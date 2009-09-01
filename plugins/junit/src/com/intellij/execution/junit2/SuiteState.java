@@ -51,7 +51,7 @@ public class SuiteState extends TestState {
 
   private static final CachedAcpect<Boolean> IS_IN_PROGRESS = new CachedAcpect<Boolean>() {
     public Boolean calculate(final SuiteState state) {
-      return Filter.IN_PROGRESS.detectIn(state.myTest.getChildren()) != null ?
+      return IN_PROGRESS.detectIn(state.myTest.getChildren()) != null ?
              Boolean.TRUE : Boolean.FALSE;
     }
   };
@@ -76,6 +76,11 @@ public class SuiteState extends TestState {
           minState < PoolOfTestStates.NOT_RUN_INDEX)
         return PoolOfTestStates.RUNNING_INDEX;
       return maxState;
+    }
+  };
+  public static final Filter IN_PROGRESS = new Filter() {
+    public boolean shouldAccept(final AbstractTestProxy test) {
+      return test.isInProgress();
     }
   };
 

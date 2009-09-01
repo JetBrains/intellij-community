@@ -50,6 +50,7 @@ public class TestProxy extends CompositePrintable implements PrintableTestProxy,
 //  private ArrayList myChildren = new ArrayList();
   private final FilterCache myChildren = new FilterCache();
   private TestProxy myParent = null;
+  public static final Filter NOT_LEAF = Filter.LEAF.not();
 
   public TestProxy(@NotNull final TestInfo info) {
     myInfo = info;
@@ -230,7 +231,7 @@ public class TestProxy extends CompositePrintable implements PrintableTestProxy,
   }
 
   public boolean hasChildSuites() {
-    return myChildren.detect(Filter.NOT_LEAF) != null;
+    return myChildren.detect(NOT_LEAF) != null;
   }
 
   public Statistics getStatistics() {

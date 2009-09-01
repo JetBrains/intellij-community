@@ -19,6 +19,7 @@ package com.intellij.execution.junit2;
 import com.intellij.execution.junit2.ui.model.JUnitAdapter;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
 import com.intellij.execution.testframework.Filter;
+import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 
@@ -32,6 +33,11 @@ public class TestProgress extends DefaultBoundedRangeModel {
   private TestProxy myCurrentState = null;
   private final MyJUnitListener myListener = new MyJUnitListener();
   private int myMissingChildren;
+  public static final Filter TEST_CASE = new Filter() {
+    public boolean shouldAccept(final AbstractTestProxy test) {
+      return test.shouldRun();
+    }
+  };
 
   public TestProgress() {
     super(0, 0, 0, 0);
@@ -44,7 +50,7 @@ public class TestProgress extends DefaultBoundedRangeModel {
 
   public void setModel(final JUnitRunningModel model) {
     myMissingChildren = 0;
-    final int knownTestCases = Filter.TEST_CASE.select(model.getRoot().getAllTests()).size();
+    final int knownTestCases = TEST_CASE.select(model.getRoot().getAllTests()).size();
     final int declaredTestCases = model.getRoot().getInfo().getTestsCount();
     if (declaredTestCases > knownTestCases)
       myMissingChildren = declaredTestCases - knownTestCases;

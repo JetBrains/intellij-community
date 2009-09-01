@@ -23,6 +23,7 @@ import com.intellij.execution.junit2.TestRootImpl;
 import com.intellij.execution.junit2.segments.ObjectReader;
 import com.intellij.execution.junit2.segments.PacketConsumer;
 import com.intellij.execution.testframework.Filter;
+import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.rt.execution.junit.segments.PoolOfDelimiters;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
@@ -37,6 +38,13 @@ public class TestStateUpdater implements PacketConsumer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.states.TestStateUpdater");
   private static final Map<Integer, StateChanger> STATE_CLASSES = new HashMap<Integer, StateChanger>();
   private TestRoot myTestRoot = new CollectingRoot();
+
+  public static final Filter RUNNING = new Filter() {
+    public boolean shouldAccept(final AbstractTestProxy test) {
+      return test.getMagnitude() == PoolOfTestStates.RUNNING_INDEX;
+    }
+  };
+  public static final Filter RUNNING_LEAF = RUNNING.and(Filter.LEAF);
 
   private static abstract class StateChanger {
     abstract void changeStateOf(TestProxy testProxy, ObjectReader reader);
@@ -120,7 +128,7 @@ public class TestStateUpdater implements PacketConsumer {
 
   public void onFinished() {
     if (myTestRoot == null) return;
-    final List runningTests = Filter.RUNNING_LEAF.select(myTestRoot.getAllTests());
+    final List runningTests = RUNNING_LEAF.select(myTestRoot.getAllTests());
     for (final Object runningTest : runningTests) {
       final TestProxy test = (TestProxy)runningTest;
       test.setState(NotFailedState.createTerminated());
