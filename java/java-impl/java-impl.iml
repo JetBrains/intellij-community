@@ -10,7 +10,6 @@
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="library" name="Trove4j" level="project" />
-    <orderEntry type="module" module-name="resources_eng" />
     <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntry type="library" name="commons-collections" level="project" />
     <orderEntry type="module" module-name="xml" />

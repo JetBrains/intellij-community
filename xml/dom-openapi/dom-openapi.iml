@@ -8,7 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="resources" />
-    <orderEntry type="module" module-name="resources_eng" />
     <orderEntry type="module" module-name="xml-openapi" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="platform-api" />

@@ -13,7 +13,6 @@
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="codeInsight-impl" />
     <orderEntry type="module" module-name="resources" />
-    <orderEntry type="module" module-name="resources_eng" />
     <orderEntry type="module" module-name="xdebugger-api" />
     <orderEntry type="module" module-name="xdebugger-impl" />
     <orderEntry type="module" module-name="lang-api" />
