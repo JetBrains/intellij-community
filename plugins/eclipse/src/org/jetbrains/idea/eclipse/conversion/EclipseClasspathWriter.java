@@ -95,15 +95,17 @@ public class EclipseClasspathWriter {
       final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
       final String libraryName = libraryOrderEntry.getLibraryName();
       if (libraryOrderEntry.isModuleLevel()) {
-        if (libraryName != null && libraryName.contains(IdeaXml.JUNIT)) {
-          final Element orderEntry =
-            addOrderEntry(EclipseXml.CON_KIND, EclipseXml.JUNIT_CONTAINER + "/" + libraryName.substring(IdeaXml.JUNIT.length()),
-                          classpathRoot, oldRoot);
-          setExported(orderEntry, libraryOrderEntry);
-        }
-        else {
-          final String[] files = libraryOrderEntry.getUrls(OrderRootType.CLASSES);
-          if (files.length > 0) {
+        final String[] files = libraryOrderEntry.getUrls(OrderRootType.CLASSES);
+        if (files.length > 0) {
+          if (libraryName != null &&
+              libraryName.contains(IdeaXml.JUNIT) &&
+              Comparing.strEqual(files[0], EclipseClasspathReader.getJunitClsUrl(libraryName.contains("4")))) {
+            final Element orderEntry =
+              addOrderEntry(EclipseXml.CON_KIND, EclipseXml.JUNIT_CONTAINER + "/" + libraryName.substring(IdeaXml.JUNIT.length()),
+                            classpathRoot, oldRoot);
+            setExported(orderEntry, libraryOrderEntry);
+          }
+          else {
             final Project project = myModel.getModule().getProject();
             final String[] kind = new String[]{EclipseXml.LIB_KIND};
             String relativeClassPath = getRelativePath(files[0], kind);
@@ -139,7 +141,6 @@ public class EclipseClasspathWriter {
             setExported(orderEntry, libraryOrderEntry);
           }
         }
-
       }
       else {
         final Element orderEntry;
