@@ -13,7 +13,7 @@
     <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="library" name="Ant" level="project" />
     <orderEntry type="module" module-name="compiler-impl" />
-    <orderEntry type="module" module-name="idea_rt" />
+    <orderEntry type="module" module-name="java-runtime" />
     <orderEntry type="module" module-name="execution-impl" />
     <orderEntry type="module" module-name="idea" />
     <orderEntry type="module" module-name="refactoring-impl" />

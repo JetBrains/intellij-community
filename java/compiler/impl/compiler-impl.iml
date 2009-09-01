@@ -14,7 +14,7 @@
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="library" name="Trove4j" level="project" />
-    <orderEntry type="module" module-name="idea_rt" />
+    <orderEntry type="module" module-name="java-runtime" />
     <orderEntry type="module" module-name="NotNull" />
     <orderEntry type="library" name="asm" level="project" />
     <orderEntry type="library" name="Eclipse" level="project" />

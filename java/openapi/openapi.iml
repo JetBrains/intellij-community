@@ -8,7 +8,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="util" exported="" />
-    <orderEntry type="module" module-name="idea_rt" />
+    <orderEntry type="module" module-name="java-runtime" />
     <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="module" module-name="forms_rt" />
@@ -26,7 +26,7 @@
     <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="module" module-name="dom-openapi" />
     <orderEntry type="module" module-name="testFramework" exported="" />
-    <orderEntry type="module" module-name="resources-en" />
+    <orderEntry type="module" module-name="resources-en" exported="" />
   </component>
   <component name="copyright">
     <option name="body" value="/*&#10; * Copyright (c) $today.year Your Corporation. All Rights Reserved.&#10; */" />
