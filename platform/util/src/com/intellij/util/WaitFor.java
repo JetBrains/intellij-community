@@ -16,7 +16,6 @@
 package com.intellij.util;
 
 import org.jetbrains.annotations.NonNls;
-import junit.framework.Assert;
 
 
 /**
@@ -91,6 +90,6 @@ public abstract class WaitFor {
     assertCompleted("");
   }
   public void assertCompleted(String message) {
-    Assert.assertTrue(message, condition());
+    assert condition(): message;
   }
 }

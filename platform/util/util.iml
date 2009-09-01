@@ -10,7 +10,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="library" name="Log4J" level="project" />
-    <orderEntry type="library" name="JUnit4" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" exported="" name="Trove4j" level="project" />
     <orderEntry type="library" exported="" name="NanoXML" level="project" />
     <orderEntry type="library" name="picocontainer" level="project" />

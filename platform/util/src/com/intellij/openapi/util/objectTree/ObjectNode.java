@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.TestOnly;
-import org.junit.Assert;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -166,7 +165,7 @@ public final class ObjectNode<T> {
 
   @TestOnly
   void assertNoReferencesKept(T aDisposable) {
-    Assert.assertNotSame(getObject(), aDisposable);
+    assert getObject() != aDisposable;
     if (myChildren != null) {
       for (ObjectNode<T> node: myChildren) {
         node.assertNoReferencesKept(aDisposable);
