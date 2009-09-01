@@ -145,6 +145,10 @@ public class TestProxy implements AbstractTestProxy {
     return isResult();
   }
 
+  public boolean isPassed() {
+    return !isNotPassed();
+  }
+
   public Location getLocation(final Project project) {
     if (psiElement == null) return null;
     final PsiElement element = psiElement.getElement();

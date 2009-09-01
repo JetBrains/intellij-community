@@ -27,6 +27,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
+import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -155,6 +156,10 @@ public class TestProxy extends CompositePrintable implements PrintableTestProxy,
 
   public boolean isLeaf() {
     return getChildCount() == 0;
+  }
+
+  public boolean isPassed() {
+    return getMagnitude() <= PoolOfTestStates.PASSED_INDEX;
   }
 
   public void addChild(final TestProxy child) {
