@@ -1,7 +1,6 @@
 package com.intellij.openapi.keymap.impl.keyGestures;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.impl.ActionProcessor;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.util.registry.Registry;
@@ -27,12 +26,12 @@ public class KeyboardGestureProcessor {
   KeyGestureState myState = myWaitForStart;
 
 
-  final Timer myHoldTimer = ApplicationManager.getApplication().isUnitTestMode() ? null : new Timer(1200, new ActionListener() {
+  final Timer myHoldTimer = new Timer(1200, new ActionListener() {
     public void actionPerformed(final ActionEvent e) {
     }
   });
 
-  final Timer myDblClickTimer = ApplicationManager.getApplication().isUnitTestMode() ? null : new Timer(500, new ActionListener() {
+  final Timer myDblClickTimer = new Timer(500, new ActionListener() {
     public void actionPerformed(final ActionEvent e) {
       myState.processDblClickTimer();
     }

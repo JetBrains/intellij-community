@@ -18,10 +18,13 @@ public class TreeUpdatePass {
 
   private DefaultMutableTreeNode myCurrentNode;
 
+  private long myAllocation;
+
   public TreeUpdatePass(@NotNull final DefaultMutableTreeNode node, @Nullable final ActiveRunnable before, @Nullable final ActiveRunnable after) {
     myNode = node;
     myBefore = before;
     myAfter = after;
+    myAllocation = System.currentTimeMillis();
   }
 
   public TreeUpdatePass(@NotNull final DefaultMutableTreeNode node) {
@@ -59,6 +62,6 @@ public class TreeUpdatePass {
 
   @Override
   public String toString() {
-    return "TreUpdatePass node=" + myNode + " stamp=" + myUpdateStamp + " expired=" + myExpired + " currentNode=" + myCurrentNode;
+    return "TreUpdatePass node=" + myNode + " stamp=" + myUpdateStamp + " expired=" + myExpired + " currentNode=" + myCurrentNode + " allocation=" + myAllocation;
   }
 }

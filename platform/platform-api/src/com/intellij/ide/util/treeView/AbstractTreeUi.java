@@ -705,7 +705,7 @@ class AbstractTreeUi {
         }
 
         if (canYield()) {
-          removeLoadingNode(node);
+          removeLoading(node, false);
         }
 
         ArrayList<TreeNode> nodesToInsert = collectNodesToInsert(descriptor, elementToIndexMap);
@@ -727,7 +727,7 @@ class AbstractTreeUi {
         final Object element = getElementFor(node);
         addNodeAction(element, new NodeAction() {
           public void onReady(final DefaultMutableTreeNode node) {
-            removeLoadingNode(node);
+            removeLoading(node, false);
           }
         });
 
@@ -753,17 +753,19 @@ class AbstractTreeUi {
     if (isRoot && !myTree.isExpanded(path)) {
       insertLoadingNode((DefaultMutableTreeNode)last, true);
       expandPath(path);
-    }
-    else if (myTree.isExpanded(path) || (isLeaf && parent != null && myTree.isExpanded(parent))) {
+    } else if (myTree.isExpanded(path) || (isLeaf && parent != null && myTree.isExpanded(parent) && !myUnbuiltNodes.contains(last))) {
       if (last instanceof DefaultMutableTreeNode) {
         processNodeActionsIfReady((DefaultMutableTreeNode)last);
       }
     }
     else {
-      if (isLeaf && parent != null) {
+      if (isLeaf && myUnbuiltNodes.contains(last)) {
+        insertLoadingNode((DefaultMutableTreeNode)last, true);
+        expandPath(path);
+      } else if (isLeaf && parent != null) {
         final DefaultMutableTreeNode parentNode = (DefaultMutableTreeNode)parent.getLastPathComponent();
         if (parentNode != null) {
-          myUnbuiltNodes.add(parentNode);
+          addToUnbuilt(parentNode);
         }
         expandPath(parent);
       }
@@ -773,23 +775,31 @@ class AbstractTreeUi {
     }
   }
 
-  private void processUnbuilt(final DefaultMutableTreeNode node, final NodeDescriptor descriptor, final TreeUpdatePass pass) {
-    if (getBuilder().isAlwaysShowPlus(descriptor)) return; // check for isAlwaysShowPlus is important for e.g. changing Show Members state!
+  private void addToUnbuilt(DefaultMutableTreeNode node) {
+    myUnbuiltNodes.add(node);
+  }
+
+  private void removeFromUnbuilt(DefaultMutableTreeNode node) {
+    myUnbuiltNodes.remove(node);
+  }
+
+  private boolean processUnbuilt(final DefaultMutableTreeNode node, final NodeDescriptor descriptor, final TreeUpdatePass pass) {
+    if (getBuilder().isAlwaysShowPlus(descriptor)) return false; // check for isAlwaysShowPlus is important for e.g. changing Show Members state!
 
     final Object element = getBuilder().getTreeStructureElement(descriptor);
 
-    if (getTreeStructure().isToBuildChildrenInBackground(element)) return; //?
+    if (getTreeStructure().isToBuildChildrenInBackground(element)) return false; //?
 
     final Object[] children = getChildrenFor(element);
     if (children.length == 0) {
-      removeLoadingNode(node);
+      removeLoading(node, false);
     }
     else if (getBuilder().isAutoExpandNode((NodeDescriptor)node.getUserObject())) {
       addNodeAction(getElementFor(node), new NodeAction() {
         public void onReady(final DefaultMutableTreeNode node) {
           final TreePath path = new TreePath(node.getPath());
           if (getTree().isExpanded(path) || children.length == 0) {
-            removeLoadingNode(node);
+            removeLoading(node, false);
           }
           else {
             maybeYeild(new ActiveRunnable() {
@@ -802,13 +812,8 @@ class AbstractTreeUi {
         }
       });
     }
-  }
 
-  private void removeLoadingNode(final DefaultMutableTreeNode parent) {
-    for (int i = 0; i < parent.getChildCount(); i++) {
-      if (removeIfLoading(parent.getChildAt(i))) break;
-    }
-    myUnbuiltNodes.remove(parent);
+    return true;
   }
 
   private boolean removeIfLoading(TreeNode node) {
@@ -1251,9 +1256,8 @@ class AbstractTreeUi {
           return;
         }
 
-        updateNodeChildren(node, pass, children.get(), true);
-
         removeFromLoadedInBackground(elementFromDescriptor.get());
+        updateNodeChildren(node, pass, children.get(), true);
 
         if (isRerunNeeded(pass)) {
           getUpdater().addSubtreeToUpdate(pass);
@@ -1263,15 +1267,7 @@ class AbstractTreeUi {
         Object element = elementFromDescriptor.get();
 
         if (element != null) {
-          myUnbuiltNodes.remove(node);
-
-          for (int i = 0; i < node.getChildCount(); i++) {
-            TreeNode child = node.getChildAt(i);
-            if (isLoadingNode(child)) {
-              removeIfLoading(child);
-              i--;
-            }
-          }
+          removeLoading(node, true);
 
           nodeToProcessActions[0] = node;
         }
@@ -1285,6 +1281,19 @@ class AbstractTreeUi {
       }
     });
     return true;
+  }
+
+  private void removeLoading(DefaultMutableTreeNode parent, boolean removeFromUnbuilt) {
+    for (int i = 0; i < parent.getChildCount(); i++) {
+      TreeNode child = parent.getChildAt(i);
+      if (removeIfLoading(child)) {
+        i--;
+      }
+    }
+
+    if (removeFromUnbuilt) {
+      removeFromUnbuilt(parent);
+    }
   }
 
   private void processNodeActionsIfReady(final DefaultMutableTreeNode node) {
@@ -1377,7 +1386,7 @@ class AbstractTreeUi {
     }
 
     NodeDescriptor childDesc = childDescriptor;
-    
+
 
     if (childDesc == null) {
       pass.expire();
@@ -1590,7 +1599,7 @@ class AbstractTreeUi {
 
           if (hasNoChildren[0]) {
             update(descriptor, false);
-            removeLoadingNode(node);
+            removeLoading(node, false);
           }
         }
       };
@@ -1649,7 +1658,7 @@ class AbstractTreeUi {
   private void insertLoadingNode(final DefaultMutableTreeNode node, boolean addToUnbuilt) {
     myTreeModel.insertNodeInto(new LoadingNode(), node, 0);
     if (addToUnbuilt) {
-      myUnbuiltNodes.add(node);
+      addToUnbuilt(node);
     }
   }
 
@@ -1843,7 +1852,7 @@ class AbstractTreeUi {
 
   private void disposeNode(DefaultMutableTreeNode node) {
     myUpdatingChildren.remove(node);
-    myUnbuiltNodes.remove(node);
+    removeFromUnbuilt(node);
 
     if (node.getChildCount() > 0) {
       for (DefaultMutableTreeNode _node = (DefaultMutableTreeNode)node.getFirstChild(); _node != null; _node = _node.getNextSibling()) {
@@ -2028,7 +2037,7 @@ class AbstractTreeUi {
       if (!checkDeferred(deferred, onDone)) {
         return;
       }
-      
+
       doSelect(elements[i], new Runnable() {
         public void run() {
           if (!checkDeferred(deferred, onDone)) return;
@@ -2505,7 +2514,7 @@ class AbstractTreeUi {
       if (!myUnbuiltNodes.contains(node)) {
         return;
       }
-      myUnbuiltNodes.remove(node);
+      removeFromUnbuilt(node);
 
 
       getBuilder().expandNodeChildren(node);
@@ -2514,9 +2523,7 @@ class AbstractTreeUi {
         public void run() {
           final Object element = getElementFor(node);
 
-          for (int i = 0; i < node.getChildCount(); i++) {
-            removeIfLoading(node.getChildAt(i));
-          }
+          removeLoading(node, false);
 
           if (node.getChildCount() == 0) {
             addNodeAction(element, new NodeAction() {

@@ -260,6 +260,6 @@ public class UpdaterTreeState {
 
   @Override
   public String toString() {
-    return "UpdaterState toSelect" + Arrays.asList(myToSelect) + " toExpand=" + Arrays.asList(myToExpand);
+    return "UpdaterState toSelect" + Arrays.asList(myToSelect) + " toExpand=" + Arrays.asList(myToExpand) + " processingNow=" + isProcessingNow() + " canRun=" + myCanRunRestore;
   }
 }
