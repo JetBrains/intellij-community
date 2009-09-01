@@ -51,7 +51,7 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.openapi.roots.impl.LanguageLevelUpdater</implementation-class>
+      <implementation-class>com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater</implementation-class>
     </component>
   </project-components>
 

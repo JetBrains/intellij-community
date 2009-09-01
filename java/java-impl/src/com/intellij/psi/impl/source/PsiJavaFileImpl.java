@@ -4,11 +4,16 @@ import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiPackageStatement;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiJavaFileImpl extends PsiJavaFileBaseImpl {
@@ -22,6 +27,19 @@ public class PsiJavaFileImpl extends PsiJavaFileBaseImpl {
 
   public Lexer createLexer() {
     return new JavaLexer(getLanguageLevel());
+  }
+
+  @NotNull
+  @Override
+  public GlobalSearchScope getResolveScope() {
+    final VirtualFile file = getVirtualFile();
+    if (file != null && !(file instanceof LightVirtualFile)) {
+      final ProjectFileIndex index = ProjectRootManager.getInstance(getProject()).getFileIndex();
+      if (!index.isInSource(file) && !index.isInLibraryClasses(file)) {
+        return GlobalSearchScope.fileScope(this);
+      }
+    }
+    return super.getResolveScope();
   }
 
   @NotNull

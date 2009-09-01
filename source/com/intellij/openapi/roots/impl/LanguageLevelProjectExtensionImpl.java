@@ -87,7 +87,7 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
     myLanguageLevel = languageLevel;
 
     if (!willReload() && DirectoryIndex.getInstance(myProject).isInitialized()) {
-      LanguageLevelUpdater.getInstance(myProject).updateLanguageLevels();
+      JavaLanguageLevelPusher.pushLanguageLevel(myProject);
     }
   }
 

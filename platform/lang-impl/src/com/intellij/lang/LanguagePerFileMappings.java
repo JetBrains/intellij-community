@@ -8,11 +8,13 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.roots.impl.FilePropertyPusher;
+import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.util.FileContentUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -25,6 +27,10 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
 
   public LanguagePerFileMappings(final Project project) {
     myProject = project;
+  }
+
+  protected FilePropertyPusher<?> getFilePropertyPusher() {
+    return null;
   }
 
   public Map<VirtualFile, T> getMappings() {
@@ -55,16 +61,22 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
     }
   }
 
+  @Nullable
+  public T getImmediateMapping(final VirtualFile file) {
+    synchronized (myMappings) {
+      return myMappings.get(file); 
+    }
+  }
+
   public void setMappings(final Map<VirtualFile, T> mappings) {
     synchronized (myMappings) {
       myMappings.clear();
       myMappings.putAll(mappings);
       cleanup();
-      FileContentUtil.reparseFiles(myProject, mappings.keySet(), true);
     }
+    handleMappingChange(mappings.keySet(), true);
   }
 
-  @TestOnly
   public void setMapping(final VirtualFile file, T dialect) {
     synchronized (myMappings) {
       if (dialect == null) {
@@ -73,7 +85,15 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
       else {
         myMappings.put(file, dialect);
       }
-      FileContentUtil.reparseFiles(myProject, Collections.singletonList(file), false);
+    }
+    handleMappingChange(ContainerUtil.createMaybeSingletonList(file), false);
+  }
+
+  private void handleMappingChange(final Collection<VirtualFile> files, final boolean includeOpenFiles) {
+    FileContentUtil.reparseFiles(myProject, files, includeOpenFiles);
+    final FilePropertyPusher<?> pusher = getFilePropertyPusher();
+    if (pusher != null) {
+      PushedFilePropertiesUpdater.getInstance(myProject).pushAll(pusher);
     }
   }
 

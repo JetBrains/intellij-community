@@ -1,13 +1,16 @@
 package com.intellij.util.indexing;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.LanguageSubstitutors;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import org.jetbrains.annotations.NotNull;
@@ -48,14 +51,9 @@ public final class FileContent extends UserDataHolderBase {
       if (project == null) {
         project = ProjectManager.getInstance().getDefaultProject();
       }
-      psi = PsiFileFactory.getInstance(project).createFileFromText(
-        getFileName(),
-        getFileType(),
-        getContentAsText(),
-        1,
-        false,
-        false
-      );
+      final Language language = ((LanguageFileType)getFileType()).getLanguage();
+      final Language substitutedLanguage = LanguageSubstitutors.INSTANCE.substituteLanguage(language, getFile(), project);
+      psi = PsiFileFactory.getInstance(project).createFileFromText(getFileName(), substitutedLanguage, getContentAsText(), false, false);
 
       psi.putUserData(FileBasedIndex.VIRTUAL_FILE, getFile());
       putUserData(CACHED_PSI, psi);
