@@ -494,17 +494,17 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   public FileTemplate getInternalTemplate(@NotNull @NonNls String templateName) {
     synchronized (LOCK) {
       LOG.assertTrue(myInternalTemplatesManager != null);
-      //noinspection HardCodedStringLiteral
+
+      if (templateName.equals("Class") && ApplicationManager.getApplication().isUnitTestMode()) {
+        String text = getTestClassTemplateText(templateName);
+        FileTemplateImpl template = new FileTemplateImpl(normalizeText(text), templateName + "ForTest", "java");
+        template.setInternal(true);
+        return template;
+      }
 
       FileTemplateImpl template = (FileTemplateImpl)myInternalTemplatesManager.getTemplate(templateName);
 
       if (template == null) {
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          String text = getTestClassTemplateText(templateName);
-          template = new FileTemplateImpl(normalizeText(text), templateName + "ForTest", "java");
-          template.setInternal(true);
-          return template;
-        }
 
         template = (FileTemplateImpl)getTemplate(templateName);
       }
