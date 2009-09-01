@@ -8,7 +8,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <runConfigurationExtension implementation="com.intellij.execution.coverage.CoverageRunConfigurationExtension"/>
     <testActionProvider implementation="com.intellij.coverage.actions.TrackCoverageActionProvider"/>
-    <coverageRunner implementation="com.intellij.coverage.EmmaCoverageRunner"/>
     <!--<coverageRunner implementation="com.intellij.coverage.CoberturaCoverageRunner"/>-->
     <coverageRunner implementation="com.intellij.coverage.IDEACoverageRunner"/>
     <projectViewNodeDecorator implementation="com.intellij.coverage.CoverageProjectViewNodeDecorator"/>

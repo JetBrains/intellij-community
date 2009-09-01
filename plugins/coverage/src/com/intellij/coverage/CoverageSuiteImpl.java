@@ -80,7 +80,7 @@ public class CoverageSuiteImpl extends CoverageSuite implements JDOMExternalizab
     myCoverageByTestEnabled = coverageByTestEnabled;
     myTracingEnabled = tracingEnabled;
     myTrackTestFolders = trackTestFolders;
-    myRunner = coverageRunner != null ? coverageRunner : CoverageRunner.getInstance(EmmaCoverageRunner.class);
+    myRunner = coverageRunner != null ? coverageRunner : CoverageRunner.getInstance(IDEACoverageRunner.class);
   }
 
   public boolean isTrackTestFolders() {
@@ -186,7 +186,7 @@ public class CoverageSuiteImpl extends CoverageSuite implements JDOMExternalizab
         }
       }
     } else {
-      myRunner = CoverageRunner.getInstance(EmmaCoverageRunner.class); //default
+      myRunner = CoverageRunner.getInstance(IDEACoverageRunner.class); //default
     }
     final String collectedLineInfo = element.getAttributeValue(COVERAGE_BY_TEST_ENABLED_ATTRIBUTE_NAME);
     myCoverageByTestEnabled = collectedLineInfo != null && Boolean.valueOf(collectedLineInfo).booleanValue();
