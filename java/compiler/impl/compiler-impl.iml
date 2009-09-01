@@ -30,6 +30,7 @@
     </orderEntry>
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="idea-ui" />
+    <orderEntry type="module" module-name="jsp-openapi" />
   </component>
   <component name="copyright">
     <Base>
