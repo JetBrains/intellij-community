@@ -9,7 +9,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="module" module-name="lang-impl" />
-    <orderEntry type="module" module-name="idea_rt" />
     <orderEntry type="module" module-name="platform-impl" />
   </component>
 </module>

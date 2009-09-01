@@ -77,6 +77,10 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
     return myChildren == null || myChildren.isEmpty();
   }
 
+  public boolean isPassed() {
+    return myState.getMagnitude() == TestStateInfo.Magnitude.SKIPPED_INDEX || myState.getMagnitude() != TestStateInfo.Magnitude.COMPLETE_INDEX; 
+  }
+
   public void addChild(final SMTestProxy child) {
     if (myChildren == null) {
       myChildren = new ArrayList<SMTestProxy>();

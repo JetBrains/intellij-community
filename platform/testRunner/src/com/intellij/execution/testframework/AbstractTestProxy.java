@@ -25,6 +25,8 @@ public interface AbstractTestProxy {
 
   boolean isLeaf();
 
+  boolean isPassed();
+
   String getName();
 
   Location getLocation(final Project project);

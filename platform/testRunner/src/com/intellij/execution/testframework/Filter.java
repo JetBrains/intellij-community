@@ -1,7 +1,5 @@
 package com.intellij.execution.testframework;
 
-import com.intellij.rt.execution.junit.states.PoolOfTestStates;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -58,7 +56,7 @@ public abstract class Filter {
 
   public static final Filter NOT_PASSED = new Filter() {
     public boolean shouldAccept(final AbstractTestProxy test) {
-      return test.getMagnitude() > PoolOfTestStates.PASSED_INDEX;
+      return !test.isPassed();
     }
   };
 
