@@ -1,4 +1,4 @@
-package com.intellij.openapi.diff.ex;
+package com.intellij.ide.commander;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;

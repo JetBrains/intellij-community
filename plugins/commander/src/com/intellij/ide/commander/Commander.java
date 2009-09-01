@@ -19,7 +19,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diff.actions.CompareFiles;
-import com.intellij.openapi.diff.ex.PsiDiffContentFactory;
+import com.intellij.ide.commander.PsiDiffContentFactory;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
