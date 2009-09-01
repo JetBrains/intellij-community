@@ -12,7 +12,6 @@ import com.intellij.compiler.make.MakeUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
-import com.intellij.openapi.compiler.ex.CompilerPathsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -369,7 +368,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
   private static String getCompilationClasspath(Module module) {
     final StringBuilder classpathBuffer = StringBuilderSpinAllocator.alloc();
     try {
-      final OrderEntry[] orderEntries = CompilerPathsEx.getOrderEntries(module);
+      final OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
       final Set<VirtualFile> processedFiles = new HashSet<VirtualFile>();
       for (final OrderEntry orderEntry : orderEntries) {
         if (orderEntry instanceof JdkOrderEntry) {

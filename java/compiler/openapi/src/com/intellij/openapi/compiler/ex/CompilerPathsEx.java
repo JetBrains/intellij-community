@@ -6,8 +6,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
@@ -70,34 +68,6 @@ public class CompilerPathsEx extends CompilerPaths {
         }
       });
     }
-  }
-
-  public static OrderEntry[] getOrderEntries(Module module) {
-    return ModuleRootManager.getInstance(module).getOrderEntries();
-    // TODO: this is a patch for SCR 36800, After J2EE Compiler copying mechanizm is fixed,
-    // TODO: remove all the code below and uncomment the line above
-    /*
-    final OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
-    final List<OrderEntry> result = new ArrayList<OrderEntry>();
-    final List<OrderEntry> moduleOrderEntries = new ArrayList<OrderEntry>();
-    int insertIndex = 0;
-    for (int idx = 0; idx < orderEntries.length; idx++) {
-      OrderEntry orderEntry = orderEntries[idx];
-      if (orderEntry instanceof ModuleOrderEntry) {
-        moduleOrderEntries.add(orderEntry);
-      }
-      else {
-        result.add(orderEntry);
-        if (orderEntry instanceof ModuleSourceOrderEntry) {
-          insertIndex = result.size() - 1;
-        }
-      }
-    }
-    if (moduleOrderEntries.size() > 0) {
-      result.addAll(insertIndex, moduleOrderEntries);
-    }
-    return result.toArray(new OrderEntry[result.size()]);
-    */
   }
 
   public static String[] getOutputPaths(Module[] modules) {

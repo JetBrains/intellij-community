@@ -8,7 +8,6 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
-import com.intellij.openapi.compiler.ex.CompilerPathsEx;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -174,7 +173,7 @@ public class ModuleChunk extends Chunk<Module> {
 
     final OrderedSet<VirtualFile> cpFiles = new OrderedSet<VirtualFile>(TObjectHashingStrategy.CANONICAL);
     for (final Module module : modules) {
-      final OrderEntry[] orderEntries = CompilerPathsEx.getOrderEntries(module);
+      final OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
       boolean skip = true;
       for (OrderEntry orderEntry : orderEntries) {
         if (orderEntry instanceof JdkOrderEntry) {
@@ -201,7 +200,7 @@ public class ModuleChunk extends Chunk<Module> {
     final OrderedSet<VirtualFile> cpFiles = new OrderedSet<VirtualFile>(TObjectHashingStrategy.CANONICAL);
     final OrderedSet<VirtualFile> jdkFiles = new OrderedSet<VirtualFile>(TObjectHashingStrategy.CANONICAL);
     for (final Module module : modules) {
-      final OrderEntry[] orderEntries = CompilerPathsEx.getOrderEntries(module);
+      final OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
       for (OrderEntry orderEntry : orderEntries) {
         if (orderEntry instanceof JdkOrderEntry) {
           jdkFiles.addAll(Arrays.asList(orderEntry.getFiles(OrderRootType.CLASSES)));
