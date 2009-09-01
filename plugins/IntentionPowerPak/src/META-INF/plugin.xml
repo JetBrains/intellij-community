@@ -326,7 +326,11 @@
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
     <intentionAction>
-      <className>com.siyeh.ipp.opassign.ReplaceOperatorAssignmentWithPostfixIncrementIntention</className>
+      <className>com.siyeh.ipp.opassign.ReplaceOperatorAssignmentWithPostfixExpressionIntention</className>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.opassign.ReplacePostfixExpressionWithOperatorAssignmentIntention</className>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
     <intentionAction>
