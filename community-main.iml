@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module relativePaths="true" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="annotations" />
+    <orderEntry type="module" module-name="ant" />
+    <orderEntry type="module" module-name="boot" />
+    <orderEntry type="module" module-name="bootstrap" />
+    <orderEntry type="module" module-name="commander" />
+    <orderEntry type="module" module-name="compiler-impl" />
+    <orderEntry type="module" module-name="compiler-openapi" />
+    <orderEntry type="module" module-name="debugger-impl" />
+    <orderEntry type="module" module-name="debugger-openapi" />
+    <orderEntry type="module" module-name="dom-impl" />
+    <orderEntry type="module" module-name="dom-openapi" />
+    <orderEntry type="module" module-name="execution-impl" />
+    <orderEntry type="module" module-name="execution-openapi" />
+    <orderEntry type="module" module-name="extensions" />
+    <orderEntry type="module" module-name="forms_rt" />
+    <orderEntry type="module" module-name="icons" />
+    <orderEntry type="module" module-name="idea-ui" />
+    <orderEntry type="module" module-name="java-impl" />
+    <orderEntry type="module" module-name="java-runtime" />
+    <orderEntry type="module" module-name="jsp-base-openapi" />
+    <orderEntry type="module" module-name="jsp-openapi" />
+    <orderEntry type="module" module-name="jsp-spi" />
+    <orderEntry type="module" module-name="lang-api" />
+    <orderEntry type="module" module-name="lang-impl" />
+    <orderEntry type="module" module-name="lvcs-api" />
+    <orderEntry type="module" module-name="lvcs-impl" />
+    <orderEntry type="module" module-name="notNull" />
+    <orderEntry type="module" module-name="openapi" />
+    <orderEntry type="module" module-name="platform-api" />
+    <orderEntry type="module" module-name="platform-impl" />
+    <orderEntry type="module" module-name="platform-main" />
+    <orderEntry type="module" module-name="platform-resources" />
+    <orderEntry type="module" module-name="platform-resources-en" />
+    <orderEntry type="module" module-name="properties" />
+    <orderEntry type="module" module-name="resources" />
+    <orderEntry type="module" module-name="resources-en" />
+    <orderEntry type="module" module-name="spellchecker" />
+    <orderEntry type="module" module-name="testFramework" />
+    <orderEntry type="module" module-name="testFramework-java" />
+    <orderEntry type="module" module-name="testRunner" />
+    <orderEntry type="module" module-name="usageView" />
+    <orderEntry type="module" module-name="util" />
+    <orderEntry type="module" module-name="vcs-api" />
+    <orderEntry type="module" module-name="vcs-impl" />
+    <orderEntry type="module" module-name="xdebugger-api" />
+    <orderEntry type="module" module-name="xdebugger-impl" />
+    <orderEntry type="module" module-name="xml" />
+    <orderEntry type="module" module-name="xml-openapi" />
+  </component>
+</module>
+
