@@ -7,7 +7,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="Annotations" />
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="jsp-base-openapi" exported="" />
