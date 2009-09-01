@@ -22,6 +22,7 @@
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="boot" />
     <orderEntry type="library" name="asm" level="project" />
+    <orderEntry type="module" module-name="dom-openapi" />
   </component>
   <component name="copyright">
     <Base>
