@@ -15,15 +15,12 @@
  */
 package com.siyeh.ipp.opassign;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiAssignmentExpression;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.IntentionPowerPackBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ReplaceOperatorAssignmentWithPostfixIncrementIntention
@@ -34,10 +31,17 @@ public class ReplaceOperatorAssignmentWithPostfixIncrementIntention
         final PsiAssignmentExpression assignment =
                 (PsiAssignmentExpression)element;
         final PsiExpression expression = assignment.getLExpression();
-        final String expressionText = expression.getText();
+        final PsiJavaToken sign = assignment.getOperationSign();
+        final IElementType tokenType = sign.getTokenType();
+        final String replacementText;
+        if (JavaTokenType.PLUSEQ.equals(tokenType)) {
+            replacementText = expression.getText() + "++";
+        } else {
+            replacementText = expression.getText() + "--";
+        }
         return IntentionPowerPackBundle.message(
-                "replace.operator.assignment.with.postfix.increment.intention.name",
-                expressionText);
+                "replace.some.operator.with.other.intention.name",
+                sign.getText(), replacementText);
     }
 
     @NotNull
