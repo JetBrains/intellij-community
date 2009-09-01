@@ -49,7 +49,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   private boolean myIsDirty = false;
   private boolean myIsLvalue = false;
   private boolean myIsExpandable;
-  public static final int MAX_DISPLAY_LABEL_LENGTH = 128;
+  public static final int MAX_DISPLAY_LABEL_LENGTH = 1024/*kb*/ *1024 /*bytes*/ / 2; // 1 Mb string
 
   protected ValueDescriptorImpl(Project project, Value value) {
     myProject = project;
