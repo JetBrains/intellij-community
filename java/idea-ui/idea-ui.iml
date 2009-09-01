@@ -11,15 +11,7 @@
     <orderEntry type="module" module-name="compiler-openapi" />
     <orderEntry type="module" module-name="compiler-impl" />
     <orderEntry type="module" module-name="java-impl" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../../lib/xmlrpc-2.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
+    <orderEntry type="library" name="XmlRPC" level="project" />
   </component>
 </module>
 
