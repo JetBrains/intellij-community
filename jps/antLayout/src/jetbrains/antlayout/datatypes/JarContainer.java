@@ -16,6 +16,7 @@ public class JarContainer extends ZipContainer {
     protected Zip createTask() {
         Jar task = new Jar();
         task.setTaskName("jar");
+        task.setWhenmanifestonly((Zip.WhenEmpty) Zip.WhenEmpty.getInstance(Zip.WhenEmpty.class, "skip"));
         return task;
     }
 

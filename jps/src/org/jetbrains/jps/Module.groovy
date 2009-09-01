@@ -13,6 +13,7 @@ class Module extends LazyInitializeableObject implements ClasspathItem {
   List excludes = []
   
   Map<String, Object> props = [:]
+  Map<String, String> sourceRootPrefixes = [:]
 
   def Module(project, name, initializer) {
     this.project = project;
@@ -64,6 +65,18 @@ class Module extends LazyInitializeableObject implements ClasspathItem {
   
   def make() {
     project.builder.makeModule(this)
+  }
+
+  def getOutput() {
+    make()
+  }
+
+  List<String> runtimeClasspath() {
+    project.builder.moduleRuntimeClasspath(this, false)
+  }
+
+  List<String> testRuntimeClasspath() {
+    project.builder.moduleRuntimeClasspath(this, true)
   }
 
   def makeTests() {

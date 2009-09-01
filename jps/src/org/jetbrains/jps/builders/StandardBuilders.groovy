@@ -23,10 +23,22 @@ class JavacBuilder implements ModuleBuilder {
     params.destdir = state.targetFolder
     if (sourceLevel != null) params.source = sourceLevel
     if (targetLevel != null) params.target = targetLevel
-    
+
     params.memoryMaximumSize = "512m"
     params.fork = "true"
+    params.debug = "on"
+
+    def customJavac = module["javac"]
+    if (customJavac != null) {
+      params.executable = customJavac
+    }
+
+    def customArgs = module["javac_args"]
     ant.javac (params) {
+      if (customArgs) {
+        compilerarg(line: customArgs)
+      }
+
       state.sourceRoots.each {
         src(path: it)
       }
@@ -50,26 +62,45 @@ class JavacBuilder implements ModuleBuilder {
 
 class ResourceCopier implements ModuleBuilder {
 
-  def processModule(ModuleChunk module, ModuleBuildState state) {
+  def processModule(ModuleChunk chunk, ModuleBuildState state) {
     if (state.sourceRoots.isEmpty()) return;
 
-    def project = module.project
+    def project = chunk.project
     def ant = project.binding.ant
 
-    ant.copy(todir: state.targetFolder) {
-      state.sourceRoots.each { root ->
-        fileset (dir : root) {
-          patternset (refid: module["compiler.resources.id"])
-          type (type: "file")
+    chunk.modules.each { module ->
+      def rootProcessor = {String root ->
+        if (new File(root).exists()) {
+          def target = state.targetFolder
+          def prefix = module.sourceRootPrefixes[root]
+          if (prefix != null) {
+            if (!(target.endsWith("/") || target.endsWith("\\"))) {
+              target += "/"
+            }
+            target += prefix
+          }
+
+          ant.copy(todir: target) {
+            fileset(dir: root) {
+              patternset(refid: chunk["compiler.resources.id"])
+              type(type: "file")
+            }
+          }
+        }
+        else {
+          project.warning("$root doesn't exist")
         }
       }
+
+      module.sourceRoots.each (rootProcessor)
+      module.testRoots.each (rootProcessor)
     }
   }
 }
 
 class GroovycBuilder implements ModuleBuilder {
   def GroovycBuilder(Project project) {
-    project.binding.ant.taskdef (name: "groovyc", classname: "org.codehaus.groovy.ant.Groovyc")    
+    project.taskdef (name: "groovyc", classname: "org.codehaus.groovy.ant.Groovyc")
   }
 
   def processModule(ModuleChunk module, ModuleBuildState state) {
@@ -78,15 +109,33 @@ class GroovycBuilder implements ModuleBuilder {
     def project = module.project
     def ant = project.binding.ant
 
-    ant.groovyc (destdir: state.targetFolder) {
+    final String destDir = state.targetFolder
+
+    ant.touch(millis: 239) {
+      fileset(dir: destDir) {
+        include(name: "**/*.class")
+      }
+    }
+
+    ant.groovyc(destdir: destDir) {
       state.sourceRoots.each {
         src(path: it)
       }
+
+      include(name: "**/*.groovy")
 
       classpath {
         state.classpath.each {
           pathelement(location: it)
         }
+
+        pathelement(location: destDir) // Includes classes generated there by javac compiler
+      }
+    }
+
+    ant.touch() {
+      fileset(dir: destDir) {
+        include(name: "**/*.class")
       }
     }
   }
@@ -95,7 +144,7 @@ class GroovycBuilder implements ModuleBuilder {
 class GroovyStubGenerator implements ModuleBuilder {
 
   def GroovyStubGenerator(Project project) {
-    project.binding.ant.taskdef (name: "generatestubs", classname: "org.codehaus.groovy.ant.GenerateStubsTask")    
+    project.taskdef (name: "generatestubs", classname: "org.codehaus.groovy.ant.GenerateStubsTask")
   }
 
   def processModule(ModuleChunk module, ModuleBuildState state) {
@@ -133,14 +182,14 @@ class GroovyStubGenerator implements ModuleBuilder {
 class JetBrainsInstrumentations implements ModuleBuilder {
 
   def JetBrainsInstrumentations(Project project) {
-    project.binding.ant.taskdef(name: "jb_instrumentations", classname: "com.intellij.ant.InstrumentIdeaExtensions")
+    project.taskdef(name: "jb_instrumentations", classname: "com.intellij.ant.InstrumentIdeaExtensions")
   }
 
   def processModule(ModuleChunk module, ModuleBuildState state) {
     def project = module.project
     def ant = project.binding.ant
 
-    ant.jb_instrumentations(destdir: state.targetFolder) {
+    ant.jb_instrumentations(destdir: state.targetFolder, failonerror: "false") {
       state.sourceRoots.each {
         src(path: it)
       }

@@ -147,12 +147,17 @@ public class IdeaProjectLoader {
 
           componentTag.content.sourceFolder.each {Node folderTag ->
             String path = expandMacro(pathFromUrl(attr(folderTag, "url")), projectBasePath, moduleBasePath)
+            String prefix = attr(folderTag, "packagePrefix")
 
             if (folderTag.attribute("isTestSource") == "true") {
               testSrc path
             }
             else {
               src path
+            }
+
+            if (prefix != null && prefix != "") {
+              project.modules[currentModuleName].sourceRootPrefixes[path] = (prefix.replace('.', '/'))
             }
           }
 

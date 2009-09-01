@@ -34,11 +34,25 @@ class ProjectBuilder {
     }
   }
 
+  public def clean() {
+    outputs.clear()
+    testOutputs.clear()
+    cp.clear()
+    testCp.clear()
+  }
+
   public def buildAll() {
     buildChunks()
     chunks.each {
       makeChunk(it)
       makeChunkTests(it)
+    }
+  }
+
+  public def buildProduction() {
+    buildChunks()
+    chunks.each {
+      makeChunk(it)
     }
   }
 
@@ -55,7 +69,7 @@ class ProjectBuilder {
     String currentOutput = outputs[chunk]
     if (currentOutput != null) return currentOutput
 
-    project.info("Making module ${chunk.name}")
+    project.stage("Making module ${chunk.name}")
     def dst = folderForChunkOutput(chunk, classesDir(binding.project), false)
     outputs[chunk] = dst
     compile(chunk, dst, false)
@@ -71,7 +85,7 @@ class ProjectBuilder {
     String currentOutput = testOutputs[chunk]
     if (currentOutput != null) return currentOutput
 
-    project.info("Making tests for ${chunk.name}")
+    project.stage("Making tests for ${chunk.name}")
     def dst = folderForChunkOutput(chunk, testClassesDir(binding.project), true)
     testOutputs[chunk] = dst
     compile(chunk, dst, true)
@@ -80,11 +94,11 @@ class ProjectBuilder {
   }
 
   private String classesDir(Project project) {
-    return new File(project.targetFolder, "classes").absolutePath
+    return new File(project.targetFolder, "production").absolutePath
   }
 
   private String testClassesDir(Project project) {
-    return new File(project.targetFolder, "testClasses").absolutePath
+    return new File(project.targetFolder, "test").absolutePath
   }
 
   private String folderForChunkOutput(ModuleChunk chunk, String basePath, boolean tests) {
@@ -108,25 +122,26 @@ class ProjectBuilder {
     (
             sourceRoots: sources,
             excludes: chunk.excludes,
-            classpath: moduleClasspath(chunk, tests),
+            classpath: moduleCompileClasspath(chunk, tests),
             targetFolder: dst,
             tempRootsToDelete: []
     )
 
-    state.print()
-
-    project.builders().each {
-      it.processModule(chunk, state)
+    if (!project.dryRun) {
+      project.builders().each {
+        it.processModule(chunk, state)
+      }
+      state.tempRootsToDelete.each {
+        binding.ant.delete(dir: it)
+      }
     }
 
-    state.tempRootsToDelete.each {
-      binding.ant.delete(dir: it)
+    chunk.modules.each {
+      project.exportProperty("module.${it.name}.output.${tests ? "test" : "main"}", dst)
     }
-    
-    binding.ant.project.setProperty("module.${chunk.name}.output.${tests ? "test" : "main"}", dst)
   }
 
-  List<String> moduleClasspath(ModuleChunk chunk, boolean test) {
+  List<String> moduleCompileClasspath(ModuleChunk chunk, boolean test) {
     Map<ModuleChunk, List<String>> map = test ? testCp : cp
 
     if (map[chunk] != null) return map[chunk]
@@ -141,6 +156,18 @@ class ProjectBuilder {
     }
 
     map[chunk] = set.asList()
+  }
+
+  List<String> moduleRuntimeClasspath(Module module, boolean test) {
+    return chunkRuntimeClasspath(chunkForModule(module), test)
+  }
+
+  List<String> chunkRuntimeClasspath(ModuleChunk chunk, boolean test) {
+    Set<String> set = new LinkedHashSet()
+    set.addAll(moduleCompileClasspath(chunk, test))
+    set.add(chunkOutput(chunk))
+
+    return set.asList()
   }
 
   private def transitiveClasspath(Object chunkOrModule, boolean test, Set<String> set, Set<Object> processed) {
@@ -173,6 +200,9 @@ class ProjectBuilder {
   }
 
   private String zipIfNecessary(String currentOut, ModuleChunk chunk) {
+    return currentOut
+
+/*
     def currentOutAsFile = new File(currentOut)
 
     if (currentOutAsFile.isDirectory() && currentOutAsFile.list().length > 0) {
@@ -186,6 +216,7 @@ class ProjectBuilder {
     else {
       currentOut
     }
+*/
   }
 
   private String chunkTestOutput(ModuleChunk chunk) {

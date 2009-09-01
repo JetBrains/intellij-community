@@ -28,7 +28,11 @@ class Project {
   final Map<String, Module> modules = [:]
   final Map<String, Library> libraries = [:]
 
+  Closure stagePrinter;
+
   String targetFolder = "."
+
+  boolean dryRun = false
 
   def Project(GantBinding binding) {
     builder = new ProjectBuilder(binding, this)
@@ -105,6 +109,14 @@ class Project {
     binding.ant.project.log(message, org.apache.tools.ant.Project.MSG_WARN)
   }
 
+  def stage(String message) {
+    if (stagePrinter != null) {
+      stagePrinter(message)
+    }
+
+    info(message)
+  }
+
   def info(String message) {
     binding.ant.project.log(message, org.apache.tools.ant.Project.MSG_INFO)
   }
@@ -113,8 +125,19 @@ class Project {
     builder.buildAll()
   }
 
+  def makeProduction() {
+    builder.buildProduction()
+  }
+
   def clean() {
-    binding.ant.delete(dir: targetFolder)
+    if (!dryRun) {
+      stage("Cleaning $targetFolder")
+      binding.ant.delete(dir: targetFolder)
+    }
+    else {
+      stage("Cleaning $targetFolder skipped as we're running dry")
+    }
+    builder.clean()
   }
 
   def ClasspathItem resolve(Object dep) {
@@ -122,28 +145,24 @@ class Project {
       return dep
     }
 
-    if (dep instanceof String) {
-      String path = dep
-      List<ClasspathItem> results = []
-      resolvers.each {
-        def resolved = it.resolve(path)
-        if (resolved != null) results.add(resolved)
-      }
+    String path = dep.toString()
 
-      if (results.isEmpty()) {
-        if (new File(path).exists()) return new PathEntry(path: path)
-
-        error("Cannot resolve $path")
-      }
-      else if (results.size() > 1) {
-        error("Ambigous resolve for $path. All of $results match")
-      }
-
-      return results[0]
+    List<ClasspathItem> results = []
+    resolvers.each {
+      def resolved = it.resolve(path)
+      if (resolved != null) results.add(resolved)
     }
 
-    error("cannot resolve $dep")
-    return null
+    if (results.isEmpty()) {
+      if (new File(path).exists()) return new PathEntry(path: path)
+
+      error("Cannot resolve $path")
+    }
+    else if (results.size() > 1) {
+      error("Ambigous resolve for $path. All of $results match")
+    }
+
+    return results[0]
   }
 
   def getAt(String key) {
@@ -158,5 +177,37 @@ class Project {
 
   def putAt(String key, Object value) {
     props[key] = value
+  }
+
+  String getPropertyIfDefined(String name) {
+    try {
+      binding[name]
+    }
+    catch (MissingPropertyException mpe) {
+      return null
+    }
+  }
+
+  boolean isDefined(String prop) {
+    try {
+      binding[prop]
+      return true
+    }
+    catch (MissingPropertyException mpe) {
+      return false
+    }
+  }
+
+  def exportProperty(String name, String value) {
+    binding.ant.project.setProperty(name, value)
+  }
+
+  def taskdef(Map args) {
+    binding.ant.taskdef(name: args.name, classname: args.classname) {
+      String additionalClasspathId = getPropertyIfDefined("additional.classpath.id")
+      if (additionalClasspathId != null) {
+        classpath (refid: additionalClasspathId)
+      }
+    }
   }
 }

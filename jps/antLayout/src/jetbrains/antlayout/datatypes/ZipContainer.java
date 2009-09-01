@@ -18,7 +18,7 @@ public class ZipContainer extends Container {
 
     public ZipContainer() {
         task = createTask();
-        task.setCompress(true); // Default compress is false
+        task.setCompress(false); // Default compress is false
     }
 
     public String getName() {
