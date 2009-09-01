@@ -5,8 +5,8 @@
       <module fileurl="file://$PROJECT_DIR$/platform/annotations/annotations.iml" filepath="$PROJECT_DIR$/platform/annotations/annotations.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/boot/boot.iml" filepath="$PROJECT_DIR$/platform/boot/boot.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/bootstrap/bootstrap.iml" filepath="$PROJECT_DIR$/platform/bootstrap/bootstrap.iml" group="platform" />
-      <module fileurl="file://$PROJECT_DIR$/java/compiler/impl/compiler-impl.iml" filepath="$PROJECT_DIR$/java/compiler/impl/compiler-impl.iml" group="java" />
-      <module fileurl="file://$PROJECT_DIR$/java/compiler/openapi/compiler-openapi.iml" filepath="$PROJECT_DIR$/java/compiler/openapi/compiler-openapi.iml" group="java" />
+      <module fileurl="file://$PROJECT_DIR$/java/compiler/impl/compiler-impl.iml" filepath="$PROJECT_DIR$/java/compiler/impl/compiler-impl.iml" group="java/compiler" />
+      <module fileurl="file://$PROJECT_DIR$/java/compiler/openapi/compiler-openapi.iml" filepath="$PROJECT_DIR$/java/compiler/openapi/compiler-openapi.iml" group="java/compiler" />
       <module fileurl="file://$PROJECT_DIR$/java/debugger/impl/debugger-impl.iml" filepath="$PROJECT_DIR$/java/debugger/impl/debugger-impl.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/debugger/openapi/debugger-openapi.iml" filepath="$PROJECT_DIR$/java/debugger/openapi/debugger-openapi.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/xml/dom-impl/dom-impl.iml" filepath="$PROJECT_DIR$/xml/dom-impl/dom-impl.iml" group="xml" />
@@ -26,6 +26,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/lang-impl/lang-impl.iml" filepath="$PROJECT_DIR$/platform/lang-impl/lang-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/lvcs-api/lvcs-api.iml" filepath="$PROJECT_DIR$/platform/lvcs-api/lvcs-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/lvcs-impl/lvcs-impl.iml" filepath="$PROJECT_DIR$/platform/lvcs-impl/lvcs-impl.iml" group="platform" />
+      <module fileurl="file://$PROJECT_DIR$/java/compiler/notNull/notNull.iml" filepath="$PROJECT_DIR$/java/compiler/notNull/notNull.iml" group="java/compiler" />
       <module fileurl="file://$PROJECT_DIR$/java/openapi/openapi.iml" filepath="$PROJECT_DIR$/java/openapi/openapi.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-api/platform-api.iml" filepath="$PROJECT_DIR$/platform/platform-api/platform-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-impl/platform-impl.iml" filepath="$PROJECT_DIR$/platform/platform-impl/platform-impl.iml" group="platform" />

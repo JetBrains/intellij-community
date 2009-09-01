@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Eclipse">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/org.eclipse.jdt.core_3.4.4.v_894_R34x.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/src/org.eclipse.jdt.core.source_3.4.4.v_894_R34x.jar!/" />
+    </SOURCES>
+  </library>
+</component>
