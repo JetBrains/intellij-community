@@ -213,7 +213,7 @@ public class ConversionServiceImpl extends ConversionService {
     String projectPath = FileUtil.toSystemDependentName(stateStore.getLocation());
 
     if (!isConversionNeeded(projectPath, moduleFile)) {
-      return false;
+      return true;
     }
 
     final int res = Messages.showYesNoDialog(project, IdeBundle.message("message.module.file.has.an.older.format.do.you.want.to.convert.it"),
