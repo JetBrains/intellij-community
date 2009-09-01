@@ -1,5 +1,6 @@
 package com.intellij.ide.browsers;
 
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.browsers.firefox.FirefoxSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -172,10 +173,11 @@ public class BrowsersConfiguration implements ApplicationComponent, PersistentSt
     getInstance()._launchBrowser(family, url);
   }
 
-  private void _launchBrowser(final BrowserFamily family, @NotNull final String url) {
+  private void _launchBrowser(final BrowserFamily family, @NotNull String url) {
     final WebBrowserSettings settings = getBrowserSettings(family);
     final String path = settings.getPath();
     if (path != null && path.length() > 0) {
+      url = BrowserUtil.escapeUrl(url);
       try {
         final BrowserSpecificSettings specificSettings = settings.getBrowserSpecificSettings();
         String[] parameters;

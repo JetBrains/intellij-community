@@ -97,12 +97,7 @@ public class BrowserUtil {
         else {
           commandLine = new String[command.length + 1];
           System.arraycopy(command, 0, commandLine, 0, command.length);
-          if (SystemInfo.isWindows) {
-            commandLine[commandLine.length - 1] = "\"" + urlString + "\"";
-          }
-          else {
-            commandLine[commandLine.length - 1] = urlString.replaceAll(" ", "%20");
-          }
+          commandLine[commandLine.length - 1] = escapeUrl(urlString);
         }
         Runtime.getRuntime().exec(commandLine);
       }
@@ -204,6 +199,16 @@ public class BrowserUtil {
     }
     else {
       launchBrowserUsingStandardWay(url);
+    }
+  }
+
+  @NotNull
+  public static String escapeUrl(@NotNull @NonNls String url) {
+    if (SystemInfo.isWindows) {
+      return "\"" + url + "\"";
+    }
+    else {
+      return url.replaceAll(" ", "%20");
     }
   }
 
