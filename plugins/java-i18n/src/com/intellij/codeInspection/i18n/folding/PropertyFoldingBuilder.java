@@ -127,9 +127,19 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
     if (isI18nProperty(literal)) {
       final PsiReference[] references = literal.getReferences();
       for (PsiReference reference : references) {
-        final PsiElement element = reference.resolve();
-        if (element instanceof Property) {
-          return "\"" + ((Property)element).getValue() + "\"";
+        if (reference instanceof PsiPolyVariantReference) {
+          final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(false);
+          for (ResolveResult result : results) {
+            final PsiElement element = result.getElement();
+            if (element instanceof Property) {
+              return "\"" + ((Property)element).getValue() + "\"";
+            }            
+          }
+        } else {
+          final PsiElement element = reference.resolve();
+          if (element instanceof Property) {
+            return "\"" + ((Property)element).getValue() + "\"";
+          }
         }
       }
     }
