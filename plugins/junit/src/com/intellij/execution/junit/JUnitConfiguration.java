@@ -27,17 +27,16 @@ import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ui.order.AdditionalClasspath;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.*;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import org.jdom.Element;
@@ -285,14 +284,12 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     private Map<String, String> myEnvs = new LinkedHashMap<String, String>();
     public boolean PASS_PARENT_ENVS = true;
 
-    public AdditionalClasspath ADDITIONAL_CLASS_PATH;
     public TestSearchScope.Wrapper TEST_SEARCH_SCOPE = new TestSearchScope.Wrapper();
 
     public boolean equals(final Object object) {
       if (!(object instanceof Data)) return false;
       final Data second = (Data)object;
-      return getClasspathList().equals(second.getClasspathList()) &&
-             Comparing.equal(TEST_OBJECT, second.TEST_OBJECT) &&
+      return Comparing.equal(TEST_OBJECT, second.TEST_OBJECT) &&
              Comparing.equal(getMainClassName(), second.getMainClassName()) &&
              Comparing.equal(getPackageName(), second.getPackageName()) &&
              Comparing.equal(getMethodName(), second.getMethodName()) &&
@@ -325,14 +322,6 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
       catch (CloneNotSupportedException e) {
         throw new RuntimeException(e);
       }
-    }
-
-    public AdditionalClasspath getClasspathList() {
-      if (ADDITIONAL_CLASS_PATH == null) {
-        ADDITIONAL_CLASS_PATH = new AdditionalClasspath();
-        ADDITIONAL_CLASS_PATH.addClasspathMarker(AdditionalClasspath.OTHER_PATH);
-      }
-      return ADDITIONAL_CLASS_PATH;
     }
 
     public Module setTestMethod(final Location<PsiMethod> methodLocation) {

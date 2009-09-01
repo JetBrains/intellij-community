@@ -9,7 +9,6 @@ import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ui.order.AdditionalClasspath;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -37,7 +36,6 @@ public class TestData implements Cloneable
   private Map<String, String> ENVS = new LinkedHashMap<String, String>();
   public boolean PASS_PARENT_ENVS = true;
 
-  public AdditionalClasspath ADDITIONAL_CLASS_PATH;
   public TestSearchScope.Wrapper TEST_SEARCH_SCOPE;
   public Map<String, String> TEST_PROPERTIES = new HashMap<String, String>();
   public List<String> TEST_LISTENERS = new ArrayList<String>();
@@ -90,8 +88,7 @@ public class TestData implements Cloneable
       return false;
     } else {
       TestData data = (TestData) obj;
-      return getClasspathList().equals(data.getClasspathList())
-          && Comparing.equal(TEST_OBJECT, data.TEST_OBJECT)
+      return Comparing.equal(TEST_OBJECT, data.TEST_OBJECT)
           && Comparing.equal(getMainClassName(), data.getMainClassName())
           && Comparing.equal(getPackageName(), data.getPackageName())
           && Comparing.equal(getSuiteName(), data.getSuiteName())
@@ -129,14 +126,6 @@ public class TestData implements Cloneable
 
     data.setScope(getScope());
     return data;
-  }
-
-  public AdditionalClasspath getClasspathList() {
-    if (ADDITIONAL_CLASS_PATH == null) {
-      ADDITIONAL_CLASS_PATH = new AdditionalClasspath();
-      ADDITIONAL_CLASS_PATH.addClasspathMarker(AdditionalClasspath.OTHER_PATH);
-    }
-    return ADDITIONAL_CLASS_PATH;
   }
 
   public String getProperty(int type, Project project) {
