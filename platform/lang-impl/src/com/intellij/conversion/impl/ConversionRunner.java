@@ -24,7 +24,7 @@ public class ConversionRunner {
   public ConversionRunner(ConverterProvider provider, ConversionContextImpl context) {
     myProvider = provider;
     myContext = context;
-    ProjectConverter converter = provider.createConverter();
+    ProjectConverter converter = provider.createConverter(context);
     myModuleFileConverter = converter.createModuleFileConverter();
     myProjectFileConverter = converter.createProjectFileConverter();
     myWorkspaceConverter = converter.createWorkspaceFileConverter();

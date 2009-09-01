@@ -28,5 +28,5 @@ public abstract class ConverterProvider {
   public abstract String getConversionDescription();
 
   @NotNull
-  public abstract ProjectConverter createConverter(); 
+  public abstract ProjectConverter createConverter(@NotNull ConversionContext context); 
 }

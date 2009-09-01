@@ -1,10 +1,7 @@
 package com.intellij.conversion.impl;
 
 import com.intellij.application.options.PathMacrosImpl;
-import com.intellij.conversion.CannotConvertException;
-import com.intellij.conversion.ModuleSettings;
-import com.intellij.conversion.ProjectSettings;
-import com.intellij.conversion.WorkspaceSettings;
+import com.intellij.conversion.*;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.ide.impl.convert.JDomConvertingUtil;
@@ -25,7 +22,7 @@ import java.util.Map;
 /**
  * @author nik
  */
-public class ConversionContextImpl {
+public class ConversionContextImpl implements ConversionContext {
   private StorageScheme myStorageScheme;
   private File myProjectBaseDir;
   private File myProjectFile;
