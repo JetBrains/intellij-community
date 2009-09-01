@@ -30,9 +30,9 @@ import com.intellij.ui.plaf.beg.BegPopupMenuBorder;
 import com.intellij.ui.popup.PopupIcons;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.SortedList;
 import com.intellij.util.ui.AsyncProcessIcon;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -56,7 +56,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private final Editor myEditor;
   private final SortedList<LookupElement> myItems;
   private final SortedMap<LookupItemWeightComparable, SortedList<LookupElement>> myItemsMap;
-  private final Map<LookupElement, Collection<LookupElementAction>> myItemActions = new THashMap<LookupElement, Collection<LookupElementAction>>();
+  private final Map<LookupElement, Collection<LookupElementAction>> myItemActions = new ConcurrentHashMap<LookupElement, Collection<LookupElementAction>>();
   private int myMinPrefixLength;
   private int myPreferredItemsCount;
   private RangeMarker myInitialOffset;
@@ -211,6 +211,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     for (LookupActionProvider provider : LookupActionProvider.EP_NAME.getExtensions()) {
       provider.fillActions(item, this, consumer);
     }
+    myItemActions.put(item, consumer.getResult());
 
     synchronized (myItems) {
       myItems.add(item);
@@ -220,18 +221,14 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
         myItemsMap.put(comparable, list = new SortedList<LookupElement>(myComparator));
       }
       list.add(item);
-
-      myItemActions.put(item, consumer.getResult());
     }
     int maxWidth = myCellRenderer.updateMaximumWidth(item);
     myLookupWidth = Math.max(maxWidth, myLookupWidth);
   }
 
   public Collection<LookupElementAction> getActionsFor(LookupElement element) {
-    synchronized (myItems) {
-      final Collection<LookupElementAction> collection = myItemActions.get(element);
-      return collection == null ? Collections.<LookupElementAction>emptyList() : collection;
-    }
+    final Collection<LookupElementAction> collection = myItemActions.get(element);
+    return collection == null ? Collections.<LookupElementAction>emptyList() : collection;
   }
 
   @Nullable
