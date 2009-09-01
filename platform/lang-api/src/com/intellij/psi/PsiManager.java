@@ -150,8 +150,6 @@ public abstract class PsiManager extends UserDataHolderBase {
    * which are automatically recalculated based on changes of the elements on which they depend.
    *
    * @return the cached values manager instance.
-   * @deprecated
-   * @see CachedValuesManager#getManager(com.intellij.openapi.project.Project)
    */
   @NotNull
   public abstract CachedValuesManager getCachedValuesManager();

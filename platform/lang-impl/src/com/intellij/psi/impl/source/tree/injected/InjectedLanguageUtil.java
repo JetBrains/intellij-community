@@ -16,7 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.util.ParameterizedCachedValueImpl;
+import com.intellij.psi.impl.ParameterizedCachedValueImpl;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.DummyHolder;

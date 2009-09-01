@@ -17,6 +17,7 @@ package com.intellij.psi.meta;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.util.CachedValue;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -38,7 +39,7 @@ public interface PsiMetaData {
 
   /**
    * @return objects this meta data depends on.
-   * @see com.intellij.psi.util.CachedValue
+   * @see CachedValue
    */
   Object[] getDependences();
 }

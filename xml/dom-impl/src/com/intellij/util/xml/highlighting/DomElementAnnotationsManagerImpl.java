@@ -22,6 +22,7 @@ import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -98,7 +99,11 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
   private final ProjectRootManager myProjectRootManager;
   private final CachedValuesManager myCachedValuesManager;
   private long myModificationCount;
-  
+
+  public DomElementAnnotationsManagerImpl(Project project, InspectionProfileManager manager, ProjectRootManager projectRootManager,
+                                          PsiManager psiManager) {
+    this(project, manager, projectRootManager, psiManager.getCachedValuesManager());
+  }
   public DomElementAnnotationsManagerImpl(Project project, final InspectionProfileManager inspectionProfileManager, ProjectRootManager projectRootManager,
                                           final CachedValuesManager cachedValuesManager) {
     myCachedValuesManager = cachedValuesManager;
