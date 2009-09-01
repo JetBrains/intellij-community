@@ -48,6 +48,8 @@
   <extensionPoint name="projectUndoProvider" interface="com.intellij.openapi.command.impl.UndoProvider"
                   area="IDEA_PROJECT"/>
 
+  <extensionPoint name="cachedValuesFactory" interface="com.intellij.util.CachedValuesFactory" area="IDEA_PROJECT"/>
+  
   <extensionPoint name="syntaxHighlighter"
                   beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean"/>
 

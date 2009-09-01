@@ -33,7 +33,7 @@ import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.*;
 
 import java.util.ArrayList;
 import java.util.List;

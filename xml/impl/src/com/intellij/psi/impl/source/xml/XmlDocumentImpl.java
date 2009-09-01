@@ -11,7 +11,7 @@ import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.impl.events.XmlDocumentChangedImpl;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.CachedValueImpl;
+import com.intellij.psi.impl.PsiCachedValueImpl;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -133,7 +133,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
 
     CachedValue<XmlNSDescriptor> cachedValue = defaultDescriptorsCache.get(namespace);
     if (cachedValue == null) {
-      defaultDescriptorsCache.put(namespace, cachedValue = new CachedValueImpl<XmlNSDescriptor>(getManager(), new CachedValueProvider<XmlNSDescriptor>() {
+      defaultDescriptorsCache.put(namespace, cachedValue = new PsiCachedValueImpl<XmlNSDescriptor>(getManager(), new CachedValueProvider<XmlNSDescriptor>() {
         public Result<XmlNSDescriptor> compute() {
           final XmlNSDescriptor defaultNSDescriptorInner = getDefaultNSDescriptorInner(namespace, strict);
 
@@ -145,7 +145,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
                                                                        ? defaultNSDescriptorInner.getDependences()
                                                                        : ExternalResourceManager.getInstance());
         }
-      }, false));
+      }));
     }
     return cachedValue.getValue();
   }

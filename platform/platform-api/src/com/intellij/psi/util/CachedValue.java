@@ -13,32 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.meta;
+package com.intellij.psi.util;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.filters.ElementFilter;
-import org.jetbrains.annotations.NonNls;
+public interface CachedValue<T> {
 
-/**
- * @author peter
- *
- * @see MetaDataRegistrar#registerMetaData(ElementFilter, Class)
- * @see PsiMetaOwner#getMetaData()
- */
-public interface PsiMetaData {
-  PsiElement getDeclaration();
+  T getValue();
 
-  @NonNls
-  String getName(PsiElement context);
+  CachedValueProvider<T> getValueProvider();
 
-  @NonNls
-  String getName();
-
-  void init(PsiElement element);
-
-  /**
-   * @return objects this meta data depends on.
-   * @see com.intellij.psi.util.CachedValue
-   */
-  Object[] getDependences();
+  boolean hasUpToDateValue();
 }

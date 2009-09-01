@@ -1,10 +1,10 @@
-package com.intellij.psi.impl;
+package com.intellij.util;
 
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.*;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,18 +12,21 @@ import org.jetbrains.annotations.Nullable;
  * @author ven
  */
 public class CachedValuesManagerImpl extends CachedValuesManager {
-  private final PsiManager myManager;
 
-  public CachedValuesManagerImpl(PsiManager manager) {
-    myManager = manager;
+  private final Project myProject;
+  private final CachedValuesFactory myFactory;
+
+  public CachedValuesManagerImpl(Project project, CachedValuesFactory factory) {
+    myProject = project;
+    myFactory = factory == null ? new DefaultCachedValuesFactory(project) : factory;
   }
 
   public <T> CachedValue<T> createCachedValue(@NotNull CachedValueProvider<T> provider, boolean trackValue) {
-    return new CachedValueImpl<T>(myManager, provider, trackValue);
+    return myFactory.createCachedValue(provider, trackValue);
   }
 
   public <T,P> ParameterizedCachedValue<T,P> createParameterizedCachedValue(@NotNull ParameterizedCachedValueProvider<T,P> provider, boolean trackValue) {
-    return new ParameterizedCachedValueImpl<T,P>(myManager, provider, trackValue);
+    return myFactory.createParameterizedCachedValue(provider, trackValue);
   }
 
   @Override
@@ -37,20 +40,20 @@ public class CachedValuesManagerImpl extends CachedValuesManager {
     if (dataHolder instanceof UserDataHolderEx) {
       UserDataHolderEx dh = (UserDataHolderEx)dataHolder;
       value = dh.getUserData(key);
-      if (value instanceof CachedValueImpl && !((CachedValueImpl)value).isFromMyProject(myManager.getProject())) {
+      if (value instanceof CachedValueBase && !((CachedValueBase)value).isFromMyProject(myProject)) {
         value = null;
         dataHolder.putUserData(key, null);
       }
       if (value == null) {
         value = createCachedValue(provider, trackValue);
-        assert ((CachedValueImpl)value).isFromMyProject(myManager.getProject());
+        assert ((CachedValueBase)value).isFromMyProject(myProject);
         value = dh.putUserDataIfAbsent(key, value);
       }
     }
     else {
       synchronized (dataHolder) {
         value = dataHolder.getUserData(key);
-        if (value instanceof CachedValueImpl && !((CachedValueImpl)value).isFromMyProject(myManager.getProject())) {
+        if (value instanceof CachedValueBase && !((CachedValueBase)value).isFromMyProject(myProject)) {
           value = null;
         }
         if (value == null) {
@@ -60,5 +63,9 @@ public class CachedValuesManagerImpl extends CachedValuesManager {
       }
     }
     return value.getValue();
+  }
+
+  public Project getProject() {
+    return myProject;
   }
 }

@@ -10,8 +10,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.ParameterizedCachedValueImpl;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.PsiParameterizedCachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.psi.util.ParameterizedCachedValueProvider;
@@ -123,7 +123,7 @@ public class JavaConcatenationInjectorManager implements ProjectComponent, Modif
       if (registrar.result != null) {
         // store this everywhere
         ParameterizedCachedValue<Places, PsiElement> cachedValue = context.getManager().getCachedValuesManager().createParameterizedCachedValue(this, false);
-        ((ParameterizedCachedValueImpl<Places, PsiElement>)cachedValue).setValue(result);
+        ((PsiParameterizedCachedValue<Places, PsiElement>)cachedValue).setValue(result);
 
         for (PsiElement operand : operands) {
           operand.putUserData(INJECTED_PSI_IN_CONCATENATION, cachedValue);
