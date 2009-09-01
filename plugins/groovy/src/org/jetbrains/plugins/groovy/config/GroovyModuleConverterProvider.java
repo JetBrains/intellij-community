@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.conversion.ConverterProvider;
 import com.intellij.conversion.ProjectConverter;
+import com.intellij.conversion.ConversionContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -36,7 +37,7 @@ public class GroovyModuleConverterProvider extends ConverterProvider {
 
   @NotNull
   @Override
-  public ProjectConverter createConverter() {
+  public ProjectConverter createConverter(@NotNull ConversionContext context) {
     return new GroovyProjectConverter();
   }
 }
