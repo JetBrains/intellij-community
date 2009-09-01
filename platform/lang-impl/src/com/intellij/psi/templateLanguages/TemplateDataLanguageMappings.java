@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -47,12 +48,8 @@ public class TemplateDataLanguageMappings extends LanguagePerFileMappings<Langua
   }
 
   @Override
-  public Language getMapping(VirtualFile file) {
-    final Language mapping = super.getMapping(file);
-    if (mapping != null) {
-      return mapping;
-    }
-    return TemplateDataLanguagePatterns.getInstance().getTemplateDataLanguageByFileName(file);
+  protected Language getDefaultMapping(@Nullable VirtualFile file) {
+    return file == null? null : TemplateDataLanguagePatterns.getInstance().getTemplateDataLanguageByFileName(file);
   }
 
   public static List<Language> getTemplateableLanguages() {

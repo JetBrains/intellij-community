@@ -6,10 +6,10 @@ package com.intellij.lang;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -29,7 +29,8 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
     myProject = project;
   }
 
-  protected FilePropertyPusher<?> getFilePropertyPusher() {
+  @Nullable
+  protected FilePropertyPusher<T> getFilePropertyPusher() {
     return null;
   }
 
@@ -50,15 +51,25 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
   }
 
   @Nullable 
-  public T getMapping(final VirtualFile file) {
+  public T getMapping(@Nullable final VirtualFile file) {
+    if (file != null) {
+      final FilePropertyPusher<T> pusher = getFilePropertyPusher();
+      final T pushedValue = pusher == null? null : file.getUserData(pusher.getFileDataKey());
+      if (pushedValue != null) return pushedValue;
+    }
     synchronized (myMappings) {
       for (VirtualFile cur = file; ; cur = cur.getParent()) {
         final T dialect = myMappings.get(cur);
         if (dialect != null) return dialect;
         if (cur == null) break;
       }
-      return null;
     }
+    return getDefaultMapping(file);
+  }
+
+  @Nullable
+  protected T getDefaultMapping(@Nullable final VirtualFile file) {
+    return null;
   }
 
   @Nullable
@@ -91,7 +102,7 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
 
   private void handleMappingChange(final Collection<VirtualFile> files, final boolean includeOpenFiles) {
     FileContentUtil.reparseFiles(myProject, files, includeOpenFiles);
-    final FilePropertyPusher<?> pusher = getFilePropertyPusher();
+    final FilePropertyPusher<T> pusher = getFilePropertyPusher();
     if (pusher != null) {
       PushedFilePropertiesUpdater.getInstance(myProject).pushAll(pusher);
     }
