@@ -326,6 +326,10 @@
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
     <intentionAction>
+      <className>com.siyeh.ipp.opassign.ReplaceOperatorAssignmentWithPostfixIncrementIntention</className>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
       <className>com.siyeh.ipp.chartostring.CharToStringIntention</className>
       <categoryKey>intention.category.strings</categoryKey>
     </intentionAction>
