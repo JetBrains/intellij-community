@@ -18,6 +18,8 @@
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="compiler-openapi" />
     <orderEntry type="module" module-name="idea_rt" />
+    <orderEntry type="module" module-name="jsp-openapi" />
+    <orderEntry type="module" module-name="java-impl" />
   </component>
   <component name="copyright">
     <Base>
