@@ -184,7 +184,7 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     assertInclude(getCompletionVariants(f), expected);
   }
 
-  protected <T> void assertInclude(List<? extends T> actual, T... expected) throws IOException {
+  protected void assertInclude(List<String> actual, String... expected) throws IOException {
     assertTrue(actual.toString(), actual.containsAll(Arrays.asList(expected)));
   }
 
@@ -299,7 +299,7 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
   }
 
   protected void assertSearchResultsContain(VirtualFile file, PsiElement... expected) throws IOException {
-    assertInclude(search(file), expected);
+    assertTrue(search(file).containsAll(Arrays.asList(expected)));
   }
 
   private List<PsiElement> search(VirtualFile file) throws IOException {

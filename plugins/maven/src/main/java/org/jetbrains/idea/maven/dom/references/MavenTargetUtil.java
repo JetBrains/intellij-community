@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
@@ -19,8 +18,6 @@ public class MavenTargetUtil {
     if (target instanceof MavenPsiElementWrapper) {
       return ((MavenPsiElementWrapper)target).getWrappee();
     }
-
-    if (target != null && !(target.getContainingFile() instanceof XmlFile)) return target;
 
     if (target == null || !(target instanceof XmlTag) || isSchema(target)) {
       target = file.findElementAt(editor.getCaretModel().getOffset());
