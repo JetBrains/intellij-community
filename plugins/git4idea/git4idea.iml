@@ -26,7 +26,7 @@
     <orderEntry type="module" module-name="vcs-impl" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="library" name="JUnit4" level="project" />
-    <orderEntry type="module" module-name="lvcs-openapi" />
+    <orderEntry type="module" module-name="lvcs-api" />
   </component>
 </module>
 
