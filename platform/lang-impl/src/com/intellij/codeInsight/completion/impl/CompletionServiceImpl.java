@@ -108,6 +108,10 @@ public class CompletionServiceImpl extends CompletionService{
   }
 
   public void correctCaseInsensitiveString(@NotNull final LookupElement element, InsertionContext context) {
+    if (!element.isPrefixMatched()) {
+      return;
+    }
+
     final String prefix = element.getPrefixMatcher().getPrefix();
     final String oldLookupString = element.getLookupString();
     if (StringUtil.startsWithIgnoreCase(oldLookupString, prefix)) {
