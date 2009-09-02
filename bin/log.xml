@@ -1,0 +1,61 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!DOCTYPE log4j:configuration SYSTEM "file:$APPLICATION_DIR$/bin/log4j.dtd">
+
+<log4j:configuration>
+  <appender name="CONSOLE-WARN" class="org.apache.log4j.ConsoleAppender">
+    <param name="target" value="System.err"/>
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="[%7r] %6p - %30.30c - %m \n"/>
+    </layout>
+    <filter class="org.apache.log4j.varia.LevelRangeFilter">
+      <param name="LevelMin" value="WARN"/>
+    </filter>
+  </appender>
+
+  <appender name="CONSOLE-DEBUG" class="org.apache.log4j.ConsoleAppender">
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="[%7r] %6p - %30.30c - %m \n"/>
+    </layout>
+    <filter class="org.apache.log4j.varia.LevelRangeFilter">
+      <param name="LevelMin" value="DEBUG"/>
+      <param name="LevelMax" value="DEBUG"/>
+    </filter>
+  </appender>
+
+  <appender name="CONSOLE-ALL" class="org.apache.log4j.ConsoleAppender">
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="[%7r] %6p - %30.30c - %m \n"/>
+    </layout>
+  </appender>
+
+  <appender name="DIALOG" class="com.intellij.diagnostic.DialogAppender">
+      <filter class="org.apache.log4j.varia.LevelRangeFilter">
+        <param name="LevelMin" value="INFO"/>
+      </filter>
+  </appender>
+
+  <appender name="FILE" class="org.apache.log4j.RollingFileAppender">
+    <param name="MaxFileSize" value="1Mb"/>
+    <param name="MaxBackupIndex" value="12"/>
+    <param name="file" value="$SYSTEM_DIR$/$LOG_DIR$/idea.log"/>
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="%d [%7r] %6p - %30.30c - %m \n"/>
+    </layout>
+  </appender>
+
+  <appender name="INCOMING_CHANGES_FILE" class="org.apache.log4j.RollingFileAppender">
+    <param name="MaxFileSize" value="1Mb"/>
+    <param name="MaxBackupIndex" value="12"/>
+    <param name="file" value="$SYSTEM_DIR$/$LOG_DIR$/incoming.log"/>
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="%d [%7r] %6p - %30.30c - %m \n"/>
+    </layout>
+  </appender>
+
+  <root>
+    <priority value="INFO"/>
+    <appender-ref ref="DIALOG"/>
+    <appender-ref ref="CONSOLE-WARN"/>    <!-- $COMMENT_LINE_FOR_TEST_MODE$ If a line contains such macro, it will be deleted then we start IDEA in JUnit Test mode -->
+    <appender-ref ref="FILE"/>
+  </root>
+</log4j:configuration>
