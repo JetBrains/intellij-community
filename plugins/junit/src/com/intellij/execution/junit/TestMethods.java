@@ -54,15 +54,7 @@ public class TestMethods extends TestMethod {
   }
 
   protected void initialize() throws ExecutionException {
-    /*final boolean isMerge = myConfiguration.isMergeWithPreviousResults(); todo
-    try {
-      myConfiguration.setMergeWithPreviousResults(true);
-      defaultInitialize();
-    }
-    finally {
-      myConfiguration.setMergeWithPreviousResults(isMerge);
-    }*/
-
+    defaultInitialize();
     final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
     RunConfigurationModule module = myConfiguration.getConfigurationModule();
     final Project project = module.getProject();
