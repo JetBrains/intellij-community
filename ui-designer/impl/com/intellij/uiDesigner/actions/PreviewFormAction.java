@@ -251,7 +251,7 @@ public final class PreviewFormAction extends AnAction{
     // 3. Now we are ready to launch Java process
     final JavaParameters parameters = new JavaParameters();
     parameters.getClassPath().add(tempPath);
-    parameters.getClassPath().add(PathManager.getLibPath() + "/jgoodies-forms.jar");
+    parameters.getClassPath().add(PathManager.findFileInLibDirectory("jgoodies-forms.jar").getAbsolutePath());
     final List<String> paths = sources.getPathList();
     for (final String path : paths) {
       parameters.getClassPath().add(path);

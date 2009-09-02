@@ -69,8 +69,7 @@ public class GlobalAntConfiguration implements ApplicationComponent, JDOMExterna
       }
     };
     AntInstallation.NAME.set(bundledAnt.getProperties(), BUNDLED_ANT_NAME);
-    final File ideaLib = new File(PathManager.getLibPath());
-    final File antHome = new File(ideaLib, ANT_FILE);
+    final File antHome = PathManager.findFileInLibDirectory(ANT_FILE);
     AntInstallation.HOME_DIR.set(bundledAnt.getProperties(), antHome.getAbsolutePath());
     ArrayList<AntClasspathEntry> classpath = AntInstallation.CLASS_PATH.getModifiableList(bundledAnt.getProperties());
     File antLibDir = new File(antHome, LIB_DIR);

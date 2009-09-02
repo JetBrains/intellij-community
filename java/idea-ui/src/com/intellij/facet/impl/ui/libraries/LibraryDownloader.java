@@ -251,8 +251,7 @@ public class LibraryDownloader {
     if (url.startsWith(LIB_SCHEMA)) {
       indicator.setText2(IdeBundle.message("progress.locate.jar.text", getExpectedFileName(libraryInfo)));
       final String path = url.substring(LIB_SCHEMA.length()).replace('/', File.separatorChar);
-      final String fullPath = PathManager.getLibPath() + File.separatorChar + path;
-      final File file = new File(fullPath);
+      final File file = PathManager.findFileInLibDirectory(path);
       downloadedFiles.add(Pair.create(libraryInfo, file));
     } else if (url.startsWith(LocalFileSystem.PROTOCOL_PREFIX)) {
       String path = url.substring(LocalFileSystem.PROTOCOL_PREFIX.length()).replace('/', File.separatorChar).replace('\\', File.separatorChar);

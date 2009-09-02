@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.net.URL;
@@ -371,5 +372,13 @@ public class PathManager {
     String systemPath = getSystemPath();
 
     return systemPath + File.separator + PLUGINS_DIRECTORY;
+  }
+
+  public static File findFileInLibDirectory(@NotNull String relativePath) {
+    File file = new File(getLibPath() + File.separator + relativePath);
+    if (file.exists()) {
+      return file;
+    }
+    return new File(getHomePath() + File.separator + "community" + File.separator + "lib" + File.separator + relativePath);
   }
 }
