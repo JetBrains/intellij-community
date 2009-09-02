@@ -7,7 +7,7 @@ import com.intellij.compiler.ant.Comment;
 import com.intellij.compiler.ant.taskdefs.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactUtil;
+import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;

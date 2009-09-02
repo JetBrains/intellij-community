@@ -1,4 +1,4 @@
-package com.intellij.openapi.roots.ui.configuration.artifacts;
+package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.elements.ComplexPackagingElement;

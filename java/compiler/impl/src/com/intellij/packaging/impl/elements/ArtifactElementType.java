@@ -1,7 +1,7 @@
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactUtil;
+import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ChooseArtifactsDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;

@@ -4,7 +4,7 @@ import com.intellij.compiler.impl.ModuleCompileScope;
 import com.intellij.compiler.impl.ProjectCompileScope;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactUtil;
+import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.packaging.artifacts.Artifact;

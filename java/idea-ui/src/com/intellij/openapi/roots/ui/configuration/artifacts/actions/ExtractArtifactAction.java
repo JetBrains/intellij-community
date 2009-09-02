@@ -11,6 +11,7 @@ import com.intellij.packaging.artifacts.ArtifactPointerManager;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.impl.artifacts.PlainArtifactType;
+import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
 
 import java.util.Collection;

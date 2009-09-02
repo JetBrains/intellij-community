@@ -1,7 +1,9 @@
-package com.intellij.openapi.roots.ui.configuration.artifacts;
+package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerProjectExtension;
+import com.intellij.packaging.impl.artifacts.PackagingElementProcessor;
+import com.intellij.packaging.impl.artifacts.ParentElementProcessor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;

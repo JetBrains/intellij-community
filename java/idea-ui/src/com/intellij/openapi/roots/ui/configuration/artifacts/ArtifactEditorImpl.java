@@ -24,6 +24,7 @@ import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.ui.ManifestFileConfiguration;
 import com.intellij.packaging.ui.PackagingEditorContext;
+import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;

@@ -1,15 +1,13 @@
-package com.intellij.packaging.impl.ui;
+package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetTypeId;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.DelegatedSourceItemPresentation;
-import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.ModuleSourceItemGroup;
-import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.elements.PackagingElementOutputKind;
+import com.intellij.packaging.elements.PackagingElementType;
+import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.ui.*;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;

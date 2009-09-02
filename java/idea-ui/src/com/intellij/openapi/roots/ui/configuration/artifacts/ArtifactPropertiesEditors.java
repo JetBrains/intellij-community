@@ -7,6 +7,7 @@ import com.intellij.packaging.artifacts.ArtifactPropertiesProvider;
 import com.intellij.packaging.artifacts.ModifiableArtifact;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
 import com.intellij.packaging.ui.PackagingEditorContext;
+import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.ui.TabbedPaneWrapper;
 
 import javax.swing.*;

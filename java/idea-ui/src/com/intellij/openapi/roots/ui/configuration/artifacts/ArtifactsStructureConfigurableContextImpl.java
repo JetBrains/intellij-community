@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.impl.artifacts.ArtifactModelImpl;
+import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.ui.ManifestFileConfiguration;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import org.jetbrains.annotations.NotNull;

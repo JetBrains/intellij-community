@@ -9,6 +9,7 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.ui.PackagingEditorContext;
+import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;

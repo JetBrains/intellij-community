@@ -3,18 +3,14 @@ package com.intellij.packaging.impl.elements;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactUtil;
 import com.intellij.openapi.roots.ui.configuration.packaging.ChooseLibrariesDialog;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.util.Icons;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
