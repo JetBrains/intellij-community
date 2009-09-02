@@ -7,12 +7,12 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="Annotations" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="testRunner" exported="" />
     <orderEntry type="module" module-name="xdebugger-api" />
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="library" exported="" name="tcServiceMessages" level="project" />
+    <orderEntry type="module" module-name="annotations" />
   </component>
 </module>
 
