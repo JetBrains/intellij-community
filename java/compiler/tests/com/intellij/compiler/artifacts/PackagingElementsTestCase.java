@@ -9,14 +9,15 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementFactory;
 
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -58,8 +59,10 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
   }
 
   protected VirtualFile getJDomJar() {
-    return JarFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(PathManager.getLibPath()) + "/jdom.jar" +
-                                                      JarFileSystem.JAR_SEPARATOR);
+    final File file = PathManager.findFileInLibDirectory("jdom.jar");
+    final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+    assertNotNull(file.getAbsolutePath() + " not found", virtualFile);
+    return JarFileSystem.getInstance().getJarRootForLocalFile(virtualFile);
   }
 
   protected Library addProjectLibrary(Module module, String name, VirtualFile... jars) {
