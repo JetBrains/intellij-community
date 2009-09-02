@@ -407,20 +407,34 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     if (hasWhitespace(debuggeeRunProperties)) {
       debuggeeRunProperties = "\"" + debuggeeRunProperties + "\"";
     }
-    parameters.getVMParametersList().replaceOrPrepend("-Xrunjdwp:", "-Xrunjdwp:" + debuggeeRunProperties);
+    final String _debuggeeRunProperties = debuggeeRunProperties;
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       @SuppressWarnings({"HardCodedStringLiteral"})
       public void run() {
         JavaSdkUtil.addRtJar(parameters.getClassPath());
 
-        if (shouldForceNoJIT(parameters.getJdk())) {
+        final Sdk jdk = parameters.getJdk();
+        final boolean forceClassicVM = shouldForceClassicVM(jdk);
+        final boolean forceNoJIT = shouldForceNoJIT(jdk);
+        final String debugKey = System.getProperty(DEBUG_KEY_NAME, "-Xdebug");
+        final boolean needDebugKey = shouldAddXdebugKey(jdk) || !"-Xdebug".equals(debugKey) /*the key is non-standard*/;
+
+        if (forceClassicVM || forceNoJIT || needDebugKey || !isJVMTIAvailable(jdk)) {
+          parameters.getVMParametersList().replaceOrPrepend("-Xrunjdwp:", "-Xrunjdwp:" + _debuggeeRunProperties);
+        }
+        else {
+          // use newer JVMTI if available
+          parameters.getVMParametersList().replaceOrPrepend("-Xrunjdwp:", "");
+          parameters.getVMParametersList().replaceOrPrepend("-agentlib:jdwp=", "-agentlib:jdwp=" + _debuggeeRunProperties);
+        }
+
+        if (forceNoJIT) {
           parameters.getVMParametersList().replaceOrPrepend("-Djava.compiler=", "-Djava.compiler=NONE");
           parameters.getVMParametersList().replaceOrPrepend("-Xnoagent", "-Xnoagent");
         }
 
-        final String debugKey = System.getProperty(DEBUG_KEY_NAME, "-Xdebug");
-        if (shouldAddXdebugKey(parameters.getJdk()) || !"-Xdebug".equals(debugKey) /*the key is non-standard*/) {
+        if (needDebugKey) {
           parameters.getVMParametersList().replaceOrPrepend(debugKey, debugKey);
         }
         else {
@@ -429,8 +443,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
           parameters.getVMParametersList().replaceOrPrepend("-Xdebug", "");
         }
 
-        boolean classicVM = shouldForceClassicVM(parameters.getJdk());
-        parameters.getVMParametersList().replaceOrPrepend("-classic", classicVM ? "-classic" : "");
+        parameters.getVMParametersList().replaceOrPrepend("-classic", forceClassicVM ? "-classic" : "");
       }
     });
 
@@ -461,13 +474,25 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     }
 
     final String version = JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION);
-    return version == null           ||
-    version.startsWith("1.5") ||
+    return version == null    ||
+    //version.startsWith("1.5") ||
     version.startsWith("1.4") ||
     version.startsWith("1.3") ||
     version.startsWith("1.2") ||
     version.startsWith("1.1") ||
     version.startsWith("1.0");
+  }
+
+  private static boolean isJVMTIAvailable(Sdk jdk) {
+    if (jdk == null) {
+      return false;
+    }
+
+    final String version = JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION);
+    if (version == null) {
+      return false;
+    }
+    return !(version.startsWith("1.4") || version.startsWith("1.3") || version.startsWith("1.2") || version.startsWith("1.1") || version.startsWith("1.0"));
   }
 
   public static RemoteConnection createDebugParameters(final JavaParameters parameters, GenericDebuggerRunnerSettings settings, boolean checkValidity)
