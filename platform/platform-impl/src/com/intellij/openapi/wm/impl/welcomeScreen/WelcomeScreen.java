@@ -32,8 +32,8 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.PixelGrabber;
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.*;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -414,9 +414,9 @@ public class WelcomeScreen {
 
   private void createListOfPlugins(final JPanel installedPluginsPanel, final JPanel bundledPluginsPanel) {
     //Create the list of installed plugins
-    IdeaPluginDescriptor[] myInstalledPlugins = ApplicationManager.getApplication().getPlugins();
+    List<IdeaPluginDescriptor> installedPlugins = new ArrayList<IdeaPluginDescriptor>(Arrays.asList(ApplicationManager.getApplication().getPlugins()));
 
-    if (myInstalledPlugins == null || myInstalledPlugins.length == 0) {
+    if (installedPlugins.size() == 0) {
       addListItemToPlugins(installedPluginsPanel, makeItalic(UIBundle
         .message("welcome.screen.plugins.panel.no.plugins.currently.installed.message.text")));
       addListItemToPlugins(bundledPluginsPanel, makeItalic(UIBundle
@@ -432,12 +432,12 @@ public class WelcomeScreen {
           return o1.getName().compareTo(o2.getName());
         }
       };
-      Arrays.sort(myInstalledPlugins, pluginsComparator);
+      Collections.sort(installedPlugins, pluginsComparator);
 
       int embeddedPlugins = 0;
-      int installedPlugins = 0;
+      int installedPluginsCount = 0;
 
-      for (IdeaPluginDescriptor plugin : myInstalledPlugins) {
+      for (IdeaPluginDescriptor plugin : installedPlugins) {
         if (plugin.getName().equals("IDEA CORE") || ((IdeaPluginDescriptorImpl) plugin).isUseCoreClassLoader()) {
           // this is not really a plugin, so it shouldn't be displayed
           continue;
@@ -447,7 +447,7 @@ public class WelcomeScreen {
           addListItemToPlugins(bundledPluginsPanel, (IdeaPluginDescriptorImpl)plugin);
         }
         else {
-          installedPlugins++;
+          installedPluginsCount++;
           addListItemToPlugins(installedPluginsPanel, (IdeaPluginDescriptorImpl)plugin);
         }
       }
@@ -455,7 +455,7 @@ public class WelcomeScreen {
         addListItemToPlugins(bundledPluginsPanel, makeItalic(UIBundle
           .message("welcome.screen.plugins.panel.all.bundled.plugins.were.uninstalled.message.text")));
       }
-      if (installedPlugins == 0) {
+      if (installedPluginsCount == 0) {
         addListItemToPlugins(installedPluginsPanel, makeItalic(UIBundle
           .message("welcome.screen.plugins.panel.no.plugins.currently.installed.message.text")));
       }
