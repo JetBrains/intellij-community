@@ -7,6 +7,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.containers.HashMap;
 
 import java.util.HashSet;
@@ -55,7 +56,7 @@ class PackageLocalsUsageCollector extends JavaRecursiveElementWalkingVisitor {
                 final String message = RefactoringBundle.message("0.uses.a.package.local.1",
                                                                  RefactoringUIUtil.getDescription(container, true),
                                                                  RefactoringUIUtil.getDescription(resolved, true));
-                myConflicts.add(ConflictsUtil.capitalize(message));
+                myConflicts.add(CommonRefactoringUtil.capitalize(message));
                 reportedRefs.add(container);
               }
             }

@@ -151,7 +151,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         final String containerDescription = RefactoringUIUtil.getDescription(container, true);
         String message = RefactoringBundle.message("0.that.is.used.in.inlined.method.is.not.accessible.from.call.site.s.in.1",
                                                    referencedDescription, containerDescription);
-        conflicts.add(ConflictsUtil.capitalize(message));
+        conflicts.add(CommonRefactoringUtil.capitalize(message));
       }
     }
   }

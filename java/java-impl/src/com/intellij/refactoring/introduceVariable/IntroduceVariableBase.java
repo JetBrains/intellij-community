@@ -698,7 +698,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     if (!modifiedInBody.isEmpty()) {
       for (PsiVariable variable : modifiedInBody) {
         final String message = RefactoringBundle.message("is.modified.in.loop.body", RefactoringUIUtil.getDescription(variable, false));
-        conflicts.add(ConflictsUtil.capitalize(message));
+        conflicts.add(CommonRefactoringUtil.capitalize(message));
       }
       conflicts.add(RefactoringBundle.message("introducing.variable.may.break.code.logic"));
     }

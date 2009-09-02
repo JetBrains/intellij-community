@@ -28,10 +28,6 @@ public class ConflictsUtil {
     }
   }
 
-  public static String capitalize(String text) {
-    return Character.toUpperCase(text.charAt(0)) + text.substring(1);
-  }
-
   public static void checkMethodConflicts(@Nullable PsiClass aClass,
                                           PsiMethod refactoredMethod,
                                           PsiMethod prototype,

@@ -232,7 +232,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
             if (container != null && !reportedContainers.contains(container)) {
               String message = RefactoringBundle.message("0.uses.1.of.an.instance.of.a.2", RefactoringUIUtil.getDescription(container, true),
                                                          RefactoringUIUtil.getDescription(nonDelegatedMember, true), classDescription);
-              conflicts.add(ConflictsUtil.capitalize(message));
+              conflicts.add(CommonRefactoringUtil.capitalize(message));
               reportedContainers.add(container);
             }
           }
@@ -248,7 +248,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
               String message = RefactoringBundle.message("0.upcasts.an.instance.of.1.to.2",
                                                          RefactoringUIUtil.getDescription(container, true), classDescription,
                                                          RefactoringUIUtil.getDescription(upcastedTo, false));
-              conflicts.add(ConflictsUtil.capitalize(message));
+              conflicts.add(CommonRefactoringUtil.capitalize(message));
               reportedContainers.add(container);
             }
           }

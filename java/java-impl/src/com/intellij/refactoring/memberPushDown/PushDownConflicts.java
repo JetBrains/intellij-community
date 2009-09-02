@@ -5,7 +5,6 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
@@ -87,7 +86,7 @@ public class PushDownConflicts {
       String name = movedMember.getName();
       if (targetClass.findFieldByName(name, false) != null) {
         String message = RefactoringBundle.message("0.already.contains.field.1", RefactoringUIUtil.getDescription(targetClass, false), CommonRefactoringUtil.htmlEmphasize(name));
-        myConflicts.add(ConflictsUtil.capitalize(message));
+        myConflicts.add(CommonRefactoringUtil.capitalize(message));
       }
     }
     else if (movedMember instanceof PsiMethod) {
@@ -98,7 +97,7 @@ public class PushDownConflicts {
         if (targetClass.findMethodBySignature(method, false) != null) {
           String message = RefactoringBundle.message("0.is.already.overridden.in.1",
                                                      RefactoringUIUtil.getDescription(method, true), RefactoringUIUtil.getDescription(targetClass, false));
-          myConflicts.add(ConflictsUtil.capitalize(message));
+          myConflicts.add(CommonRefactoringUtil.capitalize(message));
         }
       }
     }
@@ -130,7 +129,7 @@ public class PushDownConflicts {
       if(myMovedMembers.contains(classMember) && !myAbstractMembers.contains(classMember)) {
         String message = RefactoringBundle.message("0.uses.1.which.is.pushed.down", RefactoringUIUtil.getDescription(mySource, false),
                                               RefactoringUIUtil.getDescription(classMember, false));
-        message = ConflictsUtil.capitalize(message);
+        message = CommonRefactoringUtil.capitalize(message);
         myConflicts.add(message);
       }
     }

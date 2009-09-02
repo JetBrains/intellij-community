@@ -4,8 +4,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
-import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 
 /**
  *  @author dsl
@@ -26,6 +26,6 @@ public class NewParameterCollidesWithLocalUsageInfo extends UnresolvableCollisio
                                      RefactoringUIUtil.getDescription(myConflictingElement, true),
                                      RefactoringUIUtil.getDescription(myMethod, true));
 
-    return ConflictsUtil.capitalize(buffer);
+    return CommonRefactoringUtil.capitalize(buffer);
   }
 }

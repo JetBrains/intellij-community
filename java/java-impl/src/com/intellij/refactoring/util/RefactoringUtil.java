@@ -1119,12 +1119,12 @@ public class RefactoringUtil {
         @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
           super.visitReferenceElement(reference);
           final PsiElement resolved = reference.resolve();
-          if (resolved != null && !reported.contains(resolved) && !isAncestor(resolved, scopes) &&
+          if (resolved != null && !reported.contains(resolved) && !CommonRefactoringUtil.isAncestor(resolved, scopes) &&
               !PsiSearchScopeUtil.isInScope(resolveScope, resolved)) {
             final String scopeDescription =
               CommonRefactoringUtil.htmlEmphasize(RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(reference), true));
             final String message = RefactoringBundle.message("0.referenced.in.1.will.not.be.accessible.in.module.2",
-                                                             ConflictsUtil.capitalize(CommonRefactoringUtil.htmlEmphasize(
+                                                             CommonRefactoringUtil.capitalize(CommonRefactoringUtil.htmlEmphasize(
                                                                RefactoringUIUtil.getDescription(resolved, true))), scopeDescription,
                                                                                                                CommonRefactoringUtil.htmlEmphasize(
                                                                                                                  targetModule.getName()));
@@ -1166,14 +1166,14 @@ public class RefactoringUtil {
                 final String message;
                 if (module == targetModule && isInTestSources) {
                   message = RefactoringBundle.message("0.referenced.in.1.will.not.be.accessible.from.production.of.module.2",
-                                                      ConflictsUtil.capitalize(CommonRefactoringUtil.htmlEmphasize(
+                                                      CommonRefactoringUtil.capitalize(CommonRefactoringUtil.htmlEmphasize(
                                                         RefactoringUIUtil.getDescription(moveRenameUsageInfo.getReferencedElement(), true))),
                                                       scopeDescription,
                                                       CommonRefactoringUtil.htmlEmphasize(module.getName()));
                 }
                 else {
                   message = RefactoringBundle.message("0.referenced.in.1.will.not.be.accessible.from.module.2", 
-                                                      ConflictsUtil.capitalize(CommonRefactoringUtil.htmlEmphasize(
+                                                      CommonRefactoringUtil.capitalize(CommonRefactoringUtil.htmlEmphasize(
                                                         RefactoringUIUtil.getDescription(moveRenameUsageInfo.getReferencedElement(), true))),
                                                       scopeDescription,
                                                       CommonRefactoringUtil.htmlEmphasize(module.getName()));
@@ -1185,13 +1185,6 @@ public class RefactoringUtil {
         }
       }
     }
-  }
-
-  private static boolean isAncestor(final PsiElement resolved, final Collection<? extends PsiElement> scopes) {
-    for (final PsiElement scope : scopes) {
-      if (PsiTreeUtil.isAncestor(scope, resolved, false)) return true;
-    }
-    return false;
   }
 
   @Nullable

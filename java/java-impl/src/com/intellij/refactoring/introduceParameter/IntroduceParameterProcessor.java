@@ -286,7 +286,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
         String descr = RefactoringBundle.message("there.is.already.a.0.it.will.conflict.with.an.introduced.parameter",
                                                  RefactoringUIUtil.getDescription(variable, true));
 
-        conflict = ConflictsUtil.capitalize(descr);
+        conflict = CommonRefactoringUtil.capitalize(descr);
       }
     }
 

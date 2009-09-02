@@ -14,10 +14,7 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.ConflictsUtil;
-import com.intellij.refactoring.util.RefactoringHierarchyUtil;
-import com.intellij.refactoring.util.RefactoringUIUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classMembers.InterfaceContainmentVerifier;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
@@ -100,7 +97,7 @@ public class PullUpConflictsUtil {
             && !(member instanceof PsiClass && ((PsiClass)member).isInterface())) {
           String message =
             RefactoringBundle.message("0.is.not.static.it.cannot.be.moved.to.the.interface", RefactoringUIUtil.getDescription(member, false));
-          message = ConflictsUtil.capitalize(message);
+          message = CommonRefactoringUtil.capitalize(message);
           conflictsList.add(message);
         }
       }
@@ -108,7 +105,7 @@ public class PullUpConflictsUtil {
       if (member instanceof PsiField && ((PsiField)member).getInitializer() == null) {
         String message = RefactoringBundle.message("0.is.not.initialized.in.declaration.such.fields.are.not.allowed.in.interfaces",
                                                    RefactoringUIUtil.getDescription(member, false));
-        conflictsList.add(ConflictsUtil.capitalize(message));
+        conflictsList.add(CommonRefactoringUtil.capitalize(message));
       }
     }
   }
@@ -135,7 +132,7 @@ public class PullUpConflictsUtil {
         String message = RefactoringBundle.message("0.already.contains.a.1",
                                                    RefactoringUIUtil.getDescription(superClass, false),
                                                    RefactoringUIUtil.getDescription(member, false));
-        message = ConflictsUtil.capitalize(message);
+        message = CommonRefactoringUtil.capitalize(message);
         conflictsList.add(message);
       }
     }
@@ -188,7 +185,7 @@ public class PullUpConflictsUtil {
             String message = RefactoringBundle.message("0.uses.1.which.is.not.accessible.from.the.superclass",
                                                        RefactoringUIUtil.getDescription(myScope, false),
                                                        RefactoringUIUtil.getDescription(classMember, true));
-            message = ConflictsUtil.capitalize(message);
+            message = CommonRefactoringUtil.capitalize(message);
             myConflictsList.add(message);
 
           }
@@ -199,7 +196,7 @@ public class PullUpConflictsUtil {
             String message = RefactoringBundle.message("0.uses.1.which.is.not.moved.to.the.superclass",
                                                        RefactoringUIUtil.getDescription(myScope, false),
                                                        RefactoringUIUtil.getDescription(classMember, true));
-            message = ConflictsUtil.capitalize(message);
+            message = CommonRefactoringUtil.capitalize(message);
             myConflictsList.add(message);
           }
         }

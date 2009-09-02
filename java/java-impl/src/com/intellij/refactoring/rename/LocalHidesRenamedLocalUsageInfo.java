@@ -10,8 +10,8 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageViewUtil;
 
 public class LocalHidesRenamedLocalUsageInfo extends UnresolvableCollisionUsageInfo {
@@ -27,6 +27,6 @@ public class LocalHidesRenamedLocalUsageInfo extends UnresolvableCollisionUsageI
     final String descr = RefactoringBundle.message("there.is.already.a.0.it.will.conflict.with.the.renamed.1",
                                                    RefactoringUIUtil.getDescription(myConflictingElement, true),
                                                    UsageViewUtil.getType(getElement()));
-    return ConflictsUtil.capitalize(descr);
+    return CommonRefactoringUtil.capitalize(descr);
   }
 }

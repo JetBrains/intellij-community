@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.codeInsight.hint.HintManager;
 import gnu.trove.THashSet;
@@ -206,5 +207,16 @@ public class CommonRefactoringUtil {
         addVirtualFiles(virtualFile, list);
       }
     }
+  }
+
+  public static String capitalize(String text) {
+    return Character.toUpperCase(text.charAt(0)) + text.substring(1);
+  }
+
+  public static boolean isAncestor(final PsiElement resolved, final Collection<? extends PsiElement> scopes) {
+    for (final PsiElement scope : scopes) {
+      if (PsiTreeUtil.isAncestor(scope, resolved, false)) return true;
+    }
+    return false;
   }
 }

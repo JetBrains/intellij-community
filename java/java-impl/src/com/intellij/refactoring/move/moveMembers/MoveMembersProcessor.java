@@ -305,7 +305,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
         PsiMethod method = (PsiMethod)member;
         if (hasMethod(targetClass, method)) {
           String message = RefactoringBundle.message("0.already.exists.in.the.target.class", RefactoringUIUtil.getDescription(method, false));
-          message = ConflictsUtil.capitalize(message);
+          message = CommonRefactoringUtil.capitalize(message);
           conflicts.add(message);
         }
       }
@@ -313,7 +313,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
         PsiField field = (PsiField)member;
         if (hasField(targetClass, field)) {
           String message = RefactoringBundle.message("0.already.exists.in.the.target.class", RefactoringUIUtil.getDescription(field, false));
-          message = ConflictsUtil.capitalize(message);
+          message = CommonRefactoringUtil.capitalize(message);
           conflicts.add(message);
         }
       }
@@ -352,7 +352,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
                                                        RefactoringUIUtil.getDescription(targetClass, true),
                                                        VisibilityUtil.getVisibilityStringToDisplay(targetClass),
                                                        RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(ref), true));
-            message = ConflictsUtil.capitalize(message);
+            message = CommonRefactoringUtil.capitalize(message);
             conflicts.add(message);
           }
           //check for member accessibility
@@ -361,7 +361,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
                                                        RefactoringUIUtil.getDescription(member, true),
                                                        VisibilityUtil.getVisibilityStringToDisplay(member),
                                                        RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(ref), true));
-            message = ConflictsUtil.capitalize(message);
+            message = CommonRefactoringUtil.capitalize(message);
             conflicts.add(message);
           }
         }
@@ -426,7 +426,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
                                                  RefactoringUIUtil.getDescription(refMember, true),
                                                  VisibilityUtil.getVisibilityStringToDisplay(refMember),
                                                  RefactoringUIUtil.getDescription(member, false));
-      message = ConflictsUtil.capitalize(message);
+      message = CommonRefactoringUtil.capitalize(message);
       conflicts.add(message);
     }
   }
