@@ -33,6 +33,7 @@ import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -116,13 +117,15 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     return myName;
   }
 
-  public String[] getUrls(OrderRootType rootType) {
+  @NotNull
+  public String[] getUrls(@NotNull OrderRootType rootType) {
     assert !isDisposed();
     final VirtualFilePointerContainer result = myRoots.get(rootType);
     return result.getUrls();
   }
 
-  public VirtualFile[] getFiles(OrderRootType rootType) {
+  @NotNull
+  public VirtualFile[] getFiles(@NotNull OrderRootType rootType) {
     assert !isDisposed();
     final List<VirtualFile> expanded = new ArrayList<VirtualFile>();
     for (VirtualFile file : myRoots.get(rootType).getFiles()) {
@@ -163,11 +166,12 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     }
   }
 
-  public void setName(String name) {
+  public void setName(@NotNull String name) {
     LOG.assertTrue(isWritable());
     myName = name;
   }
 
+  @NotNull
   public ModifiableModel getModifiableModel() {
     assert !isDisposed();
     LibraryImpl model = new LibraryImpl(this, this, myRootModel);
@@ -192,6 +196,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     return true;
   }
 
+  @NotNull
   public RootProvider getRootProvider() {
     return myRootProvider;
   }
@@ -221,7 +226,6 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   }
 
   private void readRoots(Element element) throws InvalidDataException {
-    int i = 0;
     for (OrderRootType rootType : OrderRootType.getAllTypes()) {
       final Element rootChild = element.getChild(rootType.name());
       if (rootChild == null) {
@@ -279,7 +283,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     return mySource != null;
   }
 
-  public void addRoot(String url, OrderRootType rootType) {
+  public void addRoot(@NotNull String url, @NotNull OrderRootType rootType) {
     LOG.assertTrue(isWritable());
     assert !isDisposed();
 
@@ -287,7 +291,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     container.add(url);
   }
 
-  public void addRoot(VirtualFile file, OrderRootType rootType) {
+  public void addRoot(@NotNull VirtualFile file, @NotNull OrderRootType rootType) {
     LOG.assertTrue(isWritable());
     assert !isDisposed();
 
@@ -295,7 +299,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     container.add(file);
   }
 
-  public void addJarDirectory(final String url, final boolean recursive) {
+  public void addJarDirectory(@NotNull final String url, final boolean recursive) {
     assert !isDisposed();
     LOG.assertTrue(isWritable());
     final VirtualFilePointerContainer container = myRoots.get(OrderRootType.CLASSES);
@@ -303,7 +307,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     myJarDirectories.put(url, Boolean.valueOf(recursive));
   }
 
-  public void addJarDirectory(final VirtualFile file, final boolean recursive) {
+  public void addJarDirectory(@NotNull final VirtualFile file, final boolean recursive) {
     assert !isDisposed();
     LOG.assertTrue(isWritable());
     final VirtualFilePointerContainer container = myRoots.get(OrderRootType.CLASSES);
@@ -311,17 +315,17 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     myJarDirectories.put(file.getUrl(), Boolean.valueOf(recursive));
   }
 
-  public boolean isJarDirectory(final String url) {
+  public boolean isJarDirectory(@NotNull final String url) {
     return myJarDirectories.containsKey(url);
   }
 
-  public boolean isValid(final String url, final OrderRootType rootType) {
+  public boolean isValid(@NotNull final String url, @NotNull final OrderRootType rootType) {
     final VirtualFilePointerContainer container = myRoots.get(rootType);
     final VirtualFilePointer fp = container.findByUrl(url);
     return fp != null && fp.isValid();
   }
 
-  public boolean removeRoot(String url, OrderRootType rootType) {
+  public boolean removeRoot(@NotNull String url, @NotNull OrderRootType rootType) {
     assert !isDisposed();
     LOG.assertTrue(isWritable());
     final VirtualFilePointerContainer container = myRoots.get(rootType);
@@ -334,14 +338,14 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     return false;
   }
 
-  public void moveRootUp(String url, OrderRootType rootType) {
+  public void moveRootUp(@NotNull String url, @NotNull OrderRootType rootType) {
     assert !isDisposed();
     LOG.assertTrue(isWritable());
     final VirtualFilePointerContainer container = myRoots.get(rootType);
     container.moveUp(url);
   }
 
-  public void moveRootDown(String url, OrderRootType rootType) {
+  public void moveRootDown(@NotNull String url, @NotNull OrderRootType rootType) {
     assert !isDisposed();
     LOG.assertTrue(isWritable());
     final VirtualFilePointerContainer container = myRoots.get(rootType);

@@ -314,17 +314,17 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   public synchronized VirtualFilePointerContainer createContainer(final VirtualFilePointerFactory factory) {
     final VirtualFilePointerContainerImpl virtualFilePointerContainer = new VirtualFilePointerContainerImpl(this, this, null){
       @Override
-      protected VirtualFilePointer create(VirtualFile file) {
+      protected VirtualFilePointer create(@NotNull VirtualFile file) {
         return factory.create(file);
       }
 
       @Override
-      protected VirtualFilePointer create(String url) {
+      protected VirtualFilePointer create(@NotNull String url) {
         return factory.create(url);
       }
 
       @Override
-      protected VirtualFilePointer duplicate(VirtualFilePointer virtualFilePointer) {
+      protected VirtualFilePointer duplicate(@NotNull VirtualFilePointer virtualFilePointer) {
         return factory.duplicate(virtualFilePointer);
       }
     };

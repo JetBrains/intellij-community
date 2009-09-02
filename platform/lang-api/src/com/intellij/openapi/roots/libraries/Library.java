@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *  @author dsl
@@ -27,49 +28,49 @@ import com.intellij.openapi.vfs.VirtualFile;
 public interface Library extends JDOMExternalizable, Disposable {
   String getName();
 
-  String[] getUrls(OrderRootType rootType);
+  @NotNull String[] getUrls(@NotNull OrderRootType rootType);
 
-  VirtualFile[] getFiles(OrderRootType rootType);
+  @NotNull VirtualFile[] getFiles(@NotNull OrderRootType rootType);
 
-  ModifiableModel getModifiableModel();
+  @NotNull ModifiableModel getModifiableModel();
 
   LibraryTable getTable();
 
-  RootProvider getRootProvider();
+  @NotNull RootProvider getRootProvider();
 
-  boolean isJarDirectory(String url);
+  boolean isJarDirectory(@NotNull String url);
   
-  boolean isValid(String url, OrderRootType rootType);
+  boolean isValid(@NotNull String url, @NotNull OrderRootType rootType);
   
   interface ModifiableModel {
-    String[] getUrls(OrderRootType rootType);
+    @NotNull String[] getUrls(@NotNull OrderRootType rootType);
 
-    void setName(String name);
+    void setName(@NotNull String name);
 
     String getName();
 
-    void addRoot(String url, OrderRootType rootType);
+    void addRoot(@NotNull String url, @NotNull OrderRootType rootType);
     
-    void addJarDirectory(String url, boolean recursive);
+    void addJarDirectory(@NotNull String url, boolean recursive);
 
-    void addRoot(VirtualFile file, OrderRootType rootType);
+    void addRoot(@NotNull VirtualFile file, @NotNull OrderRootType rootType);
     
-    void addJarDirectory(VirtualFile file, boolean recursive);
+    void addJarDirectory(@NotNull VirtualFile file, boolean recursive);
 
-    void moveRootUp(String url, OrderRootType rootType);
+    void moveRootUp(@NotNull String url, @NotNull OrderRootType rootType);
 
-    void moveRootDown(String url, OrderRootType rootType);
+    void moveRootDown(@NotNull String url, @NotNull OrderRootType rootType);
 
-    boolean removeRoot(String url, OrderRootType rootType);
+    boolean removeRoot(@NotNull String url, @NotNull OrderRootType rootType);
 
     void commit();
 
-    VirtualFile[] getFiles(OrderRootType rootType);
+    @NotNull VirtualFile[] getFiles(@NotNull OrderRootType rootType);
 
     boolean isChanged();
     
-    boolean isJarDirectory(String url);
+    boolean isJarDirectory(@NotNull String url);
     
-    boolean isValid(String url, OrderRootType rootType);
+    boolean isValid(@NotNull String url, @NotNull OrderRootType rootType);
   }
 }

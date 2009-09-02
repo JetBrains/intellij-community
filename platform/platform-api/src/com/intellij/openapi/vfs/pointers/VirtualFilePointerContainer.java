@@ -30,11 +30,11 @@ import java.util.List;
 public interface VirtualFilePointerContainer {
   void killAll();
 
-  void add(VirtualFile file);
+  void add(@NotNull VirtualFile file);
 
-  void add(String url);
+  void add(@NotNull String url);
 
-  void remove(VirtualFilePointer pointer);
+  void remove(@NotNull VirtualFilePointer pointer);
 
   @NotNull List<VirtualFilePointer> getList();
 
@@ -47,7 +47,7 @@ public interface VirtualFilePointerContainer {
   @NotNull VirtualFile[] getDirectories();
 
   @Nullable
-  VirtualFilePointer findByUrl(String url);
+  VirtualFilePointer findByUrl(@NotNull String url);
 
   void clear();
 
@@ -55,13 +55,13 @@ public interface VirtualFilePointerContainer {
 
   Object get(int index);
 
-  void readExternal(Element rootChild, String childElementName) throws InvalidDataException;
+  void readExternal(@NotNull Element rootChild, @NotNull String childElementName) throws InvalidDataException;
 
-  void writeExternal(Element element, String childElementName);
+  void writeExternal(@NotNull Element element, @NotNull String childElementName);
 
-  void moveUp(String url);
+  void moveUp(@NotNull String url);
 
-  void moveDown(String url);
+  void moveDown(@NotNull String url);
 
   @NotNull VirtualFilePointerContainer clone(@NotNull Disposable parent);
 

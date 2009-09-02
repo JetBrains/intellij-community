@@ -32,13 +32,13 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
   @NonNls private static final String URL_ATTR = "url";
   private boolean myDisposed;
 
-  public VirtualFilePointerContainerImpl(VirtualFilePointerManagerImpl manager, Disposable parent, VirtualFilePointerListener listener) {
+  public VirtualFilePointerContainerImpl(@NotNull VirtualFilePointerManagerImpl manager, @NotNull Disposable parent, VirtualFilePointerListener listener) {
     myVirtualFilePointerManager = manager;
     myParent = parent;
     myListener = listener;
   }
 
-  public void readExternal(final Element rootChild, final String childElements) throws InvalidDataException {
+  public void readExternal(@NotNull final Element rootChild, @NotNull final String childElements) throws InvalidDataException {
     final List urls = rootChild.getChildren(childElements);
     for (Object url : urls) {
       Element pathElement = (Element)url;
@@ -48,7 +48,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
     }
   }
 
-  public void writeExternal(final Element element, final String childElementName) {
+  public void writeExternal(@NotNull final Element element, @NotNull final String childElementName) {
     for (int i = 0; i < getList().size(); i++) {
       String url = getList().get(i).getUrl();
       final Element rootPathElement = new Element(childElementName);
@@ -57,14 +57,14 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
     }
   }
 
-  public void moveUp(String url) {
+  public void moveUp(@NotNull String url) {
     int index = indexOf(url);
     if (index <= 0) return;
     dropCaches();
     ContainerUtil.swapElements(myList, index - 1, index);
   }
 
-  public void moveDown(String url) {
+  public void moveDown(@NotNull String url) {
     int index = indexOf(url);
     if (index < 0 || index + 1 >= myList.size()) return;
     dropCaches();
@@ -86,21 +86,21 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
     myList.clear();
   }
 
-  public void add(VirtualFile file) {
+  public void add(@NotNull VirtualFile file) {
     assert !myDisposed;
     dropCaches();
     final VirtualFilePointer pointer = create(file);
     myList.add(pointer);
   }
 
-  public void add(String url) {
+  public void add(@NotNull String url) {
     assert !myDisposed;
     dropCaches();
     final VirtualFilePointer pointer = create(url);
     myList.add(pointer);
   }
 
-  public void remove(VirtualFilePointer pointer) {
+  public void remove(@NotNull VirtualFilePointer pointer) {
     assert !myDisposed;
     dropCaches();
     final boolean result = myList.remove(pointer);
@@ -193,7 +193,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
   }
 
   @Nullable
-  public VirtualFilePointer findByUrl(String url) {
+  public VirtualFilePointer findByUrl(@NotNull String url) {
     assert !myDisposed;
     for (VirtualFilePointer pointer : myList) {
       if (pointer.getUrl().equals(url)) return pointer;
@@ -227,15 +227,15 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
     return myList.hashCode();
   }
 
-  protected VirtualFilePointer create(VirtualFile file) {
+  protected VirtualFilePointer create(@NotNull VirtualFile file) {
     return myVirtualFilePointerManager.create(file, myParent, myListener);
   }
 
-  protected VirtualFilePointer create(String url) {
+  protected VirtualFilePointer create(@NotNull String url) {
     return myVirtualFilePointerManager.create(url, myParent, myListener);
   }
 
-  protected VirtualFilePointer duplicate(VirtualFilePointer virtualFilePointer) {
+  protected VirtualFilePointer duplicate(@NotNull VirtualFilePointer virtualFilePointer) {
     return myVirtualFilePointerManager.duplicate(virtualFilePointer, myParent, myListener);
   }
 
