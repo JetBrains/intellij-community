@@ -1,5 +1,6 @@
 package com.intellij.idea;
 
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,7 +34,7 @@ public class MainImpl {
       catch (Exception e) {
         // ignore
       }
-      if (System.getProperty("idea.platform.prefix") == null) {
+      if (ApplicationNamesInfo.getInstance().getLowercaseProductName().equals("idea")) {
         ConfigImportHelper.importConfigsTo(PathManager.getConfigPath());
       }
     }
@@ -81,6 +82,7 @@ public class MainImpl {
       }
     }
 
+    System.setProperty("idea.platform.prefix", "Idea");
     startApplication(args);
   }
 

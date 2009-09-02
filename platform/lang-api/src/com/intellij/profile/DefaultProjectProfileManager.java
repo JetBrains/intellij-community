@@ -15,6 +15,7 @@
  */
 package com.intellij.profile;
 
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.StateSplitter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -187,7 +188,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
   }
 
   private static boolean isPlatform() {
-    return System.getProperty("idea.platform.prefix") != null;
+    return !ApplicationNamesInfo.getInstance().getLowercaseProductName().equals("Idea");
   }
 
   public void addProfilesListener(ProfileChangeAdapter profilesListener) {
