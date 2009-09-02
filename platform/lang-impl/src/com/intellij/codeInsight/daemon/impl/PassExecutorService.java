@@ -57,7 +57,7 @@ public abstract class PassExecutorService implements Disposable {
     }
     for (Job<Void> job : mySubmittedPasses.values()) {
       try {
-        ((JobImpl)job).waitForTermination();
+        if (!job.isDone()) ((JobImpl)job).waitForTermination();
       }
       catch (Throwable throwable) {
         LOG.error(throwable);
