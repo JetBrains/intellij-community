@@ -229,4 +229,20 @@ public class GroovyCompletionTest extends LightCodeInsightFixtureTestCase {
   public void testThisKeywordCompletionAfterClassName2() throws Throwable {
     doBasicTest();
   }
+
+  public void testCompletionInParameterListInClosableBlock() throws Throwable {
+    doBasicTest();
+  }
+
+  public void testCompletionInParameterListInClosableBlock2() throws Throwable {
+    myFixture.testCompletionVariants(getTestName(false) + ".groovy", "aDouble");
+  }
+
+  public void testStaticMemberFromInstanceContext() throws Throwable {
+    myFixture.testCompletionVariants(getTestName(false) + ".groovy", "var1", "var2");
+  }
+
+  public void testInstanceMemberFromStaticContext() throws Throwable {
+    myFixture.testCompletionVariants(getTestName(false) + ".groovy", "var3", "var4");
+  }
 }

@@ -15,6 +15,7 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -405,32 +407,37 @@ public class PsiUtil {
   }
 
   public static boolean isStaticsOK(PsiModifierListOwner owner, PsiElement place) {
-    if (!owner.hasModifierProperty(PsiModifier.STATIC)) {
+    if (owner instanceof PsiMember) {
       if (place instanceof GrReferenceExpression) {
         GrExpression qualifier = ((GrReferenceExpression)place).getQualifierExpression();
-        if (qualifier instanceof GrReferenceExpression) {
-          PsiElement qualifierResolved = ((GrReferenceExpression)qualifier).resolve();
-          if (qualifierResolved instanceof PsiClass) {
-
-            if (owner instanceof PsiMember) {
+        if (qualifier != null) {
+          if (qualifier instanceof GrReferenceExpression) {
+            PsiElement qualifierResolved = ((GrReferenceExpression)qualifier).resolve();
+            if (qualifierResolved instanceof PsiClass) { //static context
+              if (owner instanceof PsiClass) {
+                return true;
+              }
               //members from java.lang.Class can be invoked without ".class"
               PsiClass javaLangClass = JavaPsiFacade.getInstance(place.getProject()).findClass("java.lang.Class", place.getResolveScope());
               if (javaLangClass != null) {
                 PsiClass containingClass = ((PsiMember)owner).getContainingClass();
-                if ((containingClass == null && !(owner instanceof PsiClass))|| //default groovy method
-                    InheritanceUtil.isInheritorOrSelf(javaLangClass, containingClass, true) ||
-                    (owner instanceof PsiClass && containingClass != null) //inner classes
-                ) {
+                if ((containingClass == null) || //default groovy method
+                    InheritanceUtil.isInheritorOrSelf(javaLangClass, containingClass, true)) {
                   return true;
                 }
               }
+              return owner.hasModifierProperty(PsiModifier.STATIC);
             }
+          }
+
+          //instance context
+          if (owner instanceof PsiClass) {
             return false;
           }
+          return CodeInsightSettings.getInstance().SHOW_STATIC_AFTER_INSTANCE || !owner.hasModifierProperty(PsiModifier.STATIC);
         }
       }
     }
-
     return true;
   }
 
@@ -771,5 +778,20 @@ public class PsiUtil {
       place = place.getParent();
     }
     return place == clazz;
+  }
+
+  @Nullable
+  public static PsiElement skipWhitespaces(@Nullable PsiElement elem, boolean forward) {
+    while (elem != null &&
+           elem.getNode() != null &&
+           GroovyElementTypes.WHITE_SPACES_OR_COMMENTS.contains(elem.getNode().getElementType())) {
+      if (forward) {
+        elem = elem.getNextSibling();
+      }
+      else {
+        elem = elem.getPrevSibling();
+      }
+    }
+    return elem;
   }
 }

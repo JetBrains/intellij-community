@@ -52,17 +52,25 @@ public class GroovyMoveClassTest extends LightCodeInsightFixtureTestCase {
     super.setUp();
     final FileTemplateManager templateManager = FileTemplateManager.getInstance();
     FileTemplate temp = templateManager.getTemplate("GroovyClass.groovyForTest");
-    if (temp != null) return;
+    if (temp != null) templateManager.removeTemplate(temp, false);
 
     temp = templateManager.addTemplate("GroovyClass.groovyForTest", "groovy");
+    temp.setText("#if ( $PACKAGE_NAME != \"\" )package ${PACKAGE_NAME}\n" + "#end\n" + "class ${NAME} {\n" + "}");
+
+    temp = templateManager.getTemplate("GroovyClass.groovy");
+    if (temp != null) templateManager.removeTemplate(temp, false);
+
+    temp = templateManager.addTemplate("GroovyClass.groovy", "groovy");
     temp.setText("#if ( $PACKAGE_NAME != \"\" )package ${PACKAGE_NAME}\n" + "#end\n" + "class ${NAME} {\n" + "}");
   }
 
   @Override
   protected void tearDown() throws Exception {
     final FileTemplateManager templateManager = FileTemplateManager.getInstance();
-    FileTemplate temp = templateManager.getTemplate("GroovyClass.groovyForTest");
+    FileTemplate temp = templateManager.getTemplate("GroovyClass.groovy");
+    templateManager.removeTemplate(temp, false);
 
+    temp = templateManager.getTemplate("GroovyClass.groovyForTest");
     templateManager.removeTemplate(temp, false);
     super.tearDown();
   }
@@ -206,13 +214,13 @@ public class GroovyMoveClassTest extends LightCodeInsightFixtureTestCase {
   private static byte[] contentsToByteArray(File f) throws IOException {
     int b;
     final FileReader fileReader = new FileReader(f);
-    ArrayList<Byte> bytes=new ArrayList<Byte>();
+    ArrayList<Byte> bytes = new ArrayList<Byte>();
     while ((b = fileReader.read()) >= 0) {
       bytes.add((byte)b);
     }
     final byte[] res = new byte[bytes.size()];
-    for (int i=0; i<res.length; i++) {
-      res[i]=bytes.get(i);
+    for (int i = 0; i < res.length; i++) {
+      res[i] = bytes.get(i);
     }
     return res;
   }

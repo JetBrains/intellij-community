@@ -18,8 +18,8 @@ package org.jetbrains.plugins.groovy.lang.completion.filters.classdef;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author ilyas
@@ -31,10 +31,10 @@ public class ExtendsFilter implements ElementFilter {
     }
     PsiElement elem = context.getParent();
     if (elem instanceof GrTypeDefinitionBody) { //inner class
-      elem = skipWhitespaces(context.getPrevSibling());
+      elem = PsiUtil.skipWhitespaces(context.getPrevSibling(), false);
     }
     else {
-      elem = skipWhitespaces(elem.getPrevSibling());
+      elem = PsiUtil.skipWhitespaces(elem.getPrevSibling(), false);
     }
     if (!(elem instanceof GrInterfaceDefinition || elem instanceof GrClassDefinition)) {
       return false;
@@ -46,15 +46,6 @@ public class ExtendsFilter implements ElementFilter {
       }
     }
     return true;
-  }
-
-  private static PsiElement skipWhitespaces(PsiElement elem) {
-    while (elem != null &&
-           elem.getNode() != null &&
-           GroovyElementTypes.WHITE_SPACES_OR_COMMENTS.contains(elem.getNode().getElementType())) {
-      elem = elem.getPrevSibling();
-    }
-    return elem;
   }
 
   public boolean isClassAcceptable(Class hintClass) {

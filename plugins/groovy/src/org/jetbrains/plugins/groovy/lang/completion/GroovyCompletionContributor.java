@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.patterns.ElementPattern;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
@@ -19,9 +20,14 @@ import org.jetbrains.plugins.groovy.lang.completion.handlers.AfterNewClassInsert
 import org.jetbrains.plugins.groovy.lang.completion.handlers.ArrayInsertHandler;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipWhitespaces;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +43,10 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
   private static final ElementPattern<PsiElement> AFTER_DOT = psiElement().afterLeaf(".").withParent(GrReferenceExpression.class);
 
-  private static final String[] THIS_SUPER={"this", "super"};
+  private static final ElementPattern<PsiElement> IN_CLOSURE_PARAMETER =
+    psiElement(PsiElement.class).withParent(GrVariable.class);
+
+  private static final String[] THIS_SUPER = {"this", "super"};
 
   public GroovyCompletionContributor() {
     extend(CompletionType.SMART, AFTER_NEW, new CompletionProvider<CompletionParameters>(false) {
@@ -87,6 +96,8 @@ public class GroovyCompletionContributor extends CompletionContributor {
         }, result.getPrefixMatcher());
       }
     });
+
+    //provide 'this' and 'super' completions in ClassName.<caret>
     extend(CompletionType.BASIC, AFTER_DOT, new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
@@ -115,8 +126,8 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
   private static boolean checkForInnerClass(PsiClass psiClass, PsiElement identifierCopy) {
     return !PsiUtil.isInnerClass(psiClass) ||
-           org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.hasEnclosingInstanceInScope(psiClass.getContainingClass(), identifierCopy,
-                                                                                          true);
+           org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
+             .hasEnclosingInstanceInScope(psiClass.getContainingClass(), identifierCopy, true);
   }
 
   private static void addExpectedType(final CompletionResultSet result, final PsiType type, final PsiElement place) {
@@ -141,12 +152,38 @@ public class GroovyCompletionContributor extends CompletionContributor {
     JavaCompletionUtil.initOffsets(file, project, context.getOffsetMap());
     if (context.getCompletionType() == CompletionType.BASIC && file instanceof GroovyFile) {
       if (semicolonNeeded(context)) {
-        context.setFileCopyPatcher(new DummyIdentifierPatcher(CompletionInitializationContext.DUMMY_IDENTIFIER.trim() + ";"));
+        context.setFileCopyPatcher(new DummyIdentifierPatcher(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED + ";"));
+      }
+      else if (isInClosurePropertyParameters(context)) {
+        context.setFileCopyPatcher(new DummyIdentifierPatcher(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED + "->"));
       }
     }
   }
 
-  private static boolean semicolonNeeded(CompletionInitializationContext context) {
+  private static boolean isInClosurePropertyParameters(CompletionInitializationContext context) { //Closure cl={String x, <caret>...
+    final PsiFile file = context.getFile();                                                       //Closure cl={String x, String <caret>...
+    final PsiElement position = file.findElementAt(context.getStartOffset());
+    if (position == null) return false;
+
+    GrVariableDeclaration declaration = PsiTreeUtil.getParentOfType(position, GrVariableDeclaration.class, false, GrStatement.class);
+    if (declaration == null) {
+      PsiElement prev = position.getPrevSibling();
+      prev = skipWhitespaces(prev, false);
+      if (prev instanceof PsiErrorElement) {
+        prev = prev.getPrevSibling();
+      }
+      prev = skipWhitespaces(prev, false);
+      if (prev instanceof GrVariableDeclaration) declaration = (GrVariableDeclaration)prev;
+    }
+    if (declaration != null) {
+      if (!(declaration.getParent() instanceof GrClosableBlock)) return false;
+      PsiElement prevSibling = skipWhitespaces(declaration.getPrevSibling(), false);
+      return prevSibling instanceof GrParameterList;
+    }
+    return false;
+  }
+
+  private static boolean semicolonNeeded(CompletionInitializationContext context) { //<caret>String name=
     HighlighterIterator iterator = ((EditorEx)context.getEditor()).getHighlighter().createIterator(context.getStartOffset());
     if (iterator.atEnd()) return false;
 
@@ -170,6 +207,6 @@ public class GroovyCompletionContributor extends CompletionContributor {
     }
     if (iterator.atEnd()) return false;
 
-      return iterator.getTokenType() == GroovyTokenTypes.mASSIGN /*|| iterator.getTokenType() == GroovyTokenTypes.mLPAREN*/;
+    return iterator.getTokenType() == GroovyTokenTypes.mASSIGN;
   }
 }

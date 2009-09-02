@@ -20,7 +20,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConstructorCall;
@@ -72,13 +71,11 @@ public class CompleteReferenceExpression {
       PsiClass clazz = ((PsiClassType)type).resolve();
       if (clazz != null) {
         Set<String> accessedPropertyNames = new THashSet<String>();
-        List<LookupElement> props = getPropertyVariants(refExpr, clazz, accessedPropertyNames);
-
-        //propertyVariants = ArrayUtil.mergeArrays(propertyVariants, clazz.getFields(), Object.class);
-
-        List<Object> variantList = new ArrayList<Object>(props);
+        List<Object> variantList = new ArrayList<Object>(getPropertyVariants(refExpr, clazz, accessedPropertyNames));
         for (Object variant : propertyVariants) {
-          if (variant instanceof GrField && accessedPropertyNames.contains(((GrField) variant).getName())) continue;
+          if (variant instanceof PsiField && accessedPropertyNames.contains(((PsiField) variant).getName())) {
+            continue;
+          }
           variantList.add(variant);
         }
 
@@ -144,13 +141,15 @@ public class CompleteReferenceExpression {
     final PsiClass eventListener =
       JavaPsiFacade.getInstance(refExpr.getProject()).findClass("java.util.EventListener", refExpr.getResolveScope());
     for (PsiMethod method : clazz.getAllMethods()) {
-      if (GroovyPropertyUtils.isSimplePropertyAccessor(method)) {
-        String prop = GroovyPropertyUtils.getPropertyName(method);
-        accessedPropertyNames.add(prop);
-        props.add(factory.createLookupElement(prop).setIcon(GroovyIcons.PROPERTY));
-      }
-      else if (eventListener != null) {
-        addListenerProperties(method, eventListener, props, factory);
+      if (PsiUtil.isStaticsOK(method, refExpr)) {
+        if (GroovyPropertyUtils.isSimplePropertyAccessor(method)) {
+          String prop = GroovyPropertyUtils.getPropertyName(method);
+          accessedPropertyNames.add(prop);
+          props.add(factory.createLookupElement(prop).setIcon(GroovyIcons.PROPERTY));
+        }
+        else if (eventListener != null) {
+          addListenerProperties(method, eventListener, props, factory);
+        }
       }
     }
     return props;

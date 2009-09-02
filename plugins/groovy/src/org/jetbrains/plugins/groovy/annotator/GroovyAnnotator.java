@@ -708,11 +708,9 @@ public class GroovyAnnotator implements Annotator {
         holder.createWarningAnnotation(refExpr.getReferenceNameElement(), message);
       }
       if (!resolveResult.isStaticsOK() && resolved instanceof PsiModifierListOwner) {
-        final String key = ((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.STATIC)
-                           ? "cannot.reference.static"
-                           : "cannot.reference.nonstatic";
-        String message = GroovyBundle.message(key, refExpr.getReferenceName());
-        holder.createWarningAnnotation(refExpr, message);
+        if (!((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.STATIC)) {
+          holder.createWarningAnnotation(refExpr, GroovyBundle.message("cannot.reference.nonstatic", refExpr.getReferenceName()));
+        }
       }
     }
     else {

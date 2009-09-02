@@ -1,4 +1,4 @@
 def (street, house, postCode) = ["Nevsky", 134]
-def sd = house.dig<caret>
+def sd = house.ab<caret>
 -----
-digits
+abs
