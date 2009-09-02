@@ -6,7 +6,9 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
@@ -123,9 +125,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
     myActionManager = null;
   }
 
-  private static class ExecutorAction extends AnAction {
-    private static final Logger LOG = Logger.getInstance("#com.intellij.execution.ExecutorRegistryImpl.ExecutorAction");
-
+  private static class ExecutorAction extends AnAction implements DumbAware {
     private final Executor myExecutor;
 
     private ExecutorAction(@NotNull final Executor executor) {
@@ -140,7 +140,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
       boolean enabled = false;
       final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
 
-      if (project == null || !project.isInitialized() || project.isDisposed()) {
+      if (project == null || !project.isInitialized() || project.isDisposed() || DumbService.getInstance(project).isDumb()) {
         presentation.setEnabled(false);
         return;
       }
