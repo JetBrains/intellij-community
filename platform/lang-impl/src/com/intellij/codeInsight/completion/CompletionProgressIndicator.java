@@ -14,7 +14,11 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Computable;
@@ -25,8 +29,12 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.EventObject;
 
 /**
@@ -50,6 +58,13 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private LightweightHint myHint;
   private final CompletionContext myContextOriginal;
   private final Semaphore myFreezeSemaphore;
+
+  private boolean myModifiersReleased;
+
+  private String myOldDocumentText;
+  private int myOldCaret;
+  private int myOldStart;
+  private int myOldEnd;
 
   public CompletionProgressIndicator(final Editor editor, CompletionParameters parameters, CodeCompletionHandlerBase handler,
                                      final CompletionContext contextOriginal, Semaphore freezeSemaphore) {
@@ -89,6 +104,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ApplicationManager.getApplication().assertIsDispatchThread();
     registerItself();
 
+    scheduleAdvertising();
+
+    trackModifiers();
+  }
+
+  private void scheduleAdvertising() {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         if (myEditor.isDisposed()) return; //tests?
@@ -120,6 +141,30 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     });
   }
 
+  private void trackModifiers() {
+    final JComponent contentComponent = myEditor.getContentComponent();
+    contentComponent.addKeyListener(new KeyAdapter() {
+      public void keyPressed(KeyEvent e) {
+        processModifier(e);
+      }
+
+      public void keyReleased(KeyEvent e) {
+        processModifier(e);
+      }
+
+      private void processModifier(KeyEvent e) {
+        final int code = e.getKeyCode();
+        if (code == KeyEvent.VK_CONTROL || code == KeyEvent.VK_META || code == KeyEvent.VK_ALT || code == KeyEvent.VK_SHIFT) {
+          myModifiersReleased = true;
+          if (myOldDocumentText != null) {
+            cleanup();
+          }
+          contentComponent.removeKeyListener(this);
+        }
+      }
+    });
+  }
+
   private void setMergeCommand() {
     CommandProcessor.getInstance().setCurrentCommandGroupId("Completion" + hashCode());
   }
@@ -136,14 +181,41 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     CompletionServiceImpl.getCompletionService().setCurrentCompletion(this);
   }
 
-  public void liveAfterDeath(LightweightHint hint) {
+  public void liveAfterDeath(@Nullable final LightweightHint hint) {
+    if (myModifiersReleased) {
+      return;
+    }
+
     registerItself();
     myHint = hint;
-    hint.addHintListener(new HintListener() {
-      public void hintHidden(final EventObject event) {
-        if (myHint != null) {
+    if (hint != null) {
+      hint.addHintListener(new HintListener() {
+        public void hintHidden(final EventObject event) {
+          hint.removeHintListener(this);
           cleanup();
         }
+      });
+    }
+    final Document document = myEditor.getDocument();
+    document.addDocumentListener(new DocumentAdapter() {
+      @Override
+      public void beforeDocumentChange(DocumentEvent e) {
+        document.removeDocumentListener(this);
+        cleanup();
+      }
+    });
+    final SelectionModel selectionModel = myEditor.getSelectionModel();
+    selectionModel.addSelectionListener(new SelectionListener() {
+      public void selectionChanged(SelectionEvent e) {
+        selectionModel.removeSelectionListener(this);
+        cleanup();
+      }
+    });
+    final CaretModel caretModel = myEditor.getCaretModel();
+    caretModel.addCaretListener(new CaretListener() {
+      public void caretPositionChanged(CaretEvent e) {
+        caretModel.removeCaretListener(this);
+        cleanup();
       }
     });
   }
@@ -264,6 +336,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   private void cleanup() {
     myHint = null;
+    myOldDocumentText = null;
     CompletionServiceImpl.getCompletionService().setCurrentCompletion(null);
   }
 
@@ -317,6 +390,36 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   public boolean isInitialized() {
     return myInitialized;
+  }
+
+  public void restorePrefix() {
+    setMergeCommand();
+
+    if (myOldDocumentText != null) {
+      myEditor.getDocument().setText(myOldDocumentText);
+      myEditor.getSelectionModel().setSelection(myOldStart, myOldEnd);
+      myEditor.getCaretModel().moveToOffset(myOldCaret);
+      return;
+    }
+
+    if (getLookup().isVisible()) {
+      getLookup().restorePrefix();
+    }
+  }
+
+  public Editor getEditor() {
+    return myEditor;
+  }
+
+  public void rememberDocumentState() {
+    if (myModifiersReleased) {
+      return;
+    }
+
+    myOldDocumentText = myEditor.getDocument().getText();
+    myOldCaret = myEditor.getCaretModel().getOffset();
+    myOldStart = myEditor.getSelectionModel().getSelectionStart();
+    myOldEnd = myEditor.getSelectionModel().getSelectionEnd();
   }
 
 }

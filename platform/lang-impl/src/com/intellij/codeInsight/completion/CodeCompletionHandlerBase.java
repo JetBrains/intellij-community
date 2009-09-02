@@ -87,15 +87,19 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     psiFile.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, Boolean.TRUE);
     
-    CompletionProgressIndicator indicator = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+    final CompletionProgressIndicator indicator = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     if (indicator != null) {
-      if (indicator.getParameters().getCompletionType().equals(myCompletionType)) {
+      if (indicator.getParameters().getCompletionType().equals(myCompletionType) && editor == indicator.getEditor()) {
         if (!indicator.isRunning() && (!isAutocompleteCommonPrefixOnInvocation() || indicator.fillInCommonPrefix(true))) {
           return;
         }
         else {
           time = indicator.getParameters().getInvocationCount() + 1;
-          indicator.getLookup().restorePrefix();
+          new WriteCommandAction(project) {
+            protected void run(Result result) throws Throwable {
+              indicator.restorePrefix();
+            }
+          }.execute();
         }
       }
       indicator.closeAndFinish();
@@ -240,8 +244,10 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     LookupElement item = items[0];
     if (items.length == 1 && indicator.willAutoInsert(item.getAutoCompletionPolicy(), item.getPrefixMatcher())) {
       indicator.closeAndFinish();
+      indicator.rememberDocumentState();
       context.setStartOffset(offset1 - item.getPrefixMatcher().getPrefix().length());
       handleSingleItem(offset2, context, items, item.getLookupString(), item);
+      indicator.liveAfterDeath(null);
     } else {
       indicator.showLookup();
       if (isAutocompleteCommonPrefixOnInvocation() && items.length > 1) {
