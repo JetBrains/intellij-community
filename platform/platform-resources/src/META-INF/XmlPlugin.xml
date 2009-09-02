@@ -282,6 +282,8 @@
     <todoIndexer filetype="XHTML" implementationClass="com.intellij.psi.impl.cache.impl.idCache.XHtmlTodoIndexer"/>
 
     <elementSignatureProvider implementation="com.intellij.codeInsight.folding.impl.XmlElementSignatureProvider"/>
+
+    <vcsSelectionProvider implementation="com.intellij.vcsUtil.XmlVcsSelectionProvider"/>
   </extensions>
 
   <actions>

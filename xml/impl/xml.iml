@@ -16,6 +16,7 @@
     <orderEntry type="module" module-name="icons" />
     <orderEntry type="library" name="XmlBeans" level="project" />
     <orderEntry type="module" module-name="platform-resources" />
+    <orderEntry type="module" module-name="vcs-api" />
   </component>
   <component name="copyright">
     <Base>

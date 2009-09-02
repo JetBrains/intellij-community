@@ -9,14 +9,12 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlText;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
-public class PsiVcsSelectionProvider implements VcsSelectionProvider {
+public class JavaVcsSelectionProvider implements VcsSelectionProvider {
   @Nullable
   public VcsSelection getSelection(final VcsContext context) {
     final Editor editor = context.getEditor();
@@ -42,12 +40,6 @@ public class PsiVcsSelectionProvider implements VcsSelectionProvider {
     }
     else if (psiElement instanceof PsiMethod) {
       actionName = VcsBundle.message("action.name.show.history.for.method");
-    }
-    else if (psiElement instanceof XmlTag) {
-      actionName = VcsBundle.message("action.name.show.history.for.tag");
-    }
-    else if (psiElement instanceof XmlText) {
-      actionName = VcsBundle.message("action.name.show.history.for.text");
     }
     else if (psiElement instanceof PsiCodeBlock) {
       actionName = VcsBundle.message("action.name.show.history.for.code.block");
