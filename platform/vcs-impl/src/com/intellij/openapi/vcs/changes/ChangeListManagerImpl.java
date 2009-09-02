@@ -583,7 +583,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Nullable
-  public Change getChange(VirtualFile file) {
+  public Change getChange(@NotNull VirtualFile file) {
     synchronized (myDataLock) {
       final LocalChangeList list = myWorker.getListCopy(file);
       if (list != null) {
