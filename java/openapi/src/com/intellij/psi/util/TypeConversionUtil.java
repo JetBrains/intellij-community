@@ -173,7 +173,7 @@ public class TypeConversionUtil {
     }
 
     if (toType instanceof PsiCapturedWildcardType) {
-      return isNarrowingReferenceConversionAllowed(toType, ((PsiCapturedWildcardType)toType).getWildcard());
+      return isNarrowingReferenceConversionAllowed(fromType, ((PsiCapturedWildcardType)toType).getWildcard());
     }
     if (fromType instanceof PsiCapturedWildcardType) {
       return isNarrowingReferenceConversionAllowed(((PsiCapturedWildcardType)fromType).getWildcard(), toType);
