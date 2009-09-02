@@ -12,9 +12,9 @@ public class MavenPropertyPsiReferenceContributor extends PsiReferenceContributo
   @Override
   public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
     ElementPattern pattern = XmlPatterns.xmlTag().withParent(DomPatterns.withDom(DomPatterns.domElement(MavenDomProperties.class)));
-    registrar.registerReferenceProvider(pattern, new MavenPropertyPsiReferenceProvider(), PsiReferenceRegistrar.DEFAULT_PRIORITY);
+    registrar.registerReferenceProvider(pattern, new MavenPropertyPsiReferenceProvider(false), PsiReferenceRegistrar.DEFAULT_PRIORITY);
     registrar.registerReferenceProvider(PlatformPatterns.psiElement(),
-                                        new MavenFilteredPropertyPsiReferenceProvider(),
+                                        new MavenPropertyPsiReferenceProvider(true),
                                         PsiReferenceRegistrar.DEFAULT_PRIORITY);
   }
 }

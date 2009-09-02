@@ -71,6 +71,26 @@ public class MavenPropertyFindUsagesTest extends MavenDomTestCase {
     assertSearchResultsContain(myProjectPom, findTag("project.name"));
   }
 
+  //public void testFindUsagesForEnvProperty() throws Exception {
+  //  createProjectPom("<groupId>test</groupId>" +
+  //                   "<artifactId>module1</artifactId>" +
+  //                   "<version>11</version>" +
+  //                   "<name>${env.<caret>TEMP}</name>" +
+  //                   "<description>${env.<caret>TEMP}</description>");
+  //
+  //  assertSearchResultsContain(myProjectPom, findTag("project.name"), findTag("project.description"));
+  //}
+  //
+  //public void testFindUsagesForSystemProperty() throws Exception {
+  //  createProjectPom("<groupId>test</groupId>" +
+  //                   "<artifactId>module1</artifactId>" +
+  //                   "<version>11</version>" +
+  //                   "<name>${use<caret>r.home}</name>" +
+  //                   "<description>${user.home}</description>");
+  //
+  //  assertSearchResultsContain(myProjectPom, findTag("project.name"), findTag("project.description"));
+  //}
+  //
   public void testHighlightingFromTag() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>module1</artifactId>" +

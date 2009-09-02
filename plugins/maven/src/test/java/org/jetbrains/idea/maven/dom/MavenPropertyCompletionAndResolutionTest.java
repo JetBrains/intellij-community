@@ -107,6 +107,19 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, findTag("project.version"));
   }
 
+  public void testResolvingFromPropertiesSectionOfNonManagedProject() throws Exception {
+    VirtualFile m = createModulePom("module",
+                                    "<groupId>test</groupId>" +
+                                    "<artifactId>module</artifactId>" +
+                                    "<version>1</version>" +
+
+                                    "<properties>" +
+                                    "  <foo>${<caret>project.version}</foo>" +
+                                    "</properties>");
+
+    assertResolved(m, findTag("project.version"));
+  }
+
   public void testResolutionToUnknownProjectProperty() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -650,12 +663,50 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
   }
 
   public void testDoNotIncludeCollectionPropertiesInCompletion() throws Exception {
-    importProjectWithProfiles("one");
-
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
                      "<name>${<caret>}</name>");
     assertCompletionVariantsDoNotInclude(myProjectPom, "project.dependencies", "env.\\=C\\:", "idea.config.path");
+  }
+
+  public void testCompletingAfterOpenBrace() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<name>${<caret></name>");
+
+    assertCompletionVariantsInclude(myProjectPom, "project.groupId", "groupId");
+  }
+
+  public void testCompletingAfterOpenBraceInOpenTag() throws Exception {
+    if (ignore()) return;
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<name>${<caret>");
+
+    assertCompletionVariantsInclude(myProjectPom, "project.groupId", "groupId");
+  }
+
+  public void testCompletingAfterOpenBraceAndSomeText() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<name>${gro<caret></name>");
+
+    List<String> variants = getCompletionVariants(myProjectPom);
+    assertInclude(variants, "groupId");
+    assertDoNotInclude(variants, "project.groupId");
+  }
+
+  public void testDoNotCompleteAfterNonWordCharacter() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<name>${<<caret>/name>");
+
+    assertCompletionVariantsDoNotInclude(myProjectPom, "project.groupId");
   }
 }

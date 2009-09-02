@@ -6,6 +6,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.psi.PsiElement;
@@ -25,6 +27,7 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.project.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenResource;
 import org.jetbrains.idea.maven.utils.MavenConstants;
 import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem;
 
@@ -246,10 +249,24 @@ public class MavenDomUtil {
     return propertiesFile == null ? null : propertiesFile.findPropertyByKey(propName);
   }
 
-  public static List<DomFileElement<MavenDomProjectModel>> collectProjectPoms(final Project p) {
-    return DomService.getInstance().getFileElements(MavenDomProjectModel.class,
-                                                    p,
-                                                    GlobalSearchScope.projectScope(p));
+  public static boolean isFiltererResourceFile(PsiElement element) {
+    MavenProject project = findContainingProject(element);
+    if (project == null) return false;
+
+    VirtualFile file = MavenDomUtil.getVirtualFile(element);
+    if (file == null) return false;
+
+    for (MavenResource each : project.getResources()) {
+      VirtualFile resourceDir = LocalFileSystem.getInstance().findFileByPath(each.getDirectory());
+      if (resourceDir == null) continue;
+      if (!VfsUtil.isAncestor(resourceDir, file, true)) continue;
+      return each.isFiltered();
+    }
+    return false;
+  }
+
+  public static List<DomFileElement<MavenDomProjectModel>> collectProjectModels(Project p) {
+    return DomService.getInstance().getFileElements(MavenDomProjectModel.class, p, GlobalSearchScope.projectScope(p));
   }
 
   public static MavenId describe(PsiFile psiFile) {

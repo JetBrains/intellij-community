@@ -55,7 +55,7 @@ public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile
   public Collection<PsiFile> getVariants(ConvertContext context) {
     List<PsiFile> result = new ArrayList<PsiFile>();
     PsiFile currentFile = context.getFile().getOriginalFile();
-    for (DomFileElement<MavenDomProjectModel> each : MavenDomUtil.collectProjectPoms(context.getFile().getProject())) {
+    for (DomFileElement<MavenDomProjectModel> each : MavenDomUtil.collectProjectModels(context.getFile().getProject())) {
       PsiFile file = each.getOriginalFile();
       if (file == currentFile) continue;
       result.add(file);

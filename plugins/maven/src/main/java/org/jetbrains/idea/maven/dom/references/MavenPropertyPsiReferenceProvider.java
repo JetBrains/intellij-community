@@ -17,9 +17,19 @@ import java.util.List;
 import java.util.regex.Matcher;
 
 public class MavenPropertyPsiReferenceProvider extends PsiReferenceProvider {
+  private final boolean myFiltered;
+
+  public MavenPropertyPsiReferenceProvider(boolean filtered) {
+    myFiltered = filtered;
+  }
+
   @NotNull
   @Override
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+    if (myFiltered) {
+      if (!MavenDomUtil.isFiltererResourceFile(element)) return PsiReference.EMPTY_ARRAY;
+      return getReferences(element, element.getText(), 0, true);
+    }
     return getReferences(element);
   }
 
@@ -29,7 +39,7 @@ public class MavenPropertyPsiReferenceProvider extends PsiReferenceProvider {
     return getReferences(element, text, textStart, false);
   }
 
-  public static PsiReference[] getReferences(PsiElement element, String text, int textStart, boolean filtered) {
+  private static PsiReference[] getReferences(PsiElement element, String text, int textStart, boolean filtered) {
     if (StringUtil.isEmptyOrSpaces(text)) return PsiReference.EMPTY_ARRAY;
 
     MavenProject mavenProject = MavenDomUtil.findContainingProject(element);

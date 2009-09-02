@@ -214,6 +214,72 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     assertCompletionVariantsInclude(f, "xxx", "yyy");
   }
 
+  public void testCompletionAfterOpenBrace() throws Exception {
+    createProjectSubDir("res");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>res</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+
+    VirtualFile f = createProjectSubFile("res/foo.properties",
+                                         "foo=abc${<caret>");
+
+    assertCompletionVariantsInclude(f, "project.version");
+  }
+
+  public void testCompletionAfterOpenBraceInTheBeginningOfFile() throws Exception {
+    createProjectSubDir("res");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>res</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+
+    VirtualFile f = createProjectSubFile("res/foo.txt",
+                                         "${<caret>");
+
+    assertCompletionVariantsInclude(f, "project.version");
+  }
+
+  public void testCompletionInEmptyFile() throws Exception {
+    createProjectSubDir("res");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>res</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+
+    VirtualFile f = createProjectSubFile("res/foo.properties",
+                                         "<caret>");
+
+    assertCompletionVariantsDoNotInclude(f, "project.version");
+  }
+
   public void testRenaming() throws Exception {
     createProjectSubDir("res");
 
