@@ -78,7 +78,9 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
   }
 
   public boolean isPassed() {
-    return myState.getMagnitude() == TestStateInfo.Magnitude.SKIPPED_INDEX || myState.getMagnitude() != TestStateInfo.Magnitude.COMPLETE_INDEX; 
+    return myState.getMagnitude() == TestStateInfo.Magnitude.SKIPPED_INDEX ||
+           myState.getMagnitude() == TestStateInfo.Magnitude.COMPLETE_INDEX ||
+           myState.getMagnitude() == TestStateInfo.Magnitude.PASSED_INDEX; 
   }
 
   public void addChild(final SMTestProxy child) {
