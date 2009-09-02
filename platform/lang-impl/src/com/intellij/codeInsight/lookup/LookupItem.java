@@ -171,7 +171,7 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
 
   @Override
   public void handleInsert(final InsertionContext context) {
-    if (!Boolean.TRUE.equals(getAttribute(CASE_INSENSITIVE))) {
+    if (Boolean.TRUE.equals(getAttribute(CASE_INSENSITIVE))) {
       CompletionService.getCompletionService().correctCaseInsensitiveString(this, context);
     }
 
