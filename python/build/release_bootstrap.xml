@@ -31,7 +31,7 @@
           <include name="commons-net-1.4.1.jar"/>
           <include name="jsch-0.1.28.jar"/>
         </fileset>
-        <fileset dir="${project.home}/lib/ant/lib">
+        <fileset dir="${project.home}/community/lib/ant/lib">
           <include name="*.jar"/>
         </fileset>
       </classpath>
