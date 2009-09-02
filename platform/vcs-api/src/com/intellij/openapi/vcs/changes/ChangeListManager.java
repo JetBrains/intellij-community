@@ -91,7 +91,7 @@ public abstract class ChangeListManager implements ChangeListModification {
   public abstract Runnable prepareForChangeDeletion(final Collection<Change> changes);
 
   @Nullable
-  public abstract Change getChange(VirtualFile file);
+  public abstract Change getChange(@NotNull VirtualFile file);
 
   @Nullable
   public abstract Change getChange(FilePath file);
