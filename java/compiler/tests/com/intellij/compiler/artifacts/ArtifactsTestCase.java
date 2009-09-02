@@ -1,26 +1,29 @@
 package com.intellij.compiler.artifacts;
 
+import com.intellij.facet.Facet;
 import com.intellij.facet.impl.DefaultFacetsProvider;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
-import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 import com.intellij.packaging.impl.elements.ManifestFileUtil;
+import com.intellij.packaging.ui.ArtifactEditor;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ManifestFileConfiguration;
-import com.intellij.packaging.ui.ArtifactEditor;
 import com.intellij.testFramework.IdeaTestCase;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author nik
@@ -124,6 +127,18 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
       throw new UnsupportedOperationException("'getOrCreateEditor' not implemented in " + getClass().getName());
     }
 
+    public void selectArtifact(@NotNull Artifact artifact) {
+    }
+
+    public void selectFacet(@NotNull Facet<?> facet) {
+    }
+
+    public void selectModule(@NotNull Module module) {
+    }
+
+    public void selectLibrary(@NotNull Library library) {
+    }
+
     public void ensureRootIsWritable(@NotNull Artifact originalArtifact) {
     }
 
@@ -132,8 +147,16 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
       throw new UnsupportedOperationException("'getArtifactType' not implemented in " + getClass().getName());
     }
 
-    public boolean hasProblems(PackagingElement<?> element) {
-      return false;
+    public List<Artifact> chooseArtifacts(List<? extends Artifact> artifacts, String title) {
+      throw new UnsupportedOperationException("'chooseArtifacts' not implemented in " + getClass().getName());
+    }
+
+    public List<Module> chooseModules(List<Module> modules, String title) {
+      throw new UnsupportedOperationException("'chooseModules' not implemented in " + getClass().getName());
+    }
+
+    public List<Library> chooseLibraries(List<Library> libraries, String title) {
+      throw new UnsupportedOperationException("'chooseLibraries' not implemented in " + getClass().getName());
     }
   }
 }
