@@ -1,7 +1,5 @@
 package org.jetbrains.plugins.groovy.config;
 
-import com.intellij.facet.FacetManager;
-import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.ide.util.newProjectWizard.FrameworkSupportConfigurable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -9,8 +7,8 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.ui.GroovyFacetEditor;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
@@ -31,22 +29,11 @@ public class GroovySupportConfigurable extends FrameworkSupportConfigurable {
     return facetEditor.getComponent();
   }
 
-  private static void addGroovyFacet(Module module) {
-    FacetManager facetManager = FacetManager.getInstance(module);
-    ModifiableFacetModel model = facetManager.createModifiableModel();
-    final GroovyFacetType facetType = GroovyFacetType.getInstance();
-    GroovyFacet facet = facetManager.createFacet(facetType, facetType.getDefaultFacetName(), null);
-    model.addFacet(facet);
-    model.commit();
-  }
-
   public void addSupport(final Module module, final ModifiableRootModel rootModel, @Nullable Library library) {
     addGroovySupport(module, rootModel);
   }
 
   public void addGroovySupport(final Module module, ModifiableRootModel rootModel) {
-    addGroovyFacet(module);
-
     if (!facetEditor.addNewSdk()) {
       final Library selectedLibrary = facetEditor.getSelectedLibrary();
       if (selectedLibrary != null) {

@@ -15,8 +15,6 @@
 
 package org.jetbrains.plugins.groovy.config;
 
-import com.intellij.facet.FacetManager;
-import com.intellij.facet.FacetTypeId;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -141,13 +139,6 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
             LibrariesUtil.placeEntryToCorrectPlace(model, entry);
             model.commit();
             ref.set(true);
-            final FacetManager manager = FacetManager.getInstance(module);
-            final GroovyFacetType type = GroovyFacetType.getInstance();
-            final FacetTypeId<GroovyFacet> id = type.getId();
-            final GroovyFacet facetByType = manager.getFacetByType(id);
-            if (facetByType == null) {
-              manager.addFacet(type, type.getPresentableName(), null);
-            }
           }
         });
       }

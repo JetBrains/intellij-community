@@ -38,51 +38,28 @@ public class GroovyModuleConverter extends ConversionProcessor<ModuleSettings> {
       return true;
     }
 
-    for (Element facetElement : moduleSettings.getFacetElements("Groovy")) {
-      for (Element child : getChildren(facetElement, FacetManagerImpl.FACET_ELEMENT)) {
-        final String innerFacetType = child.getAttributeValue(FacetManagerImpl.TYPE_ATTRIBUTE);
-        if ("Gant_Groovy".equals(innerFacetType) || "Gant_Grails".equals(innerFacetType)) {
-          return true;
-        }
-      }
+    if (!moduleSettings.getFacetElements("Groovy").isEmpty()) {
+      return true;
     }
+
     return false;
   }
 
   @Override
   public void process(ModuleSettings moduleSettings) throws CannotConvertException {
-    boolean wasGrails = false;
     if ("GRAILS_MODULE".equals(moduleSettings.getModuleType())) {
       moduleSettings.setModuleType(StdModuleTypes.JAVA.getId());
-      wasGrails = true;
     }
 
     final Element facetManagerElement = moduleSettings.getComponentElement(FacetManagerImpl.COMPONENT_NAME);
     if (facetManagerElement == null) return;
 
-    boolean hasGroovyFacet = false;
     final Element[] facetElements = getChildren(facetManagerElement, FacetManagerImpl.FACET_ELEMENT);
     for (Element facetElement : facetElements) {
       final String facetType = facetElement.getAttributeValue(FacetManagerImpl.TYPE_ATTRIBUTE);
-      if ("Groovy".equals(facetType)) {
-        hasGroovyFacet = true;
-      }
-      else if ("Grails".equals(facetType)) {
+      if ("Grails".equals(facetType) || "Groovy".equals(facetType)) {
         facetElement.detach();
       }
-      for (Element innerFacet : getChildren(facetElement, FacetManagerImpl.FACET_ELEMENT)) {
-        final String innerFacetType = innerFacet.getAttributeValue(FacetManagerImpl.TYPE_ATTRIBUTE);
-        if ("Gant_Groovy".equals(innerFacetType) || "Gant_Grails".equals(innerFacetType)) {
-          innerFacet.detach();
-        }
-      }
-    }
-
-    if (wasGrails && !hasGroovyFacet) {
-      final Element newFacet = new Element("facet");
-      newFacet.setAttribute(FacetManagerImpl.TYPE_ATTRIBUTE, "Groovy");
-      newFacet.setAttribute(FacetManagerImpl.NAME_ATTRIBUTE, "Groovy");
-      facetManagerElement.addContent(newFacet);
     }
   }
 

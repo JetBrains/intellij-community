@@ -60,7 +60,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.CompilerMessage;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.config.GroovyFacet;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
@@ -277,7 +276,6 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
         }
 
         final ModuleFileIndex index = ModuleRootManager.getInstance(module).getFileIndex();
-        final GroovyFacet facet = GroovyFacet.getInstance(module);
         final List<VirtualFile> toCompile = new ArrayList<VirtualFile>();
         final List<VirtualFile> toCompileTests = new ArrayList<VirtualFile>();
         final CompilerConfiguration configuration = CompilerConfiguration.getInstance(myProject);
