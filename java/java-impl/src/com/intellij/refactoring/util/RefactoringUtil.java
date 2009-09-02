@@ -1122,10 +1122,10 @@ public class RefactoringUtil {
           if (resolved != null && !reported.contains(resolved) && !CommonRefactoringUtil.isAncestor(resolved, scopes) &&
               !PsiSearchScopeUtil.isInScope(resolveScope, resolved)) {
             final String scopeDescription =
-              CommonRefactoringUtil.htmlEmphasize(RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(reference), true));
+              RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(reference), true);
             final String message = RefactoringBundle.message("0.referenced.in.1.will.not.be.accessible.in.module.2",
-                                                             CommonRefactoringUtil.capitalize(CommonRefactoringUtil.htmlEmphasize(
-                                                               RefactoringUIUtil.getDescription(resolved, true))), scopeDescription,
+                                                             CommonRefactoringUtil.capitalize(
+                                                               RefactoringUIUtil.getDescription(resolved, true)), scopeDescription,
                                                                                                                CommonRefactoringUtil.htmlEmphasize(
                                                                                                                  targetModule.getName()));
             conflicts.add(message);
@@ -1158,7 +1158,7 @@ public class RefactoringUtil {
             else {
               container = usageFile;
             }
-            final String scopeDescription = CommonRefactoringUtil.htmlEmphasize(RefactoringUIUtil.getDescription(container, true));
+            final String scopeDescription = RefactoringUIUtil.getDescription(container, true);
             final VirtualFile usageVFile = usageFile.getVirtualFile();
             if (usageVFile != null) {
               Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(usageVFile);
@@ -1166,15 +1166,15 @@ public class RefactoringUtil {
                 final String message;
                 if (module == targetModule && isInTestSources) {
                   message = RefactoringBundle.message("0.referenced.in.1.will.not.be.accessible.from.production.of.module.2",
-                                                      CommonRefactoringUtil.capitalize(CommonRefactoringUtil.htmlEmphasize(
-                                                        RefactoringUIUtil.getDescription(moveRenameUsageInfo.getReferencedElement(), true))),
+                                                      CommonRefactoringUtil.capitalize(
+                                                        RefactoringUIUtil.getDescription(moveRenameUsageInfo.getReferencedElement(), true)),
                                                       scopeDescription,
                                                       CommonRefactoringUtil.htmlEmphasize(module.getName()));
                 }
                 else {
                   message = RefactoringBundle.message("0.referenced.in.1.will.not.be.accessible.from.module.2", 
-                                                      CommonRefactoringUtil.capitalize(CommonRefactoringUtil.htmlEmphasize(
-                                                        RefactoringUIUtil.getDescription(moveRenameUsageInfo.getReferencedElement(), true))),
+                                                      CommonRefactoringUtil.capitalize(
+                                                        RefactoringUIUtil.getDescription(moveRenameUsageInfo.getReferencedElement(), true)),
                                                       scopeDescription,
                                                       CommonRefactoringUtil.htmlEmphasize(module.getName()));
                 }
