@@ -11,18 +11,17 @@ import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.ui.ArtifactEditor;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ManifestFileConfiguration;
-import com.intellij.packaging.ui.PackagingEditorContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
 public class ArtifactEditorContextImpl implements ArtifactEditorContext {
-  private final PackagingEditorContext myParent;
+  private final ArtifactsStructureConfigurableContext myParent;
   private final ArtifactEditorEx myEditor;
   private ArtifactValidationManagerImpl myValidationManager;
 
-  public ArtifactEditorContextImpl(PackagingEditorContext parent, ArtifactEditorEx editor) {
+  public ArtifactEditorContextImpl(ArtifactsStructureConfigurableContext parent, ArtifactEditorEx editor) {
     myParent = parent;
     myEditor = editor;
   }

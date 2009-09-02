@@ -10,7 +10,7 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementType;
-import com.intellij.packaging.ui.PackagingEditorContext;
+import com.intellij.packaging.ui.ArtifactEditorContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +32,7 @@ public abstract class FacetBasedPackagingElementType<E extends PackagingElement<
   }
 
   @Override
-  public boolean canCreate(@NotNull PackagingEditorContext context, @NotNull Artifact artifact) {
+  public boolean canCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact) {
     return !getFacets(context).isEmpty();
   }
 
@@ -43,7 +43,7 @@ public abstract class FacetBasedPackagingElementType<E extends PackagingElement<
 
   @NotNull
   @Override
-  public List<? extends E> chooseAndCreate(@NotNull PackagingEditorContext context, @NotNull Artifact artifact, @NotNull CompositePackagingElement<?> parent) {
+  public List<? extends E> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact, @NotNull CompositePackagingElement<?> parent) {
     final Project project = context.getProject();
     final List<F> facets = getFacets(context);
     ChooseFacetsDialog dialog = new ChooseFacetsDialog(context.getProject(), facets, getDialogTitle(), getDialogDescription());
@@ -58,7 +58,7 @@ public abstract class FacetBasedPackagingElementType<E extends PackagingElement<
     return Collections.emptyList();
   }
 
-  private List<F> getFacets(PackagingEditorContext context) {
+  private List<F> getFacets(ArtifactEditorContext context) {
     final Module[] modules = context.getModulesProvider().getModules();
     final List<F> facets = new ArrayList<F>();
     for (Module module : modules) {

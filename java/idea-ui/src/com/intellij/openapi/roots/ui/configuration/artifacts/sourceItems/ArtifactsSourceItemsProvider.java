@@ -20,7 +20,7 @@ import java.util.ArrayList;
  */
 public class ArtifactsSourceItemsProvider extends PackagingSourceItemsProvider {
   @NotNull
-  public Collection<? extends PackagingSourceItem> getSourceItems(@NotNull PackagingEditorContext editorContext,
+  public Collection<? extends PackagingSourceItem> getSourceItems(@NotNull ArtifactEditorContext editorContext,
                                                                   @NotNull Artifact artifact,
                                                                   @Nullable PackagingSourceItem parent) {
     if (parent == null) {
@@ -51,12 +51,12 @@ public class ArtifactsSourceItemsProvider extends PackagingSourceItemsProvider {
       return 0;
     }
 
-    public SourceItemPresentation createPresentation(@NotNull PackagingEditorContext context) {
+    public SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
       return new ArtifactsGroupPresentation();
     }
 
     @NotNull
-    public List<? extends PackagingElement<?>> createElements(@NotNull PackagingEditorContext context) {
+    public List<? extends PackagingElement<?>> createElements(@NotNull ArtifactEditorContext context) {
       return Collections.emptyList();
     }
 

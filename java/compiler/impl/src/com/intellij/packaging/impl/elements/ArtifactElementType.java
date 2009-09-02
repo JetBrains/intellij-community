@@ -1,15 +1,15 @@
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.packaging.impl.artifacts.ArtifactUtil;
-import com.intellij.openapi.roots.ui.configuration.artifacts.ChooseArtifactsDialog;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ChooseArtifactsDialog;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactPointerManager;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementType;
+import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.artifacts.PlainArtifactType;
-import com.intellij.packaging.ui.PackagingEditorContext;
+import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,12 +32,12 @@ public class ArtifactElementType extends PackagingElementType<ArtifactPackagingE
   }
 
   @Override
-  public boolean canCreate(@NotNull PackagingEditorContext context, @NotNull Artifact artifact) {
+  public boolean canCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact) {
     return !getAvailableArtifacts(context, artifact).isEmpty();
   }
 
   @NotNull
-  public List<? extends ArtifactPackagingElement> chooseAndCreate(@NotNull PackagingEditorContext context, @NotNull Artifact artifact,
+  public List<? extends ArtifactPackagingElement> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
                                                                    @NotNull CompositePackagingElement<?> parent) {
     final Project project = context.getProject();
     ChooseArtifactsDialog dialog = new ChooseArtifactsDialog(project, getAvailableArtifacts(context, artifact),
@@ -53,7 +53,7 @@ public class ArtifactElementType extends PackagingElementType<ArtifactPackagingE
   }
 
   @NotNull
-  public static List<? extends Artifact> getAvailableArtifacts(@NotNull final PackagingEditorContext context, @NotNull final Artifact artifact) {
+  public static List<? extends Artifact> getAvailableArtifacts(@NotNull final ArtifactEditorContext context, @NotNull final Artifact artifact) {
     final Set<Artifact> result = new HashSet<Artifact>(Arrays.asList(context.getArtifactModel().getArtifacts()));
     ArtifactUtil.processPackagingElements(artifact, ARTIFACT_ELEMENT_TYPE, new Processor<ArtifactPackagingElement>() {
       public boolean process(ArtifactPackagingElement artifactPackagingElement) {

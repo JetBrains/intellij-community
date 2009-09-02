@@ -2,9 +2,9 @@ package com.intellij.packaging.elements;
 
 import com.intellij.compiler.ant.Generator;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.packaging.ui.PackagingEditorContext;
-import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.packaging.artifacts.ArtifactType;
+import com.intellij.packaging.ui.ArtifactEditorContext;
+import com.intellij.packaging.ui.PackagingElementPresentation;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -19,7 +19,7 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
     myType = type;
   }
 
-  public abstract PackagingElementPresentation createPresentation(PackagingEditorContext context);
+  public abstract PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context);
 
   public final PackagingElementType getType() {
     return myType;

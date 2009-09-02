@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.CompositePackagingElement;
-import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import org.jetbrains.annotations.Nls;
 
@@ -22,21 +21,21 @@ import java.awt.event.ActionListener;
  */
 public class ArtifactConfigurable extends NamedConfigurable<Artifact> {
   private final Artifact myOriginalArtifact;
-  private final PackagingEditorContext myPackagingEditorContext;
+  private final ArtifactsStructureConfigurableContext myArtifactsStructureContext;
   private final ArtifactEditorImpl myEditor;
   private boolean myIsInUpdateName;
 
-  public ArtifactConfigurable(Artifact originalArtifact, ArtifactsStructureConfigurableContextImpl packagingEditorContext, final Runnable updateTree) {
+  public ArtifactConfigurable(Artifact originalArtifact, ArtifactsStructureConfigurableContextImpl artifactsStructureContext, final Runnable updateTree) {
     super(true, updateTree);
     myOriginalArtifact = originalArtifact;
-    myPackagingEditorContext = packagingEditorContext;
-    myEditor = packagingEditorContext.getOrCreateEditor(originalArtifact);
+    myArtifactsStructureContext = artifactsStructureContext;
+    myEditor = artifactsStructureContext.getOrCreateEditor(originalArtifact);
   }
 
   public void setDisplayName(String name) {
     final String oldName = getArtifact().getName();
     if (name != null && !name.equals(oldName) && !myIsInUpdateName) {
-      myPackagingEditorContext.getModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact).setName(name);
+      myArtifactsStructureContext.getModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact).setName(name);
       myEditor.updateOutputPath(oldName, name);
     }
   }
@@ -53,7 +52,7 @@ public class ArtifactConfigurable extends NamedConfigurable<Artifact> {
   }
 
   private Artifact getArtifact() {
-    return myPackagingEditorContext.getArtifactModel().getArtifactByOriginal(myOriginalArtifact);
+    return myArtifactsStructureContext.getArtifactModel().getArtifactByOriginal(myOriginalArtifact);
   }
 
   public Artifact getEditableObject() {
@@ -106,9 +105,9 @@ public class ArtifactConfigurable extends NamedConfigurable<Artifact> {
         if (!Comparing.equal(selected, getArtifact().getArtifactType())) {
           final CompositePackagingElement<?> element = myEditor.getRootElement();
           final CompositePackagingElement<?> newRootElement = selected.createRootElement();
-          myPackagingEditorContext.getModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact).setArtifactType(selected);
+          myArtifactsStructureContext.getModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact).setArtifactType(selected);
           if (!newRootElement.getType().equals(element.getType())) {
-            ArtifactUtil.copyChildren(element, newRootElement, myPackagingEditorContext.getProject());
+            ArtifactUtil.copyChildren(element, newRootElement, myArtifactsStructureContext.getProject());
             myEditor.getLayoutTreeComponent().setRootElement(newRootElement);
           }
         }

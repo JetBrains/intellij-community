@@ -8,10 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.packaging.elements.PackagingElementOutputKind;
-import com.intellij.packaging.ui.PackagingEditorContext;
-import com.intellij.packaging.ui.PackagingSourceItem;
-import com.intellij.packaging.ui.SourceItemPresentation;
-import com.intellij.packaging.ui.SourceItemWeights;
+import com.intellij.packaging.ui.*;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +26,7 @@ public class LibrarySourceItem extends PackagingSourceItem {
   }
 
   @Override
-  public SourceItemPresentation createPresentation(@NotNull PackagingEditorContext context) {
+  public SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new LibrarySourceItemPresentation(myLibrary);
   }
 
@@ -67,7 +64,7 @@ public class LibrarySourceItem extends PackagingSourceItem {
   }
 
   @NotNull
-  public List<? extends PackagingElement<?>> createElements(@NotNull PackagingEditorContext context) {
+  public List<? extends PackagingElement<?>> createElements(@NotNull ArtifactEditorContext context) {
     return PackagingElementFactory.getInstance().createLibraryElements(myLibrary);
   }
 

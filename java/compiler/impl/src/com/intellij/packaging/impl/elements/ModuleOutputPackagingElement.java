@@ -8,8 +8,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.ui.ModuleElementPresentation;
 import com.intellij.packaging.impl.ui.DelegatedPackagingElementPresentation;
-import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
+import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +34,7 @@ public class ModuleOutputPackagingElement extends PackagingElement<ModuleOutputP
     myModuleName = moduleName;
   }
 
-  public PackagingElementPresentation createPresentation(PackagingEditorContext context) {
+  public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new DelegatedPackagingElementPresentation(new ModuleElementPresentation(myModuleName, findModule(context)));
   }
 

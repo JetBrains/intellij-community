@@ -22,9 +22,8 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementType;
-import com.intellij.packaging.ui.ManifestFileConfiguration;
-import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
+import com.intellij.packaging.ui.ManifestFileConfiguration;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
@@ -65,7 +64,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   private ArtifactPropertiesEditors myPropertiesEditors;
   private ArtifactValidationManagerImpl myValidationManager;
 
-  public ArtifactEditorImpl(final PackagingEditorContext context, Artifact artifact) {
+  public ArtifactEditorImpl(final ArtifactsStructureConfigurableContext context, Artifact artifact) {
     myContext = new ArtifactEditorContextImpl(context, this);
     myOriginalArtifact = artifact;
     myProject = context.getProject();

@@ -5,9 +5,9 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactProperties;
 import com.intellij.packaging.artifacts.ArtifactPropertiesProvider;
 import com.intellij.packaging.artifacts.ModifiableArtifact;
-import com.intellij.packaging.ui.ArtifactPropertiesEditor;
-import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
+import com.intellij.packaging.ui.ArtifactEditorContext;
+import com.intellij.packaging.ui.ArtifactPropertiesEditor;
 import com.intellij.ui.TabbedPaneWrapper;
 
 import javax.swing.*;
@@ -18,11 +18,11 @@ import java.util.*;
  */
 public class ArtifactPropertiesEditors {
   private Map<String, JPanel> myMainPanels;
-  private final PackagingEditorContext myContext;
+  private final ArtifactEditorContext myContext;
   private final Artifact myOriginalArtifact;
   private List<PropertiesEditorInfo> myEditors;
 
-  public ArtifactPropertiesEditors(PackagingEditorContext context, Artifact originalArtifact) {
+  public ArtifactPropertiesEditors(ArtifactEditorContext context, Artifact originalArtifact) {
     myContext = context;
     myOriginalArtifact = originalArtifact;
     myMainPanels = new HashMap<String, JPanel>();

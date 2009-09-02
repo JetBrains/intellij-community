@@ -14,6 +14,6 @@ public abstract class PackagingSourceItemsProvider {
   public static final ExtensionPointName<PackagingSourceItemsProvider> EP_NAME = ExtensionPointName.create("com.intellij.packaging.sourceItemProvider");
 
   @NotNull
-  public abstract Collection<? extends PackagingSourceItem> getSourceItems(@NotNull PackagingEditorContext editorContext, @NotNull Artifact artifact,
+  public abstract Collection<? extends PackagingSourceItem> getSourceItems(@NotNull ArtifactEditorContext editorContext, @NotNull Artifact artifact,
                                                                                  @Nullable PackagingSourceItem parent);
 }

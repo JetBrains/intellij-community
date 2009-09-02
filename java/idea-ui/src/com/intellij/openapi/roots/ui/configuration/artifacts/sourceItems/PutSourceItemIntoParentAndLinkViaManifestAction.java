@@ -5,16 +5,16 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorImpl;
-import com.intellij.packaging.impl.artifacts.ArtifactUtil;
-import com.intellij.packaging.impl.artifacts.ParentElementProcessor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.impl.artifacts.ArtifactUtil;
+import com.intellij.packaging.impl.artifacts.ParentElementProcessor;
 import com.intellij.packaging.impl.elements.ManifestFileUtil;
 import com.intellij.packaging.ui.ArtifactEditor;
-import com.intellij.packaging.ui.PackagingEditorContext;
+import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingSourceItem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,7 +84,7 @@ public class PutSourceItemIntoParentAndLinkViaManifestAction extends AnAction {
     }
 
     final Artifact artifact = parentsInfo.getGrandparentArtifact();
-    final PackagingEditorContext context = myArtifactEditor.getContext();
+    final ArtifactEditorContext context = myArtifactEditor.getContext();
     context.ensureRootIsWritable(artifact);
     context.ensureRootIsWritable(parentsInfo.getParentArtifact());
     parentsInfo = findParentAndGrandParent(myArtifactEditor.getArtifact());//find elements under modifiable root

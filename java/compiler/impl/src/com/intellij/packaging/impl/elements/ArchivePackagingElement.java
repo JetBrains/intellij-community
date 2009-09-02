@@ -7,8 +7,8 @@ import com.intellij.compiler.ant.taskdefs.Jar;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.ui.ArchiveElementPresentation;
-import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
+import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +32,7 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
     myArchiveFileName = archiveFileName;
   }
 
-  public PackagingElementPresentation createPresentation(PackagingEditorContext context) {
+  public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new ArchiveElementPresentation(this);
   }
 

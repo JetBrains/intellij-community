@@ -6,10 +6,7 @@ import com.intellij.packaging.artifacts.ArtifactPointer;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.packaging.impl.ui.ArtifactElementPresentation;
-import com.intellij.packaging.ui.PackagingEditorContext;
-import com.intellij.packaging.ui.PackagingSourceItem;
-import com.intellij.packaging.ui.SourceItemPresentation;
-import com.intellij.packaging.ui.SourceItemWeights;
+import com.intellij.packaging.ui.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -25,7 +22,7 @@ public class ArtifactSourceItem extends PackagingSourceItem {
     myArtifact = artifact;
   }
 
-  public SourceItemPresentation createPresentation(@NotNull PackagingEditorContext context) {
+  public SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     final ArtifactPointer pointer = ArtifactPointerManager.getInstance(context.getProject()).create(myArtifact);
     return new DelegatedSourceItemPresentation(new ArtifactElementPresentation(pointer, context)) {
       @Override
@@ -36,7 +33,7 @@ public class ArtifactSourceItem extends PackagingSourceItem {
   }
 
   @NotNull
-  public List<? extends PackagingElement<?>> createElements(@NotNull PackagingEditorContext context) {
+  public List<? extends PackagingElement<?>> createElements(@NotNull ArtifactEditorContext context) {
     return Collections.singletonList(PackagingElementFactory.getInstance().createArtifactElement(myArtifact, context.getProject()));
   }
 

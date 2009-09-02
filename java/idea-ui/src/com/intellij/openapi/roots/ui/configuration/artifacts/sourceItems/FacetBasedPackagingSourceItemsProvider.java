@@ -29,7 +29,7 @@ public abstract class FacetBasedPackagingSourceItemsProvider<F extends Facet, E 
 
   @NotNull
   @Override
-  public Collection<? extends PackagingSourceItem> getSourceItems(@NotNull PackagingEditorContext editorContext, @NotNull Artifact artifact,
+  public Collection<? extends PackagingSourceItem> getSourceItems(@NotNull ArtifactEditorContext editorContext, @NotNull Artifact artifact,
                                                                   @Nullable PackagingSourceItem parent) {
     if (parent instanceof ModuleSourceItemGroup) {
       final Module module = ((ModuleSourceItemGroup)parent).getModule();
@@ -60,7 +60,7 @@ public abstract class FacetBasedPackagingSourceItemsProvider<F extends Facet, E 
 
   protected abstract TreeNodePresentation createPresentation(F facet);
 
-  protected abstract PackagingElement<?> createElement(PackagingEditorContext context, F facet);
+  protected abstract PackagingElement<?> createElement(ArtifactEditorContext context, F facet);
 
   private static class FacetBasedSourceItem<F extends Facet> extends PackagingSourceItem {
     private final FacetBasedPackagingSourceItemsProvider<F, ?> myProvider;
@@ -82,13 +82,13 @@ public abstract class FacetBasedPackagingSourceItemsProvider<F extends Facet, E 
     }
 
     @Override
-    public SourceItemPresentation createPresentation(@NotNull PackagingEditorContext context) {
+    public SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
       return new DelegatedSourceItemPresentation(myProvider.createPresentation(myFacet));
     }
 
     @NotNull
     @Override
-    public List<? extends PackagingElement<?>> createElements(@NotNull PackagingEditorContext context) {
+    public List<? extends PackagingElement<?>> createElements(@NotNull ArtifactEditorContext context) {
       return Collections.singletonList(myProvider.createElement(context, myFacet));
     }
 

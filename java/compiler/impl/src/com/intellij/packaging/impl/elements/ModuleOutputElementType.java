@@ -9,7 +9,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementType;
-import com.intellij.packaging.ui.PackagingEditorContext;
+import com.intellij.packaging.ui.ArtifactEditorContext;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -34,12 +34,12 @@ public class ModuleOutputElementType extends PackagingElementType<ModuleOutputPa
   }
 
   @Override
-  public boolean canCreate(@NotNull PackagingEditorContext context, @NotNull Artifact artifact) {
+  public boolean canCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact) {
     return context.getModulesProvider().getModules().length > 0;
   }
 
   @NotNull
-  public List<? extends ModuleOutputPackagingElement> chooseAndCreate(@NotNull PackagingEditorContext context, @NotNull Artifact artifact,
+  public List<? extends ModuleOutputPackagingElement> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
                                                                        @NotNull CompositePackagingElement<?> parent) {
     List<Module> modules = chooseModules(context, artifact);
     final List<ModuleOutputPackagingElement> elements = new ArrayList<ModuleOutputPackagingElement>();
@@ -49,7 +49,7 @@ public class ModuleOutputElementType extends PackagingElementType<ModuleOutputPa
     return elements;
   }
 
-  public static List<Module> chooseModules(PackagingEditorContext context, Artifact artifact) {
+  public static List<Module> chooseModules(ArtifactEditorContext context, Artifact artifact) {
     ChooseModulesDialog dialog = new ChooseModulesDialog(context.getProject(), Arrays.asList(context.getModulesProvider().getModules()), ProjectBundle.message("dialog.title.packaging.choose.module"), "");
     dialog.show();
     List<Module> modules = dialog.getChosenElements();

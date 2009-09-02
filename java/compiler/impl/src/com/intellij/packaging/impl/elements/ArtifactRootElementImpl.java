@@ -5,8 +5,8 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.artifacts.PlainArtifactType;
-import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
+import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +21,7 @@ public class ArtifactRootElementImpl extends ArtifactRootElement<Object> {
     super(PackagingElementFactoryImpl.ARTIFACT_ROOT_ELEMENT_TYPE);
   }
 
-  public PackagingElementPresentation createPresentation(PackagingEditorContext context) {
+  public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new PackagingElementPresentation() {
       @Override
       public String getPresentableName() {

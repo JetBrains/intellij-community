@@ -5,10 +5,7 @@ import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementOutputKind;
 import com.intellij.packaging.impl.elements.ModuleOutputPackagingElement;
 import com.intellij.packaging.impl.ui.ModuleElementPresentation;
-import com.intellij.packaging.ui.PackagingEditorContext;
-import com.intellij.packaging.ui.PackagingSourceItem;
-import com.intellij.packaging.ui.SourceItemPresentation;
-import com.intellij.packaging.ui.SourceItemWeights;
+import com.intellij.packaging.ui.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -33,7 +30,7 @@ public class ModuleOutputSourceItem extends PackagingSourceItem {
   }
 
   @Override
-  public SourceItemPresentation createPresentation(@NotNull PackagingEditorContext context) {
+  public SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new DelegatedSourceItemPresentation(new ModuleElementPresentation(myModule.getName(), myModule)) {
       @Override
       public int getWeight() {
@@ -43,7 +40,7 @@ public class ModuleOutputSourceItem extends PackagingSourceItem {
   }
 
   @NotNull
-  public List<? extends PackagingElement<?>> createElements(@NotNull PackagingEditorContext context) {
+  public List<? extends PackagingElement<?>> createElements(@NotNull ArtifactEditorContext context) {
     return Collections.singletonList(new ModuleOutputPackagingElement(myModule.getName()));
   }
 

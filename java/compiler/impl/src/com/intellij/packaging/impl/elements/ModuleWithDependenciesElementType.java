@@ -3,7 +3,7 @@ package com.intellij.packaging.impl.elements;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementType;
-import com.intellij.packaging.ui.PackagingEditorContext;
+import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -29,12 +29,12 @@ public class ModuleWithDependenciesElementType extends PackagingElementType<Modu
   }
 
   @Override
-  public boolean canCreate(@NotNull PackagingEditorContext context, @NotNull Artifact artifact) {
+  public boolean canCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact) {
     return context.getModulesProvider().getModules().length > 0;
   }
 
   @NotNull
-  public List<? extends ModuleWithDependenciesPackagingElement> chooseAndCreate(@NotNull PackagingEditorContext context,
+  public List<? extends ModuleWithDependenciesPackagingElement> chooseAndCreate(@NotNull ArtifactEditorContext context,
                                                                                  @NotNull Artifact artifact,
                                                                                  @NotNull CompositePackagingElement<?> parent) {
     final List<Module> modules = ModuleOutputElementType.chooseModules(context, artifact);

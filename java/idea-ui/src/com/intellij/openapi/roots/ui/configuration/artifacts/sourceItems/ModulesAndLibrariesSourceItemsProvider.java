@@ -6,13 +6,16 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.impl.elements.*;
-import com.intellij.packaging.ui.PackagingEditorContext;
+import com.intellij.packaging.impl.artifacts.ArtifactUtil;
+import com.intellij.packaging.impl.elements.FileCopyPackagingElement;
+import com.intellij.packaging.impl.elements.ModuleOutputElementType;
+import com.intellij.packaging.impl.elements.ModuleOutputPackagingElement;
+import com.intellij.packaging.impl.elements.PackagingElementFactoryImpl;
+import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingSourceItem;
 import com.intellij.packaging.ui.PackagingSourceItemsProvider;
 import com.intellij.util.ArrayUtil;
@@ -27,7 +30,7 @@ import java.util.*;
 public class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItemsProvider {
 
   @NotNull
-  public Collection<? extends PackagingSourceItem> getSourceItems(@NotNull PackagingEditorContext editorContext, @NotNull Artifact artifact,
+  public Collection<? extends PackagingSourceItem> getSourceItems(@NotNull ArtifactEditorContext editorContext, @NotNull Artifact artifact,
                                                                   PackagingSourceItem parent) {
     if (parent == null) {
       return createModuleItems(editorContext, artifact, ArrayUtil.EMPTY_STRING_ARRAY);
@@ -41,7 +44,7 @@ public class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItems
     return Collections.emptyList();
   }
 
-  private static Collection<? extends PackagingSourceItem> createClasspathItems(PackagingEditorContext editorContext,
+  private static Collection<? extends PackagingSourceItem> createClasspathItems(ArtifactEditorContext editorContext,
                                                                                 Artifact artifact, @NotNull Module module) {
     final List<PackagingSourceItem> items = new ArrayList<PackagingSourceItem>();
     final ModuleRootModel rootModel = editorContext.getModulesProvider().getRootModel(module);
@@ -65,7 +68,7 @@ public class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItems
     return items;
   }
 
-  private static Collection<? extends PackagingSourceItem> createModuleItems(PackagingEditorContext editorContext, Artifact artifact, @NotNull String[] groupPath) {
+  private static Collection<? extends PackagingSourceItem> createModuleItems(ArtifactEditorContext editorContext, Artifact artifact, @NotNull String[] groupPath) {
     final Module[] modules = editorContext.getModulesProvider().getModules();
     final List<PackagingSourceItem> items = new ArrayList<PackagingSourceItem>();
     Set<String> groups = new HashSet<String>();
@@ -89,7 +92,7 @@ public class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItems
   }
 
   @NotNull
-  private static List<? extends Module> getNotAddedModules(@NotNull final PackagingEditorContext context, @NotNull Artifact artifact,
+  private static List<? extends Module> getNotAddedModules(@NotNull final ArtifactEditorContext context, @NotNull Artifact artifact,
                                                           final Module... allModules) {
     final Set<Module> modules = new HashSet<Module>(Arrays.asList(allModules));
     ArtifactUtil.processPackagingElements(artifact, ModuleOutputElementType.MODULE_OUTPUT_ELEMENT_TYPE, new Processor<ModuleOutputPackagingElement>() {
@@ -101,7 +104,7 @@ public class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItems
     return new ArrayList<Module>(modules);
   }
 
-  private static List<? extends Library> getNotAddedLibraries(@NotNull final PackagingEditorContext context, @NotNull Artifact artifact,
+  private static List<? extends Library> getNotAddedLibraries(@NotNull final ArtifactEditorContext context, @NotNull Artifact artifact,
                                                              List<Library> librariesList) {
     final Set<VirtualFile> roots = new HashSet<VirtualFile>();
     ArtifactUtil.processPackagingElements(artifact, PackagingElementFactoryImpl.FILE_COPY_ELEMENT_TYPE, new Processor<FileCopyPackagingElement>() {

@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactProperties;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
-import com.intellij.packaging.ui.PackagingEditorContext;
+import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -24,7 +24,7 @@ public class AntArtifactPostprocessingProperties extends ArtifactProperties<AntA
   private String myTargetName;
   private boolean myEnabled;
 
-  public ArtifactPropertiesEditor createEditor(@NotNull PackagingEditorContext context) {
+  public ArtifactPropertiesEditor createEditor(@NotNull ArtifactEditorContext context) {
     return new AntArtifactPostprocessingPropertiesEditor(this, context.getProject());
   }
 

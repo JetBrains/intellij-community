@@ -1,20 +1,22 @@
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.packaging.ChooseLibrariesDialog;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementType;
-import com.intellij.packaging.ui.PackagingEditorContext;
+import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
 * @author nik
@@ -32,12 +34,12 @@ public class LibraryElementType extends PackagingElementType<LibraryPackagingEle
   }
 
   @Override
-  public boolean canCreate(@NotNull PackagingEditorContext context, @NotNull Artifact artifact) {
+  public boolean canCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact) {
     return !getAllLibraries(context).isEmpty();
   }
 
   @NotNull
-  public List<? extends LibraryPackagingElement> chooseAndCreate(@NotNull PackagingEditorContext context, @NotNull Artifact artifact,
+  public List<? extends LibraryPackagingElement> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
                                                                   @NotNull CompositePackagingElement<?> parent) {
     ChooseLibrariesDialog dialog = new ChooseLibrariesDialog(context.getProject(), getAllLibraries(context),
                                                              ProjectBundle.message("dialog.title.packaging.choose.library"), "");
@@ -52,7 +54,7 @@ public class LibraryElementType extends PackagingElementType<LibraryPackagingEle
     return elements;
   }
 
-  private List<Library> getAllLibraries(PackagingEditorContext context) {
+  private List<Library> getAllLibraries(ArtifactEditorContext context) {
     List<Library> libraries = new ArrayList<Library>();
     libraries.addAll(Arrays.asList(LibraryTablesRegistrar.getInstance().getLibraryTable().getLibraries()));
     libraries.addAll(Arrays.asList(LibraryTablesRegistrar.getInstance().getLibraryTable(context.getProject()).getLibraries()));

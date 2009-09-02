@@ -3,8 +3,8 @@ package com.intellij.packaging.impl.elements;
 import com.intellij.compiler.ant.Generator;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.ui.DirectoryElementPresentation;
-import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
+import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -31,7 +31,7 @@ public class DirectoryPackagingElement extends CompositeElementWithManifest<Dire
     myDirectoryName = directoryName;
   }
 
-  public PackagingElementPresentation createPresentation(PackagingEditorContext context) {
+  public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new DirectoryElementPresentation(this); 
   }
 

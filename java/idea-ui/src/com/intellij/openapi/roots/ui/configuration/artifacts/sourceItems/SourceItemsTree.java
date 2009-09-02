@@ -19,7 +19,6 @@ import com.intellij.openapi.roots.ui.configuration.artifacts.SourceItemsDragging
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.packaging.ui.ArtifactEditorContext;
-import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingSourceItem;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.treeStructure.SimpleTreeBuilder;
@@ -38,12 +37,10 @@ import java.util.List;
  */
 public class SourceItemsTree implements DnDSource, Disposable{
   private SimpleDnDAwareTree myTree;
-  private final PackagingEditorContext myEditorContext;
   private final ArtifactEditorImpl myArtifactsEditor;
   private SimpleTreeBuilder myBuilder;
 
   public SourceItemsTree(ArtifactEditorContext editorContext, ArtifactEditorImpl artifactsEditor) {
-    myEditorContext = editorContext;
     myArtifactsEditor = artifactsEditor;
     myTree = new SimpleDnDAwareTree();
     myBuilder = new SimpleTreeBuilder(myTree, myTree.getBuilderModel(), new SourceItemsTreeStructure(editorContext, artifactsEditor), new WeightBasedComparator(true));

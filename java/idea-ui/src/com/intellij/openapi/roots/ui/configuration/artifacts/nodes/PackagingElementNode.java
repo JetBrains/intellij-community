@@ -1,17 +1,16 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts.nodes;
 
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorContextImpl;
+import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.ui.ArtifactEditorContext;
-import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.SmartList;
-import com.intellij.ide.projectView.PresentationData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -114,7 +113,7 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
     return nodeSources != null ? nodeSources : Collections.<PackagingNodeSource>emptyList();
   }
 
-  public PackagingEditorContext getContext() {
+  public ArtifactEditorContext getContext() {
     return myContext;
   }
 }

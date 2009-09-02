@@ -2,11 +2,11 @@ package com.intellij.packaging.impl.ui;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.configuration.packaging.PackagingEditorUtil;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.packaging.PackagingEditorUtil;
+import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.packaging.ui.PackagingElementWeights;
-import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
@@ -17,9 +17,9 @@ import org.jetbrains.annotations.NotNull;
 public class LibraryElementPresentation extends PackagingElementPresentation {
   private final Library myLibrary;
   private final String myName;
-  private final PackagingEditorContext myContext;
+  private final ArtifactEditorContext myContext;
 
-  public LibraryElementPresentation(String level, String name, Library library, PackagingEditorContext context) {
+  public LibraryElementPresentation(String level, String name, Library library, ArtifactEditorContext context) {
     myLibrary = library;
     myName = name;
     myContext = context;

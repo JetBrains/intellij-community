@@ -10,7 +10,6 @@ import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.impl.artifacts.ArtifactModelImpl;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.ui.ManifestFileConfiguration;
-import com.intellij.packaging.ui.PackagingEditorContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +19,7 @@ import java.util.Map;
 /**
 * @author nik
 */
-class ArtifactsStructureConfigurableContextImpl implements PackagingEditorContext {
+class ArtifactsStructureConfigurableContextImpl implements ArtifactsStructureConfigurableContext {
   private ModifiableArtifactModel myModifiableModel;
   private final ManifestFilesInfo myManifestFilesInfo = new ManifestFilesInfo();
   private ArtifactAdapter myModifiableModelListener;

@@ -1,10 +1,7 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.packaging.ui.PackagingSourceItem;
-import com.intellij.packaging.ui.SourceItemPresentation;
-import com.intellij.packaging.ui.PackagingEditorContext;
-import com.intellij.packaging.ui.SourceItemWeights;
+import com.intellij.packaging.ui.*;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.impl.elements.ModuleWithDependenciesPackagingElement;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -25,7 +22,7 @@ public class ModuleSourceItemGroup extends PackagingSourceItem {
     myModule = module;
   }
 
-  public SourceItemPresentation createPresentation(@NotNull PackagingEditorContext context) {
+  public SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new ModuleSourceItemPresentation(myModule);
   }
 
@@ -38,7 +35,7 @@ public class ModuleSourceItemGroup extends PackagingSourceItem {
   }
 
   @NotNull
-  public List<? extends PackagingElement<?>> createElements(@NotNull PackagingEditorContext context) {
+  public List<? extends PackagingElement<?>> createElements(@NotNull ArtifactEditorContext context) {
     return Collections.singletonList(new ModuleWithDependenciesPackagingElement(myModule.getName()));
   }
 

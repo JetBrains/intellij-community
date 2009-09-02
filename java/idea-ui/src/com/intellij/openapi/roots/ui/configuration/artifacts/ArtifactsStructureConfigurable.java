@@ -12,7 +12,6 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.BaseStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.packaging.artifacts.*;
-import com.intellij.packaging.ui.PackagingEditorContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -81,7 +80,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     return myPackagingEditorContext.getManifestFilesInfo().isManifestFilesModified() || super.isModified();
   }
 
-  public PackagingEditorContext getPackagingEditorContext() {
+  public ArtifactsStructureConfigurableContext getArtifactsStructureContext() {
     return myPackagingEditorContext;
   }
 

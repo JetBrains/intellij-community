@@ -4,9 +4,8 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.ui.PackagingEditorContext;
-import com.intellij.packaging.ui.PackagingElementPropertiesPanel;
 import com.intellij.packaging.ui.ArtifactEditorContext;
+import com.intellij.packaging.ui.PackagingElementPropertiesPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,10 +39,10 @@ public abstract class PackagingElementType<E extends PackagingElement<?>> {
     return null;
   }
 
-  public abstract boolean canCreate(@NotNull PackagingEditorContext context, @NotNull Artifact artifact);
+  public abstract boolean canCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact);
 
   @NotNull 
-  public abstract List<? extends E> chooseAndCreate(@NotNull PackagingEditorContext context, @NotNull Artifact artifact,
+  public abstract List<? extends E> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
                                                     @NotNull CompositePackagingElement<?> parent);
 
   @NotNull

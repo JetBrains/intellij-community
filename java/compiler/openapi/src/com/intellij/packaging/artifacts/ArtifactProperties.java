@@ -1,10 +1,9 @@
 package com.intellij.packaging.artifacts;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
-import com.intellij.packaging.ui.PackagingEditorContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -15,5 +14,5 @@ public abstract class ArtifactProperties<S> implements PersistentStateComponent<
   public void onBuildFinished(@NotNull Artifact artifact, @NotNull CompileContext compileContext) {
   }
 
-  public abstract ArtifactPropertiesEditor createEditor(@NotNull PackagingEditorContext context);
+  public abstract ArtifactPropertiesEditor createEditor(@NotNull ArtifactEditorContext context);
 }

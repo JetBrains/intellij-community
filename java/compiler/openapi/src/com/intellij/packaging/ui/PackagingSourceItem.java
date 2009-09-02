@@ -26,10 +26,10 @@ public abstract class PackagingSourceItem {
   @Override
   public abstract int hashCode();
 
-  public abstract SourceItemPresentation createPresentation(@NotNull PackagingEditorContext context);
+  public abstract SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context);
 
   @NotNull
-  public abstract List<? extends PackagingElement<?>> createElements(@NotNull PackagingEditorContext context);
+  public abstract List<? extends PackagingElement<?>> createElements(@NotNull ArtifactEditorContext context);
 
   public boolean isProvideElements() {
     return myProvideElements;

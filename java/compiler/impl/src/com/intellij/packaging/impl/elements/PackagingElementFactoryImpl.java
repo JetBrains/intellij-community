@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactPointerManager;
 import com.intellij.packaging.elements.*;
-import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementPropertiesPanel;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.impl.ui.properties.ArchiveElementPropertiesPanel;
@@ -272,7 +271,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
       return null;
     }
 
-    public DirectoryPackagingElement createComposite(@NotNull PackagingEditorContext context, CompositePackagingElement<?> parent) {
+    public DirectoryPackagingElement createComposite(@NotNull ArtifactEditorContext context, CompositePackagingElement<?> parent) {
       final String initialValue = suggestFileName(parent, "folder", "");
       final String name = Messages.showInputDialog(context.getProject(), "Enter directory name: ", "New Directory", null, initialValue, null);
       if (name == null) return null;
@@ -306,7 +305,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
       return null;
     }
 
-    public ArchivePackagingElement createComposite(@NotNull PackagingEditorContext context, CompositePackagingElement<?> parent) {
+    public ArchivePackagingElement createComposite(@NotNull ArtifactEditorContext context, CompositePackagingElement<?> parent) {
       final String initialValue = suggestFileName(parent, "archive", ".jar");
       final String name = Messages.showInputDialog(context.getProject(), "Enter archive name: ", "New Archive", null, initialValue, null);
       if (name == null) return null;
@@ -325,12 +324,12 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     }
 
     @Override
-    public boolean canCreate(@NotNull PackagingEditorContext context, @NotNull Artifact artifact) {
+    public boolean canCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact) {
       return true;
     }
 
     @NotNull
-    public List<? extends FileCopyPackagingElement> chooseAndCreate(@NotNull PackagingEditorContext context, @NotNull Artifact artifact,
+    public List<? extends FileCopyPackagingElement> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
                                                                      @NotNull CompositePackagingElement<?> parent) {
       final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, true, true, false, true);
       final FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, context.getProject());
@@ -354,12 +353,12 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     }
 
     @Override
-    public boolean canCreate(@NotNull PackagingEditorContext context, @NotNull Artifact artifact) {
+    public boolean canCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact) {
       return false;
     }
 
     @NotNull
-    public List<? extends ArtifactRootElement<?>> chooseAndCreate(@NotNull PackagingEditorContext context, @NotNull Artifact artifact,
+    public List<? extends ArtifactRootElement<?>> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
                                                                    @NotNull CompositePackagingElement<?> parent) {
       throw new UnsupportedOperationException("'create' not implemented in " + getClass().getName());
     }

@@ -11,8 +11,8 @@ import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.elements.PackagingElementOutputKind;
 import com.intellij.packaging.impl.ui.LibraryElementPresentation;
-import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
+import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.util.PathUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -59,7 +59,7 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
     return library != null ? LibrarySourceItem.getKindForLibrary(library) : PackagingElementOutputKind.OTHER;
   }
 
-  public PackagingElementPresentation createPresentation(PackagingEditorContext context) {
+  public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new LibraryElementPresentation(myLevel, myName, findLibrary(context), context);
   }
 
