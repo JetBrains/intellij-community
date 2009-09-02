@@ -211,18 +211,8 @@ public class JDOMXIncluder {
     if (parse) {
       assert !bases.contains(remote.toExternalForm()) : "Circular XInclude Reference to " + remote.toExternalForm();
 
-      List<Object> remoteParsed;
-      try {
-        remoteParsed = parseRemote(bases, remote);
-      }
-      catch (XIncludeException e) {
-        final Element fallbackElement = element.getChild("fallback", element.getNamespace());
-        if (fallbackElement != null) {
-          // TODO[yole] return content of fallback element (we don't have any fallbacks with content ATM)
-          return new ArrayList<Object>();                    
-        }
-        throw e;
-      }
+      final Element fallbackElement = element.getChild("fallback", element.getNamespace());
+      List<Object> remoteParsed = parseRemote(bases, remote, fallbackElement);
       remoteParsed = extractNeededChildren(element, remoteParsed);
 
       for (int i = 0; i < remoteParsed.size(); i++) {
@@ -301,7 +291,7 @@ public class JDOMXIncluder {
     }
   }
 
-  private static List<Object> parseRemote(final Stack<String> bases, final URL remote) {
+  private static List<Object> parseRemote(final Stack<String> bases, final URL remote, @Nullable Element fallbackElement) {
     try {
       Document doc = JDOMUtil.loadResourceDocument(remote);
       bases.push(remote.toExternalForm());
@@ -317,6 +307,10 @@ public class JDOMXIncluder {
       throw new XIncludeException(e);
     }
     catch (IOException e) {
+      if (fallbackElement != null) {
+        // TODO[yole] return contents of fallback element (we don't have fallback elements with content ATM)
+        return Collections.emptyList();
+      }
       throw new XIncludeException(e);
     }
   }
