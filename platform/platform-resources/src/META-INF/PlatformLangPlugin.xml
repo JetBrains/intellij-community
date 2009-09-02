@@ -79,5 +79,8 @@
   </project-components>
 
   <xi:include href="xdebugger.xml" xpointer="xpointer(/root/*)"/>
+  <xi:include href="/META-INF/ultimate.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
 
 </idea-plugin>
