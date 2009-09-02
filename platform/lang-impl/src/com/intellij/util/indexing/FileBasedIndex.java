@@ -54,6 +54,7 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.io.*;
@@ -782,6 +783,11 @@ public class FileBasedIndex implements ApplicationComponent {
     requestRebuild(indexId);
     LOG.info(e);
     checkRebuild(indexId, false);
+  }
+
+  @TestOnly
+  public boolean isIndexReady(final ID<?, ?> indexId) {
+    return myRebuildStatus.get(indexId).get() == OK;
   }
 
   private void checkRebuild(final ID<?, ?> indexId, final boolean cleanupOnly) {
