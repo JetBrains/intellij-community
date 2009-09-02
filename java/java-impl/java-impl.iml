@@ -24,6 +24,7 @@
     <orderEntry type="library" name="asm" level="project" />
     <orderEntry type="module" module-name="dom-openapi" />
     <orderEntry type="module" module-name="dom-impl" />
+    <orderEntry type="module" module-name="vcs-impl" />
   </component>
   <component name="copyright">
     <Base>
