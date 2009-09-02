@@ -16,9 +16,10 @@
 
 package org.jetbrains.plugins.groovy.config;
 
-import com.intellij.conversion.ProjectConverter;
-import com.intellij.conversion.ModuleSettings;
-import com.intellij.conversion.ConversionProcessor;
+import com.intellij.conversion.*;
+import org.jdom.Element;
+
+import java.util.ArrayList;
 
 /**
  * @author nik
@@ -27,5 +28,39 @@ public class GroovyProjectConverter extends ProjectConverter {
   @Override
   public ConversionProcessor<ModuleSettings> createModuleFileConverter() {
     return new GroovyModuleConverter();
+  }
+
+  @Override
+  public ConversionProcessor<WorkspaceSettings> createWorkspaceFileConverter() {
+    return new ConversionProcessor<WorkspaceSettings>() {
+      @Override
+      public boolean isConversionNeeded(WorkspaceSettings workspaceSettings) {
+        for (Element element : workspaceSettings.getRunConfigurations()) {
+          final String confType = element.getAttributeValue("type");
+          if ("GrailsTestsRunConfigurationType".equals(confType) || "GantScriptRunConfiguration".equals(confType)) {
+            return true;
+          }
+        }
+
+        return false;
+      }
+
+      @Override
+      public void process(WorkspaceSettings workspaceSettings) throws CannotConvertException {
+        for (Element element : new ArrayList<Element>(workspaceSettings.getRunConfigurations())) {
+          final String confType = element.getAttributeValue("type");
+          final boolean wasGrails = "GrailsTestsRunConfigurationType".equals(confType);
+          if (wasGrails || "GantScriptRunConfiguration".equals(confType)) {
+            if ("true".equals(element.getAttributeValue("default"))) {
+              element.detach();
+            } else {
+              element.setAttribute("type", wasGrails ? "GrailsRunConfigurationType" : "GroovyScriptRunConfiguration");
+              element.setAttribute("factoryName", wasGrails ? "Grails Application" : "Groovy Script");
+            }
+          }
+        }
+
+      }
+    };
   }
 }

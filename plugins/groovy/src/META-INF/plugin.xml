@@ -186,11 +186,6 @@
     <projectService serviceInterface="org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker"
                     serviceImplementation="org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker"/>
 
-    <!--Gant filetype-->
-    <quoteHandler fileType="Gant" className="org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler"/>
-    <!--Gant Run/debug-->
-    <configurationType implementation="org.jetbrains.plugins.groovy.gant.GantScriptRunConfigurationType"/>
-
     <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.gant.GantReferenceContributor"/>
     <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.providers.GroovyReferenceContributor"/>
 
