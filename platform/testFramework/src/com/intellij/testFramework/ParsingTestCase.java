@@ -24,6 +24,12 @@ public abstract class ParsingTestCase extends LightPlatformTestCase {
     myFileExt = fileExt;
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    myFile = null;
+    super.tearDown();
+  }
+
   protected String getTestDataPath() {
     return PathManagerEx.getTestDataPath();
   }
