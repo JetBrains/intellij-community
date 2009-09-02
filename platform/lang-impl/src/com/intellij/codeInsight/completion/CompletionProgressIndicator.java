@@ -182,7 +182,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void liveAfterDeath(@Nullable final LightweightHint hint) {
-    if (myModifiersReleased) {
+    if (myModifiersReleased || ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
 
