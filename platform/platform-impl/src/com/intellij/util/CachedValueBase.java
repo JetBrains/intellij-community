@@ -72,7 +72,7 @@ public abstract class CachedValueBase<T> {
     }
     else {
       Object[] items = result.getDependencyItems();
-      return result.getValue() == null ? items : ArrayUtil.append(items, result.getValue());
+      return result.getValue() == null ? items : items == null ? new Object[] {result.getValue()}: ArrayUtil.append(items, result.getValue());
     }
   }
 
