@@ -9,7 +9,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="Annotations" />
     <orderEntry type="module" module-name="xml-openapi" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="platform-impl" />
@@ -28,13 +27,13 @@
     <orderEntry type="module" module-name="debugger-impl" />
     <orderEntry type="module" module-name="xml" />
     <orderEntry type="library" name="commons-collections" level="project" />
-    <orderEntry type="module" module-name="codeInsight-impl" />
     <orderEntry type="module" module-name="xslt-rt" />
     <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="testFramework-java" />
     <orderEntry type="module" module-name="lvcs-impl" />
     <orderEntry type="module" module-name="jam-support-impl" />
     <orderEntry type="module" module-name="execution-openapi" />
+    <orderEntry type="module" module-name="annotations" />
   </component>
 </module>
 

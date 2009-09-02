@@ -15,7 +15,6 @@
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="jsp-openapi" />
     <orderEntry type="module" module-name="refactoring-impl" />
-    <orderEntry type="module" module-name="codeInsight-impl" />
     <orderEntry type="module" module-name="testFramework-java" />
     <orderEntry type="module" module-name="java-impl" />
   </component>
