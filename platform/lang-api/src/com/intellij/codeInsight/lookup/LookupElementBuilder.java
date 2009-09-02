@@ -18,6 +18,8 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,12 +50,20 @@ public class LookupElementBuilder extends LookupElement {
     myHardcodedPresentation = hardcodedPresentation;
   }
 
-  LookupElementBuilder(@NotNull String lookupString) {
-    this(lookupString, lookupString);
+  private LookupElementBuilder(@NotNull String lookupString, @NotNull Object object) {
+    this(lookupString, object, AutoCompletionPolicy.SETTINGS_DEPENDENT, null, null, null);
   }
 
-  LookupElementBuilder(@NotNull String lookupString, @NotNull Object object) {
-    this(lookupString, object, AutoCompletionPolicy.SETTINGS_DEPENDENT, null, null, null);
+  public static LookupElementBuilder create(@NotNull String lookupString) {
+    return new LookupElementBuilder(lookupString, lookupString);
+  }
+
+  public static LookupElementBuilder create(@NotNull PsiNamedElement element) {
+    return new LookupElementBuilder(ObjectUtils.assertNotNull(element.getName()), element);
+  }
+
+  public static LookupElementBuilder create(@NotNull String lookupString, @NotNull Object lookupObject) {
+    return new LookupElementBuilder(lookupString, lookupObject);
   }
 
   public LookupElementBuilder setInsertHandler(@Nullable InsertHandler<LookupElement> insertHandler) {

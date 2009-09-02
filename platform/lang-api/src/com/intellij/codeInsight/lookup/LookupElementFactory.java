@@ -41,7 +41,7 @@ public abstract class LookupElementFactory {
   }
 
   public static LookupElementBuilder builder(@NotNull String lookupString, @NotNull Object lookupObject) {
-    return new LookupElementBuilder(lookupString, lookupObject);
+    return LookupElementBuilder.create(lookupString, lookupObject);
   }
 
 }
