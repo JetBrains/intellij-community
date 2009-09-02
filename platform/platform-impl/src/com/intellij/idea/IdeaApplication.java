@@ -48,25 +48,16 @@ public class IdeaApplication {
     myArgs = args;
     boolean isInternal = Boolean.valueOf(System.getProperty(IDEA_IS_INTERNAL_PROPERTY)).booleanValue();
 
-    @NonNls final String componentsDescriptor = getComponentSetsDescriptor();
-
     if (Main.isCommandLine(args)) {
-      new CommandLineApplication(isInternal, false, Main.isHeadless(args), componentsDescriptor);
+      new CommandLineApplication(isInternal, false, Main.isHeadless(args));
     }
     else {
       System.setProperty("sun.awt.noerasebackground","true");
-      ApplicationManagerEx.createApplication(componentsDescriptor, isInternal, false, false, false, "idea");
+      ApplicationManagerEx.createApplication(isInternal, false, false, false, "idea");
     }
 
     myStarter = getStarter();
     myStarter.premain(args);
-  }
-
-  @NonNls
-  public static String getComponentSetsDescriptor() {
-    final String platformPrefix = System.getProperty("idea.platform.prefix");
-    return platformPrefix != null ? "componentSets/" + platformPrefix + "Components"
-                                  : "componentSets/IdeaComponents";
   }
 
   protected ApplicationStarter getStarter() {

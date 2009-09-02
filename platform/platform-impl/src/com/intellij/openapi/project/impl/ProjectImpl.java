@@ -157,8 +157,6 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   }
 
   public void loadProjectComponents() {
-    loadComponentsConfiguration(PROJECT_LAYER, isDefault());
-
     final Application app = ApplicationManager.getApplication();
     final IdeaPluginDescriptor[] plugins = app.getPlugins();
     for (IdeaPluginDescriptor plugin : plugins) {

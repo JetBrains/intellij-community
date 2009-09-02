@@ -354,10 +354,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     myConfigurator.loadComponentsConfiguration(components, descriptor, defaultProject);
   }
 
-  protected void loadComponentsConfiguration(final String layer, final boolean defaultProject) {
-    myConfigurator.loadComponentsConfiguration(layer, defaultProject);
-  }
-
   protected void boostrapPicoContainer() {
     myPicoContainer = createPicoContainer();
 

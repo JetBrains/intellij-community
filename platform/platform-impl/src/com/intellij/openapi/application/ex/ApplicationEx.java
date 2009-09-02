@@ -30,8 +30,6 @@ public interface ApplicationEx extends Application {
 
   boolean isInternal();
 
-  String getComponentsDescriptor();
-
   String getName();
 
   boolean holdsReadLock();

@@ -73,10 +73,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private boolean myHeadlessMode = false;
   private boolean myCommandLineMode = false;
 
-  private final String myComponentsDescriptor;
-
   private boolean myIsInternal = false;
-  @NonNls private static final String APPLICATION_LAYER = "application-components";
   private final String myName;
 
   private final ReentrantWriterPreferenceReadWriteLock myActionsLock = new ReentrantWriterPreferenceReadWriteLock();
@@ -136,7 +133,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return (IApplicationStore)super.getStateStore();
   }
 
-  public ApplicationImpl(String componentsDescriptor, boolean isInternal, boolean isUnitTestMode, boolean isHeadless, boolean isCommandLine, String appName) {
+  public ApplicationImpl(boolean isInternal, boolean isUnitTestMode, boolean isHeadless, boolean isCommandLine, String appName) {
     super(null);
 
     getPicoContainer().registerComponentInstance(Application.class, this);
@@ -168,7 +165,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       IconLoader.activate();
     }
 
-    myComponentsDescriptor = componentsDescriptor;
     myIsInternal = isInternal;
     myTestModeFlag = isUnitTestMode;
     myHeadlessMode = isHeadless;
@@ -236,10 +232,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     Disposer.assertIsEmpty();
   }
 
-  public String getComponentsDescriptor() {
-    return myComponentsDescriptor;
-  }
-
   public String getName() {
     return myName;
   }
@@ -282,8 +274,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   private void loadApplicationComponents() {
-    loadComponentsConfiguration(APPLICATION_LAYER, false);
-
     final IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
     for (IdeaPluginDescriptor plugin : plugins) {
       if (PluginManager.shouldSkipPlugin(plugin)) continue;

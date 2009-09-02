@@ -58,10 +58,6 @@ public class MockApplication extends MockComponentManager implements Application
   public void exit(boolean force) {
   }
 
-  public String getComponentsDescriptor() {
-    return null;
-  }
-
   public void assertReadAccessAllowed() {
   }
 

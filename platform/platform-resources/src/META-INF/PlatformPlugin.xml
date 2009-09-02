@@ -2,6 +2,8 @@
   <id>com.intellij</id>
   <name>IDEA CORE</name>
 
+  <xi:include href="/componentSets/PlatformComponents.xml" xpointer="xpointer(/components/*)"/>
+
   <extensionPoints>
     <xi:include href="/META-INF/PlatformExtensionPoints.xml" xpointer="xpointer(/extensionPoints/*)"/>
     <xi:include href="/META-INF/VcsExtensionPoints.xml" xpointer="xpointer(/extensionPoints/*)"/>
