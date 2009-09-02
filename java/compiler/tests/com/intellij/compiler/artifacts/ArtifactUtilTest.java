@@ -1,7 +1,7 @@
 package com.intellij.compiler.artifacts;
 
-import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactUtil;
-import com.intellij.openapi.roots.ui.configuration.artifacts.ParentElementProcessor;
+import com.intellij.packaging.impl.artifacts.ArtifactUtil;
+import com.intellij.packaging.impl.artifacts.ParentElementProcessor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
