@@ -79,7 +79,7 @@ public class CopyElementAction extends AnAction {
     PsiElement element = getTargetElement(editor, project);
     boolean result = element != null && CopyHandler.canCopy(new PsiElement[]{element});
 
-    if (!result) {
+    if (!result && file != null) {
       result = CopyHandler.canCopy(new PsiElement[]{file});
     }
 
