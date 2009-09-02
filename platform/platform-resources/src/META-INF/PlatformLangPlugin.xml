@@ -8,6 +8,7 @@
   <module value="com.intellij.modules.xdebugger"/>
 
   <xi:include href="/componentSets/PlatformLangComponents.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="/idea/PlatformLangActionManager.xml" xpointer="xpointer(/component/*)"/>
 
   <extensionPoints>
     <xi:include href="/META-INF/PlatformExtensionPoints.xml" xpointer="xpointer(/extensionPoints/*)"/>

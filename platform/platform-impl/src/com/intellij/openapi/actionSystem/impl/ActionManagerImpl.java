@@ -46,7 +46,7 @@ import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.List;
 
-public final class ActionManagerImpl extends ActionManagerEx implements JDOMExternalizable, ApplicationComponent {
+public final class ActionManagerImpl extends ActionManagerEx implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.impl.ActionManagerImpl");
   private static final int TIMER_DELAY = 500;
   private static final int UPDATE_DELAY_AFTER_TYPING = 500;
@@ -115,6 +115,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     myCachedActionListeners = null;
     myKeymapManager = keymapManager;
     myDataManager = dataManager;
+
+    registerPluginActions();
   }
 
   public void initComponent() {}
@@ -156,17 +158,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   }
 
 
-  public void readExternal(Element element) {
-    final ClassLoader classLoader = getClass().getClassLoader();
-    for (final Object o : element.getChildren()) {
-      Element children = (Element)o;
-      if (ACTIONS_ELEMENT_NAME.equals(children.getName())) {
-        processActionsElement(children, classLoader, null);
-      }
-    }
-    registerPluginActions();
-  }
-
   private void registerPluginActions() {
     final Application app = ApplicationManager.getApplication();
     final IdeaPluginDescriptor[] plugins = app.getPlugins();
@@ -179,10 +170,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
         }
       }
     }
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    throw new WriteExternalException();
   }
 
   public AnAction getAction(@NotNull String id) {
@@ -306,11 +293,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   private AnAction processActionElement(Element element, final ClassLoader loader, PluginId pluginId) {
     final Application app = ApplicationManager.getApplication();
     final IdeaPluginDescriptor plugin = app.getPlugin(pluginId);
-    @NonNls final String resBundleName = plugin != null ? plugin.getResourceBundleBaseName() : ACTIONS_BUNDLE;
-    ResourceBundle bundle = null;
-    if (resBundleName != null) {
-      bundle = getBundle(loader, resBundleName);
-    }
+    ResourceBundle bundle = getActionsResourceBundle(loader, plugin);
 
     if (!ACTION_ELEMENT_NAME.equals(element.getName())) {
       reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
@@ -377,6 +360,15 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     return stub;
   }
 
+  private ResourceBundle getActionsResourceBundle(ClassLoader loader, IdeaPluginDescriptor plugin) {
+    @NonNls final String resBundleName = plugin != null && !plugin.getPluginId().getIdString().equals("com.intellij") ? plugin.getResourceBundleBaseName() : ACTIONS_BUNDLE;
+    ResourceBundle bundle = null;
+    if (resBundleName != null) {
+      bundle = getBundle(loader, resBundleName);
+    }
+    return bundle;
+  }
+
   private static boolean isSecondary(Element element) {
     return "true".equalsIgnoreCase(element.getAttributeValue(SECONDARY));
   }
@@ -430,11 +422,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   private AnAction processGroupElement(Element element, final ClassLoader loader, PluginId pluginId) {
     final Application app = ApplicationManager.getApplication();
     final IdeaPluginDescriptor plugin = app.getPlugin(pluginId);
-    @NonNls final String resBundleName = plugin != null ? plugin.getResourceBundleBaseName() : ACTIONS_BUNDLE;
-    ResourceBundle bundle = null;
-    if (resBundleName != null) {
-      bundle = getBundle(loader, resBundleName);
-    }
+    ResourceBundle bundle = getActionsResourceBundle(loader, plugin);
 
     if (!GROUP_ELEMENT_NAME.equals(element.getName())) {
       reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
@@ -909,8 +897,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
 
   @NotNull
   public String getComponentName() {
-    final String platformPrefix = System.getProperty("idea.platform.prefix");
-    return platformPrefix != null ? platformPrefix + "ActionManager" : "ActionManager";
+    return "ActionManager";
   }
 
   public Comparator<String> getRegistrationOrderComparator() {
