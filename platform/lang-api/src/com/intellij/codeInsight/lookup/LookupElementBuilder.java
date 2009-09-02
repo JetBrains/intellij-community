@@ -174,7 +174,6 @@ public class LookupElementBuilder extends LookupElement {
       myRenderer.renderElement(this, presentation);
     }
     else if (myHardcodedPresentation != null) {
-      //noinspection ConstantConditions
       presentation.copyFrom(myHardcodedPresentation);
     } else {
       presentation.setItemText(myLookupString);
@@ -190,8 +189,8 @@ public class LookupElementBuilder extends LookupElement {
 
     if (myAutoCompletionPolicy != that.myAutoCompletionPolicy) return false;
     if (myInsertHandler != null ? !myInsertHandler.getClass().equals(that.myInsertHandler.getClass()) : that.myInsertHandler != null) return false;
-    if (myLookupString != null ? !myLookupString.equals(that.myLookupString) : that.myLookupString != null) return false;
-    if (myObject != null ? !myObject.equals(that.myObject) : that.myObject != null) return false;
+    if (!myLookupString.equals(that.myLookupString)) return false;
+    if (!myObject.equals(that.myObject)) return false;
     if (myRenderer != null ? !myRenderer.getClass().equals(that.myRenderer.getClass()) : that.myRenderer != null) return false;
 
     return true;
@@ -201,8 +200,8 @@ public class LookupElementBuilder extends LookupElement {
   public int hashCode() {
     int result = 0;
     result = 31 * result + (myInsertHandler != null ? myInsertHandler.getClass().hashCode() : 0);
-    result = 31 * result + (myLookupString != null ? myLookupString.hashCode() : 0);
-    result = 31 * result + (myObject != null ? myObject.hashCode() : 0);
+    result = 31 * result + (myLookupString.hashCode());
+    result = 31 * result + (myObject.hashCode());
     result = 31 * result + (myRenderer != null ? myRenderer.getClass().hashCode() : 0);
     result = 31 * result + (myAutoCompletionPolicy != null ? myAutoCompletionPolicy.hashCode() : 0);
     return result;
