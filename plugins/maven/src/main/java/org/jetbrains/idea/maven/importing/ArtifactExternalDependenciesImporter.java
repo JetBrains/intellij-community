@@ -1,8 +1,8 @@
 package org.jetbrains.idea.maven.importing;
 
-import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactUtil;
+import com.intellij.packaging.impl.artifacts.ArtifactUtil;
+import com.intellij.packaging.impl.artifacts.PackagingElementProcessor;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ManifestFilesInfo;
-import com.intellij.openapi.roots.ui.configuration.artifacts.PackagingElementProcessor;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.packaging.elements.CompositePackagingElement;
