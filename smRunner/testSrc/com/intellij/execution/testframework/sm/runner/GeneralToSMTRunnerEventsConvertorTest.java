@@ -2,12 +2,12 @@ package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.sm.Marker;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerTestTreeView;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.ruby.Marker;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;

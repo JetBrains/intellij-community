@@ -1,7 +1,6 @@
 package com.intellij.execution.testframework.sm.runner;
 
-import org.jetbrains.plugins.ruby.support.AssertionErrorCase;
-import org.jetbrains.plugins.ruby.support.AssertionUtil;
+import com.intellij.testFramework.exceptionCases.AssertionErrorCase;
 
 /**
  * @author Roman Chernyatchik
@@ -51,7 +50,7 @@ public class TestSuiteStackTest extends BaseSMTRunnerTestCase {
   public void testPopSuite() throws Throwable {
     final String suiteName = mySuite.getName();
 
-    AssertionUtil.assertException(new AssertionErrorCase() {
+    assertException(new AssertionErrorCase() {
       public void tryClosure() {
         myTestSuiteStack.popSuite("some suite");
       }

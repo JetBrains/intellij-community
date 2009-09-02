@@ -30,19 +30,13 @@
 
 
 
-package org.jetbrains.plugins.ruby;
+package com.intellij.execution.testframework.sm;
 
 
 
 /**
 
- * Created by IntelliJ IDEA.
-
- *
-
- * @author: Roman Chernyatchik
-
- * @date: 11.11.2006
+ * @author Roman Chernyatchik
 
  */
 
@@ -83,4 +77,3 @@ public class Marker {
     }
 
 }
-

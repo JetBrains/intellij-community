@@ -2,6 +2,7 @@ package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.sm.Marker;
 import com.intellij.execution.testframework.sm.runner.BaseSMTRunnerTestCase;
 import com.intellij.execution.testframework.sm.runner.GeneralToSMTRunnerEventsConvertor;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
@@ -9,7 +10,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.ruby.Marker;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;

@@ -1,7 +1,7 @@
-package org.jetbrains.plugins.ruby.support;
+package com.intellij.testFramework.exceptionCases;
 
 /**
- * @author: Dennis.Ushakov
+ * @author Dennis.Ushakov
  */
 public abstract class IllegalArgumentExceptionCase extends AbstractExceptionCase<IllegalArgumentException>{
   public Class<IllegalArgumentException> getExpectedExceptionClass() {

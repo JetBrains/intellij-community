@@ -2,10 +2,10 @@ package com.intellij.execution.testframework.sm.runner.ui.statistics;
 
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
+import com.intellij.execution.testframework.sm.UITestUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.ruby.support.UITestUtil;
 
 /**
  * @author Roman Chernyatchik

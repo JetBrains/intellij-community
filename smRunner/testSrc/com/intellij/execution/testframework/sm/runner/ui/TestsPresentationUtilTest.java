@@ -4,12 +4,12 @@ import com.intellij.execution.testframework.PoolOfTestIcons;
 import com.intellij.execution.testframework.sm.runner.BaseSMTRunnerTestCase;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.execution.testframework.sm.UITestUtil;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.ruby.support.UITestUtil;
 
 import javax.swing.*;
 

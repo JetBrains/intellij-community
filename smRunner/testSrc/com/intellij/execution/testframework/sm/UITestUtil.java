@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.ruby.support;
+package com.intellij.execution.testframework.sm;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.SimpleTextAttributes;

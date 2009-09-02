@@ -2,6 +2,7 @@ package com.intellij.execution.testframework.sm.runner.ui.statistics;
 
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.sm.Marker;
 import com.intellij.execution.testframework.sm.runner.BaseSMTRunnerTestCase;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsListener;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
@@ -11,7 +12,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.ruby.Marker;
 
 import javax.swing.*;
 import java.util.List;

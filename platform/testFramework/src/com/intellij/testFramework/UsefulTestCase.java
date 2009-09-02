@@ -23,12 +23,14 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
+import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
 import gnu.trove.THashSet;
 import junit.framework.Assert;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -437,4 +439,76 @@ public abstract class UsefulTestCase extends TestCase {
       }
     }
   }
+
+  /**
+   * Checks that code block throw corresponding exception.
+   * @param exceptionCase Block annotated with some exception type
+   * @throws Throwable
+   */
+  protected void assertException(final AbstractExceptionCase exceptionCase) throws Throwable {
+    assertException(exceptionCase, null);
+  }
+
+  /**
+   * Checks that code block throw corresponding exception with expected error msg.
+   * If expected error message is null it will not be checked.
+   * @param exceptionCase Block annotated with some exception type
+   * @param expectedErrorMsg expected error messge
+   * @throws Throwable
+   */
+  protected void assertException(final AbstractExceptionCase exceptionCase,
+                                 @Nullable final String expectedErrorMsg) throws Throwable {
+    assertExceptionOccurred(true, exceptionCase, expectedErrorMsg);
+  }
+
+  /**
+   * Checks that code block doesn't throw corresponding exception.
+   * @param exceptionCase Block annotated with some exception type
+   * @throws Throwable
+   */
+  protected void assertNoException(final AbstractExceptionCase exceptionCase) throws Throwable {
+    assertExceptionOccurred(false, exceptionCase, null);
+  }
+
+  protected void assertNoThrowable(final Runnable closure) {
+    String throwableName = null;
+    try{
+      closure.run();
+    } catch (Throwable thr) {
+      throwableName = thr.getClass().getName();
+    }
+    assertNull(throwableName);
+  }
+
+  private void assertExceptionOccurred(boolean shouldOccur,
+                                       AbstractExceptionCase exceptionCase,
+                                       String expectedErrorMsg) throws Throwable {
+    boolean wasThrown = false;
+    try {
+      exceptionCase.tryClosure();
+    } catch (Throwable e) {
+      if (shouldOccur) {
+        wasThrown = true;
+        final String errorMessage = exceptionCase.getAssertionErrorMessage();
+        assertEquals(errorMessage, exceptionCase.getExpectedExceptionClass(), e.getClass());
+        if (expectedErrorMsg != null) {
+          assertEquals("Compare error messages", expectedErrorMsg, e.getMessage());
+        }
+      } else if (exceptionCase.getExpectedExceptionClass().equals(e.getClass())) {
+        wasThrown = true;
+
+        System.out.println("");
+        e.printStackTrace(System.out);
+
+        fail("Exception isn't expected here. Exception message: " + e.getMessage());
+      } else {
+        throw e;
+      }
+    } finally {
+      if (shouldOccur && !wasThrown) {
+        fail(exceptionCase.getAssertionErrorMessage());
+      }
+    }
+  }
+
 }

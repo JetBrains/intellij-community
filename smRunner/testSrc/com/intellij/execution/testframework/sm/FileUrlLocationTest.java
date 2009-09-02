@@ -2,18 +2,46 @@ package com.intellij.execution.testframework.sm;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
-import org.jetbrains.plugins.ruby.rails.RailsFixtureTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
 
 /**
  * @author Roman Chernyatchik
  */
-public class FileUrlLocationTest extends RailsFixtureTestCase {
-  protected String getRailsRootPath() {
-    return myFixture.getTempDirPath() + "/fileUrl";
+public class FileUrlLocationTest extends SMLightFixtureTestCase {
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return ourDescriptor;
   }
 
   public void testSpecNavigation() throws Throwable {
-    myFixture.configureByFiles("fileUrl/my_example_spec.rb");
+    createAndAddFile("my_example_spec.rb",
+                     "\n" +
+                     "require \"spec\"\n" +
+                     "\n" +
+                     "describe \"Blabla\" do\n" +
+                     "\n" +
+                     "  # Called before each example.\n" +
+                     "  before(:each) do\n" +
+                     "    # Do nothing\n" +
+                     "  end\n" +
+                     "\n" +
+                     "  # Called after each example.\n" +
+                     "  after(:each) do\n" +
+                     "    # Do nothing\n" +
+                     "  end\n" +
+                     "\n" +
+                     "  it \"should fail\" do\n" +
+                     "\n" +
+                     "    #should pass\n" +
+                     "    true.should == false\n" +
+                     "  end\n" +
+                     "\n" +
+                     "  it \"should pass\" do\n" +
+                     "\n" +
+                     "    #should pass\n" +
+                     "    true.should == true\n" +
+                     "  end\n" +
+                     "end");
 
     final String path = myFixture.getFile().getVirtualFile().getPath();
     doTest(17, "describe", path, 4);

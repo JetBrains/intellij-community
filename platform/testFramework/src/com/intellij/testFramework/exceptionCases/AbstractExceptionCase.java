@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.ruby.support;
+package com.intellij.testFramework.exceptionCases;
 
 /**
  * @author Roman Chernyatchik

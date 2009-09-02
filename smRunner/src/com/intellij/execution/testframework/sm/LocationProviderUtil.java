@@ -5,6 +5,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
+import com.intellij.openapi.application.ApplicationManager;
 
 import java.util.List;
 import java.util.Collections;
@@ -41,7 +43,11 @@ public class LocationProviderUtil {
     if (fileByPath != null) {
       return Collections.singletonList(fileByPath);
     }
-    //TODO improve
+    // if we are in UnitTest mode probably TempFileSystem is used instead of LocaFileSystem
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      final VirtualFile tempFileByPath = TempFileSystem.getInstance().findFileByPath(filePath);
+      return Collections.singletonList(tempFileByPath);
+    }
     return Collections.emptyList();
   }
 }

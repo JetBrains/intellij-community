@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.ruby.support;
+package com.intellij.testFramework.exceptionCases;
 
 import com.intellij.util.IncorrectOperationException;
 
