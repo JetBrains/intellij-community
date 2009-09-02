@@ -21,6 +21,7 @@ import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
+import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
@@ -365,9 +366,12 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
         }
         stubHolder = StubTree.readOrBuild(getProject(), getVirtualFile());
         if (stubHolder == null) {
-          StubTree.readOrBuild(getProject(), getVirtualFile());
-          throw new AssertionError("No stub for class file " + getVirtualFile().getPresentableUrl());
+          // Must be corrupted classfile
+          LOG.info("Class file is corrupted: " + getVirtualFile().getPresentableUrl());
+
+          stubHolder = new StubTree(new PsiJavaFileStubImpl("corrupted.classfiles", true));
         }
+        
         myStub = new SoftReference<StubTree>(stubHolder);
         ((PsiFileStubImpl)stubHolder.getRoot()).setPsi(this);
 
