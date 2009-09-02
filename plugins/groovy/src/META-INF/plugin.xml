@@ -157,8 +157,6 @@
 
     <!--<compiler implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompiler"/>-->
 
-    <facetType implementation="org.jetbrains.plugins.groovy.config.GroovyFacetType"/>
-
     <fileTemplateGroup implementation="org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory"/>
 
     <usageGroupingRuleProvider implementation="org.jetbrains.plugins.groovy.findUsages.GroovyUsageViewGroupingRuleProvider"/>
