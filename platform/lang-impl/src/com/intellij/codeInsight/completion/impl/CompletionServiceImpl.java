@@ -8,7 +8,9 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -104,4 +106,36 @@ public class CompletionServiceImpl extends CompletionService{
       return withPrefixMatcher(new CamelHumpMatcher(getPrefixMatcher().getPrefix(), false));
     }
   }
+
+  public void correctCaseInsensitiveString(@NotNull final LookupElement element, InsertionContext context) {
+    final String prefix = element.getPrefixMatcher().getPrefix();
+    final String oldLookupString = element.getLookupString();
+    if (StringUtil.startsWithIgnoreCase(oldLookupString, prefix)) {
+      final String newLookupString = handleCaseInsensitiveVariant(prefix, oldLookupString);
+      if (!newLookupString.equals(oldLookupString)) {
+        final Document document = context.getEditor().getDocument();
+        document.replaceString(context.getStartOffset(), context.getTailOffset(), newLookupString);
+        PsiDocumentManager.getInstance(context.getProject()).commitDocument(document);
+      }
+    }
+  }
+
+  private static String handleCaseInsensitiveVariant(final String prefix, @NotNull final String lookupString) {
+    final int length = prefix.length();
+    if (length == 0) return lookupString;
+    boolean isAllLower = true;
+    boolean isAllUpper = true;
+    boolean sameCase = true;
+    for (int i = 0; i < length && (isAllLower || isAllUpper || sameCase); i++) {
+      final char c = prefix.charAt(i);
+      isAllLower = isAllLower && Character.isLowerCase(c);
+      isAllUpper = isAllUpper && Character.isUpperCase(c);
+      sameCase = sameCase && Character.isLowerCase(c) == Character.isLowerCase(lookupString.charAt(i));
+    }
+    if (sameCase) return lookupString;
+    if (isAllLower) return lookupString.toLowerCase();
+    if (isAllUpper) return lookupString.toUpperCase();
+    return lookupString;
+  }
+
 }
