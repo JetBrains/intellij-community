@@ -19,7 +19,6 @@ package org.jetbrains.plugins.groovy.refactoring.move;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.move.moveMembers.MoveMemberHandler;
@@ -28,8 +27,8 @@ import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
 import com.intellij.refactoring.util.EnumConstantsUtil;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.VisibilityUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -120,12 +119,7 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
     return false;
   }
 
-  public PsiMember doMove(MoveMembersOptions options, PsiMember member, ArrayList<MoveMembersProcessor.MoveMembersUsageInfo> otherUsages) {
-
-    PsiClass targetClass = JavaPsiFacade.getInstance(member.getManager().getProject())
-      .findClass(options.getTargetClassName(), GlobalSearchScope.projectScope(member.getProject()));
-    if (targetClass == null) return null;
-    PsiElement anchor = getAnchor(member, targetClass);
+  public PsiMember doMove(MoveMembersOptions options, PsiMember member, PsiElement anchor, PsiClass targetClass) {
 
     PsiMember memberCopy;
 
@@ -229,7 +223,7 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
   }
 
   @Nullable
-  private static PsiElement getAnchor(final PsiMember member, final PsiClass targetClass) {
+  public PsiElement getAnchor(final PsiMember member, final PsiClass targetClass) {
     if (member instanceof GrField && member.hasModifierProperty(PsiModifier.STATIC)) {
       final List<PsiField> referencedFields = new ArrayList<PsiField>();
       final GrExpression psiExpression = ((GrField)member).getInitializerGroovy();
