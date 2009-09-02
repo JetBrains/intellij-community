@@ -67,6 +67,7 @@ public class PsiElementRenameHandler implements RenameHandler {
   }
 
   static boolean canRename(Project project, Editor editor, PsiElement element) {
+    if (element == null) return false;
     if (CollectHighlightsUtil.isOutOfSourceRootJavaFile(element.getContainingFile())) return false;
     boolean hasRenameProcessor = RenamePsiElementProcessor.forElement(element) != RenamePsiElementProcessor.DEFAULT;
     boolean hasWritableMetaData = element instanceof PsiMetaOwner && ((PsiMetaOwner)element).getMetaData() instanceof PsiWritableMetaData;
