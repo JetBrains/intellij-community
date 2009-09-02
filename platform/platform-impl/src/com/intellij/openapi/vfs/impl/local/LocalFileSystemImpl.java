@@ -719,7 +719,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   @NotNull
   public OutputStream getOutputStream(final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws FileNotFoundException {
     final File ioFile = convertToIOFile(file);
-    final OutputStream stream = requestor instanceof SafeWriteRequestor ? new SafeFileOutputStream(ioFile) : new FileOutputStream(ioFile);
+    final OutputStream stream = shallUseSafeStream(requestor, ioFile) ? new SafeFileOutputStream(ioFile) : new FileOutputStream(ioFile);
     return new BufferedOutputStream(stream) {
       public void close() throws IOException {
         super.close();
@@ -728,6 +728,10 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
         }
       }
     };
+  }
+
+  private static boolean shallUseSafeStream(Object requestor, File file) {
+    return requestor instanceof SafeWriteRequestor && FileUtil.canCallCanExecute() && !FileUtil.canExecute(file);
   }
 
   public boolean isDirectory(final VirtualFile file) {
