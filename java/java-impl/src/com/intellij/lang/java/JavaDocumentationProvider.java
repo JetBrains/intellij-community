@@ -706,15 +706,6 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider {
         urls = findUrlForPackage(aPackage);
       }
     }
-    else {
-      DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
-      final SmartPsiElementPointer originalElementPointer = element.getUserData(DocumentationManager.ORIGINAL_ELEMENT_KEY);
-      final List<String> urlz = provider.getUrlFor(element, originalElementPointer != null ? originalElementPointer.getElement() : null);
-      if (urlz != null) {
-        urls = new ArrayList<String>();
-        urls.addAll(urlz);
-      }
-    }
 
     if (urls == null) {
       return null;
