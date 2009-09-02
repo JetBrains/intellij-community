@@ -213,7 +213,9 @@ public class JDOMXIncluder {
 
       final Element fallbackElement = element.getChild("fallback", element.getNamespace());
       List<Object> remoteParsed = parseRemote(bases, remote, fallbackElement);
-      remoteParsed = extractNeededChildren(element, remoteParsed);
+      if (remoteParsed.size() > 0) {
+        remoteParsed = extractNeededChildren(element, remoteParsed);
+      }
 
       for (int i = 0; i < remoteParsed.size(); i++) {
         Object o = remoteParsed.get(i);
