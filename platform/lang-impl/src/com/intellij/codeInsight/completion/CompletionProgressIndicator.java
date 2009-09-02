@@ -402,9 +402,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       return;
     }
 
-    if (getLookup().isVisible()) {
-      getLookup().restorePrefix();
-    }
+    getLookup().restorePrefix();
   }
 
   public Editor getEditor() {
