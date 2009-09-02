@@ -65,6 +65,9 @@ public class LookupElementBuilder extends LookupElement {
   public static LookupElementBuilder create(@NotNull String lookupString, @NotNull Object lookupObject) {
     return new LookupElementBuilder(lookupString, lookupObject);
   }
+  public static LookupElementBuilder create(@NotNull Object lookupObject, @NotNull String lookupString) {
+    return new LookupElementBuilder(lookupString, lookupObject);
+  }
 
   public LookupElementBuilder setInsertHandler(@Nullable InsertHandler<LookupElement> insertHandler) {
     return new LookupElementBuilder(myLookupString, myObject, myAutoCompletionPolicy, insertHandler, myRenderer, myHardcodedPresentation);
@@ -170,9 +173,11 @@ public class LookupElementBuilder extends LookupElement {
     if (myRenderer != null) {
       myRenderer.renderElement(this, presentation);
     }
-    else {
+    else if (myHardcodedPresentation != null) {
       //noinspection ConstantConditions
       presentation.copyFrom(myHardcodedPresentation);
+    } else {
+      presentation.setItemText(myLookupString);
     }
   }
 
