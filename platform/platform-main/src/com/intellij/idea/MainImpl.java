@@ -61,6 +61,7 @@ public class MainImpl {
   protected static void _main(final String[] args) {
     // http://weblogs.java.net/blog/shan_man/archive/2005/06/improved_drag_g.html
     System.setProperty("sun.swing.enableImprovedDragGesture", "");
+    System.setProperty("idea.platform.prefix", "Idea");
 
     if (!StartupUtil.isHeadless()) {
       AppUIUtil.updateFrameIcon(JOptionPane.getRootFrame());
@@ -82,7 +83,6 @@ public class MainImpl {
       }
     }
 
-    System.setProperty("idea.platform.prefix", "Idea");
     startApplication(args);
   }
 

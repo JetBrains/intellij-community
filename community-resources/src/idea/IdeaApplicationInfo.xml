@@ -1,0 +1,28 @@
+<component>
+  <!-- <version name="IntelliJ IDEA" major="6" minor="0.2 Beta"/> -->
+  <version codename="Community Edition" major="9" minor="0" eap="true"/>
+  <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
+  <install-over minbuild="0" maxbuild="0" version="9.0"/>
+  <!--<logo url="/idea_logo.png" textcolor="002387"/>-->
+  <logo url="/idea_logo.png" textcolor="FFFFFF"/>
+  <about url="/idea_about.png"/>
+  <icon size32="/icon.png" size16="/icon_small.png" size32opaque="/icon_white.png" size12="/general/toolWindowProject.png"/>
+  <package code="__PACKAGE_CODE__"/>
+  <names product="IDEA" fullname="IntelliJ IDEA"/>
+
+  <welcome-screen caption-url="/general/welcomeCaption.png" slogan-url="/general/developSlogan.png"/>
+
+  <update-urls check="http://www.jetbrains.com/updates/update.xml" patches="http://download.jetbrains.com/idea/" download="http://www.jetbrains.com/idea/download/"/>
+  <eap-update-urls check="http://www.jetbrains.com/updates/eap-update.xml" patches="http://download.jetbrains.com/idea/" download="http://www.jetbrains.net/confluence/display/IDEADEV/Maia+EAP"/>
+  <help file="ideahelp.jar" root="idea"/>
+  <documentation url="http://www.jetbrains.com/idea/documentation"/>
+  <support url="http://www.jetbrains.com/support/idea/index.html"/>
+  <feedback eap-url="http://jetbrains.net/jira" release-url="http://www.jetbrains.com/feedback/feedback.jsp?product=IDEA&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"/>
+  <plugins url="http://plugins.intellij.net"/>
+
+  <plugins-page category="VCS Integration" title="Select VCS Integration Plugins"/>
+  <plugins-page category="Web/JavaEE Technologies" title="Select Web/JavaEE Technology Plugins"/>
+  <plugins-page category="Application Servers" title="Select Application Server Plugins" depends="com.intellij.javaee"/>
+  <plugins-page category="HTML/JavaScript Development" title="Select HTML/JavaScript Development Plugins"/>
+  <plugins-page title="Select Other Plugins"/>
+</component>
