@@ -1,7 +1,6 @@
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.LibrarySourceItem;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -56,7 +55,7 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
   @Override
   public PackagingElementOutputKind getFilesKind(PackagingElementResolvingContext context) {
     final Library library = findLibrary(context);
-    return library != null ? LibrarySourceItem.getKindForLibrary(library) : PackagingElementOutputKind.OTHER;
+    return library != null ? getKindForLibrary(library) : PackagingElementOutputKind.OTHER;
   }
 
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
@@ -109,5 +108,19 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
   @Nullable
   public Library findLibrary(@NotNull PackagingElementResolvingContext context) {
     return LibraryLink.findLibrary(myName, myLevel, context.getProject());
+  }
+
+  public static PackagingElementOutputKind getKindForLibrary(final Library library) {
+    boolean containsDirectories = false;
+    boolean containsJars = false;
+    for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
+      if (file.isInLocalFileSystem()) {
+        containsDirectories = true;
+      }
+      else {
+        containsJars = true;
+      }
+    }
+    return new PackagingElementOutputKind(containsDirectories, containsJars);
   }
 }

@@ -5,7 +5,7 @@ import com.intellij.facet.FacetTypeId;
 import com.intellij.facet.FacetTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ui.configuration.libraryEditor.ChooseElementsDialog;
+import com.intellij.ide.util.ChooseElementsDialog;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
@@ -44,14 +44,13 @@ public abstract class FacetBasedPackagingElementType<E extends PackagingElement<
   @NotNull
   @Override
   public List<? extends E> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact, @NotNull CompositePackagingElement<?> parent) {
-    final Project project = context.getProject();
     final List<F> facets = getFacets(context);
     ChooseFacetsDialog dialog = new ChooseFacetsDialog(context.getProject(), facets, getDialogTitle(), getDialogDescription());
     dialog.show();
     if (dialog.isOK()) {
       final List<E> elements = new ArrayList<E>();
       for (F facet : dialog.getChosenElements()) {
-        elements.add(createElement(project, facet));
+        elements.add(createElement(context.getProject(), facet));
       }
       return elements;
     }

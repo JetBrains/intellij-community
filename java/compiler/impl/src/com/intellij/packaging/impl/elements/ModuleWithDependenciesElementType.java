@@ -37,7 +37,7 @@ public class ModuleWithDependenciesElementType extends PackagingElementType<Modu
   public List<? extends ModuleWithDependenciesPackagingElement> chooseAndCreate(@NotNull ArtifactEditorContext context,
                                                                                  @NotNull Artifact artifact,
                                                                                  @NotNull CompositePackagingElement<?> parent) {
-    final List<Module> modules = ModuleOutputElementType.chooseModules(context, artifact);
+    final List<Module> modules = ModuleOutputElementType.chooseModules(context);
     final List<ModuleWithDependenciesPackagingElement> elements = new ArrayList<ModuleWithDependenciesPackagingElement>();
     for (Module module : modules) {
       elements.add(new ModuleWithDependenciesPackagingElement(module.getName()));

@@ -12,6 +12,7 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.ide.util.ChooseElementsDialog;
 
 import javax.swing.*;
 import java.awt.*;

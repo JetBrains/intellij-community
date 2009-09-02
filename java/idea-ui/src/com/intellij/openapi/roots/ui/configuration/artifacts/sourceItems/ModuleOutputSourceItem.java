@@ -31,7 +31,7 @@ public class ModuleOutputSourceItem extends PackagingSourceItem {
 
   @Override
   public SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
-    return new DelegatedSourceItemPresentation(new ModuleElementPresentation(myModule.getName(), myModule)) {
+    return new DelegatedSourceItemPresentation(new ModuleElementPresentation(myModule.getName(), myModule, context)) {
       @Override
       public int getWeight() {
         return SourceItemWeights.MODULE_OUTPUT_WEIGHT;

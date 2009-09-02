@@ -2,7 +2,6 @@ package com.intellij.packaging.impl.elements;
 
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ui.configuration.artifacts.ChooseArtifactsDialog;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactPointerManager;
 import com.intellij.packaging.elements.CompositePackagingElement;
@@ -40,14 +39,10 @@ public class ArtifactElementType extends PackagingElementType<ArtifactPackagingE
   public List<? extends ArtifactPackagingElement> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
                                                                    @NotNull CompositePackagingElement<?> parent) {
     final Project project = context.getProject();
-    ChooseArtifactsDialog dialog = new ChooseArtifactsDialog(project, getAvailableArtifacts(context, artifact),
-                                                             CompilerBundle.message("dialog.title.choose.artifacts"), "");
-    dialog.show();
+    List<Artifact> artifacts = context.chooseArtifacts(getAvailableArtifacts(context, artifact), CompilerBundle.message("dialog.title.choose.artifacts"));
     final List<ArtifactPackagingElement> elements = new ArrayList<ArtifactPackagingElement>();
-    if (dialog.isOK()) {
-      for (Artifact selected : dialog.getChosenElements()) {
-        elements.add(new ArtifactPackagingElement(project, ArtifactPointerManager.getInstance(project).create(selected.getName())));
-      }
+    for (Artifact selected : artifacts) {
+      elements.add(new ArtifactPackagingElement(project, ArtifactPointerManager.getInstance(project).create(selected.getName())));
     }
     return elements;
   }

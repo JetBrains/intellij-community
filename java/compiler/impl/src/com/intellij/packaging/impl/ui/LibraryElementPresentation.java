@@ -2,8 +2,11 @@ package com.intellij.packaging.impl.ui;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.packaging.PackagingEditorUtil;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
+import com.intellij.openapi.roots.impl.ModuleLibraryTable;
+import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
+import com.intellij.openapi.module.Module;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.packaging.ui.PackagingElementWeights;
@@ -41,14 +44,14 @@ public class LibraryElementPresentation extends PackagingElementPresentation {
 
   @Override
   public void navigateToSource() {
-    ProjectStructureConfigurable.getInstance(myContext.getProject()).selectProjectOrGlobalLibrary(myLibrary, true);
+    myContext.selectLibrary(myLibrary);
   }
 
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
     if (myLibrary != null) {
       presentationData.setIcons(Icons.LIBRARY_ICON);
       presentationData.addText(myName, mainAttributes);
-      presentationData.addText(PackagingEditorUtil.getLibraryTableComment(myLibrary), commentAttributes);
+      presentationData.addText(getLibraryTableComment(myLibrary), commentAttributes);
     }
     else {
       presentationData.addText(myName, SimpleTextAttributes.ERROR_ATTRIBUTES);
@@ -60,4 +63,23 @@ public class LibraryElementPresentation extends PackagingElementPresentation {
     return PackagingElementWeights.LIBRARY;
   }
 
+  public static String getLibraryTableDisplayName(final Library library) {
+    LibraryTable table = library.getTable();
+    LibraryTablePresentation presentation = table != null ? table.getPresentation() : ModuleLibraryTable.MODULE_LIBRARY_TABLE_PRESENTATION;
+    return presentation.getDisplayName(false);
+  }
+
+  public static String getLibraryTableComment(final Library library) {
+    LibraryTable libraryTable = library.getTable();
+    String displayName;
+    if (libraryTable != null) {
+      displayName = libraryTable.getPresentation().getDisplayName(false);
+    }
+    else {
+      Module module = ((LibraryImpl)library).getModule();
+      String tableName = getLibraryTableDisplayName(library);
+      displayName = module != null ? "'" + module.getName() + "' " + tableName : tableName;
+    }
+    return " (" + displayName + ")";
+  }
 }

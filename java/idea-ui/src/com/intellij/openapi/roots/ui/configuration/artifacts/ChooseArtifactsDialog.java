@@ -1,7 +1,7 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ui.configuration.libraryEditor.ChooseElementsDialog;
+import com.intellij.ide.util.ChooseElementsDialog;
 import com.intellij.packaging.artifacts.Artifact;
 
 import javax.swing.*;

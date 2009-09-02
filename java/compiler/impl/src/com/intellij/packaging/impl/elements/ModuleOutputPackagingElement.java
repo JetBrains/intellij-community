@@ -35,7 +35,7 @@ public class ModuleOutputPackagingElement extends PackagingElement<ModuleOutputP
   }
 
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
-    return new DelegatedPackagingElementPresentation(new ModuleElementPresentation(myModuleName, findModule(context)));
+    return new DelegatedPackagingElementPresentation(new ModuleElementPresentation(myModuleName, findModule(context), context));
   }
 
   @Override

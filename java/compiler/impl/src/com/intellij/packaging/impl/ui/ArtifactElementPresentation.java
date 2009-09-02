@@ -1,7 +1,6 @@
 package com.intellij.packaging.impl.ui;
 
 import com.intellij.ide.projectView.PresentationData;
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactPointer;
 import com.intellij.packaging.impl.artifacts.PlainArtifactType;
@@ -36,7 +35,7 @@ public class ArtifactElementPresentation extends TreeNodePresentation {
 
   @Override
   public void navigateToSource() {
-    ProjectStructureConfigurable.getInstance(myContext.getProject()).select(myArtifact, true);
+    myContext.selectArtifact(myArtifact);
   }
 
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {

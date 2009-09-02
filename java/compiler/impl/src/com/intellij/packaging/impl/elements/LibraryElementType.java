@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.roots.ui.configuration.packaging.ChooseLibrariesDialog;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementType;
@@ -41,15 +40,10 @@ public class LibraryElementType extends PackagingElementType<LibraryPackagingEle
   @NotNull
   public List<? extends LibraryPackagingElement> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
                                                                   @NotNull CompositePackagingElement<?> parent) {
-    ChooseLibrariesDialog dialog = new ChooseLibrariesDialog(context.getProject(), getAllLibraries(context),
-                                                             ProjectBundle.message("dialog.title.packaging.choose.library"), "");
-    dialog.show();
-    final List<Library> selected = dialog.getChosenElements();
+    final List<Library> selected = context.chooseLibraries(getAllLibraries(context), ProjectBundle.message("dialog.title.packaging.choose.library"));
     final List<LibraryPackagingElement> elements = new ArrayList<LibraryPackagingElement>();
-    if (dialog.isOK()) {
-      for (Library library : selected) {
-        elements.add(new LibraryPackagingElement(library.getTable().getTableLevel(), library.getName()));
-      }
+    for (Library library : selected) {
+      elements.add(new LibraryPackagingElement(library.getTable().getTableLevel(), library.getName()));
     }
     return elements;
   }

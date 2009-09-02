@@ -3,12 +3,13 @@ package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.configuration.packaging.PackagingEditorUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.packaging.elements.PackagingElementOutputKind;
 import com.intellij.packaging.ui.*;
+import com.intellij.packaging.impl.ui.LibraryElementPresentation;
+import com.intellij.packaging.impl.elements.LibraryPackagingElement;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
@@ -46,21 +47,7 @@ public class LibrarySourceItem extends PackagingSourceItem {
   @NotNull
   @Override
   public PackagingElementOutputKind getKindOfProducedElements() {
-    return getKindForLibrary(myLibrary);
-  }
-
-  public static PackagingElementOutputKind getKindForLibrary(final Library library) {
-    boolean containsDirectories = false;
-    boolean containsJars = false;
-    for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
-      if (file.isInLocalFileSystem()) {
-        containsDirectories = true;
-      }
-      else {
-        containsJars = true;
-      }
-    }
-    return new PackagingElementOutputKind(containsDirectories, containsJars);
+    return LibraryPackagingElement.getKindForLibrary(myLibrary);
   }
 
   @NotNull
@@ -92,7 +79,7 @@ public class LibrarySourceItem extends PackagingSourceItem {
       if (name != null) {
         presentationData.setIcons(Icons.LIBRARY_ICON);
         presentationData.addText(name, mainAttributes);
-        presentationData.addText(PackagingEditorUtil.getLibraryTableComment(myLibrary), commentAttributes);
+        presentationData.addText(LibraryElementPresentation.getLibraryTableComment(myLibrary), commentAttributes);
       }
       else {
         final VirtualFile[] files = myLibrary.getFiles(OrderRootType.CLASSES);

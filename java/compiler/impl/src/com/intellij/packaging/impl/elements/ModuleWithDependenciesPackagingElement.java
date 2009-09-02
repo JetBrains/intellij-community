@@ -70,7 +70,7 @@ public class ModuleWithDependenciesPackagingElement extends ComplexPackagingElem
   }
 
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
-    return new DelegatedPackagingElementPresentation(new ModuleElementPresentation(myModuleName, findModule(context)) {
+    return new DelegatedPackagingElementPresentation(new ModuleElementPresentation(myModuleName, findModule(context), context) {
       @Override
       protected String getNodeText() {
         return CompilerBundle.message("node.text.0.with.dependencies", getPresentableName());
