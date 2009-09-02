@@ -139,7 +139,13 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     try {
       // correct references to moved members from the outside
       LanguageExtension<MoveMemberHandler> extension=new LanguageExtension<MoveMemberHandler>("com.intellij.refactoring.moveMemberHandler");
-
+      PsiClass targetClass = JavaPsiFacade.getInstance(myProject)
+      .findClass(myOptions.getTargetClassName(), GlobalSearchScope.projectScope(myProject));
+      if (targetClass == null) return;
+      final Map<PsiMember, PsiElement> anchors = new HashMap<PsiMember, PsiElement>();
+      for (PsiMember member : myMembersToMove) {
+        anchors.put(member, extension.forLanguage(member.getLanguage()).getAnchor(member, targetClass));
+      }
       ArrayList<MoveMembersUsageInfo> otherUsages = new ArrayList<MoveMembersUsageInfo>();
       for (UsageInfo usageInfo : usages) {
         MoveMembersUsageInfo usage = (MoveMembersUsageInfo)usageInfo;
@@ -166,7 +172,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
         }
         final RefactoringElementListener elementListener = getTransaction().getElementListener(member);
         final MoveMemberHandler handler = extension.forLanguage(member.getLanguage());
-        PsiMember newMember=handler.doMove(myOptions, member, otherUsages);
+        PsiMember newMember=handler.doMove(myOptions, member, anchors.get(member), targetClass);
         elementListener.elementMoved(newMember);
 
         fixVisibility(newMember, usages);

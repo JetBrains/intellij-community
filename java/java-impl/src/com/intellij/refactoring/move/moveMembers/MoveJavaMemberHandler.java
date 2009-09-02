@@ -2,14 +2,15 @@ package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.util.EnumConstantsUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.VisibilityUtil;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -85,16 +86,14 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
     return false;
   }
 
-  public PsiMember doMove(MoveMembersOptions options, PsiMember member, ArrayList<MoveMembersProcessor.MoveMembersUsageInfo> otherUsages) {
+  public PsiMember doMove(MoveMembersOptions options, PsiMember member, PsiElement anchor, PsiClass targetClass) {
     if (member instanceof PsiVariable) {
       ((PsiVariable)member).normalizeDeclaration();
     }
-    PsiClass targetClass = JavaPsiFacade.getInstance(member.getManager().getProject())
-      .findClass(options.getTargetClassName(), GlobalSearchScope.projectScope(member.getProject()));
+
     ChangeContextUtil.encodeContextInfo(member, true);
     if (targetClass == null) return null;
 
-    PsiElement anchor = getAnchor(member, targetClass);
 
     final PsiMember memberCopy;
     if (options.makeEnumConstant() &&
@@ -132,9 +131,9 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
   }
 
   @Nullable
-  private static PsiElement getAnchor(final PsiMember member, final PsiClass targetClass) {
+  public PsiElement getAnchor(final PsiMember member, final PsiClass targetClass) {
     if (member instanceof PsiField && member.hasModifierProperty(PsiModifier.STATIC)) {
-      final List<PsiField> referencedFields = new ArrayList<PsiField>();
+      final List<PsiField> afterFields = new ArrayList<PsiField>();
       final PsiExpression psiExpression = ((PsiField)member).getInitializer();
       if (psiExpression != null) {
         psiExpression.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -144,20 +143,35 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
             final PsiElement psiElement = expression.resolve();
             if (psiElement instanceof PsiField) {
               final PsiField psiField = (PsiField)psiElement;
-              if (psiField.getContainingClass() == targetClass && !referencedFields.contains(psiField)) {
-                referencedFields.add(psiField);
+              if (psiField.getContainingClass() == targetClass && !afterFields.contains(psiField)) {
+                afterFields.add(psiField);
               }
             }
           }
         });
       }
-      if (!referencedFields.isEmpty()) {
-        Collections.sort(referencedFields, new Comparator<PsiField>() {
-          public int compare(final PsiField o1, final PsiField o2) {
-            return -PsiUtilBase.compareElementsByPosition(o1, o2);
-          }
-        });
-        return referencedFields.get(0);
+
+      final Comparator<PsiField> fieldComparator = new Comparator<PsiField>() {
+        public int compare(final PsiField o1, final PsiField o2) {
+          return -PsiUtilBase.compareElementsByPosition(o1, o2);
+        }
+      };
+
+      if (!afterFields.isEmpty()) {
+        Collections.sort(afterFields, fieldComparator);
+        return afterFields.get(0);
+      }
+
+      final List<PsiField> beforeFields = new ArrayList<PsiField>();
+      for (PsiReference psiReference : ReferencesSearch.search(member, new LocalSearchScope(targetClass))) {
+        final PsiField fieldWithReference = PsiTreeUtil.getParentOfType(psiReference.getElement(), PsiField.class);
+        if (fieldWithReference != null && !afterFields.contains(fieldWithReference)) {
+          beforeFields.add(fieldWithReference);
+        }
+      }
+      Collections.sort(beforeFields, fieldComparator);
+      if (!beforeFields.isEmpty()) {
+        return beforeFields.get(0).getPrevSibling();
       }
     }
     return null;
