@@ -9,7 +9,7 @@
   </change-notes>
   <idea-version since-build="6800"/>
   <extensionPoints>
-    <extensionPoint name="facetImporter" interface="org.jetbrains.idea.maven.facets.FacetImporter"/>
+    <extensionPoint name="importer" interface="org.jetbrains.idea.maven.facets.MavenImporter"/>
     <extensionPoint name="archetypesProvider" interface="org.jetbrains.idea.maven.indices.MavenArchetypesProvider"/>
   </extensionPoints>
 

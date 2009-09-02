@@ -6,7 +6,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ProjectRootManager;
-import org.jetbrains.idea.maven.facets.FacetImporter;
+import org.jetbrains.idea.maven.facets.MavenImporter;
 import org.jetbrains.idea.maven.project.MavenImportingSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -84,7 +84,7 @@ public class MavenFoldersImporter {
       testFolders.add(each.getDirectory());
     }
 
-    for (FacetImporter each : FacetImporter.getSuitableFacetImporters(myMavenProject)) {
+    for (MavenImporter each : MavenImporter.getSuitableImporters(myMavenProject)) {
       each.collectSourceFolders(myMavenProject, sourceFolders);
       each.collectTestFolders(myMavenProject, testFolders);
     }
@@ -128,7 +128,7 @@ public class MavenFoldersImporter {
     }
 
     List<String> facetExcludes = new ArrayList<String>();
-    for (FacetImporter<?, ?, ?> each : FacetImporter.getSuitableFacetImporters(myMavenProject)) {
+    for (MavenImporter each : MavenImporter.getSuitableImporters(myMavenProject)) {
       each.collectExcludedFolders(myMavenProject, facetExcludes);
     }
     for (String eachFolder : facetExcludes) {
