@@ -49,8 +49,8 @@ public class JobImpl<T> implements Job<T> {
 
     createFutures(callerHasReadAccess, false);
 
-    // Don't bother scheduling if we only have one processor.
-    if (JobSchedulerImpl.CORES_COUNT >= 2) {
+    // Don't bother scheduling if we only have one processor or only one task
+    if (JobSchedulerImpl.CORES_COUNT >= 2 && myFutures.size() >= 2) {
       for (PrioritizedFutureTask<T> future : myFutures) {
         JobSchedulerImpl.execute(future);
       }
