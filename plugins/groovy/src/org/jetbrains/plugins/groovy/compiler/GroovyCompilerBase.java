@@ -125,7 +125,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       commandLine.addParameter("-Djava.library.path=" + PathManager.getBinPath());
       commandLine.addParameter("-Dprofile.groovy.compiler=true");
       commandLine.addParameter("-agentlib:yjpagent=disablej2ee,disablecounts,disablealloc,sessionname=GroovyCompiler");
-      classPathBuilder.add(PathManager.getLibPath() + File.separator + "yjp-controller-api-redist.jar");
+      classPathBuilder.add(PathManager.findFileInLibDirectory("yjp-controller-api-redist.jar").getAbsolutePath());
     }
 
     commandLine.addParameter("-cp");
