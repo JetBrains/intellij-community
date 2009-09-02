@@ -18,16 +18,10 @@
       <entry name=".+\.(gif|png|jpeg|jpg)" />
     </resourceExtensions>
     <wildcardResourcePatterns>
-      <entry name="?*.properties" />
-      <entry name="?*.xml" />
-      <entry name="?*.gif" />
-      <entry name="?*.png" />
-      <entry name="?*.jpeg" />
-      <entry name="?*.jpg" />
-      <entry name="?*.html" />
-      <entry name="?*.dtd" />
-      <entry name="?*.tld" />
-      <entry name="?*.ftl" />
+      <entry name="!*.form" />
+      <entry name="!*.java" />
+      <entry name="!*.class" />
+      <entry name="!*.groovy" />
     </wildcardResourcePatterns>
   </component>
   <component name="EclipseCompilerSettings">
