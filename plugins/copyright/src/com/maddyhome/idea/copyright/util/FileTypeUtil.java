@@ -17,9 +17,7 @@
 package com.maddyhome.idea.copyright.util;
 
 import com.intellij.lang.Commenter;
-import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
-import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,6 +26,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.xml.XmlFile;
+import com.maddyhome.idea.copyright.CopyrightUpdaters;
 import com.maddyhome.idea.copyright.options.LanguageOptions;
 
 import java.util.*;
@@ -262,21 +261,6 @@ public class FileTypeUtil
         return new HashSet<FileType>(types.values()).toArray(new FileType[]{});
     }
 
-    public String[] getMappedNames(FileType type)
-    {
-        TreeSet<String> names = new TreeSet<String>();
-        for (String name : types.keySet())
-        {
-            FileType mapped = types.get(name);
-            if (mapped.equals(type))
-            {
-                names.add(name);
-            }
-        }
-
-        return names.toArray(new String[]{});
-    }
-
     public FileType getFileTypeByFile(VirtualFile file)
     {
         FileType type = FileTypeManager.getInstance().getFileTypeByFile(file);
@@ -424,20 +408,8 @@ public class FileTypeUtil
                 {
                     return true;
                 }
-                else
-                {
-                    if (type instanceof LanguageFileType)
-                    {
-                        Language lang = ((LanguageFileType)type).getLanguage();
-                        if (lang.equals(StdLanguages.CSS))
-                        {
-                            return true;
-                        }
-                    }
-                }
             }
-
-            return false;
+            return CopyrightUpdaters.INSTANCE.forFileType(type) != null;
         }
     }
 

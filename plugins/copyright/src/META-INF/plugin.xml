@@ -3,11 +3,11 @@
 
 <idea-plugin version="2">
     <name>Copyright</name>
+    <id>com.intellij.copyright</id>
     <description>
         Copyright Notice. This plugin is used to ensure files in a project or module have
         a consistent copyright notice.
     </description>
-    <depends>com.intellij.css</depends>
     <extensions defaultExtensionNs="com.intellij">
       <projectConfigurable implementation="com.maddyhome.idea.copyright.ui.CopyrightProjectConfigurable"/>
       <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
@@ -22,6 +22,11 @@
             <implementation-class>com.maddyhome.idea.copyright.CopyrightManager</implementation-class>
         </component>
     </project-components>
+
+    <extensionPoints>
+      <extensionPoint name="updater" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint"/>
+    </extensionPoints>
+
 
     <actions>
         <action id="UpdateCopyright" class="com.maddyhome.idea.copyright.actions.UpdateCopyrightAction" text="Update Copyright..." description="Generate/Update the copyright notice." icon="/resources/copyright18x18.png">

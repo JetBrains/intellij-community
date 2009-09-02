@@ -16,17 +16,15 @@
 
 package com.maddyhome.idea.copyright.psi;
 
-import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.maddyhome.idea.copyright.CopyrightProfile;
+import com.maddyhome.idea.copyright.CopyrightUpdaters;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
 
 public class UpdateCopyrightFactory
@@ -83,18 +81,8 @@ public class UpdateCopyrightFactory
         }
         else
         {
-            if (type instanceof LanguageFileType)
-            {
-                Language lang = ((LanguageFileType)type).getLanguage();
-                if (lang.equals(StdLanguages.CSS))
-                {
-                    return new UpdateCssFileCopyright(project, module, file, options);
-                }
-            }
+            return CopyrightUpdaters.INSTANCE.forFileType(type).createInstance(project, module, file, type, options);
         }
-
-        logger.info("oops");
-        return null;
     }
 
     private UpdateCopyrightFactory()
