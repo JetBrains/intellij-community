@@ -11,8 +11,6 @@ import javax.swing.*;
 @SuppressWarnings({"HardCodedStringLiteral", "UseOfSystemOutOrSystemErr"})
 public class MainImpl {
   final static String APPLICATION_NAME = "idea";
-  public static int Internalize_hits;
-  public static int Internalize_misses;
   private static final String LOG_CATEGORY = "#com.intellij.idea.Main";
   private static boolean runStartupWizard = false;
 
@@ -52,12 +50,6 @@ public class MainImpl {
       public void run() {
         LOG.info(
           "------------------------------------------------------ IDEA SHUTDOWN ------------------------------------------------------");
-        LOG.info(
-          "-------------------------------------------------------- Statistics -------------------------------------------------------");
-        LOG.info("Internalize_hits=" + Internalize_hits);
-        LOG.info("Internalize_misses=" + Internalize_misses);
-        LOG.info(
-          "---------------------------------------------------------------------------------------------------------------------------");
       }
     });
     LOG.info("------------------------------------------------------ IDEA STARTED ------------------------------------------------------");
