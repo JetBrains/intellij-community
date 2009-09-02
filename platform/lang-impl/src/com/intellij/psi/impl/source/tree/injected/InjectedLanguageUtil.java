@@ -16,9 +16,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.ParameterizedCachedValueImpl;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.PsiParameterizedCachedValue;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
@@ -196,7 +196,7 @@ public class InjectedLanguageUtil {
           ParameterizedCachedValue<Places, PsiElement> cachedValue = psiManager.getCachedValuesManager().createParameterizedCachedValue(INJECTED_PSI_PROVIDER, false);
           Document hostDocument = hostPsiFile.getViewProvider().getDocument();
           CachedValueProvider.Result<Places> result = new CachedValueProvider.Result<Places>(places, PsiModificationTracker.MODIFICATION_COUNT, hostDocument);
-          ((ParameterizedCachedValueImpl<Places, PsiElement>)cachedValue).setValue(result);
+          ((PsiParameterizedCachedValue<Places, PsiElement>)cachedValue).setValue(result);
           current.putUserData(INJECTED_PSI_KEY, cachedValue);
         }
       }

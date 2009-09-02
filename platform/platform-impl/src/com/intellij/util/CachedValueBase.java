@@ -1,15 +1,14 @@
 package com.intellij.util;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.TimedReference;
 import com.intellij.util.concurrency.JBLock;
 import com.intellij.util.concurrency.JBReentrantReadWriteLock;
 import com.intellij.util.concurrency.LockFactory;
@@ -157,6 +156,9 @@ public abstract class CachedValueBase<T> {
 
     if (dependency instanceof ModificationTracker) {
       return ((ModificationTracker)dependency).getModificationCount();
+    }
+    if (dependency instanceof Document) {
+      return ((Document)dependency).getModificationStamp();
     }
     else {
       LOG.error("Wrong dependency type: " + dependency.getClass());

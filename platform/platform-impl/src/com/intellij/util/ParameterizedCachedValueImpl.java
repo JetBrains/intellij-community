@@ -11,7 +11,6 @@ package com.intellij.util;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.psi.util.ParameterizedCachedValueProvider;
-import com.intellij.util.CachedValueBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

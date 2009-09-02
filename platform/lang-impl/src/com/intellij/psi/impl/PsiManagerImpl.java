@@ -22,6 +22,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
@@ -64,7 +65,13 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   private final CacheManager myCacheManager;
   private final PsiModificationTrackerImpl myModificationTracker;
   private final ResolveCache myResolveCache;
-  private final CachedValuesManager myCachedValuesManager;
+  private final NotNullLazyValue<CachedValuesManager> myCachedValuesManager = new NotNullLazyValue<CachedValuesManager>() {
+    @NotNull
+    @Override
+    protected CachedValuesManager compute() {
+      return CachedValuesManager.getManager(myProject);
+    }
+  };
 
   private final List<PsiTreeChangePreprocessor> myTreeChangePreprocessors = ContainerUtil.createEmptyCOWList();
   private final List<PsiTreeChangeListener> myTreeChangeListeners = ContainerUtil.createEmptyCOWList();
@@ -119,7 +126,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     myModificationTracker = new PsiModificationTrackerImpl(myProject);
     myTreeChangePreprocessors.add(myModificationTracker);
     myResolveCache = new ResolveCache(this);
-    myCachedValuesManager = new CachedValuesManagerImpl(this);
 
     if (startupManager != null) {
       ((StartupManagerEx)startupManager).registerPreStartupActivity(
@@ -695,7 +701,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
   @NotNull
   public CachedValuesManager getCachedValuesManager() {
-    return myCachedValuesManager;
+    return myCachedValuesManager.getValue();
   }
 
   public void moveDirectory(@NotNull final PsiDirectory dir, @NotNull PsiDirectory newParent) throws IncorrectOperationException {
