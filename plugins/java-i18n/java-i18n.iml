@@ -13,8 +13,9 @@
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="xml" />
-    <orderEntry type="module" module-name="idea" />
-    <orderEntry type="module" module-name="spellchecker-core" />
+    <orderEntry type="module" module-name="spellchecker" />
+    <orderEntry type="module" module-name="java-impl" />
+    <orderEntry type="module" module-name="jsp-openapi" />
   </component>
 </module>
 
