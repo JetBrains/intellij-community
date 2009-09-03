@@ -43,7 +43,7 @@ target('default': 'The default target') {
     }
 
     classpath {
-      main.testRuntimeClasspath().each {
+      this["community-main"].testRuntimeClasspath().each {
         pathelement(location: it)
       }
       pathelement(location: "${jdk}/lib/tools.jar")
