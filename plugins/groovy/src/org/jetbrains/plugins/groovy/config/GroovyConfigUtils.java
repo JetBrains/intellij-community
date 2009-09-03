@@ -37,7 +37,7 @@ import org.jetbrains.plugins.groovy.util.LibrariesUtil;
  * @author ilyas
  */
 public abstract class GroovyConfigUtils extends AbstractConfigUtils {
-  @NonNls private static final String GROOVY_ALL_JAR_PATTERN = "groovy-all-(.*)\\.jar";
+  @NonNls public static final String GROOVY_ALL_JAR_PATTERN = "groovy-all-(.*)\\.jar";
 
   @NonNls private static final String DGM_CLASS_PATH = "org/codehaus/groovy/runtime/DefaultGroovyMethods.class";
   @NonNls private static final String CLOSURE_CLASS_PATH = "groovy/lang/Closure.class";
