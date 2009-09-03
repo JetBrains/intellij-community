@@ -2,6 +2,8 @@ package org.jetbrains.groovy
 -----
 Groovy script
   Package definition
+    Modifiers
+      <empty list>
     PsiElement(package)('package')
     PsiWhiteSpace(' ')
     Reference element

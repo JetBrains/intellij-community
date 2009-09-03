@@ -21,6 +21,6 @@ public class AnnotationsParsingTest extends GroovyParsingTestCase {
   public void testAnn6() throws Throwable { doTest(); }
   public void testAnn7() throws Throwable { doTest(); }
   public void testClassLiteral() throws Throwable { doTest(); }
-
-
+  public void testImportAnn() throws Throwable { doTest(); }
+  public void testPackageAnn() throws Throwable { doTest(); }
 }

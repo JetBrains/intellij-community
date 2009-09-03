@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
@@ -154,5 +155,9 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
 
   public boolean isOnDemand() {
     return findChildByType(GroovyTokenTypes.mSTAR) != null;
+  }
+
+  public GrModifierList getAnnotationList() {
+    return findChildByClass(GrModifierList.class);
   }
 }

@@ -141,4 +141,9 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testThisInStaticContext() throws Throwable {doTest();}
   public void testSuperWithNotEnclosingClass() throws Throwable {doTest();}
   public void testThisWithWrongQualifier() throws Throwable {doTest();}
+
+  public void testModifiersInPackageAndImportStatements() throws Throwable {
+    myFixture.copyFileToProject(getTestName(false) + ".groovy", "x/"+getTestName(false)+".groovy");
+    myFixture.testHighlighting(true, false, false, "x/"+getTestName(false)+".groovy");
+  }
 }

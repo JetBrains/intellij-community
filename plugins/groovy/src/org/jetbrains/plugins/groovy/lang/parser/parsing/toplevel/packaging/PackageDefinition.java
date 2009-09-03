@@ -19,6 +19,8 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilder.Marker;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifiers;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
@@ -28,14 +30,13 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class PackageDefinition implements GroovyElementTypes {
 
-  public static boolean parse(PsiBuilder builder) {
-
-    // TODO Add annotation parsing
-
+  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
     Marker pMarker = builder.mark();
 
-    if (!ParserUtils.getToken(builder, kPACKAGE, GroovyBundle.message("package.keyword.expected"))) {
-      pMarker.drop();
+    Modifiers.parse(builder, parser);
+
+    if (!ParserUtils.getToken(builder, kPACKAGE)) {
+      pMarker.rollbackTo();
       return false;
     }
     if (builder.getTokenType() == mIDENT) {

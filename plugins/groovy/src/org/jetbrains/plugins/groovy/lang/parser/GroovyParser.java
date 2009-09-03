@@ -362,7 +362,7 @@ public class GroovyParser implements PsiParser {
 
      if (GroovyTokenTypes.kIMPORT.equals(builder.getTokenType())) {
       PsiBuilder.Marker marker = builder.mark();
-      ImportStatement.parse(builder);
+      ImportStatement.parse(builder, this);
       marker.error(GroovyBundle.message("import.not.allowed"));
       return true;
     }
@@ -439,6 +439,13 @@ public class GroovyParser implements PsiParser {
       return true;
     }
 
+    PsiBuilder.Marker marker = builder.mark();
+    if (ImportStatement.parse(builder, this)) {
+      marker.error(GroovyBundle.message("import.not.allowed"));
+    }
+    else {
+      marker.drop();
+    }
     if (TypeDefinition.parse(builder, this)) return true;
 
     return ExpressionStatement.parse(builder, this);
@@ -446,8 +453,8 @@ public class GroovyParser implements PsiParser {
   }
 
   public boolean parseStatementWithImports(PsiBuilder builder) {
-    if (GroovyTokenTypes.kIMPORT.equals(builder.getTokenType())) {
-      return ImportStatement.parse(builder);
+    if (ImportStatement.parse(builder, this)) {
+      return true;
     } else {
       return parseStatement(builder, false);
     }

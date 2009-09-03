@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports;
 
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
@@ -35,4 +36,7 @@ public interface GrImportStatement extends GrTopStatement {
   boolean isStatic();
 
   boolean isAliasedImport();
+
+  @Nullable
+  GrModifierList getAnnotationList();
 }

@@ -29,6 +29,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.intentions.*;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicFix;
@@ -46,6 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -151,6 +153,9 @@ public class GroovyAnnotator implements Annotator {
         checkScriptDuplicateMethod(file.getTopLevelDefinitions(), holder);
       }
     }
+    else if (element instanceof GrImportStatement) {
+      checkAnnotationList(holder, ((GrImportStatement)element).getAnnotationList());
+    }
     else {
       final ASTNode node = element.getNode();
       if (node != null &&
@@ -235,6 +240,16 @@ public class GroovyAnnotator implements Annotator {
           annotation.registerFix(new ChangePackageQuickFix((GroovyFile)packageDefinition.getContainingFile(), packageName));
         }
       }
+    }
+    final GrModifierList modifierList = packageDefinition.getAnnotationList();
+    checkAnnotationList(holder, modifierList);
+  }
+
+  private static void checkAnnotationList(AnnotationHolder holder, @Nullable GrModifierList modifierList) {
+    if (modifierList == null) return;
+    final PsiElement[] modifiers = modifierList.getModifiers();
+    for (PsiElement modifier : modifiers) {
+      holder.createErrorAnnotation(modifier, GroovyBundle.message("package.definition.cannot.have.modifiers"));
     }
   }
 

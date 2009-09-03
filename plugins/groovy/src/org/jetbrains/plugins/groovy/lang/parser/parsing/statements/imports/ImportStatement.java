@@ -18,8 +18,9 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.imports;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilder.Marker;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifiers;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
@@ -29,10 +30,15 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class ImportStatement implements GroovyElementTypes {
 
-  public static boolean parse(PsiBuilder builder) {
-
+  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
     Marker impMarker = builder.mark();
 
+    Modifiers.parse(builder, parser);
+
+    if (!kIMPORT.equals(builder.getTokenType())) {
+      impMarker.rollbackTo();
+      return false;
+    }
     ParserUtils.getToken(builder, kIMPORT, GroovyBundle.message("import.keyword.expected"));
     ParserUtils.getToken(builder, kSTATIC);
     if (!ImportReference.parse(builder)) {
