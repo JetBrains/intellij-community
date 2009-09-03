@@ -16,8 +16,10 @@
 
 package com.intellij.openapi.vcs;
 
+import com.intellij.openapi.vfs.VirtualFile;
+
 import java.util.Collection;
 
 public interface TreeDiffProvider extends VcsProviderMarker {
-  Collection<String> getRemotelyChanged(final Collection<String> paths);
+  Collection<String> getRemotelyChanged(final VirtualFile vcsRoot, final Collection<String> paths);
 }
