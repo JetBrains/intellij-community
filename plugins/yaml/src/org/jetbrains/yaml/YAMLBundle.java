@@ -15,7 +15,7 @@ public class YAMLBundle {
   private static Reference<ResourceBundle> ourBundle;
 
   @NonNls
-  private static final String BUNDLE = "org.jetbrains.yaml.YAMLBundle";
+  private static final String BUNDLE = "messages.YAMLBundle";
 
   private YAMLBundle() {
   }
