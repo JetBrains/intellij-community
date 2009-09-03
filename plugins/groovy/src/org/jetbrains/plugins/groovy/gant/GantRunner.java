@@ -55,9 +55,28 @@ public class GantRunner extends GroovyScriptRunner {
   }
 
   @Override
-  public void configureCommandLine(JavaParameters params, Module module, boolean tests, VirtualFile script, String confPath,
-                                      final String groovyHome, GroovyScriptRunConfiguration configuration) throws CantRunException {
-    defaultGroovyStarter(params, module, confPath, tests, groovyHome, configuration);
+  public void configureCommandLine(JavaParameters params, Module module, boolean tests, VirtualFile script, final String groovyHome,
+                                   GroovyScriptRunConfiguration configuration) throws CantRunException {
+    final VirtualFile groovyJar = findGroovyJar(module);
+    if (groovyJar != null) {
+      params.getClassPath().add(groovyJar);
+    }
+
+    setToolsJar(params);
+
+    setGroovyHome(params, groovyHome);
+    
+    final String confPath = getConfPath(module);
+    params.getVMParametersList().add("-Dgroovy.starter.conf=" + confPath);
+
+    params.getVMParametersList().addParametersString(configuration.vmParams);
+    params.setMainClass("org.codehaus.groovy.tools.GroovyStarter");
+
+    params.getProgramParametersList().add("--conf");
+    params.getProgramParametersList().add(confPath);
+
+    params.getProgramParametersList().add("--classpath");
+    params.getProgramParametersList().add(getClearClasspath(module, tests));
 
     if (groovyHome.contains("grails")) {
       params.getClassPath().addAllFiles(GroovyUtils.getFilesInDirectoryByPattern(groovyHome + "/lib", ".*\\.jar"));
@@ -72,8 +91,6 @@ public class GantRunner extends GroovyScriptRunner {
 
     params.getVMParametersList().addParametersString("-Dant.home=" + antHome);
     params.getVMParametersList().addParametersString("-Dgant.home=\"" + gantHome + "\"");
-    //params.getVMParametersList().addParametersString("-Dscript.name=\"" + gantHome + File.separator + "bin" + File.separator + "gant\"");
-    //params.getVMParametersList().addParametersString("-Dprogram.name=gant");
 
     params.getProgramParametersList().add("--main");
     params.getProgramParametersList().add("gant.Gant");

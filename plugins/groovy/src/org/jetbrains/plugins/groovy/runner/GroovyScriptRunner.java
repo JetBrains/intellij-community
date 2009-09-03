@@ -11,6 +11,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
@@ -29,8 +30,8 @@ public abstract class GroovyScriptRunner {
     return true;
   }
 
-  public abstract void configureCommandLine(JavaParameters params, Module module, boolean tests, VirtualFile script, String confPath,
-                                               final String groovyHome, GroovyScriptRunConfiguration configuration) throws CantRunException;
+  public abstract void configureCommandLine(JavaParameters params, Module module, boolean tests, VirtualFile script, final String groovyHome,
+                                            GroovyScriptRunConfiguration configuration) throws CantRunException;
 
   public String getConfPath(@NotNull Module module) {
     String confpath = FileUtil.toSystemDependentName(LibrariesUtil.getGroovyHomePath(module) + "/conf/groovy-starter.conf");
@@ -52,9 +53,7 @@ public abstract class GroovyScriptRunner {
     }
   }
 
-  protected static void defaultGroovyStarter(JavaParameters params, Module module, String confPath, boolean tests, final String groovyHome, GroovyScriptRunConfiguration configuration) throws CantRunException {
-    addGroovyJar(params, module);
-
+  protected static void setGroovyHome(JavaParameters params, String groovyHome) {
     params.getVMParametersList().addParametersString("-Dgroovy.home=" + "\"" + groovyHome + "\"");
     if (groovyHome.contains("grails")) { //a bit of a hack
       params.getVMParametersList().addParametersString("-Dgrails.home=" + "\"" + groovyHome + "\"");
@@ -62,18 +61,6 @@ public abstract class GroovyScriptRunner {
     if (groovyHome.contains("griffon")) { //a bit of a hack
       params.getVMParametersList().addParametersString("-Dgriffon.home=" + "\"" + groovyHome + "\"");
     }
-    params.getVMParametersList().add("-Dgroovy.starter.conf=" + confPath);
-
-    setToolsJar(params);
-
-    params.getVMParametersList().addParametersString(configuration.vmParams);
-    params.setMainClass("org.codehaus.groovy.tools.GroovyStarter");
-
-    params.getProgramParametersList().add("--conf");
-    params.getProgramParametersList().add(confPath);
-
-    params.getProgramParametersList().add("--classpath");
-    params.getProgramParametersList().add(getClearClasspath(module, tests));
   }
 
   protected static void setToolsJar(JavaParameters params) {
@@ -86,19 +73,20 @@ public abstract class GroovyScriptRunner {
     }
   }
 
-  protected static void addGroovyJar(JavaParameters params, Module module) {
+  @Nullable
+  protected static VirtualFile findGroovyJar(@NotNull Module module) {
     final Pattern pattern = Pattern.compile(".*[\\\\/]groovy[^\\\\/]*jar");
     for (Library library : GroovyConfigUtils.getInstance().getSDKLibrariesByModule(module)) {
       for (VirtualFile root : library.getFiles(OrderRootType.CLASSES)) {
         if (pattern.matcher(root.getPresentableUrl()).matches()) {
-          params.getClassPath().add(root);
-          return;
+          return root;
         }
       }
     }
+    return null;
   }
 
-  private static String getClearClasspath(Module module, boolean isTests) throws CantRunException {
+  protected static String getClearClasspath(Module module, boolean isTests) throws CantRunException {
     final JavaParameters tmp = new JavaParameters();
     tmp.configureByModule(module, isTests ? JavaParameters.JDK_AND_CLASSES_AND_TESTS : JavaParameters.JDK_AND_CLASSES);
     StringBuffer buffer = RunnerUtil.getClearClassPathString(tmp, module);

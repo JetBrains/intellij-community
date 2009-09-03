@@ -90,13 +90,14 @@ public class GradleScriptType extends GroovyScriptType {
       public void configureCommandLine(JavaParameters params,
                                        Module module,
                                        boolean tests,
-                                       VirtualFile script,
-                                       String confPath,
-                                       String groovyHome,
+                                       VirtualFile script, String groovyHome,
                                        GroovyScriptRunConfiguration configuration) throws CantRunException {
         params.setMainClass("org.gradle.BootstrapMain");
 
-        addGroovyJar(params, module);
+        final VirtualFile groovyJar = findGroovyJar(module);
+        if (groovyJar != null) {
+          params.getClassPath().add(groovyJar);
+        }
         params.getClassPath().add(GradleLibraryManager.findGradleJar(module));
 
         params.getVMParametersList().addParametersString(configuration.vmParams);

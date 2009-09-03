@@ -180,9 +180,8 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
         params.setJdk(ModuleRootManager.getInstance(module).getSdk());
         params.setWorkingDirectory(getAbsoluteWorkDir());
 
-        final String confPath = scriptRunner.getConfPath(module);
         final String groovyHome = FileUtil.toSystemDependentName(groovyHomePath);
-        scriptRunner.configureCommandLine(params, module, tests, script, confPath, groovyHome, GroovyScriptRunConfiguration.this);
+        scriptRunner.configureCommandLine(params, module, tests, script, groovyHome, GroovyScriptRunConfiguration.this);
 
         if (isDebugEnabled) {
           params.getProgramParametersList().add("--debug");
