@@ -3,7 +3,7 @@ package com.intellij.conversion;
 /**
  * @author nik
  */
-public abstract class ConversionProcessor<Settings extends ComponentManagerSettings> {
+public abstract class ConversionProcessor<Settings> {
   public abstract boolean isConversionNeeded(Settings settings);
 
   public void preProcess(Settings settings) throws CannotConvertException {

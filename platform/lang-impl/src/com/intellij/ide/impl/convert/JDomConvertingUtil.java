@@ -180,13 +180,13 @@ public class JDomConvertingUtil {
   }
 
   @NotNull
-  public static List<Element> getChildren(@NotNull Element parent) {
-    return parent.getChildren();
+  public static List<Element> getChildren(@Nullable Element parent) {
+    return parent != null ? parent.getChildren() : Collections.<Element>emptyList();
   }
 
   @NotNull
-  public static List<Element> getChildren(@NotNull Element parent, @NotNull String name) {
-    return parent.getChildren(name);
+  public static List<Element> getChildren(@Nullable Element parent, @NotNull String name) {
+    return parent != null ? parent.getChildren(name) : Collections.<Element>emptyList();
   }
 
   @Nullable

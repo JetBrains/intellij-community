@@ -1,0 +1,49 @@
+package com.intellij.conversion.impl;
+
+import com.intellij.conversion.CannotConvertException;
+import com.intellij.ide.impl.convert.JDomConvertingUtil;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.util.SystemProperties;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
+import java.io.IOException;
+
+/**
+ * @author nik
+ */
+class SettingsXmlFile {
+  private final File myFile;
+  private final Document myDocument;
+  private final Element myRootElement;
+
+  SettingsXmlFile(@NotNull File file) throws CannotConvertException {
+    myFile = file;
+    myDocument = JDomConvertingUtil.loadDocument(file);
+    myRootElement = myDocument.getRootElement();
+  }
+
+  public File getFile() {
+    return myFile;
+  }
+
+  public Document getDocument() {
+    return myDocument;
+  }
+
+  public Element getRootElement() {
+    return myRootElement;
+  }
+
+  public void save() throws IOException {
+    JDOMUtil.writeDocument(myDocument, myFile, SystemProperties.getLineSeparator());
+  }
+
+  @Nullable 
+  public Element findComponent(String componentName) {
+    return JDomConvertingUtil.findComponent(myRootElement, componentName);
+  }
+}

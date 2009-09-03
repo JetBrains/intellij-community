@@ -11,18 +11,17 @@ import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author nik
  */
 public class ConversionContextImpl implements ConversionContext {
+  private Map<File, SettingsXmlFile> mySettingsFiles = new HashMap<File, SettingsXmlFile>();
   private StorageScheme myStorageScheme;
   private File myProjectBaseDir;
   private File myProjectFile;
@@ -32,6 +31,8 @@ public class ConversionContextImpl implements ConversionContext {
   private WorkspaceSettingsImpl myWorkspaceSettings;
   private List<File> myNonExistingModuleFiles = new ArrayList<File>();
   private Map<File, ModuleSettingsImpl> myModuleSettingsMap = new HashMap<File, ModuleSettingsImpl>();
+  private RunManagerSettingsImpl myRunManagerSettings;
+  private File mySettingsBaseDir;
 
   public ConversionContextImpl(String projectPath) throws CannotConvertException {
     myProjectFile = new File(projectPath);
@@ -40,9 +41,9 @@ public class ConversionContextImpl implements ConversionContext {
     if (myProjectFile.isDirectory()) {
       myStorageScheme = StorageScheme.DIRECTORY_BASED;
       myProjectBaseDir = myProjectFile;
-      final File settingsBaseDir = new File(myProjectBaseDir.getAbsolutePath(), ".idea");
-      modulesFile = new File(settingsBaseDir, "modules.xml");
-      myWorkspaceFile = new File(settingsBaseDir, "workspace.xml");
+      mySettingsBaseDir = new File(myProjectBaseDir.getAbsolutePath(), ".idea");
+      modulesFile = new File(mySettingsBaseDir, "modules.xml");
+      myWorkspaceFile = new File(mySettingsBaseDir, "workspace.xml");
     }
     else {
       myStorageScheme = StorageScheme.DEFAULT;
@@ -55,6 +56,7 @@ public class ConversionContextImpl implements ConversionContext {
 
   }
 
+  @NotNull
   public File getProjectBaseDir() {
     return myProjectBaseDir;
   }
@@ -90,14 +92,27 @@ public class ConversionContextImpl implements ConversionContext {
 
   public ProjectSettings getProjectSettings() throws CannotConvertException {
     if (myProjectSettings == null) {
-      myProjectSettings = new ProjectSettingsImpl(myProjectFile);
+      myProjectSettings = new ProjectSettingsImpl(myProjectFile, this);
     }
     return myProjectSettings;
   }
 
+  public RunManagerSettingsImpl getRunManagerSettings() throws CannotConvertException {
+    if (myRunManagerSettings == null) {
+      if (myStorageScheme == StorageScheme.DEFAULT) {
+        myRunManagerSettings = new RunManagerSettingsImpl(myWorkspaceFile, myProjectFile, null, this);
+      }
+      else {
+        final File[] files = new File(mySettingsBaseDir, "runConfigurations").listFiles();
+        myRunManagerSettings = new RunManagerSettingsImpl(myWorkspaceFile, null, files, this);
+      }
+    }
+    return myRunManagerSettings;
+  }
+
   public WorkspaceSettings getWorkspaceSettings() throws CannotConvertException {
     if (myWorkspaceSettings == null) {
-      myWorkspaceSettings = new WorkspaceSettingsImpl(myWorkspaceFile);
+      myWorkspaceSettings = new WorkspaceSettingsImpl(myWorkspaceFile, this);
     }
     return myWorkspaceSettings;
   }
@@ -106,7 +121,7 @@ public class ConversionContextImpl implements ConversionContext {
   public ModuleSettings getModuleSettings(File moduleFile) throws CannotConvertException {
     ModuleSettingsImpl settings = myModuleSettingsMap.get(moduleFile);
     if (settings == null) {
-      settings = new ModuleSettingsImpl(moduleFile);
+      settings = new ModuleSettingsImpl(moduleFile, this);
       myModuleSettingsMap.put(moduleFile, settings);
     }
     return settings;
@@ -134,5 +149,17 @@ public class ConversionContextImpl implements ConversionContext {
     for (ModuleSettingsImpl settings : myModuleSettingsMap.values()) {
       settings.save();
     }
+    if (myRunManagerSettings != null) {
+      myRunManagerSettings.save();
+    }
+  }
+
+  public SettingsXmlFile getOrCreateFile(File file) throws CannotConvertException {
+    SettingsXmlFile settingsFile = mySettingsFiles.get(file);
+    if (settingsFile == null) {
+      settingsFile = new SettingsXmlFile(file);
+      mySettingsFiles.put(file, settingsFile);
+    }
+    return settingsFile;
   }
 }

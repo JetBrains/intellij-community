@@ -21,6 +21,11 @@ public abstract class ProjectConverter {
     return null;
   }
 
+  @Nullable
+  public ConversionProcessor<RunManagerSettings> createRunConfigurationsConverter() {
+    return null;
+  }
+
   public void postProcess() {
   } 
 }

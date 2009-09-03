@@ -19,8 +19,10 @@ public class ConversionRunner {
   private final ConversionProcessor<WorkspaceSettings> myWorkspaceConverter;
   private boolean myProcessProjectFile;
   private boolean myProcessWorkspaceFile;
+  private boolean myProcessRunConfigurations;
   private List<File> myModulesFilesToProcess = new ArrayList<File>();
   private ProjectConverter myConverter;
+  private ConversionProcessor<RunManagerSettings> myRunConfigurationsConverter;
 
   public ConversionRunner(ConverterProvider provider, ConversionContextImpl context) {
     myProvider = provider;
@@ -29,6 +31,7 @@ public class ConversionRunner {
     myModuleFileConverter = myConverter.createModuleFileConverter();
     myProjectFileConverter = myConverter.createProjectFileConverter();
     myWorkspaceConverter = myConverter.createWorkspaceFileConverter();
+    myRunConfigurationsConverter = myConverter.createRunConfigurationsConverter();
   }
 
   public boolean isConversionNeeded() throws CannotConvertException {
@@ -45,14 +48,15 @@ public class ConversionRunner {
         }
       }
     }
-    return myProcessProjectFile || myProcessWorkspaceFile || !myModulesFilesToProcess.isEmpty();
+
+    myProcessRunConfigurations = myRunConfigurationsConverter != null
+                                 && myRunConfigurationsConverter.isConversionNeeded(myContext.getRunManagerSettings());
+
+    return myProcessProjectFile || myProcessWorkspaceFile || myProcessRunConfigurations || !myModulesFilesToProcess.isEmpty();
   }
 
   public boolean isModuleConversionNeeded(File moduleFile) throws CannotConvertException {
-    if (myModuleFileConverter != null && myModuleFileConverter.isConversionNeeded(myContext.getModuleSettings(moduleFile))) {
-      return true;
-    }
-    return false;
+    return myModuleFileConverter != null && myModuleFileConverter.isConversionNeeded(myContext.getModuleSettings(moduleFile));
   }
 
   public void preProcess() throws CannotConvertException {
@@ -67,6 +71,10 @@ public class ConversionRunner {
     for (File moduleFile : myModulesFilesToProcess) {
       myModuleFileConverter.preProcess(myContext.getModuleSettings(moduleFile));
     }
+
+    if (myProcessRunConfigurations) {
+      myRunConfigurationsConverter.preProcess(myContext.getRunManagerSettings());
+    }
   }
 
   public List<File> getAffectedFiles() {
@@ -78,6 +86,13 @@ public class ConversionRunner {
       affectedFiles.add(myContext.getWorkspaceFile());
     }
     affectedFiles.addAll(myModulesFilesToProcess);
+    if (myProcessRunConfigurations) {
+      try {
+        affectedFiles.addAll(myContext.getRunManagerSettings().getAffectedFiles());
+      }
+      catch (CannotConvertException ignored) {
+      }
+    }
     return affectedFiles;
   }
 
@@ -93,6 +108,10 @@ public class ConversionRunner {
     for (File moduleFile : myModulesFilesToProcess) {
       myModuleFileConverter.process(myContext.getModuleSettings(moduleFile));
     }
+
+    if (myProcessRunConfigurations) {
+      myRunConfigurationsConverter.process(myContext.getRunManagerSettings());
+    }
   }
 
   public void postProcess() throws CannotConvertException {
@@ -107,6 +126,11 @@ public class ConversionRunner {
     for (File moduleFile : myModulesFilesToProcess) {
       myModuleFileConverter.postProcess(myContext.getModuleSettings(moduleFile));
     }
+
+    if (myProcessRunConfigurations) {
+      myRunConfigurationsConverter.postProcess(myContext.getRunManagerSettings());
+    }
+    
     myConverter.postProcess();
   }
 

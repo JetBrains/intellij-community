@@ -9,7 +9,7 @@ import java.io.File;
  * @author nik
  */
 public class ProjectSettingsImpl extends ComponentManagerSettingsImpl implements ProjectSettings {
-  public ProjectSettingsImpl(File file) throws CannotConvertException {
-    super(file);
+  public ProjectSettingsImpl(File file, ConversionContextImpl context) throws CannotConvertException {
+    super(file, context);
   }
 }
