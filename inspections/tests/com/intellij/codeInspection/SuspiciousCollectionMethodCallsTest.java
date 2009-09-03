@@ -21,6 +21,7 @@ public class SuspiciousCollectionMethodCallsTest extends InspectionTestCase {
   }
 
   public void testWildcardCapture() throws Exception { doTest(); }
+  public void testWildcard() throws Exception { doTest(); }
   public void testIgnoreConvertible() throws Exception {
     myTool.REPORT_CONVERTIBLE_METHOD_CALLS = false;
     doTest();

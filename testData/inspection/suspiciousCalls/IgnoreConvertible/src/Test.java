@@ -8,4 +8,8 @@ class Clazz {
       return;
     }
   }
+
+  void foo(List<? extends Number> c) {
+    c.contains("");
+  }
 }

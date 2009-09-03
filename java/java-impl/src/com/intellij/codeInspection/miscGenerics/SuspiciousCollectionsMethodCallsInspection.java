@@ -143,6 +143,9 @@ public class SuspiciousCollectionsMethodCallsInspection extends BaseLocalInspect
           PsiType typeParamMapping = substitutor.substitute(typeParameter);
           if (typeParamMapping == null) return;
           String message = null;
+          if (typeParamMapping instanceof PsiCapturedWildcardType) {
+            typeParamMapping = ((PsiCapturedWildcardType)typeParamMapping).getWildcard();
+          }
           if (!typeParamMapping.isAssignableFrom(argType)) {
             if (typeParamMapping.isConvertibleFrom(argType)) {
               if (REPORT_CONVERTIBLE_METHOD_CALLS) {
