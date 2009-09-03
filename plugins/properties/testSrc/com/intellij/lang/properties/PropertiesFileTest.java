@@ -3,7 +3,7 @@ package com.intellij.lang.properties;
 import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.testFramework.LightIdeaTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * @author max
  */
-public class PropertiesFileTest extends LightIdeaTestCase {
+public class PropertiesFileTest extends LightPlatformTestCase {
   private Property myPropertyToAdd;
 
   protected void setUp() throws Exception {

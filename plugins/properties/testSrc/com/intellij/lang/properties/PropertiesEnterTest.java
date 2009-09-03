@@ -1,17 +1,23 @@
 package com.intellij.lang.properties;
 
-import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 
 /**
  * @author cdr
  */
-public class PropertiesEnterTest extends LightDaemonAnalyzerTestCase{
+public class PropertiesEnterTest extends LightPlatformCodeInsightTestCase {
   @NonNls private static final String BASE_PATH = "/propertiesFile/enter/";
+
+  @Override
+  protected String getTestDataPath() {
+    return PluginPathManager.getPluginHomePath("properties") + "/testData";
+  }
 
   private static void typeEnter() {
     EditorActionManager actionManager = EditorActionManager.getInstance();

@@ -2,13 +2,13 @@ package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.parsing.PropertiesLexer;
 import com.intellij.lexer.Lexer;
-import com.intellij.testFramework.LightIdeaTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NonNls;
 
 /**
  * @author max
  */
-public class PropertiesLexerTest extends LightIdeaTestCase {
+public class PropertiesLexerTest extends LightPlatformTestCase {
   private static void doTest(@NonNls String text, @NonNls String[] expectedTokens) {
     Lexer lexer = new PropertiesLexer();
     doTest(text, expectedTokens, lexer);

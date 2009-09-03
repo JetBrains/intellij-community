@@ -4,14 +4,20 @@ import com.intellij.codeInsight.generation.actions.CommentByLineCommentAction;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
 /**
  * @author cdr
  */
-public class PropertiesCommenterTest extends LightCodeInsightTestCase {
+public class PropertiesCommenterTest extends LightPlatformCodeInsightTestCase {
   public void testProp1() throws Exception { doTest(); }
   public void testUncomment() throws Exception { doTest(); }
+
+  @Override
+  protected String getTestDataPath() {
+    return PluginPathManager.getPluginHomePath("properties") + "/testData";
+  }
 
   private void doTest() throws Exception {
     configureByFile("/propertiesFile/comment/before" + getTestName(false)+".properties");
