@@ -425,5 +425,20 @@ public abstract class AbstractVcs extends StartedActivated {
   public final VcsOutgoingChangesProvider getOutgoingChangesProvider() {
     return VcsType.centralized.equals(getType()) ? null : getOutgoingProviderImpl();
   }
+
+  public RemoteDifferenceStrategy getRemoteDifferenceStrategy() {
+    return RemoteDifferenceStrategy.ASK_LATEST_REVISION;
+  }
+
+  @Nullable
+  protected TreeDiffProvider getTreeDiffProviderImpl() {
+    return null;
+  }
+
+  @Nullable
+  public TreeDiffProvider getTreeDiffProvider() {
+    final RemoteDifferenceStrategy strategy = getRemoteDifferenceStrategy();
+    return RemoteDifferenceStrategy.ASK_LATEST_REVISION.equals(strategy) ? null : getTreeDiffProviderImpl();
+  }
 }
 
