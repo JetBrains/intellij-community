@@ -1,7 +1,6 @@
 package org.jetbrains.idea.maven.dom.references;
 
-import com.intellij.codeInsight.lookup.LookupElementFactory;
-import com.intellij.codeInsight.lookup.MutableLookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -57,9 +56,7 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
       PsiFile psiFile = eachDomFile.getFile();
       String modulePath = calcRelativeModulePath(myVirtualFile, eachVFile);
 
-      MutableLookupElement<PsiFile> lookup = LookupElementFactory.getInstance().createLookupElement(psiFile, modulePath);
-      lookup.setPresentableText(modulePath);
-      result.add(lookup);
+      result.add(LookupElementBuilder.create(psiFile, modulePath).setPresentableText(modulePath));
     }
 
     return result.toArray();

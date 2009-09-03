@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.completion;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.codeInsight.lookup.MutableLookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.TokenSet;
@@ -188,7 +189,7 @@ public abstract class GroovyCompletionUtil {
       if (context instanceof GrImportStatement) {
         final String importedName = ((GrImportStatement) context).getImportedName();
         if (importedName != null && element != null) {
-          result[i] = factory.createLookupElement(element, importedName).setPresentableText(importedName);
+          result[i] = LookupElementBuilder.create(element, importedName).setPresentableText(importedName);
           continue;
         }
       }

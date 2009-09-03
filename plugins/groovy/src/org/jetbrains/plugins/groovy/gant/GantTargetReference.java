@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -11,13 +12,11 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.gant.GantIcons;
-import org.jetbrains.plugins.groovy.gant.GantUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 
 import java.util.ArrayList;
@@ -116,11 +115,11 @@ public class GantTargetReference implements PsiPolyVariantReference {
       final GroovyFile groovyFile = (GroovyFile)file;
       for (GrArgumentLabel label : GantUtils.getScriptTargets(groovyFile)) {
         String name = label.getName();
-        pageProperties.add(factory.createLookupElement(name).setIcon(GantIcons.GANT_TASK));
+        pageProperties.add(LookupElementBuilder.create(name).setIcon(GantIcons.GANT_TASK));
       }
       for (String taskName : AntTasksProvider.getInstance(file.getProject()).getAntTasks()) {
         final String name = StringUtil.decapitalize(taskName);
-        pageProperties.add(factory.createLookupElement(name).setIcon(GantIcons.ANT_TASK));
+        pageProperties.add(LookupElementBuilder.create(name).setIcon(GantIcons.ANT_TASK));
       }
     }
     return pageProperties.toArray(new LookupElement[pageProperties.size()]);

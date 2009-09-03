@@ -2,7 +2,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementFactory;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
@@ -137,7 +137,6 @@ public class CompleteReferenceExpression {
 
   private static List<LookupElement> getPropertyVariants(GrReferenceExpression refExpr, PsiClass clazz, Set<String> accessedPropertyNames) {
     List<LookupElement> props = new ArrayList<LookupElement>();
-    final LookupElementFactory factory = LookupElementFactory.getInstance();
     final PsiClass eventListener =
       JavaPsiFacade.getInstance(refExpr.getProject()).findClass("java.util.EventListener", refExpr.getResolveScope());
     for (PsiMethod method : clazz.getAllMethods()) {
@@ -145,20 +144,17 @@ public class CompleteReferenceExpression {
         if (GroovyPropertyUtils.isSimplePropertyAccessor(method)) {
           String prop = GroovyPropertyUtils.getPropertyName(method);
           accessedPropertyNames.add(prop);
-          props.add(factory.createLookupElement(prop).setIcon(GroovyIcons.PROPERTY));
+          props.add(LookupElementBuilder.create(prop).setIcon(GroovyIcons.PROPERTY));
         }
         else if (eventListener != null) {
-          addListenerProperties(method, eventListener, props, factory);
+          addListenerProperties(method, eventListener, props);
         }
       }
     }
     return props;
   }
 
-  private static void addListenerProperties(PsiMethod method,
-                                            PsiClass eventListenerClass,
-                                            List<LookupElement> result,
-                                            LookupElementFactory factory) {
+  private static void addListenerProperties(PsiMethod method, PsiClass eventListenerClass, List<LookupElement> result) {
     if (method.getName().startsWith("add") && method.getParameterList().getParametersCount() == 1) {
       final PsiParameter parameter = method.getParameterList().getParameters()[0];
       final PsiType type = parameter.getType();
@@ -169,7 +165,7 @@ public class CompleteReferenceExpression {
           final PsiMethod[] listenerMethods = listenerClass.getMethods();
           if (InheritanceUtil.isInheritorOrSelf(listenerClass, eventListenerClass, true)) {
             for (PsiMethod listenerMethod : listenerMethods) {
-              result.add(factory.createLookupElement(listenerMethod.getName()).setIcon(GroovyIcons.PROPERTY));
+              result.add(LookupElementBuilder.create(listenerMethod.getName()).setIcon(GroovyIcons.PROPERTY));
             }
           }
         }
@@ -255,7 +251,6 @@ public class CompleteReferenceExpression {
 
   private static LookupElement[] addPretendedProperties(PsiElement[] elements) {
     List<LookupElement> result = new ArrayList<LookupElement>();
-    final LookupElementFactory factory = LookupElementFactory.getInstance();
 
     for (PsiElement element : elements) {
       if (element instanceof PsiMethod && !(element instanceof GrAccessorMethod)) {
@@ -265,7 +260,7 @@ public class CompleteReferenceExpression {
           if (!PsiUtil.isValidReferenceName(propName)) {
             propName = "'" + propName + "'";
           }
-          result.add(factory.createLookupElement(propName).setIcon(GroovyIcons.PROPERTY));
+          result.add(LookupElementBuilder.create(propName).setIcon(GroovyIcons.PROPERTY));
         }
       }
     }

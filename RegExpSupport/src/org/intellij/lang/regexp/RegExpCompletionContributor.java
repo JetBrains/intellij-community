@@ -2,8 +2,9 @@ package org.intellij.lang.regexp;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.LookupElementFactory;
-import com.intellij.codeInsight.lookup.MutableLookupElement;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.patterns.ElementPattern;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.psi.PsiElement;
@@ -65,13 +66,12 @@ public class RegExpCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static MutableLookupElement<String> addLookupElement(final CompletionResultSet result, @NonNls final String name, String type, Icon icon) {
-    MutableLookupElement<String> element = LookupElementFactory.getInstance().createLookupElement(name);
-    result.addElement(element);
-    if (type != null) element.setTypeText(type);
-    if (icon != null) element.setIcon(icon);
+  private static void addLookupElement(final CompletionResultSet result, @NonNls final String name, String type, Icon icon) {
+    result.addElement(createLookupElement(name, type, icon));
+  }
 
-    return element;
+  private static LookupElement createLookupElement(String name, String type, Icon icon) {
+    return LookupElementBuilder.create(name).setTypeText(type).setIcon(icon);
   }
 
   private static class PropertyNameCompletionProvider extends CompletionProvider<CompletionParameters> {
@@ -80,7 +80,8 @@ public class RegExpCompletionContributor extends CompletionContributor {
                                final ProcessingContext context,
                                @NotNull final CompletionResultSet result) {
       for (String[] stringArray : RegExpPropertyImpl.PROPERTY_NAMES) {
-        addLookupElement(result, stringArray[0], null, emptyIcon).setTailType(TailType.createSimpleTailType('}'));
+        result.addElement(
+          TailTypeDecorator.createDecorator(createLookupElement(stringArray[0], null, emptyIcon), TailType.createSimpleTailType('}')));
       }
     }
   }
