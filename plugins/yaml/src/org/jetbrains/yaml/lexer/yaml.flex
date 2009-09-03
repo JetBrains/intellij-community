@@ -1,0 +1,205 @@
+package org.jetbrains.yaml.lexer;
+
+import com.intellij.lexer.FlexLexer;
+import com.intellij.psi.tree.IElementType;
+import org.jetbrains.yaml.YAMLTokenTypes;
+
+/* Auto generated File */
+%%
+
+%class _YAMLLexer
+%implements FlexLexer, YAMLTokenTypes
+%unicode
+%public
+
+%function advance
+%type IElementType
+
+%eof{ return;
+%eof}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////// USER CODE //////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+%{
+  private int valueIndent = 0;
+  private boolean afterEOL = false;
+  private IElementType valueTokenType = null;
+    
+  private char previousChar() {
+    return getChar(-1);
+  }
+
+  private char getChar(final int offset) {
+    final int loc = getTokenStart()  + offset;
+    return 0 <= loc && loc < zzBuffer.length() ? zzBuffer.charAt(loc) : (char) -1;
+  }
+
+  private void eatTrailingSpaces() {
+    int i=0;
+    int offset = yylength() - 1;
+    char c = getChar(offset);
+    while (c == ' ' || c == '\t'){
+      i++;
+      offset--;
+      c = getChar(offset);
+    }
+    yypushback(i);
+  }
+
+%}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////// REGEXPS DECLARATIONS //////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+EOL =                           "\n"
+WHITE_SPACE_CHAR =              [ \t]
+WHITE_SPACE =                   {WHITE_SPACE_CHAR}+
+
+LINE =                          .*
+COMMENT =                       "#"{LINE}
+
+KEY =                           [a-zA-Z_][a-zA-Z0-9\-_ ]*:
+
+ESCAPE_SEQUENCE=                \\[^\n]
+DSTRING=                        \"([^\\\"]|{ESCAPE_SEQUENCE})*?\"?
+STRING=                         '([^\\']|{ESCAPE_SEQUENCE}|(''))*?'?
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////// STATES DECLARATIONS //////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+%state VALUE, VALUE_OR_KEY, INDENT_VALUE
+
+%%
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////// RULES declarations ////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+<YYINITIAL, VALUE, VALUE_OR_KEY> {
+
+{COMMENT}                       {   return COMMENT; }
+
+{EOL}                           {   yybegin(YYINITIAL);
+                                    return EOL;
+                                }
+"{"                             {   yybegin(YYINITIAL);
+                                    return LBRACE;
+                                }
+"}"                             {   return RBRACE; }
+"["                             {   yybegin(YYINITIAL);
+                                    return LBRACKET;
+                                }
+"]"                             {   return RBRACKET; }
+","                             {   yybegin(YYINITIAL);
+                                    return COMMA;
+                                }
+":"                             {   yybegin(YYINITIAL);
+                                    return COLON;
+                                }
+"?"                             {   yybegin(YYINITIAL);
+                                    return QUESTION;
+                                }
+
+}
+
+<YYINITIAL, VALUE_OR_KEY> {
+
+{KEY} / ({LINE}?)               {   yybegin(VALUE);
+                                    return SCALAR_KEY;
+                                }
+}
+
+<YYINITIAL>{
+
+"---"                           {   return DOCUMENT_MARKER; }
+
+{WHITE_SPACE}                   {   final char prev = previousChar();
+                                    return prev == (char)-1 || prev == '\n' ? INDENT : WHITESPACE;
+                                }
+"-" / ({WHITE_SPACE} | {EOL})   {   yybegin(VALUE_OR_KEY);
+                                    return SEQUENCE_MARKER; }
+
+.                               {   return TEXT; }
+}
+
+
+<VALUE, VALUE_OR_KEY>{
+
+{WHITE_SPACE}                   {   return WHITESPACE; }
+
+{STRING}                        {   yybegin(YYINITIAL);
+                                    return SCALAR_STRING;
+                                }
+
+{DSTRING}                       {   yybegin(YYINITIAL);
+                                    return SCALAR_DSTRING;
+                                }
+
+">"/ ({WHITE_SPACE} | {EOL})      {   yybegin(INDENT_VALUE);
+                                    //System.out.println("Started SCALAR_TEXT state");
+                                    valueIndent = 0; // initialization
+                                    afterEOL = false;
+                                    valueTokenType = SCALAR_TEXT;
+                                    yypushback(1);
+                                }
+
+("|"("-"|"+")?) / ({WHITE_SPACE} | {EOL})
+                                {   yybegin(INDENT_VALUE);
+                                    //System.out.println("Started SCALAR_LIST state");
+                                    valueIndent = 0; // initialization
+                                    afterEOL = false;
+                                    valueTokenType = SCALAR_LIST;
+                                    yypushback(yylength());
+                                }
+
+[^ \t\n,{\[|>][^\n#,}\]]*       {   eatTrailingSpaces();
+                                    return TEXT;
+                                }
+.                               {   return TEXT; }
+}
+
+<INDENT_VALUE> {
+{WHITE_SPACE}                           {   afterEOL = false;
+                                            //System.out.println("Matched WHITESPACE:" + yytext());
+                                            final int matched = yylength();
+                                            if (valueIndent < 0){
+                                                valueIndent = matched;
+                                                //System.out.println("Indent selected:" + valueIndent);
+                                            }
+                                            else if (valueIndent > matched) {
+                                                yybegin(YYINITIAL);
+                                                //System.out.println("return to initial state");
+                                            }
+                                            return previousChar() == '\n' ? INDENT : WHITESPACE;
+                                        }
+[^ \n\t] {LINE}?                        {   if (afterEOL){
+                                                yypushback(yylength());
+                                                yybegin(YYINITIAL);
+                                                //System.out.println("return to initial state");
+
+                                            } else {
+                                                afterEOL = false;
+                                                if (valueIndent < 0) {
+                                                    //System.out.println("Matched TEXT:" + yytext());
+                                                    return TEXT;
+                                                }
+                                                //System.out.println("Matched ValueContext:" + yytext());
+                                                return valueTokenType;
+                                            }
+                                        }
+{EOL}                                   {   afterEOL = true;
+                                            //System.out.println("Matched EOL:");
+                                            if (valueIndent < 0) {
+                                                yybegin(YYINITIAL);
+                                                //System.out.println("return to initial state");
+                                            }
+                                            else if (valueIndent == 0) {
+                                                valueIndent --;
+                                            }
+                                            return EOL;
+                                        }
+}
+
