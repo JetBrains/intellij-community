@@ -1,0 +1,20 @@
+<project name="Test gant invocation from Ant script" default="doGant">
+  <dirname property="build.dir" file="${ant.file}"/>
+  <property name="project.home" value="${build.dir}/.."/>
+  <property name="gant.home" value="${project.home}/build/lib/gant"/>
+
+  <path id="gant.classpath">
+    <pathelement location="${project.home}/build/lib/gant_patches.jar"/>
+    <fileset dir="${gant.home}/lib">
+      <include name="*.jar"/>
+    </fileset>
+  </path>
+
+  <taskdef name="gant" classname="org.codehaus.gant.ant.Gant">
+    <classpath refid="gant.classpath"/>
+  </taskdef>
+
+  <target name="doGant">
+    <gant file="${gant.script}"/>
+  </target>
+</project>

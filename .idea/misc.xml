@@ -1,33 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project relativePaths="false" version="4">
-  <component name="BuildServerSettings">
-    <option name="HISTORY" value="" />
-    <option name="LOGIN" value="" />
-    <option name="SERVER_URL" value="http://buildserver" />
-    <option name="PASSWORD" />
-    <option name="REMEMBER_ME" value="true" />
-    <option name="USE_IDEA_PROXY_SETTINGS" value="true" />
-    <option name="INSPECTIONS_BUILD_TYPE_NAME" />
-    <option name="INSPECTIONS_PROJECT_ID" />
-    <option name="INSPECTIONS_BUILD_TYPE_ID" />
-    <option name="DUPLICATES_BUILD_TYPE_NAME" />
-    <option name="DUPLICATES_PROJECT_ID" />
-    <option name="DUPLICATES_BUILD_TYPE_ID" />
-    <option name="PERFORM_COMMIT_IF_SUCCESSFUL" value="true" />
-    <option name="PERFORM_COMMIT_IF_NO_NEW_FAILED_TESTS" value="false" />
-    <option name="REQUEST_CONFIRMATON" value="false" />
-    <option name="PRE_TESTED_COMMIT" value="true" />
-    <option name="STATUS_DIALOG_SPLITTER_PROPORTION" value="0.8" />
-    <option name="FILTER_BY_USER" value="true" />
-    <option name="FILTER_REMOTE_RUN_TREE" value="false" />
-    <option name="FILTER_BY_STATUS" value="false" />
-    <option name="SHOW_CLOSE_PROMPT" value="true" />
-  </component>
   <component name="DependencyValidationManager">
     <option name="SKIP_IMPORT_STATEMENTS" value="false" />
-  </component>
-  <component name="InspectionPassRegistrar">
-    <option name="LOAD_NEW_PROBLEMS" value="true" />
   </component>
   <component name="JavadocGenerationManager">
     <option name="OUTPUT_DIRECTORY" />
@@ -48,6 +22,9 @@
   </component>
   <component name="ProjectDetails">
     <option name="projectName" value="idea-community" />
+  </component>
+  <component name="ProjectKey">
+    <option name="state" value="$PROJECT_DIR$/.idea/misc.xml" />
   </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_1_5" assert-keyword="true" jdk-15="true" project-jdk-name="1.6" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/out" />

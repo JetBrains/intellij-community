@@ -1,0 +1,92 @@
+import org.jetbrains.jps.Jps
+import org.jetbrains.jps.idea.IdeaProjectLoader
+
+includeTool << Jps
+
+binding.setVariable("p", {String key ->
+  return getProperty(key) as String
+})
+
+binding.setVariable("guessJdk", {
+  String javaHome = p("java.home")
+
+  if (new File(javaHome).getName() == "jre") {
+    javaHome = new File(javaHome).getParent()
+  }
+
+  return javaHome
+})
+
+binding.setVariable("isMac", {
+  return System.getProperty("os.name").toLowerCase().startsWith("mac")
+})
+
+binding.setVariable("isDefined", {String key ->
+  try {
+    this[key]
+    return true
+  }
+  catch (MissingPropertyException mpe) {
+    return false
+  }
+})
+
+private String require(String key) {
+  try {
+    this[key]
+  }
+  catch (MissingPropertyException mpe) {
+    project.error("Property $key is required")
+  }
+}
+
+private String require(String key, String defaultValue) {
+  try {
+    this[key]
+  }
+  catch (MissingPropertyException mpe) {
+    project.info("$key is not defined. Defaulting to $defaultValue")
+    this[key] = defaultValue
+  }
+}
+
+binding.setVariable("requireProperty", {String key, String defaultValue = null ->
+  if (defaultValue == null) {
+    require(key)
+  }
+  else {
+    require(key, defaultValue)
+  }
+})
+
+binding.setVariable("guessHome", {
+  // Current file is supposed to be at build/scripts/release.gant path
+  new File(requireProperty("gant.file").substring("file:".length())).getParentFile().getParentFile().getParent()
+})
+
+binding.setVariable("loadProject", {
+  requireProperty("jdk", requireProperty("jdk15.home", guessJdk()))
+  new IdeaProjectLoader().loadFromPath(project, "${home}")
+
+  binding.ant.patternset(id: "idea.compiler.resources") {
+    exclude(name: "**/*.java")
+    exclude(name: "**/*.form")
+    exclude(name: "**/*.class")
+    exclude(name: "**/*.scala")
+    exclude(name: "**/*.groovy")
+  }
+
+  project["compiler.resources.id"] = "idea.compiler.resources"
+
+  if (!isMac()) {
+    project.modules.values().each {
+      it.classpath << project.resolve("$jdk/lib/tools.jar")
+    }
+  }
+})
+
+requireProperty("home", guessHome())
+
+project.stagePrinter = { String message ->
+  println "##teamcity[progressMessage '$message']"
+}

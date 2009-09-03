@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="Gant">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/build/lib/gant/lib" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/build/lib/gant/src.zip!/main/groovy" />
+    </SOURCES>
+    <jarDirectory url="file://$PROJECT_DIR$/build/lib/gant/lib" recursive="false" />
+  </library>
+</component>

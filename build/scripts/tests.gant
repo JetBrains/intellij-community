@@ -1,0 +1,13 @@
+def guessHome() {
+  // Current file is supposed to be at build/scripts/release.gant path
+  new File(this["gant.file"].substring("file:".length())).getParentFile().getParentFile().getParent()
+}
+
+includeTargets << new File("${guessHome()}/build/scripts/common_tests.gant")
+
+setProperty("testcases", ["com.intellij.AllTests"])
+
+setProperty("jvm_args", [
+            "-Xmx350m",
+            "-XX:MaxPermSize=320m",
+            ])
