@@ -307,23 +307,23 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
     }
   }
 
-  public ComponentAdapter registerComponentInstance(Object component) {
+  public ComponentAdapter registerComponentInstance(@NotNull Object component) {
     return registerComponentInstance(component.getClass(), component);
   }
 
-  public ComponentAdapter registerComponentInstance(Object componentKey, Object componentInstance) {
+  public ComponentAdapter registerComponentInstance(@NotNull Object componentKey, @NotNull Object componentInstance) {
     return registerComponent(new InstanceComponentAdapter(componentKey, componentInstance));
   }
 
-  public ComponentAdapter registerComponentImplementation(Class componentImplementation) {
+  public ComponentAdapter registerComponentImplementation(@NotNull Class componentImplementation) {
     return registerComponentImplementation(componentImplementation, componentImplementation);
   }
 
-  public ComponentAdapter registerComponentImplementation(Object componentKey, Class componentImplementation) {
+  public ComponentAdapter registerComponentImplementation(@NotNull Object componentKey, @NotNull Class componentImplementation) {
     return registerComponentImplementation(componentKey, componentImplementation, null);
   }
 
-  public ComponentAdapter registerComponentImplementation(Object componentKey, Class componentImplementation, Parameter[] parameters) {
+  public ComponentAdapter registerComponentImplementation(@NotNull Object componentKey, @NotNull Class componentImplementation, Parameter[] parameters) {
     ComponentAdapter componentAdapter = componentAdapterFactory.createComponentAdapter(componentKey, componentImplementation, parameters);
     return registerComponent(componentAdapter);
   }

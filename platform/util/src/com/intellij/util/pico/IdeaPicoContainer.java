@@ -17,6 +17,7 @@
 package com.intellij.util.pico;
 
 import com.intellij.util.ReflectionCache;
+import org.jetbrains.annotations.NotNull;
 import org.picocontainer.*;
 import org.picocontainer.defaults.*;
 import org.picocontainer.monitors.DefaultComponentMonitor;
@@ -43,7 +44,7 @@ public class IdeaPicoContainer extends DefaultPicoContainer {
       myLifecycleStrategy = new DefaultLifecycleStrategy(new DefaultComponentMonitor());
     }
 
-    public ComponentAdapter createComponentAdapter(Object componentKey, Class componentImplementation, Parameter[] parameters)
+    public ComponentAdapter createComponentAdapter(@NotNull Object componentKey, @NotNull Class componentImplementation, Parameter[] parameters)
       throws PicoIntrospectionException, AssignabilityRegistrationException, NotConcreteRegistrationException {
       return new CachingComponentAdapter(
         new ConstructorInjectionComponentAdapter(componentKey, componentImplementation, parameters, true, currentMonitor(), myLifecycleStrategy));

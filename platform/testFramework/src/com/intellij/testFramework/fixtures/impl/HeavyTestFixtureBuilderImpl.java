@@ -32,6 +32,7 @@ class HeavyTestFixtureBuilderImpl implements TestFixtureBuilder<IdeaProjectTestF
     myModuleFixtureBuilderFactory = new FactoryMap<Class<? extends ModuleFixtureBuilder>, ModuleFixtureBuilder>() {
       protected ModuleFixtureBuilder create(Class<? extends ModuleFixtureBuilder> key) {
         Class<? extends ModuleFixtureBuilder> implClass = providers.get(key);
+        assert implClass != null: key;
         container.registerComponentImplementation(implClass);
         return (ModuleFixtureBuilder)container.getComponentInstanceOfType(implClass);
       }
