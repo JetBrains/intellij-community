@@ -18,7 +18,7 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
   private final JList myList = new JList();
   private MyListModel myModel;
 
-  public FileTemplateTabAsList(String title) {
+  FileTemplateTabAsList(String title) {
     super(title);
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myList.setCellRenderer(new MyListCellRenderer());
@@ -31,15 +31,15 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
 
   private class MyListCellRenderer extends DefaultListCellRenderer {
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      Icon icon = null;
       super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      Icon icon = null;
       if (value instanceof FileTemplate) {
         FileTemplate template = (FileTemplate) value;
         icon = FileTypeManager.getInstance().getFileTypeByExtension(template.getExtension()).getIcon();
         final boolean internalTemplate = AllFileTemplatesConfigurable.isInternalTemplate(template.getName(), getTitle());
         if (internalTemplate) {
           setFont(getFont().deriveFont(Font.BOLD));
-          setText(FileTemplateManagerImpl.getInstance().localizeInternalTemplateName(template));
+          setText(FileTemplateManagerImpl.getInstanceImpl().localizeInternalTemplateName(template));
         }
         else {
           setFont(getFont().deriveFont(Font.PLAIN));
@@ -48,11 +48,11 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
 
         if (!template.isDefault()) {
           if (!isSelected) {
-            super.setForeground(MODIFIED_FOREGROUND);
+            setForeground(MODIFIED_FOREGROUND);
           }
         }
       }
-      super.setIcon(icon);
+      setIcon(icon);
       return this;
     }
   }
@@ -63,7 +63,7 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
     DefaultListModel model = (DefaultListModel) myList.getModel();
     int selectedIndex = myList.getSelectedIndex();
     model.remove(selectedIndex);
-    if (model.size() > 0) {
+    if (!model.isEmpty()) {
       myList.setSelectedIndex(Math.min(selectedIndex, model.size() - 1));
     }
     onTemplateSelected();
@@ -72,7 +72,7 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
 //      onListSelectionChanged();
   }
 
-  private class MyListModel extends DefaultListModel {
+  private static class MyListModel extends DefaultListModel {
     public void fireListDataChanged() {
       int size = getSize();
       if (size > 0) {
@@ -85,8 +85,7 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
     myModel = new MyListModel();
     myList.setModel(myModel);
     final FileTemplate[] templates = savedTemplates.values().toArray(new FileTemplate[savedTemplates.values().size()]);
-    for (int i = 0; i < templates.length; i++) {
-      FileTemplate template = templates[i];
+    for (FileTemplate template : templates) {
       myModel.addElement(template);
     }
     if (selection != null) {
@@ -119,7 +118,7 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
 
   public FileTemplate getSelectedTemplate() {
     final Object value = myList.getSelectedValue();
-    return value instanceof FileTemplate ? ((FileTemplate) value) : null;
+    return value instanceof FileTemplate ? (FileTemplate) value : null;
   }
 
   public JComponent getComponent() {

@@ -94,7 +94,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
     String name = prefName;
     int i = 0;
     while (names.contains(name)) {
-      name = prefName + " (" + (++i) + ")";
+      name = prefName + " (" + ++i + ")";
     }
     FileTemplate newTemplate = new FileTemplateImpl(content, name, extension);
     myCurrentTab.addTemplate(newTemplate);
@@ -119,7 +119,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
     String name = MessageFormat.format(nameTemplate, "", selected.getName());
     int i = 0;
     while (names.contains(name)) {
-      name = MessageFormat.format(nameTemplate, (++i) + " ", selected.getName());
+      name = MessageFormat.format(nameTemplate, ++i + " ", selected.getName());
     }
     FileTemplate newTemplate = new FileTemplateImpl(selected.getText(), name, selected.getExtension());
     myCurrentTab.addTemplate(newTemplate);
@@ -259,7 +259,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
       public void update(AnActionEvent e) {
         super.update(e);
         FileTemplate selectedItem = myCurrentTab.getSelectedTemplate();
-        FileTemplateManagerImpl manager = FileTemplateManagerImpl.getInstance();
+        FileTemplateManagerImpl manager = FileTemplateManagerImpl.getInstanceImpl();
         e.getPresentation().setEnabled(selectedItem != null
                                        && !selectedItem.isDefault()
                                        &&
@@ -355,7 +355,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
         }
       }
       if (selectedValue == null) {
-        myEditor.setTemplate(null, FileTemplateManagerImpl.getInstance().getDefaultTemplateDescription());
+        myEditor.setTemplate(null, FileTemplateManagerImpl.getInstanceImpl().getDefaultTemplateDescription());
       }
       else {
         selectTemplate(selectedValue);
@@ -366,10 +366,10 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
   private void selectTemplate(FileTemplate template) {
     VirtualFile defDesc = null;
     if (myCurrentTab == myTemplatesList) {
-      defDesc = FileTemplateManagerImpl.getInstance().getDefaultTemplateDescription();
+      defDesc = FileTemplateManagerImpl.getInstanceImpl().getDefaultTemplateDescription();
     }
     else if (myCurrentTab == myIncludesList) {
-      defDesc = FileTemplateManagerImpl.getInstance().getDefaultIncludeDescription();
+      defDesc = FileTemplateManagerImpl.getInstanceImpl().getDefaultIncludeDescription();
     }
     if (myEditor.getTemplate() != template) {
       myEditor.setTemplate(template, defDesc);
@@ -449,7 +449,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
   }
 
   public boolean isModified() {
-    return myModified || (myEditor != null && myEditor.isModified());
+    return myModified || myEditor != null && myEditor.isModified();
   }
 
   /**

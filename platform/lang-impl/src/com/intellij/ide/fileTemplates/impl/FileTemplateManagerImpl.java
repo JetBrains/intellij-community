@@ -82,7 +82,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   private static final Object TOP_DIRS_LOCK = new Object();
 
   private final FileTemplateManagerImpl[] myChildren;
-  public static FileTemplateManagerImpl getInstance() {
+  public static FileTemplateManagerImpl getInstanceImpl() {
     return (FileTemplateManagerImpl)ServiceManager.getService(FileTemplateManager.class);
   }
 
@@ -119,6 +119,20 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     myCodeTemplatesManager = codeTemplatesManager;
     myJ2eeTemplatesManager = j2eeTemplatesManager;
     myChildren = internalTemplatesManager == null ? new FileTemplateManagerImpl[0] : new FileTemplateManagerImpl[]{internalTemplatesManager,patternsManager,codeTemplatesManager,j2eeTemplatesManager};
+
+    if (ApplicationManager.getApplication().isUnitTestMode() && defaultTemplatesDirName.equals(INTERNAL_DIR)) {
+      for (String tname : Arrays.asList("Class", "AnnotationType", "Enum", "Interface")) {
+        for (FileTemplate template : getAllTemplates()) {
+          if (template.getName().equals(tname)) {
+            myTemplates.removeTemplate(template);
+            break;
+          }
+        }
+        FileTemplateImpl fileTemplate = new FileTemplateImpl(normalizeText(getTestClassTemplateText(tname)), tname, "java");
+        myTemplates.addTemplate(fileTemplate);
+        fileTemplate.setInternal(true);
+      }
+    }
   }
 
   @NotNull
@@ -495,17 +509,9 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     synchronized (LOCK) {
       LOG.assertTrue(myInternalTemplatesManager != null);
 
-      if (templateName.equals("Class") && ApplicationManager.getApplication().isUnitTestMode()) {
-        String text = getTestClassTemplateText(templateName);
-        FileTemplateImpl template = new FileTemplateImpl(normalizeText(text), templateName + "ForTest", "java");
-        template.setInternal(true);
-        return template;
-      }
-
       FileTemplateImpl template = (FileTemplateImpl)myInternalTemplatesManager.getTemplate(templateName);
 
       if (template == null) {
-
         template = (FileTemplateImpl)getTemplate(templateName);
       }
       

@@ -337,7 +337,7 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
       name = myName;
       extension = myExtension;
     }
-    VirtualFile file = FileTemplateManagerImpl.getInstance().getDefaultTemplate(name, extension);
+    VirtualFile file = FileTemplateManagerImpl.getInstanceImpl().getDefaultTemplate(name, extension);
     if (file == null) return;
     try {
       String text = readExternal(file);

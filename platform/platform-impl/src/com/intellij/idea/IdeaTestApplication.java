@@ -9,9 +9,6 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.PluginsFacade;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.util.InvalidDataException;
-
-import java.io.IOException;
 
 public class IdeaTestApplication extends CommandLineApplication {
   private DataProvider myDataContext;
@@ -38,10 +35,7 @@ public class IdeaTestApplication extends CommandLineApplication {
     return myDataContext == null ? null : myDataContext.getData(dataId);
   }
 
-
-
-
-  public static synchronized IdeaTestApplication getInstance() throws IOException, InvalidDataException {
+  public static synchronized IdeaTestApplication getInstance() {
     if (ourInstance == null) {
       new IdeaTestApplication();
       PluginsFacade.INSTANCE.getPlugins(); //initialization
