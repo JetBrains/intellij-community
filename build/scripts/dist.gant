@@ -21,7 +21,7 @@ target(compile: "Compile project") {
   project["javac"] = "$jdk/bin/javac"
   project.targetFolder = out
   project.clean()
-  project.makeAll()
+  project.makeProduction()
 }
 
 target('default': 'The default target') {

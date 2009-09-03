@@ -53,8 +53,8 @@ def layoutFull(String targetDirectory) {
   //noinspection GroovyAssignabilityCheck
   List<String> openapiModules = [platformApiModules(),
           "openapi", "testFramework-java", "debugger-openapi", "compiler-openapi", "dom-openapi", "execution-openapi",
-          "jsp-openapi", "jam-support-openapi",
-          "jam-support-openspi"].flatten()
+          "jsp-openapi"/*, "jam-support-openapi",
+          "jam-support-openspi"*/].flatten()
 
   //noinspection GroovyAssignabilityCheck
   List<String> implementationModules = [platformImplementationModules(),
