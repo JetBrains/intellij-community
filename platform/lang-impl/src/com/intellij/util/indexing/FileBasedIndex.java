@@ -1,8 +1,6 @@
 package com.intellij.util.indexing;
 
 import com.intellij.AppTopics;
-import com.intellij.concurrency.Job;
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.impl.FileSystemSynchronizerImpl;
 import com.intellij.lang.ASTNode;
@@ -1056,7 +1054,7 @@ public class FileBasedIndex implements ApplicationComponent {
     final boolean forceIndexing = oldBytes != null;
 
     PsiFile psiFile = null;
-    final Job<Object> job = JobScheduler.getInstance().createJob("IndexJob", Job.DEFAULT_PRIORITY / 2);
+    //final Job<Object> job = JobScheduler.getInstance().createJob("IndexJob", Job.DEFAULT_PRIORITY / 2);
 
     for (final ID<?, ?> indexId : myIndices.keySet()) {
       if (forceIndexing ? getInputFilter(indexId).acceptInput(file) : shouldIndexFile(file, indexId)) {
@@ -1085,8 +1083,8 @@ public class FileBasedIndex implements ApplicationComponent {
 
         final FileContent _oldContent = oldContent;
         final FileContent _fc = fc;
-        job.addTask(new Runnable() {
-          public void run() {
+        //job.addTask(new Runnable() {
+        //  public void run() {
             try {
               updateSingleIndex(indexId, file, _fc, _oldContent);
             }
@@ -1095,16 +1093,16 @@ public class FileBasedIndex implements ApplicationComponent {
               LOG.info(e);
             }
           }
-        });
-      }
+        //});
+      //}
     }
 
-    try {
-      job.scheduleAndWaitForResults();
-    }
-    catch (Throwable throwable) {
-      LOG.info(throwable);
-    }
+    //try {
+    //  job.scheduleAndWaitForResults();
+    //}
+    //catch (Throwable throwable) {
+    //  LOG.info(throwable);
+    //}
 
     if (psiFile != null) {
       psiFile.putUserData(PsiFileImpl.BUILDING_STUB, null);
