@@ -83,6 +83,8 @@
         <string>true</string>
         <key>apple.awt.graphics.UseQuartz</key>
         <string>true</string>
+        <key>apple.awt.fullscreencapturealldisplays</key>
+        <string>false</string>
       </dict>
       <key>VMOptions</key>
       <string>-Xms32m -Xmx256m -XX:MaxPermSize=150m -Xbootclasspath/a:../lib/boot.jar -ea</string>

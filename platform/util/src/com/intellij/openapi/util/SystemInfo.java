@@ -76,6 +76,13 @@ public class SystemInfo {
   public static final boolean isMacOSLeopard = isLeopard();
 
   /**
+   * Running under MacOS X version 10.5 or later;
+   *
+   * @since 9.0
+   */
+  public static final boolean isMacOSSnowLeopard = isSnowLeopard();
+
+  /**
    * Operating system is supposed to have middle mouse button click occupied by paste action.
    * @since 6.0
    */
@@ -95,6 +102,10 @@ public class SystemInfo {
 
   private static boolean isLeopard() {
     return isMac && isTiger() && !OS_VERSION.startsWith("10.4");
+  }
+
+  private static boolean isSnowLeopard() {
+    return isMac && isLeopard() && !OS_VERSION.startsWith("10.5");
   }
 
   public static boolean isJavaVersionAtLeast(String v) {
