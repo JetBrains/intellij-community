@@ -9,10 +9,12 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
+import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.io.File;
 
@@ -27,7 +29,7 @@ public class GantRunner extends GroovyScriptRunner {
   }
 
   @Override
-  public boolean ensureRunnerConfigured(Module module, final String groovyHomePath) {
+  public boolean ensureRunnerConfigured(Module module, final String confName) {
     if (!isValidModule(module)) {
       int result = Messages
         .showOkCancelDialog("Gant is not configured. Do you want to configure it?", "Configure Gant SDK",
@@ -55,8 +57,7 @@ public class GantRunner extends GroovyScriptRunner {
   }
 
   @Override
-  public void configureCommandLine(JavaParameters params, Module module, boolean tests, VirtualFile script, final String groovyHome,
-                                   GroovyScriptRunConfiguration configuration) throws CantRunException {
+  public void configureCommandLine(JavaParameters params, Module module, boolean tests, VirtualFile script, GroovyScriptRunConfiguration configuration) throws CantRunException {
     final VirtualFile groovyJar = findGroovyJar(module);
     if (groovyJar != null) {
       params.getClassPath().add(groovyJar);
@@ -64,6 +65,7 @@ public class GantRunner extends GroovyScriptRunner {
 
     setToolsJar(params);
 
+    final String groovyHome = FileUtil.toSystemDependentName(ObjectUtils.assertNotNull(LibrariesUtil.getGroovyHomePath(module)));
     setGroovyHome(params, groovyHome);
     
     final String confPath = getConfPath(module);

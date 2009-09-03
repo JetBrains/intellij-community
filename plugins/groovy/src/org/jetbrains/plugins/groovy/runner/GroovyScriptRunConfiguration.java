@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.CantRunException;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
@@ -15,24 +14,20 @@ import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
-import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PathUtil;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.util.LibrariesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -146,16 +141,6 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
       throw CantRunException.noJdkForModule(module);
     }
 
-    final String groovyHomePath = LibrariesUtil.getGroovyHomePath(module);
-    if (groovyHomePath == null) {
-      Messages.showErrorDialog(module.getProject(),
-                               ExecutionBundle.message("error.running.configuration.with.error.error.message", getName(),
-                                                       "Groovy is not configured"), ExecutionBundle.message("run.error.message.title"));
-
-      ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME, false);
-      return null;
-    }
-
     final VirtualFile script = getScriptFile();
     if (script == null) {
       throw new CantRunException("Cannot find script " + scriptPath);
@@ -166,7 +151,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
       throw new CantRunException("Unknown script type " + scriptPath);
     }
 
-    if (!scriptRunner.ensureRunnerConfigured(module, groovyHomePath)) {
+    if (!scriptRunner.ensureRunnerConfigured(module, getName())) {
       return null;
     }
 
@@ -180,8 +165,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
         params.setJdk(ModuleRootManager.getInstance(module).getSdk());
         params.setWorkingDirectory(getAbsoluteWorkDir());
 
-        final String groovyHome = FileUtil.toSystemDependentName(groovyHomePath);
-        scriptRunner.configureCommandLine(params, module, tests, script, groovyHome, GroovyScriptRunConfiguration.this);
+        scriptRunner.configureCommandLine(params, module, tests, script, GroovyScriptRunConfiguration.this);
 
         if (isDebugEnabled) {
           params.getProgramParametersList().add("--debug");

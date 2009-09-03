@@ -26,11 +26,9 @@ public abstract class GroovyScriptRunner {
 
   public abstract boolean isValidModule(Module module);
 
-  public boolean ensureRunnerConfigured(Module module, final String groovyHomePath) {
-    return true;
-  }
+  public abstract boolean ensureRunnerConfigured(Module module, final String confName);
 
-  public abstract void configureCommandLine(JavaParameters params, Module module, boolean tests, VirtualFile script, final String groovyHome,
+  public abstract void configureCommandLine(JavaParameters params, Module module, boolean tests, VirtualFile script,
                                             GroovyScriptRunConfiguration configuration) throws CantRunException;
 
   public String getConfPath(@NotNull Module module) {

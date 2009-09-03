@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.CantRunException;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
@@ -24,6 +25,10 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
+import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.nio.charset.Charset;
@@ -36,8 +41,22 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
   }
 
   @Override
-  public void configureCommandLine(JavaParameters params, Module module, boolean tests, VirtualFile script, final String groovyHome,
-                                   GroovyScriptRunConfiguration configuration) throws CantRunException {
+  public boolean ensureRunnerConfigured(Module module, String confName) {
+    if (LibrariesUtil.getGroovyHomePath(module) == null) {
+      Messages.showErrorDialog(module.getProject(),
+                               ExecutionBundle.message("error.running.configuration.with.error.error.message", confName,
+                                                       "Groovy is not configured"), ExecutionBundle.message("run.error.message.title"));
+
+      ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME, false);
+      return false;
+    }
+
+
+    return true;
+  }
+
+  @Override
+  public void configureCommandLine(JavaParameters params, Module module, boolean tests, VirtualFile script, GroovyScriptRunConfiguration configuration) throws CantRunException {
     final VirtualFile groovyJar = findGroovyJar(module);
     if (groovyJar != null) {
       params.getClassPath().add(groovyJar);
@@ -45,6 +64,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
 
     setToolsJar(params);
 
+    final String groovyHome = FileUtil.toSystemDependentName(ObjectUtils.assertNotNull(LibrariesUtil.getGroovyHomePath(module)));
     setGroovyHome(params, groovyHome);
 
     final String confPath = getConfPath(module);

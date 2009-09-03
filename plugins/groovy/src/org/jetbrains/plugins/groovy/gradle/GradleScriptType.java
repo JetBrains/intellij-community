@@ -71,7 +71,7 @@ public class GradleScriptType extends GroovyScriptType {
       }
 
       @Override
-      public boolean ensureRunnerConfigured(Module module, String groovyHomePath) {
+      public boolean ensureRunnerConfigured(Module module, String confName) {
         if (!isValidModule(module)) {
           int result = Messages
             .showOkCancelDialog("Gradle is not configured. Do you want to configure it?", "Configure Gradle SDK",
@@ -90,8 +90,7 @@ public class GradleScriptType extends GroovyScriptType {
       public void configureCommandLine(JavaParameters params,
                                        Module module,
                                        boolean tests,
-                                       VirtualFile script, String groovyHome,
-                                       GroovyScriptRunConfiguration configuration) throws CantRunException {
+                                       VirtualFile script, GroovyScriptRunConfiguration configuration) throws CantRunException {
         params.setMainClass("org.gradle.BootstrapMain");
 
         final VirtualFile groovyJar = findGroovyJar(module);
