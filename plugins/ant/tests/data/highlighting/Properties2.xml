@@ -12,7 +12,7 @@
 
   <taskdef name="obfuscate"
     classname="com.yworks.yguard.ObfuscatorTask"
-    classpath="${project.path2}/yguard.jar"/>
+    classpath="yguard.jar"/>
 
     <obfuscate>
       <property name="naming-scheme" value="mix"/>
