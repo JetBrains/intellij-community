@@ -107,6 +107,7 @@ def layoutFull(String targetDirectory) {
       jar("resources.jar") {
         module("resources")
         module("platform-resources")
+        module("community-resources")
       }
 
       jar("idea_rt.jar") { module("java-runtime")}
