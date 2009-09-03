@@ -1,0 +1,345 @@
+import org.jetbrains.jps.Module
+
+includeTargets << new File("${guessHome()}/build/scripts/utils.gant")
+
+def guessHome() {
+  // Current file is supposed to be at build/scripts/release.gant path
+  new File(this["gant.file"].substring("file:".length())).getParentFile().getParentFile().getParent()
+}
+
+target('default' : "Developers update") {
+  layoutFull(deploy)
+}
+
+def module(String name) {
+  ant.module(name: name)
+  markUsed(name)
+}
+
+def module(String name, Closure init) {
+  ant.module(name: name, init)
+  markUsed(name)
+}
+
+private def markUsed(String name) {
+  def module = project.modules[name]
+  // Can be null in "Developers update" since we are not actually loading modules.xml
+  if (module != null) {
+    module["used"] = true
+  }
+}
+
+private List platformImplementationModules() {
+  return [
+          "platform-impl",
+          "vcs-impl",
+          "lang-impl",
+          "testRunner",
+          "smRunner",
+          "xdebugger-impl",
+          "testFramework",
+          "xml",
+          "lvcs-impl",
+  ]
+}
+
+private List<String> platformApiModules() {
+  return ["platform-api", "lvcs-api", "lang-api", "vcs-api", "usageView", "xdebugger-api", "xml-openapi"]
+}
+
+def layoutFull(String targetDirectory) {
+  project.stage("layout to $targetDirectory")
+
+  //noinspection GroovyAssignabilityCheck
+  List<String> openapiModules = [platformApiModules(),
+          "openapi", "testFramework-java", "debugger-openapi", "compiler-openapi", "dom-openapi", "execution-openapi",
+          "jsp-openapi", "jam-support-openapi",
+          "jam-support-openspi"].flatten()
+
+  //noinspection GroovyAssignabilityCheck
+  List<String> implementationModules = [platformImplementationModules(),
+          "notNull",
+          "java-impl",
+          "compiler-impl",
+          "debugger-impl",
+          "dom-impl",
+          "execution-impl",
+          "refactoring-impl",
+          "jsp-spi",
+          "idea-ui"].flatten()
+
+  ant.patternset(id: "resources.included") {
+    include(name: "**/*.properties")
+    include(name: "fileTemplates/**/*")
+    include(name: "inspectionDescriptions/**/*")
+    include(name: "intentionDescriptions/**/*")
+    include(name: "tips/**/*")
+  }
+
+  ant.patternset(id: "resources.excluded") {
+    exclude(name: "**/*.properties")
+    exclude(name: "fileTemplates/**/*")
+    exclude(name: "fileTemplates")
+    exclude(name: "inspectionDescriptions/**/*")
+    exclude(name: "inspectionDescriptions")
+    exclude(name: "intentionDescriptions/**/*")
+    exclude(name: "intentionDescriptions")
+    exclude(name: "tips/**/*")
+    exclude(name: "tips")
+  }
+
+  layout(targetDirectory) {
+    dir("lib") {
+      jar("util.jar") { module("util") }
+      jar("idea-jsp-openapi.jar") { module("jsp-base-openapi") }
+
+      jar("openapi.jar") {
+        openapiModules.each { module it}
+      }
+
+      jar("annotations.jar") { module("annotations")}
+      jar("extensions.jar") { module("extensions")}
+
+      jar("idea.jar") {
+        implementationModules.each { module it}
+      }
+
+      jar("bootstrap.jar") { module("bootstrap")}
+      jar("resources.jar") {
+        module("resources")
+        module("platform-resources")
+      }
+
+      jar("idea_rt.jar") { module("java-runtime")}
+
+      jar("forms_rt.jar") {
+        module("forms_rt")
+        module("forms-compiler")
+      }
+
+      jar("resources_en.jar") {
+        module("resources-en")
+        module("platform-resources-en")
+      }
+
+      jar("icons.jar") { module("icons") }
+      jar("boot.jar") { module("boot") }
+
+      jar("javac2.jar") {
+        module("javac2")
+        module("forms-compiler")
+        module("forms_rt")
+        module("notNull")
+      }
+
+      fileset(dir: "$home/lib")
+
+      fileset(dir: "$home/lib/src") {
+        include(name: "trove4j_changes.txt")
+        include(name: "trove4j_src.jar")
+      }
+
+      dir("ant") {
+        fileset(dir: "$home/lib/ant") {
+          exclude(name: "**/src/**")
+        }
+      }
+    }
+
+    dir("plugins") {
+      def simplePlugins = ["commander", "copyright", "properties", "java-i18n"]
+
+      simplePlugins.each {
+        layoutPlugin it
+      }
+
+      layoutPlugin("ant", "ant", "antIntegration")
+//      layoutPlugin("InspectionGadgets", "InspectionGadgetsPlugin")
+//      layoutPlugin("IntelliLang", "IntelliLangJava")
+//      layoutPlugin("IntentionPowerPack", "IntentionPowerPackPlugin")
+//      layoutPlugin("ToString", "generate-tostring", "toString")
+
+      layoutPlugin("SpellChecker", "spellchecker", "spellchecker-core") {
+        fileset(dir: "$home/plugins/spellchecker/lib")
+      }
+
+
+      //layoutPlugin("maven") {
+      //  fileset(dir: "$home/svnPlugins/maven/lib")
+      //}
+
+
+      //layoutPlugin("git4idea") {
+      //  fileset(dir: "$home/svnPlugins/git4idea/lib", excludes: "**/trilead-ssh2-src.zip")
+      //}
+
+      //layoutPlugin("svn4idea") {
+      //  fileset(dir: "$home/svnPlugins/svn4idea/lib", excludes: "**/svnkitsrc.zip")
+      //}
+
+
+      //dir("junit") {
+      //  dir("lib") {
+      //    jar("junit-rt.jar") {
+      //      module("junit_rt")
+      //    }
+      //    jar("idea-junit.jar") {
+      //      noResources("junit")
+      //    }
+      //    resources("junit")
+      //  }
+      //}
+
+
+      dir("cvsIntegration") {
+        dir("lib") {
+          jar("cvs_util.jar") {noResources("cvs-core")}
+          jar("cvsIntegration.jar") {noResources("cvs-plugin")}
+          jar("javacvs-src.jar") {noResources("javacvs-src")}
+          jar("smartcvs-src.jar") {noResources("smartcvs-src")}
+
+          resources(["cvs-core", "cvs-plugin", "javacvs-src", "smartcvs-src"])
+
+          fileset(dir: "${home}/plugins/cvs2/lib")
+        }
+      }
+
+
+      dir("uiDesigner") {
+        dir("lib") {
+          jar("uiDesigner.jar") {
+            noResources("ui-designer")
+          }
+          resources("ui-designer")
+        }
+      }
+
+      //dir("testng") {
+      //  dir("lib") {
+      //    jar("testng.jar") {
+      //      noResources("testng")
+      //      noResources("testng_rt")
+      //    }
+      //
+      //    resources("testng")
+      //
+      //    fileset(dir: "$home/svnPlugins/testng/lib") {
+      //      include(name: "testng-jdk15.jar")
+      //    }
+      //  }
+      //
+      //  dir("lib-jdk14") {
+      //    fileset(dir: "$home/svnPlugins/testng/lib") {
+      //      include(name: "testng-jdk14.jar")
+      //    }
+      //  }
+      //}
+
+
+      //dir("Groovy") {
+      //  dir("lib") {
+      //    jar("Groovy.jar") {
+      //      module("jetgroovy") {
+      //        exclude(name: "standardDsls/**")
+      //      }
+      //    }
+      //
+      //    jar("groovy_rt.jar") {module("groovy-rt")}
+      //    dir("standardDsls") {
+      //      fileset(dir: "$home/svnPlugins/groovy/resources/standardDsls")
+      //    }
+      //
+      //    fileset(dir: "$home/svnPlugins/groovy/resources/conf")
+      //    fileset(file: "$home/svnPlugins/groovy/dsl/groovy-dsl.jar")
+      //  }
+      //}
+    }
+  }
+
+  printUnusedModules()
+
+  reorder(targetDirectory)
+}
+
+def printUnusedModules() {
+  project.modules.values().each {Module m ->
+    if (m["used"] == null && hasSourceRoots(m)) {
+      project.warning("Module ${m.getName()} is not used in project layout")
+    }
+  }
+}
+
+boolean hasSourceRoots(Module module) {
+  !module.sourceRoots.isEmpty()
+}
+
+def layoutPlugin(String moduleName) {
+  layoutPlugin(moduleName, moduleName, {})
+}
+
+def layoutPlugin(String moduleName, Closure custom) {
+  layoutPlugin(moduleName, moduleName, custom)
+}
+
+def layoutPlugin(String pluginName, String moduleName) {
+  layoutPlugin(pluginName, moduleName, {})
+}
+
+def layoutPlugin(String pluginName, String moduleName, Closure custom) {
+  layoutPlugin(pluginName, moduleName, pluginName, custom)
+}
+
+def layoutPlugin(String pluginName, String moduleName, String jarName) {
+  layoutPlugin(pluginName, moduleName, jarName, {})
+}
+
+def layoutPlugin(String pluginName, String moduleName, String jarName, Closure custom) {
+  dir(pluginName) {
+    dir("lib") {
+      jar("${jarName}.jar") {
+        noResources(moduleName)
+      }
+
+      resources(moduleName)
+      custom()
+    }
+  }
+}
+
+private def resources(List<String> modules) {
+  jar("resources_en.jar") {
+    modules.each {
+      module(it) {
+        patternset(refid: "resources.included")
+      }
+    }
+  }
+}
+
+private def resources(String moduleName) {
+  jar("resources_en.jar") {
+    module(moduleName) {
+      patternset(refid: "resources.included")
+    }
+  }
+}
+
+private def noResources(String moduleName) {
+  module(moduleName) {
+    patternset(refid: "resources.excluded")
+  }
+}
+
+def reorder(String targetDirectory) {
+  if (isDefined("util")) {
+    ant.java(classname: "com.intellij.util.io.zip.ReorderJarsMain", fork: "true") {
+      arg(value: "$home/build/order.txt")
+      arg(value: targetDirectory)
+      arg(value: targetDirectory)
+      arg(value: "$home/lib")
+      classpath {
+        pathelement(location: util.output)
+      }
+    }
+  }
+}

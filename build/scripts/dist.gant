@@ -1,0 +1,39 @@
+import org.jetbrains.jps.Jps
+
+includeTool << Jps
+includeTargets << new File("${guessHome()}/build/scripts/utils.gant")
+
+requireProperty("out", "$home/out/classes")
+
+def includeFile(String filename) {
+  Script s = groovyShell.parse(new File("$home/build/scripts/$filename"))
+  s.setBinding(binding)
+  s
+}
+
+def guessHome() {
+  // Current file is supposed to be at build/scripts/release.gant path
+  new File(this["gant.file"].substring("file:".length())).getParentFile().getParentFile().getParent()
+}
+
+target(compile: "Compile project") {
+  loadProject()
+  project["javac"] = "$jdk/bin/javac"
+  project.targetFolder = out
+  project.clean()
+  project.makeAll()
+}
+
+target('default': 'The default target') {
+  depends(compile)
+  def layouts = includeFile("layouts.gant")
+  def sandbox = "$home/out/release"
+
+  def layoutFolder = "$sandbox/dist.all"
+  layouts.layoutFull(layoutFolder)
+
+  def artifacts = "$sandbox/artifacts"
+  ant.zip(zipfile: "$artifacts/idea.zip") {
+    fileset(dir: layoutFolder)
+  }
+}
