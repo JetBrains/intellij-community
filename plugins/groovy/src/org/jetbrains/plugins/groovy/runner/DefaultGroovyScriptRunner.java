@@ -67,7 +67,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
     final String groovyHome = FileUtil.toSystemDependentName(ObjectUtils.assertNotNull(LibrariesUtil.getGroovyHomePath(module)));
     setGroovyHome(params, groovyHome);
 
-    final String confPath = getConfPath(module);
+    final String confPath = getConfPath(groovyHome);
     params.getVMParametersList().add("-Dgroovy.starter.conf=" + confPath);
 
     params.getVMParametersList().addParametersString(configuration.vmParams);

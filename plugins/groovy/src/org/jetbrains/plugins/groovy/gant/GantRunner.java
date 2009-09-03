@@ -10,7 +10,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
@@ -45,15 +44,13 @@ public class GantRunner extends GroovyScriptRunner {
     return true;
   }
 
-  @Override
-  public String getConfPath(@NotNull Module module) {
-    String gantHome = GantUtils.getSDKInstallPath(module);
+  private static String getConfPath(final String groovyHomePath, final String gantHome) {
     String confPath = FileUtil.toSystemDependentName(gantHome + "/conf/gant-starter.conf");
     if (new File(confPath).exists()) {
       return confPath;
     }
 
-    return super.getConfPath(module);
+    return getConfPath(groovyHomePath);
   }
 
   @Override
@@ -68,7 +65,8 @@ public class GantRunner extends GroovyScriptRunner {
     final String groovyHome = FileUtil.toSystemDependentName(ObjectUtils.assertNotNull(LibrariesUtil.getGroovyHomePath(module)));
     setGroovyHome(params, groovyHome);
     
-    final String confPath = getConfPath(module);
+    String gantHome = GantUtils.getSDKInstallPath(module);
+    final String confPath = getConfPath(groovyHome, gantHome);
     params.getVMParametersList().add("-Dgroovy.starter.conf=" + confPath);
 
     params.getVMParametersList().addParametersString(configuration.vmParams);
@@ -83,8 +81,6 @@ public class GantRunner extends GroovyScriptRunner {
     if (groovyHome.contains("grails")) {
       params.getClassPath().addAllFiles(GroovyUtils.getFilesInDirectoryByPattern(groovyHome + "/lib", ".*\\.jar"));
     }
-
-    String gantHome = GantUtils.getSDKInstallPath(module);
 
     String antHome = System.getenv("ANT_HOME");
     if (StringUtil.isEmpty(antHome)) {

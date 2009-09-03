@@ -13,7 +13,6 @@ import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
-import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,14 +30,14 @@ public abstract class GroovyScriptRunner {
   public abstract void configureCommandLine(JavaParameters params, Module module, boolean tests, VirtualFile script,
                                             GroovyScriptRunConfiguration configuration) throws CantRunException;
 
-  public String getConfPath(@NotNull Module module) {
-    String confpath = FileUtil.toSystemDependentName(LibrariesUtil.getGroovyHomePath(module) + "/conf/groovy-starter.conf");
+  protected static String getConfPath(final String groovyHomePath) {
+    String confpath = FileUtil.toSystemDependentName(groovyHomePath + "/conf/groovy-starter.conf");
     if (new File(confpath).exists()) {
       return confpath;
     }
 
     try {
-      final String jarPath = PathUtil.getJarPathForClass(getClass());
+      final String jarPath = PathUtil.getJarPathForClass(GroovyScriptRunner.class);
       if (new File(jarPath).isFile()) { //jar; distribution mode
         return new File(jarPath, "../groovy-starter.conf").getCanonicalPath();
       }
