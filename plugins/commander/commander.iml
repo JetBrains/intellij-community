@@ -8,7 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="openapi" />
-    <orderEntry type="module" module-name="idea" />
     <orderEntry type="module" module-name="java-impl" />
   </component>
   <component name="copyright">
