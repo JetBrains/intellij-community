@@ -150,6 +150,8 @@ public class OptionsEditorDialog extends DialogWrapper implements DataProvider{
       for (Configurable c : configurables) {
         if (c instanceof SearchableConfigurable && id.equals(((SearchableConfigurable)c).getId())) {
           return c;
+        } else if (id.equals(c.getClass().getName())) {
+          return c;
         }
       }
     }
