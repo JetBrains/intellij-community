@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="tcServiceMessages">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/serviceMessages.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/src/serviceMessages_201292_src.zip!/src" />
+    </SOURCES>
+  </library>
+</component>
