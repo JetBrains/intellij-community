@@ -270,11 +270,6 @@
 
     <applicationService serviceInterface="com.intellij.peer.PeerFactory" serviceImplementation="com.intellij.peer.impl.PeerFactoryImpl"/>
 
-    <applicationService serviceInterface="com.intellij.javaee.CommonModelManager"
-                        serviceImplementation="com.intellij.javaee.CommonModelManagerImpl"/>
-    <elementDescriptionProvider implementation="com.intellij.javaee.model.common.CommonModelDescriptionProvider"/>
-    <iconProvider implementation="com.intellij.javaee.model.common.CommonModelIconProvider"/>
-
     <applicationService serviceInterface="com.intellij.codeInspection.reference.RefJavaUtil"
                         serviceImplementation="com.intellij.codeInspection.reference.RefJavaUtilImpl"/>
     <applicationService serviceInterface="com.intellij.psi.EmptySubstitutor"
