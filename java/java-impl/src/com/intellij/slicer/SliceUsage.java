@@ -77,4 +77,5 @@ public class SliceUsage extends UsageInfo2UsageAdapter {
   public PsiSubstitutor getSubstitutor() {
     return mySubstitutor;
   }
+
 }

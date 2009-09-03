@@ -8,6 +8,7 @@ import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
@@ -104,27 +105,34 @@ public class SliceUtil {
 
     PsiType returnType = methodCalled.getReturnType();
     if (returnType == null) return true;
-    final PsiCodeBlock body = methodCalled.getBody();
-    if (body == null) return true;
+
+    Collection<PsiMethod> overrides = new THashSet<PsiMethod>(OverridingMethodsSearch.search(methodCalled, parent.getScope().toSearchScope(), true).findAll());
+    overrides.add(methodCalled);
 
     final boolean[] result = {true};
-    body.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitAnonymousClass(PsiAnonymousClass aClass) {
-        // do not look for returns there
-      }
+    for (PsiMethod override : overrides) {
+      if (!result[0]) break;
+      final PsiCodeBlock body = override.getBody();
+      if (body == null) continue;
 
-      public void visitReturnStatement(final PsiReturnStatement statement) {
-        PsiExpression returnValue = statement.getReturnValue();
-        if (returnValue == null) return;
-        PsiSubstitutor substitutor = resolved.getSubstitutor().putAll(parentSubstitutor);
-
-        if (!handToProcessor(returnValue, processor, parent, substitutor)) {
-          stopWalking();
-          result[0] = false;
+      body.accept(new JavaRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitAnonymousClass(PsiAnonymousClass aClass) {
+          // do not look for returns there
         }
-      }
-    });
+
+        public void visitReturnStatement(final PsiReturnStatement statement) {
+          PsiExpression returnValue = statement.getReturnValue();
+          if (returnValue == null) return;
+          PsiSubstitutor substitutor = resolved.getSubstitutor().putAll(parentSubstitutor);
+
+          if (!handToProcessor(returnValue, processor, parent, substitutor)) {
+            stopWalking();
+            result[0] = false;
+          }
+        }
+      });
+    }
 
     return result[0];
   }
@@ -181,8 +189,12 @@ public class SliceUtil {
 
     Collection<PsiMethod> superMethods = new THashSet<PsiMethod>(Arrays.asList(method.findDeepestSuperMethods()));
     superMethods.add(method);
+    Collection<PsiMethod> overrides = new THashSet<PsiMethod>(superMethods);
+    for (PsiMethod superMethod : superMethods) {
+      overrides.addAll(OverridingMethodsSearch.search(superMethod, parent.getScope().toSearchScope(), true).findAll());
+    }
     final Set<PsiReference> processed = new THashSet<PsiReference>(); //usages of super method and overridden method can overlap
-    for (final PsiMethod containingMethod : superMethods) {
+    for (final PsiMethod containingMethod : overrides) {
       if (!MethodReferencesSearch.search(containingMethod, parent.getScope().toSearchScope(), true).forEach(new Processor<PsiReference>() {
         public boolean process(final PsiReference reference) {
           SliceManager.getInstance(parameter.getProject()).checkCanceled();

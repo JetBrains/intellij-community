@@ -21,7 +21,7 @@ import java.util.Comparator;
 
 public class WeightBasedComparator implements Comparator<NodeDescriptor> {
 
-  private boolean myCompareToString;
+  private final boolean myCompareToString;
 
   public static final WeightBasedComparator INSTANCE = new WeightBasedComparator();
   public static final WeightBasedComparator FULL_INSTANCE = new WeightBasedComparator(true) {
@@ -40,13 +40,10 @@ public class WeightBasedComparator implements Comparator<NodeDescriptor> {
   }
 
   public int compare(NodeDescriptor o1, NodeDescriptor o2) {
-    final SimpleNode first = (SimpleNode) o1;
-    final SimpleNode second = (SimpleNode) o2;
-
-    final int w1 = first.getWeight();
-    final int w2 = second.getWeight();
+    final int w1 = o1.getWeight();
+    final int w2 = o2.getWeight();
     if (myCompareToString && w1 == w2) {
-      return compareToString(first, second);
+      return compareToString(o1, o2);
     }
     return compareWeights(w1, w2);
   }
@@ -55,7 +52,7 @@ public class WeightBasedComparator implements Comparator<NodeDescriptor> {
     return w2 - w1;
   }
 
-  protected int compareToString(final SimpleNode first, final SimpleNode second) {
+  protected static int compareToString(final NodeDescriptor first, final NodeDescriptor second) {
     String s1 = first.toString();
     String s2 = second.toString();
     if (s1 == null) return s2 == null ? 0 : -1;

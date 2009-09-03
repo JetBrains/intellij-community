@@ -207,5 +207,4 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
   public int hashCode() {
     return getValue().hashCode();
   }
-
 }
