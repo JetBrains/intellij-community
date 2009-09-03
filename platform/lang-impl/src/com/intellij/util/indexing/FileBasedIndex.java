@@ -1,6 +1,8 @@
 package com.intellij.util.indexing;
 
 import com.intellij.AppTopics;
+import com.intellij.concurrency.Job;
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.impl.FileSystemSynchronizerImpl;
 import com.intellij.lang.ASTNode;
@@ -1046,7 +1048,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   public void indexFileContent(com.intellij.ide.startup.FileContent content) {
-    myChangedFilesUpdater.ensureAllInvalidateTasksCompleted();
+    myChangedFilesUpdater.ensureAllInvalidateTasksCompleted();                                   
     final VirtualFile file = content.getVirtualFile();
     FileContent fc = null;
     FileContent oldContent = null;
@@ -1054,7 +1056,9 @@ public class FileBasedIndex implements ApplicationComponent {
     final boolean forceIndexing = oldBytes != null;
 
     PsiFile psiFile = null;
-    for (ID<?, ?> indexId : myIndices.keySet()) {
+    final Job<Object> job = JobScheduler.getInstance().createJob("IndexJob", Job.DEFAULT_PRIORITY / 2);
+
+    for (final ID<?, ?> indexId : myIndices.keySet()) {
       if (forceIndexing ? getInputFilter(indexId).acceptInput(file) : shouldIndexFile(file, indexId)) {
         if (fc == null) {
           byte[] currentBytes;
@@ -1079,14 +1083,27 @@ public class FileBasedIndex implements ApplicationComponent {
           oldContent = oldBytes != null? new FileContent(file, oldBytes) : null;
         }
 
-        try {
-          updateSingleIndex(indexId, file, fc, oldContent);
-        }
-        catch (StorageException e) {
-          requestRebuild(indexId);
-          LOG.info(e);
-        }
+        final FileContent _oldContent = oldContent;
+        final FileContent _fc = fc;
+        job.addTask(new Runnable() {
+          public void run() {
+            try {
+              updateSingleIndex(indexId, file, _fc, _oldContent);
+            }
+            catch (StorageException e) {
+              requestRebuild(indexId);
+              LOG.info(e);
+            }
+          }
+        });
       }
+    }
+
+    try {
+      job.scheduleAndWaitForResults();
+    }
+    catch (Throwable throwable) {
+      LOG.info(throwable);
     }
 
     if (psiFile != null) {
