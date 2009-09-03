@@ -33,11 +33,11 @@ public class GroovyProjectConverter extends ProjectConverter {
   }
 
   @Override
-  public ConversionProcessor<WorkspaceSettings> createWorkspaceFileConverter() {
-    return new ConversionProcessor<WorkspaceSettings>() {
+  public ConversionProcessor<RunManagerSettings> createRunConfigurationsConverter() {
+    return new ConversionProcessor<RunManagerSettings>() {
       @Override
-      public boolean isConversionNeeded(WorkspaceSettings workspaceSettings) {
-        for (Element element : workspaceSettings.getRunConfigurations()) {
+      public boolean isConversionNeeded(RunManagerSettings settings) {
+        for (Element element : settings.getRunConfigurations()) {
           final String confType = element.getAttributeValue("type");
           if (GRAILS_TESTS_RUN_CONFIGURATION_TYPE.equals(confType) || GANT_SCRIPT_RUN_CONFIGURATION.equals(confType)) {
             return true;
@@ -48,8 +48,8 @@ public class GroovyProjectConverter extends ProjectConverter {
       }
 
       @Override
-      public void process(WorkspaceSettings workspaceSettings) throws CannotConvertException {
-        for (Element element : workspaceSettings.getRunConfigurations()) {
+      public void process(RunManagerSettings settings) throws CannotConvertException {
+        for (Element element : settings.getRunConfigurations()) {
           final String confType = element.getAttributeValue("type");
           final boolean wasGrails = GRAILS_TESTS_RUN_CONFIGURATION_TYPE.equals(confType);
           if (wasGrails || GANT_SCRIPT_RUN_CONFIGURATION.equals(confType)) {
