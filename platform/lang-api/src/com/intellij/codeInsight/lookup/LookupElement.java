@@ -25,6 +25,10 @@ import java.util.Collections;
 import java.util.Set;
 
 /**
+ * A typical way to create lookup element is to use {@link com.intellij.codeInsight.lookup.LookupElementBuilder}. 
+ * Another way is to subclass it. Use the latter way only if you need it to implement some additional interface, to modify equals/hashCode
+ * or other advanced logic
+ *
  * @author peter
  */
 public abstract class LookupElement extends UserDataHolderBase {
