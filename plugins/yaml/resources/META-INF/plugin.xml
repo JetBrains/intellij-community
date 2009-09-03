@@ -1,0 +1,8 @@
+<idea-plugin version="2">
+  <name>YAML</name>
+  <id>org.jetbrains.plugins.yaml</id>
+  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+  <description>YAML support</description>
+
+  <depends>com.intellij.modules.lang</depends>
+</idea-plugin>
