@@ -6,6 +6,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
@@ -39,7 +40,8 @@ public class NewGantScriptAction extends NewGroovyActionBase {
 
   @Override
   protected boolean isAvailable(DataContext dataContext) {
-    return super.isAvailable(dataContext) && GantUtils.isSDKConfiguredToRun(DataKeys.MODULE.getData(dataContext));
+    return super.isAvailable(dataContext) &&
+           GantUtils.isSDKConfiguredToRun(ObjectUtils.assertNotNull(DataKeys.MODULE.getData(dataContext)));
   }
 
   @NotNull

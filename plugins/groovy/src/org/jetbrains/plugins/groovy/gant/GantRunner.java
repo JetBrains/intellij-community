@@ -13,6 +13,8 @@ import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -22,7 +24,7 @@ import java.io.File;
 public class GantRunner extends GroovyScriptRunner {
 
   @Override
-  public boolean isValidModule(Module module) {
+  public boolean isValidModule(@NotNull Module module) {
     return GantUtils.isSDKConfiguredToRun(module);
   }
 
@@ -53,8 +55,8 @@ public class GantRunner extends GroovyScriptRunner {
   }
 
   @Override
-  public void configureCommandLine(JavaParameters params, Module module, boolean tests, VirtualFile script, GroovyScriptRunConfiguration configuration) throws CantRunException {
-    String gantHome = GantUtils.getSDKInstallPath(module);
+  public void configureCommandLine(JavaParameters params, @Nullable Module module, boolean tests, VirtualFile script, GroovyScriptRunConfiguration configuration) throws CantRunException {
+    String gantHome = GantUtils.getSDKInstallPath(module, configuration.getProject());
 
     final File[] groovyJars = GroovyUtils.getFilesInDirectoryByPattern(gantHome + "/lib/", GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN);
     if (groovyJars.length > 0) {

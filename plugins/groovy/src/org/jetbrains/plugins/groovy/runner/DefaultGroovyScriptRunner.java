@@ -30,13 +30,14 @@ import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
 
 public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
 
   @Override
-  public boolean isValidModule(Module module) {
+  public boolean isValidModule(@NotNull Module module) {
     return LibrariesUtil.hasGroovySdk(module);
   }
 

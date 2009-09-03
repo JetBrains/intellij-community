@@ -1,18 +1,16 @@
 package org.jetbrains.plugins.groovy.gant;
 
-import org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelper;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.gant.GantUtils;
-import org.jetbrains.plugins.groovy.gant.GantScriptType;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.module.ModuleUtil;
 import com.sun.jdi.ReferenceType;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelper;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 /**
  * @author ilyas
@@ -37,7 +35,7 @@ public class GantPositionManagerHelper implements ScriptPositionManagerHelper {
   @NotNull
   public String getRuntimeScriptName(@NotNull final String originalName, GroovyFile groovyFile) {
     final String version =
-      GantUtils.getGantVersion(GantUtils.getSDKInstallPath(ModuleUtil.findModuleForPsiElement(groovyFile)));
+      GantUtils.getGantVersion(GantUtils.getSDKInstallPath(ModuleUtil.findModuleForPsiElement(groovyFile), groovyFile.getProject()));
     if (version.compareToIgnoreCase("1.5") >= 0) {
       return originalName;
     }

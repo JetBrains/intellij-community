@@ -66,7 +66,7 @@ public class GradleScriptType extends GroovyScriptType {
   public GroovyScriptRunner getRunner() {
     return new GroovyScriptRunner() {
       @Override
-      public boolean isValidModule(Module module) {
+      public boolean isValidModule(@NotNull Module module) {
         return GradleLibraryManager.isGradleSdk(ModuleRootManager.getInstance(module).getFiles(OrderRootType.CLASSES));
       }
 

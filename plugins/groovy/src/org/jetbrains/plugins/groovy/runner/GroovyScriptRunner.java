@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
  */
 public abstract class GroovyScriptRunner {
 
-  public abstract boolean isValidModule(Module module);
+  public abstract boolean isValidModule(@NotNull Module module);
 
   public abstract boolean ensureRunnerConfigured(Module module, final String confName);
 
