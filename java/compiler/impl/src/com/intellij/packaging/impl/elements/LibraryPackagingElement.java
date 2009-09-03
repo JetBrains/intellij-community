@@ -17,6 +17,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +28,8 @@ import java.util.List;
 public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPackagingElement> {
   private String myLevel;
   private String myName;
+  @NonNls public static final String LIBRARY_NAME_ATTRIBUTE = "name";
+  @NonNls public static final String LIBRARY_LEVEL_ATTRIBUTE = "level";
 
   public LibraryPackagingElement() {
     super(LibraryElementType.LIBRARY_ELEMENT_TYPE);
@@ -82,7 +85,7 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
     myName = state.getName();
   }
 
-  @Attribute("level")
+  @Attribute(LIBRARY_LEVEL_ATTRIBUTE)
   public String getLevel() {
     return myLevel;
   }
@@ -91,7 +94,7 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
     myLevel = level;
   }
 
-  @Attribute("name")
+  @Attribute(LIBRARY_NAME_ATTRIBUTE)
   public String getName() {
     return myName;
   }

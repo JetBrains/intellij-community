@@ -20,4 +20,7 @@ public abstract class ProjectConverter {
   public ConversionProcessor<WorkspaceSettings> createWorkspaceFileConverter() {
     return null;
   }
+
+  public void postProcess() {
+  } 
 }

@@ -113,7 +113,7 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
     return myValidationManager;
   }
 
-  public void setValidationMananger(ArtifactValidationManagerImpl validationManager) {
+  public void setValidationManager(ArtifactValidationManagerImpl validationManager) {
     myValidationManager = validationManager;
   }
 
@@ -129,5 +129,5 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
     dialog.show();
     return dialog.isOK() ? dialog.getChosenElements() : Collections.<Library>emptyList();
   }
-  
+
 }

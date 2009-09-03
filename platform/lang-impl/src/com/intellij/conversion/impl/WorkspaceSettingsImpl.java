@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.ArrayList;
 
 /**
  * @author nik
@@ -29,7 +30,7 @@ public class WorkspaceSettingsImpl extends ComponentManagerSettingsImpl implemen
       return Collections.emptyList();
     }
 
-    return JDomConvertingUtil.getChildren(element, CONFIGURATION_ELEMENT);
+    return new ArrayList<Element>(JDomConvertingUtil.getChildren(element, CONFIGURATION_ELEMENT));
   }
 
 }

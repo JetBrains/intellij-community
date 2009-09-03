@@ -26,6 +26,8 @@ import java.util.List;
  * @author nik
  */
 public class FileCopyPackagingElement extends PackagingElement<FileCopyPackagingElement> implements RenameablePackagingElement {
+  @NonNls public static final String PATH_ATTRIBUTE = "path";
+  @NonNls public static final String OUTPUT_FILE_NAME_ATTRIBUTE = "output-file-name";
   private String myFilePath;
   private String myRenamedOutputFileName;
 
@@ -114,7 +116,7 @@ public class FileCopyPackagingElement extends PackagingElement<FileCopyPackaging
     setRenamedOutputFileName(state.getRenamedOutputFileName());
   }
 
-  @Attribute("path")
+  @Attribute(PATH_ATTRIBUTE)
   public String getFilePath() {
     return myFilePath;
   }
@@ -124,7 +126,7 @@ public class FileCopyPackagingElement extends PackagingElement<FileCopyPackaging
   }
 
   @Nullable
-  @Attribute("output-file-name")
+  @Attribute(OUTPUT_FILE_NAME_ATTRIBUTE)
   public String getRenamedOutputFileName() {
     return myRenamedOutputFileName;
   }

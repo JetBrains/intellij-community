@@ -20,14 +20,15 @@ public class ConversionRunner {
   private boolean myProcessProjectFile;
   private boolean myProcessWorkspaceFile;
   private List<File> myModulesFilesToProcess = new ArrayList<File>();
+  private ProjectConverter myConverter;
 
   public ConversionRunner(ConverterProvider provider, ConversionContextImpl context) {
     myProvider = provider;
     myContext = context;
-    ProjectConverter converter = provider.createConverter(context);
-    myModuleFileConverter = converter.createModuleFileConverter();
-    myProjectFileConverter = converter.createProjectFileConverter();
-    myWorkspaceConverter = converter.createWorkspaceFileConverter();
+    myConverter = provider.createConverter(context);
+    myModuleFileConverter = myConverter.createModuleFileConverter();
+    myProjectFileConverter = myConverter.createProjectFileConverter();
+    myWorkspaceConverter = myConverter.createWorkspaceFileConverter();
   }
 
   public boolean isConversionNeeded() throws CannotConvertException {
@@ -106,6 +107,7 @@ public class ConversionRunner {
     for (File moduleFile : myModulesFilesToProcess) {
       myModuleFileConverter.postProcess(myContext.getModuleSettings(moduleFile));
     }
+    myConverter.postProcess();
   }
 
   public ConverterProvider getProvider() {

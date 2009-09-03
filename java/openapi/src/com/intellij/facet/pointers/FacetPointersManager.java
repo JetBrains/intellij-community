@@ -46,15 +46,23 @@ public abstract class FacetPointersManager {
     return moduleName + "/" + facetTypeId + "/" + facetName;
   }
 
+  @NotNull
   public static String constructId(@NotNull Facet facet) {
     return constructId(facet.getModule().getName(), facet.getType().getStringId(), facet.getName());
   }
 
-  public static String getFacetName(String facetPointerId) {
+  @NotNull
+  public static String getFacetName(@NotNull String facetPointerId) {
     return facetPointerId.substring(facetPointerId.lastIndexOf('/') + 1);
   }
 
+  @NotNull
   public static String getModuleName(String facetPointerId) {
     return facetPointerId.substring(0, facetPointerId.indexOf('/'));
+  }
+
+  @NotNull
+  public static String getFacetType(@NotNull String facetPointerId) {
+    return facetPointerId.substring(facetPointerId.indexOf('/') + 1, facetPointerId.lastIndexOf('/'));
   }
 }

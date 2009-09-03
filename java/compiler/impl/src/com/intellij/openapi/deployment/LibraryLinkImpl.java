@@ -63,10 +63,10 @@ import java.util.Map;
 public class LibraryLinkImpl extends LibraryLink {
   private static final Map<PackagingMethod, String> methodToDescriptionForDirs = new HashMap<PackagingMethod, String>();
   private static final Map<PackagingMethod, String> methodToDescriptionForFiles = new HashMap<PackagingMethod, String>();
-  @NonNls static final String LEVEL_ATTRIBUTE_NAME = "level";
-  @NonNls static final String URL_ELEMENT_NAME = "url";
+  @NonNls public static final String LEVEL_ATTRIBUTE_NAME = "level";
+  @NonNls public static final String URL_ELEMENT_NAME = "url";
   @NonNls private static final String TEMP_ELEMENT_NAME = "temp";
-  @NonNls static final String NAME_ATTRIBUTE_NAME = "name";
+  @NonNls public static final String NAME_ATTRIBUTE_NAME = "name";
 
   @NonNls private static final String JAR_SUFFIX = ".jar";
 

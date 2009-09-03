@@ -21,6 +21,7 @@ import java.util.List;
  * @author nik
  */
 public class ArchivePackagingElement extends CompositeElementWithManifest<ArchivePackagingElement> {
+  @NonNls public static final String NAME_ATTRIBUTE = "name";
   private String myArchiveFileName;
 
   public ArchivePackagingElement() {
@@ -57,7 +58,7 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
     computeChildrenInstructions(creator.archive(myArchiveFileName), resolvingContext, compilerContext, artifactType);
   }
 
-  @Attribute("name")
+  @Attribute(NAME_ATTRIBUTE)
   public String getArchiveFileName() {
     return myArchiveFileName;
   }

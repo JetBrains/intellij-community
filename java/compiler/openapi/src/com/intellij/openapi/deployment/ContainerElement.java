@@ -30,8 +30,8 @@ import java.util.Map;
 public abstract class ContainerElement implements JDOMExternalizable, Cloneable, ResolvableElement {
   private final Map<String,String> myAttributes = new LinkedHashMap<String, String>();
   private final Module myParentModule;
-  @NonNls public static final String URI_ATTR = "URI";
-  @NonNls public static final String PACKAGING_METHOD_ATTR = "method";
+  @NonNls public static final String URI_ATTRIBUTE = "URI";
+  @NonNls public static final String PACKAGING_METHOD_ATTRIBUTE = "method";
   @NonNls public static final String ELEMENT_ATTRIBUTE = "attribute";
   @NonNls public static final String ATTRIBUTE_NAME = "name";
   @NonNls public static final String ATTRIBUTE_VALUE = "value";
@@ -43,18 +43,18 @@ public abstract class ContainerElement implements JDOMExternalizable, Cloneable,
   public abstract String getPresentableName();
 
   public String getURI() {
-    return getAttribute(URI_ATTR);
+    return getAttribute(URI_ATTRIBUTE);
   }
 
   public void setURI(String uri) {
-    setAttribute(URI_ATTR, uri);
+    setAttribute(URI_ATTRIBUTE, uri);
   }
   public PackagingMethod getPackagingMethod() {
-    final String attribute = getAttribute(PACKAGING_METHOD_ATTR);
+    final String attribute = getAttribute(PACKAGING_METHOD_ATTRIBUTE);
     return attribute == null ? PackagingMethod.DO_NOT_PACKAGE : PackagingMethod.getDeploymentMethodById(attribute);
   }
   public void setPackagingMethod(PackagingMethod method) {
-    setAttribute(PACKAGING_METHOD_ATTR, method.getId());
+    setAttribute(PACKAGING_METHOD_ATTRIBUTE, method.getId());
   }
 
   public void setAttribute(String name, String value) {

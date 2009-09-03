@@ -82,7 +82,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
                                                    FileChooserDescriptorFactory.createSingleFolderDescriptor());
     setOutputPath(outputPath);
     myValidationManager = new ArtifactValidationManagerImpl(this);
-    myContext.setValidationMananger(myValidationManager);
+    myContext.setValidationManager(myValidationManager);
   }
 
   private void setOutputPath(@Nullable String outputPath) {

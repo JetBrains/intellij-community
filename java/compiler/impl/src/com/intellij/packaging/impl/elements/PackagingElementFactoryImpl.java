@@ -39,10 +39,10 @@ import java.util.List;
  * @author nik
  */
 public class PackagingElementFactoryImpl extends PackagingElementFactory {
-  public static final DirectoryElementType DIRECTORY_ELEMENT_TYPE = new DirectoryElementType();
-  public static final ArchiveElementType ARCHIVE_ELEMENT_TYPE = new ArchiveElementType();
-  public static final FileCopyElementType FILE_COPY_ELEMENT_TYPE = new FileCopyElementType();
-  public static final ArtifactRootElementType ARTIFACT_ROOT_ELEMENT_TYPE = new ArtifactRootElementType();
+  public static final PackagingElementType<DirectoryPackagingElement> DIRECTORY_ELEMENT_TYPE = new DirectoryElementType();
+  public static final PackagingElementType<ArchivePackagingElement> ARCHIVE_ELEMENT_TYPE = new ArchiveElementType();
+  public static final PackagingElementType<FileCopyPackagingElement> FILE_COPY_ELEMENT_TYPE = new FileCopyElementType();
+  public static final PackagingElementType<ArtifactRootElement<?>> ARTIFACT_ROOT_ELEMENT_TYPE = new ArtifactRootElementType();
   private static final PackagingElementType[] STANDARD_TYPES = {
       DIRECTORY_ELEMENT_TYPE, ARCHIVE_ELEMENT_TYPE,
       LibraryElementType.LIBRARY_ELEMENT_TYPE, ModuleOutputElementType.MODULE_OUTPUT_ELEMENT_TYPE,

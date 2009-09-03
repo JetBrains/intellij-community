@@ -39,7 +39,8 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
   private final Project myProject;
   private final DefaultPackagingElementResolvingContext myResolvingContext;
   private boolean myInsideCommit = false;
-  @NonNls private static final String PACKAGING_ELEMENT_NAME = "element";
+  @NonNls public static final String PACKAGING_ELEMENT_NAME = "element";
+  @NonNls public static final String TYPE_ID_ATTRIBUTE = "id";
 
   public ArtifactManagerImpl(Project project) {
     myProject = project;
@@ -98,7 +99,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
 
   private static Element serializePackagingElement(PackagingElement<?> packagingElement) {
     Element element = new Element(PACKAGING_ELEMENT_NAME);
-    element.setAttribute("id", packagingElement.getType().getId());
+    element.setAttribute(TYPE_ID_ATTRIBUTE, packagingElement.getType().getId());
     final Object bean = packagingElement.getState();
     if (bean != null) {
       XmlSerializer.serializeInto(bean, element);
@@ -112,7 +113,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
   }
 
   private <T> PackagingElement<T> deserializeElement(Element element) {
-    final String id = element.getAttributeValue("id");
+    final String id = element.getAttributeValue(TYPE_ID_ATTRIBUTE);
     PackagingElementType<?> type = PackagingElementFactory.getInstance().findElementType(id);
     PackagingElement<T> packagingElement = (PackagingElement<T>)type.createEmpty(myProject);
     T state = packagingElement.getState();

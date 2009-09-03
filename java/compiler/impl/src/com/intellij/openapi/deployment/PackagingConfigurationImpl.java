@@ -28,7 +28,7 @@ public class PackagingConfigurationImpl implements PackagingConfiguration {
   @NonNls public static final String TYPE_ATTRIBUTE_NAME = "type";
   @NonNls public static final String CONTAINER_ELEMENT_NAME = "containerElement";
   @NonNls public static final String MODULE_TYPE = "module";
-  @NonNls private static final String LIBRARY_TYPE = "library";
+  @NonNls public static final String LIBRARY_TYPE = "library";
   public static final TObjectHashingStrategy<ContainerElement> IGNORING_ATTRIBUTES_EQUALITY = new ElementIgnoringAttributesEquality();
 
   public PackagingConfigurationImpl(@NotNull Module module) {

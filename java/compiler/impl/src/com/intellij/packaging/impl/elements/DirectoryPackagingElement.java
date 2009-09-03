@@ -20,6 +20,7 @@ import java.util.List;
  * classpath is used for exploded WAR and EJB directories under exploded EAR
  */
 public class DirectoryPackagingElement extends CompositeElementWithManifest<DirectoryPackagingElement> {
+  @NonNls public static final String NAME_ATTRIBUTE = "name";
   private String myDirectoryName;
 
   public DirectoryPackagingElement() {
@@ -65,7 +66,7 @@ public class DirectoryPackagingElement extends CompositeElementWithManifest<Dire
     return "dir:" + myDirectoryName;
   }
 
-  @Attribute("name")
+  @Attribute(NAME_ATTRIBUTE)
   public String getDirectoryName() {
     return myDirectoryName;
   }

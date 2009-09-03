@@ -23,6 +23,7 @@ import java.util.List;
  * @author nik
  */
 public class ModuleOutputPackagingElement extends PackagingElement<ModuleOutputPackagingElement> {
+  @NonNls public static final String MODULE_NAME_ATTRIBUTE = "name";
   private String myModuleName;
 
   public ModuleOutputPackagingElement() {
@@ -84,7 +85,7 @@ public class ModuleOutputPackagingElement extends PackagingElement<ModuleOutputP
     return "module:" + myModuleName;
   }
 
-  @Attribute("name")
+  @Attribute(MODULE_NAME_ATTRIBUTE)
   public String getModuleName() {
     return myModuleName;
   }
