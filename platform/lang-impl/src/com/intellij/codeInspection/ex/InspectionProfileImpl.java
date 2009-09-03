@@ -238,7 +238,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     element.setAttribute(VERSION_TAG, VALID_VERSION);
     element.setAttribute(IS_LOCKED, String.valueOf(myLockedProfile));
 
-    if (myDisplayLevelMap == null) {
+    if (!myInitialized.get()) {
       for (Element el : myDeinstalledInspectionsSettings.values()) {
         element.addContent((Element)el.clone());
       }
