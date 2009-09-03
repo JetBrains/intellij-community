@@ -64,7 +64,6 @@ def layoutFull(String targetDirectory) {
           "debugger-impl",
           "dom-impl",
           "execution-impl",
-          "refactoring-impl",
           "jsp-spi",
           "idea-ui"].flatten()
 
