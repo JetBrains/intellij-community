@@ -48,17 +48,35 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
   private static final Color SEPARATOR_COLOR = BORDER_COLOR.brighter();
   @NonNls private static final String SWITCHER_FEATURE_ID = "switcher";
 
+  private static final KeyListener performanceProblemsSolver = new KeyAdapter() { //IDEA-24436
+    @Override
+    public void keyReleased(KeyEvent e) {
+      if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
+        synchronized (ToolWindowSwitcher.class) {
+          if (ToolWindowSwitcher.SWITCHER != null) {
+            ToolWindowSwitcher.SWITCHER.navigate();
+          }
+        }
+      }
+    }
+  };
+
+  private static Component focusComponent = null;
+  @NonNls private static final String SWITCHER_TITLE = "Switcher";
+
   public void actionPerformed(AnActionEvent e) {
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) return;
     if (SWITCHER == null) {
       SWITCHER = new ToolWindowSwitcherPanel(project);
+      focusComponent = FocusManager.getCurrentManager().getFocusOwner();
+      focusComponent.addKeyListener(performanceProblemsSolver);
       FeatureUsageTracker.getInstance().triggerFeatureUsed(SWITCHER_FEATURE_ID);
     }
+
     if (e.getInputEvent().isShiftDown()) {
       SWITCHER.goBack();
-    }
-    else {
+    } else {
       SWITCHER.goForward();
     }
   }
@@ -231,11 +249,15 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
           .setModalContext(false)
           .setFocusable(true)
           .setRequestFocus(true)
-          .setTitle("Switcher")
+          .setTitle(SWITCHER_TITLE)
           .setMovable(false)
           .setCancelCallback(new Computable<Boolean>() {
           public Boolean compute() {
             SWITCHER = null;
+            if (focusComponent != null) {
+              focusComponent.removeKeyListener(performanceProblemsSolver);
+              focusComponent = null;
+            }
             return true;
           }
         }).createPopup();
