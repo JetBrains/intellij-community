@@ -12,6 +12,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Comparator;
 
 /**
  * author ven
@@ -38,7 +39,11 @@ public abstract class CompletionTestBase extends JavaCodeInsightFixtureTestCase 
       final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myFixture.getEditor());
       if (lookup != null) {
         LookupElement[] items = lookup.getItems();
-        Arrays.sort(items);
+        Arrays.sort(items, new Comparator<LookupElement>() {
+          public int compare(LookupElement o1, LookupElement o2) {
+            return o1.getLookupString().compareTo(o2.getLookupString());
+          }
+        });
         result = "";
         for (LookupElement item : items) {
           result = result + "\n" + item.getLookupString();

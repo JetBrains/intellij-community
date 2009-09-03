@@ -21,6 +21,7 @@ import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.util.MethodParenthesesHandler;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.MutableLookupElement;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
@@ -125,8 +126,10 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
       }
     }
 
-    addTailType((MutableLookupElement)item);
-    super.handleInsert(context, item);
+    if (item instanceof LookupItem) {
+      addTailType((MutableLookupElement)item);
+      super.handleInsert(context, item);
+    }
 
   }
 
