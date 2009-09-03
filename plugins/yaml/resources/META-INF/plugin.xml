@@ -5,4 +5,15 @@
   <description>YAML support</description>
 
   <depends>com.intellij.modules.lang</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- YAML -->
+    <lang.parserDefinition language="yaml" implementationClass="org.jetbrains.yaml.YAMLParserDefinition"/>
+    <lang.commenter language="yaml" implementationClass="org.jetbrains.yaml.YAMLCommenter"/>
+    <lang.syntaxHighlighterFactory key="yaml" implementationClass="org.jetbrains.yaml.YAMLSyntaxHighlighterFactory"/>
+    <colorSettingsPage implementation="org.jetbrains.yaml.YAMLColorsPage"/>
+    <lang.braceMatcher language="yaml" implementationClass="org.jetbrains.yaml.YAMLPairedBraceMatcher"/>
+    <lang.foldingBuilder language="yaml" implementationClass="org.jetbrains.yaml.folding.YAMLFoldingBuilder"/>
+    <fileTypeFactory implementation="org.jetbrains.yaml.YAMLFileTypeLoader"/>
+  </extensions>
 </idea-plugin>
