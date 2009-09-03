@@ -15,6 +15,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Gregory.Shrago
  */
@@ -28,6 +30,7 @@ public class JavaLanguageLevelPusher implements FilePropertyPusher<LanguageLevel
     // nothing
   }
 
+  @NotNull
   public Key<LanguageLevel> getFileDataKey() {
     return LanguageLevel.KEY;
   }

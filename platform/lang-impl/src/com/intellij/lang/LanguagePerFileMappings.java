@@ -80,12 +80,14 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
   }
 
   public void setMappings(final Map<VirtualFile, T> mappings) {
+    final Collection<VirtualFile> oldFiles;
     synchronized (myMappings) {
+      oldFiles = new ArrayList<VirtualFile>(myMappings.keySet());
       myMappings.clear();
       myMappings.putAll(mappings);
       cleanup();
     }
-    handleMappingChange(mappings.keySet(), true);
+    handleMappingChange(mappings.keySet(), oldFiles, true);
   }
 
   public void setMapping(final VirtualFile file, T dialect) {
@@ -97,15 +99,19 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
         myMappings.put(file, dialect);
       }
     }
-    handleMappingChange(ContainerUtil.createMaybeSingletonList(file), false);
+    final List<VirtualFile> files = ContainerUtil.createMaybeSingletonList(file);
+    handleMappingChange(files, files, false);
   }
 
-  private void handleMappingChange(final Collection<VirtualFile> files, final boolean includeOpenFiles) {
-    FileContentUtil.reparseFiles(myProject, files, includeOpenFiles);
+  private void handleMappingChange(final Collection<VirtualFile> files, Collection<VirtualFile> oldFiles, final boolean includeOpenFiles) {
     final FilePropertyPusher<T> pusher = getFilePropertyPusher();
     if (pusher != null) {
+      for (VirtualFile oldFile : oldFiles) {
+        oldFile.putUserData(pusher.getFileDataKey(), null);
+      }
       PushedFilePropertiesUpdater.getInstance(myProject).pushAll(pusher);
     }
+    FileContentUtil.reparseFiles(myProject, files, includeOpenFiles);
   }
 
   public Collection<T> getAvailableValues(VirtualFile file) {
