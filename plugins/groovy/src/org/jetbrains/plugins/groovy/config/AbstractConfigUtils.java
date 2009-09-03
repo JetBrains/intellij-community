@@ -1,13 +1,11 @@
 package org.jetbrains.plugins.groovy.config;
 
-import com.intellij.facet.ui.ValidationResult;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -36,9 +34,6 @@ public abstract class AbstractConfigUtils {
 
   // SDK-dependent entities
   @NonNls protected String STARTER_SCRIPT_FILE_NAME;
-  protected String[] KEY_CLASSES;
-  protected String ERR_MESSAGE;
-  @NonNls protected String SDK_LIB_PREFIX;
 
   private final Condition<Library> LIB_SEARCH_CONDITION = new Condition<Library>() {
     public boolean value(Library library) {
@@ -143,31 +138,12 @@ public abstract class AbstractConfigUtils {
     return LibrariesUtil.getLibrariesByCondition(module, condition);
   }
 
-  public ValidationResult isSDKHome(String path) {
-    if (path != null) {
-      final VirtualFile relativeFile = VfsUtil.findRelativeFile(path, null);
-      if (relativeFile != null && isSDKHome(relativeFile)) {
-        return ValidationResult.OK;
-      }
-    }
-    return new ValidationResult(ERR_MESSAGE);
-  }
-
-  public String generateNewSDKLibName(String version, final Project project) {
-    String prefix = SDK_LIB_PREFIX;
-    return LibrariesUtil.generateNewLibraryName(version, prefix, project);
-  }
-
   public Collection<String> getSDKVersions(final Project project) {
     return ContainerUtil.map2List(getAllSDKLibraries(project), new Function<Library, String>() {
       public String fun(Library library) {
         return getSDKLibVersion(library);
       }
     });
-  }
-
-  public boolean isSDKConfiguredToRun(Module module) {
-    return getSDKInstallPath(module).length() > 0;
   }
 
   @NotNull

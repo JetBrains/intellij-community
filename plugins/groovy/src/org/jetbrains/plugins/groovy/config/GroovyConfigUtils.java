@@ -39,9 +39,6 @@ import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 public abstract class GroovyConfigUtils extends AbstractConfigUtils {
   @NonNls public static final String GROOVY_ALL_JAR_PATTERN = "groovy-all-(.*)\\.jar";
 
-  @NonNls private static final String DGM_CLASS_PATH = "org/codehaus/groovy/runtime/DefaultGroovyMethods.class";
-  @NonNls private static final String CLOSURE_CLASS_PATH = "groovy/lang/Closure.class";
-
   private static GroovyConfigUtils myGroovyConfigUtils;
   @NonNls private static final String GROOVY_JAR_PATTERN = "groovy-(\\d.*)\\.jar";
 
@@ -52,9 +49,6 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
     if (myGroovyConfigUtils == null) {
       myGroovyConfigUtils = new GroovyConfigUtils() {
         {
-          SDK_LIB_PREFIX = "groovy-";
-          KEY_CLASSES = new String[]{DGM_CLASS_PATH, CLOSURE_CLASS_PATH};
-          ERR_MESSAGE = GroovyBundle.message("invalid.groovy.sdk.path.message");
           STARTER_SCRIPT_FILE_NAME = "groovy";
         }};
     }
