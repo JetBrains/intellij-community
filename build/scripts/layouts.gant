@@ -199,7 +199,7 @@ def layoutFull(String targetDirectory) {
 
           resources(["cvs-core", "cvs-plugin", "javacvs-src", "smartcvs-src"])
 
-          fileset(dir: "${home}/plugins/cvs2/lib")
+          fileset(dir: "${home}/plugins/cvs/lib")
         }
       }
 
