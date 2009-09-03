@@ -33,6 +33,7 @@ target('default': 'The default target') {
   layouts.layoutFull(layoutFolder)
 
   def artifacts = "$sandbox/artifacts"
+  ant.mkdir(dir: artifacts)
   ant.zip(zipfile: "$artifacts/idea.zip") {
     fileset(dir: layoutFolder)
   }

@@ -257,7 +257,7 @@ def layoutFull(String targetDirectory) {
 
   printUnusedModules()
 
-  reorder(targetDirectory)
+  //reorder(targetDirectory)
 }
 
 def printUnusedModules() {
