@@ -97,7 +97,9 @@ public abstract class EditChangelistPanel {
   }
 
   public void changelistCreatedOrChanged(LocalChangeList list) {
-    myConsumer.consume(list);
+    if (myConsumer != null) {
+      myConsumer.consume(list);
+    }
   }
 
   private void onEditComment(ChangeListEditHandler handler) {
