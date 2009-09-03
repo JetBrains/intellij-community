@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.openapi.compiler.CompilerManager;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -16,11 +16,10 @@ import java.util.HashSet;
 /**
  * @author ilyas
  */
-public class GroovyCompilerLoader implements ProjectComponent{
-  private final Project myProject;
+public class GroovyCompilerLoader extends AbstractProjectComponent {
 
   public GroovyCompilerLoader(Project project) {
-    myProject = project;
+    super(project);
   }
 
   public void projectOpened() {
@@ -42,18 +41,8 @@ public class GroovyCompilerLoader implements ProjectComponent{
                                            new HashSet<FileType>(Arrays.asList(StdFileTypes.CLASS)));
   }
 
-  public void projectClosed() {
-
-  }
-
   @NotNull
   public String getComponentName() {
     return "GroovyCompilerLoader";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 }

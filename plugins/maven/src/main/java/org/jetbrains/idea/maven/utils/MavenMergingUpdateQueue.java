@@ -20,7 +20,7 @@ import javax.swing.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MavenMergingUpdateQueue extends MergingUpdateQueue {
-  private SuspendHelper mySuppendHelper = new SuspendHelper();
+  private final SuspendHelper mySuppendHelper = new SuspendHelper();
 
   public MavenMergingUpdateQueue(String name,
                                  int mergingTimeSpan,

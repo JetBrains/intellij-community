@@ -212,7 +212,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     return file;
   }
 
-  private File getProjectsTreesDir() {
+  private static File getProjectsTreesDir() {
     return MavenUtil.getPluginSystemDir("Projects");
   }
 
@@ -347,7 +347,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     myFoldersResolvingProcessor.addListener(l);
   }
 
-  private boolean shouldScheduleImport(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
+  private static boolean shouldScheduleImport(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
     return !projectWithChanges.first.hasErrors() && projectWithChanges.second.hasChanges();
   }
 
@@ -509,7 +509,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     return module == null ? null : findProject(module);
   }
 
-  private VirtualFile findPomFile(Module module, MavenModelsProvider modelsProvider) {
+  private static VirtualFile findPomFile(Module module, MavenModelsProvider modelsProvider) {
     for (VirtualFile root : modelsProvider.getContentRoots(module)) {
       final VirtualFile virtualFile = root.findChild(MavenConstants.POM_XML);
       if (virtualFile != null) {
