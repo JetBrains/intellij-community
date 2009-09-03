@@ -15,7 +15,7 @@ import java.awt.*;
 /**
  * @author Dmitry Avdeev
  */
-public abstract class EditorNotificationPanel extends JPanel {
+public class EditorNotificationPanel extends JPanel {
 
   protected final JLabel myLabel = new JLabel();
   private final JPanel myLinksPanel;
