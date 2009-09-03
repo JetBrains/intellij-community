@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
  * Date: Sep 29, 2004
  * Time: 7:38:32 PM
  * To change this template use File | Settings | File Templates.
+ * @deprecated use InsertHandler
  */
 public interface DeferredUserLookupValue<T> extends PresentableLookupValue {
   boolean handleUserSelection(LookupItem<T> item,Project project);

@@ -21,6 +21,7 @@ import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * @deprecated use LookupElementBuilder
  * @author peter
  */
 public abstract class LookupElementFactory {
