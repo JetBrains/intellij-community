@@ -9,10 +9,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.EditorDataProvider;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ide.IdeView;
+import com.intellij.ide.util.EditorHelper;
 import org.jetbrains.annotations.Nullable;
 
 public class TextEditorPsiDataProvider implements EditorDataProvider {
@@ -63,6 +65,10 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
         return new IdeView() {
 
           public void selectElement(final PsiElement element) {
+            Editor editor = EditorHelper.openInEditor(element);
+            if (editor != null) {
+              ToolWindowManager.getInstance(element.getProject()).activateEditorComponent();
+            }
           }
 
           public PsiDirectory[] getDirectories() {
