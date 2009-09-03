@@ -31,7 +31,7 @@ public class EditorNotificationPanel extends JPanel {
     add(myLinksPanel, BorderLayout.EAST);
   }
 
-  protected void createActionLabel(final String text, @NonNls final String actionId) {
+  public void createActionLabel(final String text, @NonNls final String actionId) {
     HyperlinkLabel label = new HyperlinkLabel(text, Color.BLUE, LightColors.YELLOW, Color.BLUE);
     label.addHyperlinkListener(new HyperlinkListener() {
       public void hyperlinkUpdate(final HyperlinkEvent e) {
