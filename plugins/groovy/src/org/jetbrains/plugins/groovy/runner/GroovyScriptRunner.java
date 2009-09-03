@@ -83,12 +83,18 @@ public abstract class GroovyScriptRunner {
     return null;
   }
 
-  protected static String getClearClasspath(Module module, boolean isTests) throws CantRunException {
+  protected static void addClasspathFromRootModel(@Nullable Module module, boolean isTests, JavaParameters params) throws CantRunException {
+    if (module == null) {
+      return;
+    }
+
     final JavaParameters tmp = new JavaParameters();
     tmp.configureByModule(module, isTests ? JavaParameters.JDK_AND_CLASSES_AND_TESTS : JavaParameters.JDK_AND_CLASSES);
     StringBuffer buffer = RunnerUtil.getClearClassPathString(tmp, module);
-
-    return buffer.toString();
+    if (buffer.length() > 0) {
+      params.getProgramParametersList().add("--classpath");
+      params.getProgramParametersList().add(buffer.toString());
+    }
   }
 
 }

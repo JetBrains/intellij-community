@@ -75,8 +75,7 @@ public class GantRunner extends GroovyScriptRunner {
     params.getProgramParametersList().add("--conf");
     params.getProgramParametersList().add(confPath);
 
-    params.getProgramParametersList().add("--classpath");
-    params.getProgramParametersList().add(getClearClasspath(module, tests));
+    addClasspathFromRootModel(module, tests, params);
 
     if (groovyHome.contains("grails")) {
       params.getClassPath().addAllFiles(GroovyUtils.getFilesInDirectoryByPattern(groovyHome + "/lib", ".*\\.jar"));
