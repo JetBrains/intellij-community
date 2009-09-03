@@ -271,7 +271,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
         final AbstractVcs vcs = scope.getVcs();
         if (vcs == null) continue;
-        final VcsDirtyScope adjustedScope = vcs.adjustDirtyScope(scope);
+        final VcsAppendableDirtyScope adjustedScope = vcs.adjustDirtyScope((VcsAppendableDirtyScope) scope);
 
         myChangesViewManager.updateProgressText(VcsBundle.message("changes.update.progress.message", vcs.getDisplayName()), false);
         if (! wasEverythingDirty) {

@@ -23,7 +23,7 @@ import java.util.*;
  * @author max
  * @author yole
  */
-public class VcsDirtyScopeImpl extends VcsDirtyScope {
+public class VcsDirtyScopeImpl extends VcsAppendableDirtyScope {
   private final Set<FilePath> myDirtyFiles = new THashSet<FilePath>();
   private final Map<VirtualFile, THashSet<FilePath>> myDirtyDirectoriesRecursively = new HashMap<VirtualFile, THashSet<FilePath>>();
   private final Set<VirtualFile> myAffectedContentRoots = new THashSet<VirtualFile>();

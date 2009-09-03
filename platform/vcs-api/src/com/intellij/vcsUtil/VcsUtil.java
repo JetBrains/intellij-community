@@ -65,9 +65,7 @@ public class VcsUtil {
   }
 
   public static void markFileAsDirty(final Project project, final FilePath path) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {  VcsDirtyScopeManager.getInstance(project).fileDirty( path );  }
-    });
+      VcsDirtyScopeManager.getInstance(project).fileDirty(path);
   }
 
   public static void markFileAsDirty(final Project project, final String path) {
