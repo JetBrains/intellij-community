@@ -276,6 +276,11 @@
       <categoryKey>intention.category.groovy/intention.category.closures</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.closure.ForToEachIntention</className>
     </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.closures</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.closure.EachToForIntention</className>
+    </intentionAction>
     <!--
     todo make this work
     <intentionAction>
