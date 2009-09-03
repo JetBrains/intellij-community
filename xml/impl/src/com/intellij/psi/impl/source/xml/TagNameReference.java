@@ -2,10 +2,7 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.XmlTagInsertHandler;
-import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementFactory;
-import com.intellij.codeInsight.lookup.MutableLookupElement;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -168,13 +165,13 @@ public class TagNameReference implements PsiReference {
     return getTagNameVariants((XmlTag)element);
   }
 
-  protected static MutableLookupElement<String> createClosingTagLookupElement(XmlTag tag) {
-    return LookupElementFactory.getInstance().createLookupElement(tag.getName()).setAutoCompletionPolicy(
-        AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE).setTailType(TailType.createSimpleTailType('>'));
+  protected static LookupElement createClosingTagLookupElement(XmlTag tag) {
+    return TailTypeDecorator.createDecorator(LookupElementBuilder.create(tag.getName()).setAutoCompletionPolicy(
+        AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE), TailType.createSimpleTailType('>'));
   }
 
 
-  public static MutableLookupElement[] getTagNameVariants(final XmlTag element) {
+  public static LookupElement[] getTagNameVariants(final XmlTag element) {
     final ArrayList<String> namespaces = new ArrayList<String>(Arrays.asList(element.knownNamespaces()));
     namespaces.add(XmlUtil.EMPTY_URI); // empty namespace
     final String[] variants = getTagNameVariants(element, namespaces, null);
