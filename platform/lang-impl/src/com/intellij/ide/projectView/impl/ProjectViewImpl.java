@@ -703,8 +703,10 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
     final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
     if (viewPane != null && viewPane instanceof AbstractProjectViewPSIPane) {
       return ((AbstractProjectViewPSIPane) viewPane).selectCB(element, file, requestFocus);
+    } else {
+      select(element, file, requestFocus);
+      return new ActionCallback.Done();
     }
-    return new ActionCallback.Rejected();
   }
 
   public void dispose() {
