@@ -129,6 +129,8 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
           }
         }
         FileTemplateImpl fileTemplate = new FileTemplateImpl(normalizeText(getTestClassTemplateText(tname)), tname, "java");
+        fileTemplate.setReadOnly(true);
+        fileTemplate.setModified(false);
         myTemplates.addTemplate(fileTemplate);
         fileTemplate.setInternal(true);
       }

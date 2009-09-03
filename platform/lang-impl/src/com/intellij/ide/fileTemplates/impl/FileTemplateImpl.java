@@ -372,4 +372,12 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
   public synchronized boolean isInternal() {
     return myIsInternal;
   }
+
+  synchronized void setModified(boolean modified) {
+    myModified = modified;
+  }
+
+  synchronized void setReadOnly(boolean readOnly) {
+    myReadOnly = readOnly;
+  }
 }
