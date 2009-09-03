@@ -18,13 +18,15 @@ package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.conversion.*;
 import org.jdom.Element;
-
-import java.util.ArrayList;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author nik
  */
 public class GroovyProjectConverter extends ProjectConverter {
+  @NonNls private static final String GRAILS_TESTS_RUN_CONFIGURATION_TYPE = "GrailsTestsRunConfigurationType";
+  @NonNls private static final String GANT_SCRIPT_RUN_CONFIGURATION = "GantScriptRunConfiguration";
+
   @Override
   public ConversionProcessor<ModuleSettings> createModuleFileConverter() {
     return new GroovyModuleConverter();
@@ -37,7 +39,7 @@ public class GroovyProjectConverter extends ProjectConverter {
       public boolean isConversionNeeded(WorkspaceSettings workspaceSettings) {
         for (Element element : workspaceSettings.getRunConfigurations()) {
           final String confType = element.getAttributeValue("type");
-          if ("GrailsTestsRunConfigurationType".equals(confType) || "GantScriptRunConfiguration".equals(confType)) {
+          if (GRAILS_TESTS_RUN_CONFIGURATION_TYPE.equals(confType) || GANT_SCRIPT_RUN_CONFIGURATION.equals(confType)) {
             return true;
           }
         }
@@ -47,10 +49,10 @@ public class GroovyProjectConverter extends ProjectConverter {
 
       @Override
       public void process(WorkspaceSettings workspaceSettings) throws CannotConvertException {
-        for (Element element : new ArrayList<Element>(workspaceSettings.getRunConfigurations())) {
+        for (Element element : workspaceSettings.getRunConfigurations()) {
           final String confType = element.getAttributeValue("type");
-          final boolean wasGrails = "GrailsTestsRunConfigurationType".equals(confType);
-          if (wasGrails || "GantScriptRunConfiguration".equals(confType)) {
+          final boolean wasGrails = GRAILS_TESTS_RUN_CONFIGURATION_TYPE.equals(confType);
+          if (wasGrails || GANT_SCRIPT_RUN_CONFIGURATION.equals(confType)) {
             if ("true".equals(element.getAttributeValue("default"))) {
               element.detach();
             } else {
