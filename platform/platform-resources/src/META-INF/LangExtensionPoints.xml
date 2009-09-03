@@ -398,4 +398,6 @@
 
   <extensionPoint name="previewHintProvider" interface="com.intellij.codeInsight.preview.PreviewHintProvider"/>
   <extensionPoint name="testActionProvider" interface="com.intellij.execution.testframework.ToggleModelActionProvider"/>
+
+  <extensionPoint name="psiViewerExtension" interface="com.intellij.internal.psiView.PsiViewerExtension"/>
 </extensionPoints>

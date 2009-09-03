@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.project.Project;
@@ -22,14 +23,12 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.PsiManager;
 import com.intellij.ui.SortedComboBoxModel;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 
@@ -46,6 +45,8 @@ import java.util.*;
 import java.util.List;
 
 public class PsiViewerDialog extends DialogWrapper {
+  private static final Object EXTENSION_KEY = new Object();
+
   private final Project myProject;
 
   private final Tree myTree;
@@ -54,10 +55,7 @@ public class PsiViewerDialog extends DialogWrapper {
   private Editor myEditor;
   private String myLastParsedText = null;
 
-  private final JRadioButton myRbMethod = new JRadioButton("Method");
-  private final JRadioButton myRbCodeBlock = new JRadioButton("Code Block");
-  private final JRadioButton myRbExpression = new JRadioButton("Expression");
-
+  private List<JRadioButton> myExtensionButtons = new ArrayList<JRadioButton>();
   private JRadioButton[] myFileTypeButtons;
   private FileType[] myFileTypes;
 
@@ -111,6 +109,13 @@ public class PsiViewerDialog extends DialogWrapper {
     myEditor = editorFactory.createEditor(document, myProject);
     myEditor.getSettings().setFoldingOutlineShown(false);
 
+    for(PsiViewerExtension extension: Extensions.getExtensions(PsiViewerExtension.EP_NAME)) {
+      JRadioButton button = new JRadioButton(extension.getName());
+      button.putClientProperty(EXTENSION_KEY, extension);
+      myExtensionButtons.add(button);
+    }
+
+
     FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
     Arrays.sort(fileTypes,new Comparator<FileType>() {
       public int compare(final FileType o1, final FileType o2) {
@@ -132,16 +137,16 @@ public class PsiViewerDialog extends DialogWrapper {
     myFileTypeButtons = new JRadioButton[myFileTypes.length];
 
     ButtonGroup bg = new ButtonGroup();
-    bg.add(myRbMethod);
-    bg.add(myRbCodeBlock);
-    bg.add(myRbExpression);
+    for (JRadioButton button : myExtensionButtons) {
+      bg.add(button);
+    }
 
     final int rows = 1 + myFileTypes.length / 7;
     JPanel choicesBox = new JPanel(new GridLayout(rows, 7));
 
-    choicesBox.add(myRbMethod);
-    choicesBox.add(myRbCodeBlock);
-    choicesBox.add(myRbExpression);
+    for (JRadioButton extensionButton : myExtensionButtons) {
+      choicesBox.add(extensionButton);
+    }
 
     for (int i = 0; i < myFileTypes.length; i++) {
       FileType fileType = myFileTypes[i];
@@ -174,7 +179,12 @@ public class PsiViewerDialog extends DialogWrapper {
       }
     });
 
-    myRbExpression.setSelected(true);
+    if (myExtensionButtons.size() > 0) {
+      myExtensionButtons.get(0).setSelected(true);
+    }
+    else {
+      myFileTypeButtons [0].setSelected(true);
+    }
 
     myChoicesPanel.setLayout(new BorderLayout());
     myChoicesPanel.add(choicesBox, BorderLayout.CENTER);
@@ -232,20 +242,15 @@ public class PsiViewerDialog extends DialogWrapper {
       return;
     }
     myLastParsedText = text;
-    final PsiManager psiManager = PsiManager.getInstance(myProject);
     PsiElement rootElement = null;
     try {
-      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(psiManager.getProject());
-      if (myRbMethod.isSelected()) {
-        rootElement = psiFacade == null ? null : psiFacade.getElementFactory().createMethodFromText(text, null);
+      for (JRadioButton button : myExtensionButtons) {
+        if (button.isSelected()) {
+          PsiViewerExtension ext = (PsiViewerExtension) button.getClientProperty(EXTENSION_KEY);
+          rootElement = ext.createElement(myProject, text);
+        }
       }
-      else if (myRbCodeBlock.isSelected()) {
-        rootElement = psiFacade == null ? null : psiFacade.getElementFactory().createCodeBlockFromText(text, null);
-      }
-      else if (myRbExpression.isSelected()) {
-        rootElement = psiFacade == null ? null : psiFacade.getElementFactory().createExpressionFromText(text, null);
-      }
-      else {
+      if (rootElement == null) {
         for (int i = 0; i < myFileTypeButtons.length; i++) {
           JRadioButton fileTypeButton = myFileTypeButtons[i];
 

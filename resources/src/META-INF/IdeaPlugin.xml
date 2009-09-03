@@ -1077,6 +1077,10 @@
 
     <previewHintProvider implementation="com.intellij.codeInsight.preview.JavaPreviewHintProvider"/>
     <filePropertyPusher implementation="com.intellij.openapi.roots.impl.JavaLanguageLevelPusher"/>
+
+    <psiViewerExtension implementation="com.intellij.internal.psiView.PsiViewerMethodExtension"/>
+    <psiViewerExtension implementation="com.intellij.internal.psiView.PsiViewerCodeFragmentExtension"/>
+    <psiViewerExtension implementation="com.intellij.internal.psiView.PsiViewerExpressionExtension"/>
   </extensions>
 
   <xi:include href="/META-INF/xdebugger.xml" xpointer="xpointer(/root/*)"/>
