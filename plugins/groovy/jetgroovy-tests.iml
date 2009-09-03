@@ -20,7 +20,6 @@
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="properties" />
     <orderEntry type="module" module-name="execution-impl" />
-    <orderEntry type="module" module-name="groovy-dsl" />
     <orderEntry type="module" module-name="jetgroovy" />
     <orderEntry type="module-library">
       <library>

@@ -18,21 +18,12 @@
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="properties" />
     <orderEntry type="module" module-name="execution-impl" />
-    <orderEntry type="module" module-name="groovy-dsl" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/dsl/groovy-dsl.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="library" name="Ant" level="project" />
     <orderEntry type="module" module-name="refactoring-impl" />
     <orderEntry type="module" module-name="compiler-openapi" />
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="idea-ui" />
+    <orderEntry type="library" name="Groovy" level="project" />
   </component>
 </module>
 
