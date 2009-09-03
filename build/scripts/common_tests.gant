@@ -29,6 +29,7 @@ target('default': 'The default target') {
     jvmarg (value: "-Didea.home.path=$home")
     pass("idea.test.group")
     pass("teamcity.tests.recentlyFailedTests.file")
+    jvmarg (value: "-Didea.platform.prefix=Idea")
     jvmarg (value: "-Didea.home.path=$home")
     jvmarg (value: "-Xbootclasspath/p:${boot.output}")
     jvmarg (value: "-Djava.system.class.loader=com.intellij.util.lang.UrlClassLoader")
