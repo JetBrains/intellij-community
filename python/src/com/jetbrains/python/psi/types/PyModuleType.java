@@ -1,8 +1,7 @@
 package com.jetbrains.python.psi.types;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementFactory;
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
@@ -89,7 +88,6 @@ public class PyModuleType implements PyType { // Maybe make it a PyClassType ref
       }
       else result.addAll(processor.getResultList());
     }
-    LookupElementFactory maker = LookupElementFactory.getInstance();
     for (PsiFileSystemItem pfsi : getSubmodulesList()) {
       String s = pfsi.getName();
       int pos = s.lastIndexOf('.'); // it may not contain a dot, except in extension; cut it off.
@@ -99,9 +97,7 @@ public class PyModuleType implements PyType { // Maybe make it a PyClassType ref
         if (names_already.contains(s)) continue;
         else names_already.add(s);
       }
-      LookupItem item = (LookupItem)maker.createLookupElement(pfsi, s);
-      item.setPresentableText(s); // not raw filename
-      result.add(item);
+      result.add(LookupElementBuilder.create(pfsi, s).setPresentableText(s));
     }
     return result.toArray();
   }

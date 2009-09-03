@@ -16,8 +16,8 @@
 
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElementFactory;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.extensions.Extensions;
@@ -28,9 +28,9 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.Icons;
 import com.intellij.util.containers.SortedList;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
@@ -440,9 +440,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
                 PyNamedParameter n_param = par.getAsNamed();
                 assert n_param != null;
                 if (! n_param.isKeywordContainer() && ! n_param.isPositionalContainer()) {
-                  LookupItem item = (LookupItem)factory.createLookupElement(n_param.getName() + "=");
-                  item.setIcon(n_param.getIcon(0));
-                  ret.add(item);
+                  ret.add(LookupElementBuilder.create(n_param.getName() + "=").setIcon(n_param.getIcon(0)));
                 }
               }
             }
@@ -474,9 +472,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     PsiFile f = getContainingFile();
     if (f instanceof PyFile) {
       for (String name : PyModuleType.getPossibleInstanceMembers()) {
-        LookupItem item = (LookupItem)factory.createLookupElement(name);
-        item.setIcon(Icons.FIELD_ICON);
-        ret.add(item);
+        ret.add(LookupElementBuilder.create(name).setIcon(Icons.FIELD_ICON));
       }
     }
 

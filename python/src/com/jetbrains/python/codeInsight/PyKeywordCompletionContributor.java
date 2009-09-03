@@ -2,8 +2,8 @@ package com.jetbrains.python.codeInsight;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.LookupElementFactory;
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -433,12 +433,8 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
   // ======
 
   private static void putKeywords(@NonNls @NotNull String[] words, TailType tail, final CompletionResultSet result) {
-    final LookupElementFactory factory = LookupElementFactory.getInstance();
     for (String s : words) {
-      LookupItem<String> elt = (LookupItem<String>)factory.createLookupElement(s);
-      elt.setBold();
-      elt.setTailType(tail);
-      result.addElement(elt);
+      result.addElement(TailTypeDecorator.createDecorator(LookupElementBuilder.create(s).setBold(), tail));
     }
   }
 
