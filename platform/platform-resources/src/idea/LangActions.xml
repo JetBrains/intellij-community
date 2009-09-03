@@ -284,7 +284,6 @@
       <action id="MemberPushDown" class="com.intellij.refactoring.actions.PushDownAction"/>
       <separator/>
       <action id="ExtractInclude" class="com.intellij.refactoring.actions.ExtractIncludeAction"/>
-      <action id="ExtractModule" class="com.intellij.refactoring.actions.ExtractModuleAction"/>
       <action id="ExtractSuperclass" class="com.intellij.refactoring.actions.ExtractSuperclassAction"/>
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="CodeMenu"/>
     </group>
