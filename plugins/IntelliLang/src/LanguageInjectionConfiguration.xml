@@ -292,6 +292,12 @@
     <display-name>ejbql</display-name>
     <place><![CDATA[xmlTag().withLocalName(string().matches("ejbql")).withNamespace(string().matches("http://jboss.com/products/seam/framework"))]]></place>
   </injection>
+  <injection language="RegExp" injector-id="xml">
+    <display-name>element</display-name>
+    <value-pattern>(.+)</value-pattern>
+    <place><![CDATA[xmlTag().withLocalName(string().matches("element")).withNamespace(string().matches("http://jboss.org/xml/ns/javax/validation/mapping"))]]></place>
+    <xpath-condition>@name='regexp'</xpath-condition>
+  </injection>
   <injection language="EJBQL" injector-id="xml">
     <display-name>entity-query/@ejbql</display-name>
     <place><![CDATA[xmlAttribute().withLocalName(string().matches("ejbql")).inside(xmlTag().withLocalName(string().matches("entity-query")).withNamespace(string().matches("http://jboss.com/products/seam/framework")))]]></place>
