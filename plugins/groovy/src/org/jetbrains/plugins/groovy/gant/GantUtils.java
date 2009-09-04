@@ -22,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
+import org.jetbrains.plugins.groovy.util.SdkHomeConfigurable;
 
 import java.util.ArrayList;
 
@@ -146,9 +147,12 @@ public class GantUtils {
       }
     }
 
-    final String home = GantSettings.getInstance(project).getState().SDK_HOME;
-    if (StringUtil.isNotEmpty(home)) {
-      return home;
+    final SdkHomeConfigurable.SdkHomeSettings state = GantSettings.getInstance(project).getState();
+    if (state != null) {
+      final String home = state.SDK_HOME;
+      if (StringUtil.isNotEmpty(home)) {
+        return home;
+      }
     }
     return "";
   }
