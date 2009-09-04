@@ -222,8 +222,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
           final String encoded = encode(name);
           if (!encoded.equals(name)) {
             final Icon icon = psiElement.getIcon(Iconable.ICON_FLAG_READ_STATUS | Iconable.ICON_FLAG_VISIBILITY);
-            final Object lookupValue = FileInfoManager.getFileLookupItem(candidates[i], encoded, icon);
-            variants[i] = lookupValue;
+            variants[i] = FileInfoManager.getFileLookupItem(candidates[i], encoded, icon);
           }
         }
       }
