@@ -1,20 +1,15 @@
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
-import com.intellij.xdebugger.frame.XValue;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.tree.TreeNode;
 
 /**
  * @author nik
  */
-public class WatchNode extends XValueNodeImpl {
-  private final String myExpression;
+public interface WatchNode extends TreeNode {
 
-  public WatchNode(final XDebuggerTree tree, final WatchesRootNode parent, final XValue result, final String expression) {
-    super(tree, parent, result);
-    myExpression = expression;
-  }
+  @NotNull
+  String getExpression();
 
-  public String getExpression() {
-    return myExpression;
-  }
 }

@@ -31,6 +31,16 @@ public class MessageTreeNode extends XDebuggerTreeNode {
     myText.append(message, attributes);
   }
 
+  protected MessageTreeNode(XDebuggerTree tree, XDebuggerTreeNode parent, boolean leaf) {
+    super(tree, parent, leaf);
+    myEllipsis = false;
+  }
+
+  private MessageTreeNode(XDebuggerTree tree, XDebuggerTreeNode parent, String infoMessage, String errorMessage) {
+    super(tree, parent, true);
+    myEllipsis = false;
+  }
+
   protected List<? extends TreeNode> getChildren() {
     return Collections.emptyList();
   }

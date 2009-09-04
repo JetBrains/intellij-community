@@ -58,7 +58,7 @@ public class WatchesRootNode extends XDebuggerTreeNode {
     if (myLoadedChildren == null) {
       myLoadedChildren = new ArrayList<XDebuggerTreeNode>();
       for (XDebuggerTreeNode child : myChildren) {
-        if (child instanceof WatchNode) {
+        if (child instanceof WatchNodeImpl) {
           myLoadedChildren.add(child);
         }
       }
@@ -89,7 +89,7 @@ public class WatchesRootNode extends XDebuggerTreeNode {
     }
   }
 
-  public void addWatchExpression(final XDebuggerEvaluator evaluator, final String expression, int index) {
+  public void addWatchExpression(final @NotNull XDebuggerEvaluator evaluator, final @NotNull String expression, int index) {
     MessageTreeNode message = MessageTreeNode.createEvaluatingMessage(myTree, this, expression + "...");
     if (index == -1) {
       myChildren.add(message);
@@ -134,11 +134,11 @@ public class WatchesRootNode extends XDebuggerTreeNode {
     editor.show();
   }
 
-  private class MyEvaluationCallback implements XDebuggerEvaluator.XEvaluationCallback {
+  private class MyEvaluationCallback extends XEvaluationCallbackBase {
     private final String myExpression;
     private final XDebuggerTreeNode myResultPlace;
 
-    public MyEvaluationCallback(final String expression, final XDebuggerTreeNode resultPlace) {
+    public MyEvaluationCallback(final @NotNull String expression, final @NotNull XDebuggerTreeNode resultPlace) {
       myExpression = expression;
       myResultPlace = resultPlace;
     }
@@ -146,15 +146,15 @@ public class WatchesRootNode extends XDebuggerTreeNode {
     public void evaluated(@NotNull final XValue result) {
       DebuggerUIUtil.invokeLater(new Runnable() {
         public void run() {
-          replaceNode(myResultPlace, new WatchNode(myTree, WatchesRootNode.this, result, myExpression));
+          replaceNode(myResultPlace, new WatchNodeImpl(myTree, WatchesRootNode.this, result, myExpression));
         }
       });
     }
 
-    public void errorOccured(@NotNull final String errorMessage) {
+    public void errorOccurred(@NotNull final String errorMessage) {
       DebuggerUIUtil.invokeLater(new Runnable() {
         public void run() {
-          replaceNode(myResultPlace, MessageTreeNode.createErrorMessage(myTree, WatchesRootNode.this, errorMessage));
+          replaceNode(myResultPlace, new WatchErrorNode(myTree, WatchesRootNode.this, myExpression, errorMessage));
         }
       });
     }

@@ -25,7 +25,7 @@ public interface XCompositeNode extends Obsolescent {
 
   /**
    * Indicates that an error occurs
-   * @param errorMessage message desribing the error
+   * @param errorMessage message describing the error
    */
   void setErrorMessage(@NotNull String errorMessage);
 }

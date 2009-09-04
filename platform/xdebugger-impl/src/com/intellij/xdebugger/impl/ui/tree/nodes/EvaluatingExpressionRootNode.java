@@ -1,6 +1,5 @@
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
-import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueContainer;
@@ -31,12 +30,12 @@ public class EvaluatingExpressionRootNode extends XValueContainerNode<Evaluating
     }
 
     public void computeChildren(@NotNull final XCompositeNode node) {
-      myDialog.startEvaluation(new XDebuggerEvaluator.XEvaluationCallback() {
+      myDialog.startEvaluation(new XEvaluationCallbackBase() {
         public void evaluated(@NotNull final XValue result) {
           node.addChildren(Collections.singletonList(result), true);
         }
 
-        public void errorOccured(@NotNull final String errorMessage) {
+        public void errorOccurred(@NotNull final String errorMessage) {
           node.setErrorMessage(errorMessage);
         }
       });

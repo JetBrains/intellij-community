@@ -17,6 +17,7 @@ import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackBase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +48,7 @@ public class XValueHint extends AbstractValueHint {
   }
 
   protected void evaluateAndShowHint() {
-    myEvaluator.evaluate(myExpression, new XDebuggerEvaluator.XEvaluationCallback() {
+    myEvaluator.evaluate(myExpression, new XEvaluationCallbackBase() {
       public void evaluated(@NotNull final XValue result) {
         result.computePresentation(new XValueNode() {
           public void setPresentation(@NonNls @NotNull final String name, @Nullable final Icon icon, @NonNls @Nullable final String type, @NonNls @NotNull final String value,
@@ -72,7 +73,7 @@ public class XValueHint extends AbstractValueHint {
         });
       }
 
-      public void errorOccured(@NotNull final String errorMessage) {
+      public void errorOccurred(@NotNull final String errorMessage) {
         LOG.debug("Cannot evaluate '" + myExpression + "':" + errorMessage);
       }
     });
