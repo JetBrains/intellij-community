@@ -246,8 +246,9 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   }
 
   private static Specifics checkSubtyping(PsiType type1, PsiType type2) {
-    final boolean assignable2From1 = TypeConversionUtil.isAssignable(type2, type1, false);
-    final boolean assignable1From2 = TypeConversionUtil.isAssignable(type1, type2, false);
+    boolean noBoxing = type1 instanceof PsiPrimitiveType == type2 instanceof PsiPrimitiveType;
+    final boolean assignable2From1 = noBoxing && TypeConversionUtil.isAssignable(type2, type1, false);
+    final boolean assignable1From2 = noBoxing && TypeConversionUtil.isAssignable(type1, type2, false);
     if (assignable1From2 || assignable2From1) {
       if (assignable1From2 && assignable2From1) {
         return null;
