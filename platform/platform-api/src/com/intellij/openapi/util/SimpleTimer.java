@@ -6,16 +6,18 @@ import java.util.*;
  * Simple timer that keeps order of scheduled tasks
  */
 public class SimpleTimer {
+  private final Timer ourTimer = new Timer(THREAD_NAME, true);
 
-  private Timer ourTimer = new Timer(THREAD_NAME, true);
-
-  private static SimpleTimer ourInstance = new SimpleTimer();
+  private static final SimpleTimer ourInstance = new SimpleTimer();
   private static final String THREAD_NAME = "SimpleTimer";
 
   private long myNextScheduledTime = Long.MAX_VALUE;
   private TimerTask myNextProcessingTask;
 
   private final Map<Long, ArrayList<SimpleTimerTask>> myTime2Task = new TreeMap<Long, ArrayList<SimpleTimerTask>>();
+
+  private SimpleTimer() {
+  }
 
   public static SimpleTimer getInstance() {
     return ourInstance;

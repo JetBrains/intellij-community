@@ -2,8 +2,8 @@ package com.intellij.openapi.util;
 
 public class SimpleTimerTask {
 
-  private long myTargetTime;
-  private Runnable myRunnable;
+  private final long myTargetTime;
+  private final Runnable myRunnable;
 
   private boolean myCancelled;
 
