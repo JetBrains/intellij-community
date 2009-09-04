@@ -226,9 +226,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     final DumbService.DumbModeListener dumbModeListener = new DumbService.DumbModeListener() {
       public void enteredDumbMode() {
-      }
-
-      public void beforeEnteringDumbMode() {
         for (final String id : getToolWindowIds()) {
           if (!myDumbAwareIds.contains(id)) {
             if (isToolWindowVisible(id)) {
@@ -251,7 +248,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       public void run() {
         registerToolWindowsFromBeans();
         if (DumbService.getInstance(myProject).isDumb()) {
-          dumbModeListener.beforeEnteringDumbMode();
+          dumbModeListener.enteredDumbMode();
         }
       }
     });

@@ -116,11 +116,9 @@ public abstract class DumbService {
     final DumbUnawareHider wrapper = new DumbUnawareHider(dumbUnawareContent);
     wrapper.setContentVisible(!isDumb());
     getProject().getMessageBus().connect(parentDisposable).subscribe(DUMB_MODE, new DumbModeListener() {
-      public void beforeEnteringDumbMode() {
-        wrapper.setContentVisible(false);
-      }
 
       public void enteredDumbMode() {
+        wrapper.setContentVisible(false);
       }
 
       public void exitDumbMode() {
@@ -139,17 +137,12 @@ public abstract class DumbService {
   public interface DumbModeListener {
 
     /**
-     * The events arrive on EDT before write action
-     */
-    void beforeEnteringDumbMode();
-
-    /**
-     * The event arrives on EDT inside write action
+     * The event arrives on EDT
      */
     void enteredDumbMode();
 
     /**
-     * The event arrives on EDT inside write action
+     * The event arrives on EDT
      */
     void exitDumbMode();
 

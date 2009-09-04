@@ -164,9 +164,6 @@ public class DaemonListeners implements Disposable {
     });
 
     connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-      public void beforeEnteringDumbMode() {
-        stopDaemon(true);
-      }
 
       public void enteredDumbMode() {
         stopDaemon(true);

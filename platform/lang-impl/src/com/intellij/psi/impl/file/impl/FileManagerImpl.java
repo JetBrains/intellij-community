@@ -83,8 +83,6 @@ public class FileManagerImpl implements FileManager {
     myProjectRootManager = projectRootManager;
 
     myConnection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-      public void beforeEnteringDumbMode() {
-      }
 
       public void enteredDumbMode() {
         recalcAllViewProviders();

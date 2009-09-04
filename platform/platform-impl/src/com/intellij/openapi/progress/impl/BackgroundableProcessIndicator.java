@@ -38,11 +38,9 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
     myDumbModeAction = task.getDumbModeAction();
     if (myDumbModeAction == DumbModeAction.CANCEL) {
       task.getProject().getMessageBus().connect(this).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-        public void beforeEnteringDumbMode() {
-          cancel();
-        }
 
         public void enteredDumbMode() {
+          cancel();
         }
 
         public void exitDumbMode() {

@@ -25,9 +25,6 @@ public class DumbModeIndicator implements ProjectComponent {
     myProject.getMessageBus().connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
       BalloonHandler myHandler;
 
-      public void beforeEnteringDumbMode() {
-      }
-
       public void enteredDumbMode() {
         myAlarm.addRequest(new Runnable() {
           public void run() {

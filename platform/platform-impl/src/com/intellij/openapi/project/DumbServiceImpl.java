@@ -96,18 +96,14 @@ public class DumbServiceImpl extends DumbService {
       }
     };
 
+    final boolean wasDumb = myDumb.getAndSet(true);
+
     invokeOnEDT(new DumbAwareRunnable() {
       public void run() {
         if (myProject.isDisposed()) return;
 
-        final boolean wasDumb = myDumb.getAndSet(true);
         if (!wasDumb) {
-          myPublisher.beforeEnteringDumbMode();
-          new WriteAction() {
-            protected void run(Result result) throws Throwable {
-              myPublisher.enteredDumbMode();
-            }
-          }.execute();
+          myPublisher.enteredDumbMode();
           update.run();
         } else {
           myUpdateQueue.addLast(update);
@@ -141,13 +137,8 @@ public class DumbServiceImpl extends DumbService {
       return;
     }
 
-    //leave dumb mode
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        myDumb.set(false);
-        myPublisher.exitDumbMode();
-      }
-    });
+    myDumb.set(false);
+    myPublisher.exitDumbMode();
 
     while (true) {
       final Runnable runnable;
