@@ -1,0 +1,36 @@
+YAML file
+  YAML document
+    YAML sequence
+      PsiElement(-)('-')
+      YAML array
+        PsiElement([)('[')
+        PsiElement(text)('name')
+        PsiElement(,)(',')
+        PsiElement(text)('hr')
+        PsiElement(,)(',')
+        PsiElement(text)('avg')
+      PsiElement(])(']')
+      PsiElement(Eol)('\n')
+    YAML sequence
+      PsiElement(-)('-')
+      YAML array
+        PsiElement([)('[')
+        PsiElement(text)('Mark')
+        PsiElement(text)('McGwire')
+        PsiElement(,)(',')
+        PsiElement(text)('65')
+        PsiElement(,)(',')
+        PsiElement(text)('0.278')
+      PsiElement(])(']')
+      PsiElement(Eol)('\n')
+    YAML sequence
+      PsiElement(-)('-')
+      YAML array
+        PsiElement([)('[')
+        PsiElement(text)('Sammy')
+        PsiElement(text)('Sosa')
+        PsiElement(,)(',')
+        PsiElement(text)('63')
+        PsiElement(,)(',')
+        PsiElement(text)('0.288')
+      PsiElement(])(']')

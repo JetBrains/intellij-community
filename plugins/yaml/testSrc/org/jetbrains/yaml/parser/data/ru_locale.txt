@@ -1,0 +1,20 @@
+YAML file
+  YAML document
+    YAML key value
+      PsiElement(scalar key)('ru:')
+      PsiElement(Eol)('\n')
+      PsiElement(indent)('  ')
+      YAML compound value
+        YAML key value
+          PsiElement(scalar key)('hello:')
+          PsiElement(text)('Привет')
+        PsiElement(Eol)('\n')
+        PsiElement(indent)('  ')
+        YAML key value
+          PsiElement(scalar key)('hello_world:')
+          PsiElement(text)('Привет Мир')
+        PsiElement(Eol)('\n')
+        PsiElement(indent)('  ')
+        YAML key value
+          PsiElement(scalar key)('hello_yaml_parser:')
+          PsiElement(scalar dstring)('"Ну здравствуй, йамль парсер :)"')

@@ -1,0 +1,47 @@
+YAML file
+  YAML document
+    YAML key value
+      PsiElement(scalar key)('Stack:')
+      PsiElement(Eol)('\n')
+      PsiElement(indent)('  ')
+      YAML compound value
+        YAML sequence
+          PsiElement(-)('-')
+          YAML key value
+            PsiElement(scalar key)('file:')
+            PsiElement(text)('TopClass.py')
+          PsiElement(Eol)('\n')
+          PsiElement(indent)('    ')
+          YAML key value
+            PsiElement(scalar key)('line:')
+            PsiElement(text)('23')
+          PsiElement(Eol)('\n')
+          PsiElement(indent)('    ')
+          YAML key value
+            PsiElement(scalar key)('code:')
+            YAML scalar list
+              PsiElement(scalar list)('|')
+              PsiElement(Eol)('\n')
+              PsiElement(indent)('      ')
+              PsiElement(scalar list)('x = MoreObject("345\n")')
+          PsiElement(Eol)('\n')
+          PsiElement(indent)('  ')
+        YAML sequence
+          PsiElement(-)('-')
+          YAML key value
+            PsiElement(scalar key)('file:')
+            PsiElement(text)('MoreClass.py')
+          PsiElement(Eol)('\n')
+          PsiElement(indent)('    ')
+          YAML key value
+            PsiElement(scalar key)('line:')
+            PsiElement(text)('58')
+          PsiElement(Eol)('\n')
+          PsiElement(indent)('    ')
+          YAML key value
+            PsiElement(scalar key)('code:')
+            YAML scalar list
+              PsiElement(scalar list)('|-')
+              PsiElement(Eol)('\n')
+              PsiElement(indent)('      ')
+              PsiElement(scalar list)('foo = bar')

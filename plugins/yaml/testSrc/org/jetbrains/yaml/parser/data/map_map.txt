@@ -1,0 +1,35 @@
+YAML file
+  YAML document
+    YAML key value
+      PsiElement(scalar key)('Mark McGwire:')
+      YAML compound value
+        YAML hash
+          PsiElement({)('{')
+          YAML key value
+            PsiElement(scalar key)('hr:')
+            PsiElement(text)('65')
+          PsiElement(,)(',')
+          YAML key value
+            PsiElement(scalar key)('avg:')
+            PsiElement(text)('0.278')
+    PsiElement(})('}')
+    PsiElement(Eol)('\n')
+    YAML key value
+      PsiElement(scalar key)('Sammy Sosa:')
+      YAML compound value
+        YAML hash
+          PsiElement({)('{')
+          PsiElement(Eol)('\n')
+          PsiElement(indent)('    ')
+          YAML key value
+            PsiElement(scalar key)('hr:')
+            PsiElement(text)('63')
+          PsiElement(,)(',')
+          PsiElement(Eol)('\n')
+          PsiElement(indent)('    ')
+          YAML key value
+            PsiElement(scalar key)('avg:')
+            PsiElement(text)('0.288')
+          PsiElement(Eol)('\n')
+          PsiElement(indent)('  ')
+    PsiElement(})('}')
