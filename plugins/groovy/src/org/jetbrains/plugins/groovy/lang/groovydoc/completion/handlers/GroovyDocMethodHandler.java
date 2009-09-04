@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.lang.groovydoc.completion.handlers;
 
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.MutableLookupElement;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
@@ -49,7 +48,7 @@ public class GroovyDocMethodHandler implements ContextSpecificInsertHandler {
 
     int offset = context.getEditor().getCaretModel().getOffset();
     String text = file.getText();
-    return offset < text.length() && ((LookupItem)item).getObject() instanceof PsiMethod;
+    return offset < text.length() && item.getObject() instanceof PsiMethod;
 
   }
 

@@ -21,8 +21,6 @@ import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.util.MethodParenthesesHandler;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.MutableLookupElement;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -126,11 +124,7 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
       }
     }
 
-    if (item instanceof LookupItem) {
-      addTailType((MutableLookupElement)item);
-      super.handleInsert(context, item);
-    }
-
+    addTailType(item).processTail(context.getEditor(), context.getTailOffset());
   }
 
   private static boolean isExpressionStatement(PsiFile psiFile, int offset) {
@@ -148,10 +142,9 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
     document.deleteString(offset, i);
   }
 
-  private static void addTailType(MutableLookupElement item) {
+  private static TailType addTailType(LookupElement item) {
     if ("default".equals(item.toString())) {
-      item.setTailType(TailType.CASE_COLON);
-      return;
+      return TailType.CASE_COLON;
     }
     @NonNls String[] exprs = {"true", "false", "null", "super", "this"};
     @NonNls String[] withSemi = {"break", "continue"};
@@ -161,17 +154,14 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
         "assert", "synchronized", "package", "class", "interface", "enum", "extends", "implements", "case", "catch", "finally", "else",
         "instanceof", "import", "final",};
     if (Arrays.asList(withSemi).contains(item.toString())) {
-      item.setTailType(TailType.SEMICOLON);
-      return;
+      return TailType.SEMICOLON;
     }
     if (Arrays.asList(exprs).contains(item.toString())) {
-      item.setTailType(TailType.NONE);
-      return;
+      return TailType.NONE;
     }
     if (Arrays.asList(withSpace).contains(item.toString())) {
-      item.setTailType(TailType.SPACE);
-      return;
+      return TailType.SPACE;
     }
-    item.setTailType(TailType.NONE);
+    return TailType.NONE;
   }
 }

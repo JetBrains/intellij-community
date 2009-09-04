@@ -20,7 +20,6 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.CompletionData;
 import com.intellij.codeInsight.completion.CompletionVariant;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
@@ -52,7 +51,6 @@ import org.jetbrains.plugins.groovy.lang.completion.getters.ClassesGetter;
 import org.jetbrains.plugins.groovy.lang.completion.getters.SuggestedVariableNamesGetter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 
-import java.util.ArrayList;
 import java.util.Set;
 
 /**
@@ -186,13 +184,9 @@ public class GroovyCompletionData extends CompletionData {
                                 final PsiFile file,
                                 final int offset) {
     super.completeReference(reference, set, position, file, offset);
-    for (final LookupElement element : new ArrayList<LookupElement>(set)) {
+    for (final LookupElement element : set) {
       if (element instanceof LookupItem) {
         ((LookupItem)element).setInsertHandler(new GroovyInsertHandlerAdapter());
-      } else {
-        final LookupElementBuilder builder = (LookupElementBuilder)element;
-        set.remove(builder);
-        set.add(builder.setInsertHandler(new GroovyInsertHandlerAdapter()));
       }
     }
   }

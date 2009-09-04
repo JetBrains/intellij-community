@@ -14,9 +14,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.editor.template.expressions;
 
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.PsiTypeResult;
@@ -37,7 +35,7 @@ import java.util.Set;
  */
 public class ChooseTypeExpression extends Expression {
   protected SmartTypePointer myTypePointer;
-  private final LookupItem[] myItems;
+  private final LookupElement[] myItems;
   private final PsiManager myManager;
 
   public ChooseTypeExpression(TypeConstraint[] constraints, PsiManager manager) {
@@ -46,35 +44,31 @@ public class ChooseTypeExpression extends Expression {
     myItems = createItems(constraints);
   }
 
-  private LookupItem[] createItems(TypeConstraint[] constraints) {
-    Set<LookupItem> result = new LinkedHashSet<LookupItem>();
+  private LookupElement[] createItems(TypeConstraint[] constraints) {
+    Set<LookupElement> result = new LinkedHashSet<LookupElement>();
 
     for (TypeConstraint constraint : constraints) {
       if (constraint instanceof TypeEquals) {
-        LookupItemUtil.addLookupItem(result, constraint.getType());
+        result.add(PsiTypeLookupItem.createLookupItem(constraint.getType()));
       } else if (constraint instanceof SubtypeConstraint) {
-        LookupItemUtil.addLookupItem(result, constraint.getDefaultType());
+        result.add(PsiTypeLookupItem.createLookupItem(constraint.getDefaultType()));
       } else if (constraint instanceof SupertypeConstraint) {
         processSupertypes(constraint.getType(), result);
       }
     }
 
-    LookupItem item = LookupItemUtil.objectToLookupItem("def");
-    item.setBold();
-    result.add(item);
+    result.add(LookupElementBuilder.create("def").setBold());
 
-    return result.toArray(new LookupItem[result.size()]);
+    return result.toArray(new LookupElement[result.size()]);
   }
 
-  private void processSupertypes(PsiType type, Set<LookupItem> result) {
+  private static void processSupertypes(PsiType type, Set<LookupElement> result) {
     String text = type.getCanonicalText();
     String unboxed = PsiTypesUtil.unboxIfPossible(text);
     if (unboxed != null && !unboxed.equals(text)) {
-      LookupItem item = LookupItemUtil.objectToLookupItem(unboxed);
-      item.setBold();
-      LookupItemUtil.addLookupItem(result, item);
+      result.add(LookupElementBuilder.create(unboxed).setBold());
     } else {
-      LookupItemUtil.addLookupItem(result, type);
+      result.add(PsiTypeLookupItem.createLookupItem(type));
     }
     PsiType[] superTypes = type.getSuperTypes();
     for (PsiType superType : superTypes) {

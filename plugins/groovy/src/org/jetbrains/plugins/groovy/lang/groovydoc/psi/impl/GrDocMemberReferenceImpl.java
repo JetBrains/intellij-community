@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -122,6 +123,7 @@ public abstract class GrDocMemberReferenceImpl extends GroovyDocPsiElementImpl i
     return multiResolveImpl();
   }
 
+  @NotNull
   public Object[] getVariants() {
     GrDocReferenceElement holder = getReferenceHolder();
     PsiElement resolved;
@@ -135,7 +137,6 @@ public abstract class GrDocMemberReferenceImpl extends GroovyDocPsiElementImpl i
       ResolverProcessor propertyProcessor = CompletionProcessor.createPropertyCompletionProcessor(this);
       resolved.processDeclarations(propertyProcessor, ResolveState.initial(), null, this);
       PsiElement[] propertyCandidates = ResolveUtil.mapToElements(propertyProcessor.getCandidates());
-      PsiType thisType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createType((PsiClass) resolved, PsiSubstitutor.EMPTY);
       ResolverProcessor methodProcessor = CompletionProcessor.createPropertyCompletionProcessor(this);
 
       resolved.processDeclarations(methodProcessor, ResolveState.initial(), null, this);
@@ -146,7 +147,7 @@ public abstract class GrDocMemberReferenceImpl extends GroovyDocPsiElementImpl i
 
       return ContainerUtil.map2Array(elements, new Function<PsiElement, Object>() {
         public Object fun(PsiElement psiElement) {
-          LookupItem<PsiElement> lookupItem = null;
+          LookupElement lookupItem = null;
           if (psiElement instanceof PsiNamedElement) {
             if (psiElement instanceof PsiMethod) {
               lookupItem = new LookupItem<PsiElement>(psiElement, ((PsiMethod) psiElement).getName());
@@ -163,7 +164,7 @@ public abstract class GrDocMemberReferenceImpl extends GroovyDocPsiElementImpl i
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
-  protected PsiClass getEnclosingClass(PsiElement element) {
+  protected static PsiClass getEnclosingClass(PsiElement element) {
     PsiElement parent = element.getParent();
     while (parent != null) {
       if (parent instanceof GrTypeDefinition) return (PsiClass) parent;

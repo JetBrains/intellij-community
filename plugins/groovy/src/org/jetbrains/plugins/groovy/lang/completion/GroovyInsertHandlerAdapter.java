@@ -15,16 +15,16 @@
 
 package org.jetbrains.plugins.groovy.lang.completion;
 
-import org.jetbrains.plugins.groovy.extensions.completion.ContextSpecificInsertHandler;
-import org.jetbrains.plugins.groovy.extensions.completion.InsertHandlerRegistry;
-import com.intellij.codeInsight.completion.DefaultInsertHandler;
+import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
+import org.jetbrains.plugins.groovy.extensions.completion.ContextSpecificInsertHandler;
+import org.jetbrains.plugins.groovy.extensions.completion.InsertHandlerRegistry;
 
 /**
  * @author ilyas
  */
-public class GroovyInsertHandlerAdapter extends DefaultInsertHandler{
+public class GroovyInsertHandlerAdapter implements InsertHandler {
 
   private final GroovyInsertHandler myGroovyInsertHandler = new GroovyInsertHandler();
 

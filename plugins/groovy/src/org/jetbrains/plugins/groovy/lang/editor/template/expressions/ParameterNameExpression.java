@@ -15,8 +15,7 @@
 package org.jetbrains.plugins.groovy.lang.editor.template.expressions;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
@@ -69,9 +68,9 @@ public class ParameterNameExpression extends Expression {
   public LookupElement[] calculateLookupItems(ExpressionContext context) {
     SuggestedNameInfo info = getNameInfo(context);
     if (info == null) return null;
-    LookupItem[] result = new LookupItem[info.names.length];
+    LookupElement[] result = new LookupElement[info.names.length];
     for (int i = 0; i < result.length; i++) {
-      result[i] = LookupItemUtil.objectToLookupItem(info.names[i]);
+      result[i] = LookupElementBuilder.create(info.names[i]);
     }
     return result;
   }
