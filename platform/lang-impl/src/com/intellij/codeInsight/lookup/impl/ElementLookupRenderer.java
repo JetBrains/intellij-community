@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 
 /**
  * @author yole
+ * @deprecated use {@link com.intellij.codeInsight.lookup.LookupElement#renderElement(com.intellij.codeInsight.lookup.LookupElementPresentation)}
  */
 @Deprecated
 public interface ElementLookupRenderer<T> {
