@@ -70,7 +70,4 @@ public class MigrationRootNode extends AbstractTreeNode<TypeMigrationLabeler> im
     return null;
   }
 
-  public boolean hasDuplicate() {
-    return false;
-  }
 }
