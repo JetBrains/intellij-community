@@ -377,7 +377,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   public <K> void updateIndex(StubIndexKey key, int fileId, Map<K, TIntArrayList> oldValues, Map<K, TIntArrayList> newValues) {
     try {
       MyIndex<K> index = (MyIndex<K>)myIndices.get(key);
-      index.updateWithMap(fileId, oldValues, newValues);
+      index.updateWithMap(fileId, newValues, oldValues.keySet());
     }
     catch (StorageException e) {
       LOG.info(e);
@@ -390,8 +390,14 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       super(null, null, storage);
     }
 
-    public void updateWithMap(final int inputId, final Map<K, TIntArrayList> oldData, final Map<K, TIntArrayList> newData) throws StorageException {
-      super.updateWithMap(inputId, oldData, newData);
+    public void updateWithMap(final int inputId, final Map<K, TIntArrayList> newData, Collection<K> oldKeys) throws StorageException {
+      getWriteLock().lock();
+      try {
+        super.updateWithMap(inputId, newData, oldKeys);
+      }
+      finally {
+        getWriteLock().unlock();
+      }
     }
   }
 

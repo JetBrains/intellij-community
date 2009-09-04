@@ -41,6 +41,19 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     return myInputIdMapping.size();
   }
 
+  public void removeAllValues(int inputId) {
+    final List<Value> toRemove= new ArrayList<Value>();
+    for (final Iterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
+      final Value value = valueIterator.next();
+      if (isAssociated(value, inputId)) {
+        toRemove.add(value);
+      }
+    }
+    for (Value value : toRemove) {
+      removeValue(inputId, value);
+    }
+  }
+
   public boolean removeValue(int inputId, Value value) {
     final Object input = myInputIdMapping.get(value);
     if (input == null) {

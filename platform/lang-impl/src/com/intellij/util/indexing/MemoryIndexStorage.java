@@ -110,6 +110,15 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
     }
   }
 
+  public void removeAllValues(Key key, int inputId) throws StorageException {
+    if (myBufferingEnabled.get()) {
+      getMemValueContainer(key).removeAllValues(inputId);
+    }
+    else {
+      myBackendStorage.removeAllValues(key, inputId);
+    }
+  }
+
   private synchronized UpdatableValueContainer<Value> getMemValueContainer(final Key key) {
     UpdatableValueContainer<Value> valueContainer = myMap.get(key);
     if (valueContainer == null) {

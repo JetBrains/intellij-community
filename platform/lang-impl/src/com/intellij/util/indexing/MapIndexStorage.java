@@ -9,6 +9,7 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -77,7 +78,12 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
             final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
             //noinspection IOResourceOpenedButNotSafelyClosed
             final DataOutputStream _out = new DataOutputStream(bytes);
-
+            final TIntHashSet set = valueContainer.getInvalidated();
+            if (set.size() > 0) {
+              for (int inputId : set.toArray()) {
+                myValueContainerExternalizer.saveInvalidateCommand(_out, inputId);
+              }
+            }
             final ValueContainer<Value> toRemove = valueContainer.getRemovedDelta();
             if (toRemove.size() > 0) {
               myValueContainerExternalizer.saveAsRemoved(_out, toRemove);
@@ -213,6 +219,10 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     read(key).removeValue(inputId, value);
   }
 
+  public void removeAllValues(Key key, int inputId) throws StorageException {
+    read(key).removeAllValues(inputId);
+  }
+
   public synchronized void remove(final Key key) throws StorageException {
     try {
       myKeyBeingRemoved = key;
@@ -252,7 +262,12 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
       saveImpl(out, container, true);
     }
 
+    public void saveInvalidateCommand(final DataOutput out, int inputId) throws IOException {
+      DataInputOutputUtil.writeSINT(out, -inputId);
+    }
+
     private void saveImpl(final DataOutput out, final ValueContainer<T> container, final boolean asRemovedData) throws IOException {
+      DataInputOutputUtil.writeSINT(out, container.size());
       for (final Iterator<T> valueIterator = container.getValueIterator(); valueIterator.hasNext();) {
         final T value = valueIterator.next();
         myExternalizer.save(out, value);
@@ -276,16 +291,25 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
       final ValueContainerImpl<T> valueContainer = new ValueContainerImpl<T>();
       
       while (stream.available() > 0) {
-        final T value = myExternalizer.read(in);
-        final int idCount = DataInputOutputUtil.readSINT(in);
-        for (int i = 0; i < idCount; i++) {
-          final int id = DataInputOutputUtil.readSINT(in);
-          if (id < 0) {
-            valueContainer.removeValue(-id, value);
-            valueContainer.setNeedsCompacting(true);
-          }
-          else {
-            valueContainer.addValue(id, value);
+        final int valueCount = DataInputOutputUtil.readSINT(in);
+        if (valueCount < 0) {
+          valueContainer.removeAllValues(-valueCount); 
+          valueContainer.setNeedsCompacting(true);
+        }
+        else {
+          for (int valueIdx = 0; valueIdx < valueCount; valueIdx++) {
+            final T value = myExternalizer.read(in);
+            final int idCount = DataInputOutputUtil.readSINT(in);
+            for (int i = 0; i < idCount; i++) {
+              final int id = DataInputOutputUtil.readSINT(in);
+              if (id < 0) {
+                valueContainer.removeValue(-id, value);
+                valueContainer.setNeedsCompacting(true);
+              }
+              else {
+                valueContainer.addValue(id, value);
+              }
+            }
           }
         }
       }

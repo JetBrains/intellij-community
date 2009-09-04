@@ -1,6 +1,8 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.util.Computable;
+import gnu.trove.TIntHashSet;
+import gnu.trove.TIntProcedure;
 
 import java.util.Iterator;
 import java.util.List;
@@ -12,6 +14,7 @@ import java.util.List;
 class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>{
   private final ValueContainerImpl<Value> myAdded;
   private final ValueContainerImpl<Value> myRemoved;
+  private final TIntHashSet myInvalidated;
   private final Initializer<Value> myInitializer;
   private volatile ValueContainerImpl<Value> myMerged = null;
 
@@ -23,6 +26,7 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
     myInitializer = initializer;
     myAdded = new ValueContainerImpl<Value>();
     myRemoved = new ValueContainerImpl<Value>();
+    myInvalidated = new TIntHashSet();
   }
 
   //public void log(String op, int id, final Value value) {
@@ -44,12 +48,23 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
     }
   }
 
+  public void removeAllValues(int inputId) {
+    if (myMerged != null) {
+      myMerged.removeAllValues(inputId);
+    }
+    myAdded.removeAllValues(inputId);
+    myRemoved.removeAllValues(inputId);
+    myInvalidated.add(inputId);
+  }
+
   public boolean removeValue(int inputId, Value value) {
     if (myMerged != null) {
       myMerged.removeValue(inputId, value);
     }
     if (!myAdded.removeValue(inputId, value)) {
-      myRemoved.addValue(inputId, value);
+      if (!myInvalidated.contains(inputId)) {
+        myRemoved.addValue(inputId, value);
+      }
     }
     return true;
   }
@@ -105,6 +120,12 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
       };
 
       fromDisk.forEach(addAction);
+      myInvalidated.forEach(new TIntProcedure() {
+        public boolean execute(int inputId) {
+          newMerged.removeAllValues(inputId);
+          return true;
+        }
+      });
       myRemoved.forEach(removeAction);
       myAdded.forEach(addAction);
       setNeedsCompacting(fromDisk.needsCompacting());
@@ -115,7 +136,7 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
   }
 
   public boolean isDirty() {
-    return myAdded.size() > 0 || myRemoved.size() > 0 || needsCompacting();
+    return myAdded.size() > 0 || myRemoved.size() > 0 || myInvalidated.size() > 0 || needsCompacting();
   }
 
   public ValueContainer<Value> getAddedDelta() {
@@ -124,5 +145,9 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
   
   public ValueContainer<Value> getRemovedDelta() {
     return myRemoved;
+  }
+
+  public TIntHashSet getInvalidated() {
+    return myInvalidated;
   }
 }

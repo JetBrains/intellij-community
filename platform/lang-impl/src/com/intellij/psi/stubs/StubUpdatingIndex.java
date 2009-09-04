@@ -290,10 +290,11 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       }
     }
 
-    protected void updateWithMap(final int inputId, final Map<Integer, SerializedStubTree> oldData, final Map<Integer, SerializedStubTree> newData)
+    protected void updateWithMap(final int inputId, final Map<Integer, SerializedStubTree> newData, Collection<Integer> oldKeys)
         throws StorageException {
 
       checkNameStorage();
+      Map<Integer, SerializedStubTree> oldData = readOldData(inputId);
       final Map<StubIndexKey, Map<Object, TIntArrayList>> oldStubTree = getStubTree(oldData);
       final Map<StubIndexKey, Map<Object, TIntArrayList>> newStubTree = getStubTree(newData);
 
@@ -307,7 +308,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
 
         try {
           getWriteLock().lock();
-          super.updateWithMap(inputId, oldData, newData);
+          super.updateWithMap(inputId, newData, oldKeys);
           updateStubIndices(affectedIndices, inputId, oldStubTree, newStubTree);
         }
         finally {
@@ -343,12 +344,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       return stubTree;
     }
 
-    protected Map<Integer, SerializedStubTree> mapOld(final FileContent inputData) throws StorageException {
-      checkNameStorage();
-      if (inputData == null) {
-        return Collections.emptyMap();
-      }
-      final int key = Math.abs(FileBasedIndex.getFileId(inputData.getFile()));
+    private Map<Integer, SerializedStubTree> readOldData(final int key) throws StorageException {
 
       final Map<Integer, SerializedStubTree> result = new HashMap<Integer, SerializedStubTree>();
       final Lock lock = getReadLock();
@@ -368,7 +364,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
 
       return result;
     }
-    
+
     public void clear() throws StorageException {
       final StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
       try {

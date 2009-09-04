@@ -19,7 +19,7 @@ import java.util.Locale;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class IndexInfrastructure {
-  private static final int VERSION = 7;
+  private static final int VERSION = 8;
   private static final TObjectLongHashMap<ID<?, ?>> ourIndexIdToCreationStamp = new TObjectLongHashMap<ID<?, ?>>();
   private static final boolean ourUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
@@ -32,6 +32,10 @@ public class IndexInfrastructure {
 
   public static File getStorageFile(final ID<?, ?> indexName) {
     return new File(getIndexRootDir(indexName), indexName.toString());
+  }
+
+  public static File getInputIndexStorageFile(final ID<?, ?> indexName) {
+    return new File(getIndexRootDir(indexName), indexName.toString()+"_inputs");
   }
 
   public static File getIndexRootDir(final ID<?, ?> indexName) {

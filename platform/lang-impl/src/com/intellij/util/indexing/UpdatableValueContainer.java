@@ -9,4 +9,6 @@ public abstract class UpdatableValueContainer<T> extends ValueContainer<T>{
   public abstract void addValue(int inputId, T value);
 
   public abstract boolean removeValue(int inputId, T value);
+
+  public abstract void removeAllValues(int inputId);
 }

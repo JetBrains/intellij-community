@@ -32,7 +32,7 @@ import java.util.Map;
  * @author Eugene Zhuravlev
  *         Date: Jan 20, 2008
  */
-public class TodoIndex extends CustomImplementationFileBasedIndexExtension<TodoIndexEntry, Integer, FileContent> {
+public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> {
   @NonNls public static final ID<TodoIndexEntry, Integer> NAME = ID.create("TodoIndex");
 
   public TodoIndex(TodoConfiguration config) {
@@ -138,10 +138,5 @@ public class TodoIndex extends CustomImplementationFileBasedIndexExtension<TodoI
 
   public FileBasedIndex.InputFilter getInputFilter() {
     return myInputFilter;
-  }
-
-  public UpdatableIndex<TodoIndexEntry, Integer, FileContent> createIndexImplementation(final ID<TodoIndexEntry, Integer> indexId, final FileBasedIndex owner,
-                                                                                        IndexStorage<TodoIndexEntry, Integer> storage) {
-    return new SimpleMapReduceIndex<TodoIndexEntry, Integer>(indexId, myIndexer, storage);
   }
 }
