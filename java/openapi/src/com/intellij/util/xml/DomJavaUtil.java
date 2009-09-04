@@ -4,14 +4,15 @@
  */
 package com.intellij.util.xml;
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.openapi.module.Module;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -21,7 +22,7 @@ public class DomJavaUtil {
   }
 
   @Nullable
-  public static PsiClass findClass(@Nullable String name, @NotNull final XmlFile file, @Nullable final Module module, @Nullable final GlobalSearchScope searchScope) {
+  public static PsiClass findClass(@Nullable String name, @NotNull final PsiFile file, @Nullable final Module module, @Nullable final GlobalSearchScope searchScope) {
     if (name == null) return null;
     if (name.indexOf('$')>=0) name = name.replace('$', '.');
 
