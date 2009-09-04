@@ -125,7 +125,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
     for (final CvsRootProvider cvsRootProvider : allCvsRoots) {
       if (processedCvsRoots.contains(cvsRootProvider)) continue;
       processedCvsRoots.add(cvsRootProvider);
-      final VirtualFile vf = lfs.findFileByIoFile(cvsRootProvider.getLocalRoot());
+      final VirtualFile vf = cvsRootProvider.getLocalRoot() == null ? null : lfs.findFileByIoFile(cvsRootProvider.getLocalRoot());
       final Project project = (vf == null) ? null : projectLocator.guessProjectForFile(vf);
       if (!cvsRootProvider.login(executor, project)) return false;
     }

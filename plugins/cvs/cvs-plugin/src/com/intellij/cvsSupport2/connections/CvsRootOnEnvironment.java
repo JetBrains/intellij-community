@@ -1,7 +1,6 @@
 package com.intellij.cvsSupport2.connections;
 
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDate;
-import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDate;
 import org.netbeans.lib.cvsclient.CvsRoot;
 
 import java.io.File;
