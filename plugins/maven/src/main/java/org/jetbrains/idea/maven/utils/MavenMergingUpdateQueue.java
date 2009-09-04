@@ -94,11 +94,9 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
       protected void run(Result result) throws Throwable {
         MessageBusConnection connection = project.getMessageBus().connect(MavenMergingUpdateQueue.this);
         connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-          public void beforeEnteringDumbMode() {
-            mySuppendHelper.suspend();
-          }
 
           public void enteredDumbMode() {
+            mySuppendHelper.suspend();
           }
 
           public void exitDumbMode() {
