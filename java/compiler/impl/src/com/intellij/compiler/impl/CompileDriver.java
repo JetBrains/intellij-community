@@ -42,6 +42,7 @@ import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.ui.configuration.CommonContentEntriesEditor;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -51,6 +52,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.ForwardDependenciesBuilder;
@@ -115,6 +118,7 @@ public class CompileDriver {
   private OutputPathFinder myOutputFinder; // need this for updating zip archives (experimental feature) 
 
   private Set<File> myAllOutputDirectories;
+  private static final long ONE_MINUTE_MS = 60L /*sec*/ * 1000L /*millisec*/;
 
   public CompileDriver(Project project) {
     myProject = project;
@@ -437,6 +441,7 @@ public class CompileDriver {
         }, ModalityState.NON_MODAL);
       }
       else {
+        final long duration = System.currentTimeMillis() - compileContext.getStartCompilationStamp();
         writeStatus(new CompileStatus(CompilerConfigurationImpl.DEPENDENCY_FORMAT_VERSION, wereExceptions), compileContext);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
@@ -447,6 +452,9 @@ public class CompileDriver {
             if (statusBar != null) { // because this code is in invoke later, the code may work for already closed project
               // in case another project was opened in the frame while the compiler was working (See SCR# 28591)
               statusBar.setInfo(statusMessage);
+              if (duration > ONE_MINUTE_MS) {
+                ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.MESSAGES_WINDOW, MessageType.INFO, statusMessage);
+              }
             }
             if (_status != ExitStatus.UP_TO_DATE && compileContext.getMessageCount(null) > 0) {
               compileContext.addMessage(CompilerMessageCategory.INFORMATION, statusMessage, null, -1, -1);
