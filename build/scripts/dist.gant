@@ -1,7 +1,8 @@
 import org.jetbrains.jps.Jps
+import static org.jetbrains.jps.idea.IdeaProjectLoader.*
 
+includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
 includeTool << Jps
-includeTargets << new File("${guessHome()}/build/scripts/utils.gant")
 
 requireProperty("out", "$home/out/classes")
 

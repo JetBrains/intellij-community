@@ -1,9 +1,6 @@
-def guessHome() {
-  // Current file is supposed to be at build/scripts/release.gant path
-  new File(this["gant.file"].substring("file:".length())).getParentFile().getParentFile().getParent()
-}
+import static org.jetbrains.jps.idea.IdeaProjectLoader.*
 
-includeTargets << new File("${guessHome()}/build/scripts/utils.gant")
+includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
 
 requireProperty("out", "$home/out/classes")
 
