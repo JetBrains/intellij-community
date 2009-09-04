@@ -3,6 +3,8 @@ c.d
 -----
 Groovy script
   Import statement
+    Modifiers
+      <empty list>
     PsiElement(import)('import')
     PsiWhiteSpace(' ')
     Reference element

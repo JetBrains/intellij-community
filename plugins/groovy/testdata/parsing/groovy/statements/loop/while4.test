@@ -16,6 +16,8 @@ Groovy script
     PsiElement(new line)('\n')
     PsiErrorElement:Imports are not allowed inside blocks
       Import statement
+        Modifiers
+          <empty list>
         PsiElement(import)('import')
         PsiWhiteSpace(' ')
         Reference element

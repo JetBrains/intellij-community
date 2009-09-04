@@ -3,6 +3,8 @@ import b as c
 -----
 Groovy script
   Import statement
+    Modifiers
+      <empty list>
     PsiElement(import)('import')
     PsiWhiteSpace(' ')
     PsiElement(static)('static')
@@ -11,6 +13,8 @@ Groovy script
       PsiElement(identifier)('a')
   PsiElement(new line)('\n')
   Import statement
+    Modifiers
+      <empty list>
     PsiElement(import)('import')
     PsiWhiteSpace(' ')
     Reference element
