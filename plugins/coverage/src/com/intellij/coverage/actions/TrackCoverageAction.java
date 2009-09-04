@@ -75,6 +75,7 @@ public class TrackCoverageAction extends ToggleModelAction {
   protected boolean isEnabled() {
     if (myModel == null) return false;
     final RunConfigurationBase configuration = myModel.getProperties().getConfiguration();
+    if (!(configuration instanceof ModuleBasedConfiguration)) return false;
     final CoverageEnabledConfiguration coverageEnabledConfiguration = CoverageEnabledConfiguration.get((ModuleBasedConfiguration)configuration);
     if (!coverageEnabledConfiguration.isCoverageEnabled()) return false;
     final CoverageSuiteImpl suite = (CoverageSuiteImpl)CoverageDataManager.getInstance(myProperties.getProject()).getCurrentSuite();
