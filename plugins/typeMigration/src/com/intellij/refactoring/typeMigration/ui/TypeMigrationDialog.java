@@ -33,6 +33,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 
 public class TypeMigrationDialog extends RefactoringDialog {
@@ -87,9 +89,13 @@ public class TypeMigrationDialog extends RefactoringDialog {
         validateButtons();
       }
     });
-    
 
     myScopeChooserCombo = new ScopeChooserCombo(project, false, true, FindSettings.getInstance().getDefaultScopeName());
+    myScopeChooserCombo.getChildComponent().addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        validateButtons();
+      }
+    });
     init();
     setTitle(REFACTORING_NAME);
   }
@@ -131,6 +137,7 @@ public class TypeMigrationDialog extends RefactoringDialog {
   @Override
   protected void canRun() throws ConfigurationException {
     if (!checkType(getMigrationType())) throw new ConfigurationException("\'" + StringUtil.first(myTypeCodeFragment.getText(), 10, true) + "\' is invalid type");
+    if (myScopeChooserCombo.getSelectedScope() == null) throw new ConfigurationException("Scope is not chosen");
   }
 
   private static boolean checkType(final PsiType type) {
