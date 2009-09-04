@@ -100,8 +100,8 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     public TableCellEditor getEditor(final VcsDirectoryMapping o) {
       return new AbstractTableCellEditor() {
         public Object getCellEditorValue() {
-          VcsWrapper selectedVcs = (VcsWrapper) myVcsComboBox.getComboBox().getSelectedItem();
-          return selectedVcs.getOriginal() == null ? "" : selectedVcs.getOriginal().getName();
+          final VcsWrapper selectedVcs = (VcsWrapper) myVcsComboBox.getComboBox().getSelectedItem();
+          return ((selectedVcs == null) || (selectedVcs.getOriginal() == null)) ? "" : selectedVcs.getOriginal().getName();
         }
 
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
