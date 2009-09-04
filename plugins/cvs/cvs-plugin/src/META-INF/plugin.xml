@@ -23,6 +23,12 @@
                    serviceImplementation="com.intellij.cvsSupport2.connections.ssh.SSHPasswordProviderImpl"/>
     <applicationService serviceInterface="com.intellij.cvsSupport2.config.ImportConfiguration"
                    serviceImplementation="com.intellij.cvsSupport2.config.ImportConfiguration"/>
+    <applicationService serviceInterface="com.intellij.cvsSupport2.connections.ssh.SshConnectionPool"
+                        serviceImplementation="com.intellij.cvsSupport2.connections.ssh.SshConnectionPool"/>
+    <applicationService serviceInterface="com.intellij.cvsSupport2.connections.ssh.EmptyPool"
+                        serviceImplementation="com.intellij.cvsSupport2.connections.ssh.EmptyPool"/>
+    <applicationService serviceInterface="com.intellij.cvsSupport2.connections.ssh.SocksAuthenticatorManager"
+                        serviceImplementation="com.intellij.cvsSupport2.connections.ssh.SocksAuthenticatorManager"/>
 
     <projectService serviceInterface="com.intellij.cvsSupport2.ui.CvsTabbedWindow"
                serviceImplementation="com.intellij.cvsSupport2.ui.CvsTabbedWindow"/>
