@@ -2,6 +2,7 @@ package com.intellij.slicer;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -23,6 +24,9 @@ public class SliceTreeBuilder extends AbstractTreeBuilder {
   public final boolean dataFlowToThis;
   private static final Comparator<NodeDescriptor> SLICE_NODE_COMPARATOR = new Comparator<NodeDescriptor>() {
     public int compare(NodeDescriptor o1, NodeDescriptor o2) {
+      if (!(o1 instanceof SliceNode) || !(o2 instanceof SliceNode)) {
+        return AlphaComparator.INSTANCE.compare(o1, o2);
+      }
       SliceNode node1 = (SliceNode)o1;
       SliceNode node2 = (SliceNode)o2;
       SliceUsage usage1 = node1.getValue();
