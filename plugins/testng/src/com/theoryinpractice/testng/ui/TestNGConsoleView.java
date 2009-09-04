@@ -57,6 +57,13 @@ public class TestNGConsoleView extends BaseTestsOutputConsoleView {
     return testNGResults;
   }
 
+
+  @Override
+  public void dispose() {
+    super.dispose();
+    testNGResults = null;
+  }
+
   public TestNGResults getResultsView() {
     return testNGResults;
   }
