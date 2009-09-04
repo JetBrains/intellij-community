@@ -57,7 +57,6 @@
   <component name="EntryPointsManager">
     <entry_points version="2.0" />
   </component>
-  <component name="IdProvider" IDEtalkID="B8DB9323E1E678520D38F156CE508190" />
   <component name="InspectionProjectProfileManager">
     <option name="PROJECT_PROFILE" value="p1" />
     <scopes>
@@ -270,13 +269,6 @@
     <option name="GENERATE_NO_WARNINGS" value="false" />
     <option name="GENERATE_IIOP_STUBS" value="false" />
     <option name="ADDITIONAL_OPTIONS_STRING" value="" />
-  </component>
-  <component name="SvnBranchConfigurationManager">
-    <option name="myVersion" value="124" />
-    <option name="mySupportsUserInfoFilter" value="true" />
-  </component>
-  <component name="VcsDirectoryMappings">
-    <mapping directory="" vcs="" />
   </component>
   <component name="WebServicesPlugin" addRequiredLibraries="true" />
   <UsedPathMacros>
