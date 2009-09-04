@@ -12,11 +12,6 @@ def includeFile(String filename) {
   s
 }
 
-def guessHome() {
-  // Current file is supposed to be at build/scripts/release.gant path
-  new File(this["gant.file"].substring("file:".length())).getParentFile().getParentFile().getParent()
-}
-
 target(compile: "Compile project") {
   loadProject()
   project["javac"] = "$jdk/bin/javac"
