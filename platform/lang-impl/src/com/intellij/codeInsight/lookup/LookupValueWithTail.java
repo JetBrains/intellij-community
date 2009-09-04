@@ -6,6 +6,7 @@ package com.intellij.codeInsight.lookup;
 
 /**
  * @author Dmitry Avdeev
+ * @deprecated use LookupElementBuilder
  */
 public interface LookupValueWithTail {
   String getTailText();
