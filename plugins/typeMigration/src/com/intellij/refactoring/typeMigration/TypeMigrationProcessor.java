@@ -108,6 +108,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
   public static void change(TypeMigrationLabeler labeler, UsageInfo[] usages) {
     List<UsageInfo> nonCodeUsages = new ArrayList<UsageInfo>();
     for (UsageInfo usage : usages) {
+      if (((TypeMigrationUsageInfo)usage).isExcluded()) continue;
       final PsiElement element = usage.getElement();
       if (element instanceof PsiVariable || element instanceof PsiMember || element instanceof PsiExpression || element instanceof PsiReferenceParameterList) {
         labeler.change((TypeMigrationUsageInfo)usage);

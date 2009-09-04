@@ -162,7 +162,6 @@ public class TypeMigrationLabeler {
   }
 
   public void change(final TypeMigrationUsageInfo usageInfo) {
-    if (usageInfo.isExcluded()) return;
     final PsiElement element = usageInfo.getElement();
     if (element == null) return;
     final Project project = element.getProject();
