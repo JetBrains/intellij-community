@@ -47,7 +47,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private Map<String, ToolsImpl> myTools = new HashMap<String, ToolsImpl>();
 
   private Map<String, Boolean> myDisplayLevelMap;
-  private Map<String, Element> myDeinstalledInspectionsSettings = new HashMap<String, Element>();
+  private Map<String, Element> myDeinstalledInspectionsSettings = new TreeMap<String, Element>();
   private boolean myLockedProfile = false;
 
   protected InspectionProfileImpl mySource;
