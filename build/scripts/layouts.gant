@@ -252,7 +252,6 @@ def layoutFull(String targetDirectory) {
       //    }
       //
       //    fileset(dir: "$home/svnPlugins/groovy/resources/conf")
-      //    fileset(file: "$home/svnPlugins/groovy/dsl/groovy-dsl.jar")
       //  }
       //}
     }
