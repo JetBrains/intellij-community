@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
@@ -15,7 +14,7 @@ public class SelectionNode extends Expression {
   }
 
   public LookupElement[] calculateLookupItems(ExpressionContext context) {
-    return LookupItem.EMPTY_ARRAY;
+    return LookupElement.EMPTY_ARRAY;
   }
 
   public Result calculateQuickResult(ExpressionContext context) {

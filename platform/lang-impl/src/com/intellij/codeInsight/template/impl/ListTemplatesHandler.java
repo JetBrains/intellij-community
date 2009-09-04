@@ -4,10 +4,7 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.lookup.LookupAdapter;
-import com.intellij.codeInsight.lookup.LookupEvent;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.application.Result;
@@ -37,7 +34,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler{
         array.add(new LookupItem(template, key));
       }
     }
-    LookupItem[] items = array.toArray(new LookupItem[array.size()]);
+    LookupElement[] items = array.toArray(new LookupElement[array.size()]);
 
     if (items.length == 0){
       String text = prefix.length() == 0
