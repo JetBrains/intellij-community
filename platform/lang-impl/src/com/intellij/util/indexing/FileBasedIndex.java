@@ -1,6 +1,8 @@
 package com.intellij.util.indexing;
 
 import com.intellij.AppTopics;
+import com.intellij.concurrency.Job;
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.impl.FileSystemSynchronizerImpl;
 import com.intellij.lang.ASTNode;
@@ -26,6 +28,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -102,6 +105,7 @@ public class FileBasedIndex implements ApplicationComponent {
   private final Map<Document, PsiFile> myTransactionMap = new HashMap<Document, PsiFile>();
 
   private static final int ALREADY_PROCESSED = 0x02;
+  private static final String USE_MULTITHREADED_INDEXING = "fileIndex.multithreaded";
 
   public void requestReindex(final VirtualFile file) {
     myChangedFilesUpdater.invalidateIndices(file, true);
@@ -1063,8 +1067,8 @@ public class FileBasedIndex implements ApplicationComponent {
     FileContent fc = null;
 
     PsiFile psiFile = null;
-    //final Job<Object> job = JobScheduler.getInstance().createJob("IndexJob", Job.DEFAULT_PRIORITY / 2);
 
+    final List<Runnable> tasks = new ArrayList<Runnable>();
     for (final ID<?, ?> indexId : myIndices.keySet()) {
       if (shouldIndexFile(file, indexId)) {
         if (fc == null) {
@@ -1090,8 +1094,8 @@ public class FileBasedIndex implements ApplicationComponent {
         }
 
         final FileContent _fc = fc;
-        //job.addTask(new Runnable() {
-        //  public void run() {
+        tasks.add(new Runnable() {
+          public void run() {
             try {
               updateSingleIndex(indexId, file, _fc);
             }
@@ -1099,17 +1103,30 @@ public class FileBasedIndex implements ApplicationComponent {
               requestRebuild(indexId);
               LOG.info(e);
             }
-          //}
-        //});
+          }
+        });
       }
     }
 
-    //try {
-    //  job.scheduleAndWaitForResults();
-    //}
-    //catch (Throwable throwable) {
-    //  LOG.info(throwable);
-    //}
+    if (tasks.size() > 0) {
+      if (Registry.get(USE_MULTITHREADED_INDEXING).asBoolean()) {
+        final Job<Object> job = JobScheduler.getInstance().createJob("IndexJob", Job.DEFAULT_PRIORITY / 2);
+        try {
+          for (Runnable task : tasks) {
+            job.addTask(task);
+          }
+          job.scheduleAndWaitForResults();
+        }
+        catch (Throwable throwable) {
+          LOG.info(throwable);
+        }
+      }
+      else {
+        for (Runnable task : tasks) {
+          task.run();
+        }
+      }
+    }
 
     if (psiFile != null) {
       psiFile.putUserData(PsiFileImpl.BUILDING_STUB, null);
