@@ -2,8 +2,7 @@ package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.util.text.StringUtil;
 import groovy.lang.Binding;
@@ -71,8 +70,8 @@ public class GroovyScriptMacro implements Macro {
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
     Object o = runIt(params, context);
     if (o != null) {
-      Set<LookupItem> set = new LinkedHashSet<LookupItem>();
-      LookupItemUtil.addLookupItem(set, o.toString());
+      Set<LookupElement> set = new LinkedHashSet<LookupElement>();
+      set.add(LookupElementBuilder.create(o.toString()));
       return set.toArray(new LookupElement[set.size()]);
     }
     return LookupElement.EMPTY_ARRAY;

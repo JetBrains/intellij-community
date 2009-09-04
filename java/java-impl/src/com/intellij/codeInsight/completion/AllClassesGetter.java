@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -204,9 +204,9 @@ public class AllClassesGetter {
     });
   }
 
-  public static LookupItem<PsiClass> createLookupItem(@NotNull final PsiClass psiClass) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<LookupItem<PsiClass>>() {
-      public LookupItem compute() {
+  public static LookupElement createLookupItem(@NotNull final PsiClass psiClass) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<LookupElement>() {
+      public LookupElement compute() {
         return new JavaPsiClassReferenceElement(psiClass).setInsertHandler(INSERT_HANDLER);
       }
     });

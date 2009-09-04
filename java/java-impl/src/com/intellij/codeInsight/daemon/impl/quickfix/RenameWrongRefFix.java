@@ -12,8 +12,7 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -62,8 +61,8 @@ public class RenameWrongRefFix implements IntentionAction {
   }
 
   private class ReferenceNameExpression extends Expression {
-    class HammingComparator implements Comparator<LookupItem> {
-      public int compare(LookupItem lookupItem1, LookupItem lookupItem2) {
+    class HammingComparator implements Comparator<LookupElement> {
+      public int compare(LookupElement lookupItem1, LookupElement lookupItem2) {
         String s1 = lookupItem1.getLookupString();
         String s2 = lookupItem2.getLookupString();
         int diff1 = 0;
@@ -78,13 +77,13 @@ public class RenameWrongRefFix implements IntentionAction {
       }
     }
 
-    ReferenceNameExpression(LookupItem[] items, String oldReferenceName) {
+    ReferenceNameExpression(LookupElement[] items, String oldReferenceName) {
       myItems = items;
       myOldReferenceName = oldReferenceName;
       Arrays.sort(myItems, new HammingComparator ());
     }
 
-    LookupItem[] myItems;
+    LookupElement[] myItems;
     private final String myOldReferenceName;
 
     public Result calculateResult(ExpressionContext context) {
@@ -104,14 +103,14 @@ public class RenameWrongRefFix implements IntentionAction {
     }
   }
 
-  private LookupItem[] collectItems() {
-    Set<LookupItem> items = new LinkedHashSet<LookupItem>();
+  private LookupElement[] collectItems() {
+    Set<LookupElement> items = new LinkedHashSet<LookupElement>();
     boolean qualified = myRefExpr.getQualifierExpression() != null;
 
     if (!qualified && !(myRefExpr.getParent() instanceof PsiMethodCallExpression)) {
       PsiVariable[] vars = CreateFromUsageUtils.guessMatchingVariables(myRefExpr);
       for (PsiVariable var : vars) {
-        LookupItemUtil.addLookupItem(items, var.getName());
+        items.add(LookupElementBuilder.create(var.getName()));
       }
     } else {
       class MyScopeProcessor extends BaseScopeProcessor {
@@ -151,11 +150,11 @@ public class RenameWrongRefFix implements IntentionAction {
       myRefExpr.processVariants(processor);
       PsiElement[] variants = processor.getVariants();
       for (PsiElement variant : variants) {
-        LookupItemUtil.addLookupItem(items, ((PsiNamedElement)variant).getName());
+        items.add(LookupElementBuilder.create(((PsiNamedElement)variant).getName()));
       }
     }
 
-    return items.toArray(new LookupItem[items.size()]);
+    return items.toArray(new LookupElement[items.size()]);
   }
 
   public void invoke(@NotNull Project project, final Editor editor, PsiFile file) {
@@ -163,7 +162,7 @@ public class RenameWrongRefFix implements IntentionAction {
     PsiReferenceExpression[] refs = CreateFromUsageUtils.collectExpressions(myRefExpr, PsiMember.class, PsiFile.class);
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       PsiElement element = PsiTreeUtil.getParentOfType(myRefExpr, PsiMember.class, PsiFile.class);
-      LookupItem[] items = collectItems();
+      LookupElement[] items = collectItems();
       ReferenceNameExpression refExpr = new ReferenceNameExpression(items, myRefExpr.getReferenceName());
 
       TemplateBuilderImpl builder = new TemplateBuilderImpl(element);

@@ -51,7 +51,7 @@ public class TypeOfVariableMacro implements Macro {
   }
 
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
-    return LookupItem.EMPTY_ARRAY;
+    return LookupElement.EMPTY_ARRAY;
   }
 
 }

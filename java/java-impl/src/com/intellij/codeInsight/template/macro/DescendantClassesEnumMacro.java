@@ -2,8 +2,7 @@ package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.*;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -92,15 +91,17 @@ public class DescendantClassesEnumMacro implements Macro {
     final List<PsiClass> classes = findDescendants(context, params);
     if (classes == null || classes.size() == 0) return null;
 
-    Set<LookupItem> set = new LinkedHashSet<LookupItem>();
+    Set<LookupElement> set = new LinkedHashSet<LookupElement>();
     boolean isShortName = params.length > 1 && !Boolean.valueOf(params[1].calculateResult(context).toString());
 
     for (PsiClass object : classes) {
       final String name = isShortName ? object.getName() : object.getQualifiedName();
-      if (name != null && name.length() > 0) LookupItemUtil.addLookupItem(set, name);
+      if (name != null && name.length() > 0) {
+        set.add(LookupElementBuilder.create(name));
+      }
     }
 
-    return set.toArray(new LookupItem[set.size()]);
+    return set.toArray(new LookupElement[set.size()]);
   }
 
   private static boolean isAbstractOrInterface(final PsiClass psiClass) {

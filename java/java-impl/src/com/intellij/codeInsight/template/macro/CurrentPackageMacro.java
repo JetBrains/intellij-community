@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.project.Project;
@@ -44,7 +43,7 @@ class CurrentPackageMacro implements Macro {
   }
 
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
-    return LookupItem.EMPTY_ARRAY;
+    return LookupElement.EMPTY_ARRAY;
   }
 
 

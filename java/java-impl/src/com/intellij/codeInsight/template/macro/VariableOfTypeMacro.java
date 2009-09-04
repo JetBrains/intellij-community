@@ -48,7 +48,7 @@ public class VariableOfTypeMacro implements Macro {
     for (PsiElement var : vars) {
       JavaTemplateUtil.addElementLookupItem(set, var);
     }
-    return set.toArray(new LookupItem[set.size()]);
+    return set.toArray(new LookupElement[set.size()]);
   }
 
   @Nullable

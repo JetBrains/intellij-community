@@ -4,8 +4,7 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.*;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -292,11 +291,11 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
       uniqueNames.add(name);
     }
 
-    Set<LookupItem> itemSet = new LinkedHashSet<LookupItem>();
+    Set<LookupElement> itemSet = new LinkedHashSet<LookupElement>();
     for (String name : uniqueNames) {
-      LookupItemUtil.addLookupItem(itemSet, name);
+      itemSet.add(LookupElementBuilder.create(name));
     }
-    final LookupItem[] lookupItems = itemSet.toArray(new LookupItem[itemSet.size()]);
+    final LookupElement[] lookupItems = itemSet.toArray(new LookupElement[itemSet.size()]);
     final Result result = uniqueNames.isEmpty() ? null : new TextResult(uniqueNames.get(0));
 
     Expression expr = new Expression() {

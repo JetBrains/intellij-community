@@ -16,22 +16,21 @@
 
 package com.intellij.codeInsight.template.macro;
 
-import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
-import com.intellij.psi.PsiMember;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiClass;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.template.*;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMember;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
 import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
 * Created by IntelliJ IDEA.
@@ -92,7 +91,7 @@ public class AnnotatedMacro implements Macro {
     final Query<PsiMember> query = findAnnotated(context, params);
 
     if (query != null) {
-      Set<LookupItem> set = new LinkedHashSet<LookupItem>();
+      Set<LookupElement> set = new LinkedHashSet<LookupElement>();
       final String secondParamValue = params.length > 1 ? params[1].calculateResult(context).toString() : null;
       final boolean isShortName = secondParamValue != null && !Boolean.valueOf(secondParamValue);
       final PsiClass findInClass =
@@ -102,11 +101,11 @@ public class AnnotatedMacro implements Macro {
         if (findInClass != null && !object.getContainingClass().equals(findInClass)) continue;
         boolean isClazz = object instanceof PsiClass;
         final String name = isShortName || !isClazz ? object.getName() : ((PsiClass) object).getQualifiedName();
-        LookupItemUtil.addLookupItem(set, name);
+        set.add(LookupElementBuilder.create(name));
       }
 
-      return set.toArray(new LookupItem[set.size()]);
+      return set.toArray(new LookupElement[set.size()]);
     }
-    return new LookupItem[0];
+    return LookupElement.EMPTY_ARRAY;
   }
 }

@@ -3,6 +3,7 @@ package com.intellij.refactoring.changeSignature;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -368,7 +369,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     Set<LookupItem> set = new LinkedHashSet<LookupItem>();
     JavaCompletionUtil.completeVariableNameForRefactoring(myProject, set, prefix, type, VariableKind.PARAMETER);
 
-    LookupItem[] lookupItems = set.toArray(new LookupItem[set.size()]);
+    LookupElement[] lookupItems = set.toArray(new LookupElement[set.size()]);
     editor.getCaretModel().moveToOffset(prefix.length());
     editor.getSelectionModel().removeSelection();
     LookupManager.getInstance(myProject).showLookup(editor, lookupItems, prefix, null);

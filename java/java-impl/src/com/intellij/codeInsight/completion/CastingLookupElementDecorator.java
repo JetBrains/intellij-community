@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public class CastingLookupElementDecorator extends LookupElementDecorator<LookupElement> implements TypedLookupItem {
-  private final LookupItem myCastItem;
+  private final LookupElement myCastItem;
   private final PsiType myCastType;
   private static final LookupElementVisagiste<CastingLookupElementDecorator> CASTING_VISAGISTE = new LookupElementVisagiste<CastingLookupElementDecorator>() {
     @Override

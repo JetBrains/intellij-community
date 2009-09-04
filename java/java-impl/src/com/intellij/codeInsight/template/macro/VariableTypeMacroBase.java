@@ -25,7 +25,7 @@ public abstract class VariableTypeMacroBase implements Macro {
     for (PsiElement element : vars) {
       JavaTemplateUtil.addElementLookupItem(set, element);
     }
-    return set.toArray(new LookupItem[set.size()]);
+    return set.toArray(new LookupElement[set.size()]);
   }
 
   public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {

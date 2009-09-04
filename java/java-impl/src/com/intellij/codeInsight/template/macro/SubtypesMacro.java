@@ -39,7 +39,7 @@ public class SubtypesMacro implements Macro {
   }
 
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
-    if (params.length == 0) return LookupItem.EMPTY_ARRAY;
+    if (params.length == 0) return LookupElement.EMPTY_ARRAY;
     Result paramResult = params[0].calculateQuickResult(context);
     if (paramResult instanceof PsiTypeResult) {
       final PsiType type = ((PsiTypeResult)paramResult).getType();
@@ -52,8 +52,8 @@ public class SubtypesMacro implements Macro {
       for (PsiType t: types) {
         JavaTemplateUtil.addTypeLookupItem(set, t);
       }
-      return set.toArray(new LookupItem[set.size()]);
+      return set.toArray(new LookupElement[set.size()]);
     }
-    return LookupItem.EMPTY_ARRAY;
+    return LookupElement.EMPTY_ARRAY;
   }
 }

@@ -1,9 +1,8 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Macro;
@@ -38,13 +37,13 @@ public class EnumMacro implements Macro{
 
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
     if (params.length ==0) return null;
-    Set<LookupItem> set = new LinkedHashSet<LookupItem>();
+    Set<LookupElement> set = new LinkedHashSet<LookupElement>();
 
     for (Expression param : params) {
       Result object = param.calculateResult(context);
-      LookupItemUtil.addLookupItem(set, object.toString());
+      set.add(LookupElementBuilder.create(object.toString()));
     }
-    return set.toArray(new LookupItem[set.size()]);
+    return set.toArray(new LookupElement[set.size()]);
   }
 
 }

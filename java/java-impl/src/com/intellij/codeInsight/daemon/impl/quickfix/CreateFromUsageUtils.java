@@ -43,9 +43,9 @@ import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -887,7 +887,7 @@ public class CreateFromUsageUtils {
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
       PsiElement elementAt = file.findElementAt(offset);
       PsiParameterList parameterList = PsiTreeUtil.getParentOfType(elementAt, PsiParameterList.class);
-      if (parameterList == null) return LookupItem.EMPTY_ARRAY;
+      if (parameterList == null) return LookupElement.EMPTY_ARRAY;
 
       PsiParameter parameter = PsiTreeUtil.getParentOfType(elementAt, PsiParameter.class);
 
@@ -927,7 +927,7 @@ public class CreateFromUsageUtils {
         }
       }
 
-      return set.toArray(new LookupItem[set.size()]);
+      return set.toArray(new LookupElement[set.size()]);
     }
   }
 }

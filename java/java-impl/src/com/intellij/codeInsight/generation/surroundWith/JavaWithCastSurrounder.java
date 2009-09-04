@@ -3,8 +3,7 @@ package com.intellij.codeInsight.generation.surroundWith;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -36,16 +35,16 @@ class JavaWithCastSurrounder extends JavaExpressionSurrounder {
     return null;
   }
 
-  private Template generateTemplate(Project project, String exprText, final PsiType[] suggestedTypes) {
+  private static Template generateTemplate(Project project, String exprText, final PsiType[] suggestedTypes) {
     final TemplateManager templateManager = TemplateManager.getInstance(project);
     final Template template = templateManager.createTemplate("", "");
     template.setToReformat(true);
 
-    Set<LookupItem> itemSet = new LinkedHashSet<LookupItem>();
+    Set<LookupElement> itemSet = new LinkedHashSet<LookupElement>();
     for (PsiType type : suggestedTypes) {
-      LookupItemUtil.addLookupItem(itemSet, type);
+      itemSet.add(PsiTypeLookupItem.createLookupItem(type));
     }
-    final LookupItem[] lookupItems = itemSet.toArray(new LookupItem[itemSet.size()]);
+    final LookupElement[] lookupItems = itemSet.toArray(new LookupElement[itemSet.size()]);
 
     final Result result = suggestedTypes.length > 0 ? new PsiTypeResult(suggestedTypes[0], project) : null;
 

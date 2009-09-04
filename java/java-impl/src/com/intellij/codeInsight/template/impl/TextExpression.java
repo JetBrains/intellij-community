@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
@@ -28,6 +27,6 @@ public class TextExpression extends Expression {
   }
 
   public LookupElement[] calculateLookupItems(ExpressionContext expressionContext) {
-    return new LookupItem[0];
+    return LookupElement.EMPTY_ARRAY;
   }
 }
