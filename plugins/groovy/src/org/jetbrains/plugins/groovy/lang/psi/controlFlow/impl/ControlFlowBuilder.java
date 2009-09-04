@@ -84,7 +84,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       if (statements.length > 0) {
         final GrStatement last = statements[statements.length - 1];
         if (last instanceof GrExpression) {
-          addNode(new MaybeReturnInstruction((GrExpression)last, myInstructionNumber++));
+          final MaybeReturnInstruction instruction = new MaybeReturnInstruction((GrExpression)last, myInstructionNumber++);
+          checkPending(instruction);
+          addNode(instruction);
         }
       }
     }
