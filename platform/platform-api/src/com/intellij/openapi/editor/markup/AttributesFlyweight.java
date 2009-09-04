@@ -4,11 +4,13 @@
 package com.intellij.openapi.editor.markup;
 
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
 public class AttributesFlyweight {
-  private final static class MyTHashSet extends THashSet<AttributesFlyweight> {
+  private static final class MyTHashSet extends THashSet<AttributesFlyweight> {
     public int index(final AttributesFlyweight obj) {
       return super.index(obj);
     }
@@ -18,23 +20,25 @@ public class AttributesFlyweight {
     }
   }
 
-  private final static MyTHashSet entries = new MyTHashSet();
+  private static final MyTHashSet entries = new MyTHashSet();
+
+  @NotNull
   public static AttributesFlyweight create(Color foreground,
                                            Color background,
                                            int fontType,
                                            Color effectColor,
                                            EffectType effectType,
                                            Color errorStripeColor) {
-    AttributesFlyweight key = new AttributesFlyweight(foreground, background, fontType,
-                                                      effectColor, effectType, errorStripeColor);
+    AttributesFlyweight key = new AttributesFlyweight(foreground, background, fontType, effectColor, effectType, errorStripeColor);
+    synchronized (entries) {
+      int idx = entries.index(key);
+      if (idx >= 0) {
+        return entries.get(idx);
+      }
 
-    int idx = entries.index(key);
-    if (idx >= 0) {
-      return entries.get(idx);
+      entries.add(key);
+      return key;
     }
-
-    entries.add(key);
-    return key;
   }
 
   private final Color      myForeground;
@@ -134,6 +138,7 @@ public class AttributesFlyweight {
     return result;
   }
 
+  @NonNls
   @Override
   public String toString() {
     return "AttributesFlyweight{" +
