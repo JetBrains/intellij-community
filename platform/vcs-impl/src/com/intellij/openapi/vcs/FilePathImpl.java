@@ -174,7 +174,10 @@ public class FilePathImpl implements FilePath {
 
   @Nullable
   public Document getDocument() {
-    return myVirtualFile != null ? FileDocumentManager.getInstance().getDocument(myVirtualFile) : null;
+    if ((myVirtualFile == null) || (myVirtualFile.getFileType().isBinary())) {
+      return null;
+    }
+    return FileDocumentManager.getInstance().getDocument(myVirtualFile);
   }
 
   public Charset getCharset() {
