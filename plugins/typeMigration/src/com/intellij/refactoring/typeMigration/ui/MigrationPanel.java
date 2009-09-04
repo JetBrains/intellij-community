@@ -122,6 +122,10 @@ public class MigrationPanel extends JPanel implements Disposable {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             myRootsTree.expandPath(new TreePath(myRootsTree.getModel().getRoot()));
+            final Collection<? extends AbstractTreeNode> children = currentRoot.getChildren();
+            if (!children.isEmpty()) {
+              builder.select(children.iterator().next());
+            }
           }
         });
       }
@@ -306,7 +310,7 @@ public class MigrationPanel extends JPanel implements Disposable {
 
     private static void collectInfos(final Set<TypeMigrationUsageInfo> usageInfos, final MigrationNode currentNode) {
       usageInfos.add(currentNode.getInfo());
-      if (!currentNode.areChildrenInitialized()) return; 
+      if (!currentNode.areChildrenInitialized()) return;
       final Collection<? extends AbstractTreeNode> nodes = currentNode.getChildren();
       for (AbstractTreeNode node : nodes) {
         collectInfos(usageInfos, (MigrationNode)node);
