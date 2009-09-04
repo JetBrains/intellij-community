@@ -131,6 +131,20 @@ public abstract class DialogWrapper {
   }
 
   /**
+   * Creates modal <code>DialogWrapper</code> that can be parent for other windows.
+   * The currently active window will be the dialog's parent.
+   *
+   * @param project     parent window for the dialog will be calculated based on focused window for the
+   *                    specified <code>project</code>. This parameter can be <code>null</code>. In this case parent window
+   *                    will be suggested based on current focused window.
+   * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
+   * @see com.intellij.openapi.ui.DialogWrapper#DialogWrapper(com.intellij.openapi.project.Project, boolean)
+   */
+  protected DialogWrapper(Project project) {
+    this(project, true);
+  }
+
+  /**
    * Creates modal <code>DialogWrapper</code>. The currently active window will be the dialog's parent.
    *
    * @param canBeParent specifies whether the dialog can be parent for other windows. This parameter is used
