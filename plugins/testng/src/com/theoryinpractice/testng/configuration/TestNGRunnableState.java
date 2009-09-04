@@ -131,7 +131,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
           public void run() {
             final Project project = config.getProject();
             if (project.isDisposed()) return;
-            final TestFrameworkRunningModel model = console.getModel();
+
             final TestConsoleProperties consoleProperties = console.getProperties();
             if (consoleProperties == null) return;
             final String testRunDebugId = consoleProperties.isDebug() ? ToolWindowId.DEBUG : ToolWindowId.RUN;
@@ -139,10 +139,10 @@ public class TestNGRunnableState extends JavaCommandLineState {
             final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
             if (!Comparing.strEqual(toolWindowManager.getActiveToolWindowId(), testRunDebugId)) {
               toolWindowManager.notifyByBalloon(testRunDebugId,
-                                                model == null || resultsView.getStatus() == MessageHelper.SKIPPED_TEST
+                                                resultsView == null || resultsView.getStatus() == MessageHelper.SKIPPED_TEST
                                                   ? MessageType.WARNING
                                                   : (resultsView.getStatus() == MessageHelper.FAILED_TEST ? MessageType.ERROR : MessageType.INFO),
-                                                model == null ? "Tests were not started" : resultsView.getStatusLine(), null, null);
+                                                resultsView == null ? "Tests were not started" : resultsView.getStatusLine(), null, null);
             }
           }
         });
@@ -156,7 +156,10 @@ public class TestNGRunnableState extends JavaCommandLineState {
 
       @Override
       public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
-        console.getResultsView().finish();
+        final TestNGResults resultsView = console.getResultsView();
+        if (resultsView != null) {
+          resultsView.finish();
+        }
       }
 
       @Override
@@ -172,7 +175,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
     rerunFailedTestsAction.init(console.getProperties(), runnerSettings, myConfigurationPerRunnerSettings);
     rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
       public TestFrameworkRunningModel get() {
-        return console.getModel();
+        return console.getResultsView();
       }
     });
 

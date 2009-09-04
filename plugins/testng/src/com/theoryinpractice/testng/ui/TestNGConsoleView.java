@@ -9,7 +9,6 @@ package com.theoryinpractice.testng.ui;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.ui.ConsoleView;
@@ -69,7 +68,9 @@ public class TestNGConsoleView extends BaseTestsOutputConsoleView {
   }
 
   public void rebuildTree() {
-    testNGResults.rebuildTree();
+    if (testNGResults != null) {
+      testNGResults.rebuildTree();
+    }
   }
 
   public void addTestResult(TestResultMessage result) {
@@ -209,10 +210,6 @@ public class TestNGConsoleView extends BaseTestsOutputConsoleView {
     getConsole().attachToProcess(processHandler);
   }
   
-  public TestFrameworkRunningModel getModel() {
-    return testNGResults;
-  }
-
   public void setView(final List<Printable> output, final int i) {
     if (!ApplicationManager.getApplication().isDispatchThread()) {
       SwingUtilities.invokeLater(new Runnable() {
