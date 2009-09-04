@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -22,7 +23,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.MapReduceIndex");
   private final ID<Key, Value> myIndexId;
   private final DataIndexer<Key, Value, Input> myIndexer;
-  private final IndexStorage<Key, Value> myStorage;
+  protected final IndexStorage<Key, Value> myStorage;
   private PersistentHashMap<Integer, Collection<Key>> myInputsIndex;
 
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
@@ -183,55 +184,50 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   }
 
   public final void update(final int inputId, @Nullable Input content) throws StorageException {
-    //final Map<Key, Value> oldData = mapOld(oldContent);
     assert myInputsIndex != null;
-    
-    final Map<Key, Value> data = mapNew(content);
 
-    Collection<Key> oldKeys;
-    try {
-      oldKeys = myInputsIndex.get(inputId);
-    }
-    catch (IOException e) {
-      throw new StorageException(e);
-    }
-    if (oldKeys == null) {
-      oldKeys = Collections.emptyList();
-    }
+    final Map<Key, Value> data = content != null ? myIndexer.map(content) : Collections.<Key, Value>emptyMap();
+
+    updateWithMap(inputId, data, new Callable<Collection<Key>>() {
+      public Collection<Key> call() throws Exception {
+        final Collection<Key> oldKeys = myInputsIndex.get(inputId);
+        return oldKeys == null? Collections.<Key>emptyList() : oldKeys;
+      }
+    });
+  }
+
+  protected void updateWithMap(final int inputId, final Map<Key, Value> newData, Callable<Collection<Key>> oldKeysGetter) throws StorageException {
     getWriteLock().lock();
     try {
-      // remove outdated values
-      updateWithMap(inputId, data, oldKeys);
       try {
-        final Set<Key> newKeys = data.keySet();
-        if (newKeys.size() > 0) {
-          myInputsIndex.put(inputId, newKeys);
-        }
-        else {
-          myInputsIndex.remove(inputId);
+        for (Key key : oldKeysGetter.call()) {
+          myStorage.removeAllValues(key, inputId);
         }
       }
-      catch (IOException e) {
+      catch (Exception e) {
         throw new StorageException(e);
+      }
+      // add new values
+      for (Map.Entry<Key, Value> entry : newData.entrySet()) {
+        myStorage.addValue(entry.getKey(), inputId, entry.getValue());
+      }
+      if (myInputsIndex != null) {
+        try {
+          final Set<Key> newKeys = newData.keySet();
+          if (newKeys.size() > 0) {
+            myInputsIndex.put(inputId, newKeys);
+          }
+          else {
+            myInputsIndex.remove(inputId);
+          }
+        }
+        catch (IOException e) {
+          throw new StorageException(e);
+        }
       }
     }
     finally {
       getWriteLock().unlock();
-    }
-  }
-
-  protected Map<Key, Value> mapNew(final Input content) throws StorageException {
-    return content != null ? myIndexer.map(content) : Collections.<Key, Value>emptyMap();
-  }
-
-  protected void updateWithMap(final int inputId, final Map<Key, Value> newData, Collection<Key> oldKeys) throws StorageException {
-    for (Key key : oldKeys) {
-      myStorage.removeAllValues(key, inputId);
-    }
-    // add new values
-    for (Key key : newData.keySet()) {
-      final Value newValue = newData.get(key);
-      myStorage.addValue(key, inputId, newValue);
     }
     scheduleFlush();
   }

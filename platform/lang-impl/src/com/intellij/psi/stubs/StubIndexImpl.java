@@ -36,6 +36,7 @@ import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 
@@ -374,10 +375,14 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     return Collections.<StubIndexKey>unmodifiableCollection(myIndices.keySet());
   }
   
-  public <K> void updateIndex(StubIndexKey key, int fileId, Map<K, TIntArrayList> oldValues, Map<K, TIntArrayList> newValues) {
+  public <K> void updateIndex(StubIndexKey key, int fileId, final Map<K, TIntArrayList> oldValues, Map<K, TIntArrayList> newValues) {
     try {
-      MyIndex<K> index = (MyIndex<K>)myIndices.get(key);
-      index.updateWithMap(fileId, newValues, oldValues.keySet());
+      final MyIndex<K> index = (MyIndex<K>)myIndices.get(key);
+      index.updateWithMap(fileId, newValues, new Callable<Collection<K>>() {
+        public Collection<K> call() throws Exception {
+          return oldValues.keySet();
+        }
+      });
     }
     catch (StorageException e) {
       LOG.info(e);
@@ -390,14 +395,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       super(null, null, storage);
     }
 
-    public void updateWithMap(final int inputId, final Map<K, TIntArrayList> newData, Collection<K> oldKeys) throws StorageException {
-      getWriteLock().lock();
-      try {
-        super.updateWithMap(inputId, newData, oldKeys);
-      }
-      finally {
-        getWriteLock().unlock();
-      }
+    public void updateWithMap(final int inputId, final Map<K, TIntArrayList> newData, Callable<Collection<K>> oldKeysGetter) throws StorageException {
+      super.updateWithMap(inputId, newData, oldKeysGetter);
     }
   }
 

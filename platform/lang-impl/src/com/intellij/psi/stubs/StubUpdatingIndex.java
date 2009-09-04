@@ -32,7 +32,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.locks.Lock;
+import java.util.concurrent.Callable;
 
 public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtension<Integer, SerializedStubTree, FileContent> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubUpdatingIndex");
@@ -256,8 +256,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     }
   }
 
-  private static void updateStubIndices(final Collection<StubIndexKey> indexKeys, final int inputId, final Map<StubIndexKey, Map<Object, TIntArrayList>> oldStubTree,
-                                        final Map<StubIndexKey, Map<Object, TIntArrayList>> newStubTree) {
+  private static void updateStubIndices(final Collection<StubIndexKey> indexKeys, final int inputId, final Map<StubIndexKey, Map<Object, TIntArrayList>> oldStubTree, final Map<StubIndexKey, Map<Object, TIntArrayList>> newStubTree) {
     final StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
     for (StubIndexKey key : indexKeys) {
       final Map<Object, TIntArrayList> oldMap = oldStubTree.get(key);
@@ -290,26 +289,29 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       }
     }
 
-    protected void updateWithMap(final int inputId, final Map<Integer, SerializedStubTree> newData, Collection<Integer> oldKeys)
+    protected void updateWithMap(final int inputId, final Map<Integer, SerializedStubTree> newData, Callable<Collection<Integer>> oldKeysGetter)
         throws StorageException {
 
       checkNameStorage();
-      Map<Integer, SerializedStubTree> oldData = readOldData(inputId);
-      final Map<StubIndexKey, Map<Object, TIntArrayList>> oldStubTree = getStubTree(oldData);
       final Map<StubIndexKey, Map<Object, TIntArrayList>> newStubTree = getStubTree(newData);
 
-      final Collection<StubIndexKey> affectedIndices = getAffectedIndices(oldStubTree, newStubTree);
       final StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
+      final Collection<StubIndexKey> allStubIndices = stubIndex.getAllStubIndexKeys();
       try {
         // first write-lock affected stub indices to avoid deadlocks
-        for (StubIndexKey key : affectedIndices) {
+        for (StubIndexKey key : allStubIndices) {
           stubIndex.getWriteLock(key).lock();
         }
 
         try {
           getWriteLock().lock();
-          super.updateWithMap(inputId, newData, oldKeys);
-          updateStubIndices(affectedIndices, inputId, oldStubTree, newStubTree);
+
+          final Map<Integer, SerializedStubTree> oldData = readOldData(inputId);
+          final Map<StubIndexKey, Map<Object, TIntArrayList>> oldStubTree = getStubTree(oldData);
+
+          super.updateWithMap(inputId, newData, oldKeysGetter);
+
+          updateStubIndices(getAffectedIndices(oldStubTree, newStubTree), inputId, oldStubTree, newStubTree);
         }
         finally {
           getWriteLock().unlock();
@@ -317,7 +319,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
 
       }
       finally {
-        for (StubIndexKey key : affectedIndices) {
+        for (StubIndexKey key : allStubIndices) {
           stubIndex.getWriteLock(key).unlock();
         }
       }
@@ -344,24 +346,17 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       return stubTree;
     }
 
+    /*MUST be called from under the WriteLock*/
     private Map<Integer, SerializedStubTree> readOldData(final int key) throws StorageException {
-
       final Map<Integer, SerializedStubTree> result = new HashMap<Integer, SerializedStubTree>();
-      final Lock lock = getReadLock();
-      try {
-        lock.lock();
-        final ValueContainer<SerializedStubTree> valueContainer = getData(key);
-        if (valueContainer.size() != 1) {
-          LOG.assertTrue(valueContainer.size() == 0);
-          return result;
-        }
 
-        result.put(key, valueContainer.getValueIterator().next());
-      }
-      finally {
-        lock.unlock();
+      final ValueContainer<SerializedStubTree> valueContainer = myStorage.read(key);
+      if (valueContainer.size() != 1) {
+        LOG.assertTrue(valueContainer.size() == 0);
+        return result;
       }
 
+      result.put(key, valueContainer.getValueIterator().next());
       return result;
     }
 
