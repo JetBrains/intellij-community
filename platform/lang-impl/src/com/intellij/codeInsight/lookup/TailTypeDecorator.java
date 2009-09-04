@@ -21,6 +21,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Consider using {@link InsertHandler} instead
  * @author peter
  */
 public abstract class TailTypeDecorator<T extends LookupElement> extends LookupElementDecorator<T> {
