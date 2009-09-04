@@ -156,6 +156,16 @@ public class JDomConvertingUtil {
     return element;
   }
 
+  @NotNull
+  public static Element findOrCreateComponentElement(@NotNull Element root, @NotNull String componentName) {
+    Element component = findComponent(root, componentName);
+    if (component == null) {
+      component = createComponentElement(componentName);
+      addComponent(root, component);
+    }
+    return component;
+  }
+
   public static void addComponent(final Element root, final Element component) {
     String componentName = component.getAttributeValue(NAME_ATTRIBUTE);
     final Element old = findComponent(root, componentName);

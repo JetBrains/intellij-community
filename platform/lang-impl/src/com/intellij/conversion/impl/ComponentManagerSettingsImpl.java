@@ -15,8 +15,10 @@ import java.io.IOException;
  */
 public abstract class ComponentManagerSettingsImpl implements ComponentManagerSettings {
   protected final SettingsXmlFile mySettingsFile;
+  protected final ConversionContextImpl myContext;
 
   protected ComponentManagerSettingsImpl(File file, ConversionContextImpl context) throws CannotConvertException {
+    myContext = context;
     mySettingsFile = context.getOrCreateFile(file);
   }
 

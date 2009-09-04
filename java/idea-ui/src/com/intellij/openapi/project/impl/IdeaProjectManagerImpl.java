@@ -22,7 +22,7 @@ public class IdeaProjectManagerImpl extends ProjectManagerImpl {
     final String fp = canonicalize(filePath);
 
     final File f = new File(fp);
-    if (fp != null && f.exists() && f.isFile() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (fp != null && f.exists() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       final boolean converted = ConversionService.getInstance().convert(fp);
       if (!converted) {
         throw new ProcessCanceledException();

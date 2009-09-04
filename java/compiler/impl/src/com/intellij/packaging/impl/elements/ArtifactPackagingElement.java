@@ -15,6 +15,7 @@ import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -26,6 +27,7 @@ import java.util.List;
 public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPackagingElement.ArtifactPackagingElementState> {
   private final Project myProject;
   private ArtifactPointer myArtifactPointer;
+  @NonNls public static final String ARTIFACT_NAME_ATTRIBUTE = "artifact-name";
 
   public ArtifactPackagingElement(@NotNull Project project) {
     super(ArtifactElementType.ARTIFACT_ELEMENT_TYPE);
@@ -125,7 +127,7 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
   public static class ArtifactPackagingElementState {
     private String myArtifactName;
 
-    @Attribute("artifact-name")
+    @Attribute(ARTIFACT_NAME_ATTRIBUTE)
     public String getArtifactName() {
       return myArtifactName;
     }

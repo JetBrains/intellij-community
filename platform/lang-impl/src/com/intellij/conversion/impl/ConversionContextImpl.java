@@ -1,6 +1,7 @@
 package com.intellij.conversion.impl;
 
 import com.intellij.application.options.PathMacrosImpl;
+import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.conversion.*;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.highlighter.WorkspaceFileType;
@@ -8,6 +9,7 @@ import com.intellij.ide.impl.convert.JDomConvertingUtil;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
@@ -15,7 +17,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author nik
@@ -72,10 +77,7 @@ public class ConversionContextImpl implements ConversionContext {
     final Element modules = modulesManager.getChild(ModuleManagerImpl.ELEMENT_MODULES);
     if (modules == null) return new File[0];
 
-    final ExpandMacroToPathMap macros = new ExpandMacroToPathMap();
-    final String projectDir = FileUtil.toSystemIndependentName(myProjectBaseDir.getAbsolutePath());
-    macros.addMacroExpand(PathMacrosImpl.PROJECT_DIR_MACRO_NAME, projectDir);
-    PathMacrosImpl.getInstanceEx().addMacroExpands(macros);
+    final ExpandMacroToPathMap macros = createExpandMacroMap();
 
     List<File> files = new ArrayList<File>();
     for (Element module : JDomConvertingUtil.getChildren(modules, ModuleManagerImpl.ELEMENT_MODULE)) {
@@ -84,6 +86,35 @@ public class ConversionContextImpl implements ConversionContext {
       files.add(new File(FileUtil.toSystemDependentName(filePath)));
     }
     return files.toArray(new File[files.size()]);
+  }
+
+  @NotNull
+  public String expandPath(@NotNull String path, @NotNull ModuleSettingsImpl moduleSettings) {
+    final ExpandMacroToPathMap map = createExpandMacroMap();
+    final String modulePath = FileUtil.toSystemIndependentName(moduleSettings.getModuleFile().getParentFile().getAbsolutePath());
+    map.addMacroExpand(PathMacrosImpl.MODULE_DIR_MACRO_NAME, modulePath);
+    return map.substitute(path, true, null);
+  }
+
+  @NotNull
+  public String collapsePath(@NotNull String path) {
+    ReplacePathToMacroMap map = new ReplacePathToMacroMap();
+    final String projectDir = FileUtil.toSystemIndependentName(myProjectBaseDir.getAbsolutePath());
+    map.addMacroReplacement(projectDir, PathMacrosImpl.PROJECT_DIR_MACRO_NAME);
+    PathMacrosImpl.getInstanceEx().addMacroReplacements(map);
+    return map.substitute(path, SystemInfo.isFileSystemCaseSensitive, null);
+  }
+
+  private ExpandMacroToPathMap createExpandMacroMap() {
+    final ExpandMacroToPathMap macros = new ExpandMacroToPathMap();
+    final String projectDir = FileUtil.toSystemIndependentName(myProjectBaseDir.getAbsolutePath());
+    macros.addMacroExpand(PathMacrosImpl.PROJECT_DIR_MACRO_NAME, projectDir);
+    PathMacrosImpl.getInstanceEx().addMacroExpands(macros);
+    return macros;
+  }
+
+  public File getSettingsBaseDir() {
+    return mySettingsBaseDir;
   }
 
   public File getProjectFile() {

@@ -7,8 +7,9 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.fixtures.TempDirTestFixture;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -124,8 +125,8 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
 
   @NotNull
   public VirtualFile createFile(String targetPath) {
-    final String path = StringUtil.getPackageName(targetPath, '/');
-    final String name = StringUtil.getShortName(targetPath, '/');
+    final String path = PathUtil.getParentPath(targetPath);
+    final String name = PathUtil.getFileName(targetPath);
     return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
       public VirtualFile compute() {
         try {

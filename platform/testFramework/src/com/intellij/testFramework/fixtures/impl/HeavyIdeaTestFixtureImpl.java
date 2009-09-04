@@ -4,6 +4,7 @@
 
 package com.intellij.testFramework.fixtures.impl;
 
+import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaTestApplication;
@@ -32,11 +33,11 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.EditorListenerTracker;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
-import com.intellij.codeInsight.completion.CompletionProgressIndicator;
+import com.intellij.util.PathUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -188,7 +189,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
       root = roots[0];
     }
     final VirtualFile[] virtualFile = new VirtualFile[1];
-    final VirtualFile dir = VfsUtil.createDirectories(root.getPath() + "/" + StringUtil.getPackageName(relativePath, '/'));
+    final VirtualFile dir = VfsUtil.createDirectories(root.getPath() + "/" + PathUtil.getParentPath(relativePath));
 
     new WriteCommandAction.Simple(getProject()) {
       protected void run() throws Throwable {

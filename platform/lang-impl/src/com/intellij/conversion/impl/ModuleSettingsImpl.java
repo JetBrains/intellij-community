@@ -56,4 +56,9 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
   public void setModuleType(@NotNull String moduleType) {
     getRootElement().setAttribute(ModuleImpl.ELEMENT_TYPE, moduleType);
   }
+
+  @NotNull
+  public String expandPath(@NotNull String path) {
+    return myContext.expandPath(path, this); 
+  }
 }

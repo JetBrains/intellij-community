@@ -5,8 +5,6 @@ import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.packaging.impl.artifacts.ArtifactUtil;
-import com.intellij.packaging.impl.artifacts.PackagingElementProcessor;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -16,7 +14,10 @@ import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.packaging.impl.artifacts.ArtifactUtil;
+import com.intellij.packaging.impl.artifacts.PackagingElementProcessor;
 import com.intellij.packaging.ui.ManifestFileConfiguration;
+import com.intellij.util.PathUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,8 +37,8 @@ import java.util.jar.Manifest;
 public class ManifestFileUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorContextImpl");
   public static final String MANIFEST_PATH = JarFile.MANIFEST_NAME;
-  public static final String MANIFEST_FILE_NAME = StringUtil.getShortName(MANIFEST_PATH, '/');
-  public static final String MANIFEST_DIR_NAME = StringUtil.getPackageName(MANIFEST_PATH, '/');
+  public static final String MANIFEST_FILE_NAME = PathUtil.getFileName(MANIFEST_PATH);
+  public static final String MANIFEST_DIR_NAME = PathUtil.getParentPath(MANIFEST_PATH);
 
   @Nullable
   public static VirtualFile findManifestFile(@NotNull CompositePackagingElement<?> root, PackagingElementResolvingContext context, ArtifactType artifactType) {

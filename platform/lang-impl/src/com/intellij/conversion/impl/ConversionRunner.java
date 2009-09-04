@@ -4,9 +4,7 @@ import com.intellij.conversion.*;
 import com.intellij.openapi.components.StorageScheme;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author nik
@@ -59,6 +57,26 @@ public class ConversionRunner {
     return myModuleFileConverter != null && myModuleFileConverter.isConversionNeeded(myContext.getModuleSettings(moduleFile));
   }
 
+  public Set<File> getAffectedFiles() {
+    Set<File> affectedFiles = new HashSet<File>();
+    if (myProcessProjectFile) {
+      affectedFiles.add(myContext.getProjectFile());
+    }
+    if (myProcessWorkspaceFile) {
+      affectedFiles.add(myContext.getWorkspaceFile());
+    }
+    affectedFiles.addAll(myModulesFilesToProcess);
+    if (myProcessRunConfigurations) {
+      try {
+        affectedFiles.addAll(myContext.getRunManagerSettings().getAffectedFiles());
+      }
+      catch (CannotConvertException ignored) {
+      }
+    }
+    affectedFiles.addAll(myConverter.getAdditionalAffectedFiles());
+    return affectedFiles;
+  }
+
   public void preProcess() throws CannotConvertException {
     if (myProcessProjectFile) {
       myProjectFileConverter.preProcess(myContext.getProjectSettings());
@@ -75,25 +93,8 @@ public class ConversionRunner {
     if (myProcessRunConfigurations) {
       myRunConfigurationsConverter.preProcess(myContext.getRunManagerSettings());
     }
-  }
 
-  public List<File> getAffectedFiles() {
-    List<File> affectedFiles = new ArrayList<File>();
-    if (myProcessProjectFile) {
-      affectedFiles.add(myContext.getProjectFile());
-    }
-    if (myProcessWorkspaceFile) {
-      affectedFiles.add(myContext.getWorkspaceFile());
-    }
-    affectedFiles.addAll(myModulesFilesToProcess);
-    if (myProcessRunConfigurations) {
-      try {
-        affectedFiles.addAll(myContext.getRunManagerSettings().getAffectedFiles());
-      }
-      catch (CannotConvertException ignored) {
-      }
-    }
-    return affectedFiles;
+    myConverter.preProcessingFinished();
   }
 
   public void process() throws CannotConvertException {
@@ -112,6 +113,7 @@ public class ConversionRunner {
     if (myProcessRunConfigurations) {
       myRunConfigurationsConverter.process(myContext.getRunManagerSettings());
     }
+    myConverter.processingFinished();
   }
 
   public void postProcess() throws CannotConvertException {
@@ -131,7 +133,7 @@ public class ConversionRunner {
       myRunConfigurationsConverter.postProcess(myContext.getRunManagerSettings());
     }
     
-    myConverter.postProcess();
+    myConverter.postProcessingFinished();
   }
 
   public ConverterProvider getProvider() {

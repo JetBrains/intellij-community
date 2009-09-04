@@ -102,6 +102,29 @@ public class PathUtil {
     return result.toString();
   }
 
+  @NotNull
+  public static String getFileName(@NotNull String path) {
+    if (path.length() == 0) {
+      return "";
+    }
+    final char c = path.charAt(path.length() - 1);
+    int end = c == '/' || c == '\\' ? path.length() - 1 : path.length();
+    int start = Math.max(path.lastIndexOf('/', end - 1), path.lastIndexOf('\\', end - 1)) + 1;
+    return path.substring(start, end);
+  }
+
+  @NotNull
+  public static String getParentPath(@NotNull String path) {
+    if (path.length() == 0) {
+      return "";
+    }
+    int end = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
+    if (end == path.length() - 1) {
+      end = path.lastIndexOf('/', end - 1);
+    }
+    return end == -1 ? "" : path.substring(0, end);
+  }
+
   public static String suggestFileName(final String text) {
     return text.replace(' ', '_')
                .replace('.', '_')

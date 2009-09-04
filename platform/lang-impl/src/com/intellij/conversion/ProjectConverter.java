@@ -2,6 +2,10 @@ package com.intellij.conversion;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.util.Collection;
+import java.util.Collections;
+
 /**
  * @author nik
  */
@@ -26,6 +30,16 @@ public abstract class ProjectConverter {
     return null;
   }
 
-  public void postProcess() {
-  } 
+  public Collection<File> getAdditionalAffectedFiles() {
+    return Collections.emptyList();
+  }
+
+  public void preProcessingFinished() throws CannotConvertException {
+  }
+
+  public void processingFinished() throws CannotConvertException {
+  }
+
+  public void postProcessingFinished() throws CannotConvertException {
+  }
 }

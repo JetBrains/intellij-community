@@ -1,15 +1,15 @@
 package com.intellij.packaging.impl.ui;
 
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.packaging.ui.PackagingElementWeights;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ide.projectView.PresentationData;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -26,7 +26,7 @@ public class FileCopyPresentation extends PackagingElementPresentation {
   private final boolean myIsDirectory;
 
   public FileCopyPresentation(String filePath, String outputFileName) {
-    mySourceFileName = StringUtil.getShortName(filePath, '/');
+    mySourceFileName = PathUtil.getFileName(filePath);
     myOutputFileName = outputFileName;
 
     String parentPath;
@@ -37,7 +37,7 @@ public class FileCopyPresentation extends PackagingElementPresentation {
       myIsDirectory = myFile.isDirectory();
     }
     else {
-      parentPath = FileUtil.toSystemDependentName(StringUtil.getPackageName(filePath, '/'));
+      parentPath = FileUtil.toSystemDependentName(PathUtil.getParentPath(filePath));
       myIsDirectory = false;
     }
 

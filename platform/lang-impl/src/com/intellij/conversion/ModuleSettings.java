@@ -1,7 +1,6 @@
 package com.intellij.conversion;
 
 import org.jdom.Element;
-import org.jdom.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,11 +24,8 @@ public interface ModuleSettings extends ComponentManagerSettings {
   @NotNull
   Collection<? extends Element> getFacetElements(@NotNull String facetTypeId);
 
-  @NotNull
-  Element getRootElement();
-
-  @NotNull
-  Document getDocument();
-
   void setModuleType(@NotNull String moduleType);
+
+  @NotNull
+  String expandPath(@NotNull String path);
 }
