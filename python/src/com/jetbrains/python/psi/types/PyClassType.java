@@ -1,7 +1,7 @@
 package com.jetbrains.python.psi.types;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.util.ProcessingContext;
@@ -115,10 +115,10 @@ public class PyClassType implements PyType {
     for (PyClass ancestor : myClass.getSuperClasses()) {
       Object[] ancestry = (new PyClassType(ancestor, true)).getCompletionVariants(referenceExpression, context);
       for (Object ob : ancestry) {
-        if (ob instanceof LookupItem) {
-          LookupItem item = (LookupItem)ob;
-          item.setAttribute(item.TAIL_TEXT_ATTR, " | " + ancestor.getName()); // from where it's inherited
-          item.setAttribute(item.TAIL_TEXT_SMALL_ATTR, ""); // make it gray
+        if (ob instanceof LookupElementBuilder) {
+          ret.add(((LookupElementBuilder)ob).setTailText(" | " + ancestor.getName()));
+        } else {
+          ret.add(ob);
         }
       }
       ret.addAll(Arrays.asList(ancestry));

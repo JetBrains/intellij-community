@@ -1,8 +1,7 @@
 package com.jetbrains.python.psi.resolve;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementFactory;
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -32,15 +31,15 @@ public class VariantsProcessor implements PsiScopeProcessor {
     my_notice = notice;
   }
 
-  protected void setupItem(LookupItem item) {
+  protected LookupElementBuilder setupItem(LookupElementBuilder item) {
     if (my_notice != null) {
-      setItemNotice(item, my_notice);
+      return setItemNotice(item, my_notice);
     }
+    return item;
   }
 
-  protected static void setItemNotice(final LookupItem item, String notice) {
-    item.setAttribute(item.TAIL_TEXT_ATTR, notice);
-    item.setAttribute(item.TAIL_TEXT_SMALL_ATTR, "");
+  protected static LookupElementBuilder setItemNotice(final LookupElementBuilder item, String notice) {
+    return item.setTailText(notice);
   }
 
   public LookupElement[] getResult() {
@@ -59,18 +58,14 @@ public class VariantsProcessor implements PsiScopeProcessor {
       final PsiNamedElement psiNamedElement = (PsiNamedElement)element;
       final String name = psiNamedElement.getName();
       if (!myVariants.containsKey(name)) {
-        final LookupItem lookup_item = (LookupItem)LookupElementFactory.getInstance().createLookupElement(psiNamedElement);
-        setupItem(lookup_item);
-        myVariants.put(name, lookup_item);
+        myVariants.put(name, setupItem(LookupElementBuilder.create(psiNamedElement)));
       }
     }
     else if (element instanceof PyReferenceExpression) {
       PyReferenceExpression expr = (PyReferenceExpression)element;
       String referencedName = expr.getReferencedName();
       if (referencedName != null && !myVariants.containsKey(referencedName)) {
-        final LookupItem lookup_item = (LookupItem)LookupElementFactory.getInstance().createLookupElement(referencedName);
-        setupItem(lookup_item);
-        myVariants.put(referencedName, lookup_item);
+        myVariants.put(referencedName, setupItem(LookupElementBuilder.create(referencedName)));
       }
     }
     else if (element instanceof NameDefiner) {
@@ -79,15 +74,14 @@ public class VariantsProcessor implements PsiScopeProcessor {
         if (expr != null) { // NOTE: maybe rather have SingleIterables skip nulls outright?
           String referencedName = expr.getName();
           if (referencedName != null && !myVariants.containsKey(referencedName)) {
-            final LookupItem lookup_item = (LookupItem)LookupElementFactory.getInstance().createLookupElement(referencedName);
-            setupItem(lookup_item);
+            LookupElementBuilder lookup_item = setupItem(LookupElementBuilder.create(referencedName));
             if (definer instanceof PyImportElement) { // set notice to imported module name if needed
               PsiElement maybe_from_import = definer.getParent();
               if (maybe_from_import instanceof PyFromImportStatement) {
                 final PyFromImportStatement from_import = (PyFromImportStatement)maybe_from_import;
                 PyReferenceExpression src = from_import.getImportSource();
                 if (src != null) {
-                  setItemNotice(lookup_item, " | " + src.getName());
+                  lookup_item = setItemNotice(lookup_item, " | " + src.getName());
                 }
               }
             }
