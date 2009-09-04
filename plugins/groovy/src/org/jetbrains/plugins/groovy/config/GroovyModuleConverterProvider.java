@@ -32,7 +32,7 @@ public class GroovyModuleConverterProvider extends ConverterProvider {
   @NotNull
   @Override
   public String getConversionDescription() {
-    return "Groovy Modules will be replaced by Facets";
+    return "Unneeded Groovy-related facets will be removed";
   }
 
   @NotNull
