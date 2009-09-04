@@ -16,11 +16,10 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.completion.simple.SimpleLookupItem;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -126,11 +125,11 @@ public class InsertRequiredAttributeFix implements IntentionAction, LocalQuickFi
       }
 
       public LookupElement[] calculateLookupItems(ExpressionContext context) {
-        final LookupItem[] items = new LookupItem[myValues == null ? 0 : myValues.length];
+        final LookupElement[] items = new LookupElement[myValues == null ? 0 : myValues.length];
 
         if (myValues != null) {
           for (int i = 0; i < items.length; i++) {
-            items[i] = new SimpleLookupItem(myValues[i]);
+            items[i] = LookupElementBuilder.create(myValues[i]);
           }
         }
         return items;

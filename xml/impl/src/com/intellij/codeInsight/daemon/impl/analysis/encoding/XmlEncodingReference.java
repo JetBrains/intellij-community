@@ -4,6 +4,8 @@ import com.intellij.codeInsight.completion.simple.SimpleLookupItem;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiElement;
@@ -70,16 +72,14 @@ public class XmlEncodingReference implements PsiReference, EmptyResolveMessagePr
     return false;
   }
 
+  @NotNull
   public Object[] getVariants() {
     Charset[] charsets = CharsetToolkit.getAvailableCharsets();
-    List<LookupItem> suggestions = new ArrayList<LookupItem>(charsets.length);
+    List<LookupElement> suggestions = new ArrayList<LookupElement>(charsets.length);
     for (Charset charset : charsets) {
-      String name = charset.name();
-      LookupItem item = new SimpleLookupItem(name);
-      item.setAttribute(LookupItem.CASE_INSENSITIVE, true);
-      suggestions.add(item);
+      suggestions.add(LookupElementBuilder.create(charset.name()).setCaseSensitive(false));
     }
-    return suggestions.toArray(new LookupItem[suggestions.size()]);
+    return suggestions.toArray(new LookupElement[suggestions.size()]);
   }
 
   public boolean isSoft() {

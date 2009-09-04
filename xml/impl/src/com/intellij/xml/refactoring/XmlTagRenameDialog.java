@@ -7,7 +7,7 @@
 package com.intellij.xml.refactoring;
 
 import com.intellij.codeInsight.completion.simple.SimpleLookupItem;
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -105,7 +105,7 @@ public class XmlTagRenameDialog extends RefactoringDialog {
   private void completeVariable(final Editor editor) {
     String prefix = myNameSuggestionsField.getEnteredName();
 
-    Set<LookupItem> set = new LinkedHashSet<LookupItem>();
+    Set<LookupElement> set = new LinkedHashSet<LookupElement>();
     final PsiReference reference = myTag.getReference();
     if (reference != null) {
       final Object[] variants = reference.getVariants();
@@ -113,7 +113,7 @@ public class XmlTagRenameDialog extends RefactoringDialog {
         set.add(new SimpleLookupItem(variant));
       }
 
-      LookupItem[] lookupItems = set.toArray(new LookupItem[set.size()]);
+      LookupElement[] lookupItems = set.toArray(new LookupElement[set.size()]);
       editor.getCaretModel().moveToOffset(prefix.length());
       editor.getSelectionModel().removeSelection();
       LookupManager.getInstance(getProject()).showLookup(editor, lookupItems, prefix, null);
