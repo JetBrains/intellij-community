@@ -108,6 +108,10 @@ public class Disposer {
     }
   }
 
+  public static boolean isEmpty() {
+    return ourDebugMode && ourTree.isEmpty();
+  }
+
   public static void setDebugMode(final boolean b) {
     ourDebugMode = b;
   }
