@@ -48,7 +48,7 @@ public class PsiSelectionSearcher {
     final TextRange selection = new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
 
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    if (file == null) return Collections.emptyList();
+    if (file == null || file instanceof PsiCompiledElement) return Collections.emptyList();
 
     final List<T> results = new ArrayList<T>();
 
