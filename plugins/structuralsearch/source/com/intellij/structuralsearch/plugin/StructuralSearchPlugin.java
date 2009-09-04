@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.project.Project;
 import com.intellij.structuralsearch.plugin.ui.*;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Structural search plugin main class.
@@ -50,6 +51,7 @@ public final class StructuralSearchPlugin implements ProjectComponent, JDOMExter
    * @return String representing component name. Use PluginName.ComponentName notation
    *  to avoid conflicts.
    */
+  @NotNull
   public String getComponentName() {
     return "StructuralSearchPlugin";
   }
