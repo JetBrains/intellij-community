@@ -5,7 +5,7 @@
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -24,12 +24,11 @@ import org.jetbrains.annotations.NotNull;
     ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/vcs.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
-public class VcsDirectoryMappingStorage implements ProjectComponent, PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.VcsDirectoryMappingStorage");
-
+public class VcsDirectoryMappingStorage extends AbstractProjectComponent implements PersistentStateComponent<Element> {
   private final ProjectLevelVcsManager myVcsManager;
 
-  public VcsDirectoryMappingStorage(final ProjectLevelVcsManager vcsManager) {
+  public VcsDirectoryMappingStorage(final ProjectLevelVcsManager vcsManager, Project project) {
+    super(project);
     myVcsManager = vcsManager;
   }
 
@@ -43,21 +42,9 @@ public class VcsDirectoryMappingStorage implements ProjectComponent, PersistentS
     ((ProjectLevelVcsManagerImpl) myVcsManager).readDirectoryMappings(state);
   }
 
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
   @NonNls
   @NotNull
   public String getComponentName() {
     return "VcsDirectoryMappings";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 }

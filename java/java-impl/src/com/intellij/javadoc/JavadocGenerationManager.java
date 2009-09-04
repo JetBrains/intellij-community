@@ -4,14 +4,14 @@ import com.intellij.CommonBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunnerRegistry;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -29,8 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-public final class JavadocGenerationManager implements JDOMExternalizable, ProjectComponent {
-  private final Project myProject;
+public final class JavadocGenerationManager extends AbstractProjectComponent implements JDOMExternalizable {
   private final JavadocConfiguration myConfiguration;
 
   public static JavadocGenerationManager getInstance(Project project) {
@@ -38,19 +37,8 @@ public final class JavadocGenerationManager implements JDOMExternalizable, Proje
   }
 
   JavadocGenerationManager(Project project) {
-    myProject = project;
+    super(project);
     myConfiguration = new JavadocConfiguration(project);
-  }
-
-  public void disposeComponent() {
-  }
-
-  public void initComponent() { }
-
-  public void projectClosed() {
-  }
-
-  public void projectOpened() {
   }
 
   public void generateJavadoc(final PsiDirectory directory, DataContext dataContext) {

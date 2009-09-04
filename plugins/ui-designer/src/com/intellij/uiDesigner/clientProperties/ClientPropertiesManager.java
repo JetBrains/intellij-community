@@ -4,7 +4,7 @@
 
 package com.intellij.uiDesigner.clientProperties;
 
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -21,7 +21,7 @@ import java.util.*;
 /**
  * @author yole
  */
-public class ClientPropertiesManager implements ProjectComponent, JDOMExternalizable {
+public class ClientPropertiesManager extends AbstractProjectComponent implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.clientProperties.ClientPropertiesManager");
 
   @NonNls private static final String ELEMENT_PROPERTIES = "properties";
@@ -39,9 +39,11 @@ public class ClientPropertiesManager implements ProjectComponent, JDOMExternaliz
   private final Map<String, List<ClientProperty>> myPropertyMap = new TreeMap<String, List<ClientProperty>>();
 
   public ClientPropertiesManager() {
+    super(null);
   }
 
   private ClientPropertiesManager(final Map<String, List<ClientProperty>> propertyMap) {
+    this();
     myPropertyMap.putAll(propertyMap);
   }
 
@@ -73,18 +75,9 @@ public class ClientPropertiesManager implements ProjectComponent, JDOMExternaliz
     }
   }
 
-  public void projectClosed() {
-  }
-
   @NotNull @NonNls
   public String getComponentName() {
     return COMPONENT_NAME;
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   public static class ClientProperty implements Comparable {
@@ -208,7 +201,7 @@ public class ClientPropertiesManager implements ProjectComponent, JDOMExternaliz
 
   public ClientProperty[] getConfiguredProperties(Class componentClass) {
     final List<ClientProperty> list = myPropertyMap.get(componentClass.getName());
-    if (list == null) return new ClientProperty[0]; 
+    if (list == null) return new ClientProperty[0];
     return list.toArray(new ClientProperty[list.size()]);
   }
 

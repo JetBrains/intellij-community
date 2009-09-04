@@ -38,6 +38,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 public class ProjectReloadStateImpl extends ProjectReloadState implements ProjectComponent, JDOMExternalizable {
 
@@ -55,6 +56,7 @@ public class ProjectReloadStateImpl extends ProjectReloadState implements Projec
 
   }
 
+  @NotNull
   public String getComponentName() {
     return "ProjectReloadState";
   }

@@ -15,7 +15,7 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.project.Project;
@@ -35,13 +35,12 @@ import java.awt.*;
  * @author Eugene Zhuravlev
  *         Date: Apr 24, 2007
  */
-public class AntToolwindowRegistrar implements ProjectComponent {
+public class AntToolwindowRegistrar extends AbstractProjectComponent {
   private AntExplorer myAntExplorer;
-  private final Project myProject;
   private final ToolWindowManager myToolWindowManager;
 
   public AntToolwindowRegistrar(Project project, ToolWindowManager toolWindowManager) {
-    myProject = project;
+    super(project);
     myToolWindowManager = toolWindowManager;
   }
 
@@ -111,11 +110,5 @@ public class AntToolwindowRegistrar implements ProjectComponent {
   @NotNull
   public String getComponentName() {
     return "AntToolwindowRegistrar";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 }

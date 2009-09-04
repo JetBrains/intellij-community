@@ -6,7 +6,7 @@ import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -29,14 +29,12 @@ import java.util.Map;
  * Use is subject to license terms.
  */
 
-public class HotSwapManager implements ProjectComponent{
-
-  private final Project myProject;
+public class HotSwapManager extends AbstractProjectComponent {
   private final Map<DebuggerSession, Long> myTimeStamps = new HashMap<DebuggerSession, Long>();
   private static final String CLASS_EXTENSION = ".class";
 
   public HotSwapManager(Project project, DebuggerManagerEx manager) {
-    myProject = project;
+    super(project);
     manager.addDebuggerManagerListener(new DebuggerManagerListener() {
       public void sessionCreated(DebuggerSession session) {
         myTimeStamps.put(session, Long.valueOf(System.currentTimeMillis()));
@@ -48,21 +46,9 @@ public class HotSwapManager implements ProjectComponent{
     });
   }
 
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
   @NotNull
   public String getComponentName() {
     return "HotSwapManager";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   private long getTimeStamp(DebuggerSession session) {

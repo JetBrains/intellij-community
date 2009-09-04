@@ -13,7 +13,7 @@ package com.intellij.lang.ant.config.impl;
 import com.intellij.lang.ant.AntLanguageExtension;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.psi.changes.AntChangeVisitor;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
@@ -24,13 +24,10 @@ import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.XmlChangeSet;
 import com.intellij.pom.xml.events.XmlChange;
 import com.intellij.psi.xml.XmlFile;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
-public class AntProjectComponent implements ProjectComponent {
-
-
+public class AntProjectComponent extends AbstractProjectComponent {
   public AntProjectComponent(final XmlAspect xmlAspect, PomModel pomModel, Project project) {
+    super(project);
     pomModel.addModelListener(new PomModelListener() {
       public void modelChanged(final PomModelEvent event) {
         final PomChangeSet changeSet = event.getChangeSet(xmlAspect);
@@ -54,24 +51,5 @@ public class AntProjectComponent implements ProjectComponent {
         return aspect == xmlAspect;
       }
     }, project);
-  }
-
-  public void projectOpened() {
-
-  }
-
-  public void projectClosed() {
-  }
-
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return getClass().getName();
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 }

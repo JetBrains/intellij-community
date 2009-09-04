@@ -1,8 +1,8 @@
 package com.intellij.platform;
 
-import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.DumbAwareRunnable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -11,11 +11,9 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public class FilesystemToolwindowOpener implements ProjectComponent {
-  private final Project myProject;
-
+public class FilesystemToolwindowOpener extends AbstractProjectComponent {
   public FilesystemToolwindowOpener(final Project project) {
-    myProject = project;
+    super(project);
   }
 
   public void projectOpened() {
@@ -36,17 +34,8 @@ public class FilesystemToolwindowOpener implements ProjectComponent {
     });
   }
 
-  public void projectClosed() {
-  }
-
   @NotNull
   public String getComponentName() {
     return "FilesystemToolwindowOpener";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 }

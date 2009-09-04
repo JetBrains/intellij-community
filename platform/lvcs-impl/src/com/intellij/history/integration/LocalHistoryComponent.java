@@ -36,7 +36,7 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   private LocalHistoryService myService;
   private IdeaGateway myGateway;
 
-  private AtomicBoolean isInitialized = new AtomicBoolean();
+  private final AtomicBoolean isInitialized = new AtomicBoolean();
   private Runnable myShutdownTask;
 
   @TestOnly

@@ -23,7 +23,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
   private final Map<String, ConfigurationType> myTypesByName = new LinkedHashMap<String, ConfigurationType>();
 
-  private Map<String, RunnerAndConfigurationSettingsImpl> myConfigurations =
+  private final Map<String, RunnerAndConfigurationSettingsImpl> myConfigurations =
       new LinkedHashMap<String, RunnerAndConfigurationSettingsImpl>(); // template configurations are not included here
   private final Map<Integer, Boolean> mySharedConfigurations = new TreeMap<Integer, Boolean>();
   /**

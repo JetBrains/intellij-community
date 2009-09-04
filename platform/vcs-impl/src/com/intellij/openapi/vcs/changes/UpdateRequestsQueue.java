@@ -7,8 +7,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.util.Consumer;
 
 import javax.swing.*;
@@ -33,8 +33,8 @@ public class UpdateRequestsQueue {
   private final List<Runnable> myWaitingUpdateCompletionQueue;
   private final ProjectLevelVcsManager myPlVcsManager;
   private boolean myUpdateUnversionedRequested;
-  private ScheduledSlowlyClosingAlarm mySharedExecutor;
-  private StartupManager myStartupManager;
+  private final ScheduledSlowlyClosingAlarm mySharedExecutor;
+  private final StartupManager myStartupManager;
 
   public UpdateRequestsQueue(final Project project, final ScheduledExecutorService executor, final LocalChangesUpdater delegate) {
     mySharedExecutor = ControlledAlarmFactory.createScheduledOnSharedThread(project, "Local changes update", executor);
@@ -42,7 +42,7 @@ public class UpdateRequestsQueue {
     myDelegate = delegate;
     myProject = project;
     myPlVcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    myStartupManager = StartupManagerImpl.getInstance(myProject);
+    myStartupManager = StartupManager.getInstance(myProject);
     myLock = new Object();
     myWaitingUpdateCompletionQueue = new ArrayList<Runnable>();
     // not initialized

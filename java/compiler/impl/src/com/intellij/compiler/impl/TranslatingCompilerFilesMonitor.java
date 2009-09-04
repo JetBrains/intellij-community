@@ -5,6 +5,7 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerIOUtil;
 import com.intellij.compiler.make.MakeUtil;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
@@ -106,13 +107,13 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
   };
   private final ProjectManager myProjectManager;
-  private Semaphore myInitializationInProgress = new Semaphore();
+  private final Semaphore myInitializationInProgress = new Semaphore();
 
-  public TranslatingCompilerFilesMonitor(VirtualFileManager vfsManager, ProjectManager projectManager) {
+  public TranslatingCompilerFilesMonitor(VirtualFileManager vfsManager, ProjectManager projectManager, Application application) {
     myProjectManager = projectManager;
 
     projectManager.addProjectManagerListener(new MyProjectManagerListener());
-    vfsManager.addVirtualFileListener(new MyVfsListener());
+    vfsManager.addVirtualFileListener(new MyVfsListener(), application);
   }
 
   public static TranslatingCompilerFilesMonitor getInstance() {

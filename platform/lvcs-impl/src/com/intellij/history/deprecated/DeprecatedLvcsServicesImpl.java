@@ -4,6 +4,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.localVcs.LocalVcsItemsLocker;
 import com.intellij.openapi.localVcs.LocalVcsServices;
 import com.intellij.openapi.localVcs.LvcsRevision;
+import org.jetbrains.annotations.NotNull;
 
 public class DeprecatedLvcsServicesImpl extends LocalVcsServices implements ProjectComponent {
   public LocalVcsItemsLocker getUpToDateRevisionProvider() {
@@ -20,6 +21,7 @@ public class DeprecatedLvcsServicesImpl extends LocalVcsServices implements Proj
   public void projectClosed() {
   }
 
+  @NotNull
   public String getComponentName() {
     return "LvcsBasedUpToDateVersionProvider";
   }

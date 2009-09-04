@@ -4,7 +4,7 @@
  */
 package com.intellij.openapi.project;
 
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
@@ -12,12 +12,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public class DumbModeIndicator implements ProjectComponent {
-  private final Project myProject;
+public class DumbModeIndicator extends AbstractProjectComponent {
   private final Alarm myAlarm;
 
   public DumbModeIndicator(Project project) {
-    myProject = project;
+    super(project);
     myAlarm = new Alarm(project);
   }
 
@@ -44,17 +43,8 @@ public class DumbModeIndicator implements ProjectComponent {
     });
   }
 
-  public void projectClosed() {
-  }
-
   @NotNull
   public String getComponentName() {
     return DumbModeIndicator.class.getSimpleName();
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 }

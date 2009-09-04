@@ -29,14 +29,14 @@ public class LocalHistoryService {
                              IdeaGateway gw,
                              LocalHistoryConfiguration c,
                              StartupManager sm,
-                             ProjectRootManagerEx rm,
+                             ProjectRootManagerEx projectRootManager,
                              VirtualFileManagerEx fm,
                              CommandProcessor cp) {
     myVcs = vcs;
     myGateway = gw;
     myConfiguration = c;
     myStartupManager = sm;
-    myRootManager = rm;
+    myRootManager = projectRootManager;
     myFileManager = fm;
     myCommandProcessor = cp;
 

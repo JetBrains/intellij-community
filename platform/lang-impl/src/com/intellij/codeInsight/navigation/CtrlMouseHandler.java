@@ -15,7 +15,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -31,9 +31,9 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.Comparing;
@@ -55,8 +55,7 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CtrlMouseHandler implements ProjectComponent {
-  private final Project myProject;
+public class CtrlMouseHandler extends AbstractProjectComponent {
   private final TextAttributes ourReferenceAttributes;
   private RangeHighlighter myHighlighter;
   private Editor myHighlighterView;
@@ -161,7 +160,7 @@ public class CtrlMouseHandler implements ProjectComponent {
 
   public CtrlMouseHandler(final Project project, StartupManager startupManager, EditorColorsManager colorsManager,
                           FileEditorManager fileEditorManager) {
-    myProject = project;
+    super(project);
     startupManager.registerPostStartupActivity(new DumbAwareRunnable(){
       public void run() {
         EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
@@ -176,17 +175,6 @@ public class CtrlMouseHandler implements ProjectComponent {
   @NotNull
   public String getComponentName() {
     return "CtrlMouseHandler";
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
-  }
-
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
   }
 
   private static BrowseMode getBrowseMode(final int modifiers) {
