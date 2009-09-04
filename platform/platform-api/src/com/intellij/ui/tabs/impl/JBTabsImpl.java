@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.ui.TestableUi;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.CaptionPanel;
@@ -130,6 +131,7 @@ public class JBTabsImpl extends JComponent
   private boolean myTabDraggingEnabled;
   private DragHelper myDragHelper;
   private boolean myNavigationActionsEnabled = true;
+  private boolean myUseBufferedPaint = true;
 
   public JBTabsImpl(@NotNull Project project) {
     this(project, project);
@@ -1608,13 +1610,39 @@ public class JBTabsImpl extends JComponent
       for (int eachColumn = myLastLayoutPass.getColumnCount(eachRow) - 1; eachColumn >= 0; eachColumn--) {
         final TabInfo each = myLastLayoutPass.getTabAt(eachRow, eachColumn);
         if (getSelectedInfo() == each) continue;
-        paintTab(g2d, each, leftGhostExists);
+        paintNonSelected(g2d, each, leftGhostExists);
       }
     }
   }
 
-  private void paintTab(final Graphics2D g2d, final TabInfo each, final boolean leftGhostExists) {
-    int tabIndex = myVisibleInfos.indexOf(each);
+  private void paintNonSelected(final Graphics2D g2d, final TabInfo each, final boolean leftGhostExists) {
+    final TabLabel label = myInfo2Label.get(each);
+    if (label.getBounds().width == 0) return;
+
+    if (isToBufferPainting()) {
+      Rectangle bounds = label.getBounds();
+      BufferedImage img = label.getInactiveStateImage();
+      if (img == null) {
+        img = new BufferedImage(label.getWidth() + 2, label.getHeight() + 1, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D imgG2d = img.createGraphics();
+        imgG2d.addRenderingHints(g2d.getRenderingHints());
+        doPaintInactictive(imgG2d, leftGhostExists, label, false);
+        imgG2d.dispose();
+      }
+
+      g2d.drawImage(img, bounds.x, bounds.y, bounds.width + 2, bounds.height + 1, null);
+      label.setInactiveStateImage(img);
+    } else {
+      doPaintInactictive(g2d, leftGhostExists, label, true);
+    }
+  }
+
+  private boolean isToBufferPainting() {
+    return Registry.is("ide.tabbedPane.bufferedPaint") && myUseBufferedPaint;
+  }
+
+  private void doPaintInactictive(Graphics2D g2d, boolean leftGhostExists, TabLabel label, boolean useXY) {
+    int tabIndex = myVisibleInfos.indexOf(label.getInfo());
 
     final int arc = getArcSize();
     Color topBlickColor = getTopBlickColor();
@@ -1622,7 +1650,7 @@ public class JBTabsImpl extends JComponent
     Color boundsColor = getBoundsColor();
     Color backgroundColor = getBackground();
 
-    final Color tabColor = each.getTabColor();
+    final Color tabColor = label.getInfo().getTabColor();
     if (tabColor != null) {
       backgroundColor = tabColor;
       boundsColor = tabColor.darker();
@@ -1632,10 +1660,6 @@ public class JBTabsImpl extends JComponent
 
     final TabInfo selected = getSelectedInfo();
     final int selectionTabVShift = getSelectionTabVShift();
-
-
-    final TabLabel eachLabel = myInfo2Label.get(each);
-    if (eachLabel.getBounds().width == 0) return;
 
 
     final TabInfo prev = myLastLayoutPass.getPreviousFor(myVisibleInfos.get(tabIndex));
@@ -1654,7 +1678,8 @@ public class JBTabsImpl extends JComponent
 
     boolean leftFromSelection = selected != null && tabIndex == myVisibleInfos.indexOf(selected) - 1;
 
-    final ShapeTransform shape = getEffectiveLayout().createShapeTransform(eachLabel.getBounds());
+    Rectangle originalBounds = useXY ? label.getBounds() : new Rectangle(label.getSize());
+    final ShapeTransform shape = getEffectiveLayout().createShapeTransform(originalBounds);
 
     int leftX = firstShowing ? shape.getX() : shape.getX() - shape.deltaX(arc + 1);
     int topY = shape.getY() + shape.deltaY(selectionTabVShift);
@@ -1670,7 +1695,7 @@ public class JBTabsImpl extends JComponent
 
     if (!isSingleRow()) {
       final TablePassInfo info = myTableLayout.myLastTableLayout;
-      if (!info.isInSelectionRow(each)) {
+      if (!info.isInSelectionRow(label.getInfo())) {
         shape.lineTo(rigthX, bottomY + shape.deltaY(getArcSize()));
         shape.lineTo(leftX, bottomY + shape.deltaY(getArcSize()));
         shape.lineTo(leftX, bottomY);
@@ -2649,5 +2674,15 @@ public class JBTabsImpl extends JComponent
     if (selected != null) {
       selected.putInfo(info);
     }
+  }
+
+  public boolean isUseBufferedPaint() {
+    return myUseBufferedPaint;
+  }
+
+  public void setUseBufferedPaint(boolean useBufferedPaint) {
+    myUseBufferedPaint = useBufferedPaint;
+    revalidate();
+    repaint();
   }
 }

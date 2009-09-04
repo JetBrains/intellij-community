@@ -35,6 +35,7 @@ public class TabLabel extends JPanel {
   private final JBTabsImpl myTabs;
 
   private BufferedImage myImage;
+  private BufferedImage myInactiveStateImage;
 
   public TabLabel(JBTabsImpl tabs, final TabInfo info) {
     myTabs = tabs;
@@ -212,8 +213,9 @@ public class TabLabel extends JPanel {
     if (myLabel.getRootPane() == null) return;
 
     if (myLabel.getSize() != null && myLabel.getSize().equals(myLabel.getPreferredSize())) return;
-    myLabel.getParent().invalidate();
 
+    myInactiveStateImage = null;
+    myLabel.getParent().invalidate();
     myTabs.revalidateAndRepaint(false);
   }
 
@@ -393,5 +395,17 @@ public class TabLabel extends JPanel {
 
   public void setTabEnabled(boolean enabled) {
     myLabel.setEnabled(enabled);
+  }
+
+
+  public BufferedImage getInactiveStateImage() {
+    return myInactiveStateImage;
+  }
+
+  public void setInactiveStateImage(BufferedImage img) {
+    if (myImage != null && img != myImage) {
+      myImage.flush();
+    }
+    myInactiveStateImage = img;
   }
 }

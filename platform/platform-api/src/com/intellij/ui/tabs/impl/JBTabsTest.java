@@ -58,6 +58,14 @@ public class JBTabsTest {
       }
     });
 
+    final JCheckBox bb = new JCheckBox("Buffered", true);
+    bb.addItemListener(new ItemListener() {
+      public void itemStateChanged(final ItemEvent e) {
+        tabs.setUseBufferedPaint(bb.isSelected());
+      }
+    });
+    south.add(bb);
+
     final JCheckBox f = new JCheckBox("Focused");
     f.addItemListener(new ItemListener() {
       public void itemStateChanged(final ItemEvent e) {
