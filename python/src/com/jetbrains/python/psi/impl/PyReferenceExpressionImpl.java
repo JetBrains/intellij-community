@@ -420,7 +420,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
 
     final List<Object> ret = new ArrayList<Object>();
-    final LookupElementFactory factory = LookupElementFactory.getInstance();
 
     // include our own names
     final VariantsProcessor processor = new VariantsProcessor();
