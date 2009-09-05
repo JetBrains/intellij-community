@@ -16,7 +16,7 @@
 package org.intellij.plugins.intelliLang.inject.java;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementFactory;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiElement;
@@ -56,12 +56,12 @@ final class LanguageReference extends StringLiteralReference {
 
         final FileType ft = l.getAssociatedFileType();
         if (ft != null) {
-          return LookupElementFactory.builder(s).setIcon(ft.getIcon()).setTypeText(ft.getDescription()).createLookupElement();
+          return LookupElementBuilder.create(s).setIcon(ft.getIcon()).setTypeText(ft.getDescription());
 //                } else if (l == StdLanguages.EL) {
 //                    // IDEA-10012
 //                    return new LanguageLookupValue(s, StdFileTypes.JSP.getIcon(), "Expression Language");
         }
-        return LookupElementFactory.builder(s).setIcon(new EmptyIcon(16)).createLookupElement();
+        return LookupElementBuilder.create(s).setIcon(new EmptyIcon(16));
       }
     });
   }

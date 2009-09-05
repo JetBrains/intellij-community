@@ -16,7 +16,7 @@
 
 package org.intellij.plugins.intelliLang.inject.java;
 
-import com.intellij.codeInsight.lookup.LookupElementFactory;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.util.ArrayUtil;
@@ -49,7 +49,7 @@ final class RegExpEnumReference extends StringLiteralReference {
     }
     return ContainerUtil.map2Array(values, new Function<String, Object>() {
       public Object fun(String s) {
-        return LookupElementFactory.builder(s).setIcon(Icons.ENUM_ICON);
+        return LookupElementBuilder.create(s).setIcon(Icons.ENUM_ICON);
       }
     });
   }

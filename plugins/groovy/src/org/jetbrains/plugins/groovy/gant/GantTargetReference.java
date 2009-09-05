@@ -2,7 +2,6 @@ package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -109,7 +108,6 @@ public class GantTargetReference implements PsiPolyVariantReference {
 
   public LookupElement[] getScriptTargets() {
     List<LookupElement> pageProperties = new ArrayList<LookupElement>();
-    final LookupElementFactory factory = LookupElementFactory.getInstance();
     PsiFile file = myRefExpr.getContainingFile();
     if (GantUtils.isGantScriptFile(file)) {
       final GroovyFile groovyFile = (GroovyFile)file;

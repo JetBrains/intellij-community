@@ -182,7 +182,6 @@ public abstract class GroovyCompletionUtil {
 
   public static Object[] getCompletionVariants(GroovyResolveResult[] candidates) {
     Object[] result = new Object[candidates.length];
-    final LookupElementFactory factory = LookupElementFactory.getInstance();
     for (int i = 0; i < result.length; i++) {
       final PsiElement element = candidates[i].getElement();
       final PsiElement context = candidates[i].getCurrentFileResolveContext();
