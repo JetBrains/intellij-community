@@ -2,7 +2,7 @@ package com.intellij.lang.ant.psi.impl.reference;
 
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementFactory;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ant.AntElementRole;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntStructuredElement;
@@ -35,8 +35,8 @@ public class AntEndElementNameReference extends AntElementNameReference {
             return xmlTag;
           }
         };
-    return new LookupElement[] {LookupElementFactory.builder(completionText, wrapper).setAutoCompletionPolicy(
-        AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE).createLookupElement()};
+    return new LookupElement[] {LookupElementBuilder.create(completionText, wrapper).setAutoCompletionPolicy(
+        AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE)};
   }
 
   public TextRange getRangeInElement() {

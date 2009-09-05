@@ -72,7 +72,7 @@ public class LookupItemUtil{
 
   /**
    * @deprecated
-   * @see LookupElementFactory
+   * @see LookupElementBuilder
   */
   public static LookupItem objectToLookupItem(Object object) {
     if (object instanceof LookupItem) return (LookupItem)object;
