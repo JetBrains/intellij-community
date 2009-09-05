@@ -4,11 +4,9 @@
 
 package com.intellij.openapi.paths;
 
-import com.intellij.codeInsight.completion.CompletionData;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.openapi.util.TextRange;
@@ -44,6 +42,10 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
     for (PsiReference reference : references) {
       if (!reference.isSoft()) mySoft = false;
     }
+  }
+
+  public List<PsiReference> getReferences() {
+    return myReferences;
   }
 
   public void addReference(PsiReference reference) {
@@ -120,41 +122,9 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   }
 
 
+  @NotNull 
   public Object[] getVariants() {
-    switch (myReferences.size()) {
-      case 0:
-        return ArrayUtil.EMPTY_OBJECT_ARRAY;
-      case 1:
-        return myReferences.get(0).getVariants();
-      default:
-        int minOffset = getRangeInElement().getStartOffset();
-        final String text = myElement.getText();
-        List<Object> variants = new ArrayList<Object>();
-        for(PsiReference ref: myReferences) {
-          final int startOffset = ref.getRangeInElement().getStartOffset();
-          final String prefix;
-          if (startOffset > minOffset) {
-            prefix = text.substring(minOffset, startOffset);
-          }
-          else {
-            prefix = null;
-          }
-          Object[] refVariants = ref.getVariants();
-          if (refVariants != null) {
-            for(Object refVariant : refVariants) {
-              if (prefix != null) {
-                final LookupItem item = CompletionData.objectToLookupItem(refVariant);
-                final String s = item.getLookupString();
-                item.setLookupString(prefix + s);
-                variants.add(item);
-              } else {
-                variants.add(refVariant);
-              }
-            }
-          }
-        }
-        return variants.toArray();
-    }
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @NotNull

@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.paths.PsiDynaReference;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
@@ -96,6 +97,11 @@ public class LegacyCompletionContributor extends CompletionContributor {
     });
     if (ref instanceof PsiMultiReference) {
       for (final PsiReference reference : completionData.getReferences((PsiMultiReference)ref)) {
+        processReference(result, startOffset, consumer, reference);
+      }
+    }
+    else if (ref instanceof PsiDynaReference) {
+      for (final PsiReference reference : ((PsiDynaReference<?>)ref).getReferences()) {
         processReference(result, startOffset, consumer, reference);
       }
     }
