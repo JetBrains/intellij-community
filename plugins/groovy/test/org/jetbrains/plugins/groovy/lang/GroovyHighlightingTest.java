@@ -147,4 +147,8 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
     myFixture.copyFileToProject(getTestName(false) + ".groovy", "x/"+getTestName(false)+".groovy");
     myFixture.testHighlighting(true, false, false, "x/"+getTestName(false)+".groovy");
   }
+
+  public void testNestedMethods() throws Throwable {
+    doTest();
+  }
 }

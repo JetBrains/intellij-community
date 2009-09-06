@@ -314,8 +314,9 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private static void checkInnerMethod(AnnotationHolder holder, GrMethod grMethod) {
-    if (grMethod.getParent() instanceof GrOpenBlock) {
-      holder.createErrorAnnotation(grMethod, GroovyBundle.message("Inner.methods.are.not.supported"));
+    final PsiElement parent = grMethod.getParent();
+    if (parent instanceof GrOpenBlock || parent instanceof GrClosableBlock) {
+      holder.createErrorAnnotation(grMethod.getNameIdentifierGroovy(), GroovyBundle.message("Inner.methods.are.not.supported"));
     }
   }
 
