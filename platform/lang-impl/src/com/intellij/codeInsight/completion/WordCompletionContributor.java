@@ -4,8 +4,10 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.TailTypeDecorator;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageWordCompletion;
 import com.intellij.openapi.application.ApplicationManager;
@@ -44,7 +46,7 @@ public class WordCompletionContributor extends CompletionContributor implements 
                                                                                                             character().javaIdentifierPart().andNot(character().equalTo('$')),
                                                                                                             character().javaIdentifierStart()));
     for (final String word : AllWordsGetter.getAllWords(insertedElement, startOffset)) {
-      final LookupItem<String> item = new LookupItem<String>(word, word).setTailType(TailType.SPACE);
+      final LookupElement item = TailTypeDecorator.createDecorator(LookupElementBuilder.create(word), TailType.SPACE);
       javaResultSet.addElement(item);
       plainResultSet.addElement(item);
     }

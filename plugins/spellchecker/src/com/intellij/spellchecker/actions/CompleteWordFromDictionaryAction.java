@@ -1,7 +1,8 @@
 package com.intellij.spellchecker.actions;
 
 
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
@@ -56,12 +57,12 @@ public final class CompleteWordFromDictionaryAction extends AnAction {
             }
             List<String> variants = SpellCheckerManager.getInstance(project).getVariants(prefix);
 
-            List<LookupItem<String>> lookupItems = new ArrayList<LookupItem<String>>();
+            List<LookupElement> lookupItems = new ArrayList<LookupElement>();
             for (String variant : variants) {
-              lookupItems.add(new LookupItem<String>(variant, variant));
+              lookupItems.add(LookupElementBuilder.create(variant));
             }
 
-            LookupItem[] items = new LookupItem[lookupItems.size()];
+            LookupElement[] items = new LookupElement[lookupItems.size()];
             items = lookupItems.toArray(items);
             LookupManager lookupManager = LookupManager.getInstance(project);
             lookupManager.showLookup(editor, items, prefix, null);

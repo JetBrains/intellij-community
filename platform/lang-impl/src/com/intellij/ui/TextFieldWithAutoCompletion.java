@@ -1,8 +1,7 @@
 package com.intellij.ui;
 
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.lookup.PresentableLookupValue;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -37,7 +36,7 @@ import java.util.List;
  * also instances of LookupValueWithPriority and LookupValueWithUIHint  
  */
 public class TextFieldWithAutoCompletion extends EditorTextField {
-  private List<PresentableLookupValue> myVariants;
+  private List<LookupElement> myVariants;
 
   public TextFieldWithAutoCompletion() {
     super();
@@ -75,51 +74,46 @@ public class TextFieldWithAutoCompletion extends EditorTextField {
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      final LookupItem<PresentableLookupValue>[] lookupItems = calcLookupItems(getPrefix());
+      final Editor editor = getEditor();
+      assert editor != null;
 
-      showCompletionPopup(lookupItems, null);
+      editor.getSelectionModel().removeSelection();
+      LookupManager.getInstance(getProject()).showLookup(editor, calcLookupItems(getPrefix()), getPrefix(), null);
     }
   }
 
-  public void setVariants(@Nullable final List<PresentableLookupValue> variants) {
-    myVariants = (variants != null) ? variants : Collections.<PresentableLookupValue>emptyList();
+  public void setVariants(@Nullable final List<LookupElement> variants) {
+    myVariants = (variants != null) ? variants : Collections.<LookupElement>emptyList();
   }
 
-  private LookupItem<PresentableLookupValue>[] calcLookupItems(final String prefix) {
-    final List<LookupItem<PresentableLookupValue>> items = new ArrayList<LookupItem<PresentableLookupValue>>();
+  private LookupElement[] calcLookupItems(final String prefix) {
+    final List<LookupElement> items = new ArrayList<LookupElement>();
     if (prefix == null || prefix.length() == 0) {
-      for (PresentableLookupValue variant : myVariants) {
-        items.add(new LookupItem<PresentableLookupValue>(variant, variant.getPresentation()));
+      for (LookupElement variant : myVariants) {
+        items.add(variant);
       }
     } else {
       final NameUtil.Matcher matcher = NameUtil.buildMatcher(prefix, 0, true, true);
 
-      for (PresentableLookupValue variant : myVariants) {
-        if (matcher.matches(variant.getPresentation())) {
-          items.add(new LookupItem<PresentableLookupValue>(variant, variant.getPresentation()));
+      for (LookupElement variant : myVariants) {
+        if (matcher.matches(variant.getLookupString())) {
+          items.add(variant);
         }
       }
     }
 
-    Collections.sort(items, new Comparator<LookupItem<PresentableLookupValue>>() {
-      public int compare(final LookupItem<PresentableLookupValue> item1,
-                         final LookupItem<PresentableLookupValue> item2) {
+    Collections.sort(items, new Comparator<LookupElement>() {
+      public int compare(final LookupElement item1,
+                         final LookupElement item2) {
         return item1.getLookupString().compareTo(item2.getLookupString());
       }
     });
 
-    return (LookupItem<PresentableLookupValue>[])items.toArray(new LookupItem[items.size()]);
+    return items.toArray(new LookupElement[items.size()]);
   }
 
   private String getPrefix() {
     return getText().substring(0, getCaretModel().getOffset());
   }
 
-  private void showCompletionPopup(final LookupItem[] lookupItems, final String title) {
-    final Editor editor = getEditor();
-    assert editor != null;
-
-    editor.getSelectionModel().removeSelection();
-    LookupManager.getInstance(getProject()).showLookup(editor, lookupItems, getPrefix(), null);
-  }
 }

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.paths.PsiDynaReference;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.patterns.ElementPattern;
@@ -210,8 +211,8 @@ public class CompletionData {
     return substr.substring(i).trim();
   }
 
-  public static LookupItem objectToLookupItem(Object object) {
-    if (object instanceof LookupItem) return (LookupItem)object;
+  public static LookupElement objectToLookupItem(Object object) {
+    if (object instanceof LookupElement) return (LookupElement)object;
 
     String s = null;
     TailType tailType = TailType.NONE;
@@ -249,25 +250,26 @@ public class CompletionData {
 
   protected void addLookupItem(Set<LookupElement> set, TailType tailType, @NotNull Object completion, final PsiFile file,
                                      final CompletionVariant variant) {
-    if (completion instanceof LookupElement && !(completion instanceof LookupItem)) {
-      set.add((LookupElement)completion);
+    LookupElement ret = objectToLookupItem(completion);
+    if (ret == null) return;
+    if (!(ret instanceof LookupItem)) {
+      set.add(ret);
       return;
     }
 
-    LookupItem ret = objectToLookupItem(completion);
-    if(ret == null) return;
+    LookupItem item = (LookupItem)ret;
 
     final InsertHandler insertHandler = variant.getInsertHandler();
-    if(insertHandler != null && ret.getInsertHandler() == null) {
-      ret.setInsertHandler(insertHandler);
-      ret.setTailType(TailType.UNKNOWN);
+    if(insertHandler != null && item.getInsertHandler() == null) {
+      item.setInsertHandler(insertHandler);
+      item.setTailType(TailType.UNKNOWN);
     }
     else if (tailType != TailType.NONE) {
-      ret.setTailType(tailType);
+      item.setTailType(tailType);
     }
     final Map<Object, Object> itemProperties = variant.getItemProperties();
     for (final Object key : itemProperties.keySet()) {
-      ret.setAttribute(key, itemProperties.get(key));
+      item.setAttribute(key, itemProperties.get(key));
     }
 
     set.add(ret);
@@ -278,8 +280,12 @@ public class CompletionData {
                                    final ElementFilter filter,
                                    final CompletionVariant variant) {
     if (reference instanceof PsiMultiReference) {
-      final PsiReference[] references = getReferences((PsiMultiReference)reference);
-      for (PsiReference ref : references) {
+      for (PsiReference ref : getReferences((PsiMultiReference)reference)) {
+        completeReference(ref, position, set, tailType, file, filter, variant);
+      }
+    }
+    else if (reference instanceof PsiDynaReference) {
+      for (PsiReference ref : ((PsiDynaReference<?>)reference).getReferences()) {
         completeReference(ref, position, set, tailType, file, filter, variant);
       }
     }

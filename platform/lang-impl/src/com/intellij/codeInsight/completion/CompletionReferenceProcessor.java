@@ -27,10 +27,9 @@ public class CompletionReferenceProcessor {
     return new Processor<PsiReference>() {
       public boolean process(final PsiReference reference) {
         final Object[] variants = reference.getVariants();
-        if (variants != null) {
-          for (final Object variant : variants) {
-            if (!processor.process(CompletionData.objectToLookupItem(variant))) return false;
-          }
+        assert variants != null : reference;
+        for (final Object variant : variants) {
+          if (!processor.process(CompletionData.objectToLookupItem(variant))) return false;
         }
         return true;
       }

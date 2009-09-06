@@ -1,6 +1,7 @@
 package com.intellij.spellchecker.quickfixes;
 
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.DataManager;
@@ -11,7 +12,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.spellchecker.SpellCheckerManager;
-import com.intellij.spellchecker.quickfixes.SpellCheckerQuickFix;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -66,12 +66,11 @@ public class ChangeTo implements SpellCheckerQuickFix {
     SpellCheckerManager manager = SpellCheckerManager.getInstance(project);
     List<String> variants = manager.getSuggestions(word);
 
-    List<LookupItem<String>> lookupItems = new ArrayList<LookupItem<String>>();
+    List<LookupElement> lookupItems = new ArrayList<LookupElement>();
     for (String variant : variants) {
-      final LookupItem<String> lookupItem = new LookupItem<String>(variant, variant);
-      lookupItems.add(lookupItem);
+      lookupItems.add(LookupElementBuilder.create(variant));
     }
-    LookupItem[] items = new LookupItem[lookupItems.size()];
+    LookupElement[] items = new LookupElement[lookupItems.size()];
     items = lookupItems.toArray(items);
     LookupManager lookupManager = LookupManager.getInstance(project);
     lookupManager.showLookup(editor, items, null);

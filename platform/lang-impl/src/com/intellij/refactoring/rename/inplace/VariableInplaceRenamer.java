@@ -6,7 +6,7 @@ package com.intellij.refactoring.rename.inplace;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.*;
@@ -314,7 +314,7 @@ public class VariableInplaceRenamer {
 
   private class MyExpression extends Expression {
     private final String myName;
-    private final LookupItem[] myLookupItems;
+    private final LookupElement[] myLookupItems;
 
     private MyExpression(String name) {
       myName = name;
@@ -322,10 +322,9 @@ public class VariableInplaceRenamer {
       for(NameSuggestionProvider provider: Extensions.getExtensions(NameSuggestionProvider.EP_NAME)) {
         provider.getSuggestedNames(myElementToRename, myElementToRename, names);
       }
-      myLookupItems = new LookupItem[names.size()];
+      myLookupItems = new LookupElement[names.size()];
       for (int i = 0; i < myLookupItems.length; i++) {
-        String suggestedName = names.get(i);
-        myLookupItems[i] = new LookupItem<Object>(suggestedName, suggestedName);
+        myLookupItems[i] = LookupElementBuilder.create(names.get(i));
       }
     }
 
