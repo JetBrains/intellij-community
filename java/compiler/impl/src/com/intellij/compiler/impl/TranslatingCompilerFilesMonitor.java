@@ -949,7 +949,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       });
 
       myInitializationInProgress.down();
-      StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
+      StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
         public void run() {
           new Task.Backgroundable(project, CompilerBundle.message("compiler.initial.scanning.progress.text"), false) {
             public void run(@NotNull final ProgressIndicator indicator) {
