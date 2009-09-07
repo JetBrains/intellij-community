@@ -42,7 +42,7 @@ public class OrderRootType {
   }
 
   /**
-   * Classpath.
+   * Runtime classpath.
    */
   public static final OrderRootType CLASSES_AND_OUTPUT = new OrderRootType("CLASSES_AND_OUTPUT");
 
