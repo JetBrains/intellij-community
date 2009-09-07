@@ -240,11 +240,14 @@ public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> imple
         }
       }
     };
+
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       myRefreshCacheUpdater = new FileIndexRefreshCacheUpdater(this);
+      loadCacheRunnable.run();
     }
-
-    StartupManager.getInstance(myProject).registerStartupActivity(loadCacheRunnable);
+    else {
+      StartupManager.getInstance(myProject).registerStartupActivity(loadCacheRunnable);
+    }
 
   }
 
