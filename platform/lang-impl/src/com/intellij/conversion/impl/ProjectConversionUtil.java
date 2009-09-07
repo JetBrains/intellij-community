@@ -2,7 +2,7 @@
  * Copyright (c) 2000-2007 JetBrains s.r.o. All Rights Reserved.
  */
 
-package com.intellij.ide.impl.convert;
+package com.intellij.conversion.impl;
 
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NonNls;

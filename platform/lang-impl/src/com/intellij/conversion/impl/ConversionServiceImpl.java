@@ -6,7 +6,7 @@ import com.intellij.conversion.ConversionService;
 import com.intellij.conversion.ConverterProvider;
 import com.intellij.conversion.impl.ui.ProjectConversionWizard;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.impl.convert.ProjectConversionUtil;
+import com.intellij.conversion.impl.ProjectConversionUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;

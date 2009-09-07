@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 /**
  * @author nik
  */
+@Deprecated
 public abstract class ProjectFileVersion {
   public static ProjectFileVersion getInstance(Project project) {
     return project.getComponent(ProjectFileVersion.class);

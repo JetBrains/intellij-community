@@ -39,7 +39,7 @@ public class JDomConvertingUtil {
       return JDOMUtil.loadDocument(file);
     }
     catch (JDOMException e) {
-      throw new QualifiedJDomException(e, file.getAbsolutePath());
+      throw new CannotConvertException(file.getAbsolutePath() + ": " + e.getMessage(), e);
     }
     catch (IOException e) {
       throw new CannotConvertException(e.getMessage(), e);
