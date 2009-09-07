@@ -27,7 +27,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
@@ -94,7 +93,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   @NonNls private static final String EMPTY_HTML = "<html><body></body></html>";
   private boolean myIsInRestore = false;
 
-  private JCheckBox myShareProfile = new JCheckBox("Share profile");
+  private boolean myShareProfile;
   private final InspectionProjectProfileManager myProjectProfileManager;
 
   public SingleInspectionProfilePanel(final String inspectionProfileName, final ModifiableModel profile) {
@@ -121,13 +120,6 @@ public class SingleInspectionProfilePanel extends JPanel {
     });
     myUserActivityWatcher.register(myOptionsPanel);
     updateSelectedProfileState();
-    final JPanel sharePanel = new JPanel(new BorderLayout());
-    sharePanel.add(myShareProfile, BorderLayout.EAST);
-    add(sharePanel, BorderLayout.NORTH);
-  }
-
-  public void addSharedProfileListener(ActionListener sharedProfileListener) {
-    myShareProfile.addActionListener(sharedProfileListener);
   }
 
   private void updateSelectedProfileState() {
@@ -738,6 +730,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
 
       myOptionsPanel.removeAll();
+      myOptionsPanel.add(SeparatorFactory.createSeparator("Options", null), BorderLayout.NORTH);
 
       final NamedScope scope = node.getScope();
       if (scope != null || node.isInspectionNode()) {
@@ -773,7 +766,7 @@ public class SingleInspectionProfilePanel extends JPanel {
                                                                 new Insets(0, 0, 0, 0), 0, 0));
         }
 
-        myOptionsPanel.add(withSeverity);
+        myOptionsPanel.add(withSeverity, BorderLayout.CENTER);
       }
       myOptionsPanel.validate();
       GuiUtils.enableChildren(myOptionsPanel, node.isChecked());
@@ -786,6 +779,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private void initOptionsAndDescriptionPanel() {
     myOptionsPanel.removeAll();
+    myOptionsPanel.add(SeparatorFactory.createSeparator("Options", null));
     myOptionsPanel.add(new JPanel());
     try {
       myBrowser.read(new StringReader(EMPTY_HTML), null);
@@ -856,19 +850,17 @@ public class SingleInspectionProfilePanel extends JPanel {
     initDescriptors();
     fillTreeData(myProfileFilter != null ? myProfileFilter.getFilter() : null, true);
 
-    JPanel descriptionPanel = new JPanel();
-    descriptionPanel.setBorder(IdeBorderFactory.createTitledBorder(InspectionsBundle.message("inspection.description.title")));
-    descriptionPanel.setLayout(new BorderLayout());
+    JPanel descriptionPanel = new JPanel(new BorderLayout());
+    descriptionPanel.add(SeparatorFactory.createSeparator(InspectionsBundle.message("inspection.description.title"), null), BorderLayout.NORTH);
     descriptionPanel.add(ScrollPaneFactory.createScrollPane(myBrowser), BorderLayout.CENTER);
 
-    JPanel rightPanel = new JPanel(new GridLayout(2, 1, 0, 5));
-    rightPanel.add(descriptionPanel);
+    Splitter rightPanel = new Splitter(true);
+    rightPanel.setFirstComponent(descriptionPanel);
 
-    JPanel panel1 = new JPanel(new VerticalFlowLayout());
-    panel1.setBorder(IdeBorderFactory.createTitledBorder(InspectionsBundle.message("inspection.export.options.panel.title")));
-    myOptionsPanel = panel1;
+    myOptionsPanel = new JPanel(new BorderLayout());
     initOptionsAndDescriptionPanel();
-    rightPanel.add(myOptionsPanel);
+    rightPanel.setSecondComponent(myOptionsPanel);
+    rightPanel.setHonorComponentsMinimumSize(true);
 
     final JPanel treePanel = new JPanel(new BorderLayout());
     treePanel.add(initTreeScrollPane(), BorderLayout.CENTER);
@@ -894,7 +886,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   public boolean isModified() {
     if (myModified) return true;
     if (mySelectedProfile.isChanged()) return true;
-    if (myShareProfile.isSelected() != (mySelectedProfile.getProfileManager() == myProjectProfileManager)) return true;
+    if (myShareProfile != (mySelectedProfile.getProfileManager() == myProjectProfileManager)) return true;
     if (!Comparing.strEqual(myInitialProfile, mySelectedProfile.getName())) return true;
     if (descriptorsAreChanged()) {
       return setSelectedProfileModified(true);
@@ -909,18 +901,13 @@ public class SingleInspectionProfilePanel extends JPanel {
     final String filter = myProfileFilter.getFilter();
     myProfileFilter.reset();
     myProfileFilter.setSelectedItem(filter);
-    myShareProfile.setVisible(myProjectProfileManager != null);
-    myShareProfile.setSelected(mySelectedProfile.getProfileManager() == myProjectProfileManager);
-  }
-
-  public void setSharedEnabled(boolean enabled) {
-    myShareProfile.setEnabled(enabled);
+    myShareProfile = mySelectedProfile.getProfileManager() == myProjectProfileManager;
   }
 
   public void apply() throws ConfigurationException {
     final ModifiableModel selectedProfile = getSelectedProfile();
     final ProfileManager profileManager =
-      myShareProfile.isSelected() ? myProjectProfileManager : InspectionProfileManager.getInstance();
+      myShareProfile ? myProjectProfileManager : InspectionProfileManager.getInstance();
     if (selectedProfile.getProfileManager() != profileManager) {
       if (selectedProfile.getProfileManager().getProfile(selectedProfile.getName(), false) != null) {
         selectedProfile.getProfileManager().deleteProfile(selectedProfile.getName());
@@ -986,7 +973,11 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   public boolean isProfileShared() {
-    return myShareProfile.isSelected();
+    return myShareProfile;
+  }
+
+  public void setProfileShared(boolean profileShared) {
+    myShareProfile = profileShared;
   }
 
   private class LevelSelection implements ActionListener {

@@ -369,7 +369,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         QuickFixAction.registerQuickFixAction(info, HighlightMethodUtil.getFixRange(field), new CreateConstructorParameterFromFieldFix(field), null);
         SpecialAnnotationsUtil.createAddToSpecialAnnotationFixes(field, new Processor<String>() {
           public boolean process(final String annoName) {
-            QuickFixAction.registerQuickFixAction(info, myUnusedSymbolInspection.createQuickFix(annoName, field));
+            QuickFixAction.registerQuickFixAction(info, myUnusedSymbolInspection.createQuickFix(annoName, "fields"));
             return true;
           }
         });
@@ -377,7 +377,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       }
     }
     else if (!myRefCountHolder.isReferenced(field) && weAreSureThereAreNoUsages(field)) {
-      return formatUnusedSymbolHighlightInfo("field.is.not.used", field);
+      return formatUnusedSymbolHighlightInfo("field.is.not.used", field, "fields");
     }
     return null;
   }
@@ -471,14 +471,12 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     PsiIdentifier identifier = method.getNameIdentifier();
     final HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
     QuickFixAction.registerQuickFixAction(highlightInfo, new SafeDeleteFix(method), myUnusedSymbolKey);
-    if (PropertyUtil.isSimplePropertySetter(method)) {
-      SpecialAnnotationsUtil.createAddToSpecialAnnotationFixes(method, new Processor<String>() {
-        public boolean process(final String annoName) {
-          QuickFixAction.registerQuickFixAction(highlightInfo, myUnusedSymbolInspection.createQuickFix(annoName, method));
-          return true;
-        }
-      });
-    }
+    SpecialAnnotationsUtil.createAddToSpecialAnnotationFixes(method, new Processor<String>() {
+      public boolean process(final String annoName) {
+        QuickFixAction.registerQuickFixAction(highlightInfo, myUnusedSymbolInspection.createQuickFix(annoName, "methods"));
+        return true;
+      }
+    });
     return highlightInfo;
   }
 
@@ -529,19 +527,20 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   @Nullable
   private HighlightInfo processClass(PsiClass aClass) {
     if (!isClassUnused(aClass)) return null;
+    String element = "classes";
     if (aClass.getContainingClass() != null && aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
       String pattern = aClass.isInterface()
                        ? "private.inner.interface.is.not.used"
                        : "private.inner.class.is.not.used";
-      return formatUnusedSymbolHighlightInfo(pattern, aClass);
+      return formatUnusedSymbolHighlightInfo(pattern, aClass, element);
     }
     if (aClass.getParent() instanceof PsiDeclarationStatement) { // local class
-      return formatUnusedSymbolHighlightInfo("local.class.is.not.used", aClass);
+      return formatUnusedSymbolHighlightInfo("local.class.is.not.used", aClass, element);
     }
     if (aClass instanceof PsiTypeParameter) {
-      return formatUnusedSymbolHighlightInfo("type.parameter.is.not.used", aClass);
+      return formatUnusedSymbolHighlightInfo("type.parameter.is.not.used", aClass, element);
     }
-    return formatUnusedSymbolHighlightInfo("class.is.not.used", aClass);
+    return formatUnusedSymbolHighlightInfo("class.is.not.used", aClass, element);
   }
 
   private final Map<PsiClass, Boolean> unusedClassCache = new THashMap<PsiClass, Boolean>();
@@ -564,12 +563,18 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private HighlightInfo formatUnusedSymbolHighlightInfo(@PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String pattern,
-                                                        PsiNameIdentifierOwner aClass) {
+                                                        PsiNameIdentifierOwner aClass, final String element) {
     String symbolName = aClass.getName();
     String message = JavaErrorMessages.message(pattern, symbolName);
     PsiElement identifier = aClass.getNameIdentifier();
-    HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
+    final HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
     QuickFixAction.registerQuickFixAction(highlightInfo, new SafeDeleteFix(aClass), myUnusedSymbolKey);
+    SpecialAnnotationsUtil.createAddToSpecialAnnotationFixes((PsiModifierListOwner)aClass, new Processor<String>() {
+      public boolean process(final String annoName) {
+        QuickFixAction.registerQuickFixAction(highlightInfo, myUnusedSymbolInspection.createQuickFix(annoName, element));
+        return true;
+      }
+    });
     return highlightInfo;
   }
 

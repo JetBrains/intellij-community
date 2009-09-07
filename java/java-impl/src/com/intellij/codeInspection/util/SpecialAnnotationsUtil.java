@@ -15,6 +15,7 @@ import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -24,6 +25,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.ui.ReorderableListController;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SeparatorFactory;
 import com.intellij.ui.SortedListModel;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
@@ -83,24 +85,34 @@ public class SpecialAnnotationsUtil {
         listChanged();
       }
     });
+
     final JScrollPane listScrollPane = ScrollPaneFactory.createScrollPane(injectionList);
-    listScrollPane.setBorder(BorderFactory.createEtchedBorder());
+//    listScrollPane.setBorder(BorderFactory.createEtchedBorder());
     listScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
     listScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     final FontMetrics fontMetrics = injectionList.getFontMetrics(injectionList.getFont());
     listScrollPane.setPreferredSize(new Dimension(0, fontMetrics.getHeight() * 5));
+    listScrollPane.setMinimumSize(new Dimension(0, fontMetrics.getHeight() * 3));
+    //int height = injectionList.getCellRenderer().getListCellRendererComponent(injectionList, "foo", 0, false, false).getSize().height;
+    //injectionList.setFixedCellHeight(height);
+    //injectionList.setPreferredSize(new Dimension(0, height * 3));
+    //injectionList.setMinimumSize(new Dimension(0, height * 3));
+//    injectionList.setVisibleRowCount(3);
 
     final JPanel listPanel = new JPanel(new BorderLayout());
-    listPanel.setBorder(BorderFactory.createTitledBorder(borderTitle));
 
-    listPanel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.PROJECT_VIEW_TOOLBAR, actionGroup, true).getComponent(), BorderLayout.NORTH);
-    listPanel.add(listScrollPane, BorderLayout.SOUTH);
-    return listPanel;
+    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, true);
+    listPanel.add(actionToolbar.getComponent(), BorderLayout.NORTH);
+    listPanel.add(listScrollPane, BorderLayout.CENTER);
+
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.add(SeparatorFactory.createSeparator(borderTitle, null), BorderLayout.NORTH);
+    panel.add(listPanel, BorderLayout.CENTER);
+    return panel;
   }
 
   public static IntentionAction createAddToSpecialAnnotationsListIntentionAction(final String text, final String family, final List<String> targetList,
-                                                                           final String qualifiedName,
-                                                                           final PsiElement context) {
+                                                                                 final String qualifiedName) {
     return new IntentionAction() {
       @NotNull
       public String getText() {
@@ -117,7 +129,7 @@ public class SpecialAnnotationsUtil {
       }
 
       public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-        doQuickFixInternal(project, targetList, qualifiedName, context);
+        doQuickFixInternal(project, targetList, qualifiedName);
       }
 
       public boolean startInWriteAction() {
@@ -141,12 +153,12 @@ public class SpecialAnnotationsUtil {
       }
 
       public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-        doQuickFixInternal(project, targetList, qualifiedName, context);
+        doQuickFixInternal(project, targetList, qualifiedName);
       }
     };
   }
 
-  private static void doQuickFixInternal(final Project project, final List<String> targetList, final String qualifiedName, final PsiElement context) {
+  private static void doQuickFixInternal(final Project project, final List<String> targetList, final String qualifiedName) {
     targetList.add(qualifiedName);
     Collections.sort(targetList);
     final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();

@@ -11,16 +11,15 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.deadCode.UnusedCodeExtension;
 import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.util.PropertyUtil;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,6 +73,7 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
     return SHORT_NAME;
   }
 
+  @Pattern("[a-zA-Z_0-9.]+")
   @NotNull
   @NonNls
   public String getID() {
@@ -100,20 +100,26 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
     private JPanel myPanel;
 
     public OptionsPanel() {
+
       myCheckLocalVariablesCheckBox.setSelected(LOCAL_VARIABLE);
       myCheckClassesCheckBox.setSelected(CLASS);
       myCheckFieldsCheckBox.setSelected(FIELD);
       myCheckMethodsCheckBox.setSelected(METHOD);
+
       myCheckParametersCheckBox.setSelected(PARAMETER);
       myReportUnusedParametersInPublics.setSelected(REPORT_PARAMETER_FOR_PUBLIC_METHODS);
+      myReportUnusedParametersInPublics.setEnabled(PARAMETER);
+
       final ActionListener listener = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           LOCAL_VARIABLE = myCheckLocalVariablesCheckBox.isSelected();
           CLASS = myCheckClassesCheckBox.isSelected();
           FIELD = myCheckFieldsCheckBox.isSelected();
-          PARAMETER = myCheckParametersCheckBox.isSelected();
           METHOD = myCheckMethodsCheckBox.isSelected();
-          REPORT_PARAMETER_FOR_PUBLIC_METHODS = myReportUnusedParametersInPublics.isSelected();
+
+          PARAMETER = myCheckParametersCheckBox.isSelected();
+          REPORT_PARAMETER_FOR_PUBLIC_METHODS = PARAMETER && myReportUnusedParametersInPublics.isSelected();
+          myReportUnusedParametersInPublics.setEnabled(PARAMETER);
         }
       };
       myCheckLocalVariablesCheckBox.addActionListener(listener);
@@ -123,7 +129,7 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
       myCheckParametersCheckBox.addActionListener(listener);
       myReportUnusedParametersInPublics.addActionListener(listener);
 
-      String title = InspectionsBundle.message("dependency.injection.annotations.list");
+      String title = "Do not check if annotated by";
       final JPanel listPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(INJECTION_ANNOS, title);
 
       myAnnos.add(listPanel, BorderLayout.CENTER);
@@ -139,11 +145,11 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
     return new OptionsPanel().getPanel();
   }
 
-  public IntentionAction createQuickFix(final String qualifiedName, final PsiElement context) {
+  public IntentionAction createQuickFix(final String qualifiedName, String element) {
     return SpecialAnnotationsUtil.createAddToSpecialAnnotationsListIntentionAction(
-      QuickFixBundle.message("fix.unused.symbol.injection.text", qualifiedName),
+      QuickFixBundle.message("fix.unused.symbol.injection.text", element, qualifiedName),
       QuickFixBundle.message("fix.unused.symbol.injection.family"),
-      INJECTION_ANNOS, qualifiedName, context);
+      INJECTION_ANNOS, qualifiedName);
   }
 
   private static List<String> getRegisteredAnnotations() {
