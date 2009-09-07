@@ -11,14 +11,15 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
@@ -170,20 +171,21 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
 
   private static boolean processReferences(Processor<PsiReference> processor, final PsiFile file, String name, final PsiElement element,
                                            final LocalSearchScope filterScope) {
-    if (filterScope != null) {
-      boolean isInScope = false;
-      for(PsiElement filterElement: filterScope.getScope()) {
-        if (PsiTreeUtil.isAncestor(filterElement, file, false)) {
-          isInScope = true;
-          break;
-        }
-      }
-      if (!isInScope) return true;
-    }
-    CharSequence chars = ApplicationManager.getApplication().runReadAction(new Computable<CharSequence>() {
+    CharSequence chars = ApplicationManager.getApplication().runReadAction(new NullableComputable<CharSequence>() {
       public CharSequence compute() {
+        if (filterScope != null) {
+          boolean isInScope = false;
+          for(PsiElement filterElement: filterScope.getScope()) {
+            if (PsiTreeUtil.isAncestor(filterElement, file, false)) {
+              isInScope = true;
+              break;
+            }
+          }
+          if (!isInScope) return null;
+        }
         return file.getViewProvider().getContents();
     }});
+    if (chars == null) return true;
     int index = 0;
     final int offset = name.lastIndexOf('.');
     while(true){
