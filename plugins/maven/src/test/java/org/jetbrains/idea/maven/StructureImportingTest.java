@@ -158,7 +158,30 @@ public class StructureImportingTest extends MavenImportingTestCase {
                               "<version>1</version>");
 
     importProject();
-    assertModules("project", "m (test.group1)", "m (test.group2)");
+    assertModules("project", "m (1) (test.group1)", "m (2) (test.group2)");
+  }
+  
+  public void testModulesWithSameArtifactIdAndGroup() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>dir1/m</module>" +
+                     "  <module>dir2/m</module>" +
+                     "</modules>");
+
+    createModulePom("dir1/m", "<groupId>test</groupId>" +
+                              "<artifactId>m</artifactId>" +
+                              "<version>1</version>");
+
+    createModulePom("dir2/m", "<groupId>test</groupId>" +
+                              "<artifactId>m</artifactId>" +
+                              "<version>1</version>");
+
+    importProject();
+    assertModules("project", "m (1)", "m (2)");
   }
 
   public void testModuleWithRelativePath() throws Exception {
@@ -528,6 +551,66 @@ public class StructureImportingTest extends MavenImportingTestCase {
     getMavenImporterSettings().setCreateModuleGroups(true);
     myProjectsManager.flushPendingImportRequestsInTests();
     assertModuleGroupPath("module2", "module1 and modules");
+  }
+
+  public void testModuleGroupsWhenProjectWithDuplicateNameEmerges() throws Exception {
+    VirtualFile p1 = createModulePom("project1",
+                                     "<groupId>test</groupId>" +
+                                     "<artifactId>project1</artifactId>" +
+                                     "<version>1</version>" +
+                                     "<packaging>pom</packaging>" +
+
+                                     "<modules>" +
+                                     "  <module>m1</module>" +
+                                     "</modules>");
+
+    createModulePom("project1/m1",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>module</artifactId>" +
+                    "<version>1</version>");
+
+    VirtualFile p2 = createModulePom("project2",
+                                     "<groupId>test</groupId>" +
+                                     "<artifactId>project2</artifactId>" +
+                                     "<version>1</version>" +
+                                     "<packaging>pom</packaging>");
+
+    //createModulePom("m2",
+    //                "<groupId>test</groupId>" +
+    //                "<artifactId>m2</artifactId>" +
+    //                "<version>1</version>" +
+    //                "<packaging>pom</packaging>");
+
+    getMavenImporterSettings().setCreateModuleGroups(true);
+    importProjects(p1, p2);
+    assertModules("project1", "project2", "module");
+
+    assertModuleGroupPath("project1", "project1 and modules");
+    assertModuleGroupPath("module", "project1 and modules");
+
+    p2 = createModulePom("project2",
+                         "<groupId>test</groupId>" +
+                         "<artifactId>project2</artifactId>" +
+                         "<version>1</version>" +
+                         "<packaging>pom</packaging>" +
+
+                         "<modules>" +
+                         "  <module>m2</module>" +
+                         "</modules>");
+
+    createModulePom("project2/m2",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>module</artifactId>" +
+                    "<version>1</version>");
+
+    updateProjectsAndImport(p2); // should not fail to map module names. 
+
+    assertModules("project1", "project2", "module", "module (2)");
+
+    assertModuleGroupPath("project1", "project1 and modules");
+    assertModuleGroupPath("module", "project1 and modules");
+    assertModuleGroupPath("project2", "project2 and modules");
+    assertModuleGroupPath("module (2)", "project2 and modules");
   }
 
   public void testLanguageLevel() throws Exception {

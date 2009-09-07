@@ -3,14 +3,11 @@ package org.jetbrains.idea.maven.importing;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
-import gnu.trove.THashMap;
-import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenId;
+import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class MavenModuleNameMapper {
   public static void map(List<MavenProject> projects,
@@ -31,44 +28,95 @@ public class MavenModuleNameMapper {
   private static void resolveModuleNames(List<MavenProject> projects,
                                          Map<MavenProject, Module> mavenProjectToModule,
                                          Map<MavenProject, String> mavenProjectToModuleName) {
+    List<NameItem> names = new ArrayList<NameItem>();
+
     for (MavenProject each : projects) {
-      String name;
-      Module module = mavenProjectToModule.get(each);
-      if (module != null) {
-        name = module.getName();
-      }
-      else {
-        name = each.getMavenId().getArtifactId();
-        if (!isValidName(name)) name = each.getDirectoryFile().getName();
-      }
-      mavenProjectToModuleName.put(each, name);
+      names.add(new NameItem(each, mavenProjectToModule.get(each)));
     }
 
-    Map<String, Integer> counts = collectNamesCounts(projects,
-                                                     mavenProjectToModuleName);
+    Collections.sort(names, new Comparator<NameItem>() {
+      public int compare(NameItem o1, NameItem o2) {
+        return o1.project.getPath().compareToIgnoreCase(o2.project.getPath());
+      }
+    });
 
-    for (MavenProject each : projects) {
-      String name = mavenProjectToModuleName.get(each);
-      if (counts.get(name) > 1) {
-        String groupId = each.getMavenId().getGroupId();
-        if (isValidName(groupId)) {
-          mavenProjectToModuleName.put(each, name + " (" + groupId + ")");
+    for (NameItem each : names) {
+      if (each.hasDuplicatedGroup) continue;
+
+      String name = each.getResultName();
+      for (NameItem other : names) {
+        if (each == other) continue;
+        if (name.equals(other.getResultName()) && each.groupId.equals(other.groupId)) {
+          each.setHasDuplicatedGroup(true);
+          other.setHasDuplicatedGroup(true);
         }
       }
     }
 
-    for (MavenProject each : projects) {
-      String name = mavenProjectToModuleName.get(each);
-      List<MavenProject> withSameName = getProjectsWithName(projects,
-                                                            name,
-                                                            mavenProjectToModuleName);
-      if (withSameName.size() > 1) {
-        int i = 1;
-        for (MavenProject eachWithSameName : withSameName) {
-          mavenProjectToModuleName.put(eachWithSameName, name + " (" + i + ")");
-          i++;
+    for (NameItem each : names) {
+      int count = each.number;
+      if (count != -1) continue;
+
+      count = 0;
+      String name = each.getResultName();
+      for (NameItem other : names) {
+        if (each == other) continue;
+        if (name.equals(other.getResultName())) {
+          other.setNumber(++count);
         }
       }
+      if (count > 0) each.setNumber(0);
+    }
+
+    for (NameItem each : names) {
+      mavenProjectToModuleName.put(each.project, each.getResultName());
+    }
+  }
+
+  public static class NameItem {
+    public final MavenProject project;
+    public final Module module;
+
+    public final String originalName;
+    public final String groupId;
+
+    public int number = -1; // has no duplicates
+    public boolean hasDuplicatedGroup;
+
+    public NameItem(MavenProject project, Module module) {
+      this.project = project;
+      this.module = module;
+      originalName = calcOriginalName();
+
+      String group = project.getMavenId().getGroupId();
+      groupId = isValidName(group) ? group : "";
+    }
+
+    private String calcOriginalName() {
+      if (module != null) return module.getName();
+
+      String name = project.getMavenId().getArtifactId();
+      if (!isValidName(name)) name = project.getDirectoryFile().getName();
+      return name;
+    }
+
+    public void setNumber(int num) {
+      number = num;
+    }
+
+    public void setHasDuplicatedGroup(boolean value) {
+      hasDuplicatedGroup = value;
+    }
+
+    public String getResultName() {
+      if (module != null) return module.getName();
+
+      if (number == -1) return originalName;
+      String result = originalName + " (" + (number + 1) + ")";
+      if (!hasDuplicatedGroup && groupId.length() != 0) {
+        result += " (" + groupId + ")";
+      }
+      return result;
     }
   }
 
@@ -83,31 +131,6 @@ public class MavenModuleNameMapper {
       }
     }
     return true;
-  }
-
-  private static Map<String, Integer> collectNamesCounts(List<MavenProject> projects,
-                                                         Map<MavenProject, String> mavenProjectToModuleName) {
-    Map<String, Integer> result = new THashMap<String, Integer>();
-
-    for (MavenProject each : projects) {
-      String name = mavenProjectToModuleName.get(each);
-      Integer count = result.get(name);
-      if (count == null) count = 0;
-      count++;
-      result.put(name, count);
-    }
-
-    return result;
-  }
-
-  private static List<MavenProject> getProjectsWithName(List<MavenProject> projects,
-                                                        String name,
-                                                        Map<MavenProject, String> mavenProjectToModuleName) {
-    List<MavenProject> result = new ArrayList<MavenProject>();
-    for (MavenProject each : projects) {
-      if (name.equals(mavenProjectToModuleName.get(each))) result.add(each);
-    }
-    return result;
   }
 
   private static void resolveModulePaths(List<MavenProject> projects,

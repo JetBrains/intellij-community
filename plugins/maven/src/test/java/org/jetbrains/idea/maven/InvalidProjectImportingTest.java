@@ -156,7 +156,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                             "<version>1"); //  invalid tag
 
     importProject();
-    assertModules("project", "foo", "bar (test) (1)", "bar (test) (2)", "bar (org.test)");
+    assertModules("project", "foo", "bar (1)", "bar (2)", "bar (3) (org.test)");
   }
 
   public void testInvalidProjectWithModules() throws Exception {

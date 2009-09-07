@@ -347,6 +347,16 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     waitForReadingCompletion();
   }
 
+  protected void updateProjectsAndImport(VirtualFile... files) {
+    List<MavenProject> projects = new ArrayList<MavenProject>();
+    for (VirtualFile each : files) {
+      projects.add(myProjectsManager.findProject(each));
+    }
+    myProjectsManager.forceUpdateProjects(projects);
+    waitForReadingCompletion();
+    myProjectsManager.flushPendingImportRequestsInTests();
+  }
+
   protected void initProjectsManager(boolean enableEventHandling) {
     myProjectsManager.initForTests();
     myProjectsTree = myProjectsManager.getProjectsTreeForTests();
