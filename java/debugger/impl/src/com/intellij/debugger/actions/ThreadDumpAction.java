@@ -11,6 +11,8 @@ import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.debugger.ui.DebuggerPanelsManager;
+import com.intellij.debugger.ui.DebuggerSessionTab;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -20,7 +22,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.unscramble.ThreadDumpParser;
 import com.intellij.unscramble.ThreadState;
-import com.intellij.unscramble.UnscrambleDialog;
 import com.sun.jdi.*;
 
 import java.util.ArrayList;
@@ -47,7 +48,10 @@ public class ThreadDumpAction extends AnAction {
             final List<ThreadState> threads = buildThreadStates(vm);
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
-                UnscrambleDialog.addConsole(project, threads);
+                final DebuggerSessionTab sessionTab = DebuggerPanelsManager.getInstance(project).getSessionTab();
+                if (sessionTab != null) {
+                  sessionTab.addThreadDump(threads);
+                }
               }
             }, ModalityState.NON_MODAL);
           }

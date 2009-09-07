@@ -18,6 +18,7 @@ import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.RestartAction;
@@ -41,6 +42,8 @@ import com.intellij.ui.content.AlertIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.unscramble.ThreadDumpPanel;
+import com.intellij.unscramble.ThreadState;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.DebuggerLogConsoleManagerBase;
@@ -50,6 +53,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.util.Collection;
+import java.util.List;
 
 public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.DebuggerSessionTab");
@@ -75,6 +79,7 @@ public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements
 
   public static final String BREAKPOINT_CONDITION = "breakpoint";
   private final ThreadsPanel myThreadsPanel;
+  private static final String THREAD_DUMP_CONTENT_PREFIX = "Dump";
 
   public DebuggerSessionTab(Project project, String sessionName) {
     super(project);
@@ -479,6 +484,49 @@ public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements
 
   public void showFramePanel() {
     myUi.selectAndFocus(myUi.findContent(DebuggerContentInfo.FRAME_CONTENT), false);
+  }
+
+  private int myThreadDumpsCount = 0;
+  private int myCurrentThreadDumpId = 1;
+
+  public void addThreadDump(List<ThreadState> threads) {
+    final Project project = getProject();
+    final ConsoleView consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
+    final DefaultActionGroup toolbarActions = new DefaultActionGroup();
+    final ThreadDumpPanel panel = new ThreadDumpPanel(project, consoleView, toolbarActions, threads);
+
+    final Icon icon = null;
+    final String id = createThreadDumpContentId();
+    final Content content = myUi.createContent(id, panel, id, icon, null);
+    content.setCloseable(true);
+    content.setDescription("Thread Dump");
+    myUi.addListener(new ContentManagerAdapter() {
+      public void contentRemoved(ContentManagerEvent event) {
+        if (event.getContent() == content) {
+          myThreadDumpsCount -= 1;
+          if (myThreadDumpsCount == 0) {
+            myCurrentThreadDumpId = 1;
+          }
+          myUi.removeListener(this);
+        }
+      }
+    }, content);
+    myUi.addContent(content);
+    myThreadDumpsCount += 1;
+    myCurrentThreadDumpId += 1;
+    Disposer.register(this, new Disposable() {
+      public void dispose() {
+        myUi.removeContent(content, true);
+      }
+    });
+    myUi.selectAndFocus(content, false);
+    if (threads.size() > 0) {
+      panel.selectStackFrame(0);
+    }
+  }
+
+  private String createThreadDumpContentId() {
+    return THREAD_DUMP_CONTENT_PREFIX + " #" + myCurrentThreadDumpId;
   }
 
   private class MyDebuggerStateManager extends DebuggerStateManager {

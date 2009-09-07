@@ -61,7 +61,7 @@ public class AnalyzeStacktraceUtil {
     return text;
   }
 
-  interface ConsoleFactory {
+  public interface ConsoleFactory {
     JComponent createConsoleComponent(ConsoleView consoleView, DefaultActionGroup toolbarActions);
   }
 

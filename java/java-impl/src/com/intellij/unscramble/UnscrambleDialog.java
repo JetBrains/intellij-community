@@ -6,9 +6,6 @@ package com.intellij.unscramble;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -17,21 +14,17 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.GuiUtils;
+import com.intellij.ui.TextFieldWithHistory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -43,14 +36,6 @@ public class UnscrambleDialog extends DialogWrapper{
   @NonNls private static final String PROPERTY_LOG_FILE_HISTORY_URLS = "UNSCRAMBLE_LOG_FILE_URL";
   @NonNls private static final String PROPERTY_LOG_FILE_LAST_URL = "UNSCRAMBLE_LOG_FILE_LAST_URL";
   @NonNls private static final String PROPERTY_UNSCRAMBLER_NAME_USED = "UNSCRAMBLER_NAME_USED";
-
-  private static final Icon PAUSE_ICON = IconLoader.getIcon("/debugger/threadStates/paused.png");
-  private static final Icon LOCKED_ICON = IconLoader.getIcon("/debugger/threadStates/locked.png");
-  private static final Icon RUNNING_ICON = IconLoader.getIcon("/debugger/threadStates/running.png");
-  private static final Icon SOCKET_ICON = IconLoader.getIcon("/debugger/threadStates/socket.png");
-  private static final Icon IDLE_ICON = IconLoader.getIcon("/debugger/threadStates/idle.png");
-  private static final Icon EDT_BUSY_ICON = IconLoader.getIcon("/debugger/threadStates/edtBusy.png");
-  private static final Icon IO_ICON = IconLoader.getIcon("/debugger/threadStates/io.png");
 
   private final Project myProject;
   private JPanel myEditorPanel;
@@ -335,109 +320,9 @@ public class UnscrambleDialog extends DialogWrapper{
   public static ConsoleView addConsole(final Project project, final List<ThreadState> threadDump) {
     return AnalyzeStacktraceUtil.addConsole(project, threadDump.size() > 1 ? new AnalyzeStacktraceUtil.ConsoleFactory() {
       public JComponent createConsoleComponent(ConsoleView consoleView, DefaultActionGroup toolbarActions) {
-        return new ThreadDumpPanel(consoleView, toolbarActions, threadDump);
+        return new ThreadDumpPanel(project, consoleView, toolbarActions, threadDump);
       }
     } : null, IdeBundle.message("unscramble.unscrambled.stacktrace.tab"));
-  }
-
-  private static class ThreadDumpPanel extends JPanel {
-    public ThreadDumpPanel(final ConsoleView consoleView, final ActionGroup toolbarActions, final List<ThreadState> threadDump) {
-      super(new BorderLayout());
-
-      final JList threadList = new JList(threadDump.toArray(new ThreadState[threadDump.size()]));
-      threadList.setCellRenderer(new ThreadListCellRenderer());
-      threadList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-      threadList.addListSelectionListener(new ListSelectionListener() {
-        public void valueChanged(final ListSelectionEvent e) {
-          int index = threadList.getSelectedIndex();
-          if (index >= 0) {
-            ThreadState selection = threadDump.get(index);
-            AnalyzeStacktraceUtil.printStacktrace(consoleView, selection.getStackTrace());
-          }
-          else {
-            AnalyzeStacktraceUtil.printStacktrace(consoleView, "");
-          }
-          threadList.repaint();
-        }
-      });
-      ListToolTipHandler.install(threadList);
-      add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions,false).getComponent(), BorderLayout.WEST);
-
-      final Splitter splitter = new Splitter(false, 0.3f);
-      splitter.setFirstComponent(new JScrollPane(threadList));
-      splitter.setSecondComponent(consoleView.getComponent());
-
-      add(splitter, BorderLayout.CENTER);
-    }
-
-    private static Icon getThreadStateIcon(final ThreadState threadState) {
-      if (threadState.isSleeping()) {
-        return PAUSE_ICON;
-      }
-      if (threadState.isWaiting()) {
-        return LOCKED_ICON;
-      }
-      if (threadState.getOperation() == ThreadOperation.Socket) {
-        return SOCKET_ICON;
-      }
-      if (threadState.getOperation() == ThreadOperation.IO) {
-        return IO_ICON;
-      }
-      if (threadState.isEDT()) {
-        if ("idle".equals(threadState.getThreadStateDetail())) {
-          return IDLE_ICON;
-        }
-        return EDT_BUSY_ICON;
-      }
-      return RUNNING_ICON;
-    }
-
-    private static SimpleTextAttributes getAttributes(final ThreadState threadState) {
-      if (threadState.isSleeping()) {
-        return SimpleTextAttributes.GRAY_ATTRIBUTES;
-      }
-      if (threadState.isEmptyStackTrace() || ThreadDumpParser.isKnownJdkThread(threadState)) {
-        return new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, Color.GRAY.brighter());
-      }
-      if (threadState.isEDT()) {
-        return SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
-      }
-      return SimpleTextAttributes.REGULAR_ATTRIBUTES;
-    }
-
-    private static class ThreadListCellRenderer extends ColoredListCellRenderer {
-
-      protected void customizeCellRenderer(final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
-        ThreadState threadState = (ThreadState) value;
-        setIcon(getThreadStateIcon(threadState));
-        if (!selected) {
-          ThreadState selectedThread = (ThreadState)list.getSelectedValue();
-          if (threadState.isDeadlocked()) {
-            setBackground(LightColors.RED);
-          }
-          else if (selectedThread != null && threadState.isAwaitedBy(selectedThread)) {
-            setBackground(Color.YELLOW);
-          }
-          else {
-            setBackground(UIUtil.getListBackground());
-          }
-        }
-        SimpleTextAttributes attrs = getAttributes(threadState);
-        append(threadState.getName() + " (", attrs);
-        String detail = threadState.getThreadStateDetail();
-        if (detail == null) {
-          detail = threadState.getState();
-        }
-        if (detail.length() > 30) {
-          detail = detail.substring(0, 30) + "...";
-        }
-        append(detail, attrs);
-        append(")", attrs);
-        if (threadState.getExtraState() != null) {
-          append(" [" + threadState.getExtraState() + "]", attrs);
-        }
-      }
-    }
   }
 
   protected String getDimensionServiceKey(){
