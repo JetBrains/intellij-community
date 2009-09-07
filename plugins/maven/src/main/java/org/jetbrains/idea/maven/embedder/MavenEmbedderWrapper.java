@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import gnu.trove.THashSet;
+import hidden.edu.emory.mathcs.backport.java.util.concurrent.ThreadPoolExecutor;
 import org.apache.maven.Maven;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.InvalidRepositoryException;
@@ -20,10 +21,7 @@ import org.apache.maven.artifact.repository.ArtifactRepositoryFactory;
 import org.apache.maven.artifact.repository.ArtifactRepositoryPolicy;
 import org.apache.maven.artifact.repository.DefaultArtifactRepository;
 import org.apache.maven.artifact.repository.layout.ArtifactRepositoryLayout;
-import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
-import org.apache.maven.artifact.resolver.ArtifactResolutionException;
-import org.apache.maven.artifact.resolver.ArtifactResolutionResult;
-import org.apache.maven.artifact.resolver.ArtifactResolver;
+import org.apache.maven.artifact.resolver.*;
 import org.apache.maven.execution.DefaultMavenExecutionRequest;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.ReactorManager;
@@ -393,7 +391,14 @@ public class MavenEmbedderWrapper {
   }
 
   public void release() {
+    releaseResolverThreadExecutor();
     myContainer.dispose();
+  }
+
+  private void releaseResolverThreadExecutor() {
+    ArtifactResolver resolver = getComponent(ArtifactResolver.class);
+    FieldAccessor pool = new FieldAccessor(DefaultArtifactResolver.class, resolver, "resolveArtifactPool");
+    ((ThreadPoolExecutor)pool.getField()).shutdown();
   }
 
   private interface Executor<T> {
