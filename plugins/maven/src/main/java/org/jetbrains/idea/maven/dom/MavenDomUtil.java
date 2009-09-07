@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
@@ -20,10 +21,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.dom.model.MavenDomParent;
-import org.jetbrains.idea.maven.dom.model.MavenDomProfiles;
-import org.jetbrains.idea.maven.dom.model.MavenDomProfilesModel;
-import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.dom.model.*;
 import org.jetbrains.idea.maven.project.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -64,9 +62,14 @@ public class MavenDomUtil {
     return name.equals(MavenConstants.SETTINGS_XML);
   }
 
-  public static boolean isMavenElement(PsiElement element) {
-    if (!isMavenFile(element.getContainingFile())) return false;
-    return DomUtil.findDomElement(element, MavenDomElement.class, false) != null;
+  public static boolean isMavenFile(PsiElement element) {
+    return isMavenFile(element.getContainingFile());
+  }
+
+  public static boolean isMavenProperty(PsiElement target) {
+    XmlTag tag = PsiTreeUtil.getParentOfType(target, XmlTag.class, false);
+    if (tag == null) return false;
+    return DomUtil.findDomElement(tag, MavenDomProperties.class) != null;
   }
 
   public static String calcRelativePath(VirtualFile parent, VirtualFile child) {
@@ -247,6 +250,12 @@ public class MavenDomUtil {
   public static Property findProperty(@NotNull Project project, @NotNull VirtualFile file, @NotNull String propName) {
     PropertiesFile propertiesFile = getPropertiesFile(project, file);
     return propertiesFile == null ? null : propertiesFile.findPropertyByKey(propName);
+  }
+
+  @Nullable
+  public static PsiElement findPropertyValue(@NotNull Project project, @NotNull VirtualFile file, @NotNull String propName) {
+    Property prop = findProperty(project, file, propName);
+    return prop == null ? null : prop.getFirstChild().getNextSibling().getNextSibling();
   }
 
   public static boolean isFiltererResourceFile(PsiElement element) {

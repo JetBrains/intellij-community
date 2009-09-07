@@ -572,6 +572,19 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                                                            "TEMP"));
   }
 
+  public void testHighlightUnresolvedProperties() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<name>${<error>xxx</error>}</name>" +
+
+                     "<properties>" +
+                     "  <foo>${<error>zzz</error>}</foo>" +
+                     "</properties>");
+
+    checkHighlighting();
+  }
+
   public void testCompletion() throws Exception {
     importProjectWithProfiles("one");
 
@@ -694,11 +707,22 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
-                     "<name>${gro<caret></name>");
+                     "<name>${pro<caret></name>");
 
     List<String> variants = getCompletionVariants(myProjectPom);
-    assertInclude(variants, "groupId");
-    assertDoNotInclude(variants, "project.groupId");
+    assertInclude(variants, "project.groupId");
+    assertDoNotInclude(variants, "groupId");
+  }
+  
+  public void testCompletingAfterOpenBraceAndSomeTextWithDot() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<name>${project.g<caret></name>");
+
+    List<String> variants = getCompletionVariants(myProjectPom);
+    assertInclude(variants, "project.groupId");
+    assertDoNotInclude(variants, "groupId", "project.name");
   }
 
   public void testDoNotCompleteAfterNonWordCharacter() throws Exception {

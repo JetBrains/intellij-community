@@ -3,9 +3,9 @@ package org.jetbrains.idea.maven.dom.refactorings;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
@@ -33,14 +33,15 @@ public class MavenPropertyRenameHandler extends PsiElementRenameHandler {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       String name = DEFAULT_NAME.getData(dataContext);
       dialog.performRename(name);
-    } else {
+    }
+    else {
       dialog.show();
     }
   }
 
   private PsiElement findTarget(DataContext context) {
-    PsiElement target = MavenTargetUtil.getFindTarget(PlatformDataKeys.EDITOR.getData(context),
-                                                      LangDataKeys.PSI_FILE.getData(context));
+    PsiElement target = MavenTargetUtil.getRefactorTarget(PlatformDataKeys.EDITOR.getData(context),
+                                                          LangDataKeys.PSI_FILE.getData(context));
     return isVetoed(target) ? null : target;
   }
 }

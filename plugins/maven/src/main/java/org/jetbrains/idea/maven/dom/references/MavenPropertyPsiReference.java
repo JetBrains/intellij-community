@@ -41,10 +41,12 @@ import java.util.Set;
 public class MavenPropertyPsiReference extends MavenPsiReference {
   protected final MavenDomProjectModel myProjectDom;
   protected final MavenProject myMavenProject;
+  private final boolean mySoft;
 
-  public MavenPropertyPsiReference(MavenProject mavenProject, PsiElement element, String text, TextRange range) {
+  public MavenPropertyPsiReference(MavenProject mavenProject, PsiElement element, String text, TextRange range, boolean isSoft) {
     super(element, text, range);
     myMavenProject = mavenProject;
+    mySoft = isSoft;
     myProjectDom = MavenDomUtil.getMavenDomProjectModel(myProject, mavenProject.getFile());
   }
 
@@ -341,8 +343,11 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     return createLookupElement(element, name, Icons.PROPERTY_ICON);
   }
 
-  private static LookupElement createLookupElement(Object element, String name, Icon icon) {
-    return LookupElementBuilder.create(name, element).setIcon(icon).setPresentableText(name);
+  private LookupElement createLookupElement(Object element, String name, Icon icon) {
+    return LookupElementBuilder.create(name, element)
+      .setIcon(icon)
+      .setPresentableText(name)
+      .createLookupElement();
   }
 
   @Nullable
@@ -391,6 +396,11 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
       }
     }
     return false;
+  }
+
+  @Override
+  public boolean isSoft() {
+    return mySoft;
   }
 
   private interface PropertyProcessor<T> {

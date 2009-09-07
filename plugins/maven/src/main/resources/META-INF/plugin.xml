@@ -54,6 +54,8 @@
     <dom.extender domClass="org.jetbrains.idea.maven.dom.model.MavenDomConfigurationParameter"
                   extenderClass="org.jetbrains.idea.maven.dom.MavenPluginConfigurationParameterDomExtender"/>
 
+    <elementDescriptionProvider implementation="org.jetbrains.idea.maven.dom.MavenElementDescriptionProvider" order="first"/>
+    
     <completion.contributor language="any" implementationClass="org.jetbrains.idea.maven.dom.references.MavenPropertyCompletionContributor" id="Maven"/>
 
     <psi.referenceContributor implementation="org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReferenceContributor"/>

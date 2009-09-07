@@ -11,6 +11,11 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 
 public class MavenTargetUtil {
+  public static PsiElement getRefactorTarget(Editor editor, PsiFile file) {
+    PsiElement target = getFindTarget(editor, file);
+    return target == null || !MavenDomUtil.isMavenFile(target) ? null : target;
+  }
+
   public static PsiElement getFindTarget(Editor editor, PsiFile file) {
     if (editor == null || file == null) return null;
 
@@ -19,17 +24,14 @@ public class MavenTargetUtil {
       return ((MavenPsiElementWrapper)target).getWrappee();
     }
 
-    if (target == null || !(target instanceof XmlTag) || isSchema(target)) {
+    if (target == null || isSchema(target)) {
       target = file.findElementAt(editor.getCaretModel().getOffset());
       if (target == null) return null;
     }
 
-    target = PsiTreeUtil.getParentOfType(target, XmlTag.class, false);
-    if (target == null) return null;
+    if (!MavenDomUtil.isMavenFile(target)) return null;
 
-    if (!MavenDomUtil.isMavenElement(target)) return null;
-
-    return target;
+    return PsiTreeUtil.getParentOfType(target, XmlTag.class, false);
   }
 
   private static boolean isSchema(PsiElement element) {

@@ -20,6 +20,6 @@ public class MavenPropertyPsiReferenceInjector implements DomReferenceInjector {
 
   @NotNull
   public PsiReference[] inject(@Nullable String unresolvedText, @NotNull PsiElement element, @NotNull ConvertContext context) {
-    return MavenPropertyPsiReferenceProvider.getReferences(element);
+    return MavenPropertyPsiReferenceProvider.getReferences(element, true);
   }
 }

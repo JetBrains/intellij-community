@@ -28,18 +28,18 @@ public class MavenPropertyPsiReferenceProvider extends PsiReferenceProvider {
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     if (myFiltered) {
       if (!MavenDomUtil.isFiltererResourceFile(element)) return PsiReference.EMPTY_ARRAY;
-      return getReferences(element, element.getText(), 0, true);
+      return getReferences(element, element.getText(), 0, true, false);
     }
-    return getReferences(element);
+    return getReferences(element, false);
   }
 
-  public static PsiReference[] getReferences(PsiElement element) {
+  public static PsiReference[] getReferences(PsiElement element, boolean isSoft) {
     String text = ElementManipulators.getValueText(element);
     int textStart = ElementManipulators.getValueTextRange(element).getStartOffset();
-    return getReferences(element, text, textStart, false);
+    return getReferences(element, text, textStart, false, isSoft);
   }
 
-  private static PsiReference[] getReferences(PsiElement element, String text, int textStart, boolean filtered) {
+  private static PsiReference[] getReferences(PsiElement element, String text, int textStart, boolean isFiltered, boolean isSoft) {
     if (StringUtil.isEmptyOrSpaces(text)) return PsiReference.EMPTY_ARRAY;
 
     MavenProject mavenProject = MavenDomUtil.findContainingProject(element);
@@ -54,11 +54,11 @@ public class MavenPropertyPsiReferenceProvider extends PsiReferenceProvider {
       TextRange range = TextRange.from(from, propertyName.length());
 
       MavenPropertyPsiReference ref;
-      if (filtered) {
-        ref = new MavenFilteredPropertyPsiReference(mavenProject, element, propertyName, range);
+      if (isFiltered) {
+        ref = new MavenFilteredPropertyPsiReference(mavenProject, element, propertyName, range, isSoft);
       }
       else {
-        ref = new MavenPropertyPsiReference(mavenProject, element, propertyName, range);
+        ref = new MavenPropertyPsiReference(mavenProject, element, propertyName, range, isSoft);
       }
       result.add(ref);
     }

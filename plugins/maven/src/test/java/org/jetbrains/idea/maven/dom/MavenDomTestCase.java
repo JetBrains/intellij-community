@@ -9,6 +9,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -36,6 +37,7 @@ import com.intellij.usages.UsageTargetUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper;
@@ -108,7 +110,7 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     return getEditor(f).getCaretModel().getOffset();
   }
 
-  private PsiFile getTestPsiFile() throws IOException {
+  protected PsiFile getTestPsiFile() throws IOException {
     return getTestPsiFile(myProjectPom);
   }
 
@@ -184,8 +186,9 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     assertInclude(getCompletionVariants(f), expected);
   }
 
-  protected void assertInclude(List<String> actual, String... expected) throws IOException {
-    assertTrue(actual.toString(), actual.containsAll(Arrays.asList(expected)));
+  protected <T> void assertInclude(List<? extends T> actual, T... expected) throws IOException {
+    List<T> expectedList = Arrays.asList(expected);
+    assertTrue("expected: " + expectedList + "\n" + "actual: " + actual.toString(), actual.containsAll(expectedList));
   }
 
   protected void assertDoNotInclude(List<String> actual, String... expected) throws IOException {
@@ -256,7 +259,7 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
   }
 
   protected void doRename(final VirtualFile f, String value) throws IOException {
-    final MapDataContext context = createDataContext(f, value);
+    final MapDataContext context = createRenameDataContext(f, value);
     final RenameHandler renameHandler = RenameHandlerRegistry.getInstance().getRenameHandler(context);
     assertNotNull(renameHandler);
 
@@ -264,7 +267,7 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
   }
 
   protected void assertCannotRename() throws IOException {
-    MapDataContext context = createDataContext(myProjectPom, "new name");
+    MapDataContext context = createRenameDataContext(myProjectPom, "new name");
     RenameHandler handler = RenameHandlerRegistry.getInstance().getRenameHandler(context);
     if (handler == null) return;
     try {
@@ -284,12 +287,18 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     }.execute();
   }
 
-  private MapDataContext createDataContext(VirtualFile f, String value) throws IOException {
+  private MapDataContext createDataContext(VirtualFile f) throws IOException {
     MapDataContext context = new MapDataContext();
     context.put(PlatformDataKeys.EDITOR, getEditor(f));
     context.put(LangDataKeys.PSI_FILE, getTestPsiFile(f));
     context.put(LangDataKeys.PSI_ELEMENT, TargetElementUtil.findTargetElement(getEditor(f),
-                                                                              TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED));
+                                                                              TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED
+                                                                              | TargetElementUtilBase.ELEMENT_NAME_ACCEPTED));
+    return context;
+  }
+
+  private MapDataContext createRenameDataContext(VirtualFile f, String value) throws IOException {
+    MapDataContext context = createDataContext(f);
     context.put(PsiElementRenameHandler.DEFAULT_NAME, value);
     return context;
   }
@@ -299,19 +308,23 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
   }
 
   protected void assertSearchResultsContain(VirtualFile file, PsiElement... expected) throws IOException {
-    assertTrue(search(file).containsAll(Arrays.asList(expected)));
+    assertInclude(search(file), expected);
   }
 
-  private List<PsiElement> search(VirtualFile file) throws IOException {
-    UsageTarget[] targets = UsageTargetUtil.findUsageTargets(getEditor(file), getTestPsiFile(file));
+  protected List<PsiElement> search(VirtualFile file) throws IOException {
+    final MapDataContext context = createDataContext(file);
+    UsageTarget[] targets = UsageTargetUtil.findUsageTargets(new DataProvider() {
+      public Object getData(@NonNls String dataId) {
+        return context.getData(dataId);
+      }
+    });
     PsiElement target = ((PsiElement2UsageTargetAdapter)targets[0]).getElement();
     List<PsiReference> result = new ArrayList<PsiReference>(ReferencesSearch.search(target).findAll());
-    List<PsiElement> actualElements = ContainerUtil.map(result, new Function<PsiReference, PsiElement>() {
+    return ContainerUtil.map(result, new Function<PsiReference, PsiElement>() {
       public PsiElement fun(PsiReference psiReference) {
         return psiReference.getElement();
       }
     });
-    return actualElements;
   }
 
   protected void assertHighlighted(VirtualFile file, HighlightInfo... expected) throws IOException {

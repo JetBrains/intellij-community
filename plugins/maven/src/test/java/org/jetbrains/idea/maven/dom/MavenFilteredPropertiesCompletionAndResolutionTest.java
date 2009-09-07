@@ -3,8 +3,8 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
-import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference;
 import org.jetbrains.idea.maven.dom.model.MavenDomProfilesModel;
+import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference;
 
 public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDomTestCase {
   public void testBasic() throws Exception {
@@ -214,6 +214,32 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     assertCompletionVariantsInclude(f, "xxx", "yyy");
   }
 
+  public void testSearchingFromFilters() throws Exception {
+    VirtualFile filter = createProjectSubFile("filters/filter.properties", "xxx=1");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <filters>" +
+                  "    <filter>filters/filter.properties</filter>" +
+                  "  </filters>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>res</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+
+    VirtualFile f = createProjectSubFile("res/foo.properties",
+                                         "foo=${xxx}");
+    filter = createProjectSubFile("filters/filter.properties", "xx<caret>x=1");
+
+    assertSearchResultsContain(filter, MavenDomUtil.findPropertyValue(myProject, f, "foo"));
+  }
+
   public void testCompletionAfterOpenBrace() throws Exception {
     createProjectSubDir("res");
 
@@ -253,6 +279,30 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                   "</build>");
 
     VirtualFile f = createProjectSubFile("res/foo.txt",
+                                         "${<caret>");
+
+    assertCompletionVariantsInclude(f, "project.version");
+  }
+
+  public void testCompletionAfterOpenBraceInTheBeginningOfPropertiesFile() throws Exception {
+    if (ignore()) return;
+
+    createProjectSubDir("res");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>res</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+
+    VirtualFile f = createProjectSubFile("res/foo.properties",
                                          "${<caret>");
 
     assertCompletionVariantsInclude(f, "project.version");
