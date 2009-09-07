@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker;
 import com.intellij.util.concurrency.Semaphore;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -55,7 +56,7 @@ public class RefreshSessionImpl extends RefreshSession {
     myWorkQueue.addAll(files);
   }
 
-  public void addFile(final VirtualFile file) {
+  public void addFile(@NotNull final VirtualFile file) {
     myWorkQueue.add(file);
   }
 
