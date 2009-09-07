@@ -7,6 +7,7 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
@@ -121,7 +122,7 @@ public class UnusedReturnValue extends GlobalJavaInspectionTool{
         psiMethod = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class);
       }
       if (psiMethod == null) return;
-      makeMethodVoid(project, psiMethod);
+      makeMethodHierarchyVoid(project, psiMethod);
     }
 
     @NotNull
@@ -129,37 +130,13 @@ public class UnusedReturnValue extends GlobalJavaInspectionTool{
       return getName();
     }
 
-    private static void makeMethodVoid(Project project, PsiMethod psiMethod) {
-      final PsiCodeBlock body = psiMethod.getBody();
-      assert body != null;
-      final List<PsiReturnStatement> returnStatements = new ArrayList<PsiReturnStatement>();
-      body.accept(new JavaRecursiveElementWalkingVisitor(){
-        @Override
-        public void visitReturnStatement(final PsiReturnStatement statement) {
-          super.visitReturnStatement(statement);
-          returnStatements.add(statement);
-        }
-      });
-      final PsiStatement[] psiStatements = body.getStatements();
-      final PsiStatement lastStatement =  psiStatements[psiStatements.length - 1];
-      for (PsiReturnStatement returnStatement : returnStatements) {
-        try {
-          final PsiExpression expression = returnStatement.getReturnValue();
-          if (expression instanceof PsiLiteralExpression || expression instanceof PsiThisExpression) {
-            if (returnStatement == lastStatement) {
-              returnStatement.delete();
-            }
-            else {
-              returnStatement.replace(JavaPsiFacade.getInstance(project).getElementFactory().createStatementFromText("return;", returnStatement));
-            }
-          }
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+    private static void makeMethodHierarchyVoid(Project project, @NotNull PsiMethod psiMethod) {
+      replaceReturnStatements(psiMethod);
+      for (final PsiMethod oMethod : OverridingMethodsSearch.search(psiMethod)) {
+        replaceReturnStatements(oMethod);
       }
-      PsiParameter[] params = psiMethod.getParameterList().getParameters();
-      ParameterInfoImpl[] infos = new ParameterInfoImpl[params.length];
+      final PsiParameter[] params = psiMethod.getParameterList().getParameters();
+      final ParameterInfoImpl[] infos = new ParameterInfoImpl[params.length];
       for (int i = 0; i < params.length; i++) {
         PsiParameter param = params[i];
         infos[i] = new ParameterInfoImpl(i, param.getName(), param.getType());
@@ -172,6 +149,39 @@ public class UnusedReturnValue extends GlobalJavaInspectionTool{
                                                                   infos);
 
       csp.run();
+    }
+
+    private static void replaceReturnStatements(@NotNull final PsiMethod method) {
+      final PsiCodeBlock body = method.getBody();
+      if (body != null) {
+        final List<PsiReturnStatement> returnStatements = new ArrayList<PsiReturnStatement>();
+        body.accept(new JavaRecursiveElementWalkingVisitor() {
+          @Override
+          public void visitReturnStatement(final PsiReturnStatement statement) {
+            super.visitReturnStatement(statement);
+            returnStatements.add(statement);
+          }
+        });
+        final PsiStatement[] psiStatements = body.getStatements();
+        final PsiStatement lastStatement = psiStatements[psiStatements.length - 1];
+        for (PsiReturnStatement returnStatement : returnStatements) {
+          try {
+            final PsiExpression expression = returnStatement.getReturnValue();
+            if (expression instanceof PsiLiteralExpression || expression instanceof PsiThisExpression) {    //avoid side effects
+              if (returnStatement == lastStatement) {
+                returnStatement.delete();
+              }
+              else {
+                returnStatement
+                  .replace(JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createStatementFromText("return;", returnStatement));
+              }
+            }
+          }
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
+          }
+        }
+      }
     }
   }
 }
