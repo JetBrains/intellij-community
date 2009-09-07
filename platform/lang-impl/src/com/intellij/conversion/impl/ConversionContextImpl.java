@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.FileFilter;
 import java.util.*;
 
 /**
@@ -208,7 +209,11 @@ public class ConversionContextImpl implements ConversionContext {
         myRunManagerSettings = new RunManagerSettingsImpl(myWorkspaceFile, myProjectFile, null, this);
       }
       else {
-        final File[] files = new File(mySettingsBaseDir, "runConfigurations").listFiles();
+        final File[] files = new File(mySettingsBaseDir, "runConfigurations").listFiles(new FileFilter() {
+          public boolean accept(File file) {
+            return !file.isDirectory() && file.getName().endsWith(".xml");
+          }
+        });
         myRunManagerSettings = new RunManagerSettingsImpl(myWorkspaceFile, null, files, this);
       }
     }
