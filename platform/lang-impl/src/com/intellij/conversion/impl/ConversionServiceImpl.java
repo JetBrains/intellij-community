@@ -4,7 +4,7 @@ import com.intellij.conversion.CannotConvertException;
 import com.intellij.conversion.ConversionListener;
 import com.intellij.conversion.ConversionService;
 import com.intellij.conversion.ConverterProvider;
-import com.intellij.conversion.impl.ui.ProjectConversionWizard;
+import com.intellij.conversion.impl.ui.ConvertProjectDialog;
 import com.intellij.ide.IdeBundle;
 import com.intellij.conversion.impl.ProjectConversionUtil;
 import com.intellij.openapi.application.PathManager;
@@ -104,9 +104,9 @@ public class ConversionServiceImpl extends ConversionService {
 
       final ConversionContextImpl context = new ConversionContextImpl(projectPath);
       final List<ConversionRunner> converters = getConversionRunners(context);
-      ProjectConversionWizard wizard = new ProjectConversionWizard(context, converters);
-      wizard.show();
-      if (wizard.isConverted()) {
+      ConvertProjectDialog dialog = new ConvertProjectDialog(context, converters);
+      dialog.show();
+      if (dialog.isConverted()) {
         saveConversionResult(context);
         return true;
       }

@@ -16,8 +16,8 @@ import org.jetbrains.annotations.NotNull;
 public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFolder, ClonableContentFolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.SimpleSourceFolderImpl");
   private boolean myIsTestSource;
-  @NonNls static final String ELEMENT_NAME = "sourceFolder";
-  @NonNls private static final String TEST_SOURCE_ATTR = "isTestSource";
+  @NonNls public static final String ELEMENT_NAME = "sourceFolder";
+  @NonNls public static final String TEST_SOURCE_ATTR = "isTestSource";
   private String myPackagePrefix;
   static final String DEFAULT_PACKAGE_PREFIX = "";
   @NonNls private static final String PACKAGE_PREFIX_ATTR = "packagePrefix";

@@ -5,8 +5,12 @@ import com.intellij.conversion.ModuleSettings;
 import com.intellij.facet.FacetManagerImpl;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.impl.convert.JDomConvertingUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.module.impl.ModuleImpl;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.roots.impl.ContentEntryImpl;
+import com.intellij.openapi.roots.impl.SourceFolderImpl;
+import com.intellij.openapi.vfs.VfsUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author nik
@@ -60,5 +65,21 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
   @NotNull
   public String expandPath(@NotNull String path) {
     return myContext.expandPath(path, this); 
+  }
+
+  @NotNull
+  public Collection<File> getSourceRoots(boolean includeTests) {
+    final Element rootManager = getComponentElement("NewModuleRootManager");
+    final List<File> result = new ArrayList<File>();
+    for (Element contentRoot : JDomConvertingUtil.getChildren(rootManager, ContentEntryImpl.ELEMENT_NAME)) {
+      for (Element sourceFolder : JDomConvertingUtil.getChildren(contentRoot, SourceFolderImpl.ELEMENT_NAME)) {
+        boolean isTestFolder = Boolean.parseBoolean(sourceFolder.getAttributeValue(SourceFolderImpl.TEST_SOURCE_ATTR));
+        if (includeTests || !isTestFolder) {
+          final String path = VfsUtil.urlToPath(sourceFolder.getAttributeValue(SourceFolderImpl.URL_ATTR));
+          result.add(new File(FileUtil.toSystemDependentName(expandPath(path))));
+        }
+      }
+    }
+    return result;
   }
 }

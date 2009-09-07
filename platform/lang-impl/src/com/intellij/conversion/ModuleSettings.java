@@ -28,4 +28,7 @@ public interface ModuleSettings extends ComponentManagerSettings {
 
   @NotNull
   String expandPath(@NotNull String path);
+
+  @NotNull
+  Collection<File> getSourceRoots(boolean includeTests);
 }

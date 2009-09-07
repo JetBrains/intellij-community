@@ -29,13 +29,30 @@ public class ProjectConversionUtil {
   }
 
   public static File backupFiles(final Collection<File> files, final File parentDir) throws IOException {
-    final String dirName = FileUtil.createSequentFileName(parentDir, PROJECT_FILES_BACKUP, "");
-    File backupDir = new File(parentDir, dirName);
+    File backupDir = getBackupDir(parentDir);
+    backupFiles(files, parentDir, backupDir);
+    return backupDir;
+  }
+
+  public static void backupFiles(Collection<File> files, File parentDir, File backupDir) throws IOException {
     backupDir.mkdirs();
     for (File file : files) {
-      FileUtil.copy(file, new File(backupDir, file.getName()));
+      final File target;
+      if (FileUtil.isAncestor(parentDir, file, true)) {
+        final String relativePath = FileUtil.getRelativePath(parentDir, file);
+        target = new File(backupDir.getAbsolutePath() + File.separator + relativePath);
+        FileUtil.createParentDirs(target);
+      }
+      else {
+        target = new File(backupDir, file.getName());
+      }
+      FileUtil.copy(file, target);
     }
-    return backupDir;
+  }
+
+  public static File getBackupDir(File parentDir) {
+    final String dirName = FileUtil.createSequentFileName(parentDir, PROJECT_FILES_BACKUP, "");
+    return new File(parentDir, dirName);
   }
 
 }

@@ -4,6 +4,7 @@ import com.intellij.openapi.components.StorageScheme;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.Collection;
 
 /**
  * @author nik
@@ -28,4 +29,6 @@ public interface ConversionContext {
 
   @NotNull
   String collapsePath(@NotNull String path);
+
+  Collection<File> getLibraryClassRoots(@NotNull String name, @NotNull String level);
 }

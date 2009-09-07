@@ -18,7 +18,7 @@ public abstract class ContentFolderBaseImpl extends RootModelComponentBase imple
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.SimpleContentFolderBaseImpl");
   private final VirtualFilePointer myFilePointer;
   protected final ContentEntryImpl myContentEntry;
-  @NonNls private static final String URL_ATTR = "url";
+  @NonNls public static final String URL_ATTR = "url";
 
   ContentFolderBaseImpl(VirtualFile file, ContentEntryImpl contentEntry) {
     this(VirtualFilePointerManager.getInstance().create(file, contentEntry.getRootModel().getModule(), contentEntry.getRootModel().myVirtualFilePointerListener), contentEntry);

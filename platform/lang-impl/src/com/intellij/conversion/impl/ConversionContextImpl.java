@@ -10,17 +10,21 @@ import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author nik
@@ -103,6 +107,76 @@ public class ConversionContextImpl implements ConversionContext {
     map.addMacroReplacement(projectDir, PathMacrosImpl.PROJECT_DIR_MACRO_NAME);
     PathMacrosImpl.getInstanceEx().addMacroReplacements(map);
     return map.substitute(path, SystemInfo.isFileSystemCaseSensitive, null);
+  }
+
+  public Collection<File> getLibraryClassRoots(@NotNull String name, @NotNull String level) {
+    try {
+      Element libraryElement = null;
+      if (LibraryTablesRegistrar.PROJECT_LEVEL.equals(level)) {
+        libraryElement = findProjectLibraryElement(name);
+      }
+      else if (LibraryTablesRegistrar.APPLICATION_LEVEL.equals(level)) {
+        libraryElement = findGlobalLibraryElement(name);
+      }
+
+      if (libraryElement != null) {
+        //todo[nik] support jar directories
+        final Element classesChild = libraryElement.getChild("CLASSES");
+        if (classesChild != null) {
+          final List<Element> roots = JDomConvertingUtil.getChildren(classesChild, "root");
+          List<File> files = new ArrayList<File>();
+          final ExpandMacroToPathMap pathMap = createExpandMacroMap();
+          for (Element root : roots) {
+            final String url = root.getAttributeValue("url");
+            final String path = VfsUtil.urlToPath(url);
+            files.add(new File(PathUtil.getLocalPath(pathMap.substitute(path, true, null))));
+          }
+          return files;
+        }
+      }
+
+      return Collections.emptyList();
+    }
+    catch (CannotConvertException e) {
+      return Collections.emptyList();
+    }
+  }
+
+  @Nullable
+  private Element findGlobalLibraryElement(String name) throws CannotConvertException {
+    final File file = PathManager.getOptionsFile("applicationLibraries");
+    if (file.exists()) {
+      final Element root = JDomConvertingUtil.loadDocument(file).getRootElement();
+      final Element libraryTable = JDomConvertingUtil.findComponent(root, "libraryTable");
+      if (libraryTable != null) {
+        return findLibraryInTable(libraryTable, name);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private Element findProjectLibraryElement(String name) throws CannotConvertException {
+    if (myStorageScheme == StorageScheme.DEFAULT) {
+      final Element tableElement = getProjectSettings().getComponentElement("libraryTable");
+      if (tableElement != null) {
+        return findLibraryInTable(tableElement, name);
+      }
+    }
+    else {
+      File libraryFile = new File(new File(mySettingsBaseDir, "libraries"), name + ".xml");
+      if (libraryFile.exists()) {
+        return JDomConvertingUtil.loadDocument(libraryFile).getRootElement().getChild(LibraryImpl.ELEMENT);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private Element findLibraryInTable(Element tableElement, String name) {
+    final Condition<Element> filter = JDomConvertingUtil.createElementWithAttributeFilter(LibraryImpl.ELEMENT,
+                                                                                          LibraryImpl.LIBRARY_NAME_ATTR, name);
+    return JDomConvertingUtil.findChild(tableElement, filter);
   }
 
   private ExpandMacroToPathMap createExpandMacroMap() {

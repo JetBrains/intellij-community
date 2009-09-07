@@ -42,7 +42,7 @@ import java.util.*;
  */
 public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.impl.LibraryImpl");
-  @NonNls static final String LIBRARY_NAME_ATTR = "name";
+  @NonNls public static final String LIBRARY_NAME_ATTR = "name";
   @NonNls private static final String ROOT_PATH_ELEMENT = "root";
   @NonNls public static final String ELEMENT = "library";
   @NonNls private static final String JAR_DIRECTORY_ELEMENT = "jarDirectory";

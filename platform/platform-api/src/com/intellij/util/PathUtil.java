@@ -19,6 +19,8 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,11 +37,12 @@ public class PathUtil {
     if (file.getFileSystem() instanceof JarFileSystem && file.getParent() != null) {
       return null;
     }
-    String path = file.getPath();
-    if (path.endsWith(JarFileSystem.JAR_SEPARATOR)) {
-      path = path.substring(0, path.length() - JarFileSystem.JAR_SEPARATOR.length());
-    }
-    return path.replace('/', File.separatorChar);
+    return getLocalPath(file.getPath());
+  }
+
+  @NotNull
+  public static String getLocalPath(@NotNull String path) {
+    return FileUtil.toSystemDependentName(StringUtil.trimEnd(path, JarFileSystem.JAR_SEPARATOR));
   }
 
   @NotNull
@@ -62,11 +65,7 @@ public class PathUtil {
   }
 
   public static String toPresentableUrl(String url) {
-    String path = VirtualFileManager.extractPath(url);
-    if (path.endsWith(JarFileSystem.JAR_SEPARATOR)) {
-      path = path.substring(0, path.length() - JarFileSystem.JAR_SEPARATOR.length());
-    }
-    return path.replace('/', File.separatorChar);
+    return getLocalPath(VirtualFileManager.extractPath(url));
   }
 
   public static String getCanonicalPath(@NonNls String path) {
@@ -120,7 +119,7 @@ public class PathUtil {
     }
     int end = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
     if (end == path.length() - 1) {
-      end = path.lastIndexOf('/', end - 1);
+      end = Math.max(path.lastIndexOf('/', end - 1), path.lastIndexOf('\\', end - 1));
     }
     return end == -1 ? "" : path.substring(0, end);
   }
