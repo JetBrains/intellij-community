@@ -73,4 +73,9 @@ public class ArtifactRootElementImpl extends ArtifactRootElement<Object> {
   public String getName() {
     return "";
   }
+
+  @Override
+  public String toString() {
+    return "<root>";
+  }
 }

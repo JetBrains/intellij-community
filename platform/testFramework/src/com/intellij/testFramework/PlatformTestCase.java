@@ -259,10 +259,12 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   protected void tearDown() throws Exception {
-    ((StartupManagerImpl)StartupManager.getInstance(getProject())).prepareForNextTest();
     checkAllTimersAreDisposed();
+    if (myProject != null) {
+      ((StartupManagerImpl)StartupManager.getInstance(myProject)).prepareForNextTest();
+      LookupManager.getInstance(myProject).hideActiveLookup();
+    }
 
-    LookupManager.getInstance(myProject).hideActiveLookup();
     InspectionProfileManager.getInstance().deleteProfile(PROFILE);
     try {
       checkForSettingsDamage();

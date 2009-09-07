@@ -63,19 +63,26 @@ public class ConversionServiceImpl extends ConversionService {
 
       listener.conversionNeeded();
       ConversionContextImpl context = new ConversionContextImpl(projectPath);
-      for (ConversionRunner runner : getConvertersToRun(context)) {
-        if (runner.isConversionNeeded()) {
-          final List<File> readOnlyFiles = ConversionRunner.getReadOnlyFiles(runner.getAffectedFiles());
-          if (!readOnlyFiles.isEmpty()) {
-            listener.cannotWriteToFiles(readOnlyFiles);
-            return false;
-          }
-          runner.preProcess();
-          runner.process();
-          runner.postProcess();
-        }
+      final List<ConversionRunner> runners = getConversionRunners(context);
+
+      Set<File> affectedFiles = new HashSet<File>();
+      for (ConversionRunner runner : runners) {
+        affectedFiles.addAll(runner.getAffectedFiles());
+      }
+
+      final List<File> readOnlyFiles = ConversionRunner.getReadOnlyFiles(affectedFiles);
+      if (!readOnlyFiles.isEmpty()) {
+        listener.cannotWriteToFiles(readOnlyFiles);
+        return false;
+      }
+      final File backupDir = ProjectConversionUtil.backupFiles(affectedFiles, context.getProjectBaseDir());
+      for (ConversionRunner runner : runners) {
+        runner.preProcess();
+        runner.process();
+        runner.postProcess();
       }
       context.saveFiles();
+      listener.successfullyConverted(backupDir);
       saveConversionResult(context);
       return true;
     }
@@ -96,20 +103,7 @@ public class ConversionServiceImpl extends ConversionService {
       }
 
       final ConversionContextImpl context = new ConversionContextImpl(projectPath);
-      final List<ConversionRunner> converters = getConvertersToRun(context);
-      final Iterator<ConversionRunner> iterator = converters.iterator();
-      
-      Set<String> convertersToRunIds = new HashSet<String>();
-      while (iterator.hasNext()) {
-        ConversionRunner runner = iterator.next();
-        if (!runner.isConversionNeeded() && !convertersToRunIds.contains(runner.getProvider().getId())) {
-          iterator.remove();
-        }
-        else {
-          convertersToRunIds.add(runner.getProvider().getId());
-        }
-      }
-
+      final List<ConversionRunner> converters = getConversionRunners(context);
       ProjectConversionWizard wizard = new ProjectConversionWizard(context, converters);
       wizard.show();
       if (wizard.isConverted()) {
@@ -126,9 +120,26 @@ public class ConversionServiceImpl extends ConversionService {
     }
   }
 
+  private List<ConversionRunner> getConversionRunners(ConversionContextImpl context) throws CannotConvertException {
+    final List<ConversionRunner> converters = getSortedConverters(context);
+    final Iterator<ConversionRunner> iterator = converters.iterator();
+
+    Set<String> convertersToRunIds = new HashSet<String>();
+    while (iterator.hasNext()) {
+      ConversionRunner runner = iterator.next();
+      if (!runner.isConversionNeeded() && !convertersToRunIds.contains(runner.getProvider().getId())) {
+        iterator.remove();
+      }
+      else {
+        convertersToRunIds.add(runner.getProvider().getId());
+      }
+    }
+    return converters;
+  }
+
   public boolean isConversionNeeded(String projectPath) throws CannotConvertException {
     final ConversionContextImpl context = new ConversionContextImpl(projectPath);
-    final List<ConversionRunner> runners = getConvertersToRun(context);
+    final List<ConversionRunner> runners = getSortedConverters(context);
     if (runners.isEmpty()) {
       return false;
     }
@@ -141,7 +152,7 @@ public class ConversionServiceImpl extends ConversionService {
     return false;
   }
 
-  private List<ConversionRunner> getConvertersToRun(final ConversionContextImpl context) throws CannotConvertException {
+  private List<ConversionRunner> getSortedConverters(final ConversionContextImpl context) throws CannotConvertException {
     final CachedConversionResult conversionResult = loadCachedConversionResult(context.getProjectFile());
     return createConversionRunners(context, conversionResult.myAppliedConverters);
   }
