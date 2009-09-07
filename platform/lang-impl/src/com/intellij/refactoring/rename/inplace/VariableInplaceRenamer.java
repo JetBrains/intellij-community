@@ -26,10 +26,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNameIdentifierOwner;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -118,7 +115,11 @@ public class VariableInplaceRenamer {
       return false; // Should have valid local search scope for inplace rename
     }
 
-    final PsiElement context = scope.getContainingFile().getContext();
+    final PsiFile containingFile = scope.getContainingFile();
+    if (containingFile == null){
+      return false; // Should have valid local search scope for inplace rename
+    }
+    final PsiElement context = containingFile.getContext();
     if (context != null) {
       scope = context.getContainingFile();
     }
