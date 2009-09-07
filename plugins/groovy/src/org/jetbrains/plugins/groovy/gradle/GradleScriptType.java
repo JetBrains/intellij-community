@@ -25,6 +25,8 @@ import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
 
 import javax.swing.*;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author peter
@@ -112,5 +114,33 @@ public class GradleScriptType extends GroovyScriptType {
         params.getProgramParametersList().addParametersString(configuration.scriptParams);
       }
     };
+  }
+
+  public List<String> appendImplicitImports(@NotNull GroovyFile file) {
+    return Arrays.asList(
+      "org.gradle",
+      "org.gradle.util",
+      "org.gradle.api",
+      "org.gradle.api.artifacts",
+      "org.gradle.api.artifacts.dsl",
+      "org.gradle.api.artifacts.specs",
+      "org.gradle.api.dependencies",
+      "org.gradle.api.execution",
+      "org.gradle.api.file",
+      "org.gradle.api.logging",
+      "org.gradle.api.initialization",
+      "org.gradle.api.invocation",
+      "org.gradle.api.plugins",
+      "org.gradle.api.plugins.quality",
+      "org.gradle.api.specs",
+      "org.gradle.api.tasks",
+      "org.gradle.api.tasks.bundling",
+      "org.gradle.api.tasks.compile",
+      "org.gradle.api.tasks.javadoc",
+      "org.gradle.api.tasks.testing",
+      "org.gradle.api.tasks.util",
+      "org.gradle.api.tasks.wrapper"
+
+    );
   }
 }
