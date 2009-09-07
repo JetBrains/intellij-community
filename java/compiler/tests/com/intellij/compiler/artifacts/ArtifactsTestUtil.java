@@ -2,13 +2,17 @@ package com.intellij.compiler.artifacts;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.impl.elements.ArchivePackagingElement;
 import com.intellij.packaging.impl.elements.DirectoryPackagingElement;
-import com.intellij.packaging.artifacts.ArtifactManager;
-import com.intellij.packaging.artifacts.Artifact;
-import static junit.framework.Assert.*;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author nik
@@ -35,7 +39,24 @@ public class ArtifactsTestUtil {
   }
 
   public static void assertLayout(PackagingElement element, String expected) {
-    assertEquals(expected, printToString(element, 0));
+    assertEquals(adjustMultiLine(expected), printToString(element, 0));
+  }
+
+  private static String adjustMultiLine(String expected) {
+    final List<String> strings = StringUtil.split(StringUtil.trimStart(expected, "\n"), "\n");
+    int min = Integer.MAX_VALUE;
+    for (String s : strings) {
+      int k = 0;
+      while (k < s.length() && s.charAt(k) == ' ') {
+        k++;
+      }
+      min = Math.min(min, k);
+    }
+    List<String> lines = new ArrayList<String>();
+    for (String s : strings) {
+      lines.add(s.substring(min));
+    }
+    return StringUtil.join(lines, "\n") + "\n";      
   }
 
   public static void assertLayout(Project project, String artifactName, String expected) {
