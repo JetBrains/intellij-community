@@ -48,9 +48,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
   }
 
   protected void removeFile(final Language language) {
-    synchronized (PsiLock.LOCK) {
-      myRoots.remove(language);
-    }
+    myRoots.remove(language);
   }
 
   protected PsiFile getPsiInner(final Language target) {
@@ -78,9 +76,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
 
 
   public PsiFile getCachedPsi(Language target) {
-    synchronized (PsiLock.LOCK) {
-      return myRoots.get(target);
-    }
+    return myRoots.get(target);
   }
 
   public FileElement[] getKnownTreeRoots() {
