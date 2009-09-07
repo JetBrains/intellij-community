@@ -119,7 +119,7 @@ public class EclipseImlTest extends IdeaTestCase {
     doTest();
   }
 
-  @Bombed(day = 7, month = Calendar.SEPTEMBER)
+  @Bombed(day = 15, month = Calendar.SEPTEMBER)
   public void testAllProps() throws Exception {
     doTest("/eclipse-ws-3.4.1-a/all-props");
   }
