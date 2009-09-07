@@ -25,6 +25,7 @@ public class PlatformProjectViewOpener implements DirectoryProjectConfigurator {
           public void run() {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
+                if (project.isDisposed()) return;
                 final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW);
                 if (toolWindow != null) {
                   toolWindow.activate(null);
