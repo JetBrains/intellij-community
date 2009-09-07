@@ -6,6 +6,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
@@ -61,7 +62,7 @@ public abstract class SdkHomeConfigurable implements Configurable {
 
   public void apply() throws ConfigurationException {
     final SdkHomeSettings state = new SdkHomeSettings();
-    state.SDK_HOME = myPathField.getText();
+    state.SDK_HOME = FileUtil.toSystemIndependentName(myPathField.getText());
     getFrameworkSettings().loadState(state);
   }
 
@@ -74,7 +75,7 @@ public abstract class SdkHomeConfigurable implements Configurable {
   private String getStateText() {
     final SdkHomeSettings state = getFrameworkSettings().getState();
     final String stateText = state == null ? "" : state.SDK_HOME;
-    return StringUtil.notNullize(stateText);
+    return StringUtil.notNullize(FileUtil.toSystemDependentName(stateText));
   }
 
   public void disposeUIResources() {
