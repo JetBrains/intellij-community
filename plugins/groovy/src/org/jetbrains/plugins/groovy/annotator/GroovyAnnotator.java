@@ -22,6 +22,7 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
@@ -1038,6 +1039,11 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private static void registerAddImportFixes(GrReferenceElement refElement, Annotation annotation) {
+    final String referenceName = refElement.getReferenceName();
+    if (StringUtil.isEmpty(referenceName) || Character.isLowerCase(referenceName.charAt(0))) {
+      return;
+    }
+
     annotation.registerFix(new GroovyAddImportAction(refElement));
   }
 
