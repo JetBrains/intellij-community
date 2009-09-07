@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -684,8 +685,8 @@ public class TemplateState implements Disposable {
         return myTemplateRange.getEndOffset();
       }
 
-      public Map getProperties() {
-        return myProperties;
+      public <T> T getProperty(Key<T> key) {
+        return (T) myProperties.get(key);
       }
     };
   }
