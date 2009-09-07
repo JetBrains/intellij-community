@@ -284,6 +284,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
     ProjectManagerEx.getInstanceEx().setCurrentTestProject(ourProject);
 
+    ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).clearUncommitedDocuments();
+
     for (LocalInspectionTool tool : localInspectionTools) {
       enableInspectionTool(availableInspectionTools, new LocalInspectionToolWrapper(tool));
     }
