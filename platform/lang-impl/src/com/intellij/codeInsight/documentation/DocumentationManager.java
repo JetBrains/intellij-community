@@ -241,7 +241,7 @@ public class DocumentationManager {
     return hint;
   }
 
-  private static String getTitle(final PsiElement element) {
+  private static String getTitle(@NotNull final PsiElement element) {
     final String title = SymbolPresentationUtil.getSymbolPresentableText(element);
     return CodeInsightBundle.message("javadoc.info.title", title != null ? title : element.getText());
   }
@@ -434,6 +434,9 @@ public class DocumentationManager {
             return provider.getElement();
           }
         });
+        if (element == null) {
+          return;
+        }
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
