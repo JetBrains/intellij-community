@@ -34,6 +34,7 @@ import com.intellij.openapi.util.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
@@ -203,7 +204,9 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
     Element moduleElement = new Element(MODULE);
     moduleElement.setAttribute(NAME, ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       public String compute() {
-        return getModule() != null ? getModule().getName() : "";
+        final Module module = getModule();
+        return module != null ? module.getName()
+                              : myModuleName != null ? myModuleName : "";
       }
     }));
     element.addContent(moduleElement);
@@ -211,14 +214,15 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
     super.writeExternal(element);
   }
 
+  @Nullable
   public Module getModule() {
-    if (myModule != null && myModule.isDisposed()) {
-      myModuleName = myModule.getName();
-      myModule = null;
-    }
     if (myModule == null && myModuleName != null){
       myModule = ModuleManager.getInstance(getProject()).findModuleByName(myModuleName);
     }
+    if (myModule != null && myModule.isDisposed()) {
+      myModule = null;
+    }
+
     return myModule;
   }
 
