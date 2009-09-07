@@ -215,7 +215,7 @@ public class SvnVcs extends AbstractVcs {
     }
 
     // do one time after project loaded
-    startupManager.registerPostStartupActivity(new DumbAwareRunnable() {
+    startupManager.runWhenProjectIsInitialized(new DumbAwareRunnable() {
       public void run() {
         postStartup();
 
