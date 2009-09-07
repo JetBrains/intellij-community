@@ -2,13 +2,12 @@ package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerProjectExtension;
-import com.intellij.packaging.impl.artifacts.PackagingElementProcessor;
-import com.intellij.packaging.impl.artifacts.ParentElementProcessor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactProperties;
@@ -256,13 +255,45 @@ public class ArtifactUtil {
   }
 
   public static Collection<? extends Artifact> findArtifactsByFile(@NotNull final VirtualFile file, @NotNull Project project) {
-    final List<Artifact> artifacts = new ArrayList<Artifact>();
+    final Collection<Pair<Artifact, String>> pairs = findContainingArtifactsWithOutputPaths(file, project);
+    final List<Artifact> result = new ArrayList<Artifact>();
+    for (Pair<Artifact, String> pair : pairs) {
+      result.add(pair.getFirst());
+    }
+    return result;
+  }
+
+  public static Collection<Pair<Artifact, String>> findContainingArtifactsWithOutputPaths(@NotNull final VirtualFile file, @NotNull Project project) {
+    final List<Pair<Artifact, String>> artifacts = new ArrayList<Pair<Artifact, String>>();
     for (final Artifact artifact : ArtifactManager.getInstance(project).getArtifacts()) {
-      processPackagingElements(artifact, PackagingElementFactoryImpl.FILE_COPY_ELEMENT_TYPE, new Processor<FileCopyPackagingElement>() {
-        public boolean process(FileCopyPackagingElement fileCopyPackagingElement) {
+      processPackagingElements(artifact, PackagingElementFactoryImpl.FILE_COPY_ELEMENT_TYPE, new PackagingElementProcessor<FileCopyPackagingElement>() {
+        @Override
+        public boolean process(@NotNull List<CompositePackagingElement<?>> parents,
+                               @NotNull FileCopyPackagingElement fileCopyPackagingElement) {
           final VirtualFile root = fileCopyPackagingElement.findFile();
-          if (VfsUtil.isAncestor(root, file, false)) {
-            artifacts.add(artifact);
+          if (root != null && VfsUtil.isAncestor(root, file, false)) {
+            boolean isInArchive = false;
+            for (CompositePackagingElement<?> parent : parents) {
+              if (parent instanceof ArchivePackagingElement) {
+                isInArchive = true;
+                break;
+              }
+            }
+            String path;
+            if (!isInArchive) {
+              final String relativePath;
+              if (root.equals(file)) {
+                relativePath = fileCopyPackagingElement.getOutputFileName();
+              }
+              else {
+                relativePath = VfsUtil.getRelativePath(file, root, '/');
+              }
+              path = DeploymentUtil.concatPaths(getPathFromRoot(parents, "/"), relativePath);
+            }
+            else {
+              path = null;
+            }
+            artifacts.add(Pair.create(artifact, path));
             return false;
           }
           return true;

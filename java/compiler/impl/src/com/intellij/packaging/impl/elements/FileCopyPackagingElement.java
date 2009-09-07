@@ -85,6 +85,7 @@ public class FileCopyPackagingElement extends PackagingElement<FileCopyPackaging
     }
   }
 
+  @Nullable
   public VirtualFile findFile() {
     return LocalFileSystem.getInstance().findFileByPath(myFilePath);
   }
