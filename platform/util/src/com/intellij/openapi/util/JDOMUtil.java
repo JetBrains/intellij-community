@@ -303,12 +303,24 @@ public class JDOMUtil {
 
   @NotNull
   public static Document loadDocument(File file) throws JDOMException, IOException {
-    return loadDocument(new BufferedInputStream(new FileInputStream(file)));
+    final BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(file));
+    try {
+      return loadDocument(inputStream);
+    }
+    finally {
+      inputStream.close();
+    }
   }
 
   @NotNull
   public static Document loadDocument(final IFile iFile) throws IOException, JDOMException {
-    return loadDocument(new BufferedInputStream(iFile.openInputStream()));
+    final BufferedInputStream inputStream = new BufferedInputStream(iFile.openInputStream());
+    try {
+      return loadDocument(inputStream);
+    }
+    finally {
+      inputStream.close();
+    }
   }
 
   @NotNull
