@@ -28,7 +28,6 @@ import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -65,7 +64,7 @@ public class GroovyCompiler extends GroovyCompilerBase {
     VirtualFile[] files = compileScope.getFiles(GroovyFileType.GROOVY_FILE_TYPE, true);
     if (files.length == 0) return true;
 
-    final Set<String> scriptExtensions = new THashSet<String>(GroovyFileTypeLoader.getCustomGroovyScriptExtensions());
+    final Set<String> scriptExtensions = GroovyFileTypeLoader.getCustomGroovyScriptExtensions();
 
     Set<Module> modules = new HashSet<Module>();
     for (VirtualFile file : files) {

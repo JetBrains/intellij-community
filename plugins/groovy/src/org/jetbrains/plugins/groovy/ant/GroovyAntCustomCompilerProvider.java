@@ -5,14 +5,22 @@ import com.intellij.compiler.ant.taskdefs.PatternSetRef;
 import com.intellij.compiler.ant.taskdefs.Property;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.progress.ProgressManager;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyFileTypeLoader;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Set;
 
 /**
  * Groovy provider for custom compilation task
@@ -83,9 +91,30 @@ public class GroovyAntCustomCompilerProvider extends ChunkCustomCompilerExtensio
   public boolean hasCustomCompile(ModuleChunk chunk) {
     for (Module m : chunk.getModules()) {
       if (LibrariesUtil.hasGroovySdk(m)) {
-        return true;
+        final Set<String> scriptExtensions = GroovyFileTypeLoader.getCustomGroovyScriptExtensions();
+        final ContentIterator groovyFileSearcher = new ContentIterator() {
+          public boolean processFile(VirtualFile fileOrDir) {
+            ProgressManager.getInstance().checkCanceled();
+            if (isCompilableGroovyFile(fileOrDir, scriptExtensions)) {
+              return false;
+            }
+            return true;
+          }
+        };
+
+        final ModuleRootManager rootManager = ModuleRootManager.getInstance(m);
+        final ModuleFileIndex fileIndex = rootManager.getFileIndex();
+        for (VirtualFile file : rootManager.getSourceRoots()) {
+          if (!fileIndex.iterateContentUnderDirectory(file, groovyFileSearcher)) {
+            return true;
+          }
+        }
       }
     }
     return false;
+  }
+
+  private static boolean isCompilableGroovyFile(VirtualFile file, Set<String> scriptExtensions) {
+    return !file.isDirectory() && GroovyFileType.GROOVY_FILE_TYPE == file.getFileType() && !scriptExtensions.contains(file.getExtension());
   }
 }
