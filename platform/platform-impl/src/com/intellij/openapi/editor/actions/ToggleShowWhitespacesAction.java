@@ -12,11 +12,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.Nullable;
 
 public class ToggleShowWhitespacesAction extends ToggleAction {
   public void setSelected(AnActionEvent e, boolean state) {
-    getEditor(e).getSettings().setWhitespacesShown(state);
-    getEditor(e).getComponent().repaint();
+    final Editor editor = getEditor(e);
+    assert editor != null;
+    editor.getSettings().setWhitespacesShown(state);
+    editor.getComponent().repaint();
   }
 
   public boolean isSelected(AnActionEvent e) {
@@ -24,6 +27,7 @@ public class ToggleShowWhitespacesAction extends ToggleAction {
     return editor != null && editor.getSettings().isWhitespacesShown();
   }
 
+  @Nullable
   private static Editor getEditor(AnActionEvent e) {
     return e.getData(PlatformDataKeys.EDITOR);
   }
