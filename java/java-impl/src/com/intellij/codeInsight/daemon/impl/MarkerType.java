@@ -14,10 +14,13 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.CommonProcessors;
 import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.ide.util.PsiClassListCellRenderer;
+import com.intellij.openapi.progress.ProgressManager;
 import org.jetbrains.annotations.NonNls;
 
+import javax.swing.*;
 import java.util.Comparator;
 import java.util.Arrays;
 import java.awt.event.MouseEvent;
@@ -89,8 +92,18 @@ public enum MarkerType {
     public void browse(MouseEvent e, PsiElement element) {
       PsiElement parent = element.getParent();
       if (!(parent instanceof PsiMethod)) return;
-      PsiMethod method = (PsiMethod)parent;
-      PsiMethod[] overridings = OverridingMethodsSearch.search(method, method.getUseScope(), true).toArray(PsiMethod.EMPTY_ARRAY);
+
+      final PsiMethod method = (PsiMethod)parent;
+      final CommonProcessors.CollectProcessor<PsiMethod> collectProcessor = new CommonProcessors.CollectProcessor<PsiMethod>();
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+        public void run() {
+          OverridingMethodsSearch.search(method, method.getUseScope(), true).forEach(collectProcessor);
+        }
+      }, "Searching for overridding methods", true, method.getProject(), (JComponent)e.getComponent())) {
+        return;
+      }
+
+      PsiMethod[] overridings = collectProcessor.toArray(PsiMethod.EMPTY_ARRAY);
       if (overridings.length == 0) return;
       String title = method.hasModifierProperty(PsiModifier.ABSTRACT) ?
                      DaemonBundle .message("navigation.title.implementation.method", method.getName(), overridings.length) :
@@ -132,8 +145,18 @@ public enum MarkerType {
     public void browse(MouseEvent e, PsiElement element) {
       PsiElement parent = element.getParent();
       if (!(parent instanceof PsiClass)) return;
-      PsiClass aClass = (PsiClass)parent;
-      PsiClass[] inheritors = ClassInheritorsSearch.search(aClass, aClass.getUseScope(), true).toArray(PsiClass.EMPTY_ARRAY);
+
+      final PsiClass aClass = (PsiClass)parent;
+      final CommonProcessors.CollectProcessor<PsiClass> collectProcessor = new CommonProcessors.CollectProcessor<PsiClass>();
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+        public void run() {
+          ClassInheritorsSearch.search(aClass, aClass.getUseScope(), true).forEach(collectProcessor);
+        }
+      }, "Searching for overridden methods", true, aClass.getProject(), (JComponent)e.getComponent())) {
+        return;
+      }
+
+      PsiClass[] inheritors = collectProcessor.toArray(PsiClass.EMPTY_ARRAY);
       if (inheritors.length == 0) return;
       String title = aClass.isInterface()
                      ? CodeInsightBundle.message("goto.implementation.chooser.title", aClass.getName(), inheritors.length)
