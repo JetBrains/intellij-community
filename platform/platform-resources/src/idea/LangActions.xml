@@ -553,9 +553,9 @@
     <group id="EditorTabPopupMenuEx">
       <separator/>
       <reference ref="AddToFavorites"/>
-      <reference ref="MoveToChangeList"/>
-      <separator/>
       <reference ref="AddAllToFavorites"/>
+      <separator/>
+      <reference ref="MoveToChangeList"/>
       <separator/>
       <reference ref="RunContextPopupGroup"/>
       <reference ref="VersionControlsGroup"/>
