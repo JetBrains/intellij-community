@@ -34,7 +34,7 @@ import java.util.regex.Pattern;
 /**
  * @author John Murph
  */
-public class GradlePositionManager implements ScriptPositionManagerHelper {
+public class GradlePositionManager extends ScriptPositionManagerHelper {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.gradle.GradlePositionManager");
   private static final Pattern GRADLE_CLASS_PATTERN = Pattern.compile(".*_gradle_.*");
   private static final Key<CachedValue<ClassLoader>> GRADLE_CLASS_LOADER = Key.create("GRADLE_CLASS_LOADER");
@@ -42,11 +42,6 @@ public class GradlePositionManager implements ScriptPositionManagerHelper {
 
   public boolean isAppropriateRuntimeName(@NotNull final String runtimeName) {
     return GRADLE_CLASS_PATTERN.matcher(runtimeName).matches();
-  }
-
-  @NotNull
-  public String getOriginalScriptName(ReferenceType refType, @NotNull String runtimeName) {
-    return runtimeName;
   }
 
   public boolean isAppropriateScriptFile(@NotNull final PsiFile scriptFile) {

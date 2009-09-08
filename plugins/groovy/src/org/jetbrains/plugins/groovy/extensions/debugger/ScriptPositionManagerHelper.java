@@ -13,29 +13,28 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
  *
  * @author ilyas
  */
-public interface ScriptPositionManagerHelper {
-  ExtensionPointName<ScriptPositionManagerHelper> EP_NAME = ExtensionPointName.create("org.intellij.groovy.positionManagerDelegate");
+public abstract class ScriptPositionManagerHelper {
+  public static final ExtensionPointName<ScriptPositionManagerHelper> EP_NAME = ExtensionPointName.create("org.intellij.groovy.positionManagerDelegate");
 
-  boolean isAppropriateRuntimeName(@NotNull String runtimeName);
+  public abstract boolean isAppropriateRuntimeName(@NotNull String runtimeName);
 
-  /**
-   * @return Original script name by modified runtime from runtime
-   */
   @NotNull
-  String getOriginalScriptName(ReferenceType refType, @NotNull String runtimeName);
+  public String getOriginalScriptName(ReferenceType refType, @NotNull final String runtimeName) {
+    return runtimeName;
+  }
 
-  boolean isAppropriateScriptFile(@NotNull PsiFile scriptFile);
+  public abstract boolean isAppropriateScriptFile(@NotNull PsiFile scriptFile);
 
   /**
    * @return Runtime script name
    */
   @NotNull
-  String getRuntimeScriptName(@NotNull String originalName, GroovyFile groovyFile);
+  public abstract String getRuntimeScriptName(@NotNull String originalName, GroovyFile groovyFile);
 
 
   /**
    * @return Posiible script to debug through in project scope if there wer not found other by standarrd methods
    */
   @Nullable
-  PsiFile getExtraScriptIfNotFound(ReferenceType refType, @NotNull String runtimeName, Project project);
+  public abstract PsiFile getExtraScriptIfNotFound(ReferenceType refType, @NotNull String runtimeName, Project project);
 }
