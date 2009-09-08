@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 public class BuildTargetsFactoryImpl extends BuildTargetsFactory {
 
@@ -38,7 +39,7 @@ public class BuildTargetsFactoryImpl extends BuildTargetsFactory {
     return new Comment(comment);
   }
 
-  //for test
+  @TestOnly
   public GenerationOptions getDefaultOptions(Project project) {
     return new GenerationOptionsImpl(project, true, false, false, true, ArrayUtil.EMPTY_STRING_ARRAY);
   }

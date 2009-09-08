@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
@@ -34,13 +35,20 @@ public class GenerateAntBuildAction extends CompileActionBase {
     dialog.show();
     if (dialog.isOK()) {
       final String[] names = dialog.getRepresentativeModuleNames();
-      final GenerationOptionsImpl genOptions =
-        new GenerationOptionsImpl(project, dialog.isGenerateSingleFileBuild(), dialog.isFormsCompilationEnabled(), dialog.isBackupFiles(),
-                                  dialog.isForceTargetJdk(), dialog.isRuntimeClasspathInlined(), dialog.isIdeaHomeGenerated(), names);
-      if (!validateGenOptions(project, genOptions)) {
+      final GenerationOptionsImpl[] genOptions = {null};
+      Runnable runnable = new Runnable() {
+        public void run() {
+          genOptions[0] = new GenerationOptionsImpl(project, dialog.isGenerateSingleFileBuild(), dialog.isFormsCompilationEnabled(), dialog.isBackupFiles(),
+                                    dialog.isForceTargetJdk(), dialog.isRuntimeClasspathInlined(), dialog.isIdeaHomeGenerated(), names);
+        }
+      };
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, "Analyzing project structure...", true, project)) {
         return;
       }
-      generate(project, genOptions);
+      if (!validateGenOptions(project, genOptions[0])) {
+        return;
+      }
+      generate(project, genOptions[0]);
     }
   }
 
