@@ -4,11 +4,12 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.ShadowAction;
+import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-abstract class NavigationAction extends AnAction {
+abstract class NavigationAction extends AnAction implements DumbAware {
 
   private final ShadowAction myShadow;
 
