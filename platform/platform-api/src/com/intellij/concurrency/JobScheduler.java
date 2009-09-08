@@ -20,18 +20,14 @@
 package com.intellij.concurrency;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 public abstract class JobScheduler {
-  private static final ScheduledExecutorService ourScheduledExecutorService = Executors.newScheduledThreadPool(1, new ThreadFactory() {
-    public Thread newThread(final Runnable r) {
-      return new Thread(r, "Periodic tasks thread");
-    }
-  });
+  private static final ScheduledThreadPoolExecutor ourScheduledExecutorService = ConcurrencyUtil.newSingleScheduledThreadExecutor("Periodic tasks thread");
 
   public static JobScheduler getInstance() {
     return ServiceManager.getService(JobScheduler.class);

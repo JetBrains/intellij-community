@@ -93,11 +93,14 @@ public class ConcurrencyUtil {
       }
     });
   }
-  public static ScheduledExecutorService newSingleScheduledThreadExecutor(@NonNls final String threadFactoryName) {
-    return new ScheduledThreadPoolExecutor(1,new ThreadFactory() {
+  public static ScheduledThreadPoolExecutor newSingleScheduledThreadExecutor(@NonNls final String threadFactoryName) {
+    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1, new ThreadFactory() {
       public Thread newThread(final Runnable r) {
         return new Thread(r, threadFactoryName);
       }
     });
+    executor.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
+    executor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
+    return executor;
   }
 }

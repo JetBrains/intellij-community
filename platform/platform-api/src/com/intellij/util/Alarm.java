@@ -24,14 +24,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
-import java.awt.*;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class Alarm implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.Alarm");
@@ -41,20 +43,9 @@ public class Alarm implements Disposable {
   private final List<Request> myRequests = new ArrayList<Request>();
   private final List<Request> myPendingRequests = new ArrayList<Request>();
 
-  private final ExecutorService myExecutorService;
+  private final ThreadPoolExecutor myExecutorService;
 
-  @NonNls private static final String ALARM_THREADS_POOL_NAME = "Alarm pool";
-  private static final ThreadFactory THREAD_FACTORY_OWN = threadFactory(ALARM_THREADS_POOL_NAME + "(own)");
-
-  private static ThreadFactory threadFactory(@NonNls final String threadsName) {
-    return new ThreadFactory() {
-      public Thread newThread(final Runnable r) {
-        return new Thread(r, threadsName);
-      }
-    };
-  }
-
-  private static final ExecutorService ourSharedExecutorService = Executors.newSingleThreadExecutor(threadFactory(ALARM_THREADS_POOL_NAME + "(shared)"));
+  private static final ThreadPoolExecutor ourSharedExecutorService = ConcurrencyUtil.newSingleThreadExecutor("Alarm pool(shared)");
 
   private final Object LOCK = new Object();
   private final ThreadToUse myThreadToUse;
@@ -65,6 +56,7 @@ public class Alarm implements Disposable {
     myDisposed = true;
     cancelAllRequests();
     if (myThreadToUse == ThreadToUse.OWN_THREAD) {
+      myExecutorService.getQueue().clear();
       myExecutorService.shutdown();
     }
   }
@@ -92,7 +84,7 @@ public class Alarm implements Disposable {
   }
   public Alarm(@NotNull ThreadToUse threadToUse, Disposable parentDisposable) {
     myThreadToUse = threadToUse;
-    myExecutorService = threadToUse == ThreadToUse.OWN_THREAD ? Executors.newSingleThreadExecutor(THREAD_FACTORY_OWN) : ourSharedExecutorService;
+    myExecutorService = threadToUse == ThreadToUse.OWN_THREAD ? ConcurrencyUtil.newSingleThreadExecutor("Alarm pool(own)") : ourSharedExecutorService;
 
     if (parentDisposable != null) {
       Disposer.register(parentDisposable, this);
@@ -189,7 +181,7 @@ public class Alarm implements Disposable {
 
   public static boolean isEventDispatchThread() {
     final Application app = ApplicationManager.getApplication();
-    return (app != null && app.isDispatchThread()) || EventQueue.isDispatchThread();
+    return app != null && app.isDispatchThread() || EventQueue.isDispatchThread();
   }
 
   private class Request implements Runnable {
@@ -222,13 +214,15 @@ public class Alarm implements Disposable {
                 myRequests.remove(Request.this);
               }
 
-              if (myThreadToUse == ThreadToUse.SWING_THREAD && !Alarm.this.isEdt()) {
+              if (myThreadToUse == ThreadToUse.SWING_THREAD && !isEdt()) {
                 try {
                   SwingUtilities.invokeAndWait(task);
-                } catch (Exception e) {
+                }
+                catch (Exception e) {
                   LOG.error(e);
-                } 
-              } else {
+                }
+              }
+              else {
                 task.run();
               }
             }
@@ -238,7 +232,8 @@ public class Alarm implements Disposable {
             final Application app = ApplicationManager.getApplication();
             if (app != null) {
               app.invokeLater(scheduledTask, myModalityState);
-            } else {
+            }
+            else {
               SwingUtilities.invokeLater(scheduledTask);
             }
           }
@@ -254,10 +249,6 @@ public class Alarm implements Disposable {
 
     private Runnable getTask() {
       return myTask;
-    }
-
-    public Future<?> getFuture() {
-      return myFuture;
     }
 
     public void setFuture(final ScheduledFuture<?> future) {

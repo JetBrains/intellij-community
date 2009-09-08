@@ -3,6 +3,7 @@
  */
 package com.intellij.concurrency;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import org.jetbrains.annotations.NonNls;
 
@@ -11,7 +12,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 @NonNls
-public class JobSchedulerImpl extends JobScheduler {
+public class JobSchedulerImpl extends JobScheduler implements Disposable {
   public static final int CORES_COUNT = /*1;//*/Runtime.getRuntime().availableProcessors();
 
   private static final ThreadFactory WORKERS_FACTORY = new ThreadFactory() {
@@ -95,5 +96,9 @@ public class JobSchedulerImpl extends JobScheduler {
 
   public <T> Job<T> createJob(String title, int priority) {
     return new JobImpl<T>(title, priority);
+  }
+
+  public void dispose() {
+    ((ThreadPoolExecutor)getScheduler()).getQueue().clear();
   }
 }
