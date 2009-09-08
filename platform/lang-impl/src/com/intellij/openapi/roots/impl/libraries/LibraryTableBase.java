@@ -134,6 +134,22 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     for (Library library : removedLibraries) {
       fireBeforeLibraryRemoved(library);
     }
+
+    // dispose newly created instances of same (equals()) libraries
+    for (final Library library : model.myLibraries) {
+      if (addedLibraries.contains(library)) continue;
+      for (final Library oldLibrary : myModel.myLibraries) {
+        if (library.equals(oldLibrary) && library != oldLibrary) {
+          final int index = model.myLibraries.indexOf(library);
+          Disposer.dispose(library);
+
+          // keep old library if somebody cached old instance
+          model.myLibraries.set(index, oldLibrary);
+          break;
+        }
+      }
+    }
+
     myModel = model;
     for (Library library : removedLibraries) {
       Disposer.dispose(library);
@@ -215,7 +231,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
 
     public void removeLibrary(@NotNull Library library) {
       assertWritable();
-      myLibraries.remove(library);
+      if (myLibraries.remove(library)) Disposer.dispose(library);
     }
 
     public boolean isChanged() {
@@ -238,8 +254,9 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
         if (library.getName() != null) {
           Library oldLibrary = libraries.get(library.getName());
           if (oldLibrary != null) {
-            myLibraries.remove(oldLibrary);
+            removeLibrary(oldLibrary);
           }
+
           myLibraries.add(library);
           fireLibraryAdded(library);
         }
