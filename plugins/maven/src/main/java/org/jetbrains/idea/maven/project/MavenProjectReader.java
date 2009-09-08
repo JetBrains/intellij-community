@@ -1,5 +1,6 @@
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -304,10 +305,16 @@ public class MavenProjectReader {
       if (expandedProfiles == null) expandedProfiles = expandProperties(model, basedir).getProfiles();
       Profile eachExpandedProfile = expandedProfiles.get(i);
 
+      // todo hook for IDEADEV-38717
+      assert eachExpandedProfile != null : "expanded profile not found";
+      assert Comparing.equal(eachExpandedProfile.getId(), eachRawProfile.getId()) :
+        "expected id: " + eachRawProfile.getId() + " was : " + eachExpandedProfile.getId();
+
       for (ProfileActivator eachActivator : getProfileActivators()) {
         try {
           if (eachActivator.canDetermineActivation(eachExpandedProfile) && eachActivator.isActive(eachExpandedProfile)) {
             activated.add(eachRawProfile);
+            break;
           }
         }
         catch (ProfileActivationException e) {

@@ -156,7 +156,10 @@ public class MavenProjectsManagerWatcher {
   }
 
   private String getNormalizedPath(File settingsFile) {
-    return FileUtil.toSystemIndependentName(PathUtil.getCanonicalPath(settingsFile.getAbsolutePath()));
+    String canonized = PathUtil.getCanonicalPath(settingsFile.getAbsolutePath());
+    // todo hook for IDEADEV-40110 
+    assert canonized != null : "cannot normalize path for: " + settingsFile;
+    return FileUtil.toSystemIndependentName(canonized);
   }
 
   public synchronized void stop() {
