@@ -349,13 +349,15 @@ public class MavenUtil {
         Class<?> type = each.getType();
         each.setAccessible(true);
         Object value = each.get(object);
-        if (isContainerType(value)) {
+        if (shouldStrip(value)) {
           each.set(object, null);
         }
         else {
-          Package pack = type.getPackage();
-          if (pack != null && Model.class.getPackage().getName().equals(pack.getName())) {
-            if (value != null) stripDown(value);
+          if (value != null) {
+            Package pack = type.getPackage();
+            if (pack != null && Model.class.getPackage().getName().equals(pack.getName())) {
+              stripDown(value);
+            }
           }
         }
       }
@@ -365,11 +367,12 @@ public class MavenUtil {
     }
   }
 
-  public static boolean isContainerType(Object value) {
-    return value != null && (value.getClass().isArray()
-                             || value instanceof Collection
-                             || value instanceof Map
-                             || value instanceof Xpp3Dom);
+  public static boolean shouldStrip(Object value) {
+    if (value == null) return false;
+    return value.getClass().isArray()
+           || value instanceof Collection
+           || value instanceof Map
+           || value instanceof Xpp3Dom;
   }
 
   public static void run(Project project, String title, final MavenTask task) throws MavenProcessCanceledException {
