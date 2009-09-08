@@ -70,7 +70,7 @@ public class JDOMUtil {
 
   public static boolean areElementsEqual(Element e1, Element e2) {
     if (e1 == null && e2 == null) return true;
-    if (e1 == null) return false;
+    if (e1 == null || e2 == null) return false;
 
     return attListsEqual(e1.getAttributes(), e2.getAttributes()) &&
            contentListsEqual(e1.getContent(CONTENT_FILTER), e2.getContent(CONTENT_FILTER));
@@ -235,7 +235,7 @@ public class JDOMUtil {
 
   private static boolean contentListsEqual(final List c1, final List c2) {
     if (c1 == null && c2 == null) return true;
-    if (c1 == null) return false;
+    if (c1 == null || c2 == null) return false;
 
     Iterator l1 = c1.listIterator();
     Iterator l2 = c2.listIterator();
