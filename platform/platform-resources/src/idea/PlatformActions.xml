@@ -286,7 +286,12 @@
     </group>
 
     <group id="EditorPopupMenu" configurable="true">
-      <reference ref="CutCopyPasteGroup"/>
+      <reference ref="$Cut"/>
+      <reference ref="$Copy"/>
+      <reference ref="$Paste"/>
+      <reference ref="PasteMultiple"/>
+      <reference ref="EditorPasteSimple"/>
+      <reference ref="EditorToggleColumnMode"/>
       <separator/>
       <action id="CompareClipboardWithSelection" class="com.intellij.openapi.diff.actions.CompareClipboardWithSelection"/>
       <reference ref="ChangeFileEncodingGroup"/>
@@ -294,6 +299,8 @@
 
     <group id="EditorTabPopupMenu">
       <reference ref="CloseEditorsGroup"/>
+      <separator/>
+      <reference ref="CopyPaths"/>
       <separator/>
       <reference ref="SplitVertically"/>
       <reference ref="SplitHorizontally"/>

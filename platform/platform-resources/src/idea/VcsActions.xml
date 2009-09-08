@@ -202,7 +202,7 @@
     </action>
 
     <action id="MoveToChangeList" class="com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction">
-      <add-to-group group-id="EditorPopupMenu" relative-to-action="CutCopyPasteGroup" anchor="after"/>
+      <add-to-group group-id="EditorPopupMenu" relative-to-action="CompareClipboardWithSelection" anchor="before"/>
     </action>
 
     <action id="WelcomeScreen.GetFromVcs" class="com.intellij.openapi.wm.impl.welcomeScreen.GetFromVcsAction"

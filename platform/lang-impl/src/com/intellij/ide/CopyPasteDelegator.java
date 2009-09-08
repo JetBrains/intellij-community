@@ -72,6 +72,10 @@ public abstract class CopyPasteDelegator implements CopyPasteSupport {
       return CopyHandler.canCopy(elements);
     }
 
+    public boolean isCopyVisible(DataContext dataContext) {
+      return true;
+    }
+
     public void performCut(DataContext dataContext) {
       PsiElement[] elements = getValidSelectedElements();
       if (MoveHandler.adjustForMove(myProject, elements, null) == null) {
@@ -86,6 +90,10 @@ public abstract class CopyPasteDelegator implements CopyPasteSupport {
     public boolean isCutEnabled(DataContext dataContext) {
       final PsiElement[] elements = getValidSelectedElements();
       return elements.length != 0 && MoveHandler.canMove(elements, null);
+    }
+
+    public boolean isCutVisible(DataContext dataContext) {
+      return true;
     }
 
     public void performPaste(DataContext dataContext) {

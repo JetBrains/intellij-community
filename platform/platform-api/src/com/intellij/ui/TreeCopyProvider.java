@@ -48,4 +48,8 @@ public class TreeCopyProvider implements CopyProvider {
   public boolean isCopyEnabled(DataContext dataContext) {
     return myTree.getSelectionPath() != null;
   }
+
+  public boolean isCopyVisible(DataContext dataContext) {
+    return true;
+  }
 }

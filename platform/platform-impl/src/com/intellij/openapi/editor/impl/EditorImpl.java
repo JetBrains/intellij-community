@@ -2955,12 +2955,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return true;
     }
 
+    public boolean isCopyVisible(DataContext dataContext) {
+      return getSelectionModel().hasSelection() || getSelectionModel().hasBlockSelection();
+    }
+
     public void performCut(DataContext dataContext) {
       executeAction(IdeActions.ACTION_EDITOR_CUT, dataContext);
     }
 
     public boolean isCutEnabled(DataContext dataContext) {
       return !isViewer() && getDocument().isWritable();
+    }
+
+    public boolean isCutVisible(DataContext dataContext) {
+      return getSelectionModel().hasSelection() || getSelectionModel().hasBlockSelection();
     }
 
     public void performPaste(DataContext dataContext) {

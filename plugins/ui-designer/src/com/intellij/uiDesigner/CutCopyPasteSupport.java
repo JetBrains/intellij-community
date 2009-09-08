@@ -53,6 +53,10 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
     return FormEditingUtil.getSelectedComponents(myEditor).size() > 0 && !myEditor.getInplaceEditingLayer().isEditing();
   }
 
+  public boolean isCopyVisible(DataContext dataContext) {
+    return true;
+  }
+
   public void performCopy(final DataContext dataContext) {
     doCopy();
   }
@@ -75,6 +79,10 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
 
   public boolean isCutEnabled(final DataContext dataContext) {
     return isCopyEnabled(dataContext) && FormEditingUtil.canDeleteSelection(myEditor);
+  }
+
+  public boolean isCutVisible(DataContext dataContext) {
+    return true;
   }
 
   public void performCut(final DataContext dataContext) {

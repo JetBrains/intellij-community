@@ -580,6 +580,10 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
             return getSelectionPath() != null;
           }
 
+          public boolean isCopyVisible(DataContext dataContext) {
+            return true;
+          }
+
           public void performCopy(DataContext dataContext) {
             TreePath selection = getSelectionPath();
             Object value = selection.getLastPathComponent();

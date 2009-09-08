@@ -18,5 +18,11 @@ public class CopyAction extends AnAction implements DumbAware {
     DataContext dataContext = event.getDataContext();
     CopyProvider provider = (CopyProvider)dataContext.getData(DataConstants.COPY_PROVIDER);
     presentation.setEnabled(provider != null && provider.isCopyEnabled(dataContext));
+    if (event.getPlace().equals(ActionPlaces.EDITOR_POPUP) && provider != null) {
+      presentation.setVisible(provider.isCopyVisible(dataContext));
+    }
+    else {
+      presentation.setVisible(true);
+    }
   }
 }
