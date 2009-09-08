@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
@@ -419,7 +420,7 @@ public class GitVcs extends AbstractVcs {
       myRootTracker = null;
     }
     if (myVFSListener != null) {
-      myVFSListener.dispose();
+      Disposer.dispose(myVFSListener);
       myVFSListener = null;
     }
     if (myGitIgnoreTracker != null) {

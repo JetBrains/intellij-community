@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.PathUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -46,12 +47,8 @@ public class MavenProjectsManagerWatcher {
   private final MavenProjectsProcessor myReadingProcessor;
   private final MavenEmbeddersManager myEmbeddersManager;
 
-  private final MessageBusConnection myBusConnection;
-
-  private DocumentAdapter myDocumentListener;
-  private MavenGeneralSettings.Listener mySettingsPathsChangesListener;
-  private List<VirtualFilePointer> mySettingsFilesPointers = new ArrayList<VirtualFilePointer>();
-  private List<LocalFileSystem.WatchRequest> myWatchedRoots = new ArrayList<LocalFileSystem.WatchRequest>();
+  private final List<VirtualFilePointer> mySettingsFilesPointers = new ArrayList<VirtualFilePointer>();
+  private final List<LocalFileSystem.WatchRequest> myWatchedRoots = new ArrayList<LocalFileSystem.WatchRequest>();
 
   private final Set<Document> myChangedDocuments = new THashSet<Document>();
   private final MavenMergingUpdateQueue myChangedDocumentsQueue;
@@ -67,7 +64,6 @@ public class MavenProjectsManagerWatcher {
     myReadingProcessor = readingProcessor;
     myEmbeddersManager = embeddersManager;
 
-    myBusConnection = myProject.getMessageBus().connect();
 
     myChangedDocumentsQueue = new MavenMergingUpdateQueue(getClass() + ": Document changes queue",
                                                           DOCUMENT_SAVE_DELAY,
@@ -76,21 +72,21 @@ public class MavenProjectsManagerWatcher {
   }
 
   public synchronized void start() {
+    final MessageBusConnection myBusConnection = myProject.getMessageBus().connect(myChangedDocumentsQueue);
     myBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, new MyFileChangeListener());
     myBusConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyRootChangesListener());
 
     myChangedDocumentsQueue.makeUserAware(myProject);
     myChangedDocumentsQueue.activate();
 
-    myDocumentListener = new DocumentAdapter() {
+    DocumentAdapter myDocumentListener = new DocumentAdapter() {
       public void documentChanged(DocumentEvent event) {
         Document doc = event.getDocument();
         VirtualFile file = FileDocumentManager.getInstance().getFile(doc);
 
         if (file == null) return;
-        boolean isMavenFile = file.getName().equals(MavenConstants.POM_XML)
-                              || file.getName().equals(MavenConstants.PROFILES_XML)
-                              || isSettingsFile(file);
+        boolean isMavenFile =
+          file.getName().equals(MavenConstants.POM_XML) || file.getName().equals(MavenConstants.PROFILES_XML) || isSettingsFile(file);
         if (!isMavenFile) return;
 
         synchronized (myChangedDocuments) {
@@ -121,15 +117,20 @@ public class MavenProjectsManagerWatcher {
         });
       }
     };
-    getDocumentEventMulticaster().addDocumentListener(myDocumentListener);
+    getDocumentEventMulticaster().addDocumentListener(myDocumentListener,myBusConnection);
 
-    mySettingsPathsChangesListener = new MavenGeneralSettings.Listener() {
+    final MavenGeneralSettings.Listener mySettingsPathsChangesListener = new MavenGeneralSettings.Listener() {
       public void pathChanged() {
         updateSettingsFilePointers();
         onSettingsChange();
       }
     };
     myGeneralSettings.addListener(mySettingsPathsChangesListener);
+    Disposer.register(myChangedDocumentsQueue, new Disposable() {
+      public void dispose() {
+        myGeneralSettings.removeListener(mySettingsPathsChangesListener);
+      }
+    });
     updateSettingsFilePointers();
   }
 
@@ -146,7 +147,7 @@ public class MavenProjectsManagerWatcher {
     myWatchedRoots.add(LocalFileSystem.getInstance().addRootToWatch(getNormalizedPath(settingsFile.getParentFile()), false));
 
     String url = VfsUtil.pathToUrl(getNormalizedPath(settingsFile));
-    mySettingsFilesPointers.add(VirtualFilePointerManager.getInstance().create(url, myProject, new VirtualFilePointerListener() {
+    mySettingsFilesPointers.add(VirtualFilePointerManager.getInstance().create(url, myChangedDocumentsQueue, new VirtualFilePointerListener() {
       public void beforeValidityChanged(VirtualFilePointer[] pointers) {
       }
 
@@ -155,7 +156,7 @@ public class MavenProjectsManagerWatcher {
     }));
   }
 
-  private String getNormalizedPath(File settingsFile) {
+  private static String getNormalizedPath(File settingsFile) {
     String canonized = PathUtil.getCanonicalPath(settingsFile.getAbsolutePath());
     // todo hook for IDEADEV-40110 
     assert canonized != null : "cannot normalize path for: " + settingsFile;
@@ -164,13 +165,9 @@ public class MavenProjectsManagerWatcher {
 
   public synchronized void stop() {
     Disposer.dispose(myChangedDocumentsQueue);
-    getDocumentEventMulticaster().removeDocumentListener(myDocumentListener);
-    myGeneralSettings.removeListener(mySettingsPathsChangesListener);
-    mySettingsFilesPointers.clear();
-    myBusConnection.disconnect();
   }
 
-  private EditorEventMulticaster getDocumentEventMulticaster() {
+  private static EditorEventMulticaster getDocumentEventMulticaster() {
     return EditorFactory.getInstance().getEventMulticaster();
   }
 
