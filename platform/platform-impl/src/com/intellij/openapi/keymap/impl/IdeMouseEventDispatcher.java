@@ -59,22 +59,24 @@ public final class IdeMouseEventDispatcher{
 
     // search in main keymap
 
-    KeymapManager keymapManager = KeymapManager.getInstance();
-    if (keymapManager != null) {
-      Keymap keymap = keymapManager.getActiveKeymap();
-      String[] actionIds=keymap.getActionIds(shortcut);
+    if (KeymapManagerImpl.ourKeymapManagerInitialized) {
+      KeymapManager keymapManager = KeymapManager.getInstance();
+      if (keymapManager != null) {
+        Keymap keymap = keymapManager.getActiveKeymap();
+        String[] actionIds=keymap.getActionIds(shortcut);
 
-      ActionManager actionManager = ActionManager.getInstance();
-      for (String actionId : actionIds) {
-        AnAction action = actionManager.getAction(actionId);
-        if (action == null) {
-          continue;
-        }
-        if (isModalContext && !action.isEnabledInModalContext()) {
-          continue;
-        }
-        if (!myActions.contains(action)) {
-          myActions.add(action);
+        ActionManager actionManager = ActionManager.getInstance();
+        for (String actionId : actionIds) {
+          AnAction action = actionManager.getAction(actionId);
+          if (action == null) {
+            continue;
+          }
+          if (isModalContext && !action.isEnabledInModalContext()) {
+            continue;
+          }
+          if (!myActions.contains(action)) {
+            myActions.add(action);
+          }
         }
       }
     }
