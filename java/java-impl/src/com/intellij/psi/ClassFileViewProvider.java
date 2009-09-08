@@ -6,6 +6,7 @@ package com.intellij.psi;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
@@ -23,7 +24,8 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
 
   @Override
   protected PsiFile creatFile(final Project project, final VirtualFile vFile, final FileType fileType) {
-    if (ProjectRootManager.getInstance(project).getFileIndex().isInLibraryClasses(vFile)) {
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    if (fileIndex.isInLibraryClasses(vFile) || !fileIndex.isInSource(vFile)) {
       String name = vFile.getName();
 
       // skip inners & anonymous
