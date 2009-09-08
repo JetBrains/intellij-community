@@ -53,6 +53,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -198,7 +201,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       }
     }
 
-    for (final String implicitlyImported : IMPLICITLY_IMPORTED_PACKAGES) {
+    for (final String implicitlyImported : getImplicitlyImportedPackages()) {
       final String candidate = implicitlyImported + suffix;
       if (facade.findClass(candidate, getResolveScope()) != null) {
         maybeImplicit.add(candidate);
@@ -214,6 +217,14 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     return maybeImplicit;
   }
 
+  private List<String> getImplicitlyImportedPackages() {
+    final ArrayList<String> result = new ArrayList<String>(Arrays.asList(IMPLICITLY_IMPORTED_PACKAGES));
+    if (isScript()) {
+      result.addAll(GroovyScriptType.getScriptType(this).appendImplicitImports(this));
+    }
+    return result;
+  }
+
   private boolean processImplicitImports(PsiScopeProcessor processor, ResolveState state, PsiElement lastParent,
                                          PsiElement place,
                                          JavaPsiFacade facade) {
@@ -222,7 +233,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
     if (currentPackage != null && !currentPackage.processDeclarations(processor, state, lastParent, place)) return false;
 
-    for (final String implicitlyImported : IMPLICITLY_IMPORTED_PACKAGES) {
+    for (final String implicitlyImported : getImplicitlyImportedPackages()) {
       PsiPackage aPackage = facade.findPackage(implicitlyImported);
       if (aPackage != null && !aPackage.processDeclarations(processor, state, lastParent, place)) return false;
     }

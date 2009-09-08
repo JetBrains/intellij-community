@@ -12,6 +12,8 @@ import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
 import org.jetbrains.plugins.groovy.runner.DefaultGroovyScriptRunner;
 
 import javax.swing.*;
+import java.util.List;
+import java.util.Collections;
 
 /**
  * @author ilyas
@@ -64,5 +66,9 @@ public abstract class GroovyScriptType {
   @Nullable
   public GroovyScriptRunner getRunner() {
     return null;
+  }
+
+  public List<String> appendImplicitImports(@NotNull GroovyFile file) {
+    return Collections.emptyList();
   }
 }

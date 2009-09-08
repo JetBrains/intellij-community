@@ -172,6 +172,7 @@ public class GradleScriptType extends GroovyScriptType {
   }
 
 
+  @Override
   public List<String> appendImplicitImports(@NotNull GroovyFile file) {
     return Arrays.asList(
       "org.gradle",
