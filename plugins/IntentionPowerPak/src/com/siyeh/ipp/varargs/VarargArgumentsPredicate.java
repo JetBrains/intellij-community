@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2008 Bas Leijdekkers
+ * Copyright 2007-2009 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ipp.varargs;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,11 +43,42 @@ class VarargArgumentsPredicate implements PsiElementPredicate {
         if (arguments.length < parametersCount) {
             return false;
         }
+
+        // after invoking the (false positive) quick fix for
+        // "Unnecessarily qualified static usage" inspection
+        // the psi gets into a bad state, this guards against that.
+        // http://www.jetbrains.net/jira/browse/IDEADEV-40124
+        final PsiReferenceExpression methodExpression =
+                methodCallExpression.getMethodExpression();
+        final PsiExpression qualifier =
+                methodExpression.getQualifierExpression();
+        if (qualifier == null) {
+            final PsiReferenceParameterList typeParameterList =
+                    methodExpression.getParameterList();
+            if (typeParameterList != null) {
+                final PsiTypeElement[] typeParameterElements =
+                        typeParameterList.getTypeParameterElements();
+                if (typeParameterElements.length > 0) {
+                    return false;
+                }
+            }
+        }
+
         if (arguments.length != parametersCount) {
             return true;
         }
         final PsiExpression lastExpression =
                 arguments[arguments.length - 1];
+        final PsiExpression expression = PsiUtil.deparenthesizeExpression(
+                lastExpression);
+        if (expression instanceof PsiLiteralExpression) {
+            final String text = expression.getText();
+            if ("null".equals(text)) {
+                // a single null argument is not wrapped in an array
+                // on a vararg method call, but just passed as a null value
+                return false;
+            }
+        }
         final PsiType lastArgumentType = lastExpression.getType();
         if (!(lastArgumentType instanceof PsiArrayType)) {
             return true;
