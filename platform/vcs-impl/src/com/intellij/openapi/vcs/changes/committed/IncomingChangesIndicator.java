@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
@@ -12,6 +13,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
@@ -52,10 +54,14 @@ public class IncomingChangesIndicator implements ProjectComponent {
     myStatusBar = WindowManager.getInstance().getStatusBar(myProject);
     myIndicatorComponent = new IndicatorComponent();
     myStatusBar.addCustomIndicationComponent(myIndicatorComponent);
+    Disposer.register(myProject, new Disposable() {
+      public void dispose() {
+        myStatusBar.removeCustomIndicationComponent(myIndicatorComponent);
+      }
+    });
   }
 
   public void projectClosed() {
-    myStatusBar.removeCustomIndicationComponent(myIndicatorComponent);
   }
 
   @NonNls

@@ -69,8 +69,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   private static final Key<LocalFileSystem.WatchRequest> WATCH_REQUEST_KEY = Key.create("WATCH_REQUEST_KEY");
   private static final Key<Boolean> DUMB_AWARE = Key.create("DUMB_AWARE");
 
-  private static final FileEditor[] EMPTY_EDITOR_ARRAY = new FileEditor[]{};
-  private static final FileEditorProvider[] EMPTY_PROVIDER_ARRAY = new FileEditorProvider[]{};
+  private static final FileEditor[] EMPTY_EDITOR_ARRAY = {};
+  private static final FileEditorProvider[] EMPTY_PROVIDER_ARRAY = {};
 
   private volatile JPanel myPanels;
   private EditorsSplitters mySplitters;
@@ -79,34 +79,15 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("FileEditorManagerUpdateQueue", 50, true, null);
 
   /**
-   * Updates tabs colors
-   */
-  private final MyFileStatusListener myFileStatusListener;
-
-  /**
    * Removes invalid myEditor and updates "modified" status.
    */
-  private final MyEditorPropertyChangeListener myEditorPropertyChangeListener;
-  /**
-   * Updates tabs names
-   */
-  private final MyVirtualFileListener myVirtualFileListener;
-  /**
-   * Extends/cuts number of opened tabs. Also updates location of tabs.
-   */
-  private final MyUISettingsListener myUISettingsListener;
+  private final MyEditorPropertyChangeListener myEditorPropertyChangeListener = new MyEditorPropertyChangeListener();
 
   private final List<EditorDataProvider> myDataProviders = new ArrayList<EditorDataProvider>();
-  private MessageBusConnection myConnection;
 
   public FileEditorManagerImpl(final Project project) {
 /*    ApplicationManager.getApplication().assertIsDispatchThread(); */
     myProject = project;
-
-    myFileStatusListener = new MyFileStatusListener();
-    myEditorPropertyChangeListener = new MyEditorPropertyChangeListener();
-    myVirtualFileListener = new MyVirtualFileListener();
-    myUISettingsListener = new MyUISettingsListener();
     myListenerList = new MessageListenerList<FileEditorManagerListener>(myProject.getMessageBus(), FileEditorManagerListener.FILE_EDITOR_MANAGER);
   }
 
@@ -814,12 +795,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     }
 
     final List<EditorWithProviderComposite> composites = getEditorComposites(file);
-    if (!composites.isEmpty()) {
-      return composites.get(0).getSelectedEditorWithProvider();
-    }
-    else {
-      return null;
-    }
+    return composites.isEmpty() ? null : composites.get(0).getSelectedEditorWithProvider();
   }
 
   @NotNull
@@ -947,15 +923,32 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     //myFocusWatcher.install(myWindows.getComponent ());
     getSplitters().startListeningFocus();
 
-    myConnection = myProject.getMessageBus().connect();
+    MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
 
     final FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     if (fileStatusManager != null) {
-      fileStatusManager.addFileStatusListener(myFileStatusListener);
+      /**
+       * Updates tabs colors
+       */
+      final MyFileStatusListener myFileStatusListener = new MyFileStatusListener();
+      fileStatusManager.addFileStatusListener(myFileStatusListener, myProject);
     }
-    myConnection.subscribe(AppTopics.FILE_TYPES, new MyFileTypeListener());
-    VirtualFileManager.getInstance().addVirtualFileListener(myVirtualFileListener);
+    connection.subscribe(AppTopics.FILE_TYPES, new MyFileTypeListener());
+    /**
+     * Updates tabs names
+     */
+    final MyVirtualFileListener myVirtualFileListener = new MyVirtualFileListener();
+    VirtualFileManager.getInstance().addVirtualFileListener(myVirtualFileListener, myProject);
+    /**
+     * Extends/cuts number of opened tabs. Also updates location of tabs.
+     */
+    final MyUISettingsListener myUISettingsListener = new MyUISettingsListener();
     UISettings.getInstance().addUISettingsListener(myUISettingsListener);
+    Disposer.register(myProject, new Disposable() {
+      public void dispose() {
+        UISettings.getInstance().removeUISettingsListener(myUISettingsListener);
+      }
+    });
 
     StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
       public void run() {
@@ -982,22 +975,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         });
       }
     });
-
   }
 
   public void projectClosed() {
     //myFocusWatcher.deinstall(myWindows.getComponent ());
     getSplitters().dispose();
-
-    myConnection.disconnect();
-
-// Remove application level listeners
-    final FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
-    if (fileStatusManager != null) {
-      fileStatusManager.removeFileStatusListener(myFileStatusListener);
-    }
-    VirtualFileManager.getInstance().removeVirtualFileListener(myVirtualFileListener);
-    UISettings.getInstance().removeUISettingsListener(myUISettingsListener);
 
 // Dispose created editors. We do not use use closeEditor method because
 // it fires event and changes history.

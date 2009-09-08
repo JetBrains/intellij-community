@@ -1,44 +1,39 @@
 package com.intellij.javaee;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.Disposable;
 import com.intellij.psi.impl.PsiManagerEx;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
-public class PsiExternalResourceNotifier implements ProjectComponent {
-  private final ExternalResourceListener myExternalResourceListener;
+public class PsiExternalResourceNotifier extends AbstractProjectComponent {
   private final PsiManagerEx myPsiManager;
   private final ExternalResourceManagerEx myExternalResourceManager;
   private final DaemonCodeAnalyzer myDaemonCodeAnalyzer;
 
   public PsiExternalResourceNotifier(PsiManagerEx psiManager, ExternalResourceManager externalResourceManager,
-                                     final DaemonCodeAnalyzer daemonCodeAnalyzer) {
+                                     final DaemonCodeAnalyzer daemonCodeAnalyzer, Project project) {
+    super(project);
     myPsiManager = psiManager;
     myExternalResourceManager = (ExternalResourceManagerEx)externalResourceManager;
     myDaemonCodeAnalyzer = daemonCodeAnalyzer;
-    myExternalResourceListener = new MyExternalResourceListener();
+    final ExternalResourceListener myExternalResourceListener = new MyExternalResourceListener();
     myExternalResourceManager.addExternalResourceListener(myExternalResourceListener);
-  }
-
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
+    Disposer.register(project, new Disposable() {
+      public void dispose() {
+        myExternalResourceManager.removeExternalResourceListener(myExternalResourceListener);
+      }
+    });
   }
 
   @NotNull
   public String getComponentName() {
     return "PsiExternalResourceNotifier";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-    myExternalResourceManager.removeExternalResourceListener(myExternalResourceListener);
   }
 
   private class MyExternalResourceListener implements ExternalResourceListener {

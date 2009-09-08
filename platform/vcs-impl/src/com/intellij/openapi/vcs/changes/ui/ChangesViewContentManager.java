@@ -7,12 +7,11 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -36,17 +35,16 @@ import java.util.List;
 /**
  * @author yole
  */
-public class ChangesViewContentManager implements ProjectComponent {
+public class ChangesViewContentManager extends AbstractProjectComponent {
   public static final String TOOLWINDOW_ID = VcsBundle.message("changes.toolwindow.name");
   private static final Key<ChangesViewContentEP> myEPKey = Key.create("ChangesViewContentEP");
-  private ChangesViewContentManager.MyContentManagerListener myContentManagerListener;
+  private MyContentManagerListener myContentManagerListener;
   private final ProjectLevelVcsManager myVcsManager;
 
   public static ChangesViewContentManager getInstance(Project project) {
     return project.getComponent(ChangesViewContentManager.class);
   }
 
-  private final Project myProject;
   private ContentManager myContentManager;
   private ToolWindow myToolWindow;
   private final VcsListener myVcsListener = new MyVcsListener();
@@ -54,7 +52,7 @@ public class ChangesViewContentManager implements ProjectComponent {
   private final List<Content> myAddedContents = new ArrayList<Content>();
 
   public ChangesViewContentManager(final Project project, final ProjectLevelVcsManager vcsManager) {
-    myProject = project;
+    super(project);
     myVcsManager = vcsManager;
     myVcsChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
   }
@@ -71,12 +69,21 @@ public class ChangesViewContentManager implements ProjectComponent {
           myContentManager = myToolWindow.getContentManager();
           myContentManagerListener = new MyContentManagerListener();
           myContentManager.addContentManagerListener(myContentManagerListener);
+
           for(Content content: myAddedContents) {
             myContentManager.addContent(content);
           }
           myAddedContents.clear();
           myVcsManager.addVcsListener(myVcsListener);
-          ProjectManager.getInstance().addProjectManagerListener(myProject, new MyProjectManagerListener());
+
+          Disposer.register(myProject, new Disposable(){
+            public void dispose() {
+              myContentManager.removeContentManagerListener(myContentManagerListener);
+
+              myVcsManager.removeVcsListener(myVcsListener);
+            }
+          });
+
           loadExtensionTabs();
           if (myContentManager.getContentCount() > 0) {
             myContentManager.setSelectedContent(myContentManager.getContent(0));
@@ -139,12 +146,7 @@ public class ChangesViewContentManager implements ProjectComponent {
   }
 
   public void projectClosed() {
-    myVcsManager.removeVcsListener(myVcsListener);
     myVcsChangeAlarm.cancelAllRequests();
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
-    if (myToolWindow != null) {
-      ToolWindowManager.getInstance(myProject).unregisterToolWindow(TOOLWINDOW_ID);
-    }
   }
 
   @NonNls @NotNull
@@ -159,12 +161,6 @@ public class ChangesViewContentManager implements ProjectComponent {
     else {
       myContentManager.addContent(content);
     }
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   public void removeContent(final Content content) {
@@ -215,7 +211,7 @@ public class ChangesViewContentManager implements ProjectComponent {
   private static class ContentStub extends JPanel {
     private final ChangesViewContentEP myEP;
 
-    public ContentStub(final ChangesViewContentEP EP) {
+    private ContentStub(final ChangesViewContentEP EP) {
       myEP = EP;
     }
 
@@ -235,15 +231,6 @@ public class ChangesViewContentManager implements ProjectComponent {
           event.getContent().setDisposer((Disposable) contentComponent);          
         }
       }
-    }
-  }
-
-  private class MyProjectManagerListener extends ProjectManagerAdapter {
-    public void projectClosing(final Project project) {
-      if (myContentManager != null) {
-        myContentManager.removeContentManagerListener(myContentManagerListener);
-      }
-      ProjectManager.getInstance().removeProjectManagerListener(project, this);
     }
   }
 }

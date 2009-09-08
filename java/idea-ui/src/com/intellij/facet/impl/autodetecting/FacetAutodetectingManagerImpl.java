@@ -13,7 +13,6 @@ import com.intellij.facet.autodetecting.UnderlyingFacetSelector;
 import com.intellij.facet.impl.autodetecting.model.FacetInfo2;
 import com.intellij.facet.impl.autodetecting.model.ProjectFacetInfoSet;
 import com.intellij.facet.pointers.FacetPointersManager;
-import com.intellij.ide.impl.convert.ProjectFileVersion;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
@@ -58,7 +57,6 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
   private final PsiManager myPsiManager;
   private final FacetPointersManager myFacetPointersManager;
   private FacetDetectionIndex myFileIndex;
-  private MyPsiTreeChangeListener myPsiTreeChangeListener;
   private MergingUpdateQueue myMergingUpdateQueue;
   private final ProjectFacetInfoSet myDetectedFacetSet;
   private DetectedFacetManager myDetectedFacetManager;
@@ -116,8 +114,8 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
     }
     myFileIndex = new FacetDetectionIndex(myProject, this, myDetectors.keySet());
     myFileIndex.initialize();
-    myPsiTreeChangeListener = new MyPsiTreeChangeListener();
-    myPsiManager.addPsiTreeChangeListener(myPsiTreeChangeListener, myProject);
+    MyPsiTreeChangeListener psiTreeChangeListener = new MyPsiTreeChangeListener();
+    myPsiManager.addPsiTreeChangeListener(psiTreeChangeListener, myProject);
     myMergingUpdateQueue = new MergingUpdateQueue("FacetAutodetectionQueue", 500, true, null, myProject);
   }
 
@@ -146,7 +144,7 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
   public void processFile(VirtualFile virtualFile) {
     if (!virtualFile.isValid() || virtualFile.isDirectory() || myProject.isDisposed()
         || !virtualFile.exists() || !myFileIndex.getProjectFileIndex().isInContent(virtualFile)) return;
-    
+
     FileType fileType = virtualFile.getFileType();
     Collection<FacetDetectorWrapper> detectors = myDetectors.get(fileType);
     if (detectors == null) return;
@@ -319,7 +317,7 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
     return myDetectedFacetManager;
   }
 
-  @Nullable 
+  @Nullable
   public FacetDetector<?,?> findDetector(final String detectorId) {
     return myId2Detector.get(detectorId);
   }

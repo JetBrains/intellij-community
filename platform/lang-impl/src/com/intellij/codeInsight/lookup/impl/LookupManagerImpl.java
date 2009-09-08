@@ -5,14 +5,16 @@ import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.hint.EditorHintListener;
-import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
@@ -32,7 +34,6 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
 
   private boolean myIsDisposed;
-  private EditorFactoryAdapter myEditorFactoryListener;
 
   public LookupManagerImpl(Project project, MessageBus bus) {
     myProject = project;
@@ -41,7 +42,7 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
       public void hintShown(final Project project, final LightweightHint hint, final int flags) {
         if (project == myProject) {
           Lookup lookup = getActiveLookup();
-          if (lookup != null && (flags & HintManagerImpl.HIDE_BY_LOOKUP_ITEM_CHANGE) != 0) {
+          if (lookup != null && (flags & HintManager.HIDE_BY_LOOKUP_ITEM_CHANGE) != 0) {
             lookup.addLookupListener(
               new LookupAdapter() {
                 public void currentItemChanged(LookupEvent event) {
@@ -75,18 +76,23 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
   }
 
   public void projectOpened(){
-    myEditorFactoryListener = new EditorFactoryAdapter() {
+
+    final EditorFactoryAdapter myEditorFactoryListener = new EditorFactoryAdapter() {
       public void editorReleased(EditorFactoryEvent event) {
-        if (event.getEditor() == myActiveLookupEditor){
+        if (event.getEditor() == myActiveLookupEditor) {
           hideActiveLookup();
         }
       }
     };
     EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener);
+    Disposer.register(myProject, new Disposable() {
+      public void dispose() {
+        EditorFactory.getInstance().removeEditorFactoryListener(myEditorFactoryListener);
+      }
+    });
   }
 
   public void projectClosed(){
-    EditorFactory.getInstance().removeEditorFactoryListener(myEditorFactoryListener);
     myIsDisposed = true;
   }
 

@@ -2,8 +2,8 @@ package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -13,34 +13,33 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.Disposable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.ArrayList;
 
 /**
  * @author nik
  */
 public class XLineBreakpointManager {
   private final BidirectionalMap<XLineBreakpointImpl, Document> myBreakpoints = new BidirectionalMap<XLineBreakpointImpl, Document>();
-  private final MergingUpdateQueue myBreakpointsUpdateQueue = new MergingUpdateQueue("XLine breakpoints", 300, true, null);
-  private DocumentAdapter myDocumentListener;
+  private final MergingUpdateQueue myBreakpointsUpdateQueue;
   private final Project myProject;
   private final XDependentBreakpointManager myDependentBreakpointManager;
   private final StartupManagerEx myStartupManager;
-  private EditorMouseAdapter myEditorMouseListener;
-  private MyDependentBreakpointListener myDependentBreakpointListener;
 
   public XLineBreakpointManager(Project project, final XDependentBreakpointManager dependentBreakpointManager, final StartupManager startupManager) {
     myProject = project;
@@ -48,16 +47,22 @@ public class XLineBreakpointManager {
     myStartupManager = (StartupManagerEx)startupManager;
 
     if (!myProject.isDefault()) {
-      myDocumentListener = new MyDocumentListener();
-      myEditorMouseListener = new MyEditorMouseListener();
+      DocumentAdapter documentListener = new MyDocumentListener();
+      EditorMouseAdapter editorMouseListener = new MyEditorMouseListener();
 
       EditorEventMulticaster editorEventMulticaster = EditorFactory.getInstance().getEventMulticaster();
-      editorEventMulticaster.addDocumentListener(myDocumentListener);
-      editorEventMulticaster.addEditorMouseListener(myEditorMouseListener);
+      editorEventMulticaster.addDocumentListener(documentListener,project);
+      editorEventMulticaster.addEditorMouseListener(editorMouseListener, project);
 
-      myDependentBreakpointListener = new MyDependentBreakpointListener();
+      final MyDependentBreakpointListener myDependentBreakpointListener = new MyDependentBreakpointListener();
       myDependentBreakpointManager.addListener(myDependentBreakpointListener);
+      Disposer.register(project, new Disposable() {
+        public void dispose() {
+          myDependentBreakpointManager.removeListener(myDependentBreakpointListener);
+        }
+      });
     }
+    myBreakpointsUpdateQueue = new MergingUpdateQueue("XLine breakpoints", 300, true, null, project);
   }
 
   public void updateBreakpointsUI() {
@@ -116,16 +121,6 @@ public class XLineBreakpointManager {
         }
       }
     }.execute();
-  }
-
-  public void dispose() {
-    if (!myProject.isDefault()) {
-      EditorEventMulticaster editorEventMulticaster = EditorFactory.getInstance().getEventMulticaster();
-      editorEventMulticaster.removeDocumentListener(myDocumentListener);
-      editorEventMulticaster.removeEditorMouseListener(myEditorMouseListener);
-      myDependentBreakpointManager.removeListener(myDependentBreakpointListener);
-    }
-    myBreakpointsUpdateQueue.dispose();
   }
 
   public void breakpointChanged(final XLineBreakpointImpl breakpoint) {

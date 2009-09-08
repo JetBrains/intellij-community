@@ -6,13 +6,14 @@
  */
 package com.intellij.openapi.vfs.encoding;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
@@ -22,7 +23,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.Alarm;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -45,18 +45,12 @@ import java.util.concurrent.ConcurrentLinkedQueue;
       @Storage(id = "Encoding", file = "$APP_CONFIG$/encoding.xml")
   }
 )
-public class EncodingManagerImpl extends EncodingManager implements PersistentStateComponent<Element> {
+public class EncodingManagerImpl extends EncodingManager implements PersistentStateComponent<Element>, Disposable {
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private String myDefaultEncoding = "";
   private Charset myCachedCharset = null;
-  private final DocumentAdapter myDocumentListener = new DocumentAdapter() {
-    @Override
-    public void documentChanged(DocumentEvent e) {
-      updateEncodingFromContent(e);
-    }
-  };
 
-  private final Alarm updateEncodingFromContent = new Alarm(Alarm.ThreadToUse.OWN_THREAD, ApplicationManager.getApplication());
+  private final Alarm updateEncodingFromContent = new Alarm(Alarm.ThreadToUse.OWN_THREAD, this);
   private static final Key<Charset> CACHED_CHARSET_FROM_CONTENT = Key.create("CACHED_CHARSET_FROM_CONTENT");
   private final Queue<Document> myChangedDocuments = new ConcurrentLinkedQueue<Document>();
   private final Runnable myEncodingUpdateRunnable = new Runnable() {
@@ -66,10 +60,16 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
       VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
       if (virtualFile == null) return;
       Project project = guessProject(virtualFile);
+      if (project != null && project.isDisposed()) return;
       Charset charset = LoadTextUtil.charsetFromContentOrNull(project, virtualFile, document.getText());
       document.putUserData(CACHED_CHARSET_FROM_CONTENT, charset);
     }
   };
+
+  public void dispose() {
+    updateEncodingFromContent.cancelAllRequests();
+  }
+
   private void updateEncodingFromContent(final DocumentEvent e) {
     myChangedDocuments.offer(e.getDocument());
     updateEncodingFromContent.cancelAllRequests();
@@ -87,11 +87,17 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   }
 
   public void initComponent() {
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myDocumentListener);
+    final DocumentAdapter myDocumentListener = new DocumentAdapter() {
+      @Override
+      public void documentChanged(DocumentEvent e) {
+        updateEncodingFromContent(e);
+      }
+    };
+
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myDocumentListener, this);
   }
 
   public void disposeComponent() {
-    EditorFactory.getInstance().getEventMulticaster().removeDocumentListener(myDocumentListener);
   }
 
   public Element getState() {

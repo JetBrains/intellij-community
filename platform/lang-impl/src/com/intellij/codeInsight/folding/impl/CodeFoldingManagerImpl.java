@@ -36,8 +36,6 @@ import java.awt.event.MouseEvent;
 public class CodeFoldingManagerImpl extends CodeFoldingManager implements ProjectComponent {
   private final Project myProject;
 
-  private EditorMouseMotionAdapter myMouseMotionListener;
-
   private final WeakList<Document> myDocumentsWithFoldingInfo = new WeakList<Document>();
 
   private final Key<DocumentFoldingInfo> FOLDING_INFO_IN_DOCUMENT_KEY = Key.create("FOLDING_INFO_IN_DOCUMENT_KEY");
@@ -68,7 +66,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   }
 
   public void projectOpened() {
-    myMouseMotionListener = new EditorMouseMotionAdapter() {
+    final EditorMouseMotionAdapter myMouseMotionListener = new EditorMouseMotionAdapter() {
       LightweightHint myCurrentHint = null;
       FoldRegion myCurrentFold = null;
 
@@ -121,7 +119,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
     StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
       public void run() {
-        EditorFactory.getInstance().getEventMulticaster().addEditorMouseMotionListener(myMouseMotionListener);
+        EditorFactory.getInstance().getEventMulticaster().addEditorMouseMotionListener(myMouseMotionListener, myProject);
       }
     });
   }
@@ -181,7 +179,6 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   }
 
   public void projectClosed() {
-    EditorFactory.getInstance().getEventMulticaster().removeEditorMouseMotionListener(myMouseMotionListener);
   }
 
   public FoldRegion findFoldRegion(@NotNull Editor editor, int startOffset, int endOffset) {

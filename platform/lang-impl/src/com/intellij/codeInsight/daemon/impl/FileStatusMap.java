@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.Disposable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.WeakHashMap;
@@ -24,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class FileStatusMap {
+public class FileStatusMap implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.FileStatusMap");
   private final Project myProject;
   private final Map<Document,FileStatus> myDocumentToStatusMap = new WeakHashMap<Document, FileStatus>(); // all dirty if absent
@@ -32,6 +33,10 @@ public class FileStatusMap {
 
   public FileStatusMap(@NotNull Project project) {
     myProject = project;
+  }
+
+  public void dispose() {
+    markAllFilesDirty();
   }
 
   @Nullable

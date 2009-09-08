@@ -33,8 +33,6 @@ import java.awt.*;
 import java.util.*;
 
 public class HighlightManagerImpl extends HighlightManager implements ProjectComponent {
-  private AnActionListener myAnActionListener;
-  private DocumentListener myDocumentListener;
   private final Project myProject;
 
   public HighlightManagerImpl(Project project) {
@@ -53,10 +51,10 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
   }
 
   public void projectOpened() {
-    myAnActionListener = new MyAnActionListener();
-    ActionManagerEx.getInstanceEx().addAnActionListener(myAnActionListener, myProject);
+    AnActionListener anActionListener = new MyAnActionListener();
+    ActionManagerEx.getInstanceEx().addAnActionListener(anActionListener, myProject);
 
-    myDocumentListener = new DocumentAdapter() {
+    DocumentListener documentListener = new DocumentAdapter() {
       public void documentChanged(DocumentEvent event) {
         Document document = event.getDocument();
         Editor[] editors = EditorFactory.getInstance().getEditors(document);
@@ -79,7 +77,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
         }
       }
     };
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myDocumentListener, myProject);
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(documentListener, myProject);
   }
 
   public void projectClosed() {

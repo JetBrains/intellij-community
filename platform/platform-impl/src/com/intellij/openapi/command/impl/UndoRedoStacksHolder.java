@@ -17,24 +17,18 @@ import java.util.*;
 class UndoRedoStacksHolder {
   private final Key<LinkedList<UndoableGroup>> STACK_IN_DOCUMENT_KEY = Key.create("STACK_IN_DOCUMENT_KEY");
 
-  private final UndoManagerImpl myManager;
-
   private final LinkedList<UndoableGroup> myGlobalStack = new LinkedList<UndoableGroup>();
 
   private final Map<DocumentReference, LinkedList<UndoableGroup>> myDocumentStacks = new HashMap<DocumentReference, LinkedList<UndoableGroup>>();
   private final WeakList<Document> myDocumentsWithStacks = new WeakList<Document>();
 
 
-  public UndoRedoStacksHolder(UndoManagerImpl m) {
-    myManager = m;
-  }
-
   public LinkedList<UndoableGroup> getStack(Document d) {
     return getStack(createReferenceOrGetOriginal(d));
   }
 
-  private DocumentReference createReferenceOrGetOriginal(Document d) {
-    Document original = myManager.getOriginal(d);
+  private static DocumentReference createReferenceOrGetOriginal(Document d) {
+    Document original = UndoManagerImpl.getOriginal(d);
     return DocumentReferenceByDocument.createDocumentReference(original);
   }
 
@@ -118,7 +112,7 @@ class UndoRedoStacksHolder {
   }
 
   public void clearEditorStack(FileEditor e) {
-    for (DocumentReference d : myManager.getDocumentReferences(e)) {
+    for (DocumentReference d : UndoManagerImpl.getDocumentReferences(e)) {
       clearFileStack(d);
     }
   }
@@ -134,7 +128,7 @@ class UndoRedoStacksHolder {
     }
   }
 
-  private void invalidateAllComplexCommands(LinkedList<UndoableGroup> stack) {
+  private static void invalidateAllComplexCommands(LinkedList<UndoableGroup> stack) {
     for (UndoableGroup g : stack) {
       g.invalidateIfComplex();
     }
@@ -155,7 +149,7 @@ class UndoRedoStacksHolder {
     addToStack(getGlobalStack(), g, UndoManagerImpl.GLOBAL_UNDO_LIMIT);
   }
 
-  private void addToStack(LinkedList<UndoableGroup> stack, UndoableGroup g, int limit) {
+  private static void addToStack(LinkedList<UndoableGroup> stack, UndoableGroup g, int limit) {
     stack.addLast(g);
     while (stack.size() > limit) {
       stack.removeFirst();

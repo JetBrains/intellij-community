@@ -10,18 +10,18 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAwareRunnable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -33,8 +33,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   private final Map<VirtualFile, FileStatus> myCachedStatuses = Collections.synchronizedMap(new HashMap<VirtualFile, FileStatus>());
 
   private final Project myProject;
-  private final List<FileStatusListener> myListeners = new ArrayList<FileStatusListener>();
-  private MyDocumentAdapter myDocumentListener;
+  private final List<FileStatusListener> myListeners = ContainerUtil.createEmptyCOWList();
   private FileStatusProvider myFileStatusProvider;
 
   public FileStatusManagerImpl(Project project, StartupManager startupManager) {
@@ -63,8 +62,8 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   }
 
   public void projectOpened() {
-    myDocumentListener = new MyDocumentAdapter();
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myDocumentListener, myProject);
+    MyDocumentAdapter documentListener = new MyDocumentAdapter();
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(documentListener, myProject);
   }
 
   public void disposeComponent() {
@@ -106,8 +105,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
 
     myCachedStatuses.clear();
 
-    final FileStatusListener[] listeners = myListeners.toArray(new FileStatusListener[myListeners.size()]);
-    for (FileStatusListener listener : listeners) {
+    for (FileStatusListener listener : myListeners) {
       listener.fileStatusesChanged();
     }
   }
@@ -130,8 +128,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     if (cachedStatus == newStatus) return;
     myCachedStatuses.put(file, newStatus);
 
-    final FileStatusListener[] listeners = myListeners.toArray(new FileStatusListener[myListeners.size()]);
-    for (FileStatusListener listener : listeners) {
+    for (FileStatusListener listener : myListeners) {
       listener.fileStatusChanged(file);
     }
   }

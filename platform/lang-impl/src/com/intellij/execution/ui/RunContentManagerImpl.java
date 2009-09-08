@@ -44,7 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-public class RunContentManagerImpl implements RunContentManager {
+public class RunContentManagerImpl implements RunContentManager, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.ui.RunContentManagerImpl");
   private static final Key<RunContentDescriptor> DESCRIPTOR_KEY = new Key<RunContentDescriptor>("Descriptor");
 
@@ -54,7 +54,6 @@ public class RunContentManagerImpl implements RunContentManager {
   private final Map<RunContentListener, MyRunContentListener> myListeners = new HashMap<RunContentListener, MyRunContentListener>();
   private final EventDispatcher<MyRunContentListener> myEventDispatcher;
   private final LinkedList<String> myToolwindowIdZbuffer = new LinkedList<String>();
-
 
   public RunContentManagerImpl(Project project) {
     myProject = project;
@@ -82,9 +81,7 @@ public class RunContentManagerImpl implements RunContentManager {
             Set<String> currentWindows = new HashSet<String>();
             String[] toolWindowIds = toolWindowManager.getToolWindowIds();
 
-            for (String toolWindowId : toolWindowIds) {
-              currentWindows.add(toolWindowId);
-            }
+            currentWindows.addAll(Arrays.asList(toolWindowIds));
             myToolwindowIdZbuffer.retainAll(currentWindows);
 
             final String activeToolWindowId = toolWindowManager.getActiveToolWindowId();
@@ -100,16 +97,9 @@ public class RunContentManagerImpl implements RunContentManager {
   }
 
   public void dispose() {
-    final String[] ids = myToolwindowIdToContentManagerMap.keySet().toArray(new String[myToolwindowIdToContentManagerMap.size()]);
-    for (String id : ids) {
-      unregisterToolwindow(id);
-    }
   }
 
   private void unregisterToolwindow(final String id) {
-    final ToolWindowManager windowManager = ToolWindowManager.getInstance(myProject);
-    if (windowManager.getToolWindow(id) == null) return;
-    windowManager.unregisterToolWindow(id);
     final ContentManager manager = myToolwindowIdToContentManagerMap.get(id);
     manager.removeAllContents(true);
     myToolwindowIdToContentManagerMap.remove(id);
@@ -124,7 +114,7 @@ public class RunContentManagerImpl implements RunContentManager {
       return;
     }
 
-    final ToolWindow toolWindow = toolWindowManager.registerToolWindow(toolWindowId, true, ToolWindowAnchor.BOTTOM);
+    final ToolWindow toolWindow = toolWindowManager.registerToolWindow(toolWindowId, true, ToolWindowAnchor.BOTTOM, this);
 
     final ContentManager contentManager = toolWindow.getContentManager();
     class MyDataProvider implements DataProvider {
@@ -155,6 +145,11 @@ public class RunContentManagerImpl implements RunContentManager {
       }
     });
     myToolwindowIdToContentManagerMap.put(toolWindowId, contentManager);
+    Disposer.register(contentManager, new Disposable() {
+      public void dispose() {
+        unregisterToolwindow(toolWindowId);
+      }
+    });
     myToolwindowIdZbuffer.addLast(toolWindowId);
   }
 
@@ -360,7 +355,7 @@ public class RunContentManagerImpl implements RunContentManager {
     content.putUserData(DESCRIPTOR_KEY, descriptor);
     content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
     contentManager.addContent(content);
-    new CloseListener(content, myProject, toolWindowId);
+    new CloseListener(content, toolWindowId);
     return content;
   }
 
@@ -456,13 +451,11 @@ public class RunContentManagerImpl implements RunContentManager {
   }
 
   private class CloseListener extends ContentManagerAdapter implements ProjectManagerListener {
-    private final Project myProject;
     private Content myContent;
     private final String myToolwindowId;
 
-    public CloseListener(final Content content, final Project project, String toolWindowId) {
+    private CloseListener(final Content content, String toolWindowId) {
       myContent = content;
-      myProject = project;
       content.getManager().addContentManagerListener(this);
       ProjectManager.getInstance().addProjectManagerListener(this);
       myToolwindowId = toolWindowId;
@@ -609,7 +602,7 @@ public class RunContentManagerImpl implements RunContentManager {
     }, progressTitle, true, myProject);
   }
 
-  public static interface MyRunContentListener extends EventListener {
+  public interface MyRunContentListener extends EventListener {
     void contentSelected(RunContentDescriptor descriptor, String toolwindowId);
     void contentRemoved (RunContentDescriptor descriptor, String toolwindowId);
   }

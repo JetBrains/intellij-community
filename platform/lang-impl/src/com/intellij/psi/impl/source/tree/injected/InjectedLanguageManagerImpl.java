@@ -11,13 +11,15 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.Disposable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.util.ArrayUtil;
@@ -37,7 +39,6 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
   private final Project myProject;
   private final DumbService myDumbService;
   private final AtomicReference<MultiHostInjector> myPsiManagerRegisteredInjectorsAdapter = new AtomicReference<MultiHostInjector>();
-  private final ExtensionPointListener<LanguageInjector> myListener;
 
   public static InjectedLanguageManagerImpl getInstanceImpl(Project project) {
     return (InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(project);
@@ -57,7 +58,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
         unregisterMultiHostInjector(injector);
       }
     });
-    myListener = new ExtensionPointListener<LanguageInjector>() {
+    final ExtensionPointListener<LanguageInjector> myListener = new ExtensionPointListener<LanguageInjector>() {
       public void extensionAdded(LanguageInjector extension, @Nullable PluginDescriptor pluginDescriptor) {
         psiManagerInjectorsChanged();
       }
@@ -66,8 +67,13 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
         psiManagerInjectorsChanged();
       }
     };
-    ExtensionPoint<LanguageInjector> psiManagerPoint = Extensions.getRootArea().getExtensionPoint(LanguageInjector.EXTENSION_POINT_NAME);
+    final ExtensionPoint<LanguageInjector> psiManagerPoint = Extensions.getRootArea().getExtensionPoint(LanguageInjector.EXTENSION_POINT_NAME);
     psiManagerPoint.addExtensionPointListener(myListener);
+    Disposer.register(project, new Disposable() {
+      public void dispose() {
+        psiManagerPoint.removeExtensionPointListener(myListener);
+      }
+    });
   }
 
   public void projectOpened() {
@@ -277,8 +283,6 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
   }
 
   public void disposeComponent() {
-    ExtensionPoint<LanguageInjector> psiManagerPoint = Extensions.getRootArea().getExtensionPoint(LanguageInjector.EXTENSION_POINT_NAME);
-    psiManagerPoint.removeExtensionPointListener(myListener);
   }
 
   private static class PsiManagerRegisteredInjectorsAdapter implements MultiHostInjector {

@@ -74,8 +74,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private final EditorComponentFocusWatcher myEditorComponentFocusWatcher;
   private final MyToolWindowPropertyChangeListener myToolWindowPropertyChangeListener;
   private final InternalDecoratorListener myInternalDecoratorListener;
-  private final MyUIManagerPropertyChangeListener myUIManagerPropertyChangeListener;
-  private final MyLafManagerListener myLafManagerListener;
 
   private boolean myEditorComponentActive;
   private final ActiveStack myActiveStack;
@@ -110,32 +108,30 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   };
 
   private FocusCommand myRequestFocusCmd;
-  private ArrayList<FocusCommand> myFocusRequests = new ArrayList<FocusCommand>();
+  private final ArrayList<FocusCommand> myFocusRequests = new ArrayList<FocusCommand>();
 
-  private FocusCommand myUnforcedRequestFocusCmd;
-
-  private ArrayList<KeyEvent> myToDispatchOnDone = new ArrayList<KeyEvent>();
+  private final ArrayList<KeyEvent> myToDispatchOnDone = new ArrayList<KeyEvent>();
   private int myFlushingIdleRequestsEntryCount = 0;
 
   private WeakReference<FocusCommand> myLastForcedRequest = new WeakReference<FocusCommand>(null);
-  private Application myApp;
-  private AppListener myAppListener;
 
   private FocusCommand myFocusCommandOnAppActivation;
   private ActionCallback myCallbackOnActivation;
   private WeakReference<Component> myFocusedComponentOnDeactivation;
   private WeakReference<Component> myLastFocusedProjectComponent;
 
-  private IdeEventQueue myQueue;
-  private KeyProcessorConext myKeyProcessorContext = new KeyProcessorConext();
+  private final IdeEventQueue myQueue;
+  private final KeyProcessorConext myKeyProcessorContext = new KeyProcessorConext();
 
   private long myCmdTimestamp;
   private long myForcedCmdTimestamp;
+  private final Application myApp;
 
   /**
    * invoked by reflection
    */
-  public ToolWindowManagerImpl(final Project project, WindowManagerEx windowManagerEx, Application app) {
+  public ToolWindowManagerImpl(final Project project, WindowManagerEx windowManagerEx, final Application app) {
+    myApp = app;
     myQueue = IdeEventQueue.getInstance();
     myProject = project;
     myWindowManager = windowManagerEx;
@@ -152,8 +148,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     myEditorComponentFocusWatcher = new EditorComponentFocusWatcher();
     myToolWindowPropertyChangeListener = new MyToolWindowPropertyChangeListener();
     myInternalDecoratorListener = new MyInternalDecoratorListener();
-    myUIManagerPropertyChangeListener = new MyUIManagerPropertyChangeListener();
-    myLafManagerListener = new MyLafManagerListener();
+
     myEditorComponentActive = false;
     myActiveStack = new ActiveStack();
     mySideStack = new SideStack();
@@ -162,9 +157,13 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     myForcedFocusRequestsAlarm = new EdtAlarm(project);
     myIdleAlarm = new EdtAlarm(project);
 
-    myApp = app;
-    myAppListener = new AppListener();
-    myApp.addApplicationListener(myAppListener);
+    final AppListener myAppListener = new AppListener();
+    app.addApplicationListener(myAppListener);
+    Disposer.register(project, new Disposable() {
+      public void dispose() {
+        app.removeApplicationListener(myAppListener);
+      }
+    });
 
     IdeEventQueue.getInstance().addDispatcher(new IdeEventQueue.EventDispatcher() {
       public boolean dispatch(AWTEvent e) {
@@ -197,13 +196,21 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   public void disposeComponent() {
-    myApp.removeApplicationListener(myAppListener);
   }
 
   public void projectOpened() {
+    final MyUIManagerPropertyChangeListener myUIManagerPropertyChangeListener = new MyUIManagerPropertyChangeListener();
+    final MyLafManagerListener myLafManagerListener = new MyLafManagerListener();
+
     UIManager.addPropertyChangeListener(myUIManagerPropertyChangeListener);
     LafManager.getInstance().addLafManagerListener(myLafManagerListener);
 
+    Disposer.register(myProject, new Disposable() {
+      public void dispose() {
+        UIManager.removePropertyChangeListener(myUIManagerPropertyChangeListener);
+        LafManager.getInstance().removeLafManagerListener(myLafManagerListener);
+      }
+    });
     myFrame = myWindowManager.allocateFrame(myProject);
     LOG.assertTrue(myFrame != null);
 
@@ -305,8 +312,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   public void projectClosed() {
-    UIManager.removePropertyChangeListener(myUIManagerPropertyChangeListener);
-    LafManager.getInstance().removeLafManagerListener(myLafManagerListener);
     final ArrayList<FinalizableCommand> commandsList = new ArrayList<FinalizableCommand>();
     final String[] ids = getToolWindowIds();
 
@@ -1022,7 +1027,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   public void notifyByBalloon(@NotNull final String toolWindowId,
-                              final MessageType type,
+                              @NotNull final MessageType type,
                               @NotNull final String text,
                               @Nullable final Icon icon,
                               @Nullable HyperlinkListener listener) {
@@ -1544,14 +1549,14 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
       boolean keyWasPressed = false;
 
-      for (int i = 0; i < events.length; i++) {
-        KeyEvent each = events[i];
+      for (KeyEvent each : events) {
         if (!isFocusTransferReady()) break;
 
         if (!keyWasPressed) {
           if (each.getID() == KeyEvent.KEY_PRESSED) {
             keyWasPressed = true;
-          } else {
+          }
+          else {
             myToDispatchOnDone.remove(each);
             continue;
           }
@@ -1586,10 +1591,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
   }
 
-  private String toString(KeyEvent e) {
-    return KeyStroke.getKeyStrokeForEvent(e).toString();
-  }
-
   public boolean isFocusTransferReady() {
     if (!myFocusRequests.isEmpty()) return false;
     if (myQueue == null) return true;
@@ -1598,11 +1599,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private boolean isIdleQueueEmpty() {
-    return isPendingKeyEventsRedispatched() && myIdleRequests.size() == 0;
+    return isPendingKeyEventsRedispatched() && myIdleRequests.isEmpty();
   }
 
   private boolean isPendingKeyEventsRedispatched() {
-    return myToDispatchOnDone.size() == 0;
+    return myToDispatchOnDone.isEmpty();
   }
 
   public boolean dispatch(KeyEvent e) {
@@ -1658,7 +1659,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     /**
      * Creates floating decorator for specified floating decorator.
      */
-    public AddFloatingDecoratorCmd(final InternalDecorator decorator, final WindowInfoImpl info) {
+    private AddFloatingDecoratorCmd(final InternalDecorator decorator, final WindowInfoImpl info) {
       super(myWindowManager.getCommandProcessor());
       myFloatingDecorator = new FloatingDecorator(myFrame, info.copy(), decorator);
       myId2FloatingDecorator.put(info.getId(), myFloatingDecorator);
@@ -1696,7 +1697,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private final class RemoveFloatingDecoratorCmd extends FinalizableCommand {
     private final FloatingDecorator myFloatingDecorator;
 
-    public RemoveFloatingDecoratorCmd(final WindowInfoImpl info) {
+    private RemoveFloatingDecoratorCmd(final WindowInfoImpl info) {
       super(myWindowManager.getCommandProcessor());
       myFloatingDecorator = getFloatingDecorator(info.getId());
       myId2FloatingDecorator.remove(info.getId());
@@ -1756,7 +1757,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     private final String myId;
 
 
-    public ToolWindowFocusWatcher(final ToolWindowImpl toolWindow) {
+    private ToolWindowFocusWatcher(final ToolWindowImpl toolWindow) {
       myId = toolWindow.getId();
       install(toolWindow.getComponent());
     }
@@ -1928,7 +1929,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     final ActionCallback result = new ActionCallback();
 
     if (!forced) {
-      myUnforcedRequestFocusCmd = command;
       myFocusRequests.add(command);
 
       SwingUtilities.invokeLater(new Runnable() {
@@ -2015,7 +2015,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   private void forceFinishFocusSettledown(FocusCommand cmd, ActionCallback cmdCallback) {
     rejectCommand(cmd, cmdCallback);
-    myUnforcedRequestFocusCmd = null;
   }
 
   private boolean checkForRejectOrByPass(final FocusCommand cmd, final boolean forced, final ActionCallback result) {
@@ -2085,11 +2084,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private void resetUnforcedCommand(FocusCommand cmd) {
-    myUnforcedRequestFocusCmd = null;
     myFocusRequests.remove(cmd);
   }
 
-  private boolean canExecuteOnInactiveApplication(FocusCommand cmd) {
+  private static boolean canExecuteOnInactiveApplication(FocusCommand cmd) {
     return !Patches.REQUEST_FOCUS_MAY_ACTIVATE_APP || cmd.canExecuteOnInactiveApp();
   }
 
@@ -2159,9 +2157,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private static class EdtAlarm {
-    private Alarm myAlarm;
+    private final Alarm myAlarm;
 
-    public EdtAlarm(Disposable parent) {
+    private EdtAlarm(Disposable parent) {
       myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, parent);
     }
 

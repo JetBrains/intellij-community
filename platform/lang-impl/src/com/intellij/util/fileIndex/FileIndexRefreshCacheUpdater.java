@@ -27,15 +27,14 @@ public class FileIndexRefreshCacheUpdater extends VirtualFileAdapter implements 
 
   public FileIndexRefreshCacheUpdater(final AbstractFileIndex fileIndex) {
     myFileIndex = fileIndex;
-    myVirtualFileManager = (VirtualFileManagerEx)VirtualFileManagerEx.getInstance();
+    myVirtualFileManager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
     myVirtualFileManager.addVirtualFileManagerListener(this);
-    myVirtualFileManager.addVirtualFileListener(this);
+    myVirtualFileManager.addVirtualFileListener(this,this);
     myVirtualFileManager.registerRefreshUpdater(this);
   }
 
   public void dispose() {
     myVirtualFileManager.removeVirtualFileManagerListener(this);
-    myVirtualFileManager.removeVirtualFileListener(this);
     myVirtualFileManager.unregisterRefreshUpdater(this);
   }
 

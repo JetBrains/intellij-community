@@ -33,7 +33,6 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
   private final Project myProject;
   private final XDebuggerManagerImpl myDebuggerManager;
   private final XDependentBreakpointManager myDependentBreakpointManager;
-  private HttpVirtualFileListener myHttpVirtualFileListener;
 
   public XBreakpointManagerImpl(final Project project, final XDebuggerManagerImpl debuggerManager, StartupManager startupManager) {
     myProject = project;
@@ -42,12 +41,12 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
     myDependentBreakpointManager = new XDependentBreakpointManager(this);
     myLineBreakpointManager = new XLineBreakpointManager(project, myDependentBreakpointManager, startupManager);
     if (!project.isDefault()) {
-      myHttpVirtualFileListener = new HttpVirtualFileListener() {
+      HttpVirtualFileListener httpVirtualFileListener = new HttpVirtualFileListener() {
         public void fileDownloaded(@NotNull final VirtualFile file) {
           updateBreakpointInFile(file);
         }
       };
-      HttpFileSystem.getInstance().addFileListener(myHttpVirtualFileListener);
+      HttpFileSystem.getInstance().addFileListener(httpVirtualFileListener, project);
     }
   }
 
@@ -63,13 +62,6 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
         }
       }
     });
-  }
-
-  public void dispose() {
-    myLineBreakpointManager.dispose();
-    if (!myProject.isDefault()) {
-      HttpFileSystem.getInstance().removeFileListener(myHttpVirtualFileListener);
-    }
   }
 
   public XLineBreakpointManager getLineBreakpointManager() {
@@ -89,7 +81,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
   }
 
   @NotNull
-  public <T extends XBreakpointProperties> XBreakpoint<T> addBreakpoint(final XBreakpointType<XBreakpoint<T>,T> type, final @Nullable T properties) {
+  public <T extends XBreakpointProperties> XBreakpoint<T> addBreakpoint(final XBreakpointType<XBreakpoint<T>,T> type, @Nullable final T properties) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     XBreakpointBase.BreakpointState<?,T,?> state = new XBreakpointBase.BreakpointState<XBreakpoint<T>,T,XBreakpointType<XBreakpoint<T>,T>>(true, type.getId());
     XBreakpointBase<?,T, ?> breakpoint = new XBreakpointBase<XBreakpoint<T>,T, XBreakpointBase.BreakpointState<?,T,?>>(type, this, properties, state);

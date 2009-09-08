@@ -25,11 +25,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.status.TogglePopupHintsPanel;
+import com.intellij.openapi.Disposable;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.profile.DefaultProjectProfileManager;
 import com.intellij.profile.Profile;
@@ -151,6 +153,11 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     myStatusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
     myTogglePopupHintsPanel = new TogglePopupHintsPanel(myStatusBar);
     myStatusBar.addFileStatusComponent(myTogglePopupHintsPanel);
+    Disposer.register(myProject, new Disposable() {
+      public void dispose() {
+        myStatusBar.removeFileStatusComponent(myTogglePopupHintsPanel);
+      }
+    });
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
         final Set<Profile> profiles = new HashSet<Profile>();
@@ -181,7 +188,6 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
   }
 
   public void projectClosed() {
-    myStatusBar.removeFileStatusComponent(myTogglePopupHintsPanel);
 
     final Application app = ApplicationManager.getApplication();
     Runnable cleanupInspectionProfilesRunnable = new Runnable() {

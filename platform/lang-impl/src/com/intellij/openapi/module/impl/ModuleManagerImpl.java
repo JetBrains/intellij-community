@@ -85,7 +85,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   public ModuleManagerImpl(Project project, MessageBus bus) {
     myProject = project;
     myMessageBus = bus;
-    myConnection = bus.connect();
+    myConnection = bus.connect(project);
 
     myConnection.setDefaultHandler(new MessageHandler() {
       public void handle(Method event, Object... params) {
@@ -113,7 +113,6 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
   public void disposeComponent() {
     myModuleModel.disposeModel();
-    myConnection.disconnect();
   }
 
   public long getModificationCount() {

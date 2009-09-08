@@ -76,36 +76,11 @@ public class BreakpointManager implements JDOMExternalizable {
   private final Map<Key<? extends Breakpoint>, String> myDefaultSuspendPolicies = new HashMap<Key<? extends Breakpoint>, String>();
 
   private BreakpointsConfigurationDialogFactory myBreakpointsConfigurable;
-  private EditorMouseListener myEditorMouseListener;
 
   private final EventDispatcher<BreakpointManagerListener> myDispatcher = EventDispatcher.create(BreakpointManagerListener.class);
 
   private final StartupManager myStartupManager;
 
-  private final DocumentListener myDocumentListener = new DocumentAdapter() {
-    private final Alarm myUpdateAlarm = new Alarm();
-
-    public void documentChanged(final DocumentEvent e) {
-      final Document document = e.getDocument();
-      synchronized (BreakpointManager.this) {
-        List<BreakpointWithHighlighter> breakpoints = myDocumentBreakpoints.get(document);
-
-        if(breakpoints != null) {
-          myUpdateAlarm.cancelAllRequests();
-          // must create new array in order to avoid "concurrent modification" errors
-          final List<BreakpointWithHighlighter> breakpointsToUpdate = new ArrayList<BreakpointWithHighlighter>(breakpoints);
-          myUpdateAlarm.addRequest(new Runnable() {
-            public void run() {
-              if (!myProject.isDisposed()) {
-                PsiDocumentManager.getInstance(myProject).commitDocument(document);
-                update(breakpointsToUpdate);
-              }
-            }
-          }, 300, ModalityState.NON_MODAL);
-        }
-      }
-    }
-  };
   @NonNls private static final String MASTER_BREAKPOINT_TAGNAME = "master_breakpoint";
   @NonNls private static final String SLAVE_BREAKPOINT_TAGNAME = "slave_breakpoint";
   @NonNls private static final String DEFAULT_SUSPEND_POLICY_ATTRIBUTE_NAME = "default_suspend_policy";
@@ -179,7 +154,7 @@ public class BreakpointManager implements JDOMExternalizable {
 
   public void init() {
     EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
-    myEditorMouseListener = new EditorMouseAdapter() {
+    EditorMouseAdapter myEditorMouseListener = new EditorMouseAdapter() {
       private EditorMouseEvent myMousePressedEvent;
 
       @Nullable
@@ -202,7 +177,7 @@ public class BreakpointManager implements JDOMExternalizable {
 
         int offset = editor.getCaretModel().getOffset();
         int editorLine = editor.getDocument().getLineNumber(offset);
-        if(editorLine != line) {
+        if (editorLine != line) {
           if (line < 0 || line >= document.getLineCount()) {
             return null;
           }
@@ -213,7 +188,7 @@ public class BreakpointManager implements JDOMExternalizable {
 
         Breakpoint breakpoint = findBreakpoint(document, offset, null);
         if (breakpoint == null) {
-          if(mostSuitingBreakpoint || isInsideCompiledClass) {
+          if (mostSuitingBreakpoint || isInsideCompiledClass) {
             breakpoint = addFieldBreakpoint(document, offset);
             if (breakpoint == null) {
               breakpoint = addMethodBreakpoint(document, line);
@@ -230,7 +205,7 @@ public class BreakpointManager implements JDOMExternalizable {
             }
           }
 
-          if(breakpoint != null) {
+          if (breakpoint != null) {
             RequestManagerImpl.createRequests(breakpoint);
           }
           return breakpoint;
@@ -267,7 +242,7 @@ public class BreakpointManager implements JDOMExternalizable {
       }
 
       public void mouseReleased(EditorMouseEvent e) {
-        if(myMousePressedEvent != null) {
+        if (myMousePressedEvent != null) {
           mouseClicked(e);
         }
         myMousePressedEvent = null;
@@ -303,16 +278,21 @@ public class BreakpointManager implements JDOMExternalizable {
                 public void run() {
                   Breakpoint breakpoint = toggleBreakpoint(e.getMouseEvent().isAltDown(), line);
 
-                  if(e.getMouseEvent().isShiftDown() && breakpoint != null) {
+                  if (e.getMouseEvent().isShiftDown() && breakpoint != null) {
                     breakpoint.LOG_EXPRESSION_ENABLED = true;
                     final TextWithImports logMessage = DebuggerUtilsEx.getEditorText(editor);
-                    breakpoint.setLogMessage(logMessage != null? logMessage : new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, DebuggerBundle.message("breakpoint.log.message", breakpoint.getDisplayName())));
+                    breakpoint.setLogMessage(logMessage != null
+                                             ? logMessage
+                                             : new TextWithImportsImpl(CodeFragmentKind.EXPRESSION,
+                                                                       DebuggerBundle.message("breakpoint.log.message",
+                                                                                              breakpoint.getDisplayName())));
                     breakpoint.SUSPEND_POLICY = DebuggerSettings.SUSPEND_NONE;
 
-                    DialogWrapper dialog = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().createConfigurationDialog(breakpoint, BreakpointPropertiesPanel.CONTROL_LOG_MESSAGE);
+                    DialogWrapper dialog = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager()
+                      .createConfigurationDialog(breakpoint, BreakpointPropertiesPanel.CONTROL_LOG_MESSAGE);
                     dialog.show();
 
-                    if(!dialog.isOK()) {
+                    if (!dialog.isOK()) {
                       removeBreakpoint(breakpoint);
                     }
                   }
@@ -325,6 +305,32 @@ public class BreakpointManager implements JDOMExternalizable {
     };
 
     eventMulticaster.addEditorMouseListener(myEditorMouseListener, myProject);
+
+    final DocumentListener myDocumentListener = new DocumentAdapter() {
+      private final Alarm myUpdateAlarm = new Alarm();
+
+      public void documentChanged(final DocumentEvent e) {
+        final Document document = e.getDocument();
+        synchronized (BreakpointManager.this) {
+          List<BreakpointWithHighlighter> breakpoints = myDocumentBreakpoints.get(document);
+
+          if(breakpoints != null) {
+            myUpdateAlarm.cancelAllRequests();
+            // must create new array in order to avoid "concurrent modification" errors
+            final List<BreakpointWithHighlighter> breakpointsToUpdate = new ArrayList<BreakpointWithHighlighter>(breakpoints);
+            myUpdateAlarm.addRequest(new Runnable() {
+              public void run() {
+                if (!myProject.isDisposed()) {
+                  PsiDocumentManager.getInstance(myProject).commitDocument(document);
+                  update(breakpointsToUpdate);
+                }
+              }
+            }, 300, ModalityState.NON_MODAL);
+          }
+        }
+      }
+    };
+
     eventMulticaster.addDocumentListener(myDocumentListener, myProject);
   }
 

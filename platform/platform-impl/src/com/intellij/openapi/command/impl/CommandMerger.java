@@ -1,7 +1,8 @@
 package com.intellij.openapi.command.impl;
 
-import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.NoneGroupId;
+import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.editor.Document;
@@ -13,6 +14,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -20,7 +22,7 @@ import java.util.*;
  * author: lesya
  */
 
-public class CommandMerger {
+public class CommandMerger implements Disposable {
   private final UndoManagerImpl myManager;
   private Object myLastGroupId = null;
   private boolean myIsComplex = false;
@@ -29,15 +31,14 @@ public class CommandMerger {
   private String myCommandName = null;
   private ArrayList<UndoableAction> myCurrentActions = new ArrayList<UndoableAction>();
   private Set<DocumentReference> myAffectedDocuments = new HashSet<DocumentReference>();
-  private final DocumentAdapter myDocumentListener;
   private EditorAndState myStateBefore;
   private EditorAndState myStateAfter;
   private UndoConfirmationPolicy myUndoConfirmationPolicy = UndoConfirmationPolicy.DEFAULT;
 
-  CommandMerger(UndoManagerImpl manager, EditorFactory editorFactory) {
+  CommandMerger(@NotNull UndoManagerImpl manager, @NotNull EditorFactory editorFactory) {
     myManager = manager;
     EditorEventMulticaster eventMulticaster = editorFactory.getEventMulticaster();
-    myDocumentListener = new DocumentAdapter() {
+    DocumentAdapter documentListener = new DocumentAdapter() {
       public void documentChanged(DocumentEvent e) {
         Document document = e.getDocument();
         if (myManager.isActive() && !myManager.isUndoInProgress() && !myManager.isRedoInProgress()) {
@@ -45,12 +46,10 @@ public class CommandMerger {
         }
       }
     };
-    eventMulticaster.addDocumentListener(myDocumentListener);
+    eventMulticaster.addDocumentListener(documentListener, this);
   }
 
   public void dispose() {
-    EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
-    eventMulticaster.removeDocumentListener(myDocumentListener);
     clearDocumentRefs();
   }
 
@@ -91,7 +90,7 @@ public class CommandMerger {
       myManager.compact();
     }
     merge(nextCommandToMerge);
-    clearRedoStacks(nextCommandToMerge);    
+    clearRedoStacks(nextCommandToMerge);
 
     myLastGroupId = groupId;
     if (myCommandName == null) myCommandName = commandName;

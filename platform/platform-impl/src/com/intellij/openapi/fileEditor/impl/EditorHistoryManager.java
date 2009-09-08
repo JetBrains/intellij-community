@@ -2,8 +2,9 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -11,6 +12,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.Pair;
@@ -23,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class EditorHistoryManager implements ProjectComponent, JDOMExternalizable{
+public final class EditorHistoryManager extends AbstractProjectComponent implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.EditorHistoryManager");
   private Element myElement;
 
@@ -31,29 +33,29 @@ public final class EditorHistoryManager implements ProjectComponent, JDOMExterna
     return project.getComponent(EditorHistoryManager.class);
   }
 
-  private final Project myProject;
   /**
    * State corresponding to the most recent file is the last
    */
   private final ArrayList<HistoryEntry> myEntriesList;
-  /**
-   * Listen opening of myEditor to update history
-   */
-  private final MyEditorManagerListener myEditorManagerListener;
-  /**
-   * Updates history length
-   */
-  private final MyUISettingsListener myUISettingsListener;
 
   /** Invoked by reflection */
-  EditorHistoryManager(final Project project, FileEditorManager fileEditorManager, UISettings uiSettings){
-    myProject = project;
+  EditorHistoryManager(final Project project, FileEditorManager fileEditorManager, final UISettings uiSettings){
+    super(project);
     myEntriesList = new ArrayList<HistoryEntry>();
-    myEditorManagerListener = new MyEditorManagerListener();
-    myUISettingsListener = new MyUISettingsListener();
+    MyEditorManagerListener editorManagerListener = new MyEditorManagerListener();
 
-    fileEditorManager.addFileEditorManagerListener(myEditorManagerListener);
+    /**
+     * Updates history length
+     */
+    final MyUISettingsListener myUISettingsListener = new MyUISettingsListener();
+
+    fileEditorManager.addFileEditorManagerListener(editorManagerListener, project);
     uiSettings.addUISettingsListener(myUISettingsListener);
+    Disposer.register(project, new Disposable() {
+      public void dispose() {
+        uiSettings.removeUISettingsListener(myUISettingsListener);
+      }
+    });
   }
 
   public void projectOpened(){
@@ -86,18 +88,10 @@ public final class EditorHistoryManager implements ProjectComponent, JDOMExterna
     );
   }
 
-  public void projectClosed(){}
 
   @NotNull
   public String getComponentName(){
     return "editorHistoryManager";
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent(){
-    FileEditorManager.getInstance(myProject).removeFileEditorManagerListener(myEditorManagerListener);
-    UISettings.getInstance().removeUISettingsListener(myUISettingsListener);
   }
 
   /**

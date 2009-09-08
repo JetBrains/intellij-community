@@ -90,6 +90,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   private static LightProjectDescriptor ourProjectDescriptor;
   private final Map<String, InspectionTool> myAvailableInspectionTools = new THashMap<String, InspectionTool>();
   private static boolean ourHaveShutdownHook;
+  private ThreadTracker myThreadTracker;
 
   /**
    * @return Project to be used in tests for example for project components retrieval.
@@ -271,6 +272,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     initApplication(this);
     doSetup(new SimpleLightProjectDescriptor(getModuleType(), getProjectJDK()), configureLocalInspectionTools(), myAvailableInspectionTools);
     storeSettings();
+
+    myThreadTracker = new ThreadTracker();
   }
 
   public static void doSetup(final LightProjectDescriptor descriptor,
@@ -366,8 +369,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     checkForSettingsDamage();
     doTearDown();
 
-
     super.tearDown();
+
+    myThreadTracker.checkLeak();
   }
 
   public static void doTearDown() throws Exception {
@@ -482,9 +486,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     if (dataId.equals(DataConstants.PROJECT)) {
       return ourProject;
     }
-    else {
-      return null;
-    }
+    return null;
   }
 
   protected Sdk getProjectJDK() {
@@ -589,8 +591,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   private static class SimpleLightProjectDescriptor implements LightProjectDescriptor {
-    private ModuleType myModuleType;
-    private Sdk mySdk;
+    private final ModuleType myModuleType;
+    private final Sdk mySdk;
 
     SimpleLightProjectDescriptor(ModuleType moduleType, Sdk sdk) {
       myModuleType = moduleType;

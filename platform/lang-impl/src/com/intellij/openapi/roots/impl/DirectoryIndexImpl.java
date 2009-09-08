@@ -56,7 +56,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
   public DirectoryIndexImpl(Project project, PsiManagerConfiguration psiManagerConfiguration, StartupManager startupManager) {
     myProject = project;
-    myConnection = project.getMessageBus().connect();
+    myConnection = project.getMessageBus().connect(project);
 
     myIsLasyMode = !psiManagerConfiguration.REPOSITORY_ENABLED;
     ((StartupManagerEx)startupManager).registerPreStartupActivity(new Runnable() {
@@ -76,9 +76,6 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   }
 
   public void disposeComponent() {
-    if (myInitialized) {
-      myConnection.disconnect();
-    }
     myDisposed = true;
   }
 

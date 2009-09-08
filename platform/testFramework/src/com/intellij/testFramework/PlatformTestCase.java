@@ -51,6 +51,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.util.PatchedWeakReference;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
@@ -76,7 +77,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   protected Module myModule;
   protected static final Collection<File> myFilesToDelete = new HashSet<File>();
   protected boolean myAssertionsInTestDetected;
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.IdeaTestCase");
+  protected static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.PlatformTestCase");
   public static Thread ourTestThread;
   private static TestCase ourTestCase = null;
   public static final long DEFAULT_TEST_TIME = 300L;
@@ -85,6 +86,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   private static final String ourOriginalTempDir = FileUtil.getTempDirectory();
   private EditorListenerTracker myEditorListenerTracker;
   private String myTempDirPath;
+  private ThreadTracker myThreadTracker;
 
   static {
     Logger.setFactory(TestLoggerFactory.getInstance());
@@ -132,6 +134,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     initApplication();
 
     myEditorListenerTracker = new EditorListenerTracker();
+    myThreadTracker = new ThreadTracker();
 
     setUpProject();
     storeSettings();
@@ -155,7 +158,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     assertNotNull("Cannot instantiate ProjectManager component", myProjectManager);
 
     File projectFile = getIprFile();
-    myFilesToDelete.add(projectFile);
     LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
 
     myProject = createProject(projectFile, getClass().getName() + "." + getName());
@@ -199,7 +201,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   protected File getIprFile() throws IOException {
-    return File.createTempFile("temp_" + getName(), ProjectFileType.DOT_DEFAULT_EXTENSION);
+    File tempFile = FileUtil.createTempFile("temp_" + getName(), ProjectFileType.DOT_DEFAULT_EXTENSION);
+    myFilesToDelete.add(tempFile);
+    return tempFile;
   }
 
   protected void setUpModule() {
@@ -263,6 +267,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     if (myProject != null) {
       ((StartupManagerImpl)StartupManager.getInstance(myProject)).prepareForNextTest();
       LookupManager.getInstance(myProject).hideActiveLookup();
+      
+      ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).clearUncommitedDocuments();
     }
 
     InspectionProfileManager.getInstance().deleteProfile(PROFILE);
@@ -322,6 +328,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
       //cleanTheWorld();
       myEditorListenerTracker.checkListenersLeak();
+      myThreadTracker.checkLeak();
     }
     finally {
       myProjectManager = null;

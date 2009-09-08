@@ -39,6 +39,7 @@
     <component>
       <interface-class>com.intellij.openapi.vcs.changes.ChangeListManager</interface-class>
       <implementation-class>com.intellij.openapi.vcs.changes.ChangeListManagerImpl</implementation-class>
+      <skipForDefaultProject/>
       <option name="workspace" value="true"/>
     </component>
     <component>
@@ -50,6 +51,7 @@
       <interface-class>com.intellij.openapi.vcs.changes.VcsDirtyScopeManager</interface-class>
       <implementation-class>com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl</implementation-class>
       <option name="workspace" value="true"/>
+      <skipForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor</implementation-class>

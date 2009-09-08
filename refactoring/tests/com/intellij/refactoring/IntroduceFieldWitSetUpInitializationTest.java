@@ -29,8 +29,8 @@ import org.junit.Before;
 import java.io.File;
 
 public class IntroduceFieldWitSetUpInitializationTest extends CodeInsightTestCase {
-  protected Module createModule(final String path) {
-    final Module module = super.createModule(path);
+  protected Module createModule(final String name) {
+    final Module module = super.createModule(name);
     final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
     final LibraryTable.ModifiableModel modifiableModel = model.getModuleLibraryTable().getModifiableModel();
     final Library library = modifiableModel.createLibrary("junit");

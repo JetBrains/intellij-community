@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.vcs;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
@@ -33,13 +34,13 @@ import java.util.*;
 /**
  * @author yole
  */
-public abstract class VcsVFSListener {
+public abstract class VcsVFSListener implements Disposable {
   protected static class MovedFileInfo {
     public final String myOldPath;
     public String myNewPath;
     private final VirtualFile myFile;
 
-    public MovedFileInfo(VirtualFile file, final String newPath) {
+    protected MovedFileInfo(VirtualFile file, final String newPath) {
       myOldPath = file.getPath();
       myNewPath = newPath;
       myFile = file;
@@ -49,8 +50,6 @@ public abstract class VcsVFSListener {
   protected final Project myProject;
   protected final AbstractVcs myVcs;
   protected final ChangeListManager myChangeListManager;
-  protected final MyVirtualFileAdapter myVFSListener;
-  protected final MyCommandAdapter myCommandListener;
   protected final VcsShowConfirmationOption myAddOption;
   protected final VcsShowConfirmationOption myRemoveOption;
   protected final List<VirtualFile> myAddedFiles = new ArrayList<VirtualFile>();
@@ -65,29 +64,23 @@ public abstract class VcsVFSListener {
     myProject = project;
     myVcs = vcs;
     myChangeListManager = ChangeListManager.getInstance(project);
-    myVFSListener = new MyVirtualFileAdapter();
-    myCommandListener = new MyCommandAdapter();
+
+    final MyVirtualFileAdapter myVFSListener = new MyVirtualFileAdapter();
+    final MyCommandAdapter myCommandListener = new MyCommandAdapter();
 
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
     myAddOption = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, vcs);
     myRemoveOption = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, vcs);
 
-    VirtualFileManager.getInstance().addVirtualFileListener(myVFSListener);
-    CommandProcessor.getInstance().addCommandListener(myCommandListener);
+    VirtualFileManager.getInstance().addVirtualFileListener(myVFSListener,this);
+    CommandProcessor.getInstance().addCommandListener(myCommandListener,this);
   }
 
   public void dispose() {
-    VirtualFileManager.getInstance().removeVirtualFileListener(myVFSListener);
-    CommandProcessor.getInstance().removeCommandListener(myCommandListener);
   }
 
   protected boolean isEventIgnored(final VirtualFileEvent event) {
-    if (event.isFromRefresh()) return true;
-    if (ProjectLevelVcsManager.getInstance(myProject).getVcsFor(event.getFile()) != myVcs) {
-      return true;
-    }
-
-    return false;
+    return event.isFromRefresh() || ProjectLevelVcsManager.getInstance(myProject).getVcsFor(event.getFile()) != myVcs;
   }
 
   protected void executeAdd() {

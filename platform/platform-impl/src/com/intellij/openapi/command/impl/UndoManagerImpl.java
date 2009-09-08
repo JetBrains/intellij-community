@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
@@ -32,7 +33,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
-public class UndoManagerImpl extends UndoManager implements ProjectComponent, ApplicationComponent {
+public class UndoManagerImpl extends UndoManager implements ProjectComponent, ApplicationComponent, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.impl.UndoManagerImpl");
 
   public static final int GLOBAL_UNDO_LIMIT = 10;
@@ -41,7 +42,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   private static final int COMMAND_TO_RUN_COMPACT = 20;
   private static final int FREE_QUEUES_LIMIT = 30;
 
-  private ProjectEx myProject;
+  private final ProjectEx myProject;
 
   private int myCommandLevel = 0;
 
@@ -50,39 +51,38 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   private static final int REDO = 2;
   private int myCurrentOperationState = NONE;
 
-  private CommandMerger myMerger;
+  private final CommandMerger myMerger;
 
-  private CommandListener myCommandListener;
+  private final UndoRedoStacksHolder myUndoStacksHolder = new UndoRedoStacksHolder();
+  private final UndoRedoStacksHolder myRedoStacksHolder = new UndoRedoStacksHolder();
 
-  private final UndoRedoStacksHolder myUndoStacksHolder = new UndoRedoStacksHolder(this);
-  private final UndoRedoStacksHolder myRedoStacksHolder = new UndoRedoStacksHolder(this);
-
-  private DocumentEditingUndoProvider myDocumentEditingUndoProvider;
   private CommandMerger myCurrentMerger;
   private CurrentEditorProvider myCurrentEditorProvider;
 
   private Project myCurrentActionProject = DummyProject.getInstance();
   private int myCommandCounter = 1;
-  private MyBeforeDeletionListener myBeforeFileDeletionListener;
   private final CommandProcessor myCommandProcessor;
   private final EditorFactory myEditorFactory;
   private final VirtualFileManager myVirtualFileManager;
   private final StartupManager myStartupManager;
   private UndoProvider[] myUndoProviders;
 
-  public UndoManagerImpl(Project project,
+  public UndoManagerImpl(ProjectEx project,
                          Application application,
                          CommandProcessor commandProcessor,
                          EditorFactory editorFactory,
                          VirtualFileManager virtualFileManager,
                          StartupManager startupManager) {
-    myProject = (ProjectEx)project;
+    myProject = project;
     myCommandProcessor = commandProcessor;
     myEditorFactory = editorFactory;
     myVirtualFileManager = virtualFileManager;
     myStartupManager = startupManager;
 
     init(application);
+
+    myMerger = new CommandMerger(this, myEditorFactory);
+    Disposer.register(this, myMerger);
   }
 
   public UndoManagerImpl(Application application,
@@ -112,23 +112,21 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   }
 
   private void initialize() {
-    Runnable initAction = new Runnable() {
-      public void run() {
-        runStartupActivity();
-      }
-    };
-    if (myProject != null) {
-      myStartupManager.registerStartupActivity(initAction);
+    if (myProject == null) {
+      runStartupActivity();
     }
     else {
-      initAction.run();
+      myStartupManager.registerStartupActivity(new Runnable() {
+        public void run() {
+          runStartupActivity();
+        }
+      });
     }
-
   }
 
   private void runStartupActivity() {
     myCurrentEditorProvider = new FocusBasedCurrentEditorProvider();
-    myCommandListener = new CommandAdapter() {
+    CommandListener commandListener = new CommandAdapter() {
       private boolean myFakeCommandStarted = false;
 
       public void commandStarted(CommandEvent event) {
@@ -153,21 +151,22 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
         }
       }
     };
-    myCommandProcessor.addCommandListener(myCommandListener);
+    myCommandProcessor.addCommandListener(commandListener, this);
 
-    myDocumentEditingUndoProvider = new DocumentEditingUndoProvider(myProject, myEditorFactory);
-    myMerger = new CommandMerger(this, myEditorFactory);
+    DocumentEditingUndoProvider documentEditingUndoProvider = new DocumentEditingUndoProvider(myProject, myEditorFactory);
+    Disposer.register(this, documentEditingUndoProvider);
 
-    if (myProject != null) {
-      myUndoProviders = Extensions.getExtensions(UndoProvider.PROJECT_EP_NAME, myProject);
+    myUndoProviders = myProject == null
+                      ? Extensions.getExtensions(UndoProvider.EP_NAME)
+                      : Extensions.getExtensions(UndoProvider.PROJECT_EP_NAME, myProject);
+    for (UndoProvider undoProvider : myUndoProviders) {
+      if (undoProvider instanceof Disposable) {
+        Disposer.register(this, (Disposable)undoProvider);
+      }
     }
-    else {
-      myUndoProviders = Extensions.getExtensions(UndoProvider.EP_NAME);
-    }
 
-    myBeforeFileDeletionListener = new MyBeforeDeletionListener();
-    myVirtualFileManager.addVirtualFileListener(myBeforeFileDeletionListener);
-
+    MyBeforeDeletionListener beforeFileDeletionListener = new MyBeforeDeletionListener();
+    myVirtualFileManager.addVirtualFileListener(beforeFileDeletionListener, this);
   }
 
   private void onCommandFinished(final Project project, final String commandName, final Object commandGroupId) {
@@ -237,21 +236,10 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
       .executeCommand(myProject, EmptyRunnable.getInstance(), CommonBundle.message("drop.undo.history.command.name"), null);
   }
 
+  public void dispose() {
+  }
+
   public void disposeComponent() {
-    if (myCommandListener != null) {
-      myCommandProcessor.removeCommandListener(myCommandListener);
-      myDocumentEditingUndoProvider.dispose();
-      myMerger.dispose();
-      for(UndoProvider provider: myUndoProviders) {
-        if (provider instanceof Disposable) {
-          ((Disposable) provider).dispose();
-        }
-      }
-    }
-    if (myBeforeFileDeletionListener != null) {
-      myVirtualFileManager.removeVirtualFileListener(myBeforeFileDeletionListener);
-    }
-    myProject = null;
   }
 
   public void setCurrentEditorProvider(CurrentEditorProvider p) {
@@ -455,7 +443,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     }
   }
 
-  DocumentReference[] getDocumentReferences(FileEditor editor) {
+  static DocumentReference[] getDocumentReferences(FileEditor editor) {
     List<DocumentReference> documentReferences = new ArrayList<DocumentReference>();
     Document[] documents = editor == null ? null : TextEditorProvider.getDocuments(editor);
 
@@ -479,6 +467,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   private void commandStarted(UndoConfirmationPolicy undoConfirmationPolicy) {
     if (myCommandLevel == 0) {
       myCurrentMerger = new CommandMerger(this, EditorFactory.getInstance());
+      Disposer.register(this, myCurrentMerger);
     }
     LOG.assertTrue(myCurrentMerger != null, String.valueOf(myCommandLevel));
     myCurrentMerger.setBeforeState(getCurrentState());
@@ -514,7 +503,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   private void disposeCurrentMerger() {
     LOG.assertTrue(myCommandLevel == 0);
     if (myCurrentMerger != null) {
-      myCurrentMerger.dispose();
+      Disposer.dispose(myCurrentMerger);
       myCurrentMerger = null;
     }
   }
@@ -575,9 +564,9 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
   }
 
-  public Document getOriginal(Document d) {
-    Document result = d.getUserData(FragmentContent.ORIGINAL_DOCUMENT);
-    return result == null ? d : result;
+  static Document getOriginal(Document document) {
+    Document result = document.getUserData(FragmentContent.ORIGINAL_DOCUMENT);
+    return result == null ? document : result;
   }
 
   public static boolean isCopy(Document d) {

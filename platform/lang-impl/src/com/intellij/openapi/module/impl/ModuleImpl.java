@@ -40,7 +40,6 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
 
   @NotNull private final Project myProject;
   private ModuleType myModuleType = null;
-  private MyVirtualFileListener myVirtualFileListener;
   private boolean isModuleAdded;
 
   private GlobalSearchScope myModuleScope = null;
@@ -84,8 +83,8 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   private void init(String filePath) {
     getStateStore().setModuleFilePath(filePath);
 
-    myVirtualFileListener = new MyVirtualFileListener();
-    VirtualFileManager.getInstance().addVirtualFileListener(myVirtualFileListener);
+    MyVirtualFileListener myVirtualFileListener = new MyVirtualFileListener();
+    VirtualFileManager.getInstance().addVirtualFileListener(myVirtualFileListener,this);
   }
 
   public void loadModuleComponents() {
@@ -149,7 +148,6 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   public synchronized void dispose() {
     isModuleAdded = false;
     disposeComponents();
-    VirtualFileManager.getInstance().removeVirtualFileListener(myVirtualFileListener);
     Extensions.disposeArea(this);
     super.dispose();
   }

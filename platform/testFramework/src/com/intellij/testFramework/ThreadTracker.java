@@ -1,0 +1,89 @@
+package com.intellij.testFramework;
+
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.impl.ProjectManagerImpl;
+import gnu.trove.THashSet;
+import junit.framework.Assert;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
+
+/**
+ * @author cdr
+ */
+public class ThreadTracker {
+  private final Collection<Thread> before;
+  private final boolean myDefaultProjectInitialized;
+
+  public ThreadTracker() {
+    before = getThreads();
+    myDefaultProjectInitialized = ((ProjectManagerImpl)ProjectManager.getInstance()).isDefaultProjectInitialized();
+  }
+
+  private static Collection<Thread> getThreads() {
+    //todo enable
+    return Collections.emptyList(); //Thread.getAllStackTraces().keySet();
+  }
+
+  private static final Set<String> wellKnownOffenders = new THashSet<String>(){{
+    add("Alarm pool(own)");
+    add("Alarm pool(shared)");
+    add("ApplicationImpl pooled thread");
+    add("AWT-Shutdown");
+    add("AWT-Windows");
+    add("CompilerThread0");
+    add("Finalizer");
+    add("FS Synchronizer");
+    add("IDEA Test Case Thread");
+    add("Image Fetcher 0");
+    add("Java2D Disposer");
+    add("Low Memory Detector");
+    add("main");
+    add("Monitor Ctrl-Break");
+    add("Periodic tasks thread");
+    add("Reference Handler");
+    add("Signal Dispatcher");
+    add("SimpleTimer");
+    add("timed reference disposer");
+    add("timer-int"); //serverImpl
+    add("timer-sys"); //clientimpl
+    add("TimerQueue");
+    add("UserActivityMonitor thread");
+    add("VM Periodic Task Thread");
+    add("VM Thread");
+    add("YJPAgent-Telemetry");
+
+
+
+
+    add("Change List Updater");
+  }};
+  public void checkLeak() {
+    try {
+      if (myDefaultProjectInitialized != ((ProjectManagerImpl)ProjectManager.getInstance()).isDefaultProjectInitialized()) return;
+
+      Collection<Thread> after = new THashSet<Thread>(getThreads());
+      after.removeAll(before);
+
+      for (Thread thread : after) {
+        if (thread == Thread.currentThread()) continue;
+        ThreadGroup group = thread.getThreadGroup();
+        if (group != null && "system".equals(group.getName()))continue;
+        String name = thread.getName();
+        if (name.startsWith("AWT-EventQueue-0")) continue;
+        if (name.startsWith("JobScheduler pool ")) continue;
+        if (wellKnownOffenders.contains(name)) continue;
+
+        String trace = "Thread leaked: " + thread+": "+ name +";\n ";
+        for (final StackTraceElement stackTraceElement : thread.getStackTrace()) {
+          trace += " at "+stackTraceElement +"\n";
+        }
+        Assert.fail(trace);
+      }
+    }
+    finally {
+      before.clear();
+    }
+  }
+}

@@ -30,10 +30,12 @@ import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.Disposable;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
@@ -80,8 +82,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
       }
     }
   };
-  private static final @NonNls String DEBUG_KEY_NAME = "idea.xdebug.key";
-  private final EditorColorsListener myColorsListener;
+  @NonNls private static final String DEBUG_KEY_NAME = "idea.xdebug.key";
 
   public void addClassNameMapper(final NameMapper mapper) {
     myNameMappers.add(mapper);
@@ -109,15 +110,20 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     myDispatcher.removeListener(listener);
   }
 
-  public DebuggerManagerImpl(Project project, StartupManager startupManager, EditorColorsManager colorsManager) {
+  public DebuggerManagerImpl(Project project, StartupManager startupManager, final EditorColorsManager colorsManager) {
     myProject = project;
     myBreakpointManager = new BreakpointManager(myProject, startupManager, this);
-    myColorsListener = new EditorColorsListener() {
+    final EditorColorsListener myColorsListener = new EditorColorsListener() {
       public void globalSchemeChange(EditorColorsScheme scheme) {
         getBreakpointManager().updateBreakpointsUI();
       }
     };
     colorsManager.addEditorColorsListener(myColorsListener);
+    Disposer.register(project, new Disposable() {
+      public void dispose() {
+        colorsManager.removeEditorColorsListener(myColorsListener);
+      }
+    });
   }
 
   public DebuggerSession getSession(DebugProcess process) {
@@ -131,12 +137,11 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
   public Collection<DebuggerSession> getSessions() {
     synchronized (mySessions) {
       final Collection<DebuggerSession> values = mySessions.values();
-      return values.size() > 0 ? new ArrayList<DebuggerSession>(values) : Collections.<DebuggerSession>emptyList();
+      return values.isEmpty() ? Collections.<DebuggerSession>emptyList() : new ArrayList<DebuggerSession>(values);
     }
   }
 
   public void disposeComponent() {
-    EditorColorsManager.getInstance().removeEditorColorsListener(myColorsListener);
   }
 
   public void initComponent() {
@@ -301,7 +306,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     myCustomPositionManagerFactories.remove(factory);
   }
 
-  static private boolean hasWhitespace(String string) {
+  private static boolean hasWhitespace(String string) {
     int length = string.length();
     for (int i = 0; i < length; i++) {
       if (Character.isWhitespace(string.charAt(i))) {
@@ -318,10 +323,10 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
       throw new ExecutionException(DebuggerBundle.message("error.jdk.not.specified"));
     }
     final String versionString = jdk.getVersionString();
-    if (versionString.indexOf("1.0") > -1 || versionString.indexOf("1.1") > -1) {
+    if (versionString.contains("1.0") || versionString.contains("1.1")) {
       throw new ExecutionException(DebuggerBundle.message("error.unsupported.jdk.version", versionString));
     }
-    if (SystemInfo.isWindows && versionString.indexOf("1.2") > -1) {
+    if (SystemInfo.isWindows && versionString.contains("1.2")) {
       final VirtualFile homeDirectory = jdk.getHomeDirectory();
       if (homeDirectory == null || !homeDirectory.isValid()) {
         throw new ExecutionException(DebuggerBundle.message("error.invalid.jdk.home", versionString));

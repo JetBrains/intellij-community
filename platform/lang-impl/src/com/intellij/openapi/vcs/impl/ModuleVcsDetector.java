@@ -41,6 +41,8 @@ public class ModuleVcsDetector implements ProjectComponent {
   }
 
   public void projectOpened() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    
     final StartupManager manager = StartupManager.getInstance(myProject);
     manager.registerStartupActivity(new Runnable() {
       public void run() {

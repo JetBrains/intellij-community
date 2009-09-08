@@ -17,10 +17,13 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author dyoma
@@ -29,8 +32,6 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   private final Project myProject;
 
   private RunContentManagerImpl myContentManager;
-  @NonNls
-  protected static final String MAKE_PROJECT_ON_RUN_KEY = "makeProjectOnRun";
 
   /**
    * reflection
@@ -44,7 +45,6 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   }
 
   public void projectClosed() {
-    myContentManager.dispose();
   }
 
   public void initComponent() { }
@@ -55,6 +55,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   public RunContentManager getContentManager() {
     if (myContentManager == null) {
       myContentManager = new RunContentManagerImpl(myProject);
+      Disposer.register(myProject, myContentManager);
     }
     return myContentManager;
   }

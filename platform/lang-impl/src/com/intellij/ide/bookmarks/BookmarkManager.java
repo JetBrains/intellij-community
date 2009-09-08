@@ -1,6 +1,6 @@
 package com.intellij.ide.bookmarks;
 
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -32,9 +32,8 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
-public class BookmarkManager implements JDOMExternalizable, ProjectComponent {
+public class BookmarkManager extends AbstractProjectComponent implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.bookmarks.BookmarkManager");
-  private final Project myProject;
   private final BookmarksCollection.ForEditors myEditorBookmarks = new BookmarksCollection.ForEditors();
   private final BookmarksCollection.ForPsiElements myCommanderBookmarks = new BookmarksCollection.ForPsiElements();
   private final MyEditorMouseListener myEditorMouseListener = new MyEditorMouseListener();
@@ -45,31 +44,18 @@ public class BookmarkManager implements JDOMExternalizable, ProjectComponent {
   }
 
   public BookmarkManager(Project project) {
-    myProject = project;
+    super(project);
   }
-
-  public void disposeComponent() {
-  }
-
-  public void initComponent() { }
 
   public void projectOpened() {
     EditorEventMulticasterEx eventMulticaster = (EditorEventMulticasterEx)EditorFactory.getInstance()
       .getEventMulticaster();
-    eventMulticaster.addEditorMouseListener(myEditorMouseListener);
-  }
-
-  public void projectClosed() {
-    EditorEventMulticasterEx eventMulticaster = (EditorEventMulticasterEx)EditorFactory.getInstance()
-      .getEventMulticaster();
-    eventMulticaster.removeEditorMouseListener(myEditorMouseListener);
+    eventMulticaster.addEditorMouseListener(myEditorMouseListener, myProject);
   }
 
   public Project getProject() {
     return myProject;
   }
-
-
 
   public void addEditorBookmark(Editor editor, int lineIndex, int number) {
     Document document = editor.getDocument();

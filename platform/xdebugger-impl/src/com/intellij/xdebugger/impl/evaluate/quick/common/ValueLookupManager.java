@@ -34,11 +34,10 @@ public class ValueLookupManager implements EditorMouseMotionListener, ProjectCom
   }
 
   public void projectOpened() {
-    EditorFactory.getInstance().getEventMulticaster().addEditorMouseMotionListener(this);
+    EditorFactory.getInstance().getEventMulticaster().addEditorMouseMotionListener(this,myProject);
   }
 
   public void projectClosed() {
-    EditorFactory.getInstance().getEventMulticaster().removeEditorMouseMotionListener(this);
     myAlarm.cancelAllRequests();
   }
 

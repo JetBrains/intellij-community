@@ -78,6 +78,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   public CompilerConfigurationImpl(Project project) {
     myProject = project;
     myExcludedEntriesConfiguration = new ExcludedEntriesConfiguration();
+    Disposer.register(project, myExcludedEntriesConfiguration);
   }
 
   public Element getState() {
@@ -156,7 +157,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   public void disposeComponent() {
-    Disposer.dispose(myExcludedEntriesConfiguration);
   }
 
   public void initComponent() { }

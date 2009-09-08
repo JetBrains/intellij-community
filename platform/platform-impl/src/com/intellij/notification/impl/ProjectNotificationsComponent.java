@@ -1,23 +1,22 @@
 package com.intellij.notification.impl;
 
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.notification.Notifications;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Application;
-import com.intellij.notification.Notifications;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author spleaner
  */
-public class ProjectNotificationsComponent implements ProjectComponent {
-  private Project myProject;
-  private StatusBarEx myStatusBar;
-
+public class ProjectNotificationsComponent extends AbstractProjectComponent {
   public ProjectNotificationsComponent(final Project project) {
-    myProject = project;
+    super(project);
   }
 
   public void projectOpened() {
@@ -25,17 +24,13 @@ public class ProjectNotificationsComponent implements ProjectComponent {
       return;
     }
 
-    myStatusBar = (StatusBarEx) WindowManager.getInstance().getStatusBar(myProject);
-    myProject.getMessageBus().connect().subscribe(Notifications.TOPIC, myStatusBar.getNotificationArea());
-  }
-
-  public void projectClosed() {
-    if (isDummyEnvironment()) {
-      return;
-    }
-
-    NotificationsManager.getNotificationsManager().clear(myProject);
-    myProject = null;
+    StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
+    myProject.getMessageBus().connect().subscribe(Notifications.TOPIC, statusBar.getNotificationArea());
+    Disposer.register(myProject, new Disposable() {
+      public void dispose() {
+        NotificationsManager.getNotificationsManager().clear(myProject);
+      }
+    });
   }
 
   private static boolean isDummyEnvironment() {
@@ -46,11 +41,5 @@ public class ProjectNotificationsComponent implements ProjectComponent {
   @NotNull
   public String getComponentName() {
     return "Project Notifications";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 }

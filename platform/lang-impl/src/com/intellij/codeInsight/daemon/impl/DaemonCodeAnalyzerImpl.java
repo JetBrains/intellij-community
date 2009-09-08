@@ -112,6 +112,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
         return myDisposed || super.isDisposed();
       }
     };
+    Disposer.register(project, myPassExecutorService);
+    Disposer.register(project, myFileStatusMap);
   }
 
   @NotNull
@@ -120,16 +122,15 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   public void initComponent() {
-    myFileStatusMap.markAllFilesDirty();
   }
 
   public void disposeComponent() {
-    myFileStatusMap.markAllFilesDirty();
   }
 
   public void projectOpened() {
     assert !myInitialized : "Double Initializing";
     myStatusBarUpdater = new StatusBarUpdater(myProject);
+    Disposer.register(myProject, myStatusBarUpdater);
 
     myDaemonListeners = new DaemonListeners(myProject, this, myEditorTracker);
     Disposer.register(myProject, myDaemonListeners);
@@ -148,8 +149,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     myFileStatusMap.markAllFilesDirty();
 
     stopProcess(false);
-    myPassExecutorService.dispose();
-    myStatusBarUpdater.dispose();
 
     myDisposed = true;
     myLastSettings = null;

@@ -9,7 +9,9 @@ import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.Disposable;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -28,18 +30,7 @@ import java.util.Map;
  * @author cdr
 */
 public class WholeFileLocalInspectionsPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
-  private Map<PsiFile, Boolean> myFileTools = new ConcurrentWeakHashMap<PsiFile, Boolean>();
-  private ProfileChangeAdapter myProfilesListener = new ProfileChangeAdapter() {
-    @Override
-    public void profileChanged(Profile profile) {
-      myFileTools.clear();
-    }
-
-    @Override
-    public void profileActivated(Profile oldProfile, Profile profile) {
-      myFileTools.clear();
-    }
-  };
+  private final Map<PsiFile, Boolean> myFileTools = new ConcurrentWeakHashMap<PsiFile, Boolean>();
   public InspectionProjectProfileManager myProfileManager;
 
   public WholeFileLocalInspectionsPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar,
@@ -57,17 +48,25 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
   }
 
   @Override
-  public void initComponent() {
-    super.initComponent();
+  public void projectOpened() {
+    final ProfileChangeAdapter myProfilesListener = new ProfileChangeAdapter() {
+      @Override
+      public void profileChanged(Profile profile) {
+        myFileTools.clear();
+      }
+
+      @Override
+      public void profileActivated(Profile oldProfile, Profile profile) {
+        myFileTools.clear();
+      }
+    };
     myProfileManager.addProfilesListener(myProfilesListener);
-  }
-
-  @Override
-  public void disposeComponent() {
-    super.disposeComponent();
-
-    myProfileManager.removeProfilesListener(myProfilesListener);
-    myFileTools.clear();
+    Disposer.register(myProject, new Disposable() {
+      public void dispose() {
+        myProfileManager.removeProfilesListener(myProfilesListener);
+        myFileTools.clear();
+      }
+    });
   }
 
   @Nullable

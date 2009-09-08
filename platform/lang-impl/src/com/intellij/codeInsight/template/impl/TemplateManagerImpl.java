@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -28,7 +29,6 @@ import java.util.List;
 public class TemplateManagerImpl extends TemplateManager implements ProjectComponent {
   protected Project myProject;
   private boolean myTemplateTesting;
-  private EditorFactoryListener myEditorFactoryListener;
   private final List<Disposable> myDisposables = new ArrayList<Disposable>();
 
   private static final Key<TemplateState> TEMPLATE_STATE_KEY = Key.create("TEMPLATE_STATE_KEY");
@@ -47,11 +47,10 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   public void initComponent() { }
 
   public void projectClosed() {
-    EditorFactory.getInstance().removeEditorFactoryListener(myEditorFactoryListener);
   }
 
   public void projectOpened() {
-    myEditorFactoryListener = new EditorFactoryAdapter() {
+    final EditorFactoryListener myEditorFactoryListener = new EditorFactoryAdapter() {
       public void editorReleased(EditorFactoryEvent event) {
         Editor editor = event.getEditor();
         if (editor.getProject() != null && editor.getProject() != myProject) return;
@@ -63,6 +62,11 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
       }
     };
     EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener);
+    Disposer.register(myProject, new Disposable() {
+      public void dispose() {
+        EditorFactory.getInstance().removeEditorFactoryListener(myEditorFactoryListener);
+      }
+    });
   }
 
   public void setTemplateTesting(final boolean templateTesting) {

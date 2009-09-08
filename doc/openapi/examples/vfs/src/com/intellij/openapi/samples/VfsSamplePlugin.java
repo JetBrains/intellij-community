@@ -24,10 +24,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import org.jetbrains.annotations.NotNull;
 
 public class VfsSamplePlugin implements ProjectComponent {
   private final Project myProject;
-  private MyVfsListener myVfsListener;
 
   private static int ourJavaFilesCount;
 
@@ -41,17 +41,15 @@ public class VfsSamplePlugin implements ProjectComponent {
 
     ourJavaFilesCount = 0;
 
-    for (int i = 0; i < sourceRoots.length; i++) {
-      VirtualFile sourceRoot = sourceRoots[i];
+    for (VirtualFile sourceRoot : sourceRoots) {
       countJavaFiles(sourceRoot);
     }
 
-    myVfsListener = new MyVfsListener();
-    VirtualFileManager.getInstance().addVirtualFileListener(myVfsListener);
+    MyVfsListener vfsListener = new MyVfsListener();
+    VirtualFileManager.getInstance().addVirtualFileListener(vfsListener,myProject);
   }
 
   public void projectClosed() {
-    VirtualFileManager.getInstance().removeVirtualFileListener(myVfsListener);
   }
 
   public void initComponent() {
@@ -62,11 +60,12 @@ public class VfsSamplePlugin implements ProjectComponent {
     // empty
   }
 
+  @NotNull
   public String getComponentName() {
     return "VfsSample.VfsSamplePlugin";
   }
 
-  private void updateCount(VirtualFile file, int increase) {
+  private static void updateCount(VirtualFile file, int increase) {
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     if (!fileTypeManager.isFileIgnored(file.getName())
       && fileTypeManager.getFileTypeByFile(file) == StdFileTypes.JAVA) {
@@ -75,11 +74,10 @@ public class VfsSamplePlugin implements ProjectComponent {
     }
   }
 
-  private void countJavaFiles(VirtualFile virtualFile) {
+  private static void countJavaFiles(VirtualFile virtualFile) {
     VirtualFile[] children = virtualFile.getChildren();
     if (children == null) return;
-    for (int i = 0; i < children.length; i++) {
-      VirtualFile child = children[i];
+    for (VirtualFile child : children) {
       updateCount(child, +1);
       countJavaFiles(child);
     }
@@ -89,7 +87,7 @@ public class VfsSamplePlugin implements ProjectComponent {
   // MyVfsListener
   // -------------------------------------------------------------------------
 
-  private class MyVfsListener extends VirtualFileAdapter {
+  private static class MyVfsListener extends VirtualFileAdapter {
     public void fileCreated(VirtualFileEvent event) {
       updateCount(event.getFile(), +1);
     }

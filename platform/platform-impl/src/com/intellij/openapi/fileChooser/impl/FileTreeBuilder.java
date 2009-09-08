@@ -22,7 +22,6 @@ import java.util.Comparator;
 public class FileTreeBuilder extends AbstractTreeBuilder {
   private final FileChooserDescriptor myChooserDescriptor;
 
-  private VirtualFileAdapter myVirtualFileListener;
   private final Runnable myOnInitialized;
 
   public FileTreeBuilder(JTree tree,
@@ -49,7 +48,8 @@ public class FileTreeBuilder extends AbstractTreeBuilder {
   }
 
   private void installVirtualFileListener() {
-    myVirtualFileListener = new VirtualFileAdapter() {
+
+    VirtualFileAdapter myVirtualFileListener = new VirtualFileAdapter() {
       public void propertyChanged(VirtualFilePropertyEvent event) {
         getUpdater().addSubtreeToUpdate(getRootNode());
       }
@@ -67,13 +67,9 @@ public class FileTreeBuilder extends AbstractTreeBuilder {
       }
     };
 
-    VirtualFileManager.getInstance().addVirtualFileListener(myVirtualFileListener);
+    VirtualFileManager.getInstance().addVirtualFileListener(myVirtualFileListener,this);
   }
 
-  public final void dispose() {
-    VirtualFileManager.getInstance().removeVirtualFileListener(myVirtualFileListener);
-    super.dispose();
-  }
 
   protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
     final Object element = nodeDescriptor.getElement();
@@ -84,10 +80,7 @@ public class FileTreeBuilder extends AbstractTreeBuilder {
         if (myChooserDescriptor.isChooseJarContents() && FileElement.isArchive(file)) {
           return true;
         }
-        if (file.isDirectory()) {
-          return true;
-        }
-        return false;
+        return file.isDirectory();
       }
     }
     return true;

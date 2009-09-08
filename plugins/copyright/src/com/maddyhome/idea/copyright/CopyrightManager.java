@@ -53,9 +53,8 @@ import java.util.*;
     id = "default",
     file = "$PROJECT_FILE$"), @Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/copyright/", scheme = StorageScheme.DIRECTORY_BASED,
                                        stateSplitter = CopyrightManager.CopyrightStateSplitter.class)})
-public class CopyrightManager implements ProjectComponent, JDOMExternalizable, PersistentStateComponent<Element> {
+public class CopyrightManager extends AbstractProjectComponent implements JDOMExternalizable, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#" + CopyrightManager.class.getName());
-  private FileEditorManagerListener myListener = null;
   @Nullable
   private CopyrightProfile myDefaultCopyright = null;
 
@@ -65,10 +64,8 @@ public class CopyrightManager implements ProjectComponent, JDOMExternalizable, P
 
   private final Options myOptions = new Options();
 
-  private final Project myProject;
-
   public CopyrightManager(Project project) {
-    myProject = project;
+    super(project);
   }
 
   @NonNls
@@ -89,7 +86,7 @@ public class CopyrightManager implements ProjectComponent, JDOMExternalizable, P
 
   public void projectOpened() {
     if (myProject != null) {
-      myListener = new FileEditorManagerAdapter() {
+      FileEditorManagerListener listener = new FileEditorManagerAdapter() {
         public void fileOpened(FileEditorManager fileEditorManager, VirtualFile virtualFile) {
           if (virtualFile.isWritable() && NewFileTracker.getInstance().contains(virtualFile)) {
             NewFileTracker.getInstance().remove(virtualFile);
@@ -98,7 +95,7 @@ public class CopyrightManager implements ProjectComponent, JDOMExternalizable, P
               if (module != null) {
                 final PsiFile file = PsiManager.getInstance(myProject).findFile(virtualFile);
                 if (file != null) {
-                  ApplicationManager.getApplication().invokeLater(new Runnable(){
+                  ApplicationManager.getApplication().invokeLater(new Runnable() {
                     public void run() {
                       if (file.isValid() && file.isWritable()) {
                         new UpdateCopyrightProcessor(myProject, module, file).run();
@@ -112,13 +109,7 @@ public class CopyrightManager implements ProjectComponent, JDOMExternalizable, P
         }
       };
 
-      FileEditorManager.getInstance(myProject).addFileEditorManagerListener(myListener);
-    }
-  }
-
-  public void projectClosed() {
-    if (myProject != null && myListener != null) {
-      FileEditorManager.getInstance(myProject).removeFileEditorManagerListener(myListener);
+      FileEditorManager.getInstance(myProject).addFileEditorManagerListener(listener, myProject);
     }
   }
 
@@ -126,12 +117,6 @@ public class CopyrightManager implements ProjectComponent, JDOMExternalizable, P
   @NotNull
   public String getComponentName() {
     return "CopyrightManager";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   public void readExternal(Element element) throws InvalidDataException {

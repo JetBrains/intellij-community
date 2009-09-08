@@ -17,17 +17,16 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 
 import javax.swing.*;
 
 public abstract class Animator implements Disposable {
 
-  private String myName;
   private int myTotalFrames;
   private int myCycleLength;
-  private Timer myTimer;
+  private final Timer myTimer;
 
   private int myCurrentFrame;
   private int myQueuedFrames = 0;
@@ -56,30 +55,15 @@ public abstract class Animator implements Disposable {
                   boolean repeatable,
                   final int interCycleGap,
                   final int maxRepeatCount, boolean forward) {
-    myName = name;
     myTotalFrames = totalFrames;
     myCycleLength = cycleLength;
     myRepeatable = repeatable;
     myForward = forward;
     myCurrentFrame = forward ? 0 : totalFrames;
 
-    Application app = ApplicationManager.getApplication();
-    myTimer = (app != null && app.isUnitTestMode()) ?
-              new Timer(myName, myCycleLength / myTotalFrames) {
-                {
-                  dispose();
-                }
-                @Override
-                public boolean isRunning() {
-                  return true;
-                }
-
-                @Override
-                protected void onTimer() throws InterruptedException {
-
-                }
-              }
-              : new Timer(myName, myCycleLength / myTotalFrames) {
+    Application application = ApplicationManager.getApplication();
+    myTimer = application == null || application.isUnitTestMode() ? null :
+              new Timer(name, myCycleLength / myTotalFrames) {
       protected void onTimer() throws InterruptedException {
         boolean repaint = true;
         if (!isAnimated()) {
@@ -162,25 +146,27 @@ public abstract class Animator implements Disposable {
   }
 
   public void suspend() {
-    myTimer.suspend();
+    if (myTimer != null) {
+      myTimer.suspend();
+    }
   }
 
   public void resume() {
-    myTimer.resume();
+    if (myTimer != null) { myTimer.resume();}
   }
 
   public void setTakInitialDelay(boolean take) {
-    myTimer.setTakeInitialDelay(take);
+    if (myTimer != null) {myTimer.setTakeInitialDelay(take);}
   }
 
   public abstract void paintNow(float frame, final float totalFrames, final float cycle);
 
   public void dispose() {
-    myTimer.dispose();
+    if (myTimer != null) {myTimer.dispose();}
   }
 
   public boolean isRunning() {
-    return myTimer.isRunning() && myLastAnimated;
+    return myTimer != null && myTimer.isRunning() && myLastAnimated;
   }
 
   public boolean isAnimated() {
@@ -197,6 +183,6 @@ public abstract class Animator implements Disposable {
   }
 
   public boolean isDisposed() {
-    return myTimer.isDisposed();
+    return myTimer == null || myTimer.isDisposed();
   }
 }

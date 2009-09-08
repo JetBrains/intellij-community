@@ -1,5 +1,6 @@
 package com.intellij.openapi.command.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceByDocument;
@@ -21,28 +22,20 @@ import com.intellij.psi.ExternalChangeAction;
 /**
  * author: lesya
  */
-class DocumentEditingUndoProvider {
-  private static final Logger LOG = Logger.getInstance(
-    "#com.intellij.openapi.command.impl.DocumentEditingUndoProvider");
+class DocumentEditingUndoProvider implements Disposable {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.impl.DocumentEditingUndoProvider");
 
-  private final MyEditorDocumentListener myDocumentListener;
   private final Project myProject;
 
-  public DocumentEditingUndoProvider(Project project, EditorFactory editorFactory) {
-    myDocumentListener = new MyEditorDocumentListener();
+  DocumentEditingUndoProvider(Project project, EditorFactory editorFactory) {
+    MyEditorDocumentListener documentListener = new MyEditorDocumentListener();
     myProject = project;
 
     EditorEventMulticaster m = editorFactory.getEventMulticaster();
-    m.addDocumentListener(myDocumentListener);
+    m.addDocumentListener(documentListener, this);
   }
 
   public void dispose() {
-    EditorEventMulticaster m = EditorFactory.getInstance().getEventMulticaster();
-    m.removeDocumentListener(myDocumentListener);
-  }
-
-  private boolean isCopy(Document d) {
-    return getUndoManager().isCopy(d);
   }
 
   private UndoManagerImpl getUndoManager() {
@@ -56,7 +49,7 @@ class DocumentEditingUndoProvider {
       // if we don't ignore copy's events, we will receive notification
       // for the same event twice (from original document too)
       // and undo will work incorrectly
-      if (isCopy(document)) return;
+      if (UndoManagerImpl.isCopy(document)) return;
 
       if (allEditorsAreViewersFor(document)) return;
       if (!isToRecordActions(document)) return;
@@ -83,11 +76,7 @@ class DocumentEditingUndoProvider {
       if (document.getUserData(UndoManager.DONT_RECORD_UNDO) == Boolean.TRUE) return false;
 
       final VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
-      if (vFile != null && vFile.getUserData(UndoManager.DONT_RECORD_UNDO) == Boolean.TRUE) {
-        return false;
-      }
-
-      return true;
+      return vFile == null || vFile.getUserData(UndoManager.DONT_RECORD_UNDO) != Boolean.TRUE;
     }
 
     private boolean allEditorsAreViewersFor(Document document) {

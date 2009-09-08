@@ -5,6 +5,7 @@
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
+import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaTestApplication;
@@ -31,10 +32,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.testFramework.EditorListenerTracker;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.ThreadTracker;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
 import com.intellij.util.PathUtil;
@@ -64,6 +68,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
   private IdeaTestApplication myApplication;
   private final Set<ModuleFixtureBuilder> myModuleFixtureBuilders = new THashSet<ModuleFixtureBuilder>();
   private EditorListenerTracker myEditorListenerTracker;
+  private ThreadTracker myThreadTracker;
 
   protected void addModuleFixtureBuilder(ModuleFixtureBuilder builder) {
     myModuleFixtureBuilders.add(builder);
@@ -76,11 +81,13 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
     setUpProject();
 
     myEditorListenerTracker = new EditorListenerTracker();
+    myThreadTracker = new ThreadTracker();
   }
 
   public void tearDown() throws Exception {
     ((StartupManagerImpl)StartupManager.getInstance(getProject())).prepareForNextTest();
     checkAllTimersAreDisposed();
+    ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).clearUncommitedDocuments();
 
     for (ModuleFixtureBuilder moduleFixtureBuilder: myModuleFixtureBuilders) {
       moduleFixtureBuilder.getFixture().tearDown();
@@ -122,7 +129,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
     super.tearDown();
 
     myEditorListenerTracker.checkListenersLeak();
-    
+    myThreadTracker.checkLeak();
   }
 
 

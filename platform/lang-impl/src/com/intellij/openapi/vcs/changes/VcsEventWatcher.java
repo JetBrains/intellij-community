@@ -3,7 +3,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -17,18 +17,14 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public class VcsEventWatcher implements ProjectComponent {
-  private final Project myProject;
-  private MessageBusConnection myConnection;
-  private final WolfTheProblemSolver.ProblemListener myProblemListener = new MyProblemListener();
-
+public class VcsEventWatcher extends AbstractProjectComponent {
   public VcsEventWatcher(Project project) {
-    myProject = project;
+    super(project);
   }
 
   public void projectOpened() {
-    myConnection = myProject.getMessageBus().connect();
-    myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
+    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       public void beforeRootsChange(ModuleRootEvent event) {
       }
 
@@ -41,12 +37,8 @@ public class VcsEventWatcher implements ProjectComponent {
         }, ModalityState.NON_MODAL);
       }
     });
-    WolfTheProblemSolver.getInstance(myProject).addProblemListener(myProblemListener);
-  }
-
-  public void projectClosed() {
-    WolfTheProblemSolver.getInstance(myProject).removeProblemListener(myProblemListener);
-    myConnection.disconnect();
+    final WolfTheProblemSolver.ProblemListener myProblemListener = new MyProblemListener();
+    WolfTheProblemSolver.getInstance(myProject).addProblemListener(myProblemListener,myProject);
   }
 
   @NonNls
@@ -54,13 +46,6 @@ public class VcsEventWatcher implements ProjectComponent {
   public String getComponentName() {
     return "VcsEventWatcher";
   }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
-
   private class MyProblemListener extends WolfTheProblemSolver.ProblemListener {
     @Override
     public void problemsAppeared(final VirtualFile file) {

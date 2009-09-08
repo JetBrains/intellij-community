@@ -13,10 +13,11 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.actions.ContextHelpAction;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -43,15 +44,15 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.event.InputEvent;
 import java.util.Collection;
 
-public class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
+public class ChangesViewManager extends AbstractProjectComponent implements JDOMExternalizable {
   private boolean SHOW_FLATTEN_MODE = true;
   private boolean SHOW_IGNORED_MODE = false;
 
   private final ChangesListView myView;
   private JLabel myProgressLabel;
-  private final Project myProject;
 
   private final Alarm myRepaintAlarm;
 
@@ -77,7 +78,7 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
   }
 
   public ChangesViewManager(Project project, ChangesViewContentManager contentManager) {
-    myProject = project;
+    super(project);
     myContentManager = contentManager;
     myView = new ChangesListView(project);
     Disposer.register(project, myView);
@@ -86,6 +87,11 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
 
   public void projectOpened() {
     ChangeListManager.getInstance(myProject).addChangeListListener(myListener);
+    Disposer.register(myProject, new Disposable() {
+      public void dispose() {
+        ChangeListManager.getInstance(myProject).removeChangeListListener(myListener);
+      }
+    });
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     final Content content = ContentFactory.SERVICE.getInstance().createContent(createChangeViewComponent(), "Local", false);
     content.setCloseable(false);
@@ -105,8 +111,6 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
   }
 
   public void projectClosed() {
-    ChangeListManager.getInstance(myProject).removeChangeListListener(myListener);
-
     myDisposed = true;
     myRepaintAlarm.cancelAllRequests();
   }
@@ -114,12 +118,6 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
   @NonNls @NotNull
   public String getComponentName() {
     return "ChangesViewManager";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   private JComponent createChangeViewComponent() {
@@ -134,7 +132,7 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
     ActionManager.getInstance().getAction("ChangesView.Rename").registerCustomShortcutSet(CommonShortcuts.getRename(), panel);
 
     final CustomShortcutSet diffShortcut =
-      new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.CTRL_DOWN_MASK));
+      new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK));
     ActionManager.getInstance().getAction("ChangesView.Diff").registerCustomShortcutSet(diffShortcut, panel);
 
     JPanel toolbarPanel = new JPanel(new BorderLayout());
@@ -148,8 +146,8 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
     ToggleShowFlattenAction showFlattenAction = new ToggleShowFlattenAction();
     showFlattenAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P,
                                                                                              SystemInfo.isMac
-                                                                                             ? KeyEvent.META_DOWN_MASK
-                                                                                             : KeyEvent.CTRL_DOWN_MASK)),
+                                                                                             ? InputEvent.META_DOWN_MASK
+                                                                                             : InputEvent.CTRL_DOWN_MASK)),
                                                 panel);
     visualActionsGroup.add(showFlattenAction);
     visualActionsGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));                                              
@@ -204,7 +202,7 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
   }
 
   void refreshView() {
-    if (myDisposed || (! myProject.isInitialized()) || ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (myDisposed || ! myProject.isInitialized() || ApplicationManager.getApplication().isUnitTestMode()) return;
     ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
     myView.updateModel(changeListManager.getChangeListsCopy(),
                        changeListManager.getUnversionedFiles(),
@@ -227,14 +225,8 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
 
   public void selectFile(final VirtualFile vFile) {
     if (vFile == null) return;
-    Object objectToFind;
     Change change = ChangeListManager.getInstance(myProject).getChange(vFile);
-    if (change != null) {
-      objectToFind = change;
-    }
-    else {
-      objectToFind = vFile;
-    }
+    Object objectToFind = change != null ? change : vFile;
 
     DefaultMutableTreeNode root = (DefaultMutableTreeNode)myView.getModel().getRoot();
     DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(root, objectToFind);

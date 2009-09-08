@@ -21,6 +21,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
+import com.intellij.openapi.Disposable;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.messages.MessageBus;
@@ -55,18 +56,6 @@ public class XDebuggerManagerImpl extends XDebuggerManager
   private final ExecutionPointHighlighter myExecutionPointHighlighter;
   private XDebugSessionImpl myLastActiveSession;
 
-  private final RunContentListener myContentListener = new RunContentListener() {
-    public void contentSelected(RunContentDescriptor descriptor) {
-    }
-
-    public void contentRemoved(RunContentDescriptor descriptor) {
-      XDebugSessionTab sessionTab = mySessionTabs.remove(descriptor.getProcessHandler());
-      if (sessionTab != null) {
-        Disposer.dispose(sessionTab);
-      }
-    }
-  };
-
 
   public XDebuggerManagerImpl(final Project project, final StartupManager startupManager, MessageBus messageBus) {
     myProject = project;
@@ -91,14 +80,30 @@ public class XDebuggerManagerImpl extends XDebuggerManager
   }
 
   public void projectOpened() {
-    RunContentManager contentManager = ExecutionManager.getInstance(myProject).getContentManager();
+    final RunContentManager contentManager = ExecutionManager.getInstance(myProject).getContentManager();
     LOG.assertTrue(contentManager != null, "Content manager is null");
+    final RunContentListener myContentListener = new RunContentListener() {
+      public void contentSelected(RunContentDescriptor descriptor) {
+      }
+
+      public void contentRemoved(RunContentDescriptor descriptor) {
+        XDebugSessionTab sessionTab = mySessionTabs.remove(descriptor.getProcessHandler());
+        if (sessionTab != null) {
+          Disposer.dispose(sessionTab);
+        }
+      }
+    };
+
+
     contentManager.addRunContentListener(myContentListener, DefaultDebugExecutor.getDebugExecutorInstance());
+    Disposer.register(myProject, new Disposable() {
+      public void dispose() {
+        contentManager.removeRunContentListener(myContentListener);
+      }
+    });
   }
 
   public void projectClosed() {
-    final RunContentManager contentManager = ExecutionManager.getInstance(myProject).getContentManager();
-    contentManager.removeRunContentListener(myContentListener);
   }
 
   public Project getProject() {
@@ -115,7 +120,6 @@ public class XDebuggerManagerImpl extends XDebuggerManager
   }
 
   public void disposeComponent() {
-    myBreakpointManager.dispose();
   }
 
   @NotNull

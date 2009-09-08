@@ -30,7 +30,6 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
   // fav list name -> list of (root: root url, root class)
   private final Map<String, List<Pair<AbstractUrl,String>>> myName2FavoritesRoots = new LinkedHashMap<String, List<Pair<AbstractUrl, String>>>();
   private final Project myProject;
-  private final MyRootsChangeAdapter myPsiTreeChangeAdapter = new MyRootsChangeAdapter();
   private final List<FavoritesListener> myListeners = new ArrayList<FavoritesListener>();
   public interface FavoritesListener {
     void rootsChanged(String listName);
@@ -152,13 +151,14 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
           final String name = myProject.getName();
           createNewList(name);
         }
-        PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeAdapter);
+        final MyRootsChangeAdapter myPsiTreeChangeAdapter = new MyRootsChangeAdapter();
+
+        PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeAdapter, myProject);
       }
     });
   }
 
   public void projectClosed() {
-    PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeAdapter);
   }
 
   @NotNull
@@ -184,7 +184,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     List<Pair<AbstractUrl, String>> result = new ArrayList<Pair<AbstractUrl, String>>();
     for (Object favorite : list.getChildren(FAVORITES_ROOT)) {
       final String className = ((Element)favorite).getAttributeValue(CLASS_NAME);
-      final AbstractUrl abstractUrl = readUrlFromElement(((Element)favorite), project);
+      final AbstractUrl abstractUrl = readUrlFromElement((Element)favorite, project);
       if (abstractUrl != null) {
         result.add(Pair.create(abstractUrl, className));
       }
@@ -237,7 +237,8 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
-  private static @Nullable AbstractUrl createUrlByElement(Object element, final Project project) {
+  @Nullable
+  private static AbstractUrl createUrlByElement(Object element, final Project project) {
     if (element instanceof SmartPsiElementPointer) element = ((SmartPsiElementPointer)element).getElement();
                                                                                                                                                
     for(FavoriteNodeProvider nodeProvider: Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, project)) {
@@ -254,7 +255,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     return null;
   }
 
-  private static void writeRoots(Element element, List<Pair<AbstractUrl, String>> roots) throws WriteExternalException {
+  private static void writeRoots(Element element, List<Pair<AbstractUrl, String>> roots) {
     for (Pair<AbstractUrl, String> root : roots) {
       final AbstractUrl url = root.getFirst();
       if (url == null) continue;

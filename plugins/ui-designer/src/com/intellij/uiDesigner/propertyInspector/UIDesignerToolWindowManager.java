@@ -45,7 +45,6 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
   private ComponentTreeBuilder myComponentTreeBuilder;
   private PropertyInspector myPropertyInspector;
   private final FileEditorManager myFileEditorManager;
-  private final MyFileEditorManagerListener myListener;
   private ToolWindow myToolWindow;
   private boolean myToolWindowReady = false;
   private boolean myToolWindowDisposed = false;
@@ -53,8 +52,8 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
   public UIDesignerToolWindowManager(final Project project, final FileEditorManager fileEditorManager) {
     myProject = project;
     myFileEditorManager = fileEditorManager;
-    myListener = new MyFileEditorManagerListener();
-    myFileEditorManager.addFileEditorManagerListener(myListener);
+    MyFileEditorManagerListener listener = new MyFileEditorManagerListener();
+    myFileEditorManager.addFileEditorManagerListener(listener,project);
   }
 
   public void projectOpened() {
@@ -82,15 +81,13 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
     myToolWindowPanel.setSecondComponent(myPropertyInspector);
     myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(UIDesignerBundle.message("toolwindow.ui.designer"),
                                                                                myToolWindowPanel,
-                                                                               ToolWindowAnchor.LEFT);
+                                                                               ToolWindowAnchor.LEFT, myProject);
     myToolWindow.setIcon(IconLoader.getIcon("/com/intellij/uiDesigner/icons/toolWindowUIDesigner.png"));
     myToolWindow.setAvailable(false, null);
   }
 
   public void projectClosed() {
     if (myToolWindowPanel != null) {
-      ToolWindowManager.getInstance(myProject).unregisterToolWindow(UIDesignerBundle.message("toolwindow.ui.designer"));
-      myFileEditorManager.removeFileEditorManagerListener(myListener);
       if (myComponentTreeBuilder != null) {
         Disposer.dispose(myComponentTreeBuilder);
       }
@@ -111,7 +108,7 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
   public void disposeComponent() {
   }
 
-  private MergingUpdateQueue myQueue = new MergingUpdateQueue("property.inspector", 200, true, null);
+  private final MergingUpdateQueue myQueue = new MergingUpdateQueue("property.inspector", 200, true, null);
 
   private void processFileEditorChange(final UIFormEditor newEditor) {
     myQueue.cancelAllUpdates();

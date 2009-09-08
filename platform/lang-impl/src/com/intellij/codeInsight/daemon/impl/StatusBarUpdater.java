@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -19,20 +20,19 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 
-public class StatusBarUpdater {
+public class StatusBarUpdater implements Disposable {
   private final Project myProject;
-  private final CaretListener myCaretListener;
   private final UpdateStatusRunnable myUpdateStatusRunnable = new UpdateStatusRunnable();
 
   public StatusBarUpdater(Project project) {
     myProject = project;
 
-    myCaretListener = new CaretListener() {
+    CaretListener caretListener = new CaretListener() {
       public void caretPositionChanged(CaretEvent e) {
         ApplicationManager.getApplication().invokeLater(myUpdateStatusRunnable);
       }
     };
-    EditorFactory.getInstance().getEventMulticaster().addCaretListener(myCaretListener);
+    EditorFactory.getInstance().getEventMulticaster().addCaretListener(caretListener, this);
 
     project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
@@ -43,7 +43,6 @@ public class StatusBarUpdater {
   }
 
   public void dispose() {
-    EditorFactory.getInstance().getEventMulticaster().removeCaretListener(myCaretListener);
   }
 
   public void updateStatus() {

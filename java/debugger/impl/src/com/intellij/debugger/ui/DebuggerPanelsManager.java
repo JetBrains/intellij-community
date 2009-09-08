@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,22 +45,28 @@ public class DebuggerPanelsManager implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.DebuggerPanelsManager");
 
   private final Project myProject;
+  private final ExecutionManager myExecutionManager;
 
   private final PositionHighlighter myEditorManager;
   private final HashMap<ProcessHandler, DebuggerSessionTab> mySessionTabs = new HashMap<ProcessHandler, DebuggerSessionTab>();
-  private final EditorColorsListener myColorsListener;
 
-  public DebuggerPanelsManager(Project project, EditorColorsManager colorsManager) {
+  public DebuggerPanelsManager(Project project, final EditorColorsManager colorsManager, ExecutionManager executionManager) {
     myProject = project;
+    myExecutionManager = executionManager;
 
     myEditorManager = new PositionHighlighter(myProject, getContextManager());
 
-    myColorsListener = new EditorColorsListener() {
+    final EditorColorsListener myColorsListener = new EditorColorsListener() {
       public void globalSchemeChange(EditorColorsScheme scheme) {
         myEditorManager.updateContextPointDescription();
       }
     };
     colorsManager.addEditorColorsListener(myColorsListener);
+    Disposer.register(project, new Disposable() {
+      public void dispose() {
+        colorsManager.removeEditorColorsListener(myColorsListener);
+      }
+    });
 
     getContextManager().addListener(new DebuggerContextListener() {
       public void changeEvent(final DebuggerContextImpl newContext, int event) {
@@ -78,31 +85,8 @@ public class DebuggerPanelsManager implements ProjectComponent {
     return DebuggerManagerEx.getInstanceEx(myProject).getContextManager();
   }
 
-  private final RunContentListener myContentListener = new RunContentListener() {
-    public void contentSelected(RunContentDescriptor descriptor) {
-      DebuggerSessionTab sessionTab = descriptor != null ? getSessionTab(descriptor.getProcessHandler()) : null;
-
-      if (sessionTab != null) {
-        getContextManager()
-          .setState(sessionTab.getContextManager().getContext(), sessionTab.getSession().getState(), DebuggerSession.EVENT_CONTEXT, null);
-      }
-      else {
-        getContextManager()
-          .setState(DebuggerContextImpl.EMPTY_CONTEXT, DebuggerSession.STATE_DISPOSED, DebuggerSession.EVENT_CONTEXT, null);
-      }
-    }
-
-    public void contentRemoved(RunContentDescriptor descriptor) {
-      DebuggerSessionTab sessionTab = getSessionTab(descriptor.getProcessHandler());
-      if (sessionTab != null) {
-        mySessionTabs.remove(descriptor.getProcessHandler());
-        Disposer.dispose(sessionTab);
-      }
-    }
-  };
-
-  public
   @Nullable
+  public
   RunContentDescriptor attachVirtualMachine(Executor executor,
                                             ProgramRunner runner,
                                             ExecutionEnvironment environment,
@@ -146,14 +130,41 @@ public class DebuggerPanelsManager implements ProjectComponent {
 
 
   public void projectOpened() {
-    RunContentManager contentManager = ExecutionManager.getInstance(myProject).getContentManager();
+    final RunContentManager contentManager = myExecutionManager.getContentManager();
     LOG.assertTrue(contentManager != null, "Content manager is null");
+
+    final RunContentListener myContentListener = new RunContentListener() {
+      public void contentSelected(RunContentDescriptor descriptor) {
+        DebuggerSessionTab sessionTab = descriptor != null ? getSessionTab(descriptor.getProcessHandler()) : null;
+
+        if (sessionTab != null) {
+          getContextManager()
+            .setState(sessionTab.getContextManager().getContext(), sessionTab.getSession().getState(), DebuggerSession.EVENT_CONTEXT, null);
+        }
+        else {
+          getContextManager()
+            .setState(DebuggerContextImpl.EMPTY_CONTEXT, DebuggerSession.STATE_DISPOSED, DebuggerSession.EVENT_CONTEXT, null);
+        }
+      }
+
+      public void contentRemoved(RunContentDescriptor descriptor) {
+        DebuggerSessionTab sessionTab = getSessionTab(descriptor.getProcessHandler());
+        if (sessionTab != null) {
+          mySessionTabs.remove(descriptor.getProcessHandler());
+          Disposer.dispose(sessionTab);
+        }
+      }
+    };
+
     contentManager.addRunContentListener(myContentListener, DefaultDebugExecutor.getDebugExecutorInstance());
+    Disposer.register(myProject, new Disposable() {
+      public void dispose() {
+        contentManager.removeRunContentListener(myContentListener);
+      }
+    });
   }
 
   public void projectClosed() {
-    final RunContentManager contentManager = ExecutionManager.getInstance(myProject).getContentManager();
-    contentManager.removeRunContentListener(myContentListener);
   }
 
   @NotNull
@@ -165,7 +176,6 @@ public class DebuggerPanelsManager implements ProjectComponent {
   }
 
   public void disposeComponent() {
-    EditorColorsManager.getInstance().removeEditorColorsListener(myColorsListener);
   }
 
   public static DebuggerPanelsManager getInstance(Project project) {
@@ -181,8 +191,7 @@ public class DebuggerPanelsManager implements ProjectComponent {
   @Nullable
   public DebuggerSessionTab getSessionTab() {
     DebuggerContextImpl context = DebuggerManagerEx.getInstanceEx(myProject).getContext();
-    DebuggerSessionTab sessionTab = getSessionTab(context.getDebuggerSession());
-    return sessionTab;
+    return getSessionTab(context.getDebuggerSession());
   }
 
   public void showFramePanel() {

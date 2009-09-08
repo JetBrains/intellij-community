@@ -3,7 +3,6 @@ package com.intellij.openapi.command.impl;
 import com.intellij.ProjectTopics;
 import com.intellij.history.Checkpoint;
 import com.intellij.history.LocalHistory;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
@@ -17,26 +16,27 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FileOperationsUndoProvider extends VirtualFileAdapter implements UndoProvider, Disposable {
+public class FileOperationsUndoProvider extends VirtualFileAdapter implements UndoProvider {
   private final Key<Boolean> DELETION_WAS_UNDOABLE = new Key<Boolean>("DeletionWasUndoable");
 
-  private Project myProject;
+  private final Project myProject;
   private boolean myIsInsideCommand;
 
   private List<MyUndoableAction> myCommandActions;
-  private MessageBusConnection myBusConnection;
+  private final MessageBusConnection myBusConnection;
 
+  @SuppressWarnings({"UnusedDeclaration"})
   public FileOperationsUndoProvider() {
     this(null, null);
   }
 
-  public FileOperationsUndoProvider(Project p, MessageBus bus) {
-    myProject = p;
+  public FileOperationsUndoProvider(Project project, MessageBus bus) {
+    myProject = project;
+    myBusConnection = project == null ? null : bus.connect(project);
+
     if (myProject == null) return;
 
-    myBusConnection = bus.connect();
-
-    getFileManager().addVirtualFileListener(this);
+    getFileManager().addVirtualFileListener(this, project);
     listenForModuleChanges();
   }
 
@@ -62,14 +62,7 @@ public class FileOperationsUndoProvider extends VirtualFileAdapter implements Un
     });
   }
 
-  public void dispose() {
-    if (myProject == null) return;
-
-    myBusConnection.disconnect();
-    getFileManager().removeVirtualFileListener(this);
-  }
-
-  private VirtualFileManager getFileManager() {
+  private static VirtualFileManager getFileManager() {
     return VirtualFileManager.getInstance();
   }
 
@@ -150,7 +143,7 @@ public class FileOperationsUndoProvider extends VirtualFileAdapter implements Un
     return myProject.isDisposed();
   }
 
-  private boolean isUndoable(VirtualFileEvent e) {
+  private static boolean isUndoable(VirtualFileEvent e) {
     return !e.isFromRefresh();
   }
 
@@ -197,7 +190,7 @@ public class FileOperationsUndoProvider extends VirtualFileAdapter implements Un
     myCommandActions.add(a);
   }
 
-  private DocumentReference createDocumentReference(VirtualFile f, boolean isDeletion) {
+  private static DocumentReference createDocumentReference(VirtualFile f, boolean isDeletion) {
     DocumentReference r = new DocumentReferenceByVirtualFile(f);
     if (isDeletion) r.beforeFileDeletion(f);
     return r;
@@ -217,7 +210,7 @@ public class FileOperationsUndoProvider extends VirtualFileAdapter implements Un
     private boolean myProcessDuringUndo;
     private boolean myProcessDuringRedo;
 
-    public MyUndoableAction(DocumentReference r) {
+    private MyUndoableAction(DocumentReference r) {
       myDocumentRef = r;
       myAfterActionCheckpoint = LocalHistory.putCheckpoint(myProject);
     }

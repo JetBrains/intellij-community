@@ -154,23 +154,19 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   private boolean removeContent(final Content content, boolean trackSelection, boolean dispose) {
-    if (getIndexOfContent(content) == -1) return false;
+    int indexToBeRemoved = getIndexOfContent(content);
+    if (indexToBeRemoved == -1) return false;
 
     try {
       Content selection = mySelection.isEmpty() ? null : mySelection.get(mySelection.size() - 1);
       int selectedIndex = selection != null ? myContents.indexOf(selection) : -1;
 
-      int indexToBeRemoved = myContents.indexOf(content);
-      if (indexToBeRemoved < 0) {
-        return false;
-      }
       if (!fireContentRemoveQuery(content, indexToBeRemoved, ContentManagerEvent.ContentOperation.undefined)) {
         return false;
       }
       if (!content.isValid()) {
         return false; // the content has already been invalidated by another thread or something
       }
-
 
       boolean wasSelected = isSelected(content);
       if (wasSelected) {

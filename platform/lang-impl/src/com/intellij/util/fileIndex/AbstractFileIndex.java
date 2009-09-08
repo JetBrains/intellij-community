@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
@@ -38,7 +39,7 @@ public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> imple
   private final ProjectFileIndex myProjectFileIndex;
   private boolean myFormatChanged;
   private final Project myProject;
-  private AbstractFileIndex.FileIndexCacheUpdater myRootsChangeCacheUpdater;
+  private FileIndexCacheUpdater myRootsChangeCacheUpdater;
   private final StartupManagerEx myStartupManager;
   private FileIndexRefreshCacheUpdater myRefreshCacheUpdater;
   private final Object myIndexLock = new Object();
@@ -128,7 +129,8 @@ public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> imple
         }
       }
       cacheFile.delete();
-    } finally {
+    }
+    finally {
       if (output != null) {
         try {
           output.close();
@@ -248,7 +250,6 @@ public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> imple
     else {
       StartupManager.getInstance(myProject).registerStartupActivity(loadCacheRunnable);
     }
-
   }
 
   @Nullable
@@ -258,7 +259,7 @@ public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> imple
 
   public void dispose() {
     if (myRefreshCacheUpdater != null) {
-      myRefreshCacheUpdater.dispose();
+      Disposer.dispose(myRefreshCacheUpdater);
     }
     if (myRootsChangeCacheUpdater != null) {
       ProjectRootManagerEx.getInstanceEx(myProject).unregisterChangeUpdater(myRootsChangeCacheUpdater);

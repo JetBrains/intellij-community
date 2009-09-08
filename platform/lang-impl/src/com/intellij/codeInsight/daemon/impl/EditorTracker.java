@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -10,10 +10,12 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.Disposable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.EventDispatcher;
@@ -27,10 +29,9 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
-public class EditorTracker implements ProjectComponent {
+public class EditorTracker extends AbstractProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.EditorTracker");
 
-  private final Project myProject;
   private final WindowManager myWindowManager;
   private final EditorFactory myEditorFactory;
   private final FileEditorManager myFileEditorManager;
@@ -67,14 +68,12 @@ public class EditorTracker implements ProjectComponent {
   //it actually initializes frame in WindowManager
   public EditorTracker(Project project, final WindowManager windowManager, final EditorFactory editorFactory,
                        final FileEditorManager fileEditorManager, ToolWindowManager toolwindowManager) {
-    myProject = project;
+    super(project);
     myWindowManager = windowManager;
     myEditorFactory = editorFactory;
     myFileEditorManager = fileEditorManager;
     myToolwindowManager = toolwindowManager;
-
   }
-
 
   public void projectOpened() {
     myIdeFrame = ((WindowManagerEx)myWindowManager).getFrame(myProject);
@@ -83,35 +82,30 @@ public class EditorTracker implements ProjectComponent {
         if (myIdeFrame.getFocusOwner() == null) return;
         setActiveWindow(myIdeFrame);
       }
-    });
+    }, myProject);
     if (myIdeFrame != null) {
       myIdeFrame.addWindowFocusListener(myIdeFrameFocusListener);
+      Disposer.register(myProject, new Disposable() {
+        public void dispose() {
+          myIdeFrame.removeWindowFocusListener(myIdeFrameFocusListener);
+        }
+      });
     }
 
     myEditorFactoryListener = new MyEditorFactoryListener();
     myEditorFactory.addEditorFactoryListener(myEditorFactoryListener);
-  }
-
-  public void projectClosed() {
-    if (myEditorFactoryListener != null) {
-      myEditorFactoryListener.dispose(null);
-      myEditorFactory.removeEditorFactoryListener(myEditorFactoryListener);
-    }
-    if (myIdeFrame != null) {
-      myIdeFrame.removeWindowFocusListener(myIdeFrameFocusListener);
-    }
+    Disposer.register(myProject, new Disposable() {
+      public void dispose() {
+        myEditorFactoryListener.dispose(null);
+        myEditorFactory.removeEditorFactoryListener(myEditorFactoryListener);
+      }
+    });
   }
 
   @NonNls
   @NotNull
   public String getComponentName() {
     return "EditorTracker";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   private void editorFocused(Editor editor) {

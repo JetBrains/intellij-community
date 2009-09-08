@@ -61,10 +61,6 @@ public abstract class ModuleTestCase extends IdeaTestCase {
     return createModule(path, moduleType);
   }
 
-  protected Module createModule(final String path) {
-    return createModule(path, StdModuleTypes.JAVA);
-  }
-
   protected Module createModule(final String path, final ModuleType moduleType) {
     Module module = ApplicationManager.getApplication().runWriteAction(
       new Computable<Module>() {
