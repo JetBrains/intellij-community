@@ -88,7 +88,7 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
   }
 
   @Nullable
-  private static ClassLoader getGradleClassLoader(final Module module) {
+  private static ClassLoader getGradleClassLoader(@NotNull final Module module) {
     final Project project = module.getProject();
     return PsiManager.getInstance(project).getCachedValuesManager().getCachedValue(module, GRADLE_CLASS_LOADER, new CachedValueProvider<ClassLoader>() {
         public Result<ClassLoader> compute() {
@@ -98,8 +98,8 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
   }
 
   @Nullable
-  private static ClassLoader createGradleClassLoader(Module module) {
-    final VirtualFile sdkHome = GradleLibraryManager.getSdkHome(module);
+  private static ClassLoader createGradleClassLoader(@NotNull Module module) {
+    final VirtualFile sdkHome = GradleLibraryManager.getSdkHome(module, module.getProject());
     if (sdkHome == null) {
       return null;
     }

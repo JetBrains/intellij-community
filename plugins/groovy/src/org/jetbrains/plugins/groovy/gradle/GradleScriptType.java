@@ -1,27 +1,25 @@
 package org.jetbrains.plugins.groovy.gradle;
 
+import com.intellij.compiler.options.CompileStepBeforeRun;
 import com.intellij.execution.CantRunException;
-import com.intellij.execution.Location;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Location;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
-import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.compiler.options.CompileStepBeforeRun;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -30,8 +28,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
+import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import javax.swing.*;
+import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
@@ -86,24 +86,15 @@ public class GradleScriptType extends GroovyScriptType {
 
       @Override
       public boolean ensureRunnerConfigured(@Nullable Module module, String confName, final Project project) throws ExecutionException {
-        if (module == null) {
-          throw new ExecutionException("Module is not specified");
-        }
-
-        final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-        final Sdk sdk = rootManager.getSdk();
-        if (sdk == null || !(sdk.getSdkType() instanceof JavaSdkType)) {
-          throw CantRunException.noJdkForModule(module);
-        }
-
-        if (!isValidModule(module)) {
+        if (GradleLibraryManager.getSdkHome(module, project) == null) {
           int result = Messages
             .showOkCancelDialog("Gradle is not configured. Do you want to configure it?", "Configure Gradle SDK",
                                 GradleLibraryManager.GRADLE_ICON);
           if (result == 0) {
-            ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME, false);
+            final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
+            util.editConfigurable(project, util.findProjectConfigurable(project, GradleConfigurable.class));
           }
-          if (!isValidModule(module)) {
+          if (GradleLibraryManager.getSdkHome(module, project) == null) {
             return false;
           }
         }
@@ -117,17 +108,26 @@ public class GradleScriptType extends GroovyScriptType {
                                        VirtualFile script, GroovyScriptRunConfiguration configuration) throws CantRunException {
         params.setMainClass("org.gradle.BootstrapMain");
 
-        assert module != null;
-        final VirtualFile groovyJar = findGroovyJar(module);
-        if (groovyJar != null) {
-          params.getClassPath().add(groovyJar);
+        final VirtualFile gradleHome = GradleLibraryManager.getSdkHome(module, configuration.getProject());
+        assert gradleHome != null;
+        final File[] groovyJars = GroovyUtils.getFilesInDirectoryByPattern(gradleHome.getPath() + "/lib/", GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN);
+        if (groovyJars.length > 0) {
+          params.getClassPath().add(groovyJars[0].getAbsolutePath());
+        } else if (module != null) {
+          final VirtualFile groovyJar = findGroovyJar(module);
+          if (groovyJar != null) {
+            params.getClassPath().add(groovyJar);
+          }
         }
-        params.getClassPath().add(GradleLibraryManager.findGradleJar(module));
+
+        final File[] gradleJars = GroovyUtils.getFilesInDirectoryByPattern(gradleHome.getPath() + "/lib/", GradleLibraryManager.GRADLE_JAR_FILE_PATTERN);
+        if (gradleJars.length > 0) {
+          params.getClassPath().add(gradleJars[0].getAbsolutePath());
+        }
 
         params.getVMParametersList().addParametersString(configuration.vmParams);
 
-        final VirtualFile gradleHome = GradleLibraryManager.getSdkHome(module);
-        assert gradleHome != null;
+
         params.getVMParametersList().add("-Dgradle.home=\"" + FileUtil.toSystemDependentName(gradleHome.getPath()) + "\"");
 
         setToolsJar(params);

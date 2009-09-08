@@ -33,10 +33,6 @@ public abstract class SdkHomeConfigurable implements Configurable {
   }
 
   public JComponent createComponent() {
-    if (myPanel != null) {
-      return myPanel;
-    }
-
     myPanel = new JPanel(new BorderLayout());
     final JPanel contentPanel = new JPanel(new BorderLayout());
     myPanel.add(contentPanel, BorderLayout.NORTH);
@@ -78,6 +74,8 @@ public abstract class SdkHomeConfigurable implements Configurable {
   }
 
   public void disposeUIResources() {
+    myPathField = null;
+    myPanel = null;
   }
 
   public static class SdkHomeBean {

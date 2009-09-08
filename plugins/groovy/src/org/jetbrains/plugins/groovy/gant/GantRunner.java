@@ -36,7 +36,7 @@ public class GantRunner extends GroovyScriptRunner {
                             GantIcons.GANT_ICON_16x16);
       if (result == 0) {
         final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
-          util.editConfigurable(project, util.findProjectConfigurable(project, GantConfigurable.class));
+        util.editConfigurable(project, util.findProjectConfigurable(project, GantConfigurable.class));
       }
       if (!(GantUtils.getSDKInstallPath(module, project).length() > 0)) {
         return false;

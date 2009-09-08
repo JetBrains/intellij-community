@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.groovy.gradle;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
@@ -26,7 +27,7 @@ import java.util.regex.Pattern;
  */
 public class GradleLibraryManager extends AbstractGroovyLibraryManager {
   public static final Icon GRADLE_ICON = IconLoader.getIcon("/icons/gradle/gradle.png");
-  @NonNls private static final Pattern GRADLE_JAR_FILE_PATTERN = Pattern.compile("gradle-(core-)?(\\d.*)\\.jar");
+  @NonNls static final Pattern GRADLE_JAR_FILE_PATTERN = Pattern.compile("gradle-(core-)?(\\d.*)\\.jar");
 
   @NotNull
   @Override
@@ -67,31 +68,24 @@ public class GradleLibraryManager extends AbstractGroovyLibraryManager {
   }
 
   @Nullable
-  public static VirtualFile getSdkHome(@Nullable Module module) {
-    final VirtualFile gradleJar = findGradleJar(module);
-
-    if (gradleJar != null) {
-      final VirtualFile parent = gradleJar.getParent();
-      if (parent != null && "lib".equals(parent.getName())) {
-        return parent.getParent();
+  public static VirtualFile getSdkHome(@Nullable Module module, @NotNull Project project) {
+    if (module != null) {
+      final VirtualFile gradleJar = findGradleJar(ModuleRootManager.getInstance(module).getFiles(OrderRootType.CLASSES));
+      if (gradleJar != null) {
+        final VirtualFile parent = gradleJar.getParent();
+        if (parent != null && "lib".equals(parent.getName())) {
+          return parent.getParent();
+        }
       }
     }
-    return null;
-  }
 
-  @Nullable
-  public static VirtualFile findGradleJar(@Nullable Module module) {
-    if (module == null) {
-      return null;
-    }
-
-    return findGradleJar(ModuleRootManager.getInstance(module).getFiles(OrderRootType.CLASSES));
+    return GradleSettings.getInstance(project).getSdkHome();
   }
 
   @Nullable
   private static VirtualFile findGradleJar(VirtualFile[] files) {
     for (VirtualFile file : files) {
-      if (isGradleJar(file)) {
+      if (GRADLE_JAR_FILE_PATTERN.matcher(file.getName()).matches()) {
         return PathUtil.getLocalFile(file);
       }
     }
@@ -100,10 +94,6 @@ public class GradleLibraryManager extends AbstractGroovyLibraryManager {
 
   public static boolean isGradleSdk(VirtualFile[] files) {
     return findGradleJar(files) != null;
-  }
-
-  private static boolean isGradleJar(VirtualFile file) {
-    return GRADLE_JAR_FILE_PATTERN.matcher(file.getName()).matches();
   }
 
   @Override
