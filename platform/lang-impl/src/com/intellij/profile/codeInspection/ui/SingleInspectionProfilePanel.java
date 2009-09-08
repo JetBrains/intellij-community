@@ -237,20 +237,22 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
     InspectionProfileImpl inspectionProfile =
         new InspectionProfileImpl(profileName, InspectionToolRegistrar.getInstance(), profileManager);
-    inspectionProfile.initInspectionTools();
-      final ModifiableModel profileModifiableModel = inspectionProfile.getModifiableModel();
       if (initValue == -1) {
+        inspectionProfile.initInspectionTools();
+        ModifiableModel profileModifiableModel = inspectionProfile.getModifiableModel();
         final InspectionProfileEntry[] profileEntries = profileModifiableModel.getInspectionTools(null);
         for (InspectionProfileEntry entry : profileEntries) {
           profileModifiableModel.disableTool(entry.getShortName(), (NamedScope)null);
         }
+        profileModifiableModel.setLocal(true);
+        return profileModifiableModel;
+      } else if (initValue == 0) {
+        inspectionProfile.copyFrom(selectedProfile);
+        inspectionProfile.setName(profileName);
+        inspectionProfile.initInspectionTools();
+        return inspectionProfile;
       }
-      else if (initValue == 1) {
-        profileModifiableModel.resetToBase();
-      }
-      profileModifiableModel.setName(profileName);
-      profileModifiableModel.setLocal(true);
-      return profileModifiableModel;
+      return null;
   }
 
   public void filterTree(String filter) {

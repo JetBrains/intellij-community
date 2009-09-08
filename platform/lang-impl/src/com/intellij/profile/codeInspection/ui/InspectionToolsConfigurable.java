@@ -61,6 +61,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
   private JButton myImportButton;
   private JButton myExportButton;
   private JCheckBox myShareProfileCheckBox;
+  private JButton myCopyButton;
 
   private ArrayList<String> myDeletedProfiles = new ArrayList<String>();
   protected final InspectionProfileManager myProfileManager;
@@ -149,6 +150,17 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
       }
     });
 
+    myCopyButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        final InspectionProfileImpl model = (InspectionProfileImpl)SingleInspectionProfilePanel.createNewProfile(0, getSelectedObject(), myWholePanel, "");
+        if (model != null) {
+          addProfile((InspectionProfileImpl)model.getModifiableModel());
+          myDeletedProfiles.remove(model.getName());
+          myDeleteButton.setEnabled(true);
+        }
+      }
+    });
+
     myProjectProfileManager = projectProfileManager;
     myProfileManager = profileManager;
   }
@@ -156,6 +168,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
   private void addProfile(InspectionProfileImpl model) {
     final String modelName = model.getName();
     final SingleInspectionProfilePanel panel = new SingleInspectionProfilePanel(myProjectProfileManager, modelName, model);
+    panel.reset();
     myPanel.add(modelName, panel);
     if (!myPanels.containsKey(modelName)) {
       ((DefaultComboBoxModel)myProfiles.getModel()).addElement(model);
