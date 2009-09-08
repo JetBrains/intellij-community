@@ -10,7 +10,6 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ConvertingIterator;
@@ -80,7 +79,7 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTable.Modifiable
         if (libraryOrderEntry.isModuleLevel()) {
           if (library.equals(libraryOrderEntry.getLibrary())) {
             myRootModel.removeOrderEntry(orderEntry);
-            Disposer.dispose(library);
+            //Disposer.dispose(library);
             return;
           }
         }

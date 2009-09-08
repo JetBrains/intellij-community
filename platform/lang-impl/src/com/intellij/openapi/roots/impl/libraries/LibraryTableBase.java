@@ -231,7 +231,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
 
     public void removeLibrary(@NotNull Library library) {
       assertWritable();
-      if (myLibraries.remove(library)) Disposer.dispose(library);
+      myLibraries.remove(library);
     }
 
     public boolean isChanged() {
