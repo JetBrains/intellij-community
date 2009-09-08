@@ -85,7 +85,7 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
       return myRootContainers.get(OrderRootType.CLASSES).getDirectories();
     }
     else if (type == OrderRootType.CLASSES_AND_OUTPUT) {
-      return myRootContainers.get(OrderRootType.CLASSES).getDirectories();
+      return myScope == DependencyScope.PROVIDED ? VirtualFile.EMPTY_ARRAY : myRootContainers.get(OrderRootType.CLASSES).getDirectories();
     }
     return myRootContainers.get(type).getDirectories();
   }
@@ -106,7 +106,7 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
       return myRootContainers.get(OrderRootType.CLASSES).getUrls();
     }
     else if (type == OrderRootType.CLASSES_AND_OUTPUT) {
-      return myRootContainers.get(OrderRootType.CLASSES).getUrls();
+      return myScope == DependencyScope.PROVIDED ? ArrayUtil.EMPTY_STRING_ARRAY : myRootContainers.get(OrderRootType.CLASSES).getUrls();
     }
     return myRootContainers.get(type).getUrls();
   }

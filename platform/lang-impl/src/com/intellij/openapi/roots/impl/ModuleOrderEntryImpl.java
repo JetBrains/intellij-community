@@ -116,6 +116,9 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
       if (myScope == DependencyScope.TEST && type == OrderRootType.PRODUCTION_COMPILATION_CLASSES) {
         return VirtualFile.EMPTY_ARRAY;
       }
+      if (myScope == DependencyScope.PROVIDED && type == OrderRootType.CLASSES_AND_OUTPUT) {
+        return VirtualFile.EMPTY_ARRAY;
+      }
       return ((ModuleRootManagerImpl)ModuleRootManager.getInstance(myModule)).getFilesForOtherModules(type, processed);
     }
     else {
@@ -135,6 +138,9 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
         return ArrayUtil.EMPTY_STRING_ARRAY;
       }
       if (myScope == DependencyScope.TEST && rootType == OrderRootType.PRODUCTION_COMPILATION_CLASSES) {
+        return ArrayUtil.EMPTY_STRING_ARRAY;
+      }
+      if (myScope == DependencyScope.PROVIDED && rootType == OrderRootType.CLASSES_AND_OUTPUT) {
         return ArrayUtil.EMPTY_STRING_ARRAY;
       }
       return ((ModuleRootManagerImpl)ModuleRootManager.getInstance(myModule)).getUrlsForOtherModules(rootType, processed);

@@ -20,6 +20,11 @@ public enum DependencyScope {
     @Override
     public String toString() {
       return "Runtime";
+    }},
+  PROVIDED {
+    @Override
+    public String toString() {
+      return "Provided";
     }};
 
   private static final String SCOPE_ATTR = "scope";
