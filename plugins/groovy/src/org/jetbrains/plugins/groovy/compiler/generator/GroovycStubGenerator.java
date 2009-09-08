@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.compiler.generator;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.IntermediateOutputCompiler;
+import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -30,9 +31,9 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompilerBase;
+import org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -53,8 +54,15 @@ public class GroovycStubGenerator extends GroovyCompilerBase implements Intermed
       }
     }
 
+
+
+    final ExcludedEntriesConfiguration excluded = GroovyCompilerConfiguration.getInstance(myProject).getState().excludeFromStubGeneration;
     List<VirtualFile> total = new ArrayList<VirtualFile>();
-    total.addAll(Arrays.asList(virtualFiles));
+    for (final VirtualFile virtualFile : virtualFiles) {
+      if (!excluded.isExcluded(virtualFile)) {
+        total.add(virtualFile);
+      }
+    }
 
     for (final VirtualFile javaFile : compileContext.getCompileScope().getFiles(StdFileTypes.JAVA, !hasTests)) {
       if (isCompilableJavaFile(javaFile, compileContext)) {

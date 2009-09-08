@@ -161,6 +161,8 @@
 
     <usageGroupingRuleProvider implementation="org.jetbrains.plugins.groovy.findUsages.GroovyUsageViewGroupingRuleProvider"/>
 
+    <compilerSettingsFactory implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfigurable"/>
+
     <stubElementTypeHolder class="org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes"/>
     <!--Stubs index-->
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrShortClassNameIndex"/>
@@ -183,6 +185,8 @@
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory"
                     serviceImplementation="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementFactoryImpl"/>
+    <projectService serviceInterface="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration"
+                    serviceImplementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration"/>
     <projectService serviceInterface="org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker"
                     serviceImplementation="org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker"/>
 
@@ -394,6 +398,11 @@
             class="org.jetbrains.plugins.groovy.refactoring.javaToGrovyRename.RenameJavaFileToGroovyFileAction"
             text="Rename To Groovy" description="Rename Java File to Groovy">
       <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
+    </action>
+    <action id="ExcludeFromStubGeneration"
+            class="org.jetbrains.plugins.groovy.compiler.ExcludeFromStubGenerationAction"
+            text="Exclude from stub generation" description="Don't generate Java stubs for this Groovy file on compilation">
+      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="RenameJavaFileToGroovyFileAction"/>
     </action>
     <action id="org.jetbrains.plugins.groovy.actions.generate.equals.EqualsGenerateAction"
             class="org.jetbrains.plugins.groovy.actions.generate.equals.EqualsGenerateAction"

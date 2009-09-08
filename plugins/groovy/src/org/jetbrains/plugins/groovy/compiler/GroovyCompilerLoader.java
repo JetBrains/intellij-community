@@ -26,10 +26,10 @@ public class GroovyCompilerLoader extends AbstractProjectComponent {
     CompilerManager compilerManager = CompilerManager.getInstance(myProject);
     compilerManager.addCompilableFileType(GroovyFileType.GROOVY_FILE_TYPE);
 
-    if (System.getProperty("use.groovyc.stub.generator", "false").equals("true")) {
+    if (System.getProperty("use.groovyc.stub.generator", "true").equals("true")) {
       compilerManager.addTranslatingCompiler(new GroovycStubGenerator(myProject), 
                                              new HashSet<FileType>(Arrays.asList(GroovyFileType.GROOVY_FILE_TYPE, StdFileTypes.JAVA)),
-                                             new HashSet<FileType>(Arrays.asList(StdFileTypes.CLASS)));
+                                             new HashSet<FileType>(Arrays.asList(StdFileTypes.JAVA)));
     } else {
       GroovyToJavaGenerator generator = new GroovyToJavaGenerator(myProject);
       compilerManager.addCompiler(generator);

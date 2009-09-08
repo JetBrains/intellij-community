@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.compiler.generator;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
@@ -20,6 +21,7 @@ import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -102,8 +104,10 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     GenerationItem item;
     final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
     final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(myProject);
+    final ExcludedEntriesConfiguration excluded = GroovyCompilerConfiguration.getInstance(myProject).getState().excludeFromStubGeneration;
     for (VirtualFile file : getGroovyFilesToGenerate(context)) {
       if (compilerManager.isExcludedFromCompilation(file)) continue;
+      if (excluded.isExcluded(file)) continue;
       if (compilerConfiguration.isResourceFile(file)) continue;
 
       final Module module = getModuleByFile(context, file);
