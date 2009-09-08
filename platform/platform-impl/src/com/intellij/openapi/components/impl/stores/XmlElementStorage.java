@@ -354,7 +354,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       if (myBlockSavingTheContent) return false;
       if (myUpToDateHash == null) {
         if (hash != null) {
-          if (!phisicalContentNeedsSave()) {
+          if (!physicalContentNeedsSave()) {
             myUpToDateHash = hash;
             return false;
           }
@@ -371,7 +371,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
           if (hash.intValue() == myUpToDateHash.intValue()) {
             return false;
           }
-          if (!phisicalContentNeedsSave()) {
+          if (!physicalContentNeedsSave()) {
             myUpToDateHash = hash;
             return false;
           }
@@ -381,17 +381,15 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
         }
         else {
-          return phisicalContentNeedsSave();
+          return physicalContentNeedsSave();
         }
 
       }
     }
 
-    protected boolean phisicalContentNeedsSave() {
+    protected boolean physicalContentNeedsSave() {
       return true;
     }
-
-
 
     protected abstract void doSave() throws StateStorageException;
 

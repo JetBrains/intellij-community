@@ -103,18 +103,18 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
 
     public void finishSave() {
       try {
-        RuntimeException last = null;
+        Throwable first = null;
         for (SaveSession moduleSaveSession : myModuleSaveSessions) {
           try {
             moduleSaveSession.finishSave();
           }
-          catch(RuntimeException e) {
-            last = e;
+          catch(Throwable e) {
+            if (first == null) first = e;
           }
         }
 
-        if (last != null) {
-          throw last;
+        if (first != null) {
+          throw new RuntimeException(first);
         }
       }
       finally {

@@ -13,6 +13,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,6 +24,7 @@ import com.intellij.util.io.fs.IFile;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
@@ -30,7 +32,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.Set;
 
@@ -50,8 +51,7 @@ public class StorageUtil {
       final Ref<IOException> refIOException = Ref.create(null);
 
       if (file.exists()) {
-        final byte[] bytes = file.loadBytes();
-        if (Arrays.equals(bytes, text)) return;
+        if (contentEquals(new String(text), file)) return;
         IFile backupFile = deleteBackup(filePath);
         file.renameTo(backupFile);
       }
@@ -126,13 +126,33 @@ public class StorageUtil {
     }
   }
 
+  public static boolean contentEquals(@NotNull final Document document, @NotNull final IFile file) {
+    return contentEquals(printDocumentToString(document), file);
+  }
+
+  public static boolean contentEquals(@NotNull final Element element, @NotNull final IFile file) {
+    return contentEquals(printElement(element), file);
+  }
+
+  private static boolean contentEquals(final String text, final IFile file) {
+    try {
+      String fileText = new String(file.loadBytes(), CharsetToolkit.UTF8);
+      final String convertedFileText = StringUtil.convertLineSeparators(fileText, SystemProperties.getLineSeparator());
+      return convertedFileText.equals(text);
+    }
+    catch (IOException e) {
+      LOG.debug(e);
+      return false;
+    }
+  }
+
   public static String printDocumentToString(Document document) {
     return JDOMUtil.writeDocument(document, SystemProperties.getLineSeparator());
   }
 
-  static byte[] printElement(Element element) throws StateStorage.StateStorageException {
+  static String printElement(Element element) throws StateStorage.StateStorageException {
     try {
-      return JDOMUtil.writeElement(element, SystemProperties.getLineSeparator()).getBytes(CharsetToolkit.UTF8);
+      return JDOMUtil.writeElement(element, SystemProperties.getLineSeparator());
     }
     catch (IOException e) {
       throw new StateStorage.StateStorageException(e);

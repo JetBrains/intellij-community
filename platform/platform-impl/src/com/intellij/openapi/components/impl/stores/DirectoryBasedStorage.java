@@ -1,13 +1,13 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.StateSplitter;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
@@ -75,14 +75,17 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
       final Listener listener = messageBus.syncPublisher(STORAGE_TOPIC);
       virtualFileTracker.addTracker(fileUrl, new VirtualFileAdapter() {
         public void contentsChanged(final VirtualFileEvent event) {
+          if (!StringUtil.endsWithIgnoreCase(event.getFile().getName(), ".xml")) return;
           listener.storageFileChanged(event, DirectoryBasedStorage.this);
         }
 
         public void fileDeleted(final VirtualFileEvent event) {
+          if (!StringUtil.endsWithIgnoreCase(event.getFile().getName(), ".xml")) return;
           listener.storageFileChanged(event, DirectoryBasedStorage.this);
         }
 
         public void fileCreated(final VirtualFileEvent event) {
+          if (!StringUtil.endsWithIgnoreCase(event.getFile().getName(), ".xml")) return;
           listener.storageFileChanged(event, DirectoryBasedStorage.this);
         }
       }, false, this);
@@ -143,7 +146,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
           myPathMacroSubstitutor.expandPaths(element);
         }
         
-        storageData.put(componentName, file, element);
+        storageData.put(componentName, file, element, true);
       }
     }
     catch (IOException e) {
@@ -260,7 +263,10 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
             myPathMacroSubstitutor.collapsePaths(element);
           }
 
-          StorageUtil.save(file, element);
+          if (file.getTimeStamp() <= myStorageData.getLastTimeStamp()) {
+            StorageUtil.save(file, element);
+            myStorageData.updateLastTimestamp(file);
+          }
         }
       });
 
@@ -268,6 +274,12 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
         public void run() {
           for (String name : currentNames) {
             IFile child = myDir.getChild(name);
+
+            if (child.getTimeStamp() > myStorageData.getLastTimeStamp()) {
+              // do not touch new files during VC update (which aren't read yet)
+              // now got an opposite problem: file is recreated if was removed by VC during update.
+              return;
+            }
 
             final VirtualFile virtualFile = StorageUtil.getVirtualFile(child);
             if (virtualFile != null) {
@@ -322,7 +334,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
       IFile[] children = myDir.listFiles();
       final Set<String> currentChildNames = new HashSet<String>();
       for (IFile child : children) {
-        currentChildNames.add(child.getName());
+        if (!myFileTypeManager.isFileIgnored(child.getName())) currentChildNames.add(child.getName());
       }
 
       myStorageData.process(new StorageDataProcessor() {
@@ -334,14 +346,8 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
               myPathMacroSubstitutor.collapsePaths(element);
             }
 
-            final byte[] text = StorageUtil.printElement(element);
-            try {
-              if (!Arrays.equals(file.loadBytes(), text)) {
-                filesToSave.add(file);
-              }
-            }
-            catch (IOException e) {
-              LOG.debug(e);
+            if (!StorageUtil.contentEquals(element, file)) {
+              filesToSave.add(file);
             }
           }
 
@@ -367,12 +373,13 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
 
   private static class MyStorageData {
     private Map<String, Map<IFile, Element>> myStates = new HashMap<String, Map<IFile, Element>>();
+    private long myLastTimestamp = 0;
 
     public Set<String> getComponentNames() {
       return myStates.keySet();
     }
 
-    public void put(final String componentName, final IFile file, final Element element) {
+    public void put(final String componentName, final IFile file, final Element element, final boolean updateTimestamp) {
       LOG.assertTrue(componentName != null, String.format("Component name should not be null for file: %s", file == null ? "NULL!" : file.getPath()));
       
       Map<IFile, Element> stateMap = myStates.get(componentName);
@@ -382,6 +389,15 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
       }
 
       stateMap.put(file, element);
+      if (updateTimestamp) updateLastTimestamp(file);
+    }
+
+    public void updateLastTimestamp(final IFile file) {
+      myLastTimestamp = Math.max(myLastTimestamp, file.getTimeStamp());
+    }
+
+    public long getLastTimeStamp() {
+      return myLastTimestamp;
     }
 
     public Map<IFile, Long> getAllStorageFiles() {
@@ -417,6 +433,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
     protected MyStorageData clone() {
       final MyStorageData result = new MyStorageData();
       result.myStates = new HashMap<String, Map<IFile, Element>>(myStates);
+      result.myLastTimestamp = myLastTimestamp;
       return result;
     }
 
@@ -463,7 +480,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
           e.detach();
           statePart.addContent(e);
 
-          myStorageData.put(componentName, myDir.getChild(name), statePart);
+          myStorageData.put(componentName, myDir.getChild(name), statePart, false);
         }
       }
       catch (WriteExternalException e) {

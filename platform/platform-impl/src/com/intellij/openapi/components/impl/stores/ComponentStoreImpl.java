@@ -87,16 +87,23 @@ abstract class ComponentStoreImpl implements IComponentStore {
   @NotNull
   public SaveSession startSave() throws IOException {
     try {
-      final ComponentStoreImpl.SaveSessionImpl session = createSaveSession();
+      final SaveSessionImpl session = createSaveSession();
       try {
         session.commit();
       }
       catch (Throwable e) {
+        try {
+          session.reset();
+        }
+        catch (Exception e1_ignored) {
+          LOG.info(e1_ignored);
+        }
+
         PluginId pluginId = IdeErrorsDialog.findPluginId(e);
         if (pluginId != null) {
           throw new PluginException(e, pluginId);
         }
-        session.reset();
+
         LOG.info(e);
         IOException ioException = new IOException(e.getMessage());
         ioException.initCause(e);

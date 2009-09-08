@@ -11,12 +11,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.SystemProperties;
 import static com.intellij.util.io.fs.FileSystem.FILE_SYSTEM;
 import com.intellij.util.io.fs.IFile;
 import com.intellij.util.messages.MessageBus;
@@ -32,7 +30,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -135,22 +132,10 @@ public class FileBasedStorage extends XmlElementStorage {
     }
 
     @Override
-    protected boolean phisicalContentNeedsSave() {
+    protected boolean physicalContentNeedsSave() {
       if (!myFile.exists()) return true;
-
-      final String text = StorageUtil.printDocumentToString(getDocumentToSave());
-      try {
-        String fileText = new String(myFile.loadBytes(), CharsetToolkit.UTF8);
-        final String convertedFileText = StringUtil.convertLineSeparators(fileText, SystemProperties.getLineSeparator());
-        return !convertedFileText.equals(text);
-      }
-      catch (IOException e) {
-        LOG.debug(e);
-        return true;
-      }
+      return !StorageUtil.contentEquals(getDocumentToSave(), myFile);
     }
-
-
 
     @Override
     protected Integer calcHash() {
@@ -189,7 +174,7 @@ public class FileBasedStorage extends XmlElementStorage {
       boolean needsSave = needsSave();
       if (needsSave) {
         if (LOG.isDebugEnabled()) {
-          LOG.info("File " + myFileSpec + " needs save; hash=" + myUpToDateHash + "; currentHash=" + calcHash() + "; content needs save=" + phisicalContentNeedsSave());          
+          LOG.info("File " + myFileSpec + " needs save; hash=" + myUpToDateHash + "; currentHash=" + calcHash() + "; content needs save=" + physicalContentNeedsSave());
         }
         return getAllStorageFiles();
       }
@@ -390,25 +375,16 @@ VirtualFile result = LocalFileSystem.getInstance().findFileByIoFile(myFile);
     super.setDefaultState(element);
   }
 
-  protected boolean phisicalContentNeedsSave(final Document doc) {
+  protected boolean physicalContentNeedsSave(final Document doc) {
     if (!myFile.exists()) return true;
-
-    final byte[] text = StorageUtil.printDocument(doc);
-
-    try {
-      return !Arrays.equals(myFile.loadBytes(), text);
-    }
-    catch (IOException e) {
-      LOG.debug(e);
-      return true;
-    }
+    return !StorageUtil.contentEquals(doc, myFile);
   }
 
   @Nullable
   public File updateFileExternallyFromStreamProviders() throws IOException {
     StorageData loadedData = loadData(true, myListener);
     Document document = getDocument(loadedData);
-    if (phisicalContentNeedsSave(document)) {
+    if (physicalContentNeedsSave(document)) {
       File file = new File(myFile.getAbsolutePath());
       JDOMUtil.writeDocument(document, file, "\n");
       return file;
