@@ -56,7 +56,6 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.CompilerMessage;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -263,7 +262,6 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     return new ModuleChunk((CompileContextEx)context, new Chunk<Module>(module), Collections.<Module, List<VirtualFile>>emptyMap());
   }
 
-  @Nullable
   public void compile(final CompileContext compileContext, final VirtualFile[] virtualFiles, OutputSink sink) {
     Map<Module, List<VirtualFile>> mapModulesToVirtualFiles = CompilerUtil.buildModuleToFilesMap(compileContext, virtualFiles);
     final List<Chunk<Module>> chunks =
