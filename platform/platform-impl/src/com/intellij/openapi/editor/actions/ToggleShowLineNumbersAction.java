@@ -40,7 +40,9 @@ import org.jetbrains.annotations.Nullable;
 public class ToggleShowLineNumbersAction extends ToggleAction {
 
   public void setSelected(AnActionEvent e, boolean state) {
-    getEditor(e).getSettings().setLineNumbersShown(state);
+    final Editor editor = getEditor(e);
+    assert editor != null;
+    editor.getSettings().setLineNumbersShown(state);
   }
 
   public boolean isSelected(AnActionEvent e) {
