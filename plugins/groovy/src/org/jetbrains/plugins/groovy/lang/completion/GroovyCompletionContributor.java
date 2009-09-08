@@ -78,7 +78,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
         for (final PsiArrayType type : expectedArrayTypes) {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
-              final LookupItem item = LookupItemUtil.objectToLookupItem(JavaCompletionUtil.eliminateWildcards(type));
+              final LookupItem item = (LookupItem)LookupItemUtil.objectToLookupItem(JavaCompletionUtil.eliminateWildcards(type));
               item.setAttribute(LookupItem.DONT_CHECK_FOR_INNERS, "");
               if (item.getObject() instanceof PsiClass) {
                 JavaCompletionUtil.setShowFQN(item);
@@ -116,7 +116,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
         if (!org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.hasEnclosingInstanceInScope((PsiClass)resolved, position, false)) return;
 
         for (String keyword : THIS_SUPER) {
-          final LookupItem item = LookupItemUtil.objectToLookupItem(keyword);
+          final LookupItem item = (LookupItem)LookupItemUtil.objectToLookupItem(keyword);
           item.setAttribute(LookupItem.DONT_CHECK_FOR_INNERS, "");
           result.addElement(item);
         }
@@ -139,7 +139,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
     if (psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) return;
     if (!checkForInnerClass(psiClass, place)) return;
 
-    final LookupItem item = LookupItemUtil.objectToLookupItem(JavaCompletionUtil.eliminateWildcards(type));
+    final LookupItem item = (LookupItem)LookupItemUtil.objectToLookupItem(JavaCompletionUtil.eliminateWildcards(type));
     item.setAttribute(LookupItem.DONT_CHECK_FOR_INNERS, "");
     JavaCompletionUtil.setShowFQN(item);
     item.setInsertHandler(new AfterNewClassInsertHandler((PsiClassType)type, place));
