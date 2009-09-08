@@ -108,6 +108,7 @@ public class MavenModuleImporter {
   private DependencyScope selectScope(String mavenScope) {
     if (MavenConstants.SCOPE_RUNTIME.equals(mavenScope)) return DependencyScope.RUNTIME;
     if (MavenConstants.SCOPE_TEST.equals(mavenScope)) return DependencyScope.TEST;
+    if (MavenConstants.SCOPE_PROVIDEED.equals(mavenScope)) return DependencyScope.PROVIDED;
     return DependencyScope.COMPILE;
   }
 
