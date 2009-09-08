@@ -27,8 +27,13 @@ public abstract class MavenOpenOrCreateFilesAction extends MavenAction {
   public void update(AnActionEvent e) {
     super.update(e);
 
+    Presentation p = e.getPresentation();
+
     List<File> files = getFiles(e);
-    assert !files.isEmpty();
+    if (files.isEmpty()) {
+      p.setEnabled(false);
+      return;
+    }
 
     List<VirtualFile> virtualFiles = collectVirtualFiles(files);
 
@@ -43,7 +48,6 @@ public abstract class MavenOpenOrCreateFilesAction extends MavenAction {
       text = "Open ''{0}''";
     }
 
-    Presentation p = e.getPresentation();
     p.setText(MessageFormat.format(text, files.get(0).getName()));
     p.setEnabled(enabled);
   }
