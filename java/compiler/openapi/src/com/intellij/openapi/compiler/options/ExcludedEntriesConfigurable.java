@@ -64,6 +64,11 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
     ((AbstractTableModel)myExcludedEntriesPanel.myExcludedTable.getModel()).fireTableDataChanged();
   }
 
+  public void addEntry(ExcludeEntryDescription description) {
+    myExcludeEntryDescriptions.add(description);
+    ((AbstractTableModel)myExcludedEntriesPanel.myExcludedTable.getModel()).fireTableDataChanged();
+  }
+
   private void disposeMyDescriptions() {
     for (ExcludeEntryDescription description : myExcludeEntryDescriptions) {
       Disposer.dispose(description);
