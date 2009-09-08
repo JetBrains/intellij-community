@@ -547,7 +547,7 @@
       <separator/>
       <reference ref="ExternalToolsGroup"/>
 
-      <add-to-group group-id="EditorPopupMenu" relative-to-action="CloseEditor" anchor="after"/>
+      <add-to-group group-id="EditorPopupMenu" relative-to-action="CompareClipboardWithSelection" anchor="before"/>
     </group>
 
     <group id="EditorTabPopupMenuEx">

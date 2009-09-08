@@ -288,8 +288,6 @@
     <group id="EditorPopupMenu" configurable="true">
       <reference ref="CutCopyPasteGroup"/>
       <separator/>
-      <reference ref="CloseEditor"/>
-      <separator/>
       <action id="CompareClipboardWithSelection" class="com.intellij.openapi.diff.actions.CompareClipboardWithSelection"/>
       <reference ref="ChangeFileEncodingGroup"/>
     </group>
