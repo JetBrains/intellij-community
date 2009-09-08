@@ -80,6 +80,7 @@ public class JBTabsImpl extends JComponent
 
   private TabLayout myLayout = mySingleRowLayout;
   LayoutPassInfo myLastLayoutPass;
+  TabInfo myLastPaintedSelection;
 
   public boolean myForcedRelayout;
 
@@ -142,7 +143,7 @@ public class JBTabsImpl extends JComponent
   }
 
   public JBTabsImpl(@Nullable Project project, IdeFocusManager focusManager, Disposable parent) {
-    this(project, ActionManager.getInstance(), focusManager, parent);    
+    this(project, ActionManager.getInstance(), focusManager, parent);
   }
 
   public JBTabsImpl(@Nullable Project project, ActionManager actionManager, IdeFocusManager focusManager, Disposable parent) {
@@ -1606,34 +1607,57 @@ public class JBTabsImpl extends JComponent
   }
 
   private void paintNonSelectedTabs(final Graphics2D g2d, final boolean leftGhostExists) {
+    TabInfo selected = getSelectedInfo();
+    if (myLastPaintedSelection == null || !myLastPaintedSelection.equals(selected)) {
+      List<TabInfo> tabs = getTabs();
+      for (TabInfo each : tabs) {
+        myInfo2Label.get(each).setInactiveStateImage(null);
+      }
+    }
+
     for (int eachRow = 0; eachRow < myLastLayoutPass.getRowCount(); eachRow++) {
       for (int eachColumn = myLastLayoutPass.getColumnCount(eachRow) - 1; eachColumn >= 0; eachColumn--) {
         final TabInfo each = myLastLayoutPass.getTabAt(eachRow, eachColumn);
-        if (getSelectedInfo() == each) continue;
+        if (getSelectedInfo() == each) {
+          continue;
+        }
         paintNonSelected(g2d, each, leftGhostExists);
       }
     }
+
+    myLastPaintedSelection = selected;
   }
 
   private void paintNonSelected(final Graphics2D g2d, final TabInfo each, final boolean leftGhostExists) {
     final TabLabel label = myInfo2Label.get(each);
     if (label.getBounds().width == 0) return;
 
+    int imageInsets = getArcSize() + 1;
+
+    Rectangle bounds = label.getBounds();
+
+    int x = bounds.x - imageInsets;
+    int y = bounds.y;
+    int width = bounds.width + imageInsets * 2 + 1;
+    int height = bounds.height + getArcSize() + 1;
+
     if (isToBufferPainting()) {
-      Rectangle bounds = label.getBounds();
-      BufferedImage img = label.getInactiveStateImage();
+      BufferedImage img = label.getInactiveStateImage(bounds);
+
       if (img == null) {
-        img = new BufferedImage(label.getWidth() + 2, label.getHeight() + 1, BufferedImage.TYPE_INT_ARGB);
+        img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D imgG2d = img.createGraphics();
         imgG2d.addRenderingHints(g2d.getRenderingHints());
-        doPaintInactictive(imgG2d, leftGhostExists, label, false);
+        doPaintInactictive(imgG2d, leftGhostExists, label, new Rectangle(imageInsets, 0, label.getWidth(), label.getHeight()));
         imgG2d.dispose();
       }
 
-      g2d.drawImage(img, bounds.x, bounds.y, bounds.width + 2, bounds.height + 1, null);
+      g2d.drawImage(img, x, y, width, height, null);
+
       label.setInactiveStateImage(img);
     } else {
-      doPaintInactictive(g2d, leftGhostExists, label, true);
+      doPaintInactictive(g2d, leftGhostExists, label, label.getBounds());
+      label.setInactiveStateImage(null);
     }
   }
 
@@ -1641,7 +1665,7 @@ public class JBTabsImpl extends JComponent
     return Registry.is("ide.tabbedPane.bufferedPaint") && myUseBufferedPaint;
   }
 
-  private void doPaintInactictive(Graphics2D g2d, boolean leftGhostExists, TabLabel label, boolean useXY) {
+  private void doPaintInactictive(Graphics2D g2d, boolean leftGhostExists, TabLabel label, Rectangle effectiveBounds) {
     int tabIndex = myVisibleInfos.indexOf(label.getInfo());
 
     final int arc = getArcSize();
@@ -1678,7 +1702,7 @@ public class JBTabsImpl extends JComponent
 
     boolean leftFromSelection = selected != null && tabIndex == myVisibleInfos.indexOf(selected) - 1;
 
-    Rectangle originalBounds = useXY ? label.getBounds() : new Rectangle(label.getSize());
+    Rectangle originalBounds = effectiveBounds;
     final ShapeTransform shape = getEffectiveLayout().createShapeTransform(originalBounds);
 
     int leftX = firstShowing ? shape.getX() : shape.getX() - shape.deltaX(arc + 1);

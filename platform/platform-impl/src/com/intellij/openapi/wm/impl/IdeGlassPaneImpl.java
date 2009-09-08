@@ -27,6 +27,9 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   private final Set<Painter> myPainters = new LinkedHashSet<Painter>();
   private final Map<Painter, Component> myPainter2Component = new LinkedHashMap<Painter, Component>();
 
+  private boolean myPaintingActive;
+  private boolean myPreprocessorActive;
+
   public IdeGlassPaneImpl(JRootPane rootPane) {
     myRootPane = rootPane;
     setOpaque(false);
@@ -182,21 +185,45 @@ private MouseEvent convertEvent(final MouseEvent e, final Component target) {
   }
 
   private void deactivateIfNeeded() {
-    if (!isVisible()) return;
-
-    if (myPainters.size() == 0 && myMouseListeners.size() == 0 && getComponentCount() == 0) {
-      IdeEventQueue.getInstance().removeDispatcher(this);
-      setVisible(false);
+    if (myPaintingActive) {
+      if (myPainters.size() == 0 && getComponentCount() == 0) {
+        myPaintingActive = false;
+      }
     }
+
+    if (myPreprocessorActive && myMouseListeners.size() == 0) {
+      myPreprocessorActive = false;
+    }
+
+    applyActivationState();
   }
 
   private void activateIfNeeded() {
-    if (isVisible()) return;
-
-    if (myPainters.size() > 0 || myMouseListeners.size() > 0 || getComponentCount() > 0) {
-      IdeEventQueue.getInstance().addDispatcher(this, null);
-      setVisible(true);
+    if (!myPaintingActive) {
+      if (myPainters.size() > 0 || getComponentCount() > 0) {
+        myPaintingActive = true;
+      }
     }
+
+    if (!myPreprocessorActive && myMouseListeners.size() > 0) {
+      myPreprocessorActive = true;
+    }
+
+    applyActivationState();
+  }
+
+  private void applyActivationState() {
+    if (isVisible() != myPaintingActive) {
+      setVisible(myPaintingActive);
+    }
+
+    IdeEventQueue queue = IdeEventQueue.getInstance();
+    if (!queue.containsDispatcher(this) && myPreprocessorActive) {
+      queue.addDispatcher(this, null);
+    } else if (queue.containsDispatcher(this) && myPreprocessorActive) {
+      queue.removeDispatcher(this);
+    }
+
   }
 
   public void addPainter(final Component component, final Painter painter, final Disposable parent) {

@@ -260,6 +260,10 @@ public class IdeEventQueue extends EventQueue {
     myDispatchers.remove(dispatcher);
   }
 
+  public boolean containsDispatcher(EventDispatcher dispatcher) {
+    return myDispatchers.contains(dispatcher);
+  }
+
   public void addPostprocessor(EventDispatcher dispatcher, Disposable parent) {
     _addProcessor(dispatcher, parent, myPostprocessors);
   }
