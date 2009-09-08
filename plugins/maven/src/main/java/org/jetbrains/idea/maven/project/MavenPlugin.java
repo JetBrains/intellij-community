@@ -50,11 +50,11 @@ public class MavenPlugin implements Serializable {
     Xpp3Dom config = (Xpp3Dom)plugin.getConfiguration();
     myConfiguration = config == null ? null : xppToElement(config);
 
-    for (PluginExecution each : (Iterable<PluginExecution>)plugin.getExecutions()) {
+    for (PluginExecution each : plugin.getExecutions()) {
       myExecutions.add(new Execution(each));
     }
 
-    for (Dependency each : (Iterable<Dependency>)plugin.getDependencies()) {
+    for (Dependency each : plugin.getDependencies()) {
       myDependencies.add(new MavenId(each.getGroupId(), each.getArtifactId(), each.getVersion()));
     }
   }
