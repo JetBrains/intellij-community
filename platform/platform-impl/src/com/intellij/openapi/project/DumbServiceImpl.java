@@ -5,6 +5,7 @@
 package com.intellij.openapi.project;
 
 import com.intellij.ide.startup.impl.StartupManagerImpl;
+import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -96,13 +97,20 @@ public class DumbServiceImpl extends DumbService {
       }
     };
 
-    final boolean wasDumb = myDumb.getAndSet(true);
+    //todo always go dumb immediately after those who request indices in startup activity are gone (e.g. JS indices)
+    final boolean goDumbImmediately = ((StartupManagerEx)StartupManager.getInstance(myProject)).startupActivityPassed();
+    final boolean wasDumb = goDumbImmediately ? myDumb.getAndSet(true) : false;
 
     invokeOnEDT(new DumbAwareRunnable() {
       public void run() {
         if (myProject.isDisposed()) return;
 
-        if (!wasDumb) {
+        boolean wasDumbEx = wasDumb;
+        if (!goDumbImmediately) {
+          wasDumbEx = myDumb.getAndSet(true);
+        }
+
+        if (!wasDumbEx) {
           myPublisher.enteredDumbMode();
           update.run();
         } else {
