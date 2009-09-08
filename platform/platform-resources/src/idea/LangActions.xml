@@ -518,8 +518,6 @@
       <reference ref="FindUsages"/>
       <reference ref="RefactoringMenu"/>
       <separator/>
-      <reference ref="AddToFavorites"/>
-      <separator/>
       <reference ref="FoldingGroup"/>
       <separator/>
 
