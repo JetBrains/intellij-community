@@ -141,22 +141,22 @@
     <orderEntry type="module" module-name="forms_rt" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />
     <orderEntry type="module" module-name="execution-impl" />
-    <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="j2ee-openapi" />
     <orderEntry type="module" module-name="J2EE" />
     <orderEntry type="module" module-name="web-impl" />
     <orderEntry type="module" module-name="EJB" />
     <orderEntry type="module" module-name="GwtStudio" />
     <orderEntry type="module" module-name="dom-impl" />
-    <orderEntry type="module" module-name="idea-tests" />
     <orderEntry type="module" module-name="JavaScriptLanguage" />
     <orderEntry type="module" module-name="FlexSupport" />
     <orderEntry type="module" module-name="jetgroovy" />
     <orderEntry type="module" module-name="xml" />
-    <orderEntry type="module" module-name="testFramework-java" />
-    <orderEntry type="module" module-name="compiler-tests" />
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="graph-openapi" />
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="idea-tests" scope="TEST" />
+    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
+    <orderEntry type="module" module-name="compiler-tests" scope="TEST" />
   </component>
   <component name="copyright">
     <Base>
