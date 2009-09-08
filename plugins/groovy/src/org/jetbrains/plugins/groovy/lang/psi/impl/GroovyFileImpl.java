@@ -21,11 +21,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -153,6 +157,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
     return true;
   }
+
 
   private static boolean isResolvableViaImplictImports(final PsiScopeProcessor processor, ResolveState state, PsiElement lastParent,
                                                 PsiElement place,
@@ -466,6 +471,19 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       }
     }
     return this;
+  }
+
+  public GlobalSearchScope getFileResolveScope() {
+    final VirtualFile vFile = getOriginalFile().getVirtualFile();
+    if (vFile == null) {
+      return GlobalSearchScope.allScope(getProject());
+    }
+
+    final GlobalSearchScope baseScope = ((FileManagerImpl)((PsiManagerEx)getManager()).getFileManager()).getDefaultResolveScope(vFile);
+    if (isScript()) {
+      return GroovyScriptType.getScriptType(this).patchResolveScope(this, baseScope);
+    }
+    return baseScope;
   }
 }
 

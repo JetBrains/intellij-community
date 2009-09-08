@@ -1,8 +1,13 @@
 package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.execution.Location;
+import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.NonClasspathDirectoryScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,6 +21,7 @@ import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * @author ilyas
@@ -67,4 +73,31 @@ public class GantScriptType extends GroovyScriptType {
     return null;
   }
 
+  @Override
+  public GlobalSearchScope patchResolveScope(@NotNull GroovyFile file, @NotNull GlobalSearchScope baseScope) {
+    final Module module = ModuleUtil.findModuleForPsiElement(file);
+    if (module != null) {
+      final String sdkHome = GantUtils.getSdkHomeFromClasspath(module);
+      if (sdkHome != null) {
+        return baseScope;
+      }
+    }
+
+    final GantSettings gantSettings = GantSettings.getInstance(file.getProject());
+    final VirtualFile home = gantSettings.getSdkHome();
+    if (home == null) {
+      return baseScope;
+    }
+
+    final List<VirtualFile> files = gantSettings.getClassRoots();
+    if (files.isEmpty()) {
+      return baseScope;
+    }
+
+    GlobalSearchScope result = baseScope;
+    for (final VirtualFile root : files) {
+      result = result.uniteWith(new NonClasspathDirectoryScope(root));
+    }
+    return result;
+  }
 }

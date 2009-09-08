@@ -2,12 +2,12 @@ package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.PathUtil;
@@ -22,7 +22,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
-import org.jetbrains.plugins.groovy.util.SdkHomeConfigurable;
 
 import java.util.ArrayList;
 
@@ -134,27 +133,30 @@ public class GantUtils {
   @NotNull
   public static String getSDKInstallPath(@Nullable Module module, @NotNull Project project) {
     if (module != null) {
-      Library[] libraries = LibrariesUtil.getLibrariesByCondition(module, new Condition<Library>() {
-        public boolean value(Library library1) {
-          return isSDKLibrary(library1);
-        }
-      });
-      if (libraries.length != 0) {
-        final String home = getGantLibraryHome(libraries[0]);
-        if (StringUtil.isNotEmpty(home)) {
-          return home;
-        }
+      final String fromClasspath = getSdkHomeFromClasspath(module);
+      if (fromClasspath != null) {
+        return fromClasspath;
       }
     }
 
-    final SdkHomeConfigurable.SdkHomeSettings state = GantSettings.getInstance(project).getState();
-    if (state != null) {
-      final String home = state.SDK_HOME;
+    final VirtualFile sdkHome = GantSettings.getInstance(project).getSdkHome();
+    return sdkHome != null ? sdkHome.getPath() : "";
+  }
+
+  @Nullable
+  public static String getSdkHomeFromClasspath(@NotNull Module module) {
+    Library[] libraries = LibrariesUtil.getLibrariesByCondition(module, new Condition<Library>() {
+      public boolean value(Library library1) {
+        return isSDKLibrary(library1);
+      }
+    });
+    if (libraries.length != 0) {
+      final String home = getGantLibraryHome(libraries[0]);
       if (StringUtil.isNotEmpty(home)) {
         return home;
       }
     }
-    return "";
+    return null;
   }
 
   public static boolean isSDKConfiguredToRun(@NotNull Module module) {

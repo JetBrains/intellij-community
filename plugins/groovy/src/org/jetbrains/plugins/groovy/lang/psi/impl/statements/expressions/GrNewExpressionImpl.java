@@ -49,7 +49,6 @@ import java.util.List;
  * @author ilyas
  */
 public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewExpression {
-  private final PsiType[] myMapArguments = new PsiType[]{PsiUtil.createMapType(getManager(), getResolveScope())};
 
   public GrNewExpressionImpl(@NotNull ASTNode node) {
     super(node);
@@ -135,7 +134,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     if (classResults.length == 0) return GroovyResolveResult.EMPTY_ARRAY;
 
     if (getNamedArguments().length > 0 && getArgumentList().getExpressionArguments().length == 0) {
-      GroovyResolveResult[] constructorResults = getCandidates(ref, classResults, myMapArguments); //one Map parameter, actually
+      GroovyResolveResult[] constructorResults = getCandidates(ref, classResults, new PsiType[]{PsiUtil.createMapType(getManager(), getResolveScope())}); //one Map parameter, actually
       for (GroovyResolveResult result : constructorResults) {
         if (result.getElement() instanceof PsiMethod) {
           PsiMethod constructor = (PsiMethod)result.getElement();

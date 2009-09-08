@@ -2,6 +2,7 @@ package org.jetbrains.plugins.groovy.extensions;
 
 import com.intellij.execution.Location;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -54,6 +55,10 @@ public abstract class GroovyScriptType {
   public abstract Icon getScriptIcon();
 
   public void tuneConfiguration(@NotNull GroovyFile file, @NotNull GroovyScriptRunConfiguration configuration, Location location) {
+  }
+
+  public GlobalSearchScope patchResolveScope(@NotNull GroovyFile file, @NotNull GlobalSearchScope baseScope) {
+    return baseScope;
   }
 
   @Nullable

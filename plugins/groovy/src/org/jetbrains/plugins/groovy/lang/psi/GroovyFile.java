@@ -15,6 +15,7 @@
 package org.jetbrains.plugins.groovy.lang.psi;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.FileResolveScopeProvider;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
@@ -24,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
 /**
  * @author ven
  */
-public interface GroovyFile extends GroovyFileBase {
+public interface GroovyFile extends GroovyFileBase, FileResolveScopeProvider {
 
   GrImportStatement[] getImportStatements();
 
