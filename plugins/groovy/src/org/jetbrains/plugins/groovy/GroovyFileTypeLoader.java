@@ -37,13 +37,19 @@ public class GroovyFileTypeLoader extends FileTypeFactory{
     return GROOVY_FILE_TYPES.toArray(new FileType[GROOVY_FILE_TYPES.size()]);
   }
 
-  public static List<String> getAllGroovyExtensions() {
+  public static List<String> getCustomGroovyScriptExtensions() {
     final ArrayList<String> strings = new ArrayList<String>();
-    strings.add(GroovyFileType.DEFAULT_EXTENSION);
     strings.add("gdsl");
     for (GroovyScriptTypeEP ep : GroovyScriptType.EP_NAME.getExtensions()) {
       strings.addAll(Arrays.asList(ep.extensions.split(";")));
     }
+    return strings;
+  }
+
+  public static List<String> getAllGroovyExtensions() {
+    final ArrayList<String> strings = new ArrayList<String>();
+    strings.add(GroovyFileType.DEFAULT_EXTENSION);
+    strings.addAll(getCustomGroovyScriptExtensions());
     return strings;
   }
 
