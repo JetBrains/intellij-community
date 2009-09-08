@@ -82,7 +82,25 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/commons-logging-1.1.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/archetype-common-2.0-alpha-4-SNAPSHOT.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/mercury-artifact-1.0-alpha-6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -108,6 +126,15 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/plexus-utils-1.5.5.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="dom-openapi" />
     <orderEntry type="module" module-name="idea" />
@@ -127,16 +154,7 @@
     <orderEntry type="module" module-name="jetgroovy" />
     <orderEntry type="module" module-name="xml" />
     <orderEntry type="module" module-name="testFramework-java" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/mercury-artifact-1.0-alpha-6.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module" module-name="compiler-tests" scope="TEST" />
+    <orderEntry type="module" module-name="compiler-tests" />
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="graph-openapi" />
   </component>
