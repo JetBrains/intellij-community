@@ -87,6 +87,15 @@ public class LibrariesUtil {
     return StringUtil.isEmpty(home) ? null : home;
   }
 
+  public static boolean isEmbeddableDistribution(VirtualFile[] classRoots) {
+    for (VirtualFile file : classRoots) {
+      if (GroovyConfigUtils.isGroovyAllJar(file.getName())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public static String getGroovyLibraryHome(VirtualFile[] classRoots) {
     for (VirtualFile file : classRoots) {
       if (GroovyConfigUtils.isGroovyAllJar(file.getName())) {

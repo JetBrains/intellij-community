@@ -38,7 +38,7 @@ public class GroovyCompilerWrapper {
     List compiledFiles = new ArrayList();
     try {
       unit.compile(forStubs ? Phases.CONVERSION : Phases.ALL);
-      addCompiledFiles(unit, compiledFiles, forStubs);
+      addCompiledFiles(unit, compiledFiles, forStubs, collector);
     } catch (CompilationFailedException e) {
       processCompilationException(e, collector);
     } catch (IOException e) {
@@ -49,7 +49,7 @@ public class GroovyCompilerWrapper {
     return compiledFiles;
   }
 
-  private static void addCompiledFiles(CompilationUnit compilationUnit, List compiledFiles, boolean forStubs) throws IOException {
+  private static void addCompiledFiles(CompilationUnit compilationUnit, List compiledFiles, boolean forStubs, List collector) throws IOException {
     File targetDirectory = compilationUnit.getConfiguration().getTargetDirectory();
 
     String outputPath = targetDirectory.getCanonicalPath().replace(File.separatorChar, '/');
@@ -65,12 +65,19 @@ public class GroovyCompilerWrapper {
       //for debug purposes
       //System.out.println("source: " + fileName);
       //System.out.print("classes:");
-      final List topLevelClasses = sourceUnit.getAST().getClasses();
+      final ModuleNode ast = sourceUnit.getAST();
+      final List topLevelClasses = ast.getClasses();
 
       for (int i = 0; i < topLevelClasses.size(); i++) {
-        final String topLevel = ((ClassNode)topLevelClasses.get(i)).getName();
+        final ClassNode classNode = (ClassNode)topLevelClasses.get(i);
+        final String topLevel = classNode.getName();
         if (forStubs) {
-          compiledFiles.add(new OutputItemImpl(outputPath, outputPath + "/" + topLevel.replace('.', '/') + ".java", fileName));
+          final String stubPath = outputPath + "/" + topLevel.replace('.', '/') + ".java";
+          if (new File(stubPath).exists()) {
+            compiledFiles.add(new OutputItemImpl(outputPath, stubPath, fileName));
+          } else {
+            collector.add(new CompilerMessage(CompilerMessage.WARNING, "Couldn't generate stub for " + topLevel, fileName, classNode.getLineNumber(), classNode.getColumnNumber()));
+          }
         } else {
           final String nested = topLevel + "$";
           final SortedSet tail = allClasses.tailSet(topLevel);

@@ -39,10 +39,10 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -94,23 +94,9 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     commandLine.setExePath(((JavaSdkType)sdkType).getVMExecutablePath(sdk));
 
     final PathsList classPathBuilder = new PathsList();
-
     classPathBuilder.add(PathUtil.getJarPathForClass(GroovycRunner.class));
-    final String libPath = LibrariesUtil.getGroovyHomePath(module) + "/lib";
-    if (new File(FileUtil.toSystemDependentName(libPath)).exists()) {
-      classPathBuilder.addAllFiles(GroovyUtils.getFilesInDirectoryByPattern(libPath, GROOVYC_RUNNER_REQUIRED));
-    } else {
-      //non-traditional distribution
-      //groovy-all.jar doesn't contain some dependencies like JUnit, so we should find them ourselves in module classpath
-      for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
-        for (VirtualFile file : entry.getFiles(OrderRootType.CLASSES)) {
-          if (NONTRADITIONAL_GROOVYC_RUNNER_REQUIRED.matcher(file.getName()).matches()) {
-            classPathBuilder.add(file);
-          }
-        }
-      }
-    }
 
+    addGroovyJars(module, classPathBuilder);
 
     final ModuleChunk chunk = createChunk(module, compileContext);
     final List<String> patchers = new SmartList<String>();
@@ -186,6 +172,27 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     }
     catch (ExecutionException e) {
       LOG.error(e);
+    }
+  }
+
+  private static void addGroovyJars(Module module, PathsList to) {
+    final VirtualFile[] classEntries = ModuleRootManager.getInstance(module).getFiles(OrderRootType.CLASSES);
+    if (!LibrariesUtil.isEmbeddableDistribution(classEntries)) {
+      final String home = LibrariesUtil.getGroovyLibraryHome(classEntries);
+      assert StringUtil.isNotEmpty(home);
+      final String libPath = home + "/lib";
+      if (new File(FileUtil.toSystemDependentName(libPath)).exists()) {
+        to.addAllFiles(GroovyUtils.getFilesInDirectoryByPattern(libPath, GROOVYC_RUNNER_REQUIRED));
+        return;
+      }
+    }
+
+    //non-traditional distribution
+    //groovy-all.jar doesn't contain some dependencies like JUnit, so we should find them ourselves in module classpath
+    for (VirtualFile file : classEntries) {
+      if (NONTRADITIONAL_GROOVYC_RUNNER_REQUIRED.matcher(file.getName()).matches()) {
+        to.add(file);
+      }
     }
   }
 
