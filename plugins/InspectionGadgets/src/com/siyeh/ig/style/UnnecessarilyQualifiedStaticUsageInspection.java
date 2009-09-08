@@ -144,6 +144,15 @@ public class UnnecessarilyQualifiedStaticUsageInspection
             if(!(qualifierElement instanceof PsiJavaCodeReferenceElement)){
                 return false;
             }
+            final PsiReferenceParameterList parameterList =
+                    referenceElement.getParameterList();
+            if (parameterList != null) {
+                final PsiTypeElement[] typeParameterElements =
+                        parameterList.getTypeParameterElements();
+                if (typeParameterElements.length > 0) {
+                    return false;
+                }
+            }
             final PsiElement target = referenceElement.resolve();
             if ((!(target instanceof PsiField) || m_ignoreStaticFieldAccesses) &&
                     (!(target instanceof PsiMethod) || m_ignoreStaticMethodCalls) &&
