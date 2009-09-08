@@ -10,8 +10,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.InvalidDataException;
@@ -20,9 +18,13 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.PathUtil;
+import com.intellij.util.SystemProperties;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -130,17 +132,6 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
   }
 
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException {
-    final Module module = getModule();
-    if (module == null) {
-      throw new ExecutionException("Module is not specified");
-    }
-
-    final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-    final Sdk sdk = rootManager.getSdk();
-    if (sdk == null || !(sdk.getSdkType() instanceof JavaSdkType)) {
-      throw CantRunException.noJdkForModule(module);
-    }
-
     final VirtualFile script = getScriptFile();
     if (script == null) {
       throw new CantRunException("Cannot find script " + scriptPath);
@@ -151,7 +142,8 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
       throw new CantRunException("Unknown script type " + scriptPath);
     }
 
-    if (!scriptRunner.ensureRunnerConfigured(module, getName())) {
+    final Module module = getModule();
+    if (!scriptRunner.ensureRunnerConfigured(module, getName(), getProject())) {
       return null;
     }
 
@@ -162,14 +154,18 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
         JavaParameters params = new JavaParameters();
         params.setCharset(null);
 
-        params.setJdk(ModuleRootManager.getInstance(module).getSdk());
+        if (module != null) {
+          final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+          if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
+            params.setJdk(sdk);
+          }
+        }
+        if (params.getJdk() == null) {
+          params.setJdk(new SimpleJavaSdkType().createJdk("tmp", SystemProperties.getJavaHome()));
+        }
         params.setWorkingDirectory(getAbsoluteWorkDir());
 
         scriptRunner.configureCommandLine(params, module, tests, script, GroovyScriptRunConfiguration.this);
-
-        if (isDebugEnabled) {
-          params.getProgramParametersList().add("--debug");
-        }
 
         return params;
       }

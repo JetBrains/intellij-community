@@ -3,18 +3,18 @@ package org.jetbrains.plugins.groovy.gant;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
-import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
+import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
-import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -29,15 +29,16 @@ public class GantRunner extends GroovyScriptRunner {
   }
 
   @Override
-  public boolean ensureRunnerConfigured(Module module, final String confName) {
-    if (!isValidModule(module)) {
+  public boolean ensureRunnerConfigured(@Nullable Module module, final String confName, final Project project) {
+    if (!(GantUtils.getSDKInstallPath(module, project).length() > 0)) {
       int result = Messages
         .showOkCancelDialog("Gant is not configured. Do you want to configure it?", "Configure Gant SDK",
                             GantIcons.GANT_ICON_16x16);
       if (result == 0) {
-        ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME, false);
+        final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
+          util.editConfigurable(project, util.findProjectConfigurable(project, GantConfigurable.class));
       }
-      if (!isValidModule(module)) {
+      if (!(GantUtils.getSDKInstallPath(module, project).length() > 0)) {
         return false;
       }
     }
@@ -103,6 +104,10 @@ public class GantRunner extends GroovyScriptRunner {
     params.getProgramParametersList().add(FileUtil.toSystemDependentName(configuration.scriptPath));
 
     params.getProgramParametersList().addParametersString(configuration.scriptParams);
+
+    if (configuration.isDebugEnabled) {
+      params.getProgramParametersList().add("--debug");
+    }
   }
 
 }

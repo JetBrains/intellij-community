@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.CantRunException;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.JavaSdkType;
@@ -9,6 +10,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,9 +27,9 @@ public abstract class GroovyScriptRunner {
 
   public abstract boolean isValidModule(@NotNull Module module);
 
-  public abstract boolean ensureRunnerConfigured(Module module, final String confName);
+  public abstract boolean ensureRunnerConfigured(@Nullable Module module, final String confName, final Project project) throws ExecutionException;
 
-  public abstract void configureCommandLine(JavaParameters params, Module module, boolean tests, VirtualFile script,
+  public abstract void configureCommandLine(JavaParameters params, @Nullable Module module, boolean tests, VirtualFile script,
                                             GroovyScriptRunConfiguration configuration) throws CantRunException;
 
   protected static String getConfPath(final String groovyHomePath) {

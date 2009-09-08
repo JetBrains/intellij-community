@@ -35,6 +35,8 @@ public class GantSettings implements PersistentStateComponent<SdkHomeConfigurabl
 
   public void loadState(SdkHomeConfigurable.SdkHomeSettings state) {
     mySdkPath = state;
+    myClassRoots = null;
+    mySdkHome = null;
   }
   
   private synchronized void calculateRoots() {

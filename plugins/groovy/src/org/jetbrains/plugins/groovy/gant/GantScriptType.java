@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.execution.Location;
+import com.intellij.execution.RunManagerEx;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -8,6 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.NonClasspathDirectoryScope;
+import com.intellij.compiler.options.CompileStepBeforeRun;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,6 +60,11 @@ public class GantScriptType extends GroovyScriptType {
         configuration.scriptParams = target;
         configuration.setName(configuration.getName() + "." + target);
       }
+    }
+    final CompileStepBeforeRun.MakeBeforeRunTask runTask =
+      RunManagerEx.getInstanceEx(element.getProject()).getBeforeRunTask(configuration, CompileStepBeforeRun.ID);
+    if (runTask != null) {
+      runTask.setEnabled(false);
     }
   }
 

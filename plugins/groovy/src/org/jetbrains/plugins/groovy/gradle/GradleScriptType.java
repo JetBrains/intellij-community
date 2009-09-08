@@ -2,6 +2,8 @@ package org.jetbrains.plugins.groovy.gradle;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.Location;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -11,10 +13,15 @@ import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.compiler.options.CompileStepBeforeRun;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -62,6 +69,11 @@ public class GradleScriptType extends GroovyScriptType {
         configuration.setName(configuration.getName() + "." + target);
       }
     }
+    final CompileStepBeforeRun.MakeBeforeRunTask runTask =
+      RunManagerEx.getInstanceEx(element.getProject()).getBeforeRunTask(configuration, CompileStepBeforeRun.ID);
+    if (runTask != null) {
+      runTask.setEnabled(false);
+    }
   }
 
   @Override
@@ -73,7 +85,17 @@ public class GradleScriptType extends GroovyScriptType {
       }
 
       @Override
-      public boolean ensureRunnerConfigured(Module module, String confName) {
+      public boolean ensureRunnerConfigured(@Nullable Module module, String confName, final Project project) throws ExecutionException {
+        if (module == null) {
+          throw new ExecutionException("Module is not specified");
+        }
+
+        final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+        final Sdk sdk = rootManager.getSdk();
+        if (sdk == null || !(sdk.getSdkType() instanceof JavaSdkType)) {
+          throw CantRunException.noJdkForModule(module);
+        }
+
         if (!isValidModule(module)) {
           int result = Messages
             .showOkCancelDialog("Gradle is not configured. Do you want to configure it?", "Configure Gradle SDK",
@@ -90,11 +112,12 @@ public class GradleScriptType extends GroovyScriptType {
 
       @Override
       public void configureCommandLine(JavaParameters params,
-                                       Module module,
+                                       @Nullable Module module,
                                        boolean tests,
                                        VirtualFile script, GroovyScriptRunConfiguration configuration) throws CantRunException {
         params.setMainClass("org.gradle.BootstrapMain");
 
+        assert module != null;
         final VirtualFile groovyJar = findGroovyJar(module);
         if (groovyJar != null) {
           params.getClassPath().add(groovyJar);

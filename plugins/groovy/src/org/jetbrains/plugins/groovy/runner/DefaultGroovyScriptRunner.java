@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
@@ -28,9 +29,11 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
 
@@ -42,7 +45,11 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
   }
 
   @Override
-  public boolean ensureRunnerConfigured(Module module, String confName) {
+  public boolean ensureRunnerConfigured(@Nullable Module module, String confName, final Project project) throws ExecutionException {
+    if (module == null) {
+      throw new ExecutionException("Module is not specified");
+    }
+
     if (LibrariesUtil.getGroovyHomePath(module) == null) {
       Messages.showErrorDialog(module.getProject(),
                                ExecutionBundle.message("error.running.configuration.with.error.error.message", confName,
@@ -57,7 +64,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
   }
 
   @Override
-  public void configureCommandLine(JavaParameters params, Module module, boolean tests, VirtualFile script, GroovyScriptRunConfiguration configuration) throws CantRunException {
+  public void configureCommandLine(JavaParameters params, @Nullable Module module, boolean tests, VirtualFile script, GroovyScriptRunConfiguration configuration) throws CantRunException {
     assert module != null;
     final VirtualFile groovyJar = findGroovyJar(module);
     if (groovyJar != null) {
@@ -87,6 +94,10 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
     params.getProgramParametersList().addParametersString(configuration.scriptParams);
 
     addScriptEncodingSettings(params, script, module);
+
+    if (configuration.isDebugEnabled) {
+      params.getProgramParametersList().add("--debug");
+    }
   }
 
   private static void addScriptEncodingSettings(final JavaParameters params, final VirtualFile scriptFile, Module module) {
