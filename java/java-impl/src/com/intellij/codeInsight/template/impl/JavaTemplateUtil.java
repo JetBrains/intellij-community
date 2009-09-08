@@ -2,6 +2,7 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.TemplateLookupSelectionHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -95,18 +96,18 @@ public class JavaTemplateUtil {
     }
   }
 
-  public static LookupItem addElementLookupItem(Set<LookupItem> items, PsiElement element) {
+  public static LookupElement addElementLookupItem(Set<LookupElement> items, PsiElement element) {
     return addJavaLookupItem(items, element);
   }
 
-  public static LookupItem addTypeLookupItem(Set<LookupItem> items, PsiType type) {
+  public static LookupElement addTypeLookupItem(Set<LookupElement> items, PsiType type) {
     return addJavaLookupItem(items, type);
   }
 
-  private static LookupItem addJavaLookupItem(final Set<LookupItem> items, final Object element) {
-    final LookupItem item = LookupItemUtil.addLookupItem(items, element);
-    if (item != null) {
-      item.setAttribute(TemplateLookupSelectionHandler.KEY_IN_LOOKUP_ITEM, new JavaTemplateLookupSelectionHandler());
+  private static LookupElement addJavaLookupItem(final Set<LookupElement> items, final Object element) {
+    final LookupElement item = LookupItemUtil.addLookupItem(items, element);
+    if (item instanceof LookupItem) {
+      ((LookupItem)item).setAttribute(TemplateLookupSelectionHandler.KEY_IN_LOOKUP_ITEM, new JavaTemplateLookupSelectionHandler());
     }
     return item;
   }

@@ -1,9 +1,8 @@
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,13 +23,16 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.inCallers.CallerChooser;
 import com.intellij.refactoring.ui.*;
-import com.intellij.refactoring.util.*;
+import com.intellij.refactoring.util.CanonicalTypes;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.ui.Table;
-import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -366,7 +368,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     Editor editor = editorTextField.getEditor();
     String prefix = editorTextField.getText();
     if (prefix == null) prefix = "";
-    Set<LookupItem> set = new LinkedHashSet<LookupItem>();
+    Set<LookupElement> set = new LinkedHashSet<LookupElement>();
     JavaCompletionUtil.completeVariableNameForRefactoring(myProject, set, prefix, type, VariableKind.PARAMETER);
 
     LookupElement[] lookupItems = set.toArray(new LookupElement[set.size()]);

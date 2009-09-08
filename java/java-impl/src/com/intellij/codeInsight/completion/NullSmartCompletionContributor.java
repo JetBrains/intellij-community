@@ -40,7 +40,7 @@ public class NullSmartCompletionContributor extends CompletionContributor{
         if (empty.get().booleanValue() && prefix.startsWith("n")) {
           for (final ExpectedTypeInfo info : infos) {
             if (!(info.getType() instanceof PsiPrimitiveType)) {
-              final LookupItem item = BasicExpressionCompletionContributor.createKeywordLookupItem(parameters.getPosition(), PsiKeyword.NULL);
+              final LookupItem item = (LookupItem)BasicExpressionCompletionContributor.createKeywordLookupItem(parameters.getPosition(), PsiKeyword.NULL);
               item.setAttribute(LookupItem.TYPE, PsiType.NULL);
               result.addElement(JavaSmartCompletionContributor.decorate(item, infos));
               return;

@@ -4,8 +4,9 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.patterns.ElementPattern;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -32,14 +33,17 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
             or(psiElement(PsiLocalVariable.class), psiElement(PsiParameter.class))),
         new CompletionProvider<CompletionParameters>() {
           public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
-            final Set<LookupItem> lookupSet = new THashSet<LookupItem>();
+            final Set<LookupElement> lookupSet = new THashSet<LookupElement>();
             ApplicationManager.getApplication().runReadAction(new Runnable() {
               public void run() {
                 JavaCompletionUtil.completeLocalVariableName(lookupSet, result.getPrefixMatcher(), (PsiVariable)parameters.getPosition().getParent());
               }
             });
-            for (final LookupItem item : lookupSet) {
-              result.addElement(item.setAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE));
+            for (final LookupElement item : lookupSet) {
+              if (item instanceof LookupItem) {
+                ((LookupItem)item).setAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE);
+              }
+              result.addElement(item);
             }
           }
         });
@@ -48,7 +52,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
         psiElement(PsiIdentifier.class).withParent(PsiField.class).andNot(INSIDE_TYPE_PARAMS_PATTERN),
         new CompletionProvider<CompletionParameters>() {
       public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
-        final Set<LookupItem> lookupSet = new THashSet<LookupItem>();
+        final Set<LookupElement> lookupSet = new THashSet<LookupElement>();
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
             final PsiVariable variable = (PsiVariable)parameters.getPosition().getParent();
@@ -56,7 +60,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
             JavaCompletionUtil.completeMethodName(lookupSet, variable, result.getPrefixMatcher());
           }
         });
-        for (final LookupItem item : lookupSet) {
+        for (final LookupElement item : lookupSet) {
           result.addElement(item);
         }
       }
@@ -65,13 +69,13 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
         CompletionType.BASIC, PsiJavaPatterns.psiElement().nameIdentifierOf(PsiJavaPatterns.psiMethod().withParent(PsiClass.class)),
         new CompletionProvider<CompletionParameters>() {
           public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
-            final Set<LookupItem> lookupSet = new THashSet<LookupItem>();
+            final Set<LookupElement> lookupSet = new THashSet<LookupElement>();
             ApplicationManager.getApplication().runReadAction(new Runnable() {
               public void run() {
                 JavaCompletionUtil.completeMethodName(lookupSet, parameters.getPosition().getParent(), result.getPrefixMatcher());
               }
             });
-            for (final LookupItem item : lookupSet) {
+            for (final LookupElement item : lookupSet) {
               result.addElement(item);
             }
           }

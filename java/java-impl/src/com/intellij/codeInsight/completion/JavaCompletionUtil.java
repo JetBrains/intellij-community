@@ -89,7 +89,7 @@ public class JavaCompletionUtil {
   });
   public static final Key<List<PsiMethod>> ALL_METHODS_ATTRIBUTE = Key.create("allMethods");
 
-  public static void completeLocalVariableName(Set<LookupItem> set, PrefixMatcher matcher, PsiVariable var){
+  public static void completeLocalVariableName(Set<LookupElement> set, PrefixMatcher matcher, PsiVariable var){
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.variable.name");
     final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(var.getProject());
     final VariableKind variableKind = codeStyleManager.getVariableKind(var);
@@ -129,7 +129,7 @@ public class JavaCompletionUtil {
     tunePreferencePolicy(LookupItemUtil.addLookupItems(set, nameSuggestions, matcher), suggestedNameInfo);
   }
 
-  public static void completeFieldName(Set<LookupItem> set, PsiVariable var, final PrefixMatcher matcher){
+  public static void completeFieldName(Set<LookupElement> set, PsiVariable var, final PrefixMatcher matcher){
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.variable.name");
 
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(var.getProject());
@@ -169,7 +169,7 @@ public class JavaCompletionUtil {
                                                                       matcher), suggestedNameInfo);
   }
 
-  public static void completeMethodName(Set<LookupItem> set, PsiElement element, final PrefixMatcher matcher){
+  public static void completeMethodName(Set<LookupElement> set, PsiElement element, final PrefixMatcher matcher){
     if(element instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)element;
       if (method.isConstructor()) {
@@ -202,11 +202,11 @@ public class JavaCompletionUtil {
     return item.getUserData(QUALIFIER_TYPE_ATTR);
   }
 
-  public static void completeVariableNameForRefactoring(Project project, Set<LookupItem> set, String prefix, PsiType varType, VariableKind varKind) {
+  public static void completeVariableNameForRefactoring(Project project, Set<LookupElement> set, String prefix, PsiType varType, VariableKind varKind) {
     completeVariableNameForRefactoring(project, set, new CamelHumpMatcher(prefix), varType, varKind);
   }
 
-  public static void completeVariableNameForRefactoring(Project project, Set<LookupItem> set, PrefixMatcher matcher, PsiType varType, VariableKind varKind) {
+  public static void completeVariableNameForRefactoring(Project project, Set<LookupElement> set, PrefixMatcher matcher, PsiType varType, VariableKind varKind) {
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
     SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(varKind, null, null, varType);
     final String[] strings = completeVariableNameForRefactoring(codeStyleManager, matcher, varType, varKind, suggestedNameInfo);
@@ -248,7 +248,7 @@ public class JavaCompletionUtil {
     return result.toArray(new String[result.size()]);
   }
 
-  private static void tunePreferencePolicy(final List<LookupItem> list, final SuggestedNameInfo suggestedNameInfo) {
+  private static void tunePreferencePolicy(final List<LookupElement> list, final SuggestedNameInfo suggestedNameInfo) {
     final InsertHandler insertHandler = new InsertHandler() {
       public void handleInsert(final InsertionContext context, final LookupElement item) {
         suggestedNameInfo.nameChoosen(item.getLookupString());
@@ -256,8 +256,10 @@ public class JavaCompletionUtil {
     };
 
     for (int i = 0; i < list.size(); i++) {
-      LookupItem item = list.get(i);
-      item.setPriority(list.size() - i).setInsertHandler(insertHandler);
+      LookupElement item = list.get(i);
+      if (item instanceof LookupItem) {
+        ((LookupItem)item).setPriority(list.size() - i).setInsertHandler(insertHandler);
+      }
     }
   }
 
@@ -948,9 +950,10 @@ public class JavaCompletionUtil {
     assert !(completion instanceof LookupElement);
 
 
-    LookupItem<?> ret = LookupItemUtil.objectToLookupItem(completion);
-    if (ret == null) return null;
+    LookupElement _ret = LookupItemUtil.objectToLookupItem(completion);
+    if (_ret == null || !(_ret instanceof LookupItem)) return null;
 
+    LookupItem<?> ret = (LookupItem<?>)_ret;
     final PsiSubstitutor substitutor = completionElement.getSubstitutor();
     if (substitutor != null) {
       ret.setAttribute(LookupItem.SUBSTITUTOR, substitutor);

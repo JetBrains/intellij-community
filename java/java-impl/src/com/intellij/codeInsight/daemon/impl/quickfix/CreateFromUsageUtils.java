@@ -899,7 +899,7 @@ public class CreateFromUsageUtils {
       }
 
       HashSet<String> names = new HashSet<String>();
-      Set<LookupItem> set = new LinkedHashSet<LookupItem>();
+      Set<LookupElement> set = new LinkedHashSet<LookupElement>();
 
       for (String name : myNames) {
         if (parameterNames.contains(name)) {

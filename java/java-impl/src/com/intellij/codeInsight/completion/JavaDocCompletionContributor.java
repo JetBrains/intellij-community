@@ -2,10 +2,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
-import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
-import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.SuppressionUtil;
@@ -69,7 +66,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
           ((PsiJavaReference) ref).processVariants(processor);
 
           for (final CompletionElement _item : processor.getResults()) {
-            LookupItem item = LookupItemUtil.objectToLookupItem(_item.getElement());
+            LookupItem item = (LookupItem)LookupItemUtil.objectToLookupItem(_item.getElement());
             if (onlyConstants) {
               Object o = item.getObject();
               if (!(o instanceof PsiField)) continue;
@@ -123,7 +120,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
         ret.add(tokenizer.nextToken());
       }
       for (final String s : ret) {
-        final LookupItem item = LookupItemUtil.objectToLookupItem(s);
+        final LookupItem item = (LookupItem)LookupItemUtil.objectToLookupItem(s);
         if (isInline) {
           item.setInsertHandler(new InlineInsertHandler());
         }

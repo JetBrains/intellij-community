@@ -546,7 +546,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
 
       result.addElement(BasicExpressionCompletionContributor.createKeywordLookupItem(position, PsiKeyword.THIS));
 
-      final LookupItem superItem = BasicExpressionCompletionContributor.createKeywordLookupItem(position, PsiKeyword.SUPER);
+      final LookupItem superItem = (LookupItem)BasicExpressionCompletionContributor.createKeywordLookupItem(position, PsiKeyword.SUPER);
       if (psiElement().afterLeaf(psiElement().withText("{").withSuperParent(2, psiMethod().constructor(true))).accepts(position)) {
         final PsiMethod method = PsiTreeUtil.getParentOfType(position, PsiMethod.class, false, PsiClass.class);
         assert method != null;

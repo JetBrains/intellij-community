@@ -1,16 +1,15 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -107,7 +106,7 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
     if (element instanceof PsiVariable) {
       PsiVariable var = (PsiVariable)element;
       VariableKind kind = JavaCodeStyleManager.getInstance(element.getProject()).getVariableKind(var);
-      Set<LookupItem> set = new LinkedHashSet<LookupItem>();
+      Set<LookupElement> set = new LinkedHashSet<LookupElement>();
       JavaCompletionUtil.completeVariableNameForRefactoring(element.getProject(), set, prefix, var.getType(), kind);
 
       if (prefix.length() == 0) {

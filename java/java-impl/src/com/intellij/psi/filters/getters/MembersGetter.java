@@ -93,7 +93,7 @@ public class MembersGetter {
             resolveHelper.isAccessible(member, context, null)) {
           if (result instanceof PsiField && !member.hasModifierProperty(PsiModifier.FINAL)) continue;
           if (result instanceof PsiMethod && acceptMethods) continue;
-          final LookupItem item = LookupItemUtil.objectToLookupItem(result);
+          final LookupItem item = (LookupItem)LookupItemUtil.objectToLookupItem(result);
           item.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
           JavaCompletionUtil.qualify(item);
           if (member instanceof PsiMethod) {

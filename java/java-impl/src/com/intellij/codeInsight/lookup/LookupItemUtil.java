@@ -35,15 +35,15 @@ public class LookupItemUtil{
   }
 
   @Nullable
-  public static LookupItem addLookupItem(Collection<LookupItem> set, @NotNull Object object) {
+  public static LookupElement addLookupItem(Collection<LookupElement> set, @NotNull Object object) {
     return addLookupItem(set, object, new CamelHumpMatcher(""));
   }
 
   @Nullable
-  public static LookupItem addLookupItem(Collection<LookupItem> set, @NotNull Object object, PrefixMatcher matcher) {
+  public static LookupElement addLookupItem(Collection<LookupElement> set, @NotNull Object object, PrefixMatcher matcher) {
     if (object instanceof PsiType) {
       PsiType psiType = (PsiType)object;
-      for (final LookupItem lookupItem : set) {
+      for (final LookupElement lookupItem : set) {
         Object o = lookupItem.getObject();
         if (o.equals(psiType)) {
           return lookupItem;
@@ -51,18 +51,18 @@ public class LookupItemUtil{
       }
     }
 
-    for (LookupItem lookupItem : set) {
+    for (LookupElement lookupItem : set) {
       if(lookupItem.getObject().equals(lookupItem)) return null;
     }
-    LookupItem item = objectToLookupItem(object);
+    LookupElement item = objectToLookupItem(object);
     if (matcher.prefixMatches(item)) {
       return set.add(item) ? item : null;
     }
     return null;
   }
 
-  public static List<LookupItem> addLookupItems(Set<LookupItem> set, Object[] objects, PrefixMatcher matcher) {
-    final ArrayList<LookupItem> list = new ArrayList<LookupItem>(objects.length);
+  public static List<LookupElement> addLookupItems(Set<LookupElement> set, Object[] objects, PrefixMatcher matcher) {
+    final ArrayList<LookupElement> list = new ArrayList<LookupElement>(objects.length);
     for (Object object : objects) {
       LOG.assertTrue(object != null, "Lookup item can't be null!");
       ContainerUtil.addIfNotNull(addLookupItem(set, object, matcher), list);
@@ -74,8 +74,8 @@ public class LookupItemUtil{
    * @deprecated
    * @see LookupElementBuilder
   */
-  public static LookupItem objectToLookupItem(Object object) {
-    if (object instanceof LookupItem) return (LookupItem)object;
+  public static LookupElement objectToLookupItem(Object object) {
+    if (object instanceof LookupElement) return (LookupElement)object;
     if (object instanceof PsiClass) {
       return new JavaPsiClassReferenceElement((PsiClass)object).setTailType(TailType.NONE);
     }

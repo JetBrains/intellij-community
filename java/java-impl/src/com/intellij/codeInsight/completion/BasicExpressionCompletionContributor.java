@@ -38,12 +38,12 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
     result.addElement(createKeywordLookupItem(element, s));
   }
 
-  public static LookupItem createKeywordLookupItem(final PsiElement element, final String s) {
+  public static LookupElement createKeywordLookupItem(final PsiElement element, final String s) {
     return ApplicationManager.getApplication().runReadAction(new Computable<LookupItem>() {
       public LookupItem compute() {
         try {
           final PsiKeyword keyword = JavaPsiFacade.getInstance(element.getProject()).getElementFactory().createKeyword(s);
-          return LookupItemUtil.objectToLookupItem(keyword).setAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE);
+          return ((LookupItem)LookupItemUtil.objectToLookupItem(keyword)).setAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE);
         }
         catch (IncorrectOperationException e) {
           throw new RuntimeException(e);
@@ -96,8 +96,7 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
             isClassType(defaultType, baseClassName) || isClassType(defaultType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
           final PsiMethod[] methods = collectionsClass.findMethodsByName(method, false);
           if (methods.length != 0) {
-            result.addElement(JavaCompletionUtil.qualify(
-                LookupItemUtil.objectToLookupItem(methods[0]).setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE).setTailType(
+            result.addElement(JavaCompletionUtil.qualify(((LookupItem)LookupItemUtil.objectToLookupItem(methods[0])).setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE).setTailType(
                     TailType.NONE)));
           }
         }
@@ -175,7 +174,7 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
       if (!refExpr.isQualified()) {
         final PsiElement target = refExpr.resolve();
         if (target instanceof PsiVariable) {
-          final LookupItem item = LookupItemUtil.objectToLookupItem(target);
+          final LookupItem item = (LookupItem)LookupItemUtil.objectToLookupItem(target);
           item.setAttribute(LookupItem.SUBSTITUTOR, PsiSubstitutor.EMPTY);
           return item;
         }
