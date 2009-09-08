@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.groovy.util;
 
-import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -61,19 +60,19 @@ public abstract class SdkHomeConfigurable implements Configurable {
   }
 
   public void apply() throws ConfigurationException {
-    final SdkHomeSettings state = new SdkHomeSettings();
+    final SdkHomeBean state = new SdkHomeBean();
     state.SDK_HOME = FileUtil.toSystemIndependentName(myPathField.getText());
     getFrameworkSettings().loadState(state);
   }
 
-  protected abstract PersistentStateComponent<SdkHomeSettings> getFrameworkSettings();
+  protected abstract SdkHomeSettings getFrameworkSettings();
 
   public void reset() {
     myPathField.setText(getStateText());
   }
 
   private String getStateText() {
-    final SdkHomeSettings state = getFrameworkSettings().getState();
+    final SdkHomeBean state = getFrameworkSettings().getState();
     final String stateText = state == null ? "" : state.SDK_HOME;
     return StringUtil.notNullize(FileUtil.toSystemDependentName(stateText));
   }
@@ -81,7 +80,7 @@ public abstract class SdkHomeConfigurable implements Configurable {
   public void disposeUIResources() {
   }
 
-  public static class SdkHomeSettings {
+  public static class SdkHomeBean {
     public String SDK_HOME;
   }
 

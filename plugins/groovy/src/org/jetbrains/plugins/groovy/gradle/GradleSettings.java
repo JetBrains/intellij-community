@@ -1,8 +1,11 @@
 package org.jetbrains.plugins.groovy.gradle;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.plugins.groovy.util.SdkHomeConfigurable;
+import org.jetbrains.plugins.groovy.util.SdkHomeSettings;
 
 /**
  * @author peter
@@ -14,16 +17,7 @@ import org.jetbrains.plugins.groovy.util.SdkHomeConfigurable;
       @Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/gradle.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
-public class GradleSettings implements PersistentStateComponent<SdkHomeConfigurable.SdkHomeSettings> {
-  private SdkHomeConfigurable.SdkHomeSettings mySdkPath;
-
-  public SdkHomeConfigurable.SdkHomeSettings getState() {
-    return mySdkPath;
-  }
-
-  public void loadState(SdkHomeConfigurable.SdkHomeSettings state) {
-    mySdkPath = state;
-  }
+public class GradleSettings extends SdkHomeSettings {
 
   public static GradleSettings getInstance(Project project) {
     return ServiceManager.getService(project, GradleSettings.class);
