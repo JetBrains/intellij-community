@@ -68,7 +68,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   }
 
   public <T> T getComponent(Class<T> interfaceClass, T defaultImplementation) {
-    return getComponent(interfaceClass) != null ? getComponent(interfaceClass) : null;
+    return getComponent(interfaceClass);
   }
 
   @NotNull
