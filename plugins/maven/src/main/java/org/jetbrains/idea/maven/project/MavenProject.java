@@ -291,13 +291,14 @@ public class MavenProject {
     List<Profile> profiles = collectProfiles(mavenModel);
     Set<String> result = new THashSet<String>(profiles.size());
     for (Profile each : profiles) {
-      result.add(each.getId());
+      String id = each.getId();
+      if (id != null) result.add(id);
     }
     return new ArrayList<String>(result);
   }
 
   private static List<Profile> collectProfiles(Model mavenModel) {
-    List<Profile> profiles = (List<Profile>)mavenModel.getProfiles();
+    List<Profile> profiles = mavenModel.getProfiles();
     return profiles == null ? Collections.<Profile>emptyList() : profiles;
   }
 

@@ -40,6 +40,7 @@ public class MavenProjectImporter {
   private final MavenProjectsTree myProjectsTree;
   private final Map<VirtualFile, Module> myFileToModuleMapping;
   private volatile Map<MavenProject, MavenProjectChanges> myProjectsToImportWithChanges;
+  private volatile Set<MavenProject> myAllProjects;
   private final boolean myImportModuleGroupsRequired;
   private final MavenModifiableModelsProvider myModelsProvider;
   private final MavenImportingSettings myImportingSettings;
@@ -74,6 +75,10 @@ public class MavenProjectImporter {
     List<MavenProjectsProcessorTask> postTasks = new ArrayList<MavenProjectsProcessorTask>();
 
     boolean hasChanges = false;
+
+    // in the case projects are changed during importing we must memorise them
+    myAllProjects = new LinkedHashSet<MavenProject>(myProjectsTree.getProjects());
+    myAllProjects.addAll(myProjectsToImportWithChanges.keySet()); // some projects may already have been removed from the tree
 
     hasChanges |= deleteIncompatibleModules();
     myProjectsToImportWithChanges = collectProjectsToImport(myProjectsToImportWithChanges);
@@ -133,7 +138,7 @@ public class MavenProjectImporter {
   private Map<MavenProject, MavenProjectChanges> collectNewlyCreatedProjects() {
     Map<MavenProject, MavenProjectChanges> result = new THashMap<MavenProject, MavenProjectChanges>();
 
-    for (MavenProject each : myProjectsTree.getProjects()) {
+    for (MavenProject each : myAllProjects) {
       Module module = myFileToModuleMapping.get(each.getFile());
       if (module == null) {
         result.put(each, MavenProjectChanges.ALL);
@@ -193,7 +198,7 @@ public class MavenProjectImporter {
 
   private List<Pair<MavenProject, Module>> collectIncompatibleModulesWithProjects() {
     List<Pair<MavenProject, Module>> incompatible = new ArrayList<Pair<MavenProject, Module>>();
-    for (MavenProject each : myProjectsTree.getProjects()) {
+    for (MavenProject each : myAllProjects) {
       Module module = myFileToModuleMapping.get(each.getFile());
       if (module == null) continue;
 
@@ -243,7 +248,7 @@ public class MavenProjectImporter {
     List<Module> remainingModules = new ArrayList<Module>();
     Collections.addAll(remainingModules, myModuleModel.getModules());
 
-    for (MavenProject each : selectProjectsToImport(myProjectsTree.getProjects())) {
+    for (MavenProject each : selectProjectsToImport(myAllProjects)) {
       remainingModules.remove(myMavenProjectToModule.get(each));
     }
 
@@ -304,14 +309,14 @@ public class MavenProjectImporter {
   }
 
   private void mapMavenProjectsToModulesAndNames() {
-    for (MavenProject each : myProjectsTree.getProjects()) {
+    for (MavenProject each : myAllProjects) {
       Module module = myFileToModuleMapping.get(each.getFile());
       if (module != null) {
         myMavenProjectToModule.put(each, module);
       }
     }
 
-    MavenModuleNameMapper.map(myProjectsTree.getProjects(),
+    MavenModuleNameMapper.map(myAllProjects,
                               myMavenProjectToModule,
                               myMavenProjectToModuleName,
                               myMavenProjectToModulePath,
@@ -352,7 +357,7 @@ public class MavenProjectImporter {
   private String calcTargetLevel() {
     String maxSource = null;
     String minTarget = null;
-    for (MavenProject each : myProjectsTree.getProjects()) {
+    for (MavenProject each : myAllProjects) {
       String source = each.getSourceLevel();
       String target = each.getTargetLevel();
       if (source != null && (maxSource == null || compareCompilerLevel(maxSource, source) < 0)) maxSource = source;

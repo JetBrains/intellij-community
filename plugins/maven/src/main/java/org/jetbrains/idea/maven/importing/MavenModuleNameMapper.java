@@ -10,7 +10,7 @@ import java.io.File;
 import java.util.*;
 
 public class MavenModuleNameMapper {
-  public static void map(List<MavenProject> projects,
+  public static void map(Collection<MavenProject> projects,
                          Map<MavenProject, Module> mavenProjectToModule,
                          Map<MavenProject, String> mavenProjectToModuleName,
                          Map<MavenProject, String> mavenProjectToModulePath,
@@ -25,7 +25,7 @@ public class MavenModuleNameMapper {
                        dedicatedModuleDir);
   }
 
-  private static void resolveModuleNames(List<MavenProject> projects,
+  private static void resolveModuleNames(Collection<MavenProject> projects,
                                          Map<MavenProject, Module> mavenProjectToModule,
                                          Map<MavenProject, String> mavenProjectToModuleName) {
     List<NameItem> names = new ArrayList<NameItem>();
@@ -133,7 +133,7 @@ public class MavenModuleNameMapper {
     return true;
   }
 
-  private static void resolveModulePaths(List<MavenProject> projects,
+  private static void resolveModulePaths(Collection<MavenProject> projects,
                                          Map<MavenProject, Module> mavenProjectToModule,
                                          Map<MavenProject, String> mavenProjectToModuleName,
                                          Map<MavenProject, String> mavenProjectToModulePath,

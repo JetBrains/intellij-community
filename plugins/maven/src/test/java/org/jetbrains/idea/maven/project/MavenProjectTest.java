@@ -288,6 +288,23 @@ public class MavenProjectTest extends MavenImportingTestCase {
                  FileUtil.toSystemIndependentName(findPluginConfig("group", "id", "one")));
   }
 
+  public void testDoesNotCollectProfilesWithoutId() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<profiles>" +
+                  "  <profile>" +
+                  "    <id>one</id>" +
+                  "  </profile>" +
+                  "  <profile>" +
+                  "  </profile>" +
+                  "</profiles>");
+
+    List<String> result = getMavenProject().getProfilesIds();
+    assertOrderedElementsAreEqual(result, "one");
+  }
+
   public void testCollectingRepositories() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
