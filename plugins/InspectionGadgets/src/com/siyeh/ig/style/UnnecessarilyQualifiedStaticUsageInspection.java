@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,12 +42,14 @@ public class UnnecessarilyQualifiedStaticUsageInspection
     /** @noinspection PublicField*/
     public boolean m_ignoreStaticAccessFromStaticContext = false;
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "unnecessarily.qualified.static.usage.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
          final PsiJavaCodeReferenceElement element =
@@ -62,6 +64,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection
         }
     }
 
+    @Override
     public JComponent createOptionsPanel() {
         final MultipleCheckboxOptionsPanel optionsPanel =
                 new MultipleCheckboxOptionsPanel(this);
@@ -77,6 +80,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection
         return optionsPanel;
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new UnnecessarilyQualifiedStaticUsageFix();
     }
@@ -90,6 +94,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection
                     "unnecessary.qualifier.for.this.remove.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
             final PsiElement element = descriptor.getPsiElement();
@@ -105,6 +110,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new UnnecessarilyQualifiedStaticUsageVisitor();
     }
@@ -139,9 +145,9 @@ public class UnnecessarilyQualifiedStaticUsageInspection
                 return false;
             }
             final PsiElement target = referenceElement.resolve();
-            if (!(target instanceof PsiField) &&
-                    !(target instanceof PsiClass) &&
-                    !(target instanceof PsiMethod)) {
+            if ((!(target instanceof PsiField) || m_ignoreStaticFieldAccesses) &&
+                    (!(target instanceof PsiMethod) || m_ignoreStaticMethodCalls) &&
+                    !(target instanceof PsiClass)) {
                 return false;
             }
             if (m_ignoreStaticAccessFromStaticContext) {
@@ -164,7 +170,8 @@ public class UnnecessarilyQualifiedStaticUsageInspection
                 return false;
             }
             final PsiClass qualifyingClass = (PsiClass)resolvedQualifier;
-            final JavaPsiFacade manager = JavaPsiFacade.getInstance(referenceElement.getProject());
+            final Project project = referenceElement.getProject();
+            final JavaPsiFacade manager = JavaPsiFacade.getInstance(project);
             final PsiResolveHelper resolveHelper = manager.getResolveHelper();
             final PsiMember member = (PsiMember) target;
             final PsiClass containingClass;
