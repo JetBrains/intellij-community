@@ -133,6 +133,8 @@
 
     <directClassInheritorsSearch implementation="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyDirectInheritorsSearcher"/>
 
+
+
     <!--Run/debug-->
     <configurationType implementation="org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType"/>
     <configurationProducer implementation="org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationProducer"/>
@@ -189,6 +191,9 @@
                     serviceImplementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration"/>
     <projectService serviceInterface="org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker"
                     serviceImplementation="org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker"/>
+
+    <projectService serviceInterface="org.jetbrains.plugins.groovy.gradle.ui.GradleUISettings"
+                    serviceImplementation="org.jetbrains.plugins.groovy.gradle.ui.GradleUISettings"/>
 
     <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.gant.GantReferenceContributor"/>
     <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.providers.GroovyReferenceContributor"/>
@@ -447,6 +452,9 @@
     <component>
       <interface-class>org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager</interface-class>
       <implementation-class>org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManagerImpl</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.gradle.ui.MainGradleComponent</implementation-class>
     </component>
   </project-components>
 
