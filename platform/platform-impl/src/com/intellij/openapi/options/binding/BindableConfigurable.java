@@ -26,34 +26,42 @@ import javax.swing.*;
  */
 public abstract class BindableConfigurable implements UnnamedConfigurable {
 
-  protected ControlBinder myBinder;
+  private ControlBinder myBinder;
 
   protected BindableConfigurable(ControlBinder binder) {
     myBinder = binder;
   }
-  
+
+  protected BindableConfigurable() {
+
+  }
+
   protected void bindAnnotations() {
-    myBinder.bindAnnotations(this);
+    getBinder().bindAnnotations(this);
   }
 
   protected void bindControl(JComponent control, String propertyName, boolean instant) {
-    myBinder.bindControl(control, propertyName, instant);
+    getBinder().bindControl(control, propertyName, instant);
   }
 
   protected void bindControl(ControlValueAccessor controlAccessor, String propertyName, boolean instant) {
-    myBinder.bindControl(controlAccessor, propertyName, instant);
+    getBinder().bindControl(controlAccessor, propertyName, instant);
   }
 
   public boolean isModified() {
-    return myBinder.isModified();
+    return getBinder().isModified();
   }
 
   public void apply() throws ConfigurationException {
-    myBinder.apply();
+    getBinder().apply();
   }
 
   public void reset() {
-    myBinder.reset();
+    getBinder().reset();
+  }
+
+  protected ControlBinder getBinder() {
+    return myBinder;
   }
 }
                                         
