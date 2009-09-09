@@ -28,8 +28,9 @@ import gnu.trove.THashMap;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 
-public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> {
+public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> implements ConcurrentMap<K, V> {
   private static final int NUM_LOCKS = 256;
   private static final JBReentrantReadWriteLock[] ourLocks = new JBReentrantReadWriteLock[NUM_LOCKS];
   private static int ourLockAllocationCounter = 0;
@@ -211,6 +212,24 @@ public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> {
     }
   }
 
+  public V replace(K key, V newValue) {
+    w.lock();
+    try {
+      V prev = get(key);
+
+      if (newValue == null) {
+        remove(key);
+      }
+      else {
+        put(key, newValue);
+      }
+      return prev;
+    }
+    finally {
+      w.unlock();
+    }
+  }
+
   public V putIfAbsent(K key, V value) {
     w.lock();
     try {
@@ -222,6 +241,19 @@ public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> {
       else {
         return prev;
       }
+    }
+    finally {
+      w.unlock();
+    }
+  }
+
+  public boolean remove(Object key, Object oldValue) {
+    w.lock();
+    try {
+      if (!Comparing.equal(oldValue, get(key))) {
+        return false;
+      }
+      return super.remove(key) != null;
     }
     finally {
       w.unlock();

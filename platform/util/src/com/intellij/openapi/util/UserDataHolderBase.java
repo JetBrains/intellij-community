@@ -6,13 +6,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
   private static final Object MAP_LOCK = new Object();
   private static final Object COPYABLE_MAP_LOCK = new Object();
   private static final Key<Map<Key, Object>> COPYABLE_USER_MAP_KEY = Key.create("COPYABLE_USER_MAP_KEY");
 
-  private volatile LockPoolSynchronizedMap<Key, Object> myUserMap = null;
+  private volatile ConcurrentMap<Key, Object> myUserMap = null;
 
   protected Object clone() {
     try {
@@ -28,7 +29,7 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
   }
 
   public String getUserDataString() {
-    final Map<Key, Object> userMap = myUserMap;
+    final ConcurrentMap<Key, Object> userMap = myUserMap;
     if (userMap == null) {
       return "";
     }
@@ -46,7 +47,7 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
       other.myUserMap = null;
     }
     else {
-      LockPoolSynchronizedMap<Key, Object> fresh = createMap();
+      ConcurrentMap<Key, Object> fresh = createDataMap();
       fresh.putAll(myUserMap);
       other.myUserMap = fresh;
     }
@@ -58,7 +59,7 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
   }
 
   public <T> void putUserData(Key<T> key, T value) {
-    LockPoolSynchronizedMap<Key, Object> map = getOrCreateMap();
+    Map<Key, Object> map = getOrCreateMap();
 
     if (value == null) {
       map.remove(key);
@@ -68,7 +69,7 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
     }
   }
 
-  private static LockPoolSynchronizedMap<Key, Object> createMap() {
+  protected ConcurrentMap<Key, Object> createDataMap() {
     return new LockPoolSynchronizedMap<Key, Object>(2, 0.9f);
   }
 
@@ -107,11 +108,11 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
   }
 
 
-  private LockPoolSynchronizedMap<Key, Object> getOrCreateMap() {
+  private ConcurrentMap<Key, Object> getOrCreateMap() {
     if (myUserMap == null) {
       synchronized (MAP_LOCK) {
         if (myUserMap == null) {
-          myUserMap = createMap();
+          myUserMap = createDataMap();
         }
       }
     }
