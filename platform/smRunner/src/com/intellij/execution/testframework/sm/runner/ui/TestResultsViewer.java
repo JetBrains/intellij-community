@@ -31,7 +31,8 @@ public interface TestResultsViewer extends Disposable {
   void showStatisticsForSelectedProxy();
 
   interface EventsListener extends TestProxyTreeSelectionListener {
-    void onTestNodeAdded(TestResultsViewer sender, SMTestProxy test);
+    void onTestingStarted(TestResultsViewer sender);
     void onTestingFinished(TestResultsViewer sender);
+    void onTestNodeAdded(TestResultsViewer sender, SMTestProxy test);
   }
 }

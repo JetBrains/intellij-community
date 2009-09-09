@@ -23,23 +23,14 @@ public class SMTRunnerUIActionsHandler implements TestResultsViewer.EventsListen
     myConsoleProperties = consoleProperties;
   }
 
-  //@Override
-  //public void onTestFinished(@NotNull final SMTestProxy test) {
-  //  if (!firstWasFound) {
-  //    // select first defect on the fly
-  //    if (test.isDefect()
-  //        && TestConsoleProperties.SELECT_FIRST_DEFECT.value(myConsoleProperties)) {
-  //
-  //      myResultsViewer.selectAndNotify(test);
-  //    }
-  //    firstWasFound = true;
-  //  }
-  //}
-
   public void onTestNodeAdded(final TestResultsViewer sender, final SMTestProxy test) {
     if (TestConsoleProperties.TRACK_RUNNING_TEST.value(myConsoleProperties)) {
       sender.selectAndNotify(test);
     }
+  }
+
+  public void onTestingStarted(TestResultsViewer sender) {
+    // Do nothing
   }
 
   public void onTestingFinished(final TestResultsViewer sender) {

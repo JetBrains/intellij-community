@@ -58,6 +58,10 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
         // Do nothing
       }
 
+      public void onTestingStarted(TestResultsViewer sender) {
+        // Do nothing
+      }
+
       public void onTestingFinished(TestResultsViewer sender) {
         // Do nothing
       }

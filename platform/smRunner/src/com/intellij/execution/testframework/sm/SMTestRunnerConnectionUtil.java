@@ -13,6 +13,7 @@ import com.intellij.execution.testframework.sm.runner.GeneralToSMTRunnerEventsCo
 import com.intellij.execution.testframework.sm.runner.OutputToGeneralTestEventsConverter;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
+import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerNotificationsHandler;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerUIActionsHandler;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.execution.testframework.sm.runner.ui.statistics.StatisticsPanel;
@@ -46,7 +47,7 @@ public class SMTestRunnerConnectionUtil {
    * be catched and shown in error message box
    */
   public static BaseTestsOutputConsoleView attachRunner(@NotNull final ProcessHandler processHandler,
-                                                        final TestConsoleProperties consoleProperties,
+                                                        @NotNull final TestConsoleProperties consoleProperties,
                                                         final RunnerSettings runnerSettings,
                                                         final ConfigurationPerRunnerSettings configurationSettings,
                                                         final String splitterPropertyName) throws ExecutionException {
@@ -113,7 +114,7 @@ public class SMTestRunnerConnectionUtil {
                         commandLineState.getRunnerSettings(), commandLineState.getConfigurationSettings(), splitterPropertyName);
   }
 
-  private static ProcessHandler attachEventsProcessors(final TestConsoleProperties consoleProperties,
+  private static ProcessHandler attachEventsProcessors(@NotNull final TestConsoleProperties consoleProperties,
                                                        final SMTestRunnerResultsForm resultsViewer,
                                                        final StatisticsPanel statisticsPane,
                                                        final ProcessHandler processHandler)
@@ -125,19 +126,23 @@ public class SMTestRunnerConnectionUtil {
     //events processor
     final GeneralToSMTRunnerEventsConvertor eventsProcessor = new GeneralToSMTRunnerEventsConvertor(resultsViewer.getTestsRootNode());
 
-    //ui actions
+    // ui actions
     final SMTRunnerUIActionsHandler uiActionsHandler = new SMTRunnerUIActionsHandler(consoleProperties);
+    // notifications
+    final SMTRunnerNotificationsHandler notifierHandler = new SMTRunnerNotificationsHandler(consoleProperties);
 
     // subscribe on events
 
-    // subsrcibes event processor on output consumer events
+    // subscribes event processor on output consumer events
     outputConsumer.setProcessor(eventsProcessor);
-    // subsrcibes result viewer on event processor
+    // subscribes result viewer on event processor
     eventsProcessor.addEventsListener(resultsViewer);
-    // subsrcibes test runner's actions on results viewer events
+    // subscribes test runner's actions on results viewer events
     resultsViewer.addEventsListener(uiActionsHandler);
-    // subsrcibes statistics tab viewer on event processor
+    // subscribes statistics tab viewer on event processor
     eventsProcessor.addEventsListener(statisticsPane.createTestEventsListener());
+    // subscribes test runner's notification balloons on results viewer events
+    eventsProcessor.addEventsListener(notifierHandler);
 
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override

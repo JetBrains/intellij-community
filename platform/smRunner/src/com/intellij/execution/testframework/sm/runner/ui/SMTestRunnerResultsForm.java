@@ -165,8 +165,9 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
   /**
    * Returns root node, fake parent suite for all tests and suites
    * @return
+   * @param testsRoot
    */
-  public void onTestingStarted() {
+  public void onTestingStarted(@NotNull SMTestProxy testsRoot) {
     myAnimator.setCurrentTestCase(myTestsRootNode);
     
     // Status line
@@ -177,9 +178,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
 
     myStartTime = System.currentTimeMillis();
     updateStatusLabel();
+
+    fireOnTestingStarted();
   }
 
-  public void onTestingFinished() {
+  public void onTestingFinished(@NotNull SMTestProxy testsRoot) {
     myEndTime = System.currentTimeMillis();
     updateStatusLabel();
 
@@ -371,6 +374,12 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
   private void fireOnTestingFinished() {
     for (EventsListener eventListener : myEventListeners) {
       eventListener.onTestingFinished(this);
+    }
+  }
+
+  private void fireOnTestingStarted() {
+    for (EventsListener eventListener : myEventListeners) {
+      eventListener.onTestingStarted(this);
     }
   }
 
