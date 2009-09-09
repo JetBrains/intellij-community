@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NonNls;
 import java.util.Map;
 
 class ProjectStateStorageManager extends StateStorageManagerImpl {
-  protected Project myProject;
+  protected final Project myProject;
   @NonNls protected static final String ROOT_TAG_NAME = "project";
 
   public ProjectStateStorageManager(final TrackingPathMacroSubstitutor macroSubstitutor, Project project) {

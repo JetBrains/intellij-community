@@ -131,7 +131,8 @@ public class ArrayUtil {
   }
 
 
-  public static int[] mergeArrays(int[] a1, int[] a2) {
+  @NotNull
+  public static int[] mergeArrays(@NotNull int[] a1, @NotNull int[] a2) {
     if (a1.length == 0) {
       return a2;
     }
@@ -159,7 +160,7 @@ public class ArrayUtil {
     return append(src, element, (Class<T>)src.getClass().getComponentType());
   }
 
-  public static <T> T[] append(final T[] src, final T element, final Class<T> componentType) {
+  public static <T> T[] append(@NotNull T[] src, final T element, @NotNull Class<T> componentType) {
     int length=src.length;
     T[] result=(T[])Array.newInstance(componentType, length+ 1);
     System.arraycopy(src,0,result,0,length);
@@ -173,6 +174,7 @@ public class ArrayUtil {
    * @param idx index of element to be removed.
    * @return modified array.
    */
+  @NotNull
   public static <T> T[] remove(@NotNull final T[] src,int idx){
     int length=src.length;
     if (idx < 0 || idx >= length) {
@@ -184,6 +186,7 @@ public class ArrayUtil {
     return result;
   }
 
+  @NotNull
   public static <T> T[] remove(@NotNull final T[] src, T element) {
     final int idx = find(src, element);
     if (idx == -1) return src;
@@ -191,6 +194,7 @@ public class ArrayUtil {
     return remove(src, idx);
   }
 
+  @NotNull
   public static int[] remove(@NotNull final int[] src,int idx){
     int length=src.length;
     if (idx < 0 || idx >= length) {
@@ -352,7 +356,8 @@ public class ArrayUtil {
     return true;
   }
 
-  public static <T> T[] reverseArray(T[] array) {
+  @NotNull
+  public static <T> T[] reverseArray(@NotNull T[] array) {
     T[] newArray = array.clone();
     for (int i = 0; i < array.length; i++) {
       newArray[array.length - i - 1] = array[i];
@@ -360,15 +365,16 @@ public class ArrayUtil {
     return newArray;
   }
 
-  public static int[] reverseArray(int[] array) {
+  @NotNull
+  public static int[] reverseArray(@NotNull int[] array) {
     int[] newArray = array.clone();
     for (int i = 0; i < array.length; i++) {
       newArray[array.length - i - 1] = array[i];
     }
     return newArray;
   }
-  
-  public static void reverse(char[] array) {
+
+  public static void reverse(@NotNull char[] array) {
     for (int i = 0; i < array.length; i++) {
       swap(array, array.length - i - 1, i);
     }
@@ -398,60 +404,60 @@ public class ArrayUtil {
     return 0;
   }
 
-  public static <T>void swap(T[] array, int i1, int i2) {
+  public static <T>void swap(@NotNull T[] array, int i1, int i2) {
     final T t = array[i1];
     array[i1] = array[i2];
     array[i2] = t;
   }
 
-  public static void swap(int[] array, int i1, int i2) {
+  public static void swap(@NotNull int[] array, int i1, int i2) {
     final int t = array[i1];
     array[i1] = array[i2];
     array[i2] = t;
   }
-  public static void swap(boolean [] array, int i1, int i2) {
+  public static void swap(@NotNull boolean [] array, int i1, int i2) {
     final boolean t = array[i1];
     array[i1] = array[i2];
     array[i2] = t;
   }
-  public static void swap(char[] array, int i1, int i2) {
+  public static void swap(@NotNull char[] array, int i1, int i2) {
     final char t = array[i1];
     array[i1] = array[i2];
     array[i2] = t;
   }
 
-  public static <T>void rotateLeft(T[] array, int i1, int i2) {
+  public static <T>void rotateLeft(@NotNull T[] array, int i1, int i2) {
     final T t = array[i1];
     System.arraycopy(array, i1 + 1, array, i1, i2-i1);
     array[i2] = t;
   }
-  public static <T>void rotateRight(T[] array, int i1, int i2) {
+  public static <T>void rotateRight(@NotNull T[] array, int i1, int i2) {
     final T t = array[i2];
     System.arraycopy(array, i1, array, i1+1, i2-i1);
     array[i1] = t;
   }
 
-  public static int indexOf(Object[] objects, Object object) {
+  public static int indexOf(@NotNull Object[] objects, Object object) {
     for (int i = 0; i < objects.length; i++) {
       if (Comparing.equal(objects[i], object)) return i;
     }
     return -1;
   }
 
-  public static <T> int indexOf(List<T> objects, T object, Equality<T> comparator) {
+  public static <T> int indexOf(@NotNull List<T> objects, T object, @NotNull Equality<T> comparator) {
     for (int i = 0; i < objects.size(); i++) {
       if (comparator.equals(objects.get(i), object)) return i;
     }
     return -1;
   }
-  public static <T> int indexOf(T[] objects, T object, Equality<T> comparator) {
+  public static <T> int indexOf(@NotNull T[] objects, T object, @NotNull Equality<T> comparator) {
     for (int i = 0; i < objects.length; i++) {
       if (comparator.equals(objects[i], object)) return i;
     }
     return -1;
   }
 
-  public static int indexOf(int[] ints, int value) {
+  public static int indexOf(@NotNull int[] ints, int value) {
     for (int i = 0; i < ints.length; i++) {
       if (ints[i] == value) return i;
     }
@@ -470,7 +476,8 @@ public class ArrayUtil {
     return count == 0 ? EMPTY_STRING_ARRAY : new String[count];
   }
 
-  public static <E> E[] ensureExactSize(int count, E[] sample) {
+  @NotNull
+  public static <E> E[] ensureExactSize(int count, @NotNull E[] sample) {
     if (count == sample.length) return sample;
 
     return (E[])Array.newInstance(sample.getClass().getComponentType(), count);
