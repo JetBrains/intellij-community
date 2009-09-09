@@ -8,6 +8,7 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerTestTreeView;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
@@ -249,7 +250,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     final Marker finishedMarker = new Marker();
     myEventsProcessor.addEventsListener(new SMTRunnerEventsAdapter(){
       @Override
-      public void onTestingFinished() {
+      public void onTestingFinished(@NotNull SMTestProxy testsRoot) {
         finishedMarker.set();
       }
     });

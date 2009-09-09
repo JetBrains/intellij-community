@@ -324,13 +324,13 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
 
   private void fireOnTestingStarted() {
     for (SMTRunnerEventsListener listener : myEventsListeners) {
-      listener.onTestingStarted();
+      listener.onTestingStarted(myTestsRootNode);
     }
   }
 
   private void fireOnTestingFinished() {
     for (SMTRunnerEventsListener listener : myEventsListeners) {
-      listener.onTestingFinished();
+      listener.onTestingFinished(myTestsRootNode);
     }
   }
 

@@ -10,12 +10,14 @@ import org.jetbrains.annotations.NotNull;
 public interface SMTRunnerEventsListener {
   /**
    * On start testing, before tests and suits launching
+   * @param testsRoot
    */
-  void onTestingStarted();
+  void onTestingStarted(@NotNull SMTestProxy testsRoot);
   /**
    * After test framework finish testing
+   * @param testsRootNode
    */
-  void onTestingFinished();
+  void onTestingFinished(@NotNull SMTestProxy testsRoot);
   /*
    * Tests count in next suite. For several suites this method will be invoked several times
    */

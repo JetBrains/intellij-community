@@ -59,12 +59,12 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
   public void testGetTestsRootNode() {
     assertNotNull(myTestsRootNode);
 
-    myResultsViewer.onTestingFinished();
+    myResultsViewer.onTestingFinished(myTestsRootNode);
     assertNotNull(myResultsViewer.getTestsRootNode());
   }
 
   public void testTestingStarted() {
-    myResultsViewer.onTestingStarted();
+    myResultsViewer.onTestingStarted(myTestsRootNode);
 
     assertTrue(myResultsViewer.getStartTime() > 0);
     assertEquals(0, myResultsViewer.getTestsCurrentCount());
@@ -130,7 +130,7 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
   }
 
   public void testOnFinishTesting_EndTime() {
-    myResultsViewer.onTestingFinished();
+    myResultsViewer.onTestingFinished(myTestsRootNode);
     assertTrue(myResultsViewer.getEndTime() > 0);
   }
 

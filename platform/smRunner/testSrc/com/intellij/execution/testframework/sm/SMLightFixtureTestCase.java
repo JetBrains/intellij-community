@@ -20,7 +20,7 @@ import java.io.IOException;
 /**
  * @author Roman.Chernyatchik
  */
-public class SMLightFixtureTestCase extends UsefulTestCase {
+public abstract class SMLightFixtureTestCase extends UsefulTestCase {
   protected static final LightProjectDescriptor ourDescriptor = new LightProjectDescriptor() {
     public ModuleType getModuleType() {
       return ModuleType.EMPTY;

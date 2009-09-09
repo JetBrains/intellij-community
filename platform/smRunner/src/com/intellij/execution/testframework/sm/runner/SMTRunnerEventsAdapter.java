@@ -6,8 +6,8 @@ import org.jetbrains.annotations.NotNull;
  * @author Roman Chernyatchik
 */
 public class SMTRunnerEventsAdapter implements SMTRunnerEventsListener {
-  public void onTestingStarted(){}
-  public void onTestingFinished(){}
+  public void onTestingStarted(@NotNull SMTestProxy testsRoot){}
+  public void onTestingFinished(@NotNull SMTestProxy testsRoot){}
   public void onTestsCountInSuite(final int count) {}
 
   public void onTestStarted(@NotNull final SMTestProxy test) {}
