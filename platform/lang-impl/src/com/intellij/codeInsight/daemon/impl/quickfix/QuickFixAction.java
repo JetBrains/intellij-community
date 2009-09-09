@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
+import com.intellij.lang.annotation.HighlightSeverity;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -89,7 +90,7 @@ public final class QuickFixAction {
   private static void addAvailableActionsForGroups(HighlightInfo info, Editor editor, PsiFile file, List<HighlightInfo.IntentionActionDescriptor> outList,
                                                    int[] groups,
                                                    int offset) {
-    if (info == null || info.quickFixActionMarkers == null) return;
+    if (info == null || info.quickFixActionMarkers == null || info.getSeverity() == HighlightSeverity.INFORMATION) return;
     if (groups != null && Arrays.binarySearch(groups, info.group) < 0) return;
     for (Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker> pair : info.quickFixActionMarkers) {
       HighlightInfo.IntentionActionDescriptor actionInGroup = pair.first;
