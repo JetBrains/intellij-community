@@ -70,7 +70,7 @@ public abstract class SdkHomeConfigurable implements Configurable {
   private String getStateText() {
     final SdkHomeBean state = getFrameworkSettings().getState();
     final String stateText = state == null ? "" : state.SDK_HOME;
-    return StringUtil.notNullize(FileUtil.toSystemDependentName(stateText));
+    return FileUtil.toSystemDependentName(StringUtil.notNullize(stateText));
   }
 
   public void disposeUIResources() {
