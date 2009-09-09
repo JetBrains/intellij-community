@@ -16,19 +16,22 @@
 package org.jetbrains.plugins.groovy.lang.findUsages;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Query;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 import java.util.Collection;
+import java.util.Iterator;
 
 /**
  * @author ven
@@ -158,6 +161,37 @@ public class FindUsagesTest extends LightGroovyTestCase {
 
     Collection<PsiReference> references = query.findAll();
     assertEquals(expectedUsagesCount, references.size());
+  }
+
+  public void testGDKSuperMethodSearch() throws Exception {
+    doSuperMethodTest("Object");
+  }
+
+  public void testGDKSuperMethodForMapSearch() throws Exception {
+    doSuperMethodTest("Map");
+  }
+
+  /*public void testGDKSuperMethodForListIteratorSearch() throws Exception {
+    doSuperMethodTest("Collection", "Iterator");
+  }*/
+
+  private void doSuperMethodTest(String... firstParameterTypes) throws Exception {
+    myFixture.configureByFile(getTestName(false) + ".groovy");
+    final GroovyFile file = (GroovyFile)myFixture.getFile();
+    final GrTypeDefinition psiClass = (GrTypeDefinition)file.getClasses()[0];
+    final GrMethod method = (GrMethod)psiClass.getMethods()[0];
+    final Collection<MethodSignatureBackedByPsiMethod> superMethods = SuperMethodsSearch.search(method, null, true, true).findAll();
+    assertEquals(firstParameterTypes.length, superMethods.size());
+
+    final Iterator<MethodSignatureBackedByPsiMethod> iterator = superMethods.iterator();
+    for (String firstParameterType : firstParameterTypes) {
+      final MethodSignatureBackedByPsiMethod methodSignature = iterator.next();
+      final PsiMethod superMethod = methodSignature.getMethod();
+      final String className = superMethod.getContainingClass().getName();
+      assertEquals("DefaultGroovyMethods", className);
+      final String actualParameterType = ((PsiClassType)methodSignature.getParameterTypes()[0]).resolve().getName();
+      assertEquals(firstParameterType, actualParameterType);
+    }
   }
 
 }

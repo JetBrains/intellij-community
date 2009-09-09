@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
+import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.presentation.java.JavaPresentationUtil;
@@ -25,6 +26,7 @@ import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
@@ -49,7 +51,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterL
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 import javax.swing.*;
 import java.util.*;
@@ -227,7 +228,7 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
     return PsiUtil.getJavaNameIdentifier(this);
   }
 
-  private static void findSuperMethodRecursilvely(Set<PsiMethod> methods,
+  private static void findSuperMethodRecursively(Set<PsiMethod> methods,
                                            PsiClass psiClass,
                                            boolean allowStatic,
                                            Set<PsiClass> visited,
@@ -257,7 +258,7 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
         }
       }
 
-      findSuperMethodRecursilvely(methods, resolvedSuperClass, allowStatic, visited, signature, discoveredSupers);
+      findSuperMethodRecursively(methods, resolvedSuperClass, allowStatic, visited, signature, discoveredSupers);
       discoveredSupers.removeAll(supers);
     }
   }
@@ -314,37 +315,41 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
 
   @NotNull
   public PsiMethod[] findSuperMethods(boolean checkAccess) {
-    PsiClass containingClass = getContainingClass();
+    return PsiSuperMethodImplUtil.findSuperMethods(this, checkAccess);
+
+    /*PsiClass containingClass = getContainingClass();
 
     Set<PsiMethod> methods = new HashSet<PsiMethod>();
-    findSuperMethodRecursilvely(methods, containingClass, false, new HashSet<PsiClass>(), createMethodSignature(this),
+    findSuperMethodRecursively(methods, containingClass, false, new HashSet<PsiClass>(), createMethodSignature(this),
                                 new HashSet<MethodSignature>());
 
-    return methods.toArray(new PsiMethod[methods.size()]);
+    return methods.toArray(new PsiMethod[methods.size()]);*/
   }
 
   @NotNull
   public PsiMethod[] findSuperMethods(PsiClass parentClass) {
-    Set<PsiMethod> methods = new HashSet<PsiMethod>();
-    findSuperMethodRecursilvely(methods, parentClass, false, new HashSet<PsiClass>(), createMethodSignature(this),
+    return PsiSuperMethodImplUtil.findSuperMethods(this, parentClass);
+    /*Set<PsiMethod> methods = new HashSet<PsiMethod>();
+    findSuperMethodRecursively(methods, parentClass, false, new HashSet<PsiClass>(), createMethodSignature(this),
                                 new HashSet<MethodSignature>());
-    return methods.toArray(new PsiMethod[methods.size()]);
+    return methods.toArray(new PsiMethod[methods.size()]);*/
   }
 
   @NotNull
   public List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(boolean checkAccess) {
-    PsiClass containingClass = getContainingClass();
+    return PsiSuperMethodImplUtil.findSuperMethodSignaturesIncludingStatic(this, checkAccess);
+    /*PsiClass containingClass = getContainingClass();
 
     Set<PsiMethod> methods = new HashSet<PsiMethod>();
     final MethodSignature signature = createMethodSignature(this);
-    findSuperMethodRecursilvely(methods, containingClass, true, new HashSet<PsiClass>(), signature, new HashSet<MethodSignature>());
+    findSuperMethodRecursively(methods, containingClass, true, new HashSet<PsiClass>(), signature, new HashSet<MethodSignature>());
 
     List<MethodSignatureBackedByPsiMethod> result = new ArrayList<MethodSignatureBackedByPsiMethod>();
     for (PsiMethod method : methods) {
       result.add(method.getHierarchicalMethodSignature());
     }
 
-    return result;
+    return result;*/
   }
 
   public static MethodSignature createMethodSignature(PsiMethod method) {
@@ -358,14 +363,15 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
 
   @NotNull
   public PsiMethod[] findSuperMethods() {
-    PsiClass containingClass = getContainingClass();
+    return PsiSuperMethodImplUtil.findSuperMethods(this);
+    /*PsiClass containingClass = getContainingClass();
     if (containingClass == null) return PsiMethod.EMPTY_ARRAY;
 
     Set<PsiMethod> methods = new HashSet<PsiMethod>();
-    findSuperMethodRecursilvely(methods, containingClass, false, new HashSet<PsiClass>(), createMethodSignature(this),
+    findSuperMethodRecursively(methods, containingClass, false, new HashSet<PsiClass>(), createMethodSignature(this),
                                 new HashSet<MethodSignature>());
 
-    return methods.toArray(new PsiMethod[methods.size()]);
+    return methods.toArray(new PsiMethod[methods.size()]);*/
   }
 
   /*
@@ -519,4 +525,8 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
     return getReturnType();
   }
 
+  @Override
+  public boolean isEquivalentTo(PsiElement another) {
+    return PsiClassImplUtil.isMethodEquivalentTo(this, another);
+  }
 }

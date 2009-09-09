@@ -16,14 +16,15 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.light.LightMethod;
+import com.intellij.psi.impl.source.HierarchicalMethodSignatureImpl;
 import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
@@ -107,13 +108,20 @@ public class GrGdkMethodImpl extends LightMethod implements GrGdkMethod {
   }
 
   @NotNull
+  @Override
+  public HierarchicalMethodSignature getHierarchicalMethodSignature() {
+    return new HierarchicalMethodSignatureImpl((MethodSignatureBackedByPsiMethod)getSignature(PsiSubstitutor.EMPTY));
+  }
+
+  @NotNull
   public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
-    final PsiParameter[] parameters = getParameterList().getParameters();
+    /*final PsiParameter[] parameters = getParameterList().getParameters();
     PsiType[] parameterTypes = new PsiType[parameters.length];
     for (int i = 0; i < parameterTypes.length; i++) {
       parameterTypes[i] = parameters[i].getType();
-    }
-    return MethodSignatureUtil.createMethodSignature(getName(), parameterTypes, PsiTypeParameter.EMPTY_ARRAY, substitutor); //todo
+    }*/
+
+    return MethodSignatureBackedByPsiMethod.create(this, substitutor); //todo
   }
 
   public PsiMethod getStaticMethod() {

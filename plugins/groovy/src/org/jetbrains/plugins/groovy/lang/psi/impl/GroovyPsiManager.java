@@ -33,6 +33,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -42,10 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 import org.jetbrains.plugins.groovy.lang.stubs.GroovyShortNamesCache;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author ven
@@ -213,6 +211,21 @@ public class GroovyPsiManager {
     List<PsiMethod> methods = myDefaultMethods.get(qName);
     if (methods == null) return Collections.emptyList();
     return methods;
+  }
+
+  public List<PsiMethod> getDefaultMethods(PsiClass psiClass) {
+    List<PsiMethod> list = new ArrayList<PsiMethod>();
+    getDefaultMethodsInner(psiClass, new HashSet<PsiClass>(), list);
+    return list;
+  }
+
+  public void getDefaultMethodsInner(PsiClass psiClass, Set<PsiClass> watched, List<PsiMethod> methods) {
+    if (watched.contains(psiClass)) return;
+    watched.add(psiClass);
+    methods.addAll(getDefaultMethods(psiClass.getQualifiedName()));
+    for (PsiClass aClass : psiClass.getSupers()) {
+      getDefaultMethodsInner(aClass, watched, methods);
+    }
   }
 
   public static GroovyPsiManager getInstance(Project project) {
