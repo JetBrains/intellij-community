@@ -13,6 +13,8 @@ import com.intellij.ide.IdeBundle;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 
 /**
  * @author Vladimir Kondratyev
@@ -25,21 +27,29 @@ class PatternDialog extends DialogWrapper{
   private final JTextField myPatternStringField;
   private final ColorAndFontDescriptionPanel myColorAndFontDescriptionPanel;
   private final ColorAndFontDescription myColorAndFontDescription;
+  private JCheckBox myUsedDefaultColorsCeckBox;
 
-  public PatternDialog(Component parent,TodoPattern pattern){
-    super(parent,true);
+  public PatternDialog(Component parent, TodoPattern pattern){
+    super(parent, true);
+
+    final TodoAttributes attrs = pattern.getAttributes();
     myPattern=pattern;
     myIconComboBox=new JComboBox(
       new Icon[]{TodoAttributes.DEFAULT_ICON,TodoAttributes.QUESTION_ICON,TodoAttributes.IMPORTANT_ICON}
     );
-    myIconComboBox.setSelectedItem(pattern.getAttributes().getIcon());
+    myIconComboBox.setSelectedItem(attrs.getIcon());
     myIconComboBox.setRenderer(new TodoTypeListCellRenderer());
     myCaseSensitiveCheckBox=new JCheckBox(IdeBundle.message("checkbox.case.sensitive"),pattern.isCaseSensitive());
     myPatternStringField=new JTextField(pattern.getPatternString());
 
+
+    // use default colors check box
+    myUsedDefaultColorsCeckBox = new JCheckBox(IdeBundle.message("checkbox.todo.use.default.colors"));
+    myUsedDefaultColorsCeckBox.setSelected(!attrs.shouldUseCustomTodoColor());
+
     myColorAndFontDescriptionPanel = new ColorAndFontDescriptionPanel();
 
-    TextAttributes attributes = myPattern.getAttributes().getTextAttributes();
+    TextAttributes attributes = myPattern.getAttributes().getCustomizedTextAttributes();
 
     myColorAndFontDescription = new TextAttributesDescription(null, null, attributes, null, EditorColorsManager.getInstance().getGlobalScheme(),
                                                               null, null) {
@@ -54,7 +64,26 @@ class PatternDialog extends DialogWrapper{
 
     myColorAndFontDescriptionPanel.reset(myColorAndFontDescription);
 
+    updateCustomColorsPanel();
+    myUsedDefaultColorsCeckBox.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        updateCustomColorsPanel();
+      }
+    });
+
     init();
+  }
+
+  private void updateCustomColorsPanel() {
+    final boolean useCustomColors = useCustomTodoColor();
+
+    if (useCustomColors) {
+      // restore controls
+      myColorAndFontDescriptionPanel.reset(myColorAndFontDescription);
+    } else {
+      // disable controls
+      myColorAndFontDescriptionPanel.resetDefault();
+    }
   }
 
   public JComponent getPreferredFocusedComponent(){
@@ -64,10 +93,20 @@ class PatternDialog extends DialogWrapper{
   protected void doOKAction(){
     myPattern.setPatternString(myPatternStringField.getText().trim());
     myPattern.setCaseSensitive(myCaseSensitiveCheckBox.isSelected());
-    myPattern.getAttributes().setIcon((Icon)myIconComboBox.getSelectedItem());
 
-    myColorAndFontDescriptionPanel.apply(myColorAndFontDescription, null);
+    final TodoAttributes attrs = myPattern.getAttributes();
+    attrs.setIcon((Icon)myIconComboBox.getSelectedItem());
+    attrs.setUseCustomTodoColor(useCustomTodoColor());
+
+    if (useCustomTodoColor()) {
+      myColorAndFontDescriptionPanel.apply(myColorAndFontDescription, null);
+    }
     super.doOKAction();
+  }
+
+
+  private boolean useCustomTodoColor() {
+    return !myUsedDefaultColorsCeckBox.isSelected();
   }
 
   protected JComponent createCenterPanel(){
@@ -103,6 +142,13 @@ class PatternDialog extends DialogWrapper{
     gb.gridwidth = GridBagConstraints.REMAINDER;
     gb.weightx = 1;
     panel.add(myCaseSensitiveCheckBox, gb);
+
+    gb.gridy++;
+    gb.gridx = 0;
+    gb.fill = GridBagConstraints.HORIZONTAL;
+    gb.gridwidth = GridBagConstraints.REMAINDER;
+    gb.weightx = 1;
+    panel.add(myUsedDefaultColorsCeckBox, gb);
 
     gb.gridy++;
     gb.gridx = 0;

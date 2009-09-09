@@ -37,11 +37,14 @@ public class TodoAttributes implements JDOMExternalizable, Cloneable {
 
   private Icon myIcon;
   private TextAttributes myTextAttributes = new TextAttributes();
+  private boolean myShouldUseCustomColors;
+
   @NonNls private static final String ATTRIBUTE_ICON = "icon";
   @NonNls private static final String ICON_DEFAULT = "default";
   @NonNls private static final String ICON_QUESTION = "question";
   @NonNls private static final String ICON_IMPORTANT = "important";
   @NonNls private static final String ELEMENT_OPTION = "option";
+  @NonNls private static final String USE_CUSTOM_COLORS_ATT = "useCustomColors";
 
   public TodoAttributes() {
   }
@@ -56,19 +59,26 @@ public class TodoAttributes implements JDOMExternalizable, Cloneable {
   }
 
   public TextAttributes getTextAttributes() {
+    return shouldUseCustomTodoColor()
+           ? getCustomizedTextAttributes()
+           : getDefaultColorSchemeTextAttributes();
+  }
+
+  public TextAttributes getCustomizedTextAttributes() {
     return myTextAttributes;
   }
+
 
   public void setIcon(Icon icon) {
     myIcon = icon;
   }
 
   public static TodoAttributes createDefault() {
-    TextAttributes textAttributes = createDefaultTextAttributes();
+    final TextAttributes textAttributes = getDefaultColorSchemeTextAttributes();
     return new TodoAttributes(DEFAULT_ICON, textAttributes);
   }
 
-  private static TextAttributes createDefaultTextAttributes() {
+  private static TextAttributes getDefaultColorSchemeTextAttributes() {
     return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.TODO_DEFAULT_ATTRIBUTES);
   }
 
@@ -89,7 +99,15 @@ public class TodoAttributes implements JDOMExternalizable, Cloneable {
     }
     myTextAttributes.readExternal(element);
     if (element.getChild(ELEMENT_OPTION) == null) {
-      myTextAttributes = createDefaultTextAttributes();
+      myTextAttributes = getDefaultColorSchemeTextAttributes();
+    }
+
+    // default color setting
+    final String useCustomColors = element.getAttributeValue(USE_CUSTOM_COLORS_ATT);
+    if (useCustomColors == null) {
+      myShouldUseCustomColors = false;
+    } else {
+      myShouldUseCustomColors = Boolean.valueOf(useCustomColors).booleanValue();
     }
   }
 
@@ -109,6 +127,9 @@ public class TodoAttributes implements JDOMExternalizable, Cloneable {
     }
     element.setAttribute(ATTRIBUTE_ICON, icon);
     myTextAttributes.writeExternal(element);
+
+    // default color setting
+    element.setAttribute(USE_CUSTOM_COLORS_ATT, Boolean.toString(shouldUseCustomTodoColor()));
   }
 
   public boolean equals(Object o) {
@@ -119,7 +140,7 @@ public class TodoAttributes implements JDOMExternalizable, Cloneable {
 
     if (myIcon != attributes.myIcon) return false;
     if (myTextAttributes != null ? !myTextAttributes.equals(attributes.myTextAttributes) : attributes.myTextAttributes != null) return false;
-
+    if (myShouldUseCustomColors != attributes.myShouldUseCustomColors) return false;
     return true;
   }
 
@@ -127,14 +148,26 @@ public class TodoAttributes implements JDOMExternalizable, Cloneable {
     int result;
     result = myIcon != null ? myIcon.hashCode() : 0;
     result = 29 * result + (myTextAttributes != null ? myTextAttributes.hashCode() : 0);
+    result = 29 * result + (Boolean.valueOf(myShouldUseCustomColors).hashCode());
     return result;
   }
+
+
+  public boolean shouldUseCustomTodoColor() {
+    return myShouldUseCustomColors;
+  }
+
+  public void setUseCustomTodoColor(boolean useCustomColors) {
+    myShouldUseCustomColors = useCustomColors;
+  }
+
 
   public TodoAttributes clone() {
     try {
       TextAttributes textAttributes = myTextAttributes.clone();
       TodoAttributes attributes = (TodoAttributes)super.clone();
       attributes.myTextAttributes = textAttributes;
+      attributes.myShouldUseCustomColors = myShouldUseCustomColors;
       return attributes;
     }
     catch (CloneNotSupportedException e) {

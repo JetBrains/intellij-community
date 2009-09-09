@@ -40,6 +40,7 @@ public class ColorAndFontDescriptionPanel extends JPanel {
   private final JCheckBox myCbItalic = new JCheckBox(ApplicationBundle.message("checkbox.font.italic"));
   private boolean updatingEffects;
   private ActionListener myActionListener;
+  private JLabel myLabelFont;
 
 
   public ColorAndFontDescriptionPanel() {
@@ -77,7 +78,8 @@ public class ColorAndFontDescriptionPanel extends JPanel {
     gbConstraints.gridwidth = 1;
     gbConstraints.gridy = 1;
     gbConstraints.gridx = 1;
-    panel.add(new JLabel(ApplicationBundle.message("label.font.type")), gbConstraints);
+    myLabelFont = new JLabel(ApplicationBundle.message("label.font.type"));
+    panel.add(myLabelFont, gbConstraints);
     gbConstraints.gridx = 2;
     panel.add(myCbBold, gbConstraints);
     gbConstraints.gridx = 3;
@@ -262,6 +264,7 @@ public class ColorAndFontDescriptionPanel extends JPanel {
   }
 
   public void resetDefault() {
+    myLabelFont.setEnabled(false);
     myCbBold.setSelected(false);
     myCbBold.setEnabled(false);
     myCbItalic.setSelected(false);
@@ -272,6 +275,12 @@ public class ColorAndFontDescriptionPanel extends JPanel {
     updateColorChooser(myCbEffects, myEffectsColorChooser, false, false, null);
     myEffectsCombo.setEnabled(false);
   }
+
+  //public void disableControlls(final boolean disabled) {
+  //  myCbBold.setEnabled(!disabled);
+  //  myCbItalic.setEnabled(!disabled);
+  //  myCbItalic.setEnabled(!disabled);
+  //}
 
   private static void updateColorChooser(JCheckBox checkBox,
                                          ColorPanel colorPanel,
@@ -291,12 +300,14 @@ public class ColorAndFontDescriptionPanel extends JPanel {
 
   public void reset(ColorAndFontDescription description) {
     if (description.isFontEnabled()) {
+      myLabelFont.setEnabled(true);
       myCbBold.setEnabled(true);
       myCbItalic.setEnabled(true);
       int fontType = description.getFontType();
       myCbBold.setSelected((fontType & Font.BOLD) != 0);
       myCbItalic.setSelected((fontType & Font.ITALIC) != 0);
     } else {
+      myLabelFont.setEnabled(false);
       myCbBold.setSelected(false);
       myCbBold.setEnabled(false);
       myCbItalic.setSelected(false);
