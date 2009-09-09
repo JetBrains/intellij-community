@@ -389,6 +389,7 @@ public abstract class DialogWrapper {
     return DialogWrapperPeerFactory.getInstance().createPeer(this, project, canBeParent);
   }
 
+  @Nullable
   protected JComponent createTitlePane() {
     return null;
   }

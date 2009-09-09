@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TitlePanel;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
@@ -26,6 +27,7 @@ import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -126,8 +128,15 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     syncAction.registerCustomShortcutSet(original.getShortcutSet(), tree, myDisposable);
   }
 
+  @Nullable
   protected final JComponent createTitlePane() {
-    return new TitlePanel(myChooserDescriptor.getTitle(), myChooserDescriptor.getDescription());
+    final String title = myChooserDescriptor.getTitle();
+    final String description = myChooserDescriptor.getDescription();
+    if ((StringUtil.isEmptyOrSpaces(title) || title.equals(UIBundle.message("file.chooser.default.title"))) &&
+        StringUtil.isEmptyOrSpaces(description)) {
+      return null;
+    }
+    return new TitlePanel(title, description);
   }
 
   protected JComponent createCenterPanel() {
