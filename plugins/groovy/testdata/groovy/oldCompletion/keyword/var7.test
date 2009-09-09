@@ -3,29 +3,12 @@ package a.b.c
 import org.*
 
 class A  {
-  def <caret> foo() {
+  def vo<caret> foo() {
     switch (k){
 
     }
   }
 }
 -----
-abstract
-boolean
-byte
-char
-double
-final
-float
-int
-long
-native
-private
-protected
-public
-short
-static
-strictfp
-transient
 void
 volatile

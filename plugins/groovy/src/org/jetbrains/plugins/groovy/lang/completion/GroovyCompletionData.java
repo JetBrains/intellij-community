@@ -46,8 +46,6 @@ import org.jetbrains.plugins.groovy.lang.completion.filters.toplevel.ImportFilte
 import org.jetbrains.plugins.groovy.lang.completion.filters.toplevel.PackageFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.types.BuiltInTypeAsArgumentFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.types.BuiltInTypeFilter;
-import org.jetbrains.plugins.groovy.lang.completion.filters.types.ParameterTypeFilter;
-import org.jetbrains.plugins.groovy.lang.completion.getters.ClassesGetter;
 import org.jetbrains.plugins.groovy.lang.completion.getters.SuggestedVariableNamesGetter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 
@@ -85,14 +83,6 @@ public class GroovyCompletionData extends CompletionData {
     registerFinalCompletion();
 
     registerSuggestVariableNameCompletion();
-    registerParameterTypeCompletion();
-  }
-
-  private void registerParameterTypeCompletion() {
-    CompletionVariant variant = new CompletionVariant(new ParameterTypeFilter());
-    variant.includeScopeClass(LeafPsiElement.class);
-    variant.addCompletion(new ClassesGetter(), TailType.NONE);
-    registerVariant(variant);
   }
 
   private void registerSuggestVariableNameCompletion() {

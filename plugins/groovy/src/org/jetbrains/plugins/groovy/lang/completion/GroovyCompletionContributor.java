@@ -1,21 +1,27 @@
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PlatformPatterns;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.completion.getters.ClassesGetter;
 import org.jetbrains.plugins.groovy.lang.completion.handlers.AfterNewClassInsertHandler;
 import org.jetbrains.plugins.groovy.lang.completion.handlers.ArrayInsertHandler;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -26,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipWhitespaces;
 
@@ -43,8 +50,11 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
   private static final ElementPattern<PsiElement> AFTER_DOT = psiElement().afterLeaf(".").withParent(GrReferenceExpression.class);
 
-  private static final ElementPattern<PsiElement> IN_CLOSURE_PARAMETER =
-    psiElement(PsiElement.class).withParent(GrVariable.class);
+  private static final String[] MODIFIERS =
+    new String[]{"private", "public", "protected", "transient", "abstract", "native", "volatile", "strictfp", "def", "final", "synchronized", "static"};
+  private static final ElementPattern<PsiElement> TYPE_IN_VARIABLE_DECLARATION_AFTER_MODIFIER = PlatformPatterns
+    .or(psiElement(PsiElement.class).withParent(GrVariable.class).afterLeaf(MODIFIERS),
+        psiElement(PsiElement.class).withParent(GrParameter.class));
 
   private static final String[] THIS_SUPER = {"this", "super"};
 
@@ -119,6 +129,39 @@ public class GroovyCompletionContributor extends CompletionContributor {
           final LookupItem item = (LookupItem)LookupItemUtil.objectToLookupItem(keyword);
           item.setAttribute(LookupItem.DONT_CHECK_FOR_INNERS, "");
           result.addElement(item);
+        }
+      }
+    });
+
+    extend(CompletionType.BASIC, TYPE_IN_VARIABLE_DECLARATION_AFTER_MODIFIER, new CompletionProvider<CompletionParameters>() {
+      @Override
+      protected void addCompletions(@NotNull CompletionParameters parameters,
+                                    ProcessingContext context,
+                                    @NotNull CompletionResultSet result) {
+        final PsiElement position = parameters.getPosition();
+        if (!GroovyCompletionUtil.isFirstElementAfterModifiersInVariableDeclaration(position, true)) return;
+
+        for (Object variant : new ClassesGetter().get(parameters.getPosition(), null)) {
+          final String lookupString;
+          if (variant instanceof PsiElement) {
+            lookupString = PsiUtilBase.getName(((PsiElement)variant));
+          }
+          else {
+            lookupString = variant.toString();
+          }
+          if (lookupString == null) continue;
+
+          LookupElementBuilder builder = LookupElementBuilder.create(lookupString, variant);
+          if (variant instanceof Iconable) {
+            builder = builder.setIcon(((Iconable)variant).getIcon(Iconable.ICON_FLAG_VISIBILITY));
+          }
+
+          if (variant instanceof PsiClass) {
+            String packageName = PsiFormatUtil.getPackageDisplayName((PsiClass)variant);
+            builder = builder.setTailText(" (" + packageName + ")", true);
+          }
+          builder.setInsertHandler(new GroovyInsertHandler());
+          result.addElement(builder);
         }
       }
     });
@@ -205,8 +248,9 @@ public class GroovyCompletionContributor extends CompletionContributor {
     while (!iterator.atEnd() && GroovyTokenTypes.WHITE_SPACES_OR_COMMENTS.contains(iterator.getTokenType())) {
       iterator.advance();
     }
-    if (iterator.atEnd()) return false;
+//    if (iterator.atEnd()) return true;
 
-    return iterator.getTokenType() == GroovyTokenTypes.mASSIGN;
+//    return iterator.getTokenType() == GroovyTokenTypes.mASSIGN;
+    return true;
   }
 }

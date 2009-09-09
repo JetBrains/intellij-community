@@ -16,9 +16,8 @@
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.lookup.LookupElementFactory;
-import com.intellij.codeInsight.lookup.MutableLookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.MutableLookupElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.TokenSet;
@@ -28,12 +27,14 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -110,11 +111,31 @@ public abstract class GroovyCompletionUtil {
   }
 
   /**
-   * Checks next element after modifier candidate to be appropriate
-   *
-   * @param element
-   * @return
+   * return true, if the element is first element after modifiers and there is no type element
    */
+  public static boolean isFirstElementAfterModifiersInVariableDeclaration(PsiElement element, boolean acceptParameter) {
+    final PsiElement parent = element.getParent();
+    if (!(parent instanceof GrVariable)) return false;
+
+    if (acceptParameter && parent instanceof GrParameter) {
+      return ((GrParameter)parent).getTypeElementGroovy() == null;
+    }
+
+    final PsiElement parent1 = parent.getParent();
+    if (!(parent1 instanceof GrVariableDeclaration)) return false;
+
+    final GrVariableDeclaration variableDeclaration = (GrVariableDeclaration)parent1;
+    if (variableDeclaration.getTypeElementGroovy() != null) return false;
+
+    return variableDeclaration.getVariables()[0] == parent;
+  }
+
+  /**
+     * Checks next element after modifier candidate to be appropriate
+     *
+     * @param element
+     * @return
+     */
   public static boolean canBeModifier(PsiElement element) {
     PsiElement next = element.getNextSibling();
     while (next != null && (next instanceof PsiWhiteSpace ||

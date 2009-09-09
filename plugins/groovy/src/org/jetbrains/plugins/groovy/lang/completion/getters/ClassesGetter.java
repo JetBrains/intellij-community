@@ -16,14 +16,14 @@
 package org.jetbrains.plugins.groovy.lang.completion.getters;
 
 import com.intellij.codeInsight.completion.CompletionContext;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.util.ArrayUtil;
-import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
+import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.CompletionProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 /**
  * @author ven
@@ -34,11 +34,9 @@ public class ClassesGetter implements ContextGetter {
 
   public Object[] get(PsiElement context, CompletionContext completionContext) {
     if (context != null) {
-      GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.getProject());
-      GroovyFile file = factory.createGroovyFile("def XXX xxx", false, context);
-      GrClassTypeElement typeElement = (GrClassTypeElement) ((GrVariableDeclaration) file.getTopStatements()[0]).getVariables()[0].getTypeElementGroovy();
-      LOG.assertTrue(typeElement != null);
-      return typeElement.getReferenceElement().getVariants();
+      ResolverProcessor processor = CompletionProcessor.createClassCompletionProcessor(context);
+      ResolveUtil.treeWalkUp(context, processor);
+      return GroovyCompletionUtil.getCompletionVariants(processor.getCandidates());
     }
 
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
