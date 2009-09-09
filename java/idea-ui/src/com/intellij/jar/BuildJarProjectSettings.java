@@ -61,6 +61,7 @@ public class BuildJarProjectSettings implements PersistentStateComponent<Element
   public boolean BUILD_JARS_ON_MAKE = false;
   @NonNls private static final String MAIN_CLASS = Attributes.Name.MAIN_CLASS.toString();
   @NonNls private static final String JAR_EXTENSION = ".jar";
+  @NonNls public static final String BUILD_JAR_PROJECT_SETTINGS_COMPONENT_NAME = "BuildJarProjectSettings";
   private final Project myProject;
 
   public static BuildJarProjectSettings getInstance(Project project) {
@@ -108,7 +109,7 @@ public class BuildJarProjectSettings implements PersistentStateComponent<Element
 
   @NonNls @NotNull
   public String getComponentName() {
-    return "BuildJarProjectSettings";
+    return BUILD_JAR_PROJECT_SETTINGS_COMPONENT_NAME;
   }
 
   public void initComponent() {

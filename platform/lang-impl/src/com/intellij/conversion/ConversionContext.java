@@ -2,6 +2,7 @@ package com.intellij.conversion;
 
 import com.intellij.openapi.components.StorageScheme;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Collection;
@@ -31,4 +32,7 @@ public interface ConversionContext {
   String collapsePath(@NotNull String path);
 
   Collection<File> getLibraryClassRoots(@NotNull String name, @NotNull String level);
+
+  @Nullable
+  ComponentManagerSettings getCompilerSettings();
 }

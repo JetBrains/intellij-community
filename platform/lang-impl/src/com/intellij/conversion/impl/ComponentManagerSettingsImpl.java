@@ -13,7 +13,7 @@ import java.io.IOException;
 /**
  * @author nik
  */
-public abstract class ComponentManagerSettingsImpl implements ComponentManagerSettings {
+public class ComponentManagerSettingsImpl implements ComponentManagerSettings {
   protected final SettingsXmlFile mySettingsFile;
   protected final ConversionContextImpl myContext;
 
@@ -38,5 +38,9 @@ public abstract class ComponentManagerSettingsImpl implements ComponentManagerSe
 
   public void save() throws IOException {
     mySettingsFile.save();
+  }
+
+  public File getFile() {
+    return mySettingsFile.getFile();
   }
 }

@@ -18,6 +18,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +33,7 @@ import java.util.*;
  * @author nik
  */
 public class ConversionContextImpl implements ConversionContext {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.conversion.impl.ConversionContextImpl");
   private Map<File, SettingsXmlFile> mySettingsFiles = new HashMap<File, SettingsXmlFile>();
   private StorageScheme myStorageScheme;
   private File myProjectBaseDir;
@@ -44,6 +46,7 @@ public class ConversionContextImpl implements ConversionContext {
   private Map<File, ModuleSettingsImpl> myModuleSettingsMap = new HashMap<File, ModuleSettingsImpl>();
   private RunManagerSettingsImpl myRunManagerSettings;
   private File mySettingsBaseDir;
+  private ComponentManagerSettings myCompilerManagerSettings;
 
   public ConversionContextImpl(String projectPath) throws CannotConvertException {
     myProjectFile = new File(projectPath);
@@ -145,6 +148,26 @@ public class ConversionContextImpl implements ConversionContext {
     catch (CannotConvertException e) {
       return Collections.emptyList();
     }
+  }
+
+  public ComponentManagerSettings getCompilerSettings() {
+    if (myCompilerManagerSettings == null) {
+      try {
+        File file;
+        if (myStorageScheme == StorageScheme.DEFAULT) {
+          file = myProjectFile;
+        }
+        else {
+          file = new File(mySettingsBaseDir, "compiler.xml");
+        }
+        myCompilerManagerSettings = new ComponentManagerSettingsImpl(file, this);
+      }
+      catch (CannotConvertException e) {
+        LOG.info(e);
+        return null;
+      }
+    }
+    return myCompilerManagerSettings;
   }
 
   @Nullable
