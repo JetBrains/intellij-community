@@ -80,7 +80,7 @@ public class CodeInsightUtilBase {
         FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file.getVirtualFile()), true);
 
       final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(document, project)) {
+      if (!FileDocumentManager.getInstance().requestWriting(document, project)) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             if (editor != null && editor.getComponent().isDisplayable()) {

@@ -134,7 +134,7 @@ public abstract class AbstractLayoutCodeProcessor {
     }
 
     if (!file.isWritable()){
-      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(document, myProject)) {
+      if (!FileDocumentManager.getInstance().requestWriting(document, myProject)) {
         Messages.showMessageDialog(myProject, PsiBundle.message("cannot.modify.a.read.only.file", file.getName()),
         CodeInsightBundle.message("error.dialog.readonly.file.title"),
         Messages.getErrorIcon()

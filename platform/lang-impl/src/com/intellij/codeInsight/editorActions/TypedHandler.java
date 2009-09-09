@@ -114,10 +114,8 @@ public class TypedHandler implements TypedActionHandler {
 
     if (editor.isViewer()) return;
 
-    if (!editor.getDocument().isWritable()) {
-      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(editor.getDocument(), project)) {
-        return;
-      }
+    if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
+       return;
     }
 
     Editor injectedEditor = injectedEditorIfCharTypedIsSignificant(charTyped, editor, file);

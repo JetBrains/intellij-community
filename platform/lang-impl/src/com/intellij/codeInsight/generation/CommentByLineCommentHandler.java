@@ -49,7 +49,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     myEditor = editor;
 
     if (!myFile.isWritable()) {
-      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(myDocument, project)) {
+      if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
         return;
       }
     }

@@ -3983,10 +3983,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       final Editor editor = getEditor(source);
       if (action == MOVE && !editor.isViewer()) {
-        if (!editor.getDocument().isWritable()) {
-          if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(editor.getDocument(), editor.getProject())){
+        if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), editor.getProject())) {
             return;
-          }
         }
         CommandProcessor.getInstance().executeCommand(((EditorImpl)editor).myProject, new Runnable() {
           public void run() {

@@ -18,7 +18,6 @@ package com.intellij.openapi.fileEditor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,17 +60,14 @@ public abstract class FileDocumentManager {
   @NotNull
   public abstract String getLineSeparator(@Nullable VirtualFile file, @Nullable Project project);
 
-  public static boolean fileForDocumentCheckedOutSuccessfully(@NotNull Document document, Project project) {
-    if (project != null) {
-      final VirtualFile file = getInstance().getFile(document);
-      if (file != null && file.isValid()) {
-        final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file);
-        return !operationStatus.hasReadonlyFiles();
-      }
-    }
-    document.fireReadOnlyModificationAttempt();
-    return false;
-  }
+  /**
+   * Requests writing access on given document
+   *
+   * @param document document
+   * @param project project 
+   * @return true if writing access allowed
+   */
+  public abstract boolean requestWriting(@NotNull Document document, Project project);
 
   public abstract void reloadFiles(VirtualFile... files);
 }

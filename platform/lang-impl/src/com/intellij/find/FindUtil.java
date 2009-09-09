@@ -383,10 +383,8 @@ public class FindUtil {
   private static boolean replace(Project project, Editor editor, int offset, FindModel model) {
     Document document = editor.getDocument();
 
-    if (!document.isWritable()) {
-      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(document, project)){
+    if (!FileDocumentManager.getInstance().requestWriting(document, project)) {
         return false;
-      }
     }
 
     document.startGuardedBlockChecking();

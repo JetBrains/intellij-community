@@ -46,7 +46,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     myDocument = editor.getDocument();
 
     if (!myFile.isWritable()) {
-      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(myDocument, project)) {
+      if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
         return;
       }
     }

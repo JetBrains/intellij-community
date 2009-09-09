@@ -300,6 +300,22 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     }
   }
 
+  @Override
+  public boolean requestWriting(@NotNull Document document, Project project) {
+    if (document.isWritable()) {
+      return true;
+    }
+    if (project != null) {
+      final VirtualFile file = getInstance().getFile(document);
+      if (file != null && file.isValid()) {
+        final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file);
+        return !operationStatus.hasReadonlyFiles();
+      }
+    }
+    document.fireReadOnlyModificationAttempt();
+    return false;
+  }
+
   public void reloadFiles(final VirtualFile... files) {
     for (VirtualFile file : files) {
       if (file.exists()) {

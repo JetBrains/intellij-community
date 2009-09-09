@@ -422,7 +422,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
                 documentManager.commitDocument(propertiesFileDocument);
 
                 if (!propertiesFile.isWritable() &&
-                    !FileDocumentManager.fileForDocumentCheckedOutSuccessfully(propertiesFileDocument, project)) {
+                    !FileDocumentManager.getInstance().requestWriting(document, project)) {
                   uninstallDocumentListeners();
                   try {
                     document.replaceString(0, document.getTextLength(), oldText);

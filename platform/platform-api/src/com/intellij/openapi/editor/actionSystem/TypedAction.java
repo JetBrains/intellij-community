@@ -51,10 +51,8 @@ public class TypedAction {
       if (editor.isViewer()) return;
 
       Document doc = editor.getDocument();
-      if (!doc.isWritable()) {
-        if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(doc, PlatformDataKeys.PROJECT.getData(dataContext))) {
-          return;
-        }
+      if (!FileDocumentManager.getInstance().requestWriting(doc, PlatformDataKeys.PROJECT.getData(dataContext))) {
+        return;
       }
 
       doc.startGuardedBlockChecking();

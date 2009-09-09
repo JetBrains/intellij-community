@@ -207,10 +207,8 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     if (!isApplicable(file, caretOffset - template.getKey().length(), template)) {
       return false;
     }
-    if (!editor.getDocument().isWritable()) {
-      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(editor.getDocument(), myProject)){
+    if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), myProject)) {
         return false;
-      }
     }
     final int wordStart0 = wordStart;
     final TemplateImpl template0 = template;
