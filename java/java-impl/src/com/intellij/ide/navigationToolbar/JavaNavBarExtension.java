@@ -8,6 +8,9 @@ import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.lang.StdLanguages;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 public class JavaNavBarExtension implements NavBarModelExtension{
@@ -35,18 +38,24 @@ public class JavaNavBarExtension implements NavBarModelExtension{
 
   @Nullable
   public PsiElement adjustElement(final PsiElement psiElement) {
-    if (psiElement instanceof PsiJavaFile) {
-      final PsiJavaFile psiJavaFile = (PsiJavaFile)psiElement;
-      if (psiJavaFile.getViewProvider().getBaseLanguage() == StdLanguages.JAVA) {
-        final PsiClass[] psiClasses = psiJavaFile.getClasses();
-        if (psiClasses.length == 1) {
-          return psiClasses[0];
-        }
-      }
-    }
-    if (psiElement instanceof PsiClass) return psiElement;
+    final ProjectFileIndex index = ProjectRootManager.getInstance(psiElement.getProject()).getFileIndex();
     final PsiFile containingFile = psiElement.getContainingFile();
-    if (containingFile != null) return containingFile;
+    if (containingFile != null) {
+      final VirtualFile file = containingFile.getVirtualFile();
+      if (file != null && (index.isInSourceContent(file) || index.isInLibraryClasses(file) || index.isInLibrarySource(file))) {
+        if (psiElement instanceof PsiJavaFile) {
+          final PsiJavaFile psiJavaFile = (PsiJavaFile)psiElement;
+          if (psiJavaFile.getViewProvider().getBaseLanguage() == StdLanguages.JAVA) {
+            final PsiClass[] psiClasses = psiJavaFile.getClasses();
+            if (psiClasses.length == 1) {
+              return psiClasses[0];
+            }
+          }
+        }
+        if (psiElement instanceof PsiClass) return psiElement;
+      }
+      return containingFile;
+    }
     return psiElement.isPhysical() ? psiElement : null;
   }
 }
