@@ -65,7 +65,9 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     */
     ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
       public void run() {
+        LOG.info("VFS dispose started");
         myRecords.dispose();
+        LOG.info("VFS dispose completed");
       }
     });
   }

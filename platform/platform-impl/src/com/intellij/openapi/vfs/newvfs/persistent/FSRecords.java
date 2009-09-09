@@ -169,7 +169,7 @@ public class FSRecords implements Disposable, Forceable {
         }
 
         if (myRecords.getInt(HEADER_CONNECTION_STATUS_OFFSET) != SAFELY_CLOSED_MAGIC) {
-          throw new IOException("FS repostiory wasn't safely shut down");
+          throw new IOException("FS repository wasn't safely shut down");
         }
         markDirty();
       }
@@ -217,6 +217,7 @@ public class FSRecords implements Disposable, Forceable {
     }
 
     private static void invalidateIndex() {
+      LOG.info("Marking VFS as corrupted");
       FileUtil.createIfDoesntExist(new File(PathManager.getIndexRoot(), "corruption.marker"));
     }
 
