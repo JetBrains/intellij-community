@@ -28,25 +28,23 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
     AbstractTreeNode<?> treeNode = (AbstractTreeNode)element;
     Collection<? extends AbstractTreeNode> elements = treeNode.getChildren();
     List<TreeStructureProvider> providers = getProvidersDumbAware();
-    Collection<AbstractTreeNode> modified = new ArrayList<AbstractTreeNode>(elements);
-    if (providers != null) {
+    if (providers != null && !providers.isEmpty()) {
       for (TreeStructureProvider provider : providers) {
-        modified = provider.modify(treeNode, modified, ViewSettings.DEFAULT);
+        elements = provider.modify(treeNode, (Collection<AbstractTreeNode>)elements, ViewSettings.DEFAULT);
       }
     }
-    for (AbstractTreeNode node : modified) {
+    for (AbstractTreeNode node : elements) {
       node.setParent(treeNode);
     }
 
-    return ArrayUtil.toObjectArray(modified);
+    return ArrayUtil.toObjectArray(elements);
   }
 
   public Object getParentElement(Object element) {
     if (element instanceof AbstractTreeNode){
       return ((AbstractTreeNode)element).getParent();
-    } else {
-      return null;
     }
+    return null;
   }
 
   @NotNull
