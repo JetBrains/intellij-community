@@ -34,7 +34,7 @@ public class MainImpl {
       catch (Exception e) {
         // ignore
       }
-      if (ApplicationNamesInfo.getInstance().getLowercaseProductName().equals("idea")) {
+      if (ApplicationNamesInfo.getInstance().getLowercaseProductName().equals("Idea")) {
         ConfigImportHelper.importConfigsTo(PathManager.getConfigPath());
       }
     }
