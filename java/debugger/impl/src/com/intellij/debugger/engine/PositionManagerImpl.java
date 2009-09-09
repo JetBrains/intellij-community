@@ -7,9 +7,10 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
@@ -61,49 +62,52 @@ public class PositionManagerImpl implements PositionManager {
   }
 
   public ClassPrepareRequest createPrepareRequest(final ClassPrepareRequestor requestor, final SourcePosition position) {
-    PsiClass psiClass = JVMNameUtil.getClassAt(position);
-    if(psiClass == null) {
-      return null;
-    }
-
-    String waitPrepareFor;
-    ClassPrepareRequestor waitRequestor;
-
-    if(PsiUtil.isLocalOrAnonymousClass(psiClass)) {
-      PsiClass parent = JVMNameUtil.getTopLevelParentClass(psiClass);
-
-      if(parent == null) {
-        return null;
-      }
-
-      final String parentQName = JVMNameUtil.getNonAnonymousClassName(parent);
-      if (parentQName == null) {
-        return null;
-      }
-      waitPrepareFor = parentQName + "$*";
-      waitRequestor = new ClassPrepareRequestor() {
-        public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
-          final CompoundPositionManager positionManager = ((DebugProcessImpl)debuggerProcess).getPositionManager();
-          if (positionManager.locationsOfLine(referenceType, position).size() > 0) {
-            requestor.processClassPrepare(debuggerProcess, referenceType);
-          }
-          else {
-            final List<ReferenceType> positionClasses = positionManager.getAllClasses(position);
-            if (positionClasses.contains(referenceType)) {
-              requestor.processClassPrepare(debuggerProcess, referenceType);
-            }
-          }
+    final Ref<String> waitPrepareFor = new Ref<String>(null);
+    final Ref<ClassPrepareRequestor> waitRequestor = new Ref<ClassPrepareRequestor>(null);
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        PsiClass psiClass = JVMNameUtil.getClassAt(position);
+        if(psiClass == null) {
+          return;
         }
-      };
-    }
-    else {
-      waitPrepareFor = JVMNameUtil.getNonAnonymousClassName(psiClass);
-      waitRequestor = requestor;
-    }
-    if (waitPrepareFor == null) {
+
+        if(PsiUtil.isLocalOrAnonymousClass(psiClass)) {
+          PsiClass parent = JVMNameUtil.getTopLevelParentClass(psiClass);
+
+          if(parent == null) {
+            return;
+          }
+
+          final String parentQName = JVMNameUtil.getNonAnonymousClassName(parent);
+          if (parentQName == null) {
+            return;
+          }
+          waitPrepareFor.set(parentQName + "$*");
+          waitRequestor.set(new ClassPrepareRequestor() {
+            public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
+              final CompoundPositionManager positionManager = ((DebugProcessImpl)debuggerProcess).getPositionManager();
+              if (positionManager.locationsOfLine(referenceType, position).size() > 0) {
+                requestor.processClassPrepare(debuggerProcess, referenceType);
+              }
+              else {
+                final List<ReferenceType> positionClasses = positionManager.getAllClasses(position);
+                if (positionClasses.contains(referenceType)) {
+                  requestor.processClassPrepare(debuggerProcess, referenceType);
+                }
+              }
+            }
+          });
+        }
+        else {
+          waitPrepareFor.set(JVMNameUtil.getNonAnonymousClassName(psiClass));
+          waitRequestor.set(requestor);
+        }
+      }
+    });
+    if (waitPrepareFor.get() == null) {
       return null;  // no suitable class found for this name
     }
-    return myDebugProcess.getRequestsManager().createClassPrepareRequest(waitRequestor, waitPrepareFor);
+    return myDebugProcess.getRequestsManager().createClassPrepareRequest(waitRequestor.get(), waitPrepareFor.get());
   }
 
   public SourcePosition getSourcePosition(final Location location) {

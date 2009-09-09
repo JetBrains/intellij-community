@@ -114,19 +114,15 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
   }
 
   protected void createOrWaitPrepare(final DebugProcessImpl debugProcess, final SourcePosition classPosition) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        debugProcess.getRequestsManager().callbackOnPrepareClasses(Breakpoint.this, classPosition);
+    debugProcess.getRequestsManager().callbackOnPrepareClasses(Breakpoint.this, classPosition);
 
-        List list = debugProcess.getPositionManager().getAllClasses(classPosition);
-        for (final Object aList : list) {
-          ReferenceType refType = (ReferenceType)aList;
-          if (refType.isPrepared()) {
-            processClassPrepare(debugProcess, refType);
-          }
-        }
+    List list = debugProcess.getPositionManager().getAllClasses(classPosition);
+    for (final Object aList : list) {
+      ReferenceType refType = (ReferenceType)aList;
+      if (refType.isPrepared()) {
+        processClassPrepare(debugProcess, refType);
       }
-    });
+    }
   }
 
   protected ObjectReference getThisObject(SuspendContextImpl context, LocatableEvent event) throws EvaluateException {
