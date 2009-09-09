@@ -95,27 +95,27 @@ public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements Hint
     final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
 
-    if (project != null && editor != null) {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKJAVADOC_FEATURE);
-      final LookupImpl lookup = (LookupImpl)LookupManager.getInstance(project).getActiveLookup();
-      if (lookup != null) {
-        //dumpLookupElementWeights(lookup);
-        FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKJAVADOC_LOOKUP_FEATURE);
+    try {
+      if (project != null && editor != null) {
+        FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKJAVADOC_FEATURE);
+        final LookupImpl lookup = (LookupImpl)LookupManager.getInstance(project).getActiveLookup();
+        if (lookup != null) {
+          //dumpLookupElementWeights(lookup);
+          FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKJAVADOC_LOOKUP_FEATURE);
+        }
+        actionPerformedImpl(project, editor);
       }
-      actionPerformedImpl(project, editor);
-    }
-    else if (project != null) {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickjavadoc.ctrln");
-      CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-        public void run() {
-          try {
+      else if (project != null) {
+        FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickjavadoc.ctrln");
+        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+          public void run() {
             DocumentationManager.getInstance(project).showJavaDocInfo(element, null);
           }
-          catch (IndexNotReadyException e1) {
-            DumbService.getInstance(project).showDumbModeNotification("Documentation is not available until indices are built");
-          }
-        }
-      }, getCommandName(), null);
+        }, getCommandName(), null);
+      }
+    }
+    catch (IndexNotReadyException e1) {
+      DumbService.getInstance(project).showDumbModeNotification("Documentation is not available until indices are built");
     }
   }
 
