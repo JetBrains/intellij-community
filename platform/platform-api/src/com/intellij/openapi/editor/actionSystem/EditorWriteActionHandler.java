@@ -27,7 +27,7 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
   public final void execute(final Editor editor, final DataContext dataContext) {
     if (editor.isViewer()) return;
 
-      if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), PlatformDataKeys.PROJECT.getData(dataContext)))
+      if (dataContext != null && !FileDocumentManager.getInstance().requestWriting(editor.getDocument(), PlatformDataKeys.PROJECT.getData(dataContext)))
         return;
 
     ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(editor.getDocument(),editor.getProject()) {
