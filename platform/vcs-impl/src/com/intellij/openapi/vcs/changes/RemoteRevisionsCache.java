@@ -306,6 +306,10 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
   }
 
   public boolean getState(final Change change) {
+    if (change.getBeforeRevision() != null && change.getAfterRevision() != null && (! change.isMoved()) && (! change.isRenamed())) {
+      // just edit
+      return getRevisionState(change.getBeforeRevision());
+    }
     return getRevisionState(change.getBeforeRevision()) & getRevisionState(change.getAfterRevision());
   }
 
