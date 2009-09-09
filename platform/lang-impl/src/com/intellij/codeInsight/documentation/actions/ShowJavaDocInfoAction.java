@@ -10,11 +10,14 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 
-public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements HintManagerImpl.ActionToIgnore {
+public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements HintManagerImpl.ActionToIgnore, DumbAware {
   @NonNls public static final String CODEASSISTS_QUICKJAVADOC_LOOKUP_FEATURE = "codeassists.quickjavadoc.lookup";
   @NonNls public static final String CODEASSISTS_QUICKJAVADOC_FEATURE = "codeassists.quickjavadoc";
 
@@ -102,17 +105,17 @@ public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements Hint
       actionPerformedImpl(project, editor);
     }
     else if (project != null) {
-      if (DocumentationManager.getProviderFromElement(element) != null) {
-        FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickjavadoc.ctrln");
-        CommandProcessor.getInstance().executeCommand(project,
-                                                      new Runnable() {
-                                                        public void run() {
-                                                          DocumentationManager.getInstance(project).showJavaDocInfo(element, null);
-                                                        }
-                                                      },
-                                                      getCommandName(),
-                                                      null);
-      }
+      FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickjavadoc.ctrln");
+      CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+        public void run() {
+          try {
+            DocumentationManager.getInstance(project).showJavaDocInfo(element, null);
+          }
+          catch (IndexNotReadyException e1) {
+            DumbService.getInstance(project).showDumbModeNotification("Documentation is not available until indices are built");
+          }
+        }
+      }, getCommandName(), null);
     }
   }
 
