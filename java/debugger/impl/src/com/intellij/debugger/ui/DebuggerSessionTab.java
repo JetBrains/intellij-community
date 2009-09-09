@@ -127,6 +127,8 @@ public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements
     stepping.add(actionManager.getAction(DebuggerActions.FORCE_STEP_INTO));
     stepping.add(actionManager.getAction(DebuggerActions.STEP_OUT));
     stepping.addSeparator();
+    stepping.add(actionManager.getAction(DebuggerActions.POP_FRAME));
+    stepping.addSeparator();
     stepping.add(actionManager.getAction(DebuggerActions.RUN_TO_CURSOR));
     myUi.getOptions().setTopToolbar(stepping, ActionPlaces.DEBUGGER_TOOLBAR);
 
@@ -157,7 +159,6 @@ public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements
 
     final DefaultActionGroup framesGroup = new DefaultActionGroup();
 
-    addAction(framesGroup, DebuggerActions.POP_FRAME);
     CommonActionsManager actionsManager = CommonActionsManager.getInstance();
     framesGroup.add(actionsManager.createPrevOccurenceAction(myFramesPanel.getOccurenceNavigator()));
     framesGroup.add(actionsManager.createNextOccurenceAction(myFramesPanel.getOccurenceNavigator()));
