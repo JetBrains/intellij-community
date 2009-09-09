@@ -6,16 +6,17 @@ import com.intellij.conversion.*;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.ide.impl.convert.JDomConvertingUtil;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.PathUtil;
 import org.jdom.Element;
@@ -23,8 +24,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.FileFilter;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -63,7 +64,10 @@ public class ConversionContextImpl implements ConversionContext {
     }
 
     myModuleFiles = findModuleFiles(JDomConvertingUtil.loadDocument(modulesFile).getRootElement());
-
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      System.out.println("myStorageScheme = " + myStorageScheme);
+      System.out.println("myModuleFiles = " + Arrays.toString(myModuleFiles));
+    }
   }
 
   @NotNull

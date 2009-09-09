@@ -27,7 +27,10 @@ import org.jetbrains.annotations.NotNull;
  * @author cdr
  */
 public class BuildJarSettings implements ModuleComponent, JDOMExternalizable {
-  @NonNls private static final String ELEMENT_CONTAINERINFO = "containerInfo";
+  @NonNls public static final String ELEMENT_CONTAINER_INFO = "containerInfo";
+  @NonNls public static final String BUILD_JAR_SETTINGS_COMPONENT_NAME = "BuildJarSettings";
+  @NonNls public static final String JAR_URL_ATTRIBUTE = "jarUrl";
+  @NonNls public static final String MAIN_CLASS_ATTRIBUTE = "mainClass";
   private final PackagingConfiguration myPackagingConfiguration;
   private final Module myModule;
   private String myJarUrl = "";
@@ -51,11 +54,11 @@ public class BuildJarSettings implements ModuleComponent, JDOMExternalizable {
   }
 
   public void readExternal(Element element) throws InvalidDataException {
-    Element settings = element.getChild(ELEMENT_CONTAINERINFO);
+    Element settings = element.getChild(ELEMENT_CONTAINER_INFO);
     if (settings != null) {
       myPackagingConfiguration.readExternal(settings);
     }
-    myJarUrl = JDOMExternalizer.readString(element, "jarUrl");
+    myJarUrl = JDOMExternalizer.readString(element, JAR_URL_ATTRIBUTE);
     if (myJarUrl == null) {
       final String jarPath = JDOMExternalizer.readString(element, "jarPath");
       if (jarPath != null) {
@@ -63,17 +66,17 @@ public class BuildJarSettings implements ModuleComponent, JDOMExternalizable {
       }
     }
     myBuildJar = JDOMExternalizer.readBoolean(element, "buildJar");
-    myMainClass = JDOMExternalizer.readString(element, "mainClass");
+    myMainClass = JDOMExternalizer.readString(element, MAIN_CLASS_ATTRIBUTE);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
     if (!myBuildJar) throw new WriteExternalException();
-    Element settings = new Element(ELEMENT_CONTAINERINFO);
+    Element settings = new Element(ELEMENT_CONTAINER_INFO);
     element.addContent(settings);
     myPackagingConfiguration.writeExternal(settings);
-    JDOMExternalizer.write(element, "jarUrl", myJarUrl);
+    JDOMExternalizer.write(element, JAR_URL_ATTRIBUTE, myJarUrl);
     JDOMExternalizer.write(element, "buildJar", myBuildJar);
-    JDOMExternalizer.write(element, "mainClass", myMainClass);
+    JDOMExternalizer.write(element, MAIN_CLASS_ATTRIBUTE, myMainClass);
   }
 
   public PackagingConfiguration getPackagingConfiguration() {
@@ -101,7 +104,7 @@ public class BuildJarSettings implements ModuleComponent, JDOMExternalizable {
 
   @NonNls @NotNull
   public String getComponentName() {
-    return "BuildJarSettings";
+    return BUILD_JAR_SETTINGS_COMPONENT_NAME;
   }
 
   public void initComponent() {
