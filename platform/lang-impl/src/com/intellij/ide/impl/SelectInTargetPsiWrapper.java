@@ -43,7 +43,11 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
   }
 
   public final void selectIn(SelectInContext context, final boolean requestFocus) {
-    final Object selector = context.getSelectorInFile();
+    Object selector = context.getSelectorInFile();
+    if (selector == null) {
+      selector = PsiManager.getInstance(myProject).findFile(context.getVirtualFile());
+    }
+
     if (selector instanceof PsiElement) {
       select(((PsiElement)selector).getOriginalElement(), requestFocus);
     } else {
