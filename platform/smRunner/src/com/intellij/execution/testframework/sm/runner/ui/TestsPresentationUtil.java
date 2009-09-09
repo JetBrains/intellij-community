@@ -41,6 +41,7 @@ public class TestsPresentationUtil {
   public static final SimpleTextAttributes TERMINATED_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, Color.ORANGE);
   @NonNls private static final String RESULTS_NO_TESTS = SMTestsRunnerBundle.message(
       "sm.test.runner.ui.tabs.statistics.columns.results.no.tests");
+  @NonNls private static final String UNKNOWN_TESTS_COUNT = "<...>";
 
 
   private TestsPresentationUtil() {
@@ -57,9 +58,10 @@ public class TestsPresentationUtil {
     } else {
       sb.append(SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.done"));
     }
+
     sb.append(' ').append(testsCount).append(' ');
     sb.append(SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.of"));
-    sb.append(' ').append(testsTotal);
+    sb.append(' ').append(testsTotal != 0 ? testsTotal : UNKNOWN_TESTS_COUNT);
 
     if (failuresCount > 0) {
       sb.append(DOUBLE_SPACE);

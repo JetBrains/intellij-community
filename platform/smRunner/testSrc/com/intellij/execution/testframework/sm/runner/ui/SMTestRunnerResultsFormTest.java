@@ -79,6 +79,31 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
     assertEquals(2, myResultsViewer.getTestsCurrentCount());
   }
 
+  public void testCount() {
+    myResultsViewer.onTestsCountInSuite(1);
+
+    assertEquals(1, myResultsViewer.getTestsTotal());
+
+    myResultsViewer.onTestStarted(createTestProxy("some_test", myTestsRootNode));
+    assertEquals(1, myResultsViewer.getTestsTotal());
+
+    // if exceeds - will be incremented
+    myResultsViewer.onTestStarted(createTestProxy("some_test2", myTestsRootNode));
+    assertEquals(2, myResultsViewer.getTestsTotal());
+  }
+
+  public void testCount_UnSet() {
+    myResultsViewer.onTestStarted(createTestProxy("some_test", myTestsRootNode));
+    assertEquals(0, myResultsViewer.getTestsTotal());
+
+    myResultsViewer.onTestStarted(createTestProxy("some_test2", myTestsRootNode));
+    assertEquals(0, myResultsViewer.getTestsTotal());
+
+    // count will be updated only on tests finished if wasn't set
+    myResultsViewer.onTestingFinished(myTestsRootNode);
+    assertEquals(2, myResultsViewer.getTestsTotal());
+  }
+
   public void testOnTestFailure() {
     final SMTestProxy test = createTestProxy(myTestsRootNode);
 

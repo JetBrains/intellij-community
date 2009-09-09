@@ -58,7 +58,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
   private final Project myProject;
 
   private int myTestsCurrentCount;
-  private int myTestsTotal;
+  private int myTestsTotal = 0;
   private int myTestsFailuresCount;
   private long myStartTime;
   private long myEndTime;
@@ -184,6 +184,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
 
   public void onTestingFinished(@NotNull SMTestProxy testsRoot) {
     myEndTime = System.currentTimeMillis();
+
+    if (myTestsTotal == 0) {
+      myTestsTotal = myTestsCurrentCount;
+      myStatusLine.setFraction(1);
+    }
     updateStatusLabel();
 
 
@@ -210,13 +215,21 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
   public void onTestStarted(@NotNull final SMTestProxy testProxy) {
     // Counters
     myTestsCurrentCount++;
+
     // fix total count if it is corrupted
-    if (myTestsCurrentCount > myTestsTotal) {
+    // but if test count wasn't set at all let's process such case separately
+    if (myTestsCurrentCount > myTestsTotal && myTestsTotal != 0) {
       myTestsTotal = myTestsCurrentCount;
     }
 
-    // update progress if total is set
-    myStatusLine.setFraction(myTestsTotal != 0 ? (double)myTestsCurrentCount / myTestsTotal : 0);
+    // update progress
+    if (myTestsTotal != 0) {
+      // if total is set
+      myStatusLine.setFraction((double)myTestsCurrentCount / myTestsTotal);
+    } else {
+      // just set progress in the middle to show user that tests are running
+      myStatusLine.setFraction(0.5);
+    }
 
     _addTestOrSuite(testProxy);
 

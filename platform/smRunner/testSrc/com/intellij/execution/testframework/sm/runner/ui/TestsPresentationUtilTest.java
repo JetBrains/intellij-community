@@ -35,10 +35,20 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     assertEquals("Running: 10 of 1  ",
                  TestsPresentationUtil.getProgressStatus_Text(0, 0, 1, 10, 0));
     //here number format is platform-dependent
-    assertEquals("Done: 10 of 0  Failed: 1  (5 ms)  ",
-                 TestsPresentationUtil.getProgressStatus_Text(0, 5, 0, 10, 1));
     assertEquals("Done: 10 of 1  (0 s)  ",
                  TestsPresentationUtil.getProgressStatus_Text(5, 5, 1, 10, 0));
+  }
+
+  public void testProgressText_UnsetTotal() {
+    assertEquals("Running: 0 of <...>  ",
+                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 0, 0));
+    assertEquals("Running: 1 of <...>  Failed: 1  ",
+                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 1, 1));
+    assertEquals("Running: 10 of <...>  Failed: 1  ",
+                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 10, 1));
+    //here number format is platform-dependent
+    assertEquals("Done: 10 of <...>  Failed: 1  (5 ms)  ",
+                 TestsPresentationUtil.getProgressStatus_Text(0, 5, 0, 10, 1));
   }
 
   public void testFormatTestProxyTest_NewTest() {
