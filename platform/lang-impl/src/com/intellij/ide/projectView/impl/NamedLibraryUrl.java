@@ -1,6 +1,5 @@
 package com.intellij.ide.projectView.impl;
 
-import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -25,11 +24,9 @@ public class NamedLibraryUrl extends AbstractUrl {
   public Object[] createPath(Project project) {
     final Module module = moduleName != null ? ModuleManager.getInstance(project).findModuleByName(moduleName) : null;
     if (module == null) return null;
-    final OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
-    for (int i = 0; i < orderEntries.length; i++) {
-      OrderEntry orderEntry = orderEntries[i];
-      if (orderEntry instanceof LibraryOrderEntry || orderEntry instanceof JdkOrderEntry && orderEntry.getPresentableName().equals(url)){
-        return new Object[]{new NamedLibraryElement(new LibraryGroupElement(module), orderEntry)};
+    for (OrderEntry orderEntry : ModuleRootManager.getInstance(module).getOrderEntries()) {
+      if (orderEntry instanceof LibraryOrderEntry || orderEntry instanceof JdkOrderEntry && orderEntry.getPresentableName().equals(url)) {
+        return new Object[]{new NamedLibraryElement(module, orderEntry)};
       }
     }
     return null;
@@ -43,7 +40,9 @@ public class NamedLibraryUrl extends AbstractUrl {
     if (element instanceof NamedLibraryElement) {
       NamedLibraryElement libraryElement = (NamedLibraryElement)element;
 
-      return new NamedLibraryUrl(libraryElement.getOrderEntry().getPresentableName(), libraryElement.getParent().getModule() != null ? libraryElement.getParent().getModule().getName() : null);
+      Module context = libraryElement.getModule();
+      
+      return new NamedLibraryUrl(libraryElement.getOrderEntry().getPresentableName(), context != null ? context.getName() : null);
     }
     return null;
   }

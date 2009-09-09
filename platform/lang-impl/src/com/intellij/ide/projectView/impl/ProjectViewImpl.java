@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
@@ -792,7 +793,7 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
   }
 
 
-  private class PaneOptionAction extends ToggleAction {
+  private class PaneOptionAction extends ToggleAction implements DumbAware {
     private final Map<String, Boolean> myOptionsMap;
     private final boolean myOptionDefaultValue;
 
@@ -1022,7 +1023,15 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
       }
       if (DataConstants.MODULE_CONTEXT.equals(dataId)) {
         Object selected = getSelectedNodeElement();
-        return selected instanceof Module ? selected : null;
+        if (selected instanceof Module) {
+          return !((Module)selected).isDisposed() ? selected : null;
+        }
+        else if (selected instanceof VirtualFile) {
+          return moduleByContentRoot((VirtualFile)selected);
+        }
+        else {
+          return null;
+        }
       }
 
       if (DataConstants.MODULE_CONTEXT_ARRAY.equals(dataId)) {
@@ -1116,7 +1125,12 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
           Collection<Module> modules = ((ModuleGroup)element).modulesInGroup(myProject, true);
           result.addAll(modules);
         }
+        else if (element instanceof VirtualFile) {
+          Module module = moduleByContentRoot((VirtualFile)element);
+          if (module != null) result.add(module);
+        }
       }
+
       if (result.isEmpty()) {
         return null;
       }
@@ -1124,6 +1138,17 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
         return result.toArray(new Module[result.size()]);
       }
     }
+  }
+
+  private Module moduleByContentRoot(VirtualFile file) {
+    if (ProjectRootsUtil.isModuleContentRoot(file, myProject)) {
+      Module module = ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(file);
+      if (module != null && !module.isDisposed()) {
+        return module;
+      }
+    }
+
+    return null;
   }
 
   private <T> List<T> getSelectedElements(Class<T> klass) {

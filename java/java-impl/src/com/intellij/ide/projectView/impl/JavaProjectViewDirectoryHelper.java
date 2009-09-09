@@ -50,16 +50,6 @@ public class JavaProjectViewDirectoryHelper extends ProjectViewDirectoryHelper {
   public String getNodeName(final ViewSettings settings, final Object parentValue, final PsiDirectory directory) {
     PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
 
-    if (aPackage != null
-        && !ProjectRootsUtil.isSourceRoot(directory)
-        && !settings.isFlattenPackages()
-        && settings.isHideEmptyMiddlePackages()
-        && !ProjectRootsUtil.isLibraryRoot(directory.getVirtualFile(), getProject())
-        && TreeViewUtil.isEmptyMiddlePackage(directory, true)) {
-      return null;
-    }
-
-
     PsiPackage parentPackage;
     if (!ProjectRootsUtil.isSourceRoot(directory) && aPackage != null && aPackage.getQualifiedName().length() > 0 &&
                               parentValue instanceof PsiDirectory) {

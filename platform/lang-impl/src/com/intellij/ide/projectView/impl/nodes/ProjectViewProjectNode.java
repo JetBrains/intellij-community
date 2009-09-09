@@ -4,9 +4,10 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
@@ -23,13 +24,23 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
 
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
-    final Module[] modules = ModuleManager.getInstance(getProject()).getModules();
-    final ArrayList<AbstractTreeNode> nodes = new ArrayList<AbstractTreeNode>();
-    nodes.addAll(modulesAndGroups(modules));
+    final PsiManager psiManager = PsiManager.getInstance(getProject());
+    ProjectRootManager prm = ProjectRootManager.getInstance(getProject());
+    ProjectFileIndex index = prm.getFileIndex();
+
+    ArrayList<AbstractTreeNode> nodes = new ArrayList<AbstractTreeNode>();
+
+    for (VirtualFile root : prm.getContentRoots()) {
+      VirtualFile parent = root.getParent();
+      if (parent == null || !index.isInContent(parent)) {
+        nodes.add(new PsiDirectoryNode(getProject(), psiManager.findDirectory(root), getSettings()));
+      }
+    }
+
+
     final VirtualFile baseDir = getProject().getBaseDir();
     if (baseDir == null) return nodes;
 
-    final PsiManager psiManager = PsiManager.getInstance(getProject());
     final VirtualFile[] files = baseDir.getChildren();
     for (VirtualFile file : files) {
       if (ModuleUtil.findModuleForFile(file, getProject()) == null) {
@@ -38,6 +49,11 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
         }
       }
     }
+
+    if (getSettings().isShowLibraryContents()) {
+      nodes.add(new ExternalLibrariesNode(getProject(), getSettings()));
+    }
+
     return nodes;
   }
 

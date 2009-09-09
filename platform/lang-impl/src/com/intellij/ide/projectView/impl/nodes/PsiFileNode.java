@@ -1,13 +1,19 @@
 package com.intellij.ide.projectView.impl.nodes;
 
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -20,7 +26,22 @@ public class PsiFileNode extends BasePsiNode<PsiFile>{
   }
 
   public Collection<AbstractTreeNode> getChildrenImpl() {
+    if (isArchive()) {
+      VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(getVirtualFile());
+      if (jarRoot != null) {
+        PsiDirectory psiDirectory = PsiManager.getInstance(getProject()).findDirectory(jarRoot);
+        if (psiDirectory != null) {
+          return ProjectViewDirectoryHelper.getInstance(getProject()).getDirectoryChildren(psiDirectory, getSettings(), true);
+        }
+      }
+    }
+
     return new ArrayList<AbstractTreeNode>();
+  }
+
+  private boolean isArchive() {
+    VirtualFile file = getVirtualFile();
+    return file != null && file.isValid() && file.getFileType() instanceof ArchiveFileType;
   }
 
   protected void updateImpl(PresentationData data) {
@@ -83,5 +104,10 @@ public class PsiFileNode extends BasePsiNode<PsiFile>{
 
   public boolean canRepresent(final Object element) {
     return super.canRepresent(element) || getValue().getVirtualFile() == element;
+  }
+
+  @Override
+  public boolean contains(@NotNull VirtualFile file) {
+    return super.contains(file) || isArchive() && PathUtil.getLocalFile(file) == getVirtualFile();
   }
 }

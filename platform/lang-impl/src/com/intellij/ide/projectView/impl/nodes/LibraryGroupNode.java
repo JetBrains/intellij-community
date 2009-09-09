@@ -33,7 +33,8 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
 
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
-    final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(getValue().getModule());
+    Module module = getValue().getModule();
+    final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
     final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
     final OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
     for (final OrderEntry orderEntry : orderEntries) {
@@ -48,13 +49,13 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
           addLibraryChildren(orderEntry, children, getProject(), this);
         }
         else {
-          children.add(new NamedLibraryElementNode(getProject(), new NamedLibraryElement(getValue(), orderEntry), getSettings()));
+          children.add(new NamedLibraryElementNode(getProject(), new NamedLibraryElement(module, orderEntry), getSettings()));
         }
       }
       else if (orderEntry instanceof JdkOrderEntry) {
         final Sdk jdk = ((JdkOrderEntry)orderEntry).getJdk();
         if (jdk != null) {
-          children.add(new NamedLibraryElementNode(getProject(), new NamedLibraryElement(getValue(), orderEntry), getSettings()));
+          children.add(new NamedLibraryElementNode(getProject(), new NamedLibraryElement(module, orderEntry), getSettings()));
         }
       }
     }

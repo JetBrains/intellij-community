@@ -99,12 +99,12 @@ public class ProjectViewDirectoryHelper {
                                                            final ViewSettings settings,
                                                            final boolean withSubDirectories) {
     final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
-    final Project project = psiDirectory.getProject();
+    final Project project = psiDirectory.getProject();                                                    
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final Module module = fileIndex.getModuleForFile(psiDirectory.getVirtualFile());
     final ModuleFileIndex moduleFileIndex = module == null ? null : ModuleRootManager.getInstance(module).getFileIndex();
     if (!settings.isFlattenPackages() || skipDirectory(psiDirectory)) {
-      processPsiDirectoryChildren(psiDirectory, psiDirectory.getChildren(), children, fileIndex, moduleFileIndex, settings,
+      processPsiDirectoryChildren(psiDirectory, psiDirectory.getChildren(), children, fileIndex, null, settings,
                                   withSubDirectories);
     }
     else { // source directory in "flatten packages" mode
@@ -117,11 +117,9 @@ public class ProjectViewDirectoryHelper {
         if (!skipDirectory(subdir)) {
           continue;
         }
-        if (moduleFileIndex != null) {
-          if (!moduleFileIndex.isInContent(subdir.getVirtualFile())) {
-            continue;
-          }
-        }
+        VirtualFile directoryFile = subdir.getVirtualFile();
+        if (fileIndex.isIgnored(directoryFile)) continue;
+
         if (withSubDirectories) {
           children.add(new PsiDirectoryNode(project, subdir, settings));
         }
@@ -183,6 +181,7 @@ public class ProjectViewDirectoryHelper {
     if (moduleFileIndex != null && !moduleFileIndex.isInContent(vFile)) {
       return;
     }
+    /*
     final boolean childInLibraryClasses = projectFileIndex.isInLibraryClasses(vFile);
     if (!projectFileIndex.isInSourceContent(vFile)) {
       if (childInLibraryClasses) {
@@ -197,6 +196,7 @@ public class ProjectViewDirectoryHelper {
     if (childInLibraryClasses && !projectFileIndex.isInContent(vFile) && !showFileInLibClasses(vFile)) {
       return; // skip java sources in classpath
     }
+    */
 
     try {
       container.add(ProjectViewNode.createTreeNode(nodeClass, element.getProject(), element, settings));
@@ -219,6 +219,7 @@ public class ProjectViewDirectoryHelper {
       }
       if (moduleFileIndex != null) {
         if (!moduleFileIndex.isInContent(subdir.getVirtualFile())) {
+          container.add(new PsiDirectoryNode(project, subdir, viewSettings));
           continue;
         }
       }

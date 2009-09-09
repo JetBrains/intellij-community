@@ -7,6 +7,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -58,9 +59,10 @@ public class FavoritesTreeNodeDescriptor extends PresentableNodeDescriptor<Abstr
     }
     if (nodeElement instanceof NamedLibraryElement){
       final NamedLibraryElement namedLibraryElement = ((NamedLibraryElement)nodeElement);
-      final LibraryGroupElement parent = namedLibraryElement.getParent();
-      return parent.getModule().getName() + ":" + namedLibraryElement.getOrderEntry().getPresentableName();
+      final Module module = namedLibraryElement.getModule();
+      return (module != null ? module.getName() : "") + ":" + namedLibraryElement.getOrderEntry().getPresentableName();
     }
+    
     final FavoriteNodeProvider[] nodeProviders = Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, myProject);
     for(FavoriteNodeProvider provider: nodeProviders) {
       String location = provider.getElementLocation(nodeElement);

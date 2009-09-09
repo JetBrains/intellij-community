@@ -1,6 +1,8 @@
 package com.intellij.ide.projectView.impl.nodes;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.util.Comparing;
 
 /**
  * @author Eugene Zhuravlev
@@ -8,16 +10,16 @@ import com.intellij.openapi.roots.OrderEntry;
  * Time: 7:08:30 PM
  */
 public final class NamedLibraryElement {
-  private final LibraryGroupElement myParent;
+  private final Module myContextModule;
   private final OrderEntry myEntry;
 
-  public NamedLibraryElement(LibraryGroupElement parent, OrderEntry entry) {
-    myParent = parent;
+  public NamedLibraryElement(Module parent, OrderEntry entry) {
+    myContextModule = parent;
     myEntry = entry;
   }
 
-  public LibraryGroupElement getParent() {
-    return myParent;
+  public Module getModule() {
+    return myContextModule;
   }
 
   public String getName() {
@@ -31,14 +33,14 @@ public final class NamedLibraryElement {
     final NamedLibraryElement namedLibraryElement = (NamedLibraryElement)o;
 
     if (!myEntry.equals(namedLibraryElement.myEntry)) return false;
-    if (!myParent.equals(namedLibraryElement.myParent)) return false;
+    if (Comparing.equal(myContextModule, namedLibraryElement.myContextModule)) return false;
 
     return true;
   }
 
   public int hashCode() {
     int result;
-    result = myParent.hashCode();
+    result = myContextModule != null ? myContextModule.hashCode() : 0;
     result = 29 * result + myEntry.hashCode();
     return result;
   }

@@ -9,18 +9,19 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleFileIndex;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.Icons;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,6 +36,37 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
     final Project project = getProject();
     final PsiDirectory psiDirectory = getValue();
     final VirtualFile directoryFile = psiDirectory.getVirtualFile();
+
+    if (ProjectRootsUtil.isModuleContentRoot(directoryFile, project)) {
+      ProjectFileIndex fi = ProjectRootManager.getInstance(project).getFileIndex();
+      Module module = fi.getModuleForFile(directoryFile);
+
+      data.setPresentableText(directoryFile.getName());
+      if (module != null) {
+        data.setOpenIcon(module.getModuleType().getNodeIcon(true));
+        data.setClosedIcon(module.getModuleType().getNodeIcon(false));
+
+        StringBuilder location = new StringBuilder();
+        if (getParentValue() instanceof Project) {
+          location.append(directoryFile.getPresentableUrl());
+        }
+
+        if (!Comparing.equal(module.getName(), directoryFile.getName())) {
+          if (location.length() > 0) {
+            location.append(", ");
+          }
+
+          location.append("Module '").append(module.getName()).append("'");
+        }
+
+        if (location.length() > 0) {
+          data.setLocationString(location.toString());
+        }
+
+        return;
+      }
+    }
+
     final String name = getParentValue() instanceof Project
                         ? psiDirectory.getVirtualFile().getPresentableUrl()
                         : ProjectViewDirectoryHelper.getInstance(psiDirectory.getProject()).getNodeName(getSettings(), getParentValue(), psiDirectory);
@@ -89,18 +121,18 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
       return false;
     }
 
-    if (!VfsUtil.isAncestor(value.getVirtualFile(), file, false)) {
+    VirtualFile directory = value.getVirtualFile();
+    if (directory.getFileSystem() instanceof LocalFileSystem) {
+      file = PathUtil.getLocalFile(file);
+    }
+
+    if (!VfsUtil.isAncestor(directory, file, false)) {
       return false;
     }
+
     final Project project = value.getProject();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    final Module module = fileIndex.getModuleForFile(value.getVirtualFile());
-    if (module == null) {
-      return fileIndex.getModuleForFile(file) == null;
-    }
-    final ModuleFileIndex moduleFileIndex = ModuleRootManager.getInstance(module).getFileIndex();
-    
-    return moduleFileIndex.isInContent(file);
+    return !fileIndex.isIgnored(file);
   }
 
   public VirtualFile getVirtualFile() {
@@ -117,8 +149,12 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
   }
 
   public boolean canNavigate() {
-    VirtualFile virtualFile = getVirtualFile();
-    return virtualFile != null && (ProjectRootsUtil.isSourceOrTestRoot(virtualFile, getProject()) || ProjectRootsUtil.isLibraryRoot(virtualFile, getProject()));
+    VirtualFile file = getVirtualFile();
+    Project project = getProject();
+
+    return file != null && (ProjectRootsUtil.isModuleContentRoot(file, project) ||
+                            ProjectRootsUtil.isSourceOrTestRoot(file, project) ||
+                            ProjectRootsUtil.isLibraryRoot(file, project));
   }
 
   public boolean canNavigateToSource() {
@@ -128,7 +164,12 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
   public void navigate(final boolean requestFocus) {
     Module module = ModuleUtil.findModuleForPsiElement(getValue());
     if (module != null) {
-      ProjectSettingsService.getInstance(myProject).openContentEntriesSettings(module);
+      if (ProjectRootsUtil.isModuleContentRoot(getVirtualFile(), getProject())) {
+        ProjectSettingsService.getInstance(myProject).openModuleSettings(module);
+      }
+      else {
+        ProjectSettingsService.getInstance(myProject).openContentEntriesSettings(module);
+      }
     }
   }
 
