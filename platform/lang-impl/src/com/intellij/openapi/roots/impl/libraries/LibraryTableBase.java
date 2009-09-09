@@ -136,19 +136,19 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     }
 
     // dispose newly created instances of same (equals()) libraries
-    for (final Library library : model.myLibraries) {
-      if (addedLibraries.contains(library)) continue;
-      for (final Library oldLibrary : myModel.myLibraries) {
-        if (library.equals(oldLibrary) && library != oldLibrary) {
-          final int index = model.myLibraries.indexOf(library);
-          Disposer.dispose(library);
-
-          // keep old library if somebody cached old instance
-          model.myLibraries.set(index, oldLibrary);
-          break;
-        }
-      }
-    }
+    //for (final Library library : model.myLibraries) {
+    //  if (addedLibraries.contains(library)) continue;
+    //  for (final Library oldLibrary : myModel.myLibraries) {
+    //    if (library.equals(oldLibrary) && library != oldLibrary) {
+    //      final int index = model.myLibraries.indexOf(library);
+    //      Disposer.dispose(library);
+    //
+    //      // keep old library if somebody cached old instance
+    //      model.myLibraries.set(index, oldLibrary);
+    //      break;
+    //    }
+    //  }
+    //}
 
     myModel = model;
     for (Library library : removedLibraries) {
