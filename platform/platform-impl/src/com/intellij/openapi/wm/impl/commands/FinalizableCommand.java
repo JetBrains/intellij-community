@@ -29,4 +29,8 @@ public abstract class FinalizableCommand implements Runnable{
     return null;
   }
 
+  public boolean willChangeState() {
+    return true;
+  }
+
 }

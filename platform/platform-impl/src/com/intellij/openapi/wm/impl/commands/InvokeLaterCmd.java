@@ -20,4 +20,9 @@ public final class InvokeLaterCmd extends FinalizableCommand{
       finish();
     }
   }
+
+  @Override
+  public boolean willChangeState() {
+    return false;
+  }
 }

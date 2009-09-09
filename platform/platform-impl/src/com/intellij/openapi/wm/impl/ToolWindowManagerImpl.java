@@ -348,7 +348,13 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
    * Before delegating it fires state changed.
    */
   private void execute(final ArrayList<FinalizableCommand> commandList) {
-    fireStateChanged();
+    for (FinalizableCommand each : commandList) {
+      if (each.willChangeState()) {
+        fireStateChanged();
+        break;
+      }
+    }
+
     for (FinalizableCommand each : commandList) {
       each.beforeExecute(this);
     }
