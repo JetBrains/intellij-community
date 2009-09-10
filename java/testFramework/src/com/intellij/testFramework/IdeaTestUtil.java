@@ -119,7 +119,7 @@ public class IdeaTestUtil extends PlatformTestUtil {
       String textBefore = String.valueOf(FileUtil.loadFileText(file2));
       textAfter = StringUtil.convertLineSeparators(textAfter);
       textBefore = StringUtil.convertLineSeparators(textBefore);
-      Assert.assertEquals(textAfter, textBefore);
+      Assert.assertEquals(file1.getPath(), textAfter, textBefore);
       return;
     }
 
