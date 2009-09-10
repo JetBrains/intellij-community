@@ -36,6 +36,7 @@ import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.unscramble.ThreadState;
 import com.intellij.xdebugger.AbstractDebuggerSession;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ThreadReference;
@@ -44,6 +45,7 @@ import com.sun.jdi.request.EventRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -367,10 +369,21 @@ public class DebuggerSession implements AbstractDebuggerSession {
         }
 
         if(currentThread == null) {
-          for (final ThreadReferenceProxyImpl threadReferenceProxy : getProcess().getVirtualMachineProxy().allThreads()) {
-            currentThread = threadReferenceProxy;
-            if (currentThread.status() == ThreadReference.THREAD_STATUS_RUNNING) {
+          final Collection<ThreadReferenceProxyImpl> allThreads = getProcess().getVirtualMachineProxy().allThreads();
+          // heuristics: try to pre-select EventDispatchThread
+          for (final ThreadReferenceProxyImpl thread : allThreads) {
+            if (ThreadState.isEDT(thread.name())) {
+              currentThread = thread;
               break;
+            }
+          }
+          if (currentThread == null) {
+            // heuristics: display the first thread with RUNNABLE status
+            for (final ThreadReferenceProxyImpl thread : allThreads) {
+              currentThread = thread;
+              if (currentThread.status() == ThreadReference.THREAD_STATUS_RUNNING) {
+                break;
+              }
             }
           }
         }

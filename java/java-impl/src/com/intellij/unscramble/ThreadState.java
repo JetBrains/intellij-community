@@ -128,6 +128,11 @@ public class ThreadState {
   }
 
   public boolean isEDT() {
-    return getName().startsWith("AWT-EventQueue");
+    final String name = getName();
+    return isEDT(name);
+  }
+
+  public static boolean isEDT(String name) {
+    return name.startsWith("AWT-EventQueue");
   }
 }
