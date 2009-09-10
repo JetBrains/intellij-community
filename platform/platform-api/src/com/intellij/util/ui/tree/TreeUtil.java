@@ -816,24 +816,23 @@ public final class TreeUtil {
     boolean accept(Object node);
   }
 
-  public static void ensueSelection(JTree tree) {
+  public static void ensureSelection(JTree tree) {
     final TreePath[] paths = tree.getSelectionPaths();
 
     if (paths != null) {
-      if (paths.length > 1) return;
-      if (paths.length == 1) {
-        if (tree.isRootVisible()) return;
-        if (paths[0].getPathCount() > 1) return;
+      for (TreePath each : paths) {
+        if (tree.getRowForPath(each) >= 0 && tree.isVisible(each)) {
+          return;
+        }
       }
     }
 
-
-    for (int eachRow = 0; eachRow < tree.getVisibleRowCount(); eachRow++) {
-      final TreePath eachPath = tree.getPathForRow(eachRow);
-      if (eachPath == null) continue;
-      if (!tree.isRootVisible() && eachPath.getPathCount() == 1) continue;
-      tree.setSelectionPath(eachPath);
-      break;
+    for (int eachRow = 0; eachRow < tree.getRowCount(); eachRow++) {
+      TreePath eachPath = tree.getPathForRow(eachRow);
+      if (eachPath != null && tree.isVisible(eachPath)) {
+        tree.setSelectionPath(eachPath);
+        break;
+      }
     }
   }
 

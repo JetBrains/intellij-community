@@ -293,6 +293,10 @@ public class AbstractTreeBuilder implements Disposable {
     return true;
   }
 
+  public boolean isToEnsureSelectionOnFocusGained() {
+    return true;
+  }
+
   protected void runBackgroundLoading(final Runnable runnable) {
     final Application app = ApplicationManager.getApplication();
     if (app != null) {

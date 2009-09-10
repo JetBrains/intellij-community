@@ -200,6 +200,8 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
 
     }
 
+    myTreeBuilder.getUi().maybeReady();
+
     if (myRunAfterUpdate != null) {
       final Runnable runnable = new Runnable() {
         public void run() {

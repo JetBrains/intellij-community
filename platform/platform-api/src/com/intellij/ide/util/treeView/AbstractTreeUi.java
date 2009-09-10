@@ -34,6 +34,8 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.security.AccessControlException;
 import java.util.*;
 import java.util.List;
@@ -164,6 +166,13 @@ class AbstractTreeUi {
       }
     });
     Disposer.register(getBuilder(), uiNotify);
+
+    myTree.addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        maybeReady();
+      }
+    });
   }
 
   protected void hideNotify() {
@@ -967,7 +976,7 @@ class AbstractTreeUi {
   }
 
   public boolean isReady() {
-    return !isYeildingNow() && (!hasSheduledUpdates() || getUpdater().isInPostponeMode()) && !hasExpandedUnbuiltNodes() && !isWorkerBusy();
+    return !isYeildingNow() && !isWorkerBusy() && (!hasSheduledUpdates() || getUpdater().isInPostponeMode()) && !hasExpandedUnbuiltNodes();
   }
 
   private void executeYieldingRequest(Runnable runnable, TreeUpdatePass pass) {
@@ -987,6 +996,16 @@ class AbstractTreeUi {
     }
   }
 
+  void maybeReady() {
+    if (isReady()) {
+      if (myTree.isShowing()) {
+        if (getBuilder().isToEnsureSelectionOnFocusGained() && Registry.is("ide.tree.ensureSelectionOnFocusGained")) {
+          TreeUtil.ensureSelection(myTree);
+        }
+      }
+    }
+  }
+
   private void flushPendingNodeActions() {
     final DefaultMutableTreeNode[] nodes = myPendingNodeActions.toArray(new DefaultMutableTreeNode[myPendingNodeActions.size()]);
     myPendingNodeActions.clear();
@@ -1002,6 +1021,8 @@ class AbstractTreeUi {
         each.run();
       }
     }
+
+    maybeReady();
   }
 
   protected void runOnYieldingDone(Runnable onDone) {
@@ -1294,6 +1315,8 @@ class AbstractTreeUi {
     if (removeFromUnbuilt) {
       removeFromUnbuilt(parent);
     }
+
+    maybeReady();
   }
 
   private void processNodeActionsIfReady(final DefaultMutableTreeNode node) {
@@ -1326,6 +1349,8 @@ class AbstractTreeUi {
         }
       }
     }
+
+    maybeReady();
   }
 
 
@@ -1776,6 +1801,8 @@ class AbstractTreeUi {
     if (wasRemoved && finalizeRunnable != null) {
       finalizeRunnable.run();
     }
+
+    maybeReady();
   }
 
   public boolean isWorkerBusy() {
@@ -2382,7 +2409,7 @@ class AbstractTreeUi {
     final List<NodeAction> actions = myNodeActions.get(element);
     myNodeActions.remove(element);
 
-    if (elementToPutNodeActionsFor != null) {
+    if (elementToPutNodeActionsFor != null && actions != null) {
       myNodeActions.put(elementToPutNodeActionsFor, actions);
     }
   }

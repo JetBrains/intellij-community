@@ -390,8 +390,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     if (treeState != null) {
       treeState.applyTo(myTree);
     }
-
-    TreeUtil.ensueSelection(myTree);
   }
 
   public void installComparator() {

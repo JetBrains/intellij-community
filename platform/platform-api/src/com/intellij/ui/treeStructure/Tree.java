@@ -66,8 +66,6 @@ public class Tree extends JTree implements Autoscroll, TestableUi {
       addFocusListener(new MyFocusListener());
     }
 
-    addFocusListener(new SelectionFixer());
-
     setCellRenderer(new NodeRenderer());
   }
 
@@ -384,21 +382,6 @@ public class Tree extends JTree implements Autoscroll, TestableUi {
 
     public void focusLost(FocusEvent e) {
       focusChanges();
-    }
-  }
-
-  private class SelectionFixer extends FocusAdapter {
-    public void focusGained(final FocusEvent e) {
-      final TreePath[] paths = getSelectionPaths();
-      if (paths == null || paths.length == 0) {
-        for (int eachRow = 0; eachRow < getRowCount(); eachRow++) {
-          final TreePath path = getPathForRow(eachRow);
-          if (path != null && isVisible(path)) {
-            setSelectionPath(path);
-            break;
-          }
-        }
-      }
     }
   }
 
