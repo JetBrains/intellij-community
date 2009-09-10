@@ -53,6 +53,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.update.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -165,11 +166,12 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
 
           final List<VirtualFile> list = invokeManualMerging(paths, myProject);
           FileGroup mergedGroup = updatedFiles.getGroupById(FileGroup.MERGED_ID);
+          final VcsKey vcsKey = CvsVcs2.getKey();
           for(VirtualFile mergedFile: list) {
             String path = FileUtil.toSystemDependentName(mergedFile.getPresentableUrl());
             mergedWithConflictsGroup.remove(path);
             binaryMergedGroup.remove(path);
-            mergedGroup.add(path);
+            mergedGroup.add(path, vcsKey, null);
           }
         }
       }

@@ -19,6 +19,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.vcsUtil.VcsUtil;
@@ -91,10 +92,6 @@ public class FileGroup implements JDOMExternalizable {
     return mySupportsDeletion;
   }
 
-  public void add(@NotNull final String path) {
-    myFiles.add(new UpdatedFile(path));
-  }
-
   public void addError(@NotNull final String path, @NotNull final String error) {
     myErrorsMap.put(path, error);
   }
@@ -103,8 +100,12 @@ public class FileGroup implements JDOMExternalizable {
     return myErrorsMap;
   }
 
-  public void add(@NotNull String path, @NotNull AbstractVcs vcs, @NotNull VcsRevisionNumber revision) {
-    myFiles.add(new UpdatedFile(path, vcs.getName(), revision.asString()));
+  public void add(@NotNull String path, @NotNull String vcsName, @Nullable VcsRevisionNumber revision) {
+    myFiles.add(new UpdatedFile(path, vcsName, revision == null ? "" : revision.asString()));
+  }
+
+  public void add(@NotNull String path, @NotNull VcsKey vcsKey, @Nullable VcsRevisionNumber revision) {
+    myFiles.add(new UpdatedFile(path, vcsKey, revision == null ? "" : revision.asString()));
   }
 
   public void remove(String path) {
@@ -126,6 +127,10 @@ public class FileGroup implements JDOMExternalizable {
       files.add(file.getPath());
     }
     return files;
+  }
+
+  public Collection<UpdatedFile> getUpdatedFiles() {
+    return new ArrayList<UpdatedFile>(myFiles);
   }
 
   public List<Pair<String, VcsRevisionNumber>> getFilesAndRevisions(ProjectLevelVcsManager vcsManager) {
@@ -248,7 +253,7 @@ public class FileGroup implements JDOMExternalizable {
   public void setRevisions(final String path, final AbstractVcs vcs, final VcsRevisionNumber revision) {
     for (UpdatedFile file : myFiles) {
       if (file.getPath().startsWith(path)) {
-        file.setVcsName(vcs.getName());
+        file.setVcsKey(vcs.getKeyInstanceMethod());
         file.setRevision(revision.asString());
       }
     }
@@ -257,7 +262,7 @@ public class FileGroup implements JDOMExternalizable {
     }
   }
 
-  private static class UpdatedFile {
+  static class UpdatedFile {
     private final String myPath;
     private String myVcsName;
     private String myRevision;
@@ -266,7 +271,13 @@ public class FileGroup implements JDOMExternalizable {
       myPath = path;
     }
 
-    public UpdatedFile(final String path, final String vcsName, final String revision) {
+    public UpdatedFile(final String path, @NotNull final VcsKey vcsKey, final String revision) {
+      myPath = path;
+      myVcsName = vcsKey.getName();
+      myRevision = revision;
+    }
+
+    private UpdatedFile(final String path, @NotNull String vcsName, final String revision) {
       myPath = path;
       myVcsName = vcsName;
       myRevision = revision;
@@ -280,8 +291,8 @@ public class FileGroup implements JDOMExternalizable {
       return myVcsName;
     }
 
-    public void setVcsName(final String vcsName) {
-      myVcsName = vcsName;
+    public void setVcsKey(final VcsKey vcsKey) {
+      myVcsName = vcsKey.getName();
     }
 
     public String getRevision() {

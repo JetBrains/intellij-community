@@ -1,5 +1,8 @@
 package com.intellij.openapi.vcs.update;
 
+import com.intellij.openapi.util.Pair;
+import com.intellij.util.Consumer;
+
 import java.util.List;
 
 public class UpdateFilesHelper {
@@ -36,6 +39,24 @@ public class UpdateFilesHelper {
   }
 
   public static void iterateFileGroupFiles(final UpdatedFiles updatedFiles, final Callback callback) {
+    final List<FileGroup> groups = updatedFiles.getTopLevelGroups();
+    for (FileGroup group : groups) {
+      iterateGroup(group, callback);
+
+      // for changed on server
+      for (FileGroup childGroup : group.getChildren()) {
+        iterateGroup(childGroup, callback);
+      }
+    }
+  }
+
+  private static void iterateGroup(final FileGroup group, final Consumer<Pair<String, String>> callback) {
+    for (FileGroup.UpdatedFile updatedFile : group.getUpdatedFiles()) {
+      callback.consume(new Pair<String, String>(updatedFile.getPath(), updatedFile.getVcsName()));
+    }
+  }
+
+  public static void iterateAffectedFiles(final UpdatedFiles updatedFiles, final Consumer<Pair<String, String>> callback) {
     final List<FileGroup> groups = updatedFiles.getTopLevelGroups();
     for (FileGroup group : groups) {
       iterateGroup(group, callback);

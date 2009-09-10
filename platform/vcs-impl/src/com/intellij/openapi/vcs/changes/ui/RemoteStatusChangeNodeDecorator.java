@@ -17,7 +17,7 @@ public class RemoteStatusChangeNodeDecorator implements ChangeNodeDecorator {
   }
 
   public void decorate(final Change change, final SimpleColoredComponent component) {
-    final boolean state = myRemoteRevisionsCache.getState(change);
+    final boolean state = myRemoteRevisionsCache.isUpToDate(change);
     reportState(state);
     if (! state) {
       component.append(" ");

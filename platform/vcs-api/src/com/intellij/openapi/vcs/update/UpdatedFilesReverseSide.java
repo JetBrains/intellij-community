@@ -26,13 +26,6 @@ public class UpdatedFilesReverseSide {
     myFileIdx = new HashMap<String, FileGroup>();
   }
 
-  /**
-   * removes file from group that previously contained it
-   */
-  public void addFileToGroup(final String groupId, final VirtualFile file, final DuplicateLevel duplicateLevel) {
-    addFileToGroup(groupId, file.getPresentableUrl(), duplicateLevel);
-  }
-
   public boolean isEmpty() {
     return myFileIdx.isEmpty();
   }
@@ -41,12 +34,12 @@ public class UpdatedFilesReverseSide {
     return myGroupHolder.get(id);
   }
 
-  public void addFileToGroup(final String groupId, final String file, final DuplicateLevel duplicateLevel) {
+  public void addFileToGroup(final String groupId, final String file, final DuplicateLevel duplicateLevel, final String vcsName) {
     final FileGroup newGroup = myGroupHolder.get(groupId);
-    addFileToGroup(newGroup, file, duplicateLevel);
+    addFileToGroup(newGroup, file, duplicateLevel, vcsName);
   }
 
-  public void addFileToGroup(final FileGroup group, final String file, final DuplicateLevel duplicateLevel) {
+  public void addFileToGroup(final FileGroup group, final String file, final DuplicateLevel duplicateLevel, final String vcsName) {
     if (duplicateLevel.searchPreviousContainment(group.getId())) {
       final FileGroup oldGroup = myFileIdx.get(file);
       if (oldGroup != null) {
@@ -57,7 +50,7 @@ public class UpdatedFilesReverseSide {
       }
     }
 
-    group.add(file);
+    group.add(file, vcsName, null);
     myFileIdx.put(file, group);
   }
 
@@ -89,8 +82,8 @@ public class UpdatedFilesReverseSide {
   private void copyGroup(final Parent parent, final FileGroup from, final DuplicateLevel duplicateLevel) {
     final FileGroup to = createOrGet(parent, from);
 
-    for (String file : from.getFiles()) {
-      addFileToGroup(to, file, duplicateLevel);
+    for (FileGroup.UpdatedFile updatedFile : from.getUpdatedFiles()) {
+      addFileToGroup(to, updatedFile.getPath(), duplicateLevel, updatedFile.getVcsName());
     }
     for (FileGroup fromChild : from.getChildren()) {
       copyGroup(new GroupParent(to), fromChild, duplicateLevel);

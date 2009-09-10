@@ -65,12 +65,7 @@ public class UpdatedFilesProcessor  extends CvsMessagesAdapter {
     FileGroup collection = getCollectionFor(message.getType(), virtualFile);
     LOG.assertTrue(collection != null, String.valueOf(message.getType()));
     final CvsRevisionNumber revision = message.getRevision();
-    if (revision != null) {
-      collection.add(path, CvsVcs2.getInstance(myProject), revision);
-    }
-    else {
-      collection.add(path);
-    }
+    collection.add(path, CvsVcs2.getKey(), revision);
   }
 
   private FileGroup getCollectionFor(int messageType, @Nullable VirtualFile vFile) {

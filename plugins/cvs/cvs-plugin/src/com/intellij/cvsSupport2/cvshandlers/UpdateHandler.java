@@ -1,6 +1,7 @@
 package com.intellij.cvsSupport2.cvshandlers;
 
 import com.intellij.CvsBundle;
+import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.actions.update.UpdateSettings;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
@@ -16,6 +17,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -126,12 +128,13 @@ public class UpdateHandler extends CommandCvsHandler implements PostCvsActivity 
 
       }
 
+      final VcsKey vcsKey = CvsVcs2.getKey();
       for (final MergedWithConflictProjectOrModuleFile myCorruptedFile : myCorruptedFiles) {
         if (myCorruptedFile.shouldBeCheckedOut()) {
           addFileToCheckout(myCorruptedFile.getOriginal());
         }
         else {
-          myUpdatedFiles.getGroupById(FileGroup.MODIFIED_ID).add(myCorruptedFile.getOriginal().getPath());
+          myUpdatedFiles.getGroupById(FileGroup.MODIFIED_ID).add(myCorruptedFile.getOriginal().getPath(), vcsKey, null);
         }
       }
 
