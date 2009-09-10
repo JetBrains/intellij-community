@@ -7,16 +7,16 @@ package com.intellij.uiDesigner.binding;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiClass;
 import com.intellij.util.Query;
 
 import javax.swing.*;
@@ -35,7 +35,7 @@ public class FormPropertyUsageTest extends PsiTestCase {
       new Runnable() {
         public void run() {
           try{
-            String root = PathManagerEx.getTestDataPath() + "/uiDesigner/binding/" + getTestName(true);
+            String root = PluginPathManager.getPluginHomePath("ui-designer") + "/testData/binding/" + getTestName(true);
             PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk("java 1.4"));
             myTestProjectRoot = PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
           }

@@ -1,6 +1,6 @@
 package com.intellij.uiDesigner.core;
 
-import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.compiler.FormErrorInfo;
@@ -44,7 +44,7 @@ public class AsmCodeGeneratorTest extends TestCase {
   }
 
   private AsmCodeGenerator initCodeGenerator(final String formFileName, final String className) throws Exception {
-    final String testDataPath = PathManagerEx.getTestDataPath() + File.separatorChar + "uiDesigner" + File.separatorChar;
+    final String testDataPath = PluginPathManager.getPluginHomePath("ui-designer") + "/testData/";
     return initCodeGenerator(formFileName, className, testDataPath);
   }
 
@@ -286,7 +286,7 @@ public class AsmCodeGeneratorTest extends TestCase {
   public void testIdeadev14081() throws Exception {
     // NOTE: That doesn't really reproduce the bug as it's dependent on a particular instrumentation sequence used during form preview
     // (the nested form is instrumented with a new AsmCodeGenerator instance directly in the middle of instrumentation of the current form)
-    final String testDataPath = PathManagerEx.getTestDataPath() + File.separatorChar + "uiDesigner" + File.separatorChar +
+    final String testDataPath = PluginPathManager.getPluginHomePath("ui-designer") + File.separatorChar + "testData" + File.separatorChar +
       File.separatorChar + "formEmbedding" + File.separatorChar + "Ideadev14081" + File.separatorChar;
     AsmCodeGenerator embeddedClassGenerator = initCodeGenerator("Embedded.form", "Embedded", testDataPath);
     byte[] embeddedPatchedData = getVerifiedPatchedData(embeddedClassGenerator);

@@ -5,7 +5,7 @@
 package com.intellij.uiDesigner.make;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,7 +33,7 @@ public class FormSourceCodeGeneratorTest extends PsiTestCase {
       new Runnable() {
         public void run() {
           try{
-            String root = PathManagerEx.getTestDataPath() + "/uiDesigner/sourceCodeGenerator/" + getTestName(true);
+            String root = PluginPathManager.getPluginHomePath("ui-designer") + "/testData/sourceCodeGenerator/" + getTestName(true);
             PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk("java 1.5"));
             myTestProjectRoot = PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
           }
