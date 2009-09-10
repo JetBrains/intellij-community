@@ -8,7 +8,6 @@
  */
 package com.intellij.refactoring;
 
-import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -16,10 +15,17 @@ import com.intellij.refactoring.makeStatic.MakeMethodStaticProcessor;
 import com.intellij.refactoring.makeStatic.MakeStaticUtil;
 import com.intellij.refactoring.makeStatic.Settings;
 import com.intellij.refactoring.util.ParameterTablePanel;
+import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.JavaTestUtil;
 
 import java.util.ArrayList;
 
-public class MakeMethodStaticTest extends CodeInsightTestCase {
+public class MakeMethodStaticTest extends LightCodeInsightTestCase {
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
+
   public void testEmptyMethod() throws Exception {
     configureByFile("/refactoring/makeMethodStatic/before1.java");
     perform(true);
@@ -164,7 +170,7 @@ public class MakeMethodStaticTest extends CodeInsightTestCase {
     PsiMethod method = (PsiMethod) element;
 
     new MakeMethodStaticProcessor(
-            myProject,
+            getProject(),
             method,
             new Settings(true, addClassParameter ? "anObject" : null, null)).run();
   }
@@ -177,7 +183,7 @@ public class MakeMethodStaticTest extends CodeInsightTestCase {
     final boolean addClassParameter = MakeStaticUtil.buildVariableData(method, parametersForFields);
 
     new MakeMethodStaticProcessor(
-            myProject,
+            getProject(),
             method,
             new Settings(true, addClassParameter ? "anObject" : null,
                          parametersForFields.toArray(
