@@ -6,6 +6,9 @@
     <intentionAction>
       <className>com.intellij.refactoring.typeMigration.intentions.ConvertFieldToAtomicIntention</className>
     </intentionAction>
+    <intentionAction>
+      <className>com.intellij.refactoring.typeMigration.intentions.ConvertFieldToThreadLocalIntention</className>
+    </intentionAction>
   </extensions>
   <actions>
     <group id="Type Migration">

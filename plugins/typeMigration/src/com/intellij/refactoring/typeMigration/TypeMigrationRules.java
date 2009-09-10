@@ -34,6 +34,7 @@ public class TypeMigrationRules {
     myConversionRules.add(new BoxingTypeConversionRule());
     myConversionRules.add(new ElementToArrayConversionRule());
     myConversionRules.add(new AtomicConversionRule());
+    myConversionRules.add(new ThreadLocalConversionRule());
   }
 
   public void setMigrationRootType(PsiType migrationRootType) {
