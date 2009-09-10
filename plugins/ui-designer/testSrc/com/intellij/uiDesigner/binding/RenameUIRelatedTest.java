@@ -4,6 +4,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.ProjectScope;
@@ -16,7 +17,12 @@ import junit.framework.Assert;
  */
 public class RenameUIRelatedTest extends MultiFileTestCase {
   protected String getTestRoot() {
-    return "/refactoring/renameUIRelated/";
+    return "/renameUIRelated/";
+  }
+
+  @Override
+  protected String getTestDataPath() {
+    return PluginPathManager.getPluginHomePath("ui-designer") + "/testData";
   }
 
   @Override
