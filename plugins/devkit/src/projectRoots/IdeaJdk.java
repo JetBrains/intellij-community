@@ -208,7 +208,7 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
       }
     }
     if (javaSdks.isEmpty()){
-      String requiredVer = getRequiredJdkVersion(sdk);
+      JDKVersion requiredVer = getRequiredJdkVersion(sdk);
       if (requiredVer != null) {
         Messages.showErrorDialog(DevKitBundle.message("no.java.sdk.for.idea.sdk.found", requiredVer), "No Java SDK found");
       }
@@ -239,8 +239,13 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
     final SdkType sdkType = sdk.getSdkType();
     if (sdkType instanceof JavaSdk) {
       final String versionString = sdkType.getVersionString(sdk);
-      String requiredJdkVersion = getRequiredJdkVersion(ideaSdk);
-      if (versionString != null && requiredJdkVersion != null && versionString.contains(requiredJdkVersion)) {
+      JDKVersion requiredJdkVersion = getRequiredJdkVersion(ideaSdk);
+      if (versionString != null && requiredJdkVersion != null) {
+        for (JDKVersion version : JDKVersion.values()) {
+          if (versionString.contains(version.getPresentation())) {
+            return requiredJdkVersion.compareTo(version) <= 0;
+          }
+        }
         return true;
       }
     }
@@ -269,13 +274,13 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
     return result;
   }
 
-  private static String getRequiredJdkVersion(final Sdk ideaSdk) {
+  private static JDKVersion getRequiredJdkVersion(final Sdk ideaSdk) {
     int classFileVersion = getIdeaClassFileVersion(ideaSdk);
-    String requiredJdkVersion = null;
+    JDKVersion requiredJdkVersion = null;
     switch(classFileVersion) {
-      case 48: requiredJdkVersion = "1.4"; break;
-      case 49: requiredJdkVersion = "1.5"; break;
-      case 50: requiredJdkVersion = "1.6"; break;
+      case 48: requiredJdkVersion = JDKVersion.V1_4; break;
+      case 49: requiredJdkVersion = JDKVersion.V1_5; break;
+      case 50: requiredJdkVersion = JDKVersion.V1_6; break;
     }
     return requiredJdkVersion;
   }
@@ -499,5 +504,20 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
 
   public static SdkType getInstance() {
     return SdkType.findInstance(IdeaJdk.class);
+  }
+
+  enum JDKVersion {
+
+    V1_4("1.4"), V1_5("1.5"), V1_6("1.6");
+
+    private String myPresentation;
+
+    JDKVersion(String presentation) {
+      myPresentation = presentation;
+    }
+
+    public String getPresentation() {
+      return myPresentation;
+    }
   }
 }
