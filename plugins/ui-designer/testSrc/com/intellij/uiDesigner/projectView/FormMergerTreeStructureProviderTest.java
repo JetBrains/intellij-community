@@ -2,6 +2,7 @@ package com.intellij.uiDesigner.projectView;
 
 import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane;
 import com.intellij.ide.projectView.impl.ClassesTreeStructureProvider;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectView.BaseProjectViewTestCase;
 import com.intellij.psi.PsiClass;
@@ -10,6 +11,10 @@ import com.intellij.psi.PsiJavaFile;
 
 
 public class FormMergerTreeStructureProviderTest extends BaseProjectViewTestCase {
+  @Override
+  protected String getTestDataPath() {
+    return PluginPathManager.getPluginHomePath("ui-designer") + "/testData";
+  }
 
   public void testStandardProviders() {
     final AbstractProjectViewPSIPane pane = createPane();

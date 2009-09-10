@@ -53,7 +53,7 @@ import java.io.File;
     super.setUp();
     myTempDirectory = FileUtil.createTempDirectory(getTestName(true), "test");
     myFilesToDelete.add(getTestContentFile());
-    final File testRoot = new File(PathManagerEx.getTestDataPath(), getTestPath());
+    final File testRoot = new File(getTestDataPath(), getTestPath());
     assertTrue(testRoot.getAbsolutePath(), testRoot.isDirectory());
 
     final File currentTestRoot = new File(testRoot, getTestDirectoryName());
@@ -67,6 +67,10 @@ import java.io.File;
                                                              }
                                                            });
 
+  }
+
+  protected String getTestDataPath() {
+    return PathManagerEx.getTestDataPath();
   }
 
   protected abstract String getTestPath();
