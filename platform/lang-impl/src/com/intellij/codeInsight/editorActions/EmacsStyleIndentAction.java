@@ -36,7 +36,7 @@ public class EmacsStyleIndentAction extends BaseCodeInsightAction implements Dum
     public void invoke(final Project project, final Editor editor, final PsiFile file) {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-      if (!file.isWritable() && !FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
+      if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
         return;
       }
 

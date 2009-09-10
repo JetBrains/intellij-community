@@ -73,13 +73,14 @@ public class CodeInsightUtilBase {
   public static boolean prepareFileForWrite(final PsiFile file) {
     if (file == null) return false;
 
-    if (!file.isWritable()) {
-      final Project project = file.getProject();
+    final Project project = file.getProject();
+    final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+
+    if (!ReadonlyStatusHandler.getInstance(project).isWriteAccessAllowed(file.getVirtualFile())) {
 
       final Editor editor =
         FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file.getVirtualFile()), true);
 
-      final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
       if (!FileDocumentManager.getInstance().requestWriting(document, project)) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {

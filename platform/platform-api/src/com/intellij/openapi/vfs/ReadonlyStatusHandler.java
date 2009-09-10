@@ -18,15 +18,14 @@ package com.intellij.openapi.vfs;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
 public abstract class ReadonlyStatusHandler {
 
-  public static class UnsuccessfulOperation extends Exception {
-    public UnsuccessfulOperation(String message) {
-      super(message);
-    }
+  public static boolean ensureFilesWritable(Project project, @NotNull VirtualFile... files) {
+    return getInstance(project).ensureFilesWritable(files).hasReadonlyFiles();
   }
 
   public static class OperationStatus {
@@ -74,6 +73,8 @@ public abstract class ReadonlyStatusHandler {
   }
 
   public abstract OperationStatus ensureFilesWritable(VirtualFile... files);
+
+  public abstract boolean isWriteAccessAllowed(VirtualFile... files);
 
   public OperationStatus ensureFilesWritable(final Collection<VirtualFile> files) {
     return ensureFilesWritable(files.toArray(new VirtualFile[files.size()]));

@@ -17,11 +17,9 @@ public class AutoIndentLinesHandler implements CodeInsightActionHandler {
   public void invoke(Project project, Editor editor, PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    if (!file.isWritable()){
       if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)){
         return;
       }
-    }
 
     Document document = editor.getDocument();
     int startOffset, endOffset;

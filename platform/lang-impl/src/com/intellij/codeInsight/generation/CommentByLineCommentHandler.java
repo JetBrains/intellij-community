@@ -48,10 +48,8 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     myDocument = editor.getDocument();
     myEditor = editor;
 
-    if (!myFile.isWritable()) {
-      if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
-        return;
-      }
+    if (!FileDocumentManager.getInstance().requestWriting(myDocument, project)) {
+      return;
     }
 
     PsiDocumentManager.getInstance(project).commitDocument(myDocument);

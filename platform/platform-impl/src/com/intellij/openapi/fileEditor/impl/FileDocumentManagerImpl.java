@@ -301,15 +301,19 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   @Override
+  public boolean isWritingAllowed(@NotNull Document document, Project project) {
+    return document.isWritable();
+  }
+
+  @Override
   public boolean requestWriting(@NotNull Document document, Project project) {
-    if (document.isWritable()) {
+    if (isWritingAllowed(document, project)) {
       return true;
     }
     if (project != null) {
       final VirtualFile file = getInstance().getFile(document);
       if (file != null && file.isValid()) {
-        final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file);
-        return !operationStatus.hasReadonlyFiles();
+        return ReadonlyStatusHandler.ensureFilesWritable(project, file);
       }
     }
     document.fireReadOnlyModificationAttempt();

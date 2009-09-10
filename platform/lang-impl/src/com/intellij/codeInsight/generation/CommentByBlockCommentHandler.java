@@ -45,10 +45,8 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
 
     myDocument = editor.getDocument();
 
-    if (!myFile.isWritable()) {
-      if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
-        return;
-      }
+    if (!FileDocumentManager.getInstance().requestWriting(myDocument, project)) {
+      return;
     }
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.comment.block");
     final Commenter commenter = findCommenter(myFile, myEditor);

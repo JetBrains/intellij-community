@@ -120,6 +120,16 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     return createResultStatus(files, modificationStamps);
   }
 
+  @Override
+  public boolean isWriteAccessAllowed(VirtualFile... files) {
+    for (VirtualFile file : files) {
+      if (!file.isWritable()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   private static OperationStatus createResultStatus(final VirtualFile[] files, final long[] modificationStamps) {
     List<VirtualFile> readOnlyFiles = new ArrayList<VirtualFile>();
     List<VirtualFile> updatedFiles = new ArrayList<VirtualFile>();
