@@ -252,15 +252,24 @@ public class JavaSdkImpl extends JavaSdk {
   }
 
   public static Sdk getMockJdk(@NonNls String versionName) {
+    File mockJdkCEPath = new File(PathManager.getHomePath(), "java/mockJDK");
+    if (mockJdkCEPath.exists()) {
+      return createMockJdk(mockJdkCEPath.getPath(), versionName, getInstance());
+    }
     final String forcedPath = System.getProperty("idea.testingFramework.mockJDK");
     String jdkHome = forcedPath != null ? forcedPath : PathManager.getHomePath() + File.separator + "mockJDK";
     return createMockJdk(jdkHome, versionName, getInstance());
   }
 
   public static Sdk getMockJdk15(@NonNls String versionName) {
+    File mockJdkCEPath = new File(PathManager.getHomePath(), "java/mockJDK");
+    if (mockJdkCEPath.exists()) {
+      return createMockJdk(mockJdkCEPath.getPath(), versionName, getInstance());
+    }
     String jdkHome = PathManager.getHomePath() + File.separator + "mockJDK-1.5";
     return createMockJdk(jdkHome, versionName, getInstance());
   }
+  
   public static Sdk getMockJdk17(@NonNls String versionName) {
     String jdkHome = PathManager.getHomePath() + File.separator + "mockJDK-1.7";
     return createMockJdk(jdkHome, versionName, getInstance());

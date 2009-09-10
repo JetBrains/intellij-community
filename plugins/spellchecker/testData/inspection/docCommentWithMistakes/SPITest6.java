@@ -3,7 +3,6 @@ package testData.inspection.docCommentWithMistakes.data.java.src;
 /**
  * doc <TYPO descr="Word 'commment' is misspelled">commment</TYPO>
  *
- * @author Ekaterina Shliakhovetskaja
  * @author Test Test
  */
 class SPITest6 {
