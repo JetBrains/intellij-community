@@ -10,7 +10,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.extractclass.ExtractClassProcessor;
+import com.intellij.JavaTestUtil;
 import junit.framework.Assert;
 
 import java.util.ArrayList;
@@ -18,6 +20,11 @@ import java.util.ArrayList;
 public class ExtractClassTest extends MultiFileTestCase{
   protected String getTestRoot() {
     return "/refactoring/extractClass/";
+  }
+
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
   }
 
   private void doTestMethod() throws Exception {
@@ -31,7 +38,7 @@ public class ExtractClassTest extends MultiFileTestCase{
   private void doTestMethod(final String methodName, final String conflicts) throws Exception {
     doTest(new PerformAction() {
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
-        PsiClass aClass = myJavaFacade.findClass("Test");
+        PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(myProject));
 
         assertNotNull("Class Test not found", aClass);
 
@@ -74,7 +81,7 @@ public class ExtractClassTest extends MultiFileTestCase{
   private void doTestFieldAndMethod(final String methodName) throws Exception {
     doTest(new PerformAction() {
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
-        PsiClass aClass = myJavaFacade.findClass("Test");
+        PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(myProject));
 
         assertNotNull("Class Test not found", aClass);
 
@@ -96,7 +103,7 @@ public class ExtractClassTest extends MultiFileTestCase{
   private void doTestField(final String conflicts, final boolean generateGettersSetters) throws Exception {
     doTest(new PerformAction() {
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
-        PsiClass aClass = myJavaFacade.findClass("Test");
+        PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(myProject));
 
         assertNotNull("Class Test not found", aClass);
 
@@ -110,8 +117,8 @@ public class ExtractClassTest extends MultiFileTestCase{
     });
   }
 
-  private void doTest(final PsiClass aClass, final ArrayList<PsiMethod> methods, final ArrayList<PsiField> fields, final String conflicts,
-                      boolean generateGettersSetters) {
+  private static void doTest(final PsiClass aClass, final ArrayList<PsiMethod> methods, final ArrayList<PsiField> fields, final String conflicts,
+                             boolean generateGettersSetters) {
     try {
       ExtractClassProcessor processor = new ExtractClassProcessor(aClass, fields, methods, new ArrayList<PsiClass>(), "", "Extracted", generateGettersSetters);
       processor.run();
@@ -147,7 +154,7 @@ public class ExtractClassTest extends MultiFileTestCase{
   public void testPublicFieldDelegation() throws Exception {
     doTest(new PerformAction() {
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
-        PsiClass aClass = myJavaFacade.findClass("Test");
+        PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(myProject));
 
         assertNotNull("Class Test not found", aClass);
 
@@ -165,7 +172,7 @@ public class ExtractClassTest extends MultiFileTestCase{
   private void doTestInnerClass() throws Exception {
     doTest(new PerformAction() {
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
-        PsiClass aClass = myJavaFacade.findClass("Test");
+        PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(myProject));
 
         assertNotNull("Class Test not found", aClass);
 
