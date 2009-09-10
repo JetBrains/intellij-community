@@ -44,9 +44,9 @@ import java.util.Comparator;
  */
 public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreakpointProperties> {
   public static final ExtensionPointName<XBreakpointType> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.xdebugger.breakpointType");
-  private @NonNls @NotNull String myId;
-  private @Nls @NotNull String myTitle;
-  private boolean mySuspendThreadSupported;
+  private final @NonNls @NotNull String myId;
+  private final @Nls @NotNull String myTitle;
+  private final boolean mySuspendThreadSupported;
 
   /**
    * @param id an unique id of breakpoint type

@@ -75,7 +75,7 @@ public abstract class XDebuggerEvaluator {
     void errorOccurred(@NotNull String errorMessage);
 
     /**
-     * @deprecated use {@link XDebuggerEvaluator.XEvaluationCallback#errorOccurred(String)}
+     * @deprecated use {@link XEvaluationCallback#errorOccurred(String)}
      */
     @Deprecated
     void errorOccured(@NotNull String errorMessage);

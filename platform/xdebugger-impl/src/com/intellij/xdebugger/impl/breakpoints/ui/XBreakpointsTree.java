@@ -148,10 +148,8 @@ public class XBreakpointsTree<B extends XBreakpoint<?>> extends CheckboxTree {
   }
 
   private static class BreakpointsTreeCellRenderer extends CheckboxTreeCellRenderer {
-    public void customizeCellRenderer(final JTree tree,
-                                        final Object value,
-                                        final boolean selected,
-                                        final boolean expanded, final boolean leaf, final int row, final boolean hasFocus) {
+    @Override
+    public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       if (value instanceof BreakpointNode) {
         BreakpointNode node = (BreakpointNode)value;
         XBreakpoint breakpoint = node.getBreakpoint();

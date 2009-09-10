@@ -14,7 +14,7 @@ import java.util.*;
  * @author nik
  */
 public class XDependentBreakpointManager {
-  private final Map<XBreakpointBase,  XDependentBreakpointInfo> mySlave2Info = new HashMap<XBreakpointBase, XDependentBreakpointInfo>();
+  private final Map<XBreakpoint<?>,  XDependentBreakpointInfo> mySlave2Info = new HashMap<XBreakpoint<?>, XDependentBreakpointInfo>();
   private final MultiValuesMap<XBreakpointBase, XDependentBreakpointInfo> myMaster2Info = new MultiValuesMap<XBreakpointBase, XDependentBreakpointInfo>();
   private final XBreakpointManagerImpl myBreakpointManager;
   private final EventDispatcher<XDependentBreakpointListener> myDispatcher;
@@ -157,7 +157,7 @@ public class XDependentBreakpointManager {
     return myMaster2Info.containsKey((XBreakpointBase)breakpoint) || mySlave2Info.containsKey(breakpoint);
   }
 
-  public Set<XBreakpointBase> getAllSlaveBreakpoints() {
+  public Set<XBreakpoint<?>> getAllSlaveBreakpoints() {
     return mySlave2Info.keySet();
   }
 

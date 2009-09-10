@@ -31,8 +31,8 @@ import javax.swing.*;
 * To change this template use File | Settings | File Templates.
 */
 public class PsiBackedSmartStepIntoVariant<T extends PsiNamedElement & NavigationItem> extends XSmartStepIntoVariant {
-  public final T myElement;
-  private ItemPresentation myPresentation;
+  private final T myElement;
+  private final ItemPresentation myPresentation;
 
   public PsiBackedSmartStepIntoVariant(@NotNull T element) {
     myElement = element;
@@ -48,5 +48,9 @@ public class PsiBackedSmartStepIntoVariant<T extends PsiNamedElement & Navigatio
   @Override
   public Icon getIcon() {
     return myPresentation.getIcon(false);
+  }
+
+  public T getElement() {
+    return myElement;
   }
 }

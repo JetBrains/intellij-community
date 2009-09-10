@@ -16,7 +16,7 @@ import javax.swing.*;
  */
 public class DefaultDebugExecutor extends Executor {
   @NonNls public static final String EXECUTOR_ID = ToolWindowId.DEBUG;
-  private static final Icon TOOLWINDOW_ICON = IconLoader.getIcon("/general/toolWindowDebugger.png");
+  private static final Icon TOOL_WINDOW_ICON = IconLoader.getIcon("/general/toolWindowDebugger.png");
   private static final Icon ICON = IconLoader.getIcon("/actions/startDebugger.png");
   private static final Icon DISABLED_ICON = IconLoader.getIcon("/process/disabledDebug.png");
   private final String myStartActionText = XDebuggerBundle.message("debugger.runner.start.action.text");
@@ -27,7 +27,7 @@ public class DefaultDebugExecutor extends Executor {
   }
 
   public Icon getToolWindowIcon() {
-    return TOOLWINDOW_ICON;
+    return TOOL_WINDOW_ICON;
   }
 
   @NotNull

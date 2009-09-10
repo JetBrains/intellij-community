@@ -13,8 +13,8 @@ import java.util.List;
  */
 public abstract class XExecutionStack {
   public static final XExecutionStack[] EMPTY_ARRAY = new XExecutionStack[0];
-  private String myDisplayName;
-  private Icon myIcon;
+  private final String myDisplayName;
+  private final Icon myIcon;
 
   protected XExecutionStack(final String displayName) {
     this(displayName, DebuggerIcons.SUSPENDED_THREAD_ICON);

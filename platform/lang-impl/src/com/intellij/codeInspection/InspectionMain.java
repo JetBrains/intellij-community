@@ -10,6 +10,8 @@ package com.intellij.codeInspection;
 
 import com.intellij.openapi.application.ApplicationStarter;
 
+import java.util.Arrays;
+
 public class InspectionMain implements ApplicationStarter {
   private InspectionApplication myApplication;
 
@@ -20,7 +22,7 @@ public class InspectionMain implements ApplicationStarter {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void premain(String[] args) {
     if (args.length < 4) {
-      System.err.println("invalid args:" + args);
+      System.err.println("invalid args:" + Arrays.toString(args));
       printHelp();
     }
 

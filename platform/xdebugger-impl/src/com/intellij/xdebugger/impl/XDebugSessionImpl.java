@@ -165,12 +165,12 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   private void disableSlaveBreakpoints(final XDependentBreakpointManager dependentBreakpointManager) {
-    Set<XBreakpointBase> slaveBreakpoints = dependentBreakpointManager.getAllSlaveBreakpoints();
+    Set<XBreakpoint<?>> slaveBreakpoints = dependentBreakpointManager.getAllSlaveBreakpoints();
     Set<XBreakpointType<?,?>> breakpointTypes = new HashSet<XBreakpointType<?,?>>();
     for (XBreakpointHandler<?> handler : myDebugProcess.getBreakpointHandlers()) {
       breakpointTypes.add(getBreakpointTypeClass(handler));
     }
-    for (XBreakpointBase slaveBreakpoint : slaveBreakpoints) {
+    for (XBreakpoint<?> slaveBreakpoint : slaveBreakpoints) {
       if (breakpointTypes.contains(slaveBreakpoint.getType())) {
         myDisabledSlaveBreakpoints.add(slaveBreakpoint);
       }
@@ -227,6 +227,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private <B extends XBreakpoint<?>> void processBreakpoint(final XBreakpoint<?> breakpoint, final XBreakpointHandler<B> handler, boolean register) {
     XBreakpointType<?, ?> type = breakpoint.getType();
     if (handler.getBreakpointTypeClass().equals(type.getClass())) {
+      //noinspection unchecked
       B b = (B)breakpoint;
       handleBreakpoint(handler, b, register, false);
     }

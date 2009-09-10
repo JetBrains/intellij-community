@@ -330,7 +330,7 @@ public class ArtifactUtil {
     final List<CompositePackagingElement<?>> compositeChildren = new SmartList<CompositePackagingElement<?>>();
     final List<FileCopyPackagingElement> fileCopies = new SmartList<FileCopyPackagingElement>();
     final List<FileCopyPackagingElement> dirCopies = new SmartList<FileCopyPackagingElement>();
-    ArtifactUtil.processElements(parent.getChildren(), context, artifactType, new Processor<PackagingElement<?>>() {
+    processElements(parent.getChildren(), context, artifactType, new Processor<PackagingElement<?>>() {
       public boolean process(PackagingElement<?> element) {
         if (element instanceof CompositePackagingElement) {
           final CompositePackagingElement<?> compositeElement = (CompositePackagingElement<?>)element;

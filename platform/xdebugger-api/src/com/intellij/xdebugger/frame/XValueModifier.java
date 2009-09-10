@@ -29,7 +29,7 @@ public abstract class XValueModifier {
     void errorOccurred(@NotNull String errorMessage);
 
     /**
-     * @deprecated use {@link XValueModifier.XModificationCallback#errorOccurred(String)}
+     * @deprecated use {@link XModificationCallback#errorOccurred(String)}
      */
     @Deprecated
     void errorOccured(@NotNull String errorMessage);
