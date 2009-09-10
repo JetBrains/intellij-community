@@ -1,8 +1,7 @@
 package com.intellij.refactoring;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightTestCase;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.util.Pair;
@@ -14,6 +13,7 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.extractSuperclass.ExtractSuperClassProcessor;
 import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -42,7 +42,7 @@ public class ExtractSuperClassTest extends CodeInsightTestCase {
 
   @NonNls
   private String getRoot() {
-    return PathManagerEx.getTestDataPath()+ "/refactoring/extractSuperClass/" + getTestName(true);
+    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/extractSuperClass/" + getTestName(true);
   }
 
   private void doTest(@NonNls final String className, @NonNls final String newClassName,

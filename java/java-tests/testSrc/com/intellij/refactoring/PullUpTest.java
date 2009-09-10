@@ -14,6 +14,7 @@ import com.intellij.refactoring.memberPullUp.PullUpHelper;
 import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.JavaTestUtil;
 
 /**
  * @author ven
@@ -94,5 +95,10 @@ public class PullUpTest extends LightCodeInsightTestCase {
 
   protected Sdk getProjectJDK() {
     return JavaSdkImpl.getMockJdk15("50");
+  }
+
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
   }
 }
