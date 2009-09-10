@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -70,29 +69,24 @@ public class CodeInsightUtilBase {
                               language);
   }
 
-  public static boolean prepareFileForWrite(final PsiFile file) {
-    if (file == null) return false;
+  public static boolean prepareFileForWrite(final PsiFile psiFile) {
+    if (psiFile == null) return false;
+    final VirtualFile file = psiFile.getVirtualFile();
+    final Project project = psiFile.getProject();
 
-    final Project project = file.getProject();
-    final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-
-    if (!ReadonlyStatusHandler.getInstance(project).isWriteAccessAllowed(file.getVirtualFile())) {
-
-      final Editor editor =
-        FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file.getVirtualFile()), true);
-
-      if (!FileDocumentManager.getInstance().requestWriting(document, project)) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            if (editor != null && editor.getComponent().isDisplayable()) {
-              HintManager.getInstance()
-                .showErrorHint(editor, CodeInsightBundle.message("error.hint.file.is.readonly", file.getVirtualFile().getPresentableUrl()));
-            }
+    final Editor editor =
+      psiFile.isWritable() ? null : FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file), true);
+    if (!ReadonlyStatusHandler.ensureFilesWritable(project, file)) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          if (editor != null && editor.getComponent().isDisplayable()) {
+            HintManager.getInstance()
+              .showErrorHint(editor, CodeInsightBundle.message("error.hint.file.is.readonly", file.getPresentableUrl()));
           }
-        });
+        }
+      });
 
-        return false;
-      }
+      return false;
     }
 
     return true;

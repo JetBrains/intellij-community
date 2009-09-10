@@ -61,12 +61,6 @@ public abstract class FileDocumentManager {
   public abstract String getLineSeparator(@Nullable VirtualFile file, @Nullable Project project);
 
   /**
-   * @return true if writing access allowed
-   * @see #requestWriting(com.intellij.openapi.editor.Document, com.intellij.openapi.project.Project)
-   */
-  public abstract boolean isWritingAllowed(@NotNull Document document, Project project);
-
-  /**
    * Requests writing access on given document, possibly involving interaction with user.
    *
    * @param document document

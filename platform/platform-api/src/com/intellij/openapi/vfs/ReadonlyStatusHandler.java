@@ -15,66 +15,26 @@
  */
 package com.intellij.openapi.vfs;
 
-import com.intellij.CommonBundle;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
 public abstract class ReadonlyStatusHandler {
 
-  public static boolean ensureFilesWritable(Project project, @NotNull VirtualFile... files) {
+  public static boolean ensureFilesWritable(Project project, VirtualFile... files) {
     return getInstance(project).ensureFilesWritable(files).hasReadonlyFiles();
   }
 
-  public static class OperationStatus {
-    private final VirtualFile[] myReadonlyFiles;
-    private final VirtualFile[] myUpdatedFiles;
+  public interface OperationStatus {
+    VirtualFile[] getReadonlyFiles();
 
-    public OperationStatus(final VirtualFile[] readonlyFiles, final VirtualFile[] updatedFiles) {
-      myReadonlyFiles = readonlyFiles;
-      myUpdatedFiles = updatedFiles;
-    }
+    boolean hasReadonlyFiles();
 
-    public VirtualFile[] getReadonlyFiles() {
-      return myReadonlyFiles;
-    }
-
-    public VirtualFile[] getUpdatedFiles() {
-      return myUpdatedFiles;
-    }
-
-    public boolean hasUpdatedFiles() {
-      return myUpdatedFiles.length > 0;
-    }
-
-    public boolean hasReadonlyFiles() {
-      return myReadonlyFiles.length > 0;
-    }
-
-    public String getReadonlyFilesMessage() {
-      if (hasReadonlyFiles()) {
-        StringBuffer buf = new StringBuffer();
-        if (myReadonlyFiles.length > 1) {
-          for (VirtualFile file : myReadonlyFiles) {
-            buf.append('\n');
-            buf.append(file.getPresentableUrl());
-          }
-
-          return CommonBundle.message("failed.to.make.the.following.files.writable.error.message", buf.toString());
-        }
-        else {
-          return CommonBundle.message("failed.to.make.file.writeable.error.message", myReadonlyFiles[0].getPresentableUrl());
-        }
-      }
-      return null;
-    }
+    String getReadonlyFilesMessage();
   }
 
   public abstract OperationStatus ensureFilesWritable(VirtualFile... files);
-
-  public abstract boolean isWriteAccessAllowed(VirtualFile... files);
 
   public OperationStatus ensureFilesWritable(final Collection<VirtualFile> files) {
     return ensureFilesWritable(files.toArray(new VirtualFile[files.size()]));
@@ -83,4 +43,5 @@ public abstract class ReadonlyStatusHandler {
   public static ReadonlyStatusHandler getInstance(Project project) {
     return ServiceManager.getService(project, ReadonlyStatusHandler.class);
   }
+
 }

@@ -638,10 +638,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
             }
           }
 
-          if (readonlyFiles.isEmpty()) return new ReadonlyStatusHandler.OperationStatus(VirtualFile.EMPTY_ARRAY, VirtualFile.EMPTY_ARRAY);
-
-          return ReadonlyStatusHandler.getInstance(myProject)
-            .ensureFilesWritable(readonlyFiles.toArray(new VirtualFile[readonlyFiles.size()]));
+          return ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(readonlyFiles);
         }
       });
     }
