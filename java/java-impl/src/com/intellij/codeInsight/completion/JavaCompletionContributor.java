@@ -170,7 +170,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     if (ANNOTATION_ATTRIBUTE_NAME.accepts(insertedElement)) {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
-          completeAnnotationAttributeName(_result, file, insertedElement, completionData);
+          completeAnnotationAttributeName(_result, file, insertedElement, parameters);
         }
       });
       _result.stopHere();
@@ -191,7 +191,7 @@ public class JavaCompletionContributor extends CompletionContributor {
                                                                                      (PsiJavaReference) reference,
                                                                                      new ElementExtractorFilter(filter),
                                                                                      checkAccess,
-                                                                                     result.getPrefixMatcher())) {
+                                                                                     result.getPrefixMatcher(), parameters)) {
                   if (isSwitchLabel) {
                     result.addElement(TailTypeDecorator.createDecorator(element, TailType.createSimpleTailType(':')));
                   } else {
@@ -257,7 +257,7 @@ public class JavaCompletionContributor extends CompletionContributor {
   }
 
   private static void completeAnnotationAttributeName(CompletionResultSet result, PsiFile file, PsiElement insertedElement,
-                                                      JavaAwareCompletionData completionData) {
+                                                      CompletionParameters parameters) {
     PsiNameValuePair pair = PsiTreeUtil.getParentOfType(insertedElement, PsiNameValuePair.class);
     PsiAnnotationParameterList parameterList = (PsiAnnotationParameterList)pair.getParent();
     PsiAnnotation anno = (PsiAnnotation)parameterList.getParent();
@@ -275,7 +275,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     if (showClasses && insertedElement.getParent() instanceof PsiReferenceExpression) {
-      final Set<LookupElement> set = JavaCompletionUtil.processJavaReference(insertedElement, (PsiJavaReference)insertedElement.getParent(), TrueFilter.INSTANCE, true, result.getPrefixMatcher());
+      final Set<LookupElement> set = JavaCompletionUtil.processJavaReference(insertedElement, (PsiJavaReference)insertedElement.getParent(), TrueFilter.INSTANCE, true, result.getPrefixMatcher(), parameters);
 
       for (final LookupElement element : set) {
         result.addElement(element);

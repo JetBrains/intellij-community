@@ -189,7 +189,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
           final ElementFilter filter = getReferenceFilter(element);
           if (filter != null) {
             final List<ExpectedTypeInfo> infos = Arrays.asList(getExpectedTypes(parameters));
-            for (final LookupElement item : completeReference(element, reference, filter, true)) {
+            for (final LookupElement item : completeReference(element, reference, filter, true, parameters)) {
               if (AFTER_THROW_NEW.accepts(element)) {
                 ((LookupItem)item).setAttribute(LookupItem.DONT_CHECK_FOR_INNERS, "");
                 if (item.getObject() instanceof PsiClass) {
@@ -203,7 +203,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
           }
           else if (INSIDE_TYPECAST.accepts(element)) {
             final ReturnTypeFilter rfilter = new ReturnTypeFilter(new GeneratorFilter(AssignableToFilter.class, new CastTypeGetter()));
-            for (final LookupElement item : completeReference(element, reference, rfilter, false)) {
+            for (final LookupElement item : completeReference(element, reference, rfilter, false, parameters)) {
               result.addElement(item);
             }
           }
@@ -626,7 +626,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     result.addElement(decorate(item, infos));
   }
 
-  static Set<LookupElement> completeReference(final PsiElement element, PsiReference reference, final ElementFilter filter, final boolean acceptClasses) {
+  static Set<LookupElement> completeReference(final PsiElement element, PsiReference reference, final ElementFilter filter, final boolean acceptClasses, CompletionParameters parameters) {
     if (reference instanceof PsiMultiReference) {
       reference = ContainerUtil.findInstance(((PsiMultiReference) reference).getReferences(), PsiJavaReference.class);
     }
@@ -651,7 +651,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
                  ReflectionCache.isAssignable(CandidateInfo.class, hintClass) ||
                  ReflectionCache.isAssignable(PsiKeyword.class, hintClass);
         }
-      }, true, null);
+      }, true, null, parameters);
     }
 
     return Collections.emptySet();

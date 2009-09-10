@@ -5,31 +5,22 @@ import com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurrounder
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.EvaluatingComputable;
-import com.intellij.debugger.engine.ContextUtil;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
-import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.DebuggerExpressionComboBox;
-import com.intellij.debugger.ui.EditorEvaluationCommand;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressWindowWithNotification;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
-import com.sun.jdi.Value;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: lex
@@ -46,99 +37,71 @@ public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
   public boolean isApplicable(PsiExpression expr) {
     PsiFile file = expr.getContainingFile();
     if (!(file instanceof PsiCodeFragment)) return false;
-    return file.getUserData(DebuggerExpressionComboBox.KEY) != null;
+    if (file.getUserData(DebuggerExpressionComboBox.KEY) == null) {
+      return false;
+    }
+
+    return RuntimeTypeEvaluator.isSubtypeable(expr);
   }
 
   public TextRange surroundExpression(Project project, Editor editor, PsiExpression expr) throws IncorrectOperationException {
     DebuggerContextImpl debuggerContext = (DebuggerManagerEx.getInstanceEx(project)).getContext();
     DebuggerSession debuggerSession = debuggerContext.getDebuggerSession();
     if (debuggerSession != null) {
-      SurroundWithCastWorker worker = new SurroundWithCastWorker(editor, expr, debuggerContext);
-      worker.getProgressWindow().setTitle(DebuggerBundle.message("title.evaluating"));
-      debuggerContext.getDebugProcess().getManagerThread().startProgress(worker, worker.getProgressWindow());
+      final ProgressWindowWithNotification progressWindow = new ProgressWindowWithNotification(true, expr.getProject());
+      SurroundWithCastWorker worker = new SurroundWithCastWorker(editor, expr, debuggerContext, progressWindow);
+      progressWindow.setTitle(DebuggerBundle.message("title.evaluating"));
+      debuggerContext.getDebugProcess().getManagerThread().startProgress(worker, progressWindow);
     }
     return null;
   }
 
-  private class SurroundWithCastWorker extends EditorEvaluationCommand<String> {
-    public SurroundWithCastWorker(Editor editor, PsiExpression expression, DebuggerContextImpl context) {
-      super(editor, expression, context);
+  private class SurroundWithCastWorker extends RuntimeTypeEvaluator {
+    private final Editor myEditor;
+
+    public SurroundWithCastWorker(Editor editor, PsiExpression expression, DebuggerContextImpl context, final ProgressIndicator indicator) {
+      super(editor, expression, context, indicator);
+      myEditor = editor;
     }
 
-    protected void executeWriteCommand(final Project project, final Runnable runnable) {
-      DebuggerInvocationUtil.invokeLater(project, new Runnable() {
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              public void run() {
-                CommandProcessor.getInstance().executeCommand(project, runnable, CodeInsightBundle.message("command.name.surround.with.runtime.cast"), null);
-              }
-            });
-          }
-        }, getProgressWindow().getModalityState());
-    }
-
-    public void threadAction() {
-      final String type;
-      try {
-        type = evaluate();
-      }
-      catch (ProcessCanceledException e) {
+    @Override
+    protected void typeCalculationFinished(@Nullable final String type) {
+      if (type == null) {
         return;
       }
-      catch (EvaluateException e) {
-        return;
-      }
-
-      final Project project = myElement.getProject();
 
       hold();
-
-      executeWriteCommand(project, new Runnable() {
+      final Project project = myElement.getProject();
+      DebuggerInvocationUtil.invokeLater(project, new Runnable() {
         public void run() {
-          try {
-            LOG.assertTrue(type != null);
+          new WriteCommandAction(project, CodeInsightBundle.message("command.name.surround.with.runtime.cast")) {
+            protected void run(Result result) throws Throwable {
+              try {
+                LOG.assertTrue(type != null);
 
-            PsiElementFactory factory = JavaPsiFacade.getInstance(myElement.getProject()).getElementFactory();
-            PsiParenthesizedExpression parenth = (PsiParenthesizedExpression) factory.createExpressionFromText("((" + type + ")expr)", null);
-            PsiTypeCastExpression cast = (PsiTypeCastExpression) parenth.getExpression();
-            cast.getOperand().replace(myElement);
-            parenth = (PsiParenthesizedExpression)JavaCodeStyleManager.getInstance(project).shortenClassReferences(parenth);
-            PsiExpression expr  = (PsiExpression) myElement.replace(parenth);
-            TextRange range = expr.getTextRange();
-            getEditor().getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
-            getEditor().getCaretModel().moveToOffset(range.getEndOffset());
-            getEditor().getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-          }
-          catch (IncorrectOperationException e) {
-            // OK here. Can be caused by invalid type like one for proxy starts with . '.Proxy34'
-          }
-          finally{
-            release();
-          }
+                PsiElementFactory factory = JavaPsiFacade.getInstance(myElement.getProject()).getElementFactory();
+                PsiParenthesizedExpression parenth =
+                  (PsiParenthesizedExpression)factory.createExpressionFromText("((" + type + ")expr)", null);
+                PsiTypeCastExpression cast = (PsiTypeCastExpression)parenth.getExpression();
+                cast.getOperand().replace(myElement);
+                parenth = (PsiParenthesizedExpression)JavaCodeStyleManager.getInstance(project).shortenClassReferences(parenth);
+                PsiExpression expr = (PsiExpression)myElement.replace(parenth);
+                TextRange range = expr.getTextRange();
+                myEditor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+                myEditor.getCaretModel().moveToOffset(range.getEndOffset());
+                myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+              }
+              catch (IncorrectOperationException e) {
+                // OK here. Can be caused by invalid type like one for proxy starts with . '.Proxy34'
+              }
+              finally {
+                release();
+              }
+            }
+          }.execute();
         }
-      });
+      }, myProgressIndicator.getModalityState());
     }
 
-    protected String evaluate(final EvaluationContextImpl evaluationContext) throws EvaluateException {
-      final Project project = evaluationContext.getProject();
-
-      ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project, new EvaluatingComputable<ExpressionEvaluator>() {
-        public ExpressionEvaluator compute() throws EvaluateException {
-          return EvaluatorBuilderImpl.getInstance().build(myElement, ContextUtil.getSourcePosition(evaluationContext));
-        }
-      });
-
-      final Value value = evaluator.evaluate(evaluationContext);
-      if(value != null){
-        return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-          public String compute() {
-            return DebuggerUtilsEx.getQualifiedClassName(value.type().name(), project);
-          }
-        });
-      }
-      else {
-        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.surrounded.expression.null"));
-      }
-    }
   }
 }

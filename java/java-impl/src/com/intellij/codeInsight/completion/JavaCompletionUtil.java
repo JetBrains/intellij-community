@@ -11,10 +11,10 @@ import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.editor.Document;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.*;
@@ -35,6 +35,7 @@ import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.PairFunction;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -45,6 +46,7 @@ import java.util.*;
 
 public class JavaCompletionUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.JavaCompletionUtil");
+  public static final Key<PairFunction<PsiExpression, CompletionParameters, PsiType>> DYNAMIC_TYPE_EVALUATOR = Key.create("DYNAMIC_TYPE_EVALUATOR");
 
   static final Key<PsiType> QUALIFIER_TYPE_ATTR = Key.create("qualifierType"); // SmartPsiElementPointer to PsiType of "qualifier"
   @NonNls
@@ -827,7 +829,7 @@ public class JavaCompletionUtil {
   }
 
   public static Set<LookupElement> processJavaReference(PsiElement element, PsiJavaReference javaReference, ElementFilter elementFilter,
-                                                        final boolean checkAccess, @Nullable final PrefixMatcher matcher) {
+                                                        final boolean checkAccess, @Nullable final PrefixMatcher matcher, CompletionParameters parameters) {
     final THashSet<LookupElement> set = new THashSet<LookupElement>();
     final Condition<String> nameCondition = matcher == null ? null : new Condition<String>() {
       public boolean value(String s) {
@@ -839,7 +841,7 @@ public class JavaCompletionUtil {
     final Collection<CompletionElement> plainResults = processor.getResults();
 
     final PsiType qualifierType = processor.getQualifierType();
-    PsiType castedQualifierType = addQualifierCastingVariants(javaReference, processor, set);
+    PsiType castedQualifierType = addQualifierCastingVariants(javaReference, processor, set, parameters);
 
     boolean mayHighlight = qualifierType != null && (castedQualifierType == null || !qualifierType.isAssignableFrom(castedQualifierType));
 
@@ -854,33 +856,50 @@ public class JavaCompletionUtil {
   }
 
   @Nullable
-  private static PsiType addQualifierCastingVariants(PsiJavaReference javaReference, JavaCompletionProcessor processor, THashSet<LookupElement> set) {
+  private static PsiType addQualifierCastingVariants(PsiJavaReference javaReference, JavaCompletionProcessor processor, THashSet<LookupElement> set, CompletionParameters parameters) {
     if (javaReference instanceof PsiReferenceExpression) {
       final PsiReferenceExpression refExpr = (PsiReferenceExpression)javaReference;
       final PsiExpression qualifier = refExpr.getQualifierExpression();
       if (qualifier != null) {
         final Project project = qualifier.getProject();
-        final PsiType type = GuessManager.getInstance(project).getDataFlowCastedExpressionType(qualifier);
+        final PairFunction<PsiExpression, CompletionParameters, PsiType> evaluator = refExpr.getContainingFile().getCopyableUserData(DYNAMIC_TYPE_EVALUATOR);
+        PsiType type = null;
+        if (evaluator != null) {
+          type = evaluator.fun(qualifier, parameters);
+        }
+        if (type == null) {
+          type = GuessManager.getInstance(project).getDataFlowCastedExpressionType(qualifier);
+        }
         if (type != null) {
           processor.clear();
 
-          final String newText = "((" + type.getCanonicalText() + ") " + qualifier.getText() + ")." + refExpr.getReferenceName();
-          final PsiExpression newRef = JavaPsiFacade.getElementFactory(project).createExpressionFromText(newText, refExpr);
-          ((PsiReferenceExpression)newRef).processVariants(processor);
-
-          final LookupElement castItem = PsiTypeLookupItem.createLookupItem(type);
-
-          for (CompletionElement completionElement : processor.getResults()) {
-            final LookupElement item = createLookupElement(completionElement, type);
-            if (item != null) {
-              set.add(highlightIfNeeded(type, castQualifier(project, item, castItem)));
-            }
-          }
-          return type;
+          return addQualifierCastingVariants(processor, refExpr, type, set);
         }
       }
     }
     return null;
+  }
+
+  private static PsiType addQualifierCastingVariants(JavaCompletionProcessor processor, PsiReferenceExpression refExpr,
+                                                     PsiType castTo,
+                                                     THashSet<LookupElement> set) {
+    Project project = refExpr.getProject();
+
+    PsiExpression qualifier = refExpr.getQualifierExpression();
+    assert qualifier != null;
+    final String newText = "((" + castTo.getCanonicalText() + ") " + qualifier.getText() + ")." + refExpr.getReferenceName();
+    final PsiExpression newRef = JavaPsiFacade.getElementFactory(project).createExpressionFromText(newText, refExpr);
+    ((PsiReferenceExpression)newRef).processVariants(processor);
+
+    final LookupElement castItem = PsiTypeLookupItem.createLookupItem(castTo);
+
+    for (CompletionElement completionElement : processor.getResults()) {
+      final LookupElement item = createLookupElement(completionElement, castTo);
+      if (item != null) {
+        set.add(highlightIfNeeded(castTo, castQualifier(project, item, castItem)));
+      }
+    }
+    return castTo;
   }
 
   private static LookupElementDecorator<LookupElement> castQualifier(final Project project, LookupElement item, final LookupElement to) {
@@ -998,5 +1017,16 @@ public class JavaCompletionUtil {
     ret.setAttribute(LookupItem.TAIL_TEXT_ATTR, StringUtil.notNullize(tailText) + " (" + packageName + ")");
     ret.setAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR, "");
     return ret;
+  }
+
+  @Nullable
+  static PsiElement getQualifier(final PsiElement element) {
+    return element instanceof PsiJavaCodeReferenceElement ? ((PsiJavaCodeReferenceElement)element).getQualifier() : null;
+  }
+
+  public static boolean containsMethodCalls(@Nullable final PsiElement qualifier) {
+    if (qualifier == null) return false;
+    if (qualifier instanceof PsiMethodCallExpression) return true;
+    return containsMethodCalls(getQualifier(qualifier));
   }
 }

@@ -354,19 +354,20 @@ public class SetValueAction extends DebuggerAction {
 
         PsiFile psiFile = PsiDocumentManager.getInstance(debuggerContext.getProject()).getPsiFile(editor.getDocument());
 
-        EditorEvaluationCommand evaluationCommand = new EditorEvaluationCommand(getEditor(), psiFile, debuggerContext) {
+        final ProgressWindowWithNotification progressWindow = new ProgressWindowWithNotification(true, getProject());
+        EditorEvaluationCommand evaluationCommand = new EditorEvaluationCommand(getEditor(), psiFile, debuggerContext, progressWindow) {
           public void threadAction() {
             try {
               evaluate();
             }
             catch(EvaluateException e) {
-              getProgressWindow().cancel();
+              progressWindow.cancel();
             }
             catch(ProcessCanceledException e) {
-              getProgressWindow().cancel();
+              progressWindow.cancel();
             }
             finally{
-              if (!getProgressWindow().isCanceled()) {
+              if (!progressWindow.isCanceled()) {
                 DebuggerInvocationUtil.swingInvokeLater(debuggerContext.getProject(), new Runnable() {
                   public void run() {
                     comboBox.addRecent(text);
@@ -389,7 +390,7 @@ public class SetValueAction extends DebuggerAction {
                                                                                                InvalidTypeException,
                                                                                                EvaluateException,
                                                                                                IncompatibleThreadStateException {
-                if(!getProgressWindow().isCanceled()) {
+                if(!progressWindow.isCanceled()) {
                   setValueRunnable.setValue(evaluationContext, newValue);
                   node.calcValue();
                 }
@@ -408,7 +409,6 @@ public class SetValueAction extends DebuggerAction {
           }
         };
 
-        final ProgressWindowWithNotification progressWindow = evaluationCommand.getProgressWindow();
         progressWindow.addListener(new ProgressIndicatorListenerAdapter() {
           //should return whether to stop processing
           public void stopped() {

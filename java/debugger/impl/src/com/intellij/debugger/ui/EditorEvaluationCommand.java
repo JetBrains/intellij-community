@@ -11,27 +11,25 @@ import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.util.ProgressWindowWithNotification;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Mar 15, 2004
- * Time: 4:07:59 PM
- * To change this template use File | Settings | File Templates.
+ * @author lex
  */
 public abstract class EditorEvaluationCommand<T> extends DebuggerContextCommandImpl {
   protected final PsiElement myElement;
-  private final Editor myEditor;
-  private final ProgressWindowWithNotification myProgressWindow;
+  @Nullable private final Editor myEditor;
+  protected final ProgressIndicator myProgressIndicator;
   private final DebuggerContextImpl myDebuggerContext;
 
-  public EditorEvaluationCommand(Editor editor, PsiElement expression, DebuggerContextImpl context) {
+  public EditorEvaluationCommand(@Nullable Editor editor, PsiElement expression, DebuggerContextImpl context,
+                                 final ProgressIndicator indicator) {
     super(context);
     Project project = expression.getProject();
-    myProgressWindow = new ProgressWindowWithNotification(true, project);
+    myProgressIndicator = indicator;
     myEditor = editor;
     myElement = expression;
     myDebuggerContext = (DebuggerManagerEx.getInstanceEx(project)).getContext();
@@ -44,20 +42,22 @@ public abstract class EditorEvaluationCommand<T> extends DebuggerContextCommandI
   protected abstract T evaluate(EvaluationContextImpl evaluationContext) throws EvaluateException;
 
   public T evaluate() throws EvaluateException {
-    getProgressWindow().setText(DebuggerBundle.message("progress.evaluating", myElement.getText()));
+    myProgressIndicator.setText(DebuggerBundle.message("progress.evaluating", myElement.getText()));
 
     try {
       T result = evaluate(myDebuggerContext.createEvaluationContext());
 
-      if(getProgressWindow().isCanceled()) throw new ProcessCanceledException();
+      if (myProgressIndicator.isCanceled()) throw new ProcessCanceledException();
 
       return result;
     } catch (final EvaluateException e) {
-      DebuggerInvocationUtil.invokeLater(myDebuggerContext.getProject(), new Runnable() {
-        public void run() {
-          showEvaluationHint(myEditor, myElement, e);
-        }
-      }, myProgressWindow.getModalityState());
+      if (myEditor != null) {
+        DebuggerInvocationUtil.invokeLater(myDebuggerContext.getProject(), new Runnable() {
+          public void run() {
+            showEvaluationHint(myEditor, myElement, e);
+          }
+        }, myProgressIndicator.getModalityState());
+      }
       throw e;
     }
   }
@@ -71,11 +71,4 @@ public abstract class EditorEvaluationCommand<T> extends DebuggerContextCommandI
                                             1500);
   }
 
-  public ProgressWindowWithNotification getProgressWindow() {
-    return myProgressWindow;
-  }
-
-  public Editor getEditor() {
-    return myEditor;
-  }
 }
