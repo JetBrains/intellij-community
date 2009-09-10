@@ -8,11 +8,9 @@
  */
 package com.intellij.refactoring;
 
-import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLocalVariable;
@@ -21,24 +19,17 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor;
 import com.intellij.refactoring.introduceParameter.Util;
+import com.intellij.testFramework.LightCodeInsightTestCase;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-public class IntroduceParameterTest extends CodeInsightTestCase {
-  private LanguageLevel myPreviousLanguageLevel;
-
-  protected void setUp() throws Exception {
-    super.setUp();
-    myPreviousLanguageLevel = LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).getLanguageLevel();
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
+public class IntroduceParameterTest extends LightCodeInsightTestCase {
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
   }
-
-  protected void tearDown() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(myPreviousLanguageLevel);
-    super.tearDown();
-  }
-
+  
   private void doTest(int replaceFieldsWithGetters, boolean removeUnusedParameters, boolean searchForSuper, boolean declareFinal,
                       final boolean generateDelegate) throws Exception {
     configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
@@ -222,7 +213,7 @@ public class IntroduceParameterTest extends CodeInsightTestCase {
 
   private void doTestThroughHandler() throws Exception {
     configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
-    new IntroduceParameterHandler().invoke(myProject, myEditor, myFile, new DataContext() {
+    new IntroduceParameterHandler().invoke(getProject(), myEditor, myFile, new DataContext() {
       @Nullable
       public Object getData(@NonNls final String dataId) {
         return null;
@@ -231,13 +222,13 @@ public class IntroduceParameterTest extends CodeInsightTestCase {
     checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
   }
 
-  private boolean perform(boolean replaceAllOccurences,
-                          int replaceFieldsWithGetters,
-                          @NonNls String parameterName,
-                          boolean searchForSuper,
-                          boolean declareFinal,
-                          final boolean removeUnusedParameters,
-                          final boolean generateDelegate) {
+  private static boolean perform(boolean replaceAllOccurences,
+                                 int replaceFieldsWithGetters,
+                                 @NonNls String parameterName,
+                                 boolean searchForSuper,
+                                 boolean declareFinal,
+                                 final boolean removeUnusedParameters,
+                                 final boolean generateDelegate) {
     int startOffset = myEditor.getSelectionModel().getSelectionStart();
     int endOffset = myEditor.getSelectionModel().getSelectionEnd();
 
@@ -265,7 +256,7 @@ public class IntroduceParameterTest extends CodeInsightTestCase {
     PsiExpression initializer = expr == null ? localVariable.getInitializer() : expr;
     TIntArrayList parametersToRemove = removeUnusedParameters ? Util.findParametersToRemove(method, initializer) : new TIntArrayList();
     new IntroduceParameterProcessor(
-      myProject, method, methodToSearchFor, initializer, expr, localVariable, true, parameterName, replaceAllOccurences,
+      getProject(), method, methodToSearchFor, initializer, expr, localVariable, true, parameterName, replaceAllOccurences,
       replaceFieldsWithGetters,
       declareFinal, generateDelegate, null, parametersToRemove).run();
 
@@ -273,8 +264,8 @@ public class IntroduceParameterTest extends CodeInsightTestCase {
     return true;
   }
 
-  private void performForLocal(boolean searchForSuper, boolean removeLocalVariable, boolean replaceAllOccurences, boolean declareFinal,
-                               final boolean removeUnusedParameters) {
+  private static void performForLocal(boolean searchForSuper, boolean removeLocalVariable, boolean replaceAllOccurrences, boolean declareFinal,
+                                      final boolean removeUnusedParameters) {
     final int offset = myEditor.getCaretModel().getOffset();
     final PsiElement element = myFile.findElementAt(offset).getParent();
     assertTrue(element instanceof PsiLocalVariable);
@@ -294,9 +285,9 @@ public class IntroduceParameterTest extends CodeInsightTestCase {
     TIntArrayList parametersToRemove = removeUnusedParameters ? Util.findParametersToRemove(method, parameterInitializer) : new TIntArrayList();
 
     new IntroduceParameterProcessor(
-      myProject, method, methodToSearchFor,
+      getProject(), method, methodToSearchFor,
       parameterInitializer, null, localVariable, removeLocalVariable,
-      localVariable.getName(), replaceAllOccurences,
+      localVariable.getName(), replaceAllOccurrences,
       IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE,
       declareFinal, false, null, parametersToRemove).run();
   }
