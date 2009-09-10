@@ -1,16 +1,16 @@
 package com.intellij.refactoring;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightTestCase;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.copy.CopyClassesHandler;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.IncorrectOperationException;
 
@@ -29,7 +29,7 @@ public class CopyClassTest extends CodeInsightTestCase {
   }
 
   private void doTest(final String oldName, final String copyName) throws Exception {
-    String root = PathManagerEx.getTestDataPath()+ "/refactoring/copyClass/" + getTestName(true);
+    String root = JavaTestUtil.getJavaTestDataPath() + "/refactoring/copyClass/" + getTestName(true);
 
     PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk15("java 1.5"));
     myRootDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
