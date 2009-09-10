@@ -23,7 +23,7 @@ import java.util.Collection;
 public abstract class ReadonlyStatusHandler {
 
   public static boolean ensureFilesWritable(Project project, VirtualFile... files) {
-    return getInstance(project).ensureFilesWritable(files).hasReadonlyFiles();
+    return !getInstance(project).ensureFilesWritable(files).hasReadonlyFiles();
   }
 
   public interface OperationStatus {
