@@ -1,34 +1,19 @@
 package com.intellij.refactoring.inline;
 
-import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.refactoring.MockInlineMethodOptions;
-import com.intellij.JavaTestUtil;
+import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 
-public class InlineMethodTest extends CodeInsightTestCase {
-  private LanguageLevel myPreviousLanguageLevel;
-
+public class InlineMethodTest extends LightCodeInsightTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
-  }
-
-  protected void setUp() throws Exception {
-    super.setUp();
-    myPreviousLanguageLevel = LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).getLanguageLevel();
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
-  }
-
-  protected void tearDown() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(myPreviousLanguageLevel);
-    super.tearDown();
   }
 
   public void testInlineParms() throws Exception {
@@ -158,7 +143,7 @@ public class InlineMethodTest extends CodeInsightTestCase {
     final boolean condition = InlineMethodProcessor.checkBadReturns(method) && !InlineMethodHandler.allUsagesAreTailCalls(method);
     assertFalse("Bad returns found", condition);
     InlineOptions options = new MockInlineMethodOptions();
-    final InlineMethodProcessor processor = new InlineMethodProcessor(myProject, method, refExpr, myEditor, options.isInlineThisOnly());
+    final InlineMethodProcessor processor = new InlineMethodProcessor(getProject(), method, refExpr, myEditor, options.isInlineThisOnly());
     processor.run();
   }
 }

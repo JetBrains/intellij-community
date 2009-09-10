@@ -6,8 +6,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiReference;
@@ -19,26 +17,13 @@ import com.intellij.testFramework.LightCodeInsightTestCase;
  * @author ven
  */
 public class InlineLocalTest extends LightCodeInsightTestCase {
-  private LanguageLevel myPreviousLanguageLevel;
-
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  protected void setUp() throws Exception {
-    super.setUp();
-    myPreviousLanguageLevel = LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).getLanguageLevel();
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
-  }
-
   protected Sdk getProjectJDK() {
     return JavaSdkImpl.getMockJdk15("java 1.5");
-  }
-
-  protected void tearDown() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(myPreviousLanguageLevel);
-    super.tearDown();
   }
 
   public void testInference () throws Exception {
