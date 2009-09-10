@@ -339,15 +339,14 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     }
   }
 
-  private  LookupElement createLookupElement(Object element, String name) {
+  private static LookupElement createLookupElement(Object element, String name) {
     return createLookupElement(element, name, Icons.PROPERTY_ICON);
   }
 
-  private LookupElement createLookupElement(Object element, String name, Icon icon) {
-    return LookupElementBuilder.create(name, element)
+  private static LookupElement createLookupElement(Object element, String name, Icon icon) {
+    return LookupElementBuilder.create(element, name)
       .setIcon(icon)
-      .setPresentableText(name)
-      .createLookupElement();
+      .setPresentableText(name);
   }
 
   @Nullable

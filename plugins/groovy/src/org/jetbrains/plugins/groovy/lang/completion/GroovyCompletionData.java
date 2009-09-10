@@ -21,6 +21,7 @@ import com.intellij.codeInsight.completion.CompletionData;
 import com.intellij.codeInsight.completion.CompletionVariant;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -29,6 +30,7 @@ import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.LeftNeighbour;
 import com.intellij.psi.filters.position.ParentElementFilter;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.completion.filters.classdef.ExtendsFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.classdef.ImplementsFilter;
@@ -174,11 +176,12 @@ public class GroovyCompletionData extends CompletionData {
                                 final PsiFile file,
                                 final int offset) {
     super.completeReference(reference, set, position, file, offset);
+    Set<LookupElement> result = new THashSet<LookupElement>();
     for (final LookupElement element : set) {
-      if (element instanceof LookupItem) {
-        ((LookupItem)element).setInsertHandler(new GroovyInsertHandlerAdapter());
-      }
+      result.add(LookupElementDecorator.withInsertHandler(element, new GroovyInsertHandlerAdapter()));
     }
+    set.clear();
+    set.addAll(result);
   }
 
 

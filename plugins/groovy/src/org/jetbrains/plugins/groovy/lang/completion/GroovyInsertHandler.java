@@ -16,8 +16,8 @@
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.completion.DefaultInsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.util.MethodParenthesesHandler;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -41,7 +41,7 @@ import java.util.Arrays;
 /**
  * @author ven
  */
-public class GroovyInsertHandler extends DefaultInsertHandler {
+public class GroovyInsertHandler implements InsertHandler<LookupElement> {
   private static final String CLOSURE_CLASS = "groovy.lang.Closure";
 
   public void handleInsert(InsertionContext context, LookupElement item) {
@@ -146,19 +146,11 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
     if ("default".equals(item.toString())) {
       return TailType.CASE_COLON;
     }
-    @NonNls String[] exprs = {"true", "false", "null", "super", "this"};
-    @NonNls String[] withSemi = {"break", "continue"};
     @NonNls String[] withSpace =
       {"private", "public", "protected", "static", "transient", "abstract", "native", "volatile", "strictfp", "boolean", "byte", "char",
         "short", "int", "float", "long", "double", "void", "new", "try", "while", "with", "switch", "for", "return", "throw", "throws",
         "assert", "synchronized", "package", "class", "interface", "enum", "extends", "implements", "case", "catch", "finally", "else",
         "instanceof", "import", "final",};
-    if (Arrays.asList(withSemi).contains(item.toString())) {
-      return TailType.SEMICOLON;
-    }
-    if (Arrays.asList(exprs).contains(item.toString())) {
-      return TailType.NONE;
-    }
     if (Arrays.asList(withSpace).contains(item.toString())) {
       return TailType.SPACE;
     }

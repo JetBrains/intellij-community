@@ -151,7 +151,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
           }
           if (lookupString == null) continue;
 
-          LookupElementBuilder builder = LookupElementBuilder.create(lookupString, variant);
+          LookupElementBuilder builder = LookupElementBuilder.create(variant, lookupString);
           if (variant instanceof Iconable) {
             builder = builder.setIcon(((Iconable)variant).getIcon(Iconable.ICON_FLAG_VISIBILITY));
           }
