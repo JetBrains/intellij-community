@@ -1099,6 +1099,8 @@ public class FileBasedIndex implements ApplicationComponent {
             try {
               updateSingleIndex(indexId, file, _fc);
             }
+            catch (ProcessCanceledException ignored) {
+            }
             catch (StorageException e) {
               requestRebuild(indexId);
               LOG.info(e);
