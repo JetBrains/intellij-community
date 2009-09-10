@@ -1,6 +1,7 @@
 package git4idea.changes;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -16,6 +17,7 @@ import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
 import org.jetbrains.annotations.NonNls;
 
+import java.io.File;
 import java.util.*;
 
 /**
@@ -59,6 +61,26 @@ public class GitChangeUtils {
     }
   }
 
+  public static Collection<String> parseDiffForPaths(final String rootPath, final StringScanner s) throws VcsException {
+    final Collection<String> result = new LinkedList<String>();
+
+    while (s.hasMoreData()) {
+      if (s.isEol()) {
+        s.nextLine();
+        continue;
+      }
+      if ("CADUMR".indexOf(s.peek()) == -1) {
+        // exit if there is no next character
+        break;
+      }
+      String[] tokens = s.line().split("\t");
+      String path = tokens[tokens.length - 1];
+      path = rootPath + File.separator + GitUtil.unescapePath(path);
+      path = FileUtil.toSystemDependentName(path);
+      result.add(path);
+    }
+    return result;
+  }
 
   /**
    * Parse changes from lines

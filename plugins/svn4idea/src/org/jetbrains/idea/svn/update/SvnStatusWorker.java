@@ -3,6 +3,7 @@ package org.jetbrains.idea.svn.update;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -43,6 +44,7 @@ public class SvnStatusWorker {
       if (progress != null) {
         progress.setText(SvnBundle.message("progress.text.update.computing.post.update.status", myRoot.getAbsolutePath()));
       }
+      final VcsKey vcsKey = SvnVcs.getKey();
       statusClient.doStatus(myRoot, true, false, false, false, new ISVNStatusHandler() {
         public void handleStatus(SVNStatus status) {
           if (status.getFile() == null) {
@@ -63,29 +65,29 @@ public class SvnStatusWorker {
             String path = status.getFile().getAbsolutePath();
 
             if (status.getContentsStatus() == SVNStatusType.STATUS_ADDED) {
-              myPostUpdateFiles.getGroupById(FileGroup.LOCALLY_ADDED_ID).add(path);
+              myPostUpdateFiles.getGroupById(FileGroup.LOCALLY_ADDED_ID).add(path, vcsKey, null);
             }
             else if (status.getContentsStatus() == SVNStatusType.STATUS_CONFLICTED) {
                 // may conflict with update status.
               FileGroup group = myPostUpdateFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID);
               if (group != null && (group.getFiles() == null || !group.getFiles().contains(path))) {
-                group.add(path);
+                group.add(path, vcsKey, null);
               }
             }
             else if (status.getContentsStatus() == SVNStatusType.STATUS_DELETED) {
-              myPostUpdateFiles.getGroupById(FileGroup.LOCALLY_REMOVED_ID).add(path);
+              myPostUpdateFiles.getGroupById(FileGroup.LOCALLY_REMOVED_ID).add(path, vcsKey, null);
             }
             else if (status.getContentsStatus() == SVNStatusType.STATUS_REPLACED) {
-              myPostUpdateFiles.getGroupById(FileGroup.LOCALLY_ADDED_ID).add(path);
+              myPostUpdateFiles.getGroupById(FileGroup.LOCALLY_ADDED_ID).add(path, vcsKey, null);
             }
             else if (status.getContentsStatus() == SVNStatusType.STATUS_MODIFIED ||
                      status.getPropertiesStatus() == SVNStatusType.STATUS_MODIFIED) {
-              myPostUpdateFiles.getGroupById(FileGroup.MODIFIED_ID).add(path);
+              myPostUpdateFiles.getGroupById(FileGroup.MODIFIED_ID).add(path, vcsKey, null);
             }
             else if (status.getContentsStatus() == SVNStatusType.STATUS_UNVERSIONED ||
                      status.getContentsStatus() == SVNStatusType.STATUS_OBSTRUCTED) {
               if (status.getFile().isFile() || !SVNWCUtil.isVersionedDirectory(status.getFile())) {
-                myPostUpdateFiles.getGroupById(FileGroup.UNKNOWN_ID).add(path);
+                myPostUpdateFiles.getGroupById(FileGroup.UNKNOWN_ID).add(path, vcsKey, null);
               }
             }
           }

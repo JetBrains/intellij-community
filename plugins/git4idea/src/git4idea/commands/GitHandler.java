@@ -402,6 +402,13 @@ public abstract class GitHandler {
     }
   }
 
+  public void addRelativePathsForFiles(@NotNull final Collection<File> files) {
+    checkNotStarted();
+    for (File file : files) {
+      myCommandLine.addParameter(GitUtil.relativePath(myWorkingDirectory, file));
+    }
+  }
+
   /**
    * Add virtual file parameters. The parameters are made relative to the working directory
    *

@@ -49,6 +49,7 @@ import git4idea.config.GitVcsConfigurable;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.GitVersion;
 import git4idea.diff.GitDiffProvider;
+import git4idea.diff.GitTreeDiffProvider;
 import git4idea.history.GitHistoryProvider;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeProvider;
@@ -166,6 +167,8 @@ public class GitVcs extends AbstractVcs {
    */
   private GitConfigTracker myConfigTracker;
 
+  private final TreeDiffProvider myTreeDiffProvider;
+
   public static GitVcs getInstance(@NotNull Project project) {
     return (GitVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(NAME);
   }
@@ -194,6 +197,7 @@ public class GitVcs extends AbstractVcs {
     myMergeProvider = new GitMergeProvider(myProject);
     myCommittedChangeListProvider = new GitCommittedChangeListProvider(myProject);
     myOutgoingChangesProvider = new GitOutgoingChangesProvider(myProject);
+    myTreeDiffProvider = new GitTreeDiffProvider(myProject);
   }
 
   /**
@@ -628,5 +632,15 @@ public class GitVcs extends AbstractVcs {
   @Override
   protected VcsOutgoingChangesProvider getOutgoingProviderImpl() {
     return myOutgoingChangesProvider;
+  }
+
+  @Override
+  public RemoteDifferenceStrategy getRemoteDifferenceStrategy() {
+    return RemoteDifferenceStrategy.ASK_TREE_PROVIDER;
+  }
+
+  @Override
+  protected TreeDiffProvider getTreeDiffProviderImpl() {
+    return myTreeDiffProvider;
   }
 }

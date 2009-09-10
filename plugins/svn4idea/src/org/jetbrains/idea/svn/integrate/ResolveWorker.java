@@ -3,6 +3,7 @@ package org.jetbrains.idea.svn.integrate;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdateFilesHelper;
@@ -10,8 +11,9 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnUtil;
-import org.jetbrains.idea.svn.update.SvnUpdateGroups;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.SvnMergeProvider;
+import org.jetbrains.idea.svn.update.SvnUpdateGroups;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -84,11 +86,12 @@ public class ResolveWorker {
 
     final FileGroup mergedGroup = updatedFiles.getGroupById(FileGroup.MERGED_ID);
     final FileGroup conflictedGroup = updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID);
+    final VcsKey vcsKey = SvnVcs.getKey();
 
     for (final VirtualFile mergedFile : mergedFiles) {
       String path = FileUtil.toSystemDependentName(mergedFile.getPresentableUrl());
       conflictedGroup.remove(path);
-      mergedGroup.add(path);
+      mergedGroup.add(path, vcsKey, null);
 
       mergedFile.refresh(false, false);
       // for additionally created files removal to be detected

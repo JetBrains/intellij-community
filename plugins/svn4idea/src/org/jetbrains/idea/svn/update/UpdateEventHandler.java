@@ -183,7 +183,7 @@ public class UpdateEventHandler implements ISVNEventHandler {
   protected void addFileToGroup(final String id, final SVNEvent event) {
     final FileGroup fileGroup = myUpdatedFiles.getGroupById(id);
     final String path = event.getFile().getAbsolutePath();
-    fileGroup.add(path);
+    fileGroup.add(path, SvnVcs.getKey(), null);
     if (event.getErrorMessage() != null) {
       fileGroup.addError(path, event.getErrorMessage().getMessage());
     }
