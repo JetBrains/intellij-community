@@ -22,9 +22,11 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IconDeferrer;
 import com.intellij.ui.RowIcon;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,6 +95,7 @@ public class IconUtil {
 
         Icon providersIcon = getProvidersIcon(file, flags, project);
         Icon icon = providersIcon == null ? file.getIcon() : providersIcon;
+
         final boolean dumb = project != null && DumbService.getInstance(project).isDumb();
         for (FileIconPatcher patcher : getPatchers()) {
           if (dumb && !(patcher instanceof DumbAware)) {
@@ -101,6 +104,11 @@ public class IconUtil {
 
           icon = patcher.patchIcon(icon, file, flags, project);
         }
+
+        if ((flags & Iconable.ICON_FLAG_READ_STATUS) != 0 && !file.isWritable()) {
+          return new LayeredIcon(icon, Icons.LOCKED_ICON);
+        }
+        
         return icon;
       }
     });

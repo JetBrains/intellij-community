@@ -40,6 +40,13 @@ public class LayeredIcon implements Icon {
     myVShifts = new int[layerCount];
   }
 
+  public LayeredIcon(Icon... icons) {
+    this(icons.length);
+    for (int i = 0; i < icons.length; i++) {
+      setIcon(icons[i], i);
+    }
+  }
+
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof LayeredIcon)) return false;
