@@ -231,10 +231,13 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     Disposer.dispose(this);
 
     if (isInternal() && !Disposer.isEmpty()) {
-      try {
-        Class.forName("com.intellij.util.ProfilingUtil").getDeclaredMethod("forceCaptureMemorySnapshot").invoke(null);
-      }
-      catch (Exception ignored) {
+      int ret = Messages.showOkCancelDialog("Memory leaks detected. Create memory snapshot?", "Memory leaks", Messages.getErrorIcon());
+      if (ret == 0) {
+        try {
+          Class.forName("com.intellij.util.ProfilingUtil").getDeclaredMethod("forceCaptureMemorySnapshot").invoke(null);
+        }
+        catch (Exception ignored) {
+        }
       }
     }
     Disposer.assertIsEmpty();
