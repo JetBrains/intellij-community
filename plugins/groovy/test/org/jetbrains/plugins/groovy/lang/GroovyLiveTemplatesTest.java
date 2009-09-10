@@ -5,8 +5,12 @@
 package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.codeInsight.template.impl.actions.ListTemplatesAction;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 /**
@@ -20,22 +24,17 @@ public class GroovyLiveTemplatesTest extends LightCodeInsightFixtureTestCase{
 
   public void testJavaTemplatesWorkInGroovyContext() throws Throwable {
     myFixture.configureByFile(getTestName(false) + ".groovy");
-    expandTemplate();
-    myFixture.checkResultByFile(getTestName(false) + ".groovy");
+    expandTemplate(myFixture.getEditor());
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }
 
-  private void expandTemplate() {
-    new WriteCommandAction(getProject()) {
+  public static void expandTemplate(final Editor editor) {
+    new WriteCommandAction(editor.getProject()) {
       protected void run(Result result) throws Throwable {
-        new ListTemplatesAction().actionPerformedImpl(getProject(), myFixture.getEditor());
+        new ListTemplatesAction().actionPerformedImpl(editor.getProject(), editor);
+        ((LookupImpl)LookupManager.getActiveLookup(editor)).finishLookup(Lookup.NORMAL_SELECT_CHAR);
       }
     }.execute();
-  }
-
-  public void testHtmlTemplatesWorkInGsp() throws Throwable {
-    myFixture.configureByFile(getTestName(false) + ".gsp");
-    expandTemplate();
-    myFixture.checkResultByFile(getTestName(false) + ".gsp");
   }
 
 }
