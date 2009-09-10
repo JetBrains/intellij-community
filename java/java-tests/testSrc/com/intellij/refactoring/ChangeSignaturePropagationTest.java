@@ -1,6 +1,6 @@
 package com.intellij.refactoring;
 
-import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -8,8 +8,8 @@ import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
+import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.containers.HashSet;
-import com.intellij.JavaTestUtil;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -17,7 +17,7 @@ import java.util.Set;
 /**
  * @author ven
  */
-public class ChangeSignaturePropagationTest extends CodeInsightTestCase {
+public class ChangeSignaturePropagationTest extends LightCodeInsightTestCase {
   public void testParamSimple() throws Exception {
     parameterPropagationTest();
   }
@@ -37,7 +37,7 @@ public class ChangeSignaturePropagationTest extends CodeInsightTestCase {
   private void parameterPropagationTest() throws Exception {
     PsiMethod method = getPrimaryMethod();
     PsiClass aClass = method.getContainingClass();
-    PsiType newParamType = myJavaFacade.getElementFactory().createTypeByFQClassName("java.lang.Class", GlobalSearchScope.allScope(myProject));
+    PsiType newParamType = JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName("java.lang.Class", GlobalSearchScope.allScope(getProject()));
     final ParameterInfoImpl[] newParameters = new ParameterInfoImpl[]{new ParameterInfoImpl(-1, "clazz", newParamType, "null")};
     final Set<PsiMethod> methodsToPropagateParameters = new HashSet<PsiMethod>(Arrays.asList(aClass.getMethods()));
     doTest(newParameters, new ThrownExceptionInfo[0], methodsToPropagateParameters, null, method);
@@ -46,7 +46,7 @@ public class ChangeSignaturePropagationTest extends CodeInsightTestCase {
   private void exceptionPropagationTest() throws Exception {
     PsiMethod method = getPrimaryMethod();
     PsiClass aClass = method.getContainingClass();
-    PsiClassType newExceptionType = myJavaFacade.getElementFactory().createTypeByFQClassName("java.lang.Exception", GlobalSearchScope.allScope(myProject));
+    PsiClassType newExceptionType = JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName("java.lang.Exception", GlobalSearchScope.allScope(getProject()));
     final ThrownExceptionInfo[] newExceptions = new ThrownExceptionInfo[]{new ThrownExceptionInfo(-1, newExceptionType)};
     final Set<PsiMethod> methodsToPropagateExceptions = new HashSet<PsiMethod>(Arrays.asList(aClass.getMethods()));
     doTest(new ParameterInfoImpl[0], newExceptions, null, methodsToPropagateExceptions, method);
@@ -60,7 +60,7 @@ public class ChangeSignaturePropagationTest extends CodeInsightTestCase {
     final String filePath = getBasePath() + getTestName(false) + ".java";
     final PsiType returnType = primaryMethod.getReturnType();
     final CanonicalTypes.Type type = returnType == null ? null : CanonicalTypes.createTypeWrapper(returnType);
-    new ChangeSignatureProcessor(myProject, primaryMethod, false, null,
+    new ChangeSignatureProcessor(getProject(), primaryMethod, false, null,
                                  primaryMethod.getName(),
                                  type,
                                  generateParameterInfos(primaryMethod, newParameters),
@@ -78,7 +78,7 @@ public class ChangeSignaturePropagationTest extends CodeInsightTestCase {
     return (PsiMethod) targetElement;
   }
 
-  private String getBasePath() {
+  private static String getBasePath() {
     return "/refactoring/changeSignaturePropagation/";
   }
 

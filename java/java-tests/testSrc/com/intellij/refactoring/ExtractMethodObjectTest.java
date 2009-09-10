@@ -4,15 +4,15 @@
  */
 package com.intellij.refactoring;
 
-import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.extractMethodObject.ExtractMethodObjectProcessor;
 import com.intellij.refactoring.util.duplicates.DuplicatesImpl;
-import com.intellij.JavaTestUtil;
+import com.intellij.testFramework.LightCodeInsightTestCase;
 
-public class ExtractMethodObjectTest extends CodeInsightTestCase {
+public class ExtractMethodObjectTest extends LightCodeInsightTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();

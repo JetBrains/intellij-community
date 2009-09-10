@@ -1,20 +1,20 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.LightCodeInsightTestCase;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 
 /**
  * @author ven
  */
-public class IntroduceConstantTest extends CodeInsightTestCase {
+public class IntroduceConstantTest extends LightCodeInsightTestCase {
   @NonNls private static final String BASE_PATH = "/refactoring/introduceConstant/";
 
   @Override
@@ -36,7 +36,7 @@ public class IntroduceConstantTest extends CodeInsightTestCase {
     doTest(true);    
   }
 
-  private void convertLocal(final boolean makeEnumConstant) {
+  private static void convertLocal(final boolean makeEnumConstant) {
     PsiLocalVariable local = PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiLocalVariable.class);
     new MockLocalToFieldHandler(getProject(), true, makeEnumConstant).convertLocalToField(local, getEditor());
   }
@@ -57,7 +57,7 @@ public class IntroduceConstantTest extends CodeInsightTestCase {
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
-  protected Sdk getTestProjectJdk() {
+  protected Sdk getProjectJDK() {
     return JavaSdkImpl.getMockJdk15("java 1.5");
   }
 }

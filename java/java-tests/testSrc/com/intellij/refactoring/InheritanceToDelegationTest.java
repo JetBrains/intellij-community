@@ -1,42 +1,26 @@
 package com.intellij.refactoring;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.inheritanceToDelegation.InheritanceToDelegationProcessor;
 import com.intellij.util.ArrayUtil;
-import com.intellij.JavaTestUtil;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author dsl
  */
 public class InheritanceToDelegationTest extends MultiFileTestCase {
-  private LanguageLevel myPreviousLanguageLevel;
-
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
-  }
-
-
-  protected void setUp() throws Exception {
-    super.setUp();
-    myPreviousLanguageLevel = LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).getLanguageLevel();
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
-  }
-
-  protected void tearDown() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(myPreviousLanguageLevel);
-    super.tearDown();
   }
 
   protected Sdk getTestProjectJdk() {

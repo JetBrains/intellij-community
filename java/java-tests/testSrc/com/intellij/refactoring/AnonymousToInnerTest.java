@@ -1,15 +1,15 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.refactoring.anonymousToInner.AnonymousToInnerHandler;
+import com.intellij.testFramework.LightCodeInsightTestCase;
 
 /**
  * @author yole
  */
-public class AnonymousToInnerTest extends CodeInsightTestCase {
+public class AnonymousToInnerTest extends LightCodeInsightTestCase {
   private static final String TEST_ROOT = "/refactoring/anonymousToInner/";
 
   @Override
@@ -18,7 +18,7 @@ public class AnonymousToInnerTest extends CodeInsightTestCase {
   }
 
   @Override
-  protected Sdk getTestProjectJdk() {
+  protected Sdk getProjectJDK() {
     return JavaSdkImpl.getMockJdk15("java 1.5");
   }
 
@@ -38,7 +38,7 @@ public class AnonymousToInnerTest extends CodeInsightTestCase {
     };
 
 
-    handler.invoke(myProject, myEditor, myFile, null);
+    handler.invoke(getProject(), myEditor, myFile, null);
     checkResultByFile(TEST_ROOT + getTestName(true) + "_after.java");
   }
 }
