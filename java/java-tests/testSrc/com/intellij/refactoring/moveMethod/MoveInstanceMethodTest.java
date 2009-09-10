@@ -7,6 +7,7 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodHandler;
 import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodProcessor;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.JavaTestUtil;
 
 /**
  * @author ven
@@ -57,5 +58,9 @@ public class MoveInstanceMethodTest extends LightCodeInsightTestCase {
 
   }
 
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
 
 }
