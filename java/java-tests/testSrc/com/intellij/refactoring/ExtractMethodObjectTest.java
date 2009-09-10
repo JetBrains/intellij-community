@@ -10,8 +10,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.extractMethodObject.ExtractMethodObjectProcessor;
 import com.intellij.refactoring.util.duplicates.DuplicatesImpl;
+import com.intellij.JavaTestUtil;
 
 public class ExtractMethodObjectTest extends CodeInsightTestCase {
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
 
   private void doTest() throws Exception {
     doTest(true);
