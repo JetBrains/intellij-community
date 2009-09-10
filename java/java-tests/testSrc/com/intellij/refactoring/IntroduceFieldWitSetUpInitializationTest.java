@@ -24,11 +24,17 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler;
 import com.intellij.refactoring.introduceField.LocalToFieldHandler;
 import com.intellij.util.PathUtil;
+import com.intellij.JavaTestUtil;
 import org.junit.Before;
 
 import java.io.File;
 
 public class IntroduceFieldWitSetUpInitializationTest extends CodeInsightTestCase {
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
+
   protected Module createModule(final String name) {
     final Module module = super.createModule(name);
     final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
