@@ -172,7 +172,7 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
 
     myResultsViewer.setShowStatisticForProxyHandler(new PropagateSelectionHandler() {
       public void handlePropagateSelectionRequest(@Nullable final SMTestProxy selectedTestProxy, @NotNull final Object sender,
-                                    final boolean requestFocus) {
+                                                  final boolean requestFocus) {
         onSelectedHappend.set();
         proxyRef.set(selectedTestProxy);
         focusRequestedRef.set(requestFocus);
@@ -259,11 +259,213 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
     myResultsViewer.performUpdate();
 
     final DefaultMutableTreeNode suite1Node =
-        (DefaultMutableTreeNode)myTreeModel.getChild(myTreeModel.getRoot(), 0);
+      (DefaultMutableTreeNode)myTreeModel.getChild(myTreeModel.getRoot(), 0);
     final DefaultMutableTreeNode suite2Node =
-        (DefaultMutableTreeNode)myTreeModel.getChild(suite1Node, 0);
+      (DefaultMutableTreeNode)myTreeModel.getChild(suite1Node, 0);
 
     assertTrue(myResultsViewer.getTreeView().isExpanded(new TreePath(suite1Node.getPath())));
     assertFalse(myResultsViewer.getTreeView().isExpanded(new TreePath(suite2Node.getPath())));
   }
+
+  public void testCustomProgress_General() {
+    myResultsViewer.onCustomProgressTestsCategory("foo", 4);
+
+    myResultsViewer.onTestStarted(createTestProxy("some_test1", myTestsRootNode));
+    assertEquals(0, myResultsViewer.getTestsCurrentCount());
+    myResultsViewer.onCustomProgressTestStarted();
+    assertEquals(1, myResultsViewer.getTestsCurrentCount());
+
+    myResultsViewer.onTestStarted(createTestProxy("some_test2", myTestsRootNode));
+    assertEquals(1, myResultsViewer.getTestsCurrentCount());
+    myResultsViewer.onCustomProgressTestStarted();
+    assertEquals(2, myResultsViewer.getTestsCurrentCount());
+  }
+
+  public void testCustomProgress_MixedMde() {
+    // enable custom mode
+    myResultsViewer.onCustomProgressTestsCategory("foo", 4);
+
+    myResultsViewer.onTestStarted(createTestProxy("some_test1", myTestsRootNode));
+    assertEquals(0, myResultsViewer.getTestsCurrentCount());
+    myResultsViewer.onCustomProgressTestStarted();
+    assertEquals(1, myResultsViewer.getTestsCurrentCount());
+
+    myResultsViewer.onTestStarted(createTestProxy("some_test2", myTestsRootNode));
+    assertEquals(1, myResultsViewer.getTestsCurrentCount());
+    myResultsViewer.onCustomProgressTestStarted();
+    assertEquals(2, myResultsViewer.getTestsCurrentCount());
+
+    // disable custom mode
+    myResultsViewer.onCustomProgressTestsCategory(null, 0);
+
+    assertEquals(2, myResultsViewer.getTestsCurrentCount());
+    myResultsViewer.onCustomProgressTestStarted();
+    assertEquals(2, myResultsViewer.getTestsCurrentCount());
+    myResultsViewer.onTestStarted(createTestProxy("some_test1", myTestsRootNode));
+    assertEquals(3, myResultsViewer.getTestsCurrentCount());
+
+    assertEquals(3, myResultsViewer.getTestsCurrentCount());
+    myResultsViewer.onCustomProgressTestStarted();
+    assertEquals(3, myResultsViewer.getTestsCurrentCount());
+    myResultsViewer.onTestStarted(createTestProxy("some_test1", myTestsRootNode));
+    assertEquals(4, myResultsViewer.getTestsCurrentCount());
+  }
+
+  public void testCustomProgress_Failure() {
+    myResultsViewer.onCustomProgressTestsCategory("foo", 4);
+
+    final SMTestProxy test1 = createTestProxy("some_test1", myTestsRootNode);
+    myResultsViewer.onTestStarted(test1);
+    myResultsViewer.onCustomProgressTestStarted();
+
+    myResultsViewer.onTestFailed(test1);
+    assertEquals(0, myResultsViewer.getTestsFailuresCount());
+
+    myResultsViewer.onCustomProgressTestFailed();
+    assertEquals(1, myResultsViewer.getTestsFailuresCount());
+  }
+
+  public void testCustomProgress_UnSetCount() {
+    myResultsViewer.onCustomProgressTestsCategory("foo", 0);
+
+    assertEquals(0, myResultsViewer.getTestsTotal());
+
+    myResultsViewer.onCustomProgressTestStarted();
+    assertEquals(0, myResultsViewer.getTestsTotal());
+
+    myResultsViewer.onCustomProgressTestStarted();
+    assertEquals(0, myResultsViewer.getTestsTotal());
+
+    // count will be updated only on tests finished if wasn't set
+    myResultsViewer.onTestingFinished(myTestsRootNode);
+    assertEquals(2, myResultsViewer.getTestsTotal());
+  }
+
+  public void testCustomProgress_IncreaseCount() {
+    myResultsViewer.onCustomProgressTestsCategory("foo", 1);
+
+    assertEquals(1, myResultsViewer.getTestsTotal());
+
+    myResultsViewer.onCustomProgressTestStarted();
+    assertEquals(1, myResultsViewer.getTestsTotal());
+
+    myResultsViewer.onCustomProgressTestStarted();
+    assertEquals(2, myResultsViewer.getTestsTotal());
+  }
+
+  public void testCustomProgress_IncreaseCount_MixedMode() {
+    // custom mode
+    myResultsViewer.onCustomProgressTestsCategory("foo", 1);
+
+    assertEquals(1, myResultsViewer.getTestsTotal());
+
+    myResultsViewer.onCustomProgressTestStarted();
+    assertEquals(1, myResultsViewer.getTestsTotal());
+
+    myResultsViewer.onCustomProgressTestStarted();
+    assertEquals(2, myResultsViewer.getTestsTotal());
+
+    // disable custom mode
+    myResultsViewer.onCustomProgressTestsCategory(null, 0);
+    assertEquals(2, myResultsViewer.getTestsTotal());
+
+    myResultsViewer.onTestsCountInSuite(1);
+    assertEquals(3, myResultsViewer.getTestsTotal());
+
+    myResultsViewer.onTestStarted(createTestProxy("some_test1", myTestsRootNode));
+    assertEquals(3, myResultsViewer.getTestsTotal());
+
+    myResultsViewer.onTestStarted(createTestProxy("some_test2", myTestsRootNode));
+    assertEquals(4, myResultsViewer.getTestsTotal());
+  }
+
+  //TODO categories - mized
+
+  public void testCustomProgress_MentionedCategories_CategoryWithoutName() {
+    // enable custom mode
+    assertTrue(myResultsViewer.getMentionedCategories().isEmpty());
+
+    myResultsViewer.onCustomProgressTestsCategory("foo", 4);
+
+    assertTrue(myResultsViewer.getMentionedCategories().isEmpty());
+  }
+
+  public void testCustomProgress_MentionedCategories_DefaultCategory() {
+    // enable custom mode
+    assertTrue(myResultsViewer.getMentionedCategories().isEmpty());
+
+    myResultsViewer.onCustomProgressTestStarted();
+
+    assertTrue(myResultsViewer.getMentionedCategories().isEmpty());
+  }
+
+  public void testCustomProgress_MentionedCategories_OneCustomCategory() {
+    // enable custom mode
+    myResultsViewer.onCustomProgressTestsCategory("Foo", 4);
+    assertTrue(myResultsViewer.getMentionedCategories().isEmpty());
+
+    myResultsViewer.onTestStarted(createTestProxy("some_test1", myTestsRootNode));
+    assertTrue(myResultsViewer.getMentionedCategories().isEmpty());
+
+    myResultsViewer.onCustomProgressTestStarted();
+    assertSameElements(myResultsViewer.getMentionedCategories(), "Foo");
+
+    // disable custom mode
+    myResultsViewer.onCustomProgressTestsCategory(null, 0);
+    assertSameElements(myResultsViewer.getMentionedCategories(), "Foo");
+  }
+
+  public void testCustomProgress_MentionedCategories_SeveralCategories() {
+    // enable custom mode
+    myResultsViewer.onCustomProgressTestsCategory("Foo", 4);
+    assertTrue(myResultsViewer.getMentionedCategories().isEmpty());
+
+    myResultsViewer.onTestStarted(createTestProxy("some_test1", myTestsRootNode));
+    assertTrue(myResultsViewer.getMentionedCategories().isEmpty());
+
+    myResultsViewer.onCustomProgressTestStarted();
+    assertSameElements(myResultsViewer.getMentionedCategories(), "Foo");
+
+    // disable custom mode
+    myResultsViewer.onCustomProgressTestsCategory(null, 0);
+
+    myResultsViewer.onCustomProgressTestStarted();
+    assertSameElements(myResultsViewer.getMentionedCategories(), "Foo");
+
+    myResultsViewer.onTestStarted(createTestProxy("some_test2", myTestsRootNode));
+    assertSameElements(myResultsViewer.getMentionedCategories(), "Foo", TestsPresentationUtil.DEFAULT_TESTS_CATEGORY);
+  }
+
+  public void testCustomProgress_MentionedCategories() {
+    // enable custom mode
+    assertTrue(myResultsViewer.getMentionedCategories().isEmpty());
+
+    myResultsViewer.onCustomProgressTestsCategory("foo", 4);
+
+    myResultsViewer.onTestStarted(createTestProxy("some_test1", myTestsRootNode));
+    assertEquals(0, myResultsViewer.getTestsCurrentCount());
+    myResultsViewer.onCustomProgressTestStarted();
+    assertEquals(1, myResultsViewer.getTestsCurrentCount());
+
+    myResultsViewer.onTestStarted(createTestProxy("some_test2", myTestsRootNode));
+    assertEquals(1, myResultsViewer.getTestsCurrentCount());
+    myResultsViewer.onCustomProgressTestStarted();
+    assertEquals(2, myResultsViewer.getTestsCurrentCount());
+
+    // disable custom mode
+    myResultsViewer.onCustomProgressTestsCategory(null, 0);
+
+    assertEquals(2, myResultsViewer.getTestsCurrentCount());
+    myResultsViewer.onCustomProgressTestStarted();
+    assertEquals(2, myResultsViewer.getTestsCurrentCount());
+    myResultsViewer.onTestStarted(createTestProxy("some_test1", myTestsRootNode));
+    assertEquals(3, myResultsViewer.getTestsCurrentCount());
+
+    assertEquals(3, myResultsViewer.getTestsCurrentCount());
+    myResultsViewer.onCustomProgressTestStarted();
+    assertEquals(3, myResultsViewer.getTestsCurrentCount());
+    myResultsViewer.onTestStarted(createTestProxy("some_test1", myTestsRootNode));
+    assertEquals(4, myResultsViewer.getTestsCurrentCount());
+  }
+
 }

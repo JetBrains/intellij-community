@@ -33,6 +33,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * @author: Roman Chernyatchik
@@ -64,6 +66,9 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
   private long myEndTime;
   private StatisticsPanel myStatisticsPane;
 
+  // custom progress
+  private String myCurrentCustomProgressCategory;
+  private Set<String> myMentionedCategories = new HashSet<String>();
 
   public SMTestRunnerResultsForm(final RunConfigurationBase runConfiguration,
                                  @NotNull final JComponent console,
@@ -201,9 +206,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
   }
 
   public void onTestsCountInSuite(final int count) {
-    //This is for beter support groups of TestSuites
-    //Each group notifies about it's size
-    myTestsTotal += count;
+    updateCountersAndProgressOnTestCount(count, false);
   }
 
   /**
@@ -213,35 +216,15 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
    * @param testProxy Proxy
    */
   public void onTestStarted(@NotNull final SMTestProxy testProxy) {
-    // Counters
-    myTestsCurrentCount++;
-
-    // fix total count if it is corrupted
-    // but if test count wasn't set at all let's process such case separately
-    if (myTestsCurrentCount > myTestsTotal && myTestsTotal != 0) {
-      myTestsTotal = myTestsCurrentCount;
-    }
-
-    // update progress
-    if (myTestsTotal != 0) {
-      // if total is set
-      myStatusLine.setFraction((double)myTestsCurrentCount / myTestsTotal);
-    } else {
-      // just set progress in the middle to show user that tests are running
-      myStatusLine.setFraction(0.5);
-    }
+    updateCountersAndProgressOnTestStarted(false);
 
     _addTestOrSuite(testProxy);
-
-
-    updateStatusLabel();
 
     fireOnTestNodeAdded(testProxy);
   }
 
   public void onTestFailed(@NotNull final SMTestProxy test) {
-    myTestsFailuresCount++;
-    updateStatusLabel();
+    updateCountersAndProgressOnTestFailed(false);
   }
 
   public void onTestIgnored(@NotNull final SMTestProxy test) {
@@ -257,6 +240,19 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
    */
   public void onSuiteStarted(@NotNull final SMTestProxy newSuite) {
     _addTestOrSuite(newSuite);
+  }
+
+  public void onCustomProgressTestsCategory(@Nullable String categoryName, int testCount) {
+    myCurrentCustomProgressCategory = categoryName;
+    updateCountersAndProgressOnTestCount(testCount, true);
+  }
+
+  public void onCustomProgressTestStarted() {
+    updateCountersAndProgressOnTestStarted(true);
+  }
+
+  public void onCustomProgressTestFailed() {
+    updateCountersAndProgressOnTestFailed(true);
   }
 
   public void onTestFinished(@NotNull final SMTestProxy test) {
@@ -354,8 +350,16 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
     return myTestsCurrentCount;
   }
 
+  protected int getTestsFailuresCount() {
+    return myTestsFailuresCount;
+  }
+
   protected int getTestsTotal() {
     return myTestsTotal;
+  }
+
+  public Set<String> getMentionedCategories() {
+    return myMentionedCategories;
   }
 
   protected long getStartTime() {
@@ -417,7 +421,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
     }
     myStatusLine.setText(TestsPresentationUtil.getProgressStatus_Text(myStartTime, myEndTime,
                                                                        myTestsTotal, myTestsCurrentCount,
-                                                                       myTestsFailuresCount));
+                                                                       myTestsFailuresCount, myMentionedCategories));
   }
 
   /**
@@ -458,6 +462,54 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
       init(builder);
     }
   }
+
+  private void updateCountersAndProgressOnTestCount(final int count, final boolean isCustomMessage) {
+    if (!isModeConsistent(isCustomMessage)) return;
+
+    //This is for beter support groups of TestSuites
+    //Each group notifies about it's size
+    myTestsTotal += count;
+    updateStatusLabel();
+  }
+
+  private void updateCountersAndProgressOnTestStarted(final boolean isCustomMessage) {
+    if (!isModeConsistent(isCustomMessage)) return;
+
+    // for mixed tests results : mention category only if it contained tests
+    myMentionedCategories.add(myCurrentCustomProgressCategory != null ? myCurrentCustomProgressCategory : TestsPresentationUtil.DEFAULT_TESTS_CATEGORY);
+
+    // Counters
+    myTestsCurrentCount++;
+
+    // fix total count if it is corrupted
+    // but if test count wasn't set at all let's process such case separately
+    if (myTestsCurrentCount > myTestsTotal && myTestsTotal != 0) {
+      myTestsTotal = myTestsCurrentCount;
+    }
+
+    // update progress
+    if (myTestsTotal != 0) {
+      // if total is set
+      myStatusLine.setFraction((double)myTestsCurrentCount / myTestsTotal);
+    } else {
+      // just set progress in the middle to show user that tests are running
+      myStatusLine.setFraction(0.5);
+    }
+    updateStatusLabel();
+  }
+
+  private void updateCountersAndProgressOnTestFailed(final boolean isCustomMessage) {
+    if (!isModeConsistent(isCustomMessage)) return;
+
+    myTestsFailuresCount++;
+    updateStatusLabel();
+  }
+
+  private boolean isModeConsistent(boolean isCustomMessage) {
+    // check that we are in consistent mode
+    return isCustomMessage != (myCurrentCustomProgressCategory == null);
+  }
+
 
  private static class MyFocusTraversalPolicy extends FocusTraversalPolicy {
    final List<Component> myComponents;

@@ -9,6 +9,7 @@ import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Roman Chernyatchik
@@ -42,6 +44,7 @@ public class TestsPresentationUtil {
   @NonNls private static final String RESULTS_NO_TESTS = SMTestsRunnerBundle.message(
       "sm.test.runner.ui.tabs.statistics.columns.results.no.tests");
   @NonNls private static final String UNKNOWN_TESTS_COUNT = "<...>";
+  @NonNls static final String DEFAULT_TESTS_CATEGORY = "Tests";
 
 
   private TestsPresentationUtil() {
@@ -51,12 +54,42 @@ public class TestsPresentationUtil {
                                               final long endTime,
                                               final int testsTotal,
                                               final int testsCount,
-                                              final int failuresCount) {
+                                              final int failuresCount,
+                                              @Nullable final Set<String> allCategories) {
     final StringBuilder sb = new StringBuilder();
     if (endTime == 0) {
       sb.append(SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.running"));
     } else {
       sb.append(SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.done"));
+    }
+
+    if (allCategories != null) {
+      // if all categories is just one default tests category - let's do not add prefixes
+
+      if (allCategories.size() > 1
+          || (allCategories.size() == 1 && !DEFAULT_TESTS_CATEGORY.equals(allCategories.iterator().next()))) {
+
+        sb.append(' ');
+        boolean first = true;
+        for (String category : allCategories) {
+          if (StringUtil.isEmpty(category)) {
+            continue;
+          }
+
+          // separator
+          if (!first) {
+            sb.append(", ");
+
+          }
+
+          // first symbol - to lower case
+          final char firstChar = category.charAt(0);
+          sb.append(first ? firstChar : Character.toLowerCase(firstChar));
+
+          sb.append(category.substring(1));
+          first = false;
+        }
+      }
     }
 
     sb.append(' ').append(testsCount).append(' ');

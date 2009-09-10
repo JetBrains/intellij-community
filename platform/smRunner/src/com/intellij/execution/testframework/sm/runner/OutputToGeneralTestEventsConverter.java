@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Roman Chernyatchik
@@ -181,6 +182,37 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
+  private void fireOnTestFinished(final String testName, final int duration) {
+    // local variable is used to prevent concurrent modification
+    final GeneralTestEventsProcessor processor = myProcessor;
+    if (processor != null) {
+      processor.onTestFinished(testName, duration);
+    }
+  }
+
+  private void fireOnCustomProgressTestsCategory(@NotNull final String categoryName, int testsCount) {
+    final GeneralTestEventsProcessor processor = myProcessor;
+    if (processor != null) {
+      final boolean disableCustomMode = StringUtil.isEmpty(categoryName);
+      processor.onCustomProgressTestsCategory(disableCustomMode ? null : categoryName,
+                                              disableCustomMode ? 0 : testsCount);
+    }
+  }
+
+  private void fireOnCustomProgressTestStarted() {
+    final GeneralTestEventsProcessor processor = myProcessor;
+    if (processor != null) {
+      processor.onCustomProgressTestStarted();
+    }
+  }
+
+  private void fireOnCustomProgressTestFailed() {
+    final GeneralTestEventsProcessor processor = myProcessor;
+    if (processor != null) {
+      processor.onCustomProgressTestFailed();
+    }
+  }
+
   private void fireOnTestOutput(final String testName, final String text, final boolean stdOut) {
     // local variable is used to prevent concurrent modification
     final GeneralTestEventsProcessor processor = myProcessor;
@@ -202,14 +234,6 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     final GeneralTestEventsProcessor processor = myProcessor;
     if (processor != null) {
       processor.onTestsCountInSuite(count);
-    }
-  }
-
-  private void fireOnTestFinished(final String testName, final int duration) {
-    // local variable is used to prevent concurrent modification
-    final GeneralTestEventsProcessor processor = myProcessor;
-    if (processor != null) {
-      processor.onTestFinished(testName, duration);
     }
   }
 
@@ -236,6 +260,12 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     @NonNls private static final String ATTR_KEY_TEST_DURATION = "duration";
     @NonNls private static final String ATTR_KEY_LOCATION_URL = "location";
     @NonNls private static final String ATTR_KEY_STACKTRACE_DETAILS = "details";
+
+    @NonNls public static final String CUSTOM_STATUS = "customProgressStatus";
+    @NonNls private static final String ATTR_KEY_TEST_TYPE = "type";
+    @NonNls private static final String ATTR_KEY_TESTS_CATEGORY = "testsCategory";
+    @NonNls private static final String ATTR_VAL_TEST_STARTED = "testStarted";
+    @NonNls private static final String ATTR_VAL_TEST_FAILED = "testFailed";
 
     public void visitTestSuiteStarted(@NotNull final TestSuiteStarted suiteStarted) {
       final String locationUrl = suiteStarted.getAttributes().get(ATTR_KEY_LOCATION_URL);
@@ -324,6 +354,8 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
 
       if (KEY_TESTS_COUNT.equals(name)) {
         processTestCountInSuite(msg);
+      } else if (CUSTOM_STATUS.equals(name)) {
+        processCustomStatus(msg);
       } else {
         //Do nothing
       }
@@ -331,13 +363,38 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
 
     private void processTestCountInSuite(final ServiceMessage msg) {
       final String countStr = msg.getAttributes().get(ATTR_KEY_TEST_COUNT);
+      fireOnTestsCountInSuite(convertToInt(countStr));
+    }
+
+    private int convertToInt(String countStr) {
       int count = 0;
       try {
         count = Integer.parseInt(countStr);
       } catch (NumberFormatException ex) {
         LOG.error(ex);
       }
-      fireOnTestsCountInSuite(count);
+      return count;
+    }
+
+    private void processCustomStatus(final ServiceMessage msg) {
+      final Map<String,String> attrs = msg.getAttributes();
+      final String msgType = attrs.get(ATTR_KEY_TEST_TYPE);
+      if (msgType != null) {
+        if (msgType.equals(ATTR_VAL_TEST_STARTED)) {
+          fireOnCustomProgressTestStarted();
+        } else if (msgType.equals(ATTR_VAL_TEST_FAILED)) {
+          fireOnCustomProgressTestFailed();
+        }
+        return;
+      }
+      final String testsCategory = attrs.get(ATTR_KEY_TESTS_CATEGORY);
+      if (testsCategory != null) {
+        final String countStr = msg.getAttributes().get(ATTR_KEY_TEST_COUNT);
+        fireOnCustomProgressTestsCategory(testsCategory, convertToInt(countStr));
+
+        //noinspection UnnecessaryReturnStatement
+        return;
+      }
     }
   }
 }

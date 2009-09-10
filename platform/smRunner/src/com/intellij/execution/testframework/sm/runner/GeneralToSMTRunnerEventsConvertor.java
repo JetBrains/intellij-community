@@ -183,6 +183,31 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
     });
   }
 
+  public void onCustomProgressTestsCategory(@Nullable final String categoryName,
+                                            final int testCount) {
+    SMRunnerUtil.addToInvokeLater(new Runnable() {
+      public void run() {
+        fireOnCustomProgressTestsCategory(categoryName, testCount);
+      }
+    });
+  }
+
+  public void onCustomProgressTestStarted() {
+    SMRunnerUtil.addToInvokeLater(new Runnable() {
+      public void run() {
+        fireOnCustomProgressTestStarted();
+      }
+    });
+  }
+
+  public void onCustomProgressTestFailed() {
+    SMRunnerUtil.addToInvokeLater(new Runnable() {
+      public void run() {
+        fireOnCustomProgressTestFailed();
+      }
+    });
+  }
+
   public void onTestFailure(final String testName,
                             final String localizedMessage, final String stackTrace,
                             final boolean isTestError) {
@@ -374,6 +399,25 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
   private void fireOnSuiteFinished(final SMTestProxy suite) {
     for (SMTRunnerEventsListener listener : myEventsListeners) {
       listener.onSuiteFinished(suite);
+    }
+  }
+
+
+  private void fireOnCustomProgressTestsCategory(@Nullable final String categoryName, int testCount) {
+    for (SMTRunnerEventsListener listener : myEventsListeners) {
+      listener.onCustomProgressTestsCategory(categoryName, testCount);
+    }
+  }
+
+  private void fireOnCustomProgressTestStarted() {
+    for (SMTRunnerEventsListener listener : myEventsListeners) {
+      listener.onCustomProgressTestStarted();
+    }
+  }
+
+  private void fireOnCustomProgressTestFailed() {
+    for (SMTRunnerEventsListener listener : myEventsListeners) {
+      listener.onCustomProgressTestFailed();
     }
   }
 

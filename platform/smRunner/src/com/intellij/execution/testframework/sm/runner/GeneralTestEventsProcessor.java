@@ -26,4 +26,15 @@ public interface GeneralTestEventsProcessor extends Disposable {
   void onSuiteFinished(final String suiteName);
 
   void onUncapturedOutput(final String text, final Key outputType);
+
+  // Custom progress statistics
+
+  /**
+   * @param categoryName If isn't empty then progress statistics will use only custom start/failed events.
+   * If name is null statistics will be switched to normal mode
+   * @param testCount - 0 will be considered as unknown tests number
+   */
+  void onCustomProgressTestsCategory(@Nullable final String categoryName, final int testCount);
+  void onCustomProgressTestStarted();
+  void onCustomProgressTestFailed();
 }

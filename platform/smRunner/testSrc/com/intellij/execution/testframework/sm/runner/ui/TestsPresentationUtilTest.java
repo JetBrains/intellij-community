@@ -7,6 +7,7 @@ import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.UITestUtil;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,24 +32,55 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
 
   public void testProgressText() {
     assertEquals("Running: 10 of 1  Failed: 1  ",
-                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 1, 10, 1));
+                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 1, 10, 1, null));
     assertEquals("Running: 10 of 1  ",
-                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 1, 10, 0));
+                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 1, 10, 0, null));
     //here number format is platform-dependent
     assertEquals("Done: 10 of 1  (0 s)  ",
-                 TestsPresentationUtil.getProgressStatus_Text(5, 5, 1, 10, 0));
+                 TestsPresentationUtil.getProgressStatus_Text(5, 5, 1, 10, 0, null));
   }
 
   public void testProgressText_UnsetTotal() {
     assertEquals("Running: 0 of <...>  ",
-                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 0, 0));
+                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 0, 0, null));
     assertEquals("Running: 1 of <...>  Failed: 1  ",
-                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 1, 1));
+                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 1, 1, null));
     assertEquals("Running: 10 of <...>  Failed: 1  ",
-                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 10, 1));
+                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 10, 1, null));
     //here number format is platform-dependent
     assertEquals("Done: 10 of <...>  Failed: 1  (5 ms)  ",
-                 TestsPresentationUtil.getProgressStatus_Text(0, 5, 0, 10, 1));
+                 TestsPresentationUtil.getProgressStatus_Text(0, 5, 0, 10, 1, null));
+  }
+
+  public void testProgressText_Category() {
+    assertEquals("Running: 0 of <...>  ",
+                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 0, 0, new HashSet<String>()));
+
+    final HashSet<String> category = new HashSet<String>();
+
+    category.clear();
+    category.add("Scenarios");
+    assertEquals("Running: Scenarios 0 of <...>  ",
+                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 0, 0, category));
+
+    category.clear();
+    category.add("Scenarios");
+    category.add(TestsPresentationUtil.DEFAULT_TESTS_CATEGORY);
+    assertEquals("Running: Scenarios, tests 0 of <...>  ",
+                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 0, 0, category));
+
+    category.clear();
+    category.add("Cucumbers");
+    category.add("Tomatos");
+    category.add(TestsPresentationUtil.DEFAULT_TESTS_CATEGORY);
+    assertEquals("Running: Tests, tomatos, cucumbers 0 of <...>  ",
+                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 0, 0, category));
+
+    category.clear();
+    category.add(TestsPresentationUtil.DEFAULT_TESTS_CATEGORY);
+    assertEquals("Running: 0 of <...>  ",
+                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 0, 0, category));
+
   }
 
   public void testFormatTestProxyTest_NewTest() {

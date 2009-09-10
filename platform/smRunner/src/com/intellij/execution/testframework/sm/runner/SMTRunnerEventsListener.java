@@ -1,6 +1,7 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Roman Chernyatchik
@@ -30,4 +31,15 @@ public interface SMTRunnerEventsListener {
 
   void onSuiteFinished(@NotNull SMTestProxy suite);
   void onSuiteStarted(@NotNull SMTestProxy suite);
+
+  // Custom progress statistics
+
+  /**
+   * @param categoryName If isn't empty then progress statistics will use only custom start/failed events.
+   * If name is empty string statistics will be switched to normal mode
+   * @param testCount - 0 will be considered as unknown tests number
+   */
+  void onCustomProgressTestsCategory(@Nullable final String categoryName, final int testCount);
+  void onCustomProgressTestStarted();
+  void onCustomProgressTestFailed();
 }
