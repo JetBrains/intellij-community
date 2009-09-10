@@ -7,6 +7,7 @@ import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.JavaTestUtil;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -14,6 +15,11 @@ import org.jetbrains.annotations.NonNls;
  */
 public class ChangeClassSignatureTest extends LightCodeInsightTestCase {
   @NonNls private static final String DATA_PATH = "/refactoring/changeClassSignature/";
+
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
 
   protected Sdk getProjectJDK() {
     return JavaSdkImpl.getMockJdk15("java 1.5");
