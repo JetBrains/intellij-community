@@ -44,10 +44,10 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
     addProblemElement(refElement, true, descriptions);
   }
 
-  protected void addProblemElement(RefEntity refElement, boolean filterSuppresssed, CommonProblemDescriptor... descriptions) {
+  protected void addProblemElement(RefEntity refElement, boolean filterSuppressed, CommonProblemDescriptor... descriptions) {
     if (refElement == null) return;
     if (descriptions == null || descriptions.length == 0) return;
-    if (filterSuppresssed) {
+    if (filterSuppressed) {
       if (ourOutputPath == null || !(this instanceof LocalInspectionToolWrapper)) {
         CommonProblemDescriptor[] problems = getProblemElements().get(refElement);
         if (problems == null) {
