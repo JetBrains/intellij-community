@@ -72,27 +72,27 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
   @Override
   public ItemPresentation getPresentation() {
     final YAMLFile yamlFile = (YAMLFile)getContainingFile();
-      final PsiElement value = getValue();
-      if (YAMLUtil.isScalarValue(value)){
-        return new ItemPresentation() {
-          public String getPresentableText() {
-            return getValueText();
-          }
-
-          public String getLocationString() {
-            return "[" + yamlFile.getName() + "]";
-          }
-
-          public Icon getIcon(boolean open) {
-            return Icons.PROPERTY_ICON;
-          }
-
-          public TextAttributesKey getTextAttributesKey() {
-            return null;
-          }
-        };
+    final PsiElement value = getValue();
+    return new ItemPresentation() {
+      public String getPresentableText() {
+        if (YAMLUtil.isScalarValue(value)){
+          return getValueText();
+        }
+        return getName();
       }
-    return super.getPresentation();
+
+      public String getLocationString() {
+        return "[" + yamlFile.getName() + "]";
+      }
+
+      public Icon getIcon(boolean open) {
+        return Icons.PROPERTY_ICON;
+      }
+
+      public TextAttributesKey getTextAttributesKey() {
+        return null;
+      }
+    };
   }
 
   public PsiElement setName(@NonNls @NotNull String newName) throws IncorrectOperationException {
