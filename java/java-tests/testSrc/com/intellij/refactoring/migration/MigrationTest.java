@@ -33,11 +33,6 @@ public class MigrationTest extends MultiFileTestCase {
     })));
   }
 
-  public void testXmlRefs() throws Exception {
-    doTest(createAction(new MigrationMap(new MigrationMapEntry[]{
-      new MigrationMapEntry("qqq", "zzz.bbb", MigrationMapEntry.PACKAGE, true)
-    })));
-  }
 
 
 
