@@ -1,5 +1,6 @@
 package com.intellij.refactoring;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -280,4 +281,10 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
       return myInfos;
     }
   }
+
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
+
 }
