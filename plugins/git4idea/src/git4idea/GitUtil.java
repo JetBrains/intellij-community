@@ -19,6 +19,7 @@ package git4idea;
  * This code was originally derived from the MKS & Mercurial IDEA VCS plugins
  */
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -48,6 +49,7 @@ import java.util.*;
  * Git utility/helper methods
  */
 public class GitUtil {
+  private final static Logger LOG = Logger.getInstance("#git4idea.GitUtil");
 
   /**
    * A private constructor to suppress instance creation
@@ -637,6 +639,7 @@ public class GitUtil {
     parametersSpecifier.consume(h);
 
     String output = h.run();
+    LOG.debug("getLocalCommittedChanges output: '" + output + "'");
     StringScanner s = new StringScanner(output);
     while (s.hasMoreData() && s.startsWith('\u000C')) {
       s.nextLine();

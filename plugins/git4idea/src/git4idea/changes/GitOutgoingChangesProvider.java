@@ -1,5 +1,6 @@
 package git4idea.changes;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsOutgoingChangesProvider;
@@ -13,6 +14,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider {
+  private final static Logger LOG = Logger.getInstance("#git4idea.changes.GitOutgoingChangesProvider");
   private final Project myProject;
 
   public GitOutgoingChangesProvider(Project project) {
@@ -20,6 +22,7 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider {
   }
 
   public List getOutgoingChanges(final VirtualFile vcsRoot, final boolean findRemote) throws VcsException {
+    LOG.debug("getOutgoingChanges root: " + vcsRoot.getPath());
     final GitBranchesSearcher searcher = new GitBranchesSearcher(myProject, vcsRoot, findRemote);
     if (searcher.getLocal() == null || searcher.getRemote() == null) return Collections.emptyList();
 
