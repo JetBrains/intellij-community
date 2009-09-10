@@ -70,7 +70,7 @@ public class LazyRefreshingSelfQueue<T> {
     synchronized (myLock) {
       for (Pair<Long, T> pair : myQueue) {
         if (pair.getFirst() != null) {
-          onlyAbsolute = pair.getFirst() < startTime;
+          onlyAbsolute = pair.getFirst() > startTime;
           break;
         }
       }

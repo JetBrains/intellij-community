@@ -170,6 +170,7 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
   }
 
   public void plus(final Pair<String, AbstractVcs> pair) {
+    LOG.debug("add " + pair.getFirst());
     // does not support
     if (pair.getSecond().getDiffProvider() == null) return;
 
@@ -184,10 +185,12 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
     synchronized (myLock) {
       final Pair<VcsRoot, VcsRevisionNumber> value = myData.get(key);
       if (value == null) {
+        LOG.debug("adding new " + key);
         final LazyRefreshingSelfQueue<String> queue = getQueue(vcsRoot);
         myData.put(key, new Pair<VcsRoot, VcsRevisionNumber>(vcsRoot, NOT_LOADED));
         queue.addRequest(key);
       } else if (! value.getFirst().equals(vcsRoot)) {
+        LOG.debug("switch vcs " + key);
         switchVcs(value.getFirst(), vcsRoot, key);
       }
     }
@@ -213,6 +216,7 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
   }
 
   public void minus(Pair<String, AbstractVcs> pair) {
+    LOG.debug("minus " + pair.getFirst());
     // does not support
     if (pair.getSecond().getDiffProvider() == null) return;
     final VirtualFile root = getRootForPath(pair.getFirst());
@@ -221,6 +225,7 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
     final LazyRefreshingSelfQueue<String> queue;
     final String key = pair.getFirst();
     synchronized (myLock) {
+      LOG.debug("removing " + key);
       queue = getQueue(new VcsRoot(pair.getSecond(), root));
       myData.remove(key);
     }
