@@ -3,7 +3,6 @@
  */
 package com.intellij.refactoring;
 
-import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -13,11 +12,18 @@ import com.intellij.refactoring.makeStatic.MakeClassStaticProcessor;
 import com.intellij.refactoring.makeStatic.MakeStaticUtil;
 import com.intellij.refactoring.makeStatic.Settings;
 import com.intellij.refactoring.util.ParameterTablePanel;
+import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.JavaTestUtil;
 
 import java.util.ArrayList;
 
-public class MakeClassStaticTest extends CodeInsightTestCase {
+public class MakeClassStaticTest extends LightCodeInsightTestCase {
   private static final String TEST_ROOT = "/refactoring/makeClassStatic/";
+
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
 
   public void testSimple() throws Exception { perform(); }
 
@@ -56,7 +62,7 @@ public class MakeClassStaticTest extends CodeInsightTestCase {
     boolean addClassParameter = MakeStaticUtil.isParameterNeeded(aClass);
 
     new MakeClassStaticProcessor(
-            myProject,
+            getProject(),
             aClass,
             new Settings(true, addClassParameter ? "anObject" : null, null)).run();
     checkResultByFile(TEST_ROOT + getTestName(true) + "_after.java");
@@ -71,7 +77,7 @@ public class MakeClassStaticTest extends CodeInsightTestCase {
     final boolean addClassParameter = MakeStaticUtil.buildVariableData(aClass, parametersForFields);
 
     new MakeClassStaticProcessor(
-            myProject,
+            getProject(),
             aClass,
             new Settings(true, addClassParameter ? "anObject" : null,
                          parametersForFields.toArray(
