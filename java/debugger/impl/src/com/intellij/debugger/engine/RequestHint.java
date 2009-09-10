@@ -25,6 +25,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public class RequestHint {
   public static final int STOP = 0;
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.RequestHint");
@@ -61,7 +63,7 @@ public class RequestHint {
           return false;
         }
         final DebugProcessImpl process = context.getDebugProcess();
-        if (!myTargetMethodSignature.getName(process).equals(method.signature())) {
+        if (!signatureMatches(method, process)) {
           return false;
         }
         final ObjectReference thisObject = frameProxy.thisObject();
@@ -72,6 +74,24 @@ public class RequestHint {
         LOG.info(e);
       }
       return true;
+    }
+
+    private boolean signatureMatches(Method method, DebugProcessImpl process) throws EvaluateException {
+      final String expectedSignature = myTargetMethodSignature.getName(process);
+      if (expectedSignature.equals(method.signature())) {
+        return true;
+      }
+      // check if there are any bridge methods that match
+      final List<Method> methods = method.declaringType().methods();
+      for (Method m : methods) {
+        if (m == method) {
+          continue;
+        }
+        if (myTargetMethodName.equals(m.name()) && m.isBridge() && expectedSignature.equals(m.signature())) {
+          return true;
+        }
+      }
+      return false;
     }
   }
 
