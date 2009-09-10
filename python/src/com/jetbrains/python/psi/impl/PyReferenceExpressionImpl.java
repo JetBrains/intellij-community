@@ -17,7 +17,6 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.extensions.Extensions;
