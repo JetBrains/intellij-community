@@ -652,19 +652,6 @@
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="WeighingNewGroup"/>
     </action>
 
-    <group id="PropertyInspectorActions" text="InspectorActions">
-      <group id="PropertyInspectorActions.CommonActions">
-        <action id="PropertyInspectorActions.AddProperty" class="com.intellij.designer.inspector.impl.actions.AddPropertyAction"
-                text="Add Property" use-shortcut-of="Generate"/>
-        <action id="PropertyInspectorActions.RemoveProperty" class="com.intellij.designer.inspector.impl.actions.RemovePropertyAction"
-                text="Remove Property" use-shortcut-of="EditorDelete"/>
-      </group>
-
-      <action id="PropertyInspectorActions.EditValue" class="com.intellij.designer.inspector.impl.actions.EditPropertyAction"
-              text="Edit Property">
-        <keyboard-shortcut first-keystroke="ENTER" keymap="$default"/>
-      </action>
-    </group>
 
     <group id="DiffPanel.Toolbar.IDEA">
       <reference ref="Find"/>

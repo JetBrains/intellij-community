@@ -2036,9 +2036,6 @@
     <action id="Print">
       <keyboard-shortcut first-keystroke="control P" />
     </action>
-    <action id="PropertyInspectorActions.AddProperty">
-      <keyboard-shortcut first-keystroke="alt INSERT" />
-    </action>
     <action id="QuickJavaDoc">
       <mouse-shortcut keystroke="alt button2" />
       <keyboard-shortcut first-keystroke="shift control SPACE" />
