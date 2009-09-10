@@ -9,6 +9,7 @@ import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.containers.HashSet;
+import com.intellij.JavaTestUtil;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -81,7 +82,7 @@ public class ChangeSignaturePropagationTest extends CodeInsightTestCase {
     return "/refactoring/changeSignaturePropagation/";
   }
 
-  private ParameterInfoImpl[] generateParameterInfos (PsiMethod method, ParameterInfoImpl[] newParameters) {
+  private static ParameterInfoImpl[] generateParameterInfos (PsiMethod method, ParameterInfoImpl[] newParameters) {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     ParameterInfoImpl[] result = new ParameterInfoImpl[parameters.length + newParameters.length];
     for (int i = 0; i < parameters.length; i++) {
@@ -91,7 +92,7 @@ public class ChangeSignaturePropagationTest extends CodeInsightTestCase {
     return result;
   }
 
-  private ThrownExceptionInfo[] generateExceptionInfos (PsiMethod method, ThrownExceptionInfo[] newExceptions) {
+  private static ThrownExceptionInfo[] generateExceptionInfos (PsiMethod method, ThrownExceptionInfo[] newExceptions) {
     final PsiClassType[] exceptions = method.getThrowsList().getReferencedTypes();
     ThrownExceptionInfo[] result = new ThrownExceptionInfo[exceptions.length + newExceptions.length];
     for (int i = 0; i < exceptions.length; i++) {
@@ -100,4 +101,10 @@ public class ChangeSignaturePropagationTest extends CodeInsightTestCase {
     System.arraycopy(newExceptions, 0, result, exceptions.length, newExceptions.length);
     return result;
   }
+
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
+
 }
