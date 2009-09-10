@@ -137,7 +137,7 @@ public class FilePathImpl implements FilePath {
     if (pos < 0 || pos == path.indexOf(File.separatorChar)) {
       return null;
     }
-    return new FilePathImpl(new File(path.substring(0, pos)), false);
+    return new FilePathImpl(new File(path.substring(0, pos)), true);
   }
 
   public VirtualFile getVirtualFile() {
