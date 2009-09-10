@@ -15,9 +15,10 @@
  */
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.codeInsight.completion.CompletionService;
+import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.PrefixMatcher;
-import com.intellij.codeInsight.completion.CompletionService;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -107,7 +108,7 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
   }
 
   @NotNull
-  public static <T extends LookupElement> LookupElementDecorator<T> delegate(@NotNull T element, @NotNull final InsertHandlerDecorator<T> insertHandler) {
+  public static <T extends LookupElement> LookupElementDecorator<T> withInsertHandler(@NotNull T element, @NotNull final InsertHandler<LookupElementDecorator<T>> insertHandler) {
     return new InsertingDecorator<T>(element, insertHandler);
   }
 
@@ -123,9 +124,9 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
   }
 
   private static class InsertingDecorator<T extends LookupElement> extends LookupElementDecorator<T> {
-    private final InsertHandlerDecorator<T> myInsertHandler;
+    private final InsertHandler<LookupElementDecorator<T>> myInsertHandler;
 
-    public InsertingDecorator(T element, InsertHandlerDecorator<T> insertHandler) {
+    public InsertingDecorator(T element, InsertHandler<LookupElementDecorator<T>> insertHandler) {
       super(element);
       myInsertHandler = insertHandler;
     }

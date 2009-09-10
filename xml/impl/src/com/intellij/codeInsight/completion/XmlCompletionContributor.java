@@ -81,7 +81,7 @@ public class XmlCompletionContributor extends CompletionContributor {
                result.runRemainingContributors(parameters, new Consumer<LookupElement>() {
                  public void consume(LookupElement element) {
                    addWordVariants.set(false);
-                   result.addElement(LookupElementDecorator.delegate(element, QUOTE_EATER));
+                   result.addElement(LookupElementDecorator.withInsertHandler(element, QUOTE_EATER));
                  }
                });
                if (addWordVariants.get().booleanValue()) {

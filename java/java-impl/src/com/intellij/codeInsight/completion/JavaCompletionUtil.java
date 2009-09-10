@@ -884,7 +884,7 @@ public class JavaCompletionUtil {
   }
 
   private static LookupElementDecorator<LookupElement> castQualifier(final Project project, LookupElement item, final LookupElement to) {
-    return LookupElementDecorator.delegate(item, new InsertHandlerDecorator<LookupElement>() {
+    return LookupElementDecorator.withInsertHandler(item, new InsertHandlerDecorator<LookupElement>() {
       public void handleInsert(InsertionContext context, LookupElementDecorator<LookupElement> item) {
         final Document document = context.getEditor().getDocument();
         PsiDocumentManager.getInstance(project).commitDocument(document);

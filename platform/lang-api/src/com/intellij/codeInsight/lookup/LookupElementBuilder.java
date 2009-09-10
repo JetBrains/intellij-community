@@ -69,10 +69,6 @@ public class LookupElementBuilder extends LookupElement {
     return new LookupElementBuilder(ObjectUtils.assertNotNull(element.getName()), element);
   }
 
-  public static LookupElementBuilder create(@NotNull String lookupString, @NotNull Object lookupObject) {
-    return new LookupElementBuilder(lookupString, lookupObject);
-  }
-
   public static LookupElementBuilder create(@NotNull Object lookupObject, @NotNull String lookupString) {
     return new LookupElementBuilder(lookupString, lookupObject);
   }
@@ -177,11 +173,6 @@ public class LookupElementBuilder extends LookupElement {
     presentation.setTailText(tailText, grayed);
     return new LookupElementBuilder(myLookupString, myObject, myAutoCompletionPolicy, myInsertHandler, null, presentation,
                                     myAllLookupStrings, myCaseSensitive);
-  }
-
-  @Deprecated
-  public LookupElement createLookupElement() {
-    return this;
   }
 
   public AutoCompletionPolicy getAutoCompletionPolicy() {

@@ -10,6 +10,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class AntEndElementNameReference extends AntElementNameReference {
   private final TextRange myRange;
@@ -25,7 +26,8 @@ public class AntEndElementNameReference extends AntElementNameReference {
     return getElement();
   }
 
-  public Object[] getVariants() {
+  @NotNull
+  public LookupElement[] getVariants() {
     final AntStructuredElement element = getElement();
     final XmlTag xmlTag = element.getSourceElement();
     final String completionText = myIsTagClosed ? element.getSourceElement().getName() : element.getSourceElement().getName() + ">";
@@ -35,7 +37,7 @@ public class AntEndElementNameReference extends AntElementNameReference {
             return xmlTag;
           }
         };
-    return new LookupElement[] {LookupElementBuilder.create(completionText, wrapper).setAutoCompletionPolicy(
+    return new LookupElement[] {LookupElementBuilder.create(wrapper, completionText).setAutoCompletionPolicy(
         AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE)};
   }
 
