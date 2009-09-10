@@ -9,10 +9,16 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.refactoring.inlineSuperClass.InlineSuperClassRefactoringProcessor;
+import com.intellij.JavaTestUtil;
 
 public class InlineSuperClassTest extends MultiFileTestCase {
   protected String getTestRoot() {
     return "/refactoring/inlineSuperClass/";
+  }
+
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
   }
 
   protected Sdk getTestProjectJdk() {
