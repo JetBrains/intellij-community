@@ -95,10 +95,6 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
     if (project != null) {
       try {
-        if (ApplicationManager.getApplication().isDispatchThread()) {
-          ApplicationManager.getApplication().saveAll();
-        }
-
         final FilePath[] filePaths = myScopeInfo.getRoots(context, myActionInfo);
         final FilePath[] roots = filterDescindingFiles(filterRoots(filePaths, context), project);
         if (roots.length == 0) {
@@ -119,6 +115,9 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
           }
         }
 
+        if (ApplicationManager.getApplication().isDispatchThread()) {
+          ApplicationManager.getApplication().saveAll();
+        }
         Task.Backgroundable task = new Updater(project, roots, vcsToVirtualFiles);
         ProgressManager.getInstance().run(task);
       }
