@@ -23,6 +23,7 @@ import com.intellij.packaging.artifacts.ModifiableArtifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
+import com.intellij.packaging.impl.elements.ArchivePackagingElement;
 import com.intellij.packaging.ui.ManifestFileConfiguration;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
@@ -276,6 +277,17 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     final String oldDefaultPath = ArtifactUtil.getDefaultArtifactOutputPath(oldArtifactName, myProject);
     if (Comparing.equal(oldDefaultPath, getConfiguredOutputPath())) {
       setOutputPath(ArtifactUtil.getDefaultArtifactOutputPath(newArtifactName, myProject));
+      final CompositePackagingElement<?> root = getRootElement();
+      if (root instanceof ArchivePackagingElement) {
+        final String name = ((ArchivePackagingElement)root).getArchiveFileName();
+        final String fileName = FileUtil.getNameWithoutExtension(name);
+        final String extension = FileUtil.getExtension(name);
+        if (fileName.equals(oldArtifactName) && extension.length() > 0) {
+          myLayoutTreeComponent.ensureRootIsWritable();
+          ((ArchivePackagingElement)getRootElement()).setArchiveFileName(newArtifactName + "." + extension);
+          myLayoutTreeComponent.updateTreeNodesPresentation();
+        }
+      }
     }
   }
 

@@ -104,7 +104,7 @@ public class ArtifactConfigurable extends NamedConfigurable<Artifact> {
         final ArtifactType selected = (ArtifactType)artifactTypeBox.getSelectedItem();
         if (!Comparing.equal(selected, getArtifact().getArtifactType())) {
           final CompositePackagingElement<?> element = myEditor.getRootElement();
-          final CompositePackagingElement<?> newRootElement = selected.createRootElement();
+          final CompositePackagingElement<?> newRootElement = selected.createRootElement(getArtifact().getName());
           myArtifactsStructureContext.getModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact).setArtifactType(selected);
           if (!newRootElement.getType().equals(element.getType())) {
             ArtifactUtil.copyChildren(element, newRootElement, myArtifactsStructureContext.getProject());

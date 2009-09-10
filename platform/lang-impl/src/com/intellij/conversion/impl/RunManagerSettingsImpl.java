@@ -1,15 +1,14 @@
 package com.intellij.conversion.impl;
 
-import com.intellij.conversion.RunManagerSettings;
 import com.intellij.conversion.CannotConvertException;
+import com.intellij.conversion.RunManagerSettings;
 import com.intellij.ide.impl.convert.JDomConvertingUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -75,15 +74,4 @@ public class RunManagerSettingsImpl implements RunManagerSettings {
     return files;
   }
 
-  public void save() throws IOException {
-    if (myWorkspaceFile != null) {
-      myWorkspaceFile.save();
-    }
-    if (myProjectFile != null) {
-      myProjectFile.save();
-    }
-    for (SettingsXmlFile file : mySharedConfigurationFiles) {
-      file.save();
-    }
-  }
 }

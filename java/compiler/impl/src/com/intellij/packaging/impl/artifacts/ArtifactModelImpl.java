@@ -1,7 +1,7 @@
 package com.intellij.packaging.impl.artifacts;
 
-import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.artifacts.*;
+import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,8 +51,9 @@ public class ArtifactModelImpl extends ArtifactModelBase implements ModifiableAr
   public ModifiableArtifact addArtifact(@NotNull final String name, @NotNull ArtifactType artifactType) {
     final String outputPath = ArtifactUtil.getDefaultArtifactOutputPath(name, myArtifactManager.getProject());
 
-    final ArtifactImpl artifact = new ArtifactImpl(generateUniqueName(name), artifactType, false, artifactType.createRootElement(), 
-                                                   outputPath, true);
+    final String artifactName = generateUniqueName(name);
+    final CompositePackagingElement<?> rootElement = artifactType.createRootElement(artifactName);
+    final ArtifactImpl artifact = new ArtifactImpl(artifactName, artifactType, false, rootElement, outputPath, true);
     myOriginalArtifacts.add(artifact);
     myArtifact2ModifiableCopy.put(artifact, artifact);
     myModifiable2Original.put(artifact, artifact);

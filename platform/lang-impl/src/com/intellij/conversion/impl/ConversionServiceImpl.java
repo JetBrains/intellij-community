@@ -6,7 +6,6 @@ import com.intellij.conversion.ConversionService;
 import com.intellij.conversion.ConverterProvider;
 import com.intellij.conversion.impl.ui.ConvertProjectDialog;
 import com.intellij.ide.IdeBundle;
-import com.intellij.conversion.impl.ProjectConversionUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
@@ -81,7 +80,7 @@ public class ConversionServiceImpl extends ConversionService {
         runner.process();
         runner.postProcess();
       }
-      context.saveFiles();
+      context.saveFiles(affectedFiles);
       listener.successfullyConverted(backupDir);
       saveConversionResult(context);
       return true;
@@ -248,7 +247,7 @@ public class ConversionServiceImpl extends ConversionService {
           runner.convertModule(moduleFile);
         }
       }
-      context.saveFiles();
+      context.saveFiles(Collections.singletonList(moduleFile));
       Messages.showInfoMessage(project, IdeBundle.message("message.your.module.was.succesfully.converted.br.old.version.was.saved.to.0", backupFile.getAbsolutePath()),
                                IdeBundle.message("dialog.title.convert.module"));
       return true;

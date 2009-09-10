@@ -63,7 +63,7 @@ public abstract class ArtifactType {
   }
 
   @NotNull
-  public abstract CompositePackagingElement<?> createRootElement();
+  public abstract CompositePackagingElement<?> createRootElement(@NotNull String artifactName);
 
   public void checkRootElement(@NotNull CompositePackagingElement<?> rootElement, @NotNull Artifact artifact, @NotNull ArtifactValidationManager manager) {
   }

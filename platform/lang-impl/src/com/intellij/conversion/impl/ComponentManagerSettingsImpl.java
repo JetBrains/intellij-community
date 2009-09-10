@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * @author nik
@@ -34,10 +33,6 @@ public class ComponentManagerSettingsImpl implements ComponentManagerSettings {
 
   public Element getComponentElement(@NotNull @NonNls String componentName) {
     return mySettingsFile.findComponent(componentName);
-  }
-
-  public void save() throws IOException {
-    mySettingsFile.save();
   }
 
   public File getFile() {

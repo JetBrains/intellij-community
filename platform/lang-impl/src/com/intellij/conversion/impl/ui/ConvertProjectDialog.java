@@ -8,6 +8,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.HashSet;
 import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;
@@ -25,6 +26,7 @@ import java.util.Set;
  * @author nik
  */
 public class ConvertProjectDialog extends DialogWrapper {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.conversion.impl.ui.ConvertProjectDialog");
   private JPanel myMainPanel;
   private JTextPane myTextPane;
   private boolean myConverted;
@@ -106,14 +108,16 @@ public class ConvertProjectDialog extends DialogWrapper {
           runner.postProcess();
         }
       }
-      myContext.saveFiles();
+      myContext.saveFiles(myAffectedFiles);
       myConverted = true;
       super.doOKAction();
     }
     catch (CannotConvertException e) {
+      LOG.info(e);
       showErrorMessage(IdeBundle.message("error.cannot.convert.project", e.getMessage()));
     }
     catch (IOException e) {
+      LOG.info(e);
       showErrorMessage(IdeBundle.message("error.cannot.convert.project", e.getMessage()));
     }
   }

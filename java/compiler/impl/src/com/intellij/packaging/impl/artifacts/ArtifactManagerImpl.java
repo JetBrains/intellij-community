@@ -138,16 +138,17 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
         LOG.info("Unknown artifact type: " + state.getArtifactType());
         continue;
       }
-      
+
+      final String artifactName = state.getName();
       final CompositePackagingElement<?> rootElement;
       if (element != null) {
         rootElement = (CompositePackagingElement<?>)deserializeElement(element);
       }
       else {
-        rootElement = type.createRootElement();
+        rootElement = type.createRootElement(artifactName);
       }
 
-      final ArtifactImpl artifact = new ArtifactImpl(state.getName(), type, state.isBuildOnMake(), rootElement, state.getOutputPath(),
+      final ArtifactImpl artifact = new ArtifactImpl(artifactName, type, state.isBuildOnMake(), rootElement, state.getOutputPath(),
                                                      state.isClearOutputOnRebuild());
       final List<ArtifactPropertiesState> propertiesList = state.getPropertiesList();
       for (ArtifactPropertiesState propertiesState : propertiesList) {
