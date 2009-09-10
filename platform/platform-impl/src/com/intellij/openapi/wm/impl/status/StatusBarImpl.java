@@ -234,7 +234,7 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
 
   private void disposeAppLevelCustomComponents() {
     if (myCustomComponentsFactoryList != null) {
-      for (StatusBarCustomComponentFactory factory : myCustomComponentsFactoryList) {
+      for (StatusBarCustomComponentFactory<JComponent> factory : myCustomComponentsFactoryList) {
         try {
           JComponent c = myFactory2Component.get(factory);
           if (c != null) {
@@ -317,11 +317,10 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
   }
 
   public final void addCustomIndicationComponent(@NotNull JComponent c) {
-
     addCustomIndicationComponent(c, myCustomIndicationsPanel);
   }
 
-  private void addCustomIndicationComponent(final JComponent c, final JPanel indicationsPanel) {
+  private static void addCustomIndicationComponent(final JComponent c, final JPanel indicationsPanel) {
     final GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.fill = GridBagConstraints.BOTH;
     gbConstraints.weightx = 0;
@@ -337,7 +336,7 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     removeCustomIndicationComponent(component, myCustomIndicationsPanel);
   }
 
-  private void removeCustomIndicationComponent(final JComponent component, final JPanel indicationsPanel) {
+  private static void removeCustomIndicationComponent(final JComponent component, final JPanel indicationsPanel) {
     indicationsPanel.remove(component);
     if (indicationsPanel.getComponentCount() == 0) {
       indicationsPanel.setVisible(false);

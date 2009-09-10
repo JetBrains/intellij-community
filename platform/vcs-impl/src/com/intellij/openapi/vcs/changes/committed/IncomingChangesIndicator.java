@@ -14,8 +14,11 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.ide.DataManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,7 +81,7 @@ public class IncomingChangesIndicator implements ProjectComponent {
 
   private void refreshIndicator() {
     final List<CommittedChangeList> list = myCache.getCachedIncomingChanges();
-    if (list == null || list.size() == 0) {
+    if (list == null || list.isEmpty()) {
       debug("Refreshing indicator: no changes");
       myIndicatorComponent.clear();
       myIndicatorComponent.setToolTipText("");
@@ -95,18 +98,22 @@ public class IncomingChangesIndicator implements ProjectComponent {
     LOG.debug(message);
   }
 
-  private class IndicatorComponent extends SimpleColoredComponent {
-    public IndicatorComponent() {
+  private static class IndicatorComponent extends SimpleColoredComponent {
+    private IndicatorComponent() {
       addMouseListener(new MouseAdapter() {
         @Override
         public void mouseClicked(final MouseEvent e) {
           if (!e.isPopupTrigger()) {
-            ToolWindow changesView = ToolWindowManager.getInstance(myProject).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
-            changesView.show(new Runnable() {
-              public void run() {
-                ChangesViewContentManager.getInstance(myProject).selectContent("Incoming");
-              }
-            });
+            DataContext dataContext = DataManager.getInstance().getDataContext(IndicatorComponent.this);
+            final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+            if (project != null) {
+              ToolWindow changesView = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
+              changesView.show(new Runnable() {
+                public void run() {
+                  ChangesViewContentManager.getInstance(project).selectContent("Incoming");
+                }
+              });
+            }
           }
         }
       });
