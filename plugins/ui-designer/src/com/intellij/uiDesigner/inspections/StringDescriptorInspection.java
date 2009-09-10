@@ -1,15 +1,23 @@
 package com.intellij.uiDesigner.inspections;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.propertyInspector.properties.BorderProperty;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public abstract class StringDescriptorInspection extends BaseFormInspection {
-  private static final BorderProperty myBorderProperty = new BorderProperty(null);
+  private static final NotNullLazyValue<BorderProperty> myBorderProperty = new NotNullLazyValue<BorderProperty>() {
+    @NotNull
+    @Override
+    protected BorderProperty compute() {
+      return new BorderProperty(null);
+    }
+  };
 
   public StringDescriptorInspection(@NonNls String inspectionKey) {
     super(inspectionKey);
@@ -28,7 +36,7 @@ public abstract class StringDescriptorInspection extends BaseFormInspection {
       IContainer container = (IContainer) component;
       StringDescriptor descriptor = container.getBorderTitle();
       if (descriptor != null) {
-        checkStringDescriptor(module, component, myBorderProperty, descriptor, collector);
+        checkStringDescriptor(module, component, myBorderProperty.getValue(), descriptor, collector);
       }
     }
 
