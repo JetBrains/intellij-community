@@ -9,10 +9,16 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.JavaTestUtil;
 
 public class ExtractMethod15Test extends LightCodeInsightTestCase {
   private LanguageLevel myPreviousLanguageLevel;
   private static final String BASE_PATH = "/refactoring/extractMethod15/";
+
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
 
   protected void setUp() throws Exception {
     super.setUp();

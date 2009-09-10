@@ -13,6 +13,7 @@ import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.JavaTestUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
@@ -20,6 +21,12 @@ import java.util.List;
 public class ExtractMethodTest extends LightCodeInsightTestCase {
   @NonNls private static final String BASE_PATH = "/refactoring/extractMethod/";
   private boolean myCatchOnNewLine = true;
+
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
+
 
   public void testExitPoints1() throws Exception {
     doExitPointsTest(true);
