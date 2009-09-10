@@ -14,9 +14,16 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.JavaTestUtil;
 
 public abstract class FindMethodDuplicatesBaseTest extends LightCodeInsightTestCase {
   private LanguageLevel myPreviousLanguageLevel;
+
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
+  
 
   protected void setUp() throws Exception {
     super.setUp();
