@@ -5,9 +5,9 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.SourcePathsBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.notification.NotificationListener;
+import com.intellij.notification.Notifications;
+import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.impl.NotificationsManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -31,13 +31,13 @@ import com.intellij.psi.xml.XmlElement;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomModule;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.execution.MavenRunner;
+import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
+import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.indices.ArchetypeInfo;
 import org.jetbrains.idea.maven.project.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.execution.MavenRunner;
-import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
-import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.utils.MavenConstants;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -93,10 +93,8 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
         }
         catch (IOException e) {
           MavenLog.LOG.warn(e);
-          NotificationsManager.getNotificationsManager().notify("Cannot create " + MavenConstants.POM_XML + " " + root.getPath(),
-                                                                e.getMessage(),
-                                                                NotificationType.ERROR,
-                                                                NotificationListener.REMOVE);
+          Notifications.Bus.notify(new Notification("Maven", "Cannot create " + MavenConstants.POM_XML + " " + root.getPath(),
+                                                    e.getMessage(), NotificationType.ERROR), project);
           return;
         }
 

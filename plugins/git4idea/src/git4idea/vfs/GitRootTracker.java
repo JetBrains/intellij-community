@@ -17,6 +17,7 @@
 package git4idea.vfs;
 
 import com.intellij.ProjectTopics;
+import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -44,6 +45,7 @@ import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkEvent;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -87,10 +89,13 @@ public class GitRootTracker implements VcsListener {
    * If true, the notification is currently active and has not been dismissed yet.
    */
   private final AtomicBoolean myNotificationPosted = new AtomicBoolean(false);
+
+  private Notification myNotification;
+
   /**
    * The invalid git roots
    */
-  private static final String GIT_INVALID_ROOTS_ID = "GIT_INVALID_ROOTS";
+  private static final String GIT_INVALID_ROOTS_ID = "Git";
   /**
    * The command listener
    */
@@ -265,30 +270,28 @@ public class GitRootTracker implements VcsListener {
         if (!hasInvalidRoots) {
           // all roots are correct
           if (myNotificationPosted.compareAndSet(true, false)) {
-            final Notifications notifications = myProject.getMessageBus().syncPublisher(Notifications.TOPIC);
-            notifications.invalidateAll(GIT_INVALID_ROOTS_ID);
+            if (myNotification != null) {
+              if (!myNotification.isExpired()) {
+                myNotification.expire();
+              }
+
+              myNotification = null;
+            }
           }
           return;
         }
         if (myNotificationPosted.compareAndSet(false, true)) {
-          String title = GitBundle.message("root.tracker.message");
-          final Notifications notifications = myProject.getMessageBus().syncPublisher(Notifications.TOPIC);
-          notifications.notify(GIT_INVALID_ROOTS_ID, title, title, NotificationType.ERROR, new NotificationListener() {
-            @NotNull
-            public Continue perform() {
-              if (fixRoots()) {
-                myNotificationPosted.set(false);
-                return Continue.REMOVE;
+          myNotification = new Notification(GIT_INVALID_ROOTS_ID, "Invalid Git roots",
+                                            "<p>Some configured Git VCS roots are not under Git or have Git repsoitories in subdirectories without configured VCS root. <a href=\"\">Configure.</a></p>",
+                                            NotificationType.ERROR, new NotificationListener() {
+              public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+                if (fixRoots()) {
+                  notification.expire();
+                }
               }
-              else {
-                return Continue.LEAVE;
-              }
-            }
+            });
 
-            public Continue onRemove() {
-              return Continue.LEAVE;
-            }
-          });
+          Notifications.Bus.notify(myNotification, myProject);
         }
       }
     });

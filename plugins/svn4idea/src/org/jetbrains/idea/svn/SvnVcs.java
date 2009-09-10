@@ -34,10 +34,7 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.ide.FrameStateListener;
 import com.intellij.ide.FrameStateManager;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
+import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -104,6 +101,7 @@ import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLogAdapter;
 import org.tmatesoft.svn.util.SVNLogType;
 
+import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
@@ -337,32 +335,28 @@ public class SvnVcs extends AbstractVcs {
     }
   }
 
-  private final static String UPGRADE_SUBVERSION_FORMAT = "UPGRADE_SUBVERSION_FORMAT";
+  private final static String UPGRADE_SUBVERSION_FORMAT = "Subversion";
 
   private void upgradeToRecentVersion(final SvnConfiguration.SvnSupportOptions supportOptions) {
     if (! supportOptions.upgradeTo16Asked()) {
       final SvnWorkingCopyChecker workingCopyChecker = new SvnWorkingCopyChecker();
 
       if (workingCopyChecker.upgradeNeeded()) {
-        final Notifications notifications = myProject.getMessageBus().syncPublisher(Notifications.TOPIC);
-        notifications.register(UPGRADE_SUBVERSION_FORMAT, NotificationDisplayType.BALLOON, false);
-        final String title = SvnBundle.message("upgrade.format.to16.question.title");
-        notifications.notify(UPGRADE_SUBVERSION_FORMAT, title, title, NotificationType.INFORMATION, new NotificationListener() {
-          @NotNull
-          public Continue perform() {
-            final int upgradeAnswer = Messages.showYesNoDialog(SvnBundle.message("upgrade.format.to16.question.text",
-                SvnBundle.message("label.where.svn.format.can.be.changed.text", SvnBundle.message("action.show.svn.map.text"))),
-                SvnBundle.message("upgrade.format.to16.question.title"), Messages.getWarningIcon());
-            if (DialogWrapper.OK_EXIT_CODE == upgradeAnswer) {
-              workingCopyChecker.doUpgrade();
-            }
-            return Continue.REMOVE;
-          }
 
-          public Continue onRemove() {
-            return Continue.REMOVE;
-          }
-        });
+        Notifications.Bus.notify(new Notification(UPGRADE_SUBVERSION_FORMAT, SvnBundle.message("upgrade.format.to16.question.title"),
+                                                  "Old format Subversion working copies <a href=\"\">could be upgraded to version 1.6</a>.",
+                                                  NotificationType.INFORMATION, new NotificationListener() {
+            public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+              final int upgradeAnswer = Messages.showYesNoDialog(SvnBundle.message("upgrade.format.to16.question.text",
+                  SvnBundle.message("label.where.svn.format.can.be.changed.text", SvnBundle.message("action.show.svn.map.text"))),
+                  SvnBundle.message("upgrade.format.to16.question.title"), Messages.getWarningIcon());
+              if (DialogWrapper.OK_EXIT_CODE == upgradeAnswer) {
+                workingCopyChecker.doUpgrade();
+              }
+
+              notification.expire();
+            }
+          }));
       }
     }
   }

@@ -15,9 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.dsl;
 
-import com.intellij.notification.NotificationListener;
+import com.intellij.notification.Notifications;
+import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.impl.NotificationsManager;
+import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -52,6 +53,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
+import javax.swing.event.HyperlinkEvent;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
@@ -288,18 +290,17 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
       }
 
       final StackTraceElement[] elements = e.getStackTrace();
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(NotificationsManager.TOPIC)
-        .notify("Groovy DSL parsing", "DSL descriptor execution error", e.getMessage(), NotificationType.ERROR, new NotificationListener() {
-          @NotNull
-          public Continue perform() {
-            suggestAnalyzeTrace(project, elements);
-            return Continue.REMOVE;
-          }
 
-          public Continue onRemove() {
-            return Continue.REMOVE;
-          }
-        });
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(Notifications.TOPIC).notify(
+        new Notification("Groovy DSL parsing", "DSL descriptor execution error",
+                         "<p>" + e.getMessage() + "</p><p><a href=\"\">Click here to investigate.</a></p>", NotificationType.ERROR, new NotificationListener() {
+            public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+              suggestAnalyzeTrace(project, elements);
+              notification.expire();
+            }
+          })
+      );
+      
       disableFile(vfile);
       return null;
     }
