@@ -7,17 +7,26 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.inheritanceToDelegation.InheritanceToDelegationProcessor;
 import com.intellij.util.ArrayUtil;
+import com.intellij.JavaTestUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Arrays;
 
 /**
  * @author dsl
  */
 public class InheritanceToDelegationTest extends MultiFileTestCase {
   private LanguageLevel myPreviousLanguageLevel;
+
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
+
 
   protected void setUp() throws Exception {
     super.setUp();
@@ -133,9 +142,9 @@ public class InheritanceToDelegationTest extends MultiFileTestCase {
     final boolean delegateOtherMembers, final boolean generateGetter) {
     return new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
-        PsiClass aClass = myJavaFacade.findClass(className);
+        PsiClass aClass = myJavaFacade.findClass(className, GlobalSearchScope.projectScope(getProject()));
         assertNotNull("Class " + className + " not found", aClass);
-        PsiClass baseClass = myJavaFacade.findClass(baseClassName);
+        PsiClass baseClass = myJavaFacade.findClass(baseClassName, GlobalSearchScope.projectScope(getProject()));
         assertNotNull("Base class " + baseClassName + " not found", baseClass);
         final PsiMethod[] methods = baseClass.getMethods();
         final PsiMethod[] delegatedMethods = new PsiMethod[methodIndices.length];
@@ -145,7 +154,7 @@ public class InheritanceToDelegationTest extends MultiFileTestCase {
         final PsiClass[] delegatedInterfaces = new PsiClass[delegatedInterfaceNames.length];
         for (int i = 0; i < delegatedInterfaceNames.length; i++) {
           String delegatedInterfaceName = delegatedInterfaceNames[i];
-          PsiClass anInterface = myJavaFacade.findClass(delegatedInterfaceName);
+          PsiClass anInterface = myJavaFacade.findClass(delegatedInterfaceName, GlobalSearchScope.projectScope(getProject()));
           assertNotNull(anInterface);
           delegatedInterfaces[i] = anInterface;
         }
@@ -163,26 +172,22 @@ public class InheritanceToDelegationTest extends MultiFileTestCase {
     final boolean delegateOtherMembers, final boolean generateGetter) {
     return new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
-        PsiClass aClass = myJavaFacade.findClass(className);
+        PsiClass aClass = myJavaFacade.findClass(className, GlobalSearchScope.projectScope(getProject()));
         assertNotNull("Class " + className + " not found", aClass);
-        PsiClass baseClass = myJavaFacade.findClass(baseClassName);
+        PsiClass baseClass = myJavaFacade.findClass(baseClassName, GlobalSearchScope.projectScope(getProject()));
         assertNotNull("Base class " + baseClassName + " not found", baseClass);
         final PsiMethod[] delegatedMethods;
         final List<PsiMethod> methodsList = new ArrayList<PsiMethod>();
-        for (int i = 0; i < methodNames.length; i++) {
-          String name = methodNames[i];
+        for (String name : methodNames) {
           final PsiMethod[] methodsByName = baseClass.findMethodsByName(name, false);
-          for (int j = 0; j < methodsByName.length; j++) {
-            PsiMethod method = methodsByName[j];
-            methodsList.add(method);
-          }
+          methodsList.addAll(Arrays.asList(methodsByName));
         }
         delegatedMethods = methodsList.toArray(new PsiMethod[methodsList.size()]);
 
         final PsiClass[] delegatedInterfaces = new PsiClass[delegatedInterfaceNames.length];
         for (int i = 0; i < delegatedInterfaceNames.length; i++) {
           String delegatedInterfaceName = delegatedInterfaceNames[i];
-          PsiClass anInterface = myJavaFacade.findClass(delegatedInterfaceName);
+          PsiClass anInterface = myJavaFacade.findClass(delegatedInterfaceName, GlobalSearchScope.projectScope(getProject()));
           assertNotNull(anInterface);
           delegatedInterfaces[i] = anInterface;
         }
