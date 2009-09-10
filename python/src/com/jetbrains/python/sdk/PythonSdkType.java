@@ -345,20 +345,38 @@ public class PythonSdkType extends SdkType {
     return getPythonBinaryPath(sdkHome).getPath();
   }
 
+  /**
+   * Copies a number of resources as files to a temporary directory.
+   * @param resourceNames each file created will have the same name as the resource it's created from.
+   * @return the temporary directory
+   * @throws IOException if anything goes wrong.
+   */
+  private static File copyResourcesToTempDir(final String... resourceNames) throws IOException {
+    final File tempdir = FileUtil.createTempDirectory("pycharm", "");
+    for (final String resourceName : resourceNames) {
+      final String text = FileUtil.loadTextAndClose(new InputStreamReader(PythonSdkType.class.getResourceAsStream(resourceName)));
+      File target = new File(tempdir.getCanonicalPath(), resourceName);
+      FileWriter out = new FileWriter(target);
+      out.write(text);
+      out.close();
+    }
+    return tempdir;
+  }
+
+
+  private final static String GENERATOR3 = "generator3.py";
+  private final static String FIND_BINARIES = "find_binaries.py"; 
+
   public static void generateBuiltinStubs(String sdkPath, final String stubsRoot) {
     new File(stubsRoot).mkdirs();
     try {
-      final String text = FileUtil.loadTextAndClose(new InputStreamReader(PythonSdkType.class.getResourceAsStream("generator3.py")));
-      final File tempFile = FileUtil.createTempFile("gen", "");
 
-      FileWriter out = new FileWriter(tempFile);
-      out.write(text);
-      out.close();
+      final File tempDir = copyResourcesToTempDir(GENERATOR3, "pyparsing.py", "pyparsing_py3.py");
 
       GeneralCommandLine commandLine = new GeneralCommandLine();
       commandLine.setExePath(getInterpreterPath(sdkPath));    // python
 
-      commandLine.addParameter(tempFile.getAbsolutePath());   // gen.py
+      commandLine.addParameter(tempDir.getAbsolutePath() + File.separatorChar + GENERATOR3);
 
       commandLine.addParameter("-d"); commandLine.addParameter(stubsRoot); // -d stubs_root
       commandLine.addParameter("-b"); // for builtins
@@ -372,6 +390,7 @@ public class PythonSdkType extends SdkType {
       catch (ExecutionException e) {
         LOG.error(e);
       }
+      FileUtil.delete(tempDir);
     }
     catch (IOException e) {
       LOG.error(e);
@@ -394,23 +413,14 @@ public class PythonSdkType extends SdkType {
     try {
       final int RUN_TIMEOUT = 10*1000; // 10 seconds per call is plenty enough; anything more is clearly wrong.
       final String bin_path = getInterpreterPath(sdkPath);
-      String text;
-      FileWriter out;
-      
-      text = FileUtil.loadTextAndClose(new InputStreamReader(PythonSdkType.class.getResourceAsStream("find_binaries.py")));
-      final File find_bin_file = FileUtil.createTempFile("find_bin", "");
-      out = new FileWriter(find_bin_file);
-      out.write(text);
-      out.close();
 
-      text = FileUtil.loadTextAndClose(new InputStreamReader(PythonSdkType.class.getResourceAsStream("generator3.py")));
-      final File gen3_file = FileUtil.createTempFile("gen3", "");
-      out = new FileWriter(gen3_file);
-      out.write(text);
-      out.close();
+      final File tempDir = copyResourcesToTempDir(GENERATOR3, FIND_BINARIES, "pyparsing.py", "pyparsing_py3.py");
+
 
       try {
-        final ProcessOutput run_result = SdkUtil.getProcessOutput(sdkPath, new String[] {bin_path, find_bin_file.getPath()});
+        final ProcessOutput run_result = SdkUtil.getProcessOutput(
+          sdkPath, new String[] {bin_path, tempDir.getPath() + File.separatorChar + FIND_BINARIES}
+        );
 
         if (run_result.getExitCode() == 0) {
           for (String line : run_result.getStdoutLines()) {
@@ -424,13 +434,13 @@ public class PythonSdkType extends SdkType {
             File f_orig = new File(fname);
             File f_skel = new File(stubsRoot + File.separator + mod_fname + ".py");
             if (f_orig.lastModified() >= f_skel.lastModified()) {
-              // skeleton stale, rebuild
+              // stale skeleton, rebuild
               if (indicator != null) {
                 indicator.setText2(modname);
               }
               LOG.info("Skeleton for " + modname);
               final ProcessOutput gen_result = SdkUtil.getProcessOutput(sdkPath,
-                new String[] {bin_path, gen3_file.getPath(), "-d", stubsRoot, modname}, RUN_TIMEOUT
+                new String[] {bin_path, tempDir.getPath() + File.separatorChar + GENERATOR3, "-d", stubsRoot, modname}, RUN_TIMEOUT
               );
               if (gen_result.getExitCode() != 0) {
                 StringBuffer sb = new StringBuffer("Skeleton for ");
@@ -445,12 +455,11 @@ public class PythonSdkType extends SdkType {
         else {
           StringBuffer sb = new StringBuffer();
           for (String err_line : run_result.getStderrLines()) sb.append(err_line).append("\n");
-          LOG.error("failed to run find_binaries, exit code " + run_result.getExitCode() + ", stderr '" + sb.toString() + "'");
+          LOG.error("failed to run " + FIND_BINARIES + ", exit code " + run_result.getExitCode() + ", stderr '" + sb.toString() + "'");
         }
       }
       finally {
-        FileUtil.delete(find_bin_file);
-        FileUtil.delete(gen3_file);
+        FileUtil.delete(tempDir);
       }
     }
     catch (IOException e) {

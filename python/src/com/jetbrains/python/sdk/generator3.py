@@ -1,4 +1,5 @@
 # encoding: utf-8
+import re
 """
 This thing tries to restore public interface of objects that don't have a python
 source: C extensions and built-in objects. It does not reimplement the
@@ -10,8 +11,12 @@ we do not support some fancier things like metaclasses.
 We use certain kind of doc comments ("f(int) -> list") as a hint for functions'
 input and output, especially in builtin functions.
 
-This code has to work with CPython versions from 2.2 to 3.0, and hopefully with
+This code has to work with CPython versions from 2.4 to 3.0, and hopefully with
 compatible versions of Jython and IronPython.
+
+NOTE: Currently python 3 support is outright BROKEN, because bare asterisks and param decorators
+are not parsed. This is deliberate in current version, since the rest of PyCharm does not support
+all this too.
 """
 
 import sys
@@ -35,17 +40,10 @@ version = (
   (sys.hexversion & (0xff << 16)) >> 16
 )
 
-if version[0] == 1:
-  printable_chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~  \t\n\r\x0b\x0c'
-else:
-  printable_chars = string_mod.printable
-
-DIGITS = string_mod.digits
-
 if version[0] >= 3:
   import builtins as the_builtins
   string = "".__class__
-  LETTERS = string_mod.ascii_letters
+  #LETTERS = string_mod.ascii_letters
   STR_TYPES = (getattr(the_builtins, "bytes"), str)
   
   NUM_TYPES = (int, float)
@@ -60,7 +58,7 @@ if version[0] >= 3:
     
 else: # < 3.0
   import __builtin__ as the_builtins
-  LETTERS = string_mod.letters
+  #LETTERS = string_mod.letters
   STR_TYPES = (getattr(the_builtins, "unicode"), str)
   
   NUM_TYPES = (int, long, float)
@@ -72,10 +70,12 @@ else: # < 3.0
 
   def the_exec(source, context):
     exec (source) in context
-    
+
+BUILTIN_MOD_NAME = the_builtins.__name__
 
 #
 IDENT_PATTERN = "[A-Za-z_][0-9A-Za-z_]*" # re pattern for identifier
+NUM_IDENT_PATTERN = re.compile("([A-Za-z_]+)[0-9]?[A-Za-z_]*") # 'foo_123' -> $1 = 'foo_'
 STR_CHAR_PATTERN = "[0-9A-Za-z_.,\+\-&\*% ]" 
 
 DOC_FUNC_RE = re.compile("(?:.*\.)?(\w+)\(([^\)]*)\).*") # $1 = function name, $2 = arglist
@@ -88,14 +88,14 @@ STARS_IDENT_RE = re.compile("(\*?\*?" + IDENT_PATTERN + ")") # $1 = identifier, 
 
 IDENT_EQ_RE = re.compile("(" + IDENT_PATTERN + "\s*=)") # $1 = identifier with a following '='
 
-VAL_RE  = re.compile(
-  "(-?[0-9]+)|"+
-  "('" + STR_CHAR_PATTERN + "*')|"+
-  '("' + STR_CHAR_PATTERN + '*")|'+
+SIMPLE_VALUE_RE  = re.compile(
+  "([+-]?[0-9]+\.?[0-9]*(?:[Ee]?[+-]?[0-9]+\.?[0-9]*)?)|"+        # number
+  "('" + STR_CHAR_PATTERN + "*')|"+ # single-quoted string
+  '("' + STR_CHAR_PATTERN + '*")|'+ # double-quoted string
   "(\[\])|"+
   "(\{\})|"+
   "(\(\))|" +
-  "(None)"
+  "(True|False|None)"
 ) # $? = sane default value
 
 def _searchbases(cls, accum):
@@ -164,19 +164,38 @@ def isProperty(x):
 
 
 FAKE_CLASSOBJ_NAME = "___Classobj"
-BUILTIN_MOD_NAME = the_builtins.__name__
 
-def isSaneRValue(x):
-  return isinstance(x, EASY_TYPES)
-  
 def sanitizeIdent(x):
   "Takes an identifier and returns it sanitized"
-  if x in ("class", "object", "def", "self", "None"):
+  if x in ("class", "object", "def", "list", "tuple", "int", "float", "str", "unicode" "None"):
     return "p_" + x
   else:
-    return x
+    return x.replace("-", "_").replace(" ", "_") # for things like "list-or-tuple" or "list or tuple"
 
-doing_builtins = False
+def sanitizeValue(p_value):
+  "Returns p_value or its part if it represents a sane simple value, else returns 'None'"
+  if isinstance(p_value, STR_TYPES):
+    match = SIMPLE_VALUE_RE.match(p_value)
+    if match:
+      return match.groups()[match.lastindex-1]
+    else:
+      return 'None'
+  elif isinstance(p_value, NUM_TYPES):
+    return repr(p_value)  
+  elif p_value is None:
+    return 'None' 
+  else:
+    if hasattr(p_value, "__name__") and hasattr(p_value, "__module__") and p_value.__module__ == BUILTIN_MOD_NAME:
+      return p_value.__name__ # float -> "float"
+    else:
+      return repr(repr(p_value)) # function -> "<function ...>", etc  
+
+def extractAlphaPrefix(p_string, default="some"):
+  "Returns 'foo' for things like 'foo1' or 'foo2'; it prefix cannot be found, the default is returned"
+  match = NUM_IDENT_PATTERN.match(p_string)
+  name = match and match.groups()[match.lastindex-1] or None
+  return name or default
+
 
 class FakeClassObj:
   "A mock class representing the old style class base."
@@ -185,10 +204,200 @@ class FakeClassObj:
   def __init__(self):
     pass
 
+if version[0] < 3:
+  from pyparsing import *
+else:
+  from pyparsing_py3 import *
+  
+# grammar to parse parameter lists
+
+# // snatched from parsePythonValue.py, from pyparsing samples, copyright 2006 by Paul McGuire but under BSD license.
+# we don't suppress lots of punctuation becase we want it back when we reconstuct the lists
+
+lparen,rparen,lbrack,rbrack,lbrace,rbrace,colon = map(Literal,"()[]{}:")
+
+integer = Combine(Optional(oneOf("+ -")) + Word(nums))\
+    .setName("integer")
+real = Combine(Optional(oneOf("+ -")) + Word(nums) + "." +
+               Optional(Word(nums)) +
+               Optional(oneOf("e E")+Optional(oneOf("+ -")) +Word(nums)))\
+    .setName("real")
+tupleStr = Forward()
+listStr = Forward()
+dictStr = Forward()
+
+boolLiteral = oneOf("True False")
+noneLiteral = Literal("None")
+
+listItem = real|integer|quotedString|unicodeString|boolLiteral|noneLiteral| \
+            Group(listStr) | tupleStr | dictStr
+
+tupleStr << ( Suppress("(") + Optional(delimitedList(listItem)) +
+            Optional(Literal(",")) + Suppress(")") ).setResultsName("tuple")
+
+listStr << (lbrack + Optional(delimitedList(listItem) +
+            Optional(Literal(","))) + rbrack).setResultsName("list")
+
+dictEntry = Group( listItem + colon + listItem )
+dictStr << (lbrace + Optional(delimitedList(dictEntry) + Optional(Literal(","))) + rbrace).setResultsName("dict")
+# \\ end of the snatched part
+
+# our output format is s-expressions:
+# (simple name optional_value) is name or name=value
+# (nested (simple ...) (simple ...)) is (name, name,...)
+# (opt ...) is [, ...] or suchlike.
+
+T_SIMPLE = 'Simple'
+T_NESTED = 'Nested'
+T_OPTIONAL = 'Opt'
+
+TRIPLE_DOT = '...'
+
+COMMA = Suppress(",")
+APOS = Suppress("'")
+QUOTE = Suppress('"')
+SP = Suppress(Optional(White()))
+
+ident = Word(alphas+"_", alphanums+"_-").setName("ident") # we accept things like "foo-or-bar"
+decorated_ident = ident + Optional(Suppress(SP + Literal(":") + SP + ident)) # accept "foo: bar", ignore "bar"
+spaced_ident = Combine(decorated_ident + ZeroOrMore(Literal(' ') + decorated_ident)) # we accept 'list or tuple' or 'C struct'
+
+# allow quoted names, because __setattr__, etc docs use it
+paramname = spaced_ident | \
+            APOS + spaced_ident + APOS | \
+            QUOTE + spaced_ident + QUOTE
+
+initializer = (SP + Suppress("=") + SP + Combine(listItem | ident)).setName("=init") # accept foo=defaultfoo
+
+param = Group(Empty().setParseAction(replaceWith(T_SIMPLE)) + Combine(Optional(oneOf("* **"))+ paramname) + Optional(initializer))
+
+ellipsis = Group(
+  Empty().setParseAction(replaceWith(T_SIMPLE))+ \
+  (Literal("..") + \
+  ZeroOrMore(Literal('.'))).setParseAction(replaceWith(TRIPLE_DOT)) # we want to accept both 'foo,..' and 'foo, ...'
+)
+
+paramSlot = Forward()
+
+simpleParamSeq = ZeroOrMore(paramSlot + COMMA) + Optional(paramSlot + Optional(COMMA))
+nestedParamSeq = Group(
+  Suppress('(').setParseAction(replaceWith(T_NESTED)) + \
+  simpleParamSeq + Optional(ellipsis + Optional(COMMA) + Optional(simpleParamSeq)) + \
+  Suppress(')')
+) # we accept "(a1, ... an)"
+
+paramSlot << (param | nestedParamSeq)
+
+optionalPart = Forward()
+
+paramSeq = simpleParamSeq + Optional(optionalPart) # this is our approximate target 
+
+optionalPart << (
+  Group(
+    Suppress('[').setParseAction(replaceWith(T_OPTIONAL)) + Optional(COMMA) + \
+    paramSeq + Optional(ellipsis) + \
+    Suppress(']')
+  ) \
+  | ellipsis
+)
+
+# this is our ideal target, with balancing paren and a multiline rest of doc. 
+paramSeqAndRest = paramSeq + Suppress(')') + Suppress(Optional(Regex(".*(?s)"))) 
+
+def transformSeq(results, toplevel=True):
+  "Transforms a tree of ParseResults into a param spec string."
+  ret = [] # add here token to join
+  for token in results:
+    token_type = token[0]
+    if token_type is T_SIMPLE:
+      token_name = token[1]
+      if len(token) == 3: # name with value
+        if toplevel:
+          ret.append(sanitizeIdent(token_name) + "=" + sanitizeValue(token[2]))
+        else:
+          # smth like "a, (b1=1, b2=2)", make it "a, p_b"
+          return "p_" + results[0][1]
+      elif token_name == TRIPLE_DOT:
+        if toplevel and not hasItemStartingWith(ret, "*"):
+          ret.append("*more") # TODO check if *param is present already
+        else:
+          # we're in a "foo, (bar1, bar2, ...)"; make it "foo, bar_tuple"
+          return extractAlphaPrefix(results[0][1]) + "_tuple"
+      else: # just name
+        ret.append(sanitizeIdent(token_name))
+    elif token_type is T_NESTED:
+      ret.append(transformSeq(token[1:], False))
+    elif token_type is T_OPTIONAL:
+      ret.extend(transformOptionalSeq(token))
+    else:
+      raise Exception("This cannot be a token type: " + repr(token_type))
+  return ret
+
+def transformOptionalSeq(results):
+  """
+  Produces a string that describes the optional part of parameters.
+  @param results must start from T_OPTIONAL.
+  """
+  assert results[0] is T_OPTIONAL, "transformOptionalSeq expects a T_OPTIONAL node, sees " + repr(results[0])
+  ret = []
+  for token in results[1:]:
+    token_type = token[0]
+    if token_type is T_SIMPLE:
+      token_name = token[1]
+      if len(token) == 3: # name with value; little sense, but can happen in a deeply nested optional
+        ret.append(sanitizeIdent(token_name) + "=" + sanitizeValue(token[2]))
+      elif token_name == '...':
+        # we're in a "foo, [bar, ...]"; make it "foo, *bar"
+        return ["*" + extractAlphaPrefix(results[1][1])] # we must return a seq; [1] is first simple, [1][1] is its name
+      else: # just name
+        ret.append(sanitizeIdent(token_name)+ "=None")
+    elif token_type is T_OPTIONAL:
+      ret.extend(transformOptionalSeq(token))
+    # maybe handle T_NESTED if such cases ever occur in real life 
+    # it can't be nested in a sane case, really
+  return ret
+
+def flatten(seq):
+  "Transforms tree lists like ['a', ['b', 'c'], 'd'] to strings like '(a, (b, c), d)', enclosing each tree level in parens."
+  ret = []
+  for one in seq:
+    if type(one) is list:
+      ret.append(flatten(one))
+    else:
+      ret.append(one)
+  return "(" + ", ".join(ret) + ")"
+
+def makeNamesUnique(seq, name_map=None):
+  """
+  Returns a copy of tree list seq where all clashing names are modified by numeric suffixes:
+  ['a', 'b', 'a', 'b'] becomes ['a', 'b', 'a_1', 'b_1']. 
+  Each repeating name has its own counter in the name_map.
+  """
+  ret = []
+  if not name_map:
+    name_map = {}
+  for one in seq:
+    if type(one) is list:
+      ret.append(makeNamesUnique(one, name_map))
+    else:
+      if one in name_map:
+        old_one = one
+        one = one + "_" + str(name_map[old_one])
+        name_map[old_one] += 1
+      else:
+        name_map[one] = 1
+      ret.append(one)
+  return ret
+  
+def hasItemStartingWith(p_seq, p_start):
+  for item in p_seq:
+    if isinstance(item, STR_TYPES) and item.startswith(p_start):
+      return True
+  return False
 
 class ModuleRedeclarator(object):
   
-  def __init__(self, module, outfile, indent_size=4):
+  def __init__(self, module, outfile, indent_size=4, doing_builtins = False):
     """
     Create new instance.
     @param module module to restore.
@@ -201,6 +410,7 @@ class ModuleRedeclarator(object):
     self._indent_step = " " * indent_size
     self.imported_modules = {"": the_builtins}
     self._defined = {} # contains True for every name defined so far
+    self.doing_builtins = doing_builtins
     
     
   def indent(self, level):
@@ -210,11 +420,10 @@ class ModuleRedeclarator(object):
     
   def out(self, what, indent=0):
     "Output the argument, indenting as nedded, and adding a eol"
-    self.outfile.write(self.indent(indent));
-    self.outfile.write(what);
-    self.outfile.write("\n");
-    
-    
+    self.outfile.write(self.indent(indent))
+    self.outfile.write(what)
+    self.outfile.write("\n")
+
   def outDocstring(self, docstring, indent):
     if docstring is not None and isinstance(docstring, str):
       self.out('"""', indent)
@@ -240,7 +449,7 @@ class ModuleRedeclarator(object):
       "modules", "path_importer_cache", "argv", "builtins",
       "last_traceback", "last_type", "last_value",
     ),
-    "*":   ("__builtins__",)
+    "*":   (BUILTIN_MOD_NAME,)
   }
 
   # Some values are special and are better represented by hand-crafted constructs.
@@ -265,6 +474,9 @@ class ModuleRedeclarator(object):
     ("dict", "__init__"): "(self, seq=None, **kwargs)",
     (None, "min"): "(*args)",
     (None, "max"): "(*args)",
+    (None, "zip"): "(seq1, seq2, *more_seqs)",
+    (None, "range"): "(start=None, stop=None, step=None)", # suboptimal: allows empty arglist
+    (None, "filter"): "(function_or_none, sequence)",
   }
 
   if version[0] < 3:
@@ -273,6 +485,8 @@ class ModuleRedeclarator(object):
   else:
     PREDEFINED_BUILTIN_SIGS[("super", "__init__")] = "(self, type1=None, type2=None)"
 
+  if version == (2, 5):
+    PREDEFINED_BUILTIN_SIGS[("unicode", "splitlines")] = "(keepends=None)" # a typo in docstring there    
 
   # Some builtin classes effectively change __init__ signature without overriding it.
   # This callable serves as a placeholder to be replaced via REDEFINED_BUILTIN_SIGS
@@ -392,7 +606,117 @@ class ModuleRedeclarator(object):
                 notice = " # (!) real value is " + s
               self.out(prefix + "None" + postfix + notice, indent)        
         
-        
+
+  def seemsToHaveSelf(self, reqargs):
+    """"
+    @param requargs a list of required arguments of a method
+    @return true if param_name looks like a 'self' parameter
+    """
+    return reqargs and reqargs[0] == "self"
+
+  SIG_DOC_NOTE = "restored from __doc__"
+  SIG_DOC_UNRELIABLY = "NOTE: unreliably restored from __doc__ "
+
+  def restoreByDocString(self, signature_string, func_name, class_name):
+    """
+    @param signature_string: parameter list extracted from the doc string.
+    @param func_name: name of the function.
+    @param class_name: name of the containing class, or None
+    @return (reconstructed_spec, note) or (None, None) if failed.
+    """
+    # parse
+    parsing_failed = False
+    try:
+      # strict parsing
+      tokens = paramSeqAndRest.parseString(signature_string, True)
+    except ParseException:
+      # it did not parse completely; scavenge what we can
+      parsing_failed = True
+      tokens = [] 
+      try:
+        # most unrestrictive parsing 
+        tokens = paramSeq.parseString(signature_string, False)
+      except ParseException:
+        pass
+    #
+    seq = transformSeq(tokens)
+
+    # add safe defaults for unparsed
+    if parsing_failed:
+      note = self.SIG_DOC_UNRELIABLY
+      starred = None
+      double_starred = None
+      for one in seq:
+        if type(one) is str:
+          if one.startswith("**"):
+            double_starred = one
+          elif one.startswith("*"):
+            starred = one
+      if not starred:
+        seq.append("*args")
+      if not double_starred:
+        seq.append("**kwargs")
+    else:
+      note = self.SIG_DOC_NOTE
+
+    # add 'self' if needed
+    if class_name:
+      if self.KNOWN_DECORATORS.get((class_name, func_name), None) == "@static":
+        pass
+      elif not self.seemsToHaveSelf(seq) and func_name != "__new__":
+        seq.insert(0, "self")
+    seq = makeNamesUnique(seq)
+    return (func_name + flatten(seq), note)
+
+  def parseFuncDoc(self, func_doc, func_name, class_name):
+    """
+    @param func_doc: __doc__ of the function.
+    @param func_name: name of the function.
+    @param class_name: name of the containing class, or None
+    @return (reconstructed_spec, note) or (None, None) if failed.
+    """
+    # find the first thing to look like a definition
+    prefix_re = re.compile(func_name + "\s*\(") # "foo(..."
+    match = prefix_re.search(func_doc)
+    # parse the part that looks right
+    if match:
+      spec, note = self.restoreByDocString(func_doc[match.end():], func_name, class_name)
+      # if "NOTE" in note: 
+        # print "------\n", func_name, "@", match.end()
+        # print "------\n", func_doc
+        # print
+      return (spec, note)
+    else:
+      return (None, None)
+
+  def isPredefinedBuiltin(self, module_name, class_name, func_name):
+    return self.doing_builtins and module_name == BUILTIN_MOD_NAME and (class_name, func_name) in self.PREDEFINED_BUILTIN_SIGS
+
+  def restorePredefinedBuiltin(self, class_name, func_name):
+    spec = func_name + self.PREDEFINED_BUILTIN_SIGS[(class_name, func_name)]
+    note = "known special case of " + (class_name and class_name+"." or "") + func_name
+    return (spec, note)
+    
+  def restoreByInspect(self, p_func):
+    "Returns paramlist restored by inspect."
+    args, varg, kwarg, defaults = inspect.getargspec(p_func)
+    spec = []
+    if defaults:
+      dcnt = len(defaults)-1 
+    else:
+      dcnt = -1
+    args = args or []
+    args.reverse() # backwards, for easier defaults handling
+    for arg in args: 
+      if dcnt >= 0:
+        arg += "=" + sanitizeValue(defaults[dcnt])
+        dcnt -= 1
+      spec.insert(0, arg)
+    if varg:
+      spec.append("*" + varg)
+    if kwarg:
+      spec.append("**" + kwarg)
+    return flatten(spec)
 
   def redoFunction(self, p_func, p_name, indent, p_class=None, p_modname=None):
     """
@@ -403,55 +727,29 @@ class ModuleRedeclarator(object):
     @param p_class the class that contains this function as a method 
     """
 
-    def seemsToHaveSelf(reqargs):
-      """"
-      @param requargs a list of required arguments of a method
-      @return true if param_name looks like a 'self' parameter
-      """
-      if not reqargs:
-        return False
-      # handle special cases of builtins, like object.__new__
-      if doing_builtins and reqargs == ["S", "*more"]:
-        return True
-      else:
-        return reqargs[0] == "self" 
-
     # real work
     classname = p_class and p_class.__name__ or None
     # any decorators?
-    if doing_builtins and p_modname == BUILTIN_MOD_NAME:
+    if self.doing_builtins and p_modname == BUILTIN_MOD_NAME:
       deco = self.KNOWN_DECORATORS.get((classname, p_name), None)
       if deco:
-        self.out(deco + " # known case", indent);
+        self.out(deco + " # known case", indent)
     if p_name == "__new__":
-      self.out("@staticmethod # known case of __new__", indent);
+      self.out("@staticmethod # known case of __new__", indent)
     if inspect and inspect.isfunction(p_func):
-      args, varg, kwarg, defaults = inspect.getargspec(p_func)
-      spec = []
-      dcnt = defaults and len(defaults)-1 or -1
-      args = args or []
-      args.reverse() # backwards, for easier defaults handling
-      for arg in args: 
-        if dcnt >= 0:
-          arg += " = " + repr(defaults[dcnt])
-          dcnt -= 1
-        spec.insert(0, arg)
-      if varg:
-        spec.append("*" + varg)
-      if kwarg:
-        spec.append("**" + kwarg)
-      self.out("def " + p_name + "(" + ", ".join(spec) + "): # reliably restored by inspect", indent);
+      self.out("def " + p_name + self.restoreByInspect(p_func) +": # reliably restored by inspect", indent)
       self.outDocAttr(p_func, indent+1, p_class)
-      self.out("pass", indent+1);
-    elif doing_builtins and p_modname == BUILTIN_MOD_NAME and (classname, p_name) in self.PREDEFINED_BUILTIN_SIGS:
-      spec = self.PREDEFINED_BUILTIN_SIGS[(classname, p_name)]
-      self.out("def " + p_name + spec + ": # known special case of " + (classname and classname+"." or "") + p_name, indent)
+      self.out("pass", indent+1)
+    elif self.isPredefinedBuiltin(p_modname, classname, p_name):
+      spec, sig_note = self.restorePredefinedBuiltin(classname, p_name)
+      self.out("def " + spec + ": # " + sig_note, indent)
       self.outDocAttr(p_func, indent+1, p_class)
-      self.out("pass", indent+1);
+      self.out("pass", indent+1)
+
     else:
       # __doc__ is our best source of arglist
       sig_note = "real signature unknown"
-      spec = []
+      spec = ""
       is_init = (p_name == "__init__" and p_class is not None)
       funcdoc = None
       if is_init and hasattr(p_class, "__doc__"):
@@ -462,87 +760,24 @@ class ModuleRedeclarator(object):
       elif hasattr(p_func, "__doc__"):
         funcdoc = p_func.__doc__
       sig_restored = False
-      if isinstance(funcdoc, STR_TYPES):  
-        m = DOC_FUNC_RE.search(funcdoc)
-        if m:
-          matches = m.groups()
-          if matches[0] == p_name or is_init: 
-            # they seem to really mention what we need
-            sig_note = "restored from __doc__"
-            sig_restored = True
-            reqargs = []
-            optargs = []
-            optargvals = [] # values of optional args, "=x" or "", one per optarg
-            argmod = 1 # argument modifier counter for duplicate values
-            if len(matches) > 1:
-              argstr = matches[1]
-              # cut between fixed and optional args  
-              brk_cutpos = string.find(argstr, '[') # (a, b[, c]) 
-              if brk_cutpos < 0:
-                brk_cutpos = len(argstr)
-              star_cutpos = string.find(argstr, '*') # (a, *b) 
-              if star_cutpos < 0:
-                star_cutpos = len(argstr)
-              eq_cutpos = len(argstr)   
-              m = IDENT_EQ_RE.search(argstr) # (a, b=1)
-              if m:
-                eq_cutpos = m.start()
-              cutpos = min(star_cutpos, brk_cutpos, eq_cutpos) # before this point come required args, after it optional
-              # possible "required args" 
-              for arg in argstr[:cutpos].split(", "): 
-                arg = arg.strip("\"'") # doc might speak of f("foo")
-                m = IDENT_RE.search(arg)
-                if m and m.groups() and m.groups()[0]:
-                  argname = sanitizeIdent(m.groups(0)[0])
-                  if argname in reqargs:
-                    argname += str(argmod) # foo -> foo1, etc
-                    argmod += 1
-                  reqargs.append(argname)
-                elif arg == "...":
-                  arg = "*more" # doc might speak of f(x, ...)
-                  reqargs.append(arg)
-                  # else: skip the unknown thing
-              # possible "optional args" 
-              for arg in argstr[cutpos:].split(','):
-                m = STARS_IDENT_RE.search(arg)
-                if m and m.groups() and m.groups()[0]: # got default value?
-                  argname = sanitizeIdent(m.groups(0)[0])
-                  if argname in reqargs or argname in optargs:
-                    argname += str(argmod) # foo -> foo1, etc
-                    argmod += 1
-                  optargs.append(argname)
-                  if argname.startswith("*"):
-                    optargvals.append("") # "*x" args can't have default values
-                  else:
-                    mdef = VAL_RE.search(arg)
-                    if mdef:
-                      defval = arg[mdef.start() : mdef.end()]
-                    else:
-                      defval = 'None'
-                    optargvals.append("="+defval)
-              # we may be missng 'self' because doc comment omits it
-              if p_class:
-                if self.KNOWN_DECORATORS.get((classname, p_name), None) == "@static":
-                  pass
-                elif not reqargs or not seemsToHaveSelf(reqargs):
-                  reqargs.insert(0, "self")
-                else:
-                  if sig_note:
-                      sig_note += "; "
-                  sig_note += "considered " + reqargs[0] + " to be 'self'"
-            # reconstruct the spec
-            spec = reqargs + [n + v for (n, v) in zip(optargs, optargvals)]
-        else:
-          funcdoc = None
+      if isinstance(funcdoc, STR_TYPES):
+        (spec, more_notes) = self.parseFuncDoc(funcdoc, p_name, classname)
+        sig_restored = spec is not None
+        if more_notes:
+          if sig_note:
+            sig_note += "; "
+          sig_note += more_notes
       if not sig_restored:
         # use an allow-all declaration
+        decl = []
         if p_class:
-          spec.append("self")
-        spec.append("*args")
-        spec.append("**kwargs")
-      self.out("def " + p_name + "(" + ", ".join(spec) + "): # " + sig_note, indent);
+          decl.append("self")
+        decl.append("*args")
+        decl.append("**kwargs")
+        spec = p_name + "(" + ", ".join(decl) + ")"
+      self.out("def " + spec + ": # " + sig_note, indent)
       self.outDocstring(funcdoc, indent+1)
-      self.out("pass", indent+1);
+      self.out("pass", indent+1)
 
   def redoClass(self, p_class, p_name, indent, p_modname=None):
     """
@@ -555,7 +790,7 @@ class ModuleRedeclarator(object):
     base_def = ""
     if bases:
       base_def = "(" + ", ".join([x.__name__ for x in bases]) + ")"
-    self.out("class " + p_name + base_def + ":", indent);
+    self.out("class " + p_name + base_def + ":", indent)
     self.outDocAttr(p_class, indent+1)
     # inner parts
     if hasattr(p_class, "__dict__"):
@@ -592,7 +827,7 @@ class ModuleRedeclarator(object):
       #  
       for item_name in sortedNoCase(properties.keys()):
         item =  properties[item_name]
-        self.out(item_name + " =  property(None, None, None)", indent+1); # TODO: handle docstring
+        self.out(item_name + " =  property(None, None, None)", indent+1) # TODO: handle docstring
       if properties:
         self.out("", 0) # empty line after the block
       #
@@ -603,15 +838,14 @@ class ModuleRedeclarator(object):
         self.out("", 0) # empty line after the block
       #  
     if not methods and not properties and not others:
-      self.out("pass", indent+1);
-    
-    
+      self.out("pass", indent+1)
+
   def redo(self, p_name):
     """
     Restores module declarations.
     Intended for built-in modules and thus does not handle import statements. 
     """
-    self.out("# encoding: utf-8", 0); # NOTE: maybe encoding must be selectable
+    self.out("# encoding: utf-8", 0) # NOTE: maybe encoding should be selectable
     if hasattr(self.module, "__name__"):
       mod_name = " calls itself " + self.module.__name__
     else:
@@ -691,13 +925,13 @@ class ModuleRedeclarator(object):
         # output
         replacement = self.REPLACE_MODULE_VALUES.get((p_name, item_name), None)
         if replacement is not None:
-          self.out(item_name + " = " + replacement + " # real value of type "+ str(type(item)) + " replaced", 0);
+          self.out(item_name + " = " + replacement + " # real value of type "+ str(type(item)) + " replaced", 0)
         elif self.isSkippedInModule(p_name, item_name):
           self.out(item_name + " = None # real value of type "+ str(type(item)) + " skipped", 0)
         else:
           self.fmtValue(item, 0, prefix = item_name + " = " )
         self._defined[item_name] = True
-      self.out("", 0); # empty line after vars
+      self.out("", 0) # empty line after vars
     #
     if funcs:
       self.out("# functions", 0)
@@ -739,11 +973,11 @@ class ModuleRedeclarator(object):
         item = vars_complex[item_name]
         replacement = self.REPLACE_MODULE_VALUES.get((p_name, item_name), None)
         if replacement is not None:
-          self.out(item_name + " = " + replacement + " # real value of type "+ str(type(item)) + " replaced", 0);
+          self.out(item_name + " = " + replacement + " # real value of type "+ str(type(item)) + " replaced", 0)
         elif self.isSkippedInModule(p_name, item_name):
-          self.out(item_name + " = None # real value of type "+ str(type(item)) + " skipped", 0);
+          self.out(item_name + " = None # real value of type "+ str(type(item)) + " skipped", 0)
         else:
-          self.fmtValue(item, 0, prefix = item_name + " = " , as_name = item_name);
+          self.fmtValue(item, 0, prefix = item_name + " = " , as_name = item_name)
         self._defined[item_name] = True
         self.out("", 0) # empty line after each item
     
@@ -787,10 +1021,12 @@ if __name__ == "__main__":
   if '-b' in opts:
     doing_builtins = True
     names.extend(sys.builtin_module_names)
-    if not '__builtin__' in names:
-      names.append('__builtin__')
+    if not BUILTIN_MOD_NAME in names:
+      names.append(BUILTIN_MOD_NAME)
     if '__main__' in names:
       names.remove('__main__') # we don't want ourselves processed
+  else:
+    doing_builtins = False
   # go on
   for name in names:
     if not quiet:
@@ -802,12 +1038,17 @@ if __name__ == "__main__":
       dirname = subdir
       if dirname:
         dirname += os.path.sep # "a -> a/"
-      for pathindex in range(len(quals)-1): # create dirs for all quals but last
-        dirname += os.path.sep.join(quals[0 : pathindex+1])
-        if not os.path.isdir(dirname):
-          action = "creating subdir " + dirname
-          os.makedirs(dirname)
-      fname = dirname + os.path.sep + quals[-1] + ".py"
+      # for pathindex in range(len(quals)-1): # create dirs for all quals but last
+        # subdirname = dirname + os.path.sep.join(quals[0 : pathindex+1])
+        # if not os.path.isdir(subdirname):
+          # action = "creating subdir " + subdirname
+          # os.makedirs(subdirname)
+      target_dir = dirname + os.path.sep.join(quals[0 : len(quals)-1])
+      sys.stderr.write("target dir is " + repr(target_dir) + "\n")
+      if not os.path.isdir(target_dir):
+        action = "creating dir " + target_dir
+        os.makedirs(target_dir)
+      fname = target_dir + os.path.sep + quals[-1] + ".py"
       #
       action = "importing"
       try:
@@ -836,10 +1077,11 @@ if __name__ == "__main__":
       action = "opening " + fname
       outfile = fopen(fname, "w")
       action = "restoring"
-      r = ModuleRedeclarator(mod, outfile)
+      r = ModuleRedeclarator(mod, outfile, doing_builtins=doing_builtins)
       r.redo(name)
       action = "closing " + fname
       outfile.close()
     except:
       sys.stderr.write("Failed to process " + name + " while " + action + "\n")
+      raise
       continue
