@@ -53,6 +53,11 @@
     <orderEntry type="module" module-name="xml" />
     <orderEntry type="module" module-name="xml-openapi" />
     <orderEntry type="module" module-name="community-resources" />
+    <orderEntry type="module" module-name="java-tests" />
+    <orderEntry type="module" module-name="copyright" />
+    <orderEntry type="module" module-name="cvs-plugin" />
+    <orderEntry type="module" module-name="java-i18n" />
+    <orderEntry type="module" module-name="ui-designer" />
   </component>
 </module>
 

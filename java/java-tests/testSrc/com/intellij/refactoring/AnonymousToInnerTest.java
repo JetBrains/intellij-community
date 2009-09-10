@@ -1,5 +1,6 @@
 package com.intellij.refactoring;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
@@ -10,6 +11,11 @@ import com.intellij.refactoring.anonymousToInner.AnonymousToInnerHandler;
  */
 public class AnonymousToInnerTest extends CodeInsightTestCase {
   private static final String TEST_ROOT = "/refactoring/anonymousToInner/";
+
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
 
   @Override
   protected Sdk getTestProjectJdk() {
