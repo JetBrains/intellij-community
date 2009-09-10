@@ -4,6 +4,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.scopeChooser.EditScopesDialog;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.StripeTable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -83,7 +84,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     final JPanel localPanel = new JPanel(new BorderLayout());
     localPanel.setBorder(BorderFactory.createTitledBorder("Local colors:"));
     //localPanel.add(new JLabel("Local colors:"), BorderLayout.NORTH);
-    localPanel.add(BetterJTable.createStripedJScrollPane(myLocalTable), BorderLayout.CENTER);
+    localPanel.add(StripeTable.createScrollPane(myLocalTable), BorderLayout.CENTER);
     localPanel.add(Box.createVerticalStrut(10), BorderLayout.SOUTH);
     localPanel.add(buildButtons(myLocalTable, "Share", new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -110,7 +111,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     final JPanel sharedPanel = new JPanel(new BorderLayout());
     sharedPanel.setBorder(BorderFactory.createTitledBorder("Shared colors:"));
     //sharedPanel.add(new JLabel("Shared colors:"), BorderLayout.NORTH);
-    sharedPanel.add(BetterJTable.createStripedJScrollPane(mySharedTable), BorderLayout.CENTER);
+    sharedPanel.add(StripeTable.createScrollPane(mySharedTable), BorderLayout.CENTER);
     sharedPanel.add(buildButtons(mySharedTable, "Unshare", new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         unshare();

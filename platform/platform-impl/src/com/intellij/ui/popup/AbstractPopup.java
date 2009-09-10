@@ -431,6 +431,10 @@ public class AbstractPopup implements JBPopup {
     cancel(null);
   }
 
+  public void setRequestFocus(boolean requestFocus) {
+    myRequestFocus = requestFocus;
+  }
+
   public void cancel(InputEvent e) {
     if (isDisposed()) return;
 

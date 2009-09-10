@@ -166,4 +166,10 @@ public class Wrapper extends JPanel implements NullableComponent {
     }
   }
 
+  public static class North extends Wrapper {
+    public North(JComponent wrapped) {
+      super(new BorderLayout());
+      add(wrapped, BorderLayout.NORTH);
+    }
+  }
 }

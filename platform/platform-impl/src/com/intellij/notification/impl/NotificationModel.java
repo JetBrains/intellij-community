@@ -1,7 +1,10 @@
 package com.intellij.notification.impl;
 
+import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
-import com.intellij.util.NotNullFunction;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
+import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,65 +15,45 @@ import java.util.*;
 /**
  * @author spleaner
  */
-public class NotificationModel<T extends Notification> {
+public class NotificationModel {
 
-  private final List<T> myNotifications = ContainerUtil.createEmptyCOWList();
-  private final List<NotificationModelListener<T>> myListeners = ContainerUtil.createEmptyCOWList();
-  private final List<T> myArchive = ContainerUtil.createEmptyCOWList();
+  private final Map<Notification, Pair<Project, Boolean>> myNotifications = new LinkedHashMap<Notification, Pair<Project, Boolean>>();
+  private final List<NotificationModelListener> myListeners = ContainerUtil.createEmptyCOWList();
 
-  public void addListener(@NotNull final NotificationModelListener<T> listener) {
+  public void addListener(@NotNull final NotificationModelListener listener) {
     myListeners.add(listener);
   }
 
-  public void removeListener(@NotNull final NotificationModelListener<T> listener) {
+  public void removeListener(@NotNull final NotificationModelListener listener) {
     myListeners.remove(listener);
   }
 
-  public void add(@NotNull final T notification) {
-    myNotifications.add(0, notification);
-    for (NotificationModelListener<T> listener : myListeners) {
+  public void add(@NotNull final Notification notification, final @Nullable Project project) {
+    myNotifications.put(notification, Pair.create(project, false));
+    for (NotificationModelListener listener : myListeners) {
       listener.notificationsAdded(notification);
     }
   }
 
-  public void archive() {
+  public void markRead() {
     if (myNotifications.size() > 0) {
-      myArchive.addAll(myNotifications);
+      final Collection<Notification> tba = myNotifications.keySet();
+      for (final Map.Entry<Notification, Pair<Project, Boolean>> entry : myNotifications.entrySet()) {
+        entry.setValue(new Pair<Project, Boolean>(entry.getValue().first, true));
+      }
 
-      final T[] tba = myNotifications.toArray((T[])Array.newInstance(myNotifications.get(0).getClass(), myNotifications.size()));
-      myNotifications.clear();
-
-      for (final NotificationModelListener<T> listener : myListeners) {
-        listener.notificationsArchived(tba);
+      for (final NotificationModelListener listener : myListeners) {
+        listener.notificationsRead(tba.toArray(new Notification[tba.size()]));
       }
     }
   }
 
   @Nullable
-  public T remove(final int index, @NotNull NotNullFunction<T, Boolean> filter) {
-    final LinkedList<T> filtered = filterNotifications(filter);
-    if (filtered.size() > 0 && index >= 0 && index < filtered.size()) {
-      final T notification = filtered.get(index);
-      if (notification != null) {
-        myNotifications.remove(notification);
-
-        for (NotificationModelListener<T> listener : myListeners) {
-          listener.notificationsRemoved(notification);
-        }
-
-        return notification;
-      }
-    }
-
-    return null;
-  }
-
-  @Nullable
-  public T remove(@NotNull final T notification) {
-    if (myNotifications.contains(notification)) {
+  public Notification remove(@NotNull final Notification notification) {
+    if (myNotifications.containsKey(notification)) {
       myNotifications.remove(notification);
 
-      for (NotificationModelListener<T> listener : myListeners) {
+      for (NotificationModelListener listener : myListeners) {
         listener.notificationsRemoved(notification);
       }
     }
@@ -78,28 +61,25 @@ public class NotificationModel<T extends Notification> {
     return notification;
   }
 
-  public void remove(@NotNull final T... notifications) {
-    final List<T> tbr = new ArrayList<T>();
-    for (T notification : notifications) {
-      if (myNotifications.contains(notification)) {
+  public void remove(@NotNull final Notification... notifications) {
+    final List<Notification> tbr = new ArrayList<Notification>();
+    for (final Notification notification : notifications) {
+      if (myNotifications.containsKey(notification)) {
         tbr.add(notification);
         myNotifications.remove(notification);
-      } else if (myArchive.contains(notification)) {
-        tbr.add(notification);
-        myArchive.remove(notification);
       }
     }
 
     if (tbr.size() > 0) {
-      for (NotificationModelListener<T> listener : myListeners) {
-        listener.notificationsRemoved(tbr.toArray((T[])Array.newInstance(tbr.get(0).getClass(), tbr.size())));
+      for (NotificationModelListener listener : myListeners) {
+        listener.notificationsRemoved(tbr.toArray((Notification[])Array.newInstance(tbr.get(0).getClass(), tbr.size())));
       }
     }
   }
 
   @Nullable
-  public T get(final int index, @NotNull NotNullFunction<T, Boolean> filter) {
-    final LinkedList<T> filtered = filterNotifications(filter);
+  public Notification get(final int index, @NotNull PairFunction<Notification, Project, Boolean> filter) {
+    final LinkedList<Notification> filtered = filterNotifications(filter);
     if (index >= 0 && filtered.size() > index) {
       return filtered.get(index);
     }
@@ -107,29 +87,28 @@ public class NotificationModel<T extends Notification> {
     return null;
   }
 
-  private LinkedList<T> filterNotifications(@NotNull NotNullFunction<T, Boolean> filter) {
-    final LinkedList<T> result = new LinkedList<T>();
-    for (final T notification : myNotifications) {
-      if (filter.fun(notification)) {
-        result.add(notification);
+  private LinkedList<Notification> filterNotifications(@NotNull PairFunction<Notification, Project, Boolean> filter) {
+    final LinkedList<Notification> result = new LinkedList<Notification>();
+    for (final Map.Entry<Notification, Pair<Project, Boolean>> entry : myNotifications.entrySet()) {
+      if (filter.fun(entry.getKey(), entry.getValue().first)) {
+        result.addFirst(entry.getKey());
       }
     }
 
     return result;
   }
 
-
-  public int getCount(@NotNull NotNullFunction<T, Boolean> filter) {
+  public int getCount(@NotNull PairFunction<Notification, Project, Boolean> filter) {
     return filterNotifications(filter).size();
   }
 
-  public boolean isEmpty(@NotNull NotNullFunction<T, Boolean> filter) {
+  public boolean isEmpty(@NotNull PairFunction<Notification, Project, Boolean> filter) {
     return getCount(filter) == 0;
   }
 
   @Nullable
-  public T getFirst(@NotNull NotNullFunction<T, Boolean> filter) {
-    final LinkedList<T> result = filterNotifications(filter);
+  public Notification getFirst(@NotNull PairFunction<Notification, Project, Boolean> filter) {
+    final LinkedList<Notification> result = filterNotifications(filter);
     if (result.size() > 0) {
       return result.getFirst();
     }
@@ -137,53 +116,28 @@ public class NotificationModel<T extends Notification> {
     return null;
   }
 
-  public void clear(@NotNull NotNullFunction<T, Boolean> filter) {
-    final LinkedList<T> result = filterNotifications(filter);
-    for (final T notification : result) {
+  public void clear(@NotNull PairFunction<Notification, Project, Boolean> filter) {
+    final LinkedList<Notification> result = filterNotifications(filter);
+    for (final Notification notification : result) {
       myNotifications.remove(notification);
     }
 
-    final Collection<T> archive = getArchive(filter);
-    for (final T notification : archive) {
-      myArchive.remove(notification);
-    }
-
-    result.addAll(archive);
-
     if (!result.isEmpty()) {
-      final T[] removed = result.toArray((T[])Array.newInstance(result.get(0).getClass(), result.size()));
-      for (NotificationModelListener<T> listener : myListeners) {
+      final Notification[] removed = result.toArray((Notification[])Array.newInstance(result.get(0).getClass(), result.size()));
+      for (NotificationModelListener listener : myListeners) {
         listener.notificationsRemoved(removed);
       }
     }
   }
 
-  public List<T> getAll(@Nullable final String id, @NotNull NotNullFunction<T, Boolean> filter) {
-    if (id == null) {
-      return Collections.unmodifiableList(filterNotifications(filter));
-    }
-    else {
-      final List<T> result = new ArrayList<T>();
-      final LinkedList<T> filtered = filterNotifications(filter);
-      for (T notification : filtered) {
-        if (id.equals(notification.getId())) {
-          result.add(notification);
-        }
-      }
-
-      return result;
-    }
-  }
-
-
-  public List<T> getByType(@Nullable final NotificationType type, @NotNull NotNullFunction<T, Boolean> filter) {
+  public List<Notification> getByType(@Nullable final NotificationType type, @NotNull PairFunction<Notification, Project, Boolean> filter) {
     if (type == null) {
       return Collections.unmodifiableList(filterNotifications(filter));
     }
     else {
-      final List<T> result = new ArrayList<T>();
-      final LinkedList<T> filtered = filterNotifications(filter);
-      for (T notification : filtered) {
+      final List<Notification> result = new ArrayList<Notification>();
+      final LinkedList<Notification> filtered = filterNotifications(filter);
+      for (final Notification notification : filtered) {
         if (type == notification.getType()) {
           result.add(notification);
         }
@@ -193,24 +147,24 @@ public class NotificationModel<T extends Notification> {
     }
   }
 
-  public void invalidateAll(final String id, @NotNull NotNullFunction<T, Boolean> filter) {
-    if (id != null) {
-      final List<T> all = getAll(id, filter);
-      if (all.size() > 0) {
-        T[] a = (T[])Array.newInstance(all.get(0).getClass(), all.size());
-        remove(all.toArray(a));
-      }
-    }
+  public boolean wasRead(final Notification notification) {
+    final Pair<Project, Boolean> pair = myNotifications.get(notification);
+    return pair != null && pair.second;
   }
 
-  public Collection<T> getArchive(@NotNull NotNullFunction<T, Boolean> filter) {
-    final LinkedList<T> result = new LinkedList<T>();
-    for (final T notification : myArchive) {
-      if (filter.fun(notification)) {
-        result.add(notification);
-      }
-    }
+  public boolean hasUnread(final PairFunction<Notification, Project, Boolean> filter) {
+    return getUnreadCount(filter) > 0;
+  }
 
-    return Collections.unmodifiableList(result);
+  private int getUnreadCount(final PairFunction<Notification, Project, Boolean> filter) {
+    return filterNotifications(new PairFunction<Notification, Project, Boolean>() {
+      public Boolean fun(Notification notification, Project project) {
+        return filter.fun(notification, project) && !wasRead(notification);
+      }
+    }).size();
+  }
+
+  public boolean hasRead(PairFunction<Notification, Project, Boolean> filter) {
+    return getUnreadCount(filter) < myNotifications.size();
   }
 }

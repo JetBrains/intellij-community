@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
 import java.awt.event.InputEvent;
 
 /**
@@ -106,6 +105,10 @@ public interface JBPopup extends Disposable, LightweightWindow {
    */
   void cancel();
 
+  /**
+   * @param b true if popup should request focus
+   */
+  void setRequestFocus(final boolean b);
 
   /**
    * Cancels the popup as a response to some mouse action. All the subsequent mouse events originated from the event's point

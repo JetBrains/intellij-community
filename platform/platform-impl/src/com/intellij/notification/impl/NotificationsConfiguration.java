@@ -1,11 +1,13 @@
 package com.intellij.notification.impl;
 
+import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.messages.MessageBus;
@@ -14,16 +16,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 
 /**
  * @author spleaner
  */
 @State(name = "NotificationConfiguration",
-       storages = {
-         @Storage(id = "other", file = "$APP_CONFIG$/notifications.xml")
-       })
+       storages = {@Storage(id = "other", file = "$APP_CONFIG$/notifications.xml")})
 public class NotificationsConfiguration implements ApplicationComponent, Notifications, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.notification.impl.NotificationsConfiguration");
 
@@ -56,7 +55,7 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
 
   private void _remove(NotificationSettings[] toRemove) {
     for (final NotificationSettings settings : toRemove) {
-      myIdToSettingsMap.remove(settings.getComponentName());
+      myIdToSettingsMap.remove(settings.getGroupId());
     }
   }
 
@@ -65,7 +64,7 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
 
     Collections.sort(result, new Comparator<NotificationSettings>() {
       public int compare(NotificationSettings o1, NotificationSettings o2) {
-        return o1.getComponentName().compareToIgnoreCase(o2.getComponentName());
+        return o1.getGroupId().compareToIgnoreCase(o2.getGroupId());
       }
     });
 
@@ -73,9 +72,9 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
   }
 
   @Nullable
-  public static NotificationSettings getSettings(@NotNull final Notification notification) {
+  public static NotificationSettings getSettings(@NotNull final String groupId) {
     final NotificationsConfiguration configuration = getNotificationsConfiguration();
-    return configuration.myIdToSettingsMap.get(notification.getId());
+    return configuration.myIdToSettingsMap.get(groupId);
   }
 
   @NotNull
@@ -91,9 +90,9 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
     myIdToSettingsMap.clear();
   }
 
-  public void register(@NotNull final String id, @NotNull final NotificationDisplayType displayType, final boolean canDisable) {
+  public void register(@NotNull final String id, @NotNull final NotificationDisplayType displayType) {
     if (!myIdToSettingsMap.containsKey(id)) {
-      myIdToSettingsMap.put(id, new NotificationSettings(id, displayType, canDisable));
+      myIdToSettingsMap.put(id, new NotificationSettings(id, displayType));
     }
   }
 
@@ -101,25 +100,11 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
     return myIdToSettingsMap.containsKey(id);
   }
 
-  public void notify(@NotNull final String id,
-                     @NotNull final String name,
-                     @NotNull final String description,
-                     @NotNull final NotificationType type,
-                     @NotNull final NotificationListener handler) {
-    // do nothing
+  public void notify(@NotNull Notification notification) {
   }
 
-  public void notify(@NotNull final String id,
-                     @NotNull final String name,
-                     @NotNull final String description,
-                     @NotNull final NotificationType type,
-                     @NotNull final NotificationListener handler,
-                     @Nullable final Icon icon) {
-    // do nothing
-  }
-
-  public void invalidateAll(@NotNull final String id) {
-    // do nothing
+  public void notify(@NotNull Notification notification,
+                     @NotNull NotificationDisplayType defaultDisplayType) {
   }
 
   public Element getState() {
@@ -134,10 +119,11 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
   public void loadState(final Element state) {
     for (@NonNls Element child : (Iterable<? extends Element>)state.getChildren("notification")) {
       final NotificationSettings settings = NotificationSettings.load(child);
-      final String id = settings.getComponentName();
-      LOG.assertTrue(!myIdToSettingsMap.containsKey(id), String.format("Settings for '%s' already loaded!", id));
-
-      myIdToSettingsMap.put(id, settings);
+      if (settings != null) {
+        final String id = settings.getGroupId();
+        LOG.assertTrue(!myIdToSettingsMap.containsKey(id), String.format("Settings for '%s' already loaded!", id));
+        myIdToSettingsMap.put(id, settings);
+      }
     }
   }
 }

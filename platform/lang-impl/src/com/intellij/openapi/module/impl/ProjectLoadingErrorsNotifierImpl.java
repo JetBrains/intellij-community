@@ -1,7 +1,7 @@
 package com.intellij.openapi.module.impl;
 
 import com.intellij.CommonBundle;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -10,12 +10,14 @@ import com.intellij.openapi.module.ProjectLoadingErrorsNotifier;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.event.HyperlinkEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -68,25 +70,26 @@ public class ProjectLoadingErrorsNotifierImpl extends ProjectLoadingErrorsNotifi
     }
 
     final String invalidElements = getInvalidElementsString(descriptions);
-    final String errorText = ProjectBundle.message("error.message.configuration.cannot.load") + " " + invalidElements;
-    final NotificationListener listener = new NotificationListener() {
-      @NotNull
-      public Continue perform() {
-        final List<ConfigurationErrorDescription> validDescriptions = ContainerUtil.findAll(descriptions, new Condition<ConfigurationErrorDescription>() {
-          public boolean value(ConfigurationErrorDescription errorDescription) {
-            return errorDescription.isValid();
-          }
-        });
-        RemoveInvalidElementsDialog.showDialog(myProject, CommonBundle.getErrorTitle(), invalidElements, validDescriptions);
-        return Continue.REMOVE;
-      }
+    final String errorText = ProjectBundle.message("error.message.configuration.cannot.load") + " " + invalidElements + " <a href=\"\">Fix</a>";
 
-      public Continue onRemove() {
-        return Continue.LEAVE;
-      }
-    };
-    myProject.getMessageBus().syncPublisher(Notifications.TOPIC).notify("project-configuration-error", errorText, "",
-                                                                         NotificationType.ERROR, listener);
+    Notifications.Bus.notify(new Notification("Project Loading Error", "Error Loading Project", errorText, NotificationType.ERROR,
+                                              new NotificationListener() {
+                                                public void hyperlinkUpdate(@NotNull Notification notification,
+                                                                            @NotNull HyperlinkEvent event) {
+                                                  final List<ConfigurationErrorDescription> validDescriptions =
+                                                    ContainerUtil.findAll(descriptions, new Condition<ConfigurationErrorDescription>() {
+                                                      public boolean value(ConfigurationErrorDescription errorDescription) {
+                                                        return errorDescription.isValid();
+                                                      }
+                                                    });
+                                                  RemoveInvalidElementsDialog
+                                                    .showDialog(myProject, CommonBundle.getErrorTitle(), invalidElements,
+                                                                validDescriptions);
+
+                                                  notification.expire();
+                                                }
+                                              }), myProject);
+
   }
 
   private static String getInvalidElementsString(ConfigurationErrorDescription[] descriptions) {

@@ -1,5 +1,6 @@
 package com.intellij.notification.impl.actions;
 
+import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -9,14 +10,17 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.util.messages.MessageBus;
-import org.jetbrains.annotations.NotNull;
+
+import javax.swing.event.HyperlinkEvent;
 
 /**
  * @author spleaner
  */
 public class NotificationTestAction extends AnAction implements DumbAware {
+
+  public static final String TEST_GROUP_ID = "Test Notification";
+
   public NotificationTestAction() {
     super("Add Test Notification");
   }
@@ -35,17 +39,16 @@ public class NotificationTestAction extends AnAction implements DumbAware {
       type = NotificationType.INFORMATION;
     }
 
-    messageBus.syncPublisher(Notifications.TOPIC).notify("Idea.Test", "Test Notification", "Test Notification Description", type,
-        new NotificationListener() {
-          @NotNull
-          public Continue perform() {
-            final int i = Messages.showChooseDialog("Notification message", "Test", new String[]{"Leave", "Remove"}, "Remove", null);
-            return i == 1 ? Continue.REMOVE : Continue.LEAVE;
-          }
+    final NotificationListener listener = new NotificationListener() {
+      public void hyperlinkUpdate(Notification n, HyperlinkEvent e) {
+        n.expire();
+      }
+    };
 
-          public Continue onRemove() {
-            return Continue.REMOVE;
-          }
-        });
+    final Notification notification = new Notification(TEST_GROUP_ID, "This is a test notification",
+      "You can close this notification by clicking <a href=\"close\">this link</a>.",
+      type, listener);
+
+    messageBus.syncPublisher(Notifications.TOPIC).notify(notification);
   }
 }

@@ -2,6 +2,7 @@ package com.intellij.ui.tabs;
 
 import com.intellij.ui.FileColorManager;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.openapi.ui.StripeTable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -17,7 +18,7 @@ import java.util.List;
 /**
  * @author spleaner
  */
-public abstract class FileColorSettingsTable extends BetterJTable {
+public abstract class FileColorSettingsTable extends StripeTable {
   private static final int NAME_COLUMN = 0;
   private static final int COLOR_COLUMN = 1;
 

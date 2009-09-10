@@ -1,22 +1,24 @@
 package com.intellij.notification.impl;
 
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.Disposable;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationDisplayType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author spleaner
  */
-public class ProjectNotificationsComponent extends AbstractProjectComponent {
+public class ProjectNotificationsComponent implements Notifications, ProjectComponent {
+  private Project myProject;
+
   public ProjectNotificationsComponent(final Project project) {
-    super(project);
+    myProject = project;
   }
 
   public void projectOpened() {
@@ -24,13 +26,23 @@ public class ProjectNotificationsComponent extends AbstractProjectComponent {
       return;
     }
 
-    StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
-    myProject.getMessageBus().connect().subscribe(Notifications.TOPIC, statusBar.getNotificationArea());
+    myProject.getMessageBus().connect().subscribe(TOPIC, this);
     Disposer.register(myProject, new Disposable() {
       public void dispose() {
-        NotificationsManager.getNotificationsManager().clear(myProject);
+        NotificationsManagerImpl.getNotificationsManagerImpl().clear(myProject);
       }
     });
+  }
+
+  public void notify(@NotNull Notification notification) {
+    NotificationsManagerImpl.getNotificationsManagerImpl().doNotify(notification, null, myProject);
+  }
+
+  public void notify(@NotNull Notification notification, @NotNull NotificationDisplayType defaultDisplayType) {
+    NotificationsManagerImpl.getNotificationsManagerImpl().doNotify(notification, defaultDisplayType, myProject);
+  }
+
+  public void projectClosed() {
   }
 
   private static boolean isDummyEnvironment() {
@@ -41,5 +53,12 @@ public class ProjectNotificationsComponent extends AbstractProjectComponent {
   @NotNull
   public String getComponentName() {
     return "Project Notifications";
+  }
+
+  public void initComponent() {
+  }
+
+  public void disposeComponent() {
+    myProject = null;
   }
 }

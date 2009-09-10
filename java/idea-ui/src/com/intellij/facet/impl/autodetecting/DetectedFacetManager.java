@@ -6,17 +6,16 @@ package com.intellij.facet.impl.autodetecting;
 
 import com.intellij.ProjectTopics;
 import com.intellij.facet.*;
-import com.intellij.facet.autodetecting.FacetDetector;
 import com.intellij.facet.autodetecting.DetectedFacetPresentation;
+import com.intellij.facet.autodetecting.FacetDetector;
 import com.intellij.facet.impl.autodetecting.facetsTree.DetectedFacetsDialog;
 import com.intellij.facet.impl.autodetecting.model.DetectedFacetInfo;
 import com.intellij.facet.impl.autodetecting.model.FacetInfo2;
 import com.intellij.facet.impl.autodetecting.model.ProjectFacetInfoSet;
-import com.intellij.notification.Notifications;
+import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.NotificationListener;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
@@ -25,14 +24,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -40,7 +40,7 @@ import java.util.*;
  * @author nik
  */
 public class DetectedFacetManager implements Disposable {
-  @NonNls private static final String NOTIFICATION_ID = "facets-detected";
+  @NonNls private static final String NOTIFICATION_ID = "Facet Detector";
   private static final int NOTIFICATION_DELAY = 200;
   private final Project myProject;
   private final FacetAutodetectingManagerImpl myAutodetectingManager;
@@ -95,7 +95,7 @@ public class DetectedFacetManager implements Disposable {
 
           myPendingNewFacets.addAll(added);
           if (clearNotifications) {
-            getNotifications().invalidateAll(NOTIFICATION_ID);
+            //getNotifications().invalidateAll(NOTIFICATION_ID);
           }
           queueNotificationPopup();
         }
@@ -153,8 +153,8 @@ public class DetectedFacetManager implements Disposable {
         name = ProjectBundle.message("notification.name.0.facets.detected", filesMap.size());
         description = "";
       }
-      getNotifications().notify(NOTIFICATION_ID, name, description, NotificationType.INFORMATION,
-                                                                           new MyNotificationListener(detectedFacetInfos));
+
+      Notifications.Bus.notify(new Notification(NOTIFICATION_ID, name, description , NotificationType.INFORMATION), myProject);
     }
     else {
       myPendingNewFacets.addAll(newFacets);
@@ -346,23 +346,23 @@ public class DetectedFacetManager implements Disposable {
     }
   }
 
-  private class MyNotificationListener implements NotificationListener {
-    private final Set<DetectedFacetInfo<Module>> myDetectedFacetInfos;
-
-    public MyNotificationListener(Set<DetectedFacetInfo<Module>> detectedFacetInfos) {
-      myDetectedFacetInfos = detectedFacetInfos;
-    }
-
-    @NotNull
-    public Continue perform() {
-      if (showImplicitFacetsDialog()) {
-        return Continue.REMOVE;
-      }
-      return Continue.LEAVE;
-    }
-
-    public Continue onRemove() {
-      return Continue.REMOVE;
-    }
-  }
+  //private class MyNotificationListener implements NotificationListener {
+  //  private final Set<DetectedFacetInfo<Module>> myDetectedFacetInfos;
+  //
+  //  public MyNotificationListener(Set<DetectedFacetInfo<Module>> detectedFacetInfos) {
+  //    myDetectedFacetInfos = detectedFacetInfos;
+  //  }
+  //
+  //  @NotNull
+  //  public Continue perform() {
+  //    if (showImplicitFacetsDialog()) {
+  //      return Continue.REMOVE;
+  //    }
+  //    return Continue.LEAVE;
+  //  }
+  //
+  //  public Continue onRemove() {
+  //    return Continue.REMOVE;
+  //  }
+  //}
 }

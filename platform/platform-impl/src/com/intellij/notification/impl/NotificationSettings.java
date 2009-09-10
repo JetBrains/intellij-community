@@ -11,26 +11,16 @@ import org.jetbrains.annotations.Nullable;
 public class NotificationSettings {
 
   private NotificationDisplayType myDisplayType;
-  private boolean myCanDisable;
-  private String myComponentName;
-  private boolean myEnabled;
+  private String myGroupId;
 
-  public NotificationSettings(final String componentName, final NotificationDisplayType displayType,
-                              final boolean canDisable) {
-    this(componentName, displayType, true, canDisable);
-  }
-
-  public NotificationSettings(final String componentName, final NotificationDisplayType displayType, final boolean enabled,
-                              final boolean canDisable) {
-    myComponentName = componentName;
+  public NotificationSettings(final String groupId, final NotificationDisplayType displayType) {
+    myGroupId = groupId;
     myDisplayType = displayType;
-    myEnabled = enabled;
-    myCanDisable = canDisable;
   }
 
  @NotNull
-  public String getComponentName() {
-    return myComponentName;
+  public String getGroupId() {
+    return myGroupId;
   }
 
   @NotNull
@@ -38,15 +28,8 @@ public class NotificationSettings {
     return myDisplayType;
   }
 
-  public boolean isCanDisable() {
-    return myCanDisable;
-  }
-
   @Nullable
   public static NotificationSettings load(@NotNull final Element element) {
-    final String enabledValue = element.getAttributeValue("enabled");
-    final boolean enabled = enabledValue == null || Boolean.valueOf(enabledValue).booleanValue();
-
     final String displayTypeString = element.getAttributeValue("displayType");
     NotificationDisplayType displayType = NotificationDisplayType.BALLOON;
     if (displayTypeString != null) {
@@ -58,29 +41,18 @@ public class NotificationSettings {
       }
     }
 
-    return new NotificationSettings(element.getAttributeValue("component"),
-        displayType,
-        enabled, Boolean.valueOf(element.getAttributeValue("canDisable")).booleanValue());
+    final String groupId = element.getAttributeValue("groupId");
+    return groupId != null ? new NotificationSettings(groupId, displayType) : null;
   }
 
   @NotNull
   public Element save() {
     final Element result = new Element("notification");
 
-    result.setAttribute("component", getComponentName());
+    result.setAttribute("groupId", getGroupId());
     result.setAttribute("displayType", getDisplayType().toString());
-    result.setAttribute("canDisable", Boolean.valueOf(isCanDisable()).toString());
-    result.setAttribute("enabled", Boolean.valueOf(isEnabled()).toString());
 
     return result;
-  }
-
-  public boolean isEnabled() {
-    return myEnabled;
-  }
-
-  public void setEnabled(final boolean b) {
-    myEnabled = b;
   }
 
   public void setDisplayType(final NotificationDisplayType displayType) {

@@ -30,6 +30,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.plaf.ProgressBarUI;
@@ -895,6 +897,20 @@ public class UIUtil {
 
   public static Color getBorderSeparatorColor() {
     return SEPARATOR_COLOR;
+  }
+
+  public static HTMLEditorKit getHTMLEditorKit() {
+    final HTMLEditorKit kit = new HTMLEditorKit();
+
+    Font font = UIManager.getFont("Label.font");
+    @NonNls String family = font != null ? font.getFamily() : "Tahoma";
+    int size = font != null ? font.getSize() : 11;
+
+    final StyleSheet styleSheet = kit.getStyleSheet();
+    styleSheet.addRule(String.format("body, div, p { font-family: %s; font-size: %s; } p { margin-top: 0; }", family, size));
+    kit.setStyleSheet(styleSheet);
+
+    return kit;
   }
 
   public static void removeScrollBorder(final Component c) {

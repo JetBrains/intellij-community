@@ -101,7 +101,8 @@
     </component>    
 
     <component>
-      <implementation-class>com.intellij.notification.impl.NotificationsManager</implementation-class>
+      <interface-class>com.intellij.notification.NotificationsManager</interface-class>
+      <implementation-class>com.intellij.notification.impl.NotificationsManagerImpl</implementation-class>
     </component>
   </application-components>
 

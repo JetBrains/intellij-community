@@ -1,12 +1,13 @@
 package com.intellij.notification.impl;
 
 import org.jetbrains.annotations.NotNull;
+import com.intellij.notification.Notification;
 
 /**
  * @author spleaner
  */
-public interface NotificationModelListener<T extends Notification> {
-  void notificationsAdded(@NotNull final T... notification);
-  void notificationsRemoved(@NotNull final T... notification);
-  void notificationsArchived(@NotNull final T... notification);
+public interface NotificationModelListener {
+  void notificationsAdded(@NotNull Notification... notification);
+  void notificationsRemoved(@NotNull Notification... notification);
+  void notificationsRead(@NotNull Notification... notification);
 }

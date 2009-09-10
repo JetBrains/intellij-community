@@ -5,7 +5,18 @@ package com.intellij.notification;
  */
 public enum NotificationDisplayType {
 
-  BALLOON,
-  ICON
+  NONE("Ignore"),
+  BALLOON("Balloon"),
+  STICKY_BALLOON("Sticky balloon");
+
+  private String myTitle;
+
+  private NotificationDisplayType(final String humanTitle) {
+    myTitle = humanTitle;
+  }
+
+  public String getTitle() {
+    return myTitle;
+  }
 
 }
