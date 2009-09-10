@@ -2047,7 +2047,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       return true;
     }
 
-    if (!myApp.isActive() && !canExecuteOnInactiveApplication(cmd)) {
+    boolean doNotExecuteBecauseAppIsInactive = !myApp.isActive()
+                                               && (!canExecuteOnInactiveApplication(cmd) && Registry.is("actionSystem.suspendFocusTransferIfApplicationInactive")); 
+    if (doNotExecuteBecauseAppIsInactive) {
       if (myCallbackOnActivation != null) {
         myCallbackOnActivation.setRejected();
       }
@@ -2138,26 +2140,32 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
 
     @Override
-    public void applicationActivated(IdeFrame ideFrame) {
+    public void applicationActivated(final IdeFrame ideFrame) {
       final FocusCommand cmd = myFocusCommandOnAppActivation;
       ActionCallback callback = myCallbackOnActivation;
       myFocusCommandOnAppActivation = null;
       myCallbackOnActivation = null;
-      if (cmd != null && !cmd.isExpired()) {
-        requestFocus(cmd, true).notifyWhenDone(callback);
-      }
-      else {
-        final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
 
-        if (ideFrame == myWindowManager.getFrame(myProject)) {
-          final Component owner = mgr.getFocusOwner();
-          Component old = myFocusedComponentOnDeactivation != null ? myFocusedComponentOnDeactivation.get() : null;
-
-          if (owner == null && old != null && old.isShowing()) {
-            requestFocus(old, false);
+      if (cmd != null) {
+        requestFocus(cmd, true).notify(callback).doWhenRejected(new Runnable() {
+          public void run() {
+            focusLastFocusedComponent(ideFrame);
           }
-          myFocusedComponentOnDeactivation = null;
+        });
+      } else {
+        focusLastFocusedComponent(ideFrame);
+      }
+    }
+
+    private void focusLastFocusedComponent(IdeFrame ideFrame) {
+      final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+      if (ideFrame == myWindowManager.getFrame(myProject)) {
+        final Component owner = mgr.getFocusOwner();
+        Component old = myFocusedComponentOnDeactivation != null ? myFocusedComponentOnDeactivation.get() : null;
+        if (owner == null && old != null && old.isShowing()) {
+          requestFocus(old, false);
         }
+        myFocusedComponentOnDeactivation = null;
       }
     }
   }
