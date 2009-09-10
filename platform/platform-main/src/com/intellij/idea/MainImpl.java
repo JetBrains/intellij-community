@@ -22,6 +22,7 @@ public class MainImpl {
    * Is called from PluginManager
    */
   protected static void start(final String[] args) {
+    System.setProperty("idea.platform.prefix", "Idea");
     StartupUtil.isHeadless = Main.isHeadless(args);
     boolean isNewConfigFolder = PathManager.ensureConfigFolderExists(true);
     if (!StartupUtil.isHeadless && isNewConfigFolder) {
@@ -61,7 +62,6 @@ public class MainImpl {
   protected static void _main(final String[] args) {
     // http://weblogs.java.net/blog/shan_man/archive/2005/06/improved_drag_g.html
     System.setProperty("sun.swing.enableImprovedDragGesture", "");
-    System.setProperty("idea.platform.prefix", "Idea");
 
     if (!StartupUtil.isHeadless()) {
       AppUIUtil.updateFrameIcon(JOptionPane.getRootFrame());
