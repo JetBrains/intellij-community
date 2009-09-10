@@ -10,6 +10,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.JavaTestUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -19,6 +20,11 @@ import java.util.ArrayList;
  */
 public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
   private LanguageLevel myPreviousLanguageLevel;
+
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
 
   protected void setUp() throws Exception {
     super.setUp();

@@ -4,11 +4,17 @@ import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.JavaTestUtil;
 
 /**
  * @author dsl
  */
 public class ConvertToInstanceMethodTest extends LightCodeInsightTestCase {
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
+
   public void testSimple() throws Exception { doTest(0); }
 
   public void testInterface() throws Exception { doTest(1); }

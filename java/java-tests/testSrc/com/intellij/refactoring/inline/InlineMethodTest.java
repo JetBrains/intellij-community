@@ -1,4 +1,3 @@
-
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
@@ -10,11 +9,16 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.refactoring.MockInlineMethodOptions;
+import com.intellij.JavaTestUtil;
 import org.jetbrains.annotations.NonNls;
 
 public class InlineMethodTest extends CodeInsightTestCase {
   private LanguageLevel myPreviousLanguageLevel;
 
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
 
   protected void setUp() throws Exception {
     super.setUp();

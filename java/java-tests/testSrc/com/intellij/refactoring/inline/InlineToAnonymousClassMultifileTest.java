@@ -1,14 +1,14 @@
 package com.intellij.refactoring.inline;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightTestCase;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.ProjectScope;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.usageView.UsageInfo;
 
@@ -32,7 +32,7 @@ public class InlineToAnonymousClassMultifileTest extends CodeInsightTestCase {
   }
 
   private String getRoot() {
-    return PathManagerEx.getTestDataPath()+ "/refactoring/inlineToAnonymousClass/multifile/" + getTestName(true);
+    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/inlineToAnonymousClass/multifile/" + getTestName(true);
   }
 
   private void doTest(String className) throws Exception {

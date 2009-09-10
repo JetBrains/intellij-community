@@ -1,5 +1,6 @@
 package com.intellij.refactoring.inline;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -19,6 +20,11 @@ import com.intellij.testFramework.LightCodeInsightTestCase;
  */
 public class InlineLocalTest extends LightCodeInsightTestCase {
   private LanguageLevel myPreviousLanguageLevel;
+
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
 
   protected void setUp() throws Exception {
     super.setUp();

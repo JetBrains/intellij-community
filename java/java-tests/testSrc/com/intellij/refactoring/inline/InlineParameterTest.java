@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.JavaTestUtil;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -14,6 +15,11 @@ import org.jetbrains.annotations.NonNls;
  */
 public class InlineParameterTest extends LightCodeInsightTestCase {
   private LanguageLevel myPreviousLanguageLevel;
+
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
 
   protected void setUp() throws Exception {
     super.setUp();
