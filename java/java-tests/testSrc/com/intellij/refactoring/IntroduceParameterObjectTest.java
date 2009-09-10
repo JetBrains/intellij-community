@@ -13,12 +13,17 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.introduceparameterobject.IntroduceParameterObjectProcessor;
 import com.intellij.refactoring.util.ParameterTablePanel;
+import com.intellij.JavaTestUtil;
 
 import java.util.ArrayList;
 
 public class IntroduceParameterObjectTest extends MultiFileTestCase{
   protected String getTestRoot() {
     return "/refactoring/introduceParameterObject/";
+  }
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
   }
 
   private void doTest() throws Exception {
@@ -44,7 +49,7 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
     });
   }
 
-  private ParameterTablePanel.VariableData[] generateParams(final PsiMethod method) {
+  private static ParameterTablePanel.VariableData[] generateParams(final PsiMethod method) {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
 
     final ParameterTablePanel.VariableData[] datas = new ParameterTablePanel.VariableData[parameters.length];
