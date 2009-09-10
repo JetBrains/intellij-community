@@ -3,6 +3,7 @@ package com.intellij.refactoring.migration;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.refactoring.MultiFileTestCase;
+import com.intellij.JavaTestUtil;
 
 /**
  * @author dsl
@@ -52,5 +53,10 @@ public class MigrationTest extends MultiFileTestCase {
 
   protected String getTestRoot() {
     return "/refactoring/migration/";
+  }
+
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
   }
 }
