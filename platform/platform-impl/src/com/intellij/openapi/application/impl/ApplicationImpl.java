@@ -230,7 +230,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     myDisposeInProgress = true;
     Disposer.dispose(this);
 
-    if (!Disposer.isEmpty()) {
+    if (isInternal() && !Disposer.isEmpty()) {
       try {
         Class.forName("com.intellij.util.ProfilingUtil").getDeclaredMethod("forceCaptureMemorySnapshot").invoke(null);
       }
