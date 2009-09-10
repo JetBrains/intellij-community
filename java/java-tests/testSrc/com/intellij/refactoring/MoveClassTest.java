@@ -1,22 +1,22 @@
 package com.intellij.refactoring;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightTestCase;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
 import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
 
 public class MoveClassTest extends CodeInsightTestCase {
-
   public void testContextChange() throws Exception{
     doTest("contextChange1", new String[]{"pack1.Class1"}, "pack2");
     doTest("contextChange2", new String[]{"pack1.Class1"}, "pack2");
@@ -62,7 +62,7 @@ public class MoveClassTest extends CodeInsightTestCase {
   }
 
   private void doTest(String testName, String[] classNames, String newPackageName) throws Exception{
-    String root = PathManagerEx.getTestDataPath()+ "/refactoring/moveClass/" + testName;
+    String root = JavaTestUtil.getJavaTestDataPath() + "/refactoring/moveClass/" + testName;
 
     String rootBefore = root + "/before";
     PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk("java 1.4"));
@@ -80,7 +80,7 @@ public class MoveClassTest extends CodeInsightTestCase {
     final PsiClass[] classes = new PsiClass[classNames.length];
     for(int i = 0; i < classes.length; i++){
       String className = classNames[i];
-      classes[i] = myJavaFacade.findClass(className);
+      classes[i] = myJavaFacade.findClass(className, GlobalSearchScope.projectScope(getProject()));
       assertNotNull("Class " + className + " not found", classes[i]);
     }
 
