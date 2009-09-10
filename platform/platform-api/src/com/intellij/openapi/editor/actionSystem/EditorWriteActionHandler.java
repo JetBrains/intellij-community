@@ -22,13 +22,16 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.MockDocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
 
 public abstract class EditorWriteActionHandler extends EditorActionHandler {
   public final void execute(final Editor editor, final DataContext dataContext) {
     if (editor.isViewer()) return;
 
-      if (dataContext != null && !FileDocumentManager.getInstance().requestWriting(editor.getDocument(), PlatformDataKeys.PROJECT.getData(dataContext)))
-        return;
+    if (dataContext != null) {
+      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+      if (project != null && !FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) return;
+    }
 
     ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(editor.getDocument(),editor.getProject()) {
       public void run() {

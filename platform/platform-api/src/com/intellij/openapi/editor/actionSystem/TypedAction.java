@@ -23,6 +23,7 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
 
 /**
  * Provides services for registering actions which are activated by typing in the editor.
@@ -51,8 +52,11 @@ public class TypedAction {
       if (editor.isViewer()) return;
 
       Document doc = editor.getDocument();
-      if (!FileDocumentManager.getInstance().requestWriting(doc, PlatformDataKeys.PROJECT.getData(dataContext))) {
-        return;
+      if (dataContext != null) {
+        Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+        if (project != null && !FileDocumentManager.getInstance().requestWriting(doc, project)) {
+          return;
+        }
       }
 
       doc.startGuardedBlockChecking();
