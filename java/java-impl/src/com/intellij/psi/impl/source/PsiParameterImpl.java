@@ -166,25 +166,23 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
     if (parent instanceof PsiParameterList){
       return parent.getParent();
     }
-    else if (parent instanceof PsiForeachStatement) {
+    if (parent instanceof PsiForeachStatement) {
       return parent;
     }
-    else if (parent instanceof PsiCatchSection) {
+    if (parent instanceof PsiCatchSection) {
       return parent;
     }
-    else{
-      PsiElement[] children = parent.getChildren();
-      for(int i = 0; i < children.length; i++){
-        if (children[i].equals(this)){
-          while(!(children[i] instanceof PsiCodeBlock)){
-            i++;
-          }
-          return children[i];
+    PsiElement[] children = parent.getChildren();
+    for(int i = 0; i < children.length; i++){
+      if (children[i].equals(this)){
+        while(!(children[i] instanceof PsiCodeBlock)){
+          i++;
         }
+        return children[i];
       }
-      LOG.error("codeblock not found among parameter' "+this+" parents children: "+ Arrays.asList(children));
-      return null;
     }
+    LOG.error("codeblock not found among parameter' "+this+" parents children: "+ Arrays.asList(children));
+    return null;
   }
 
   public boolean isVarArgs() {
