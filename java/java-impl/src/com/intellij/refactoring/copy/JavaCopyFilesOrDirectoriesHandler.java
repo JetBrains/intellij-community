@@ -9,7 +9,7 @@ public class JavaCopyFilesOrDirectoriesHandler extends CopyFilesOrDirectoriesHan
   protected boolean canCopyFiles(final PsiElement[] elements) {
     for (PsiElement element : elements) {
       if (!(element instanceof PsiFile) ||
-          element instanceof PsiJavaFile && !JspPsiUtil.isInJspFile(element)) {
+          element instanceof PsiJavaFile && !JspPsiUtil.isInJspFile(element) && ((PsiJavaFile) element).getClasses().length > 0) {
         return false;
       }
     }
