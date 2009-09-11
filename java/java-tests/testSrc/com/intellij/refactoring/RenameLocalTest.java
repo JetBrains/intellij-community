@@ -4,12 +4,18 @@ import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.JavaTestUtil;
 
 /**
  * @author ven
  */
 public class RenameLocalTest extends LightCodeInsightTestCase {
   private static final String BASE_PATH = "/refactoring/renameLocal/";
+
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
 
   public void testIDEADEV3320() throws Exception {
     doTest("f");
