@@ -501,23 +501,6 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
           e.consume();
         }
       }
-
-      public void mouseExited(final MouseEvent e) {
-        if (!hasChildren) return;
-        component.getLabel().setIcon(wrapIcon(icon, index, Color.gray));
-      }
-    });
-
-    ListenerUtil.addMouseMotionListener(component, new MouseMotionAdapter() {
-      public void mouseMoved(MouseEvent e) {
-        if (!hasChildren) return;
-        if (isInsideIcon(e.getPoint(), icon)) {
-          component.getLabel().setIcon(wrapIcon(icon, index, Color.black));
-        }
-        else {
-          component.getLabel().setIcon(wrapIcon(icon, index, Color.gray));
-        }
-      }
     });
   }
 
@@ -585,10 +568,13 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
           }
           return FINAL_CHOICE;
         }
+
+        /*
         public void canceled() {
           super.canceled();
           item.getLabel().setIcon(wrapIcon(NavBarModel.getIcon(object), index, Color.gray));
         }
+        */
       };
       step.setDefaultOptionIndex(index < myModel.size() - 1 ? objects.indexOf(myModel.getElement(index + 1)) : 0);
       myNodePopup = new ListPopupImpl(step) {
@@ -880,9 +866,10 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       public boolean value(final VirtualFile virtualFile) {
         if (scope instanceof PsiDirectory) {
           final PsiDirectory directory = (PsiDirectory)scope;
-          return VfsUtil.isAncestor(directory.getVirtualFile(), virtualFile, false);
+          if (!VfsUtil.isAncestor(directory.getVirtualFile(), virtualFile, false)) return false;
+          return ModuleUtil.findModuleForFile(virtualFile, scope.getProject()) == ModuleUtil.findModuleForPsiElement(scope);
         }
-        else if (scope instanceof PsiDirectoryContainer) {
+        else if (scope instanceof PsiDirectoryContainer) { // TODO: remove. It doesn't look like we'll have packages in navbar ever again
           final PsiDirectory[] psiDirectories = ((PsiDirectoryContainer)scope).getDirectories();
           for (PsiDirectory directory : psiDirectories) {
             if (VfsUtil.isAncestor(directory.getVirtualFile(), virtualFile, false)) {
