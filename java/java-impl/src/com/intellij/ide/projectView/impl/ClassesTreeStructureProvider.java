@@ -26,7 +26,6 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
   }
 
   public Collection<AbstractTreeNode> modify(AbstractTreeNode parent, Collection<AbstractTreeNode> children, ViewSettings settings) {
-    final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
     ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
     for (final AbstractTreeNode child : children) {
       Object o = child.getValue();
@@ -35,8 +34,7 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
         final PsiClassOwner classOwner = (PsiClassOwner)o;
         PsiClass[] classes = classOwner.getClasses();
         final VirtualFile file = classOwner.getVirtualFile();
-        if (file != null &&
-            (index.isInSourceContent(file) || index.isInLibraryClasses(file) || index.isInLibrarySource(file))) {
+        if (fileInRoots(file)) {
           if (classes.length == 1 && !(classes[0] instanceof SyntheticElement)) {
             result.add(new ClassTreeNode(myProject, classes[0], settings1));
           } else {
@@ -50,6 +48,12 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
     return result;
   }
 
+  private boolean fileInRoots(VirtualFile file) {
+    final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
+    return file != null &&
+        (index.isInSourceContent(file) || index.isInLibraryClasses(file) || index.isInLibrarySource(file));
+  }
+
   public Object getData(Collection<AbstractTreeNode> selected, String dataName) {
     return null;
   }
@@ -57,6 +61,9 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
   public PsiElement getTopLevelElement(final PsiElement element) {
     PsiFile baseRootFile = getBaseRootFile(element);
     if (baseRootFile == null) return null;
+
+    if (!fileInRoots(baseRootFile.getVirtualFile())) return baseRootFile;
+
     PsiElement current = element;
     while (current != null) {
       if (current instanceof PsiFileSystemItem) {
