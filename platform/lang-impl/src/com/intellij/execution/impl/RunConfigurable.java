@@ -42,7 +42,9 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.net.URL;
 import java.util.*;
 
@@ -371,6 +373,12 @@ class RunConfigurable extends BaseConfigurable {
     myWholePanel.add(myPanel, BorderLayout.CENTER);
 
     updateDialog();
+
+    Dimension d = myWholePanel.getPreferredSize();
+    d.width = Math.max(d.width, 800);
+    d.height = Math.max(d.height, 600);
+    myWholePanel.setPreferredSize(d);
+
     return myWholePanel;
   }
 

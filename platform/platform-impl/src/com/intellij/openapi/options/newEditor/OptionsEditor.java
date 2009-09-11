@@ -665,6 +665,10 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     return myTree.getTree();
   }
 
+  @Override
+  public Dimension getPreferredSize() {
+    return new Dimension(1200, 768);
+  }
 
   private class Filter extends ElementFilter.Active.Impl<SimpleNode> {
 
