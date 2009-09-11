@@ -1,6 +1,5 @@
 package com.intellij.ide.hierarchy.method;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.hierarchy.HierarchyBrowserManager;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
@@ -14,7 +13,6 @@ import java.util.Collection;
 import java.util.Collections;
 
 public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
-  public static final String TYPE = IdeBundle.message("title.hierarchy.method");
   private final SmartPsiElementPointer myMethod;
 
   /**

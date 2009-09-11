@@ -14,6 +14,10 @@ import javax.swing.*;
 import java.awt.*;
 
 public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx {
+
+  @SuppressWarnings({"UnresolvedPropertyKey"})
+  public static final String METHOD_TYPE = IdeBundle.message("title.hierarchy.method");
+
   @NonNls public static final String METHOD_HIERARCHY_BROWSER_DATA_KEY = "com.intellij.ide.hierarchy.MethodHierarchyBrowserBase";
 
   public MethodHierarchyBrowserBase(final Project project, final PsiElement method) {

@@ -34,7 +34,7 @@ public final class MethodHierarchyBrowser extends MethodHierarchyBrowserBase {
     baseOnThisMethodAction
       .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_METHOD_HIERARCHY).getShortcutSet(), tree);
 
-    trees.put(MethodHierarchyTreeStructure.TYPE, tree);
+    trees.put(METHOD_TYPE, tree);
   }
 
   protected JPanel createLegendPanel() {
@@ -56,7 +56,7 @@ public final class MethodHierarchyBrowser extends MethodHierarchyBrowserBase {
   }
 
   protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull final String typeName, @NotNull final PsiElement psiElement) {
-    if (!MethodHierarchyTreeStructure.TYPE.equals(typeName)) {
+    if (!METHOD_TYPE.equals(typeName)) {
       LOG.error("unexpected type: " + typeName);
       return null;
     }

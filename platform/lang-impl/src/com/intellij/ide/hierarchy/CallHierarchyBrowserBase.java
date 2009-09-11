@@ -18,7 +18,9 @@ import java.util.Map;
 
 public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
 
+  @SuppressWarnings({"UnresolvedPropertyKey"})
   public static final String CALLEE_TYPE = IdeBundle.message("title.hierarchy.callees.of");
+  @SuppressWarnings({"UnresolvedPropertyKey"})
   public static final String CALLER_TYPE = IdeBundle.message("title.hierarchy.callers.of");
 
   public static final String SCOPE_PROJECT = IdeBundle.message("hierarchy.scope.project");

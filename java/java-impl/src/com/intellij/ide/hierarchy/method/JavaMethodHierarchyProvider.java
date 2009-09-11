@@ -2,6 +2,7 @@ package com.intellij.ide.hierarchy.method;
 
 import com.intellij.ide.hierarchy.HierarchyProvider;
 import com.intellij.ide.hierarchy.HierarchyBrowser;
+import com.intellij.ide.hierarchy.MethodHierarchyBrowserBase;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -77,6 +78,6 @@ public class JavaMethodHierarchyProvider implements HierarchyProvider {
   }
 
   public void browserActivated(final HierarchyBrowser hierarchyBrowser) {
-    ((MethodHierarchyBrowser) hierarchyBrowser).changeView(MethodHierarchyTreeStructure.TYPE);
+    ((MethodHierarchyBrowser) hierarchyBrowser).changeView(MethodHierarchyBrowserBase.METHOD_TYPE);
   }
 }
