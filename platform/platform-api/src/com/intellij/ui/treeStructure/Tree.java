@@ -255,7 +255,10 @@ public class Tree extends JTree implements Autoscroll, TestableUi {
               if (nodeIndex + 1 < structure.getChildElements(ppd).length) {
                 PresentableNodeDescriptor nextChild = ppd.getChildToHighlightAt(nodeIndex + 1);
                 int nextRow = getRowForPath(getPath(nextChild));
-                last = toPresentableNode(getPathForRow(nextRow - 1).getLastPathComponent());
+                TreePath prevPath = getPathForRow(nextRow - 1);
+                if (prevPath != null) {
+                  last = toPresentableNode(prevPath.getLastPathComponent());
+                }
               }
               else {
                 int lastRow = getRowForPath(getPath(last));
