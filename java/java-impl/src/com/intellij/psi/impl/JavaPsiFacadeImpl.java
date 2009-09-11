@@ -183,7 +183,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     }
 
     final List<PsiClass> classes = filterByName(className, pkg.getClasses(scope));
-    return classes.isEmpty() ? null : Arrays.asList(classes.get(0));
+    return classes.isEmpty() ? classes : Arrays.asList(classes.get(0));
   }
 
   private static List<PsiClass> filterByName(String className, PsiClass[] classes) {
