@@ -34,11 +34,11 @@
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleGetInfoString</key>
-    <string>IntelliJ IDEA @@major@@.@@minor@@, build @@@@. Copyright JetBrains s.r.o., (c) 2000-2009</string>
+    <string>IntelliJ IDEA @@version@@, build @@build@@. Copyright JetBrains s.r.o., (c) 2000-2009</string>
     <key>CFBundleShortVersionString</key>
-    <string>@@major@@.@@minor@@</string>
+    <string>@@version@@</string>
     <key>CFBundleVersion</key>
-    <string>@@@@</string>
+    <string>@@build@@</string>
     <key>Java</key>
    <dict>
       <key>ClassPath</key>
@@ -70,11 +70,11 @@
         <key>com.apple.mrj.application.live-resize</key>
         <string>false</string>
         <key>idea.config.path</key>
-        <string>~/Library/Preferences/IntelliJIDEA90</string>
+        <string>~/Library/Preferences/@@system_selector@@/</string>
         <key>idea.system.path</key>
-        <string>~/Library/Caches/IntelliJIDEA90/</string>
+        <string>~/Library/Caches/@@system_selector@@/</string>
         <key>idea.plugins.path</key>
-        <string>~/Library/Application Support/IntelliJIDEA90/</string>
+        <string>~/Library/Application Support/@@system_selector@@/</string>
         <key>java.endorsed.dirs</key>
         <string></string>
         <key>idea.smooth.progress</key>
@@ -86,8 +86,10 @@
         <key>apple.awt.fullscreencapturealldisplays</key>
         <string>false</string>
       </dict>
+
       <key>VMOptions</key>
-      <string>-Xms32m -Xmx256m -XX:MaxPermSize=150m -Xbootclasspath/a:../lib/boot.jar -ea</string>
+      <string>@@vmoptions@@ -Xbootclasspath/a:../lib/boot.jar</string>
+
       <key>WorkingDirectory</key>
       <string>$APP_PACKAGE/bin</string>
    </dict>

@@ -13,6 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package com.intellij.openapi.util.io;
 
 import com.intellij.CommonBundle;
@@ -966,5 +967,17 @@ public class FileUtil {
       }
     }
     return true;
+  }
+
+  @Nullable
+  public static File findFirstThatExist(String... paths) {
+    for (String path : paths) {
+      if (!StringUtil.isEmptyOrSpaces(path)) {
+        File file = new File(toSystemDependentName(path));
+        if (file.exists()) return file;
+      }
+    }
+
+    return null;
   }
 }

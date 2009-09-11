@@ -56,11 +56,11 @@ public class LoggerFactory implements Logger.Factory {
       */
 
       System.setProperty("log4j.defaultInitOverride", "true");
-      String fileName = PathManager.getBinPath() + File.separator + "log.xml";
-      File logXmlFile = new File(fileName);
-      if (!logXmlFile.exists()) {
-        throw new RuntimeException("log.xml file does not exist! Path: [" + fileName + "]");
+      File logXmlFile = FileUtil.findFirstThatExist(PathManager.getHomePath() + "/bin/log.xml", PathManager.getHomePath() + "/community/bin/log.xml");
+      if (logXmlFile == null) {
+        throw new RuntimeException("log.xml file does not exist! Path: [ $home/bin/log.xml]");
       }
+
       String text = new String(FileUtil.loadFileText(logXmlFile));
       text = StringUtil.replace(text, SYSTEM_MACRO, StringUtil.replace(PathManager.getSystemPath(), "\\", "\\\\"));
       text = StringUtil.replace(text, APPLICATION_MACRO, StringUtil.replace(PathManager.getHomePath(), "\\", "\\\\"));
@@ -73,15 +73,8 @@ public class LoggerFactory implements Logger.Factory {
       File file = new File(new File(PathManager.getSystemPath()), LOG_DIR);
       file.mkdirs();
 
-      DOMConfigurator domConfigurator = new DOMConfigurator();
-      try {
-        domConfigurator.doConfigure(new StringReader(text), LogManager.getLoggerRepository());
-      }
-      catch (ClassCastException e) {
-        // shit :-E
-        System.out.println("log.xml content:\n" + text);
-        throw e;
-      }
+      new DOMConfigurator().doConfigure(new StringReader(text), LogManager.getLoggerRepository());
+
       myInitialized = true;
     }
     catch (Exception e) {

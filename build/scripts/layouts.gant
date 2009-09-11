@@ -55,6 +55,7 @@ def layoutFull(String targetDirectory) {
   //noinspection GroovyAssignabilityCheck
   List<String> implementationModules = [platformImplementationModules(),
           "notNull",
+          "platform-main",
           "java-impl",
           "compiler-impl",
           "debugger-impl",

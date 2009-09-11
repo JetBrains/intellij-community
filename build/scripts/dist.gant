@@ -4,7 +4,35 @@ import static org.jetbrains.jps.idea.IdeaProjectLoader.*
 includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
 includeTool << Jps
 
-requireProperty("out", "$home/out/classes")
+requireProperty("buildNumber", requireProperty("build.number", "SNAPSHOT"))
+requireProperty("out", "$home/out")
+
+setProperty("version", "MaiaCE")
+setProperty("vmoptions", "-Xms32m -Xmx256m -XX:MaxPermSize=150m -ea")
+setProperty("system_selector", "IntelliJIdeaCE90")
+
+class Paths {
+  final sandbox
+  final distWin
+  final distAll
+  final distUnix
+  final distMac
+  final artifacts
+
+  def Paths(String home, String out) {
+    sandbox = out
+    distWin = "$sandbox/dist.win"
+    distAll = "$sandbox/dist.all"
+    distUnix = "$sandbox/dist.unix"
+    distMac = "$sandbox/dist.mac"
+
+    artifacts = "$sandbox/artifacts"
+  }
+}
+
+setProperty("paths", new Paths(home, out))
+
+def paths = new Paths(home, out)
 
 def includeFile(String filename) {
   Script s = groovyShell.parse(new File("$home/build/scripts/$filename"))
@@ -14,23 +42,152 @@ def includeFile(String filename) {
 
 target(compile: "Compile project") {
   loadProject()
+
+  project.stage("Cleaning up sandbox folder")
+  ant.delete(dir: paths.sandbox)
+
+  [paths.sandbox, paths.distWin, paths.distAll, paths.distUnix, paths.distMac, paths.artifacts].each {
+    ant.mkdir(dir: it)
+  }
+
+  ant.tstamp() {
+    format(property: "today.year", pattern: "yyyy")
+  }
+
   project["javac"] = "$jdk/bin/javac"
-  project.targetFolder = out
+  project.targetFolder = "$out/classes"
   project.clean()
   project.makeProduction()
 }
 
+String appInfoFile() {
+  return "${this["community-resources"].output}/idea/IdeaApplicationInfo.xml"
+}
+
+def wire_build_date() {
+  ant.replace(token: "__BUILD_NUMBER__", value: buildNumber, file: appInfoFile())
+  ant.replace(token: "__BUILD_DATE__", value: DSTAMP, file: appInfoFile())
+}
+
 target('default': 'The default target') {
   depends(compile)
+  wire_build_date()
+
   def layouts = includeFile("layouts.gant")
-  def sandbox = "$home/out/release"
+  layouts.layoutFull(paths.distAll)
 
-  def layoutFolder = "$sandbox/dist.all"
-  layouts.layoutFull(layoutFolder)
+  ant.echo(message: buildNumber, file: "$paths.distAll/build.txt")
+  ant.copy(todir: "$paths.distAll/license", preservelastmodified: "true") {
+    fileset(dir: "$home/license")
+  }
 
-  def artifacts = "$sandbox/artifacts"
-  ant.mkdir(dir: artifacts)
-  ant.zip(zipfile: "$artifacts/idea.zip") {
-    fileset(dir: layoutFolder)
+  layoutMac()
+  layoutLinux()
+  layoutWin()
+}
+
+private def patchPropertiesFile(String where) {
+  ant.echo(file: "$where/bin/idea.properties", append: "true", message:
+           """
+
+#-----------------------------------------------------------------------
+# Change to 'disabled' if you need not to receive instant visual notifications about
+# fatal errors that happen to IDEA or plugins installed.
+#-----------------------------------------------------------------------
+idea.fatal.error.notification=enabled
+"""
+  )
+}
+
+private def layoutWin() {
+  layout("$paths.distWin") {
+    dir("bin") {
+      fileset(dir: "$home/bin") { include(name: "*.*") }
+      fileset(dir: "$home/bin/win") { include(name: "*.*") }
+    }
+  }
+
+  patchPropertiesFile(paths.distWin)
+  ant.echo(file: "$paths.distWin/bin/idea.exe.vmoptions", message: vmoptions.replace(' ', '\n'))
+
+  ant.zip(zipfile: "$paths.artifacts/idea${buildNumber}.win.zip") {
+    fileset(dir: paths.distAll)
+    fileset(dir: paths.distWin)
   }
 }
+
+private def layoutMac() {
+  project.stage("Cleaning up sandbox folder")
+
+  ant.copy(todir: "$paths.distMac/bin") {
+    fileset(dir: "$home/bin") { include(name: "*.*") }
+    fileset(dir: "$home/bin/nix")
+    fileset(dir: "$home/bin/mac")
+  }
+
+  patchPropertiesFile(paths.distMac)
+
+  ant.copy(todir: paths.distMac) {
+    fileset(dir: "$home/build/conf/mac")
+  }
+
+  ant.replace(file: "${paths.distMac}/Contents/Info.plist") {
+    replacefilter(token: "@@build@@", value: buildNumber)
+
+
+    replacefilter(token: "@@version@@", value: version)
+    replacefilter(token: "@@vmoptions@@", value: vmoptions)
+    replacefilter(token: "@@system_selector@@", value: system_selector)
+  }
+
+  def root = "$version-${buildNumber}.app"
+  ant.zip(zipfile: "$paths.artifacts/idea${buildNumber}.mac.zip") {
+    [paths.distAll, paths.distMac].each {
+      tarfileset(dir: it, prefix: root) {
+        exclude(name: "bin/*.sh")
+        exclude(name: "Contents/MacOS/idea")
+      }
+    }
+
+    tarfileset(dir: paths.distMac, filemode: "755", prefix: root) {
+      include(name: "bin/*.sh")
+      include(name: "Contents/MacOS/idea")
+    }
+  }
+}
+
+def layoutLinux() {
+  project.stage("tar.gz")
+  layout(paths.distUnix) {
+    dir("bin") {
+      fileset(dir: "$home/bin") { include(name: "*.*") }
+      fileset(dir: "$home/bin/linux") { include(name: "*.*") }
+      fileset(dir: "$home/bin/nix") { include(name: "*.*") }
+    }
+  }
+
+  patchPropertiesFile(paths.distUnix)
+
+  ant.echo(file: "$paths.distUnix/bin/idea.vmoptions", message: vmoptions.replace(' ', '\n') )
+  ant.fixcrlf(srcdir: "$paths.distUnix/bin", includes: "idea.vmoptions", eol: "unix")
+  ant.fixcrlf(srcdir: "$paths.distUnix/bin", includes: "*.sh", eol: "unix")
+
+
+  def tarRoot = "idea-$buildNumber"
+  def tarPath = "$paths.artifacts/idea${buildNumber}.tar"
+  ant.tar(tarfile: tarPath) {
+    [paths.distAll, paths.distUnix].each {
+      tarfileset(dir: it, prefix: tarRoot) {
+        exclude(name: "bin/*.sh")
+      }
+    }
+
+    tarfileset(dir: paths.distUnix, filemode: "755", prefix: tarRoot) {
+      include(name: "bin/*.sh")
+    }
+  }
+
+  ant.gzip(src: tarPath, zipfile: "${tarPath}.gz")
+  ant.delete(file: tarPath)
+}
+

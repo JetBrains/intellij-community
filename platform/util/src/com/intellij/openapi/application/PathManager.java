@@ -1,27 +1,29 @@
 /*
- * Copyright 2000-2007 JetBrains s.r.o.
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *  http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
+
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.URL;
@@ -32,7 +34,6 @@ import java.util.Set;
 
 public class PathManager {
   @NonNls private static final String PROPERTIES_FILE = "idea.properties.file";
-  @NonNls private static final String IDEA_PROPERTIES = "idea.properties";
   @NonNls private static final String PROPERTY_SYSTEM_PATH = "idea.system.path";
   @NonNls private static final String PROPERTY_CONFIG_PATH = "idea.config.path";
   @NonNls private static final String PROPERTY_PLUGINS_PATH = "idea.plugins.path";
@@ -53,17 +54,6 @@ public class PathManager {
   @NonNls private static final String BIN_FOLDER = "bin";
   @NonNls private static final String OPTIONS_FOLDER = "options";
 
-  private static final FileFilter BIN_FOLDER_FILE_FILTER = new FileFilter() {
-    public boolean accept(File pathname) {
-      return pathname.isDirectory() && BIN_FOLDER.equalsIgnoreCase(pathname.getName());
-    }
-  };
-  private static final FileFilter PROPERTIES_FILE_FILTER = new FileFilter() {
-    public boolean accept(File pathname) {
-      return pathname.isFile() && IDEA_PROPERTIES.equalsIgnoreCase(pathname.getName());
-    }
-  };
-
   public static String getHomePath() {
     if (ourHomePath != null) return ourHomePath;
 
@@ -79,7 +69,8 @@ public class PathManager {
 
         do {
           final String parent = root.getParent();
-          assert parent != null : "No parent found for " + root + "; " + BIN_FOLDER + " folder with " + IDEA_PROPERTIES + " file not found";
+          assert parent != null : "No parent found for " + root + "; " + BIN_FOLDER + " folder with " +
+                                  "idea.properties" + " file not found";
           root = new File(parent).getAbsoluteFile(); // one step back to get folder
         }
         while (root != null && !isIdeaHome(root));
@@ -100,16 +91,8 @@ public class PathManager {
   }
 
   private static boolean isIdeaHome(final File root) {
-    final File[] files = root.listFiles(BIN_FOLDER_FILE_FILTER);
-    if (files != null && files.length > 0) {
-      for (File binFolder : files) {
-        final File[] binFolderContents = binFolder.listFiles(PROPERTIES_FILE_FILTER);
-        if (binFolderContents != null && binFolderContents.length > 0) {
-          return true;
-        }
-      }
-    }
-    return false;
+    return new File(root, FileUtil.toSystemDependentName("bin/idea.properties")).exists() ||
+           new File(root, FileUtil.toSystemDependentName("community/bin/idea.properties")).exists();
   }
 
   public static String getLibPath() {
@@ -309,16 +292,15 @@ public class PathManager {
   }
 
   public static void loadProperties() {
-    String propFilePath = System.getProperty(PROPERTIES_FILE);
-    if (StringUtil.isEmptyOrSpaces(propFilePath) || !new File(propFilePath).exists()) {
-      propFilePath = SystemProperties.getUserHome() + File.separator + IDEA_PROPERTIES;
-      if (StringUtil.isEmptyOrSpaces(propFilePath) || !new File(propFilePath).exists()) {
-        propFilePath = getBinPath() + File.separator + IDEA_PROPERTIES;
-      }
-    }
 
-    File propFile = new File(propFilePath);
-    if (propFile.exists()) {
+    File propFile = FileUtil.findFirstThatExist(
+      System.getProperty(PROPERTIES_FILE),
+      SystemProperties.getUserHome() + "/idea.properties",
+      getHomePath() + "/bin/idea.properties",
+      getHomePath() + "/community/bin/idea.properties"
+    );
+
+    if (propFile != null) {
       InputStream fis = null;
       try {
         fis = new BufferedInputStream(new FileInputStream(propFile));
@@ -335,7 +317,7 @@ public class PathManager {
       }
       catch (IOException e) {
         //noinspection HardCodedStringLiteral
-        System.out.println("Problem reading from property file: " + propFilePath);
+        System.err.println("Problem reading from property file: " + propFile.getPath());
       }
       finally{
         try {
