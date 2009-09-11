@@ -7,8 +7,14 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
 import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination;
+import com.intellij.JavaTestUtil;
 
 public class MovePackageTest extends MultiFileTestCase {
+
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
 
   public void testMoveSingle() throws Exception {
     doTest(new String[]{"pack1"}, "target");
@@ -34,12 +40,12 @@ public class MovePackageTest extends MultiFileTestCase {
   private void doTest(final String[] packageNames, final String newPackageName) throws Exception {
     doTest(new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
-        MovePackageTest.this.performAction(rootDir, packageNames, newPackageName);
+        MovePackageTest.this.performAction(packageNames, newPackageName);
       }
     });
   }
 
-  private void performAction(VirtualFile rootDir, String[] packageNames, String newPackageName) throws Exception {
+  private void performAction(String[] packageNames, String newPackageName) throws Exception {
     final PsiPackage[] packages = new PsiPackage[packageNames.length];
     for (int i = 0; i < packages.length; i++) {
       String packageName = packageNames[i];
