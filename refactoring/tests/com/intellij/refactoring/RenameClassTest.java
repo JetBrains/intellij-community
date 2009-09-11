@@ -12,10 +12,6 @@ public class RenameClassTest extends MultiFileTestCase {
     doTest("pack1.Class1", "Class1New");
   }
 
-  public void testJsp() throws Exception {
-    doTest("pack1.TestClass", "NewTestClass");
-  }
-
   public void testCollision() throws Exception {
     doTest("pack1.MyList", "List");
   }
