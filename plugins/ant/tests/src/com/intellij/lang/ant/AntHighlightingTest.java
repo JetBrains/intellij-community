@@ -10,13 +10,12 @@
  */
 package com.intellij.lang.ant;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.lang.ant.validation.AntDuplicateTargetsInspection;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.testFramework.IdeaTestUtil;
 
 import java.util.Collections;
 import java.util.List;
@@ -42,8 +41,7 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testEntity() throws Exception {
-    configureByFiles(null, new VirtualFile[]{getVirtualFile(getTestName(false) + ".xml"),
-      getVirtualFile(getTestName(false) + ".ent")});
+    configureByFiles(null, getVirtualFile(getTestName(false) + ".xml"), getVirtualFile(getTestName(false) + ".ent"));
     doDoTest(true, false);
   }
 
@@ -64,18 +62,17 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testProperties() throws Exception {
-    configureByFiles(null, new VirtualFile[]{getVirtualFile(getTestName(false) + ".xml"),
-      getVirtualFile(getTestName(false) + ".properties")});
+    configureByFiles(null, getVirtualFile(getTestName(false) + ".xml"), getVirtualFile(getTestName(false) + ".properties"));
     doDoTest(true, false);
   }
 
   public void testProperties2() throws Exception {
-    configureByFiles(null, new VirtualFile[]{getVirtualFile(getTestName(false) + ".xml"), getVirtualFile("yguard.jar")});
+    configureByFiles(null, getVirtualFile(getTestName(false) + ".xml"), getVirtualFile("yguard.jar"));
     doDoTest(true, false);
   }
 
   public void testEscapedProperties() throws Exception {
-    configureByFiles(null, new VirtualFile[]{getVirtualFile(getTestName(false) + ".xml")});
+    configureByFiles(null, getVirtualFile(getTestName(false) + ".xml"));
     doDoTest(true, false);
   }
 
@@ -88,8 +85,7 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testBigFile() throws Exception {
-    configureByFiles(null, new VirtualFile[]{getVirtualFile(getTestName(false) + ".xml"),
-      getVirtualFile("buildserver.xml"), getVirtualFile("buildserver.properties")});
+    configureByFiles(null, getVirtualFile(getTestName(false) + ".xml"), getVirtualFile("buildserver.xml"), getVirtualFile("buildserver.properties"));
 
     try {
       myIgnoreInfos = true;
