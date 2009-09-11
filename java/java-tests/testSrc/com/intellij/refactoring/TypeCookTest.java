@@ -1,7 +1,6 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
@@ -730,7 +729,7 @@ public class TypeCookTest extends MultiFileTestCase {
   }
 
   private void doStuff(String rootDir, String itemRepr, String itemName) throws FileNotFoundException {
-    String patternName = PathManagerEx.getTestDataPath() + getTestRoot() + getTestName(true) + "/after/" + itemName;
+    String patternName = getTestDataPath() + getTestRoot() + getTestName(true) + "/after/" + itemName;
 
     File patternFile = new File(patternName);
 
