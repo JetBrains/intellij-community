@@ -197,8 +197,6 @@
     <projectService serviceInterface="org.jetbrains.plugins.groovy.gant.AntTasksProvider"
                     serviceImplementation="org.jetbrains.plugins.groovy.gant.AntTasksProvider"/>
 
-    <refactoring.copyHandler implementation="org.jetbrains.plugins.groovy.refactoring.copy.GroovyCopyFilesOrDirectoriesHandler"/>
-
     <java.elementFinder implementation="org.jetbrains.plugins.groovy.lang.psi.impl.javaView.GroovyClassFinder"/>
     <java.elementFinder implementation="org.jetbrains.plugins.groovy.gant.GantClassFinder"/>
     <java.elementFinder implementation="org.jetbrains.plugins.groovy.gradle.GradleClassFinder"/>
