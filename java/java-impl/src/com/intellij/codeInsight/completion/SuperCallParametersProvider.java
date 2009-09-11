@@ -62,7 +62,7 @@ class SuperCallParametersProvider extends CompletionProvider<CompletionParameter
     icon.setIcon(Icons.PARAMETER_ICON, 0, 2*w/5, 0);
     icon.setIcon(Icons.PARAMETER_ICON, 1);
 
-    final LookupElement element = LookupElementBuilder.create(lookupString);
+    final LookupElement element = LookupElementBuilder.create(lookupString).setIcon(icon);
     element.putUserData(JavaCompletionUtil.SUPER_METHOD_PARAMETERS, Boolean.TRUE);
 
     final TailType tail = method.isConstructor() || method.getReturnType() instanceof PsiPrimitiveType
