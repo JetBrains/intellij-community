@@ -1,6 +1,7 @@
 package com.intellij.refactoring.copy;
 
 import com.intellij.psi.*;
+import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
 
 /**
  * @author yole
@@ -9,7 +10,7 @@ public class JavaCopyFilesOrDirectoriesHandler extends CopyFilesOrDirectoriesHan
   protected boolean canCopyFiles(final PsiElement[] elements) {
     for (PsiElement element : elements) {
       if (!(element instanceof PsiFile) ||
-          element instanceof PsiJavaFile && !JspPsiUtil.isInJspFile(element) && ((PsiJavaFile) element).getClasses().length > 0) {
+          element instanceof PsiJavaFile && !JspPsiUtil.isInJspFile(element) && !CollectHighlightsUtil.isOutOfSourceRootJavaFile((PsiJavaFile) element)) {
         return false;
       }
     }

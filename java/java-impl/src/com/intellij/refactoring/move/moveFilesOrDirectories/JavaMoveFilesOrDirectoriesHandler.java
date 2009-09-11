@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.copy.JavaCopyFilesOrDirectoriesHandler;
 import com.intellij.refactoring.move.MoveCallback;
+import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
 
 public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHandler {
   @Override
@@ -17,7 +18,7 @@ public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHan
         allJava &= JavaCopyFilesOrDirectoriesHandler.hasPackages((PsiDirectory)element);
       }
       else if (element instanceof PsiFile) {
-        allJava &= element instanceof PsiJavaFile && !JspPsiUtil.isInJspFile(element) && ((PsiJavaFile) element).getClasses().length > 0;
+        allJava &= element instanceof PsiJavaFile && !JspPsiUtil.isInJspFile(element) && !CollectHighlightsUtil.isOutOfSourceRootJavaFile((PsiJavaFile) element);
       }
       else {
         return false;
