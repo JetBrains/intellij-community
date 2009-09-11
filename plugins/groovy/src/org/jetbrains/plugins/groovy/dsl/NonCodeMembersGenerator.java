@@ -3,6 +3,10 @@ package org.jetbrains.plugins.groovy.dsl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
@@ -31,6 +35,16 @@ public class NonCodeMembersGenerator implements GroovyEnhancerConsumer{
     }, ", "));
 
     myClassText.append(") {}\n");
+  }
+
+  public void delegatesTo(String type) {
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(myProject);
+    final PsiClass clazz = facade.findClass(type, GlobalSearchScope.allScope(myProject));
+    if (clazz != null) {
+      for (PsiMethod method : clazz.getAllMethods()) {
+        myClassText.append(method.getText()).append("\n");
+      }
+    }
   }
 
   @Nullable

@@ -254,7 +254,7 @@ public class GrGenerateEqualsHelper {
     String[] nameSuggestions = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, PsiType.getJavaLangObject(myClass.getManager(), myClass.getResolveScope())).names;
     final String objectBaseName = nameSuggestions.length > 0 ? nameSuggestions[0] : BASE_OBJECT_PARAMETER_NAME;
     myParameterName = getUniqueLocalVarName(objectBaseName, myEqualsFields);
-    //todo check it
+    //todo isApplicable it
     final PsiType classType = TypesUtil.createType(myClass.getQualifiedName(), myClass.getContext());
 
     nameSuggestions = codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, classType).names;

@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,9 +11,11 @@ import org.jetbrains.annotations.Nullable;
 */
 class GroovyClassDescriptor implements ClassDescriptor {
   private final PsiClass myPsiClass;
+  private final PsiElement myPlace;
 
-  public GroovyClassDescriptor(@NotNull PsiClass psiClass) {
+  public GroovyClassDescriptor(@NotNull PsiClass psiClass, PsiElement place) {
     myPsiClass = psiClass;
+    myPlace = place;
   }
 
   @Nullable
@@ -22,6 +25,10 @@ class GroovyClassDescriptor implements ClassDescriptor {
 
   public boolean isInheritor(String qname) {
     return InheritanceUtil.isInheritor(myPsiClass, qname);
+  }
+
+  public PsiElement getPlace() {
+    return myPlace;
   }
 
   @Override

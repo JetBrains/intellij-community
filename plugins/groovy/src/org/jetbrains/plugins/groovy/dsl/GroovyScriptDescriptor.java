@@ -4,6 +4,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.PsiElement;
 
 /**
  * @author peter
@@ -11,8 +12,8 @@ import org.jetbrains.annotations.Nullable;
 public class GroovyScriptDescriptor extends GroovyClassDescriptor implements ScriptDescriptor {
   @NotNull private final GroovyFile myFile;
 
-  public GroovyScriptDescriptor(GroovyFile file, GroovyScriptClass scriptClass) {
-    super(scriptClass);
+  public GroovyScriptDescriptor(GroovyFile file, GroovyScriptClass scriptClass, PsiElement place) {
+    super(scriptClass, place);
     myFile = file;
   }
 

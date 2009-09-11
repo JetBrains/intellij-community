@@ -335,7 +335,7 @@ public class GroovyPositionManager implements PositionManager {
           if (toFind.equals(findReferenceTypeSourceImage(candidateFirstPosition))) {
             return fromClass;
           }
-          break; // check only the first location
+          break; // isApplicable only the first location
         }
       }
       catch (AbsentInformationException ignored) {

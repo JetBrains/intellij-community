@@ -1,13 +1,20 @@
 package org.jetbrains.plugins.groovy.dsl
 
+import org.jetbrains.plugins.groovy.dsl.toplevel.Context
+import org.jetbrains.plugins.groovy.dsl.toplevel.GdslMetaClassProperties
+import org.jetbrains.plugins.groovy.dsl.toplevel.Contributor
+
 /**
  * @author ilyas
  */
 
 public class GroovyDslExecutor {
-  private final List<Closure> myScriptEnhancers = [];
-  private final List<Closure> myClassEnhancers = [];
+  private final List<Closure> myScriptEnhancers = []
+  private final List<Closure> myClassEnhancers = []
   private final String myFileName;
+
+  private final List<Context> myContexts = []
+  private final List<Contributor> myContributors = []
 
   public GroovyDslExecutor(String text, String fileName) {
     myFileName = fileName
@@ -16,27 +23,14 @@ public class GroovyDslExecutor {
     def script = shell.parse(text, fileName)
 
     def mc = new ExpandoMetaClass(script.class, false)
+    def enhancer = new GdslMetaClassProperties(this)
 
-
-    mc.enhanceScript = {Map args, Closure enh ->
-      enh.resolveStrategy = Closure.DELEGATE_FIRST
-      myScriptEnhancers << {
-        ScriptDescriptor wrapper, GroovyEnhancerConsumer c ->
-        if (args.extension == wrapper.extension) {
-          runEnhancer enh, new EnhancerDelegate(consumer:c)
-        }
+    // Fill script with necessary properties
+    def properties = enhancer.metaClass.properties
+    for (MetaProperty p in properties) {
+      if (p.getType() == Closure.class) {
+        mc."$p.name" = p.getProperty(enhancer)
       }
-    }
-
-    mc.enhanceClass = {Map args, Closure enh ->
-      enh.resolveStrategy = Closure.DELEGATE_FIRST
-      myClassEnhancers << {
-        ClassDescriptor cw, GroovyEnhancerConsumer c ->
-        if (!args.className || cw.getQualifiedName() == args.className) {
-          runEnhancer enh, new EnhancerDelegate(consumer:c)
-        }
-      }
-
     }
 
     mc.initialize()
@@ -44,10 +38,30 @@ public class GroovyDslExecutor {
     script.run()
   }
 
-  def runEnhancer(code, delegate) {
+  def addClassEnhancer(Closure cl) {
+    myClassEnhancers << cl
+  }
+
+  def addScriptEnhancer(Closure cl) {
+    myScriptEnhancers << cl
+  }
+
+  def addContext(Context ctx) {
+    myContexts << ctx
+  }
+
+  def addContributor(Contributor cb) {
+    myContributors << cb
+  }
+
+  public def runEnhancer(code, delegate) {
     def copy = code.clone()
     copy.delegate = delegate
     copy()
+  }
+
+  public def runContributor(Contributor cb, ClassDescriptor cd, delegate) {
+    cb.getApplyFunction(delegate)(cd.getPlace())
   }
 
   def processVariants(ClassDescriptor descriptor, GroovyEnhancerConsumer consumer) {
@@ -65,6 +79,16 @@ public class GroovyDslExecutor {
 class EnhancerDelegate {
   GroovyEnhancerConsumer consumer
 
+  def methodMissing(String name, args) {
+    if (consumer.metaClass.respondsTo(consumer, name, args)) {
+      //this.metaClass."$name" = {Object[] varArgs ->
+      //  return consumer.invokeMethod(name, * varArgs)
+      //}
+      consumer.invokeMethod(name, args)
+    }
+  }
+
+
   def property(Map args) {
     consumer.property(args.name, stringifyType(args.type))
   }
@@ -75,9 +99,11 @@ class EnhancerDelegate {
     type.toString()
   }
 
+  //def delegatesTo(String type) { consumer.delegatesTo(type) }
+
   def method(Map args) {
     def params = [:]
-    args.params.each { name, type ->
+    args.params.each {name, type ->
       params[name] = stringifyType(type)
     }
     consumer.method(args.name, stringifyType(args.type), params)

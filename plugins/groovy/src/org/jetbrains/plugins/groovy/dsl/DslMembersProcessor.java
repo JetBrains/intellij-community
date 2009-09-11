@@ -34,7 +34,7 @@ public class DslMembersProcessor implements NonCodeMembersProcessor {
       if (psiClass != null && !(psiClass instanceof GroovyScriptClass)) {
         final String qname = psiClass.getQualifiedName();
         if (qname != null) {
-          return GroovyDslFileIndex.processExecutors(psiClass.getProject(), new GroovyClassDescriptor(psiClass), processor);
+          return GroovyDslFileIndex.processExecutors(psiClass.getProject(), new GroovyClassDescriptor(psiClass, place), processor);
         }
       }
     }

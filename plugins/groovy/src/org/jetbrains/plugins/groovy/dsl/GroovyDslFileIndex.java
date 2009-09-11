@@ -228,7 +228,28 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
               @Override
               protected NonCodeMembersHolder create(ClassDescriptor key) {
                 final NonCodeMembersGenerator generator = new NonCodeMembersGenerator(project);
-                executor.processVariants(key, generator);
+                try {
+                  executor.processVariants(key, generator);
+                }
+                catch (Exception e) { // To handle exceptions in definition script
+                  if (project.isDisposed()) {
+                    LOG.error(e);
+                    return null;
+                  }
+
+                  final StackTraceElement[] elements = e.getStackTrace();
+
+                  ApplicationManager.getApplication().getMessageBus().syncPublisher(Notifications.TOPIC).notify(
+                    new Notification("Groovy DSL parsing", "DSL descriptor execution error",
+                                     "<p>" + e.getMessage() + "</p><p><a href=\"\">Click here to investigate.</a></p>", NotificationType.ERROR, new NotificationListener() {
+                        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+                          suggestAnalyzeTrace(project, elements);
+                          notification.expire();
+                        }
+                      })
+                  );
+                  disableFile(dslFile.getVirtualFile());
+                }
                 return generator.getMembersHolder();
               }
             };

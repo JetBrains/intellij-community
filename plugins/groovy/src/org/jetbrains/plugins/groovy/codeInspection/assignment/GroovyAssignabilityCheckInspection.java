@@ -81,7 +81,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       }
     }
 
-    //check last expression on method body
+    //isApplicable last expression on method body
     @Override
     public void visitOpenBlock(GrOpenBlock block) {
       super.visitOpenBlock(block);
