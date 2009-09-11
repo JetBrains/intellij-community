@@ -124,7 +124,7 @@ public class CoverageEnabledConfiguration implements JDOMExternalizable{
       }
     }
     String runner = element.getAttributeValue(COVERAGE_RUNNER);
-    if (runner == null) runner = "emma";
+    if (runner == null) runner = "idea";
     for (CoverageRunner coverageRunner : Extensions.getExtensions(CoverageRunner.EP_NAME)) {
       if (Comparing.strEqual(coverageRunner.getId(), runner)) {
         myCoverageRunner = coverageRunner;
