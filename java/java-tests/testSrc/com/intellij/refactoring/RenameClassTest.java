@@ -2,8 +2,11 @@ package com.intellij.refactoring;
 
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.JavaTestUtil;
 import org.jetbrains.annotations.NonNls;
@@ -55,7 +58,7 @@ public class RenameClassTest extends MultiFileTestCase {
   }
 
   private void performAction(String qClassName, String newName) throws Exception {
-    PsiClass aClass = myJavaFacade.findClass(qClassName);
+    PsiClass aClass = myJavaFacade.findClass(qClassName, GlobalSearchScope.allScope(getProject()));
     assertNotNull("Class " + qClassName + " not found", aClass);
 
     new RenameProcessor(myProject, aClass, newName, true, true).run();
@@ -65,5 +68,10 @@ public class RenameClassTest extends MultiFileTestCase {
 
   protected String getTestRoot() {
     return "/refactoring/renameClass/";
+  }
+
+  @Override
+  protected Sdk getTestProjectJdk() {
+    return JavaSdkImpl.getMockJdk15("java 1.5");
   }
 }
