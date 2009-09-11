@@ -3,6 +3,8 @@ package com.intellij.refactoring;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
@@ -27,6 +29,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
+  @Override
+  protected Sdk getProjectJDK() {
+    return JavaSdkImpl.getMockJdk15("java 1.5");
+  }
 
   public void testExitPoints1() throws Exception {
     doExitPointsTest(true);

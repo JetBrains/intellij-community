@@ -16,10 +16,10 @@ class Foo {
             public void actionPerformed( ActionEvent e ) {
                 newMethod();
             }
-        };
-    }
 
-    private void newMethod() {
-        setVisible( false );
+            private void newMethod() {
+                setVisible( false );
+            }
+        };
     }
 }
