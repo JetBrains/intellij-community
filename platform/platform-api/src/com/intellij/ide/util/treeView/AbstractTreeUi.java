@@ -116,6 +116,12 @@ class AbstractTreeUi {
 
   private boolean myWasEverIndexNotReady;
   private boolean myShowing;
+  private FocusAdapter myFocusListener = new FocusAdapter() {
+    @Override
+    public void focusGained(FocusEvent e) {
+      maybeReady();
+    }
+  };
 
   protected final void init(AbstractTreeBuilder builder,
                             JTree tree,
@@ -167,12 +173,7 @@ class AbstractTreeUi {
     });
     Disposer.register(getBuilder(), uiNotify);
 
-    myTree.addFocusListener(new FocusAdapter() {
-      @Override
-      public void focusGained(FocusEvent e) {
-        maybeReady();
-      }
-    });
+    myTree.addFocusListener(myFocusListener);
   }
 
   protected void hideNotify() {
@@ -293,6 +294,8 @@ class AbstractTreeUi {
 
     myTree.removeTreeExpansionListener(myExpansionListener);
     myTree.removeTreeSelectionListener(mySelectionListener);
+    myTree.removeFocusListener(myFocusListener);
+
     disposeNode(getRootNode());
     myElementToNodeMap.clear();
     getUpdater().cancelAllRequests();
