@@ -8,26 +8,17 @@
  */
 package com.intellij.refactoring;
 
-import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 
-public class RenameFieldTest extends CodeInsightTestCase {
-  private LanguageLevel myPreviousLanguageLevel;
-
-  protected void setUp() throws Exception {
-    super.setUp();
-    myPreviousLanguageLevel = LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).getLanguageLevel();
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
-  }
-
-  protected void tearDown() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(myPreviousLanguageLevel);
-    super.tearDown();
+public class RenameFieldTest extends LightCodeInsightTestCase {
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
   }
 
   protected void doTest(@NonNls String newName, @NonNls String ext) throws Exception {
@@ -69,10 +60,10 @@ public class RenameFieldTest extends CodeInsightTestCase {
     doTest("newField", "java");
   }
 
-  protected void perform(String newName) {
+  protected static void perform(String newName) {
     PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase
       .ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
 
-    new RenameProcessor(myProject, element, newName, false, false).run();
+    new RenameProcessor(getProject(), element, newName, false, false).run();
   }
 }
