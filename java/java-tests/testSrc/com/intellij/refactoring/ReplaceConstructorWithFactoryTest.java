@@ -1,21 +1,20 @@
 package com.intellij.refactoring;
 
-import com.intellij.codeInsight.CodeInsightTestCase;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
+import com.intellij.JavaTestUtil;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.replaceConstructorWithFactory.ReplaceConstructorWithFactoryProcessor;
+import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 
 /**
  * @author dsl
  */
-public class ReplaceConstructorWithFactoryTest extends CodeInsightTestCase {
-  private LanguageLevel myPrevLanguageLevel;
+public class ReplaceConstructorWithFactoryTest extends LightCodeInsightTestCase {
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
 
   public void testEmptyConstructor() throws Exception { runTest("01", null); }
 
@@ -64,7 +63,7 @@ public class ReplaceConstructorWithFactoryTest extends CodeInsightTestCase {
     }
     PsiClass targetClass = null;
     if (targetClassName != null) {
-      targetClass = myJavaFacade.findClass(targetClassName, GlobalSearchScope.allScope(getProject()));
+      targetClass = JavaPsiFacade.getInstance(getProject()).findClass(targetClassName, GlobalSearchScope.allScope(getProject()));
       assertTrue(targetClass != null);
     }
 
@@ -74,28 +73,15 @@ public class ReplaceConstructorWithFactoryTest extends CodeInsightTestCase {
         targetClass = constructor.getContainingClass();
       }
       replaceConstructorWithFactoryProcessor = new ReplaceConstructorWithFactoryProcessor(
-        myProject, constructor, constructor.getContainingClass(), targetClass, "new" + constructor.getName());
+        getProject(), constructor, constructor.getContainingClass(), targetClass, "new" + constructor.getName());
     }
     else {
       if (targetClass == null) {
         targetClass = aClass;
       }
       replaceConstructorWithFactoryProcessor = new ReplaceConstructorWithFactoryProcessor(
-        myProject, null, aClass, targetClass, "new" + aClass.getName());
+        getProject(), null, aClass, targetClass, "new" + aClass.getName());
     }
     replaceConstructorWithFactoryProcessor.run();
-  }
-
-
-  protected void setUp() throws Exception {
-    super.setUp();
-    myPrevLanguageLevel = LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).getLanguageLevel();
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
-  }
-
-
-  protected void tearDown() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(myPrevLanguageLevel);
-    super.tearDown();
   }
 }
