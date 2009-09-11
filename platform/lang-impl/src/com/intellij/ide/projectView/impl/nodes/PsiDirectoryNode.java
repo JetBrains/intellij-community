@@ -43,9 +43,6 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
 
       data.setPresentableText(directoryFile.getName());
       if (module != null) {
-        data.setOpenIcon(module.getModuleType().getNodeIcon(true));
-        data.setClosedIcon(module.getModuleType().getNodeIcon(false));
-
         StringBuilder location = new StringBuilder();
         if (getParentValue() instanceof Project) {
           location.append(directoryFile.getPresentableUrl());
@@ -63,6 +60,8 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
           data.setLocationString(location.toString());
         }
 
+        setupIcon(data, psiDirectory);
+
         return;
       }
     }
@@ -75,9 +74,6 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
       return;
     }
 
-    final VirtualFile virtualFile = psiDirectory.getVirtualFile();
-    final boolean isWritable = virtualFile.isWritable();
-
     data.setPresentableText(name);
     if (ProjectRootsUtil.isModuleContentRoot(directoryFile, project) || ProjectRootsUtil.isLibraryRoot(directoryFile, project)) {
       final String locationString = directoryFile.getPresentableUrl();
@@ -89,6 +85,12 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
       data.setLocationString(ProjectViewDirectoryHelper.getInstance(project).getLocationString(psiDirectory));
     }
 
+    setupIcon(data, psiDirectory);
+  }
+
+  private static void setupIcon(PresentationData data, PsiDirectory psiDirectory) {
+    final VirtualFile virtualFile = psiDirectory.getVirtualFile();
+    final boolean isWritable = virtualFile.isWritable();
     for (final IconProvider provider : Extensions.getExtensions(IconProvider.EXTENSION_POINT_NAME)) {
       final Icon openIcon = provider.getIcon(psiDirectory, Iconable.ICON_FLAG_OPEN);
       if (openIcon != null) {
@@ -100,7 +102,6 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
         }
       }
     }
-
   }
 
   public Collection<AbstractTreeNode> getChildrenImpl() {

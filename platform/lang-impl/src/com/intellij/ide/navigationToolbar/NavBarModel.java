@@ -5,6 +5,7 @@
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -14,9 +15,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -26,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +43,7 @@ public class NavBarModel {
   private final Project myProject;
 
   private final MyObservable myObservable = new MyObservable();
+  private final static SimpleTextAttributes WOLFED = new SimpleTextAttributes(null, null, Color.red, SimpleTextAttributes.STYLE_WAVED);
 
   public NavBarModel(final Project project) {
     myProject = project;
@@ -122,33 +124,18 @@ public class NavBarModel {
       oldModel.add(getElement(i));
     }
     removeAllElements();
-    addElement(myProject);
+    //addElement(myProject);
     final Set<VirtualFile> roots = new HashSet<VirtualFile>();
     final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
-    Module module = ApplicationManager.getApplication().runReadAction(
-        new Computable<Module>() {
-          public Module compute() {
-            return ModuleUtil.findModuleForPsiElement(psiElement);
-          }
-        }
-    );
     final ProjectFileIndex projectFileIndex = projectRootManager.getFileIndex();
-    if (module != null) {
-      VirtualFile vFile = PsiUtilBase.getVirtualFile(psiElement);
-      if (vFile != null && (projectFileIndex.isInLibrarySource(vFile) || projectFileIndex.isInLibraryClasses(vFile))) {
-        module = null;
+
+    for (VirtualFile root : projectRootManager.getContentRoots()) {
+      VirtualFile parent = root.getParent();
+      if (parent == null || !projectFileIndex.isInContent(parent)) {
+        roots.add(root);
       }
     }
-    if (module == null) {
-      roots.addAll(Arrays.asList(projectRootManager.getContentRoots()));
-    }
-    else {
-      ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-      roots.addAll(Arrays.asList(moduleRootManager.getContentRoots()));
-      if (ModuleManager.getInstance(myProject).getModules().length > 1) {
-        addElement(module);
-      }
-    }
+
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         traverseToRoot(psiElement, roots);
@@ -194,10 +181,21 @@ public class NavBarModel {
     }
     else if (psiElement instanceof PsiDirectory) {
       final PsiDirectory psiDirectory = (PsiDirectory)psiElement;
-      final PsiDirectory parentDirectory = psiDirectory.getParentDirectory();
 
-      if (!roots.contains(psiDirectory.getVirtualFile()) && parentDirectory != null) {
-        traverseToRoot(parentDirectory, roots);
+      if (!roots.contains(psiDirectory.getVirtualFile())) {
+        PsiDirectory parentDirectory = psiDirectory.getParentDirectory();
+
+        if (parentDirectory == null) {
+          VirtualFile jar = PathUtil.getLocalFile(psiDirectory.getVirtualFile());
+          if (ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(jar)) {
+            parentDirectory = PsiManager.getInstance(myProject).findDirectory(jar.getParent());
+          }
+        }
+
+
+        if (parentDirectory != null) {
+          traverseToRoot(parentDirectory, roots);
+        }
       }
     }
     else if (psiElement instanceof PsiFileSystemItem) {
@@ -319,17 +317,23 @@ public class NavBarModel {
                                                    : SimpleTextAttributes.STYLE_PLAIN);
       }
       else {
-        return new SimpleTextAttributes(null, null, Color.red,
-          NavBarPanel.wolfHasProblemFilesBeneath((PsiElement)object)
-                                                               ? SimpleTextAttributes.STYLE_WAVED
-                                                               : SimpleTextAttributes.STYLE_PLAIN);
+        if (object instanceof PsiDirectory) {
+          VirtualFile vDir = ((PsiDirectory)object).getVirtualFile();
+          if (vDir.getParent() == null || ProjectRootsUtil.isModuleContentRoot(vDir, myProject)) {
+            return SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
+          }
+        }
+        
+        if (NavBarPanel.wolfHasProblemFilesBeneath((PsiElement)object)) {
+          return WOLFED;
+        }
       }
     }
     else if (object instanceof Module) {
-      return new SimpleTextAttributes(null, null, Color.red, WolfTheProblemSolver.getInstance(myProject)
-        .hasProblemFilesBeneath((Module)object)
-                                                             ? SimpleTextAttributes.STYLE_WAVED
-                                                             : SimpleTextAttributes.STYLE_PLAIN);
+      if (WolfTheProblemSolver.getInstance(myProject).hasProblemFilesBeneath((Module)object)) {
+        return WOLFED;
+      }
+
     }
     else if (object instanceof Project) {
       final Project project = (Project)object;
@@ -342,7 +346,7 @@ public class NavBarModel {
       );
       for (Module module : modules) {
         if (WolfTheProblemSolver.getInstance(project).hasProblemFilesBeneath(module)) {
-          return new SimpleTextAttributes(null, null, Color.red, SimpleTextAttributes.STYLE_WAVED);
+          return WOLFED;
         }
       }
     }

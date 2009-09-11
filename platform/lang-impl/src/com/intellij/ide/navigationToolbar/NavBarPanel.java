@@ -125,6 +125,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.navigationToolbar.NavigationToolbarPanel");
   private MessageBusConnection myConnection;
   private WeakTimerListener myWeakTimerListener;
+  private static final int GAP_BETWEEN_LIST_ITEMS = 10;
 
   public NavBarPanel(final Project project) {
     myProject = project;
@@ -370,7 +371,8 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     myScrollablePanel.removeAll();
     myScrollablePanel.invalidate();
     final GridBagConstraints gc = new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 0, 1, GridBagConstraints.WEST,
-                                                         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
+                                                         GridBagConstraints.NONE,
+                                                         new Insets(0, GAP_BETWEEN_LIST_ITEMS / 2, 0, GAP_BETWEEN_LIST_ITEMS / 2), 0, 0);
     final MyCompositeLabel toBeContLabel = getDotsLabel();
     final int additionalWidth = toBeContLabel.getPreferredSize().width;
     final Window window = SwingUtilities.getWindowAncestor(this);
@@ -388,7 +390,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
         final int labelWidth = linkLabel.getPreferredSize().width;
         if (myPreferredWidth + labelWidth < availableWidth) {
           myScrollablePanel.add(linkLabel, gc);
-          myPreferredWidth += labelWidth;
+          myPreferredWidth += labelWidth + GAP_BETWEEN_LIST_ITEMS;
         }
         else {
           myScrollablePanel.add(toBeContLabel, gc);
@@ -415,7 +417,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
         final int labelWidth = linkLabel.getPreferredSize().width;
         if (availableWidth == 0 || myPreferredWidth + labelWidth < availableWidth) {
           myScrollablePanel.add(linkLabel, gc);
-          myPreferredWidth += labelWidth;
+          myPreferredWidth += labelWidth + GAP_BETWEEN_LIST_ITEMS;
         }
         else {
           myFirstIndex = i + 1;
