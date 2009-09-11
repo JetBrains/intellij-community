@@ -362,6 +362,10 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
       }
     }
     for (Facet facet : toAdd) {
+      final Module module = facet.getModule();
+      if (!module.equals(myModule)) {
+        LOG.error(facet + " is created for module " + module + " but added to module " + myModule);
+      }
       final FacetType<?,?> type = facet.getType();
       if (type.isOnlyOneFacetAllowed()) {
         if (type.getUnderlyingFacetType() == null) {
