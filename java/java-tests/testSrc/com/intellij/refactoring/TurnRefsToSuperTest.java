@@ -1,5 +1,6 @@
 package com.intellij.refactoring;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -8,6 +9,10 @@ import org.jetbrains.annotations.NonNls;
 
 public class TurnRefsToSuperTest extends MultiFileTestCase {
 
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
 
   public void testSuperClass() throws Exception {
     doTest("AClass", "ASuper", true);
