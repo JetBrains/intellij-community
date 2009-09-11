@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
+import com.intellij.util.text.FilePathHashingStrategy;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -242,7 +243,7 @@ public class ProcessingItemsBuilder extends BuildInstructionVisitor {
       final VirtualFile[] children = sourceFile.getChildren();
       THashMap<String, VirtualFile> outputChildren = null;
       if (outputFile != null) {
-        outputChildren = new THashMap<String, VirtualFile>();
+        outputChildren = new THashMap<String, VirtualFile>(FilePathHashingStrategy.create());
         VirtualFile[] files = outputFile.getChildren();
         if (files != null) {
           for (VirtualFile file : files) {

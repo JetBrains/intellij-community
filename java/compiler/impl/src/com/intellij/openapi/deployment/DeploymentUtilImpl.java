@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -203,6 +204,12 @@ public class DeploymentUtilImpl extends DeploymentUtil {
     try {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Copy file '" + fromFile + "' to '"+toFile+"'");
+      }
+      if (toFile.exists() && !SystemInfo.isFileSystemCaseSensitive) {
+        File canonicalFile = toFile.getCanonicalFile();
+        if (!canonicalFile.getAbsolutePath().equals(toFile.getAbsolutePath())) {
+          FileUtil.delete(toFile);
+        }
       }
       FileUtil.copy(fromFile, toFile);
     }
