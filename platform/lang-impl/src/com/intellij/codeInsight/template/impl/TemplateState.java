@@ -491,6 +491,7 @@ public class TemplateState implements Disposable {
   }
 
   private void unblockDocument() {
+    PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
     PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myDocument);
   }
 
