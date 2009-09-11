@@ -8,12 +8,18 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
+import com.intellij.JavaTestUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 
 public class SafeDeleteTest extends MultiFileTestCase {
   private VirtualFile myRootBefore;
+
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
 
   protected boolean clearModelBeforeConfiguring() {
     return true;
@@ -64,7 +70,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     assertNotNull("Class " + qClassName + " not found", aClass);
 
     String root = ProjectRootManager.getInstance(getProject()).getContentRoots()[0].getPath();
-    myRootBefore = configureByFiles(new File(root), new VirtualFile[]{aClass.getContainingFile().getVirtualFile()});
+    myRootBefore = configureByFiles(new File(root), aClass.getContainingFile().getVirtualFile());
     final PsiElement psiElement = TargetElementUtilBase
       .findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
 
