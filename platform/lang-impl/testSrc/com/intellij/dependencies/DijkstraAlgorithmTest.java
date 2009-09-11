@@ -33,8 +33,8 @@ public class DijkstraAlgorithmTest extends TestCase{
         return Arrays.asList(in).iterator();
       }
     });
-    final ShortestPathUtil algorithm = new ShortestPathUtil(myGraph);
-    final List shortestPath = algorithm.getShortestPath("a", "b");
+    final ShortestPathUtil<String> algorithm = new ShortestPathUtil<String>(myGraph);
+    final List<String> shortestPath = algorithm.getShortestPath("a", "b");
     checkResult(new String[]{"b","a"}, shortestPath);
   }
 
@@ -57,8 +57,8 @@ public class DijkstraAlgorithmTest extends TestCase{
         return Arrays.asList(in).iterator();
       }
     });
-    final ShortestPathUtil algorithm = new ShortestPathUtil(myGraph);
-    final List shortestPath = algorithm.getShortestPath("b", "c");
+    final ShortestPathUtil<String> algorithm = new ShortestPathUtil<String>(myGraph);
+    final List<String> shortestPath = algorithm.getShortestPath("b", "c");
     checkResult(new String[]{"c","d","b"}, shortestPath);
   }
 
@@ -81,8 +81,8 @@ public class DijkstraAlgorithmTest extends TestCase{
         return Arrays.asList(in).iterator();
       }
     });
-    final ShortestPathUtil algorithm = new ShortestPathUtil(myGraph);
-    final List shortestPath = algorithm.getShortestPath("c", "b");
+    final ShortestPathUtil<String> algorithm = new ShortestPathUtil<String>(myGraph);
+    final List<String> shortestPath = algorithm.getShortestPath("c", "b");
     checkResult(new String[]{"b","d","c"}, shortestPath);
   }
 
@@ -107,17 +107,16 @@ public class DijkstraAlgorithmTest extends TestCase{
         return Arrays.asList(in).iterator();
       }
     });
-    final ShortestPathUtil algorithm = new ShortestPathUtil(myGraph);
-    final List shortestPath = algorithm.getShortestPath("c", "b");
+    final ShortestPathUtil<String> algorithm = new ShortestPathUtil<String>(myGraph);
+    final List<String> shortestPath = algorithm.getShortestPath("c", "b");
     checkResult(new String[]{"b","d","e","c"}, shortestPath);
   }
 
-  private void checkResult(final String [] expectedPath, List<String> path){
+  private static void checkResult(final String [] expectedPath, List<String> path){
     assertNotNull(path);
     assertEquals(expectedPath.length, path.size());
     int index = 0;
-    for (Iterator<String> iterator = path.iterator(); iterator.hasNext();) {
-      String s = iterator.next();
+    for (String s : path) {
       assertEquals(expectedPath[index++], s);
     }
   }
