@@ -17,7 +17,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.JavaRefactoringListenerManager;
 import com.intellij.refactoring.listeners.impl.JavaRefactoringListenerManagerImpl;
-import com.intellij.refactoring.util.JavaDocPolicy;
+import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageInfo;
@@ -32,12 +32,12 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.memberPushDown.PushDownProcessor");
   private final MemberInfo[] myMemberInfos;
   private PsiClass myClass;
-  private final JavaDocPolicy myJavaDocPolicy;
+  private final DocCommentPolicy myJavaDocPolicy;
 
   public PushDownProcessor(Project project,
                            MemberInfo[] memberInfos,
                            PsiClass aClass,
-                           JavaDocPolicy javaDocPolicy) {
+                           DocCommentPolicy javaDocPolicy) {
     super(project);
     myMemberInfos = memberInfos;
     myClass = aClass;

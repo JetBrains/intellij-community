@@ -10,7 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.memberPullUp.JavaDocPanel;
+import com.intellij.refactoring.ui.DocCommentPanel;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
@@ -39,7 +39,7 @@ public abstract class ExtractSuperBaseDialog extends RefactoringDialog {
   protected JTextField mySourceClassField;
   protected JTextField myExtractedSuperNameField;
   protected ReferenceEditorWithBrowseButton myPackageNameField;
-  protected JavaDocPanel myJavaDocPanel;
+  protected DocCommentPanel myJavaDocPanel;
 
 
   public ExtractSuperBaseDialog(Project project, PsiClass sourceClass, List<MemberInfo> members, String refactoringName) {
@@ -59,7 +59,7 @@ public abstract class ExtractSuperBaseDialog extends RefactoringDialog {
     initSourceClassField();
     myExtractedSuperNameField = new JTextField();
 
-    myJavaDocPanel = new JavaDocPanel(getJavaDocPanelName());
+    myJavaDocPanel = new DocCommentPanel(getJavaDocPanelName());
     myJavaDocPanel.setPolicy(getJavaDocPolicySetting());
 
     super.init();

@@ -19,7 +19,7 @@ import com.intellij.refactoring.memberPushDown.PushDownConflicts;
 import com.intellij.refactoring.memberPushDown.PushDownProcessor;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.refactoring.util.FixableUsagesRefactoringProcessor;
-import com.intellij.refactoring.util.JavaDocPolicy;
+import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.usageView.UsageInfo;
@@ -154,7 +154,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
 
 
   protected void performRefactoring(final UsageInfo[] usages) {
-    new PushDownProcessor(mySuperClass.getProject(), myMemberInfos, mySuperClass, new JavaDocPolicy(JavaDocPolicy.ASIS)).run();
+    new PushDownProcessor(mySuperClass.getProject(), myMemberInfos, mySuperClass, new DocCommentPolicy(DocCommentPolicy.ASIS)).run();
     replaceInnerTypeUsages();
     super.performRefactoring(usages);
     try {

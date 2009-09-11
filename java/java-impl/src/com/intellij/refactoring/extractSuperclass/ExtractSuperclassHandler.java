@@ -18,12 +18,12 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.extractInterface.ExtractClassUtil;
+import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.memberPullUp.PullUpConflictsUtil;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.JavaDocPolicy;
+import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -130,7 +130,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
     final String superclassName = dialog.getExtractedSuperName();
     final PsiDirectory targetDirectory = dialog.getTargetDirectory();
     final MemberInfo[] selectedMemberInfos = dialog.getSelectedMemberInfos();
-    final JavaDocPolicy javaDocPolicy = new JavaDocPolicy(dialog.getJavaDocPolicy());
+    final DocCommentPolicy javaDocPolicy = new DocCommentPolicy(dialog.getJavaDocPolicy());
     LocalHistoryAction a = LocalHistory.startAction(myProject, getCommandName(subclass, superclassName));
     try {
       PsiClass superclass = null;

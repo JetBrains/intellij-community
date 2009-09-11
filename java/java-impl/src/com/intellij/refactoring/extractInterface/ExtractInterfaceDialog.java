@@ -11,7 +11,7 @@ import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.extractSuperclass.ExtractSuperBaseDialog;
 import com.intellij.refactoring.extractSuperclass.ExtractSuperBaseProcessor;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
-import com.intellij.refactoring.util.JavaDocPolicy;
+import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 
 import javax.swing.*;
@@ -191,7 +191,7 @@ class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
   protected ExtractSuperBaseProcessor createProcessor() {
     return new ExtractInterfaceProcessor(myProject, false, getTargetDirectory(), getExtractedSuperName(),
                                          mySourceClass, getSelectedMembers(),
-                                         new JavaDocPolicy(getJavaDocPolicy()));
+                                         new DocCommentPolicy(getJavaDocPolicy()));
   }
 
   @Override

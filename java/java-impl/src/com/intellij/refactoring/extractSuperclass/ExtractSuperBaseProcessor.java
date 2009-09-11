@@ -12,7 +12,7 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessorBase;
-import com.intellij.refactoring.util.JavaDocPolicy;
+import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -31,14 +31,14 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
   protected PsiDirectory myTargetDirectory;
   protected final String myNewClassName;
   protected MemberInfo[] myMemberInfos;
-  protected final JavaDocPolicy myJavaDocPolicy;
+  protected final DocCommentPolicy myJavaDocPolicy;
 
 
   public ExtractSuperBaseProcessor(Project project,
                                    boolean replaceInstanceOf,
                                    PsiDirectory targetDirectory,
                                    String newClassName,
-                                   PsiClass aClass, MemberInfo[] memberInfos, JavaDocPolicy javaDocPolicy) {
+                                   PsiClass aClass, MemberInfo[] memberInfos, DocCommentPolicy javaDocPolicy) {
     super(project, replaceInstanceOf, newClassName);
     myTargetDirectory = targetDirectory;
     myNewClassName = newClassName;

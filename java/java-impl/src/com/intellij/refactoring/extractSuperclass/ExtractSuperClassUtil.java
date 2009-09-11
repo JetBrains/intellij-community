@@ -8,7 +8,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.memberPullUp.PullUpHelper;
-import com.intellij.refactoring.util.JavaDocPolicy;
+import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.IncorrectOperationException;
@@ -29,7 +29,7 @@ public class ExtractSuperClassUtil {
                                            final String superclassName,
                                            final PsiClass subclass,
                                            final MemberInfo[] selectedMemberInfos,
-                                           final JavaDocPolicy javaDocPolicy)
+                                           final DocCommentPolicy javaDocPolicy)
     throws IncorrectOperationException {
     PsiClass superclass = JavaDirectoryService.getInstance().createClass(targetDirectory, superclassName);
     final PsiModifierList superClassModifierList = superclass.getModifierList();

@@ -11,8 +11,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.listeners.JavaRefactoringListenerManager;
 import com.intellij.refactoring.listeners.MoveMemberListener;
 import com.intellij.refactoring.memberPullUp.PullUpHelper;
-import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.JavaTestUtil;
 
@@ -65,7 +65,7 @@ public class PullUpTest extends LightCodeInsightTestCase {
       }
     };
     JavaRefactoringListenerManager.getInstance(getProject()).addMoveMembersListener(listener);
-    new PullUpHelper(sourceClass, targetClass, infos, new JavaDocPolicy(JavaDocPolicy.ASIS)).moveMembersToBase();
+    new PullUpHelper(sourceClass, targetClass, infos, new DocCommentPolicy(DocCommentPolicy.ASIS)).moveMembersToBase();
     JavaRefactoringListenerManager.getInstance(getProject()).removeMoveMembersListener(listener);
     assertEquals(countMoved[0], membersToFind.length);
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");

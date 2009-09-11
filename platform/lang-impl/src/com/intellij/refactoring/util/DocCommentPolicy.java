@@ -8,21 +8,21 @@
  */
 package com.intellij.refactoring.util;
 
-import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.PsiComment;
 import com.intellij.util.IncorrectOperationException;
 
-public class JavaDocPolicy {
+public class DocCommentPolicy<T extends PsiComment> {
   public static final int ASIS = 0;
   public static final int MOVE = 1;
   public static final int COPY = 2;
 
   private final int myJavaDocPolicy;
 
-  public JavaDocPolicy(int javaDocPolicy) {
+  public DocCommentPolicy(int javaDocPolicy) {
     myJavaDocPolicy = javaDocPolicy;
   }
 
-  public void processCopiedJavaDoc(PsiDocComment newDocComment, PsiDocComment docComment, boolean willOldBeDeletedAnyway)
+  public void processCopiedJavaDoc(T newDocComment, T docComment, boolean willOldBeDeletedAnyway)
           throws IncorrectOperationException{
     if(myJavaDocPolicy == COPY || docComment == null) return;
 
@@ -34,13 +34,13 @@ public class JavaDocPolicy {
     }
   }
 
-  public void processNewJavaDoc(PsiDocComment newDocComment) throws IncorrectOperationException {
+  public void processNewJavaDoc(T newDocComment) throws IncorrectOperationException {
     if(myJavaDocPolicy == ASIS && newDocComment != null) {
       newDocComment.delete();
     }
   }
 
-  public void processOldJavaDoc(PsiDocComment oldDocComment) throws IncorrectOperationException {
+  public void processOldJavaDoc(T oldDocComment) throws IncorrectOperationException {
     if(myJavaDocPolicy == MOVE && oldDocComment != null) {
       oldDocComment.delete();
     }

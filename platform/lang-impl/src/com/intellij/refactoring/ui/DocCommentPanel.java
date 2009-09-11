@@ -6,9 +6,9 @@
  * To change template for new class use
  * Code Style | Class Templates options (Tools | IDE Options).
  */
-package com.intellij.refactoring.memberPullUp;
+package com.intellij.refactoring.ui;
 
-import com.intellij.refactoring.util.JavaDocPolicy;
+import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.IdeBorderFactory;
 
@@ -16,13 +16,13 @@ import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
 
-public class JavaDocPanel extends JPanel {
+public class DocCommentPanel extends JPanel {
   private JRadioButton myRbJavaDocAsIs = null;
   private JRadioButton myRbJavaDocMove = null;
   private JRadioButton myRbJavaDocCopy = null;
   private final TitledBorder myBorder;
 
-  public JavaDocPanel(String title) {
+  public DocCommentPanel(String title) {
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     myBorder = IdeBorderFactory.createTitledBorder(title);
     this.setBorder(myBorder);
@@ -59,10 +59,10 @@ public class JavaDocPanel extends JPanel {
   }
 
   public void setPolicy(final int javaDocPolicy) {
-    if (javaDocPolicy == JavaDocPolicy.COPY) {
+    if (javaDocPolicy == DocCommentPolicy.COPY) {
       myRbJavaDocCopy.setSelected(true);
     }
-    else if (javaDocPolicy == JavaDocPolicy.MOVE) {
+    else if (javaDocPolicy == DocCommentPolicy.MOVE) {
       myRbJavaDocMove.setSelected(true);
     }
     else {
@@ -72,12 +72,12 @@ public class JavaDocPanel extends JPanel {
 
   public int getPolicy() {
     if (myRbJavaDocCopy != null && myRbJavaDocCopy.isSelected()) {
-      return JavaDocPolicy.COPY;
+      return DocCommentPolicy.COPY;
     }
     if (myRbJavaDocMove != null && myRbJavaDocMove.isSelected()) {
-      return JavaDocPolicy.MOVE;
+      return DocCommentPolicy.MOVE;
     }
 
-    return JavaDocPolicy.ASIS;
+    return DocCommentPolicy.ASIS;
   }
 }

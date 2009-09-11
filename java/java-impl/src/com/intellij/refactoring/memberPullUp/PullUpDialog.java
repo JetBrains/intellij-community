@@ -17,6 +17,7 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoChange;
 import com.intellij.refactoring.ui.ClassCellRenderer;
+import com.intellij.refactoring.ui.DocCommentPanel;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.classMembers.InterfaceContainmentVerifier;
@@ -42,7 +43,7 @@ public class PullUpDialog extends DialogWrapper {
   private final List<PsiClass> mySuperClasses;
   private final MemberInfoStorage myMemberInfoStorage;
   private List<MemberInfo> myMemberInfos;
-  private JavaDocPanel myJavaDocPanel;
+  private DocCommentPanel myJavaDocPanel;
 
   private JComboBox myClassCombo;
 
@@ -172,7 +173,7 @@ public class PullUpDialog extends DialogWrapper {
     myMemberSelectionPanel.getTable().addMemberInfoChangeListener(myMemberInfoModel);
     panel.add(myMemberSelectionPanel, BorderLayout.CENTER);
 
-    myJavaDocPanel = new JavaDocPanel(RefactoringBundle.message("javadoc.for.abstracts"));
+    myJavaDocPanel = new DocCommentPanel(RefactoringBundle.message("javadoc.for.abstracts"));
     myJavaDocPanel.setPolicy(JavaRefactoringSettings.getInstance().PULL_UP_MEMBERS_JAVADOC);
     panel.add(myJavaDocPanel, BorderLayout.EAST);
     return panel;

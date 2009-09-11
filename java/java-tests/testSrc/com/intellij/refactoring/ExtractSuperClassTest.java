@@ -11,8 +11,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.extractSuperclass.ExtractSuperClassProcessor;
-import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NonNls;
@@ -58,7 +58,7 @@ public class ExtractSuperClassTest extends CodeInsightTestCase {
                                                                           newClassName,
                                                                           psiClass, members,
                                                                           false,
-                                                                          new JavaDocPolicy(JavaDocPolicy.ASIS));
+                                                                          new DocCommentPolicy(DocCommentPolicy.ASIS));
     processor.run();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     FileDocumentManager.getInstance().saveAllDocuments();

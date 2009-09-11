@@ -17,7 +17,7 @@ import com.intellij.refactoring.extractSuperclass.ExtractSuperClassUtil;
 import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.memberPullUp.PullUpHelper;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.JavaDocPolicy;
+import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -35,7 +35,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
   private String myInterfaceName;
   private MemberInfo[] mySelectedMembers;
   private PsiDirectory myTargetDir;
-  private JavaDocPolicy myJavaDocPolicy;
+  private DocCommentPolicy myJavaDocPolicy;
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     int offset = editor.getCaretModel().getOffset();
@@ -75,7 +75,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
             myInterfaceName = dialog.getExtractedSuperName();
             mySelectedMembers = dialog.getSelectedMembers();
             myTargetDir = dialog.getTargetDirectory();
-            myJavaDocPolicy = new JavaDocPolicy(dialog.getJavaDocPolicy());
+            myJavaDocPolicy = new DocCommentPolicy(dialog.getJavaDocPolicy());
             try {
               doRefactoring();
             }
@@ -109,7 +109,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
                                    PsiClass aClass,
                                    String interfaceName,
                                    MemberInfo[] selectedMembers,
-                                   JavaDocPolicy javaDocPolicy) throws IncorrectOperationException {
+                                   DocCommentPolicy javaDocPolicy) throws IncorrectOperationException {
     PsiClass anInterface = JavaDirectoryService.getInstance().createInterface(targetDir, interfaceName);
     PsiJavaCodeReferenceElement ref = ExtractSuperClassUtil.createExtendingReference(anInterface, aClass, selectedMembers);
     final PsiReferenceList referenceList = aClass.isInterface() ? aClass.getExtendsList() : aClass.getImplementsList();

@@ -7,7 +7,7 @@ package com.intellij.refactoring;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.*;
 import com.intellij.refactoring.memberPushDown.PushDownProcessor;
-import com.intellij.refactoring.util.JavaDocPolicy;
+import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 
@@ -45,7 +45,8 @@ public class PushDownTest extends LightCodeInsightTestCase {
     memberInfo.setChecked(true);
     membersToMove.add(memberInfo);
 
-    new PushDownProcessor(getProject(), membersToMove.toArray(new MemberInfo[membersToMove.size()]), classes[0], new JavaDocPolicy(JavaDocPolicy.ASIS)){
+    new PushDownProcessor(getProject(), membersToMove.toArray(new MemberInfo[membersToMove.size()]), classes[0], new DocCommentPolicy(
+      DocCommentPolicy.ASIS)){
       @Override
       protected boolean showConflicts(final List<String> conflicts) {
         if (failure ? conflicts.isEmpty() : !conflicts.isEmpty()) {

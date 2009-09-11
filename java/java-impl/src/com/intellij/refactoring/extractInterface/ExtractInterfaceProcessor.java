@@ -3,7 +3,7 @@ package com.intellij.refactoring.extractInterface;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.extractSuperclass.ExtractSuperBaseProcessor;
-import com.intellij.refactoring.util.JavaDocPolicy;
+import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.IncorrectOperationException;
 
@@ -17,7 +17,7 @@ public class ExtractInterfaceProcessor extends ExtractSuperBaseProcessor {
                String newClassName,
                PsiClass aClass,
                MemberInfo[] memberInfos,
-               JavaDocPolicy javaDocPolicy) {
+               DocCommentPolicy javaDocPolicy) {
     super(project, replaceInstanceOf, targetDirectory, newClassName, aClass, memberInfos, javaDocPolicy);
   }
 

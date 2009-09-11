@@ -27,7 +27,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.listeners.JavaRefactoringListenerManager;
 import com.intellij.refactoring.listeners.impl.JavaRefactoringListenerManagerImpl;
-import com.intellij.refactoring.util.JavaDocPolicy;
+import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.VisibilityUtil;
@@ -45,13 +45,13 @@ public class PullUpHelper {
   private final PsiClass myTargetSuperClass;
   private final boolean myIsTargetInterface;
   private final MemberInfo[] myMembersToMove;
-  private final JavaDocPolicy myJavaDocPolicy;
+  private final DocCommentPolicy myJavaDocPolicy;
   private HashSet<PsiMember> myMembersAfterMove = null;
   private final PsiManager myManager;
 
 
   public PullUpHelper(PsiClass sourceClass, PsiClass targetSuperClass, MemberInfo[] membersToMove,
-                      JavaDocPolicy javaDocPolicy) {
+                      DocCommentPolicy javaDocPolicy) {
     mySourceClass = sourceClass;
     myTargetSuperClass = targetSuperClass;
     myMembersToMove = membersToMove;

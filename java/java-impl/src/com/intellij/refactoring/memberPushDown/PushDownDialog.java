@@ -10,10 +10,10 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoChange;
 import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.intellij.refactoring.classMembers.UsedByDependencyMemberInfoModel;
-import com.intellij.refactoring.memberPullUp.JavaDocPanel;
+import com.intellij.refactoring.ui.DocCommentPanel;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.ui.RefactoringDialog;
-import com.intellij.refactoring.util.JavaDocPolicy;
+import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 
 import javax.swing.*;
@@ -25,7 +25,7 @@ import java.util.List;
 public class PushDownDialog extends RefactoringDialog {
   private final List<MemberInfo> myMemberInfos;
   private final PsiClass myClass;
-  private JavaDocPanel myJavaDocPanel;
+  private DocCommentPanel myJavaDocPanel;
   private MemberInfoModel<PsiMember, MemberInfo> myMemberInfoModel;
 
   public PushDownDialog(Project project, MemberInfo[] memberInfos, PsiClass aClass) {
@@ -91,7 +91,7 @@ public class PushDownDialog extends RefactoringDialog {
     memberSelectionPanel.getTable().addMemberInfoChangeListener(myMemberInfoModel);
 
 
-    myJavaDocPanel = new JavaDocPanel(RefactoringBundle.message("push.down.javadoc.panel.title"));
+    myJavaDocPanel = new DocCommentPanel(RefactoringBundle.message("push.down.javadoc.panel.title"));
     myJavaDocPanel.setPolicy(JavaRefactoringSettings.getInstance().PULL_UP_MEMBERS_JAVADOC);
     panel.add(myJavaDocPanel, BorderLayout.EAST);
     return panel;
@@ -104,7 +104,7 @@ public class PushDownDialog extends RefactoringDialog {
 
     invokeRefactoring (new PushDownProcessor(
             getProject(), getSelectedMemberInfos(), myClass,
-            new JavaDocPolicy(getJavaDocPolicy())));
+            new DocCommentPolicy(getJavaDocPolicy())));
   }
 
   private class MyMemberInfoModel extends UsedByDependencyMemberInfoModel<PsiMember, PsiClass, MemberInfo> {

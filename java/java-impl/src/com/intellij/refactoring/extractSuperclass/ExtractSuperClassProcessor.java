@@ -2,7 +2,7 @@ package com.intellij.refactoring.extractSuperclass;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.refactoring.util.JavaDocPolicy;
+import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.IncorrectOperationException;
 
@@ -13,7 +13,7 @@ public class ExtractSuperClassProcessor extends ExtractSuperBaseProcessor {
 
   public ExtractSuperClassProcessor(Project project,
                                     PsiDirectory targetDirectory, String newClassName, PsiClass aClass, MemberInfo[] memberInfos, boolean replaceInstanceOf,
-                                    JavaDocPolicy javaDocPolicy) {
+                                    DocCommentPolicy javaDocPolicy) {
     super(project, replaceInstanceOf, targetDirectory, newClassName, aClass, memberInfos, javaDocPolicy);
   }
 

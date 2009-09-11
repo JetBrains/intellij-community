@@ -26,7 +26,7 @@ import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.JavaDocPolicy;
+import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
@@ -149,7 +149,7 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
     try {
       try {
         PullUpHelper helper = new PullUpHelper(mySubclass, dialog.getSuperClass(), dialog.getSelectedMemberInfos(),
-                                               new JavaDocPolicy(dialog.getJavaDocPolicy()));
+                                               new DocCommentPolicy(dialog.getJavaDocPolicy()));
         helper.moveMembersToBase();
         helper.moveFieldInitializations();
       }
