@@ -89,7 +89,7 @@ public class LibrariesUtil {
 
   public static boolean isEmbeddableDistribution(VirtualFile[] classRoots) {
     for (VirtualFile file : classRoots) {
-      if (GroovyConfigUtils.isGroovyAllJar(file.getName())) {
+      if (file.getName().matches(GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN)) {
         return true;
       }
     }
@@ -98,7 +98,7 @@ public class LibrariesUtil {
 
   public static String getGroovyLibraryHome(VirtualFile[] classRoots) {
     for (VirtualFile file : classRoots) {
-      if (GroovyConfigUtils.isGroovyAllJar(file.getName())) {
+      if (GroovyConfigUtils.isAnyGroovyJar(file.getName())) {
         String jarPath = file.getPresentableUrl();
         File realFile = new File(jarPath);
         if (realFile.exists()) {

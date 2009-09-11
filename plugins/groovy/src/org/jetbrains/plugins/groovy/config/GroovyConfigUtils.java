@@ -77,7 +77,7 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
 
   public static boolean isGroovyLibrary(VirtualFile[] classFiles) {
     for (VirtualFile file : classFiles) {
-      if (isGroovyAllJar(file.getName())) {
+      if (isAnyGroovyJar(file.getName())) {
         return true;
       }
     }
@@ -88,7 +88,7 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
     return getSDKVersion(LibrariesUtil.getGroovyLibraryHome(library));
   }
 
-  public static boolean isGroovyAllJar(@NonNls final String name) {
+  public static boolean isAnyGroovyJar(@NonNls final String name) {
     return name.matches(GROOVY_ALL_JAR_PATTERN) || name.matches(GROOVY_JAR_PATTERN);
   }
 
