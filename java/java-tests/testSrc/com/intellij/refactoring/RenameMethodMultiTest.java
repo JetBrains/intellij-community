@@ -7,11 +7,17 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.JavaTestUtil;
 
 /**
  * @author dsl
  */
 public class RenameMethodMultiTest extends MultiFileTestCase {
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
+
   protected String getTestRoot() {
     return "/refactoring/renameMethod/multi/";
   }
