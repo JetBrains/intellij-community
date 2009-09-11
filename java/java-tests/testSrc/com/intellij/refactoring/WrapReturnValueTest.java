@@ -12,9 +12,15 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.wrapreturnvalue.WrapReturnValueProcessor;
+import com.intellij.JavaTestUtil;
 import org.jetbrains.annotations.NonNls;
 
 public class WrapReturnValueTest extends MultiFileTestCase{
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
+
   protected String getTestRoot() {
     return "/refactoring/wrapReturnValue/";
   }
