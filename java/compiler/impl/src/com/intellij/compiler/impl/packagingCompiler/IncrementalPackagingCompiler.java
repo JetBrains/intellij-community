@@ -44,7 +44,7 @@ public class IncrementalPackagingCompiler extends PackagingCompilerBase {
     for (BuildParticipantProvider<?> provider : providers) {
       addItemsForProvider(provider, allModules, builderContext);
     }
-    return builderContext.getProcessingItems(builderContext.getCompileContext().getCompileScope().getAffectedModules());
+    return builderContext.getProcessingItems();
   }
 
   private static <P extends BuildParticipant> void addItemsForProvider(final BuildParticipantProvider<P> provider,
