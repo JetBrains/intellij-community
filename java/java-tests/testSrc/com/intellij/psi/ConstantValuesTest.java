@@ -1,15 +1,15 @@
 package com.intellij.psi;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
@@ -25,7 +25,7 @@ public class ConstantValuesTest extends PsiTestCase{
       new Runnable() {
         public void run() {
           try{
-            String rootPath = PathManagerEx.getTestDataPath() + "/psi/constantValues";
+            String rootPath = JavaTestUtil.getJavaTestDataPath() + "/psi/constantValues";
             VirtualFile root = PsiTestUtil.createTestProjectStructure(myProject, myModule, rootPath, myFilesToDelete, true);
 
             ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
