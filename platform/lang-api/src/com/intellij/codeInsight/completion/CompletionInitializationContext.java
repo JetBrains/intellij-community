@@ -7,6 +7,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NonNls;
@@ -43,19 +44,25 @@ public class CompletionInitializationContext {
     
     final int selectionEndOffset = selectionModel.hasSelection() ? selectionModel.getSelectionEnd() : caretOffset;
     myOffsetMap.addOffset(SELECTION_END_OFFSET, selectionEndOffset);
+    myOffsetMap.addOffset(IDENTIFIER_END_OFFSET, findIdentifierEnd(file, selectionEndOffset));
+  }
 
-    final PsiReference reference = file.findReferenceAt(selectionEndOffset);
-    if(reference != null){
-      myOffsetMap.addOffset(IDENTIFIER_END_OFFSET,
-                            reference.getElement().getTextRange().getStartOffset() + reference.getRangeInElement().getEndOffset());
-    } else {
-      final String text = file.getText();
-      int idEnd = selectionEndOffset;
-      while (idEnd < text.length() && Character.isJavaIdentifierPart(text.charAt(idEnd))) {
-        idEnd++;
+  private static int findIdentifierEnd(PsiFile file, int selectionEndOffset) {
+    try {
+      final PsiReference reference = file.findReferenceAt(selectionEndOffset);
+      if(reference != null){
+        return reference.getElement().getTextRange().getStartOffset() + reference.getRangeInElement().getEndOffset();
       }
-      myOffsetMap.addOffset(IDENTIFIER_END_OFFSET, idEnd);
     }
+    catch (IndexNotReadyException ignored) {
+    }
+
+    final String text = file.getText();
+    int idEnd = selectionEndOffset;
+    while (idEnd < text.length() && Character.isJavaIdentifierPart(text.charAt(idEnd))) {
+      idEnd++;
+    }
+    return idEnd;
   }
 
   public void setFileCopyPatcher(@NotNull final FileCopyPatcher fileCopyPatcher) {
