@@ -1,14 +1,13 @@
 package com.intellij.refactoring;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.refactoring.typeCook.Settings;
 import com.intellij.refactoring.typeCook.deductive.builder.ReductionSystem;
@@ -17,9 +16,9 @@ import com.intellij.refactoring.typeCook.deductive.resolver.Binding;
 import com.intellij.refactoring.typeCook.deductive.resolver.ResolverTree;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
-import java.io.FileNotFoundException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -34,9 +33,9 @@ public class TypeCookTest extends MultiFileTestCase {
     return JavaSdkImpl.getMockJdk15("java 1.5");
   }
 
-  protected void setUp() throws Exception {
-    super.setUp();
-    LanguageLevelProjectExtension.getInstance(myJavaFacade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
   }
 
   public String getTestRoot() {
