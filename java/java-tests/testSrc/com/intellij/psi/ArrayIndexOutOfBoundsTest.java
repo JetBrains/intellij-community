@@ -1,8 +1,8 @@
 package com.intellij.psi;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
@@ -34,7 +35,7 @@ public class ArrayIndexOutOfBoundsTest extends PsiTestCase {
       new Runnable() {
         public void run() {
           try{
-            String root = PathManagerEx.getTestDataPath() + "/psi/arrayIndexOutOfBounds/src";
+            String root = JavaTestUtil.getJavaTestDataPath() + "/psi/arrayIndexOutOfBounds/src";
             PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk("java 1.4"));
             myProjectRoot = PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
           }
@@ -64,7 +65,7 @@ public class ArrayIndexOutOfBoundsTest extends PsiTestCase {
   }
 
   public void testLongLivingClassAfterRename() throws Exception {
-    PsiClass psiClass = myJavaFacade.findClass("bla.Bla");
+    PsiClass psiClass = myJavaFacade.findClass("bla.Bla", GlobalSearchScope.projectScope(getProject()));
     ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(psiClass);
     renamePackage();
     //assertTrue(psiClass.isValid());
@@ -75,7 +76,7 @@ public class ArrayIndexOutOfBoundsTest extends PsiTestCase {
     Runnable runnable = new Runnable() {
       public void run() {
         try {
-          FileUtil.copyDir(new File(PathManagerEx.getTestDataPath() + "/psi/arrayIndexOutOfBounds/src"),
+          FileUtil.copyDir(new File(JavaTestUtil.getJavaTestDataPath() + "/psi/arrayIndexOutOfBounds/src"),
                            VfsUtil.virtualToIoFile(myProjectRoot));
         }
         catch (IOException e) {
