@@ -32,9 +32,9 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.HashSet;
 
 /**
  * @author: Roman Chernyatchik
@@ -68,7 +68,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
 
   // custom progress
   private String myCurrentCustomProgressCategory;
-  private Set<String> myMentionedCategories = new HashSet<String>();
+  private Set<String> myMentionedCategories = new LinkedHashSet<String>();
 
   public SMTestRunnerResultsForm(final RunConfigurationBase runConfiguration,
                                  @NotNull final JComponent console,

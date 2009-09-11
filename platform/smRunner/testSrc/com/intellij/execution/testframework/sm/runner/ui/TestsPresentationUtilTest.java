@@ -1,10 +1,10 @@
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.testframework.PoolOfTestIcons;
+import com.intellij.execution.testframework.sm.UITestUtil;
 import com.intellij.execution.testframework.sm.runner.BaseSMTRunnerTestCase;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
-import com.intellij.execution.testframework.sm.UITestUtil;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.HashSet;
@@ -13,6 +13,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * @author Roman Chernyatchik
@@ -56,7 +58,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     assertEquals("Running: 0 of <...>  ",
                  TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 0, 0, new HashSet<String>()));
 
-    final HashSet<String> category = new HashSet<String>();
+    final Set<String> category = new LinkedHashSet<String>();
 
     category.clear();
     category.add("Scenarios");
@@ -73,7 +75,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     category.add("Cucumbers");
     category.add("Tomatos");
     category.add(TestsPresentationUtil.DEFAULT_TESTS_CATEGORY);
-    assertEquals("Running: Tests, tomatos, cucumbers 0 of <...>  ",
+    assertEquals("Running: Cucumbers, tomatos, tests 0 of <...>  ",
                  TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 0, 0, category));
 
     category.clear();
