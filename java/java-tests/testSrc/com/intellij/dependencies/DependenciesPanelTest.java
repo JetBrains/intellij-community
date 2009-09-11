@@ -31,8 +31,8 @@
  */
 package com.intellij.dependencies;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.DependencyUISettings;
@@ -40,6 +40,7 @@ import com.intellij.packageDependencies.ForwardDependenciesBuilder;
 import com.intellij.packageDependencies.ui.DependenciesPanel;
 import com.intellij.packageDependencies.ui.PackagePatternProvider;
 import com.intellij.psi.*;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.TestSourceBasedTestCase;
 import junit.framework.Assert;
 
@@ -88,4 +89,10 @@ public class DependenciesPanelTest extends TestSourceBasedTestCase{
   protected String getTestPath() {
     return "dependencies";
   }
+
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
+
 }
