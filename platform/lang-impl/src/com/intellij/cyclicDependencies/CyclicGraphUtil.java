@@ -9,6 +9,9 @@ import java.util.*;
  * Date: Feb 13, 2005
  */
 public class CyclicGraphUtil {
+  private CyclicGraphUtil() {
+  }
+
   public static <Node> Set<List<Node>> getNodeCycles(final Graph<Node> graph, final Node node){
     Set<List<Node>> result = new HashSet<List<Node>>();
 
@@ -55,8 +58,7 @@ public class CyclicGraphUtil {
 
     final HashSet<Node> retainNodes = new HashSet<Node>(inNodes);
     retainNodes.retainAll(outNodes);
-    for (Iterator<Node> iterator = retainNodes.iterator(); iterator.hasNext();) {
-      Node node1 = iterator.next();
+    for (Node node1 : retainNodes) {
       ArrayList<Node> oneNodeCycle = new ArrayList<Node>();
       oneNodeCycle.add(node1);
       oneNodeCycle.add(node);
@@ -66,14 +68,12 @@ public class CyclicGraphUtil {
     inNodes.removeAll(retainNodes);
     outNodes.removeAll(retainNodes);
 
-    final ShortestPathUtil algorithm = new ShortestPathUtil(graphWithoutNode);
+    final ShortestPathUtil<Node> algorithm = new ShortestPathUtil<Node>(graphWithoutNode);
 
-    for (Iterator<Node> iterator = outNodes.iterator(); iterator.hasNext();) {
-      Node fromNode = iterator.next();
-      for (Iterator<Node> iterator1 = inNodes.iterator(); iterator1.hasNext();) {
-        Node toNode = iterator1.next();
-        final List shortestPath = algorithm.getShortestPath( toNode, fromNode);
-        if (shortestPath != null){
+    for (Node fromNode : outNodes) {
+      for (Node toNode : inNodes) {
+        final List<Node> shortestPath = algorithm.getShortestPath(toNode, fromNode);
+        if (shortestPath != null) {
           ArrayList<Node> path = new ArrayList<Node>();
           path.addAll(shortestPath);
           path.add(node);

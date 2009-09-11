@@ -132,10 +132,9 @@ public class SearchCyclesTest extends TestCase{
     checkResult(new String[][]{{"b","d","e","c","a"}, {"e","c","a"}}, nodeCycles);
   }
 
-  private void checkResult(String[][] expected, Set<List<String>> cycles){
+  private static void checkResult(String[][] expected, Set<List<String>> cycles){
     assertEquals(expected.length, cycles.size());
-    for (Iterator<List<String>> iterator = cycles.iterator(); iterator.hasNext();) {
-      List<String> strings = iterator.next();
+    for (List<String> strings : cycles) {
       assertTrue(findInMatrix(expected, strings.toArray(new String[strings.size()])) > -1);
     }
   }
