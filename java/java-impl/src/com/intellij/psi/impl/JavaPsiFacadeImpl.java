@@ -150,7 +150,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
 
     if (DumbService.getInstance(getProject()).isDumb()) {
       final List<PsiClass> classes = findClassesInDumbMode(qualifiedName, scope);
-      if (classes.size() == 1) {
+      if (!classes.isEmpty()) {
         return classes.get(0);
       }
       return null;
@@ -182,8 +182,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
       return Collections.emptyList();
     }
 
-    final List<PsiClass> classes = filterByName(className, pkg.getClasses(scope));
-    return classes.isEmpty() ? classes : Arrays.asList(classes.get(0));
+    return filterByName(className, pkg.getClasses(scope));
   }
 
   private static List<PsiClass> filterByName(String className, PsiClass[] classes) {
