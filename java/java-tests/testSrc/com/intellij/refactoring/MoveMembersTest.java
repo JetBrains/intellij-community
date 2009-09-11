@@ -94,7 +94,7 @@ public class MoveMembersTest extends MultiFileTestCase {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
         MoveMembersTest.this.performAction(sourceClassName, targetClassName, memberIndices);
       }
-    });
+    }, false);
   }
 
   private void performAction(String sourceClassName, String targetClassName, int[] memberIndices) throws Exception {

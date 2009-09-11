@@ -23,7 +23,7 @@ public class ExtractMethodObjectTest extends LightCodeInsightTestCase {
   }
 
   private void doTest(boolean createInnerClass) throws Exception {
-    final String testName = getTestName(true);
+    final String testName = getTestName(false);
     configureByFile("/refactoring/extractMethodObject/" + testName + ".java");
     PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiMethod);

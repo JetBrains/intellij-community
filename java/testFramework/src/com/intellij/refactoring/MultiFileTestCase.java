@@ -20,7 +20,11 @@ public abstract class MultiFileTestCase extends CodeInsightTestCase {
   protected boolean myDoCompare = true;
 
   protected void doTest(PerformAction performAction) throws Exception {
-    String testName = getTestName(true);
+    doTest(performAction, true);
+  }
+
+  protected void doTest(PerformAction performAction, final boolean lowercaseFirstLetter) throws Exception {
+    String testName = getTestName(lowercaseFirstLetter);
     String root = getTestDataPath() + getTestRoot() + testName;
 
     String rootBefore = root + "/before";

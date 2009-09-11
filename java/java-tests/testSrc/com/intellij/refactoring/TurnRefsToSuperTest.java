@@ -122,7 +122,7 @@ public class TurnRefsToSuperTest extends MultiFileTestCase {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
         TurnRefsToSuperTest.this.performAction(className, superClassName, replaceInstanceOf);
       }
-    });
+    }, false);
   }
 
   public String getTestRoot() {
