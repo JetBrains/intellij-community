@@ -292,7 +292,7 @@ public class DetectedFacetManager implements Disposable {
   }
 
   private FacetDetectedNotification createSingleFacetDetectedNotification(final DetectedFacetInfo<Module> detectedFacetInfo, final VirtualFile[] files) {
-    DetectedFacetPresentation presentation = FacetDetectorRegistryEx.getDetectedFacetPresentation(detectedFacetInfo.getFacetType());
+    @SuppressWarnings({"RedundantCast"}) DetectedFacetPresentation presentation = FacetDetectorRegistryEx.getDetectedFacetPresentation((FacetType<?,? extends FacetConfiguration>)detectedFacetInfo.getFacetType());
 
     String text = presentation.getAutodetectionPopupText(detectedFacetInfo.getModule(), detectedFacetInfo.getFacetType(),
                                                          detectedFacetInfo.getFacetName(), files);
