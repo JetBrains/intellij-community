@@ -7,6 +7,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.move.moveInner.MoveInnerImpl;
 import com.intellij.refactoring.move.moveInner.MoveInnerProcessor;
+import com.intellij.JavaTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +15,11 @@ import org.jetbrains.annotations.Nullable;
  *  @author dsl
  */
 public class MoveInnerTest extends MultiFileTestCase {
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
+  
   protected String getTestRoot() {
     return "/refactoring/moveInner/";
   }
