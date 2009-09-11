@@ -9,11 +9,17 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.move.moveMembers.MockMoveMembersOptions;
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
+import com.intellij.JavaTestUtil;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 
 public class MoveMembersTest extends MultiFileTestCase {
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
+
   public void testJavadocRefs() throws Exception {
     doTest("Class1", "Class2", 0);
   }
