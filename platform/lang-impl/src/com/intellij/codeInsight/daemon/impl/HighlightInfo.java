@@ -341,11 +341,11 @@ public class HighlightInfo {
       myKey = key;
     }
 
-    public IntentionActionDescriptor(final IntentionAction action, final List<IntentionAction> options, final String displayName) {
+    public IntentionActionDescriptor(@NotNull IntentionAction action, final List<IntentionAction> options, final String displayName) {
       this(action, options, displayName, null);
     }
 
-    public IntentionActionDescriptor(final IntentionAction action, final List<IntentionAction> options, final String displayName, Icon icon) {
+    public IntentionActionDescriptor(@NotNull IntentionAction action, final List<IntentionAction> options, final String displayName, Icon icon) {
       myAction = action;
       myOptions = options;
       myDisplayName = displayName;

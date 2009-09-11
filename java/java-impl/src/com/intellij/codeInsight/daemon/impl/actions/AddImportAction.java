@@ -8,7 +8,7 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.hint.QuestionAction;
+import com.intellij.codeInsight.hint.PriorityQuestionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,7 +19,10 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.statistics.StatisticsManager;
@@ -34,7 +37,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class AddImportAction implements QuestionAction {
+public class AddImportAction implements PriorityQuestionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.actions.AddImportAction");
 
   private final Project myProject;
@@ -61,7 +64,7 @@ public class AddImportAction implements QuestionAction {
 
     for (PsiClass myTargetClass : myTargetClasses) {
       if (!myTargetClass.isValid()) {
-        return  false;
+        return false;
       }
     }
 
@@ -227,5 +230,9 @@ public class AddImportAction implements QuestionAction {
 
   protected void bindReference(PsiReference ref, PsiClass targetClass) {
     ref.bindToElement(targetClass);
+  }
+
+  public int getPriority() {
+    return 10;
   }
 }

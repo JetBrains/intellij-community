@@ -52,6 +52,12 @@ public class HintManagerImpl extends HintManager implements Disposable {
   private Editor myLastEditor = null;
   private final Alarm myHideAlarm = new Alarm();
 
+  public boolean canShowQuestionAction(PriorityQuestionAction action) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    return !(myQuestionAction instanceof PriorityQuestionAction) ||
+           ((PriorityQuestionAction)myQuestionAction).getPriority() <= action.getPriority();
+  }
+
   public interface ActionToIgnore {
   }
 
@@ -422,24 +428,20 @@ public class HintManagerImpl extends HintManager implements Disposable {
     return getHintPosition(hint, editor, pos, pos, constraint);
   }
 
-  private static Point getHintPosition(LightweightHint hint,
-                                Editor editor,
-                                LogicalPosition pos1,
-                                LogicalPosition pos2,
-                                short constraint) {
+  private static Point getHintPosition(LightweightHint hint, Editor editor, LogicalPosition pos1, LogicalPosition pos2, short constraint) {
     Point p = _getHintPosition(hint, editor, pos1, pos2, constraint);
     JLayeredPane layeredPane = editor.getComponent().getRootPane().getLayeredPane();
     Dimension hintSize = hint.getComponent().getPreferredSize();
-    if (constraint == ABOVE){
-      if (p.y < 0){
+    if (constraint == ABOVE) {
+      if (p.y < 0) {
         Point p1 = _getHintPosition(hint, editor, pos1, pos2, UNDER);
         if (p1.y + hintSize.height <= layeredPane.getSize().height) {
           return p1;
         }
       }
     }
-    else if (constraint == UNDER){
-      if (p.y + hintSize.height > layeredPane.getSize().height){
+    else if (constraint == UNDER) {
+      if (p.y + hintSize.height > layeredPane.getSize().height) {
         Point p1 = _getHintPosition(hint, editor, pos1, pos2, ABOVE);
         if (p1.y >= 0) {
           return p1;
@@ -450,11 +452,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     return p;
   }
 
-  private static Point _getHintPosition(LightweightHint hint,
-                                Editor editor,
-                                LogicalPosition pos1,
-                                LogicalPosition pos2,
-                                short constraint) {
+  private static Point _getHintPosition(LightweightHint hint, Editor editor, LogicalPosition pos1, LogicalPosition pos2, short constraint) {
     Dimension hintSize = hint.getComponent().getPreferredSize();
     int line1 = pos1.line;
     int col1 = pos1.column;
@@ -495,7 +493,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     return location;
   }
 
-  public void showErrorHint(@NotNull Editor editor, String text) {
+  public void showErrorHint(@NotNull Editor editor, @NotNull String text) {
     JLabel label = HintUtil.createErrorLabel(text);
     LightweightHint hint = new LightweightHint(label);
     Point p = getHintPosition(hint, editor, ABOVE);
@@ -514,15 +512,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     showEditorHint(hint, editor, p, HIDE_BY_ANY_KEY | HIDE_BY_TEXT_CHANGE | HIDE_BY_SCROLLING, 0, false);
   }
 
-  public void showErrorHint(
-    Editor editor,
-    String hintText,
-    int offset1,
-    int offset2,
-    short constraint,
-    int flags,
-    int timeout) {
-
+  public void showErrorHint(@NotNull Editor editor, @NotNull String hintText, int offset1, int offset2, short constraint, int flags, int timeout) {
     JLabel label = HintUtil.createErrorLabel(hintText);
     LightweightHint hint = new LightweightHint(label);
     final LogicalPosition pos1 = editor.offsetToLogicalPosition(offset1);
@@ -532,72 +522,59 @@ public class HintManagerImpl extends HintManager implements Disposable {
   }
 
 
-  public void showQuestionHint(
-    Editor editor,
-    String hintText,
-    int offset1,
-    int offset2,
-    QuestionAction action) {
-
+  public void showQuestionHint(@NotNull Editor editor, @NotNull String hintText, int offset1, int offset2, @NotNull QuestionAction action) {
     JLabel label = HintUtil.createQuestionLabel(hintText);
     LightweightHint hint = new LightweightHint(label);
     showQuestionHint(editor, offset1, offset2, hint, action, ABOVE);
   }
 
-  public void showQuestionHint(
-    final Editor editor,
-    final int offset1,
-    final int offset2,
-    final LightweightHint hint,
-    final QuestionAction action,
-    final short constraint) {
-
+  public void showQuestionHint(@NotNull final Editor editor,
+                               final int offset1,
+                               final int offset2,
+                               @NotNull final LightweightHint hint,
+                               @NotNull final QuestionAction action,
+                               final short constraint) {
     final LogicalPosition pos1 = editor.offsetToLogicalPosition(offset1);
     final LogicalPosition pos2 = editor.offsetToLogicalPosition(offset2);
     final Point p = getHintPosition(hint, editor, pos1, pos2, constraint);
     showQuestionHint(editor, p, offset1, offset2, hint, action);
   }
 
-  public void showQuestionHint(final Editor editor,
-                               final Point p,
+
+  public void showQuestionHint(@NotNull final Editor editor,
+                               @NotNull final Point p,
                                final int offset1,
                                final int offset2,
-                               final LightweightHint hint,
-                               final QuestionAction action) {
+                               @NotNull final LightweightHint hint,
+                               @NotNull final QuestionAction action) {
     TextAttributes attributes = new TextAttributes();
     attributes.setEffectColor(HintUtil.QUESTION_UNDERSCORE_COLOR);
     attributes.setEffectType(EffectType.LINE_UNDERSCORE);
-    final RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(offset1, offset2,
-                                                                                     HighlighterLayer.ERROR + 1,
-                                                                                     attributes,
-                                                                                     HighlighterTargetArea.EXACT_RANGE);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if (myQuestionHint != null) {
-          myQuestionHint.hide();
-          myQuestionHint = null;
-          myQuestionAction = null;
+    final RangeHighlighter highlighter = editor.getMarkupModel()
+      .addRangeHighlighter(offset1, offset2, HighlighterLayer.ERROR + 1, attributes, HighlighterTargetArea.EXACT_RANGE);
+    if (myQuestionHint != null) {
+      myQuestionHint.hide();
+      myQuestionHint = null;
+      myQuestionAction = null;
+    }
+
+    hint.addHintListener(new HintListener() {
+      public void hintHidden(EventObject event) {
+        if (!editor.isDisposed()) {
+          editor.getMarkupModel().removeHighlighter(highlighter);
         }
 
-        hint.addHintListener(new HintListener() {
-          public void hintHidden(EventObject event) {
-            if (!editor.isDisposed()) {
-              editor.getMarkupModel().removeHighlighter(highlighter);
-            }
-
-            if (myQuestionHint == hint) {
-              myQuestionAction = null;
-              myQuestionHint = null;
-            }
-            hint.removeHintListener(this);
-          }
-        });
-
-        showEditorHint(hint, editor, p, HIDE_BY_ANY_KEY | HIDE_BY_TEXT_CHANGE | UPDATE_BY_SCROLLING | HIDE_IF_OUT_OF_EDITOR, 0, false);
-        myQuestionAction = action;
-        myQuestionHint = hint;
+        if (myQuestionHint == hint) {
+          myQuestionAction = null;
+          myQuestionHint = null;
+        }
+        hint.removeHintListener(this);
       }
     });
+
+    showEditorHint(hint, editor, p, HIDE_BY_ANY_KEY | HIDE_BY_TEXT_CHANGE | UPDATE_BY_SCROLLING | HIDE_IF_OUT_OF_EDITOR, 0, false);
+    myQuestionAction = action;
+    myQuestionHint = hint;
   }
 
   private void updateLastEditor(final Editor editor) {
@@ -679,13 +656,15 @@ public class HintManagerImpl extends HintManager implements Disposable {
    */
   private final class MyProjectManagerListener extends ProjectManagerAdapter {
     public void projectOpened(Project project) {
-      FileEditorManager.getInstance(project).addFileEditorManagerListener(myEditorManagerListener);
+      FileEditorManager.getInstance(project).addFileEditorManagerListener(myEditorManagerListener, project);
     }
 
     public void projectClosed(Project project) {
-      FileEditorManager.getInstance(project).removeFileEditorManagerListener(myEditorManagerListener);
       // avoid leak through com.intellij.codeInsight.hint.TooltipController.myCurrentTooltip
       TooltipController.getInstance().cancelTooltips();
+
+      myQuestionAction = null;
+      myQuestionHint = null;
     }
   }
 

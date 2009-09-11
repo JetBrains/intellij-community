@@ -3,10 +3,7 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
-import com.intellij.codeInsight.hint.HintManagerImpl;
-import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.codeInsight.hint.QuestionAction;
-import com.intellij.codeInsight.hint.ScrollAwareHint;
+import com.intellij.codeInsight.hint.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.openapi.Disposable;
@@ -61,7 +58,6 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   private static final Insets INACTIVE_MARGIN = new Insets(0, 0, 0, 0);
   private static final Insets ACTIVE_MARGIN = new Insets(0, 0, 0, 0);
 
-  private final Project myProject;
   private final Editor myEditor;
 
   private static final Alarm myAlarm = new Alarm();
@@ -143,16 +139,20 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
 
     myComponentHint.setShouldDelay(delay);
 
-    HintManagerImpl.getInstanceImpl().showQuestionHint(myEditor, position,
-                                 offset,
-                                 offset,
-                                 myComponentHint,
-                                 new QuestionAction() {
-                                   public boolean execute() {
-                                     showPopup();
-                                     return true;
-                                   }
-                                 });
+    HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
+    PriorityQuestionAction action = new PriorityQuestionAction() {
+      public boolean execute() {
+        showPopup();
+        return true;
+      }
+
+      public int getPriority() {
+        return 0;
+      }
+    };
+    if (hintManager.canShowQuestionAction(action)) {
+      hintManager.showQuestionHint(myEditor, position, offset, offset, myComponentHint, action);
+    }
   }
 
   private static Point getHintPosition(Editor editor) {
@@ -177,7 +177,6 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   private IntentionHintComponent(@NotNull Project project, @NotNull PsiFile file, @NotNull Editor editor, ShowIntentionsPass.IntentionsInfo intentions) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     myFile = file;
-    myProject = project;
     myEditor = editor;
 
     setLayout(new BorderLayout());
@@ -223,7 +222,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     });
 
     myComponentHint = new MyComponentHint(this);
-    IntentionListStep step = new IntentionListStep(this, intentions, myEditor, myFile, myProject);
+    IntentionListStep step = new IntentionListStep(this, intentions, myEditor, myFile, project);
     recreateMyPopup(step);
   }
 

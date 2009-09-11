@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ShowAutoImportPass extends TextEditorHighlightingPass {
@@ -63,33 +64,26 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   public void doApplyInformationToEditor() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!myEditor.getContentComponent().hasFocus()) return;
-    HighlightInfo[] visibleHighlights = getVisibleHighlights(myStartOffset, myEndOffset, myProject, myEditor);
-
-    PsiElement[] elements = new PsiElement[visibleHighlights.length];
-    for (int i = 0; i < visibleHighlights.length; i++) {
-      ProgressManager.getInstance().checkCanceled();
-
-      HighlightInfo highlight = visibleHighlights[i];
-      final PsiElement elementAt = myFile.findElementAt(highlight.startOffset);
-      elements[i] = elementAt;
-    }
+    List<HighlightInfo> visibleHighlights = getVisibleHighlights(myStartOffset, myEndOffset, myProject, myEditor);
 
     int caretOffset = myEditor.getCaretModel().getOffset();
-    for (int i = visibleHighlights.length - 1; i >= 0; i--) {
-      HighlightInfo info = visibleHighlights[i];
-      if (elements[i] != null && info.startOffset <= caretOffset && showAddImportHint(info, elements[i])) return;
+    for (int i = visibleHighlights.size() - 1; i >= 0; i--) {
+      ProgressManager.getInstance().checkCanceled();
+      HighlightInfo info = visibleHighlights.get(i);
+      if (info.startOffset <= caretOffset && showAddImportHint(info)) return;
     }
 
-    for (int i = 0; i < visibleHighlights.length; i++) {
-      HighlightInfo info = visibleHighlights[i];
-      if (elements[i] != null && info.startOffset > caretOffset && showAddImportHint(info, elements[i])) return;
+    for (int i = 0; i < visibleHighlights.size(); i++) {
+      ProgressManager.getInstance().checkCanceled();
+      HighlightInfo info = visibleHighlights.get(i);
+      if (info.startOffset > caretOffset && showAddImportHint(info)) return;
     }
   }
 
   @NotNull
-  private static HighlightInfo[] getVisibleHighlights(int startOffset, int endOffset, Project project, Editor editor) {
+  private static List<HighlightInfo> getVisibleHighlights(int startOffset, int endOffset, Project project, Editor editor) {
     List<HighlightInfo> highlights = DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), project);
-    if (highlights == null) return HighlightInfo.EMPTY_ARRAY;
+    if (highlights == null) return Collections.emptyList();
 
     List<HighlightInfo> array = new ArrayList<HighlightInfo>();
     for (HighlightInfo info : highlights) {
@@ -99,13 +93,14 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
         array.add(info);
       }
     }
-    return array.toArray(new HighlightInfo[array.size()]);
+    return array;
   }
 
-  private boolean showAddImportHint(HighlightInfo info, PsiElement element) {
+  private boolean showAddImportHint(HighlightInfo info) {
     if (!DaemonCodeAnalyzerSettings.getInstance().isImportHintEnabled()) return false;
     if (!DaemonCodeAnalyzer.getInstance(myProject).isImportHintsEnabled(myFile)) return false;
-    if (!element.isValid()) return false;
+    PsiElement element = myFile.findElementAt(info.startOffset);
+    if (element == null || !element.isValid()) return false;
 
     final List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> list = info.quickFixActionRanges;
     for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : list) {

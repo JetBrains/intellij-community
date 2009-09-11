@@ -114,7 +114,7 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
     final Project project = myRef.getProject();
     CodeInsightUtil.sortIdenticalShortNameClasses(classes, psiFile);
 
-    final QuestionAction action = createAddImportAction(classes, project, editor, myRef);
+    final QuestionAction action = createAddImportAction(classes, project, editor);
 
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
 
@@ -141,8 +141,7 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
   protected abstract boolean isQualified(T reference);
 
   public boolean showHint(final Editor editor) {
-    if (isQualified(myRef)) return false;
-    return doFix(editor, true, false);
+    return !isQualified(myRef) && doFix(editor, true, false);
   }
 
   @NotNull
@@ -192,7 +191,7 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
         CodeInsightUtil.sortIdenticalShortNameClasses(classes, file);
         if (classes.length == 0) return;
 
-        AddImportAction action = createAddImportAction(classes, project, editor, myRef);
+        AddImportAction action = createAddImportAction(classes, project, editor);
         action.execute();
       }
     });
@@ -202,7 +201,7 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
     reference.bindToElement(targetClass);
   }
 
-  protected AddImportAction createAddImportAction(PsiClass[] classes, Project project, Editor editor, T reference) {
+  protected AddImportAction createAddImportAction(PsiClass[] classes, Project project, Editor editor) {
     return new AddImportAction(project, myRef, editor, classes) {
       @Override
       protected void bindReference(PsiReference ref, PsiClass targetClass) {

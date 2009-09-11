@@ -34,28 +34,17 @@ public abstract class HintManager {
 
   public abstract void showHint(@NotNull JComponent component, @NotNull RelativePoint p, int flags, int timeout);
 
-  public abstract void showErrorHint(@NotNull Editor editor, String text);
+  public abstract void showErrorHint(@NotNull Editor editor, @NotNull String text);
 
   public abstract void showInformationHint(@NotNull Editor editor, @NotNull String text);
+
   public abstract void showInformationHint(@NotNull Editor editor, @NotNull JComponent component);
 
-  public abstract void showQuestionHint(
-    Editor editor,
-    String hintText,
-    int offset1,
-    int offset2,
-    QuestionAction action);
+  public abstract void showQuestionHint(@NotNull Editor editor, @NotNull String hintText, int offset1, int offset2, @NotNull QuestionAction action);
 
   public abstract boolean hideHints(int mask, boolean onlyOne, boolean editorChanged);
 
-  public abstract void showErrorHint(
-    Editor editor,
-    String hintText,
-    int offset1,
-    int offset2,
-    short constraint,
-    int flags,
-    int timeout);
+  public abstract void showErrorHint(@NotNull Editor editor, @NotNull String hintText, int offset1, int offset2, short constraint, int flags, int timeout);
 
   public abstract void hideAllHints();
 
