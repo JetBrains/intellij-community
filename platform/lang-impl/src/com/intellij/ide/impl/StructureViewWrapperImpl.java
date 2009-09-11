@@ -36,8 +36,6 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
   private final JPanel myPanel;
 
-  private final FileEditorManagerListener myEditorManagerListener;
-
   private final Alarm myAlarm;
 
   // -------------------------------------------------------------------------
@@ -59,37 +57,36 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       }
     });
 
-    myEditorManagerListener = new FileEditorManagerAdapter() {
+    FileEditorManagerListener editorManagerListener = new FileEditorManagerAdapter() {
       private FileEditorManagerEvent myLastEvent;
+
       public void selectionChanged(final FileEditorManagerEvent event) {
         myLastEvent = event;
         myAlarm.cancelAllRequests();
-        myAlarm.addRequest(
-          new Runnable() {
-            public void run() {
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                public void run() {
-                  if (myLastEvent == null) {
-                    return;
-                  }
-                  try {
-                    if (myProject.isDisposed()) {
-                      return; // project may have been closed
-                    }
-                    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-                    setFileEditor(myLastEvent.getNewEditor());
-                  }
-                  finally {
-                    myLastEvent = null;
-                  }
+        myAlarm.addRequest(new Runnable() {
+          public void run() {
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              public void run() {
+                if (myLastEvent == null) {
+                  return;
                 }
-              }, ModalityState.NON_MODAL);
-            }
-          }, 400
-        );
+                try {
+                  if (myProject.isDisposed()) {
+                    return; // project may have been closed
+                  }
+                  PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+                  setFileEditor(myLastEvent.getNewEditor());
+                }
+                finally {
+                  myLastEvent = null;
+                }
+              }
+            }, ModalityState.NON_MODAL);
+          }
+        }, 400);
       }
     };
-    FileEditorManager.getInstance(project).addFileEditorManagerListener(myEditorManagerListener);
+    FileEditorManager.getInstance(project).addFileEditorManagerListener(editorManagerListener,this);
   }
 
   // -------------------------------------------------------------------------
@@ -102,7 +99,6 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
   public void dispose() {
     myFileEditor = null;
-    FileEditorManager.getInstance(myProject).removeFileEditorManagerListener(myEditorManagerListener);
     rebuild();
   }
 

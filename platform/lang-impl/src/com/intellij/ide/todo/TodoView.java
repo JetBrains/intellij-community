@@ -13,6 +13,7 @@ import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsListener;
@@ -44,8 +45,6 @@ import java.beans.PropertyChangeListener;
 public class TodoView implements PersistentStateComponent<Element>, Disposable {
   private final Project myProject;
   private final ProjectLevelVcsManager myVCSManager;
-  private MyPropertyChangeListener myPropertyChangeListener;
-  private MessageBusConnection myConnection;
 
   private ContentManager myContentManager;
   private CurrentFileTodosPanel myCurrentFileTodos;
@@ -76,11 +75,17 @@ public class TodoView implements PersistentStateComponent<Element>, Disposable {
     myChangeListTodosPanelSettings = new TodoPanelSettings();
 
     myVCSManager.addVcsListener(myVcsListener);
-    myPropertyChangeListener=new MyPropertyChangeListener();
-    TodoConfiguration.getInstance().addPropertyChangeListener(myPropertyChangeListener);
 
-    myConnection = myProject.getMessageBus().connect();
-    myConnection.subscribe(AppTopics.FILE_TYPES, new MyFileTypeListener());
+    final MyPropertyChangeListener myPropertyChangeListener = new MyPropertyChangeListener();
+    TodoConfiguration.getInstance().addPropertyChangeListener(myPropertyChangeListener);
+    Disposer.register(this, new Disposable() {
+      public void dispose() {
+        TodoConfiguration.getInstance().removePropertyChangeListener(myPropertyChangeListener);
+      }
+    });
+
+    MessageBusConnection connection = myProject.getMessageBus().connect(this);
+    connection.subscribe(AppTopics.FILE_TYPES, new MyFileTypeListener());
   }
 
   public void loadState(Element element) {
@@ -137,14 +142,6 @@ public class TodoView implements PersistentStateComponent<Element>, Disposable {
 
   public void dispose() {
     myVCSManager.removeVcsListener(myVcsListener);
-    TodoConfiguration.getInstance().removePropertyChangeListener(myPropertyChangeListener);
-    myConnection.disconnect();
-
-    if(myAllTodos!=null){ // Panels can be null if project was closed before starup activities run
-      myCurrentFileTodos.dispose();
-      myAllTodos.dispose();
-      myChangeListTodos.dispose();
-    }
   }
 
   public void initToolWindow(ToolWindow toolWindow) {
@@ -159,6 +156,7 @@ public class TodoView implements PersistentStateComponent<Element>, Disposable {
       }
     };
     allTodosContent.setComponent(myAllTodos);
+    Disposer.register(this, myAllTodos);
 
     Content currentFileTodosContent=
       ContentFactory.SERVICE.getInstance().createContent(null,IdeBundle.message("title.todo.current.file"),false);
@@ -169,6 +167,7 @@ public class TodoView implements PersistentStateComponent<Element>, Disposable {
         return builder;
       }
     };
+    Disposer.register(this, myCurrentFileTodos);
     currentFileTodosContent.setComponent(myCurrentFileTodos);
 
     myChangeListTodosContent = ContentFactory.SERVICE.getInstance()
@@ -182,6 +181,7 @@ public class TodoView implements PersistentStateComponent<Element>, Disposable {
         return builder;
       }
     };
+    Disposer.register(this, myChangeListTodos);
     myChangeListTodosContent.setComponent(myChangeListTodos);
 
     myContentManager=toolWindow.getContentManager();

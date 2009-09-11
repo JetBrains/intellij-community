@@ -21,23 +21,16 @@ import javax.swing.tree.TreePath;
 abstract class CurrentFileTodosPanel extends TodoPanel{
   private static final Logger LOG=Logger.getInstance("#com.intellij.ide.todo.CurrentFileTodosPanel");
 
-  private final MyFileEditorManagerListener myFileEditorManagerListener;
-
-  public CurrentFileTodosPanel(Project project,TodoPanelSettings settings,Content content){
+  CurrentFileTodosPanel(Project project,TodoPanelSettings settings,Content content){
     super(project,settings,true,content);
     FileEditorManager fileEditorManager=FileEditorManager.getInstance(project);
     VirtualFile[] files=fileEditorManager.getSelectedFiles();
-    PsiFile psiFile = files.length != 0 ? PsiManager.getInstance(myProject).findFile(files[0]) : null;
+    PsiFile psiFile = files.length == 0 ? null : PsiManager.getInstance(myProject).findFile(files[0]);
     setFile(psiFile);
-    myFileEditorManagerListener=new MyFileEditorManagerListener();
-    fileEditorManager.addFileEditorManagerListener(myFileEditorManagerListener);
-  }
-
-  void dispose(){
+    MyFileEditorManagerListener fileEditorManagerListener = new MyFileEditorManagerListener();
     // It's important to remove this listener. It prevents invocation of setFile method after the tree builder
     // is disposed.
-    FileEditorManager.getInstance(myProject).removeFileEditorManagerListener(myFileEditorManagerListener);
-    super.dispose();
+    fileEditorManager.addFileEditorManagerListener(fileEditorManagerListener,this);
   }
 
   private void setFile(PsiFile file){

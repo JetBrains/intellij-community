@@ -7,21 +7,22 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.ui.EditorNotificationPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.text.DateFormat;
+import java.util.List;
 
 /**
  * @author yole
@@ -31,15 +32,16 @@ public class OutdatedVersionNotifier implements ProjectComponent {
 
   private final FileEditorManager myFileEditorManager;
   private final CommittedChangesCache myCache;
-  private final FileEditorManagerListener myFileEditorManagerListener = new MyFileEditorManagerListener();
+  private final Project myProject;
   private static final Key<OutdatedRevisionPanel> PANEL_KEY = new Key<OutdatedRevisionPanel>("OutdatedRevisionPanel");
   private volatile boolean myIncomingChangesRequested;
 
   public OutdatedVersionNotifier(FileEditorManager fileEditorManager,
                                  CommittedChangesCache cache,
-                                 MessageBus messageBus) {
+                                 MessageBus messageBus, Project project) {
     myFileEditorManager = fileEditorManager;
     myCache = cache;
+    myProject = project;
     messageBus.connect().subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesAdapter() {
       public void incomingChangesUpdated(@Nullable final List<CommittedChangeList> receivedChanges) {
         if (myCache.getCachedIncomingChanges() == null) {
@@ -70,11 +72,11 @@ public class OutdatedVersionNotifier implements ProjectComponent {
   }
 
   public void projectOpened() {
-    myFileEditorManager.addFileEditorManagerListener(myFileEditorManagerListener);
+    final FileEditorManagerListener myFileEditorManagerListener = new MyFileEditorManagerListener();
+    myFileEditorManager.addFileEditorManagerListener(myFileEditorManagerListener, myProject);
   }
 
   public void projectClosed() {
-    myFileEditorManager.removeFileEditorManagerListener(myFileEditorManagerListener);
   }
 
   @NonNls

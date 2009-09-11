@@ -12,6 +12,7 @@ import com.intellij.ide.todo.nodes.TodoFileNode;
 import com.intellij.ide.todo.nodes.TodoItemNode;
 import com.intellij.ide.todo.nodes.TodoTreeHelper;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
@@ -32,8 +33,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Icons;
 import com.intellij.util.OpenSourceUtil;
@@ -54,7 +55,7 @@ import java.awt.event.KeyEvent;
 /**
  * @author Vladimir Kondratyev
  */
-abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavigator, DataProvider {
+abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavigator, DataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.todo.TodoPanel");
 
   protected Project myProject;
@@ -72,7 +73,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
    * @param currentFileMode if <code>true</code> then view doesn't have "Group By Packages" and "Flatten Packages"
    *                        actions.
    */
-  public TodoPanel(Project project,
+  TodoPanel(Project project,
                    TodoPanelSettings settings,
                    boolean currentFileMode,
                    Content content) {
@@ -185,7 +186,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     setToolbar(toolBarPanel);
   }
 
-  void dispose() {
+  public void dispose() {
     myVisibilityWatcher.deinstall(this);
     myVisibilityWatcher = null;
     myProject = null;
@@ -358,7 +359,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
    * Provides support for "auto scroll to source" functionnality.
    */
   private final class MyAutoScrollToSourceHandler extends AutoScrollToSourceHandler {
-    public MyAutoScrollToSourceHandler() {
+    MyAutoScrollToSourceHandler() {
     }
 
     protected boolean isAutoScrollMode() {
@@ -497,7 +498,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
   }
 
   private final class MyShowPackagesAction extends ToggleAction {
-    public MyShowPackagesAction() {
+    MyShowPackagesAction() {
       super(IdeBundle.message("action.group.by.packages"), null, Icons.GROUP_BY_PACKAGES);
     }
 
@@ -512,7 +513,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
   }
 
   private final class MyShowModulesAction extends ToggleAction {
-    public MyShowModulesAction() {
+    MyShowModulesAction() {
       super(IdeBundle.message("action.group.by.modules"), null, IconLoader.getIcon("/objectBrowser/showModules.png"));
     }
 
@@ -527,7 +528,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
   }
 
   private final class MyFlattenPackagesAction extends ToggleAction {
-    public MyFlattenPackagesAction() {
+    MyFlattenPackagesAction() {
       super(IdeBundle.message("action.flatten.packages"), null, Icons.FLATTEN_PACKAGES_ICON);
     }
 
@@ -547,7 +548,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
   }
 
   private final class MySetTodoFilterAction extends AnAction implements CustomComponentAction {
-    public MySetTodoFilterAction() {
+    MySetTodoFilterAction() {
       super(IdeBundle.message("action.filter.todo.items"), null, IconLoader.getIcon("/ant/filter.png"));
     }
 
@@ -599,7 +600,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
        * @param description action's description.
        * @param filter      filter to be applied. <code>null</code> value means "empty" filter.
        */
-      public TodoFilterApplier(String text, String description, TodoFilter filter) {
+      TodoFilterApplier(String text, String description, TodoFilter filter) {
         super(null, description, null);
         getTemplatePresentation().setText(text, false);
         myFilter = filter;

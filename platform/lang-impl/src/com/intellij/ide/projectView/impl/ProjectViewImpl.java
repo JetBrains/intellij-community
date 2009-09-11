@@ -176,8 +176,8 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
   private final MessageBusConnection myConnection;
   private JPanel myTopPanel;
   private ActionToolbar myToolBar;
-  private Map<String, Element> myUninitializedPaneState = new HashMap<String, Element>();
-  private Map<String, SelectInTarget> mySelectInTargets = new HashMap<String, SelectInTarget>();
+  private final Map<String, Element> myUninitializedPaneState = new HashMap<String, Element>();
+  private final Map<String, SelectInTarget> mySelectInTargets = new HashMap<String, SelectInTarget>();
 
   public ProjectViewImpl(Project project, final FileEditorManager fileEditorManager, final ToolWindowManagerEx toolWindowManager) {
     myProject = project;
@@ -598,7 +598,7 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
     }
 
     class FlattenPackagesDependableAction extends PaneOptionAction {
-      public FlattenPackagesDependableAction(Map<String, Boolean> optionsMap,
+      FlattenPackagesDependableAction(Map<String, Boolean> optionsMap,
                                              final String text,
                                              final String description,
                                              final Icon icon,
@@ -927,11 +927,6 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
       return elements;
     }
 
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "ProjectView";
   }
 
   private final class MyPanel extends JPanel implements DataProvider {
@@ -1412,7 +1407,7 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
   }
 
   private class HideEmptyMiddlePackagesAction extends PaneOptionAction {
-    public HideEmptyMiddlePackagesAction() {
+    private HideEmptyMiddlePackagesAction() {
       super(myHideEmptyPackages, "", "", null, ourHideEmptyPackagesDefaults);
     }
 
@@ -1490,14 +1485,13 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
 
   private class MyAutoScrollFromSourceHandler extends AutoScrollFromSourceHandler {
     private final Alarm myAlarm = new Alarm(myProject);
-    private FileEditorManagerAdapter myEditorManagerListener;
 
-    public MyAutoScrollFromSourceHandler() {
+    private MyAutoScrollFromSourceHandler() {
       super(ProjectViewImpl.this.myProject, ProjectViewImpl.this);
     }
 
     public void install() {
-      myEditorManagerListener = new FileEditorManagerAdapter() {
+      FileEditorManagerAdapter myEditorManagerListener = new FileEditorManagerAdapter() {
         public void selectionChanged(final FileEditorManagerEvent event) {
           final FileEditor newEditor = event.getNewEditor();
           myAlarm.cancelAllRequests();
@@ -1514,7 +1508,7 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
           }, 300, ModalityState.NON_MODAL);
         }
       };
-      myFileEditorManager.addFileEditorManagerListener(myEditorManagerListener);
+      myFileEditorManager.addFileEditorManagerListener(myEditorManagerListener, this);
     }
 
     public void scrollFromSource() {
@@ -1541,9 +1535,6 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
     }
 
     public void dispose() {
-      if (myEditorManagerListener != null) {
-        myFileEditorManager.removeFileEditorManagerListener(myEditorManagerListener);
-      }
     }
 
     protected boolean isAutoScrollMode() {
@@ -1564,7 +1555,7 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
       private final PsiFile myPsiFile;
       private final Editor myEditor;
 
-      public MySelectInContext(final PsiFile psiFile, Editor editor) {
+      private MySelectInContext(final PsiFile psiFile, Editor editor) {
         myPsiFile = psiFile;
         myEditor = editor;
       }

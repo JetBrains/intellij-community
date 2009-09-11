@@ -38,7 +38,6 @@ public class PaletteManager implements ProjectComponent {
   private final FileEditorManager myFileEditorManager;
   private PaletteWindow myPaletteWindow;
   private ToolWindow myPaletteToolWindow;
-  private final MyFileEditorManagerListener myListener;
   private final List<KeyListener> myKeyListeners = ContainerUtil.createEmptyCOWList();
   private final List<PaletteDragEventListener> myDragEventListeners = ContainerUtil.createEmptyCOWList();
   private final List<ListSelectionListener> mySelectionListeners = ContainerUtil.createEmptyCOWList();
@@ -46,7 +45,6 @@ public class PaletteManager implements ProjectComponent {
   public PaletteManager(Project project, FileEditorManager fileEditorManager) {
     myProject = project;
     myFileEditorManager = fileEditorManager;
-    myListener = new MyFileEditorManagerListener();
   }
 
   public void projectOpened() {
@@ -58,7 +56,8 @@ public class PaletteManager implements ProjectComponent {
                                                                                           ToolWindowAnchor.RIGHT);
         myPaletteToolWindow.setIcon(IconLoader.getIcon("/general/toolWindowPalette.png"));
         myPaletteToolWindow.setAvailable(false, null);
-        myFileEditorManager.addFileEditorManagerListener(myListener);
+        final MyFileEditorManagerListener myListener = new MyFileEditorManagerListener();
+        myFileEditorManager.addFileEditorManagerListener(myListener, myProject);
       }
     });
   }
@@ -68,7 +67,6 @@ public class PaletteManager implements ProjectComponent {
       ToolWindowManager.getInstance(myProject).unregisterToolWindow(IdeBundle.message("toolwindow.palette"));
       myPaletteWindow = null;
     }
-    myFileEditorManager.removeFileEditorManagerListener(myListener);
   }
 
   @NotNull
