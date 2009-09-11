@@ -1,9 +1,9 @@
 package com.intellij.dependencies;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.JavaAnalysisScope;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.packageDependencies.BackwardDependenciesBuilder;
 import com.intellij.packageDependencies.DependenciesBuilder;
@@ -36,7 +36,7 @@ public class UsagesInAnalyzingDependenciesTest extends PsiTestCase{
       new Runnable() {
         public void run() {
           try{
-            String root = PathManagerEx.getTestDataPath() + "/dependencies/search/" + getTestName(true);
+            String root = JavaTestUtil.getJavaTestDataPath() + "/dependencies/search/" + getTestName(true);
             PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk("java 1.4"));
             PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
           }
@@ -69,7 +69,7 @@ public class UsagesInAnalyzingDependenciesTest extends PsiTestCase{
                               "(2, 14) import com.a.A;","(4, 3) A myA = new A();", "(4, 15) A myA = new A();", "(6, 9) myA.aa();"}, psiUsages);
   }
 
-  private String toString(Usage usage) {
+  private static String toString(Usage usage) {
     TextChunk[] textChunks = usage.getPresentation().getText();
     StringBuffer result = new StringBuffer();
     for (TextChunk textChunk : textChunks) {
@@ -119,7 +119,7 @@ public class UsagesInAnalyzingDependenciesTest extends PsiTestCase{
     checkResult(new String []{"(2, 3) B myB = new B();", "(2, 15) B myB = new B();", "(4, 9) myB.bb();"}, psiUsages);
   }
 
-  private void checkResult(final String[] usages, final String [] psiUsages) {
+  private static void checkResult(final String[] usages, final String [] psiUsages) {
     assertEquals(usages.length , psiUsages.length);
     for (int i = 0; i < psiUsages.length; i++) {
       assertEquals(usages[i], psiUsages[i]);

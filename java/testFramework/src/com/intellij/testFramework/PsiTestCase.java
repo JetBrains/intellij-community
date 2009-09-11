@@ -101,7 +101,7 @@ public abstract class PsiTestCase extends ModuleTestCase {
   }
 
   protected void configure(String path, String dataName) throws Exception {
-    myDataRoot = PathManagerEx.getTestDataPath() + path;
+    myDataRoot = getTestDataPath() + path;
 
     myTestDataBefore = loadData(dataName);
 
@@ -110,6 +110,10 @@ public abstract class PsiTestCase extends ModuleTestCase {
 
     final VirtualFile vFile = vDir.findChild(myTestDataBefore.getTextFile());
     myFile = myPsiManager.findFile(vFile);
+  }
+
+  protected String getTestDataPath() {
+    return PathManagerEx.getTestDataPath();
   }
 
   private PsiTestData loadData(String dataName) throws Exception {
