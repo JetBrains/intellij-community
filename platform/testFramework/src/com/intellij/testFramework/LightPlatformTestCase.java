@@ -23,8 +23,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -64,6 +64,7 @@ import gnu.trove.THashMap;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
@@ -117,7 +118,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   public static void initApplication(final DataProvider dataProvider) throws Exception {
-    ourApplication = IdeaTestApplication.getInstance();
+    ourApplication = IdeaTestApplication.getInstance(null);
     ourApplication.setDataProvider(dataProvider);
   }
 

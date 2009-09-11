@@ -96,9 +96,14 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     return DEFAULT_TEST_TIME;
   }
 
+  @Nullable
+  protected String getApplicationConfigDirPath() throws Exception {
+    return null;
+  }
+
   protected void initApplication() throws Exception {
     boolean firstTime = ourApplication == null;
-    ourApplication = IdeaTestApplication.getInstance();
+    ourApplication = IdeaTestApplication.getInstance(getApplicationConfigDirPath());
     ourApplication.setDataProvider(this);
 
     if (firstTime) {

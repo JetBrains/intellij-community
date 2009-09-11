@@ -5,7 +5,6 @@
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
-import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaTestApplication;
@@ -156,7 +155,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
   }
 
   private void initApplication() throws Exception {
-    myApplication = IdeaTestApplication.getInstance();
+    myApplication = IdeaTestApplication.getInstance(null);
     myApplication.setDataProvider(new MyDataProvider());
   }
 

@@ -1,6 +1,7 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.StreamProvider;
@@ -19,7 +20,9 @@ import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.ConnectException;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -87,7 +90,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   public Collection<String> getStorageFileNames() {
-    return myStorages.keySet();
+    return Collections.unmodifiableCollection(myStorages.keySet());
   }
 
   private void putStorageToMap(final String key, final StateStorage stateStorage) {
@@ -350,7 +353,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     final Matcher matcher = MACRO_PATTERN.matcher(file);
     while (matcher.find()) {
       String m = matcher.group(1);
-      if (!myMacros.containsKey(m)) {
+      if (!myMacros.containsKey(m) || (!ApplicationManagerEx.getApplication().isUnitTestMode() && myMacros.get(m) == null)) {
         throw new IllegalArgumentException("Unknown macro: " + m + " in storage spec: " + file);
       }
     }

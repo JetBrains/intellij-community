@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.PluginsFacade;
 import com.intellij.openapi.extensions.PluginId;
+import org.jetbrains.annotations.Nullable;
 
 public class IdeaTestApplication extends CommandLineApplication {
   private DataProvider myDataContext;
@@ -35,14 +36,14 @@ public class IdeaTestApplication extends CommandLineApplication {
     return myDataContext == null ? null : myDataContext.getData(dataId);
   }
 
-  public static synchronized IdeaTestApplication getInstance() {
+  public static synchronized IdeaTestApplication getInstance(@Nullable final String configPath) {
     if (ourInstance == null) {
       new IdeaTestApplication();
       PluginsFacade.INSTANCE.getPlugins(); //initialization
       final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
       new WriteAction() {
         protected void run(Result result) throws Throwable {
-          app.load(null);
+          app.load(configPath);
         }
       }.execute();
     }
