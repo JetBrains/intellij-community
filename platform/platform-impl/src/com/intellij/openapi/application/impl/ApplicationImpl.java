@@ -230,18 +230,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     myDisposeInProgress = true;
     Disposer.dispose(this);
 
-    if (isInternal() && !Disposer.isEmpty()) {
-      int ret = JOptionPane.showConfirmDialog(null, "Memory leaks detected. Create memory snapshot?", "Memory leaks", JOptionPane.OK_CANCEL_OPTION);
-      if (ret == JOptionPane.OK_OPTION) {
-        try {
-          System.out.println("Creating snapshot...");
-          Class.forName("com.intellij.util.ProfilingUtil").getDeclaredMethod("forceCaptureMemorySnapshot").invoke(null);
-          System.out.println("Snapshot created");
-        }
-        catch (Exception ignored) {
-        }
-      }
-    }
     Disposer.assertIsEmpty();
   }
 
