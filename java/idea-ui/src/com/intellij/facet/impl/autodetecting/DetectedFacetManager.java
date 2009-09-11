@@ -56,7 +56,7 @@ public class DetectedFacetManager implements Disposable {
   private final Set<DetectedFacetInfo<Module>> myPendingNewFacets = new HashSet<DetectedFacetInfo<Module>>();
   private final Alarm myNotificationAlarm = new Alarm();
   private final ProjectFacetInfoSet myDetectedFacetSet;
-  private final List<Notification> myNotifications = new ArrayList<Notification>();
+  private final List<FacetDetectedNotification> myNotifications = new ArrayList<FacetDetectedNotification>();
 
   public DetectedFacetManager(final Project project, final FacetAutodetectingManagerImpl autodetectingManager,
                               final ProjectFacetInfoSet detectedFacetSet) {
@@ -66,12 +66,12 @@ public class DetectedFacetManager implements Disposable {
     myAutodetectingManager = autodetectingManager;
     myDetectedFacetSet.addListener(new ProjectFacetInfoSet.DetectedFacetListener() {
       public void facetDetected(final DetectedFacetInfo<Module> info) {
-        onDetectedFacetChanged(Collections.singletonList(info));
+        onDetectedFacetChanged(Collections.singletonList(info), Collections.<DetectedFacetInfo<Module>>emptyList());
       }
 
       public void facetRemoved(final DetectedFacetInfo<Module> info) {
         myAutodetectingManager.getFileIndex().removeFromIndex(info);
-        onDetectedFacetChanged(Collections.<DetectedFacetInfo<Module>>emptyList());
+        onDetectedFacetChanged(Collections.<DetectedFacetInfo<Module>>emptyList(), Collections.singletonList(info));
       }
     });
     Disposer.register(myProject, this);
@@ -91,19 +91,19 @@ public class DetectedFacetManager implements Disposable {
     return myProject;
   }
 
-  public void onDetectedFacetChanged(@NotNull final Collection<DetectedFacetInfo<Module>> added) {
+  public void onDetectedFacetChanged(@NotNull final Collection<DetectedFacetInfo<Module>> added, @NotNull final Collection<DetectedFacetInfo<Module>> removed) {
     if (!myUIInitialized) return;
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      final boolean clearNotifications = myDetectedFacetSet.getAllDetectedFacets().isEmpty();
-
       Runnable runnable = new Runnable() {
         public void run() {
           if (isDisposed()) return;
 
           myPendingNewFacets.addAll(added);
-          if (clearNotifications) {
-            //getNotifications().invalidateAll(NOTIFICATION_ID);
+          for (FacetDetectedNotification notification : myNotifications) {
+            for (DetectedFacetInfo<Module> facetInfo : removed) {
+              notification.processFacetRemoved(facetInfo);
+            }
           }
           queueNotificationPopup();
         }
@@ -145,14 +145,14 @@ public class DetectedFacetManager implements Disposable {
     HashMap<DetectedFacetInfo<Module>, List<VirtualFile>> filesMap = getFilesMap(newFacets);
     if (!filesMap.isEmpty() && showNotification) {
       final Set<DetectedFacetInfo<Module>> detectedFacetInfos = filesMap.keySet();
-      final Notification notification;
+      final FacetDetectedNotification notification;
       if (filesMap.size() == 1) {
         final DetectedFacetInfo<Module> facetInfo = detectedFacetInfos.iterator().next();
         final List<VirtualFile> files = filesMap.get(facetInfo);
         notification = createSingleFacetDetectedNotification(facetInfo, files.toArray(new VirtualFile[files.size()]));
       }
       else {
-        notification = createSeveralFacetsDetectedNotification(filesMap.size());
+        notification = createSeveralFacetsDetectedNotification(filesMap.keySet());
       }
       myNotifications.add(notification);
       Notifications.Bus.notify(notification, myProject);
@@ -167,7 +167,7 @@ public class DetectedFacetManager implements Disposable {
 
   public void initUI() {
     myUIInitialized = true;
-    onDetectedFacetChanged(myDetectedFacetSet.getAllDetectedFacets());
+    onDetectedFacetChanged(myDetectedFacetSet.getAllDetectedFacets(), Collections.<DetectedFacetInfo<Module>>emptyList());
   }
 
   public void disposeUI() {
@@ -291,7 +291,7 @@ public class DetectedFacetManager implements Disposable {
     return FacetManager.getInstance(module).createFacet(facetType, info.getFacetName(), (C)info.getConfiguration(), underlyingFacet);
   }
 
-  private Notification createSingleFacetDetectedNotification(final DetectedFacetInfo<Module> detectedFacetInfo, final VirtualFile[] files) {
+  private FacetDetectedNotification createSingleFacetDetectedNotification(final DetectedFacetInfo<Module> detectedFacetInfo, final VirtualFile[] files) {
     DetectedFacetPresentation presentation = FacetDetectorRegistryEx.getDetectedFacetPresentation(detectedFacetInfo.getFacetType());
 
     String text = presentation.getAutodetectionPopupText(detectedFacetInfo.getModule(), detectedFacetInfo.getFacetType(),
@@ -303,7 +303,7 @@ public class DetectedFacetManager implements Disposable {
     final String description = ProjectBundle.message("facet.autodetected.info.text", detectedFacetInfo.getFacetType().getPresentableName(), text,
                                                      detectedFacetInfo.getFacetName());
     final String title = ProjectBundle.message("notification.name.0.facet.detected", detectedFacetInfo.getFacetType().getPresentableName());
-    return new Notification(NOTIFICATION_ID, title, description, NotificationType.INFORMATION, new NotificationListener() {
+    return new FacetDetectedNotification(title, description, new NotificationListener() {
       public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
         if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           notification.expire();
@@ -329,13 +329,13 @@ public class DetectedFacetManager implements Disposable {
           }
         }
       }
-    });
+    }, Collections.singletonList(detectedFacetInfo));
   }
 
-  private Notification createSeveralFacetsDetectedNotification(final int facetsNumber) {
-    final String title = ProjectBundle.message("notification.name.0.facets.detected", facetsNumber);
-    final String content = ProjectBundle.message("facet.autodetection.several.facets.detected.text", facetsNumber);
-    return new Notification(NOTIFICATION_ID, title, content, NotificationType.INFORMATION, new NotificationListener() {
+  private FacetDetectedNotification createSeveralFacetsDetectedNotification(final Set<DetectedFacetInfo<Module>> facets) {
+    final String title = ProjectBundle.message("notification.name.0.facets.detected", facets.size());
+    final String content = ProjectBundle.message("facet.autodetection.several.facets.detected.text", facets.size());
+    return new FacetDetectedNotification(title, content, new NotificationListener() {
       public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
         if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           if (isDisposed()) {
@@ -347,7 +347,7 @@ public class DetectedFacetManager implements Disposable {
           }
         }
       }
-    });
+    }, facets);
   }
 
   private void removeAllNotifications() {
@@ -391,6 +391,21 @@ public class DetectedFacetManager implements Disposable {
       }
       myAutodetectingManager.removeFacetFromCache(facet);
     }
+  }
 
+  private static class FacetDetectedNotification extends Notification {
+    private List<DetectedFacetInfo<Module>> myFacets = new ArrayList<DetectedFacetInfo<Module>>();
+
+    private FacetDetectedNotification(@NotNull String title, @NotNull String content, NotificationListener listener, Collection<DetectedFacetInfo<Module>> facets) {
+      super(NOTIFICATION_ID, title, content, NotificationType.INFORMATION, listener);
+      myFacets.addAll(facets);
+    }
+
+    public void processFacetRemoved(DetectedFacetInfo<Module> facetInfo) {
+      myFacets.remove(facetInfo);
+      if (myFacets.isEmpty() && !isExpired()) {
+        expire();
+      }
+    }
   }
 }
