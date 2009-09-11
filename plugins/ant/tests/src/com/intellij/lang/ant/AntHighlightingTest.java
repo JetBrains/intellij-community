@@ -34,7 +34,11 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
   private boolean myIgnoreInfos;
 
   private void doTest() throws Exception {
-    doTest(getTestName(false) + ".xml", false, false);
+    doTest(false);
+  }
+
+  private void doTest(final boolean lowercaseFirstLetter) throws Exception {
+    doTest(getTestName(lowercaseFirstLetter) + ".xml", false, false);
   }
 
   public void testEntity() throws Exception {
@@ -44,11 +48,11 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testSanity() throws Exception {
-    doTest();
+    doTest(true);
   }
 
   public void testSanity2() throws Exception {
-    doTest();
+    doTest(true);
   }
 
   public void testRefid() throws Exception {
