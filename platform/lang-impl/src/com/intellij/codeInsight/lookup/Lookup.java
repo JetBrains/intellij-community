@@ -7,6 +7,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.*;
 
 public interface Lookup extends UserDataHolder{
   char NORMAL_SELECT_CHAR = '\n';
@@ -40,4 +41,6 @@ public interface Lookup extends UserDataHolder{
   PsiFile getPsiFile();
 
   boolean isCompletion();
+
+  java.util.List<LookupElement> getItems();
 }

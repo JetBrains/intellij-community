@@ -44,8 +44,6 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
   public static final Object INDICATE_ANONYMOUS = Key.create("INDICATE ANONYMOUS");
   public static final Key<Object> DEPRECATED_ATTR = Key.create("DEPRECATED");
 
-  public static final Key<Comparable[]> WEIGHT = Key.create("WEIGHT");
-
   public static final Object CASE_INSENSITIVE = Key.create("CASE_INSENSITIVE");
 
   public static final Key<TailType> TAIL_TYPE_ATTR = Key.create("myTailType"); // one of constants defined in SimpleTailType interface

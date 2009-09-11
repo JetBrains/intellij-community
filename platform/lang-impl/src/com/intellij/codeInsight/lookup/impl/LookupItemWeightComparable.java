@@ -3,7 +3,7 @@
  */
 package com.intellij.codeInsight.lookup.impl;
 
-import com.intellij.codeInsight.completion.CompletionPreferencePolicy;
+import com.intellij.codeInsight.completion.CompletionLookupArranger;
 
 import java.util.Arrays;
 
@@ -20,7 +20,7 @@ public class LookupItemWeightComparable implements Comparable<LookupItemWeightCo
   }
 
   public int compareTo(final LookupItemWeightComparable o) {
-    return CompletionPreferencePolicy.doCompare(myPriority, o.myPriority, myWeight, o.myWeight);
+    return CompletionLookupArranger.doCompare(myPriority, o.myPriority, myWeight, o.myWeight);
   }
 
   public String toString() {

@@ -32,11 +32,6 @@ public abstract class CompletionService {
    * A "weigher" extension key (see {@link Weigher}) to sort completion items.
    */
   public static final Key<CompletionWeigher> WEIGHER_KEY = Key.create("completion");
-  /**
-   * A "weigher" extension key (see {@link Weigher}) to skip some of the top lookup items that shouldn't be selected, but should still be at the top
-   * (so {@link #WEIGHER_KEY} is not applicable).
-   */
-  public static final Key<CompletionWeigher> PRESELECT_KEY = Key.create("preferredCompletionItem");
 
   public static CompletionService getCompletionService() {
     return ServiceManager.getService(CompletionService.class);

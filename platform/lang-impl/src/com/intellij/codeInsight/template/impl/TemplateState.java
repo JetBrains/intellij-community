@@ -1,7 +1,9 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionInitializationContext;
+import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.completion.OffsetMap;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.*;
 import com.intellij.lang.LanguageLiteralEscapers;
@@ -23,8 +25,8 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -400,9 +402,6 @@ public class TemplateState implements Disposable {
         EditorModificationUtil.insertStringAtCaret(myEditor, s);
         itemSelected(lookupItems[0], psiFile, currentSegmentNumber, ' ', lookupItems);
       } else {
-        if (lookupItems[0] instanceof LookupItem) {
-          ((LookupItem)lookupItems[0]).setPriority(Integer.MAX_VALUE);
-        }
         runLookup(currentSegmentNumber, lookupItems, psiFile);
       }
     }
@@ -422,9 +421,7 @@ public class TemplateState implements Disposable {
     final LookupManager lookupManager = LookupManager.getInstance(myProject);
     if (lookupManager.isDisposed()) return;
 
-    final CompletionParameters parameters =
-      new CompletionParameters(psiFile, psiFile, CompletionType.BASIC, myEditor.getCaretModel().getOffset(), 1);
-    final Lookup lookup = lookupManager.showLookup(myEditor, lookupItems, new CompletionPreferencePolicy(parameters));
+    final Lookup lookup = lookupManager.showLookup(myEditor, lookupItems);
     toProcessTab = false;
     lookup.addLookupListener(new LookupAdapter() {
       public void lookupCanceled(LookupEvent event) {

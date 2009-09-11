@@ -19,7 +19,7 @@ public class NegativeStatisticsWeigher extends CompletionWeigher {
     final StatisticsInfo info = StatisticsManager.serialize(CompletionService.STATISTICS_KEY, item, location);
     if (info == null || info == StatisticsInfo.EMPTY) return 0;
 
-    final StatisticsInfo ignoreInfo = new StatisticsInfo(CompletionPreferencePolicy.composeContextWithValue(info), CompletionPreferencePolicy.IGNORED);
+    final StatisticsInfo ignoreInfo = new StatisticsInfo(CompletionLookupArranger.composeContextWithValue(info), CompletionLookupArranger.IGNORED);
     final int count = manager.getUseCount(ignoreInfo);
     if (count >= StatisticsManager.OBLIVION_THRESHOLD - 1) {
       return -1;

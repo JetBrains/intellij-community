@@ -62,12 +62,8 @@ public final class CompleteWordFromDictionaryAction extends AnAction {
               lookupItems.add(LookupElementBuilder.create(variant));
             }
 
-            LookupElement[] items = new LookupElement[lookupItems.size()];
-            items = lookupItems.toArray(items);
-            LookupManager lookupManager = LookupManager.getInstance(project);
-            lookupManager.showLookup(editor, items, prefix, null);
-
-            /*AnnotationHolder.createInfoAnnotation(TextRange.from(0, prefix.length()), "test");*/
+            LookupElement[] items = lookupItems.toArray(new LookupElement[lookupItems.size()]);
+            LookupManager.getInstance(project).showLookup(editor, items, prefix);
           }
         }
       }

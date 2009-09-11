@@ -1,9 +1,9 @@
 package com.intellij.internal;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeInsight.completion.CompletionLookupArranger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
@@ -33,7 +33,7 @@ public class DumpLookupElementWeights extends AnAction implements DumbAware {
     final int count = lookup.getPreferredItemsCount();
     for (int i = 0; i < model.getSize(); i++) {
       final LookupElement item = (LookupElement)model.getElementAt(i);
-      System.out.println(item.getLookupString() + Arrays.toString(item.getUserData(LookupItem.WEIGHT)));
+      System.out.println(item.getLookupString() + Arrays.toString(item.getUserData(CompletionLookupArranger.WEIGHT)));
       if (i == count - 1) {
         System.out.println("------------");
       }

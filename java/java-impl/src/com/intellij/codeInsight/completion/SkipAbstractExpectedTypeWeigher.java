@@ -11,12 +11,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
-public class SkipAbstractExpectedTypeWeigher extends CompletionWeigher {
+public class SkipAbstractExpectedTypeWeigher extends CompletionPreselectSkipper {
 
   enum Result {
     NON_DEFAULT,
@@ -25,8 +24,9 @@ public class SkipAbstractExpectedTypeWeigher extends CompletionWeigher {
     ACCEPT
   }
 
-  public Comparable weigh(@NotNull final LookupElement item, final CompletionLocation location) {
-    return getSkippingStatus(item, location);
+  @Override
+  public boolean skipElement(LookupElement element, CompletionLocation location) {
+    return getSkippingStatus(element, location) != Result.ACCEPT;
   }
 
   public static Result getSkippingStatus(final LookupElement item, final CompletionLocation location) {

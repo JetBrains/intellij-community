@@ -21,7 +21,6 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -96,36 +95,13 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     myIsDisposed = true;
   }
 
-  public Lookup showLookup(final Editor editor, LookupElement[] items, LookupItemPreferencePolicy itemPreferencePolicy) {
-    return showLookup(editor, items, "", itemPreferencePolicy);
-  }
-
-  public Lookup showLookup(Editor editor,
-                           LookupElement[] items,
-                           LookupItemPreferencePolicy itemPreferencePolicy,
-                           @Nullable String bottomText) {
-    return showLookup(editor, items, itemPreferencePolicy);
-  }
-
-  public Lookup showLookup(final Editor editor, final LookupElement[] items, final String prefix, final LookupItemPreferencePolicy itemPreferencePolicy) {
-    final LookupImpl lookup = createLookup(editor, items, prefix, itemPreferencePolicy);
+  public Lookup showLookup(final Editor editor, @NotNull LookupElement[] items, final String prefix, @NotNull final LookupArranger arranger) {
+    final LookupImpl lookup = createLookup(editor, items, prefix, arranger);
     lookup.show();
     return lookup;
   }
 
-  public Lookup showLookup(Editor editor,
-                           LookupElement[] items,
-                           String prefix,
-                           LookupItemPreferencePolicy itemPreferencePolicy,
-                           @Nullable String bottomText) {
-    return showLookup(editor, items, prefix, itemPreferencePolicy);
-  }
-
-  public LookupImpl createLookup(final Editor editor, final LookupElement[] items, final String prefix, final LookupItemPreferencePolicy itemPreferencePolicy) {
-    return createLookup(editor, items, prefix, itemPreferencePolicy, null);
-  }
-
-  public LookupImpl createLookup(final Editor editor, LookupElement[] items, String prefix, LookupItemPreferencePolicy itemPreferencePolicy, @Nullable String bottomText) {
+  public LookupImpl createLookup(final Editor editor, @NotNull LookupElement[] items, final String prefix, @NotNull final LookupArranger arranger) {
     hideActiveLookup();
 
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
@@ -146,10 +122,7 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     if (daemonCodeAnalyzer != null) {
       daemonCodeAnalyzer.setUpdateByTimerEnabled(false);
     }
-    for (final LookupElement item : items) {
-      item.setPrefixMatcher(new CamelHumpMatcher(prefix));
-    }
-    myActiveLookup = new LookupImpl(myProject, editor, items, itemPreferencePolicy);
+    myActiveLookup = new LookupImpl(myProject, editor, arranger);
     myActiveLookupEditor = editor;
     myActiveLookup.addLookupListener(
       new LookupAdapter(){
@@ -182,6 +155,15 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
         }
       }
     );
+
+    if (items.length > 0) {
+      for (final LookupElement item : items) {
+        item.setPrefixMatcher(new CamelHumpMatcher(prefix));
+        myActiveLookup.addItem(item);
+      }
+      myActiveLookup.refreshUi();
+    }
+
     myPropertyChangeSupport.firePropertyChange(PROP_ACTIVE_LOOKUP, null, myActiveLookup);
     return myActiveLookup;
   }

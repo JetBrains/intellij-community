@@ -73,7 +73,7 @@ public class ChangeTo implements SpellCheckerQuickFix {
     LookupElement[] items = new LookupElement[lookupItems.size()];
     items = lookupItems.toArray(items);
     LookupManager lookupManager = LookupManager.getInstance(project);
-    lookupManager.showLookup(editor, items, null);
+    lookupManager.showLookup(editor, items);
 
 
   }

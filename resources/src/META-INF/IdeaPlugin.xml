@@ -746,8 +746,8 @@
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferShorterWeigher" id="shorter"
              order="after fieldsAndGetters"/>
 
-    <weigher key="preferredCompletionItem" implementationClass="com.intellij.codeInsight.completion.SkipAbstractExpectedTypeWeigher"
-             id="skipAbstract"/>
+    <completion.skip implementation="com.intellij.codeInsight.completion.SkipAbstractExpectedTypeWeigher" id="skipAbstract"/>
+
 
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.LiteralSelectioner"/>
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.DocCommentSelectioner"/>

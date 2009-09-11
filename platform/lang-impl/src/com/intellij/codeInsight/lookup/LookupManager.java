@@ -3,6 +3,7 @@ package com.intellij.codeInsight.lookup;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
@@ -20,13 +21,16 @@ public abstract class LookupManager {
     return getInstance(project).getActiveLookup();
   }
 
-  public abstract Lookup showLookup(Editor editor, LookupElement[] items, LookupItemPreferencePolicy itemPreferencePolicy);
-  @Deprecated
-  public abstract Lookup showLookup(Editor editor, LookupElement[] items, LookupItemPreferencePolicy itemPreferencePolicy, @Nullable String bottomText);
-  public abstract Lookup showLookup(Editor editor, LookupElement[] items, String prefix, LookupItemPreferencePolicy itemPreferencePolicy);
-  @Deprecated
-  public abstract Lookup showLookup(Editor editor, LookupElement[] items, String prefix, LookupItemPreferencePolicy itemPreferencePolicy,
-                                    @Nullable String bottomText);
+  public Lookup showLookup(Editor editor, @NotNull LookupElement... items) {
+    return showLookup(editor, items, "", LookupArranger.DEFAULT);
+  }
+
+  public Lookup showLookup(Editor editor, @NotNull LookupElement[] items, String prefix) {
+    return showLookup(editor, items, prefix, LookupArranger.DEFAULT);
+  }
+
+  public abstract Lookup showLookup(Editor editor, @NotNull LookupElement[] items, String prefix, @NotNull LookupArranger arranger);
+
   public abstract void hideActiveLookup();
   public abstract Lookup getActiveLookup();
 
@@ -37,9 +41,6 @@ public abstract class LookupManager {
 
   public abstract boolean isDisposed();
 
-  public abstract Lookup createLookup(Editor editor, LookupElement[] items, final String prefix, LookupItemPreferencePolicy itemPreferencePolicy);
+  public abstract Lookup createLookup(Editor editor, @NotNull LookupElement[] items, final String prefix, LookupArranger arranger);
 
-  @Deprecated
-  public abstract Lookup createLookup(Editor editor, LookupElement[] items, final String prefix, LookupItemPreferencePolicy itemPreferencePolicy,
-                                      @Nullable String bottomText);
 }

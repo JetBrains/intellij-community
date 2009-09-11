@@ -1,10 +1,6 @@
 package com.intellij.codeInsight.lookup.impl;
 
-import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
-import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.MessageBus;
 
@@ -16,28 +12,13 @@ import com.intellij.util.messages.MessageBus;
  * To change this template use Options | File Templates.
  */
 public class TestLookupManager extends LookupManagerImpl{
-  private final Project myProject;
   public TestLookupManager(Project project, MessageBus bus){
     super(project, bus);
-    myProject = project;
-  }
-
-  public Lookup showLookup(final Editor editor, LookupElement[] items, LookupItemPreferencePolicy itemPreferencePolicy) {
-    hideActiveLookup();
-
-    for (final LookupElement item : items) {
-      item.setPrefixMatcher(new CamelHumpMatcher(""));
-    }
-    myActiveLookup = new LookupImpl(myProject, editor, items, itemPreferencePolicy);
-    myActiveLookupEditor = editor;
-    myActiveLookup.show();
-    return myActiveLookup;
   }
 
   public void forceSelection(char completion, int index){
     if(myActiveLookup == null) throw new RuntimeException("There are no items in this lookup");
-    final LookupElement[] items = myActiveLookup.getItems();
-    final LookupElement lookupItem = items[index];
+    final LookupElement lookupItem = myActiveLookup.getItems().get(index);
     myActiveLookup.setCurrentItem(lookupItem);
     myActiveLookup.finishLookup(completion);
   }
@@ -54,7 +35,4 @@ public class TestLookupManager extends LookupManagerImpl{
     }
   }
 
-  public LookupElement[] getItems(){
-    return myActiveLookup != null ? myActiveLookup.getItems() : null;
-  }
 }

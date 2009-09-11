@@ -116,7 +116,7 @@ public class XmlTagRenameDialog extends RefactoringDialog {
       LookupElement[] lookupItems = set.toArray(new LookupElement[set.size()]);
       editor.getCaretModel().moveToOffset(prefix.length());
       editor.getSelectionModel().removeSelection();
-      LookupManager.getInstance(getProject()).showLookup(editor, lookupItems, prefix, null);
+      LookupManager.getInstance(getProject()).showLookup(editor, lookupItems, prefix);
     }
   }
 

@@ -78,7 +78,7 @@ public class TextFieldWithAutoCompletion extends EditorTextField {
       assert editor != null;
 
       editor.getSelectionModel().removeSelection();
-      LookupManager.getInstance(getProject()).showLookup(editor, calcLookupItems(getPrefix()), getPrefix(), null);
+      LookupManager.getInstance(getProject()).showLookup(editor, calcLookupItems(getPrefix()), getPrefix());
     }
   }
 

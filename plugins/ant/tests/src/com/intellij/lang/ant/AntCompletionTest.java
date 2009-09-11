@@ -8,6 +8,9 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.TestLookupManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class AntCompletionTest extends LightCodeInsightTestCase {
 
@@ -83,9 +86,6 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
   public void testInsertion1() throws Exception {
     configureByFile("test8.xml");
     performNormalCompletion();
-    if (getItems() != null) {
-      select();
-    }
 
     checkResultByFile("/test8-out.xml");
   }
@@ -93,18 +93,12 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
   public void testInsertion2() throws Exception {
     configureByFile("test9.xml");
     performNormalCompletion();
-    if (getItems() != null) {
-      select();
-    }
     checkResultByFile("/test8-out.xml");
   }
 
   public void testTargetCompletion() throws Exception {
     configureByFile("targetCompletion.xml");
     performNormalCompletion();
-    if (getItems() != null) {
-      select();
-    }
     checkResultByFile("/targetCompletion-out.xml");
   }
 
@@ -115,18 +109,13 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     AntSupport.markFileAsAntFile(myVFile, myFile.getViewProvider(), true);
 
     performNormalCompletion();
-    if (getItems() != null) {
-      select();
-    }
+    select();
     checkResultByFile("/targetCompletion2-out.xml");
   }
 
   public void testEntityCompletion() throws Exception {
     configureByFile("EntityCompletion.xml");
     performNormalCompletion();
-    if (getItems() != null) {
-      select();
-    }
 
     checkResultByFile("EntityCompletion-out.xml");
   }
@@ -174,32 +163,32 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     checkResultByFile(testName + "-out.xml");
   }
 
-  private void select() {
+  private static void select() {
     select(Lookup.NORMAL_SELECT_CHAR, getSelected());
   }
 
-  private void performNormalCompletion() {
+  private static void performNormalCompletion() {
     new CodeCompletionHandlerBase(CompletionType.BASIC).invoke(getProject(), getEditor(), AntSupport.getAntFile(myFile));
   }
 
-  private void select(char completionChar, LookupElement item) {
+  private static void select(char completionChar, LookupElement item) {
     ((TestLookupManager)LookupManager.getInstance(getProject())).forceSelection(completionChar, item);
   }
 
-  private LookupElement getSelected() {
-    return LookupManager.getInstance(getProject()).getActiveLookup().getCurrentItem();
+  private static LookupElement getSelected() {
+    final Lookup lookup = LookupManager.getInstance(getProject()).getActiveLookup();
+    return lookup.getCurrentItem();
   }
 
-  private LookupElement[] getItems() {
-    return ((TestLookupManager)LookupManager.getInstance(getProject())).getItems();
+  @NotNull
+  private static LookupElement[] getItems() {
+    final List<LookupElement> list = LookupManager.getInstance(getProject()).getActiveLookup().getItems();
+    return list.toArray(new LookupElement[list.size()]);
   }
 
   protected void tearDown() throws Exception {
-    if (getItems() != null) LookupManager.getInstance(getProject()).hideActiveLookup();
+    LookupManager.getInstance(getProject()).hideActiveLookup();
     super.tearDown();
   }
 
-  //public static void main(String[] args) {
-  //  new TestRunner().doRun(new TestSuite(AntCompletionTest.class));
-  //}
 }

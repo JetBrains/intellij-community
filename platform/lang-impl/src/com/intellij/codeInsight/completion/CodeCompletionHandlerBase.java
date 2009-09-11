@@ -13,8 +13,8 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,8 +28,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -49,6 +49,9 @@ import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+import java.util.Arrays;
 
 public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CodeCompletionHandlerBase");
@@ -277,7 +280,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         insertLookupString(context, offset2, uniqueText);
         context.editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
 
-        lookupItemSelected(context, item, Lookup.AUTO_INSERT_SELECT_CHAR, items);
+        lookupItemSelected(context, item, Lookup.AUTO_INSERT_SELECT_CHAR, Arrays.asList(items));
       }
     }.execute();
   }
@@ -289,7 +292,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     editor.getSelectionModel().removeSelection();
   }
 
-  protected static void selectLookupItem(final LookupElement item, final char completionChar, final CompletionContext context, final LookupElement[] items) {
+  protected static void selectLookupItem(final LookupElement item, final char completionChar, final CompletionContext context, final List<LookupElement> items) {
     final int caretOffset = context.editor.getCaretModel().getOffset();
 
     context.setSelectionEndOffset(caretOffset);
@@ -413,10 +416,10 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
   private static void lookupItemSelected(final CompletionContext context, @NotNull final LookupElement item, final char completionChar,
-                                         final LookupElement[] items) {
+                                         final List<LookupElement> items) {
     final Editor editor = context.editor;
     final PsiFile file = context.file;
-    final InsertionContext context1 = new InsertionContext(context.getOffsetMap(), completionChar, items, file, editor);
+    final InsertionContext context1 = new InsertionContext(context.getOffsetMap(), completionChar, items.toArray(new LookupElement[items.size()]), file, editor);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         final int idEndOffset = context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET);

@@ -712,7 +712,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       return myEmptyLookup ? LookupElement.EMPTY_ARRAY : null;
     }
     else {
-      return lookup.getSortedItems();
+      final List<LookupElement> list = lookup.getItems();
+      return list.toArray(new LookupElement[list.size()]);
     }
   }
 
