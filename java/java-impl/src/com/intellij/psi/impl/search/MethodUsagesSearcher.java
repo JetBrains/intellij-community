@@ -27,7 +27,11 @@ public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodR
     final PsiManager psiManager = PsiManager.getInstance(method.getProject());
     final boolean isStrictSignatureSearch = p.isStrictSignatureSearch();
 
-    final PsiClass aClass = method.getContainingClass();
+    final PsiClass aClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+      public PsiClass compute() {
+        return method.getContainingClass();
+      }
+    });
     if (aClass == null) return true;
 
     if (method.isConstructor()) {
