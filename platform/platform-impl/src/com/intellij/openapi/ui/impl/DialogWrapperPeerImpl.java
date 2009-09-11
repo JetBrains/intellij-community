@@ -942,7 +942,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       }
 
       private void flushEvents() {
-        if (myWrapper.isToDispatchTypeAhead()) {
+        if (myWrapper.isToDispatchTypeAhead() && myContextOnFinish != null) {
           myContextOnFinish.dispatch(myEvents);
         }
       }
