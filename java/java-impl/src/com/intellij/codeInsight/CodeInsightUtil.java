@@ -199,7 +199,11 @@ public class CodeInsightUtil {
     if(baseClass == null) return Collections.emptySet();
 
     Set<PsiType> result = new HashSet<PsiType>();
-    final GlobalSearchScope scope = context.getResolveScope();
+    final GlobalSearchScope scope = ApplicationManager.getApplication().runReadAction(new Computable<GlobalSearchScope>() {
+      public GlobalSearchScope compute() {
+        return context.getResolveScope();
+      }
+    });
     final Query<PsiClass> baseQuery = ClassInheritorsSearch.search(
       new ClassInheritorsSearch.SearchParameters(baseClass, scope, true, false, false, shortNameCondition));
     final Query<PsiClass> query = new FilteredQuery<PsiClass>(baseQuery, new Condition<PsiClass>() {
