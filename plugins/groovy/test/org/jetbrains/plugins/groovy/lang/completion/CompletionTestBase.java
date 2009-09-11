@@ -10,9 +10,9 @@ import org.jetbrains.plugins.groovy.CompositeCompletionData;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * author ven
@@ -38,8 +38,8 @@ public abstract class CompletionTestBase extends JavaCodeInsightFixtureTestCase 
 
       final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myFixture.getEditor());
       if (lookup != null) {
-        LookupElement[] items = lookup.getItems();
-        Arrays.sort(items, new Comparator<LookupElement>() {
+        List<LookupElement> items = lookup.getItems();
+        Collections.sort(items, new Comparator<LookupElement>() {
           public int compare(LookupElement o1, LookupElement o2) {
             return o1.getLookupString().compareTo(o2.getLookupString());
           }
