@@ -220,7 +220,7 @@ private MouseEvent convertEvent(final MouseEvent e, final Component target) {
     IdeEventQueue queue = IdeEventQueue.getInstance();
     if (!queue.containsDispatcher(this) && myPreprocessorActive) {
       queue.addDispatcher(this, null);
-    } else if (queue.containsDispatcher(this) && myPreprocessorActive) {
+    } else if (queue.containsDispatcher(this) && !myPreprocessorActive) {
       queue.removeDispatcher(this);
     }
 
