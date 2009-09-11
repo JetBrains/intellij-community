@@ -261,7 +261,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       return true;
     }
 
-    return GroovyDslFileIndex.processExecutors(getProject(), new GroovyScriptDescriptor(this, scriptClass), processor);
+    return GroovyDslFileIndex.processExecutors(getProject(), new GroovyScriptDescriptor(this, scriptClass, place), processor);
   }
 
 
