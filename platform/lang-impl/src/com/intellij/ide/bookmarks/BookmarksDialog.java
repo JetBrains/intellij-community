@@ -204,7 +204,9 @@ public abstract class BookmarksDialog extends DialogWrapper{
 
   public <T extends Bookmark> void fillList(List<T> bookmarks, Bookmark selectedBookmark) {
     final List<Bookmark> list = new ArrayList<Bookmark>();
-    list.add(selectedBookmark);
+    if (selectedBookmark != null) {
+      list.add(selectedBookmark);
+    }
     fillList(bookmarks, list);
   }
 
