@@ -16,6 +16,7 @@ public class PreferLocalVariablesLiteralsAndAnnoMethodsWeigher extends Completio
   enum MyResult {
     classLiteral,
     normal,
+    superMethodParameters,
     localOrParameter,
     annoMethod,
   }
@@ -24,7 +25,12 @@ public class PreferLocalVariablesLiteralsAndAnnoMethodsWeigher extends Completio
     final Object object = item.getObject();
 
     if (location.getCompletionType() == CompletionType.SMART) {
-      if (object instanceof PsiLocalVariable || object instanceof PsiParameter || object instanceof PsiThisExpression) return MyResult.localOrParameter;
+      if (object instanceof PsiLocalVariable || object instanceof PsiParameter || object instanceof PsiThisExpression) {
+        return MyResult.localOrParameter;
+      }
+      if (object instanceof String && item.getUserData(JavaCompletionUtil.SUPER_METHOD_PARAMETERS) == Boolean.TRUE) {
+        return MyResult.superMethodParameters;
+      }
       return MyResult.normal;
     }
 

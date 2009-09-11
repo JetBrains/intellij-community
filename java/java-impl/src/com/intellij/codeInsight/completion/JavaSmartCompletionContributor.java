@@ -9,17 +9,17 @@ import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.patterns.ElementPattern;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.patterns.PsiJavaPatterns;
 import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
 import static com.intellij.patterns.StandardPatterns.*;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.*;
+import com.intellij.psi.filters.ElementExtractorFilter;
+import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.filters.GeneratorFilter;
+import com.intellij.psi.filters.OrFilter;
 import com.intellij.psi.filters.getters.CastTypeGetter;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.filters.getters.InstanceOfLeftPartTypeGetter;
@@ -34,10 +34,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -146,6 +143,11 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         }
       }
     });
+
+    extend(CompletionType.SMART,
+           psiElement().beforeLeaf(psiElement(JavaTokenType.RPARENTH)).afterLeaf("(").withParent(
+             psiElement(PsiReferenceExpression.class).withParent(
+               psiElement(PsiExpressionList.class).withParent(PsiMethodCallExpression.class))), new SuperCallParametersProvider());
 
     extend(CompletionType.SMART, psiElement().afterLeaf(PsiKeyword.INSTANCEOF), new CompletionProvider<CompletionParameters>(false) {
       protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
