@@ -11,6 +11,8 @@ package com.intellij.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLocalVariable;
@@ -290,5 +292,10 @@ public class IntroduceParameterTest extends LightCodeInsightTestCase {
       localVariable.getName(), replaceAllOccurrences,
       IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE,
       declareFinal, false, null, parametersToRemove).run();
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return JavaSdkImpl.getMockJdk15("java 1.5");
   }
 }
