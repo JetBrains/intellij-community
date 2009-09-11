@@ -635,7 +635,7 @@ public class GitUtil {
 
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.LOG);
     h.setNoSSH(true);
-    h.addParameters("--pretty=format:%x0C%n" + GitChangeUtils.COMMITTED_CHANGELIST_FORMAT);
+    h.addParameters("--pretty=format:%x0C%n" + GitChangeUtils.COMMITTED_CHANGELIST_FORMAT, "--name-status");
     parametersSpecifier.consume(h);
 
     String output = h.run();
