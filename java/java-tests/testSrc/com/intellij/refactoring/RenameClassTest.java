@@ -5,9 +5,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.JavaTestUtil;
 import org.jetbrains.annotations.NonNls;
 
 public class RenameClassTest extends MultiFileTestCase {
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
+
   public void testNonJava() throws Exception {
     doTest("pack1.Class1", "Class1New");
   }
