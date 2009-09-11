@@ -13,11 +13,16 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.replaceConstructorWithBuilder.ParameterData;
 import com.intellij.refactoring.replaceConstructorWithBuilder.ReplaceConstructorWithBuilderProcessor;
 import com.intellij.util.containers.HashMap;
+import com.intellij.JavaTestUtil;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class ReplaceConstructorWithBuilderTest extends MultiFileTestCase {
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
 
   public void testVarargs() throws Exception {
     doTest(true);
