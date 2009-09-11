@@ -4,7 +4,6 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,7 +12,6 @@ import com.intellij.patterns.PsiJavaPatterns;
 import static com.intellij.patterns.PsiJavaPatterns.psiClass;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.not;
-import static com.intellij.patterns.StandardPatterns.or;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
@@ -23,7 +21,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,43 +63,7 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
 
     });
 
-    extend(PsiJavaPatterns.psiElement().withSuperParent(2,
-                                                        or(
-                                                            PsiJavaPatterns.psiElement(PsiConditionalExpression.class).withParent(
-                                                                PsiReturnStatement.class),
-                                                            PsiJavaPatterns.psiElement(PsiReturnStatement.class))), new CompletionProvider<JavaSmartCompletionParameters>() {
-      public void addCompletions(@NotNull final JavaSmartCompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
-        final PsiElement element = parameters.getPosition();
-
-        final PsiElement parent = element.getParent();
-        if (parent instanceof PsiReferenceExpression && ((PsiReferenceExpression)parent).getQualifierExpression() != null) return;
-
-        final PsiClass collectionsClass =
-            JavaPsiFacade.getInstance(element.getProject()).findClass(CommonClassNames.JAVA_UTIL_COLLECTIONS, element.getResolveScope());
-        if (collectionsClass == null) return;
-
-        final PsiType type = parameters.getExpectedType();
-        final PsiType defaultType = parameters.getDefaultType();
-        addCollectionMethod(result, type, defaultType, CommonClassNames.JAVA_UTIL_LIST, "emptyList", collectionsClass);
-        addCollectionMethod(result, type, defaultType, CommonClassNames.JAVA_UTIL_SET, "emptySet", collectionsClass);
-        addCollectionMethod(result, type, defaultType, CommonClassNames.JAVA_UTIL_MAP, "emptyMap", collectionsClass);
-
-      }
-
-      private void addCollectionMethod(final CompletionResultSet result, final PsiType expectedType,
-                                       final PsiType defaultType, final String baseClassName,
-                                       @NonNls final String method, @NotNull final PsiClass collectionsClass) {
-        if (isClassType(expectedType, baseClassName) || isClassType(expectedType, CommonClassNames.JAVA_UTIL_COLLECTION) ||
-            isClassType(defaultType, baseClassName) || isClassType(defaultType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
-          final PsiMethod[] methods = collectionsClass.findMethodsByName(method, false);
-          if (methods.length != 0) {
-            result.addElement(JavaCompletionUtil.qualify(((LookupItem)LookupItemUtil.objectToLookupItem(methods[0])).setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE).setTailType(
-                    TailType.NONE)));
-          }
-        }
-      }
-
-    });
+    extend(not(psiElement().afterLeaf(".")), new CollectionsUtilityMethodsProvider());
 
     extend(not(psiElement().afterLeaf(".")), new CompletionProvider<JavaSmartCompletionParameters>() {
       protected void addCompletions(@NotNull final JavaSmartCompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
@@ -193,11 +154,4 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
     return new ExpressionLookupItem(expression);
   }
 
-  private static boolean isClassType(final PsiType type, final String className) {
-    if (type instanceof PsiClassType) {
-      final PsiClass psiClass = ((PsiClassType)type).resolve();
-      return psiClass != null && className.equals(psiClass.getQualifiedName());
-    }
-    return false;
-  }
 }
