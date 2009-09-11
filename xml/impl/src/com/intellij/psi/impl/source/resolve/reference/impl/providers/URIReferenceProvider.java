@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.StringTokenizer;
-import java.io.File;
 
 /**
  * @by Maxim.Mossienko
@@ -108,9 +107,16 @@ public class URIReferenceProvider extends PsiReferenceProvider {
         String url = tokenizer.nextToken();
 
         offset = text.indexOf(url);
-        if (isUrlText(url)) refs.add(new DependentNSReference(element, new TextRange(offset,offset + url.length()), urlReference));
-        else {
-          refs.addAll(Arrays.asList(new FileReferenceSet(url, element, offset, this, false).getAllReferences()));
+        final TextRange urlRange = new TextRange(offset, offset + url.length());
+        if (isUrlText(url)) {
+          refs.add(new DependentNSReference(element, urlRange, urlReference));
+        } else {
+          final FakeLocalSchemaReference ref = FakeLocalSchemaReference.getRefToRegisteredSchema(url, element, urlRange);
+          if (ref != null) {
+            refs.addAll(Arrays.asList(ref));
+          } else {
+            refs.addAll(Arrays.asList(new FileReferenceSet(url, element, offset, this, false).getAllReferences()));
+          }
         }
       }
 
@@ -155,5 +161,4 @@ public class URIReferenceProvider extends PsiReferenceProvider {
   private static URLReference[] getUrlReference(final PsiElement element, boolean soft) {
     return new URLReference[] { new URLReference(element, null, soft)};
   }
-
 }
