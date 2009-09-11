@@ -294,7 +294,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         }
         toolWindow.setIcon(icon);
       }
-      toolWindow.setSplitMode(bean.secondary, null);
+
+      if (!getInfo(bean.id).isSplit() && bean.secondary) toolWindow.setSplitMode(bean.secondary, null);
 
       final ActionCallback activation = toolWindow.setActivation(new ActionCallback());
 
