@@ -10,11 +10,17 @@ import com.intellij.refactoring.memberPushDown.PushDownProcessor;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.JavaTestUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class PushDownTest extends LightCodeInsightTestCase {
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
+
   private void doTest() throws Exception {
     doTest(false);
   }
@@ -45,8 +51,7 @@ public class PushDownTest extends LightCodeInsightTestCase {
     memberInfo.setChecked(true);
     membersToMove.add(memberInfo);
 
-    new PushDownProcessor(getProject(), membersToMove.toArray(new MemberInfo[membersToMove.size()]), classes[0], new DocCommentPolicy(
-      DocCommentPolicy.ASIS)){
+    new PushDownProcessor(getProject(), membersToMove.toArray(new MemberInfo[membersToMove.size()]), classes[0], new DocCommentPolicy(DocCommentPolicy.ASIS)){
       @Override
       protected boolean showConflicts(final List<String> conflicts) {
         if (failure ? conflicts.isEmpty() : !conflicts.isEmpty()) {
