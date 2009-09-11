@@ -1,6 +1,7 @@
 package com.intellij.refactoring.copy;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
 
 /**
@@ -10,7 +11,9 @@ public class JavaCopyFilesOrDirectoriesHandler extends CopyFilesOrDirectoriesHan
   protected boolean canCopyFiles(final PsiElement[] elements) {
     for (PsiElement element : elements) {
       if (!(element instanceof PsiFile) ||
-          element instanceof PsiJavaFile && !JspPsiUtil.isInJspFile(element) && !CollectHighlightsUtil.isOutOfSourceRootJavaFile((PsiJavaFile) element)) {
+          element instanceof PsiClassOwner &&
+          PsiUtilBase.getTemplateLanguageFile(element) != element &&
+          !CollectHighlightsUtil.isOutsideSourceRoot((PsiFile) element)) {
         return false;
       }
     }
@@ -35,12 +38,6 @@ public class JavaCopyFilesOrDirectoriesHandler extends CopyFilesOrDirectoriesHan
     if (JavaDirectoryService.getInstance().getPackage(directory) != null) {
       return true;
     }
-    /*PsiDirectory[] subdirectories = directory.getSubdirectories();
-    for (PsiDirectory subdirectory : subdirectories) {
-      if (hasPackages(subdirectory)) {
-        return true;
-      }
-    }*/
     return false;
   }
 }

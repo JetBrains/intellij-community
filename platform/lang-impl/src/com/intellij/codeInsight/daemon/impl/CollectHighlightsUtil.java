@@ -113,14 +113,15 @@ public class CollectHighlightsUtil {
   }
 
   public static boolean isOutOfSourceRootJavaFile(@Nullable PsiFile psiFile) {
-    if (psiFile == null) return false;
-    if (psiFile.getFileType() == StdFileTypes.JAVA) {
-      final VirtualFile file = psiFile.getVirtualFile();
-      if (file != null) {
-        final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(psiFile.getProject()).getFileIndex();
-        if (!projectFileIndex.isInSource(file) && !projectFileIndex.isInLibraryClasses(file)) {
-          return true;
-        }
+    return psiFile != null && psiFile.getFileType() == StdFileTypes.JAVA && isOutsideSourceRoot(psiFile);
+  }
+
+  public static boolean isOutsideSourceRoot(@NotNull PsiFile psiFile) {
+    final VirtualFile file = psiFile.getVirtualFile();
+    if (file != null) {
+      final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(psiFile.getProject()).getFileIndex();
+      if (!projectFileIndex.isInSource(file) && !projectFileIndex.isInLibraryClasses(file)) {
+        return true;
       }
     }
     return false;
