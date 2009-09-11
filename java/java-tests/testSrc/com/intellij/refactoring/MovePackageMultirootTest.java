@@ -11,11 +11,18 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
 import com.intellij.refactoring.move.moveClassesOrPackages.MultipleRootsMoveDestination;
+import com.intellij.JavaTestUtil;
 
 /**
  *  @author dsl
  */
 public class MovePackageMultirootTest extends MultiFileTestCase {
+
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
+
   protected String getTestRoot() {
     return "/refactoring/movePackageMultiroot/";
   }
