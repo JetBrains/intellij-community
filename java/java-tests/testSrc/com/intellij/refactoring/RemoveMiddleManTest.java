@@ -4,12 +4,14 @@
  */
 package com.intellij.refactoring;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.removemiddleman.DelegationUtils;
 import com.intellij.refactoring.removemiddleman.RemoveMiddlemanProcessor;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
@@ -19,6 +21,11 @@ import java.util.List;
 import java.util.Set;
 
 public class RemoveMiddleManTest extends MultiFileTestCase{
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
+
   protected String getTestRoot() {
     return "/refactoring/removemiddleman/";
   }
@@ -30,9 +37,9 @@ public class RemoveMiddleManTest extends MultiFileTestCase{
   private void doTest(final boolean delete) throws Exception {
     doTest(new PerformAction() {
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
-        PsiClass aClass = myJavaFacade.findClass("Test");
+        PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.allScope(getProject()));
 
-        if (aClass == null) aClass = myJavaFacade.findClass("p.Test");
+        if (aClass == null) aClass = myJavaFacade.findClass("p.Test", GlobalSearchScope.allScope(getProject()));
         assertNotNull("Class Test not found", aClass);
 
         final PsiField field = aClass.findFieldByName("myField", false);
