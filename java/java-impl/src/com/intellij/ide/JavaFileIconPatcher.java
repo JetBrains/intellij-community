@@ -10,10 +10,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassOwner;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.Icons;
 
@@ -55,7 +52,10 @@ public class JavaFileIconPatcher implements FileIconPatcher {
             return aClass.getIcon(flags);
           }
         }
-        return classes[classes.length - 1].getIcon(flags);
+        final PsiClass lastClass = classes[classes.length - 1];
+        if (!(lastClass instanceof SyntheticElement)) {
+          return lastClass.getIcon(flags);
+        }
       }
     }
     return baseIcon;
