@@ -65,22 +65,39 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
 
     @Override @NotNull
     public String buildErrorString(Object... infos){
+        final boolean inSameFile = ((Boolean) infos[0]).booleanValue();
+        if (inSameFile) {
+            return InspectionGadgetsBundle.message("" +
+                    "unnecessary.fully.qualified.name.problem.descriptor2");
+        }
         return InspectionGadgetsBundle.message(
-                "unnecessary.fully.qualified.name.problem.descriptor");
+                "unnecessary.fully.qualified.name.problem.descriptor1");
     }
 
     @Override
     public InspectionGadgetsFix buildFix(Object... infos){
-        return new UnnecessaryFullyQualifiedNameFix();
+        return new UnnecessaryFullyQualifiedNameFix(
+                ((Boolean) infos[0]).booleanValue());
     }
 
     private static class UnnecessaryFullyQualifiedNameFix
             extends InspectionGadgetsFix{
 
+        private final boolean inSameFile;
+
+        public UnnecessaryFullyQualifiedNameFix(boolean inSameFile) {
+            this.inSameFile = inSameFile;
+        }
+
         @NotNull
         public String getName(){
-            return InspectionGadgetsBundle.message(
-                    "unnecessary.fully.qualified.name.replace.quickfix");
+            if (inSameFile) {
+                return InspectionGadgetsBundle.message(
+                        "unnecessary.fully.qualified.name.remove.quickfix");
+            } else {
+                return InspectionGadgetsBundle.message(
+                        "unnecessary.fully.qualified.name.replace.quickfix");
+            }
         }
 
         @Override
@@ -105,15 +122,18 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
             if (qualifiedName == null) {
                 return;
             }
+            final String containingPackageName = file.getPackageName();
             @NonNls final String packageName =
                     ClassUtil.extractPackageName(qualifiedName);
-            if (importList.findSingleClassImportStatement(qualifiedName) == null) {
-                if (importList.findOnDemandImportStatement(packageName) == null) {
-                    addImport(importList, aClass);
-                } else if (ImportUtils.hasDefaultImportConflict(qualifiedName, file)) {
-                    addImport(importList, aClass);
-                } else if (ImportUtils.hasOnDemandImportConflict(qualifiedName, file)) {
-                    addImport(importList, aClass);
+            if (!containingPackageName.equals(packageName)) {
+                if (importList.findSingleClassImportStatement(qualifiedName) == null) {
+                    if (importList.findOnDemandImportStatement(packageName) == null) {
+                        addImport(importList, aClass);
+                    } else if (ImportUtils.hasDefaultImportConflict(qualifiedName, file)) {
+                        addImport(importList, aClass);
+                    } else if (ImportUtils.hasOnDemandImportConflict(qualifiedName, file)) {
+                        addImport(importList, aClass);
+                    }
                 }
             }
             final String fullyQualifiedText = referenceElement.getText();
@@ -240,6 +260,10 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
                     return;
                 }
             }
+            final PsiFile containingFile = reference.getContainingFile();
+            if (!(containingFile instanceof PsiJavaFile)) {
+                return;
+            }
             final PsiElement psiElement = reference.resolve();
             if(!(psiElement instanceof PsiClass)){
                 return;
@@ -262,7 +286,12 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
             if (!ImportUtils.nameCanBeImported(fqName, reference)) {
                 return;
             }
-            registerError(reference);
+            final PsiJavaFile javaFile = (PsiJavaFile) containingFile;
+            final String packageName = javaFile.getPackageName();
+            final String elementPackageName =
+                    ClassUtil.extractPackageName(text);
+            final boolean inSameFile = elementPackageName.equals(packageName);
+            registerError(reference, Boolean.valueOf(inSameFile));
         }
 
         private String stripAngleBrackets(String string) {

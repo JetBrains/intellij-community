@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,9 @@ public class ImportUtils{
                                             @NotNull PsiElement context){
         final PsiClass containingClass = ClassUtils.getContainingClass(context);
         if (containingClass != null) {
+            if (fqName.equals(containingClass.getQualifiedName())) {
+                return true;
+            }
             final String shortName = ClassUtil.extractClassName(fqName);
             final PsiClass[] innerClasses = containingClass.getAllInnerClasses();
             for (PsiClass innerClass : innerClasses) {
@@ -250,19 +253,6 @@ public class ImportUtils{
             }
         }
         return false;
-    }
-
-    public static boolean importStatementMatches(
-            PsiImportStatement importStatement, String name){
-        final String qualifiedName = importStatement.getQualifiedName();
-
-        if(importStatement.isOnDemand()){
-            final int lastDotIndex = name.lastIndexOf((int) '.');
-            final String packageName = name.substring(0, lastDotIndex);
-            return packageName.equals(qualifiedName);
-        } else{
-            return name.equals(qualifiedName);
-        }
     }
 
     private static class ClassReferenceVisitor
