@@ -3,7 +3,7 @@
  */
 package com.intellij.psi;
 
-import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.OrderRootType;
@@ -56,7 +56,7 @@ public class ClsBuilderTest extends LightIdeaTestCase {
     final PsiFileStub stub = ClsStubBuilder.build(vFile, vFile.contentsToByteArray());
     final String butWas = ((StubBase)stub).printTree();
 
-    final String goldFilePath = PathManagerEx.getTestDataPath() + "/psi/cls/stubBuilder/" + goldFile;
+    final String goldFilePath = JavaTestUtil.getJavaTestDataPath() + "/psi/cls/stubBuilder/" + goldFile;
     String expected = "";
     try {
       expected = FileUtil.loadTextAndClose(new FileReader(goldFilePath));
