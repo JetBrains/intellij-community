@@ -49,7 +49,7 @@ public class MoveMembersTest extends MultiFileTestCase {
   }
 
   public void testIDEADEV11416() throws Exception {
-    doTest("Y", "X", 0);
+    doTest("Y", "X", false, 0);
   }
 
   public void testTwoMethods() throws Exception {
@@ -57,7 +57,7 @@ public class MoveMembersTest extends MultiFileTestCase {
   }
 
   public void testIDEADEV12448() throws Exception {
-    doTest("B", "A", 0);
+    doTest("B", "A", false, 0);
   }
 
   public void testFieldForwardRef() throws Exception {
@@ -88,13 +88,17 @@ public class MoveMembersTest extends MultiFileTestCase {
     return "/refactoring/moveMembers/";
   }
 
-  private void doTest(final String sourceClassName, final String targetClassName, final int... memberIndices)
+  private void doTest(final String sourceClassName, final String targetClassName, final int... memberIndices) throws Exception {
+    doTest(sourceClassName, targetClassName, true, memberIndices);
+  }
+
+  private void doTest(final String sourceClassName, final String targetClassName, final boolean lowercaseFirstLetter, final int... memberIndices)
     throws Exception {
     doTest(new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
         MoveMembersTest.this.performAction(sourceClassName, targetClassName, memberIndices);
       }
-    }, false);
+    }, lowercaseFirstLetter);
   }
 
   private void performAction(String sourceClassName, String targetClassName, int[] memberIndices) throws Exception {
