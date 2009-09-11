@@ -165,12 +165,12 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
             case ChangeInfo.CONTENTS_CHANGED:
               if(!CodeEditUtil.isNodeGenerated(affectedChild))
                 ((TreeElement)affectedChild).acceptTree(new RecursiveTreeElementWalkingVisitor(){
-                  protected boolean visitNode(TreeElement element) {
+                  protected void visitNode(TreeElement element) {
                     if(CodeEditUtil.isNodeGenerated(element)){
                       postponeFormatting(viewProvider, element);
-                      return false;
+                      return;
                     }
-                    return true;
+                    super.visitNode(element);
                   }
                 });
               break;
@@ -447,13 +447,13 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
     for (final FileElement fileElement : ((SingleRootFileViewProvider)key).getKnownTreeRoots()) {
       fileElement.acceptTree(
         new RecursiveTreeElementWalkingVisitor(){
-          protected boolean visitNode(TreeElement element) {
+          protected void visitNode(TreeElement element) {
             if(CodeEditUtil.isMarkedToReformatBefore(element)) {
               CodeEditUtil.markToReformatBefore(element, false);
               rangesToProcess.put(document.createRangeMarker(element.getStartOffset(), element.getStartOffset()),
                              new ReformatWithHeadingWhitespaceAction());
             }
-            return true;
+            super.visitNode(element);
           }
         });
     }

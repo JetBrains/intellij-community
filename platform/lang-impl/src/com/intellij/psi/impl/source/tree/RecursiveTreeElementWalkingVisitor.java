@@ -1,62 +1,64 @@
 package com.intellij.psi.impl.source.tree;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.psi.WalkingState;
+
 public abstract class RecursiveTreeElementWalkingVisitor extends TreeElementVisitor{
-  private boolean startedWalking;
-  private boolean isDown;
   private final boolean myDoTransform;
 
   protected RecursiveTreeElementWalkingVisitor() {
     this(true);
   }
+
   protected RecursiveTreeElementWalkingVisitor(boolean doTransform) {
     myDoTransform = doTransform;
   }
 
-  @Override public void visitLeaf(LeafElement leaf) {
+  private static class ASTTreeGuide implements WalkingState.TreeGuide<ASTNode> {
+    public ASTNode getNextSibling(ASTNode element) {
+      return element.getTreeNext();
+    }
+
+    public ASTNode getPrevSibling(ASTNode element) {
+      return element.getTreePrev();
+    }
+
+    public ASTNode getFirstChild(ASTNode element) {
+      return element.getFirstChildNode();
+    }
+
+    public ASTNode getParent(ASTNode element) {
+      return element.getTreeParent();
+    }
+
+    private static final ASTTreeGuide instance = new ASTTreeGuide();
+  }
+
+  private final WalkingState<ASTNode> myWalkingState = new WalkingState<ASTNode>(ASTTreeGuide.instance) {
+    @Override
+    public void elementFinished(ASTNode element) {
+
+    }
+
+    @Override
+    public void visit(ASTNode element) {
+      ((TreeElement)element).acceptTree(RecursiveTreeElementWalkingVisitor.this);
+    }
+  };
+
+  @Override
+  public void visitLeaf(LeafElement leaf) {
     visitNode(leaf);
   }
 
-  @Override public void visitComposite(CompositeElement composite) {
-    isDown = visitNode(composite);
-    if (!startedWalking) {
-      startedWalking = true;
-      if (myDoTransform || !TreeUtil.isCollapsedChameleon(composite)) {
-        walk(composite);
-      }
-      startedWalking = false;
-    }
+  @Override
+  public void visitComposite(CompositeElement composite) {
+    visitNode(composite);
   }
 
-  private void walk(TreeElement root) {
-    for (TreeElement element = next(root, root); element != null; element = next(element, root)) {
-      CompositeElement parent = element.getTreeParent();
-      TreeElement next = element.getTreeNext();
-      isDown = false; // if client visitor did not call default visitElement it means skip subtree
-      element.acceptTree(this);
-      assert element.getTreeNext() == next;
-      assert element.getTreeParent() == parent;
+  protected void visitNode(TreeElement element){
+    if (myDoTransform || !TreeUtil.isCollapsedChameleon(element)) {
+      myWalkingState.elementStarted(element);
     }
-  }
-
-  private TreeElement next(TreeElement element, TreeElement root) {
-    if (isDown) {
-      TreeElement child = element.getFirstChildNode();
-      if (child != null) return child;
-    }
-
-    // up
-    while (element != root) {
-      TreeElement next = element.getTreeNext();
-      if (next != null) {
-        assert next.getTreePrev() == element : "Element: "+element+"; next.prev: "+next.getTreePrev()+"; File: "+ SharedImplUtil.getContainingFile(element);
-        return next;
-      }
-      element = element.getTreeParent();
-    }
-    return null;
-  }
-
-  protected boolean visitNode(TreeElement element){
-    return true;
   }
 }

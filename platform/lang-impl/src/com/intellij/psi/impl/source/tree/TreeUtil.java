@@ -26,12 +26,9 @@ public class TreeUtil {
     }
   }
 
-  public static void ensureParsedRecursively(ASTNode node) {
-    if (node != null) {
-      for (ASTNode cur = node.getFirstChildNode(); cur != null; cur = cur.getTreeNext()) {
-        ensureParsedRecursively(cur);
-      }
-    }
+  public static void ensureParsedRecursively(@NotNull ASTNode node) {
+    ((TreeElement)node).acceptTree(new RecursiveTreeElementWalkingVisitor() {
+    });
   }
 
   public static boolean isCollapsedChameleon(ASTNode node) {
@@ -102,9 +99,8 @@ public class TreeUtil {
   }
 
   public static boolean isLeafOrCollapsedChameleon(ASTNode node) {
-    if (node instanceof LeafElement) return true;
-    if (node instanceof LazyParseableElement && !((LazyParseableElement)node).isParsed()) return true;
-    return false;
+    return node instanceof LeafElement ||
+           node instanceof LazyParseableElement && !((LazyParseableElement)node).isParsed();
   }
 
   @Nullable
@@ -112,7 +108,7 @@ public class TreeUtil {
     if (isLeafOrCollapsedChameleon(element)) {
       return element;
     }
-    else{
+    else {
       for(TreeElement child = element.getFirstChildNode(); child != null; child = child.getTreeNext()){
         TreeElement leaf = findFirstLeafOrChameleon(child);
         if (leaf != null) return leaf;
@@ -126,13 +122,11 @@ public class TreeUtil {
     if (element instanceof LeafElement){
       return (LeafElement)element;
     }
-    else{
-      for(ASTNode child = element.getLastChildNode(); child != null; child = child.getTreePrev()){
-        LeafElement leaf = findLastLeaf(child);
-        if (leaf != null) return leaf;
-      }
-      return null;
+    for(ASTNode child = element.getLastChildNode(); child != null; child = child.getTreePrev()){
+      LeafElement leaf = findLastLeaf(child);
+      if (leaf != null) return leaf;
     }
+    return null;
   }
 
   @Nullable
@@ -238,22 +232,18 @@ public class TreeUtil {
     final TreeElement[] result = {null};
     element.acceptTree(new RecursiveTreeElementWalkingVisitor(expandChameleons) {
       @Override
-      protected boolean visitNode(TreeElement node) {
-        if (result[0] != null) return false;
+      protected void visitNode(TreeElement node) {
+        if (result[0] != null) return;
 
         if (commonParent != null) {
           initStrongWhitespaceHolder(commonParent, node, false);
         }
-        if (!expandChameleons && isLeafOrCollapsedChameleon(node)) {
+        if (!expandChameleons && isCollapsedChameleon(node) || node instanceof LeafElement || node.getElementType() == searchedType) {
           result[0] = node;
-          return false;
+          return;
         }
 
-        if (node instanceof LeafElement || node.getElementType() == searchedType) {
-          result[0] = node;
-          return false;
-        }
-        return super.visitNode(node);
+        super.visitNode(node);
       }
     });
     return result[0];

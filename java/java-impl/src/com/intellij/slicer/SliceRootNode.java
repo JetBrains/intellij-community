@@ -12,6 +12,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author cdr
@@ -39,8 +40,8 @@ public abstract class SliceRootNode extends SliceNode {
   }
 
   @Override
-  public Collection<? extends AbstractTreeNode> getChildrenUnderProgress(ProgressIndicator progress) {
-    return getChildren();
+  public List<? extends AbstractTreeNode> getChildrenUnderProgress(ProgressIndicator progress) {
+    return (List<? extends AbstractTreeNode>)getChildren();
   }
 
   @Override

@@ -4,6 +4,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -32,6 +33,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
   private final SliceTreeBuilder myTreeBuilder;
   private final Collection<PsiElement> leafExpressions = new THashSet<PsiElement>(SliceLeafAnalyzer.LEAF_ELEMENT_EQUALITY);
   protected boolean changed;
+  private int index; // my index in parent's mycachedchildren
 
   protected SliceNode(@NotNull Project project, SliceUsage sliceUsage, @NotNull DuplicateMap targetEqualUsages,
                       @NotNull Collection<PsiElement> leafExpressions) {
@@ -60,20 +62,44 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
 
   @NotNull
   public Collection<? extends AbstractTreeNode> getChildren() {
+    ProgressIndicator current = ProgressManager.getInstance().getProgressIndicator();
+    ProgressIndicator indicator = current == null ? new ProgressIndicatorBase() : current;
+    if (current == null) {
+      indicator.start();
+    }
     final Collection[] nodes = new Collection[1];
-    ProgressManager.getInstance().runProcess(new Runnable(){
+    ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable(){
       public void run() {
         nodes[0] = getChildrenUnderProgress(ProgressManager.getInstance().getProgressIndicator());
       }
-    }, new ProgressIndicatorBase());
+    }, indicator);
+    if (current == null) {
+      indicator.stop();
+    }
     return nodes[0];
   }
 
-  public Collection<? extends AbstractTreeNode> getChildrenUnderProgress(ProgressIndicator progress) {
-    if (myCachedChildren != null || !isValid() || getTreeBuilder().splitByLeafExpressions) {
-      return myCachedChildren == null ? Collections.<AbstractTreeNode>emptyList() : myCachedChildren;
+  SliceNode getNext() {
+    AbstractTreeNode parent = getParent();
+    if (parent instanceof SliceNode) {
+      Object[] children = getTreeBuilder().getTreeStructure().getChildElements(parent);
+      return index == children.length - 1 ? null : (SliceNode)children[index + 1];
     }
-    final List<AbstractTreeNode> children = Collections.synchronizedList(new ArrayList<AbstractTreeNode>());
+    return null;
+  }
+
+  SliceNode getPrev() {
+    AbstractTreeNode parent = getParent();
+    if (parent instanceof SliceNode) {
+      Object[] children = getTreeBuilder().getTreeStructure().getChildElements(parent);
+      return index == 0 ? null : (SliceNode)children[index - 1];
+    }
+    return null;
+  }
+
+  protected List<? extends AbstractTreeNode> getChildrenUnderProgress(ProgressIndicator progress) {
+    if (isUpToDate()) return myCachedChildren == null ? Collections.<AbstractTreeNode>emptyList() : myCachedChildren;
+    final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
     final SliceManager manager = SliceManager.getInstance(getProject());
     manager.runInterruptibly(new Runnable() {
       public void run() {
@@ -81,7 +107,10 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
           public boolean process(SliceUsage sliceUsage) {
             manager.checkCanceled();
             SliceNode node = new SliceNode(myProject, sliceUsage, targetEqualUsages, getTreeBuilder(), getLeafExpressions());
-            children.add(node);
+            synchronized (children) {
+              node.index = children.size();
+              children.add(node);
+            }
             return true;
           }
         };
@@ -102,8 +131,18 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
         });
       }
     }, progress);
-    myCachedChildren = children;
-    return myCachedChildren;
+
+    synchronized (children) {
+      myCachedChildren = children;
+    }
+    return children;
+  }
+
+  private boolean isUpToDate() {
+    if (myCachedChildren != null || !isValid() || getTreeBuilder().splitByLeafExpressions) {
+      return true;
+    }
+    return false;
   }
 
   @NotNull

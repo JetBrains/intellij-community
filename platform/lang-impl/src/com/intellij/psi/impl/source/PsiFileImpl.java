@@ -247,7 +247,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   private void switchFromStubToAST(ASTNode root, final Iterator<StubElement<?>> stubs) {
     ((TreeElement)root).acceptTree(new RecursiveTreeElementWalkingVisitor() {
       @Override
-      protected boolean visitNode(TreeElement tree) {
+      protected void visitNode(TreeElement tree) {
         final IElementType type = tree.getElementType();
 
         if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(tree)) {
@@ -279,7 +279,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
           base.setNode(tree);
           base.setStub(null);
         }
-        return true;
+        super.visitNode(tree);
       }
     });
   }

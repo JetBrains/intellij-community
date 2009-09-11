@@ -88,16 +88,16 @@ public class ParseUtil {
       final List<ASTNode> comments = new SmartList<ASTNode>();
       ((TreeElement)root).acceptTree(new RecursiveTreeElementWalkingVisitor(false) {
         @Override
-        protected boolean visitNode(TreeElement child) {
+        protected void visitNode(TreeElement child) {
           IElementType type = child.getElementType();
           if (type == JavaDocElementType.DOC_COMMENT ||
               type == JavaTokenType.END_OF_LINE_COMMENT ||
               type == JavaTokenType.C_STYLE_COMMENT) {
             comments.add(child);
           }
-          if (TreeUtil.isLeafOrCollapsedChameleon(child)) return false;
+          if (TreeUtil.isLeafOrCollapsedChameleon(child)) return;
 
-          return true;
+          super.visitNode(child);
         }
       });
 

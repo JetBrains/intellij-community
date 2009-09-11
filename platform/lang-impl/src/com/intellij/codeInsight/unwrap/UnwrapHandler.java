@@ -179,16 +179,17 @@ public class UnwrapHandler implements CodeInsightActionHandler {
 
     private void restoreCaretPosition(final PsiFile file) {
       ((TreeElement)file.getNode()).acceptTree(new RecursiveTreeElementWalkingVisitor() {
-        protected boolean visitNode(TreeElement element) {
+        protected void visitNode(TreeElement element) {
           PsiElement el = element.getPsi();
           Integer offset = el.getCopyableUserData(CARET_POS_KEY);
 
-          if (offset == null) return true; // continue;
-
-          myEditor.getCaretModel().moveToOffset(el.getTextOffset() + offset);
-          el.putCopyableUserData(CARET_POS_KEY, null);
-
-          return false;
+          // continue;
+          if (offset != null) {
+            myEditor.getCaretModel().moveToOffset(el.getTextOffset() + offset);
+            el.putCopyableUserData(CARET_POS_KEY, null);
+            return;
+          }
+          super.visitNode(element);
         }
       });
     }

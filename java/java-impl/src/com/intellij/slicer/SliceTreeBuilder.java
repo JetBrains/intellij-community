@@ -1,8 +1,8 @@
 package com.intellij.slicer;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
-import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.AlphaComparator;
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
@@ -62,16 +63,9 @@ public class SliceTreeBuilder extends AbstractTreeBuilder {
   public void switchToSplittedNodes() {
     final SliceRootNode root = (SliceRootNode)getRootNode().getUserObject();
 
-    final Ref<Collection<PsiElement>> leafExpressions = Ref.create(null);
-    boolean b = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      public void run() {
-        Collection<PsiElement> l = SliceLeafAnalyzer.calcLeafExpressions(root, ProgressManager.getInstance().getProgressIndicator());
-        leafExpressions.set(l);
-      }
-    }, "Expanding all nodes... (may very well take the whole day)", true, root.getProject());
-    if (!b) return;
+    Collection<PsiElement> leaves = calcLeafExpressions(root);
+    if (leaves == null) return;  //cancelled
 
-    Collection<PsiElement> leaves = leafExpressions.get();
     if (leaves.isEmpty()) {
       Messages.showErrorDialog("Unable to find leaf expressions to group by", "Cannot group");
       return;
@@ -85,6 +79,21 @@ public class SliceTreeBuilder extends AbstractTreeBuilder {
 
     getUpdater().cancelAllRequests();
     getUpdater().addSubtreeToUpdateByElement(root);
+  }
+
+  @Nullable("null means canceled")
+  public static Collection<PsiElement> calcLeafExpressions(final SliceRootNode root) {
+    final Ref<Collection<PsiElement>> leafExpressions = Ref.create(null);
+    boolean b = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      public void run() {
+        Collection<PsiElement> l = SliceLeafAnalyzer.calcLeafExpressions(root);
+        leafExpressions.set(l);
+      }
+    }, "Expanding all nodes... (may very well take the whole day)", true, root.getProject());
+    if (!b) return null;
+
+    Collection<PsiElement> leaves = leafExpressions.get();
+    return leaves;
   }
 
   public void switchToUnsplittedNodes() {

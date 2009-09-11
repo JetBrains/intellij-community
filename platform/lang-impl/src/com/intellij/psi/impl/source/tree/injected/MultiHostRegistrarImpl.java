@@ -57,12 +57,6 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
   private VirtualFile myHostVirtualFile;
   private final PsiElement myContextElement;
   private final PsiFile myHostPsiFile;
-  private static final TreeElementVisitor CLEAR_CACHES_VISITOR = new RecursiveTreeElementWalkingVisitor(){
-    protected boolean visitNode(TreeElement element) {
-      element.clearCaches();
-      return true;
-    }
-  };
 
   MultiHostRegistrarImpl(@NotNull Project project, @NotNull PsiFile hostPsiFile, @NotNull PsiElement contextElement) {
     myProject = project;
@@ -320,7 +314,12 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
       String newText = entry.getValue();
       leaf.rawReplaceWithText(newText);
     }
-    ((TreeElement)parsedNode).acceptTree(CLEAR_CACHES_VISITOR);
+    ((TreeElement)parsedNode).acceptTree(new RecursiveTreeElementWalkingVisitor(){
+      protected void visitNode(TreeElement element) {
+        element.clearCaches();
+        super.visitNode(element);
+      }
+    });
   }
 
   private static PsiFile registerDocument(final DocumentWindowImpl documentWindow,
