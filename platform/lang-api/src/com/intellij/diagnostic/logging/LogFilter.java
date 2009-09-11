@@ -50,8 +50,17 @@ public class LogFilter implements JDOMExternalizable {
     myIconPath = iconPath;
   }
 
+  public LogFilter(String name) {
+    myName = name;
+  }
+
   //read external
   public LogFilter() {
+  }
+
+  @Override
+  public String toString() {
+    return myName;
   }
 
   public void setIcon(final Icon icon) {
@@ -84,7 +93,8 @@ public class LogFilter implements JDOMExternalizable {
         return IconLoader.getIcon(image);
       }
     }
-    return IconLoader.getIcon("/ant/filter.png");
+    //return IconLoader.getIcon("/ant/filter.png");
+    return null;
   }
 
   public void readExternal(Element element) throws InvalidDataException {

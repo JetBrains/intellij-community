@@ -6,15 +6,15 @@ package com.intellij.diagnostic.logging;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -29,13 +29,10 @@ import java.util.regex.Pattern;
  * Date: 06-Feb-2006
  */
 @State(
-  name="LogFilters",
-  storages = {
-    @Storage(
-      id="LogFilters",
-      file="$WORKSPACE_FILE$"
-    )}
-)
+  name = "LogFilters",
+  storages = {@Storage(
+    id = "LogFilters",
+    file = "$WORKSPACE_FILE$")})
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public class LogConsolePreferences extends LogFilterRegistrar {
   private final SortedMap<LogFilter, Boolean> myRegisteredLogFilters = new TreeMap<LogFilter, Boolean>(new Comparator<LogFilter>() {
@@ -68,7 +65,7 @@ public class LogConsolePreferences extends LogFilterRegistrar {
   private final List<FilterListener> myListeners = new ArrayList<FilterListener>();
   private static final Logger LOG = Logger.getInstance("#" + LogConsolePreferences.class.getName());
 
-  public static LogConsolePreferences getInstance(Project project){
+  public static LogConsolePreferences getInstance(Project project) {
     return ServiceManager.getService(project, LogConsolePreferences.class);
   }
 
@@ -87,7 +84,8 @@ public class LogConsolePreferences extends LogFilterRegistrar {
           final char c = CUSTOM_FILTER.charAt(i);
           if (Character.isLetterOrDigit(c)) {
             buf.append(Character.toUpperCase(c));
-          } else {
+          }
+          else {
             buf.append("\\").append(c);
           }
         }
@@ -100,7 +98,7 @@ public class LogConsolePreferences extends LogFilterRegistrar {
     return ourCustomPattern;
   }
 
-  public boolean isApplicable(@NotNull String text, String prevType){
+  public boolean isApplicable(@NotNull String text, String prevType) {
     if (CUSTOM_FILTER != null) {
       final Pattern pattern = getCustomPattern();
       if (pattern != null && !pattern.matcher(text.toUpperCase()).matches()) return false;
@@ -118,32 +116,32 @@ public class LogConsolePreferences extends LogFilterRegistrar {
   }
 
   private boolean isApplicable(final String type) {
-    if (type.equals(ERROR)){
+    if (type.equals(ERROR)) {
       return !FILTER_ERRORS;
     }
-    if (type.equals(WARNING)){
+    if (type.equals(WARNING)) {
       return !FILTER_WARNINGS;
     }
-    if (type.equals(INFO)){
+    if (type.equals(INFO)) {
       return !FILTER_INFO;
     }
     return true;
   }
 
-  public static ConsoleViewContentType getContentType(String type){
+  public static ConsoleViewContentType getContentType(String type) {
     if (type.equals(ERROR)) return ConsoleViewContentType.ERROR_OUTPUT;
     return ConsoleViewContentType.NORMAL_OUTPUT;
   }
 
   @Nullable
-  public static String getType(@NotNull String text){
+  public static String getType(@NotNull String text) {
     if (ERROR_PATTERN.matcher(text.toUpperCase()).matches()) return ERROR;
     if (WARNING_PATTERN.matcher(text.toUpperCase()).matches() || WARN_PATTERN.matcher(text.toUpperCase()).matches()) return WARNING;
     if (INFO_PATTERN.matcher(text.toUpperCase()).matches()) return INFO;
     return null;
   }
 
-  public static Key getProcessOutputTypes(String type){
+  public static Key getProcessOutputTypes(String type) {
     if (type.equals(ERROR)) return ProcessOutputTypes.STDERR;
     if (type.equals(WARNING) || type.equals(INFO)) return ProcessOutputTypes.STDOUT;
     return null;
@@ -182,7 +180,7 @@ public class LogConsolePreferences extends LogFilterRegistrar {
     }
   }
 
-  public void registerFilter(LogFilter filter){
+  public void registerFilter(LogFilter filter) {
     myRegisteredLogFilters.put(filter, Boolean.FALSE);
   }
 
@@ -190,32 +188,32 @@ public class LogConsolePreferences extends LogFilterRegistrar {
     return new ArrayList<LogFilter>(myRegisteredLogFilters.keySet());
   }
 
-  public boolean isFilterSelected(LogFilter filter){
+  public boolean isFilterSelected(LogFilter filter) {
     final Boolean isSelected = myRegisteredLogFilters.get(filter);
     if (isSelected != null) {
       return isSelected.booleanValue();
     }
-    if (filter.getName().indexOf(ERROR) != -1) return FILTER_ERRORS;
-    if (filter.getName().indexOf(WARN) != -1) return FILTER_WARNINGS;
-    return filter.getName().indexOf(INFO) == -1 || FILTER_INFO;
+    if (filter instanceof StandartLogFilter) {
+      return ((StandartLogFilter)filter).isSelected(this);
+    }
+    return false;
   }
 
-  public void setFilterSelected(LogFilter filter, boolean state){
-    if (myRegisteredLogFilters.containsKey(filter)){
+  public void setFilterSelected(LogFilter filter, boolean state) {
+    if (filter instanceof StandartLogFilter) {
+      ((StandartLogFilter)filter).selectFilter(this);
+    }
+    else if (myRegisteredLogFilters.containsKey(filter)) {
       myRegisteredLogFilters.put(filter, state);
-    } else {
-      String filterName = filter.getName();
-      if (filterName.indexOf(ERROR) != -1){
-        FILTER_ERRORS = state;
-      }
-      if (filterName.indexOf(WARN) != -1){
-        FILTER_WARNINGS = state;
-      }
-      if (filterName.indexOf(INFO) != -1){
-        FILTER_INFO = state;
-      }
     }
     fireStateChanged(filter);
+  }
+
+  public void selectOnlyFilter(LogFilter filter) {
+    for (LogFilter logFilter : myRegisteredLogFilters.keySet()) {
+      myRegisteredLogFilters.put(logFilter, false);
+    }
+    setFilterSelected(filter, true);
   }
 
   private void fireStateChanged(final LogFilter filter) {
@@ -240,6 +238,7 @@ public class LogConsolePreferences extends LogFilterRegistrar {
 
   public interface FilterListener {
     void onFilterStateChange(LogFilter filter);
+
     void onTextFilterChange();
   }
 }

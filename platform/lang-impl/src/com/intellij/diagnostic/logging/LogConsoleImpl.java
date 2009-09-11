@@ -18,9 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.ui.FilterComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +26,8 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.KeyEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +36,8 @@ import java.util.List;
  * User: anna
  * Date: Apr 19, 2005
  */
-public abstract class LogConsoleImpl extends AdditionalTabComponent implements LogConsole, ChangeListener, LogConsolePreferences.FilterListener {
+public abstract class LogConsoleImpl extends AdditionalTabComponent
+  implements LogConsole, ChangeListener, LogConsolePreferences.FilterListener {
   private ConsoleView myConsole;
   private final LightProcessHandler myProcessHandler = new LightProcessHandler();
   private ReaderThread myReaderThread;
@@ -49,11 +49,11 @@ public abstract class LogConsoleImpl extends AdditionalTabComponent implements L
   private String myLineUnderSelection = null;
   private int myLineOffset = -1;
 
-  private FilterComponent myFilter = new FilterComponent("LOG_FILTER_HISTORY", 5) {
+  /*private FilterComponent myFilter = new FilterComponent("LOG_FILTER_HISTORY", 5) {
     public void filter() {
       getPreferences().updateCustomFilter(getFilter());
     }
-  };
+  };*/
 
   private LogContentPreprocessor myContentPreprocessor;
   private boolean myShowStandardFilters = true;
@@ -97,24 +97,26 @@ public abstract class LogConsoleImpl extends AdditionalTabComponent implements L
   }
 
   @SuppressWarnings({"NonStaticInitializer"})
-  private JComponent createToolbar(){
-    final LogConsolePreferences registrar = getPreferences();
+  private JComponent createToolbar() {
 
-    myFilter.reset();
+    /*myFilter.reset();
     myFilter.setSelectedItem(registrar.CUSTOM_FILTER != null ? registrar.CUSTOM_FILTER : "");
-    new AnAction(){
+    new AnAction() {
       {
-        registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, KeyEvent.SHIFT_DOWN_MASK)), LogConsoleImpl.this);
+        registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, KeyEvent.SHIFT_DOWN_MASK)),
+                                  LogConsoleImpl.this);
       }
+
       public void actionPerformed(final AnActionEvent e) {
         myFilter.requestFocusInWindow();
       }
-    };
+    };*/
 
     if (myBuildInActions) {
-      final JComponent tbComp = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, getOrCreateActions(), true).getComponent();
+      final JComponent tbComp =
+        ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, getOrCreateActions(), true).getComponent();
       myTopComponent.add(tbComp, BorderLayout.CENTER);
-      myTopComponent.add(myFilter, BorderLayout.EAST);
+      //myTopComponent.add(myFilter, BorderLayout.EAST);
     }
 
 
@@ -123,9 +125,6 @@ public abstract class LogConsoleImpl extends AdditionalTabComponent implements L
 
   public ActionGroup getOrCreateActions() {
     if (myActions != null) return myActions;
-
-    final LogConsolePreferences prefs = getPreferences();
-
     DefaultActionGroup group = new DefaultActionGroup();
 
     final AnAction[] actions = myConsole.createConsoleActions();
@@ -135,28 +134,8 @@ public abstract class LogConsoleImpl extends AdditionalTabComponent implements L
 
     group.addSeparator();
 
-    final ArrayList<LogFilter> filters = new ArrayList<LogFilter>();
-    if (myShowStandardFilters) {
-      filters.add(new LogFilter(DiagnosticBundle.message("log.console.filter.by.type", LogConsolePreferences.INFO), IconLoader.getIcon("/ant/filterInfo.png")){
-        public boolean isAcceptable(String line) {
-          return prefs.isApplicable(line, myPrevType);
-        }
-      });
-      filters.add(new LogFilter(DiagnosticBundle.message("log.console.filter.by.type", LogConsolePreferences.WARNING), IconLoader.getIcon("/ant/filterWarning.png")){
-        public boolean isAcceptable(String line) {
-          return prefs.isApplicable(line, myPrevType);
-        }
-      });
-      filters.add(new LogFilter(DiagnosticBundle.message("log.console.filter.by.type", LogConsolePreferences.ERROR), IconLoader.getIcon("/ant/filterError.png")){
-        public boolean isAcceptable(String line) {
-          return prefs.isApplicable(line, myPrevType);
-        }
-      });
-    }
-    filters.addAll(prefs.getRegisteredLogFilters());
-
-    for (final LogFilter filter : filters) {
-      group.add(new ToggleAction(filter.getName(), filter.getName(), filter.getIcon()){
+    /*for (final LogFilter filter : filters) {
+      group.add(new ToggleAction(filter.getName(), filter.getName(), filter.getIcon()) {
         public boolean isSelected(AnActionEvent e) {
           return prefs.isFilterSelected(filter);
         }
@@ -165,7 +144,7 @@ public abstract class LogConsoleImpl extends AdditionalTabComponent implements L
           prefs.setFilterSelected(filter, state);
         }
       });
-    }
+    }*/
 
     myActions = group;
 
@@ -204,10 +183,11 @@ public abstract class LogConsoleImpl extends AdditionalTabComponent implements L
   public void activate() {
     if (myReaderThread == null) return;
     if (isActive() && !myReaderThread.myRunning) {
-      myFilter.setSelectedItem(getPreferences().CUSTOM_FILTER);
+      //myFilter.setSelectedItem(getPreferences().CUSTOM_FILTER);
       myReaderThread.startRunning();
-      ApplicationManager.getApplication().executeOnPooledThread(myReaderThread);     
-    } else if (!isActive() && myReaderThread.myRunning) {
+      ApplicationManager.getApplication().executeOnPooledThread(myReaderThread);
+    }
+    else if (!isActive() && myReaderThread.myRunning) {
       myReaderThread.stopRunning();
     }
   }
@@ -246,14 +226,14 @@ public abstract class LogConsoleImpl extends AdditionalTabComponent implements L
       Disposer.dispose(myConsole);
       myConsole = null;
     }
-    if (myFilter != null) {
+    /*if (myFilter != null) {
       myFilter.dispose();
       myFilter = null;
-    }
+    }*/
     myOriginalDocument = null;
   }
 
-  private void stopRunning(){
+  private void stopRunning() {
     if (myReaderThread != null && !isActive()) {
       myReaderThread.stopRunning();
     }
@@ -266,23 +246,25 @@ public abstract class LogConsoleImpl extends AdditionalTabComponent implements L
       myOriginalDocument = getOriginalDocument();
       for (LogFragment fragment : fragments) {
         myProcessHandler.notifyTextAvailable(fragment.getText(), fragment.getOutputType());
-        if (myOriginalDocument != null){
+        if (myOriginalDocument != null) {
           myOriginalDocument.append(fragment.getText());
         }
       }
     }
     else {
       final String key = LogConsolePreferences.getType(text);
-      if (getPreferences().isApplicable(text, myPrevType)){
-        myProcessHandler.notifyTextAvailable(text + "\n", key != null ?
-                                                          LogConsolePreferences.getProcessOutputTypes(key) :
-                                                          (myPrevType == LogConsolePreferences.ERROR ? ProcessOutputTypes.STDERR : ProcessOutputTypes.STDOUT));
+      if (getPreferences().isApplicable(text, myPrevType)) {
+        myProcessHandler.notifyTextAvailable(text + "\n", key != null
+                                                          ? LogConsolePreferences.getProcessOutputTypes(key)
+                                                          : (myPrevType == LogConsolePreferences.ERROR
+                                                             ? ProcessOutputTypes.STDERR
+                                                             : ProcessOutputTypes.STDOUT));
       }
       if (key != null) {
         myPrevType = key;
       }
       myOriginalDocument = getOriginalDocument();
-      if (myOriginalDocument != null){
+      if (myOriginalDocument != null) {
         myOriginalDocument.append(text).append("\n");
       }
     }
@@ -304,10 +286,10 @@ public abstract class LogConsoleImpl extends AdditionalTabComponent implements L
     }
   }
 
-  private StringBuffer getOriginalDocument(){
+  private StringBuffer getOriginalDocument() {
     if (myOriginalDocument == null) {
       final Editor editor = getEditor();
-      if (editor != null){
+      if (editor != null) {
         myOriginalDocument = new StringBuffer(editor.getDocument().getText());
       }
     }
@@ -350,7 +332,8 @@ public abstract class LogConsoleImpl extends AdditionalTabComponent implements L
             if (Comparing.strEqual(myLineUnderSelection, line)) {
               caretPositioned = true;
               offset += myLineOffset != -1 ? myLineOffset : 0;
-            } else {
+            }
+            else {
               offset += line.length() + 1;
             }
           }
@@ -387,8 +370,9 @@ public abstract class LogConsoleImpl extends AdditionalTabComponent implements L
   private class ReaderThread implements Runnable {
     private BufferedReader myFileStream;
     private boolean myRunning = false;
+
     @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
-    public ReaderThread(File file){
+    public ReaderThread(File file) {
       try {
         try {
           final FileInputStream inputStream = new FileInputStream(file);
@@ -409,13 +393,14 @@ public abstract class LogConsoleImpl extends AdditionalTabComponent implements L
 
     public void run() {
       if (myFileStream == null) return;
-      while (myRunning){
+      while (myRunning) {
         try {
           int i = 0;
-          while (i++ < 100){
-            if (myRunning && myFileStream != null && myFileStream.ready()){
+          while (i++ < 100) {
+            if (myRunning && myFileStream != null && myFileStream.ready()) {
               addMessage(myFileStream.readLine());
-            } else {
+            }
+            else {
               break;
             }
           }
@@ -460,8 +445,79 @@ public abstract class LogConsoleImpl extends AdditionalTabComponent implements L
     return myConsole.getPreferredFocusableComponent();
   }
 
+  private List<LogFilter> getLogFilters(final LogConsolePreferences prefs) {
+    abstract class MyFilter extends StandartLogFilter {
+      protected MyFilter(String name) {
+        super(name);
+      }
+
+      public boolean isAcceptable(String line) {
+        return prefs.isApplicable(line, myPrevType);
+      }
+    }
+    final ArrayList<LogFilter> filters = new ArrayList<LogFilter>();
+    if (myShowStandardFilters) {
+      filters.add(new MyFilter(DiagnosticBundle.message("log.console.filter.show.all")) {
+        @Override
+        public void selectFilter(LogConsolePreferences prefs) {
+          prefs.FILTER_ERRORS = false;
+          prefs.FILTER_INFO = false;
+          prefs.FILTER_WARNINGS = false;
+        }
+
+        @Override
+        public boolean isSelected(LogConsolePreferences prefs) {
+          return !prefs.FILTER_ERRORS && !prefs.FILTER_INFO && !prefs.FILTER_WARNINGS;
+        }
+      });
+      filters.add(new MyFilter(DiagnosticBundle.message("log.console.filter.show.errors.and.warnings")) {
+        @Override
+        public void selectFilter(LogConsolePreferences prefs) {
+          prefs.FILTER_ERRORS = false;
+          prefs.FILTER_INFO = true;
+          prefs.FILTER_WARNINGS = false;
+        }
+
+        @Override
+        public boolean isSelected(LogConsolePreferences prefs) {
+          return !prefs.FILTER_ERRORS && prefs.FILTER_INFO && !prefs.FILTER_WARNINGS;
+        }
+      });
+      filters.add(new MyFilter(DiagnosticBundle.message("log.console.filter.show.errors")) {
+        @Override
+        public void selectFilter(LogConsolePreferences prefs) {
+          prefs.FILTER_ERRORS = false;
+          prefs.FILTER_INFO = true;
+          prefs.FILTER_WARNINGS = true;
+        }
+
+        @Override
+        public boolean isSelected(LogConsolePreferences prefs) {
+          return !prefs.FILTER_ERRORS && prefs.FILTER_INFO && prefs.FILTER_WARNINGS;
+        }
+      });
+    }
+    filters.addAll(prefs.getRegisteredLogFilters());
+    return filters;
+  }
+
   public JComponent getSearchComponent() {
-    return myFilter;
+    final LogConsolePreferences prefs = getPreferences();
+    List<LogFilter> filters = getLogFilters(prefs);
+    final JComboBox combo = new JComboBox(filters.toArray(new LogFilter[filters.size()]));
+    for (LogFilter filter : filters) {
+      if (prefs.isFilterSelected(filter)) {
+        combo.setSelectedItem(filter);
+        break;
+      }
+    }
+    combo.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        LogFilter filter = (LogFilter)combo.getSelectedItem();
+        prefs.selectOnlyFilter(filter);
+      }
+    });
+    return combo;
   }
 
   public boolean isContentBuiltIn() {
