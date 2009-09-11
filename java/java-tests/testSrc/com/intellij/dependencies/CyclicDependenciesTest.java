@@ -1,10 +1,10 @@
 package com.intellij.dependencies;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.JavaAnalysisScope;
 import com.intellij.cyclicDependencies.CyclicDependenciesBuilder;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiPackage;
@@ -24,7 +24,7 @@ public class CyclicDependenciesTest extends PsiTestCase {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         try {
-          String root = PathManagerEx.getTestDataPath() + "/dependencies/cycle/" + getTestName(true);
+          String root = JavaTestUtil.getJavaTestDataPath() + "/dependencies/cycle/" + getTestName(true);
           PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk("java 1.4"));
           PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
         }
@@ -162,11 +162,10 @@ public class CyclicDependenciesTest extends PsiTestCase {
     checkResult(expected, cyclicDependencies, true);
   }
 
-  private void checkResult(HashMap<String, String[][]> expected, HashMap<PsiPackage, Set<List<PsiPackage>>> cycles) {
+  private static void checkResult(HashMap<String, String[][]> expected, HashMap<PsiPackage, Set<List<PsiPackage>>> cycles) {
     assertEquals(expected.size(), cycles.size());
     Iterator<PsiPackage> it = cycles.keySet().iterator();
-    for (Iterator<String> iterator = expected.keySet().iterator(); iterator.hasNext();) {
-      final String packs = iterator.next();
+    for (final String packs : expected.keySet()) {
       final PsiPackage psiPackage = it.next();
       assertEquals(packs, psiPackage.getQualifiedName());
       assertEquals(expected.get(packs).length, cycles.get(psiPackage).size());
@@ -176,8 +175,7 @@ public class CyclicDependenciesTest extends PsiTestCase {
         final List<PsiPackage> cycle = iC.next();
         assertEquals(expectedCycle.length, cycle.size());
         Iterator<PsiPackage> iCycle = cycle.iterator();
-        for (int j = 0; j < expectedCycle.length; j++) {
-          final String expectedInCycle = expectedCycle[j];
+        for (final String expectedInCycle : expectedCycle) {
           final PsiPackage packageInCycle = iCycle.next();
           assertEquals(expectedInCycle, packageInCycle.getQualifiedName());
         }
@@ -185,22 +183,19 @@ public class CyclicDependenciesTest extends PsiTestCase {
     }
   }
 
-  private void checkResult(HashMap<String, String[][]> expected, HashMap<PsiPackage, Set<List<PsiPackage>>> cycles, boolean forceContains){
+  private static void checkResult(HashMap<String, String[][]> expected, HashMap<PsiPackage, Set<List<PsiPackage>>> cycles, boolean forceContains){
     assertEquals(expected.size(), cycles.size());
-    for (Iterator<PsiPackage> iterator = cycles.keySet().iterator(); iterator.hasNext();) {
-      final PsiPackage psiPackage = iterator.next();
+    for (final PsiPackage psiPackage : cycles.keySet()) {
       assertTrue(expected.containsKey(psiPackage.getQualifiedName()));
       final String packs = psiPackage.getQualifiedName();
-      if (forceContains){
+      if (forceContains) {
         assertEquals(expected.get(packs).length, cycles.get(psiPackage).size());
       }
-      for (Iterator<List<PsiPackage>> iC = cycles.get(psiPackage).iterator(); iC.hasNext();) {
-        final List<PsiPackage> cycle = iC.next();
+      for (final List<PsiPackage> cycle : cycles.get(psiPackage)) {
         final String[][] expectedCycles = expected.get(packs);
-        final String [] string = new String[cycle.size()];
+        final String[] string = new String[cycle.size()];
         int i = 0;
-        for (Iterator<PsiPackage> iCycle = cycle.iterator(); iCycle.hasNext();) {
-          final PsiPackage packageInCycle = iCycle.next();
+        for (final PsiPackage packageInCycle : cycle) {
           string[i++] = packageInCycle.getQualifiedName();
         }
         assertTrue(findInMatrix(expectedCycles, string) > -1);
