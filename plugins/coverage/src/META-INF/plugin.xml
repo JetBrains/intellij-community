@@ -12,6 +12,8 @@
     <coverageRunner implementation="com.intellij.coverage.IDEACoverageRunner"/>
     <projectViewNodeDecorator implementation="com.intellij.coverage.CoverageProjectViewNodeDecorator"/>
     <junitListener implementation="com.intellij.junit.IDEAJUnitCoverageListener"/>
+
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
   </extensions>
   <extensions defaultExtensionNs="com.theoryinpractice.testng">
     <listener implementation="org.testng.IDEACoverageListener"/>
