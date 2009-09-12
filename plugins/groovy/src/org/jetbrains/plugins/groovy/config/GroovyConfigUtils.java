@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -26,8 +27,10 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
@@ -41,6 +44,7 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
 
   private static GroovyConfigUtils myGroovyConfigUtils;
   @NonNls private static final String GROOVY_JAR_PATTERN = "groovy-(\\d.*)\\.jar";
+  public static final String NO_VERSION = "<no version>";
 
   private GroovyConfigUtils() {
   }
@@ -91,6 +95,35 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
   public static boolean isAnyGroovyJar(@NonNls final String name) {
     return name.matches(GROOVY_ALL_JAR_PATTERN) || name.matches(GROOVY_JAR_PATTERN);
   }
+
+  @Nullable
+  public String getSDKVersion(@NotNull Module module) {
+    final String path = LibrariesUtil.getGroovyHomePath(module);
+    if (path == null) return null;
+    return getSDKVersion(path);
+  }
+
+  public boolean isAtLeastGroovy1_7(Module module) {
+    if (module == null) return false;
+    final String version = getSDKVersion(module);
+    if (version == null) return false;
+    return version.compareTo("1.7") >= 0;
+  }
+
+  public  boolean isAtLeastGroovy1_7(PsiElement psiElement) {
+    return isAtLeastGroovy1_7(ModuleUtil.findModuleForPsiElement(psiElement));
+  }
+
+  @NotNull
+  public String getSDKVersion(PsiElement psiElement) {
+    final Module module = ModuleUtil.findModuleForPsiElement(psiElement);
+    if (module == null) {
+      return NO_VERSION;
+    }
+    final String s = getSDKVersion(module);
+    return s != null ? s : NO_VERSION;
+  }
+
 
   @NotNull
   public String getSDKInstallPath(Module module) {

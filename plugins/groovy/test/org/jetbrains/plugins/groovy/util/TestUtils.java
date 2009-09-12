@@ -54,6 +54,14 @@ public abstract class TestUtils {
     return getTestDataPath() + "/mockGroovyLib";
   }
 
+  public static String getMockGroovy1_7LibraryHome() {
+    return getTestDataPath() + "/mockGroovyLib1.7";
+  }
+
+  public static String getMockGroovy1_7LibraryName() {
+    return getMockGroovy1_7LibraryHome()+"/groovy-all-1.7.jar";
+  }
+
   public static PsiFile createPseudoPhysicalGroovyFile(final Project project, final String text) throws IncorrectOperationException {
     return createPseudoPhysicalFile(project, TEMP_FILE, text);
   }

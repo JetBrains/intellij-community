@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.intentions.*;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicFix;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
 import org.jetbrains.plugins.groovy.intentions.utils.DuplicatesUtil;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
@@ -108,7 +109,6 @@ public class GroovyAnnotator implements Annotator {
       final GrMethod method = (GrMethod)element;
       checkMethodDefinitionModifiers(holder, method);
       checkInnerMethod(holder, method);
-      addOverrideGutter(holder, method);
     }
     else if (element instanceof GrVariableDeclaration) {
       checkVariableDeclaration(holder, (GrVariableDeclaration)element);
@@ -276,16 +276,6 @@ public class GroovyAnnotator implements Annotator {
 
   private static void registerImplementsMethodsFix(GrTypeDefinition typeDefinition, Annotation annotation) {
     annotation.registerFix(new ImplementMethodsQuickFix(typeDefinition));
-  }
-
-  private static void addOverrideGutter(AnnotationHolder holder, GrMethod method) {
-    final Annotation annotation = holder.createInfoAnnotation(method, null);
-
-    final PsiMethod[] superMethods = method.findSuperMethods();
-    if (superMethods.length > 0) {
-      boolean isImplements = !method.hasModifierProperty(PsiModifier.ABSTRACT) && superMethods[0].hasModifierProperty(PsiModifier.ABSTRACT);
-//      annotation.setGutterIconRenderer(new OverrideGutter(superMethods, isImplements));
-    }
   }
 
   private static void checkConstructorInvocation(AnnotationHolder holder, GrConstructorInvocation invocation) {
@@ -500,7 +490,7 @@ public class GroovyAnnotator implements Annotator {
       }
     }
 
-    checkStaticDeclarationsInInnerClass(typeDefinition, holder); 
+    checkStaticDeclarationsInInnerClass(typeDefinition, holder);
   }
 
   private static void checkAccessModifiers(AnnotationHolder holder, @NotNull PsiModifierList modifierList) {
@@ -601,20 +591,33 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private static void checkTypeDefinition(AnnotationHolder holder, GrTypeDefinition typeDefinition) {
+    final GroovyConfigUtils configUtils = GroovyConfigUtils.getInstance();
     if (typeDefinition.isAnnotationType()) {
       Annotation annotation = holder.createInfoAnnotation(typeDefinition.getNameIdentifierGroovy(), null);
       annotation.setTextAttributes(DefaultHighlighter.ANNOTATION);
+    }
+    else if (typeDefinition.isAnonymous()) {
+      if (!configUtils.isAtLeastGroovy1_7(typeDefinition)) {
+        holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(),
+                                     GroovyBundle.message("anonymous.classes.are.not.suported", configUtils.getSDKVersion(typeDefinition)));
+      }
+    }
+    else if (typeDefinition.getContainingClass() != null) {
+      if (!configUtils.isAtLeastGroovy1_7(typeDefinition)) {
+        holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(),
+                                     GroovyBundle.message("inner.classes.are.not.suported", configUtils.getSDKVersion(typeDefinition)));
+      }
     }
 
     final GrImplementsClause implementsClause = typeDefinition.getImplementsClause();
     final GrExtendsClause extendsClause = typeDefinition.getExtendsClause();
 
     if (implementsClause != null) {
-      checkForImplementingClass(holder, extendsClause, implementsClause, ((GrTypeDefinition) implementsClause.getParent()));
+      checkForImplementingClass(holder, extendsClause, implementsClause, ((GrTypeDefinition)implementsClause.getParent()));
     }
 
     if (extendsClause != null) {
-      checkForExtendingInterface(holder, extendsClause, implementsClause, ((GrTypeDefinition) extendsClause.getParent()));
+      checkForExtendingInterface(holder, extendsClause, implementsClause, ((GrTypeDefinition)extendsClause.getParent()));
     }
 
     checkDuplicateClass(typeDefinition, holder);
@@ -738,7 +741,7 @@ public class GroovyAnnotator implements Annotator {
         checkSingleResolvedElement(holder, refExpr, resolveResult);
       }
     }
-    
+
     if (parent instanceof GrCall) {
       if (resolved == null && results.length > 0) {
         resolved = results[0].getElement();

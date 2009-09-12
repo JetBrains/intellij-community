@@ -5,7 +5,16 @@
 package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialConditionalInspection;
@@ -15,6 +24,7 @@ import org.jetbrains.plugins.groovy.codeInspection.unassignedVariable.Unassigned
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUntypedAccessInspection;
 import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.io.IOException;
 
@@ -25,6 +35,21 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return "/svnPlugins/groovy/testdata/highlighting/";
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return new DefaultLightProjectDescriptor() {
+      @Override
+      public void configureModule(Module module, ModifiableRootModel model) {
+        final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary("GROOVY").getModifiableModel();
+        final VirtualFile groovyJar =
+          JarFileSystem.getInstance().refreshAndFindFileByPath(TestUtils.getMockGroovy1_7LibraryName()+"!/");
+        modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES);
+        modifiableModel.commit();
+      }
+    };
   }
 
   public void testDuplicateClosurePrivateVariable() throws Throwable {
@@ -107,7 +132,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testAnonymousClassStaticMethod() throws Throwable {doTest();}
   public void testAnonymousClassShoudImplementMethods() throws Throwable {doTest();}
 
-  
+
   public void testDefaultMapConstructorNamedArgs() throws Throwable {doTest();}
   public void testDefaultMapConstructorNamedArgsError() throws Throwable {doTest();}
   public void testDefaultMapConstructorWhenDefConstructorExists() throws Throwable {doTest();}
@@ -125,15 +150,15 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testUnresolvedMethodCallWithTwoDeclarations() throws Throwable{
     doTest();
   }
-  
+
   public void testUnresolvedAccess() throws Exception { doTest(new GroovyUnresolvedAccessInspection()); }
   public void testUntypedAccess() throws Exception { doTest(new GroovyUntypedAccessInspection()); }
-  
+
   public void testUnassigned1() throws Exception { doTest(new UnassignedVariableAccessInspection()); }
   public void testUnassigned2() throws Exception { doTest(new UnassignedVariableAccessInspection()); }
   public void testUnassigned3() throws Exception { doTest(new UnassignedVariableAccessInspection()); }
   public void testUnassignedTryFinally() throws Exception { doTest(new UnassignedVariableAccessInspection()); }
-  
+
   public void testUnusedVariable() throws Exception { doTest(new UnusedDefInspection()); }
   public void testDefinitionUsedInClosure() throws Exception { doTest(new UnusedDefInspection()); }
   public void testDefinitionUsedInClosure2() throws Exception { doTest(new UnusedDefInspection()); }
