@@ -3,6 +3,8 @@ package org.jetbrains.plugins.groovy.dsl
 import org.jetbrains.plugins.groovy.dsl.toplevel.Context
 import org.jetbrains.plugins.groovy.dsl.toplevel.GdslMetaClassProperties
 import org.jetbrains.plugins.groovy.dsl.toplevel.Contributor
+import org.jetbrains.plugins.groovy.dsl.augmenters.PsiAugmenter
+import org.jetbrains.plugins.groovy.dsl.augmenters.PsiClassCategory
 
 /**
  * @author ilyas
@@ -15,6 +17,11 @@ public class GroovyDslExecutor {
 
   private final List<Context> myContexts = []
   private final List<Contributor> myContributors = []
+
+  // todo provide extensions!
+  private final List<PsiAugmenter> myPsiAugmenters = [
+          new PsiClassCategory()
+  ]
 
   public GroovyDslExecutor(String text, String fileName) {
     myFileName = fileName
@@ -33,10 +40,34 @@ public class GroovyDslExecutor {
       }
     }
 
+    //Augment PSI interfaces with new methods
+    //augmentCommonPSI()
+
     mc.initialize()
     script.metaClass = mc
     script.run()
   }
+
+  def augmentCommonPSI() {
+    for (aug in myPsiAugmenters) {
+      final def fqn = aug.getTargetClassFqn()
+      try {
+        final def psiClazz = Class.forName(fqn)
+        for (MetaMethod m in aug.metaClass.methods) {
+          // Injecting methods to existing PsiClasses
+          // Wrapper to handle an arbitrary number of parameters
+          psiClazz.metaClass."${m.name}Impl" = {List args ->
+                            m.invoke(aug, *args)}
+          psiClass.metaClass."$m.name" = {Object[] args -> "${m.name}Impl"(args.toList())}
+        }
+
+      }
+      catch (ClassNotFoundException) {
+        // do nothing
+      }
+    }
+  }
+
 
   def addClassEnhancer(Closure cl) {
     myClassEnhancers << cl
@@ -81,9 +112,6 @@ class EnhancerDelegate {
 
   def methodMissing(String name, args) {
     if (consumer.metaClass.respondsTo(consumer, name, args)) {
-      //this.metaClass."$name" = {Object[] varArgs ->
-      //  return consumer.invokeMethod(name, * varArgs)
-      //}
       consumer.invokeMethod(name, args)
     }
   }

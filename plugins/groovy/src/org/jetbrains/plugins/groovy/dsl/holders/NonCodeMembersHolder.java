@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.groovy.dsl;
+package org.jetbrains.plugins.groovy.dsl.holders;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiField;
@@ -13,7 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 /**
  * @author peter
  */
-public class NonCodeMembersHolder {
+public class NonCodeMembersHolder implements CustomMembersHolder {
   private final GrTypeDefinition myPsiClass;
 
   public NonCodeMembersHolder(@NotNull String classText, Project project) {

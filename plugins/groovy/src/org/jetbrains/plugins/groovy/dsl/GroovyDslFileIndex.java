@@ -15,10 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.dsl;
 
-import com.intellij.notification.Notifications;
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -51,6 +51,7 @@ import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 import javax.swing.event.HyperlinkEvent;
@@ -64,7 +65,7 @@ import java.util.concurrent.TimeUnit;
  * @author peter
  */
 public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
-  public static final Key<CachedValue<ConcurrentFactoryMap<ClassDescriptor, NonCodeMembersHolder>>> CACHED_ENHANCEMENTS = Key.create("CACHED_ENHANCEMENTS");
+  public static final Key<CachedValue<ConcurrentFactoryMap<ClassDescriptor, CustomMembersHolder>>> CACHED_ENHANCEMENTS = Key.create("CACHED_ENHANCEMENTS");
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex");
   private static final FileAttribute ENABLED = new FileAttribute("ENABLED", 0);
 
@@ -221,13 +222,13 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
   private static boolean processExecutor(final GroovyDslExecutor executor, final ClassDescriptor descriptor, PsiScopeProcessor processor, final GroovyFile dslFile) {
     final Project project = dslFile.getProject();
-    final ConcurrentFactoryMap<ClassDescriptor, NonCodeMembersHolder> map = dslFile.getManager().getCachedValuesManager()
-      .getCachedValue(dslFile, CACHED_ENHANCEMENTS, new CachedValueProvider<ConcurrentFactoryMap<ClassDescriptor, NonCodeMembersHolder>>() {
-        public Result<ConcurrentFactoryMap<ClassDescriptor, NonCodeMembersHolder>> compute() {
-          final ConcurrentFactoryMap<ClassDescriptor, NonCodeMembersHolder> result = new ConcurrentFactoryMap<ClassDescriptor, NonCodeMembersHolder>() {
+    final ConcurrentFactoryMap<ClassDescriptor, CustomMembersHolder> map = dslFile.getManager().getCachedValuesManager()
+      .getCachedValue(dslFile, CACHED_ENHANCEMENTS, new CachedValueProvider<ConcurrentFactoryMap<ClassDescriptor, CustomMembersHolder>>() {
+        public Result<ConcurrentFactoryMap<ClassDescriptor, CustomMembersHolder>> compute() {
+          final ConcurrentFactoryMap<ClassDescriptor, CustomMembersHolder> result = new ConcurrentFactoryMap<ClassDescriptor, CustomMembersHolder>() {
               @Override
-              protected NonCodeMembersHolder create(ClassDescriptor key) {
-                final NonCodeMembersGenerator generator = new NonCodeMembersGenerator(project);
+              protected CustomMembersHolder create(ClassDescriptor key) {
+                final CustomMembersGenerator generator = new CustomMembersGenerator(project);
                 try {
                   executor.processVariants(key, generator);
                 }
@@ -236,19 +237,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
                     LOG.error(e);
                     return null;
                   }
-
-                  final StackTraceElement[] elements = e.getStackTrace();
-
-                  ApplicationManager.getApplication().getMessageBus().syncPublisher(Notifications.TOPIC).notify(
-                    new Notification("Groovy DSL parsing", "DSL descriptor execution error",
-                                     "<p>" + e.getMessage() + "</p><p><a href=\"\">Click here to investigate.</a></p>", NotificationType.ERROR, new NotificationListener() {
-                        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-                          suggestAnalyzeTrace(project, elements);
-                          notification.expire();
-                        }
-                      })
-                  );
-                  disableFile(dslFile.getVirtualFile());
+                  invokeDslErrorPopup(e, project, dslFile.getVirtualFile());
                 }
                 return generator.getMembersHolder();
               }
@@ -257,7 +246,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
         }
       }, false);
     assert map != null;
-    final NonCodeMembersHolder holder = map.get(descriptor);
+    final CustomMembersHolder holder = map.get(descriptor);
     return holder == null || holder.processMembers(processor);
   }
 
@@ -310,21 +299,25 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
         return null;
       }
 
-      final StackTraceElement[] elements = e.getStackTrace();
-
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(Notifications.TOPIC).notify(
-        new Notification("Groovy DSL parsing", "DSL descriptor execution error",
-                         "<p>" + e.getMessage() + "</p><p><a href=\"\">Click here to investigate.</a></p>", NotificationType.ERROR, new NotificationListener() {
-            public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-              suggestAnalyzeTrace(project, elements);
-              notification.expire();
-            }
-          })
-      );
-      
-      disableFile(vfile);
+      invokeDslErrorPopup(e, project, vfile);
       return null;
     }
+  }
+
+  private static void invokeDslErrorPopup(Throwable e, final Project project, VirtualFile vfile) {
+    final StackTraceElement[] elements = e.getStackTrace();
+
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(Notifications.TOPIC).notify(
+      new Notification("Groovy DSL parsing", "DSL script execution error",
+                       "<p>" + e.getMessage() + "</p><p><a href=\"\">Click here to investigate.</a></p>", NotificationType.ERROR, new NotificationListener() {
+          public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+            suggestAnalyzeTrace(project, elements);
+            notification.expire();
+          }
+        })
+    );
+
+    disableFile(vfile);
   }
 
   private static void suggestAnalyzeTrace(Project project, StackTraceElement[] elements) {

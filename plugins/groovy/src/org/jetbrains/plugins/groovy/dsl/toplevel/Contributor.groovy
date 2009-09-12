@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.groovy.dsl.toplevel
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.plugins.groovy.dsl.augmenters.PsiClassCategory
 
 /**
  * @author ilyas
@@ -19,9 +20,21 @@ class Contributor {
     f.delegate = delegate
     f.resolveStrategy = Closure.DELEGATE_ONLY
     return {PsiElement elem ->
+      // turn on to augment POJO interfaces in PSI with new methods and properties
+      // Warning! Leads to the significant memory consumption
+      //ExpandoMetaClass.enableGlobally()
+
       myContexts.each {Context ctx ->
-        if (ctx.isApplicable(elem)) f(elem)
+        if (ctx.isApplicable(elem)) {
+          // todo refactor to add dynamically other categories!
+          use(PsiClassCategory) {
+            f(elem)
+          }
+        }
       }
+
+      // switch off to reduce memory usage
+      //ExpandoMetaClass.disableGlobally()
     }
   }
 

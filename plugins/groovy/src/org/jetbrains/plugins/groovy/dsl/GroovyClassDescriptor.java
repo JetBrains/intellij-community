@@ -45,6 +45,6 @@ class GroovyClassDescriptor implements ClassDescriptor {
 
   @Override
   public int hashCode() {
-    return myPsiClass.hashCode();
+    return myPsiClass.hashCode() * 31 + myPlace.hashCode();
   }
 }
