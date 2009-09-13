@@ -51,6 +51,7 @@ class GdslMetaClassProperties {
   Closure context = {Map args ->
     def ctx = new Context(args)
     myExecutor.addContext(ctx)
+    return ctx
   }
 
   /**
