@@ -11,4 +11,8 @@ public interface LogConsole {
   boolean isShowStandardFilters();
 
   void setShowStandardFilters(boolean showStandardFilters);
+
+  void registerLogFilter(LogFilter filter);
+
+  void unregisterLogFilter(LogFilter filter);
 }

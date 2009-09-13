@@ -193,15 +193,15 @@ public class LogConsolePreferences extends LogFilterRegistrar {
     if (isSelected != null) {
       return isSelected.booleanValue();
     }
-    if (filter instanceof StandartLogFilter) {
-      return ((StandartLogFilter)filter).isSelected(this);
+    if (filter instanceof IndependentLogFilter) {
+      return ((IndependentLogFilter)filter).isSelected();
     }
     return false;
   }
 
   public void setFilterSelected(LogFilter filter, boolean state) {
-    if (filter instanceof StandartLogFilter) {
-      ((StandartLogFilter)filter).selectFilter(this);
+    if (filter instanceof IndependentLogFilter) {
+      ((IndependentLogFilter)filter).selectFilter();
     }
     else if (myRegisteredLogFilters.containsKey(filter)) {
       myRegisteredLogFilters.put(filter, state);

@@ -1,9 +1,6 @@
 package com.intellij.xdebugger.impl.ui;
 
-import com.intellij.diagnostic.logging.AdditionalTabComponent;
-import com.intellij.diagnostic.logging.DebuggerLogConsoleManager;
-import com.intellij.diagnostic.logging.LogConsoleImpl;
-import com.intellij.diagnostic.logging.LogFilesManager;
+import com.intellij.diagnostic.logging.*;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessHandler;
@@ -23,9 +20,11 @@ import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -67,33 +66,50 @@ public abstract class DebuggerLogConsoleManagerBase implements DebuggerLogConsol
     myEnvironment = env;
   }
 
-  public void addLogConsole(final String name, final String path, final long skippedContent, Icon icon) {
+  public void addLogConsole(String name, Reader reader, long skippedContent, Icon icon) {
     final Ref<Content> content = new Ref<Content>();
-
-    final LogConsoleImpl log = new LogConsoleImpl(myProject, new File(path), skippedContent, name, false) {
+    addLogConsole(new LogConsoleBase(myProject, reader, skippedContent, name, false) {
       public boolean isActive() {
         final Content logContent = content.get();
         return logContent != null && logContent.isSelected();
       }
-    };
-    log.attachStopLogConsoleTrackingListener(getRunContentDescriptor().getProcessHandler());
+    }, icon, content);
+  }
+
+  public void addLogConsole(final String name, final String path, final long skippedContent, Icon icon) {
+    final Ref<Content> content = new Ref<Content>();
+    addLogConsole(new LogConsoleImpl(myProject, new File(path), skippedContent, name, false) {
+      public boolean isActive() {
+        final Content logContent = content.get();
+        return logContent != null && logContent.isSelected();
+      }
+    }, icon, content);
+  }
+
+  private void addLogConsole(final LogConsoleBase logConsole, Icon icon, Ref<Content> content) {
+    logConsole.attachStopLogConsoleTrackingListener(getRunContentDescriptor().getProcessHandler());
     // Attach custom log handlers
     if (myEnvironment != null && myEnvironment.getRunProfile() instanceof RunConfigurationBase) {
-      ((RunConfigurationBase)myEnvironment.getRunProfile()).customizeLogConsole(log);
+      ((RunConfigurationBase)myEnvironment.getRunProfile()).customizeLogConsole(logConsole);
     }
 
-    content.set(addLogComponent(log, icon));
+    content.set(addLogComponent(logConsole, icon));
     final ContentManagerAdapter l = new ContentManagerAdapter() {
       public void selectionChanged(final ContentManagerEvent event) {
-        log.activate();
+        logConsole.activate();
       }
     };
-    myContentListeners.put(log, l);
+    myContentListeners.put(logConsole, l);
     getUi().addListener(l, this);
   }
 
   public void addLogConsole(String name, String path, long skippedContent) {
     addLogConsole(name, path, skippedContent, DEFAULT_TAB_COMPONENT_ICON);
+  }
+
+  @Nullable
+  public static String getLogContentId(@NotNull String tabTitle) {
+    return "Log-" + tabTitle;
   }
 
   public void removeLogConsole(final String path) {
@@ -126,7 +142,7 @@ public abstract class DebuggerLogConsoleManagerBase implements DebuggerLogConsol
   }
 
   private Content addLogComponent(AdditionalTabComponent tabComponent, Icon icon) {
-    @NonNls final String id = "Log-" + tabComponent.getTabTitle();
+    @NonNls final String id = getLogContentId(tabComponent.getTabTitle());
     return addLogComponent(tabComponent, id, icon);
   }
 
