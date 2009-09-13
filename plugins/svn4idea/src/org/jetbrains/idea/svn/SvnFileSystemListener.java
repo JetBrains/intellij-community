@@ -47,6 +47,7 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileOperationsHandler;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
@@ -68,6 +69,7 @@ import java.util.*;
 
 public class SvnFileSystemListener implements LocalFileOperationsHandler, CommandListener {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnFileSystemListener");
+  private LocalFileSystem myLfs;
 
   private static class AddedFileInfo {
     private final Project myProject;
@@ -117,6 +119,10 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
   @Nullable private File myStorageForUndo;
   private final List<Pair<File, File>> myUndoStorageContents = new ArrayList<Pair<File, File>>();
   private boolean myUndoingMove = false;
+
+  public SvnFileSystemListener() {
+    myLfs = LocalFileSystem.getInstance();
+  }
 
   private void addToMoveExceptions(final Project project, final SVNException e) {
     List<VcsException> exceptionList = myMoveExceptions.get(project);
@@ -636,9 +642,13 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
       AddedFileInfo addedFileInfo = it.next();
       if (addedFileInfo.myProject == project) {
         it.remove();
+        final File ioFile = new File(getIOFile(addedFileInfo.myDir), addedFileInfo.myName);
         VirtualFile addedFile = addedFileInfo.myDir.findChild(addedFileInfo.myName);
+        if (addedFile == null) {
+          addedFile = myLfs.refreshAndFindFileByIoFile(ioFile);
+        }
         if (addedFile != null) {
-          final SVNStatus fileStatus = getFileStatus(vcs, new File(getIOFile(addedFileInfo.myDir), addedFileInfo.myName));
+          final SVNStatus fileStatus = getFileStatus(vcs, ioFile);
           if (fileStatus == null || fileStatus.getContentsStatus() != SVNStatusType.STATUS_IGNORED) {
             boolean isIgnored = ChangeListManager.getInstance(addedFileInfo.myProject).isIgnoredFile(addedFile);
             if (!isIgnored) {
