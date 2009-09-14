@@ -23,7 +23,7 @@ import javax.swing.*;
 public class ElementPresentationUtil {
   private static final Icon STATIC_MARK_ICON = IconLoader.getIcon("/nodes/staticMark.png");
   private static final Icon FINAL_MARK_ICON = IconLoader.getIcon("/nodes/finalMark.png");
-  private static final Icon JUNIT_TEST_MARK = IconLoader.getIcon("/nodes/junitTestMark.png");
+  public static final Icon JUNIT_TEST_MARK = IconLoader.getIcon("/nodes/junitTestMark.png");
   private static final Icon RUNNABLE_MARK = IconLoader.getIcon("/nodes/runnableMark.png");
 
   private ElementPresentationUtil() {
