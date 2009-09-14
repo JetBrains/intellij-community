@@ -26,12 +26,12 @@ public abstract class ReadonlyStatusHandler {
     return !getInstance(project).ensureFilesWritable(files).hasReadonlyFiles();
   }
 
-  public interface OperationStatus {
-    VirtualFile[] getReadonlyFiles();
+  public abstract static class OperationStatus {
+    public abstract VirtualFile[] getReadonlyFiles();
 
-    boolean hasReadonlyFiles();
+    public abstract boolean hasReadonlyFiles();
 
-    String getReadonlyFilesMessage();
+    public abstract String getReadonlyFilesMessage();
   }
 
   public abstract OperationStatus ensureFilesWritable(VirtualFile... files);

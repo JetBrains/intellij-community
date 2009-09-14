@@ -165,7 +165,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     }
   }
 
-  private static class OperationStatusImpl implements OperationStatus {
+  private static class OperationStatusImpl extends OperationStatus {
 
     private final VirtualFile[] myReadonlyFiles;
 
