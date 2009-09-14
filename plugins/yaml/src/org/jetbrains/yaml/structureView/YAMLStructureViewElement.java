@@ -3,6 +3,7 @@ package org.jetbrains.yaml.structureView;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.Icons;
 import org.jetbrains.yaml.psi.*;
 
@@ -12,7 +13,8 @@ import java.util.List;
 /**
  * @author oleg
  */
-public class YAMLStructureViewElement implements StructureViewTreeElement {
+public class
+  YAMLStructureViewElement implements StructureViewTreeElement {
   private final YAMLPsiElement myElement;
 
   public YAMLStructureViewElement(final YAMLPsiElement element) {
@@ -38,9 +40,10 @@ public class YAMLStructureViewElement implements StructureViewTreeElement {
 
   public ItemPresentation getPresentation() {
     if (myElement instanceof YAMLKeyValue){
+      final YAMLKeyValue kv = (YAMLKeyValue)myElement;
       return new ItemPresentation() {
         public String getPresentableText() {
-          return ((YAMLKeyValue)myElement).getKeyText();
+          return kv.getKeyText();
         }
 
         public String getLocationString() {
@@ -48,7 +51,9 @@ public class YAMLStructureViewElement implements StructureViewTreeElement {
         }
 
         public Icon getIcon(boolean open) {
-          return Icons.PROPERTY_ICON;
+          final PsiElement value = kv.getValue();
+          return value instanceof YAMLCompoundValue && !((YAMLCompoundValue)value).getYAMLElements().isEmpty()
+                 ? Icons.XML_TAG_ICON : Icons.PROPERTY_ICON;
         }
 
         public TextAttributesKey getTextAttributesKey() {
