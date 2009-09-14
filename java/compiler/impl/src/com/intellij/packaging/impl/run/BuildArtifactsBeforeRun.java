@@ -60,7 +60,6 @@ public class BuildArtifactsBeforeRun implements BeforeRunTaskProvider<BuildArtif
   }
 
   public BuildArtifactsBeforeRunTask createTask(RunConfiguration runConfiguration) {
-    if (!ArtifactManager.useArtifacts()) return null;
     return new BuildArtifactsBeforeRunTask(myProject);
   }
 
