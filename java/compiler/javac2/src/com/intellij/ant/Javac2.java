@@ -283,7 +283,7 @@ public class Javac2 extends Javac {
      * @return the flags for class writer
      */
     private static int getAsmClassWriterFlags(int version) {
-        return version >= Opcodes.V1_6 ? ClassWriter.COMPUTE_FRAMES : ClassWriter.COMPUTE_MAXS;
+        return version >= Opcodes.V1_6 && version != Opcodes.V1_1 ? ClassWriter.COMPUTE_FRAMES : ClassWriter.COMPUTE_MAXS;
     }
 
     /**
