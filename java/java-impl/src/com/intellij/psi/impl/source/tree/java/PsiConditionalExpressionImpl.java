@@ -3,18 +3,19 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.ChildRoleBase;
-import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiConditionalExpressionImpl extends ExpressionPsiElement implements PsiConditionalExpression, Constants {
+public class PsiConditionalExpressionImpl extends ExpressionPsiElement implements PsiConditionalExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiConditionalExpressionImpl");
 
   public PsiConditionalExpressionImpl() {
-    super(CONDITIONAL_EXPRESSION);
+    super(JavaElementType.CONDITIONAL_EXPRESSION);
   }
 
   @NotNull
@@ -36,8 +37,8 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
   public PsiType getType() {
     PsiExpression expr1 = getThenExpression();
     PsiExpression expr2 = getElseExpression();
-    PsiType type1 = expr1 != null ? expr1.getType() : null;
-    PsiType type2 = expr2 != null ? expr2.getType() : null;
+    PsiType type1 = expr1 == null ? null : expr1.getType();
+    PsiType type2 = expr2 == null ? null : expr2.getType();
     if (type1 == null) return type2;
     if (type2 == null) return type1;
 
@@ -47,10 +48,10 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
     if (TypeConversionUtil.isNumericType(typeRank1) && TypeConversionUtil.isNumericType(typeRank2)){
       if (typeRank1 == TypeConversionUtil.BYTE_RANK && typeRank2 == TypeConversionUtil.SHORT_RANK) return type2;
       if (typeRank1 == TypeConversionUtil.SHORT_RANK && typeRank2 == TypeConversionUtil.BYTE_RANK) return type1;
-      if (typeRank1 == TypeConversionUtil.BYTE_RANK || typeRank1 == TypeConversionUtil.SHORT_RANK || typeRank1 == TypeConversionUtil.CHAR_RANK){
+      if (typeRank2 == TypeConversionUtil.INT_RANK && (typeRank1 == TypeConversionUtil.BYTE_RANK || typeRank1 == TypeConversionUtil.SHORT_RANK || typeRank1 == TypeConversionUtil.CHAR_RANK)){
         if (TypeConversionUtil.areTypesAssignmentCompatible(type1, expr2)) return type1;
       }
-      if (typeRank2 == TypeConversionUtil.BYTE_RANK || typeRank2 == TypeConversionUtil.SHORT_RANK || typeRank2 == TypeConversionUtil.CHAR_RANK){
+      if (typeRank1 == TypeConversionUtil.INT_RANK && (typeRank2 == TypeConversionUtil.BYTE_RANK || typeRank2 == TypeConversionUtil.SHORT_RANK || typeRank2 == TypeConversionUtil.CHAR_RANK)){
         if (TypeConversionUtil.areTypesAssignmentCompatible(type2, expr1)) return type2;
       }
       return TypeConversionUtil.binaryNumericPromotion(type1, type2);
@@ -81,35 +82,31 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
         return getFirstChildNode();
 
       case ChildRole.QUEST:
-        return findChildByType(QUEST);
+        return findChildByType(JavaTokenType.QUEST);
 
       case ChildRole.THEN_EXPRESSION:
-        {
-          ASTNode quest = findChildByRole(ChildRole.QUEST);
-          ASTNode child = quest.getTreeNext();
-          while(true){
-            if (child == null) return null;
-            if (EXPRESSION_BIT_SET.contains(child.getElementType())) break;
-            child = child.getTreeNext();
-          }
-          return child;
+        ASTNode quest = findChildByRole(ChildRole.QUEST);
+        ASTNode child = quest.getTreeNext();
+        while(true){
+          if (child == null) return null;
+          if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) break;
+          child = child.getTreeNext();
         }
+        return child;
 
       case ChildRole.COLON:
-        return findChildByType(COLON);
+        return findChildByType(JavaTokenType.COLON);
 
       case ChildRole.ELSE_EXPRESSION:
-        {
-          ASTNode colon = findChildByRole(ChildRole.COLON);
-          if (colon == null) return null;
-          return EXPRESSION_BIT_SET.contains(getLastChildNode().getElementType()) ? getLastChildNode() : null;
-        }
+        ASTNode colon = findChildByRole(ChildRole.COLON);
+        if (colon == null) return null;
+        return ElementType.EXPRESSION_BIT_SET.contains(getLastChildNode().getElementType()) ? getLastChildNode() : null;
     }
   }
 
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
-    if (EXPRESSION_BIT_SET.contains(child.getElementType())){
+    if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())){
       int role = getChildRole(child, ChildRole.CONDITION);
       if (role != ChildRoleBase.NONE) return role;
       role = getChildRole(child, ChildRole.THEN_EXPRESSION);
@@ -117,15 +114,13 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
       role = getChildRole(child, ChildRole.ELSE_EXPRESSION);
       return role;
     }
-    else if (child.getElementType() == QUEST){
+    if (child.getElementType() == JavaTokenType.QUEST){
       return ChildRole.QUEST;
     }
-    else if (child.getElementType() == COLON){
+    if (child.getElementType() == JavaTokenType.COLON){
       return ChildRole.COLON;
     }
-    else{
-      return ChildRoleBase.NONE;
-    }
+    return ChildRoleBase.NONE;
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
