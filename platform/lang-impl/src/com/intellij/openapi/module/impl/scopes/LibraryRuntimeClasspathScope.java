@@ -6,9 +6,11 @@ package com.intellij.openapi.module.impl.scopes;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +23,6 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
   private final ProjectFileIndex myIndex;
   private final LinkedHashSet<VirtualFile> myEntries = new LinkedHashSet<VirtualFile>();
   private final List<Module> myModules;
-  private boolean myJDKProcessed = false;
 
   public LibraryRuntimeClasspathScope(final Project project, final List<Module> modules) {
     super(project);
@@ -46,9 +47,9 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
   }
 
   private void buildEntries(@NotNull final Module module, final Set<Module> processedModules) {
-    if (processedModules.contains(module)) return;
+    if (!processedModules.add(module)) return;
 
-    processedModules.add(module);
+    final Set<Sdk> myJDKProcessed = new THashSet<Sdk>();
 
     ModuleRootManager.getInstance(module).processOrder(new RootPolicy<LinkedHashSet<VirtualFile>>() {
       public LinkedHashSet<VirtualFile> visitLibraryOrderEntry(final LibraryOrderEntry libraryOrderEntry,
@@ -74,8 +75,7 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
       }
 
       public LinkedHashSet<VirtualFile> visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final LinkedHashSet<VirtualFile> value) {
-        if (myJDKProcessed) return value;
-        myJDKProcessed = true;
+        if (!myJDKProcessed.add(jdkOrderEntry.getJdk())) return value;
         value.addAll(Arrays.asList(jdkOrderEntry.getFiles(OrderRootType.CLASSES)));
         return value;
       }
