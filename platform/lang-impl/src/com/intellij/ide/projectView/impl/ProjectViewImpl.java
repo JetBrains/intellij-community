@@ -1021,6 +1021,9 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
         if (selected instanceof Module) {
           return !((Module)selected).isDisposed() ? selected : null;
         }
+        else if (selected instanceof PsiDirectory) {
+          return moduleByContentRoot(((PsiDirectory)selected).getVirtualFile());
+        }
         else if (selected instanceof VirtualFile) {
           return moduleByContentRoot((VirtualFile)selected);
         }
@@ -1119,6 +1122,10 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
         else if (element instanceof ModuleGroup) {
           Collection<Module> modules = ((ModuleGroup)element).modulesInGroup(myProject, true);
           result.addAll(modules);
+        }
+        else if (element instanceof PsiDirectory) {
+          Module module = moduleByContentRoot(((PsiDirectory)element).getVirtualFile());
+          if (module != null) result.add(module);
         }
         else if (element instanceof VirtualFile) {
           Module module = moduleByContentRoot((VirtualFile)element);
