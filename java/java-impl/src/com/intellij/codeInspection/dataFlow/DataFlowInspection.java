@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +33,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 public class DataFlowInspection extends BaseLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowInspection");
@@ -96,14 +98,16 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
           .createExpressionFromText("a != null",
                                                                                                                               null);
         binary.getLOperand().replace(qualifier);
+        List<LocalQuickFix> fixes = new SmartList<LocalQuickFix>();
+
         if (PsiUtil.getLanguageLevel(qualifier).hasAssertKeyword()) {
-          return new LocalQuickFix[]{
-            new AddAssertStatementFix(binary),
-            new SurroundWithIfFix(qualifier)
-          };
-        } else {
-          return new LocalQuickFix[]{new SurroundWithIfFix(qualifier)};
+          fixes.add(new AddAssertStatementFix(binary));
         }
+        SurroundWithIfFix ifFix = new SurroundWithIfFix(qualifier);
+        if (ifFix.isAvailable()) {
+          fixes.add(ifFix);
+        }
+        return fixes.toArray(new LocalQuickFix[fixes.size()]);
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);

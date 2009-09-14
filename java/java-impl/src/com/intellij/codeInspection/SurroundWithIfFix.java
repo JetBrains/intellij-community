@@ -27,10 +27,10 @@ public class SurroundWithIfFix implements LocalQuickFix {
 
   @NotNull
   public String getName() {
-    return InspectionsBundle.message("inspection.surround.if.quickfix", myExpression.getText());
+    return InspectionsBundle.message("inspection.surround.if.quickfix", myText);
   }
 
-  public SurroundWithIfFix(PsiExpression expressionToAssert) {
+  public SurroundWithIfFix(@NotNull PsiExpression expressionToAssert) {
     myExpression = expressionToAssert;
     myText = myExpression.getText();
   }
@@ -53,7 +53,7 @@ public class SurroundWithIfFix implements LocalQuickFix {
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     Document document = documentManager.getDocument(file);
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
-    PsiElement[] elements = new PsiElement[]{anchorStatement};
+    PsiElement[] elements = {anchorStatement};
     PsiElement prev = PsiTreeUtil.skipSiblingsBackward(anchorStatement, PsiWhiteSpace.class);
     if (prev instanceof PsiComment && SuppressManager.getInstance().getSuppressedInspectionIdsIn(prev) != null) {
       elements = new PsiElement[]{prev, anchorStatement};
@@ -76,5 +76,15 @@ public class SurroundWithIfFix implements LocalQuickFix {
   @NotNull
   public String getFamilyName() {
     return InspectionsBundle.message("inspection.surround.if.family");
+  }
+
+  public boolean isAvailable() {
+    if (!myExpression.isValid() || myText == null) {
+      return false;
+    }
+    PsiStatement statement = PsiTreeUtil.getParentOfType(myExpression, PsiStatement.class);
+    if (statement == null) return false;
+    PsiElement parent = statement.getParent();
+    return !(parent instanceof PsiForStatement);
   }
 }
