@@ -405,10 +405,14 @@ public final class TreeUtil {
   }
 
   public static ActionCallback showRowCentered(final JTree tree, final int row, final boolean centerHorizontally) {
+    return showRowCentered(tree, row, centerHorizontally, true);
+  }
+
+  public static ActionCallback showRowCentered(final JTree tree, final int row, final boolean centerHorizontally, boolean scroll) {
     final int visible = getVisibleRowCount(tree);
     final int top = visible > 0 ? row - (visible - 1)/ 2 : row;
     final int bottom = visible > 0 ? top + visible - 1 : row;
-    return showAndSelect(tree, top, bottom, row, -1);
+    return showAndSelect(tree, top, bottom, row, -1, false, scroll);
   }
 
   public static ActionCallback showAndSelect(final JTree tree, int top, int bottom, final int row, final int previous) {
@@ -416,6 +420,10 @@ public final class TreeUtil {
   }
 
   public static ActionCallback showAndSelect(final JTree tree, int top, int bottom, final int row, final int previous, boolean addToSelection) {
+    return showAndSelect(tree, top, bottom, row, previous, addToSelection, true);
+  }
+
+  public static ActionCallback showAndSelect(final JTree tree, int top, int bottom, final int row, final int previous, boolean addToSelection, final boolean scroll) {
     final TreePath path = tree.getPathForRow(row);
 
     if (path == null) return new ActionCallback.Done();
@@ -495,7 +503,9 @@ public final class TreeUtil {
       final Rectangle b1 = bounds;
       final Runnable runnable = new Runnable() {
         public void run() {
-          tree.scrollRectToVisible(b1);
+          if (scroll) {
+            tree.scrollRectToVisible(b1);
+          }
           callback.setDone();
         }
       };

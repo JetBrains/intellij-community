@@ -34,8 +34,10 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.ComponentEvent;
 import java.security.AccessControlException;
 import java.util.*;
 import java.util.List;
@@ -153,6 +155,28 @@ class AbstractTreeUi {
 
     mySelectionListener = new MySelectionListener();
     myTree.addTreeSelectionListener(mySelectionListener);
+
+    myTree.addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent e) {
+        super.componentResized(e);
+      }
+
+      @Override
+      public void componentMoved(ComponentEvent e) {
+        super.componentMoved(e);
+      }
+
+      @Override
+      public void componentShown(ComponentEvent e) {
+        super.componentShown(e);
+      }
+
+      @Override
+      public void componentHidden(ComponentEvent e) {
+        super.componentHidden(e);
+      }
+    });
 
     setUpdater(getBuilder().createUpdater());
     myProgress = getBuilder().createProgressIndicator();
@@ -1924,7 +1948,7 @@ class AbstractTreeUi {
   }
 
   public void select(final Object[] elements, @Nullable final Runnable onDone, boolean addToSelection, boolean deferred) {
-    _select(elements, onDone, addToSelection, true, false, deferred);
+    _select(elements, onDone, addToSelection, true, false, true, deferred);
   }
 
   void _select(final Object[] elements,
@@ -1933,7 +1957,7 @@ class AbstractTreeUi {
                final boolean checkCurrentSelection,
                final boolean checkIfInStructure) {
 
-    _select(elements, onDone, addToSelection, checkCurrentSelection, checkIfInStructure, false);
+    _select(elements, onDone, addToSelection, checkCurrentSelection, checkIfInStructure, true, false);
   }
 
   void _select(final Object[] elements,
@@ -1941,7 +1965,16 @@ class AbstractTreeUi {
                final boolean addToSelection,
                final boolean checkCurrentSelection,
                final boolean checkIfInStructure,
-               final boolean deferred) {
+               final boolean scrollToVisible) {
+
+    _select(elements, onDone, addToSelection, checkCurrentSelection, checkIfInStructure, scrollToVisible, false);
+  }
+
+  void _select(final Object[] elements,
+               final Runnable onDone,
+               final boolean addToSelection,
+               final boolean checkCurrentSelection,
+               final boolean checkIfInStructure, final boolean scrollToVisible, final boolean deferred) {
 
     boolean willAffectSelection = elements.length > 0 || (elements.length == 0 && addToSelection);
     if (!willAffectSelection) {
@@ -1979,7 +2012,7 @@ class AbstractTreeUi {
 
           if (!runSelection) {
             if (elements.length > 0) {
-              selectVisible(elements[0], onDone, true, true);
+              selectVisible(elements[0], onDone, true, true, scrollToVisible);
             }
             return;
           }
@@ -2009,7 +2042,7 @@ class AbstractTreeUi {
           if (!addToSelection) {
             myTree.clearSelection();
           }
-          addNext(elementsToSelect, 0, onDone, originalRows, deferred);
+          addNext(elementsToSelect, 0, onDone, originalRows, deferred, scrollToVisible);
         }
         else {
           addToDeferred(elementsToSelect, onDone);
@@ -2056,7 +2089,7 @@ class AbstractTreeUi {
   }
 
 
-  private void addNext(final Object[] elements, final int i, @Nullable final Runnable onDone, final int[] originalRows, final boolean deferred) {
+  private void addNext(final Object[] elements, final int i, @Nullable final Runnable onDone, final int[] originalRows, final boolean deferred, final boolean scrollToVisible) {
     if (i >= elements.length) {
       if (myTree.isSelectionEmpty()) {
         myTree.setSelectionRows(originalRows);
@@ -2072,9 +2105,9 @@ class AbstractTreeUi {
         public void run() {
           if (!checkDeferred(deferred, onDone)) return;
 
-          addNext(elements, i + 1, onDone, originalRows, deferred);
+          addNext(elements, i + 1, onDone, originalRows, deferred, scrollToVisible);
         }
-      }, true, deferred, i == 0);
+      }, true, deferred, i == 0, scrollToVisible);
     }
   }
 
@@ -2086,17 +2119,17 @@ class AbstractTreeUi {
     _select(new Object[] {element}, onDone, addToSelection, true, false);
   }
 
-  private void doSelect(final Object element, final Runnable onDone, final boolean addToSelection, final boolean deferred, final boolean canBeCentered) {
+  private void doSelect(final Object element, final Runnable onDone, final boolean addToSelection, final boolean deferred, final boolean canBeCentered, final boolean scrollToVisible) {
     final Runnable _onDone = new Runnable() {
       public void run() {
         if (!checkDeferred(deferred, onDone)) return;
-        selectVisible(element, onDone, addToSelection, canBeCentered);
+        selectVisible(element, onDone, addToSelection, canBeCentered, scrollToVisible);
       }
     };
     _expand(element, _onDone, true, false);
   }
 
-  private void selectVisible(Object element, final Runnable onDone, boolean addToSelection, boolean canBeCentered) {
+  private void selectVisible(Object element, final Runnable onDone, boolean addToSelection, boolean canBeCentered, final boolean scroll) {
     final DefaultMutableTreeNode toSelect = getNodeForElement(element, false);
     if (toSelect == null) {
       runDone(onDone);
@@ -2111,7 +2144,7 @@ class AbstractTreeUi {
     if (Registry.is("ide.tree.autoscrollToVCenter") && canBeCentered) {
       runDone(new Runnable() {
         public void run() {
-          TreeUtil.showRowCentered(myTree, row, false).doWhenDone(new Runnable() {
+          TreeUtil.showRowCentered(myTree, row, false, scroll).doWhenDone(new Runnable() {
             public void run() {
               runDone(onDone);
             }
@@ -2119,7 +2152,7 @@ class AbstractTreeUi {
         }
       });
     } else {
-      TreeUtil.showAndSelect(myTree, row - 2, row + 2, row, -1, addToSelection).doWhenDone(new Runnable() {
+      TreeUtil.showAndSelect(myTree, row - 2, row + 2, row, -1, addToSelection, scroll).doWhenDone(new Runnable() {
         public void run() {
           runDone(onDone);
         }
