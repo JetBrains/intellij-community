@@ -44,12 +44,12 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   public void registerStartupActivity(Runnable runnable) {
-    //assert !myStartupActivityPassed : "Registering startup activity that will never be run" ;
+    assert !myStartupActivityPassed : "Registering startup activity that will never be run" ;
     myActivities.add(runnable);
   }
 
   public synchronized void registerPostStartupActivity(Runnable runnable) {
-    //assert !myPostStartupActivityPassed : "Registering post-startup activity that will never be run" ;
+    assert !myPostStartupActivityPassed : "Registering post-startup activity that will never be run" ;
     myPostStartupActivities.add(runnable);
   }
 
@@ -167,26 +167,29 @@ public class StartupManagerImpl extends StartupManagerEx {
   public void runWhenProjectIsInitialized(final Runnable action) {
     final Runnable runnable;
 
+    final Application application = ApplicationManager.getApplication();
     if (action instanceof DumbAware) {
       runnable = new DumbAwareRunnable() {
         public void run() {
-          ApplicationManager.getApplication().runWriteAction(action);
+          application.runWriteAction(action);
         }
       };
     }
     else {
       runnable = new Runnable() {
         public void run() {
-          ApplicationManager.getApplication().runWriteAction(action);
+          application.runWriteAction(action);
         }
       };
     }
 
-    if (myProject.isInitialized()) {
-      if (ApplicationManager.getApplication().isDispatchThread()) {
+    if (myProject.isInitialized() || (application.isUnitTestMode() && myPostStartupActivityPassed)) {
+      // in tests which simulate project opening, post-startup activities could have been run already. Then we should act as if the project was initialized
+      if (application.isDispatchThread()) {
         runnable.run();
-      } else {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
+      }
+      else {
+        application.invokeLater(new Runnable() {
           public void run() {
             if (!myProject.isDisposed()) {
               runnable.run();
