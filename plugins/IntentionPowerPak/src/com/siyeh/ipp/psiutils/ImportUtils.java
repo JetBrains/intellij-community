@@ -16,6 +16,7 @@
 package com.siyeh.ipp.psiutils;
 
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.ClassUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,6 +28,7 @@ public class ImportUtils{
 
     public static boolean nameCanBeImported(@NotNull String fqName,
                                             @NotNull PsiJavaFile file){
+      if (file instanceof JspFile) return false;
         if(hasExactImportConflict(fqName, file)){
             return false;
         }
