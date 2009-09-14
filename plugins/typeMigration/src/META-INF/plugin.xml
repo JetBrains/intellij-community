@@ -5,9 +5,11 @@
         implementation="com.intellij.refactoring.typeMigration.TypeMigrationVariableTypeFixProvider"/>
     <intentionAction>
       <className>com.intellij.refactoring.typeMigration.intentions.ConvertFieldToAtomicIntention</className>
+       <category>Concurrency</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.refactoring.typeMigration.intentions.ConvertFieldToThreadLocalIntention</className>
+      <category>Concurrency</category>
     </intentionAction>
   </extensions>
   <actions>

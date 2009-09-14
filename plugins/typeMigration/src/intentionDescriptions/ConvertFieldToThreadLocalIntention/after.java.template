@@ -1,0 +1,6 @@
+public class X {
+  ThreadLocal<Integer> count = new ThreadLocal<Integer>();
+  {
+    count.set(0);
+  }
+}
