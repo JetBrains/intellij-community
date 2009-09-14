@@ -114,6 +114,11 @@ public class ArtifactModelImpl extends ArtifactModelBase implements ModifiableAr
     return modifiableCopy;
   }
 
+  public Artifact getOriginalArtifact(Artifact artifact) {
+    final ArtifactImpl original = myModifiable2Original.get(artifact);
+    return original != null ? original : artifact;
+  }
+
   @NotNull
   public ArtifactImpl getArtifactByOriginal(@NotNull Artifact artifact) {
     final ArtifactImpl artifactImpl = (ArtifactImpl)artifact;

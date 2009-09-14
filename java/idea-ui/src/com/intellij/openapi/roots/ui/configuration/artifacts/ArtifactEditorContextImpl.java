@@ -50,12 +50,12 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
     return myParent.getProject();
   }
 
-  public CompositePackagingElement<?> getRootElement(@NotNull Artifact originalArtifact) {
-    return myParent.getRootElement(originalArtifact);
+  public CompositePackagingElement<?> getRootElement(@NotNull Artifact artifact) {
+    return myParent.getRootElement(artifact);
   }
 
-  public void ensureRootIsWritable(@NotNull Artifact originalArtifact) {
-    myParent.ensureRootIsWritable(originalArtifact);
+  public void ensureRootIsWritable(@NotNull Artifact artifact) {
+    myParent.ensureRootIsWritable(artifact);
   }
 
   public ArtifactEditor getOrCreateEditor(Artifact artifact) {

@@ -47,30 +47,41 @@ class ArtifactsStructureConfigurableContextImpl implements ArtifactsStructureCon
     return ArtifactManager.getInstance(myProject);
   }
 
-  public CompositePackagingElement<?> getRootElement(@NotNull Artifact originalArtifact) {
+  @NotNull
+  private Artifact getOriginalArtifact(@NotNull Artifact artifact) {
     if (myModifiableModel != null) {
-      final CompositePackagingElement<?> rootElement = myModifiableModel.getArtifactByOriginal(originalArtifact).getRootElement();
-      if (rootElement != originalArtifact.getRootElement()) {
-        myModifiableRoots.put(originalArtifact, rootElement);
+      return ((ArtifactModelImpl)myModifiableModel).getOriginalArtifact(artifact);
+    }
+    return artifact;
+  }
+
+  public CompositePackagingElement<?> getRootElement(@NotNull Artifact artifact) {
+    artifact = getOriginalArtifact(artifact);
+    if (myModifiableModel != null) {
+      final CompositePackagingElement<?> rootElement = myModifiableModel.getArtifactByOriginal(artifact).getRootElement();
+      if (rootElement != artifact.getRootElement()) {
+        myModifiableRoots.put(artifact, rootElement);
       }
     }
-    CompositePackagingElement<?> root = myModifiableRoots.get(originalArtifact);
+    CompositePackagingElement<?> root = myModifiableRoots.get(artifact);
     if (root == null) {
-      root = ArtifactUtil.copyFromRoot(originalArtifact.getRootElement(), myProject);
-      myModifiableRoots.put(originalArtifact, root);
+      root = ArtifactUtil.copyFromRoot(artifact.getRootElement(), myProject);
+      myModifiableRoots.put(artifact, root);
     }
     return root;
   }
 
-  public void ensureRootIsWritable(@NotNull Artifact originalArtifact) {
-    final ModifiableArtifact artifact = getModifiableArtifactModel().getOrCreateModifiableArtifact(originalArtifact);
-    if (artifact.getRootElement() == originalArtifact.getRootElement()) {
-      artifact.setRootElement(getRootElement(originalArtifact));
+  public void ensureRootIsWritable(@NotNull Artifact artifact) {
+    artifact = getOriginalArtifact(artifact);
+    final ModifiableArtifact modifiableArtifact = getModifiableArtifactModel().getOrCreateModifiableArtifact(artifact);
+    if (modifiableArtifact.getRootElement() == artifact.getRootElement()) {
+      modifiableArtifact.setRootElement(getRootElement(artifact));
     }
 
   }
 
   public ArtifactEditorImpl getOrCreateEditor(Artifact artifact) {
+    artifact = getOriginalArtifact(artifact);
     ArtifactEditorImpl artifactEditor = myArtifactEditors.get(artifact);
     if (artifactEditor == null) {
       artifactEditor = new ArtifactEditorImpl(this, artifact);

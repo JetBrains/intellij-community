@@ -35,4 +35,6 @@ public interface ArtifactEditorEx extends ArtifactEditor, Disposable {
   ComplexElementSubstitutionParameters getSubstitutionParameters();
 
   void queueValidation();
+
+  void rebuildTries();
 }

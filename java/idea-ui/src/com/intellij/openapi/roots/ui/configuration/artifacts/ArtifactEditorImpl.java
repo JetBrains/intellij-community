@@ -48,7 +48,7 @@ import java.util.List;
 public class ArtifactEditorImpl implements ArtifactEditorEx {
   private JPanel myMainPanel;
   private JCheckBox myBuildOnMakeCheckBox;
-  private TextFieldWithBrowseButton myOutputDirectoryField;
+  private TextFieldWithBrowseButton myOutputDirectoryField;    
   private JCheckBox myShowIncludedCheckBox;
   private JPanel myEditorPanel;
   private JCheckBox myClearOnRebuildCheckBox;

@@ -28,9 +28,9 @@ public interface ArtifactEditorContext extends PackagingElementResolvingContext 
   @NotNull
   ManifestFileConfiguration getManifestFile(CompositePackagingElement<?> element, ArtifactType artifactType);
 
-  CompositePackagingElement<?> getRootElement(@NotNull Artifact originalArtifact);
+  CompositePackagingElement<?> getRootElement(@NotNull Artifact artifact);
 
-  void ensureRootIsWritable(@NotNull Artifact originalArtifact);
+  void ensureRootIsWritable(@NotNull Artifact artifact);
 
   ArtifactEditor getOrCreateEditor(Artifact originalArtifact);
 
