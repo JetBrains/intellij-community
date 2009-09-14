@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.ui.FilterComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,7 @@ import javax.swing.event.ChangeEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -58,11 +60,14 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   private final boolean myBuildInActions;
   private final List<LogFilter> myLogFilters = new ArrayList<LogFilter>();
 
-  /*private final FilterComponent myFilter = new FilterComponent("LOG_FILTER_HISTORY", 5) {
+  private FilterComponent myFilter = new FilterComponent("LOG_FILTER_HISTORY", 5) {
     public void filter() {
       getPreferences().updateCustomFilter(getFilter());
     }
-  };*/
+  };
+  private JPanel mySearchComponent;
+  private JComboBox myLogFilterCombo;
+  private JPanel myTextFilterWrapper;
 
   public LogConsoleBase(Project project, @Nullable Reader reader, String title, final boolean buildInActions) {
     super(new BorderLayout());
@@ -146,25 +151,26 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
 
   @SuppressWarnings({"NonStaticInitializer"})
   private JComponent createToolbar() {
+    final LogConsolePreferences registrar = getPreferences();
 
-    /*myFilter.reset();
+    myFilter.reset();
     myFilter.setSelectedItem(registrar.CUSTOM_FILTER != null ? registrar.CUSTOM_FILTER : "");
     new AnAction() {
       {
         registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, KeyEvent.SHIFT_DOWN_MASK)),
-                                  LogConsoleImpl.this);
+                                  LogConsoleBase.this);
       }
 
       public void actionPerformed(final AnActionEvent e) {
         myFilter.requestFocusInWindow();
       }
-    };*/
+    };
 
     if (myBuildInActions) {
       final JComponent tbComp =
         ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, getOrCreateActions(), true).getComponent();
       myTopComponent.add(tbComp, BorderLayout.CENTER);
-      //myTopComponent.add(myFilter, BorderLayout.EAST);
+      myTopComponent.add(myFilter, BorderLayout.EAST);
     }
 
 
@@ -210,7 +216,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   public void onTextFilterChange() {
     filterConsoleOutput(new Condition<String>() {
       public boolean value(final String line) {
-        return getPreferences().isApplicable(line, myPrevType);
+        return getPreferences().isApplicable(line, myPrevType, myShowStandardFilters);
       }
     });
   }
@@ -230,7 +236,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   public void activate() {
     if (myReaderThread == null) return;
     if (isActive() && !myReaderThread.myRunning) {
-      //myFilter.setSelectedItem(getPreferences().CUSTOM_FILTER);
+      myFilter.setSelectedItem(getPreferences().CUSTOM_FILTER);
       myReaderThread.startRunning();
       ApplicationManager.getApplication().executeOnPooledThread(myReaderThread);
     }
@@ -264,10 +270,10 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
       Disposer.dispose(myConsole);
       myConsole = null;
     }
-    /*if (myFilter != null) {
+    if (myFilter != null) {
       myFilter.dispose();
       myFilter = null;
-    }*/
+    }
     myOriginalDocument = null;
   }
 
@@ -279,6 +285,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
 
   protected void addMessage(final String text) {
     if (text == null) return;
+    if (!getPreferences().isApplicable(text, myPrevType, myShowStandardFilters)) return;
     if (myContentPreprocessor != null) {
       final java.util.List<LogFragment> fragments = myContentPreprocessor.parseLogLine(text + "\n");
       myOriginalDocument = getOriginalDocument();
@@ -291,13 +298,11 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     }
     else {
       final String key = LogConsolePreferences.getType(text);
-      if (getPreferences().isApplicable(text, myPrevType)) {
-        myProcessHandler.notifyTextAvailable(text + "\n", key != null
-                                                          ? LogConsolePreferences.getProcessOutputTypes(key)
-                                                          : (myPrevType == LogConsolePreferences.ERROR
-                                                             ? ProcessOutputTypes.STDERR
-                                                             : ProcessOutputTypes.STDOUT));
-      }
+      myProcessHandler.notifyTextAvailable(text + "\n", key != null
+                                                        ? LogConsolePreferences.getProcessOutputTypes(key)
+                                                        : (myPrevType == LogConsolePreferences.ERROR
+                                                           ? ProcessOutputTypes.STDERR
+                                                           : ProcessOutputTypes.STDOUT));
       if (key != null) {
         myPrevType = key;
       }
@@ -376,6 +381,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   }
 
   private boolean printMessageToConsole(String line, Condition<String> isApplicable) {
+    if (!isApplicable.value(line)) return false;
     if (myContentPreprocessor != null) {
       List<LogFragment> fragments = myContentPreprocessor.parseLogLine(line + '\n');
       for (LogFragment fragment : fragments) {
@@ -384,23 +390,19 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
           myConsole.print(fragment.getText(), consoleViewType);
         }
       }
-      return true;
     }
     else {
       final String contentType = LogConsolePreferences.getType(line);
-      boolean applicable = isApplicable.value(line);
-      if (applicable) {
-        myConsole.print(line + "\n", contentType != null
-                                     ? LogConsolePreferences.getContentType(contentType)
-                                     : (myPrevType == LogConsolePreferences.ERROR
-                                        ? ConsoleViewContentType.ERROR_OUTPUT
-                                        : ConsoleViewContentType.NORMAL_OUTPUT));
-      }
+      myConsole.print(line + "\n", contentType != null
+                                   ? LogConsolePreferences.getContentType(contentType)
+                                   : (myPrevType == LogConsolePreferences.ERROR
+                                      ? ConsoleViewContentType.ERROR_OUTPUT
+                                      : ConsoleViewContentType.NORMAL_OUTPUT));
       if (contentType != null) {
         myPrevType = contentType;
       }
-      return applicable;
     }
+    return true;
   }
 
   public ActionGroup getToolbarActions() {
@@ -432,7 +434,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     }
 
     public boolean isAcceptable(String line) {
-      return myPrefs.isApplicable(line, myPrevType);
+      return myPrefs.isApplicable(line, myPrevType, myShowStandardFilters);
     }
   }
 
@@ -491,20 +493,22 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   public JComponent getSearchComponent() {
     final LogConsolePreferences prefs = getPreferences();
     List<LogFilter> filters = getLogFilters(prefs);
-    final JComboBox combo = new JComboBox(filters.toArray(new LogFilter[filters.size()]));
+    myLogFilterCombo.setModel(new DefaultComboBoxModel(filters.toArray(new LogFilter[filters.size()])));
     for (LogFilter filter : filters) {
       if (prefs.isFilterSelected(filter)) {
-        combo.setSelectedItem(filter);
+        myLogFilterCombo.setSelectedItem(filter);
         break;
       }
     }
-    combo.addActionListener(new ActionListener() {
+    myLogFilterCombo.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final LogFilter filter = (LogFilter)combo.getSelectedItem();
+        final LogFilter filter = (LogFilter)myLogFilterCombo.getSelectedItem();
         prefs.selectOnlyFilter(filter);
       }
     });
-    return combo;
+    myTextFilterWrapper.removeAll();
+    myTextFilterWrapper.add(myFilter);
+    return mySearchComponent;
   }
 
   public boolean isContentBuiltIn() {

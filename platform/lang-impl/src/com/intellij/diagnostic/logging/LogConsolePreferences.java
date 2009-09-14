@@ -98,21 +98,24 @@ public class LogConsolePreferences extends LogFilterRegistrar {
     return ourCustomPattern;
   }
 
-  public boolean isApplicable(@NotNull String text, String prevType) {
+  public boolean isApplicable(@NotNull String text, String prevType, boolean checkStandartFilters) {
     if (CUSTOM_FILTER != null) {
       final Pattern pattern = getCustomPattern();
       if (pattern != null && !pattern.matcher(text.toUpperCase()).matches()) return false;
     }
-    final String type = getType(text);
-    boolean selfTyped = false;
-    if (type != null) {
-      if (!isApplicable(type)) return false;
-      selfTyped = true;
-    }
     for (LogFilter filter : myRegisteredLogFilters.keySet()) {
       if (myRegisteredLogFilters.get(filter).booleanValue() && !filter.isAcceptable(text)) return false;
     }
-    return selfTyped || prevType == null || isApplicable(prevType);
+    if (checkStandartFilters) {
+      final String type = getType(text);
+      boolean selfTyped = false;
+      if (type != null) {
+        if (!isApplicable(type)) return false;
+        selfTyped = true;
+      }
+      return selfTyped || prevType == null || isApplicable(prevType);
+    }
+    return true;
   }
 
   private boolean isApplicable(final String type) {
