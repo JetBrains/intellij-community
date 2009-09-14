@@ -157,7 +157,7 @@ public class SSBasedInspection extends BaseJavaLocalInspectionTool {
   }
 
   public void projectOpened(final Project project) {
-    StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
+    StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
       public void run() {
         precompileConfigurations(project);
       }
