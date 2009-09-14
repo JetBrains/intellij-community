@@ -26,17 +26,13 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 public final class ObjectTree<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectTree");
 
-  final ObjectNode[] EMPTY_ARRAY = new ObjectNode[0];
-  final Collection<ObjectNode<T>> EMPTY_COLLECTION = Collections.unmodifiableCollection(new ArrayList<ObjectNode<T>>());
-
-  private CopyOnWriteArraySet<ObjectTreeListener> myListeners = new CopyOnWriteArraySet<ObjectTreeListener>();
+  private final CopyOnWriteArraySet<ObjectTreeListener> myListeners = new CopyOnWriteArraySet<ObjectTreeListener>();
 
   // identity used here to prevent problems with hashCode/equals overridden by not very bright minds
   private final THashSet<T> myRootObjects = new MyTHashSet<T>();
@@ -276,8 +272,8 @@ public final class ObjectTree<T> {
   }
 
   private static class MyTHashSet<T> extends THashSet<T> {
-    public MyTHashSet() {
-      super(TObjectHashingStrategy.IDENTITY);
+    private MyTHashSet() {
+      super(IDENTITY);
     }
 
     public void compact() {

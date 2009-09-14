@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 
 public final class ObjectNode<T> {
+  private static final ObjectNode[] EMPTY_ARRAY = new ObjectNode[0];
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectNode");
 
@@ -36,7 +37,7 @@ public final class ObjectNode<T> {
   private LinkedHashSet<ObjectNode<T>> myChildren;
   private final Throwable myTrace;
 
-  private long myOwnModification;
+  private final long myOwnModification;
   private long myChildModification;
 
   public ObjectNode(ObjectTree<T> tree, ObjectNode<T> parentNode, T object, long modification) {
@@ -50,7 +51,7 @@ public final class ObjectNode<T> {
 
   private ObjectNode<T>[] getChildrenArray() {
     synchronized (myTree.treeLock) {
-      if (myChildren == null) return myTree.EMPTY_ARRAY;
+      if (myChildren == null || myChildren.isEmpty()) return EMPTY_ARRAY;
       return myChildren.toArray(new ObjectNode[myChildren.size()]);
     }
   }
@@ -92,7 +93,7 @@ public final class ObjectNode<T> {
 
   public Collection<ObjectNode<T>> getChildren() {
     synchronized (myTree.treeLock) {
-      if (myChildren == null) return myTree.EMPTY_COLLECTION;
+      if (myChildren == null) return Collections.emptyList();
       return Collections.unmodifiableCollection(myChildren);
     }
   }
