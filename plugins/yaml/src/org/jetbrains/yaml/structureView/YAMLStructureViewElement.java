@@ -13,8 +13,7 @@ import java.util.List;
 /**
  * @author oleg
  */
-public class
-  YAMLStructureViewElement implements StructureViewTreeElement {
+public class YAMLStructureViewElement implements StructureViewTreeElement {
   private final YAMLPsiElement myElement;
 
   public YAMLStructureViewElement(final YAMLPsiElement element) {
