@@ -31,23 +31,21 @@
  */
 package com.intellij.openapi.vcs.readOnlyHandler;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.CommonBundle;
 import gnu.trove.THashSet;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @State(
   name="ReadonlyStatusHandler",
@@ -59,6 +57,7 @@ import java.util.Set;
 )
 public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements PersistentStateComponent<ReadonlyStatusHandlerImpl.State> {
   private final Project myProject;
+  private final WritingAccessProvider[] myAccessProviders;
 
   public static class State {
     public boolean SHOW_DIALOG = true;
@@ -68,6 +67,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
 
   public ReadonlyStatusHandlerImpl(Project project) {
     myProject = project;
+    myAccessProviders = Extensions.getExtensions(WritingAccessProvider.EP_NAME, project);
   }
 
   public State getState() {
@@ -93,6 +93,13 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     }
     files = realFiles.toArray(new VirtualFile[realFiles.size()]);
 
+    for (WritingAccessProvider accessProvider : myAccessProviders) {
+      Collection<VirtualFile> denied = accessProvider.requestWriting(files);
+      if (!denied.isEmpty()) {
+        return new OperationStatusImpl(denied.toArray(new VirtualFile[denied.size()]));
+      }
+    }
+    
     final FileInfo[] fileInfos = createFileInfos(files);
     if (fileInfos.length == 0) { // if all files are already writable
       return createResultStatus(files);

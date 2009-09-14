@@ -19,6 +19,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ui.CommitHelper;
+import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
@@ -85,6 +86,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       scheduleUpdate();
     }
   };
+  private final ChangelistConflictTracker myConflictTracker;
 
   public static ChangeListManagerImpl getInstanceImpl(final Project project) {
     return (ChangeListManagerImpl) project.getComponent(ChangeListManager.class);
@@ -101,6 +103,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myWorker = new ChangeListWorker(myProject, new MyChangesDeltaForwarder(myProject, ourUpdateAlarm));
     myDelayedNotificator = new DelayedNotificator(myListeners, ourUpdateAlarm);
     myModifier = new Modifier(myWorker, myDelayedNotificator);
+
+    myConflictTracker = new ChangelistConflictTracker(project, this, myFileStatusManager);
   }
 
   public void projectOpened() {
@@ -121,6 +125,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         }
       });
     }
+
+    myConflictTracker.startTracking();
   }
 
   private void broadcastStateAfterLoad() {
@@ -158,6 +164,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
 
     myUpdater.stop();
+    myConflictTracker.stopTracking();
   }
 
   @NotNull @NonNls
@@ -535,6 +542,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
+  @Override
+  public boolean isDefaultChangeList(ChangeList list) {
+    return list instanceof LocalChangeList && myWorker.isDefaultList((LocalChangeList)list);
+  }
+
   @NotNull
   public Collection<LocalChangeList> getInvolvedListsFilterChanges(final Collection<Change> changes, final List<Change> validChanges) {
     synchronized (myDataLock) {
@@ -602,6 +614,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       }
 
       return null;
+    }
+  }
+
+  @Override
+  public LocalChangeList getChangeList(@NotNull VirtualFile file) {
+    synchronized (myDataLock) {
+      return myWorker.getListCopy(file);
     }
   }
 
@@ -756,6 +775,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
           setDefaultChangeList(myWorker.getListsCopy().get(0));
         }
       }
+      myConflictTracker.loadState(element);
     }
   }
 
@@ -769,6 +789,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         worker = myWorker.copy();
       }
       new ChangeListManagerSerialization(ignoredFilesComponent, worker).writeExternal(element);
+      myConflictTracker.saveState(element);
     }
   }
 
@@ -900,6 +921,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     synchronized (myDataLock) {
       myShowLocalChangesInvalidated = true;
     }
+  }
+
+  public ChangelistConflictTracker getConflictTracker() {
+    return myConflictTracker;
   }
 
   private static class MyChangesDeltaForwarder implements PlusMinus<Pair<String, AbstractVcs>> {

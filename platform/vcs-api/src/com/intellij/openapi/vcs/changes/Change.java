@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.impl.VcsPathPresenter;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,6 +94,11 @@ public class Change {
 
   public FileStatus getFileStatus() {
     return myFileStatus;
+  }
+
+  @Nullable
+  public VirtualFile getVirtualFile() {
+    return myAfterRevision == null ? null : myAfterRevision.getFile().getVirtualFile();
   }
 
   public boolean equals(final Object o) {

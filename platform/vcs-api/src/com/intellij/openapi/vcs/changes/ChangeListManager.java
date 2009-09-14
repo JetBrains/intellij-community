@@ -78,8 +78,9 @@ public abstract class ChangeListManager implements ChangeListModification {
    * Returns currently active changelist
    * @return active changelist
    */
-  @Nullable
   public abstract LocalChangeList getDefaultChangeList();
+
+  public abstract boolean isDefaultChangeList(ChangeList list);
 
   @Nullable
   public abstract LocalChangeList getChangeList(Change change);
@@ -92,6 +93,9 @@ public abstract class ChangeListManager implements ChangeListModification {
 
   @Nullable
   public abstract Change getChange(@NotNull VirtualFile file);
+
+  @Nullable
+  public abstract LocalChangeList getChangeList(@NotNull VirtualFile file);
 
   @Nullable
   public abstract Change getChange(FilePath file);

@@ -16,6 +16,9 @@
   <changesViewContent tabName="Incoming" className="com.intellij.openapi.vcs.changes.committed.IncomingChangesViewProvider"
                       predicateClassName="com.intellij.openapi.vcs.changes.committed.IncomingChangesVisibilityPredicate"/>
 
+  <vcs.fileStatusProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictFileStatusProvider"/>
+  <writingAccessProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictAccessProvider"/>
+
   <handleTypeFactory implementation="com.intellij.openapi.vcs.readOnlyHandler.VcsHandleTypeFactory"/>
 
   <keymapExtension implementation="com.intellij.openapi.vcs.impl.VcsKeymapExtension"/>

@@ -340,7 +340,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
     }
   }
 
-  protected abstract List<T> getSelectedObjects(final ChangesBrowserNode node);
+  protected abstract List<T> getSelectedObjects(final ChangesBrowserNode<T> node);
 
   @Nullable
   protected abstract T getLeadSelectedObject(final ChangesBrowserNode node);
@@ -357,7 +357,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
     else {
       final TreePath path = myTree.getSelectionPath();
       if (path == null) return null;
-      return getLeadSelectedObject((ChangesBrowserNode)path.getLastPathComponent());
+      return getLeadSelectedObject((ChangesBrowserNode<T>)path.getLastPathComponent());
     }
   }
 
@@ -373,7 +373,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
     else {
       final TreePath path = myTree.getSelectionPath();
       if (path == null) return null;
-      final List<T> changes = getSelectedObjects(((ChangesBrowserNode)path.getLastPathComponent()));
+      final List<T> changes = getSelectedObjects(((ChangesBrowserNode<T>)path.getLastPathComponent()));
       return changes.size() > 0 ? changes.get(0) : null;
     }
   }
@@ -391,8 +391,22 @@ public abstract class ChangesTreeList<T> extends JPanel {
     myList.repaint();
   }
 
+  public void includeChanges(final Collection<T> changes) {
+    myIncludedChanges.addAll(changes);
+    notifyInclusionListener();
+    myTree.repaint();
+    myList.repaint();
+  }
+
   public void excludeChange(final T change) {
     myIncludedChanges.remove(change);
+    notifyInclusionListener();
+    myTree.repaint();
+    myList.repaint();
+  }
+
+  public void excludeChanges(final Collection<T> changes) {
+    myIncludedChanges.removeAll(changes);
     notifyInclusionListener();
     myTree.repaint();
     myList.repaint();
@@ -404,6 +418,10 @@ public abstract class ChangesTreeList<T> extends JPanel {
 
   public Collection<T> getIncludedChanges() {
     return myIncludedChanges;
+  }
+
+  public void expandAll() {
+    TreeUtil.expandAll(myTree);
   }
 
   public AnAction[] getTreeActions() {

@@ -60,7 +60,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
         return builder.buildModel(changes, changeNodeDecorator);
       }
 
-      protected List<Change> getSelectedObjects(final ChangesBrowserNode node) {
+      protected List<Change> getSelectedObjects(final ChangesBrowserNode<Change> node) {
         return node.getAllChangesUnder();
       }
 

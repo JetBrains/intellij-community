@@ -24,4 +24,13 @@
 
   <extensionPoint name="vcsSelectionProvider"
                   interface="com.intellij.vcsUtil.VcsSelectionProvider"/>
+
+  <!--<extensionPoint name="writingAccessProvider"-->
+                  <!--interface="com.intellij.openapi.vcs.readOnlyHandler.WritingAccessProvider"-->
+                  <!--area="IDEA_PROJECT"/>-->
+  
+  <extensionPoint name="vcs.fileStatusProvider"
+                  interface="com.intellij.openapi.vcs.impl.FileStatusProvider"
+                  area="IDEA_PROJECT"/>
+
 </extensionPoints>

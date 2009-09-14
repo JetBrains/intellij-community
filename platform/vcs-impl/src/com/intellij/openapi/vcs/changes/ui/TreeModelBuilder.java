@@ -96,26 +96,7 @@ public class TreeModelBuilder {
                                      final MultiMap<String, VirtualFile> switchedFiles,
                                      @Nullable final List<VirtualFile> ignoredFiles, @Nullable final List<VirtualFile> lockedFolders,
                                      @Nullable final Map<VirtualFile, LogicalLock> logicallyLockedFiles) {
-    final RemoteRevisionsCache revisionsCache = RemoteRevisionsCache.getInstance(myProject);
-    for (ChangeList list : changeLists) {
-      final Collection<Change> changes = list.getChanges();
-      final ChangeListRemoteState listRemoteState = new ChangeListRemoteState(changes.size());
-      ChangesBrowserNode listNode = new ChangesBrowserChangeListNode(myProject, list, listRemoteState);
-      model.insertNodeInto(listNode, root, 0);
-      final HashMap<String, ChangesBrowserNode> foldersCache = new HashMap<String, ChangesBrowserNode>();
-      final ChangesGroupingPolicy policy = createGroupingPolicy();
-      int i = 0;
-      for (final Change change : changes) {
-        final MyChangeNodeUnderChangeListDecorator decorator =
-          new MyChangeNodeUnderChangeListDecorator(revisionsCache, new ChangeListRemoteState.Reporter(i, listRemoteState));
-        insertChangeNode(change, foldersCache, policy, listNode, new Computable<ChangesBrowserNode>() {
-          public ChangesBrowserNode compute() {
-            return new ChangesBrowserChangeNode(myProject, change, decorator);
-          }
-        });
-        ++ i;
-      }
-    }
+    buildModel(changeLists);
 
     if (!modifiedWithoutEditing.isEmpty()) {
       buildVirtualFiles(modifiedWithoutEditing, ChangesBrowserNode.MODIFIED_WITHOUT_EDITING_TAG);
@@ -145,6 +126,30 @@ public class TreeModelBuilder {
     collapseDirectories(model, root);
     sortNodes();
 
+    return model;
+  }
+
+  public DefaultTreeModel buildModel(List<? extends ChangeList> changeLists) {
+    final RemoteRevisionsCache revisionsCache = RemoteRevisionsCache.getInstance(myProject);
+    for (ChangeList list : changeLists) {
+      final Collection<Change> changes = list.getChanges();
+      final ChangeListRemoteState listRemoteState = new ChangeListRemoteState(changes.size());
+      ChangesBrowserNode listNode = new ChangesBrowserChangeListNode(myProject, list, listRemoteState);
+      model.insertNodeInto(listNode, root, 0);
+      final HashMap<String, ChangesBrowserNode> foldersCache = new HashMap<String, ChangesBrowserNode>();
+      final ChangesGroupingPolicy policy = createGroupingPolicy();
+      int i = 0;
+      for (final Change change : changes) {
+        final MyChangeNodeUnderChangeListDecorator decorator =
+          new MyChangeNodeUnderChangeListDecorator(revisionsCache, new ChangeListRemoteState.Reporter(i, listRemoteState));
+        insertChangeNode(change, foldersCache, policy, listNode, new Computable<ChangesBrowserNode>() {
+          public ChangesBrowserNode compute() {
+            return new ChangesBrowserChangeNode(myProject, change, decorator);
+          }
+        });
+        ++ i;
+      }
+    }
     return model;
   }
 

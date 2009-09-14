@@ -70,6 +70,7 @@ class ChangeListManagerSerialization {
     if (ChangeListManagerSerialization.ATT_VALUE_TRUE.equals(listNode.getAttributeValue(ATT_READONLY))) {
       list.setReadOnly(true);
     }
+
   }
 
   private void readFileToIgnore(final Element ignoredNode) {

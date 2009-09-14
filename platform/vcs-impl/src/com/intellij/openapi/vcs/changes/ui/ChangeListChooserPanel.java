@@ -137,7 +137,7 @@ public class ChangeListChooserPanel extends JPanel {
 
       @Override
       protected void nameChanged(String errorMessage) {
-        myOkEnabledListener.consume(errorMessage == null);
+        myOkEnabledListener.consume(myRbExisting.isSelected() || errorMessage == null);
       }
     };
   }

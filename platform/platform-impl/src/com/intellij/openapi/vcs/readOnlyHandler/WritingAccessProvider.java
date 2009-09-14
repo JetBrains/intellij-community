@@ -1,7 +1,7 @@
 package com.intellij.openapi.vcs.readOnlyHandler;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -12,8 +12,11 @@ import java.util.Collection;
 public interface WritingAccessProvider {
 
   ExtensionPointName<WritingAccessProvider> EP_NAME = ExtensionPointName.create("com.intellij.writingAccessProvider");
-  
-  boolean isWritingAllowed(@NotNull VirtualFile file);
 
-  boolean requestWriting(Collection<VirtualFile> files);
+  /**
+   * @param files files to be checked
+   * @return set of files that cannot be accessed
+   */
+  @NotNull
+  Collection<VirtualFile> requestWriting(VirtualFile... files);
 }

@@ -9,11 +9,13 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -35,6 +37,13 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   private final Project myProject;
   private final List<FileStatusListener> myListeners = ContainerUtil.createEmptyCOWList();
   private FileStatusProvider myFileStatusProvider;
+  private final NotNullLazyValue<FileStatusProvider[]> myExtensions = new NotNullLazyValue<FileStatusProvider[]>() {
+    @NotNull
+    @Override
+    protected FileStatusProvider[] compute() {
+      return Extensions.getExtensions(FileStatusProvider.EP_NAME, myProject);
+    }
+  };
 
   public FileStatusManagerImpl(Project project, StartupManager startupManager) {
     myProject = project;
@@ -52,6 +61,12 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
 
   public FileStatus calcStatus(@NotNull VirtualFile virtualFile) {
     if (virtualFile.isInLocalFileSystem() && myFileStatusProvider != null) {
+      for (FileStatusProvider extension : myExtensions.getValue()) {
+        FileStatus status = extension.getFileStatus(virtualFile);
+        if (status != null) {
+          return status;
+        }
+      }
       return myFileStatusProvider.getFileStatus(virtualFile);
     } else {
       return FileStatus.NOT_CHANGED;
@@ -62,7 +77,14 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   }
 
   public void projectOpened() {
-    MyDocumentAdapter documentListener = new MyDocumentAdapter();
+    DocumentAdapter documentListener = new DocumentAdapter() {
+      public void documentChanged(DocumentEvent event) {
+        VirtualFile file = FileDocumentManager.getInstance().getFile(event.getDocument());
+        if (file != null) {
+          refreshFileStatusFromDocument(file, event.getDocument());
+        }
+      }
+    };
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(documentListener, myProject);
   }
 
@@ -157,12 +179,4 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     }
   }
 
-  private class MyDocumentAdapter extends DocumentAdapter {
-    public void documentChanged(DocumentEvent event) {
-      VirtualFile file = FileDocumentManager.getInstance().getFile(event.getDocument());
-      if (file != null) {
-        refreshFileStatusFromDocument(file, event.getDocument());
-      }
-    }
-  }
 }
