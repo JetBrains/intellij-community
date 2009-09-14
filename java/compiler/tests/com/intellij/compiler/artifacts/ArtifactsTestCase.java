@@ -119,7 +119,7 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
       return configuration;
     }
 
-    public CompositePackagingElement<?> getRootElement(@NotNull Artifact originalArtifact) {
+    public CompositePackagingElement<?> getRootElement(@NotNull Artifact artifact) {
       throw new UnsupportedOperationException("'getRootElement' not implemented in " + getClass().getName());
     }
 
@@ -139,7 +139,7 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
     public void selectLibrary(@NotNull Library library) {
     }
 
-    public void ensureRootIsWritable(@NotNull Artifact originalArtifact) {
+    public void ensureRootIsWritable(@NotNull Artifact artifact) {
     }
 
     @NotNull
