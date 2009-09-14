@@ -71,12 +71,22 @@ public class CustomMembersGenerator implements GroovyEnhancerConsumer{
     }
   }
 
+  /**
+   * Find a class by its full-qulified name
+   * @param fqn
+   * @return
+   */
   @Nullable
   public PsiClass findClass(String fqn) {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(myProject);
     return facade.findClass(fqn, GlobalSearchScope.allScope(myProject));
   }
 
+
+  /**
+   * Add a member to a context's ctype
+   * @param member
+   */
   public void add(@NonNls PsiMember member) {
     final DelegatedMembersHolder holder = new DelegatedMembersHolder();
     holder.addMember(member);

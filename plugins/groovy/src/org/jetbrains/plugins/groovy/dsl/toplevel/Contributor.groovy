@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.groovy.dsl.toplevel
 
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.groovy.dsl.augmenters.PsiClassCategory
 
@@ -25,11 +26,16 @@ class Contributor {
       //ExpandoMetaClass.enableGlobally()
 
       myContexts.each {Context ctx ->
-        if (ctx.isApplicable(elem)) {
-          // todo refactor to add dynamically other categories!
-          use(PsiClassCategory) {
-            f(elem)
+        try {
+          if (ctx.isApplicable(elem)) {
+            // todo refactor to add dynamically other categories!
+            use(PsiClassCategory) {
+              f(elem)
+            }
           }
+        }
+        catch (ProcessCanceledException e) {
+          // do nothing
         }
       }
 
