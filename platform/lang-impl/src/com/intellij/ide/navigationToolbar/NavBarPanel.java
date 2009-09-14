@@ -29,6 +29,7 @@ import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.WeakTimerListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -37,19 +38,16 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -67,7 +65,6 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupOwner;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Alarm;
-import com.intellij.util.Icons;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -326,14 +323,14 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
         myList.clear();
         for (int index = 0; index < myModel.size(); index++) {
           final Object object = myModel.get(index);
-          final boolean hasChildren = myModel.hasChildren(object);
-          final Icon icon = NavBarModel.getIcon(object);
+          final Icon closedIcon = getIcon(object, false);
+          final Icon openIcon = getIcon(object, true);
           final MyCompositeLabel label = new MyCompositeLabel(index,
-                                                              hasChildren ? wrapIcon(icon, index, Color.gray) : icon,
+                                                              wrapIcon(openIcon, closedIcon, index),
                                                               NavBarModel.getPresentableText(object, getWindow()),
                                                               myModel.getTextAttributes(object, false), myModel);
 
-          installActions(index, hasChildren, icon, label);
+          installActions(index, label);
           myList.add(label);
         }
         rebuildComponent();
@@ -341,29 +338,49 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     }
   }
 
-  private Icon wrapIcon(final Icon icon, final int idx, final Color color) {
-    LayeredIcon layeredIcon = new LayeredIcon(2);
-    layeredIcon.setIcon(icon, 0);
-    Icon plusIcon = new Icon() {
+  @Nullable
+  private static Icon getIcon(final Object object, final boolean isopen) {
+    if (!NavBarModel.checkValid(object)) return null;
+    if (object instanceof Project) return IconLoader.getIcon("/nodes/project.png");
+    if (object instanceof Module) return ((Module)object).getModuleType().getNodeIcon(false);
+    try {
+      if (object instanceof PsiElement) return ApplicationManager.getApplication().runReadAction(
+          new Computable<Icon>() {
+            public Icon compute() {
+              return ((PsiElement)object).isValid() ? ((PsiElement)object).getIcon(isopen ? Iconable.ICON_FLAG_OPEN : Iconable.ICON_FLAG_CLOSED) : null;
+            }
+          }
+      );
+    }
+    catch (IndexNotReadyException e) {
+      return null;
+    }
+    if (object instanceof JdkOrderEntry) return ((JdkOrderEntry)object).getJdk().getSdkType().getIcon();
+    if (object instanceof LibraryOrderEntry) return IconLoader.getIcon("/nodes/ppLibClosed.png");
+    if (object instanceof ModuleOrderEntry) return ((ModuleOrderEntry)object).getModule().getModuleType().getNodeIcon(false);
+    return null;
+  }
+
+
+  private Icon wrapIcon(final Icon openIcon, final Icon closedIcon, final int idx) {
+    return new Icon() {
       public void paintIcon(Component c, Graphics g, int x, int y) {
-        g.setColor(color);
-        g.drawRect(x + 1, y - 4, 8, 8);
-        g.drawLine(x + 3, y, x + 7, y);
         if (myModel.getSelectedIndex() != idx || myNodePopup == null || !myNodePopup.isVisible()) {
-          g.drawLine(x + 5, y - 2, x + 5, y + 2);
+          closedIcon.paintIcon(c, g, x, y);
+        }
+        else {
+          openIcon.paintIcon(c, g, x, y);
         }
       }
 
       public int getIconWidth() {
-        return 10;
+        return openIcon.getIconWidth();
       }
 
       public int getIconHeight() {
-        return 8;
+        return openIcon.getIconHeight();
       }
     };
-    layeredIcon.setIcon(plusIcon, 1, -12, (icon == null ? Icons.FOLDER_ICON:icon).getIconHeight() / 2);
-    return layeredIcon;
   }
 
   private void rebuildComponent() {
@@ -446,7 +463,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   }
 
   // ------ NavBar actions -------------------------
-  private void installActions(final int index, final boolean hasChildren, final Icon icon, final MyCompositeLabel component) {
+  private void installActions(final int index, final MyCompositeLabel component) {
     ListenerUtil.addMouseListener(component, new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
         if (!e.isConsumed() && !e.isPopupTrigger() && e.getClickCount() == 2) {
@@ -504,12 +521,6 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     });
   }
 
-  private static boolean isInsideIcon(final Point point, final Icon icon) {
-    if (icon == null) return false;
-    final int height = icon.getIconHeight();
-    return point.x > 0 && point.x < 10 && point.y > height / 2 - 4 && point.y < height / 2 + 4;
-  }
-
   private void doubleClick(final int index) {
     doubleClick(myModel.getElement(index));
   }
@@ -547,7 +558,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       final Icon[] icons = new Icon[objects.size()];
       for (int i = 0; i < objects.size(); i++) {
         siblings[i] = objects.get(i);
-        icons[i] = NavBarModel.getIcon(siblings[i]);
+        icons[i] = getIcon(siblings[i], false);
       }
       final MyCompositeLabel item = getItem(index);
       LOG.assertTrue(item != null);
@@ -1136,7 +1147,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       setFocusBorderAroundIcon(false);
       String name = NavBarModel.getPresentableText(value, getWindow());
-      LOG.assertTrue(name != null);
+
       Color color = list.getForeground();
       boolean isProblemFile = false;
       if (value instanceof PsiElement) {
@@ -1178,7 +1189,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
         nameAttributes = new SimpleTextAttributes(Font.PLAIN, color);
       }
       append(name, nameAttributes);
-      setIcon(NavBarModel.getIcon(value));
+      setIcon(NavBarPanel.getIcon(value, false));
       setPaintFocusBorder(false);
       setBackground(selected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
     }

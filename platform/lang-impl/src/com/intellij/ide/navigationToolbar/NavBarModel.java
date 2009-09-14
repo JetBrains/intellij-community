@@ -15,10 +15,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.roots.ModuleFileIndex;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
@@ -30,7 +34,6 @@ import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -277,28 +280,6 @@ public class NavBarModel {
     return object.toString();
   }
 
-  @Nullable
-  protected static Icon getIcon(final Object object) {
-    if (!checkValid(object)) return null;
-    if (object instanceof Project) return IconLoader.getIcon("/nodes/project.png");
-    if (object instanceof Module) return ((Module)object).getModuleType().getNodeIcon(false);
-    try {
-      if (object instanceof PsiElement) return ApplicationManager.getApplication().runReadAction(
-          new Computable<Icon>() {
-            public Icon compute() {
-              return ((PsiElement)object).isValid() ? ((PsiElement)object).getIcon(Iconable.ICON_FLAG_CLOSED) : null;
-            }
-          }
-      );
-    }
-    catch (IndexNotReadyException e) {
-      return null;
-    }
-    if (object instanceof JdkOrderEntry) return ((JdkOrderEntry)object).getJdk().getSdkType().getIcon();
-    if (object instanceof LibraryOrderEntry) return IconLoader.getIcon("/nodes/ppLibClosed.png");
-    if (object instanceof ModuleOrderEntry) return ((ModuleOrderEntry)object).getModule().getModuleType().getNodeIcon(false);
-    return null;
-  }
 
   protected SimpleTextAttributes getTextAttributes(final Object object, final boolean selected) {
     if (!checkValid(object)) return SimpleTextAttributes.REGULAR_ATTRIBUTES;
