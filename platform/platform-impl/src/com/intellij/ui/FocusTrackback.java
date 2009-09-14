@@ -166,16 +166,7 @@ public class FocusTrackback {
 
     if (project != null && !project.isDisposed()) {
       final IdeFocusManager focusManager = IdeFocusManager.getInstance(project);
-      focusManager.requestFocus(new FocusCommand() {
-        public ActionCallback run() {
-          _restoreFocus();
-          return new ActionCallback.Done();
-        }
-
-        public String toString() {
-          return "focus trackback";
-        }
-      }, false).doWhenProcessed(new Runnable() {
+      focusManager.requestFocus(new MyFocusCommand(), false).doWhenProcessed(new Runnable() {
         public void run() {
           dispose();
         }
@@ -382,4 +373,19 @@ public class FocusTrackback {
   }
 
 
+  private class MyFocusCommand extends FocusCommand {
+    public ActionCallback run() {
+      _restoreFocus();
+      return new ActionCallback.Done();
+    }
+
+    @Override
+    public boolean isExpired() {
+      return isConsumed();
+    }
+
+    public String toString() {
+      return "focus trackback";
+    }
+  }
 }
