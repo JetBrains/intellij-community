@@ -16,5 +16,7 @@ public interface YAMLKeyValue extends YAMLPsiElement, PsiNamedElement {
 
   String getValueText();
 
+  void setValueText(String text);
+
   String getValueIndent();
 }
