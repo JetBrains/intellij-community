@@ -10,7 +10,7 @@ YAML file
         PsiElement(,)(',')
         PsiElement(text)('avg')
       PsiElement(])(']')
-      PsiElement(Eol)('\n')
+    PsiElement(Eol)('\n')
     YAML sequence
       PsiElement(-)('-')
       YAML array
@@ -22,7 +22,7 @@ YAML file
         PsiElement(,)(',')
         PsiElement(text)('0.278')
       PsiElement(])(']')
-      PsiElement(Eol)('\n')
+    PsiElement(Eol)('\n')
     YAML sequence
       PsiElement(-)('-')
       YAML array

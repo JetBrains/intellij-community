@@ -17,7 +17,7 @@ YAML file
       YAML key value
         PsiElement(scalar key)('avg:')
         PsiElement(text)('0.278')
-      PsiElement(Eol)('\n')
+    PsiElement(Eol)('\n')
     YAML sequence
       PsiElement(-)('-')
       PsiElement(Eol)('\n')

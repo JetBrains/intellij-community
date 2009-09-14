@@ -7,25 +7,25 @@ YAML file
     YAML sequence
       PsiElement(-)('-')
       PsiElement(text)('Mark McGwire')
-      PsiElement(Eol)('\n')
+    PsiElement(Eol)('\n')
     YAML sequence
       PsiElement(-)('-')
       PsiElement(text)('Sammy Sosa')
-      PsiElement(Eol)('\n')
+    PsiElement(Eol)('\n')
     YAML sequence
       PsiElement(-)('-')
       PsiElement(text)('Ken Griffey')
       PsiElement(Eol)('\n')
       PsiElement(Eol)('\n')
-      PsiComment(comment)('# Team ranking')
-      PsiElement(Eol)('\n')
+    PsiComment(comment)('# Team ranking')
+    PsiElement(Eol)('\n')
   YAML document
     PsiElement(---)('---')
     PsiElement(Eol)('\n')
     YAML sequence
       PsiElement(-)('-')
       PsiElement(text)('Chicago Cubs')
-      PsiElement(Eol)('\n')
+    PsiElement(Eol)('\n')
     YAML sequence
       PsiElement(-)('-')
       PsiElement(text)('St Louis Cardinals')
