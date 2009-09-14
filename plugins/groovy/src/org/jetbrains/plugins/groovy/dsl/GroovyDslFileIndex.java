@@ -233,7 +233,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
                   executor.processVariants(key, generator);
                 }
                 catch (Exception e) { // To handle exceptions in definition script
-                  if (project.isDisposed()) {
+                  if (project.isDisposed() || ApplicationManager.getApplication().isUnitTestMode()) {
                     LOG.error(e);
                     return null;
                   }
