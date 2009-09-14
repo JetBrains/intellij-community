@@ -151,28 +151,23 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
     myReadOrder = new JDOMExternalizableStringList();
     myReadOrder.addAll(myOrder);
 
-    final Set<String> knownSeverities = new HashSet<String>(ourMap.keySet()); //remove all irrelevant
-    knownSeverities.addAll(STANDART_SEVERITIES.keySet());
+    final List<String> knownSeverities = createCurrentSeverities();
     myOrder.retainAll(knownSeverities);
 
     if (myOrder.isEmpty()) {
       initOrder();
-    } else {//enforce include all known
-      List<HighlightSeverity> order = new ArrayList<HighlightSeverity>();
-      for (HighlightInfoType type : STANDART_SEVERITIES.values()) {
-        order.add(type.getSeverity(null));
-      }
-      Collections.sort(order);
-      for (int i = 0; i < order.size(); i++) {
-        HighlightSeverity stdSeverity = order.get(i);
-        if (!myOrder.contains(stdSeverity.toString())) {
-          for (int oIdx = 0; oIdx < myOrder.size(); oIdx++) {
-            final HighlightInfoType type = STANDART_SEVERITIES.get(myOrder.get(oIdx));
-            if (type != null && order.indexOf(type.getSeverity(null)) > i) {
-              myOrder.add(oIdx, stdSeverity.toString());
-              myReadOrder = null;
-              break;
-            }
+    }
+    //enforce include all known
+    for (int i = 0; i < knownSeverities.size(); i++) {
+      String stdSeverity = knownSeverities.get(i);
+      if (!myOrder.contains(stdSeverity)) {
+        for (int oIdx = 0; oIdx < myOrder.size(); oIdx++) {
+          final String orderSeverity = myOrder.get(oIdx);
+          final HighlightInfoType type = STANDART_SEVERITIES.get(orderSeverity);
+          if (type != null && knownSeverities.indexOf(type.getSeverity(null).toString()) > i) {
+            myOrder.add(oIdx, stdSeverity);
+            myReadOrder = null;
+            break;
           }
         }
       }
