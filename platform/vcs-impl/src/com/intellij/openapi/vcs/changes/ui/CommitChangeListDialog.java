@@ -787,14 +787,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     return !getIncludedChanges().isEmpty();
   }
 
-  public void addSelectionChangeListener(SelectionChangeListener listener) {
-    throw new UnsupportedOperationException();
-  }
-
-  public void removeSelectionChangeListener(SelectionChangeListener listener) {
-    throw new UnsupportedOperationException();
-  }
-
   public Collection<VirtualFile> getVirtualFiles() {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     for (Change change: getIncludedChanges()) {

@@ -46,24 +46,6 @@ public interface CheckinProjectPanel extends Refreshable {
   boolean hasDiffs();
 
   /**
-   * Adds a listener which is notified when the selection in the check-in panel is moved.
-   * To obtain selected object/objects use the data context
-   * passed to {@link SelectionChangeListener#selectionChanged(com.intellij.openapi.actionSystem.DataContext)}
-   * with {@link com.intellij.openapi.actionSystem.DataConstants#VIRTUAL_FILE} or
-   * {@link com.intellij.openapi.actionSystem.DataConstants#VIRTUAL_FILE_ARRAY} constants.
-   *
-   * @param listener the listener to add.
-   */
-  void addSelectionChangeListener(SelectionChangeListener listener);
-
-  /**
-   * Removes a listener which is notified when the selection in the check-in panel is moved.
-   *
-   * @param listener the listener to remove.
-   */
-  void removeSelectionChangeListener(SelectionChangeListener listener);
-
-  /**
    * Returns the list of files selected for checkin, as {@link VirtualFile} objects. The returned list
    * does not include files which will be deleted from the VCS during the check-in operation.
    *
