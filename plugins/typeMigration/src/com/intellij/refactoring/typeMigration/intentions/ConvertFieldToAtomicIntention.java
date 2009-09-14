@@ -52,6 +52,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
     final PsiField psiField = PsiTreeUtil.getParentOfType(element, PsiField.class);
     if (psiField == null) return false;
     if (psiField.getTypeElement() == null) return false;
+    if (!PsiUtil.isLanguageLevel5OrHigher(psiField)) return false;
     final PsiType psiType = psiField.getType();
     final PsiClass psiTypeClass = PsiUtil.resolveClassInType(psiType);
     if (psiTypeClass != null) {
