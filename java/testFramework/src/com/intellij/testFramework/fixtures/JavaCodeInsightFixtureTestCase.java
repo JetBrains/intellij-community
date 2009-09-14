@@ -69,7 +69,7 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase{
     return PathManager.getHomePath().replace(File.separatorChar, '/') + getBasePath();
   }
 
-  protected void tuneFixture(final JavaModuleFixtureBuilder moduleBuilder) {}
+  protected void tuneFixture(final JavaModuleFixtureBuilder moduleBuilder) throws Exception {}
 
   protected void tearDown() throws Exception {
     myFixture.tearDown();
