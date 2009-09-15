@@ -178,7 +178,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
       return Collections.emptyList();
     }
 
-    if (pkg instanceof PsiPackageImpl && !((PsiPackageImpl)pkg).containsClassNamed(className)) {
+    if (pkg == null || pkg instanceof PsiPackageImpl && !((PsiPackageImpl)pkg).containsClassNamed(className)) {
       return Collections.emptyList();
     }
 
