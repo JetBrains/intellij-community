@@ -100,7 +100,16 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
       final PsiExpression initializer = psiField.getInitializer();
       if (initializer != null) {
         psiField.setInitializer(elementFactory.createExpressionFromText("new " + toType.getCanonicalText() + "()", psiField));
-        final String initializerText = psiField.getName() + ".set(" + initializer.getText() + ");";
+        String initializerText = psiField.getName() + ".set(";
+        if (PsiUtil.isLanguageLevel5OrHigher(psiField)) {
+          initializerText += initializer.getText();
+        }
+        else {
+          initializerText += fromType instanceof PsiPrimitiveType ? "new " + ((PsiPrimitiveType)fromType).getBoxedTypeName() + "(" + initializer.getText() + ")"
+                                                                  : initializer.getText();
+        }
+        initializerText += ");";
+
         final PsiClassInitializer classInitializer = elementFactory.createClassInitializer();
         classInitializer.getModifierList().setModifierProperty(PsiModifier.STATIC, psiField.hasModifierProperty(PsiModifier.STATIC));
         final PsiClass containingClass = psiField.getContainingClass();
