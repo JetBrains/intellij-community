@@ -129,7 +129,7 @@ public class ManifestFileUtil {
     }
 
     final List<String> classpath = configuration.getClasspath();
-    if (!classpath.isEmpty()) {
+    if (classpath != null && !classpath.isEmpty()) {
       mainAttributes.put(Attributes.Name.CLASS_PATH, StringUtil.join(classpath, " "));
     }
     else {
