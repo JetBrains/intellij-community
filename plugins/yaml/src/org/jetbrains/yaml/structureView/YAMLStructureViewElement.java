@@ -60,6 +60,25 @@ public class YAMLStructureViewElement implements StructureViewTreeElement {
         }
       };
     }
+    if (myElement instanceof YAMLDocument){
+      return new ItemPresentation() {
+        public String getPresentableText() {
+          return "YAML document";
+        }
+
+        public String getLocationString() {
+          return null;
+        }
+
+        public Icon getIcon(boolean open) {
+          return Icons.XML_TAG_ICON;
+        }
+
+        public TextAttributesKey getTextAttributesKey() {
+          return null;
+        }
+      };
+    }
     return myElement.getPresentation();
   }
 
