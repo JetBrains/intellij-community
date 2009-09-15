@@ -14,13 +14,13 @@ import java.util.ArrayList;
 public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
   private TestListener myTestsListener;
   private JUnit3OutputObjectRegistry myRegistry;
-  private ArrayList<String> myListeners;
+  private ArrayList myListeners;
 
   public JUnit3IdeaTestRunner() {
     super(DeafStream.DEAF_PRINT_STREAM);
   }
 
-  public int startRunnerWithArgs(String[] args, ArrayList<String> listeners) {
+  public int startRunnerWithArgs(String[] args, ArrayList listeners) {
     myListeners = listeners;
     try {
       Test suite = TestRunnerUtil.getTestSuite(this, args);
@@ -54,8 +54,8 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
     TestResult testResult = super.createTestResult();
     testResult.addListener(myTestsListener);
     try {
-      for (String listener : myListeners) {
-        final IDEAJUnitListener junitListener = (IDEAJUnitListener)Class.forName(listener).newInstance();
+      for (int i = 0; i < myListeners.size(); i++) {
+        final IDEAJUnitListener junitListener = (IDEAJUnitListener)Class.forName((String)myListeners.get(i)).newInstance();
         testResult.addListener(new TestListener() {
           public void addError(Test test, Throwable t) {}
 

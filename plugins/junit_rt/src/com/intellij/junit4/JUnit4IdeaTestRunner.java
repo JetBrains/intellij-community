@@ -42,7 +42,7 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
     packet.send();
   }
 
-  public int startRunnerWithArgs(String[] args, ArrayList<String> listeners) {
+  public int startRunnerWithArgs(String[] args, ArrayList listeners) {
     try {
       final JUnitCore runner = new JUnitCore();
 
@@ -65,15 +65,13 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
       }
 
       runner.addListener(myTestsListener);
-      for (String listener : listeners) {
-        final IDEAJUnitListener junitListener = (IDEAJUnitListener)Class.forName(listener).newInstance();
-        runner.addListener(new RunListener(){
-          @Override
+      for (Iterator iterator = listeners.iterator(); iterator.hasNext();) {
+        final IDEAJUnitListener junitListener = (IDEAJUnitListener)Class.forName((String)iterator.next()).newInstance();
+        runner.addListener(new RunListener() {
           public void testStarted(Description description) throws Exception {
             junitListener.testStarted(JUnit4ReflectionUtil.getClassName(description), JUnit4ReflectionUtil.getMethodName(description));
           }
 
-          @Override
           public void testFinished(Description description) throws Exception {
             junitListener.testFinished(JUnit4ReflectionUtil.getClassName(description), JUnit4ReflectionUtil.getMethodName(description));
           }

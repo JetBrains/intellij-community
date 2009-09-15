@@ -9,7 +9,7 @@ import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
 import java.util.ArrayList;
 
 public interface IdeaTestRunner {
-  int startRunnerWithArgs(String[] args, ArrayList<String> listeners);
+  int startRunnerWithArgs(String[] args, ArrayList listeners);
 
   void setStreams(SegmentedOutputStream segmentedOut, SegmentedOutputStream segmentedErr);
 }

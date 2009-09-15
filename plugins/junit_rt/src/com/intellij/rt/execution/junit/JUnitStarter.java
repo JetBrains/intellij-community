@@ -28,7 +28,7 @@ public class JUnitStarter {
       argList.addElement(arg);
     }
 
-    final ArrayList<String> listeners = new ArrayList<String>();
+    final ArrayList listeners = new ArrayList();
     boolean isJUnit4 = processParameters(argList, listeners);
 
     if (!canWorkWithJUnitVersion(err, isJUnit4)) {
@@ -46,7 +46,7 @@ public class JUnitStarter {
     System.exit(exitCode);
   }
 
-  private static boolean processParameters(Vector args, final List<String> listeners) {
+  private static boolean processParameters(Vector args, final List listeners) {
     boolean isJunit4 = false;
     Vector result = new Vector(args.size());
     for (int i = 0; i < args.size(); i++) {
@@ -137,7 +137,7 @@ public class JUnitStarter {
     new TestRunner().setPrinter(new JUnit3IdeaTestRunner.MockResultPrinter());
   }
 
-  private static int prepareStreamsAndStart(String[] args, final boolean isJUnit4, ArrayList<String> listeners, SegmentedOutputStream out,
+  private static int prepareStreamsAndStart(String[] args, final boolean isJUnit4, ArrayList listeners, SegmentedOutputStream out,
                                             SegmentedOutputStream err) {
     PrintStream oldOut = System.out;
     PrintStream oldErr = System.err;
