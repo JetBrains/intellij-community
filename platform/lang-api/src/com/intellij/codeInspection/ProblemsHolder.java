@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +44,7 @@ public class ProblemsHolder {
     myFile = file;
   }
 
-  public void registerProblem(PsiElement psiElement, String descriptionTemplate, LocalQuickFix... fixes) {
+  public void registerProblem(PsiElement psiElement, @Nls String descriptionTemplate, LocalQuickFix... fixes) {
     registerProblem(psiElement, descriptionTemplate, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fixes);
   }
 
