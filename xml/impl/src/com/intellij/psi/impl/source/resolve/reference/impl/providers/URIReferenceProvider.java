@@ -107,16 +107,9 @@ public class URIReferenceProvider extends PsiReferenceProvider {
         String url = tokenizer.nextToken();
 
         offset = text.indexOf(url);
-        final TextRange urlRange = new TextRange(offset, offset + url.length());
-        if (isUrlText(url)) {
-          refs.add(new DependentNSReference(element, urlRange, urlReference));
-        } else {
-          final FakeLocalSchemaReference ref = FakeLocalSchemaReference.getRefToRegisteredSchema(url, element, urlRange);
-          if (ref != null) {
-            refs.addAll(Arrays.asList(ref));
-          } else {
-            refs.addAll(Arrays.asList(new FileReferenceSet(url, element, offset, this, false).getAllReferences()));
-          }
+        if (isUrlText(url)) refs.add(new DependentNSReference(element, new TextRange(offset,offset + url.length()), urlReference));
+        else {
+          refs.addAll(Arrays.asList(new FileReferenceSet(url, element, offset, this, false).getAllReferences()));
         }
       }
 
@@ -161,4 +154,5 @@ public class URIReferenceProvider extends PsiReferenceProvider {
   private static URLReference[] getUrlReference(final PsiElement element, boolean soft) {
     return new URLReference[] { new URLReference(element, null, soft)};
   }
+
 }
