@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -65,7 +66,7 @@ public class ListScrollingUtil {
     selectItem(list, selectedIndex);
   }
 
-  public static boolean selectItem(JList list, Object item) {
+  public static boolean selectItem(JList list, @NotNull Object item) {
     ListModel model = list.getModel();
     for (int i = 0; i < model.getSize(); i++) {
       Object anItem = model.getElementAt(i);

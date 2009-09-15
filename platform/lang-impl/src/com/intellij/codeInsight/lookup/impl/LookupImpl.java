@@ -122,7 +122,9 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     getComponent().add(bottomPanel, BorderLayout.SOUTH);
     getComponent().setBorder(new BegPopupMenuBorder());
 
-    updateListBounds();
+    final ListModel model = myList.getModel();
+    addEmptyItem((DefaultListModel)model);
+    updateListHeight(model);
   }
 
   public AsyncProcessIcon getProcessIcon() {
@@ -142,6 +144,9 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   public void markDirty() {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+    }
     myDirty = true;
     myPreselectedItem = null;
   }
@@ -238,6 +243,9 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   private void updateList() {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+    }
     final List<LookupElement> items = getSortedItems();
     SortedMap<Comparable, List<LookupElement>> itemsMap = new TreeMap<Comparable, List<LookupElement>>();
     int minPrefixLength = items.isEmpty() ? 0 : Integer.MAX_VALUE;
@@ -261,37 +269,47 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     Object oldSelected = !myDirty ? null : myList.getSelectedValue();
     boolean hasExactPrefixes;
     final boolean hasPreselectedItem;
+    final boolean hasItems;
+    DefaultListModel model = (DefaultListModel)myList.getModel();
+    final LookupElement preselectedItem = myPreselectedItem;
     synchronized (myList) {
-      DefaultListModel model = (DefaultListModel)myList.getModel();
       model.clear();
 
       Set<LookupElement> firstItems = new THashSet<LookupElement>();
 
       hasExactPrefixes = addExactPrefixItems(model, firstItems, items);
       addMostRelevantItems(model, firstItems, itemsMap.values());
-      hasPreselectedItem = addPreselectedItem(model, firstItems);
+      hasPreselectedItem = addPreselectedItem(model, firstItems, preselectedItem);
       myPreferredItemsCount = firstItems.size();
 
       addRemainingItemsLexicographically(model, firstItems, items);
+
+      hasItems = model.getSize() != 0;
+      if (!hasItems) {
+        addEmptyItem(model);
+      }
     }
 
-    updateListBounds();
+    if (hasItems) {
+      myList.setFixedCellWidth(myLookupWidth);
+    }
+    updateListHeight(model);
 
     myAdComponent.setText(myAdText);
 
-    if (myList.getModel().getSize() > 0) {
+    if (hasItems) {
       if (oldSelected != null) {
         if (hasExactPrefixes || !ListScrollingUtil.selectItem(myList, oldSelected)) {
           selectMostPreferableItem();
         }
       }
       else {
-        if (myPreselectedItem == EMPTY_LOOKUP_ITEM) {
+        if (preselectedItem == EMPTY_LOOKUP_ITEM) {
           selectMostPreferableItem();
           myPreselectedItem = getCurrentItem();
         }
         else if (hasPreselectedItem && !hasExactPrefixes) {
-          ListScrollingUtil.selectItem(myList, myPreselectedItem);
+          ListScrollingUtil.selectItem(myList, preselectedItem);
         }
         else {
           selectMostPreferableItem();
@@ -300,13 +318,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
   }
 
-  private void updateListBounds() {
-    final ListModel model = myList.getModel();
-    if (model.getSize() == 0) {
-      addEmptyItem((DefaultListModel)model);
-    } else {
-      myList.setFixedCellWidth(myLookupWidth);
-    }
+  private void updateListHeight(ListModel model) {
     myList.setFixedCellHeight(myCellRenderer.getListCellRendererComponent(myList, model.getElementAt(0), 0, false, false).getPreferredSize().height);
 
     myList.setVisibleRowCount(Math.min(model.getSize(), LOOKUP_HEIGHT));
@@ -331,11 +343,11 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
   }
 
-  private boolean addPreselectedItem(DefaultListModel model, Set<LookupElement> firstItems) {
-    final boolean hasPreselectedItem = !myDirty && myPreselectedItem != EMPTY_LOOKUP_ITEM;
-    if (hasPreselectedItem && !firstItems.contains(myPreselectedItem)) {
-      firstItems.add(myPreselectedItem);
-      model.addElement(myPreselectedItem);
+  private boolean addPreselectedItem(DefaultListModel model, Set<LookupElement> firstItems, @Nullable final LookupElement preselectedItem) {
+    final boolean hasPreselectedItem = !myDirty && preselectedItem != EMPTY_LOOKUP_ITEM && preselectedItem != null;
+    if (hasPreselectedItem && !firstItems.contains(preselectedItem)) {
+      firstItems.add(preselectedItem);
+      model.addElement(preselectedItem);
     }
     return hasPreselectedItem;
   }
