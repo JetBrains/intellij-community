@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiSuperMethodUtil;
@@ -22,7 +23,7 @@ import java.util.List;
 /**
 * @author peter
 */
-class SuperCallParametersProvider extends CompletionProvider<CompletionParameters> {
+class SameSignatureCallParametersProvider extends CompletionProvider<CompletionParameters> {
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters,
                                 ProcessingContext context,
@@ -30,16 +31,13 @@ class SuperCallParametersProvider extends CompletionProvider<CompletionParameter
     final PsiMethodCallExpression methodCall = PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiMethodCallExpression.class);
     assert methodCall != null;
     final PsiReferenceExpression expression = methodCall.getMethodExpression();
-    if (!"super".equals(expression.getReferenceName()) && !(expression.getQualifier() instanceof PsiSuperExpression)) {
-      return;
-    }
 
-    List<PsiMethod> candidates = getSuperMethodCandidates(expression);
+    List<Pair<PsiMethod, PsiSubstitutor>> candidates = getSuperMethodCandidates(expression);
 
     PsiMethod container = PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class);
     while (container != null) {
-      for (final PsiMethod candidate : candidates) {
-        if (container.getParameterList().getParametersCount() > 1 && isSuperMethod(container, candidate)) {
+      for (final Pair<PsiMethod, PsiSubstitutor> candidate : candidates) {
+        if (container.getParameterList().getParametersCount() > 1 && isSuperMethod(container, candidate.first, candidate.second)) {
           result.addElement(createParametersLookupElement(container));
           return;
         }
@@ -71,15 +69,15 @@ class SuperCallParametersProvider extends CompletionProvider<CompletionParameter
     return TailTypeDecorator.createDecorator(element, tail);
   }
 
-  private static List<PsiMethod> getSuperMethodCandidates(PsiReferenceExpression expression) {
-    List<PsiMethod> candidates = new ArrayList<PsiMethod>();
+  private static List<Pair<PsiMethod, PsiSubstitutor>> getSuperMethodCandidates(PsiReferenceExpression expression) {
+    List<Pair<PsiMethod, PsiSubstitutor>> candidates = new ArrayList<Pair<PsiMethod, PsiSubstitutor>>();
     for (final JavaResolveResult candidate : expression.multiResolve(true)) {
       final PsiElement element = candidate.getElement();
       if (element instanceof PsiMethod) {
         final PsiClass psiClass = ((PsiMethod)element).getContainingClass();
         if (psiClass != null) {
-          for (PsiMethod overload : psiClass.findMethodsByName(((PsiMethod)element).getName(), true)) {
-            if (!overload.hasModifierProperty(PsiModifier.ABSTRACT) && !overload.hasModifierProperty(PsiModifier.STATIC)) {
+          for (Pair<PsiMethod, PsiSubstitutor> overload : psiClass.findMethodsAndTheirSubstitutorsByName(((PsiMethod)element).getName(), true)) {
+            if (!overload.first.hasModifierProperty(PsiModifier.ABSTRACT)/* && overload.first.hasModifierProperty(PsiModifier.STATIC)*/) {
               candidates.add(overload);
             }
           }
@@ -91,24 +89,22 @@ class SuperCallParametersProvider extends CompletionProvider<CompletionParameter
   }
 
 
-  private static boolean isSuperMethod(PsiMethod container, PsiMethod superCandidate) {
-    if (!container.isConstructor()) {
-      return PsiSuperMethodUtil.isSuperMethod(container, superCandidate);
+  private static boolean isSuperMethod(PsiMethod container, PsiMethod callee, PsiSubstitutor substitutor) {
+    if (PsiSuperMethodUtil.isSuperMethod(container, callee)) {
+      return true;
     }
 
-    if (!superCandidate.isConstructor()) {
-      return false;
-    }
     final PsiParameter[] parameters = container.getParameterList().getParameters();
-    final PsiParameter[] superParams = superCandidate.getParameterList().getParameters();
+    final PsiParameter[] superParams = callee.getParameterList().getParameters();
     if (superParams.length != parameters.length) {
       return false;
     }
+    final boolean checkNames = callee.isConstructor();
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
       final PsiParameter superParam = superParams[i];
-      if (!Comparing.equal(parameter.getName(), superParam.getName()) ||
-          !Comparing.equal(parameter.getType(), superParam.getType())) {
+      if (checkNames && !Comparing.equal(parameter.getName(), superParam.getName()) ||
+          !Comparing.equal(parameter.getType(), substitutor.substitute(superParam.getType()))) {
         return false;
       }
     }
