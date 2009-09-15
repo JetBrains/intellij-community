@@ -30,16 +30,16 @@ public class CustomMembersGenerator implements GroovyEnhancerConsumer{
   public CustomMembersHolder getMembersHolder() {
     // Add non-code members holder
     if (myClassText.length() > 0) {
-      myDepot.addHolder(new NonCodeMembersHolder(myClassText.toString(), myProject));
+      addMemberHolder(new NonCodeMembersHolder(myClassText.toString(), myProject));
     }
 
     return myDepot;
 
   }
 
-  /*************************************************************************************
-   Methods and properties of the GroovyDSL language
-   ************************************************************************************/
+  public void addMemberHolder(CustomMembersHolder holder) {
+    myDepot.addHolder(holder);
+  }
 
   public void property(String name, String type) {
     myClassText.append("def ").append(type).append(" ").append(name).append("\n");
@@ -56,6 +56,10 @@ public class CustomMembersGenerator implements GroovyEnhancerConsumer{
     myClassText.append(") {}\n");
   }
 
+  /*************************************************************************************
+   Methods and properties of the GroovyDSL language
+   ************************************************************************************/
+
   public void delegatesTo(String type) {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(myProject);
     final PsiClass clazz = facade.findClass(type, GlobalSearchScope.allScope(myProject));
@@ -67,7 +71,7 @@ public class CustomMembersGenerator implements GroovyEnhancerConsumer{
       for (PsiField field : clazz.getAllFields()) {
         holder.addMember(field);
       }
-      myDepot.addHolder(holder);
+      addMemberHolder(holder);
     }
   }
 
@@ -90,7 +94,7 @@ public class CustomMembersGenerator implements GroovyEnhancerConsumer{
   public void add(@NonNls PsiMember member) {
     final DelegatedMembersHolder holder = new DelegatedMembersHolder();
     holder.addMember(member);
-    myDepot.addHolder(holder);
+    addMemberHolder(holder);
   }
 
 }
