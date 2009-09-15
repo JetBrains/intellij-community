@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -232,7 +233,10 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
                 try {
                   executor.processVariants(key, generator);
                 }
-                catch (Exception e) { // To handle exceptions in definition script
+                catch (ProcessCanceledException e) {
+                  throw e;
+                }  
+                catch (Throwable e) { // To handle exceptions in definition script
                   if (project.isDisposed() || ApplicationManager.getApplication().isUnitTestMode()) {
                     LOG.error(e);
                     return null;
