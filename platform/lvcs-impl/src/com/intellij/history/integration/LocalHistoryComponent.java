@@ -6,6 +6,7 @@ import com.intellij.history.core.storage.Storage;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.ide.startup.StartupManagerEx;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
@@ -18,7 +19,6 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -46,9 +46,12 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
     return (LocalHistoryComponent)p.getComponent(LocalHistory.class);
   }
 
-  // todo bad method - extend interface instead
   public static LocalVcs getLocalVcsFor(Project p) {
     return getComponentInstance(p).getLocalVcs();
+  }
+
+  public static IdeaGateway getGatewayFor(Project p) {
+    return getComponentInstance(p).getGateway();
   }
 
   public LocalHistoryComponent(Project p,
@@ -183,11 +186,9 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
     return myVcs.putSystemLabel(name, color);
   }
 
-  @Override
-  public Checkpoint putCheckpoint() {
-    if (!isInitialized()) return new Checkpoint.NullCheckpoint();
-
-    return new CheckpointImpl(myGateway, myVcs);
+  public void registerUnsavedDocuments(VirtualFile file) {
+    if (!isInitialized()) return;
+    myGateway.registerUnsavedDocuments(myVcs, file);
   }
 
   @Override
@@ -235,6 +236,10 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
 
   public LocalVcs getLocalVcs() {
     return myVcs;
+  }
+
+  public IdeaGateway getGateway() {
+    return myGateway;
   }
 
   public void projectOpened() {

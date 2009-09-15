@@ -612,13 +612,12 @@ public class VfsUtil {
     return name == null || name.length() == 0 || "/".equals(name) || "\\".equals(name);
   }
 
-  public static VirtualFile createDirectories(@NotNull String dir) throws IOException {
-    final String path = FileUtil.toSystemIndependentName(dir);
+  public static VirtualFile createDirectories(final @NotNull String dir) throws IOException {
     final Ref<IOException> err = new Ref<IOException>();
     VirtualFile result = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
       public VirtualFile compute() {
         try {
-          return createDirectoryIfMissing(path);
+          return createDirectoryIfMissing(dir);
         }
         catch (IOException e) {
           err.set(e);
@@ -632,6 +631,10 @@ public class VfsUtil {
 
   @Nullable
   public static VirtualFile createDirectoryIfMissing(@NotNull String dir) throws IOException {
+    return doCreateDirectoriesIfMissing(FileUtil.toSystemIndependentName(dir));
+  }
+
+  private static VirtualFile doCreateDirectoriesIfMissing(String dir) throws IOException {
     final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir);
     if (file == null) {
       int pos = dir.lastIndexOf('/');

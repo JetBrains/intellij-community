@@ -38,7 +38,7 @@ public abstract class LocalHistoryAction extends AnAction implements DumbAware {
   }
 
   protected IdeaGateway getGateway(AnActionEvent e) {
-    return new IdeaGateway(getProject(e));
+    return LocalHistoryComponent.getGatewayFor(getProject(e));
   }
 
   protected VirtualFile getFile(AnActionEvent e) {

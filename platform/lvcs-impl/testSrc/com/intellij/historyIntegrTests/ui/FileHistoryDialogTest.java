@@ -112,7 +112,7 @@ public class FileHistoryDialogTest extends IntegrationTestCase {
     m.createReverter().revert();
 
     assertEquals("old.txt", f.getName());
-    assertEquals(f.getParent(), root.findChild("oldDir"));
+    assertEquals(f.getParent(), dir);
     assertEquals("newDir", dir.getName());
   }
 

@@ -16,6 +16,10 @@ public class DirectoryChangeModel {
     isRightContentEditable = editableRightContent;
   }
 
+  public Difference getDifference() {
+    return myDiff;
+  }
+
   public boolean isFile() {
     return myDiff.isFile();
   }

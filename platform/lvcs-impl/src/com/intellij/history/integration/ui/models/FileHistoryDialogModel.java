@@ -1,8 +1,9 @@
 package com.intellij.history.integration.ui.models;
 
 import com.intellij.history.core.LocalVcs;
+import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.integration.IdeaGateway;
-import com.intellij.history.integration.revertion.FileReverter;
+import com.intellij.history.integration.revertion.DifferenceReverter;
 import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -15,6 +16,8 @@ public abstract class FileHistoryDialogModel extends HistoryDialogModel {
 
   @Override
   protected Reverter createRevisionReverter() {
-    return new FileReverter(myGateway, getLeftRevision(), getLeftEntry(), getRightEntry());
+    Revision l = getLeftRevision();
+    Revision r = getRightRevision();
+    return new DifferenceReverter(myVcs, myGateway, l.getDifferencesWith(r), l);
   }
 }

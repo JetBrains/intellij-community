@@ -16,14 +16,33 @@
 
 package com.intellij.util.containers;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
+import java.util.*;
 
 public class ContainerUtilTest extends junit.framework.TestCase {
   public void testFindInstanceOf() {
     Iterator<Object> iterator = Arrays.asList(new Object[]{new Integer(1), new ArrayList(), "1"}).iterator();
     String string = (String)com.intellij.util.containers.ContainerUtil.find(iterator, com.intellij.util.containers.FilteringIterator.instanceOf(String.class));
     junit.framework.Assert.assertEquals("1", string);
+  }
+
+  public void testConcatMulti() {
+    List l = ContainerUtil.concat(Arrays.asList(1, 2), Collections.EMPTY_LIST, Arrays.asList(3, 4));
+    assertEquals(4, l.size());
+    assertEquals(1, l.get(0));
+    assertEquals(2, l.get(1));
+    assertEquals(3, l.get(2));
+    assertEquals(4, l.get(3));
+    
+    try {
+      l.get(-1);
+      fail();
+    } catch(IndexOutOfBoundsException ignore) {
+    }
+
+    try {
+      l.get(4);
+      fail();
+    } catch(IndexOutOfBoundsException ignore) {
+    }
   }
 }

@@ -62,7 +62,7 @@ public class TestIdeaGateway extends IdeaGateway {
   }
 
   @Override
-  public VirtualFile getDocumentFile(Document d) {
+  public VirtualFile getFile(Document d) {
     return ((MyDocument)d).getFile();
   }
 

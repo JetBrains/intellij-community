@@ -20,12 +20,11 @@ package com.intellij.openapi.command.undo;
  * @author Dmitry Avdeev
  */
 public abstract class NonDocumentUndoableAction implements UndoableAction {
-
-  public final DocumentReference[] getAffectedDocuments() {
-    return DocumentReference.EMPTY_ARRAY;
+  public DocumentReference[] getAffectedDocuments() {
+    return null;
   }
 
-  public final boolean isComplex() {
+  public final boolean shouldConfirmUndo() {
     return true;
   }
 }

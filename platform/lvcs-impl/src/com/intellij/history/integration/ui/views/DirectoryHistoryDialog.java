@@ -1,8 +1,9 @@
 package com.intellij.history.integration.ui.views;
 
-import static com.intellij.history.integration.LocalHistoryBundle.message;
 import com.intellij.history.core.LocalVcs;
+import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.integration.IdeaGateway;
+import static com.intellij.history.integration.LocalHistoryBundle.message;
 import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.DiffManager;
@@ -10,15 +11,16 @@ import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.ex.DiffStatusBar;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesTreeList;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
-import com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -121,10 +123,8 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     return "reference.dialogs.localHistory.show.folder";
   }
 
-  private DirectoryChange getSelectedChange() {
-    List<Change> selected = myChangesTree.getSelectedChanges();
-    if (selected.size() != 1) return null;
-    return (DirectoryChange)selected.get(0);
+  private List<DirectoryChange> getSelectedChanges() {
+    return (List)myChangesTree.getSelectedChanges();
   }
 
   private class ShowDifferenceAction extends ActionOnSelection {
@@ -133,14 +133,19 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     }
 
     @Override
-    protected void performOn(DirectoryChange c) {
-      DiffRequest r = createDifference(c.getFileDifferenceModel());
+    protected void performOn(List<DirectoryChange> changes) {
+      DiffRequest r = createDifference(getFirstChange(changes).getFileDifferenceModel());
       DiffManager.getInstance().getDiffTool().show(r);
     }
 
     @Override
-    protected boolean isEnabledFor(DirectoryChange c) {
-      return c.canShowFileDifference();
+    protected boolean isEnabledFor(List<DirectoryChange> changes) {
+      DirectoryChange c = getFirstChange(changes);
+      return c != null && c.canShowFileDifference();
+    }
+
+    private DirectoryChange getFirstChange(List<DirectoryChange> changes) {
+      return changes.isEmpty() ? null : changes.get(0);
     }
   }
 
@@ -150,12 +155,16 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     }
 
     @Override
-    protected void performOn(DirectoryChange c) {
-      revert(myModel.createRevisionReverter(c.getModel()));
+    protected void performOn(List<DirectoryChange> changes) {
+      List<Difference> diffs = new ArrayList<Difference>();
+      for (DirectoryChange each : changes) {
+        diffs.add(each.getModel().getDifference());
+      }
+      revert(myModel.createRevisionReverter(diffs));
     }
 
     @Override
-    protected boolean isEnabledFor(DirectoryChange c) {
+    protected boolean isEnabledFor(List<DirectoryChange> changes) {
       return myModel.isRevertEnabled();
     }
   }
@@ -171,10 +180,10 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     }
 
     public void perform() {
-      performOn(getSelectedChange());
+      performOn(getSelectedChanges());
     }
 
-    protected abstract void performOn(DirectoryChange c);
+    protected abstract void performOn(List<DirectoryChange> changes);
 
     @Override
     public void update(AnActionEvent e) {
@@ -183,11 +192,10 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     }
 
     public boolean isEnabled() {
-      DirectoryChange c = getSelectedChange();
-      return c != null && isEnabledFor(c);
+      return isEnabledFor(getSelectedChanges());
     }
 
-    protected boolean isEnabledFor(DirectoryChange c) {
+    protected boolean isEnabledFor(List<DirectoryChange> changes) {
       return true;
     }
   }

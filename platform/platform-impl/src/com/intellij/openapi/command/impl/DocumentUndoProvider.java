@@ -3,10 +3,9 @@ package com.intellij.openapi.command.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.DocumentReference;
-import com.intellij.openapi.command.undo.DocumentReferenceByDocument;
+import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.NonUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -19,15 +18,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ExternalChangeAction;
 
-/**
- * author: lesya
- */
-class DocumentEditingUndoProvider implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.impl.DocumentEditingUndoProvider");
-
+class DocumentUndoProvider implements Disposable {
   private final Project myProject;
 
-  DocumentEditingUndoProvider(Project project, EditorFactory editorFactory) {
+  DocumentUndoProvider(Project project, EditorFactory editorFactory) {
     MyEditorDocumentListener documentListener = new MyEditorDocumentListener();
     myProject = project;
 
@@ -44,7 +38,7 @@ class DocumentEditingUndoProvider implements Disposable {
 
   private class MyEditorDocumentListener extends DocumentAdapter {
     public void documentChanged(final DocumentEvent e) {
-      final Document document = e.getDocument();
+      Document document = e.getDocument();
 
       // if we don't ignore copy's events, we will receive notification
       // for the same event twice (from original document too)
@@ -55,21 +49,12 @@ class DocumentEditingUndoProvider implements Disposable {
       if (!isToRecordActions(document)) return;
 
       UndoManagerImpl undoManager = getUndoManager();
-      if (externalChanges()) {
-        createNonUndoableAction(document);
+      if (isExternalChange() || !undoManager.isActive()) {
+        registerNonUndoableAction(document);
+        return;
       }
-      else {
-        LOG.assertTrue(
-          undoManager.isInsideCommand(),
-          "Undoable actions allowed inside commands only (see com.intellij.openapi.command.CommandProcessor.executeCommand())"
-        );
-        if (undoManager.isActive()) {
-          createUndoableEditorChangeAction(e);
-        }
-        else {
-          createNonUndoableAction(document);
-        }
-      }
+
+      registerUndoableAction(e);
     }
 
     private boolean isToRecordActions(final Document document) {
@@ -88,23 +73,17 @@ class DocumentEditingUndoProvider implements Disposable {
       return true;
     }
 
-    private void createUndoableEditorChangeAction(final DocumentEvent e) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("document changed:");
-        LOG.debug("  offset:" + e.getOffset());
-        LOG.debug("  old fragment:" + e.getOldFragment());
-        LOG.debug("  new fragment:" + e.getNewFragment());
-      }
-
-      EditorChangeAction action = new EditorChangeAction((DocumentEx)e.getDocument(), e.getOffset(),
-                                                         e.getOldFragment(), e.getNewFragment(), e.getOldTimeStamp());
-
-      getUndoManager().undoableActionPerformed(action);
+    private void registerUndoableAction(DocumentEvent e) {
+      getUndoManager().undoableActionPerformed(new EditorChangeAction((DocumentEx)e.getDocument(),
+                                                                      e.getOffset(),
+                                                                      e.getOldFragment(),
+                                                                      e.getNewFragment(),
+                                                                      e.getOldTimeStamp()));
     }
 
-    private void createNonUndoableAction(final Document document) {
+    private void registerNonUndoableAction(final Document document) {
+      final DocumentReference ref = DocumentReferenceManager.getInstance().create(document);
       UndoManagerImpl undoManager = getUndoManager();
-      final DocumentReference ref = DocumentReferenceByDocument.createDocumentReference(document);
       if (!undoManager.documentWasChanged(ref)) return;
 
       undoManager.undoableActionPerformed(
@@ -113,14 +92,14 @@ class DocumentEditingUndoProvider implements Disposable {
             return new DocumentReference[]{ref};
           }
 
-          public boolean isComplex() {
+          public boolean shouldConfirmUndo() {
             return false;
           }
         }
       );
     }
 
-    private boolean externalChanges() {
+    private boolean isExternalChange() {
       return ApplicationManager.getApplication().getCurrentWriteAction(ExternalChangeAction.class) != null;
     }
   }

@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Collections;
 
 public class DirectoryHistoryDialogTest extends PatchingTestCase {
   public void testDialogWorks() throws IOException {
@@ -92,7 +93,7 @@ public class DirectoryHistoryDialogTest extends PatchingTestCase {
 
     DirectoryHistoryDialogModel m = createModelAndSelectRevision(2);
     DirectoryChange c = (DirectoryChange)m.getChanges().get(0);
-    m.createRevisionReverter(c.getModel()).revert();
+    m.createRevisionReverter(Collections.singletonList(c.getDifference())).revert();
 
     assertNull(root.findChild("f1.txt"));
     assertNotNull(root.findChild("f2.txt"));

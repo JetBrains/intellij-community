@@ -12,22 +12,24 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class UndoUtil {
-  private UndoUtil() {}
+  private UndoUtil() {
+  }
 
   /**
    * make undoable action in current document in order to Undo action work from current file
+   *
    * @param file to make editors of to respond to undo action.
    */
   public static void markPsiFileForUndo(@NotNull final PsiFile file) {
     Project project = file.getProject();
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) return;
-    final DocumentReference ref = DocumentReferenceByDocument.createDocumentReference(document);
+    final DocumentReference ref = DocumentReferenceManager.getInstance().create(document);
     markDocumentReferenceForUndo(project, ref, "markDocumentForUndo: " + file);
   }
 
   public static void markVirtualFileForUndo(@NotNull Project project, @NotNull VirtualFile file) {
-    final DocumentReference ref = new DocumentReferenceByVirtualFile(file);
+    final DocumentReference ref = DocumentReferenceManager.getInstance().create(file);
     markDocumentReferenceForUndo(project, ref, "markVirtualFileForUndo: " + file.getPath());
   }
 
@@ -45,7 +47,7 @@ public class UndoUtil {
         return new DocumentReference[]{ref};
       }
 
-      public boolean isComplex() {
+      public boolean shouldConfirmUndo() {
         return false;
       }
 

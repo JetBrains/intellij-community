@@ -1,8 +1,5 @@
 package com.intellij.history.core;
 
-import com.intellij.history.core.changes.CreateFileChange;
-import com.intellij.history.core.changes.DeleteChange;
-import com.intellij.history.core.changes.RenameChange;
 import com.intellij.history.core.storage.UnavailableContent;
 import com.intellij.history.core.tree.Entry;
 import org.junit.Test;
@@ -265,24 +262,5 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
     vcs.createFile("c:/dir/root/file", null, timestamp, false);
 
     assertTrue(vcs.hasEntry("c:/dir/root/file"));
-  }
-
-  @Test
-  public void testLastChange() {
-    long timestamp = -1;
-    vcs.createFile("f", null, timestamp, false);
-    assertEquals(CreateFileChange.class, vcs.getLastChange().getClass());
-
-    vcs.beginChangeSet();
-    assertEquals(CreateFileChange.class, vcs.getLastChange().getClass());
-
-    vcs.rename("f", "f2");
-    assertEquals(RenameChange.class, vcs.getLastChange().getClass());
-
-    vcs.endChangeSet(null);
-    assertEquals(RenameChange.class, vcs.getLastChange().getClass());
-
-    vcs.delete("f2");
-    assertEquals(DeleteChange.class, vcs.getLastChange().getClass());
   }
 }

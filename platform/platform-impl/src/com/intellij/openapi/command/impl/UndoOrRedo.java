@@ -3,7 +3,6 @@ package com.intellij.openapi.command.impl;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.DocumentReference;
-import com.intellij.openapi.command.undo.DocumentReferenceByDocument;
 import com.intellij.openapi.command.undo.NonUndoableAction;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.editor.Document;
@@ -86,7 +85,8 @@ abstract class UndoOrRedo {
     }
 
     if (containsNonUndoableActions()) {
-      reportCannotUndo(CommonBundle.message("cannot.undo.error.contains.nonundoable.changes.message"), myUndoableGroup.getAffectedDocuments());
+      reportCannotUndo(CommonBundle.message("cannot.undo.error.contains.nonundoable.changes.message"),
+                       myUndoableGroup.getAffectedDocuments());
       return;
     }
 
@@ -223,7 +223,7 @@ abstract class UndoOrRedo {
 
   private void reportCannotUndo(final String message, final Collection<DocumentReference> problemFiles) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      throw new RuntimeException(message);
+      throw new RuntimeException(message + " " + problemFiles);
     }
 
     new CannotUndoReportDialog(myManager.getProject(), message, problemFiles).show();
@@ -268,34 +268,34 @@ abstract class UndoOrRedo {
     return result;
   }
 
-  public static class NothingToUndoException extends Exception {}
+  public static class NothingToUndoException extends Exception {
+  }
 
   private UndoableGroup getLastAction() throws NothingToUndoException {
-    final DocumentReference[] documents = myEditor == null? null : myManager.getDocumentReferences(myEditor);
-    if (documents == null || documents.length == 0) {
+    Set<DocumentReference> refs = myEditor == null ? Collections.EMPTY_SET : myManager.getDocumentReferences(myEditor);
+    if (refs.isEmpty()) {
       return getStackHolder().getGlobalStack().getLast();
     }
-    else {
-      long recentDocumentTimeStamp = -1;
-      UndoableGroup result = null;
-      for (DocumentReference docRef : documents) {
-        UndoableGroup action = getStackHolder().getLastAction(docRef);
-        if (action != null) {
-          long modificationStamp;
-          Document doc = docRef.getDocument();
-          modificationStamp = doc != null ? doc.getModificationStamp() : docRef.getFile().getTimeStamp();
-          if (recentDocumentTimeStamp < modificationStamp) {
-            result = action;
-            recentDocumentTimeStamp = modificationStamp;
-          }
+    
+    long recentDocumentTimeStamp = -1;
+    UndoableGroup result = null;
+    for (DocumentReference docRef : refs) {
+      UndoableGroup action = getStackHolder().getLastAction(docRef);
+      if (action != null) {
+        long modificationStamp;
+        Document doc = docRef.getDocument();
+        modificationStamp = doc != null ? doc.getModificationStamp() : docRef.getFile().getTimeStamp();
+        if (recentDocumentTimeStamp < modificationStamp) {
+          result = action;
+          recentDocumentTimeStamp = modificationStamp;
         }
       }
-      if (result != null) {
-        return result;
-      }
-      else {
-        throw new NothingToUndoException();
-      }
+    }
+    if (result != null) {
+      return result;
+    }
+    else {
+      throw new NothingToUndoException();
     }
   }
 
@@ -319,7 +319,6 @@ abstract class UndoOrRedo {
     catch (NothingToUndoException e) {
       // No live stacks left. Last operation at the stack was completely transparent.
     }
-
   }
 
   public boolean isTransparentsOnly() {

@@ -11,14 +11,28 @@ public class IdeaGatewayTest extends IntegrationTestCase {
   }
 
   public void testGettingDirectory() throws Exception {
-    assertSame(root, gateway.findOrCreateDirectory(root.getPath()));
+    assertSame(root, gateway.findOrCreateFileSafely(root.getPath(), true));
   }
 
   public void testCreatingDirectory() throws Exception {
     String subSubDirPath = root.getPath() + "/subDir/subSubDir";
 
     assertFalse(new File(subSubDirPath).exists());
-    VirtualFile subDir = gateway.findOrCreateDirectory(subSubDirPath);
+    VirtualFile subDir = gateway.findOrCreateFileSafely(subSubDirPath, true);
+
+    assertNotNull(subDir);
+    assertEquals(subSubDirPath, subDir.getPath());
+
+    assertTrue(new File(subSubDirPath).exists());
+  }
+
+  public void testCreatingDirectoryWhenSuchFileExists() throws Exception {
+    String subSubDirPath = root.getPath() + "/subDir/subSubDir";
+
+    assertFalse(new File(subSubDirPath).exists());
+    root.createChildData(this, "subDir");
+
+    VirtualFile subDir = gateway.findOrCreateFileSafely(subSubDirPath, true);
 
     assertNotNull(subDir);
     assertEquals(subSubDirPath, subDir.getPath());

@@ -61,23 +61,23 @@ public class CommandMerger implements Disposable {
     if (!isUndoTransparent) myOnlyUndoTransparents = false;
     if (isUndoTransparent) myHasUndoTransparents = true;
     myCurrentActions.add(action);
-    myAffectedDocuments.addAll(Arrays.asList(action.getAffectedDocuments()));
-    myIsComplex |= action.isComplex() || !isUndoTransparent && affectsMultiplePhysicalDocs();
+    DocumentReference[] refs = action.getAffectedDocuments();
+    if (refs != null) {
+      Collections.addAll(myAffectedDocuments, refs);
+    }
+    myIsComplex |= action.shouldConfirmUndo() || !isUndoTransparent && affectsMultiplePhysicalDocs();
   }
 
   private boolean affectsMultiplePhysicalDocs() {
-    return areMultiplePhisicalDocsAffected(myAffectedDocuments);
+    return areMultiplePhysicalDocsAffected(myAffectedDocuments);
   }
 
-  protected static boolean areMultiplePhisicalDocsAffected(Collection<DocumentReference> rr) {
+  protected static boolean areMultiplePhysicalDocsAffected(Collection<DocumentReference> rr) {
     if (rr.size() < 2) return false;
     int count = 0;
     for (DocumentReference docRef : rr) {
       VirtualFile file = docRef.getFile();
       if (file instanceof LightVirtualFile) continue;
-
-      Document doc = docRef.getDocument();
-      if (doc != null && UndoManagerImpl.isCopy(doc)) continue;
       count++;
     }
 
@@ -139,9 +139,9 @@ public class CommandMerger implements Disposable {
 
   public void flushCurrentCommand() {
     if (!isEmpty()) {
-      int commandCounter = myManager.getCommandCounterAndInc();
+      int commandTimestamp = myManager.nextCommandTimestamp();
       UndoableGroup undoableGroup = new UndoableGroup(myCommandName, myIsComplex, myManager.getProject(), myStateBefore, myStateAfter,
-                                                      commandCounter, myUndoConfirmationPolicy,
+                                                      commandTimestamp, myUndoConfirmationPolicy,
                                                       myHasUndoTransparents && myOnlyUndoTransparents);
       undoableGroup.addTailActions(myCurrentActions);
       addToAllStacks(undoableGroup);
@@ -151,8 +151,8 @@ public class CommandMerger implements Disposable {
   }
 
   private void addToAllStacks(UndoableGroup group) {
-    for (DocumentReference document : myAffectedDocuments) {
-      myManager.getUndoStacksHolder().addToLocalStack(document, group);
+    for (DocumentReference each : myAffectedDocuments) {
+      myManager.getUndoStacksHolder().addToLocalStack(each, group);
     }
 
     if (myIsComplex) {
@@ -171,13 +171,11 @@ public class CommandMerger implements Disposable {
     return myCurrentActions.isEmpty();
   }
 
-  public boolean hasChangesOf(DocumentReference doc) {
+  public boolean hasChangesOf(DocumentReference ref) {
     for (UndoableAction action : myCurrentActions) {
-      for (DocumentReference document : action.getAffectedDocuments()) {
-        if (document.equals(doc)) return true;
-      }
+      DocumentReference[] refs = action.getAffectedDocuments();
+      if (refs == null || Arrays.asList(refs).contains(ref)) return true;
     }
-
     return false;
   }
 

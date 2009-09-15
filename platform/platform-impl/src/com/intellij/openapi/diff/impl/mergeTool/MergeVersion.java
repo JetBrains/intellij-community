@@ -6,7 +6,7 @@ import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.DocumentReference;
-import com.intellij.openapi.command.undo.DocumentReferenceByDocument;
+import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.NonUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -54,18 +54,18 @@ public interface MergeVersion {
       final Document workingDocument = myDocument; //DocumentUtil.createCopy(myDocument, project);
       //LOG.assertTrue(workingDocument != myDocument);
       workingDocument.setReadOnly(false);
-      final DocumentReference ref = DocumentReferenceByDocument.createDocumentReference(workingDocument);
+      final DocumentReference[] refs = new DocumentReference[] { DocumentReferenceManager.getInstance().create(workingDocument)};
       myTextBeforeMerge = myDocument.getText();
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           setDocumentText(workingDocument, myOriginalText, DiffBundle.message("merge.init.merge.content.command.name"), project);
           UndoManager.getInstance(project).undoableActionPerformed(new NonUndoableAction() {
-            public boolean isComplex() {
+            public boolean shouldConfirmUndo() {
               return false;
             }
 
             public DocumentReference[] getAffectedDocuments() {
-              return new DocumentReference[]{ref};
+              return refs;
             }
           });
         }

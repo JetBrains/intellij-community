@@ -24,73 +24,118 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
   }
 
   @Override
-  public void visit(CreateEntryChange c) throws IOException {
-    Entry e = getAffectedEntry(c);
-    VirtualFile f = myGateway.findVirtualFile(e.getPath());
-
-    unregisterDelayedApplies(f);
-    f.delete(this);
+  public void visit(CreateEntryChange c) throws IOException, StopVisitingException {
+    if (shouldRevert(c)) {
+      Entry e = getAffectedEntry(c);
+      VirtualFile f = myGateway.findVirtualFile(e.getPath());
+      if (f != null) {
+        unregisterDelayedApplies(f);
+        f.delete(this);
+      }
+    }
 
     c.revertOn(myRoot);
+
+    checkShouldStop(c);
   }
 
   @Override
-  public void visit(ContentChange c) {
+  public void visit(ContentChange c) throws IOException, StopVisitingException {
     c.revertOn(myRoot);
 
-    Entry e = getAffectedEntry(c);
-    VirtualFile f = myGateway.findVirtualFile(e.getPath());
-    registerDelayedContentApply(f, e);
+    if (shouldRevert(c)) {
+      Entry e = getAffectedEntry(c);
+      VirtualFile f = myGateway.findVirtualFile(e.getPath());
+      registerDelayedContentApply(f, e);
+    }
+
+    checkShouldStop(c);
   }
 
   @Override
   public void visit(RenameChange c) throws IOException, StopVisitingException {
-    Entry e = getAffectedEntry(c);
-    VirtualFile f = myGateway.findVirtualFile(e.getPath());
+    if (shouldRevert(c)) {
+      Entry e = getAffectedEntry(c);
+      VirtualFile f = myGateway.findOrCreateFileSafely(e.getPath(), e.isDirectory());
+      c.revertOn(myRoot);
 
-    c.revertOn(myRoot);
+      String newName = getName(e);
+      VirtualFile existing = f.getParent().findChild(newName);
+      if (existing != null) {
+        existing.delete(this);
+      }
+      f.rename(this, newName);
+    }
+    else {
+      c.revertOn(myRoot);
+    }
 
-    f.rename(this, getName(e));
+    checkShouldStop(c);
   }
 
   @Override
   public void visit(ROStatusChange c) throws IOException, StopVisitingException {
-    Entry e = getAffectedEntry(c);
-    VirtualFile f = myGateway.findVirtualFile(e.getPath());
+    if (shouldRevert(c)) {
+      Entry e = getAffectedEntry(c);
+      VirtualFile f = myGateway.findOrCreateFileSafely(e.getPath(), e.isDirectory());
+      c.revertOn(myRoot);
 
-    c.revertOn(myRoot);
+      registerDelayedROStatusApply(f, e);
+    }
+    else {
+      c.revertOn(myRoot);
+    }
 
-    registerDelayedROStatusApply(f, e);
+    checkShouldStop(c);
   }
 
   @Override
-  public void visit(MoveChange c) throws IOException {
-    Entry e = getAffectedEntry(c, 1);
-    VirtualFile f = myGateway.findVirtualFile(e.getPath());
+  public void visit(MoveChange c) throws IOException, StopVisitingException {
+    if (shouldRevert(c)) {
+      Entry e = getAffectedEntry(c, 1);
+      VirtualFile f = myGateway.findOrCreateFileSafely(e.getPath(), e.isDirectory());
 
-    c.revertOn(myRoot);
-    String parentPath = getParentPath(getAffectedEntry(c));
-    VirtualFile parent = myGateway.findVirtualFile(parentPath);
+      c.revertOn(myRoot);
+      String parentPath = getParentPath(getAffectedEntry(c));
+      VirtualFile parent = myGateway.findOrCreateFileSafely(parentPath, true);
 
-    f.move(this, parent);
+      VirtualFile existing = parent.findChild(e.getName());
+      if (existing != null) existing.delete(this);
+      f.move(this, parent);
+    }
+    else {
+      c.revertOn(myRoot);
+    }
+
+    checkShouldStop(c);
   }
 
   @Override
-  public void visit(DeleteChange c) throws IOException {
+  public void visit(DeleteChange c) throws IOException, StopVisitingException {
     c.revertOn(myRoot);
-    Entry e = getAffectedEntry(c);
 
-    revertDeletion(e);
+    if (shouldRevert(c)) {
+      Entry e = getAffectedEntry(c);
+
+      revertDeletion(e);
+    }
+
+    checkShouldStop(c);
+  }
+
+  protected boolean shouldRevert(Change c) {
+    return true;
+  }
+
+  protected void checkShouldStop(Change c) throws StopVisitingException {
   }
 
   private void revertDeletion(Entry e) throws IOException {
-    VirtualFile parent = myGateway.findVirtualFile(getParentPath(e));
+    VirtualFile f = myGateway.findOrCreateFileSafely(e, e.getPath(), e.isDirectory());
     if (e.isDirectory()) {
-      parent.createChildDirectory(e, getName(e));
       for (Entry child : e.getChildren()) revertDeletion(child);
     }
     else {
-      VirtualFile f = parent.createChildData(e, getName(e));
       registerDelayedContentApply(f, e);
       registerDelayedROStatusApply(f, e);
     }

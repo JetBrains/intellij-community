@@ -66,6 +66,11 @@
     </component>
 
     <component>
+      <interface-class>com.intellij.openapi.command.undo.DocumentReferenceManager</interface-class>
+      <implementation-class>com.intellij.openapi.command.impl.DocumentReferenceManagerImpl</implementation-class>
+    </component>
+
+    <component>
       <interface-class>com.intellij.openapi.application.PathMacros</interface-class>
       <implementation-class>com.intellij.application.options.PathMacrosImpl</implementation-class>
     </component>

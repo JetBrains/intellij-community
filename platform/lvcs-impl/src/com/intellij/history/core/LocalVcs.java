@@ -18,6 +18,7 @@ import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.util.concurrency.JBLock;
 import com.intellij.util.concurrency.JBReentrantReadWriteLock;
 import com.intellij.util.concurrency.LockFactory;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
@@ -32,11 +33,12 @@ public class LocalVcs {
 
   protected final Storage myStorage;
 
+  private final List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
+
   private ChangeList myChangeList;
   private volatile int myEntryCounter;
   private Entry myRoot;
 
-  private Change myLastChange;
   private boolean wasModifiedAfterLastSave;
   private int myChangeSetDepth;
 
@@ -337,7 +339,7 @@ public class LocalVcs {
     addChangeToChangeList(c);
     endChangeSet(null);
 
-    myLastChange = c;
+    fireChange(c);
   }
 
   private void addChangeToChangeList(Change c) {
@@ -348,16 +350,6 @@ public class LocalVcs {
   @TestOnly
   public ChangeList getChangeList() {
     return myChangeList;
-  }
-
-  public Change getLastChange() {
-    readChangeSets();
-    try {
-      return myLastChange;
-    }
-    finally {
-      unreadChangeSets();
-    }
   }
 
   public boolean isBefore(Change before, Change after, boolean canBeEqual) {
@@ -443,7 +435,7 @@ public class LocalVcs {
   public void acceptRead(ChangeVisitor v) throws IOException {
     readAll();
     try {
-      myChangeList.getAcceptFun(myRoot, v, false).doAccept();
+      myChangeList.getAcceptFunc(myRoot, v, false).doAccept();
     }
     finally {
       unreadAll();
@@ -454,12 +446,26 @@ public class LocalVcs {
     ChangeList.AcceptFun acceptFun;
     readAll();
     try {
-      acceptFun = myChangeList.getAcceptFun(myRoot, v, true);
+      acceptFun = myChangeList.getAcceptFunc(myRoot, v, true);
     }
     finally {
       unreadAll();
     }
     acceptFun.doAccept();
+  }
+
+  public void addListener(Listener l) {
+    myListeners.add(l);
+  }
+
+  public void removeListener(Listener l) {
+    myListeners.add(l);
+  }
+
+  private void fireChange(Change c) {
+    for (Listener each : myListeners) {
+      each.onChange(c);
+    }
   }
 
   private long getCurrentTimestamp() {
@@ -522,5 +528,9 @@ public class LocalVcs {
     public Entry myRoot = new RootEntry();
     public int myEntryCounter = 0;
     public ChangeList myChangeList = new ChangeList();
+  }
+
+  public interface Listener {
+    void onChange(Change c);
   }
 }

@@ -56,7 +56,7 @@ public class SelectionReverter extends Reverter {
       }
     });
 
-    Document d = myGateway.getDocumentFor(myRightEntry.getPath());
+    Document d = myGateway.getDocument(myRightEntry.getPath());
 
     int from = d.getLineStartOffset(myFromLine);
     int to = d.getLineEndOffset(myToLine);

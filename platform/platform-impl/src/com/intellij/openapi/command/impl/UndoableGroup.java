@@ -23,7 +23,7 @@ class UndoableGroup {
 
   private String myCommandName;
   private boolean myComplex;
-  private int myCommandCounter;
+  private int myCommandTimestamp;
   private boolean myTransparentsOnly;
   private ArrayList<UndoableAction> myActions;
   private EditorAndState myStateBefore;
@@ -37,12 +37,12 @@ class UndoableGroup {
                        Project project,
                        EditorAndState stateBefore,
                        EditorAndState stateAfter,
-                       int commandCounter,
+                       int commandTimestamp,
                        UndoConfirmationPolicy undoConfirmationPolicy,
                        boolean transparentsOnly) {
     myCommandName = commandName;
     myComplex = isComplex;
-    myCommandCounter = commandCounter;
+    myCommandTimestamp = commandTimestamp;
     myActions = new ArrayList<UndoableAction>();
     myProject = project;
     myStateBefore = stateBefore;
@@ -156,7 +156,8 @@ class UndoableGroup {
   public Collection<DocumentReference> getAffectedDocuments() {
     Set<DocumentReference> result = new HashSet<DocumentReference>();
     for (UndoableAction action : myActions) {
-      result.addAll(Arrays.asList(action.getAffectedDocuments()));
+      DocumentReference[] refs = action.getAffectedDocuments();
+      if (refs != null) Collections.addAll(result, refs);
     }
     return result;
   }
@@ -181,8 +182,8 @@ class UndoableGroup {
     return myCommandName;
   }
 
-  public int getCommandCounter() {
-    return myCommandCounter;
+  public int getCommandTimestamp() {
+    return myCommandTimestamp;
   }
 
   public boolean askConfirmation() {
@@ -198,7 +199,7 @@ class UndoableGroup {
   }
 
   private boolean affectsMultiplePhysicalDocs() {
-    return CommandMerger.areMultiplePhisicalDocsAffected(getAffectedDocuments());
+    return CommandMerger.areMultiplePhysicalDocsAffected(getAffectedDocuments());
   }
 
   public boolean isTransparentsOnly() {

@@ -2,12 +2,13 @@ package com.intellij.history.integration.ui.models;
 
 import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.revisions.Difference;
-import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
-import com.intellij.history.integration.revertion.DirectoryReverter;
-import com.intellij.history.integration.revertion.RevisionReverter;
+import com.intellij.history.integration.revertion.DifferenceReverter;
+import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.history.integration.ui.views.DirectoryChange;
 import com.intellij.openapi.vfs.VirtualFile;
+
+import java.util.List;
 
 public class DirectoryHistoryDialogModel extends HistoryDialogModel {
   public DirectoryHistoryDialogModel(IdeaGateway gw, LocalVcs vcs, VirtualFile f) {
@@ -24,15 +25,11 @@ public class DirectoryHistoryDialogModel extends HistoryDialogModel {
   }
 
   @Override
-  protected RevisionReverter createRevisionReverter() {
-    return createRevisionReverter(getLeftEntry(), getRightEntry());
+  protected Reverter createRevisionReverter() {
+    return createRevisionReverter(getLeftRevision().getDifferencesWith(getRightRevision()));
   }
 
-  public RevisionReverter createRevisionReverter(DirectoryChangeModel m) {
-    return createRevisionReverter(m.getEntry(0), m.getEntry(1));
-  }
-
-  private RevisionReverter createRevisionReverter(Entry leftEntry, Entry rightEntry) {
-    return new DirectoryReverter(myVcs, myGateway, getLeftRevision(), leftEntry, rightEntry);
+  public Reverter createRevisionReverter(List<Difference> diffs) {
+    return new DifferenceReverter(myVcs, myGateway, diffs, getLeftRevision());
   }
 }

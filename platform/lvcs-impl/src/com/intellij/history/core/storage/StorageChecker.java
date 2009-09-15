@@ -68,7 +68,7 @@ public class StorageChecker {
     final Set<Content> allContents = new HashSet<Content>();
 
     try {
-      cl.getAcceptFun(root, new ChangeVisitor() {
+      cl.getAcceptFunc(root, new ChangeVisitor() {
         @Override
         public void visit(StructuralChange c) {
           allContents.addAll(c.getContentsToPurge());

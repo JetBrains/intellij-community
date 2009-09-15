@@ -96,6 +96,6 @@ public abstract class FileDifferenceModel {
   }
 
   protected Document getDocument() {
-    return myGateway.getDocumentFor(getRightEntry().getPath());
+    return myGateway.getDocument(getRightEntry().getPath());
   }
 }

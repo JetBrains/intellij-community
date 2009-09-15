@@ -1,7 +1,7 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.command.undo.DocumentReference;
-import com.intellij.openapi.command.undo.DocumentReferenceByDocument;
+import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.Key;
@@ -11,7 +11,10 @@ import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 
 class UndoRedoStacksHolder {
@@ -22,14 +25,13 @@ class UndoRedoStacksHolder {
   private final Map<DocumentReference, LinkedList<UndoableGroup>> myDocumentStacks = new HashMap<DocumentReference, LinkedList<UndoableGroup>>();
   private final WeakList<Document> myDocumentsWithStacks = new WeakList<Document>();
 
-
   public LinkedList<UndoableGroup> getStack(Document d) {
     return getStack(createReferenceOrGetOriginal(d));
   }
 
   private static DocumentReference createReferenceOrGetOriginal(Document d) {
     Document original = UndoManagerImpl.getOriginal(d);
-    return DocumentReferenceByDocument.createDocumentReference(original);
+    return DocumentReferenceManager.getInstance().create(original);
   }
 
   public LinkedList<UndoableGroup> getStack(@NotNull DocumentReference r) {
@@ -38,13 +40,12 @@ class UndoRedoStacksHolder {
 
   @Nullable
   public UndoableGroup getLastAction(@NotNull DocumentReference r) {
-
     LinkedList<UndoableGroup> documentStack = getStack(r);
 
     for (int i = myGlobalStack.size() - 1; i >= 0; i--) {
       UndoableGroup group = myGlobalStack.get(i);
       if (isSpecial(group)) {
-        if (documentStack.isEmpty() || documentStack.getLast().getCommandCounter() < group.getCommandCounter()) {
+        if (documentStack.isEmpty() || documentStack.getLast().getCommandTimestamp() < group.getCommandTimestamp()) {
           return group;
         } else {
           return documentStack.getLast();
@@ -80,7 +81,7 @@ class UndoRedoStacksHolder {
   private LinkedList<UndoableGroup> getStackForDocument(DocumentReference r) {
     // If document is not associated with file, we have to store its stack in document
     // itself to avoid memory leaks caused by holding stacks of all documents, ever created, here.
-    // And to know, what documents do exist now, we have to maintain soft reference list of them.
+    // And to know, what documents do exist now, we have to maintain weak reference list of them.
 
     Document d = r.getDocument();
     LinkedList<UndoableGroup> result = d.getUserData(STACK_IN_DOCUMENT_KEY);
@@ -159,7 +160,7 @@ class UndoRedoStacksHolder {
   public Set<DocumentReference> getAffectedDocuments() {
     Set<DocumentReference> result = new HashSet<DocumentReference>(myDocumentStacks.keySet());
     for (Document d : myDocumentsWithStacks) {
-      result.add(DocumentReferenceByDocument.createDocumentReference(d));
+      result.add(DocumentReferenceManager.getInstance().create(d));
     }
     return result;
   }
@@ -172,9 +173,9 @@ class UndoRedoStacksHolder {
     return result;
   }
 
-  public int getYoungestCommandAge(DocumentReference r) {
+  public int getLastCommandTimestamp(DocumentReference r) {
     LinkedList<UndoableGroup> stack = getStack(r);
     if (stack.isEmpty()) return 0;
-    return Math.max(stack.getFirst().getCommandCounter(), stack.getLast().getCommandCounter());
+    return Math.max(stack.getFirst().getCommandTimestamp(), stack.getLast().getCommandTimestamp());
   }
 }

@@ -13,42 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.command.undo;
+package com.intellij.openapi.command.impl;
 
+import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author max
- */
-public class DocumentReferenceByVirtualFile extends DocumentReference {
-  private final VirtualFile myFile;
-  private String myUrl = null;
+public class DocumentReferenceByVirtualFile implements DocumentReference {
+  private VirtualFile myFile;
 
-  public DocumentReferenceByVirtualFile(VirtualFile file) {
+  DocumentReferenceByVirtualFile(@NotNull VirtualFile file) {
     myFile = file;
   }
 
-  public void beforeFileDeletion(VirtualFile file) {
-    if (myFile != file) return;
-    if (!myFile.isValid()) return;
-    myUrl = file.getUrl();
+  @Nullable
+  public Document getDocument() {
+    assert myFile.isValid() : "should not be called on references to deleted files";
+    return FileDocumentManager.getInstance().getDocument(myFile);
   }
 
-  protected String getUrl() {
-    if (myFile.isValid())
-      return myFile.getUrl();
-    else
-      return myUrl;
-  }
-
+  @NotNull
   public VirtualFile getFile() {
     return myFile;
   }
 
-  public Document getDocument() {
-    if (!myFile.isValid()) return null;
-    return FileDocumentManager.getInstance().getDocument(myFile);
+  @Override
+  public String toString() {
+    return myFile.toString();
+  }
+
+  public void update(VirtualFile f) {
+    myFile = f;
   }
 }

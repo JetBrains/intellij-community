@@ -99,7 +99,7 @@ public class ChangeList {
     return result;
   }
 
-  public AcceptFun getAcceptFun(Entry root, ChangeVisitor v, boolean copyChangeList) throws IOException {
+  public AcceptFun getAcceptFunc(Entry root, ChangeVisitor v, boolean copyChangeList) throws IOException {
     return new AcceptFun(v, root.copy(), copyChangeList ? new ArrayList<Change>(myChanges) : myChanges);
   }
 
@@ -130,7 +130,7 @@ public class ChangeList {
   public List<Change> getChangesFor(Entry root, String path) {
     try {
       ChangeCollectingVisitor v = new ChangeCollectingVisitor(path);
-      getAcceptFun(root, v, false).doAccept();
+      getAcceptFunc(root, v, false).doAccept();
       return v.getResult();
     }
     catch (IOException ex) {

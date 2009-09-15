@@ -31,7 +31,7 @@ public class Paths {
   }
 
   public static String withoutRootIfUnder(String path, String root) {
-    if (!startsWith(path, root)) return null;
+    if (!isParent(root, path)) return null;
 
     path = path.substring(root.length());
     if (path.length() == 0) return "";
@@ -40,8 +40,8 @@ public class Paths {
     return path.substring(1);
   }
 
-  private static boolean startsWith(String path, String prefix) {
-    return myIsCaseSensitive ? path.startsWith(prefix) : StringUtil.startsWithIgnoreCase(path, prefix);
+  public static boolean isParent(String parent, String path) {
+    return myIsCaseSensitive ? path.startsWith(parent) : StringUtil.startsWithIgnoreCase(path, parent);
   }
 
   public static boolean equals(String p1, String p2) {

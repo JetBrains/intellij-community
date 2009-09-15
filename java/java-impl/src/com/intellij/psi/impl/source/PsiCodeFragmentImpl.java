@@ -2,7 +2,7 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.command.undo.DocumentReference;
-import com.intellij.openapi.command.undo.DocumentReferenceByDocument;
+import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.editor.Document;
@@ -66,7 +66,10 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
     clone.myOriginalFile = this;
     clone.myPseudoImports = new LinkedHashMap<String, String>(myPseudoImports);
     FileManager fileManager = ((PsiManagerEx)getManager()).getFileManager();
-    SingleRootFileViewProvider cloneViewProvider = (SingleRootFileViewProvider)fileManager.createFileViewProvider(new LightVirtualFile(getName(), getLanguage(), getText()), false);
+    SingleRootFileViewProvider cloneViewProvider = (SingleRootFileViewProvider)fileManager.createFileViewProvider(new LightVirtualFile(
+      getName(),
+      getLanguage(),
+      getText()), false);
     cloneViewProvider.forceCachedPsi(clone);
     clone.myViewProvider = cloneViewProvider;
     return clone;
@@ -76,7 +79,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
 
   @NotNull
   public FileViewProvider getViewProvider() {
-    if(myViewProvider != null) return myViewProvider;
+    if (myViewProvider != null) return myViewProvider;
     return super.getViewProvider();
   }
 
@@ -90,7 +93,6 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
   public FileType getFileType() {
     return StdFileTypes.JAVA;
   }
-
 
   public PsiElement getContext() {
     return myContext;
@@ -122,7 +124,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
 
   public void addImportsFromString(String imports) {
     StringTokenizer tokenizer = new StringTokenizer(imports, ",");
-    while(tokenizer.hasMoreTokens()){
+    while (tokenizer.hasMoreTokens()) {
       String qName = tokenizer.nextToken();
       String name = PsiNameHelper.getShortClassName(qName);
       myPseudoImports.put(name, qName);
@@ -182,11 +184,11 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
       }
     }
 
-
     IElementType i = myContentElementType;
     if (i == ElementType.TYPE_TEXT || i == ElementType.EXPRESSION_STATEMENT || i == ElementType.REFERENCE_TEXT) {
       return true;
-    } else {
+    }
+    else {
       processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
       if (lastParent == null) {
         // Parent element should not see our vars
@@ -223,8 +225,8 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
   private static class ImportClassUndoableAction implements UndoableAction {
     private final String myClassName;
     private final String myQName;
-    private final LinkedHashMap<String,String> myPseudoImports;
-    private final Document myDocument;
+    private final LinkedHashMap<String, String> myPseudoImports;
+    private final DocumentReference[] myReferences;
 
     public ImportClassUndoableAction(final String className,
                                      final String qName,
@@ -232,11 +234,11 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
                                      final LinkedHashMap<String, String> pseudoImportsMap) {
       myClassName = className;
       myQName = qName;
-      myDocument = document;
       myPseudoImports = pseudoImportsMap;
+      myReferences = new DocumentReference[]{DocumentReferenceManager.getInstance().create(document)};
     }
 
-    public boolean isComplex() {
+    public boolean shouldConfirmUndo() {
       return false;
     }
 
@@ -249,8 +251,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
     }
 
     public DocumentReference[] getAffectedDocuments() {
-      Document document = myDocument;
-      return new DocumentReference[]{DocumentReferenceByDocument.createDocumentReference(document)};
+      return myReferences;
     }
   }
 

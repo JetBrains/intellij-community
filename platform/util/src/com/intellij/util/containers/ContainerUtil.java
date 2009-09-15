@@ -343,20 +343,29 @@ public class ContainerUtil {
   }
 
   public static <T> List<T> concat(@NotNull final List<? extends T> list1, @NotNull final List<? extends T> list2) {
+    return concat(new List[]{list1, list2});
+  }
+
+  public static <T> List<T> concat(@NotNull final List<? extends T>... lists) {
+    int size = 0;
+    for (List<? extends T> each : lists) {
+      size += each.size();
+    }
+    final int finalSize = size;
     return new AbstractList<T>() {
       public T get(final int index) {
-        T t;
-        if (index < list1.size()) {
-          t = list1.get(index);
+        if (index >= 0 && index < finalSize) {
+          int from = 0;
+          for (List<? extends T> each : lists) {
+            if (from <= index && index < from + each.size()) return each.get(index - from);
+            from += each.size();
+          }
         }
-        else {
-          t = list2.get(index - list1.size());
-        }
-        return t;
+        throw new IndexOutOfBoundsException("index: " + index + "size: " + size());
       }
 
       public int size() {
-        return list1.size() + list2.size();
+        return finalSize;
       }
     };
   }
@@ -413,7 +422,7 @@ public class ContainerUtil {
   public static <T,V> List<V> mapNotNull(T[] array, Function<T, V> mapping) {
     return mapNotNull(Arrays.asList(array), mapping);
   }
-  
+
   public static <T,V> List<V> mapNotNull(Iterable<? extends T> iterable, Function<T, V> mapping) {
     List<V> result = new ArrayList<V>();
     for (T t : iterable) {
@@ -505,7 +514,7 @@ public class ContainerUtil {
   public static <T> boolean or(T[] iterable, Condition<T> condition) {
     return or(Arrays.asList(iterable), condition);
   }
-  
+
   public static <T> boolean or(Iterable<T> iterable, Condition<T> condition) {
     for (final T t : iterable) {
       if (condition.value(t)) return true;

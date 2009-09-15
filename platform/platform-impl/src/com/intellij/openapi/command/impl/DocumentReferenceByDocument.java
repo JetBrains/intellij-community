@@ -13,25 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.command.undo;
+package com.intellij.openapi.command.impl;
 
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.command.undo.DocumentReference;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @see com.intellij.openapi.command.undo.UndoManager#undoableActionPerformed(UndoableAction) 
- */
-public interface UndoableAction {
-  void undo() throws UnexpectedUndoException;
-  void redo() throws UnexpectedUndoException;
+public class DocumentReferenceByDocument implements DocumentReference {
+  private final Document myDocument;
 
-  boolean shouldConfirmUndo();
+  DocumentReferenceByDocument(@NotNull Document document) {
+    myDocument = document;
+  }
 
-  /**
-   * Returns the documents, affected by this action.
-   * If the returned value is null, all documents are "affected".
-   * The action can be undone if all of its affected documents are either
-   * not affected by any of further actions or all of such actions are undone.
-   */
+  @NotNull
+  public Document getDocument() {
+    return myDocument;
+  }
+
   @Nullable
-  DocumentReference[] getAffectedDocuments();
+  public VirtualFile getFile() {
+    return null;
+  }
 }

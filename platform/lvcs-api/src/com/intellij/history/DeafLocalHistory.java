@@ -18,10 +18,6 @@ public class DeafLocalHistory extends LocalHistory {
     return false;
   }
 
-  public Checkpoint putCheckpoint() {
-    return Checkpoint.NULL_INSTANCE;
-  }
-
   public Label putSystemLabel(final String name, final int color) {
     return Label.NULL_INSTANCE;
   }

@@ -41,10 +41,6 @@ public abstract class LocalHistory implements SettingsSavingComponent {
     return getInstance(p).putSystemLabel(name, color);
   }
 
-  public static Checkpoint putCheckpoint(Project p) {
-    return getInstance(p).putCheckpoint();
-  }
-
   public static byte[] getByteContent(Project p, VirtualFile f, FileRevisionTimestampComparator c) {
     return getInstance(p).getByteContent(f, c);
   }
@@ -72,8 +68,6 @@ public abstract class LocalHistory implements SettingsSavingComponent {
   public Label putSystemLabel(String name) {
     return putSystemLabel(name, -1);
   }
-
-  public abstract Checkpoint putCheckpoint();
 
   public abstract byte[] getByteContent(VirtualFile f, FileRevisionTimestampComparator c);
 

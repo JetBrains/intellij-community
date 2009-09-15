@@ -23,15 +23,17 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
-import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.HashSet;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Set;
 
 public class UndoManagerImpl extends UndoManager implements ProjectComponent, ApplicationComponent, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.impl.UndoManagerImpl");
@@ -60,7 +62,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   private CurrentEditorProvider myCurrentEditorProvider;
 
   private Project myCurrentActionProject = DummyProject.getInstance();
-  private int myCommandCounter = 1;
+  private int myCommandTimestamp = 1;
   private final CommandProcessor myCommandProcessor;
   private final EditorFactory myEditorFactory;
   private final VirtualFileManager myVirtualFileManager;
@@ -91,7 +93,6 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
                          VirtualFileManager virtualFileManager) {
     this(null, application, commandProcessor, editorFactory, virtualFileManager, null);
   }
-
 
   private void init(Application application) {
     if (myProject == null || application.isUnitTestMode() && !myProject.isDefault()) {
@@ -153,8 +154,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     };
     myCommandProcessor.addCommandListener(commandListener, this);
 
-    DocumentEditingUndoProvider documentEditingUndoProvider = new DocumentEditingUndoProvider(myProject, myEditorFactory);
-    Disposer.register(this, documentEditingUndoProvider);
+    Disposer.register(this, new DocumentUndoProvider(myProject, myEditorFactory));
 
     myUndoProviders = myProject == null
                       ? Extensions.getExtensions(UndoProvider.EP_NAME)
@@ -165,14 +165,13 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
       }
     }
 
-    MyBeforeDeletionListener beforeFileDeletionListener = new MyBeforeDeletionListener();
-    myVirtualFileManager.addVirtualFileListener(beforeFileDeletionListener, this);
+    //myVirtualFileManager.addVirtualFileListener(new MyFileListener(), this);
   }
 
   private void onCommandFinished(final Project project, final String commandName, final Object commandGroupId) {
     commandFinished(commandName, commandGroupId);
     if (myCommandLevel == 0) {
-      for(UndoProvider undoProvider: myUndoProviders) {
+      for (UndoProvider undoProvider : myUndoProviders) {
         undoProvider.commandFinished(project);
       }
       myCurrentActionProject = DummyProject.getInstance();
@@ -183,7 +182,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
   private void onCommandStarted(final Project project, UndoConfirmationPolicy undoConfirmationPolicy) {
     if (myCommandLevel == 0) {
-      for(UndoProvider undoProvider: myUndoProviders) {
+      for (UndoProvider undoProvider : myUndoProviders) {
         undoProvider.commandStarted(project);
       }
       myCurrentActionProject = project;
@@ -204,16 +203,15 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   }
 
   public void markCommandAsNonUndoable(@Nullable final VirtualFile affectedFile) {
+    final DocumentReference[] refs = affectedFile == null
+                                     ? null : new DocumentReference[]{DocumentReferenceManager.getInstance().create(affectedFile)};
     undoableActionPerformed(new NonUndoableAction() {
-      public boolean isComplex() {
+      public boolean shouldConfirmUndo() {
         return false;
       }
 
       public DocumentReference[] getAffectedDocuments() {
-        if (affectedFile != null) {
-          return new DocumentReference[] { new DocumentReferenceByVirtualFile(affectedFile) };
-        }
-        return DocumentReference.EMPTY_ARRAY;
+        return refs;
       }
     });
   }
@@ -274,7 +272,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   }
 
   public void clearUndoRedoQueue(Document document) {
-    clearUndoRedoQueue(DocumentReferenceByDocument.createDocumentReference(document));
+    clearUndoRedoQueue(DocumentReferenceManager.getInstance().create(document));
   }
 
   private void clearUndoRedoQueue(DocumentReference docRef) {
@@ -286,57 +284,53 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   }
 
   public void clearUndoRedoQueue(VirtualFile file) {
-    clearUndoRedoQueue(new DocumentReferenceByVirtualFile(file));
+    clearUndoRedoQueue(DocumentReferenceManager.getInstance().create(file));
   }
 
   public void compact() {
-    if (myCurrentOperationState == NONE && myCommandCounter % COMMAND_TO_RUN_COMPACT == 0) {
+    if (myCurrentOperationState == NONE && myCommandTimestamp % COMMAND_TO_RUN_COMPACT == 0) {
       doCompact();
     }
   }
 
   private void doCompact() {
-    Set<DocumentReference> docsOnHold = new HashSet<DocumentReference>(myUndoStacksHolder.getAffectedDocuments());
-    docsOnHold.addAll(myRedoStacksHolder.getAffectedDocuments());
+    Collection<DocumentReference> refs = collectReferencesWithoutMergers();
 
-    docsOnHold.removeAll(myUndoStacksHolder.getGlobalStackAffectedDocuments());
-    docsOnHold.removeAll(myRedoStacksHolder.getGlobalStackAffectedDocuments());
-
-    Set<DocumentReference> openedDocs = new HashSet<DocumentReference>();
-    for (DocumentReference docRef : docsOnHold) {
-      final VirtualFile file = docRef.getFile();
-      if (file != null) {
-        if (myProject != null && FileEditorManager.getInstance(myProject).isFileOpen(file)) {
-          openedDocs.add(docRef);
+    Collection<DocumentReference> openDocs = new HashSet<DocumentReference>();
+    for (DocumentReference each : refs) {
+      VirtualFile file = each.getFile();
+      if (file == null) {
+        Document document = each.getDocument();
+        if (document != null && EditorFactory.getInstance().getEditors(document, myProject).length > 0) {
+          openDocs.add(each);
         }
       }
       else {
-        Document document = docRef.getDocument();
-        if (document != null && EditorFactory.getInstance().getEditors(document, myProject).length > 0) {
-          openedDocs.add(docRef);
+        if (myProject != null && FileEditorManager.getInstance(myProject).isFileOpen(file)) {
+          openDocs.add(each);
         }
       }
     }
-    docsOnHold.removeAll(openedDocs);
+    refs.removeAll(openDocs);
 
-    if (docsOnHold.size() <= FREE_QUEUES_LIMIT) return;
+    if (refs.size() <= FREE_QUEUES_LIMIT) return;
 
-    final DocumentReference[] freeDocs = docsOnHold.toArray(new DocumentReference[docsOnHold.size()]);
-    Arrays.sort(freeDocs, new Comparator<DocumentReference>() {
-      public int compare(DocumentReference docRef1, DocumentReference docRef2) {
-        return getRefAge(docRef1) - getRefAge(docRef2);
+    DocumentReference[] backSorted = refs.toArray(new DocumentReference[refs.size()]);
+    Arrays.sort(backSorted, new Comparator<DocumentReference>() {
+      public int compare(DocumentReference a, DocumentReference b) {
+        return getLastCommandTimestamp(a) - getLastCommandTimestamp(b);
       }
     });
 
-    for (int i = 0; i < freeDocs.length - FREE_QUEUES_LIMIT; i++) {
-      DocumentReference doc = freeDocs[i];
-      if (getRefAge(doc) + COMMANDS_TO_KEEP_LIVE_QUEUES > myCommandCounter) break;
-      clearUndoRedoQueue(doc);
+    for (int i = 0; i < backSorted.length - FREE_QUEUES_LIMIT; i++) {
+      DocumentReference each = backSorted[i];
+      if (getLastCommandTimestamp(each) + COMMANDS_TO_KEEP_LIVE_QUEUES > myCommandTimestamp) break;
+      clearUndoRedoQueue(each);
     }
   }
 
-  private int getRefAge(DocumentReference ref) {
-    return Math.max(myUndoStacksHolder.getYoungestCommandAge(ref), myRedoStacksHolder.getYoungestCommandAge(ref));
+  private int getLastCommandTimestamp(DocumentReference ref) {
+    return Math.max(myUndoStacksHolder.getLastCommandTimestamp(ref), myRedoStacksHolder.getLastCommandTimestamp(ref));
   }
 
   public void undoableActionPerformed(UndoableAction action) {
@@ -417,47 +411,39 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
       }
     }
 
-    DocumentReference[] documentReferences = getDocumentReferences(editor);
+    Set<DocumentReference> refs = getDocumentReferences(editor);
 
-    if (documentReferences.length != 0) {
-      for (DocumentReference ref : documentReferences) {
-        if (shouldCheckMerger) {
-          if (myMerger != null && (myMerger.hasChangesOf(ref) || myMerger.isComplex() && myMerger.getAffectedDocuments().isEmpty())) {
-            return true;
-          }
-        }
-
-        if (stackHolder.hasUndoableActions(ref)) {
-          return true;
-        }
-      }
-
-      return false;
-    }
-    else {
+    if (refs.isEmpty()) {
       if (shouldCheckMerger) {
         if (myMerger != null && myMerger.isComplex() && !myMerger.isEmpty()) return true;
       }
-
       return !stackHolder.getGlobalStack().isEmpty();
     }
+
+    for (DocumentReference each : refs) {
+      if (shouldCheckMerger) {
+        if (myMerger != null && (myMerger.hasChangesOf(each) || (myMerger.isComplex() && myMerger.getAffectedDocuments().isEmpty()))) {
+          return true;
+        }
+      }
+      if (stackHolder.hasUndoableActions(each)) return true;
+    }
+    return false;
   }
 
-  static DocumentReference[] getDocumentReferences(FileEditor editor) {
-    List<DocumentReference> documentReferences = new ArrayList<DocumentReference>();
+  public static Set<DocumentReference> getDocumentReferences(FileEditor editor) {
+    Set<DocumentReference> result = new THashSet<DocumentReference>();
     Document[] documents = editor == null ? null : TextEditorProvider.getDocuments(editor);
-
     if (documents != null) {
-      for (Document d : documents) {
-        documentReferences.add(DocumentReferenceByDocument.createDocumentReference(getOriginal(d)));
+      for (Document each : documents) {
+        Document original = getOriginal(each);
+        // KirillK : in AnAction.update we may have an editor with an invalid file 
+        VirtualFile f = FileDocumentManager.getInstance().getFile(each);
+        if (f != null && !f.isValid()) continue;
+        result.add(DocumentReferenceManager.getInstance().create(original));
       }
     }
-
-    if (editor instanceof DocumentReferenceEditor) {
-      documentReferences.addAll(Arrays.asList(((DocumentReferenceEditor) editor).getDocumentReferences()));
-    }
-
-    return documentReferences.toArray(new DocumentReference[documentReferences.size()]);
+    return result;
   }
 
   public boolean isActive() {
@@ -520,48 +506,12 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     return myCommandLevel > 0;
   }
 
-  public boolean documentWasChanged(DocumentReference docRef) {
-    if (myCurrentMerger != null && myCurrentMerger.hasChangesOf(docRef)) return true;
-    if (myMerger != null && myMerger.hasChangesOf(docRef)) return true;
-    if (!myUndoStacksHolder.getStack(docRef).isEmpty()) return true;
-
-    LinkedList<UndoableGroup> globalStack = myUndoStacksHolder.getGlobalStack();
-    for (final UndoableGroup group : globalStack) {
-      Collection<DocumentReference> affectedDocuments = group.getAffectedDocuments();
-      if (affectedDocuments.contains(docRef)) return true;
-    }
-
-    return false;
+  public boolean documentWasChanged(DocumentReference ref) {
+    return collectReferencesWithoutRedo().contains(ref);
   }
 
-  public int getCommandCounterAndInc() {
-    return ++myCommandCounter;
-  }
-
-  public DocumentReference findInvalidatedReferenceByUrl(String url) {
-    DocumentReference result = findInvalidatedReferenceByUrl(myUndoStacksHolder.getAffectedDocuments(), url);
-    if (result != null) return result;
-    result = findInvalidatedReferenceByUrl(myRedoStacksHolder.getAffectedDocuments(), url);
-    if (result != null) return result;
-    result = findInvalidatedReferenceByUrl(myRedoStacksHolder.getGlobalStackAffectedDocuments(), url);
-    if (result != null) return result;
-    if (myMerger != null) {
-      result = findInvalidatedReferenceByUrl(myMerger.getAffectedDocuments(), url);
-      if (result != null) return result;
-    }
-    if (myCurrentMerger != null) {
-      result = findInvalidatedReferenceByUrl(myCurrentMerger.getAffectedDocuments(), url);
-      if (result != null) return result;
-    }
-    return null;
-  }
-
-  private static DocumentReference findInvalidatedReferenceByUrl(Collection<DocumentReference> collection, String url) {
-    for (final DocumentReference documentReference : collection) {
-      if (documentReference.equalsByUrl(url)) return documentReference;
-    }
-    return null;
-
+  public int nextCommandTimestamp() {
+    return ++myCommandTimestamp;
   }
 
   static Document getOriginal(Document document) {
@@ -573,22 +523,26 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     return d.getUserData(FragmentContent.ORIGINAL_DOCUMENT) != null;
   }
 
-  private class MyBeforeDeletionListener extends VirtualFileAdapter {
-    public void beforeFileDeletion(VirtualFileEvent event) {
-      VirtualFile file = event.getFile();
-      beforeFileDeletion(file, myUndoStacksHolder.getAffectedDocuments());
-      beforeFileDeletion(file, myUndoStacksHolder.getGlobalStackAffectedDocuments());
-      beforeFileDeletion(file, myRedoStacksHolder.getAffectedDocuments());
-      beforeFileDeletion(file, myRedoStacksHolder.getGlobalStackAffectedDocuments());
-      if (myMerger != null) beforeFileDeletion(file, myMerger.getAffectedDocuments());
-      if (myCurrentMerger != null) beforeFileDeletion(file, myCurrentMerger.getAffectedDocuments());
-    }
+  private Collection<DocumentReference> collectReferencesWithoutRedo() {
+    return doCollectReferences(false, true);
+  }
 
-    private void beforeFileDeletion(VirtualFile file, Collection<DocumentReference> docs) {
-      for (final DocumentReference documentReference : docs) {
-        documentReference.beforeFileDeletion(file);
-      }
+  private Collection<DocumentReference> collectReferencesWithoutMergers() {
+    return doCollectReferences(true, false);
+  }
 
+  private Collection<DocumentReference> doCollectReferences(boolean collectRedo, boolean collectMergers) {
+    Set<DocumentReference> result = new THashSet<DocumentReference>();
+    result.addAll(myUndoStacksHolder.getAffectedDocuments());
+    result.addAll(myUndoStacksHolder.getGlobalStackAffectedDocuments());
+    if (collectRedo) {
+      result.addAll(myRedoStacksHolder.getAffectedDocuments());
+      result.addAll(myRedoStacksHolder.getGlobalStackAffectedDocuments());
     }
+    if (collectMergers) {
+      if (myMerger != null) result.addAll(myMerger.getAffectedDocuments());
+      if (myCurrentMerger != null) result.addAll(myCurrentMerger.getAffectedDocuments());
+    }
+    return result;
   }
 }

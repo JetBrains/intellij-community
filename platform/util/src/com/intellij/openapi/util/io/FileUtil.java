@@ -674,6 +674,10 @@ public class FileUtil {
     return SystemInfo.isFileSystemCaseSensitive? path1.compareTo(path2) : path1.compareToIgnoreCase(path2);
   }
 
+  public static int pathHashCode(String path) {
+    return SystemInfo.isFileSystemCaseSensitive? path.hashCode() : path.toLowerCase().hashCode();
+  }
+
   @NotNull
   public static String getExtension(@NotNull String fileName) {
     int index = fileName.lastIndexOf('.');

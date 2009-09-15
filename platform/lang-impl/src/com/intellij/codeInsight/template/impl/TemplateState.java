@@ -14,7 +14,7 @@ import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.DocumentReference;
-import com.intellij.openapi.command.undo.DocumentReferenceByDocument;
+import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -213,6 +213,10 @@ public class TemplateState implements Disposable {
   public void start(TemplateImpl template) {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
+    final DocumentReference[] refs = myDocument == null
+                                     ? null
+                                     : new DocumentReference[] {DocumentReferenceManager.getInstance().create(myDocument) };
+
     UndoManager.getInstance(myProject).undoableActionPerformed(
       new UndoableAction() {
         public void undo() {
@@ -231,11 +235,10 @@ public class TemplateState implements Disposable {
         }
 
         public DocumentReference[] getAffectedDocuments() {
-          if (myDocument == null) return new DocumentReference[0];
-          return new DocumentReference[]{DocumentReferenceByDocument.createDocumentReference(myDocument)};
+          return refs;
         }
 
-        public boolean isComplex() {
+        public boolean shouldConfirmUndo() {
           return false;
         }
       }

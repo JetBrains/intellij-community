@@ -183,10 +183,10 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
         }
 
         public DocumentReference[] getAffectedDocuments() {
-          return DocumentReference.EMPTY_ARRAY;
+          return null;
         }
 
-        public boolean isComplex() {
+        public boolean shouldConfirmUndo() {
           return true;
         }
       });

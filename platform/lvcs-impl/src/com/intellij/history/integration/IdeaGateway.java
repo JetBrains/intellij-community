@@ -4,6 +4,7 @@ import com.intellij.CommonBundle;
 import com.intellij.history.Clock;
 import com.intellij.history.core.ContentFactory;
 import com.intellij.history.core.LocalVcs;
+import com.intellij.history.core.Paths;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -19,7 +20,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 
-import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -94,12 +95,24 @@ public class IdeaGateway {
     return getFileSystem().findFileByPath(path);
   }
 
-  public VirtualFile findOrCreateDirectory(String path) {
-    File f = new File(path);
-    if (!f.exists()) f.mkdirs();
+  public VirtualFile findOrCreateFileSafely(String path, boolean isDirectory) throws IOException {
+    return findOrCreateFileSafely(this, path, isDirectory);
+  }
 
-    getFileSystem().refresh(false);
-    return getFileSystem().findFileByPath(path);
+  public VirtualFile findOrCreateFileSafely(Object requestor, String path, boolean isDirectory) throws IOException {
+    VirtualFile f = findVirtualFile(path);
+    if (f != null && f.isDirectory() != isDirectory) {
+      f.delete(this);
+      f = null;
+    }
+    if (f == null) {
+      VirtualFile parent = findOrCreateFileSafely(Paths.getParentOf(path), true);
+      String name = Paths.getNameOf(path);
+      f = isDirectory
+          ? parent.createChildDirectory(requestor, name)
+          : parent.createChildData(requestor, name);
+    }
+    return f;
   }
 
   public List<VirtualFile> getAllFilesFrom(String path) {
@@ -121,11 +134,27 @@ public class IdeaGateway {
   public void registerUnsavedDocuments(LocalVcs vcs) {
     vcs.beginChangeSet();
     for (Document d : getUnsavedDocuments()) {
-      VirtualFile f = getDocumentFile(d);
+      VirtualFile f = getFile(d);
       if (shouldNotRegister(f)) continue;
-      vcs.changeFileContent(f.getPath(), contentFactoryFor(d), Clock.getCurrentTimestamp());
+      registerDocumentContents(vcs, f, d);
     }
     vcs.endChangeSet(null);
+  }
+
+  public void registerUnsavedDocuments(LocalVcs vcs, VirtualFile f) {
+    if (shouldNotRegister(f)) return;
+    if (f.isDirectory()) {
+      for (VirtualFile each : f.getChildren()) {
+        registerUnsavedDocuments(vcs, each);
+      }
+    }
+    else {
+      registerDocumentContents(vcs, f, getDocument(f));
+    }
+  }
+
+  private void registerDocumentContents(LocalVcs vcs, VirtualFile f, Document d) {
+    vcs.changeFileContent(f.getPath(), contentFactoryFor(d), Clock.getCurrentTimestamp());
   }
 
   private boolean shouldNotRegister(VirtualFile f) {
@@ -151,7 +180,7 @@ public class IdeaGateway {
 
   protected byte[] bytesFromDocument(Document d) {
     try {
-      return d.getText().getBytes(getDocumentFile(d).getCharset().name());
+      return d.getText().getBytes(getFile(d).getCharset().name());
     }
     catch (UnsupportedEncodingException e) {
       return d.getText().getBytes();
@@ -171,11 +200,6 @@ public class IdeaGateway {
     }
   }
 
-  public Document getDocumentFor(String path) {
-    VirtualFile f = findVirtualFile(path);
-    return getDocManager().getDocument(f);
-  }
-
   public void saveAllUnsavedDocuments() {
     getDocManager().saveAllDocuments();
   }
@@ -184,8 +208,16 @@ public class IdeaGateway {
     return getDocManager().getUnsavedDocuments();
   }
 
-  protected VirtualFile getDocumentFile(Document d) {
+  protected VirtualFile getFile(Document d) {
     return getDocManager().getFile(d);
+  }
+
+  protected Document getDocument(VirtualFile f) {
+    return getDocManager().getDocument(f);
+  }
+
+  public Document getDocument(String path) {
+    return getDocument(findVirtualFile(path));
   }
 
   public FileType getFileType(String fileName) {

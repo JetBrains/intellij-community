@@ -144,7 +144,8 @@ public class BasicsTest extends LocalVcsPerformanceTestCase {
   @Test
   public void testCalculatingChangeChains() {
     vcs.createDirectory("root");
-    final Change c = vcs.getLastChange();
+    Change lastChangeSet = vcs.getChangeList().getChanges().get(0);
+    final Change c = lastChangeSet.getChanges().get(lastChangeSet.getChanges().size() -1);
     createChildren("root", 5);
 
     assertExecutionTime(50, new RunnableAdapter() {
