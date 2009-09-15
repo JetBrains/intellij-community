@@ -34,7 +34,15 @@ class DefaultStateSerializer {
       JDOMExternalizable jdomExternalizable = (JDOMExternalizable)state;
 
       final Element element = new Element("temp_element");
-      jdomExternalizable.writeExternal(element);
+      try {
+        jdomExternalizable.writeExternal(element);
+      }
+      catch (WriteExternalException e) {
+        throw e;
+      }catch (Throwable e) {
+        LOG.info("Unable to serialize component state!", e);
+        return new Element("empty");
+      }
       return element;
     }
     else {
