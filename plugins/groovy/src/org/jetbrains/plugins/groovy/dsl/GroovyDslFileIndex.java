@@ -25,14 +25,13 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.psi.PsiFile;
@@ -43,7 +42,6 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.unscramble.UnscrambleDialog;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.indexing.*;
@@ -57,6 +55,8 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 import javax.swing.event.HyperlinkEvent;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -309,13 +309,16 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   }
 
   private static void invokeDslErrorPopup(Throwable e, final Project project, VirtualFile vfile) {
-    final StackTraceElement[] elements = e.getStackTrace();
+    final StringWriter writer = new StringWriter();
+    e.printStackTrace(new PrintWriter(writer));
 
     ApplicationManager.getApplication().getMessageBus().syncPublisher(Notifications.TOPIC).notify(
       new Notification("Groovy DSL parsing", "DSL script execution error",
                        "<p>" + e.getMessage() + "</p><p><a href=\"\">Click here to investigate.</a></p>", NotificationType.ERROR, new NotificationListener() {
           public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-            suggestAnalyzeTrace(project, elements);
+            final UnscrambleDialog dialog = new UnscrambleDialog(project);
+            dialog.setText(writer.toString());
+            dialog.show();
             notification.expire();
           }
         })
@@ -324,13 +327,4 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     disableFile(vfile);
   }
 
-  private static void suggestAnalyzeTrace(Project project, StackTraceElement[] elements) {
-    final UnscrambleDialog dialog = new UnscrambleDialog(project);
-    dialog.setText(StringUtil.join(elements, new Function<StackTraceElement, String>() {
-      public String fun(StackTraceElement stackTraceElement) {
-        return stackTraceElement.toString();
-      }
-    }, "\n"));
-    dialog.show();
-  }
 }
