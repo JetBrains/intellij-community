@@ -39,7 +39,9 @@ public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<
 
       if (weight1 != null) {
         final int result = weight1.compareTo(weight2);
-        if (result != 0) return result;
+        if (result != 0) {
+          return result;
+        }
       }
     }
     myComputedWeighs = comparable.myComputedWeighs;

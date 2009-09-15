@@ -746,6 +746,9 @@
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferShorterWeigher" id="shorter"
              order="after fieldsAndGetters"/>
 
+    <weigher key="completionSorting" implementationClass="com.intellij.codeInsight.completion.PreferLessParametersWeigher" id="lessParams"
+             order="after sLookupString, before sProximity"/>
+
     <completion.skip implementation="com.intellij.codeInsight.completion.SkipAbstractExpectedTypeWeigher" id="skipAbstract"/>
 
 

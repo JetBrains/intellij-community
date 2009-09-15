@@ -13,7 +13,8 @@ import org.jetbrains.annotations.Nullable;
  *
  * Known key values include:
  *  <li> "proximity" to measure proximity level of an element in a particular place (location)
- *  <li> "completion" ({@link com.intellij.codeInsight.completion.CompletionService#WEIGHER_KEY}) - to compare lookup elements
+ *  <li> "completion" ({@link com.intellij.codeInsight.completion.CompletionService#RELEVANCE_KEY}) - to compare lookup elements by relevance and move preferred items to the top
+ *  <li> "completionSorting" ({@link com.intellij.codeInsight.completion.CompletionService#SORTING_KEY}) - to sort lookup elements across the lookup list
  *
  * Your weigher should return {@link Comparable} instances of the same type.   
  *

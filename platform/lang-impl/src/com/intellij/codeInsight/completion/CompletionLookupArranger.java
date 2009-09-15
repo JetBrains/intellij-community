@@ -1,10 +1,6 @@
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementDecorator;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupArranger;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.lookup.impl.LookupItemWeightComparable;
 import com.intellij.openapi.util.Key;
@@ -12,8 +8,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.WeighingService;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
-import com.intellij.psi.util.proximity.PsiProximityComparator;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -21,8 +15,9 @@ import java.util.List;
 
 public class CompletionLookupArranger extends LookupArranger {
   public static final Key<LookupItemWeightComparable> RELEVANCE_KEY = Key.create("RELEVANCE_KEY");
-  @NonNls public static final String SELECTED = "selected";
-  @NonNls public static final String IGNORED = "ignored";
+  private static final Key<Comparable> SORTING_KEY = Key.create("SORTING_KEY");
+  private static final String SELECTED = "selected";
+  static final String IGNORED = "ignored";
   private final CompletionLocation myLocation;
   public static final Key<Comparable[]> WEIGHT = Key.create("WEIGHT");
 
@@ -32,39 +27,13 @@ public class CompletionLookupArranger extends LookupArranger {
 
   @Override
   public void sortItems(List<LookupElement> items) {
-    final PsiProximityComparator proximityComparator = new PsiProximityComparator(myLocation.getCompletionParameters().getPosition());
     Collections.sort(items, new Comparator<LookupElement>() {
       public int compare(LookupElement o1, LookupElement o2) {
-        LookupElement c1 = getCoreElement(o1);
-        LookupElement c2 = getCoreElement(o2);
-
-        if (c1 instanceof LookupItem && c2 instanceof LookupItem) {
-          double priority1 = ((LookupItem)c1).getPriority();
-          double priority2 = ((LookupItem)c2).getPriority();
-          if (priority1 > priority2) return -1;
-          if (priority2 > priority1) return 1;
-        }
-
-        int grouping1 = c1.getGrouping();
-        int grouping2 = c2.getGrouping();
-        if (grouping1 > grouping2) return -1;
-        if (grouping2 > grouping1) return 1;
-
-        int stringCompare = o1.getLookupString().compareToIgnoreCase(o2.getLookupString());
-        if (stringCompare != 0) return stringCompare;
-
-        return proximityComparator.compare(o1.getObject(), o2.getObject());
+        //noinspection unchecked
+        return getSortingWeight(o1).compareTo(getSortingWeight(o2));
       }
     });
   }
-
-  private static LookupElement getCoreElement(LookupElement element) {
-    while (element instanceof LookupElementDecorator) {
-      element = ((LookupElementDecorator) element).getDelegate();
-    }
-    return element;
-  }
-
 
   public void itemSelected(LookupElement item, final Lookup lookup) {
     final StatisticsManager manager = StatisticsManager.getInstance();
@@ -105,12 +74,22 @@ public class CompletionLookupArranger extends LookupArranger {
     return info.getContext() + "###" + info.getValue();
   }
 
-  public Comparable[] getWeight(final LookupElement item) {
+  public Comparable[] getRelevanceWeight(final LookupElement item) {
     if (item.getUserData(WEIGHT) != null) return item.getUserData(WEIGHT);
 
-    final Comparable[] result = new Comparable[]{WeighingService.weigh(CompletionService.WEIGHER_KEY, item, myLocation)};
+    final Comparable[] result = new Comparable[]{WeighingService.weigh(CompletionService.RELEVANCE_KEY, item, myLocation)};
 
     item.putUserData(WEIGHT, result);
+
+    return result;
+  }
+
+  public Comparable getSortingWeight(final LookupElement item) {
+    if (item.getUserData(SORTING_KEY) != null) return item.getUserData(SORTING_KEY);
+
+    final Comparable result = WeighingService.weigh(CompletionService.SORTING_KEY, item, myLocation);
+
+    item.putUserData(SORTING_KEY, result);
 
     return result;
   }
@@ -143,7 +122,7 @@ public class CompletionLookupArranger extends LookupArranger {
     if (item.getUserData(RELEVANCE_KEY) != null) return item.getUserData(RELEVANCE_KEY);
 
     final double priority = item instanceof LookupItem ? ((LookupItem)item).getPriority() : 0;
-    final LookupItemWeightComparable result = new LookupItemWeightComparable(priority, getWeight(item));
+    final LookupItemWeightComparable result = new LookupItemWeightComparable(priority, getRelevanceWeight(item));
 
     item.putUserData(RELEVANCE_KEY, result);
 

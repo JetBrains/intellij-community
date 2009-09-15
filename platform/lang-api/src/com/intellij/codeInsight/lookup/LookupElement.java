@@ -77,6 +77,9 @@ public abstract class LookupElement extends UserDataHolderBase {
     presentation.setItemText(getLookupString());
   }
 
+  /**
+   * @deprecated use {@link com.intellij.codeInsight.completion.PrioritizedLookupElement}
+   */
   public int getGrouping() {
     return 0;
   }

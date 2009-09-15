@@ -29,9 +29,13 @@ public abstract class CompletionService {
   private static final Key<SoftReference<CompletionProcess>> INVOLVED_IN_COMPLETION_KEY = Key.create("INVOLVED_IN_COMPLETION_KEY");
   public static final Key<CompletionStatistician> STATISTICS_KEY = Key.create("completion");
   /**
-   * A "weigher" extension key (see {@link Weigher}) to sort completion items.
+   * A "weigher" extension key (see {@link Weigher}) to sort completion items by priority and move the heaviest to the top of the Lookup.
    */
-  public static final Key<CompletionWeigher> WEIGHER_KEY = Key.create("completion");
+  public static final Key<CompletionWeigher> RELEVANCE_KEY = Key.create("completion");
+  /**
+   * A "weigher" extension key (see {@link Weigher}) to sort the whole lookup descending.
+   */
+  public static final Key<CompletionWeigher> SORTING_KEY = Key.create("completionSorting");
 
   public static CompletionService getCompletionService() {
     return ServiceManager.getService(CompletionService.class);
