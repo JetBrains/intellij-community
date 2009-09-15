@@ -15,5 +15,7 @@
     <lang.braceMatcher language="yaml" implementationClass="org.jetbrains.yaml.YAMLPairedBraceMatcher"/>
     <lang.foldingBuilder language="yaml" implementationClass="org.jetbrains.yaml.folding.YAMLFoldingBuilder"/>
     <fileTypeFactory implementation="org.jetbrains.yaml.YAMLFileTypeLoader"/>
+    <lang.psiStructureViewFactory language="yaml" implementationClass="org.jetbrains.yaml.structureView.YAMLStructureViewFactory"/>
+    <fileTypeIndentOptionsProvider implementation="org.jetbrains.yaml.YAMLIndentationOptionsProvider"/>
   </extensions>
 </idea-plugin>
