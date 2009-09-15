@@ -106,6 +106,8 @@ public class FileBasedIndex implements ApplicationComponent {
 
   private static final int ALREADY_PROCESSED = 0x02;
   private static final String USE_MULTITHREADED_INDEXING = "fileIndex.multithreaded";
+  private @Nullable String myConfigPath;
+  private @Nullable String mySystemPath;
 
   public void requestReindex(final VirtualFile file) {
     myChangedFilesUpdater.invalidateIndices(file, true);
@@ -118,6 +120,9 @@ public class FileBasedIndex implements ApplicationComponent {
   public FileBasedIndex(final VirtualFileManagerEx vfManager, FileDocumentManager fdm, MessageBus bus) throws IOException {
     myVfManager = vfManager;
     myFileDocumentManager = fdm;
+
+    myConfigPath = calcConfigPath(PathManager.getConfigPath());
+    mySystemPath = calcConfigPath(PathManager.getSystemPath());
 
     final MessageBusConnection connection = bus.connect();
     connection.subscribe(PsiDocumentTransactionListener.TOPIC, new PsiDocumentTransactionListener() {
@@ -237,6 +242,17 @@ public class FileBasedIndex implements ApplicationComponent {
       });
       FileUtil.createIfDoesntExist(workInProgressFile);
       saveRegisteredIndices(myIndices.keySet());
+    }
+  }
+
+  private String calcConfigPath(final String path) {
+    try {
+      final String _path = FileUtil.toSystemIndependentName(new File(path).getCanonicalPath());
+      return _path.endsWith("/")? _path : _path + "/" ;
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      return null;
     }
   }
 
@@ -1284,6 +1300,9 @@ public class FileBasedIndex implements ApplicationComponent {
     }
 
     void invalidateIndices(final VirtualFile file, final boolean markForReindex) {
+      if (isUnderConfigOrSystem(file)) {
+        return;
+      }
       if (file.isDirectory()) {
         if (isMock(file) || myManagingFS.wereChildrenAccessed(file)) {
           for (VirtualFile child : file.getChildren()) {
@@ -1507,6 +1526,17 @@ public class FileBasedIndex implements ApplicationComponent {
   private boolean shouldIndexFile(final VirtualFile file, final ID<?, ?> indexId) {
     return getInputFilter(indexId).acceptInput(file) &&
            (isMock(file) || !IndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId)));
+  }
+
+  private boolean isUnderConfigOrSystem(VirtualFile file) {
+    final String filePath = file.getPath();
+    if (myConfigPath != null && FileUtil.startsWith(filePath, myConfigPath)) {
+      return true;
+    }
+    if (mySystemPath != null && FileUtil.startsWith(filePath, mySystemPath)) {
+      return true;
+    }
+    return false;
   }
 
   private static boolean isMock(final VirtualFile file) {
