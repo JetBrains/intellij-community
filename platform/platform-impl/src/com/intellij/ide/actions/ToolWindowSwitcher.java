@@ -30,6 +30,7 @@ import com.intellij.util.Icons;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import javax.swing.FocusManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -68,9 +69,11 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) return;
     if (SWITCHER == null) {
-      SWITCHER = new ToolWindowSwitcherPanel(project);
       focusComponent = FocusManager.getCurrentManager().getFocusOwner();
-      focusComponent.addKeyListener(performanceProblemsSolver);
+      if (focusComponent != null) {
+        focusComponent.addKeyListener(performanceProblemsSolver);
+      }
+      SWITCHER = new ToolWindowSwitcherPanel(project);
       FeatureUsageTracker.getInstance().triggerFeatureUsed(SWITCHER_FEATURE_ID);
     }
 
