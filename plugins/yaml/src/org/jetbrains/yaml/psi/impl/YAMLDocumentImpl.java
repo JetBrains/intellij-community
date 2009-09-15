@@ -29,7 +29,7 @@ public class YAMLDocumentImpl extends YAMLPsiElementImpl implements YAMLDocument
       }
 
       public String getLocationString() {
-        return getContainingFile().getName();
+        return null;
       }
 
       public Icon getIcon(boolean open) {
