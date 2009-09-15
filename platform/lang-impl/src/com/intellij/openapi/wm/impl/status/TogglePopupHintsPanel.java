@@ -8,13 +8,11 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.UIBundle;
@@ -33,8 +31,6 @@ public class TogglePopupHintsPanel extends JPanel implements StatusBarPatch{
   private static final Icon EMPTY_ICON = new EmptyIcon(INSPECTIONS_ICON.getIconWidth(), INSPECTIONS_ICON.getIconHeight());
 
   private final JLabel myHectorLabel = new JLabel(EMPTY_ICON);
-  private final JLabel myInspectionProfileLabel = new JLabel();
-  private int myMinLength;
 
   public TogglePopupHintsPanel(final StatusBar statusBar) {
     super(new GridBagLayout());
@@ -52,23 +48,10 @@ public class TogglePopupHintsPanel extends JPanel implements StatusBarPatch{
       }
     });
     myHectorLabel.setIconTextGap(0);
-    myInspectionProfileLabel.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        final PsiFile file = getCurrentFile();
-        if (file != null) {
-          if (!DaemonCodeAnalyzer.getInstance(file.getProject()).isHighlightingAvailable(file)) return;
-          final Project project = file.getProject();
-          final ErrorsConfigurable errorsConfigurable = ErrorsConfigurable.SERVICE.getInstance(project);
-          assert errorsConfigurable != null;
-          ShowSettingsUtil.getInstance().editConfigurable(project, errorsConfigurable);
-        }
-      }
-    });
+
     add(myHectorLabel, new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-    add(myInspectionProfileLabel, new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 3, 0, 3), 0, 0));
 
     StatusBarTooltipper.install(this, myHectorLabel, statusBar);
-    StatusBarTooltipper.install(this, myInspectionProfileLabel, statusBar);
   }
 
 
@@ -94,39 +77,20 @@ public class TogglePopupHintsPanel extends JPanel implements StatusBarPatch{
 
   private void updateStatus(PsiFile file) {
     if (isStateChangeable(file)) {
+      String tooltip;
       if (HighlightLevelUtil.shouldInspect(file)) {
         myHectorLabel.setIcon(INSPECTIONS_ICON);
-        String text = InspectionProjectProfileManager.getInstance(file.getProject()).getInspectionProfile().getName();
-        if (text != null){
-          text = "Inspections: " + text;
-          final Font font = getFont();
-          if (font != null) {
-            final int width = getFontMetrics(font).stringWidth(text);
-            if (width > 80 && text.length() > 30){
-              text = text.substring(0, 27) + "...";
-            }
-            if (myMinLength < width){
-              myMinLength = width;
-              Dimension dim = getMinimumSize();
-              dim = new Dimension(myMinLength, dim.height);
-              myInspectionProfileLabel.setPreferredSize(dim);             
-            }
-          }
-        }
-        myInspectionProfileLabel.setText(text);
+        tooltip =  "Current inspection profile: " + InspectionProjectProfileManager.getInstance(file.getProject()).getInspectionProfile().getName() + ". ";
       }
       else {
         myHectorLabel.setIcon(INSPECTIONS_OFF_ICON);
-        myInspectionProfileLabel.setText("Inspections: Off");
+        tooltip = "Inspections are off. ";
       }
-      myHectorLabel.setToolTipText(UIBundle.message("popup.hints.panel.click.to.configure.highlighting.tooltip.text"));
-      myInspectionProfileLabel.setToolTipText(UIBundle.message("popup.hints.panel.click.to.configure.profile.text"));
+      myHectorLabel.setToolTipText(tooltip + UIBundle.message("popup.hints.panel.click.to.configure.highlighting.tooltip.text"));
     }
     else {
       myHectorLabel.setIcon(EMPTY_ICON);
       myHectorLabel.setToolTipText(null);
-      myInspectionProfileLabel.setText("");
-      myInspectionProfileLabel.setToolTipText(null);
     }
   }
 

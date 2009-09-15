@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.HectorComponentPanel;
 import com.intellij.openapi.editor.HectorComponentPanelsProvider;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -18,16 +19,21 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.lang.ref.WeakReference;
 import java.util.*;
@@ -109,6 +115,27 @@ public class HectorComponent extends JPanel {
 
     gc.gridy = GridBagConstraints.RELATIVE;
     gc.weighty = 0;
+
+    final HyperlinkLabel configurator = new HyperlinkLabel("Configure inspections");
+    gc.weightx = 0;
+    gc.fill = GridBagConstraints.NONE;
+    gc.anchor = GridBagConstraints.EAST;
+    add(configurator, gc);
+    configurator.addHyperlinkListener(new HyperlinkListener() {
+      public void hyperlinkUpdate(HyperlinkEvent e) {
+        final JBPopup hector = getOldHector();
+        if (hector != null) {
+          hector.cancel();
+        }
+        if (!DaemonCodeAnalyzer.getInstance(myFile.getProject()).isHighlightingAvailable(myFile)) return;
+        final Project project = myFile.getProject();
+        final ErrorsConfigurable errorsConfigurable = ErrorsConfigurable.SERVICE.getInstance(project);
+        assert errorsConfigurable != null;
+        ShowSettingsUtil.getInstance().editConfigurable(project, errorsConfigurable);
+      }
+    });
+
+    gc.anchor = GridBagConstraints.WEST;
     myAdditionalPanels = new ArrayList<HectorComponentPanel>();
     for (HectorComponentPanelsProvider provider : Extensions.getExtensions(HectorComponentPanelsProvider.EP_NAME, project)) {
       final HectorComponentPanel componentPanel = provider.createConfigurable(file);
@@ -175,6 +202,7 @@ public class HectorComponent extends JPanel {
     }
   }
 
+  @Nullable
   private JBPopup getOldHector(){
     if (myHectorRef == null) return null;
     final JBPopup hector = myHectorRef.get();
