@@ -106,47 +106,59 @@ public class GroovyPositionManager implements PositionManager {
 
   public ClassPrepareRequest createPrepareRequest(final ClassPrepareRequestor requestor, final SourcePosition position)
     throws NoDataException {
-    GroovyPsiElement sourceImage = findReferenceTypeSourceImage(position);
-    String qName = null;
-    if (sourceImage instanceof GrTypeDefinition) {
-      qName = ((GrTypeDefinition)sourceImage).getQualifiedName();
-    } else if (sourceImage == null) {
-      qName = getScriptQualifiedName(position);
+    String qName = getOuterClassName(position);
+    if (qName != null) {
+      return myDebugProcess.getRequestsManager().createClassPrepareRequest(requestor, qName);
     }
 
-    String waitPrepareFor;
-    ClassPrepareRequestor waitRequestor;
+    qName = findEnclosingName(position);
 
-    if (qName == null) {
-      GrTypeDefinition typeDefinition = findEnclosingTypeDefinition(position);
-
-      if (typeDefinition != null) {
-        qName = typeDefinition.getQualifiedName();
-      } else {
-        qName = getScriptQualifiedName(position);
-      }
-
-      if (qName == null) throw new NoDataException();
-      waitPrepareFor = qName + "$*";
-      waitRequestor = new ClassPrepareRequestor() {
-        public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
-          final CompoundPositionManager positionManager = ((DebugProcessImpl)debuggerProcess).getPositionManager();
-          if (positionManager.locationsOfLine(referenceType, position).size() > 0) {
+    if (qName == null) throw new NoDataException();
+    ClassPrepareRequestor waitRequestor = new ClassPrepareRequestor() {
+      public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
+        final CompoundPositionManager positionManager = ((DebugProcessImpl)debuggerProcess).getPositionManager();
+        if (positionManager.locationsOfLine(referenceType, position).size() > 0) {
+          requestor.processClassPrepare(debuggerProcess, referenceType);
+        }
+        else {
+          final List<ReferenceType> positionClasses = positionManager.getAllClasses(position);
+          if (positionClasses.contains(referenceType)) {
             requestor.processClassPrepare(debuggerProcess, referenceType);
-          } else {
-            final List<ReferenceType> positionClasses = positionManager.getAllClasses(position);
-            if (positionClasses.contains(referenceType)) {
-              requestor.processClassPrepare(debuggerProcess, referenceType);
-            }
           }
         }
-      };
-    } else {
-      waitPrepareFor = qName;
-      waitRequestor = requestor;
-    }
+      }
+    };
+    return myDebugProcess.getRequestsManager().createClassPrepareRequest(waitRequestor, qName + "$*");
+  }
 
-    return myDebugProcess.getRequestsManager().createClassPrepareRequest(waitRequestor, waitPrepareFor);
+  @Nullable
+  private static String findEnclosingName(final SourcePosition position) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Nullable
+      public String compute() {
+        GrTypeDefinition typeDefinition = findEnclosingTypeDefinition(position);
+        if (typeDefinition != null) {
+          return typeDefinition.getQualifiedName();
+        }
+        return getScriptQualifiedName(position);
+      }
+    });
+  }
+
+  @Nullable
+  private static String getOuterClassName(final SourcePosition position) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Nullable
+      public String compute() {
+        GroovyPsiElement sourceImage = findReferenceTypeSourceImage(position);
+        if (sourceImage instanceof GrTypeDefinition) {
+          return ((GrTypeDefinition)sourceImage).getQualifiedName();
+        } else if (sourceImage == null) {
+          return getScriptQualifiedName(position);
+        }
+        return null;
+      }
+    });
   }
 
   @Nullable
