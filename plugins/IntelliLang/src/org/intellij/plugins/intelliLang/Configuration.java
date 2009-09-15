@@ -447,13 +447,12 @@ public final class Configuration implements PersistentStateComponent<Element> {
       }
 
       public DocumentReference[] getAffectedDocuments() {
-        return DocumentReference.EMPTY_ARRAY;
+        return null;
       }
 
-      public boolean isComplex() {
+      public boolean shouldConfirmUndo() {
         return true;
       }
-
     };
     final List<PsiFile> psiFiles = ContainerUtil.mapNotNull(psiElementsToRemove, new NullableFunction<PsiElement, PsiFile>() {
       public PsiFile fun(final PsiElement psiAnnotation) {

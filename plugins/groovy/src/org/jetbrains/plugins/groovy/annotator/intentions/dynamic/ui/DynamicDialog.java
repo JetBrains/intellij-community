@@ -325,7 +325,8 @@ public abstract class DynamicDialog extends DialogWrapper {
       }
     }
 
-    final Document document = PsiDocumentManager.getInstance(myProject).getDocument(myReferenceExpression.getContainingFile());
+    Document document = PsiDocumentManager.getInstance(myProject).getDocument(myReferenceExpression.getContainingFile());
+    final DocumentReference[] refs = new DocumentReference[]{DocumentReferenceManager.getInstance().create(document)};
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
@@ -364,10 +365,10 @@ public abstract class DynamicDialog extends DialogWrapper {
           }
 
           public DocumentReference[] getAffectedDocuments() {
-            return new DocumentReference[]{DocumentReferenceByDocument.createDocumentReference(document)};
+            return refs;
           }
 
-          public boolean isComplex() {
+          public boolean shouldConfirmUndo() {
             return true;
           }
         });
