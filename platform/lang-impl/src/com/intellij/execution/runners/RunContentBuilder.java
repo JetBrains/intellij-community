@@ -197,6 +197,9 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
 
     final AnAction stopAction = ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM);
     actionGroup.add(stopAction);
+    if (myExecutionResult instanceof DefaultExecutionResult) {
+      actionGroup.addAll(((DefaultExecutionResult)myExecutionResult).getAdditionalStopActions());
+    }
 
     actionGroup.addAll(myExecutionResult.getActions());
 

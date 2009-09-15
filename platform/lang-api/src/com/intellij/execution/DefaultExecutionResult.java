@@ -22,6 +22,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+import java.util.ArrayList;
+
 /**
  * @author dyoma
  */
@@ -30,6 +33,7 @@ public class DefaultExecutionResult implements ExecutionResult {
   private final ProcessHandler myProcessHandler;
   private AnAction[] myActions;
   private AnAction[] myRestartActions;
+  private List<AnAction> myStopActions = new ArrayList<AnAction>();
 
   public DefaultExecutionResult(final ExecutionConsole console, final ProcessHandler processHandler) {
     this(console, processHandler, AnAction.EMPTY_ARRAY);
@@ -59,6 +63,15 @@ public class DefaultExecutionResult implements ExecutionResult {
 
   public void setRestartActions(AnAction... restartActions) {
     myRestartActions = restartActions;
+  }
+
+  public void addStopAction(AnAction action) {
+    myStopActions.add(action);
+  }
+
+  @NotNull 
+  public AnAction[] getAdditionalStopActions() {
+    return myStopActions.toArray(new AnAction[myStopActions.size()]);
   }
 
   public ProcessHandler getProcessHandler() {

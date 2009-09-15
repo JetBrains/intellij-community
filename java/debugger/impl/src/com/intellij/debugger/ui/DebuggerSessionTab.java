@@ -296,8 +296,10 @@ public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements
 
     addActionToGroup(group, XDebuggerActions.RESUME);
     addActionToGroup(group, XDebuggerActions.PAUSE);
-    //group.add(new KillProcessAction());
     addActionToGroup(group, IdeActions.ACTION_STOP_PROGRAM);
+    if (executionResult instanceof DefaultExecutionResult) {
+      group.addAll(((DefaultExecutionResult)executionResult).getAdditionalStopActions());
+    }
 
     group.addSeparator();
 
