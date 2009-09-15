@@ -187,8 +187,10 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
   }
 
   public void dispose() {
-    myVisibilityWatcher.deinstall(this);
-    myVisibilityWatcher = null;
+    if (myVisibilityWatcher != null) {
+      myVisibilityWatcher.deinstall(this);
+      myVisibilityWatcher = null;
+    }
     myProject = null;
   }
 
