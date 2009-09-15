@@ -53,8 +53,8 @@ public class GroovyDslTest extends LightCodeInsightFixtureTestCase {
     doCustomTest("""
       def ctx = context(ctype: "java.lang.String")
 
-      contributor ([ctx], {elem ->
-        findClass("java.lang.Throwable")?.methods.each{add it}
+      contributor ([ctx], {
+        findClass("java.lang.Throwable")?.methods?.each{add it}
       })
 """)
   }

@@ -1,18 +1,10 @@
 package org.jetbrains.plugins.groovy.dsl.toplevel
 
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.PsiElement
-import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.Any
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClosureScope
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ScriptScope
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+
 import org.jetbrains.plugins.groovy.dsl.*
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 
 /**
  * @author ilyas
@@ -28,9 +20,9 @@ class GdslMetaClassProperties {
   Closure enhanceScript = {Map args, Closure enh ->
     enh.resolveStrategy = Closure.DELEGATE_FIRST
     myExecutor.addScriptEnhancer {
-      ScriptDescriptor wrapper, GroovyEnhancerConsumer c ->
+      ScriptDescriptor wrapper, consumer ->
       if (args.extension == wrapper.extension) {
-        myExecutor.runEnhancer enh, new EnhancerDelegate(consumer: c)
+        myExecutor.runEnhancer enh, consumer
       }
     }
   }
@@ -38,9 +30,9 @@ class GdslMetaClassProperties {
   Closure enhanceClass = {Map args, Closure enh ->
     enh.resolveStrategy = Closure.DELEGATE_FIRST
     myExecutor.addClassEnhancer {
-      ClassDescriptor cw, GroovyEnhancerConsumer c ->
+      ClassDescriptor cw, consumer ->
       if (!args.className || cw.getQualifiedName() == args.className) {
-        myExecutor.runEnhancer enh, new EnhancerDelegate(consumer: c)
+        myExecutor.runEnhancer enh, consumer
       }
     }
   }
@@ -58,14 +50,10 @@ class GdslMetaClassProperties {
    * Contributor definition
    */
   Closure contributor = {List cts, Closure toDo ->
-    def cb = new Contributor(cts, toDo)
-
-    // Do we need this?
-    //myExecutor.addContributor(cb)
-
+    def contrib = new Contributor(cts, toDo)
     myExecutor.addClassEnhancer {
-      ClassDescriptor cw, GroovyEnhancerConsumer c ->
-      myExecutor.runContributor cb, cw, new EnhancerDelegate(consumer: c)
+      ClassDescriptor descriptor, consumer ->
+      myExecutor.runContributor(contrib, descriptor, consumer)
     }
 
   }

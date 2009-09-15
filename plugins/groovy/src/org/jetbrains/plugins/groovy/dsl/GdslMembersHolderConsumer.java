@@ -14,27 +14,17 @@
  *  limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.dsl.augmenters;
+package org.jetbrains.plugins.groovy.dsl;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import org.jetbrains.plugins.groovy.dsl.psi.PsiEnhancerCategory;
-
-import java.util.Arrays;
-import java.util.Collection;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
+import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder;
 
 /**
  * @author ilyas
  */
-public class PsiClassCategory implements PsiEnhancerCategory {
-
-  /**
-   * Adds property `methods' into PsiClass
-   * @param clazz
-   * @return
-   */
-  public static Collection<PsiMethod> getMethods(PsiClass clazz) {
-    return Arrays.asList(clazz.getAllMethods());
-  }
-
+public interface GdslMembersHolderConsumer {
+  void addMemberHolder(CustomMembersHolder holder);
+  Project getProject();
+  PsiElement getPlace();
 }

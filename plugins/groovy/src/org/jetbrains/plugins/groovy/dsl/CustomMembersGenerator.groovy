@@ -1,0 +1,90 @@
+package org.jetbrains.plugins.groovy.dsl;
+
+
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.PsiElement
+import com.intellij.util.Function
+import org.jetbrains.annotations.Nullable
+import org.jetbrains.plugins.groovy.dsl.dsltop.GdslTopLevelMembersProvider
+import org.jetbrains.plugins.groovy.dsl.holders.CompoundMembersHolder
+import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder
+import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder
+
+/**
+ * @author peter, ilyas
+ */
+public class CustomMembersGenerator implements GdslMembersHolderConsumer {
+  private final StringBuilder myClassText = new StringBuilder();
+  private final Project myProject;
+  private final PsiElement myPlace;
+  private final CompoundMembersHolder myDepot = new CompoundMembersHolder();
+
+  public CustomMembersGenerator(Project project, PsiElement place) {
+    myProject = project;
+    myPlace = place;
+  }
+
+  def methodMissing(String name, args) {
+    final def newArgs = new Object[args.length + 1]
+    for (int i = 0; i < args.length; i++) {
+      newArgs[i] = args[i]
+    }
+    newArgs[args.length] = this
+
+    // Get other DSL methods from extensions
+    for (d in GdslTopLevelMembersProvider.EP_NAME.getExtensions()) {
+      final def variants = d.metaClass.respondsTo(d, name, newArgs)
+      if (variants.size() == 1) {
+        return d.invokeMethod(name, newArgs)
+      }
+    }
+    return null
+  }
+
+  public PsiElement getPlace() {
+    return myPlace
+  }
+
+  @Nullable
+  public CustomMembersHolder getMembersHolder() {
+    // Add non-code members holder
+    if (myClassText.length() > 0) {
+      addMemberHolder(new NonCodeMembersHolder(myClassText.toString(), myProject));
+    }
+    return myDepot;
+  }
+
+  public void addMemberHolder(CustomMembersHolder holder) {
+    myDepot.addHolder(holder);
+  }
+
+  public Project getProject() {
+    return myProject;
+  }
+
+  /** **********************************************************
+   Obsolete methods.
+   *********************************************************** */
+  def property(Map args) {
+    myClassText.append("def ").append(stringifyType(args.type)).append(" ").append(args.name).append("\n")
+  }
+
+  def method(Map args) {
+    def params = [:]
+    args.params.each {name, type ->
+      params[name] = stringifyType(type)
+    }
+    myClassText.append("def ").append(stringifyType(args.type)).append(" ").append(args.name).append("(")
+    myClassText.append(StringUtil.join(params.keySet(),
+                                       [fun: {String s -> return params.get(s) + " " + s}] as Function, ", "))
+    myClassText.append(") {}\n")
+  }
+
+  private def stringifyType(type) {
+    type instanceof Closure ? "groovy.lang.Closure" :
+    type instanceof Map ? "java.util.Map" :
+    type.toString()
+  }
+
+}

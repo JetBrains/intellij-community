@@ -16,26 +16,25 @@ class Contributor {
     whatToDo = cl
   }
 
-  def getApplyFunction(delegate) {
+  def getApplyFunction(delegate, PsiElement place) {
     def f = whatToDo.clone()
+
     f.delegate = delegate
-    f.resolveStrategy = Closure.DELEGATE_ONLY
+    f.resolveStrategy = Closure.DELEGATE_FIRST
+
+    // Add categories to augment PSI
     final def catInstances = PsiEnhancerCategory.EP_NAME.getExtensions()
     def cats = new ArrayList();
     for (c in catInstances) {
       cats.add(c.class)
     }
 
-    return {PsiElement elem ->
-      // turn on to augment POJO interfaces in PSI with new methods and properties
-      // Warning! Leads to the significant memory consumption
-      //ExpandoMetaClass.enableGlobally()
-
+    return {
       myContexts.each {Context ctx ->
         try {
-          if (ctx.isApplicable(elem)) {
+          if (ctx.isApplicable(place)) {
             use(cats) {
-              f(elem)
+              f()
             }
           }
         }
@@ -43,9 +42,6 @@ class Contributor {
           // do nothing
         }
       }
-
-      // switch off to reduce memory usage
-      //ExpandoMetaClass.disableGlobally()
     }
   }
 
