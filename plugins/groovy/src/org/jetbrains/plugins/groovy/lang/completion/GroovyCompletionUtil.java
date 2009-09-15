@@ -15,10 +15,10 @@
 
 package org.jetbrains.plugins.groovy.lang.completion;
 
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.lookup.MutableLookupElement;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.Nullable;
@@ -219,15 +219,8 @@ public abstract class GroovyCompletionUtil {
     return result;
   }
 
-  public static void setTailTypeForConstructor(PsiClass clazz, MutableLookupElement<PsiClass> lookupElement) {
-    final boolean hasParameters = hasConstructorParameters(clazz);
-    lookupElement.setTailType(new TailType() {
-      public int processTail(Editor editor, int tailOffset) {
-        editor.getDocument().insertString(tailOffset, "()");
-        editor.getCaretModel().moveToOffset(hasParameters ? tailOffset + 1 : tailOffset + 2);
-        return tailOffset + 2;
-      }
-    });
+  public static LookupElement setTailTypeForConstructor(PsiClass clazz, LookupElement lookupElement) {
+    return LookupElementDecorator.withInsertHandler(lookupElement, ParenthesesInsertHandler.getInstance(hasConstructorParameters(clazz)));
   }
 
   public static boolean hasConstructorParameters(PsiClass clazz) {
