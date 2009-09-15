@@ -30,6 +30,10 @@ public abstract class ParenthesesInsertHandler<T extends LookupElement> implemen
     }
   };
 
+  public static ParenthesesInsertHandler<LookupElement> getInstance(boolean hasParameters) {
+    return hasParameters ? WITH_PARAMETERS : NO_PARAMETERS;
+  }
+
   private final boolean mySpaceBeforeParentheses;
   private final boolean mySpaceBetweenParentheses;
   private final boolean myInsertRightParenthesis;

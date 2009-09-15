@@ -26,7 +26,6 @@ import java.util.Set;
  */
 public class LookupItem<T> extends MutableLookupElement<T> implements Comparable {
   public static final Object HIGHLIGHTED_ATTR = Key.create("highlighted");
-  public static final Object TYPE_ATTR = Key.create("type");
   public static final Object ICON_ATTR = Key.create("icon");
   public static final Object TYPE_TEXT_ATTR = Key.create("typeText");
   public static final Object TAIL_TEXT_ATTR = Key.create("tailText");

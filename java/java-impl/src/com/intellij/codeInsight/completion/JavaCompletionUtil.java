@@ -110,10 +110,10 @@ public class JavaCompletionUtil {
     tunePreferencePolicy(LookupItemUtil.addLookupItems(set, suggestedNames, matcher), suggestedNameInfo);
     if (set.isEmpty()) {
       if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) && matcher.prefixMatches("object")) {
-        set.add(LookupElementFactoryImpl.getInstance().createLookupElement("object"));
+        set.add(LookupElementBuilder.create("object"));
       }
       if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING) && matcher.prefixMatches("string")) {
-        set.add(LookupElementFactoryImpl.getInstance().createLookupElement("string"));
+        set.add(LookupElementBuilder.create("string"));
       }
     }
 

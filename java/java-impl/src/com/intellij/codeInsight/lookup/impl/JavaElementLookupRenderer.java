@@ -115,31 +115,25 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
   @Nullable
   private static String getTypeText(final Object o, final LookupItem item) {
     String text = null;
-    PsiType typeAttr = (PsiType)item.getAttribute(LookupItem.TYPE_ATTR);
-    if (typeAttr != null){
-      text = typeAttr.getPresentableText();
-    }
-    else {
-      if (o instanceof PsiElement) {
-        final PsiElement element = (PsiElement)o;
-        if (element.isValid()) {
-          if (element instanceof PsiMethod){
-            text = getTypeText(item, ((PsiMethod)element).getReturnType());
+    if (o instanceof PsiElement) {
+      final PsiElement element = (PsiElement)o;
+      if (element.isValid()) {
+        if (element instanceof PsiMethod){
+          text = getTypeText(item, ((PsiMethod)element).getReturnType());
+        }
+        else if (element instanceof PsiVariable){
+          PsiVariable variable = (PsiVariable)element;
+          text = variable.getType().getPresentableText();
+        }
+        else if (element instanceof PsiExpression){
+          PsiExpression expression = (PsiExpression)element;
+          PsiType type = expression.getType();
+          if (type != null){
+            text = type.getPresentableText();
           }
-          else if (element instanceof PsiVariable){
-            PsiVariable variable = (PsiVariable)element;
-            text = variable.getType().getPresentableText();
-          }
-          else if (element instanceof PsiExpression){
-            PsiExpression expression = (PsiExpression)element;
-            PsiType type = expression.getType();
-            if (type != null){
-              text = type.getPresentableText();
-            }
-          }
-          else if (element instanceof BeanPropertyElement) {
-            return getTypeText(item, ((BeanPropertyElement)element).getPropertyType());
-          }
+        }
+        else if (element instanceof BeanPropertyElement) {
+          return getTypeText(item, ((BeanPropertyElement)element).getPropertyType());
         }
       }
     }
