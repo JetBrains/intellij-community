@@ -23,6 +23,6 @@ public class YAMLStructureViewBuilder extends TreeBasedStructureViewBuilder {
   public StructureViewModel createStructureViewModel() {
     return new StructureViewModelBase(myPsiFile, new YAMLStructureViewElement(myPsiFile))
       .withSorters(Sorter.ALPHA_SORTER)
-      .withSuitableClasses(YAMLDocument.class, YAMLKeyValue.class);
+      .withSuitableClasses(YAMLFile.class, YAMLDocument.class, YAMLKeyValue.class);
   }
 }
