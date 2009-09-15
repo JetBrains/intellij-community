@@ -165,6 +165,15 @@ public class MockApplication extends MockComponentManager implements Application
   public boolean runProcessWithProgressSynchronously(Runnable process,
                                                      String progressTitle,
                                                      boolean canBeCanceled,
+                                                     @Nullable Project project,
+                                                     JComponent parentComponent,
+                                                     String cancelText) {
+    return false;
+  }
+
+  public boolean runProcessWithProgressSynchronously(Runnable process,
+                                                     String progressTitle,
+                                                     boolean canBeCanceled,
                                                      Project project) {
     return false;
   }

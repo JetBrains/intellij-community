@@ -50,7 +50,8 @@ class CallbackData {
       }, null);
     } else {
       if (mode.isSynchronous()) {
-        final Waiter waiter = new Waiter(project, afterUpdate, state);
+        final Waiter waiter = new Waiter(project, afterUpdate, state,
+                                         VcsBundle.message("change.list.manager.wait.lists.synchronization", title),  mode.isCancellable());
         return new CallbackData(
           new Runnable() {
             public void run() {
@@ -59,8 +60,7 @@ class CallbackData {
             }
           }, new Runnable() {
             public void run() {
-              ProgressManager.getInstance().runProcessWithProgressSynchronously(waiter,
-                      VcsBundle.message("change.list.manager.wait.lists.synchronization", title), mode.isCancellable(), project);
+              ProgressManager.getInstance().run(waiter);
             }
           }
         );

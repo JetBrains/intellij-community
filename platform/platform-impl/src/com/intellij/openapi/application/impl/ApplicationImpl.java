@@ -431,8 +431,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   public boolean runProcessWithProgressSynchronously(final Runnable process, final String progressTitle, final boolean canBeCanceled, @Nullable final Project project,
                                                      final JComponent parentComponent) {
+    return runProcessWithProgressSynchronously(process, progressTitle, canBeCanceled, project, parentComponent, null);
+  }
 
-
+  public boolean runProcessWithProgressSynchronously(final Runnable process, final String progressTitle, final boolean canBeCanceled, @Nullable final Project project,
+                                                       final JComponent parentComponent, final String cancelText) {
     assertIsDispatchThread();
 
     if (myExceptionalThreadWithReadAccessRunnable != null ||
@@ -448,9 +451,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       return true;
     }
 
-    final ProgressWindow progress = parentComponent == null
-                                    ? new ProgressWindow(canBeCanceled, project)
-                                    : new ProgressWindow(canBeCanceled, false, project, parentComponent, null);
+    final ProgressWindow progress = new ProgressWindow(canBeCanceled, false, project, parentComponent, cancelText);
     progress.setTitle(progressTitle);
 
     try {

@@ -229,7 +229,7 @@ public class ProgressManagerImpl extends ProgressManager {
           public void run() {
             new TaskRunnable(task, ProgressManager.getInstance().getProgressIndicator()).run();
           }
-        }, task.getTitle(), task.isCancellable(), task.getProject(), parentComponent);
+        }, task.getTitle(), task.isCancellable(), task.getProject(), parentComponent, task.getCancelText());
     if (result) {
       final Task.NotificationInfo notificationInfo = task.getNotificationInfo();
       if (notificationInfo != null) {

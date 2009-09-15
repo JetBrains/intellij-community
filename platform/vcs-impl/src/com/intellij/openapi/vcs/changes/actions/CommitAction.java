@@ -13,12 +13,12 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 

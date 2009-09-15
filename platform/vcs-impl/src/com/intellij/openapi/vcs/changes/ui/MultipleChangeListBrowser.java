@@ -16,6 +16,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
@@ -305,6 +306,20 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     }
 
     public void addToolbarActions(final DialogWrapper dialogWrapper) {
+      final Icon icon = IconLoader.getIcon("/vcs/refresh.png");
+      if (myBrowser.myChangesToDisplay == null) {
+        myBrowser.addToolbarAction(new AnAction() {
+          @Override
+          public void actionPerformed(AnActionEvent e) {
+            myBrowser.rebuildList();
+          }
+
+          @Override
+          public void update(AnActionEvent e) {
+            e.getPresentation().setIcon(icon);
+          }
+        });
+      }
       myBrowser.addToolbarAction(new RollbackDialogAction());
       final EditSourceInCommitAction editSourceAction = new EditSourceInCommitAction(dialogWrapper);
       editSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myBrowser);

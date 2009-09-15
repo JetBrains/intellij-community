@@ -59,6 +59,13 @@ public interface ApplicationEx extends Application {
                                               boolean canBeCanceled,
                                               @Nullable Project project, JComponent parentComponent);
 
+  /**
+   * Runs modal process. For internal use only, see {@link Task}
+   */
+  boolean runProcessWithProgressSynchronously(final Runnable process,
+                                              String progressTitle,
+                                              boolean canBeCanceled,
+                                              @Nullable Project project, JComponent parentComponent, final String cancelText);
 
   boolean isInModalProgressThread();
 
