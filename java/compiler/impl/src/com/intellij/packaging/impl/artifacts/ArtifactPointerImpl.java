@@ -1,10 +1,10 @@
 package com.intellij.packaging.impl.artifacts;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactModel;
 import com.intellij.packaging.artifacts.ArtifactPointer;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -54,5 +54,25 @@ public class ArtifactPointerImpl implements ArtifactPointer {
 
   void setName(String name) {
     myName = name;
+  }
+
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    ArtifactPointerImpl that = (ArtifactPointerImpl)o;
+
+    if (myArtifact != null ? !myArtifact.equals(that.myArtifact) : that.myArtifact != null) return false;
+    if (!myName.equals(that.myName)) return false;
+    if (!myProject.equals(that.myProject)) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    int result = myProject.hashCode();
+    result = 31 * result + myName.hashCode();
+    result = 31 * result + (myArtifact != null ? myArtifact.hashCode() : 0);
+    return result;
   }
 }

@@ -37,4 +37,19 @@ public abstract class BeforeRunTask implements Cloneable{
       return null;
     }
   }
+
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    BeforeRunTask that = (BeforeRunTask)o;
+
+    if (myIsEnabled != that.myIsEnabled) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    return (myIsEnabled ? 1 : 0);
+  }
 }

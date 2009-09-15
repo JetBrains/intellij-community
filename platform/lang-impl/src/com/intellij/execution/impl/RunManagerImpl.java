@@ -379,13 +379,22 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     addConfigurationElement(parentNode, template, CONFIGURATION);
   }
 
-  private void addConfigurationElement(final Element parentNode, RunnerAndConfigurationSettingsImpl template, String elementType)
+  private void addConfigurationElement(final Element parentNode, RunnerAndConfigurationSettingsImpl settings, String elementType)
       throws WriteExternalException {
     final Element configurationElement = new Element(elementType);
     parentNode.addContent(configurationElement);
-    template.writeExternal(configurationElement);
-    if (!(template.getConfiguration() instanceof UnknownRunConfiguration)) {
-      final Map<Key<? extends BeforeRunTask>, BeforeRunTask> tasks = getBeforeRunTasks(template.getConfiguration());
+    settings.writeExternal(configurationElement);
+
+    if (!(settings.getConfiguration() instanceof UnknownRunConfiguration)) {
+      final Map<Key<? extends BeforeRunTask>, BeforeRunTask> tasks = getBeforeRunTasks(settings.getConfiguration());
+      Map<Key<? extends BeforeRunTask>, BeforeRunTask> templateTasks;
+      if (!settings.isTemplate()) {
+        final RunnerAndConfigurationSettingsImpl templateSettings = getConfigurationTemplate(settings.getFactory());
+        templateTasks = getBeforeRunTasks(templateSettings.getConfiguration());
+      }
+      else {
+        templateTasks = null;
+      }
       final List<Key<? extends BeforeRunTask>> order = new ArrayList<Key<? extends BeforeRunTask>>(tasks.keySet());
       Collections.sort(order, new Comparator<Key<? extends BeforeRunTask>>() {
         public int compare(Key<? extends BeforeRunTask> o1, Key<? extends BeforeRunTask> o2) {
@@ -394,9 +403,17 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       });
       final Element methodsElement = new Element(METHOD);
       for (Key<? extends BeforeRunTask> providerID : order) {
+        final BeforeRunTask beforeRunTask = tasks.get(providerID);
+
+        if (templateTasks != null) {
+          final BeforeRunTask templateTask = templateTasks.get(providerID);
+          if (beforeRunTask.equals(templateTask)) {
+            continue; // not neccesary saving if the task is the same as template
+          }
+        }
+
         final Element child = new Element(OPTION);
         child.setAttribute(NAME_ATTR, providerID.toString());
-        final BeforeRunTask beforeRunTask = tasks.get(providerID);
         beforeRunTask.writeExternal(child);
         methodsElement.addContent(child);
       }
@@ -477,13 +494,12 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       for (Object o : child.getChildren(OPTION)) {
         final Element methodElement = (Element)o;
         final String providerName = methodElement.getAttributeValue(NAME_ATTR);
-        Key<? extends BeforeRunTask> id = getProviderKey(providerName);
-        if (id != null) {
-          final BeforeRunTask beforeRunTask = getProvider(id).createTask(settings.getConfiguration());
-          if (beforeRunTask != null) {
-            beforeRunTask.readExternal(methodElement);
-            map.put(id, beforeRunTask);
-          }
+        final Key<? extends BeforeRunTask> id = getProviderKey(providerName);
+        final BeforeRunTaskProvider provider = getProvider(id);
+        final BeforeRunTask beforeRunTask = provider.createTask(settings.getConfiguration());
+        if (beforeRunTask != null) {
+          beforeRunTask.readExternal(methodElement);
+          map.put(id, beforeRunTask);
         }
       }
     }
@@ -691,9 +707,9 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   public final void setBeforeRunTasks(final RunConfiguration runConfiguration, Map<Key<? extends BeforeRunTask>, BeforeRunTask> tasks) {
     final Map<Key<? extends BeforeRunTask>, BeforeRunTask> taskMap = getBeforeRunTasks(runConfiguration);
     for (Map.Entry<Key<? extends BeforeRunTask>, BeforeRunTask> entry : tasks.entrySet()) {
-      if (taskMap.containsKey(entry.getKey())) {
+      //if (taskMap.containsKey(entry.getKey())) {
         taskMap.put(entry.getKey(), entry.getValue());
-      }
+      //}
     }
     myConfigurationToBeforeTasksMap.put(runConfiguration, taskMap);
   }
@@ -723,18 +739,25 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   private Map<Key<? extends BeforeRunTask>, BeforeRunTaskProvider> myBeforeStepsMap;
   private Map<String, Key<? extends BeforeRunTask>> myProviderKeysMap;
 
-  private synchronized BeforeRunTaskProvider getProvider(Key<? extends BeforeRunTask> providerId) {
+  private synchronized @NotNull BeforeRunTaskProvider getProvider(Key<? extends BeforeRunTask> providerId) {
     if (myBeforeStepsMap == null) {
       initProviderMaps();
     }
     return myBeforeStepsMap.get(providerId);
   }
 
-  private synchronized Key<? extends BeforeRunTask> getProviderKey(String keyString) {
+  private synchronized @NotNull Key<? extends BeforeRunTask> getProviderKey(String keyString) {
     if (myProviderKeysMap == null) {
       initProviderMaps();
     }
-    return myProviderKeysMap.get(keyString);
+    Key<? extends BeforeRunTask> id = myProviderKeysMap.get(keyString);
+    if (id == null) {
+      final UnknownBeforeRunTaskProvider provider = new UnknownBeforeRunTaskProvider(keyString);
+      id = provider.getId();
+      myProviderKeysMap.put(keyString, id);
+      myBeforeStepsMap.put(id, provider);
+    }
+    return id;
   }
 
   private void initProviderMaps() {

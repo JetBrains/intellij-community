@@ -62,4 +62,24 @@ public class AntBeforeRunTask extends BeforeRunTask{
     }
     return Comparing.equal(myTargetName, target.getName());
   }
+
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+
+    AntBeforeRunTask that = (AntBeforeRunTask)o;
+
+    if (myAntFileUrl != null ? !myAntFileUrl.equals(that.myAntFileUrl) : that.myAntFileUrl != null) return false;
+    if (myTargetName != null ? !myTargetName.equals(that.myTargetName) : that.myTargetName != null) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + (myTargetName != null ? myTargetName.hashCode() : 0);
+    result = 31 * result + (myAntFileUrl != null ? myAntFileUrl.hashCode() : 0);
+    return result;
+  }
 }

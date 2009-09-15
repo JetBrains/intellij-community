@@ -2,9 +2,9 @@ package com.intellij.packaging.impl.run;
 
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.openapi.project.Project;
+import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactPointer;
 import com.intellij.packaging.artifacts.ArtifactPointerManager;
-import com.intellij.packaging.artifacts.Artifact;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -67,5 +67,25 @@ public class BuildArtifactsBeforeRunTask extends BeforeRunTask {
 
   public void removeArtifact(Artifact artifact) {
     myArtifactPointers.remove(ArtifactPointerManager.getInstance(myProject).create(artifact));
+  }
+
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+
+    BuildArtifactsBeforeRunTask that = (BuildArtifactsBeforeRunTask)o;
+
+    if (!myArtifactPointers.equals(that.myArtifactPointers)) return false;
+    if (!myProject.equals(that.myProject)) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + myArtifactPointers.hashCode();
+    result = 31 * result + myProject.hashCode();
+    return result;
   }
 }
