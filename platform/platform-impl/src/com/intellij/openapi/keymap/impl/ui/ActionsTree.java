@@ -75,6 +75,9 @@ public class ActionsTree {
             AnAction action = ActionManager.getInstance().getActionOrStub(actionId);
             if (action != null) {
               text = action.getTemplatePresentation().getText();
+              if (text == null || text.length() == 0) { //fill dynamic presentation gaps 
+                text = actionId;
+              }
               Icon actionIcon = action.getTemplatePresentation().getIcon();
               if (actionIcon != null) {
                 icon = actionIcon;

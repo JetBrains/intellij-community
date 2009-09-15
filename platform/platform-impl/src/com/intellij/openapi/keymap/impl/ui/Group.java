@@ -2,6 +2,7 @@ package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapGroup;
 
 import javax.swing.*;

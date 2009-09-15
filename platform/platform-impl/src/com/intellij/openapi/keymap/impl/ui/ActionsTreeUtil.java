@@ -54,10 +54,15 @@ public class ActionsTreeUtil {
     final KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
     ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
     final IdeaPluginDescriptor[] plugins = ApplicationManager.getApplication().getPlugins();
+    Arrays.sort(plugins, new Comparator<IdeaPluginDescriptor>() {
+      public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
+        return o1.getName().compareTo(o2.getName());
+      }
+    });
     for (IdeaPluginDescriptor plugin : plugins) {
       Group pluginGroup;
       if (plugin.getName().equals("IDEA CORE")) {
-        pluginGroup = otherGroup;
+        continue;
       }
       else {
         pluginGroup = new Group(plugin.getName(), null, null);
@@ -66,6 +71,11 @@ public class ActionsTreeUtil {
       if (pluginActions == null || pluginActions.length == 0) {
         continue;
       }
+      Arrays.sort(pluginActions, new Comparator<String>() {
+        public int compare(String o1, String o2) {
+          return getTextToCompare(o1).compareTo(getTextToCompare(o2));
+        }
+      });
       for (String pluginAction : pluginActions) {
         if (keymapManager.getBoundActions().contains(pluginAction)) continue;
         final AnAction anAction = managerEx.getActionOrStub(pluginAction);
@@ -279,15 +289,6 @@ public class ActionsTreeUtil {
       public int compare(String id1, String id2) {
         return getTextToCompare(id1).compareToIgnoreCase(getTextToCompare(id2));
       }
-
-      private String getTextToCompare(String id) {
-        AnAction action = actionManager.getActionOrStub(id);
-        if (action == null) {
-          return id;
-        }
-        String text = action.getTemplatePresentation().getText();
-        return text != null ? text : id;
-      }
     });
 
     Group group = new Group(KeyMapBundle.message("other.group.title"), OTHER_ICON, OTHER_ICON);
@@ -295,6 +296,15 @@ public class ActionsTreeUtil {
       if (filtered == null || filtered.value(actionManager.getActionOrStub(id))) group.addActionId(id);
     }
     return group;
+  }
+
+  private static String getTextToCompare(String id) {
+    AnAction action = ActionManager.getInstance().getActionOrStub(id);
+    if (action == null) {
+      return id;
+    }
+    String text = action.getTemplatePresentation().getText();
+    return text != null ? text : id;
   }
 
   private static void filterOtherActionsGroup(ArrayList<String> actions) {
