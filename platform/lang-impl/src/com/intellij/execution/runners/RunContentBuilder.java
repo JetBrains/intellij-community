@@ -28,6 +28,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -215,6 +216,7 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
     actionGroup.addSeparator();
     actionGroup.add(myUi.getOptions().getLayoutActions());
     actionGroup.addSeparator();
+    actionGroup.add(PinToolwindowTabAction.getPinAction());
     actionGroup.add(new CloseAction(myExecutor, contentDescriptor, myProject));
     actionGroup.add(new ContextHelpAction(myExecutor.getHelpId()));
     return actionGroup;

@@ -8,6 +8,7 @@ import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.TabbedPaneImpl;
 import com.intellij.ui.TabbedPane;
 import com.intellij.ui.content.tabs.TabbedContentAction;
+import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.util.IJSwingUtilities;
 
 import javax.swing.*;
@@ -26,6 +27,8 @@ import java.util.List;
  * @author Vladimir Kondratyev
  */
 public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
+  public static final String POPUP_PLACE = "TabbedPanePopup";
+
   private ContentManager myManager;
   private TabbedPaneWrapper myTabbedPaneWrapper;
 
@@ -118,6 +121,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
     }
 
     private class MyTabbedPane extends TabbedPaneImpl {
+
       public MyTabbedPane(int tabPlacement) {
         super(tabPlacement);
         addMouseListener(new MyPopupHandler());
@@ -230,7 +234,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
           group.add(new TabbedContentAction.CloseAllButThisAction(content));
         }
         group.addSeparator();
-        group.add(new TabbedContentAction.MyPinTabAction(content));
+        group.add(PinToolwindowTabAction.getPinAction());
         group.addSeparator();
         group.add(new TabbedContentAction.MyNextTabAction(myManager));
         group.add(new TabbedContentAction.MyPreviousTabAction(myManager));
@@ -241,7 +245,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
             group.add(anAction);
           }
         }
-        ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+        ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(POPUP_PLACE, group);
         menu.getComponent().show(myTabbedPaneWrapper.getComponent(), x, y);
       }
     }

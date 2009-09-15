@@ -101,33 +101,6 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
     }
   }
 
-  public static class MyPinTabAction extends ToggleAction {
-    private final Content myContent;
-
-    public MyPinTabAction(Content content) {
-      myContent = content;
-      Presentation presentation = getTemplatePresentation();
-      presentation.setText(UIBundle.message("tabbed.pane.pin.tab.action.name"));
-      presentation.setDescription(UIBundle.message("tabbed.pane.pin.tab.action.description"));
-    }
-
-    public boolean isSelected(AnActionEvent event) {
-      return myContent != null && myContent.isPinned();
-    }
-
-    public void setSelected(AnActionEvent event, boolean flag) {
-      myContent.setPinned(flag);
-    }
-
-    public void update(AnActionEvent event) {
-      super.update(event);
-      Presentation presentation = event.getPresentation();
-      boolean enabled = myContent != null && myContent.isPinnable();
-      presentation.setEnabled(enabled);
-      presentation.setVisible(enabled);
-    }
-  }
-
   public static class CloseAllAction extends TabbedContentAction {
     public CloseAllAction(ContentManager manager) {
       super(manager, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE_ALL_EDITORS), UIBundle.message("tabbed.pane.close.all.action.name"));

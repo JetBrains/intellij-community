@@ -8,6 +8,7 @@ import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.tabs.TabbedContentAction;
+import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.tabs.impl.singleRow.MoreIcon;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.UIUtil;
@@ -28,6 +29,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyChangeListener, DataProvider {
+  public static final String POPUP_PLACE = "ToolwindowPopup";
 
   private ContentManager myManager;
 
@@ -499,7 +501,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       contentGroup.add(new TabbedContentAction.CloseAllButThisAction(content));
       contentGroup.addSeparator();
       if (content.isPinnable()) {
-        contentGroup.add(new TabbedContentAction.MyPinTabAction(content));
+        contentGroup.add(PinToolwindowTabAction.getPinAction());
         contentGroup.addSeparator();
       }
 
@@ -518,7 +520,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
           group.addAll(windowPopup);
         }
 
-        final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+        final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(POPUP_PLACE, group);
         popupMenu.getComponent().show(comp, x, y);
       }
     });

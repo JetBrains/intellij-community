@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -207,6 +208,7 @@ public class XDebugSessionTab extends DebuggerLogConsoleManagerBase {
 
     group.addSeparator();
 
+    group.add(PinToolwindowTabAction.getPinAction());
     group.add(new CloseAction(executor, myRunContentDescriptor, getProject()));
     group.add(new ContextHelpAction(executor.getHelpId()));
 

@@ -10,6 +10,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.TreeToolTipHandler;
@@ -75,6 +76,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
 
   protected void appendActions(@NotNull DefaultActionGroup actionGroup, @Nullable String helpID) {
     actionGroup.add(myAutoScrollToSourceHandler.createToggleAction());
+    actionGroup.add(PinToolwindowTabAction.getPinAction());
     actionGroup.add(new CloseAction());
     if (helpID != null) {
       actionGroup.add(new ContextHelpAction(helpID));

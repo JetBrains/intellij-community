@@ -42,6 +42,7 @@ import com.intellij.ui.content.AlertIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.unscramble.ThreadDumpPanel;
 import com.intellij.unscramble.ThreadState;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -333,6 +334,7 @@ public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements
 
     group.addSeparator();
 
+    addActionToGroup(group, PinToolwindowTabAction.ACTION_NAME);
     group.add(new CloseAction(executor, myRunContentDescriptor, getProject()));
     group.add(new ContextHelpAction(executor.getHelpId()));
 

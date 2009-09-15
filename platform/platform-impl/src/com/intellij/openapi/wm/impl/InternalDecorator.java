@@ -40,7 +40,7 @@ import java.util.Map;
  * @author Eugene Belyaev
  * @author Vladimir Kondratyev
  */
-public final class InternalDecorator extends JPanel implements TestableUi {
+public final class InternalDecorator extends JPanel implements TestableUi, TypeSafeDataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.InternalDecorator");
 
   private static final int DIVIDER_WIDTH = 5;
@@ -265,6 +265,12 @@ public final class InternalDecorator extends JPanel implements TestableUi {
       if (floatingDecorator != null) {
         floatingDecorator.apply(myInfo);
       }
+    }
+  }
+
+  public void calcData(DataKey key, DataSink sink) {
+    if (PlatformDataKeys.TOOL_WINDOW.equals(key)) {
+      sink.put(PlatformDataKeys.TOOL_WINDOW, myToolWindow);
     }
   }
 

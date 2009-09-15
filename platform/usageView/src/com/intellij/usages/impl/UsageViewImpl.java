@@ -423,6 +423,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return new AnAction[]{
       canPerformReRun() ? new ReRunAction() : null,
       new CloseAction(),
+      ActionManager.getInstance().getAction("PinToolwindowTab"),
       createRecentFindUsagesAction(),
       expandAllAction,
       collapseAllAction,
