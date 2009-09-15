@@ -51,4 +51,24 @@ public class MavenBeforeRunTask extends BeforeRunTask {
     myProjectPath = element.getAttributeValue("file");
     myGoal = element.getAttributeValue("goal");
   }
+
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+
+    MavenBeforeRunTask that = (MavenBeforeRunTask)o;
+
+    if (myGoal != null ? !myGoal.equals(that.myGoal) : that.myGoal != null) return false;
+    if (myProjectPath != null ? !myProjectPath.equals(that.myProjectPath) : that.myProjectPath != null) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + (myProjectPath != null ? myProjectPath.hashCode() : 0);
+    result = 31 * result + (myGoal != null ? myGoal.hashCode() : 0);
+    return result;
+  }
 }
