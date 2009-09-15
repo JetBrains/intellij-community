@@ -161,4 +161,8 @@ public class CompileContextExProxy implements CompileContextEx {
   public void commitZip(String outputDir) throws IOException {
     myDelegate.commitZip(outputDir);
   }
+
+  public void assignModule(@NotNull VirtualFile root, @NotNull Module module, boolean isTestSource) {
+    myDelegate.assignModule(root, module, isTestSource);
+  }
 }

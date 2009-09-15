@@ -5,6 +5,7 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,4 +46,6 @@ public interface CompileContextEx extends CompileContext {
   void commitZipFiles();
 
   void commitZip(String outputDir) throws IOException;
+
+  void assignModule(@NotNull VirtualFile root, @NotNull Module module, boolean isTestSource);
 }

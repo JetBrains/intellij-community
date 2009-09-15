@@ -286,7 +286,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     return myTask.getIndicator();
   }
 
-  public void assignModule(VirtualFile root, Module module, final boolean isTestSource) {
+  public void assignModule(@NotNull VirtualFile root, @NotNull Module module, final boolean isTestSource) {
     try {
       myRootToModuleMap.put(root, module);
       Set<VirtualFile> set = myModuleToRootsMap.get(module);
