@@ -8,6 +8,7 @@ import com.intellij.util.Icons;
 import org.jetbrains.yaml.psi.*;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -24,14 +25,16 @@ public class YAMLStructureViewElement implements StructureViewTreeElement {
     if (myElement instanceof YAMLFile ||
         myElement instanceof YAMLDocument ||
         myElement instanceof YAMLKeyValue && ((YAMLKeyValue)myElement).getValue() instanceof YAMLCompoundValue){
-      final List<YAMLPsiElement> list = myElement instanceof YAMLKeyValue 
+      final List<YAMLPsiElement> children = myElement instanceof YAMLKeyValue
                                         ? ((YAMLCompoundValue)((YAMLKeyValue)myElement).getValue()).getYAMLElements()
                                         : myElement.getYAMLElements();
-      final StructureViewTreeElement[] structureElements = new StructureViewTreeElement[list.size()];
-      for (int i = 0; i < structureElements.length; i++) {
-        structureElements[i] = new YAMLStructureViewElement(list.get(i));
+      final List<StructureViewTreeElement> structureElements = new ArrayList<StructureViewTreeElement>();
+      for (YAMLPsiElement child : children) {
+        if (child instanceof YAMLDocument || child instanceof YAMLKeyValue){
+          structureElements.add(new YAMLStructureViewElement(child));
+        }
       }
-      return structureElements;
+      return structureElements.toArray(new StructureViewTreeElement[structureElements.size()]);
     }
     return EMPTY_ARRAY;
   }
