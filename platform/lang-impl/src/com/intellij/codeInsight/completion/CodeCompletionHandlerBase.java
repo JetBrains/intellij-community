@@ -15,6 +15,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,8 +51,8 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.Arrays;
+import java.util.List;
 
 public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CodeCompletionHandlerBase");
@@ -473,8 +474,20 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         if (copy != null && copy.isValid() && copy.getClass().equals(file.getClass())) {
           final Document document = copy.getViewProvider().getDocument();
           assert document != null;
-          document.setText(file.getText());
-          PsiDocumentManager.getInstance(copy.getProject()).commitDocument(document);
+          final String oldCopyText = copy.getText();
+          final String newText = file.getText();
+          document.setText(newText);
+          try {
+            PsiDocumentManager.getInstance(copy.getProject()).commitDocument(document);
+          }
+          catch (IndexOutOfBoundsException e) {
+            document.setText("");
+            if (((ApplicationEx)ApplicationManager.getApplication()).isInternal()) {
+              LOG.error("old text: " + oldCopyText + "; new text: " + newText, e);
+            } else {
+              throw e;
+            }
+          }
           return copy;
         }
       }
