@@ -27,9 +27,14 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public interface XSourcePosition {
-
+  /**
+   * @return 0-based number of line
+   */
   int getLine();
 
+  /**
+   * @return offset from the beginning of file
+   */
   int getOffset();
 
   @NotNull

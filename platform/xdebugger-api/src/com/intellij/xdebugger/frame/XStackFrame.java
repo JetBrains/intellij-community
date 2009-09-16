@@ -62,7 +62,7 @@ public abstract class XStackFrame extends XValueContainer {
     XSourcePosition position = getSourcePosition();
     if (position != null) {
       component.append(position.getFile().getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      component.append(":" + position.getLine(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      component.append(":" + (position.getLine()+1), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       component.setIcon(DebuggerIcons.STACK_FRAME_ICON);
     }
     else {

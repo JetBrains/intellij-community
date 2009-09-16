@@ -50,9 +50,21 @@ public abstract class XDebuggerUtil {
 
   public abstract <B extends XBreakpoint<?>> XBreakpointType<B, ?> findBreakpointType(@NotNull Class<? extends XBreakpointType<B, ?>> typeClass);
 
+  /**
+   * Create {@link XSourcePosition} instance by line number
+   * @param file file
+   * @param line 0-based line number
+   * @return source position
+   */
   @Nullable
   public abstract XSourcePosition createPosition(@NotNull VirtualFile file, int line);
 
+  /**
+   * Create {@link XSourcePosition} instance by line number
+   * @param file file
+   * @param offset offset from the beginning of file
+   * @return source position
+   */
   @Nullable
   public abstract XSourcePosition createPositionByOffset(@NotNull VirtualFile file, int offset);
 
@@ -67,5 +79,12 @@ public abstract class XDebuggerUtil {
   @Nullable
   public abstract XValueContainer getValueContainer(DataContext dataContext);
 
+  /**
+   * Process all {@link com.intellij.psi.PsiElement}s on the specified line
+   * @param project project
+   * @param document document
+   * @param line 0-based line number
+   * @param processor processor
+   */
   public abstract void iterateLine(@NotNull Project project, @NotNull Document document, int line, @NotNull Processor<PsiElement> processor);
 }
