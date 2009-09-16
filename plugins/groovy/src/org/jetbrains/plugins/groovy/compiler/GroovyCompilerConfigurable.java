@@ -83,7 +83,7 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Compi
 
   @Nls
   public String getDisplayName() {
-    return "Groovy compiler";
+    return "Groovy Compiler";
   }
 
   public Icon getIcon() {
@@ -91,7 +91,7 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Compi
   }
 
   public String getHelpTopic() {
-    return "";
+    return "reference.projectsettings.compiler.groovy";
   }
 
   public JComponent createComponent() {

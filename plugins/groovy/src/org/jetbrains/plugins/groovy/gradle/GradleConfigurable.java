@@ -2,7 +2,6 @@ package org.jetbrains.plugins.groovy.gradle;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.plugins.groovy.gant.GantSettings;
 import org.jetbrains.plugins.groovy.util.SdkHomeConfigurable;
 
 import javax.swing.*;
@@ -21,7 +20,7 @@ public class GradleConfigurable extends SdkHomeConfigurable {
   }
 
   public String getHelpTopic() {
-    return "";
+    return "reference.settingsdialog.project.gradle";
   }
 
   @Override

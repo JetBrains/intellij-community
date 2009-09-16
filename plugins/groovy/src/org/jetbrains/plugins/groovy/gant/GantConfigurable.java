@@ -20,7 +20,7 @@ public class GantConfigurable extends SdkHomeConfigurable {
   }
 
   public String getHelpTopic() {
-    return "";
+    return "reference.settingsdialog.project.gant";
   }
 
   @Override
