@@ -16,31 +16,34 @@
 
 package com.intellij.openapi.vcs.changes.conflicts;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xmlb.XmlSerializer;
-import com.intellij.util.NullableFunction;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashMap;
+import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
@@ -49,12 +52,7 @@ public class ChangelistConflictTracker {
 
   private static final Key<EditorNotificationPanel> KEY = Key.create("changelistConflictPanel");
 
-  private final Map<String, Conflict> myConflicts = new FactoryMap<String, Conflict>() {
-    @Override
-    protected Conflict create(String key) {
-      return new Conflict();
-    }
-  };
+  private final Map<String, Conflict> myConflicts = new HashMap<String, Conflict>();
 
   private Options myOptions = new Options();
   private final Project myProject;
@@ -254,6 +252,7 @@ public class ChangelistConflictTracker {
       }
     }
     XmlSerializer.deserializeInto(myOptions, from);
+    myOptions.TRACKING_ENABLED = false;
   }
 
   public void optionsChanged() {
