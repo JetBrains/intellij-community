@@ -870,7 +870,7 @@ public class JavaCompletionUtil {
           type = evaluator.fun(qualifier, parameters);
         }
         if (type == null) {
-          type = GuessManager.getInstance(project).getDataFlowCastedExpressionType(qualifier);
+          type = GuessManager.getInstance(project).getControlFlowExpressionType(qualifier);
         }
         if (type != null) {
           processor.clear();

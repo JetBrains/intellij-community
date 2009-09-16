@@ -17,6 +17,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -102,7 +103,7 @@ public class GuessManagerImpl extends GuessManager {
   public PsiType[] guessTypeToCast(PsiExpression expr) { //TODO : make better guess based on control flow
     LinkedHashSet<PsiType> types = new LinkedHashSet<PsiType>();
 
-    ContainerUtil.addIfNotNull(_getDataFlowExpressionTypes(expr).get(expr), types);
+    ContainerUtil.addIfNotNull(getControlFlowExpressionType(expr), types);
     addExprTypesWhenContainerElement(types, expr);
     addExprTypesByDerivedClasses(types, expr);
 
@@ -111,12 +112,17 @@ public class GuessManagerImpl extends GuessManager {
 
   @NotNull
   @Override
-  public Map<PsiExpression, PsiType> getDataFlowExpressionTypes(@NotNull final PsiExpression forPlace) {
-    return _getDataFlowExpressionTypes(forPlace);
+  public Map<PsiExpression, PsiType> getControlFlowExpressionTypes(@NotNull final PsiExpression forPlace) {
+    final Map<PsiExpression, PsiType> typeMap = buildDataflowTypeMap(forPlace);
+    if (typeMap != null) {
+      return typeMap;
+    }
+
+    return getAllTypeCasts(forPlace);
   }
 
-  @NotNull
-  private static Map<PsiExpression, PsiType> _getDataFlowExpressionTypes(final PsiExpression forPlace) {
+  @Nullable
+  private static Map<PsiExpression, PsiType> buildDataflowTypeMap(PsiExpression forPlace) {
     PsiElement scope = DfaUtil.getTopmostBlockInSameClass(forPlace);
     if (scope == null) {
       return Collections.emptyMap();
@@ -130,12 +136,57 @@ public class GuessManagerImpl extends GuessManager {
 
     final ExpressionTypeInstructionVisitor visitor = new ExpressionTypeInstructionVisitor(forPlace);
     if (runner.analyzeMethod(scope, visitor) == RunnerResult.OK) {
-      final Map<PsiExpression, PsiType> map = visitor.getResult();
-      if (map != null) {
-        return map;
-      }
+      return visitor.getResult();
     }
-    return Collections.emptyMap();
+    return null;
+  }
+
+  private static Map<PsiExpression, PsiType> getAllTypeCasts(PsiExpression forPlace) {
+    final int start = forPlace.getTextRange().getStartOffset();
+    final Map<PsiExpression, PsiType> allCasts = new THashMap<PsiExpression, PsiType>(ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY);
+    getTopmostBlock(forPlace).accept(new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitTypeCastExpression(PsiTypeCastExpression expression) {
+        final PsiTypeElement castType = expression.getCastType();
+        final PsiExpression operand = expression.getOperand();
+        if (operand != null && castType != null) {
+          allCasts.put(operand, castType.getType());
+        }
+        super.visitTypeCastExpression(expression);
+      }
+
+      @Override
+      public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
+        final PsiTypeElement castType = expression.getCheckType();
+        final PsiExpression operand = expression.getOperand();
+        if (castType != null) {
+          allCasts.put(operand, castType.getType());
+        }
+        super.visitInstanceOfExpression(expression);
+      }
+
+      @Override
+      public void visitElement(PsiElement element) {
+        if (element.getTextRange().getStartOffset() > start) {
+          return;
+        }
+
+        super.visitElement(element);
+      }
+    });
+    return allCasts;
+  }
+
+  private static PsiElement getTopmostBlock(PsiElement scope) {
+    PsiElement lastScope = scope;
+    while (true) {
+      final PsiCodeBlock lastCodeBlock = PsiTreeUtil.getParentOfType(lastScope, PsiCodeBlock.class, true);
+      if (lastCodeBlock == null) {
+        break;
+      }
+      lastScope = lastCodeBlock;
+    }
+    return lastScope;
   }
 
   private void addExprTypesByDerivedClasses(LinkedHashSet<PsiType> set, PsiExpression expr) {
@@ -291,6 +342,21 @@ public class GuessManagerImpl extends GuessManager {
       }
     }
     return null;
+  }
+
+  @Nullable
+  public PsiType getControlFlowExpressionType(@NotNull PsiExpression expr) {
+    final Map<PsiExpression, PsiType> allCasts = getAllTypeCasts(expr);
+    if (!allCasts.containsKey(expr)) {
+      return null; //optimization
+    }
+
+    final Map<PsiExpression, PsiType> fromDfa = buildDataflowTypeMap(expr);
+    if (fromDfa != null) {
+      return fromDfa.get(expr);
+    }
+
+    return allCasts.get(expr);
   }
 
   private static class ExpressionTypeInstructionVisitor extends InstructionVisitor {

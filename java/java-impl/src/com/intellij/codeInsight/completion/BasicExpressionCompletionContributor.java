@@ -118,7 +118,7 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
     final PsiExpression context = PsiTreeUtil.getParentOfType(position, PsiExpression.class);
     if (context == null) return;
 
-    final Map<PsiExpression,PsiType> map = GuessManager.getInstance(position.getProject()).getDataFlowExpressionTypes(context);
+    final Map<PsiExpression,PsiType> map = GuessManager.getInstance(position.getProject()).getControlFlowExpressionTypes(context);
     for (final PsiExpression expression : map.keySet()) {
       final PsiType castType = map.get(expression);
       final PsiType baseType = expression.getType();

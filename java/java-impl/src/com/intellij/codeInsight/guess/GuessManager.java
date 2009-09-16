@@ -21,10 +21,8 @@ public abstract class GuessManager {
   public abstract PsiType[] guessTypeToCast(PsiExpression expr);
 
   @NotNull 
-  public abstract Map<PsiExpression, PsiType> getDataFlowExpressionTypes(@NotNull PsiExpression forPlace);
+  public abstract Map<PsiExpression, PsiType> getControlFlowExpressionTypes(@NotNull PsiExpression forPlace);
 
   @Nullable
-  public PsiType getDataFlowCastedExpressionType(@NotNull PsiExpression expr) {
-    return getDataFlowExpressionTypes(expr).get(expr);
-  }
+  public abstract PsiType getControlFlowExpressionType(@NotNull PsiExpression expr);
 }
