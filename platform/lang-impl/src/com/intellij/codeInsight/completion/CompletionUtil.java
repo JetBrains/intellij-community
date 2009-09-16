@@ -137,6 +137,7 @@ public class CompletionUtil {
   public static void emulateInsertion(LookupElement item, int offset, InsertionContext context) {
     context.getOffsetMap().addOffset(CompletionInitializationContext.START_OFFSET, offset);
     context.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, offset);
+    context.getOffsetMap().addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, offset);
     context.setTailOffset(offset);
 
     final Editor editor = context.getEditor();
