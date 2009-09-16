@@ -721,6 +721,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     mySplitter.setFirstComponent(myBrowser);
     mySplitter.setSecondComponent(myCommitMessageArea);
     mySplitter.setProportion(calcSplitterProportion());
+    mySplitter.setDividerWidth(3);
     rootPane.add(mySplitter, BorderLayout.CENTER);
 
     JComponent browserHeader = myBrowser.getHeaderPanel();

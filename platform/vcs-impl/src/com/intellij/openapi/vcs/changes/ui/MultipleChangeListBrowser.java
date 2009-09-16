@@ -22,7 +22,6 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
 import com.intellij.openapi.vcs.changes.actions.RollbackDialogAction;
-import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.EventDispatcher;
@@ -326,7 +325,6 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
       myBrowser.addToolbarAction(editSourceAction);
 
       myBrowser.addToolbarAction(ActionManager.getInstance().getAction("Vcs.CheckinProjectToolbar"));
-      myBrowser.addToolbarActions(CommitMessage.getToolbarActions());
 
       final List<AnAction> actions = AdditionalLocalChangeActionsInstaller.calculateActions(myProject, myBrowser.getAllChanges());
       if (actions != null) {

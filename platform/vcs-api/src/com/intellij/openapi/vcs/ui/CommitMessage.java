@@ -18,6 +18,8 @@ package com.intellij.openapi.vcs.ui;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.SeparatorFactory;
@@ -36,8 +38,21 @@ public class CommitMessage extends JPanel implements Disposable {
     final JScrollPane scrollPane = new JScrollPane(myCommentArea);
     scrollPane.setPreferredSize(myCommentArea.getPreferredSize());
     add(scrollPane, BorderLayout.CENTER);
+
+    JPanel labelPanel = new JPanel(new BorderLayout());
+    labelPanel.setBorder(BorderFactory.createEmptyBorder());
     JComponent separator = SeparatorFactory.createSeparator(VcsBundle.message("label.commit.comment"), myCommentArea);
-    add(separator, BorderLayout.NORTH);
+    JPanel separatorPanel = new JPanel(new BorderLayout());
+    separatorPanel.add(separator, BorderLayout.SOUTH);
+    separatorPanel.add(Box.createVerticalGlue(), BorderLayout.NORTH);
+    labelPanel.add(separatorPanel, BorderLayout.CENTER);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, getToolbarActions(), true);
+    toolbar.setReservePlaceAutoPopupIcon(false);
+    toolbar.getComponent().setBorder(BorderFactory.createEmptyBorder());
+    labelPanel.add(toolbar.getComponent(), BorderLayout.EAST);
+    add(labelPanel, BorderLayout.NORTH);
+
+    setBorder(BorderFactory.createEmptyBorder());
     final TextComponentUndoProvider textComponentUndoProvider = new TextComponentUndoProvider(myCommentArea);
     Disposer.register(this, textComponentUndoProvider);
   }
