@@ -69,19 +69,9 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
       if (isAnnotationReference && !aClass.isAnnotationType()) continue;
       if (JavaCompletionUtil.isInExcludedPackage(aClass)) continue;
       if (referenceHasTypeParameters && !aClass.hasTypeParameters()) continue;
-      PsiFile file = aClass.getContainingFile();
-      if (file instanceof PsiClassOwner) {
-        PsiClass[] psiClasses = ((PsiClassOwner)file).getClasses();
-        if (psiClasses.length == 0) { //do not show classes from default package
-          continue;
-        }
-        String fqn = psiClasses[0].getQualifiedName();
-        if (fqn == null || fqn.indexOf('.') == -1) { //do not show classes from default package
-          continue;
-        }
-      }
       String qName = aClass.getQualifiedName();
       if (qName != null) { //filter local classes
+        if (qName.indexOf('.') == -1) continue; //do not show classes from default package)
         if (qName.endsWith(name)) {
           if (isAccessible(aClass, myRef)) {
             classList.add(aClass);
