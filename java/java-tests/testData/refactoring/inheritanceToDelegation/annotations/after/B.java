@@ -1,5 +1,5 @@
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 class B {
     public final A myDelegate = new A();

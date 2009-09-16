@@ -65,6 +65,7 @@ public abstract class PsiNameHelper {
    */
   public abstract boolean isQualifiedName(@Nullable String text);
 
+  @NotNull
   public static String getShortClassName(@NotNull String referenceText) {
     return getShortClassName(referenceText, true);
   }
