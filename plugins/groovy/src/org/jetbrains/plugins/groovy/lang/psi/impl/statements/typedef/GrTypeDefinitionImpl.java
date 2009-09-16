@@ -25,10 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.ElementBase;
-import com.intellij.psi.impl.ElementPresentationUtil;
-import com.intellij.psi.impl.InheritanceImplUtil;
-import com.intellij.psi.impl.PsiClassImplUtil;
+import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.impl.source.tree.java.ClassElement;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -76,7 +73,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -504,7 +500,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
   @NotNull
   public Collection<HierarchicalMethodSignature> getVisibleSignatures() {
-    return Collections.emptyList();
+    return PsiSuperMethodImplUtil.getVisibleSignatures(this);
   }
 
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {

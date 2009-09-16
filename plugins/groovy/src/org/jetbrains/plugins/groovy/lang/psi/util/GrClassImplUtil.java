@@ -154,15 +154,19 @@ public class GrClassImplUtil {
       }
     }
 
-    addGroovyObjectMethods(clazz, allMethods);
+//    addGroovyObjectMethods(clazz, allMethods);
 
-    for (PsiClass aSuper : clazz.getSupers()) {
+    final PsiClass[] supers = clazz.getSupers();
+    if (supers.length<2) {
+      addGroovyObjectMethods(clazz, allMethods);
+    }
+    for (PsiClass aSuper : supers) {
       getAllMethodsInner(aSuper, allMethods, visited);
     }
   }
 
   public static void addGroovyObjectMethods(PsiClass clazz, List<PsiMethod> allMethods) {
-    if (clazz instanceof GrTypeDefinition && !clazz.isInterface() && clazz.getExtendsListTypes().length == 0) {
+    if (clazz instanceof GrTypeDefinition && !clazz.isInterface() /*&& clazz.getExtendsListTypes().length == 0*/) {
       final PsiClass groovyObject =
         JavaPsiFacade.getInstance(clazz.getProject()).findClass(GrTypeDefinition.DEFAULT_BASE_CLASS_NAME, clazz.getResolveScope());
       if (groovyObject != null) {

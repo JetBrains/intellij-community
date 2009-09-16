@@ -176,4 +176,6 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testNestedMethods() throws Throwable {
     doTest();
   }
+
+  public void testRawOverridedMethod() throws Exception {doTest();}
 }

@@ -15,6 +15,7 @@
 
 package org.jetbrains.plugins.groovy.annotator;
 
+import com.intellij.codeInsight.ClassUtil;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
@@ -25,7 +26,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import gnu.trove.TObjectHashingStrategy;
@@ -73,7 +73,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
-import org.jetbrains.plugins.groovy.overrideImplement.GroovyOverrideImplementUtil;
 import org.jetbrains.plugins.groovy.overrideImplement.quickFix.ImplementMethodsQuickFix;
 
 import java.util.*;
@@ -259,13 +258,12 @@ public class GroovyAnnotator implements Annotator {
     if (typeDefinition.isEnum() || typeDefinition.isAnnotationType()) return;
     if (typeDefinition instanceof GrTypeParameter) return;
 
-    Collection<CandidateInfo> methodsToImplement = GroovyOverrideImplementUtil.getMethodsToImplement(typeDefinition);
-    if (methodsToImplement.isEmpty()) return;
+    Collection<HierarchicalMethodSignature> allMethods = typeDefinition.getVisibleSignatures();
+    PsiMethod abstractMethod = ClassUtil.getAnyAbstractMethod(typeDefinition, allMethods);
 
-    final PsiElement methodCandidateInfo = methodsToImplement.iterator().next().getElement();
-    assert methodCandidateInfo instanceof PsiMethod;
+    if (abstractMethod == null) return;
 
-    String notImplementedMethodName = ((PsiMethod)methodCandidateInfo).getName();
+    String notImplementedMethodName = abstractMethod.getName();
 
     final int startOffset = typeDefinition.getTextOffset();
     int endOffset = typeDefinition.getNameIdentifierGroovy().getTextRange().getEndOffset();

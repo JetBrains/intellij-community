@@ -28,8 +28,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
@@ -252,7 +252,7 @@ public class PsiImplUtil {
   }
 
   public static boolean isExtendsSignature(MethodSignature superSignatureCandidate, MethodSignature subSignature) {
-    final String name1 = superSignatureCandidate.getName();
+    /*final String name1 = superSignatureCandidate.getName();
     final String name2 = subSignature.getName();
     if (!name1.equals(name2)) return false;
 
@@ -261,13 +261,13 @@ public class PsiImplUtil {
     if (subTypes.length != superTypes.length) return false;
     for (int i = 0; i < subTypes.length - 1; i++) {
       PsiType superType = TypeConversionUtil.erasure(superTypes[i]);
-      PsiType subType = TypeConversionUtil.erasure(subTypes[i]);
+      PsiType subType = subTypes[i];
       if (!superType.isAssignableFrom(subType)) return false;
     }
 
     if (superTypes.length > 0) {
       final PsiType lastSuperType = TypeConversionUtil.erasure(superTypes[superTypes.length - 1]);
-      final PsiType lastSubType = TypeConversionUtil.erasure(subTypes[superTypes.length - 1]);
+      final PsiType lastSubType = subTypes[superTypes.length - 1];
       if (lastSuperType instanceof PsiArrayType && !(lastSubType instanceof PsiArrayType)) {
         final PsiType componentType = ((PsiArrayType) lastSuperType).getComponentType();
         if (!lastSubType.isConvertibleFrom(componentType)) return false;
@@ -276,7 +276,8 @@ public class PsiImplUtil {
       }
     }
 
-    return true;
+    return true;*/
+    return MethodSignatureUtil.isSubsignature(superSignatureCandidate, subSignature);
   }
 
   public static PsiElement getOriginalElement(PsiClass clazz, PsiFile containingFile) {
