@@ -54,7 +54,7 @@ public class PyUtil {
         if (doc == null) {
             return;
         }
-        if (!FileDocumentManager.getInstance().fileForDocumentCheckedOutSuccessfully(doc, element.getProject())) {
+        if (!FileDocumentManager.getInstance().requestWriting(doc, element.getProject())) {
             throw new IllegalStateException();
         }
     }
