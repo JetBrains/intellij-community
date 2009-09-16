@@ -52,7 +52,7 @@ public class VcsManagerPerModuleConfiguration implements JDOMExternalizable, Mod
     if (!USE_PROJECT_VCS) {
       final VirtualFile[] roots = ModuleRootManager.getInstance(myModule).getContentRoots();
 
-      StartupManager.getInstance(myModule.getProject()).registerStartupActivity(new Runnable() {
+      StartupManager.getInstance(myModule.getProject()).runWhenProjectIsInitialized(new Runnable() {
         public void run() {
           for(VirtualFile file: roots) {
             vcsManager.setDirectoryMapping(file.getPath(), ACTIVE_VCS_NAME);
