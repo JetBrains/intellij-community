@@ -1,6 +1,7 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.CommonBundle;
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -621,12 +622,16 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     }
     if (psiElement == null || !psiElement.isValid()) return null;
     PsiFile containingFile = psiElement.getContainingFile();
-    final VirtualFile virtualFile = containingFile == null ? null : containingFile.getVirtualFile();
+    VirtualFile virtualFile = containingFile == null ? null : containingFile.getVirtualFile();
+
     if (virtualFile != null) {
       int startOffset = psiElement.getTextOffset();
       if (descriptor instanceof ProblemDescriptorImpl) {
         final TextRange textRange = ((ProblemDescriptorImpl)descriptor).getTextRangeForNavigation();
         if (textRange != null) {
+          if (virtualFile instanceof VirtualFileWindow) {
+            virtualFile = ((VirtualFileWindow)virtualFile).getDelegate();
+          }
           startOffset = textRange.getStartOffset();
         }
       }

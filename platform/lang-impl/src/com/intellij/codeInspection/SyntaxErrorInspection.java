@@ -2,7 +2,6 @@ package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.*;
@@ -88,7 +87,12 @@ public class SyntaxErrorInspection extends GlobalInspectionTool {
       CommonProblemDescriptor descriptor;
       final TextRange textRange = element.getTextRange();
       if (textRange.getLength() > 0) {
-        descriptor = manager.createProblemDescriptor(element, element.getErrorDescription(), ProblemHighlightType.ERROR, null);
+        descriptor = manager.createProblemDescriptor(
+          element,
+          GlobalInspectionUtil.createInspectionMessage(element.getErrorDescription()),
+          ProblemHighlightType.ERROR,
+          null
+        );
       }
       else {
         PsiElement parent = element;
@@ -105,16 +109,11 @@ public class SyntaxErrorInspection extends GlobalInspectionTool {
         int offset = element.getTextRange().getStartOffset() - parent.getTextRange().getStartOffset();
         descriptor = manager.createProblemDescriptor(parent,
                                                      new TextRange(offset, offset+1),
-                                                     element.getErrorDescription() + " #loc", ProblemHighlightType.ERROR);
+                                                     GlobalInspectionUtil.createInspectionMessage(element.getErrorDescription()),
+                                                     ProblemHighlightType.ERROR);
       }
 
-      PsiFile elementFile = element.getContainingFile();
-      RefElement refElement = globalContext.getRefManager().getReference(elementFile);
-      if (refElement == null) {
-        PsiElement context = elementFile.getContext();
-        if (context != null) refElement = globalContext.getRefManager().getReference(context.getContainingFile());
-      }
-      problemDescriptionsProcessor.addProblemElement(refElement, descriptor);
+      problemDescriptionsProcessor.addProblemElement(GlobalInspectionUtil.retrieveRefElement(element, globalContext), descriptor);
     }
 
     public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {

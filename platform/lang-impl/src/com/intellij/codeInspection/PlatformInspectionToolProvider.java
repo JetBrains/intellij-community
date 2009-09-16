@@ -5,6 +5,6 @@ package com.intellij.codeInspection;
  */
 public class PlatformInspectionToolProvider implements InspectionToolProvider {
   public Class[] getInspectionClasses() {
-    return new Class[] { SyntaxErrorInspection.class };
+    return new Class[] { SyntaxErrorInspection.class, AnnotatorBasedInspection.class };
   }
 }

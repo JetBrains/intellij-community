@@ -123,7 +123,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
     }
   }
 
-  protected void setupRootModel(final String testDir, final VirtualFile[] sourceDir, final String jdkName) {
+  protected void setupRootModel(final String testDir, final VirtualFile[] sourceDir, final String sdkName) {
     VirtualFile projectDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(testDir));
     assertNotNull(projectDir);
     sourceDir[0] = projectDir.findChild("src");
@@ -143,18 +143,22 @@ public abstract class InspectionTestCase extends PsiTestCase {
 
     // IMPORTANT! The jdk must be obtained in a way it is obtained in the normal program!
     //ProjectJdkEx jdk = ProjectJdkTable.getInstance().getInternalJdk();
-    Sdk jdk;
-    if ("java 1.5".equals(jdkName)) {
-      jdk = JavaSdkImpl.getMockJdk15(jdkName);
+
+    rootModel.setSdk(getTestProjectSdk(sdkName));
+
+    rootModel.commit();
+  }
+
+  protected Sdk getTestProjectSdk(String sdkName) {
+    Sdk sdk;
+    if ("java 1.5".equals(sdkName)) {
+      sdk = JavaSdkImpl.getMockJdk15(sdkName);
       LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
     }
     else {
-      jdk = JavaSdkImpl.getMockJdk(jdkName);
+      sdk = JavaSdkImpl.getMockJdk(sdkName);
     }
-
-    rootModel.setSdk(jdk);
-
-    rootModel.commit();
+    return sdk;
   }
 
   @NonNls
