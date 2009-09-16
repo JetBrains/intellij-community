@@ -147,7 +147,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
     PsiElement anchor = getNormalizedAnchor(anchorElement);
 
-    boolean tempDeleteSelf = anchorElement == null;
+    boolean tempDeleteSelf = false;
     if (element.getParent() instanceof PsiExpressionStatement && anchor.equals(anchorElement)) {
       PsiStatement statement = (PsiStatement)element.getParent();
       if (statement.getParent() instanceof PsiCodeBlock) {

@@ -36,6 +36,12 @@ public class IntroduceConstantTest extends LightCodeInsightTestCase {
     doTest(true);    
   }
 
+  public void testAnnotationDescription() throws Exception {
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+    new MockIntroduceConstantHandler(null).invoke(getProject(), getEditor(), getFile(), null);
+    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+  }
+
   private static void convertLocal(final boolean makeEnumConstant) {
     PsiLocalVariable local = PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiLocalVariable.class);
     new MockLocalToFieldHandler(getProject(), true, makeEnumConstant).convertLocalToField(local, getEditor());
