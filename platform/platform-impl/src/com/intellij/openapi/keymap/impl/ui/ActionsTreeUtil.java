@@ -53,8 +53,9 @@ public class ActionsTreeUtil {
     Group pluginsGroup = new Group(KeyMapBundle.message("plugins.group.title"), null, null);
     final KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
     ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
-    final IdeaPluginDescriptor[] plugins = ApplicationManager.getApplication().getPlugins();
-    Arrays.sort(plugins, new Comparator<IdeaPluginDescriptor>() {
+    final List<IdeaPluginDescriptor> plugins = new ArrayList<IdeaPluginDescriptor>();
+    Collections.addAll(plugins, ApplicationManager.getApplication().getPlugins());
+    Collections.sort(plugins, new Comparator<IdeaPluginDescriptor>() {
       public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
         return o1.getName().compareTo(o2.getName());
       }
