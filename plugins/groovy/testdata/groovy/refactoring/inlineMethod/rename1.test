@@ -15,11 +15,9 @@ static String test() {
 protected static def getGeneratedFileNames() {
     foo = 0
     while (true) {
-      String result
       def foo1 = 42
       println(foo1)
-      result = foo1
-      foo = result
+      foo = foo1
     }
     int t = foo
 }

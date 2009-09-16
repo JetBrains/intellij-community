@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.psi.PsiElement;
@@ -94,12 +95,36 @@ public class InlineMethodTest extends LightCodeInsightFixtureTestCase {
   public void testVen_tail() throws Throwable { doTest(); }
   public void testVen_tail2() throws Throwable { doTest(); }
   public void testVoid() throws Throwable { doTest(); }
+  public void testExpressionInParameter() throws Throwable {doTest();}
+  public void testFinalParameter() throws Throwable { doTest(); }
+  public void testParameterIsUsedAfterCall() throws Throwable { doTest(); }
+  public void testFieldAsParameter() throws Throwable { doTest(); }
+  public void testWritableVariable() throws Throwable { doTest(); }
 
-  protected void doTest() throws IncorrectOperationException, InvalidDataException, IOException {
-    doInlineTest(myFixture, getTestDataPath() + getTestName(true) + ".test", false);
+  public void testInlineAll() throws Throwable {
+    doTest(new GroovyInlineHandler() {
+      @Override
+      public Settings prepareInlineElement(PsiElement element, Editor editor, boolean invokedOnReference) {
+        return new Settings() {
+          public boolean isOnlyOneReferenceToInline() {
+            return false;
+          }
+        };
+      }
+    });
   }
 
-  public static void doInlineTest(final JavaCodeInsightTestFixture fixture, final String testFile, boolean withCaret) throws IOException {
+  protected void doTest() throws IncorrectOperationException, InvalidDataException, IOException {
+    doTest(new GroovyInlineHandler());
+
+  }
+
+  protected void doTest(InlineHandler handler) throws IOException {
+    doInlineTest(myFixture, getTestDataPath() + getTestName(true) + ".test", false, handler);
+  }
+
+  public static void doInlineTest(final JavaCodeInsightTestFixture fixture, final String testFile, boolean withCaret,
+                                  InlineHandler inlineHandler) throws IOException {
     final List<String> data = TestUtils.readInput(testFile);
     String fileText = data.get(0);
 
@@ -129,7 +154,7 @@ public class InlineMethodTest extends LightCodeInsightFixtureTestCase {
     Assert.assertNotNull("Cannot resolve selected reference expression", element);
 
     // handling inline refactoring
-    GenericInlineHandler.invoke(element, myEditor, new GroovyInlineHandler());
+    GenericInlineHandler.invoke(element, myEditor, inlineHandler);
     String result = myEditor.getDocument().getText();
     String invokedResult = GroovyInlineMethodUtil.getInvokedResult();
     final int caretOffset = myEditor.getCaretModel().getOffset();

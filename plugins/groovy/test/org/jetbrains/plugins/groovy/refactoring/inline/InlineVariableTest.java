@@ -40,7 +40,7 @@ public class InlineVariableTest extends LightCodeInsightFixtureTestCase {
   public void testVar6() throws Throwable { doTest(); }
 
   protected void doTest() throws IncorrectOperationException, InvalidDataException, IOException {
-    InlineMethodTest.doInlineTest(myFixture, getTestDataPath() + getTestName(true) + ".test", true);
+    InlineMethodTest.doInlineTest(myFixture, getTestDataPath() + getTestName(true) + ".test", true, new GroovyInlineHandler());
   }
 
 }

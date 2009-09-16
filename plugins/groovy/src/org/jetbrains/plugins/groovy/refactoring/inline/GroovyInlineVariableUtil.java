@@ -33,6 +33,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
+import com.intellij.usageView.UsageInfo;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.Nullable;
@@ -82,8 +83,8 @@ public class GroovyInlineVariableUtil {
         return conflicts;
       }
 
-      public void inlineReference(final PsiReference reference, final PsiElement referenced) {
-        GrExpression exprToBeReplaced = (GrExpression) reference.getElement();
+      public void inlineUsage(final UsageInfo usage, final PsiElement referenced) {
+        GrExpression exprToBeReplaced = (GrExpression) usage.getElement();
         assert variable.getInitializerGroovy() != null;
         GrExpression initializerGroovy = variable.getInitializerGroovy();
         assert initializerGroovy != null;

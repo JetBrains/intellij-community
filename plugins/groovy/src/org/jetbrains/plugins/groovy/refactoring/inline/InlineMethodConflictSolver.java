@@ -21,7 +21,6 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -35,10 +34,11 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
  * Utility class to solve name conflicts related to local variable names of method to be inlined
  * @author ilyas
  */
-public abstract class InlineMethodConflictSolver {
+public class InlineMethodConflictSolver {
+  private InlineMethodConflictSolver() {}
 
   public static String suggestNewName(@NotNull String startName, GrMethod method, PsiElement call, String... otherNames) {
-    String newName = startName;
+    String newName;
     int i = 1;
     PsiElement parent = call.getParent();
     while (!(parent instanceof GrVariableDeclarationOwner) && parent != null) {

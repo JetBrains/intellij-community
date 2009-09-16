@@ -1,7 +1,6 @@
 class A {
 
 
-
 }
 
 class Test {

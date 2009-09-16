@@ -23,14 +23,15 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.impl.PersistentRangeMarker;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -46,8 +47,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
@@ -99,13 +100,14 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
     return conflicts;
   }
 
-  public void inlineReference(PsiReference reference, PsiElement referenced) {
-    PsiElement element = reference.getElement();
+  public void inlineUsage(UsageInfo usage, PsiElement referenced) {
+    PsiElement element=usage.getElement();
+
     assert element instanceof GrExpression && element.getParent() instanceof GrCallExpression;
     GrCallExpression call = (GrCallExpression) element.getParent();
     RangeMarker marker = inlineReferenceImpl(call, myMethod, isOnExpressionOrReturnPlace(call), GroovyInlineMethodUtil.isTailMethodCall(call));
 
-    // highilght replaced result
+    // highlight replaced result
     if (marker != null) {
       Project project = referenced.getProject();
       FileEditorManager manager = FileEditorManager.getInstance(project);
@@ -163,7 +165,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       // Add variable for method result
       Collection<GrReturnStatement> returnStatements = GroovyRefactoringUtil.findReturnStatements(newMethod);
       boolean hasTailExpr = GroovyRefactoringUtil.hasTailReturnExpression(method);
-      boolean hasReturnStatements = returnStatements.size() > 0;
+      final int returnCount = returnStatements.size();
       PsiType methodType = method.getReturnType();
       GrOpenBlock body = newMethod.getBlock();
       assert body != null;
@@ -173,7 +175,9 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
         GrExpression resultExpr;
         if (PsiType.VOID.equals(methodType)) {
           resultExpr = factory.createExpressionFromText("null");
-        } else if (hasReturnStatements) {
+        }else if (returnCount == 1) {
+          resultExpr = factory.createExpressionFromText(returnStatements.iterator().next().getReturnValue().getText());
+        }else if (returnCount > 1) {
           resultExpr = factory.createExpressionFromText(resultName);
         } else if (hasTailExpr) {
           GrExpression expr = (GrExpression) statements[statements.length - 1];
@@ -187,8 +191,8 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       // Calculate anchor to insert before
       GrExpression enclosingExpr = changeEnclosingStatement(replaced != null ? replaced : call);
       GrVariableDeclarationOwner owner = PsiTreeUtil.getParentOfType(enclosingExpr, GrVariableDeclarationOwner.class);
-      PsiElement element = enclosingExpr;
       assert owner != null;
+      PsiElement element = enclosingExpr;
       while (element != null && element.getParent() != owner) {
         element = element.getParent();
       }
@@ -205,7 +209,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       }
 
       // Process method return statements
-      if (hasReturnStatements && PsiType.VOID != methodType && !isTailMethodCall) {
+      if (returnCount > 1 && PsiType.VOID != methodType && !isTailMethodCall) {
         PsiType type = methodType != null && methodType.equalsToText("java.lang.Object") ? null : methodType;
         GrVariableDeclaration resultDecl = factory.createVariableDeclaration(new String[0], null, type, resultName);
         GrStatement statement = ((GrStatementOwner) owner).addStatementBefore(resultDecl, anchor);
@@ -222,7 +226,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
           }
         }
       }
-      if (PsiType.VOID.equals(methodType) && !isTailMethodCall) {
+      if (!isTailMethodCall && (PsiType.VOID.equals(methodType) || returnCount == 1)) {
         for (GrReturnStatement returnStatement : returnStatements) {
           returnStatement.removeStatement();
         }
@@ -334,7 +338,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
 
 
   /*
-  Parepare temporary method sith non-conflicting local names
+  Prepare temporary method with non-conflicting local names
   */
   private static GrMethod prepareNewMethod(GrCallExpression call, GrMethod method, GrReferenceExpression qualifier) throws IncorrectOperationException {
 
@@ -368,7 +372,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
         }
       }
     }
-    GroovyRefactoringUtil.replaceParamatersWithArguments(call, newMethod);
+    GroovyInlineMethodUtil.replaceParametersWithArguments(call, newMethod);
     return newMethod;
   }
 
@@ -389,6 +393,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
    *
    * @return null if method has more or less than one return statement or has void type
    */
+  @Nullable
   static GrExpression getAloneResultExpression(GrMethod method) {
     GrOpenBlock body = method.getBlock();
     assert body != null;
@@ -431,6 +436,4 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
     }
     return false;
   }
-
-
 }

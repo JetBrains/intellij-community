@@ -483,10 +483,7 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
   public void delete() throws IncorrectOperationException {
     PsiElement parent = getParent();
     if (parent instanceof GroovyFileImpl || parent instanceof GrTypeDefinitionBody) {
-      ASTNode astNode = parent.getNode();
-      if (astNode != null) {
-        astNode.removeChild(getNode());
-      }
+      super.delete();
       return;
     }
     throw new IncorrectOperationException("Invalid enclosing type definition");

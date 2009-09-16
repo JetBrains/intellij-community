@@ -70,6 +70,9 @@ public class GroovyInlineHandler implements InlineHandler {
         owner instanceof GrVariableDeclarationOwner) {
       ((GrVariableDeclarationOwner) owner).removeVariable(((GrVariable) element));
     }
+    if (element instanceof GrMethod) {
+      element.delete();
+    }
   }
 
   @Nullable

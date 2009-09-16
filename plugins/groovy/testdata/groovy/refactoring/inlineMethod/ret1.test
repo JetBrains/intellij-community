@@ -12,8 +12,6 @@ int bar(i = 8, k = i + 1, j = k) {
   return i + k + j + q + q + q
 }
 
-int result
 def q = 6
 print 8 + 1
-result = 8 + 8 + 1 + 8 + 1 + q + q + q
-def t = result
+def t = 8 + 8 + 1 + 8 + 1 + q + q + q
