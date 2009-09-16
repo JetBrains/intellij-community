@@ -14,7 +14,7 @@ class FictiveBackgroundable extends Task.Backgroundable {
   FictiveBackgroundable(@Nullable final Project project, @NotNull final Runnable runnable, final boolean cancellable, final String title,
                         final ModalityState state) {
     super(project, VcsBundle.message("change.list.manager.wait.lists.synchronization", title), cancellable, BackgroundFromStartOption.getInstance());
-    myWaiter = new Waiter(project, runnable, state, null, cancellable);
+    myWaiter = new Waiter(project, runnable, state, VcsBundle.message("change.list.manager.wait.lists.synchronization", title), cancellable);
   }
 
   public void run(@NotNull final ProgressIndicator indicator) {
