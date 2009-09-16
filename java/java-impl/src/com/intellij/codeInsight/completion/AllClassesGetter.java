@@ -136,7 +136,11 @@ public class AllClassesGetter {
 
     final Set<String> qnames = new THashSet<String>();
 
-    final GlobalSearchScope scope = filterByScope ? context.getContainingFile().getResolveScope() : GlobalSearchScope.allScope(context.getProject());
+    final GlobalSearchScope scope = ApplicationManager.getApplication().runReadAction(new Computable<GlobalSearchScope>() {
+      public GlobalSearchScope compute() {
+        return filterByScope ? context.getContainingFile().getResolveScope() : GlobalSearchScope.allScope(context.getProject());
+      }
+    });
     final PrefixMatcher prefixMatcher = set.getPrefixMatcher();
 
     final boolean lookingForAnnotations = PsiJavaPatterns.psiElement().afterLeaf("@").accepts(context);
