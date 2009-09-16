@@ -31,10 +31,10 @@ import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author: Roman Chernyatchik
@@ -182,6 +182,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
     selectAndNotify(myTestsRootNode);
 
     myStartTime = System.currentTimeMillis();
+    final Date today = new Date(myStartTime);
+    myTestsRootNode.addSystemOutput("Testing started at "
+                                    + DateFormat.getTimeInstance(SimpleDateFormat.SHORT).format(today)
+                                    + " ...\n");
+
     updateStatusLabel();
 
     fireOnTestingStarted();
