@@ -301,7 +301,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   @Override
-  public boolean fileForDocumentCheckedOutSuccessfully(@NotNull Document document, Project project) {
+  public boolean requestWriting(@NotNull Document document, Project project) {
     final VirtualFile file = getInstance().getFile(document);
     if (file != null && file.isValid()) {
       return ReadonlyStatusHandler.ensureFilesWritable(project, file);

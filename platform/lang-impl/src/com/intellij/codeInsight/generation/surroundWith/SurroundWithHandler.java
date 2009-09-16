@@ -88,7 +88,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler{
 
   static void doSurround(final Project project, final Editor editor, final Surrounder surrounder, final PsiElement[] elements) {
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    if (!FileDocumentManager.getInstance().fileForDocumentCheckedOutSuccessfully(editor.getDocument(), project)){
+    if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)){
       return;
     }
 

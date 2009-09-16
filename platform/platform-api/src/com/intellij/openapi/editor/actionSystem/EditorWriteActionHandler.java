@@ -30,7 +30,7 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
 
     if (dataContext != null) {
       Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-      if (project != null && !FileDocumentManager.getInstance().fileForDocumentCheckedOutSuccessfully(editor.getDocument(), project)) return;
+      if (project != null && !FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) return;
     }
 
     ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(editor.getDocument(),editor.getProject()) {

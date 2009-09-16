@@ -72,7 +72,7 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
       ((CopyPasteManagerEx)CopyPasteManager.getInstance()).moveContentTopStackTop(chooser.getAllContents().get(selectedIndex));
 
       if (editor != null) {
-          if (!FileDocumentManager.getInstance().fileForDocumentCheckedOutSuccessfully(editor.getDocument(), project)){
+          if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)){
             return;
           }
 

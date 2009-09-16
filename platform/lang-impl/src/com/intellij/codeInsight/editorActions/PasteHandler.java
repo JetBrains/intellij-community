@@ -49,7 +49,7 @@ public class PasteHandler extends EditorActionHandler {
   public void execute(final Editor editor, final DataContext dataContext) {
     if (editor.isViewer()) return;
 
-      if (!FileDocumentManager.getInstance().fileForDocumentCheckedOutSuccessfully(editor.getDocument(), PlatformDataKeys.PROJECT.getData(dataContext))){
+      if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), PlatformDataKeys.PROJECT.getData(dataContext))){
         return;
       }
 

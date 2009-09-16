@@ -32,7 +32,7 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateDelegateHandler");
 
   public void invoke(final Project project, final Editor editor, final PsiFile file) {
-    if (!FileDocumentManager.getInstance().fileForDocumentCheckedOutSuccessfully(editor.getDocument(), project)) {
+    if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
       return;
     }
     PsiDocumentManager.getInstance(project).commitAllDocuments();

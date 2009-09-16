@@ -68,7 +68,7 @@ public class EndHandler extends EditorActionHandler {
                 caretModel.moveToLogicalPosition(new LogicalPosition(line, col));
 
                 if (caretModel.getLogicalPosition().column != col){
-                  if (!FileDocumentManager.getInstance().fileForDocumentCheckedOutSuccessfully(editor.getDocument(), project)) {
+                  if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
                     return;
                   }
                   editor.getSelectionModel().removeSelection();
