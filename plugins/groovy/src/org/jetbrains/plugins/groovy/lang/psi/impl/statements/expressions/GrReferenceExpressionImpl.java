@@ -79,6 +79,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     visitor.visitReferenceExpression(this);
   }
 
+  @Nullable
   public PsiElement getReferenceNameElement() {
     final ASTNode lastChild = getNode().getLastChildNode();
     if (lastChild == null) return null;
@@ -110,7 +111,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     return null;
   }
 
-  private String getValueText(PsiElement stringNameElement) {
+  private static String getValueText(PsiElement stringNameElement) {
     final String text = stringNameElement.getText();
     final char firstChar = text.charAt(0);
     if (text.charAt(text.length() - 1) == firstChar) return text.substring(1, text.length() - 1);
@@ -198,6 +199,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     });
   }
 
+  @Nullable
   private PsiType getNominalTypeImpl() {
     IElementType dotType = getDotTokenType();
 
@@ -235,7 +237,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     } else if (resolved instanceof PsiVariable) {
       result = ((PsiVariable) resolved).getType();
     } else
-    if (resolved instanceof PsiMethod && !GroovyPsiManager.getInstance(resolved.getProject()).isTypeBeingInferred(resolved)) {
+    if (resolved instanceof PsiMethod && !GroovyPsiManager.isTypeBeingInferred(resolved)) {
       if (dotType == GroovyTokenTypes.mMEMBER_POINTER) {
         return facade.getElementFactory().createTypeByFQClassName("groovy.lang.Closure", getResolveScope());
       }
@@ -304,6 +306,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     }
   }
 
+  @Nullable
   private PsiType getTypeForObjectGetClass(JavaPsiFacade facade, PsiMethod method) {
     PsiType type = method.getReturnType();
     if (type instanceof PsiClassType) {
@@ -492,7 +495,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       }
     }
 
-    private void processClassQualifierType(GrReferenceExpressionImpl refExpr, ResolverProcessor processor, PsiType qualifierType) {
+    private static void processClassQualifierType(GrReferenceExpressionImpl refExpr, ResolverProcessor processor, PsiType qualifierType) {
       Project project = refExpr.getProject();
       if (qualifierType instanceof PsiClassType) {
         PsiClassType.ClassResolveResult qualifierResult = ((PsiClassType) qualifierType).resolveGenerics();
@@ -594,6 +597,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     return false;
   }
 
+  @NotNull
   public Object[] getVariants() {
     return CompleteReferenceExpression.getVariants(this);
   }

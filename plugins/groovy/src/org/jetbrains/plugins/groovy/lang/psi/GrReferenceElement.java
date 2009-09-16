@@ -14,7 +14,10 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiQualifiedReference;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -26,6 +29,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 public interface GrReferenceElement extends GroovyPsiElement, PsiPolyVariantReference, PsiQualifiedReference {
   @Nullable
   String getReferenceName();
+
+  @Nullable
   PsiElement getReferenceNameElement();
 
   PsiElement resolve();
