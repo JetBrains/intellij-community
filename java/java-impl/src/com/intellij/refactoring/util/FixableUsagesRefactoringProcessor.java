@@ -24,6 +24,7 @@ public abstract class FixableUsagesRefactoringProcessor extends BaseRefactoringP
   }
 
   protected void performRefactoring(UsageInfo[] usageInfos) {
+    RefactoringUtil.sortDepthFirstRightLeftOrder(usageInfos);
     for (UsageInfo usageInfo : usageInfos) {
       try {
         ((FixableUsageInfo)usageInfo).fixUsage();
@@ -41,7 +42,6 @@ public abstract class FixableUsagesRefactoringProcessor extends BaseRefactoringP
     findUsages(usages);
     final int numUsages = usages.size();
     final FixableUsageInfo[] usageArray = usages.toArray(new FixableUsageInfo[numUsages]);
-    RefactoringUtil.sortDepthFirstRightLeftOrder(usageArray);
     return usageArray;
   }
 
