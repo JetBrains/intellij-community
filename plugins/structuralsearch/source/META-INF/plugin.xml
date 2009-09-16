@@ -7,7 +7,7 @@
   <extensions defaultExtensionNs="com.intellij">
       <inspectionToolProvider implementation="com.intellij.structuralsearch.inspection.highlightTemplate.SSRInspectionsLoader"/>
   </extensions>
-  
+  <resource-bundle>messages.SSRBundle</resource-bundle>
   <project-components>
       <component>
         <implementation-class>com.intellij.structuralsearch.plugin.StructuralSearchPlugin</implementation-class>
@@ -17,15 +17,14 @@
   </project-components>
 
   <actions>
-      <group id="StructuralSearchActions">
-        <action id="StructuralSearchPlugin.StructuralSearchAction" class="com.intellij.structuralsearch.plugin.StructuralSearchAction">
-          <add-to-group group-id="SearchMenu" anchor="after" relative-to-action="ReplaceInPath"/>
-        </action>
+    <group id="StructuralSearchActions">
+      <action id="StructuralSearchPlugin.StructuralSearchAction" class="com.intellij.structuralsearch.plugin.StructuralSearchAction">
+        <add-to-group group-id="SearchMenu" anchor="after" relative-to-action="ReplaceInPath"/>
+      </action>
 
-        <action id="StructuralSearchPlugin.StructuralReplaceAction" class="com.intellij.structuralsearch.plugin.StructuralReplaceAction">
-          <add-to-group group-id="SearchMenu" anchor="after" relative-to-action="StructuralSearchPlugin.StructuralSearchAction"/>
-        </action>
-      </group>
-
+      <action id="StructuralSearchPlugin.StructuralReplaceAction" class="com.intellij.structuralsearch.plugin.StructuralReplaceAction">
+        <add-to-group group-id="SearchMenu" anchor="after" relative-to-action="StructuralSearchPlugin.StructuralSearchAction"/>
+      </action>
+    </group>
   </actions>
 </idea-plugin>
