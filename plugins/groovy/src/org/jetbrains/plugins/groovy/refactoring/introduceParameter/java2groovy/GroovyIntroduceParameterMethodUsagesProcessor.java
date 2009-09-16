@@ -66,32 +66,34 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
     return GroovyRefactoringUtil.isMethodUsage(usage.getElement()) && isGroovyUsage(usage);
   }
 
-  public List<String> findConflicts(IntroduceParameterData data, UsageInfo[] usages) {
+  public Map<PsiElement, String> findConflicts(IntroduceParameterData data, UsageInfo[] usages) {
     Set<UsageInfo> groovyUsages = new HashSet<UsageInfo>();
     for (UsageInfo usage : usages) {
       if (isMethodUsage(usage)) groovyUsages.add(usage);
     }
-    if (groovyUsages.size() == 0) return Collections.emptyList();
-    List<String> conflicts = new ArrayList<String>();
+    if (groovyUsages.size() == 0) return Collections.emptyMap();
+    Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
     data.getParameterInitializer().accept(new InitializerVisitor(conflicts));
     return conflicts;
   }
 
   private static class InitializerVisitor extends JavaRecursiveElementWalkingVisitor {
-    private final List<String> conflicts;
+    private final Map<PsiElement, String> conflicts;
 
-    private InitializerVisitor(List<String> conflicts) {
+    private InitializerVisitor(Map<PsiElement, String> conflicts) {
       this.conflicts = conflicts;
     }
 
     @Override
     public void visitNewExpression(PsiNewExpression expression) {
       super.visitNewExpression(expression);
-      if (expression.getQualifier() != null) {
-        conflicts.add(GroovyRefactoringBundle.message("groovy.does.not.support.inner.classes.but.it.is.used.in.parameter.initializer"));
+      final PsiExpression qualifier = expression.getQualifier();
+      if (qualifier != null) {
+        conflicts.put(qualifier, GroovyRefactoringBundle.message("groovy.does.not.support.inner.classes.but.it.is.used.in.parameter.initializer"));
       }
-      if (expression.getAnonymousClass() != null) {
-        conflicts.add(GroovyRefactoringBundle.message("groovy.does.not.support.anonymous.classes.but.it.is.used.in.parameter.initializer"));
+      final PsiAnonymousClass anonymousClass = expression.getAnonymousClass();
+      if (anonymousClass != null) {
+        conflicts.put(anonymousClass, GroovyRefactoringBundle.message("groovy.does.not.support.anonymous.classes.but.it.is.used.in.parameter.initializer"));
       }
     }
   }

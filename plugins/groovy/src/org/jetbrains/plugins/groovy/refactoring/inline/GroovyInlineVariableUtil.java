@@ -54,6 +54,8 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * @author ilyas
@@ -71,13 +73,13 @@ public class GroovyInlineVariableUtil {
     return new InlineHandler.Inliner() {
 
       @Nullable
-      public Collection<String> getConflicts(PsiReference reference, PsiElement referenced) {
-        ArrayList<String> conflicts = new ArrayList<String>();
+      public Map<PsiElement, String> getConflicts(PsiReference reference, PsiElement referenced) {
+        Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
         GrExpression expr = (GrExpression) reference.getElement();
         if (expr.getParent() instanceof GrAssignmentExpression) {
           GrAssignmentExpression parent = (GrAssignmentExpression) expr.getParent();
           if (expr.equals(parent.getLValue())) {
-            conflicts.add(GroovyRefactoringBundle.message("local.varaible.is.lvalue"));
+            conflicts.put(expr, GroovyRefactoringBundle.message("local.varaible.is.lvalue"));
           }
         }
         return conflicts;

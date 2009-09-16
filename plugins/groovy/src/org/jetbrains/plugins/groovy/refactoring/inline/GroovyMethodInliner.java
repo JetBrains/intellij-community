@@ -57,6 +57,8 @@ import org.jetbrains.plugins.groovy.refactoring.NameValidator;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * @author ilyas
@@ -71,7 +73,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
   }
 
   @Nullable
-  public Collection<String> getConflicts(PsiReference reference, PsiElement referenced) {
+  public Map<PsiElement, String> getConflicts(PsiReference reference, PsiElement referenced) {
     PsiElement element = reference.getElement();
     assert element instanceof GrExpression && element.getParent() instanceof GrCallExpression;
     GrCallExpression call = (GrCallExpression) element.getParent();
@@ -79,8 +81,8 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
     return collectConflicts(call, infos);
   }
 
-  private static Collection<String> collectConflicts(GrCallExpression call, Collection<GroovyInlineMethodUtil.ReferenceExpressionInfo> infos) {
-    ArrayList<String> conflicts = new ArrayList<String>();
+  private static Map<PsiElement, String> collectConflicts(GrCallExpression call, Collection<GroovyInlineMethodUtil.ReferenceExpressionInfo> infos) {
+    Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
 
     for (GroovyInlineMethodUtil.ReferenceExpressionInfo info : infos) {
       if (!(PsiUtil.isAccessible(call, info.declaration))) {
@@ -88,11 +90,11 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
           String className = info.containingClass.getName();
           String signature = GroovyRefactoringUtil.getMethodSignature(((PsiMethod) info.declaration));
           String name = CommonRefactoringUtil.htmlEmphasize(className + "." + signature);
-          conflicts.add(GroovyRefactoringBundle.message("method.is.not.accessible.form.context.0", name));
+          conflicts.put(info.declaration, GroovyRefactoringBundle.message("method.is.not.accessible.form.context.0", name));
         } else if (info.declaration instanceof PsiField) {
           String className = info.containingClass.getName();
           String name = CommonRefactoringUtil.htmlEmphasize(className + "." + info.getPresentation());
-          conflicts.add(GroovyRefactoringBundle.message("field.is.not.accessible.form.context.0", name));
+          conflicts.put(info.declaration, GroovyRefactoringBundle.message("field.is.not.accessible.form.context.0", name));
         }
       }
     }

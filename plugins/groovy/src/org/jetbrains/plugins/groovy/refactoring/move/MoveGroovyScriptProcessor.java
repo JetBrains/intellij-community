@@ -55,7 +55,7 @@ public class MoveGroovyScriptProcessor extends MoveClassesOrPackagesProcessor {
   @Override
   protected UsageInfo[] findUsages() {
     List<UsageInfo> allUsages = new ArrayList<UsageInfo>();
-    ArrayList<String> conflicts = new ArrayList<String>();
+    Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
     final List<PsiElement> elements = getElements();
     for (PsiElement element : elements) {
       final GroovyFile groovyFile = (GroovyFile)element;
@@ -77,7 +77,7 @@ public class MoveGroovyScriptProcessor extends MoveClassesOrPackagesProcessor {
 
   @Override
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
-    return showConflicts(Collections.<String>emptyList());
+    return showConflicts(Collections.<PsiElement, String>emptyMap());
   }
 
   @Override
