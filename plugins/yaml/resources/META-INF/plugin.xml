@@ -18,4 +18,9 @@
     <lang.psiStructureViewFactory language="yaml" implementationClass="org.jetbrains.yaml.structureView.YAMLStructureViewFactory"/>
     <fileTypeIndentOptionsProvider implementation="org.jetbrains.yaml.YAMLIndentationOptionsProvider"/>
   </extensions>
+  <project-components>
+    <component>
+        <implementation-class>org.jetbrains.yaml.psi.YAMLPsiManager</implementation-class>
+    </component>
+  </project-components>
 </idea-plugin>
