@@ -140,7 +140,7 @@ public class ChangelistConflictTracker {
   public boolean isWritingAllowed(@NotNull VirtualFile file) {
     if (isFromActiveChangelist(file)) return true;
     Conflict conflict = myConflicts.get(file.getPath());
-    return conflict == null || conflict.ignored;
+    return conflict != null && conflict.ignored;
   }
 
   public boolean isFromActiveChangelist(VirtualFile file) {
@@ -175,7 +175,8 @@ public class ChangelistConflictTracker {
                     ChangelistConflictResolution.MOVE.resolveConflict(myProject, dialog.getSelectedChanges());
                   }
                 } else if (actionId.equals("switch")) {
-
+                  List<Change> changes = Collections.singletonList(myChangeListManager.getChange(file));
+                  ChangelistConflictResolution.SWITCH.resolveConflict(myProject, changes);
                 } else if (actionId.equals("ignore")) {
                   ignoreConflict(file, true);
                 }
@@ -305,9 +306,11 @@ public class ChangelistConflictTracker {
   public void ignoreConflict(@NotNull VirtualFile file, boolean ignore) {
     String path = file.getPath();
     Conflict conflict = myConflicts.get(path);
-    if (conflict != null) {
-      conflict.ignored = ignore;
+    if (conflict == null) {
+      conflict = new Conflict();
+      myConflicts.put(path, conflict);
     }
+    conflict.ignored = ignore;
     addNotification(file, !ignore);
     myFileStatusManager.fileStatusChanged(file);
   }
