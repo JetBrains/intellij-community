@@ -15,6 +15,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 
@@ -89,8 +90,16 @@ public class GenericInlineHandler {
 
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
           public void run() {
-            for (PsiReference reference : allReferences) {
-              inlineReference(reference, element, inliners);
+            final PsiReference[] references = sortDepthFirstRightLeftOrder(allReferences);
+
+
+            final UsageInfo[] usages = new UsageInfo[references.length];
+            for (int i = 0; i < references.length; i++) {
+              usages[i] = new UsageInfo(references[i]);
+            }
+
+            for (UsageInfo usage : usages) {
+              inlineReference(usage, element, inliners);
             }
 
             if (!settings.isOnlyOneReferenceToInline()) {
@@ -117,13 +126,13 @@ public class GenericInlineHandler {
     }
   }
 
-  private static void inlineReference(final PsiReference reference,
+  private static void inlineReference(final UsageInfo usage,
                                       final PsiElement element,
                                       final Map<Language, InlineHandler.Inliner> inliners) {
-    final Language language = reference.getElement().getLanguage();
+    final Language language = usage.getElement().getLanguage();
     final InlineHandler.Inliner inliner = inliners.get(language);
     if (inliner != null) {
-      inliner.inlineReference(reference, element);
+      inliner.inlineUsage(usage, element);
     }
   }
 
@@ -132,4 +141,19 @@ public class GenericInlineHandler {
       super(message);
     }
   }
+
+  //order of usages across different files is irrelevant
+  public static PsiReference[] sortDepthFirstRightLeftOrder(final Collection<PsiReference> allReferences) {
+    final PsiReference[] usages = allReferences.toArray(new PsiReference[allReferences.size()]);
+    Arrays.sort(usages, new Comparator<PsiReference>() {
+      public int compare(final PsiReference usage1, final PsiReference usage2) {
+        final PsiElement element1 = usage1.getElement();
+        final PsiElement element2 = usage2.getElement();
+        if (element1 == null || element2 == null) return 0;
+        return element2.getTextRange().getStartOffset() - element1.getTextRange().getStartOffset();
+      }
+    });
+    return usages;
+  }
+
 }

@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -74,9 +75,9 @@ public interface InlineHandler {
 
     /**
      * Perform actual inline of element to the point where it is referenced
-     * @param reference reference to inlined element
+     * @param usage usage of inlined element
      * @param referenced inlined element
      */
-    void inlineReference(PsiReference reference, PsiElement referenced);
+    void inlineUsage(UsageInfo usage, PsiElement referenced);
   }
 }
