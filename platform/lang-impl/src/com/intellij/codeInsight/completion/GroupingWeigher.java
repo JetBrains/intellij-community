@@ -14,6 +14,6 @@ public class GroupingWeigher extends CompletionWeigher {
       return -prioritized.getGrouping();
     }
 
-    return -element.getGrouping();
+    return 0;
   }
 }

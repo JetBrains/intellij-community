@@ -102,11 +102,6 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
     return myDelegate.hashCode();
   }
 
-  @Override
-  public int getGrouping() {
-    return myDelegate.getGrouping();
-  }
-
   @NotNull
   public static <T extends LookupElement> LookupElementDecorator<T> withInsertHandler(@NotNull T element, @NotNull final InsertHandler<? super LookupElementDecorator<T>> insertHandler) {
     return new InsertingDecorator<T>(element, insertHandler);

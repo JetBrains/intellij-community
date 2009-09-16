@@ -298,11 +298,6 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
     return myPriority;
   }
 
-  @Override
-  public final int getGrouping() {
-    return myGrouping;
-  }
-
   @NotNull
   public LookupItem<T> setPresentableText(@NotNull final String displayText) {
     myPresentable = displayText;

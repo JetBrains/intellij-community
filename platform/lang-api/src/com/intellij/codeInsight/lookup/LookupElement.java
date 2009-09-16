@@ -77,13 +77,6 @@ public abstract class LookupElement extends UserDataHolderBase {
     presentation.setItemText(getLookupString());
   }
 
-  /**
-   * @deprecated use {@link com.intellij.codeInsight.completion.PrioritizedLookupElement}
-   */
-  public int getGrouping() {
-    return 0;
-  }
-
   @Nullable
   public <T> T as(Class<T> aClass) {
     //noinspection unchecked
