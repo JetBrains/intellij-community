@@ -320,7 +320,7 @@ public class MethodSignatureUtil {
   public static boolean isSubsignature(MethodSignature superSignature, MethodSignature subSignature) {
     if (subSignature == superSignature) return true;
     if (!areSignaturesEqualLightweight(superSignature, subSignature)) return false;
-    PsiSubstitutor unifyingSubstitutor = getSuperMethodSignatureSubstitutor(superSignature, subSignature);
+    PsiSubstitutor unifyingSubstitutor = getSuperMethodSignatureSubstitutor(subSignature, superSignature);
     if (checkSignaturesEqualInner(superSignature, subSignature, unifyingSubstitutor)) return true;
 
     if (subSignature.getTypeParameters().length > 0) return false;
