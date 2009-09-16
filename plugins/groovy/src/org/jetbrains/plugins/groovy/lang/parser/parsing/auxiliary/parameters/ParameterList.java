@@ -58,6 +58,8 @@ public class ParameterList implements GroovyElementTypes {
       }
     }
 
+    ParserUtils.getToken(builder, mNLS);
+
     if ((ending.equals(mCLOSABLE_BLOCK_OP) &&
             mCLOSABLE_BLOCK_OP.equals(builder.getTokenType()))
             || ending.equals(mRPAREN)) {

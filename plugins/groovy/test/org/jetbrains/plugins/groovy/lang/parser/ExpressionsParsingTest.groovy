@@ -40,6 +40,7 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
   public void testclosures$closparam3() throws Throwable { doTest(); }
   public void testclosures$closparam4() throws Throwable { doTest(); }
   public void testclosures$closparam5() throws Throwable { doTest(); }
+  public void testclosures$closparam6() throws Throwable { doTest(); }
   public void testclosures$final_error() throws Throwable { doTest(); }
   public void testclosures$param6() throws Throwable { doTest(); }
   public void testclosures$param7() throws Throwable { doTest(); }
