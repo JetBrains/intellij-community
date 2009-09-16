@@ -162,9 +162,13 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
   @NotNull
   @Override
   public PsiClassType[] getSuperTypes() {
-    return new PsiClassType[]{getBaseClassType()};
+    return new PsiClassType[]{getBaseClassType(), getGroovyObjectType()};
   }
 
+  private PsiClassType getGroovyObjectType() {
+    return JavaPsiFacade.getInstance(getProject()).getElementFactory()
+      .createTypeByFQClassName(DEFAULT_BASE_CLASS_NAME, getResolveScope());
+  }
 
   @Override
   public String[] getSuperClassNames() {
@@ -199,9 +203,9 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
   public PsiClassType[] getImplementsListTypes() {
     final PsiClass baseClass = getBaseClass();
     if (baseClass != null && baseClass.isInterface()) {
-      return new PsiClassType[]{getBaseClassType()};
+      return new PsiClassType[]{getBaseClassType(), getGroovyObjectType()};
     }
-    return PsiClassType.EMPTY_ARRAY;
+    return new PsiClassType[]{getGroovyObjectType()};
   }
 
   @Override

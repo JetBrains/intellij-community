@@ -35,7 +35,7 @@ public class ClassesGetter implements ContextGetter {
   public Object[] get(PsiElement context, CompletionContext completionContext) {
     if (context != null) {
       ResolverProcessor processor = CompletionProcessor.createClassCompletionProcessor(context);
-      ResolveUtil.treeWalkUp(context, processor);
+      ResolveUtil.treeWalkUp(context, processor, false);
       return GroovyCompletionUtil.getCompletionVariants(processor.getCandidates());
     }
 

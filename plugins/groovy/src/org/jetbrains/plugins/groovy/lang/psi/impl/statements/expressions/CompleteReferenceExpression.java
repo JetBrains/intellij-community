@@ -178,12 +178,7 @@ public class CompleteReferenceExpression {
     GrExpression qualifier = refExpr.getQualifierExpression();
     String[] sameQualifier = getVariantsWithSameQualifier(qualifier, refExpr);
     if (qualifier == null) {
-      ResolveUtil.treeWalkUp(refExpr, processor);
-      PsiClass contextClass = PsiUtil.getContextClass(refExpr);
-      if (contextClass != null) {
-        PsiClassType classType = JavaPsiFacade.getInstance(refExpr.getProject()).getElementFactory().createType(contextClass);
-        ResolveUtil.processNonCodeMethods(classType, processor, refExpr.getProject(), refExpr, true);
-      }
+      ResolveUtil.treeWalkUp(refExpr, processor, true);
       qualifier = PsiImplUtil.getRuntimeQualifier(refExpr);
       if (qualifier != null) {
         getVariantsFromQualifier(refExpr, processor, qualifier);

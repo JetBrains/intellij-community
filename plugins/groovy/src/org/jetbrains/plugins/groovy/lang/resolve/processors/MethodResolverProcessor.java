@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
@@ -49,6 +50,8 @@ public class MethodResolverProcessor extends ResolverProcessor {
   private final Set<GroovyResolveResult> myInapplicableCandidates = new LinkedHashSet<GroovyResolveResult>();
   private final boolean myIsConstructor;
 
+  private boolean myStopExecuting = false;
+
   public MethodResolverProcessor(String name, GroovyPsiElement place, boolean isConstructor, PsiType thisType, @Nullable PsiType[] argumentTypes, PsiType[] typeArguments) {
     super(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), place, PsiType.EMPTY_ARRAY);
     myIsConstructor = isConstructor;
@@ -58,6 +61,9 @@ public class MethodResolverProcessor extends ResolverProcessor {
   }
 
   public boolean execute(PsiElement element, ResolveState state) {
+    if (myStopExecuting) {
+      return false;
+    }
     PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) element;
@@ -115,7 +121,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
     return substitutor;
   }
 
-  private boolean isClosure(PsiVariable variable) {
+  private static boolean isClosure(PsiVariable variable) {
     if (variable instanceof GrVariable) {
       final PsiType type = ((GrVariable) variable).getTypeGroovy();
       return type != null && type.equalsToText(GrClosableBlock.GROOVY_LANG_CLOSURE);
@@ -180,6 +186,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
     return substitutor;
   }
 
+  @Nullable
   private PsiType getContextType() {
     final PsiElement parent = myPlace.getParent().getParent();
     PsiType rType = null;
@@ -306,5 +313,13 @@ public class MethodResolverProcessor extends ResolverProcessor {
 
   public void setArgumentTypes(@Nullable PsiType[] argumentTypes) {
     myArgumentTypes = argumentTypes;
+  }
+
+  @Override
+  public void handleEvent(Event event, Object associated) {
+    super.handleEvent(event, associated);
+    if (JavaScopeProcessorEvent.CHANGE_LEVEL == event && myCandidates.size() > 0) {
+      myStopExecuting = true;
+    }
   }
 }

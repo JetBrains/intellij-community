@@ -502,4 +502,21 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertTrue(resolved instanceof GrMethod);
     assertEquals("OuterClass", ((GrMethod) resolved).getContainingClass().getName());
   }
+
+  public void testPrintMethodInAnonymousClass1() throws Exception {
+    PsiReference ref = configureByFile("printMethodInAnonymousClass1/A.groovy");
+    assertInstanceOf(ref.resolve(), GrGdkMethod.class);
+  }
+
+  public void testPrintMethodInAnonymousClass2() throws Exception {
+    PsiReference ref = configureByFile("printMethodInAnonymousClass2/B.groovy");
+    assertInstanceOf(ref.resolve(), GrGdkMethod.class);
+  }
+
+  public void testFooMethodInAnonymousClass() throws Exception {
+    PsiReference ref = configureByFile("fooMethodInAnonymousClass/A.groovy");
+    final PsiElement resolved = ref.resolve();
+    assertInstanceOf(resolved, PsiMethod.class);
+    assertEquals("A", ((PsiMethod)resolved).getContainingClass().getName());
+  }
 }

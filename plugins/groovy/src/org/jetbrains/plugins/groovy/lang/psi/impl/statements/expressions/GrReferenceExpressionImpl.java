@@ -413,12 +413,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     private void resolveImpl(GrReferenceExpressionImpl refExpr, ResolverProcessor processor) {
       GrExpression qualifier = refExpr.getQualifierExpression();
       if (qualifier == null) {
-        ResolveUtil.treeWalkUp(refExpr, processor);
-        PsiClass contextClass = PsiUtil.getContextClass(refExpr);
-        if (contextClass != null) {
-          PsiClassType classType = JavaPsiFacade.getInstance(refExpr.getProject()).getElementFactory().createType(contextClass);
-          if (!ResolveUtil.processNonCodeMethods(classType, processor, refExpr.getProject(), refExpr, false)) return;
-        }
+        ResolveUtil.treeWalkUp(refExpr, processor, true);
         if (!processor.hasCandidates()) {
           qualifier = PsiImplUtil.getRuntimeQualifier(refExpr);
           if (qualifier != null) {

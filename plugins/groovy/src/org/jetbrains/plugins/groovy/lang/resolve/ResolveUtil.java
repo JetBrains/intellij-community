@@ -18,13 +18,16 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
@@ -34,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
@@ -51,13 +55,29 @@ public class ResolveUtil {
   public static final PsiScopeProcessor.Event DECLARATION_SCOPE_PASSED = new PsiScopeProcessor.Event() {
   };
 
-  public static boolean treeWalkUp(PsiElement place, PsiScopeProcessor processor) {
+  private ResolveUtil() {
+  }
+
+  public static boolean treeWalkUp(PsiElement place, PsiScopeProcessor processor, boolean processNonCodeMethods) {
     PsiElement lastParent = null;
     PsiElement run = place;
+
+    final Project project = place.getProject();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+
     while (run != null) {
       if (!run.processDeclarations(processor, ResolveState.initial(), lastParent, place)) return false;
+      if (processNonCodeMethods) {
+        if (run instanceof GrTypeDefinition) {
+          processNonCodeMethods(factory.createType(((GrTypeDefinition)run)), processor, project, place, false);
+        }
+        else if ((run instanceof GroovyFile) && ((GroovyFile)run).isScript()) {
+          processNonCodeMethods(factory.createType(((GroovyFile)run).getScriptClass()), processor, project, place, false);
+        }
+      }
       lastParent = run;
       run = run.getContext();
+      processor.handleEvent(JavaScopeProcessorEvent.CHANGE_LEVEL, null);
     }
 
     return true;
@@ -122,11 +142,6 @@ public class ResolveUtil {
       for (NonCodeMembersProcessor membersProcessor : NonCodeMembersProcessor.EP_NAME.getExtensions()) {
         if (!membersProcessor.processNonCodeMethods(type, processor, place, forCompletion)) return false;
       }
-      /*
-      for (PsiMethod method : getDomainClassMethods(type, project)) {
-        if (!processElement(processor, method)) return false;
-      }
-      */
 
       if (type instanceof PsiArrayType) {
         //implicit super types
@@ -150,102 +165,7 @@ public class ResolveUtil {
     return true;
   }
 
-  /*
-  private static List<PsiMethod> getDomainClassMethods(PsiType type, Project project) {
-    if (!(type instanceof PsiClassType)) {
-      return Collections.emptyList();
-    }
-
-    final PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(type.getCanonicalText(), GlobalSearchScope.allScope(project));
-    if (psiClass == null || !DomainClassUtils.isDomainClass(psiClass)) {
-      return Collections.emptyList();
-    }
-
-    List<PsiMethod> res = new ArrayList<PsiMethod>();
-
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-
-    final PsiField[] fields = DomainClassUtils.getDomainFields(psiClass);
-
-    for (PsiField field : fields) {
-      res.add(factory.createMethodFromText("List " + DOMAIN_LIST_ORDER + capitalize(field.getName()) + "()", null));
-    }
-
-    List<PsiMethod> start = new ArrayList<PsiMethod>(FINDER_PREFICES.length);
-    for (String prefix : FINDER_PREFICES) {
-      start.add(factory.createMethodFromText("List " + prefix + "()", null));
-    }
-
-    for (int i = 0; i < fields.length; i++) {
-
-      res.addAll(getNewMethods(start, fields, factory));
-    }
-
-    return res;
-  }
-
-
-  private static List<PsiMethod> getNewMethods(List<PsiMethod> methods, PsiField[] fields, PsiElementFactory factory) {
-    List<PsiMethod> res = new ArrayList<PsiMethod>(methods.size());
-    for (PsiMethod method : methods) {
-      for (PsiField field : fields) {
-        if (isUsed(method, field)) continue;
-        for (String connective : DOMAIN_CONNECTIVES) {
-          //with One-Parameter-Postfix
-          for (String expr : DOMAIN_FINDER_EXPRESSIONS_WITH_ONE_PARAMETER) {
-            StringBuffer methodText = getMethodName(method, field, connective).append(expr).append('(');
-            addExistingParameter(method, methodText);
-            addParameter(methodText, field, field.getName());
-            methodText.delete(methodText.length() - 1, methodText.length()).append(')');
-
-            res.add(factory.createMethodFromText(methodText.toString(), null));
-          }
-
-          {
-            //without postfix
-            StringBuffer methodText = getMethodName(method, field, connective).append('(');
-            addExistingParameter(method, methodText);
-            methodText.delete(methodText.length() - 1, methodText.length()).append(')');
-
-            res.add(factory.createMethodFromText(methodText.toString(), null));
-          }
-
-          {
-            //with Two-Paramter-Postfix
-            StringBuffer methodText = getMethodName(method, field, connective).append("Between").append('(');
-            addExistingParameter(method, methodText);
-            addParameter(methodText, field, "lower" + capitalize(field.getName()));
-            addParameter(methodText, field, "upper" + capitalize(field.getName()));
-            methodText.delete(methodText.length() - 1, methodText.length()).append(')');
-
-            res.add(factory.createMethodFromText(methodText.toString(), null));
-          }
-        }
-      }
-    }
-    return res;
-  }
-
-  private static void addExistingParameter(PsiMethod method, StringBuffer methodText) {
-    for (PsiParameter parameter : method.getParameterList().getParameters()) {
-      addParameter(methodText, parameter, parameter.getName());
-    }
-    if (method.getParameterList().getParameters().length==0) methodText.append(',');
-  }
-
-  private static void addParameter(StringBuffer methodText, PsiVariable parameter, String parameterName) {
-    methodText.append(parameter.getType().getCanonicalText()).append(' ').append(parameter.getName()).append(",");
-  }
-
-  private static StringBuffer getMethodName(PsiMethod method, PsiField field, String connective) {
-    return new StringBuffer("List ").append(method.getName()).append(connective).append(capitalize(field.getName()));
-  }
-
-  private static boolean isUsed(PsiMethod method, PsiField field) {
-    return (method.getName().contains(capitalize(field.getName())));
-  }
-
-  */
+  @Nullable
   private static String rawCanonicalText(PsiType type) {
     final String result = type.getCanonicalText();
     if (result == null) return null;
@@ -254,6 +174,7 @@ public class ResolveUtil {
     return result;
   }
 
+  @Nullable
   public static PsiType getListTypeForSpreadOperator(GrReferenceExpression refExpr, PsiType componentType) {
     PsiClass clazz = findListClass(refExpr.getManager(), refExpr.getResolveScope());
     if (clazz != null) {
@@ -267,6 +188,7 @@ public class ResolveUtil {
     return null;
   }
 
+  @Nullable
   public static PsiClass findListClass(PsiManager manager, GlobalSearchScope resolveScope) {
     return JavaPsiFacade.getInstance(manager.getProject()).findClass("java.util.List", resolveScope);
   }
@@ -276,13 +198,15 @@ public class ResolveUtil {
     return resolveExistingElement(place, processor, GrVariable.class, GrReferenceExpression.class);
   }
 
+  @Nullable
   public static PsiClass resolveClass(GroovyPsiElement place, String name) {
     ClassResolverProcessor processor = new ClassResolverProcessor(name, place);
     return resolveExistingElement(place, processor, PsiClass.class);
   }
 
+  @Nullable
   public static <T> T resolveExistingElement(GroovyPsiElement place, ResolverProcessor processor, Class<? extends T>... classes) {
-    treeWalkUp(place, processor);
+    treeWalkUp(place, processor, true);
     final GroovyResolveResult[] candidates = processor.getCandidates();
     for (GroovyResolveResult candidate : candidates) {
       final PsiElement element = candidate.getElement();
@@ -295,6 +219,7 @@ public class ResolveUtil {
     return null;
   }
 
+  @Nullable
   public static GrLabeledStatement resolveLabeledStatement(String label, PsiElement place) {
     while (place != null) {
       PsiElement run = place;
