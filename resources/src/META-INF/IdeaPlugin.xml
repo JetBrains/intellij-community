@@ -724,12 +724,10 @@
              order="before stats, after statics"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferLocalVariablesLiteralsAndAnnoMethodsWeigher" id="local"
              order="after expectedType, before nameEnd"/>
-    <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.RecursiveCallParameterWeigher" id="recursiveCall"
+    <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.RecursionWeigher" id="recursion"
              order="after local"/>
-    <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PassingQualifierParameterWeigher"
-             id="qualifierParameter" order="after recursiveCall"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.NameEndMatchingDegreeWeigher" id="nameEnd"
-             order="after qualifierParameter, before stats"/>
+             order="after recursion, before stats"/>
 
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferNonGenericWeigher" id="nonGeneric"
              order="after prefix"/>

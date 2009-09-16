@@ -23,11 +23,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.filters.*;
-import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
-import com.intellij.psi.filters.element.ExcludeSillyAssignment;
 import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -69,17 +66,9 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
     }
 
     if (!allowRecursion) {
-      if (psiElement().afterLeaf(PsiKeyword.RETURN).inside(PsiReturnStatement.class).accepts(element)) {
-        return new ElementExtractorFilter(new ExcludeDeclaredFilter(ElementClassFilter.METHOD));
-      }
-
-      if (psiElement().inside(
-          PsiJavaPatterns.or(
-              PsiJavaPatterns.psiElement(PsiAssignmentExpression.class),
-              PsiJavaPatterns.psiElement(PsiVariable.class))).
-          andNot(psiElement().afterLeaf(".")).accepts(element)) {
-        return new ElementExtractorFilter(new AndFilter(new ExcludeSillyAssignment(),
-                                                     new ExcludeDeclaredFilter(new ClassFilter(PsiVariable.class))));
+      final ElementFilter filter = JavaCompletionUtil.recursionFilter(element);
+      if (filter != null) {
+        return new ElementExtractorFilter(filter);
       }
     }
 

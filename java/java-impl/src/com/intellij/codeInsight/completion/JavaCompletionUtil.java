@@ -17,9 +17,14 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.patterns.PsiElementPattern;
+import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.filters.AndFilter;
+import com.intellij.psi.filters.ClassFilter;
+import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
+import com.intellij.psi.filters.element.ExcludeSillyAssignment;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.infos.CandidateInfo;
@@ -28,6 +33,7 @@ import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
+import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
@@ -1030,5 +1036,22 @@ public class JavaCompletionUtil {
     if (qualifier == null) return false;
     if (qualifier instanceof PsiMethodCallExpression) return true;
     return containsMethodCalls(getQualifier(qualifier));
+  }
+
+  @Nullable
+  static ElementFilter recursionFilter(PsiElement element) {
+    if (com.intellij.patterns.PsiJavaPatterns.psiElement().afterLeaf(PsiKeyword.RETURN).inside(PsiReturnStatement.class).accepts(element)) {
+      return new ExcludeDeclaredFilter(ElementClassFilter.METHOD);
+    }
+
+    if (com.intellij.patterns.PsiJavaPatterns.psiElement().inside(
+        PsiJavaPatterns.or(
+            PsiJavaPatterns.psiElement(PsiAssignmentExpression.class),
+            PsiJavaPatterns.psiElement(PsiVariable.class))).
+        andNot(com.intellij.patterns.PsiJavaPatterns.psiElement().afterLeaf(".")).accepts(element)) {
+      return new AndFilter(new ExcludeSillyAssignment(),
+                                                   new ExcludeDeclaredFilter(new ClassFilter(PsiVariable.class)));
+    }
+    return null;
   }
 }

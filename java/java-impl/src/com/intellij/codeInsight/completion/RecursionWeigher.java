@@ -8,6 +8,7 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -15,24 +16,41 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public class RecursiveCallParameterWeigher extends CompletionWeigher {
+public class RecursionWeigher extends CompletionWeigher {
 
-  public Integer weigh(@NotNull final LookupElement element, final CompletionLocation location) {
-    if (location.getCompletionType() != CompletionType.BASIC && location.getCompletionType() != CompletionType.SMART) return 0;
+  private enum Result {
+    recursive,
+    passingObjectToItself,
+    normal,
+    delegation,
+  }
+
+  public Result weigh(@NotNull final LookupElement element, final CompletionLocation location) {
+    if (location.getCompletionType() != CompletionType.BASIC && location.getCompletionType() != CompletionType.SMART) return Result.normal;
 
     final Object object = element.getObject();
-    if (!(object instanceof PsiModifierListOwner) && !(object instanceof PsiExpression)) return 0;
+    if (!(object instanceof PsiModifierListOwner) && !(object instanceof PsiExpression)) return Result.normal;
 
     final PsiMethod positionMethod = JavaCompletionUtil.POSITION_METHOD.getValue(location);
-    if (positionMethod == null) return 0;
+    if (positionMethod == null) return Result.normal;
 
     final PsiElement position = location.getCompletionParameters().getPosition();
+    final ElementFilter filter = JavaCompletionUtil.recursionFilter(position);
+    if (filter != null && !filter.isAcceptable(object, position)) {
+      return Result.recursive;
+    }
+
     final PsiMethodCallExpression expression = PsiTreeUtil.getParentOfType(position, PsiMethodCallExpression.class, true, PsiClass.class);
     final PsiReferenceExpression reference = expression != null ? expression.getMethodExpression() : PsiTreeUtil.getParentOfType(position, PsiReferenceExpression.class);
-    if (reference == null) return 0;
+    if (reference == null) return Result.normal;
 
     final PsiExpression qualifier = reference.getQualifierExpression();
     boolean isDelegate = qualifier != null && !(qualifier instanceof PsiThisExpression);
+
+    if (isPassingObjectToItself(object, qualifier, isDelegate)) {
+      return Result.passingObjectToItself;
+    }
+
     if (expression != null) {
       final ExpectedTypeInfo[] expectedInfos = JavaCompletionUtil.EXPECTED_TYPES.getValue(location);
       if (expectedInfos != null) {
@@ -40,12 +58,12 @@ public class RecursiveCallParameterWeigher extends CompletionWeigher {
         if (itemType != null) {
           for (final ExpectedTypeInfo expectedInfo : expectedInfos) {
             if (positionMethod.equals(expectedInfo.getCalledMethod()) && expectedInfo.getType().isAssignableFrom(itemType)) {
-              return isDelegate ? 2 : -1;
+              return isDelegate ? Result.delegation : Result.recursive;
             }
           }
         }
       }
-      return 0;
+      return Result.normal;
     }
 
     if (object instanceof PsiMethod) {
@@ -54,12 +72,20 @@ public class RecursiveCallParameterWeigher extends CompletionWeigher {
           Comparing.equal(method.getName(), positionMethod.getName()) &&
           method.getParameterList().getParametersCount() == positionMethod.getParameterList().getParametersCount()) {
         if (findDeepestSuper(method).equals(findDeepestSuper(positionMethod))) {
-          return isDelegate ? 2 : -1;
+          return isDelegate ? Result.delegation : Result.recursive;
         }
       }
     }
 
-    return 0;
+    return Result.normal;
+  }
+
+  private static boolean isPassingObjectToItself(Object object, PsiExpression qualifier, boolean delegate) {
+    if (object instanceof PsiThisExpression) {
+      return !delegate || qualifier instanceof PsiSuperExpression;
+    }
+    return qualifier instanceof PsiReferenceExpression &&
+           object.equals(((PsiReferenceExpression)qualifier).advancedResolve(true).getElement());
   }
 
   @NotNull
