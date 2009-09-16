@@ -24,8 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.FileFilter;
-import java.util.ArrayList;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -171,8 +170,14 @@ public class JavaSdkImpl extends JavaSdk {
     VirtualFile docs = findDocs(jdkHome, "docs/api");
 
     final SdkModificator sdkModificator = sdk.getSdkModificator();
+    final Set<VirtualFile> previousRoots = new LinkedHashSet<VirtualFile>(Arrays.asList(sdkModificator.getRoots(OrderRootType.CLASSES)));
+    sdkModificator.removeRoots(OrderRootType.CLASSES);
+    previousRoots.removeAll(new HashSet<VirtualFile>(Arrays.asList(classes)));
     for (VirtualFile aClass : classes) {
       sdkModificator.addRoot(aClass, OrderRootType.CLASSES);
+    }
+    for (VirtualFile root : previousRoots) {
+      sdkModificator.addRoot(root, OrderRootType.CLASSES);
     }
     if(sources != null){
       sdkModificator.addRoot(sources, OrderRootType.SOURCES);
@@ -316,13 +321,15 @@ public class JavaSdkImpl extends JavaSdk {
       File libFile = new File(file, "lib");
       @NonNls File classesFile = new File(file, "../Classes");
       @NonNls File libExtFile = new File(libFile, "ext");
-      jarDirs = new File[]{libFile, classesFile, libExtFile};
+      @NonNls File libEndorsedFile = new File(libFile, "endorsed");
+      jarDirs = new File[]{libEndorsedFile, libFile, classesFile, libExtFile};
     }
     else{
       @NonNls final String jre = "jre";
       File jreLibFile = isJre ? new File(file, "lib") : new File(new File(file, jre), "lib");
       @NonNls File jreLibExtFile = new File(jreLibFile, "ext");
-      jarDirs = new File[]{jreLibFile, jreLibExtFile};
+      @NonNls File jreLibEndorsedFile = new File(jreLibFile, "endorsed");
+      jarDirs = new File[]{jreLibEndorsedFile, jreLibFile, jreLibExtFile};
     }
 
     ArrayList<File> childrenList = new ArrayList<File>();

@@ -4,13 +4,16 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vfs.*;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.impl.MessageListenerList;
 import org.jdom.Element;
@@ -36,7 +39,7 @@ import java.util.Map;
 public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentStateComponent<Element>, ExportableComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl");
 
-  private final ArrayList<Sdk> myJdks = new ArrayList<Sdk>();
+  private final List<Sdk> mySdks = new ArrayList<Sdk>();
 
   private final MessageListenerList<Listener> myListenerList;
 
@@ -48,6 +51,34 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
   public ProjectJdkTableImpl() {
     myMessageBus = ApplicationManager.getApplication().getMessageBus();
     myListenerList = new MessageListenerList<Listener>(myMessageBus, JDK_TABLE_TOPIC);
+    // support external changes to jdk libraries (Endorsed Standards Override)
+    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
+      public void fileCreated(VirtualFileEvent event) {
+        updateJdks(event.getFile());
+      }
+
+      private void updateJdks(VirtualFile file) {
+        if (file.isDirectory() || !StdFileTypes.ARCHIVE.equals(file.getFileType())) {
+          // consider only archive files that may contain libraries
+          return;
+        }
+        for (Sdk sdk : mySdks) {
+          final SdkType sdkType = sdk.getSdkType();
+          if (!(sdkType instanceof JavaSdkType)) {
+            continue;
+          }
+          final VirtualFile home = sdk.getHomeDirectory();
+          if (home == null) {
+            continue;
+          }
+          if (VfsUtil.isAncestor(home, file, true)) {
+            sdkType.setupSdkPaths(sdk);
+            // no need to iterate further assuming the file cannot be under the home of several SDKs
+            break;
+          }
+        }
+      }
+    });
   }
 
   @NotNull
@@ -62,7 +93,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
 
   @Nullable
   public Sdk findJdk(String name) {
-    for (Sdk jdk : myJdks) {
+    for (Sdk jdk : mySdks) {
       if (Comparing.strEqual(name, jdk.getName())) {
         return jdk;
       }
@@ -106,7 +137,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
   }
 
   public Sdk[] getAllJdks() {
-    return myJdks.toArray(new Sdk[myJdks.size()]);
+    return mySdks.toArray(new Sdk[mySdks.size()]);
   }
 
   public List<Sdk> getSdksOfType(final SdkType type) {
@@ -122,14 +153,14 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
 
   public void addJdk(Sdk jdk) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    myJdks.add(jdk);
+    mySdks.add(jdk);
     myMessageBus.syncPublisher(JDK_TABLE_TOPIC).jdkAdded(jdk);
   }
 
   public void removeJdk(Sdk jdk) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     myMessageBus.syncPublisher(JDK_TABLE_TOPIC).jdkRemoved(jdk);
-    myJdks.remove(jdk);
+    mySdks.remove(jdk);
   }
 
   public void updateJdk(Sdk originalJdk, Sdk modifiedJdk) {
@@ -161,7 +192,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
   }
 
   public void loadState(Element element) {
-    myJdks.clear();
+    mySdks.clear();
 
     final List children = element.getChildren(ELEMENT_JDK);
     for (final Object aChildren : children) {
@@ -173,13 +204,13 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
       catch (InvalidDataException ex) {
         LOG.error(ex);
       }
-      myJdks.add(jdk);
+      mySdks.add(jdk);
     }
   }
 
   public Element getState() {
     Element element = new Element("ProjectJdkTableImpl");
-    for (Sdk jdk : myJdks) {
+    for (Sdk jdk : mySdks) {
       final Element e = new Element(ELEMENT_JDK);
       try {
         ((ProjectJdkImpl)jdk).writeExternal(e);
