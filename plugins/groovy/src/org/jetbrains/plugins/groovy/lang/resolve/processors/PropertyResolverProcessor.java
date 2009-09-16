@@ -46,8 +46,8 @@ public class PropertyResolverProcessor extends ResolverProcessor {
 
   public boolean execute(PsiElement element, ResolveState state) {
     if (myName != null && element instanceof PsiMethod && !(element instanceof GrAccessorMethod)) {
-      PsiMethod method = (PsiMethod) element;
-      boolean lValue = myPlace instanceof GroovyPsiElement && PsiUtil.isLValue((GroovyPsiElement) myPlace);
+      PsiMethod method = (PsiMethod)element;
+      boolean lValue = myPlace instanceof GroovyPsiElement && PsiUtil.isLValue((GroovyPsiElement)myPlace);
       if (!lValue && GroovyPropertyUtils.isSimplePropertyGetter(method, myName) ||
           lValue && GroovyPropertyUtils.isSimplePropertySetter(method, myName)) {
         if (method instanceof GrMethod && isFieldReferenceInSameClass(method, myName)) {
@@ -58,17 +58,23 @@ public class PropertyResolverProcessor extends ResolverProcessor {
         super.execute(element, state);
         return false;
       }
-    } else if (myName == null || myName.equals(((PsiNamedElement) element).getName())) {
-      if (element instanceof GrField && ((GrField) element).isProperty()) {
+    }
+    else if (myName == null || myName.equals(((PsiNamedElement)element).getName())) {
+      if (element instanceof GrField && ((GrField)element).isProperty()) {
         if (myProperty == null) {
-          boolean isAccessible = isAccessible((PsiNamedElement) element);
-          boolean isStaticsOK = isStaticsOK((PsiNamedElement) element);
+          boolean isAccessible = isAccessible((PsiNamedElement)element);
+          boolean isStaticsOK = isStaticsOK((PsiNamedElement)element);
 
           PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
           substitutor = substitutor == null ? PsiSubstitutor.EMPTY : substitutor;
           myProperty = new GroovyResolveResultImpl(element, myCurrentFileResolveContext, substitutor, isAccessible, isStaticsOK);
         }
         return true;
+      }
+      else if (element instanceof GrReferenceExpression) {
+        if (((GrReferenceExpression)element).getQualifier() != null) {
+          return true;
+        }
       }
       return super.execute(element, state);
     }

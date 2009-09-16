@@ -15,23 +15,24 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.util.PropertyUtil;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiReference
+import com.intellij.psi.util.PropertyUtil
+import org.jetbrains.plugins.groovy.GroovyFileType
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement
-import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
  * @author ven
@@ -257,6 +258,15 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                                             b.fo<caret>o""")
     def reference = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
     assertEquals("Bar", assertInstanceOf(reference.resolve(), GrMethod.class).containingClass.name)
+  }
+
+  public void testIDEADEV40403() {
+    myFixture.configureByFile("IDEADEV40403/A.groovy");
+    def reference = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset);
+    def resolved = reference.resolve()
+    assertInstanceOf(resolved, PsiMethod.class);
+    def clazz = resolved.containingClass
+    assertEquals "Script", clazz.name
   }
 
   private void doTest(String fileName) throws Exception {
