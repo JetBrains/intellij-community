@@ -60,7 +60,7 @@ public class ChangelistConflictFileStatusProvider implements FileStatusProvider 
     else if (options.HIGHLIGHT_NON_ACTIVE_CHANGELIST) {
       FileStatus status = myChangeListManager.getStatus(virtualFile);
       if (status == FileStatus.MODIFIED || status == FileStatus.ADDED) {
-        if (!myConflictTracker.isWritingAllowed(virtualFile)) {
+        if (!myConflictTracker.isFromActiveChangelist(virtualFile)) {
           return status == FileStatus.MODIFIED ? MODIFIED_OUTSIDE : ADDED_OUTSIDE;
         }
       }

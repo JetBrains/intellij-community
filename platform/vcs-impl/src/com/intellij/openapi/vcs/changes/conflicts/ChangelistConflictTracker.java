@@ -85,12 +85,19 @@ public class ChangelistConflictTracker {
         }
         Document document = e.getDocument();
         VirtualFile file = myDocumentManager.getFile(document);
-        if (file != null && !isWritingAllowed(file)) {
-          boolean old = myConflicts.containsKey(file.getPath());
-          Conflict conflict = myConflicts.get(file.getPath());
+        if (file != null && !isFromActiveChangelist(file)) {
+          String path = file.getPath();
+          Conflict conflict = myConflicts.get(path);
+          boolean newConflict = false;
+          if (conflict == null) {
+            conflict = new Conflict();
+            myConflicts.put(path, conflict);
+            newConflict = true;
+          }
           conflict.timestamp = System.currentTimeMillis();
           conflict.changelistId = myChangeListManager.getDefaultChangeList().getId();
-          if (!old) {
+
+          if (newConflict && myOptions.HIGHLIGHT_CONFLICTS) {
             myFileStatusManager.fileStatusChanged(file);
             addNotification(file, true);
           }
@@ -131,15 +138,17 @@ public class ChangelistConflictTracker {
   }
 
   public boolean isWritingAllowed(@NotNull VirtualFile file) {
-    if (!myOptions.TRACKING_ENABLED || !myOptions.SHOW_DIALOG) {
-      return true;
-    }
+    if (isFromActiveChangelist(file)) return true;
+    Conflict conflict = myConflicts.get(file.getPath());
+    return conflict == null || conflict.ignored;
+  }
+
+  public boolean isFromActiveChangelist(VirtualFile file) {
     LocalChangeList changeList = myChangeListManager.getChangeList(file);
     if (changeList == null || myChangeListManager.isDefaultChangeList(changeList)) {
       return true;
     }
-    Conflict conflict = myConflicts.get(file.getPath());
-    return conflict == null || conflict.ignored;
+    return false;
   }
 
   private void addNotification(final VirtualFile file, final boolean add) {
@@ -229,30 +238,32 @@ public class ChangelistConflictTracker {
       fileElement.setAttribute("ignored", Boolean.toString(entry.getValue().ignored));
       to.addContent(fileElement);
     }
+    to.setAttribute("verified", "true");              // todo remove the check
     XmlSerializer.serializeInto(myOptions, to);
   }
 
   public void loadState(Element from) {
     myConflicts.clear();
-    List files = from.getChildren("file");
-    for (Object file : files) {
-      Element element = (Element)file;
-      String path = element.getAttributeValue("path");
-      if (path != null) {
-        Conflict conflict = new Conflict();
-        conflict.changelistId = element.getAttributeValue("changelist");
-        try {
-          conflict.timestamp = Long.parseLong(element.getAttributeValue("time"));
+    if (from.getAttributeValue("verified") != null) {    // todo remove the check
+      List files = from.getChildren("file");
+      for (Object file : files) {
+        Element element = (Element)file;
+        String path = element.getAttributeValue("path");
+        if (path != null) {
+          Conflict conflict = new Conflict();
+          conflict.changelistId = element.getAttributeValue("changelist");
+          try {
+            conflict.timestamp = Long.parseLong(element.getAttributeValue("time"));
+          }
+          catch (NumberFormatException e) {
+            // do nothing
+          }
+          conflict.ignored = Boolean.parseBoolean(element.getAttributeValue("ignored"));
+          myConflicts.put(path, conflict);
         }
-        catch (NumberFormatException e) {
-          // do nothing
-        }
-        conflict.ignored = Boolean.parseBoolean(element.getAttributeValue("ignored"));
-        myConflicts.put(path, conflict);
       }
     }
     XmlSerializer.deserializeInto(myOptions, from);
-    myOptions.TRACKING_ENABLED = false;
   }
 
   public void optionsChanged() {
@@ -260,7 +271,7 @@ public class ChangelistConflictTracker {
       VirtualFile file = LocalFileSystem.getInstance().findFileByPath(entry.getKey());
       if (file != null) {
         myFileStatusManager.fileStatusChanged(file);
-        addNotification(file, hasConflict(file));
+        addNotification(file, myOptions.TRACKING_ENABLED && myOptions.HIGHLIGHT_CONFLICTS && !entry.getValue().ignored);
       }
     }
   }
