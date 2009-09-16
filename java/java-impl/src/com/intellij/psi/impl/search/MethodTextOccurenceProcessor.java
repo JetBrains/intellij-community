@@ -4,8 +4,10 @@
  */
 package com.intellij.psi.impl.search;
 
-import com.intellij.psi.search.TextOccurenceProcessor;
 import com.intellij.psi.*;
+import com.intellij.psi.search.TextOccurenceProcessor;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +50,10 @@ public class MethodTextOccurenceProcessor implements TextOccurenceProcessor {
             if (!refMethod.hasModifierProperty(PsiModifier.STATIC)) {
               PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(myContainingClass, refMethodClass, PsiSubstitutor.EMPTY);
               if (substitutor != null) {
-                if (refMethod.getSignature(PsiSubstitutor.EMPTY).equals(method.getSignature(substitutor))) {
+                MethodSignature superSignature = method.getSignature(substitutor);
+                MethodSignature refSignature = refMethod.getSignature(PsiSubstitutor.EMPTY);
+
+                if (MethodSignatureUtil.isSubsignature(superSignature, refSignature)) {
                   if (!myConsumer.process(ref)) return false;
                 }
               }

@@ -41,12 +41,10 @@ public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodR
       }
     }
 
-    final PsiClass parentClass = method.getContainingClass();
     boolean needStrictSignatureSearch = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
-        return method.isValid() && isStrictSignatureSearch && (parentClass == null
-                                        || parentClass instanceof PsiAnonymousClass
-                                        || parentClass.hasModifierProperty(PsiModifier.FINAL)
+        return method.isValid() && isStrictSignatureSearch && (aClass instanceof PsiAnonymousClass
+                                        || aClass.hasModifierProperty(PsiModifier.FINAL)
                                         || method.hasModifierProperty(PsiModifier.STATIC)
                                         || method.hasModifierProperty(PsiModifier.FINAL)
                                         || method.hasModifierProperty(PsiModifier.PRIVATE));

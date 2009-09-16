@@ -74,13 +74,13 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
           final CandidateInfo conflict = newConflictsArray[j];
           assert conflict != method;
           switch (isMoreSpecific(method, conflict, applicabilityLevel)) {
-            case TRUE:
+            case FIRST:
               conflicts.remove(conflict);
               break;
-            case FALSE:
+            case SECOND:
               conflicts.remove(method);
               break;
-            case CONFLICT:
+            case NEITHER:
               break;
           }
         }
@@ -240,9 +240,9 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   }
 
   private enum Specifics {
-    FALSE,
-    TRUE,
-    CONFLICT
+    FIRST,
+    SECOND,
+    NEITHER
   }
 
   private static Specifics checkSubtyping(PsiType type1, PsiType type2) {
@@ -254,10 +254,10 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         return null;
       }
 
-      return assignable1From2 ? Specifics.FALSE : Specifics.TRUE;
+      return assignable1From2 ? Specifics.SECOND : Specifics.FIRST;
     }
 
-    return Specifics.CONFLICT;
+    return Specifics.NEITHER;
   }
 
   private boolean isBoxingHappened(PsiType argType, PsiType parameterType) {
@@ -332,8 +332,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       boxingHappened[0] += isBoxingHappened(argType, type1) ? 1 : 0;
       boxingHappened[1] += isBoxingHappened(argType, type2) ? 1 : 0;
     }
-    if (boxingHappened[0] == 0 && boxingHappened[1] > 0) return Specifics.TRUE;
-    if (boxingHappened[0] > 0 && boxingHappened[1] == 0) return Specifics.FALSE;
+    if (boxingHappened[0] == 0 && boxingHappened[1] > 0) return Specifics.FIRST;
+    if (boxingHappened[0] > 0 && boxingHappened[1] == 0) return Specifics.SECOND;
 
     Specifics isMoreSpecific = null;
     for (int i = 0; i < types1.length; i++) {
@@ -343,35 +343,35 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       final Specifics specifics = type1 == null || type2 == null ? null : checkSubtyping(type1, type2);
       if (specifics == null) continue;
       switch (specifics) {
-        case TRUE:
-          if (isMoreSpecific == Specifics.FALSE) return Specifics.CONFLICT;
+        case FIRST:
+          if (isMoreSpecific == Specifics.SECOND) return Specifics.NEITHER;
           isMoreSpecific = specifics;
           break;
-        case FALSE:
-          if (isMoreSpecific == Specifics.TRUE) return Specifics.CONFLICT;
+        case SECOND:
+          if (isMoreSpecific == Specifics.FIRST) return Specifics.NEITHER;
           isMoreSpecific = specifics;
           break;
-        case CONFLICT:
-          return Specifics.CONFLICT;
+        case NEITHER:
+          return Specifics.NEITHER;
       }
     }
 
     if (isMoreSpecific == null && class1 != class2) {
       if (class2.isInheritor(class1, true) || class1.isInterface() && !class2.isInterface()) {
         if (MethodSignatureUtil.isSubsignature(method1.getSignature(info1.getSubstitutor()), method2.getSignature(info2.getSubstitutor()))) {
-          isMoreSpecific = Specifics.FALSE;
+          isMoreSpecific = Specifics.SECOND;
         }
       }
       else if (class1.isInheritor(class2, true) || class2.isInterface()) {
         if (MethodSignatureUtil.isSubsignature(method2.getSignature(info2.getSubstitutor()), method1.getSignature(info1.getSubstitutor()))) {
-          isMoreSpecific = Specifics.TRUE;
+          isMoreSpecific = Specifics.FIRST;
         }
       }
     }
     if (isMoreSpecific == null) {
-      if (typeParameters1.length < typeParameters2.length) return Specifics.TRUE;
-      if (typeParameters1.length > typeParameters2.length) return Specifics.FALSE;
-      return Specifics.CONFLICT;
+      if (typeParameters1.length < typeParameters2.length) return Specifics.FIRST;
+      if (typeParameters1.length > typeParameters2.length) return Specifics.SECOND;
+      return Specifics.NEITHER;
     }
 
     return isMoreSpecific;
