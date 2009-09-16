@@ -35,14 +35,15 @@ public class RemoveRedundantElseAction extends PsiElementBaseIntentionAction {
         PsiKeyword.ELSE.equals(element.getText())) {
       PsiIfStatement ifStatement = (PsiIfStatement)element.getParent();
       if (ifStatement.getElseBranch() == null) return false;
-      if (ifStatement.getThenBranch() == null) return false;
+      PsiStatement thenBranch = ifStatement.getThenBranch();
+      if (thenBranch == null) return false;
       PsiElement block = PsiTreeUtil.getParentOfType(ifStatement, PsiCodeBlock.class);
       if (block != null) {
         try {
           ControlFlow controlFlow = ControlFlowFactory.getInstance(project).getControlFlow(block, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
-          int startOffset = controlFlow.getStartOffset(ifStatement.getThenBranch());
-          int endOffset = controlFlow.getEndOffset(ifStatement.getThenBranch());
-          return !ControlFlowUtil.canCompleteNormally(controlFlow, startOffset,endOffset);
+          int startOffset = controlFlow.getStartOffset(thenBranch);
+          int endOffset = controlFlow.getEndOffset(thenBranch);
+          return startOffset != -1 && endOffset != -1 && !ControlFlowUtil.canCompleteNormally(controlFlow, startOffset,endOffset);
         }
         catch (AnalysisCanceledException e) {
           return false;

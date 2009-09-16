@@ -5,6 +5,7 @@ package com.intellij.psi.controlFlow;
 
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +22,7 @@ public class ControlFlowSubRange implements ControlFlow {
     myEnd = end;
   }
 
+  @NotNull
   public List<Instruction> getInstructions() {
     if (myInstructions == null) {
       final List<Instruction> list = new ArrayList<Instruction>(myEnd - myStart);
@@ -59,12 +61,12 @@ public class ControlFlowSubRange implements ControlFlow {
     return myEnd - myStart;
   }
 
-  public int getStartOffset(PsiElement element) {
+  public int getStartOffset(@NotNull PsiElement element) {
     return patchOffset(myControlFlow.getStartOffset(element));
     //return (myControlFlow.getStartOffset(element));
   }
 
-  public int getEndOffset(PsiElement element) {
+  public int getEndOffset(@NotNull PsiElement element) {
     return patchOffset(myControlFlow.getEndOffset(element));
     //return myControlFlow.getEndOffset(element);
   }

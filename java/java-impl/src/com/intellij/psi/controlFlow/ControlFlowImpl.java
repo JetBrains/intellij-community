@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiStatement;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,6 +48,7 @@ class ControlFlowImpl implements ControlFlow {
     myElementToEndOffsetMap.put(element, myInstructions.size());
   }
 
+  @NotNull
   public List<Instruction> getInstructions() {
     return myInstructions;
   }
@@ -54,7 +56,7 @@ class ControlFlowImpl implements ControlFlow {
     return myInstructions.size();
   }
 
-  public int getStartOffset(PsiElement element) {
+  public int getStartOffset(@NotNull PsiElement element) {
     int value = myElementToStartOffsetMap.get(element);
     if (value == 0){
       if (!myElementToStartOffsetMap.containsKey(element)) return -1;
@@ -62,7 +64,7 @@ class ControlFlowImpl implements ControlFlow {
     return value;
   }
 
-  public int getEndOffset(PsiElement element) {
+  public int getEndOffset(@NotNull PsiElement element) {
     int value = myElementToEndOffsetMap.get(element);
     if (value == 0){
       if (!myElementToEndOffsetMap.containsKey(element)) return -1;
