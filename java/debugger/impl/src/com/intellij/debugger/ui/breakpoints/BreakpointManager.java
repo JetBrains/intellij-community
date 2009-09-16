@@ -671,7 +671,7 @@ public class BreakpointManager implements JDOMExternalizable {
 
   @SuppressWarnings({"HardCodedStringLiteral"}) 
   public void writeExternal(final Element parentNode) throws WriteExternalException {
-    WriteExternalException ex = PsiDocumentManager.getInstance(myProject).commitAndRunReadAction(new Computable<WriteExternalException>() {
+    WriteExternalException ex = ApplicationManager.getApplication().runReadAction(new Computable<WriteExternalException>() {
       public WriteExternalException compute() {
         try {
           removeInvalidBreakpoints();
