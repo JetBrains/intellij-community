@@ -186,7 +186,9 @@ public class FileGroup implements JDOMExternalizable {
       final String path = pathElement.getText();
       final String vcsName = pathElement.getAttributeValue(VCS_ATTRIBUTE);
       final String revision = pathElement.getAttributeValue(REVISION_ATTRIBUTE);
-      myFiles.add(new UpdatedFile(path, vcsName, revision));
+      if (vcsName != null) {   // ignore UpdatedFiles from previous version
+        myFiles.add(new UpdatedFile(path, vcsName, revision));
+      }
     }
   }
 
