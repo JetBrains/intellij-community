@@ -44,6 +44,7 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
 
   public ChangelistConflictConfigurable(ChangeListManagerImpl manager) {
     super(new ControlBinder(manager.getConflictTracker().getOptions()));
+    
     myEnableCheckBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         UIUtil.setEnabled(myOptionsPanel, myEnableCheckBox.isSelected(), true);
@@ -71,6 +72,7 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
     Collection<String> conflicts = myConflictTracker.getIgnoredConflicts();
     myIgnoredFiles.setListData(conflicts.toArray(new String[conflicts.size()]));     
     myClearButton.setEnabled(!conflicts.isEmpty());
+    UIUtil.setEnabled(myOptionsPanel, myEnableCheckBox.isSelected(), true);    
   }
 
   @Override

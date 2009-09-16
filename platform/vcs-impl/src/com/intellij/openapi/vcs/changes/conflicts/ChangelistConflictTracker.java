@@ -281,7 +281,7 @@ public class ChangelistConflictTracker {
   }
 
   public boolean hasConflict(@NotNull VirtualFile file) {
-    if (myOptions.TRACKING_ENABLED) {
+    if (!myOptions.TRACKING_ENABLED) {
       return false;
     }
     Conflict conflict = myConflicts.get(file.getPath());
