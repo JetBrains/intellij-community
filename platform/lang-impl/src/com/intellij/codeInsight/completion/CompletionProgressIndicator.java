@@ -398,6 +398,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       myEditor.getDocument().setText(myOldDocumentText);
       myEditor.getSelectionModel().setSelection(myOldStart, myOldEnd);
       myEditor.getCaretModel().moveToOffset(myOldCaret);
+      myOldDocumentText = null;
       return;
     }
 
