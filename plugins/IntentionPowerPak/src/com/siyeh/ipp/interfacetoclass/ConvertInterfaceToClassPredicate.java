@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Bas Leijdekkers
+ * Copyright 2006-2009 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,34 +18,34 @@ package com.siyeh.ipp.interfacetoclass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaToken;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ConvertInterfaceToClassPredicate implements PsiElementPredicate {
 
-	public boolean satisfiedBy(PsiElement element) {
-		final PsiElement parent = element.getParent();
-		if (!(parent instanceof PsiClass)) {
-			return false;
-		}
-		final PsiClass aClass = (PsiClass)parent;
-		if (!aClass.isInterface() || aClass.isAnnotationType()) {
-			return false;
-		}
-		final PsiJavaToken leftBrace = aClass.getLBrace();
-		final int offsetInParent = element.getStartOffsetInParent();
-		if (leftBrace == null || offsetInParent >= leftBrace.getStartOffsetInParent()) {
-			return false;
-		}
-		final PsiManager manager = element.getManager();
-		final SearchScope useScope = aClass.getUseScope();
-          for (PsiClass inheritor : ClassInheritorsSearch.search(aClass, useScope, true)) {
-			if (inheritor.isInterface()) {
-				return false;
-			}
-		}
-		return true;
-	}
+    public boolean satisfiedBy(PsiElement element) {
+        final PsiElement parent = element.getParent();
+        if (!(parent instanceof PsiClass)) {
+            return false;
+        }
+        final PsiClass aClass = (PsiClass)parent;
+        if (!aClass.isInterface() || aClass.isAnnotationType()) {
+            return false;
+        }
+        final PsiJavaToken leftBrace = aClass.getLBrace();
+        final int offsetInParent = element.getStartOffsetInParent();
+        if (leftBrace == null ||
+                offsetInParent >= leftBrace.getStartOffsetInParent()) {
+            return false;
+        }
+        final SearchScope useScope = aClass.getUseScope();
+        for (PsiClass inheritor :
+                ClassInheritorsSearch.search(aClass, useScope, true)) {
+            if (inheritor.isInterface()) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
