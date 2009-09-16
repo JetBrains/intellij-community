@@ -86,11 +86,13 @@ public class OverrideImplementUtil {
     Map<MethodSignature, PsiMethod> concretes = new LinkedHashMap<MethodSignature,PsiMethod>();
     Map<PsiClass, PsiSubstitutor> substitutors = new HashMap<PsiClass,PsiSubstitutor>();
 
-    PsiMethod[] allMethods = aClass.getAllMethods();
+    Collection<HierarchicalMethodSignature> allMethodSigs = aClass.getVisibleSignatures();
     PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(aClass.getProject()).getResolveHelper();
-    for (PsiMethod method : allMethods) {
+    for (HierarchicalMethodSignature methodSig : allMethodSigs) {
+      PsiMethod method = methodSig.getMethod();
       if (method.hasModifierProperty(PsiModifier.STATIC) || !resolveHelper.isAccessible(method, aClass, aClass)) continue;
       PsiClass hisClass = method.getContainingClass();
+      if (hisClass == null) continue;
       //Filter non-immediate super constructors
       if (method.isConstructor() && (!aClass.isInheritor(hisClass, false) || aClass instanceof PsiAnonymousClass || aClass.isEnum())) {
         continue;
