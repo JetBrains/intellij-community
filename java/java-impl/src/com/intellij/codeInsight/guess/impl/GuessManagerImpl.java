@@ -6,6 +6,7 @@ import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.TypeCastInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.InstanceofInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -319,22 +320,33 @@ public class GuessManagerImpl extends GuessManager {
     }
 
     @Override
+    public DfaInstructionState[] visitMethodCall(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+      if (myForPlace == instruction.getCallExpression()) {
+        addToResult(((ExpressionTypeMemoryState)memState).getStates());
+      }
+      return super.visitMethodCall(instruction, runner, memState);
+    }
+
+    @Override
     public DfaInstructionState[] visitPush(PushInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
       if (myForPlace == instruction.getPlace()) {
-        final Map<PsiExpression, PsiType> map = ((ExpressionTypeMemoryState)memState).getStates();
-        if (myResult == null) {
-          myResult = new THashMap<PsiExpression, PsiType>(map, ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY);
-        } else {
-          final Iterator<PsiExpression> iterator = myResult.keySet().iterator();
-          while (iterator.hasNext()) {
-            PsiExpression psiExpression = iterator.next();
-            if (!myResult.get(psiExpression).equals(map.get(psiExpression))) {
-              iterator.remove();
-            }
+        addToResult(((ExpressionTypeMemoryState)memState).getStates());
+      }
+      return super.visitPush(instruction, runner, memState);
+    }
+
+    private void addToResult(Map<PsiExpression, PsiType> map) {
+      if (myResult == null) {
+        myResult = new THashMap<PsiExpression, PsiType>(map, ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY);
+      } else {
+        final Iterator<PsiExpression> iterator = myResult.keySet().iterator();
+        while (iterator.hasNext()) {
+          PsiExpression psiExpression = iterator.next();
+          if (!myResult.get(psiExpression).equals(map.get(psiExpression))) {
+            iterator.remove();
           }
         }
       }
-      return super.visitPush(instruction, runner, memState);
     }
   }
 }

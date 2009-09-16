@@ -90,7 +90,7 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         final PsiElement element = parameters.getPosition();
-        if (psiElement().afterLeaf(psiElement().withText(")").withParent(PsiTypeCastExpression.class)).accepts(element)) return;
+        if (JavaSmartCompletionContributor.INSIDE_TYPECAST_EXPRESSION.accepts(element)) return;
 
         final int offset = parameters.getOffset();
         final PsiReference reference = element.getContainingFile().findReferenceAt(offset);

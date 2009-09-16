@@ -81,7 +81,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         psiElement().inside(PsiSuperExpression.class)
         );
   public static final Key<Boolean> TYPE_CAST = Key.create("TYPE_CAST");
-  private static final ElementPattern<PsiElement> INSIDE_TYPECAST_EXPRESSION = psiElement().withParent(
+  static final ElementPattern<PsiElement> INSIDE_TYPECAST_EXPRESSION = psiElement().withParent(
     psiElement(PsiReferenceExpression.class).afterLeaf(
       psiElement().withText(")").withParent(PsiTypeCastExpression.class)));
   private static final PsiElementPattern.Capture<PsiElement> INSIDE_TYPECAST_TYPE = psiElement().afterLeaf(psiElement().withText("(").withParent(
