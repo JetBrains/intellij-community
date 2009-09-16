@@ -30,10 +30,10 @@ public class InlineSuperClassRefactoringDialog extends RefactoringDialog{
   }
 
   protected JComponent createCenterPanel() {
-    return new JLabel("Inline \'" + mySuperClass.getQualifiedName() + "\' to \'" + StringUtil.join(myTargetClasses, new Function<PsiClass, String>() {
+    return new JLabel("<html>Inline \'" + mySuperClass.getQualifiedName() + "\' to <br>&nbsp;&nbsp;&nbsp;\'" + StringUtil.join(myTargetClasses, new Function<PsiClass, String>() {
       public String fun(final PsiClass psiClass) {
         return psiClass.getQualifiedName();
       }
-    }, ", ") + "\'");
+    }, "\',<br>&nbsp;&nbsp;&nbsp;\'") + "\'</html>");
   }
 }
