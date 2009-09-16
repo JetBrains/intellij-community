@@ -42,7 +42,6 @@ class GdslMetaClassProperties {
    */
   Closure context = {Map args ->
     def ctx = new Context(args)
-    myExecutor.addContext(ctx)
     return ctx
   }
 
@@ -63,7 +62,7 @@ class GdslMetaClassProperties {
    */
   Closure ClosureScope = {Map args -> new ClosureScope(args)}
   Closure ScriptScope = {Map args -> new ScriptScope(args)}
-  Closure Any = {Map args -> new Any()}
+  Any Any = new Any()
 
 
 }

@@ -32,11 +32,7 @@ import java.util.Collection;
 /**
  * @author ilyas
  */
-public class GrExpressionCategory implements PsiEnhancerCategory{
-
-  public static Collection<GrExpression> getArguments(GrCallExpression call) {
-    return Arrays.asList(call.getExpressionArguments());
-  }
+public class PsiExpressionCategory implements PsiEnhancerCategory{
 
   @Nullable
   public static PsiClass getClassType(GrExpression expr) {
@@ -50,6 +46,15 @@ public class GrExpressionCategory implements PsiEnhancerCategory{
       final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
       return facade.findClass(text, GlobalSearchScope.allScope(project));
     }
+  }
+
+  /**
+   * Returns arguments of a call expression
+   * @param call
+   * @return
+   */
+  public static Collection<GrExpression> getArguments(GrCallExpression call) {
+    return Arrays.asList(call.getExpressionArguments());
   }
 
 }

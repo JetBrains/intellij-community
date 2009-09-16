@@ -26,6 +26,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
  *
  * @author ilyas
  */
-public interface GdslTopLevelMembersProvider {
-  ExtensionPointName<GdslTopLevelMembersProvider> EP_NAME = ExtensionPointName.create("org.intellij.groovy.gdslTopLevelProvider");
+public interface GdslMembersProvider {
+  ExtensionPointName<GdslMembersProvider> EP_NAME = ExtensionPointName.create("org.intellij.groovy.gdslTopLevelProvider");
 }

@@ -17,17 +17,20 @@
 package org.jetbrains.plugins.groovy.dsl.dsltop;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.GdslMembersHolderConsumer;
 import org.jetbrains.plugins.groovy.dsl.holders.DelegatedMembersHolder;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 
 /**
  * @author ilyas
  */
-public class GroovyDslDefaultMembers implements GdslTopLevelMembersProvider {
+public class GroovyDslDefaultMembers implements GdslMembersProvider {
   
   /*************************************************************************************
    Methods and properties of the GroovyDSL language
@@ -74,9 +77,30 @@ public class GroovyDslDefaultMembers implements GdslTopLevelMembersProvider {
    * Returns enclosing method call of a given context's place
    */
   @Nullable
-  public GrCallExpression getEnclosingCall(GdslMembersHolderConsumer consumer) {
+  public GrMethodCallExpression enclosingCall(String name, GdslMembersHolderConsumer consumer) {
     final PsiElement place = consumer.getPlace();
-    return place == null ? null : PsiTreeUtil.getParentOfType(place, GrCallExpression.class);
+    if (place == null) return null;
+    GrMethodCallExpression call = PsiTreeUtil.getParentOfType(place, GrMethodCallExpression.class, true);
+    if (call == null) return null;
+    while (call != null && !name.equals(getInvokedMethodName(call))) {
+      call = PsiTreeUtil.getParentOfType(call, GrMethodCallExpression.class, true);
+    }
+    if (call == null) return null;
+    for (GrExpression arg : call.getClosureArguments()) {
+      if (arg instanceof GrClosableBlock && PsiTreeUtil.findCommonParent(place, arg) == arg) {
+        return call;
+      }
+    }
+    return null;
+  }
+
+  private static String getInvokedMethodName(GrMethodCallExpression call) {
+    final GrExpression expr = call.getInvokedExpression();
+    if (expr instanceof GrReferenceExpression) {
+      GrReferenceExpression ref = (GrReferenceExpression)expr;
+      return ref.getName();
+    }
+    return null;
   }
   
 }

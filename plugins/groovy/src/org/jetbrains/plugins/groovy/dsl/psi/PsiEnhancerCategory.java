@@ -19,7 +19,7 @@ package org.jetbrains.plugins.groovy.dsl.psi;
 import com.intellij.openapi.extensions.ExtensionPointName;
 
 /**
- * Category class to add new methods int ItntelliJ PSI classes
+ * Category class to add new methods int IntelliJ PSI classes
  *
  * @author ilyas
  */
