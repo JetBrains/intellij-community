@@ -34,16 +34,17 @@ public class JobUtil {
       return thingProcessor.process(t);
     }
 
-    final Job<?> job = JobScheduler.getInstance().createJob(jobName, Job.DEFAULT_PRIORITY);
+    final Job<String> job = JobScheduler.getInstance().createJob(jobName, Job.DEFAULT_PRIORITY);
 
     for (final T thing : things) {
+      //noinspection HardCodedStringLiteral
       job.addTask(new Runnable(){
         public void run() {
           if (!thingProcessor.process(thing)) {
             job.cancel();
           }
         }
-      });
+      }, "done");
     }
     try {
       job.scheduleAndWaitForResults();
