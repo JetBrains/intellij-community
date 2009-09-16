@@ -52,8 +52,7 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     return CALL_HIERARCHY_BROWSER_DATA_KEY;
   }
 
-  @Override
-  protected void appendActions(@NotNull DefaultActionGroup actionGroup, String helpID) {
+  protected void prependActions(@NotNull DefaultActionGroup actionGroup) {
     actionGroup.add(new ChangeViewTypeActionBase(IdeBundle.message("action.caller.methods.hierarchy"),
                                                  IdeBundle.message("action.caller.methods.hierarchy"),
                                                  IconLoader.getIcon("/hierarchy/caller.png"), CALLER_TYPE));
@@ -62,8 +61,6 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
                                                  IconLoader.getIcon("/hierarchy/callee.png"), CALLEE_TYPE));
     actionGroup.add(new AlphaSortAction());
     actionGroup.add(new ChangeScopeAction());
-
-    super.appendActions(actionGroup, helpID);
   }
 
   @NotNull

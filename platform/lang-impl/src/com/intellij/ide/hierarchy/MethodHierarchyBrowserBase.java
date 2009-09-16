@@ -64,10 +64,9 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
   }
 
   @Override
-  protected void appendActions(@NotNull DefaultActionGroup actionGroup, String helpID) {
+  protected void prependActions(@NotNull DefaultActionGroup actionGroup) {
     actionGroup.add(new AlphaSortAction());
     actionGroup.add(new ShowImplementationsOnlyAction());
-    super.appendActions(actionGroup, helpID);
   }
 
   @NotNull

@@ -296,10 +296,13 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   @Override
   protected void appendActions(@NotNull DefaultActionGroup actionGroup, String helpID) {
+    prependActions(actionGroup);
     actionGroup.add(myRefreshAction);
     super.appendActions(actionGroup, helpID);
   }
 
+  protected void prependActions(final DefaultActionGroup actionGroup) {
+  }
 
   public boolean hasNextOccurence() {
     return getOccurrenceNavigator().hasNextOccurence();

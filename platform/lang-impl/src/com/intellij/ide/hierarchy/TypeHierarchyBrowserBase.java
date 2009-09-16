@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
 
@@ -46,12 +45,11 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     myIsInterface = isInterface(element);
   }
 
-  protected void appendActions(@NotNull final DefaultActionGroup actionGroup, @Nullable String helpID) {
+  protected void prependActions(final DefaultActionGroup actionGroup) {
     actionGroup.add(new ViewClassHierarchyAction());
     actionGroup.add(new ViewSupertypesHierarchyAction());
     actionGroup.add(new ViewSubtypesHierarchyAction());
     actionGroup.add(new AlphaSortAction());
-    super.appendActions(actionGroup, helpID);
   }
 
   @NotNull
