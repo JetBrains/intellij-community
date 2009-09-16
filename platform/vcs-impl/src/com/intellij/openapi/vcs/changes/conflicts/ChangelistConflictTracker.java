@@ -276,6 +276,10 @@ public class ChangelistConflictTracker {
     }
   }
 
+  public Map<String, Conflict> getConflicts() {
+    return myConflicts;
+  }
+
   public Collection<String> getIgnoredConflicts() {
     return ContainerUtil.mapNotNull(myConflicts.entrySet(), new NullableFunction<Map.Entry<String, Conflict>, String>() {
       public String fun(Map.Entry<String, Conflict> entry) {
@@ -284,7 +288,7 @@ public class ChangelistConflictTracker {
     });
   }
 
-  private static class Conflict {
+  public static class Conflict {
     long timestamp;
     String changelistId;
     boolean ignored;
@@ -298,13 +302,13 @@ public class ChangelistConflictTracker {
     return conflict != null && !conflict.ignored;
   }
 
-  public void ignoreConflict(@NotNull VirtualFile file, boolean set) {
+  public void ignoreConflict(@NotNull VirtualFile file, boolean ignore) {
     String path = file.getPath();
     Conflict conflict = myConflicts.get(path);
     if (conflict != null) {
-      conflict.ignored = set;
+      conflict.ignored = ignore;
     }
-    addNotification(file, !set);
+    addNotification(file, !ignore);
     myFileStatusManager.fileStatusChanged(file);
   }
 

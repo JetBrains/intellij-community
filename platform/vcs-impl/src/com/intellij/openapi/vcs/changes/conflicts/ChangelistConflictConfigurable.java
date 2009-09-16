@@ -6,8 +6,6 @@ import com.intellij.openapi.options.binding.BindControl;
 import com.intellij.openapi.options.binding.BindableConfigurable;
 import com.intellij.openapi.options.binding.ControlBinder;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 
@@ -79,11 +77,8 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
   public void apply() throws ConfigurationException {
     super.apply();
     if (myIgnoredFilesCleared) {
-      for (String path : myConflictTracker.getIgnoredConflicts()) {
-        VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
-        if (file != null) {
-          myConflictTracker.ignoreConflict(file, false);
-        }
+      for (ChangelistConflictTracker.Conflict conflict : myConflictTracker.getConflicts().values()) {
+        conflict.ignored = false;        
       }
     }
     myConflictTracker.optionsChanged();
