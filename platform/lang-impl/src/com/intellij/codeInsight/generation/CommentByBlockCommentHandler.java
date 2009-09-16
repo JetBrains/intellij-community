@@ -45,7 +45,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
 
     myDocument = editor.getDocument();
 
-    if (!FileDocumentManager.getInstance().requestWriting(myDocument, project)) {
+    if (!FileDocumentManager.getInstance().fileForDocumentCheckedOutSuccessfully(myDocument, project)) {
       return;
     }
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.comment.block");

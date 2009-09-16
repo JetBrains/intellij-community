@@ -100,7 +100,7 @@ public class ImplementAbstractMethodHandler {
 
   private void implementInClass(final PsiClass psiClass) {
     if (!psiClass.isValid()) return;
-    if (!FileDocumentManager.getInstance().requestWriting(PsiDocumentManager.getInstance(myProject).getDocument(psiClass.getContainingFile()), myProject)) {
+    if (!FileDocumentManager.getInstance().fileForDocumentCheckedOutSuccessfully(PsiDocumentManager.getInstance(myProject).getDocument(psiClass.getContainingFile()), myProject)) {
       MessagesEx.fileIsReadOnly(myProject, psiClass.getContainingFile().getVirtualFile()).showNow();
       return;
     }

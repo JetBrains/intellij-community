@@ -54,7 +54,7 @@ public class TypedAction {
       Document doc = editor.getDocument();
       if (dataContext != null) {
         Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-        if (project != null && !FileDocumentManager.getInstance().requestWriting(doc, project)) {
+        if (project != null && !FileDocumentManager.getInstance().fileForDocumentCheckedOutSuccessfully(doc, project)) {
           return;
         }
       }

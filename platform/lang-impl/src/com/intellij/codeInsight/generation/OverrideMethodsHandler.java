@@ -12,7 +12,7 @@ import com.intellij.psi.util.PsiUtilBase;
 
 public class OverrideMethodsHandler implements CodeInsightActionHandler{
   public final void invoke(final Project project, final Editor editor, PsiFile file) {
-    if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)){
+    if (!FileDocumentManager.getInstance().fileForDocumentCheckedOutSuccessfully(editor.getDocument(), project)){
       return;
     }
 

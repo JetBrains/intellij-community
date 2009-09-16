@@ -383,7 +383,7 @@ public class FindUtil {
   private static boolean replace(Project project, Editor editor, int offset, FindModel model) {
     Document document = editor.getDocument();
 
-    if (!FileDocumentManager.getInstance().requestWriting(document, project)) {
+    if (!FileDocumentManager.getInstance().fileForDocumentCheckedOutSuccessfully(document, project)) {
         return false;
     }
 

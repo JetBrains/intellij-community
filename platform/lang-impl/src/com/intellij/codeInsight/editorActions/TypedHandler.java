@@ -114,7 +114,7 @@ public class TypedHandler implements TypedActionHandler {
 
     if (editor.isViewer()) return;
 
-    if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
+    if (!FileDocumentManager.getInstance().fileForDocumentCheckedOutSuccessfully(editor.getDocument(), project)) {
        return;
     }
 

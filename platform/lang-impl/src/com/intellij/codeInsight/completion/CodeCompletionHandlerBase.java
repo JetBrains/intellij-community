@@ -85,7 +85,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       document.fireReadOnlyModificationAttempt();
       return;
     }
-    if (!FileDocumentManager.getInstance().requestWriting(document, project)) {
+    if (!FileDocumentManager.getInstance().fileForDocumentCheckedOutSuccessfully(document, project)) {
       return;
     }
 
