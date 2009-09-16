@@ -22,14 +22,29 @@ import java.util.List;
 
 public abstract class VcsHistorySession {
   private final List<VcsFileRevision> myRevisions;
-  private volatile VcsRevisionNumber myCachedRevisionNumber;
+  private final Object myLock;
+  private VcsRevisionNumber myCachedRevisionNumber;
+
+  protected VcsRevisionNumber getCachedRevision() {
+    synchronized (myLock) {
+      return myCachedRevisionNumber;
+    }
+  }
+
+  protected void setCachedRevision(final VcsRevisionNumber number) {
+    synchronized (myLock) {
+      myCachedRevisionNumber = number;
+    }
+  }
 
   public VcsHistorySession(List<VcsFileRevision> revisions) {
+    myLock = new Object();
     myRevisions = revisions;
     myCachedRevisionNumber = calcCurrentRevisionNumber();
   }
 
   protected VcsHistorySession(List<VcsFileRevision> revisions, VcsRevisionNumber currentRevisionNumber) {
+    myLock = new Object();
     myRevisions = revisions;
     myCachedRevisionNumber = currentRevisionNumber;
   }
@@ -47,7 +62,7 @@ public abstract class VcsHistorySession {
   protected abstract VcsRevisionNumber calcCurrentRevisionNumber();
 
   public final VcsRevisionNumber getCurrentRevisionNumber() {
-    return myCachedRevisionNumber;
+    return getCachedRevision();
   }
 
   public boolean isCurrentRevision(VcsRevisionNumber rev) {
@@ -56,9 +71,10 @@ public abstract class VcsHistorySession {
   }
 
   public synchronized boolean refresh() {
-    final VcsRevisionNumber oldValue = myCachedRevisionNumber;
-    myCachedRevisionNumber = calcCurrentRevisionNumber();
-    return !Comparing.equal(oldValue, myCachedRevisionNumber);
+    final VcsRevisionNumber oldValue = getCachedRevision();
+    final VcsRevisionNumber newNumber = calcCurrentRevisionNumber();
+    setCachedRevision(newNumber);
+    return !Comparing.equal(oldValue, newNumber);
   }
 
   public boolean allowAsyncRefresh() {

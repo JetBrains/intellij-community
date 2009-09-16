@@ -3,8 +3,8 @@ package com.intellij.openapi.vcs.history;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.PanelWithActionsAndCloseButton;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -295,7 +295,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
           createSession(new Consumer<VcsHistorySession>() {
             public void consume(final VcsHistorySession session) {
               if (session != null) {
-                if (myHistorySession.allowAsyncRefresh()) {
+                if (session.allowAsyncRefresh()) {
                   SwingUtilities.invokeLater(new Runnable() {
                     public void run() {
                       refresh(session);
@@ -476,9 +476,14 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
 
     final TreeCellRenderer defaultCellRenderer = myDualView.getTree().getCellRenderer();
 
-    myDualView.setTreeCellRenderer(new MyTreeCellRenderer(defaultCellRenderer, myHistorySession));
+    final Getter<VcsHistorySession> sessionGetter = new Getter<VcsHistorySession>() {
+      public VcsHistorySession get() {
+        return myHistorySession;
+      }
+    };
+    myDualView.setTreeCellRenderer(new MyTreeCellRenderer(defaultCellRenderer, sessionGetter));
 
-    myDualView.setCellWrapper(new MyCellWrapper(myHistorySession));
+    myDualView.setCellWrapper(new MyCellWrapper(sessionGetter));
 
     TableViewModel sortableModel = myDualView.getFlatView().getTableViewModel();
     sortableModel.setSortable(true);
@@ -1425,9 +1430,9 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
 
   private class MyTreeCellRenderer implements TreeCellRenderer {
     private final TreeCellRenderer myDefaultCellRenderer;
-    private final VcsHistorySession myHistorySession;
+    private final Getter<VcsHistorySession> myHistorySession;
 
-    public MyTreeCellRenderer(final TreeCellRenderer defaultCellRenderer, final VcsHistorySession historySession) {
+    public MyTreeCellRenderer(final TreeCellRenderer defaultCellRenderer, final Getter<VcsHistorySession> historySession) {
       myDefaultCellRenderer = defaultCellRenderer;
       myHistorySession = historySession;
     }
@@ -1447,10 +1452,10 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
 
       if (revision != null) {
 
-        if (Comparing.equal(revision.getRevisionNumber(), myHistorySession.getCurrentRevisionNumber())) {
+        if (myHistorySession.get().isCurrentRevision(revision.getRevisionNumber())) {
           makeBold(result);
         }
-        if (!selected && Comparing.equal(revision.getRevisionNumber(), myHistorySession.getCurrentRevisionNumber())) {
+        if (!selected && myHistorySession.get().isCurrentRevision(revision.getRevisionNumber())) {
           result.setBackground(new Color(188, 227, 231));
           ((JComponent)result).setOpaque(false);
         }
@@ -1467,9 +1472,9 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
   }
 
   private static class MyCellWrapper implements CellWrapper {
-    private final VcsHistorySession myHistorySession;
+    private final Getter<VcsHistorySession> myHistorySession;
 
-    public MyCellWrapper(final VcsHistorySession historySession) {
+    public MyCellWrapper(final Getter<VcsHistorySession> historySession) {
       myHistorySession = historySession;
     }
 
@@ -1483,7 +1488,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
                      Object treeNode) {
       VcsFileRevision revision = (VcsFileRevision)treeNode;
       if (revision == null) return;
-      if (myHistorySession.isCurrentRevision(revision.getRevisionNumber())) {
+      if (myHistorySession.get().isCurrentRevision(revision.getRevisionNumber())) {
         makeBold(component);
       }
     }
