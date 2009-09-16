@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy.lang;
 
-import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
@@ -34,21 +33,27 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
 import com.intellij.util.concurrency.Semaphore;
+import junit.framework.AssertionFailedError;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompilerLoader;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * @author peter
@@ -81,7 +86,7 @@ public class GroovyCompilerTest extends JavaCodeInsightFixtureTestCase {
     final File[] groovyJars = GroovyUtils.getFilesInDirectoryByPattern(PathManager.getHomePath() + "/community/lib", GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN);
     assert groovyJars.length == 1;
     moduleBuilder.addLibrary("Groovy", groovyJars[0].getPath());
-    moduleBuilder.addJdk(CompilerConfigurationImpl.getTestsExternalCompilerHome());
+    //moduleBuilder.addJdk(CompilerConfigurationImpl.getTestsExternalCompilerHome());
   }
 
   public void testPlainGroovy() throws Throwable {
@@ -105,18 +110,76 @@ public class GroovyCompilerTest extends JavaCodeInsightFixtureTestCase {
     assertOutput("Foo", "239");
   }
 
+  public void testCorrectFailAndCorrect() throws Exception {
+    myFixture.addClass("public class Foo {" +
+                       "public static void main(String[] args) { " +
+                       "  System.out.println(new Bar().foo());" +
+                       "}" +
+                       "}");
+    final String barText = "class Bar {" + "  def foo() { 239  }" + "}";
+    final PsiFile file = myFixture.addFileToProject("Bar.groovy", barText);
+    make();
+    assertOutput("Foo", "239");
+
+    setFileText(file, "class Bar {}");
+    try {
+      make();
+      fail("Make should fail");
+    }
+    catch (RuntimeException e) {
+      if (!(e.getCause() instanceof AssertionFailedError)) {
+        throw e;
+      }
+    }
+
+    setFileText(file, barText);
+    make();
+    assertOutput("Foo", "239");
+  }
+
+  public void testRenameToJava() throws Throwable {
+    myFixture.addClass("public class Foo {" +
+                       "public static void main(String[] args) { " +
+                       "  System.out.println(new Bar().foo());" +
+                       "}" +
+                       "}");
+
+    final PsiFile bar =
+      myFixture.addFileToProject("Bar.groovy", "public class Bar {" + "public int foo() { " + "  return 239;" + "}" + "}");
+
+    make();
+    assertOutput("Foo", "239");
+
+    new WriteCommandAction(getProject()) {
+      protected void run(Result result) throws Throwable {
+        bar.setName("Bar.java");
+      }
+    }.execute();
+
+    make();
+    assertOutput("Foo", "239");
+  }
+
+  private static void setFileText(PsiFile file, String barText) throws IOException {
+    VfsUtil.saveText(file.getVirtualFile(), barText);
+  }
+
   private void make() {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
-    CompilerManager.getInstance(getProject()).make(new ErrorReportingCallback(semaphore));
+    final ErrorReportingCallback callback = new ErrorReportingCallback(semaphore);
+    CompilerManager.getInstance(getProject()).make(callback);
     semaphore.waitFor();
+    callback.throwException();
   }
 
   private void compile(VirtualFile... files) {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
+    final ErrorReportingCallback callback = new ErrorReportingCallback(semaphore);
     CompilerManager.getInstance(getProject()).compile(files, new ErrorReportingCallback(semaphore), false);
     semaphore.waitFor();
+    callback.throwException();
   }
 
   private void assertOutput(String className, String output) throws ExecutionException {
@@ -155,6 +218,7 @@ public class GroovyCompilerTest extends JavaCodeInsightFixtureTestCase {
 
   private static class ErrorReportingCallback implements CompileStatusNotification {
     private final Semaphore mySemaphore;
+    private Throwable myError;
 
     public ErrorReportingCallback(Semaphore semaphore) {
       mySemaphore = semaphore;
@@ -173,9 +237,19 @@ public class GroovyCompilerTest extends JavaCodeInsightFixtureTestCase {
           fail("Compiler errors occurred! " + errorBuilder.toString());
         }
       }
+      catch (Throwable t) {
+        myError = t;
+      }
       finally {
         mySemaphore.up();
       }
     }
+
+    void throwException() {
+      if (myError != null) {
+        throw new RuntimeException(myError);
+      }
+    }
+
   }
 }

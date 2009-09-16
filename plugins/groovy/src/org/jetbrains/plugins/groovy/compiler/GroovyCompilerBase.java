@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.compiler;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.ModuleCompilerUtil;
 import com.intellij.compiler.impl.CompilerUtil;
+import com.intellij.compiler.impl.FileSetCompileScope;
 import com.intellij.compiler.impl.javaCompiler.ModuleChunk;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -55,6 +56,7 @@ import com.intellij.util.Chunk;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.groovy.compiler.rt.CompilerMessage;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
@@ -169,7 +171,20 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       StringBuffer unparsedBuffer = processHandler.getUnparsedOutput();
       if (unparsedBuffer.length() != 0) compileContext.addMessage(CompilerMessageCategory.ERROR, unparsedBuffer.toString(), null, -1, -1);
 
-      sink.add(outputDir.getPath(), processHandler.getSuccessfullyCompiled(), toRecompile.toArray(new VirtualFile[toRecompile.size()]));
+      List<OutputItem> outputItems = processHandler.getSuccessfullyCompiled();
+      if (forStubs) {
+        List<VirtualFile> stubFiles = new ArrayList<VirtualFile>();
+        for (final OutputItem outputItem : outputItems) {
+          final File stub = new File(outputItem.getOutputPath());
+          CompilerUtil.refreshIOFile(stub);
+          final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(stub);
+          ContainerUtil.addIfNotNull(file, stubFiles);
+        }
+        ((CompileContextEx)compileContext).addScope(new FileSetCompileScope(stubFiles, new Module[]{module}));
+        outputItems = Collections.emptyList();
+      }
+
+      sink.add(outputDir.getPath(), outputItems, toRecompile.toArray(new VirtualFile[toRecompile.size()]));
     }
     catch (ExecutionException e) {
       LOG.error(e);
