@@ -31,7 +31,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -251,30 +251,30 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
   }
 
   @Override
-  protected boolean showConflicts(List<String> conflicts) {
+  protected boolean showConflicts(Map<PsiElement, String> conflicts) {
     if (!conflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
-      throw new RuntimeException(StringUtil.join(conflicts, "\n"));
+      throw new RuntimeException(StringUtil.join(conflicts.values(), "\n"));
     }
     return super.showConflicts(conflicts);
   }
 
   @Override
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
-    final List<String> conflicts = new ArrayList<String>();
+    final Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
     final PsiClass builderClass =
       psiFacade.findClass(StringUtil.getQualifiedName(myPackageName, myClassName), GlobalSearchScope.projectScope(myProject));
     if (builderClass == null) {
       if (!myCreateNewBuilderClass) {
-        conflicts.add("Selected class was not found.");
+        conflicts.put(null, "Selected class was not found.");
       }
     } else if (myCreateNewBuilderClass){
-      conflicts.add("Class with chosen name already exist.");
+      conflicts.put(builderClass, "Class with chosen name already exist.");
     }
 
     final PsiMethod commonConstructor = getMostCommonConstructor();
     if (commonConstructor == null) {
-      conflicts.add("Found constructors are not reducible to simple chain");
+      conflicts.put(null, "Found constructors are not reducible to simple chain");
     }
 
     return showConflicts(conflicts);

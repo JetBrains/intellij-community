@@ -100,14 +100,15 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
   public boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
-    Set<String> conflicts = new HashSet<String>();
+    Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
 
-    conflicts.addAll(RenameUtil.getConflictDescriptions(usagesIn));
+    conflicts.putAll(RenameUtil.getConflictDescriptions(usagesIn));
     RenamePsiElementProcessor.forElement(myPrimaryElement).findExistingNameConflicts(myPrimaryElement, myNewName, conflicts);
     if (!conflicts.isEmpty()) {
       ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
       conflictsDialog.show();
       if (!conflictsDialog.isOK()) {
+        if (conflictsDialog.isShowConflicts()) prepareSuccessful();
         return false;
       }
     }

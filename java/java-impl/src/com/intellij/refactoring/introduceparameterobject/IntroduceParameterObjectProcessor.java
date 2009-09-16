@@ -102,32 +102,33 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
 
   @Override
   protected boolean preprocessUsages(final Ref<UsageInfo[]> refUsages) {
-    ArrayList<String> conflicts = new ArrayList<String>();
+    Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
     if (myUseExistingClass) {
       if (existingClass == null) {
-        conflicts.add(RefactorJBundle.message("cannot.perform.the.refactoring") + "Could not find the selected class");
+        conflicts.put(null, RefactorJBundle.message("cannot.perform.the.refactoring") + "Could not find the selected class");
       }
       final String incompatibilityMessage = "Selected class is not compatible with chosen parameters";
       if (!myExistingClassCompatible) {
         conflicts
-          .add(RefactorJBundle.message("cannot.perform.the.refactoring") + incompatibilityMessage);
+          .put(existingClass, RefactorJBundle.message("cannot.perform.the.refactoring") + incompatibilityMessage);
 
       }
       if (!paramsNeedingSetters.isEmpty()) {
-        conflicts.add(RefactorJBundle.message("cannot.perform.the.refactoring") + incompatibilityMessage);
+        conflicts.put(existingClass, RefactorJBundle.message("cannot.perform.the.refactoring") + incompatibilityMessage);
       }
     }
     else if (existingClass != null) {
-      conflicts.add(RefactorJBundle.message("cannot.perform.the.refactoring") +
+      conflicts.put(existingClass,
+                    RefactorJBundle.message("cannot.perform.the.refactoring") +
                     RefactorJBundle.message("there.already.exists.a.class.with.the.chosen.name"));
     }
     return showConflicts(conflicts);
   }
 
   @Override
-  protected boolean showConflicts(final List<String> conflicts) {
+  protected boolean showConflicts(final Map<PsiElement, String> conflicts) {
     if (!conflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
-      throw new RuntimeException(StringUtil.join(conflicts, "\n"));
+      throw new RuntimeException(StringUtil.join(conflicts.values(), "\n"));
     }
     return super.showConflicts(conflicts);
   }

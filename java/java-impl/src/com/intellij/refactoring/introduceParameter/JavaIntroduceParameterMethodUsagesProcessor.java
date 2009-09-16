@@ -12,17 +12,17 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.FieldConflictsResolver;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.VisibilityUtil;
-import com.intellij.refactoring.util.usageInfo.DefaultConstructorImplicitUsageInfo;
 import com.intellij.refactoring.util.javadoc.MethodJavaDocHelper;
+import com.intellij.refactoring.util.usageInfo.DefaultConstructorImplicitUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
-import java.util.List;
+import java.util.Map;
 
 /**
  * @author Maxim.Medvedev
@@ -123,8 +123,8 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
   }
 
 
-  public List<String> findConflicts(IntroduceParameterData data, UsageInfo[] usages) {
-    return Collections.emptyList();
+  public Map<PsiElement, String> findConflicts(IntroduceParameterData data, UsageInfo[] usages) {
+    return Collections.emptyMap();
   }
 
   public boolean processChangeMethodSignature(IntroduceParameterData data, UsageInfo usage, UsageInfo[] usages) throws IncorrectOperationException {

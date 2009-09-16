@@ -69,18 +69,18 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     final UsageInfo[] usages = refUsages.get();
-    ArrayList<String> conflicts = new ArrayList<String>();
+    Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
     final Set<PsiMember> members = new HashSet<PsiMember>();
     members.add(myMethod);
     if (myTargetVariable instanceof PsiField) members.add((PsiMember)myTargetVariable);
     if (!myTargetClass.isInterface()) {
-      conflicts.addAll(Arrays.asList(MoveMembersProcessor.analyzeAccessibilityConflicts(members, myTargetClass, new LinkedHashSet<String>(), myNewVisibility)));
+      conflicts.putAll(MoveMembersProcessor.analyzeAccessibilityConflicts(members, myTargetClass, new LinkedHashMap<PsiElement, String>(), myNewVisibility));
     }
     else {
       for (final UsageInfo usage : usages) {
         if (usage instanceof InheritorUsageInfo) {
-          conflicts.addAll(Arrays.asList(MoveMembersProcessor.analyzeAccessibilityConflicts(
-            members, ((InheritorUsageInfo)usage).getInheritor(), new LinkedHashSet<String>(), myNewVisibility)));
+          conflicts.putAll(MoveMembersProcessor.analyzeAccessibilityConflicts(
+            members, ((InheritorUsageInfo)usage).getInheritor(), new LinkedHashMap<PsiElement, String>(), myNewVisibility));
         }
       }
     }
@@ -99,7 +99,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
               String message = RefactoringBundle.message("0.contains.call.with.null.argument.for.parameter.1",
                                                          RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(methodCall), true),
                                                          CommonRefactoringUtil.htmlEmphasize(parameter.getName()));
-              conflicts.add(message);
+              conflicts.put(instanceValue, message);
             }
           }
         }

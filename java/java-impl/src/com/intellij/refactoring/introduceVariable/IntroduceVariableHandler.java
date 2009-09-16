@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
@@ -18,6 +19,7 @@ import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 public class IntroduceVariableHandler extends IntroduceVariableBase {
 
@@ -70,9 +72,13 @@ public class IntroduceVariableHandler extends IntroduceVariableBase {
     WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
   }
 
-  protected boolean reportConflicts(final ArrayList<String> conflicts, final Project project) {
+  protected boolean reportConflicts(final Map<PsiElement, String> conflicts, final Project project, IntroduceVariableSettings dialog) {
     ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
     conflictsDialog.show();
-    return conflictsDialog.isOK();
+    final boolean ok = conflictsDialog.isOK();
+    if (!ok && conflictsDialog.isShowConflicts()) {
+      if (dialog instanceof DialogWrapper) ((DialogWrapper)dialog).close(DialogWrapper.CANCEL_EXIT_CODE);
+    }
+    return ok;
   }
 }

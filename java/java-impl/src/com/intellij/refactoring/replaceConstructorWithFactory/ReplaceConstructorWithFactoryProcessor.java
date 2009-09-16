@@ -114,13 +114,14 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usages = refUsages.get();
 
-    ArrayList<String> conflicts = new ArrayList<String>();
+    Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
     final PsiResolveHelper helper = JavaPsiFacade.getInstance(myProject).getResolveHelper();
-    if (!helper.isAccessible(getConstructorContainingClass(), myTargetClass, null)) {
+    final PsiClass constructorContainingClass = getConstructorContainingClass();
+    if (!helper.isAccessible(constructorContainingClass, myTargetClass, null)) {
       String message = RefactoringBundle.message("class.0.is.not.accessible.from.target.1",
-                                                 RefactoringUIUtil.getDescription(getConstructorContainingClass(), true),
+                                                 RefactoringUIUtil.getDescription(constructorContainingClass, true),
                                                  RefactoringUIUtil.getDescription(myTargetClass, true));
-      conflicts.add(message);
+      conflicts.put(constructorContainingClass, message);
     }
 
     HashSet<PsiElement> reportedContainers = new HashSet<PsiElement>();
@@ -133,7 +134,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
           String message = RefactoringBundle.message("target.0.is.not.accessible.from.1",
                                                      targetClassDescription,
                                                      RefactoringUIUtil.getDescription(container, true));
-          conflicts.add(message);
+          conflicts.put(myTargetClass, message);
         }
       }
     }
@@ -146,8 +147,9 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
 
           if (PsiTreeUtil.isAncestor(containingClass, myTargetClass, true)) {
             String message = RefactoringBundle.message("constructor.being.refactored.is.used.in.initializer.of.0",
-                                                       RefactoringUIUtil.getDescription(field, true), RefactoringUIUtil.getDescription(getConstructorContainingClass(), false));
-            conflicts.add(message);
+                                                       RefactoringUIUtil.getDescription(field, true), RefactoringUIUtil.getDescription(
+                constructorContainingClass, false));
+            conflicts.put(field, message);
           }
         }
       }

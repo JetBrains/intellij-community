@@ -264,11 +264,12 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
     return result;
   }
 
-  public List<String> getConflicts(final UsageInfo[] usages) {
-    List<String> conflicts = new ArrayList<String>();
+  public Map<PsiElement, String> getConflicts(final UsageInfo[] usages) {
+    Map<PsiElement, String> conflicts = new LinkedHashMap<PsiElement, String>();
 
-    if (myTargetClass.findInnerClassByName(myClassToMove.getName(), false) != null) {
-      conflicts.add(RefactoringBundle.message("move.to.inner.duplicate.inner.class",
+    final PsiClass innerClass = myTargetClass.findInnerClassByName(myClassToMove.getName(), false);
+    if (innerClass != null) {
+      conflicts.put(innerClass, RefactoringBundle.message("move.to.inner.duplicate.inner.class",
                                               CommonRefactoringUtil.htmlEmphasize(myTargetClass.getQualifiedName()),
                                               CommonRefactoringUtil.htmlEmphasize(myClassToMove.getName())));
     }
@@ -343,10 +344,10 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
   }
 
   private class ConflictsCollector {
-    private final List<String> myConflicts;
+    private final Map<PsiElement, String> myConflicts;
     private final Set<PsiElement> myReportedContainers = new HashSet<PsiElement>();
 
-    public ConflictsCollector(final List<String> conflicts) {
+    public ConflictsCollector(final Map<PsiElement, String> conflicts) {
       myConflicts = conflicts;
     }
 
@@ -361,7 +362,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
         final String message = RefactoringBundle.message("element.will.no.longer.be.accessible",
                                                          targetDescription,
                                                          RefactoringUIUtil.getDescription(container, true));
-        myConflicts.add(message);
+        myConflicts.put(targetElement, message);
       }
     }
   }

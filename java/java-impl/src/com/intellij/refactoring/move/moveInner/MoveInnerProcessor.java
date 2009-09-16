@@ -27,7 +27,10 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.refactoring.rename.RenameUtil;
-import com.intellij.refactoring.util.*;
+import com.intellij.refactoring.util.ConflictsUtil;
+import com.intellij.refactoring.util.NonCodeUsageInfo;
+import com.intellij.refactoring.util.RefactoringUIUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -38,10 +41,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 public class MoveInnerProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveInner.MoveInnerProcessor");
@@ -326,7 +326,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
   }
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
-    final ArrayList<String> conflicts = new ArrayList<String>();
+    final Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
 
     class Visitor extends JavaRecursiveElementWalkingVisitor {
       private final HashMap<PsiElement,HashSet<PsiElement>> reported = new HashMap<PsiElement, HashSet<PsiElement>>();
@@ -347,7 +347,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
             String message = RefactoringBundle.message("0.will.become.inaccessible.from.1",
                                                        RefactoringUIUtil.getDescription(resolved, true),
                                                        RefactoringUIUtil.getDescription(container, true));
-            conflicts.add(message);
+            conflicts.put(resolved, message);
           }
         }
       }

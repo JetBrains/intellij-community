@@ -12,7 +12,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -49,12 +48,13 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
   }
 
   @Override
-  public void findExistingNameConflicts(PsiElement element, String newName, Collection<String> conflicts) {
+  public void findExistingNameConflicts(PsiElement element, String newName, Map<PsiElement, String> conflicts) {
     final PsiPackage aPackage = (PsiPackage)element;
     final Project project = element.getProject();
     final String qualifiedNameAfterRename = getPackageQualifiedNameAfterRename(aPackage, newName, true);
-    if (JavaPsiFacade.getInstance(project).findClass(qualifiedNameAfterRename, GlobalSearchScope.allScope(project)) != null) {
-      conflicts.add("Class with qualified name \'" + qualifiedNameAfterRename + "\'  already exist");
+    final PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(qualifiedNameAfterRename, GlobalSearchScope.allScope(project));
+    if (psiClass != null) {
+      conflicts.put(psiClass, "Class with qualified name \'" + qualifiedNameAfterRename + "\'  already exist");
     }
   }
 

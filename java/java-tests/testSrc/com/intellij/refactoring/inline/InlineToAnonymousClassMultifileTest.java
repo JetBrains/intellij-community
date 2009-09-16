@@ -6,6 +6,7 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -13,7 +14,7 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.usageView.UsageInfo;
 
 import java.io.File;
-import java.util.ArrayList;
+import java.util.Map;
 
 /**
  * @author yole
@@ -45,7 +46,7 @@ public class InlineToAnonymousClassMultifileTest extends CodeInsightTestCase {
                                                                                     classToInline,
                                                                                     null, false, false, false);
     UsageInfo[] usages = processor.findUsages();
-    ArrayList<String> conflicts = processor.getConflicts(usages);
+    Map<PsiElement,String> conflicts = processor.getConflicts(usages);
     assertEquals(0, conflicts.size());
     processor.run();
 

@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassToInnerProcessor;
@@ -16,7 +17,7 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.usageView.UsageInfo;
 
 import java.io.File;
-import java.util.List;
+import java.util.Map;
 
 /**
  * @author yole
@@ -113,8 +114,8 @@ public class MoveClassToInnerTest extends CodeInsightTestCase {
     PsiClass targetClass = myJavaFacade.findClass(targetClassName, ProjectScope.getAllScope(myProject));
     MoveClassToInnerProcessor processor = new MoveClassToInnerProcessor(myProject, classToMove, targetClass, true, true, null);
     UsageInfo[] usages = processor.findUsages();
-    List<String> conflicts = processor.getConflicts(usages);
-    assertSameElements(conflicts, expectedConflicts);
+    Map<PsiElement,String> conflicts = processor.getConflicts(usages);
+    assertSameElements(conflicts.values() , expectedConflicts);
   }
 
   private void performAction(String[] classNames, String targetClassName) throws Exception{

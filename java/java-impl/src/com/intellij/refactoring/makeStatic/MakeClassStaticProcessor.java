@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author ven
@@ -294,8 +295,8 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
     }
   }
 
-  protected List<String> getConflictDescriptions(final UsageInfo[] usages) {
-    final List<String> conflicts = super.getConflictDescriptions(usages);
+  protected Map<PsiElement,String> getConflictDescriptions(final UsageInfo[] usages) {
+    final Map<PsiElement, String> conflicts = super.getConflictDescriptions(usages);
 
     //Check fields already exist
     if (mySettings.isMakeClassParameter()) {
@@ -304,7 +305,7 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
       if (existing != null) {
         String message = RefactoringBundle.message("there.is.already.a.0.in.1", RefactoringUIUtil.getDescription(existing, false),
                                               RefactoringUIUtil.getDescription(myMember, false));
-              conflicts.add(message);
+              conflicts.put(existing, message);
       }
     }
 
@@ -317,7 +318,7 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
         if (existing != null) {
           String message = RefactoringBundle.message("there.is.already.a.0.in.1", RefactoringUIUtil.getDescription(existing, false),
                                                 RefactoringUIUtil.getDescription(myMember, false));
-          conflicts.add(message);
+          conflicts.put(existing, message);
         }
       }
     }

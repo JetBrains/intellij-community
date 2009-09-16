@@ -11,7 +11,8 @@ import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
 import com.intellij.util.containers.HashSet;
 
-import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class InputValidator implements IntroduceVariableBase.Validator {
   private final Project myProject;
@@ -31,7 +32,7 @@ public class InputValidator implements IntroduceVariableBase.Validator {
     }
     final PsiElement scope = anchor.getParent();
     if(scope == null) return true;
-    final ArrayList<String> conflicts = new ArrayList<String>();
+    final Map<PsiElement, String> conflicts = new LinkedHashMap<PsiElement, String>();
     final HashSet<PsiVariable> reportedVariables = new HashSet<PsiVariable>();
     JavaUnresolvableLocalCollisionDetector.CollidingVariableVisitor visitor = new JavaUnresolvableLocalCollisionDetector.CollidingVariableVisitor() {
       public void visitCollidingElement(PsiVariable collidingVariable) {
@@ -39,7 +40,7 @@ public class InputValidator implements IntroduceVariableBase.Validator {
         if (!reportedVariables.contains(collidingVariable)) {
           reportedVariables.add(collidingVariable);
           String message = RefactoringBundle.message("introduced.variable.will.conflict.with.0", RefactoringUIUtil.getDescription(collidingVariable, true));
-          conflicts.add(message);
+          conflicts.put(collidingVariable, message);
         }
       }
     };
@@ -54,7 +55,7 @@ public class InputValidator implements IntroduceVariableBase.Validator {
     }
 
     if (conflicts.size() > 0) {
-      return myIntroduceVariableBase.reportConflicts(conflicts, myProject);
+      return myIntroduceVariableBase.reportConflicts(conflicts, myProject, settings);
     } else {
       return true;
     }

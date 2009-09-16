@@ -70,7 +70,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   }
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
-    ArrayList<String> conflicts = new ArrayList<String>();
+    Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
 
     if (myDialog != null) {
       checkExistingMethods(myDialog.getGetterPrototypes(), conflicts, true);
@@ -79,7 +79,10 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
       if(conflicts.size() > 0) {
         ConflictsDialog dialog = new ConflictsDialog(myProject, conflicts);
         dialog.show();
-        if(!dialog.isOK()) return false;
+        if(!dialog.isOK()){
+          if (dialog.isShowConflicts()) prepareSuccessful();
+          return false;
+        }
       }
     }
 
@@ -87,7 +90,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
-  private void checkExistingMethods(PsiMethod[] prototypes, ArrayList<String> conflicts, boolean isGetter) {
+  private void checkExistingMethods(PsiMethod[] prototypes, Map<PsiElement, String> conflicts, boolean isGetter) {
     if(prototypes == null) return;
     for (PsiMethod prototype : prototypes) {
       final PsiType prototypeReturnType = prototype.getReturnType();
@@ -105,7 +108,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
                                                 CommonRefactoringUtil.htmlEmphasize(prototype.getName())) :
                            RefactoringBundle.message("encapsulate.fields.setter.exists", CommonRefactoringUtil.htmlEmphasize(descr),
                                                 CommonRefactoringUtil.htmlEmphasize(prototype.getName()));
-          conflicts.add(message);
+          conflicts.put(existing, message);
         }
       }
     }

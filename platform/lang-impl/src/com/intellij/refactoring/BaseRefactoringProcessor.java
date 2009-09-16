@@ -434,11 +434,14 @@ public abstract class BaseRefactoringProcessor {
     performPsiSpoilingRefactoring();
   }
 
-  protected boolean showConflicts(final List<String> conflicts) {
+  protected boolean showConflicts(final Map<PsiElement, String> conflicts) {
     if (!conflicts.isEmpty() && myPrepareSuccessfulSwingThreadCallback != null) {
       final ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
       conflictsDialog.show();
-      if (!conflictsDialog.isOK()) return false;
+      if (!conflictsDialog.isOK()){
+        if (conflictsDialog.isShowConflicts()) prepareSuccessful();
+        return false;
+      }
     }
 
     prepareSuccessful();

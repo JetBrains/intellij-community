@@ -218,7 +218,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
     }
   }
 
-  public void findExistingNameConflicts(final PsiElement element, final String newName, final Collection<String> conflicts) {
+  public void findExistingNameConflicts(final PsiElement element, final String newName, final Map<PsiElement, String> conflicts) {
     if (element instanceof PsiCompiledElement) return;
     if (element instanceof PsiField) {
       PsiField refactoredField = (PsiField)element;

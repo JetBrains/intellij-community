@@ -1092,7 +1092,7 @@ public class RefactoringUtil {
                                             Collection<? extends PsiElement> scope,
                                             final UsageInfo[] usages,
                                             PsiElement target,
-                                            final Collection<String> conflicts) {
+                                            final Map<PsiElement, String> conflicts) {
     if (scope == null) return;
     final VirtualFile vFile = PsiUtilBase.getVirtualFile(target);
     if (vFile == null) return;
@@ -1103,7 +1103,7 @@ public class RefactoringUtil {
                                             final Collection<? extends PsiElement> scopes,
                                             final UsageInfo[] usages,
                                             final VirtualFile vFile,
-                                            final Collection<String> conflicts) {
+                                            final Map<PsiElement, String> conflicts) {
     if (scopes == null) return;
 
     for (final PsiElement scope : scopes) {
@@ -1128,7 +1128,7 @@ public class RefactoringUtil {
                                                                RefactoringUIUtil.getDescription(resolved, true)), scopeDescription,
                                                                                                                CommonRefactoringUtil.htmlEmphasize(
                                                                                                                  targetModule.getName()));
-            conflicts.add(message);
+            conflicts.put(resolved, message);
             reported.add(resolved);
           }
         }
@@ -1164,21 +1164,22 @@ public class RefactoringUtil {
               Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(usageVFile);
               if (module != null) {
                 final String message;
+                final PsiElement referencedElement = moveRenameUsageInfo.getReferencedElement();
                 if (module == targetModule && isInTestSources) {
                   message = RefactoringBundle.message("0.referenced.in.1.will.not.be.accessible.from.production.of.module.2",
                                                       CommonRefactoringUtil.capitalize(
-                                                        RefactoringUIUtil.getDescription(moveRenameUsageInfo.getReferencedElement(), true)),
+                                                        RefactoringUIUtil.getDescription(referencedElement, true)),
                                                       scopeDescription,
                                                       CommonRefactoringUtil.htmlEmphasize(module.getName()));
                 }
                 else {
                   message = RefactoringBundle.message("0.referenced.in.1.will.not.be.accessible.from.module.2", 
                                                       CommonRefactoringUtil.capitalize(
-                                                        RefactoringUIUtil.getDescription(moveRenameUsageInfo.getReferencedElement(), true)),
+                                                        RefactoringUIUtil.getDescription(referencedElement, true)),
                                                       scopeDescription,
                                                       CommonRefactoringUtil.htmlEmphasize(module.getName()));
                 }
-                conflicts.add(message);
+                conflicts.put(referencedElement, message);
               }
             }
           }

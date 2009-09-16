@@ -1,10 +1,11 @@
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
-import java.util.List;
+import java.util.Map;
 
 /**
  * @author Maxim.Medvedev
@@ -16,7 +17,7 @@ public interface IntroduceParameterMethodUsagesProcessor {
 
   boolean isMethodUsage(UsageInfo usage);
 
-  List<String> findConflicts(IntroduceParameterData data, UsageInfo[] usages);
+  Map<PsiElement, String> findConflicts(IntroduceParameterData data, UsageInfo[] usages);
 
   boolean processChangeMethodUsage(IntroduceParameterData data, UsageInfo usage, UsageInfo[] usages) throws IncorrectOperationException;
 

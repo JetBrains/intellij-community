@@ -11,7 +11,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
+import java.util.Map;
 
 public class ConflictsUtil {
   private ConflictsUtil() {
@@ -31,7 +31,7 @@ public class ConflictsUtil {
   public static void checkMethodConflicts(@Nullable PsiClass aClass,
                                           PsiMethod refactoredMethod,
                                           PsiMethod prototype,
-                                          final Collection<String> conflicts) {
+                                          final Map<PsiElement,String> conflicts) {
     if (prototype == null) return;
 
     PsiMethod method = aClass != null ? aClass.findMethodBySignature(prototype, true) : null;
@@ -41,7 +41,7 @@ public class ConflictsUtil {
         final String classDescr = aClass instanceof PsiAnonymousClass ?
                                   RefactoringBundle.message("current.class") :
                                   RefactoringUIUtil.getDescription(aClass, false);
-        conflicts.add(RefactoringBundle.message("method.0.is.already.defined.in.the.1",
+        conflicts.put(method, RefactoringBundle.message("method.0.is.already.defined.in.the.1",
                                                 getMethodPrototypeString(prototype),
                                                 classDescr));
       }
@@ -55,10 +55,10 @@ public class ConflictsUtil {
             final String conflict = isMethodAbstract != isMyMethodAbstract ?
                                     RefactoringBundle.message("method.0.will.implement.method.of.the.base.class", protoMethodInfo, className) :
                                     RefactoringBundle.message("method.0.will.override.a.method.of.the.base.class", protoMethodInfo, className);
-            conflicts.add(conflict);
+            conflicts.put(method, conflict);
           }
           else { // prototype is private, will be compile-error
-            conflicts.add(RefactoringBundle.message("method.0.will.hide.method.of.the.base.class",
+            conflicts.put(method, RefactoringBundle.message("method.0.will.hide.method.of.the.base.class",
                                                     protoMethodInfo, className));
           }
         }
@@ -74,7 +74,7 @@ public class ConflictsUtil {
     );
   }
 
-  public static void checkFieldConflicts(@Nullable PsiClass aClass, String newName, final Collection<String> conflicts) {
+  public static void checkFieldConflicts(@Nullable PsiClass aClass, String newName, final Map<PsiElement, String> conflicts) {
     PsiField existingField = aClass != null ? aClass.findFieldByName(newName, true) : null;
     if (existingField != null) {
       if (aClass.equals(existingField.getContainingClass())) {
@@ -83,7 +83,7 @@ public class ConflictsUtil {
                            RefactoringUIUtil.getDescription(aClass, false);
         final String conflict = RefactoringBundle.message("field.0.is.already.defined.in.the.1",
                                                           existingField.getName(), className);
-        conflicts.add(conflict);
+        conflicts.put(existingField, conflict);
       }
       else { // method somewhere in base class
         if (!existingField.hasModifierProperty(PsiModifier.PRIVATE)) {
@@ -91,7 +91,7 @@ public class ConflictsUtil {
           String className = RefactoringUIUtil.getDescription(existingField.getContainingClass(), false);
           final String descr = RefactoringBundle.message("field.0.will.hide.field.1.of.the.base.class",
                                                          newName, fieldInfo, className);
-          conflicts.add(descr);
+          conflicts.put(existingField, descr);
         }
       }
     }

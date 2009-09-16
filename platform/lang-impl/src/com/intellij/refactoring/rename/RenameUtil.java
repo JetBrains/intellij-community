@@ -41,7 +41,7 @@ public class RenameUtil {
                                        boolean searchInStringsAndComments,
                                        boolean searchForTextOccurences,
                                        Map<? extends PsiElement, String> allRenames) {
-    final List<UsageInfo> result = new ArrayList<UsageInfo>();
+    final List<UsageInfo> result = Collections.synchronizedList(new ArrayList<UsageInfo>());
 
     PsiManager manager = element.getManager();
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
@@ -227,12 +227,12 @@ public class RenameUtil {
     }
   }
 
-  public static Collection<String> getConflictDescriptions(UsageInfo[] usages) {
-    ArrayList<String> descriptions = new ArrayList<String>();
+  public static Map<PsiElement, String> getConflictDescriptions(UsageInfo[] usages) {
+    Map<PsiElement, String> descriptions = new HashMap<PsiElement, String>();
 
     for (UsageInfo usage : usages) {
       if (usage instanceof UnresolvableCollisionUsageInfo) {
-        descriptions.add(((UnresolvableCollisionUsageInfo)usage).getDescription());
+        descriptions.put(usage.getElement(), ((UnresolvableCollisionUsageInfo)usage).getDescription());
       }
     }
     return descriptions;

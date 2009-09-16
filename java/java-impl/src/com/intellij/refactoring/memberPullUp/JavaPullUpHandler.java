@@ -18,6 +18,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -36,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.LinkedHashMap;
 
 public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog.Callback, ElementsHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.memberPullUp.JavaPullUpHandler");
@@ -170,11 +172,13 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
     final MemberInfo[] infos = dialog.getSelectedMemberInfos();
     PsiClass superClass = dialog.getSuperClass();
     if (!checkWritable(superClass, infos)) return false;
-    String[] conflicts = PullUpConflictsUtil.checkConflicts(infos, mySubclass, superClass, null, null, dialog.getContainmentVerifier());
-    if (conflicts.length > 0) {
+    LinkedHashMap<PsiElement,String> conflicts = PullUpConflictsUtil.checkConflicts(infos, mySubclass, superClass, null, null, dialog.getContainmentVerifier());
+    if (!conflicts.isEmpty()) {
       ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
       conflictsDialog.show();
-      return conflictsDialog.isOK();
+      final boolean ok = conflictsDialog.isOK();
+      if (!ok && conflictsDialog.isShowConflicts()) dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
+      return ok;
     }
     return true;
   }

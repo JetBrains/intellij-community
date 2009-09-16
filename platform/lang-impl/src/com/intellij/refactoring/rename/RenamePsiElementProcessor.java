@@ -52,7 +52,7 @@ public abstract class RenamePsiElementProcessor {
   public void prepareRenaming(final PsiElement element, final String newName, final Map<PsiElement, String> allRenames) {
   }
 
-  public void findExistingNameConflicts(final PsiElement element, final String newName, final Collection<String> conflicts) {
+  public void findExistingNameConflicts(final PsiElement element, final String newName, final Map<PsiElement, String> conflicts) {
   }
 
   @NotNull

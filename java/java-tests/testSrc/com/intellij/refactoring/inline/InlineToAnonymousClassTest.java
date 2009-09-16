@@ -11,7 +11,7 @@ import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.ArrayList;
+import java.util.Map;
 
 /**
  * @author yole
@@ -321,10 +321,10 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
   public void testConflictInaccessibleOuterField() throws Exception {
     InlineToAnonymousClassProcessor processor = prepareProcessor();
     UsageInfo[] usages = processor.findUsages();
-    ArrayList<String> conflicts = processor.getConflicts(usages);
+    Map<PsiElement,String> conflicts = processor.getConflicts(usages);
     assertEquals(1, conflicts.size());
     assertEquals("Field <b><code>C2.a</code></b> that is used in inlined method is not accessible from call site(s) in method <b><code>C2User.test()</code></b>",
-                 conflicts.get(0));
+                 conflicts.values().iterator().next());
   }
 
   private void doTestNoInline(final String expectedMessage) throws Exception {
@@ -374,7 +374,7 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     final InlineToAnonymousClassProcessor processor = new InlineToAnonymousClassProcessor(getProject(), classToInline, callToInline, inlineThisOnly,
                                                                                           false, searchInNonJavaFiles);
     UsageInfo[] usages = processor.findUsages();
-    ArrayList<String> conflicts = processor.getConflicts(usages);
+    Map<PsiElement, String> conflicts = processor.getConflicts(usages);
     assertEquals(0, conflicts.size());
     processor.run();
   }

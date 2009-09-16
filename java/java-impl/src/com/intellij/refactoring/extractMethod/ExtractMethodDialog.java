@@ -13,12 +13,11 @@ import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.ui.VisibilityPanel;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.ParameterTablePanel;
-import com.intellij.util.VisibilityUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -27,8 +26,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.Collection;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class ExtractMethodDialog extends AbstractExtractDialog {
@@ -148,12 +147,15 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
   }
 
   protected void doOKAction() {
-    Set<String> conflicts = new HashSet<String>();
+    Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
     checkMethodConflicts(conflicts);
     if (!conflicts.isEmpty()) {
       final ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
       conflictsDialog.show();
-      if (!conflictsDialog.isOK()) return;
+      if (!conflictsDialog.isOK()){
+        if (conflictsDialog.isShowConflicts()) close(CANCEL_EXIT_CODE);
+        return;
+      }
     }
 
     if (myCbMakeVarargs != null && myCbMakeVarargs.isSelected()) {
@@ -394,7 +396,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
     return buffer;
   }
 
-  protected void checkMethodConflicts(Collection<String> conflicts) {
+  protected void checkMethodConflicts(Map<PsiElement, String> conflicts) {
     PsiMethod prototype;
     try {
       PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();

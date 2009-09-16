@@ -12,10 +12,9 @@ import com.intellij.refactoring.extractMethod.AbstractExtractDialog;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.ParameterTablePanel;
-import com.intellij.util.VisibilityUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.Function;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -24,7 +23,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Enumeration;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class ExtractMethodObjectDialog extends AbstractExtractDialog {
@@ -132,16 +132,20 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
   }
 
   protected void doOKAction() {
-    Set<String> conflicts = new HashSet<String>();
+    Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
     if (myCreateInnerClassRb.isSelected()) {
-      if (myTargetClass.findInnerClassByName(myInnerClassName.getText(), false) != null) {
-        conflicts.add("Inner class " + myInnerClassName.getText() + " already defined in class " + myTargetClass.getName());
+      final PsiClass innerClass = myTargetClass.findInnerClassByName(myInnerClassName.getText(), false);
+      if (innerClass != null) {
+        conflicts.put(innerClass, "Inner class " + myInnerClassName.getText() + " already defined in class " + myTargetClass.getName());
       }
     }
     if (conflicts.size() > 0) {
       final ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
       conflictsDialog.show();
-      if (!conflictsDialog.isOK()) return;
+      if (!conflictsDialog.isOK()){
+        if (conflictsDialog.isShowConflicts()) close(CANCEL_EXIT_CODE);
+        return;
+      }
     }
 
     final JCheckBox makeVarargsCb = myCreateInnerClassRb.isSelected() ? myCbMakeVarargs : myCbMakeVarargsAnonymous;

@@ -9,15 +9,13 @@ import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class PushDownConflicts {
   private final PsiClass myClass;
   private final Set<PsiMember> myMovedMembers;
   private final Set<PsiMember> myAbstractMembers;
-  private final ArrayList<String> myConflicts;
+  private final Map<PsiElement, String> myConflicts;
 
 
   public PushDownConflicts(PsiClass aClass, MemberInfo[] memberInfos) {
@@ -35,14 +33,14 @@ public class PushDownConflicts {
       }
     }
 
-    myConflicts = new ArrayList<String>();
+    myConflicts = new HashMap<PsiElement, String>();
   }
 
   public boolean isAnyConflicts() {
     return !myConflicts.isEmpty();
   }
 
-  public ArrayList<String> getConflicts() {
+  public Map<PsiElement, String> getConflicts() {
     return myConflicts;
   }
 
@@ -71,7 +69,7 @@ public class PushDownConflicts {
             if (qualifierType instanceof PsiClassType) {
               final PsiClass aClass = ((PsiClassType)qualifierType).resolve();
               if (!InheritanceUtil.isInheritorOrSelf(aClass, targetClass, true)) {
-                myConflicts.add(RefactoringBundle.message("pushed.members.will.not.be.visible.from.certain.call.sites"));
+                myConflicts.put(aClass, RefactoringBundle.message("pushed.members.will.not.be.visible.from.certain.call.sites"));
                 break Members;
               }
             }
@@ -84,9 +82,10 @@ public class PushDownConflicts {
   public void checkMemberPlacementInTargetClassConflict(final PsiClass targetClass, final PsiMember movedMember) {
     if (movedMember instanceof PsiField) {
       String name = movedMember.getName();
-      if (targetClass.findFieldByName(name, false) != null) {
+      final PsiField field = targetClass.findFieldByName(name, false);
+      if (field != null) {
         String message = RefactoringBundle.message("0.already.contains.field.1", RefactoringUIUtil.getDescription(targetClass, false), CommonRefactoringUtil.htmlEmphasize(name));
-        myConflicts.add(CommonRefactoringUtil.capitalize(message));
+        myConflicts.put(field, CommonRefactoringUtil.capitalize(message));
       }
     }
     else if (movedMember instanceof PsiMethod) {
@@ -94,10 +93,11 @@ public class PushDownConflicts {
       assert modifierList != null;
       if (!modifierList.hasModifierProperty(PsiModifier.ABSTRACT)) {
         PsiMethod method = (PsiMethod)movedMember;
-        if (targetClass.findMethodBySignature(method, false) != null) {
+        final PsiMethod overrider = targetClass.findMethodBySignature(method, false);
+        if (overrider != null) {
           String message = RefactoringBundle.message("0.is.already.overridden.in.1",
                                                      RefactoringUIUtil.getDescription(method, true), RefactoringUIUtil.getDescription(targetClass, false));
-          myConflicts.add(CommonRefactoringUtil.capitalize(message));
+          myConflicts.put(overrider, CommonRefactoringUtil.capitalize(message));
         }
       }
     }
@@ -111,7 +111,7 @@ public class PushDownConflicts {
         if (name.equals(innerClass.getName())) {
           String message = RefactoringBundle.message("0.already.contains.inner.class.named.1", RefactoringUIUtil.getDescription(targetClass, false),
                                                 CommonRefactoringUtil.htmlEmphasize(name));
-          myConflicts.add(message);
+          myConflicts.put(innerClass, message);
         }
       }
     }
@@ -130,7 +130,7 @@ public class PushDownConflicts {
         String message = RefactoringBundle.message("0.uses.1.which.is.pushed.down", RefactoringUIUtil.getDescription(mySource, false),
                                               RefactoringUIUtil.getDescription(classMember, false));
         message = CommonRefactoringUtil.capitalize(message);
-        myConflicts.add(message);
+        myConflicts.put(mySource, message);
       }
     }
   }

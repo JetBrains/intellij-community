@@ -9,8 +9,8 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
 
 /**
  *  @author dsl
@@ -77,7 +77,7 @@ public class MultipleRootsMoveDestination extends AutocreatingMoveDestination {
   }
 
   public void analyzeModuleConflicts(final Collection<PsiElement> elements,
-                                     ArrayList<String> conflicts, final UsageInfo[] usages) {
+                                     Map<PsiElement,String> conflicts, final UsageInfo[] usages) {
   }
 
   public PsiDirectory getTargetIfExists(PsiDirectory source) {

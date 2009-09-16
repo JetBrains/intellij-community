@@ -23,7 +23,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
+import java.util.Map;
 
 /**
  * Interface that should be implemented by the language in order to provide inline functionality and possibly
@@ -71,7 +71,7 @@ public interface InlineHandler {
      * or null if no conflicts detected.
      */
     @Nullable
-    Collection<String> getConflicts(PsiReference reference, PsiElement referenced);
+    Map<PsiElement, String> getConflicts(PsiReference reference, PsiElement referenced);
 
     /**
      * Perform actual inline of element to the point where it is referenced

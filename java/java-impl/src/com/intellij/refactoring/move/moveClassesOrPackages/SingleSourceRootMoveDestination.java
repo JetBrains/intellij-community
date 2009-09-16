@@ -7,8 +7,8 @@ import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
 
 /**
  *  @author dsl
@@ -54,7 +54,7 @@ public class SingleSourceRootMoveDestination implements MoveDestination {
   }
 
   public void analyzeModuleConflicts(final Collection<PsiElement> elements,
-                                     ArrayList<String> conflicts, final UsageInfo[] usages) {
+                                     Map<PsiElement,String> conflicts, final UsageInfo[] usages) {
     RefactoringUtil.analyzeModuleConflicts(myPackage.getManager().getProject(), elements, usages, myTargetDirectory, conflicts);
   }
 

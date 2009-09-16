@@ -105,7 +105,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
-    ArrayList<String> conflicts = new ArrayList<String>();
+    Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
 
     if (!myInlineThisOnly) {
       final PsiMethod[] superMethods = myMethod.findSuperMethods();
@@ -113,7 +113,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         final String message = method.hasModifierProperty(PsiModifier.ABSTRACT) ? RefactoringBundle
           .message("inlined.method.implements.method.from.0", method.getContainingClass().getQualifiedName()) : RefactoringBundle
           .message("inlined.method.overrides.method.from.0", method.getContainingClass().getQualifiedName());
-        conflicts.add(message);
+        conflicts.put(method, message);
       }
     }
 
@@ -123,6 +123,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       ConflictsDialog dialog = new ConflictsDialog(myProject, conflicts);
       dialog.show();
       if (!dialog.isOK()) {
+        if (dialog.isShowConflicts()) prepareSuccessful();
         return false;
       }
     }
@@ -138,7 +139,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   public static void addInaccessibleMemberConflicts(final PsiElement element,
                                                     final UsageInfo[] usages,
                                                     final ReferencedElementsCollector collector,
-                                                    final ArrayList<String> conflicts) {
+                                                    final Map<PsiElement, String> conflicts) {
     element.accept(collector);
     final Map<PsiMember, Set<PsiMember>> containersToReferenced = getInaccessible(collector.myReferencedMembers, usages);
 
@@ -150,7 +151,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         final String containerDescription = RefactoringUIUtil.getDescription(container, true);
         String message = RefactoringBundle.message("0.that.is.used.in.inlined.method.is.not.accessible.from.call.site.s.in.1",
                                                    referencedDescription, containerDescription);
-        conflicts.add(CommonRefactoringUtil.capitalize(message));
+        conflicts.put(container, CommonRefactoringUtil.capitalize(message));
       }
     }
   }

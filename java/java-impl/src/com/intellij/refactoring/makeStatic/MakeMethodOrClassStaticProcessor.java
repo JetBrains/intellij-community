@@ -23,18 +23,15 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.ConflictsUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParameterListOwner> extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.makeMethodStatic.MakeMethodStaticProcessor");
@@ -57,11 +54,12 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
   protected final boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
     if (myPrepareSuccessfulSwingThreadCallback != null) {
-      List<String> conflicts = getConflictDescriptions(usagesIn);
+      Map<PsiElement, String> conflicts = getConflictDescriptions(usagesIn);
       if (conflicts.size() > 0) {
         ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
         conflictsDialog.show();
         if (!conflictsDialog.isOK()) {
+          if (conflictsDialog.isShowConflicts()) prepareSuccessful();
           return false;
         }
       }
@@ -95,8 +93,8 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
     return result.toArray(new UsageInfo[result.size()]);
   }
 
-  protected List<String> getConflictDescriptions(UsageInfo[] usages) {
-    ArrayList<String> conflicts = new ArrayList<String>();
+  protected Map<PsiElement, String> getConflictDescriptions(UsageInfo[] usages) {
+    Map<PsiElement, String> conflicts = new LinkedHashMap<PsiElement, String>();
     HashSet<PsiElement> processed = new HashSet<PsiElement>();
     String typeString = StringUtil.capitalize(UsageViewUtil.getType(myMember));
     for (UsageInfo usageInfo : usages) {
@@ -117,12 +115,12 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
             if (mySettings.getNameForField(field) == null) {
               String message = RefactoringBundle.message("0.uses.non.static.1.which.is.not.passed.as.a.parameter", typeString,
                                                          RefactoringUIUtil.getDescription(field, true));
-              conflicts.add(message);
+              conflicts.put(field, message);
             }
           }
           else {
             String message = RefactoringBundle.message("0.uses.1.which.needs.class.instance", typeString, RefactoringUIUtil.getDescription(referencedElement, true));
-            conflicts.add(message);
+            conflicts.put(referencedElement, message);
           }
         }
       }
@@ -131,7 +129,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
         final PsiMethod overridingMethod = ((PsiMethod)usageInfo.getElement());
         String message = RefactoringBundle.message("method.0.is.overridden.by.1", RefactoringUIUtil.getDescription(myMember, false),
                                                    RefactoringUIUtil.getDescription(overridingMethod, true));
-        conflicts.add(message);
+        conflicts.put(overridingMethod, message);
       }
       else {
         PsiElement element = usageInfo.getElement();
@@ -149,32 +147,31 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
 
         if (inaccessible.isEmpty()) continue;
 
-        conflicts.add(createInaccessibleFieldsConflictDescription(inaccessible, container));
+        final Map<PsiElement, String> inaccessibleConflicts = createInaccessibleFieldsConflictDescription(inaccessible, container);
+        conflicts.putAll(inaccessibleConflicts);
       }
     }
     return conflicts;
   }
 
-  private static String createInaccessibleFieldsConflictDescription(ArrayList<PsiField> inaccessible, PsiElement container) {
+  private static Map<PsiElement, String> createInaccessibleFieldsConflictDescription(ArrayList<PsiField> inaccessible, PsiElement container) {
     if (inaccessible.size() == 1) {
       final PsiField field = inaccessible.get(0);
-      return RefactoringBundle.message("field.0.is.not.accessible",
+      return Collections.<PsiElement, String>singletonMap(field, RefactoringBundle.message("field.0.is.not.accessible",
                                        CommonRefactoringUtil.htmlEmphasize(field.getName()),
-                                       RefactoringUIUtil.getDescription(container, true));
+                                       RefactoringUIUtil.getDescription(container, true)));
     } else {
-      StringBuffer fieldsBuffer = new StringBuffer();
+      Map<PsiElement, String> result = new HashMap<PsiElement, String>();
       for (int j = 0; j < inaccessible.size(); j++) {
         PsiField field = inaccessible.get(j);
+        result.put(field, RefactoringBundle.message("field.0.is.not.accessible",
+                                       CommonRefactoringUtil.htmlEmphasize(field.getName()),
+                                       RefactoringUIUtil.getDescription(container, true)));
 
-        if (j > 0) {
-          fieldsBuffer.append(", ");
-        }
-        fieldsBuffer.append(CommonRefactoringUtil.htmlEmphasize(field.getName()));
+
       }
 
-      return RefactoringBundle.message("fields.0.are.not.accessible",
-                                       fieldsBuffer.toString(),
-                                       RefactoringUIUtil.getDescription(container, true));
+      return result;
     }
   }
 

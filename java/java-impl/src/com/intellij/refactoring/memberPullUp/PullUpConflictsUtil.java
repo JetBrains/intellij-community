@@ -14,19 +14,21 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.*;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringHierarchyUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classMembers.InterfaceContainmentVerifier;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.ArrayUtil;
 
 import java.util.*;
 
 public class PullUpConflictsUtil {
   private PullUpConflictsUtil() {}
 
-  public static String[] checkConflicts(final MemberInfo[] infos,
+  public static LinkedHashMap<PsiElement, String> checkConflicts(final MemberInfo[] infos,
                                         PsiClass subclass,
                                         PsiClass superClass,
                                         PsiPackage targetPackage,
@@ -58,11 +60,11 @@ public class PullUpConflictsUtil {
         movedMembers.add(member);
       }
     }
-    final LinkedHashSet<String> conflictsList = new LinkedHashSet<String>();
+    final LinkedHashMap<PsiElement, String> conflicts = new LinkedHashMap<PsiElement, String>();
     if (superClass != null) {
-      checkSuperclassMembers(superClass, infos, conflictsList);
+      checkSuperclassMembers(superClass, infos, conflicts);
       if (isInterfaceTarget) {
-        checkInterfaceTarget(infos, conflictsList);
+        checkInterfaceTarget(infos, conflicts);
       }
     }
     // check if moved methods use other members in the classes between Subclass and Superclass
@@ -71,7 +73,7 @@ public class PullUpConflictsUtil {
       if (member instanceof PsiMethod || member instanceof PsiClass) {
         ConflictingUsagesOfSubClassMembers visitor =
           new ConflictingUsagesOfSubClassMembers(member, movedMembers, abstractMethods, subclass, superClass,
-                                                 superClass != null ? null : targetPackage, conflictsList,
+                                                 superClass != null ? null : targetPackage, conflicts,
                                                  interfaceContainmentVerifier);
         member.accept(visitor);
       }
@@ -83,11 +85,11 @@ public class PullUpConflictsUtil {
       checkModuleConflictsList.add(method.getTypeParameterList());
     }
     RefactoringUtil.analyzeModuleConflicts(subclass.getProject(), checkModuleConflictsList,
-                                           new UsageInfo[0], targetRepresentativeElement, conflictsList);
-    return ArrayUtil.toStringArray(conflictsList);
+                                           new UsageInfo[0], targetRepresentativeElement, conflicts);
+    return conflicts;
   }
 
-  private static void checkInterfaceTarget(MemberInfo[] infos, LinkedHashSet<String> conflictsList) {
+  private static void checkInterfaceTarget(MemberInfo[] infos, LinkedHashMap<PsiElement, String> conflictsList) {
     for (MemberInfo info : infos) {
       PsiElement member = info.getMember();
 
@@ -98,21 +100,21 @@ public class PullUpConflictsUtil {
           String message =
             RefactoringBundle.message("0.is.not.static.it.cannot.be.moved.to.the.interface", RefactoringUIUtil.getDescription(member, false));
           message = CommonRefactoringUtil.capitalize(message);
-          conflictsList.add(message);
+          conflictsList.put(member, message);
         }
       }
 
       if (member instanceof PsiField && ((PsiField)member).getInitializer() == null) {
         String message = RefactoringBundle.message("0.is.not.initialized.in.declaration.such.fields.are.not.allowed.in.interfaces",
                                                    RefactoringUIUtil.getDescription(member, false));
-        conflictsList.add(CommonRefactoringUtil.capitalize(message));
+        conflictsList.put(member, CommonRefactoringUtil.capitalize(message));
       }
     }
   }
 
   private static void checkSuperclassMembers(PsiClass superClass,
                                              MemberInfo[] infos,
-                                             LinkedHashSet<String> conflictsList) {
+                                             LinkedHashMap<PsiElement, String> conflictsList) {
     for (MemberInfo info : infos) {
       PsiMember member = info.getMember();
       boolean isConflict = false;
@@ -133,7 +135,7 @@ public class PullUpConflictsUtil {
                                                    RefactoringUIUtil.getDescription(superClass, false),
                                                    RefactoringUIUtil.getDescription(member, false));
         message = CommonRefactoringUtil.capitalize(message);
-        conflictsList.add(message);
+        conflictsList.put(superClass, message);
       }
     }
 
@@ -146,13 +148,13 @@ public class PullUpConflictsUtil {
     private final PsiClass mySubclass;
     private final PsiClass mySuperClass;
     private final PsiPackage myTargetPackage;
-    private final Set<String> myConflictsList;
+    private final LinkedHashMap<PsiElement, String> myConflictsList;
     private final InterfaceContainmentVerifier myInterfaceContainmentVerifier;
 
     ConflictingUsagesOfSubClassMembers(PsiElement scope,
                                        Set<PsiElement> movedMembers, Set<PsiMethod> abstractMethods,
                                        PsiClass subclass, PsiClass superClass,
-                                       PsiPackage targetPackage, Set<String> conflictsList,
+                                       PsiPackage targetPackage, LinkedHashMap<PsiElement, String> conflictsList,
                                        InterfaceContainmentVerifier interfaceContainmentVerifier) {
       super(subclass);
       myScope = scope;
@@ -186,7 +188,7 @@ public class PullUpConflictsUtil {
                                                        RefactoringUIUtil.getDescription(myScope, false),
                                                        RefactoringUIUtil.getDescription(classMember, true));
             message = CommonRefactoringUtil.capitalize(message);
-            myConflictsList.add(message);
+            myConflictsList.put(classMember, message);
 
           }
           return;
@@ -197,7 +199,7 @@ public class PullUpConflictsUtil {
                                                        RefactoringUIUtil.getDescription(myScope, false),
                                                        RefactoringUIUtil.getDescription(classMember, true));
             message = CommonRefactoringUtil.capitalize(message);
-            myConflictsList.add(message);
+            myConflictsList.put(classMember, message);
           }
         }
       }

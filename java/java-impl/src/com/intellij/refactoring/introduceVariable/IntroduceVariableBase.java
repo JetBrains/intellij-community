@@ -49,6 +49,7 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public abstract class IntroduceVariableBase extends IntroduceHandlerBase implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceVariable.IntroduceVariableBase");
@@ -681,10 +682,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     boolean isOK(IntroduceVariableSettings dialog);
   }
 
-  protected abstract boolean reportConflicts(ArrayList<String> conflicts, final Project project);
+  protected abstract boolean reportConflicts(Map<PsiElement, String> conflicts, final Project project, IntroduceVariableSettings dialog);
 
 
-  public static void checkInLoopCondition(PsiExpression occurence, List<String> conflicts) {
+  public static void checkInLoopCondition(PsiExpression occurence, Map<PsiElement, String> conflicts) {
     final PsiElement loopForLoopCondition = RefactoringUtil.getLoopForLoopCondition(occurence);
     if (loopForLoopCondition == null) return;
     final List<PsiVariable> referencedVariables = RefactoringUtil.collectReferencedVariables(occurence);
@@ -698,9 +699,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     if (!modifiedInBody.isEmpty()) {
       for (PsiVariable variable : modifiedInBody) {
         final String message = RefactoringBundle.message("is.modified.in.loop.body", RefactoringUIUtil.getDescription(variable, false));
-        conflicts.add(CommonRefactoringUtil.capitalize(message));
+        conflicts.put(variable, CommonRefactoringUtil.capitalize(message));
       }
-      conflicts.add(RefactoringBundle.message("introducing.variable.may.break.code.logic"));
+      conflicts.put(occurence, RefactoringBundle.message("introducing.variable.may.break.code.logic"));
     }
   }
 

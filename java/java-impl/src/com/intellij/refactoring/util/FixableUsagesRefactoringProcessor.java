@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public abstract class FixableUsagesRefactoringProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#" + FixableUsagesRefactoringProcessor.class.getName());
@@ -47,11 +48,11 @@ public abstract class FixableUsagesRefactoringProcessor extends BaseRefactoringP
 
   protected abstract void findUsages(@NotNull List<FixableUsageInfo> usages);
 
-  protected static void checkConflicts(final Ref<UsageInfo[]> refUsages, final List<String> conflicts) {
+  protected static void checkConflicts(final Ref<UsageInfo[]> refUsages, final Map<PsiElement, String> conflicts) {
     for (UsageInfo info : refUsages.get()) {
       final String conflict = ((FixableUsageInfo)info).getConflictMessage();
       if (conflict != null) {
-        conflicts.add(XmlUtil.escape(conflict));
+        conflicts.put(info.getElement(), XmlUtil.escape(conflict));
       }
     }
   }

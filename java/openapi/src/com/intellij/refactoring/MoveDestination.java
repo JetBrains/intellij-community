@@ -23,8 +23,8 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * Represents a destination of Move Classes/Packages refactoring.
@@ -60,5 +60,5 @@ public interface MoveDestination {
   @Nullable
   String verify(PsiPackage source);
 
-  void analyzeModuleConflicts(final Collection<PsiElement> elements, ArrayList<String> conflicts, final UsageInfo[] usages);
+  void analyzeModuleConflicts(final Collection<PsiElement> elements, Map<PsiElement,String> conflicts, final UsageInfo[] usages);
 }

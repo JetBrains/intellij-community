@@ -124,15 +124,15 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
       CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("inline.to.anonymous.refactoring"), s, null, myClass.getProject());
       return false;
     }
-    ArrayList<String> conflicts = getConflicts(usages);
+    Map<PsiElement, String> conflicts = getConflicts(usages);
     if (!conflicts.isEmpty()) {
       return showConflicts(conflicts);
     }
     return super.preprocessUsages(refUsages);
   }
 
-  public ArrayList<String> getConflicts(final UsageInfo[] usages) {
-    ArrayList<String> result = new ArrayList<String>();
+  public Map<PsiElement, String> getConflicts(final UsageInfo[] usages) {
+    Map<PsiElement, String> result = new LinkedHashMap<PsiElement, String>();
     ReferencedElementsCollector collector = new ReferencedElementsCollector() {
       protected void checkAddMember(@NotNull final PsiMember member) {
         if (PsiTreeUtil.isAncestor(myClass, member, false)) {

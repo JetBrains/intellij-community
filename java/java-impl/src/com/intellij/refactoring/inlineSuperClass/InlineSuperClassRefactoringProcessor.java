@@ -29,7 +29,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -131,7 +130,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
 
   @Override
   protected boolean preprocessUsages(final Ref<UsageInfo[]> refUsages) {
-    final List<String> conflicts = new ArrayList<String>();
+    final Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
     final PushDownConflicts pushDownConflicts = new PushDownConflicts(mySuperClass, myMemberInfos);
     for (PsiClass targetClass : myTargetClasses) {
       for (MemberInfo info : myMemberInfos) {
@@ -140,14 +139,14 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
       }
     }
     checkConflicts(refUsages, conflicts);
-    conflicts.addAll(pushDownConflicts.getConflicts());
+    conflicts.putAll(pushDownConflicts.getConflicts());
     return showConflicts(conflicts);
   }
 
   @Override
-  protected boolean showConflicts(final List<String> conflicts) {
+  protected boolean showConflicts(final Map<PsiElement, String> conflicts) {
     if (!conflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
-      throw new RuntimeException(StringUtil.join(conflicts, "\n"));
+      throw new RuntimeException(StringUtil.join(conflicts.values(), "\n"));
     }
     return super.showConflicts(conflicts);
   }

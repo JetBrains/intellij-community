@@ -97,18 +97,18 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
 
   @Override
   protected boolean preprocessUsages(final Ref<UsageInfo[]> refUsages) {
-    final List<String> conflicts = new ArrayList<String>();
+    final Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
     final Project project = sourceClass.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
     final PsiClass existingClass =
       JavaPsiFacade.getInstance(project).findClass(StringUtil.getQualifiedName(newPackageName, newClassName), scope);
     if (existingClass != null) {
-      conflicts.add(RefactorJBundle.message("cannot.perform.the.refactoring") +
+      conflicts.put(existingClass, RefactorJBundle.message("cannot.perform.the.refactoring") +
                     RefactorJBundle.message("there.already.exists.a.class.with.the.chosen.name"));
     }
 
     if (!myGenerateAccessors) {
-      conflicts.addAll(calculateInitializersConflicts());
+      conflicts.putAll(calculateInitializersConflicts());
       final NecessaryAccessorsVisitor visitor = new NecessaryAccessorsVisitor();
       for (PsiField field : fields) {
         field.accept(visitor);
@@ -122,35 +122,35 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
 
       final Set<PsiField> fieldsNeedingGetter = visitor.getFieldsNeedingGetter();
       for (PsiField field : fieldsNeedingGetter) {
-        conflicts.add("Field \'" + field.getName() + "\' needs getter");
+        conflicts.put(field, "Field \'" + field.getName() + "\' needs getter");
       }
       final Set<PsiField> fieldsNeedingSetter = visitor.getFieldsNeedingSetter();
       for (PsiField field : fieldsNeedingSetter) {
-        conflicts.add("Field \'" + field.getName() + "\' needs getter");
+        conflicts.put(field, "Field \'" + field.getName() + "\' needs getter");
       }
     }
     return showConflicts(conflicts);
   }
 
   @Override
-  protected boolean showConflicts(final List<String> conflicts) {
+  protected boolean showConflicts(final Map<PsiElement, String> conflicts) {
     if (!conflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
-      throw new RuntimeException(StringUtil.join(conflicts, "\n"));
+      throw new RuntimeException(StringUtil.join(conflicts.values(), "\n"));
     }
     return super.showConflicts(conflicts);
   }
 
-  private List<String> calculateInitializersConflicts() {
-    final List<String> out = new ArrayList<String>();
+  private Map<PsiElement, String> calculateInitializersConflicts() {
+    final Map<PsiElement, String> out = new HashMap<PsiElement, String>();
     final PsiClassInitializer[] initializers = sourceClass.getInitializers();
     for (PsiClassInitializer initializer : initializers) {
       if (initializerDependsOnMoved(initializer)) {
-        out.add("Class initializer requires moved members");
+        out.put(initializer, "Class initializer requires moved members");
       }
     }
     for (PsiMethod constructor : sourceClass.getConstructors()) {
       if (initializerDependsOnMoved(constructor.getBody())) {
-        out.add("Constructor requires moved members");
+        out.put(constructor, "Constructor requires moved members");
       }
     }
     return out;

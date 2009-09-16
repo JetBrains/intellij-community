@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -30,6 +31,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.LinkedHashMap;
 
 public class ExtractSuperclassHandler implements RefactoringActionHandler, ExtractSuperclassDialog.Callback, ElementsHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractSuperclass.ExtractSuperclassHandler");
@@ -115,12 +117,14 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
     else {
       targetPackage = null;
     }
-    String[] conflicts =
+    LinkedHashMap<PsiElement,String> conflicts =
       PullUpConflictsUtil.checkConflicts(infos, mySubclass, null, targetPackage, targetDirectory, dialog.getContainmentVerifier());
-    if (conflicts.length > 0) {
+    if (!conflicts.isEmpty()) {
       ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
       conflictsDialog.show();
-      return conflictsDialog.isOK();
+      final boolean ok = conflictsDialog.isOK();
+      if (!ok && conflictsDialog.isShowConflicts()) dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
+      return ok;
     }
     return true;
   }

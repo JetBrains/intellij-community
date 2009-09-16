@@ -36,7 +36,7 @@ public class GenericInlineHandler {
       settings.isOnlyOneReferenceToInline() ? Collections.singleton(invocationReference) : ReferencesSearch.search(element).findAll();
     final Map<Language, InlineHandler.Inliner> inliners = new HashMap<Language, InlineHandler.Inliner>();
 
-    final Set<String> conflicts = new HashSet<String>();
+    final Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
     for (PsiReference ref : allReferences) {
       final Language language = ref.getElement().getLanguage();
       if (inliners.containsKey(language)) continue;
@@ -51,7 +51,7 @@ public class GenericInlineHandler {
         }
       }
       if (inliner == null) {
-        conflicts.add("Cannot inline reference from " + language.getID());
+        conflicts.put(null, "Cannot inline reference from " + language.getID());
       }
     }
 
@@ -62,11 +62,13 @@ public class GenericInlineHandler {
     final Project project = element.getProject();
     if (!conflicts.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        throw new ConflictsFoundInTestException("Refactoring cannot be performed:" + conflicts.iterator().next());
+        throw new ConflictsFoundInTestException("Refactoring cannot be performed:" + conflicts.values().iterator().next());
       } else {
         final ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
         conflictsDialog.show();
-        if (!conflictsDialog.isOK()) return true;
+        if (!conflictsDialog.isOK()){
+          return true;
+        }
       }
     }
 
@@ -115,13 +117,13 @@ public class GenericInlineHandler {
   private static void collectConflicts(final PsiReference reference,
                                        final PsiElement element,
                                        final Map<Language, InlineHandler.Inliner> inliners,
-                                       final Set<String> conflicts) {
+                                       final Map<PsiElement, String> conflicts) {
     final Language language = reference.getElement().getLanguage();
     final InlineHandler.Inliner inliner = inliners.get(language);
     if (inliner != null) {
-      final Collection<String> refConflicts = inliner.getConflicts(reference, element);
+      final Map<PsiElement, String> refConflicts = inliner.getConflicts(reference, element);
       if (refConflicts != null) {
-        conflicts.addAll(refConflicts);
+        conflicts.putAll(refConflicts);
       }
     }
   }

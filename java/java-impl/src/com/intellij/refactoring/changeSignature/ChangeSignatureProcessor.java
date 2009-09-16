@@ -301,7 +301,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     myChangeInfo.updateMethod((PsiMethod) elements[0]);
   }
 
-  private void addMethodConflicts(Collection<String> conflicts) {
+  private void addMethodConflicts(Map<PsiElement, String> conflicts) {
     String newMethodName = myChangeInfo.newName;
 
     try {
@@ -338,10 +338,10 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
-    Set<String> conflictDescriptions = new HashSet<String>();
+    Map<PsiElement, String> conflictDescriptions = new HashMap<PsiElement, String>();
     UsageInfo[] usagesIn = refUsages.get();
     addMethodConflicts(conflictDescriptions);
-    conflictDescriptions.addAll(RenameUtil.getConflictDescriptions(usagesIn));
+    conflictDescriptions.putAll(RenameUtil.getConflictDescriptions(usagesIn));
     Set<UsageInfo> usagesSet = new HashSet<UsageInfo>(Arrays.asList(usagesIn));
     RenameUtil.removeConflictUsages(usagesSet);
     if (myChangeInfo.isVisibilityChanged) {
@@ -356,7 +356,10 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     if (myPrepareSuccessfulSwingThreadCallback != null && !conflictDescriptions.isEmpty()) {
       ConflictsDialog dialog = new ConflictsDialog(myProject, conflictDescriptions);
       dialog.show();
-      if (!dialog.isOK()) return false;
+      if (!dialog.isOK()){
+        if (dialog.isShowConflicts()) prepareSuccessful();
+        return false;
+      }
     }
 
     if (myChangeInfo.isReturnTypeChanged) {
@@ -368,7 +371,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
-  private void addInaccessibilityDescriptions(Set<UsageInfo> usages, Set<String> conflictDescriptions) throws IncorrectOperationException {
+  private void addInaccessibilityDescriptions(Set<UsageInfo> usages, Map<PsiElement, String> conflictDescriptions) throws IncorrectOperationException {
     PsiMethod method = myChangeInfo.getMethod();
     PsiModifierList modifierList = (PsiModifierList)method.getModifierList().copy();
     RefactoringUtil.setVisibility(modifierList, myNewVisibility);
@@ -391,7 +394,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
                                         RefactoringUIUtil.getDescription(method, true),
                                         myNewVisibility,
                                         RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(element), true));
-            conflictDescriptions.add(message);
+            conflictDescriptions.put(method, message);
             if (!needToChangeCalls()) {
               iterator.remove();
             }

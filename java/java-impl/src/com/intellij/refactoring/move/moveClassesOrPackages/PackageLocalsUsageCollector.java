@@ -4,22 +4,22 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.ConflictsUtil;
-import com.intellij.util.VisibilityUtil;
-import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.ConflictsUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashMap;
 
 import java.util.HashSet;
-import java.util.List;
+import java.util.Map;
 
 class PackageLocalsUsageCollector extends JavaRecursiveElementWalkingVisitor {
   private final HashMap<PsiElement,HashSet<PsiElement>> myReported = new HashMap<PsiElement, HashSet<PsiElement>>();
   private final PsiElement[] myElementsToMove;
-  private final List<String> myConflicts;
+  private final Map<PsiElement, String> myConflicts;
   private final PackageWrapper myTargetPackage;
 
-  public PackageLocalsUsageCollector(final PsiElement[] elementsToMove, final PackageWrapper targetPackage, List<String> conflicts) {
+  public PackageLocalsUsageCollector(final PsiElement[] elementsToMove, final PackageWrapper targetPackage, Map<PsiElement,String> conflicts) {
     myElementsToMove = elementsToMove;
     myConflicts = conflicts;
     myTargetPackage = targetPackage;
@@ -56,7 +56,7 @@ class PackageLocalsUsageCollector extends JavaRecursiveElementWalkingVisitor {
                 final String message = RefactoringBundle.message("0.uses.a.package.local.1",
                                                                  RefactoringUIUtil.getDescription(container, true),
                                                                  RefactoringUIUtil.getDescription(resolved, true));
-                myConflicts.add(CommonRefactoringUtil.capitalize(message));
+                myConflicts.put(resolved, CommonRefactoringUtil.capitalize(message));
                 reportedRefs.add(container);
               }
             }

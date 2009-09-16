@@ -14,6 +14,7 @@ import com.intellij.JavaTestUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class PushDownTest extends LightCodeInsightTestCase {
   @Override
@@ -53,7 +54,7 @@ public class PushDownTest extends LightCodeInsightTestCase {
 
     new PushDownProcessor(getProject(), membersToMove.toArray(new MemberInfo[membersToMove.size()]), classes[0], new DocCommentPolicy(DocCommentPolicy.ASIS)){
       @Override
-      protected boolean showConflicts(final List<String> conflicts) {
+      protected boolean showConflicts(Map<PsiElement, String> conflicts) {
         if (failure ? conflicts.isEmpty() : !conflicts.isEmpty()) {
           fail(failure ? "Conflict was not detected" : "False conflict was detected");
         }

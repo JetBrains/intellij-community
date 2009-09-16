@@ -11,6 +11,7 @@ package com.intellij.refactoring.introduceParameter;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -38,6 +39,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 public class IntroduceParameterProcessor extends BaseRefactoringProcessor implements IntroduceParameterData {
@@ -190,12 +193,13 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
-    ArrayList<String> conflicts = new ArrayList<String> ();
+    Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
 
     AnySameNameVariables anySameNameVariables = new AnySameNameVariables();
     myMethodToReplaceIn.accept(anySameNameVariables);
-    if (anySameNameVariables.getConflict() != null) {
-      conflicts.add(anySameNameVariables.getConflict());
+    final Pair<PsiElement, String> conflictPair = anySameNameVariables.getConflict();
+    if (conflictPair != null) {
+      conflicts.put(conflictPair.first, conflictPair.second);
     }
 
     if (!myGenerateDelegate) {
@@ -209,7 +213,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
         for (UsageInfo usageInfo : usagesIn) {
           if (!(usageInfo.getElement() instanceof PsiMethod) && !(usageInfo instanceof InternalUsageInfo)) {
             if (!PsiTreeUtil.isAncestor(myMethodToReplaceIn.getContainingClass(), usageInfo.getElement(), false)) {
-              conflicts.add(RefactoringBundle.message("parameter.initializer.contains.0.but.not.all.calls.to.method.are.in.its.class",
+              conflicts.put(myParameterInitializer, RefactoringBundle.message("parameter.initializer.contains.0.but.not.all.calls.to.method.are.in.its.class",
                                                       CommonRefactoringUtil.htmlEmphasize(PsiKeyword.SUPER)));
               break;
             }
@@ -219,13 +223,13 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     }
 
     for (IntroduceParameterMethodUsagesProcessor processor : IntroduceParameterMethodUsagesProcessor.EP_NAME.getExtensions()) {
-      conflicts.addAll(processor.findConflicts(this, refUsages.get()));
+      conflicts.putAll(processor.findConflicts(this, refUsages.get()));
     }
 
     return showConflicts(conflicts);
   }
 
-  private void detectAccessibilityConflicts(final UsageInfo[] usageArray, ArrayList<String> conflicts) {
+  private void detectAccessibilityConflicts(final UsageInfo[] usageArray, Map<PsiElement, String> conflicts) {
     if (myParameterInitializer != null) {
       final ReferencedElementsCollector collector = new ReferencedElementsCollector();
       myParameterInitializer.accept(collector);
@@ -242,7 +246,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
                     "0.is.not.accesible.from.1.value.for.introduced.parameter.in.that.method.call.will.be.incorrect",
                     RefactoringUIUtil.getDescription(element, true),
                     RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(place), true));
-                conflicts.add(message);
+                conflicts.put(element, message);
               }
             }
           }
@@ -274,9 +278,9 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   }
 
   public class AnySameNameVariables extends JavaRecursiveElementWalkingVisitor {
-    private String conflict = null;
+    private Pair<PsiElement, String> conflict = null;
 
-    public String getConflict() {
+    public Pair<PsiElement, String> getConflict() {
       return conflict;
     }
 
@@ -286,7 +290,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
         String descr = RefactoringBundle.message("there.is.already.a.0.it.will.conflict.with.an.introduced.parameter",
                                                  RefactoringUIUtil.getDescription(variable, true));
 
-        conflict = CommonRefactoringUtil.capitalize(descr);
+        conflict = Pair.<PsiElement, String>create(variable, CommonRefactoringUtil.capitalize(descr));
       }
     }
 
