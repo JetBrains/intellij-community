@@ -354,7 +354,17 @@ public class GroovycRunner {
     return (GroovyClassLoader) AccessController.doPrivileged(new PrivilegedAction() {
       public Object run() {
         URLClassLoader urlClassLoader = new URLClassLoader(GroovyCompilerUtil.convertClasspathToUrls(compilerConfiguration));
-        return new GroovyClassLoader(urlClassLoader, compilerConfiguration);
+        return new GroovyClassLoader(urlClassLoader, compilerConfiguration) {
+          public Class loadClass(String name, boolean lookupScriptFiles, boolean preferClassOverScript)
+            throws ClassNotFoundException, CompilationFailedException {
+            try {
+              return super.loadClass(name, lookupScriptFiles, preferClassOverScript);
+            }
+            catch (LinkageError e) {
+              throw new RuntimeException("Problem loading class " + name, e);
+            }
+          }
+        };
       }
     });
   }
