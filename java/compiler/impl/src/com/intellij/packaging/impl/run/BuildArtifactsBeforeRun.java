@@ -24,6 +24,7 @@ import com.intellij.packaging.impl.compiler.IncrementalArtifactsCompiler;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +34,8 @@ import java.util.Set;
  * @author nik
  */
 public class BuildArtifactsBeforeRun implements BeforeRunTaskProvider<BuildArtifactsBeforeRunTask> {
-  public static final Key<BuildArtifactsBeforeRunTask> ID = Key.create("BuildArtifacts");
+  @NonNls public static final String BUILD_ARTIFACTS_ID = "BuildArtifacts";
+  public static final Key<BuildArtifactsBeforeRunTask> ID = Key.create(BUILD_ARTIFACTS_ID);
   private Project myProject;
 
   public BuildArtifactsBeforeRun(Project project) {

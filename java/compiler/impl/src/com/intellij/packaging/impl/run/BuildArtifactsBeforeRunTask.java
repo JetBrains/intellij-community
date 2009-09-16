@@ -16,8 +16,8 @@ import java.util.List;
  * @author nik
  */
 public class BuildArtifactsBeforeRunTask extends BeforeRunTask {
-  @NonNls private static final String NAME_ATTRIBUTE = "name";
-  @NonNls private static final String ARTIFACT_ELEMENT = "artifact";
+  @NonNls public static final String NAME_ATTRIBUTE = "name";
+  @NonNls public static final String ARTIFACT_ELEMENT = "artifact";
   private List<ArtifactPointer> myArtifactPointers = new ArrayList<ArtifactPointer>();
   private final Project myProject;
 
