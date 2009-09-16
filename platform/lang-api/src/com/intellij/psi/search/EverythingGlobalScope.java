@@ -31,4 +31,16 @@ public class EverythingGlobalScope extends GlobalSearchScope {
   public boolean isSearchInModuleContent(@NotNull final Module aModule) {
     return true;
   }
+
+  @NotNull
+  @Override
+  public SearchScope union(@NotNull SearchScope scope) {
+    return this;
+  }
+
+  @NotNull
+  @Override
+  public SearchScope intersectWith(@NotNull SearchScope scope2) {
+    return scope2;
+  }
 }

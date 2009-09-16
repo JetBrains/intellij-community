@@ -79,10 +79,9 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   public abstract boolean isSearchInLibraries();
 
-  private static final String ALL_SCOPE_NAME = PsiBundle.message("psi.search.scope.project.and.libraries");
   @NotNull
   public GlobalSearchScope intersectWith(@NotNull GlobalSearchScope scope) {
-    if (ALL_SCOPE_NAME.equals(scope.getDisplayName()) || scope == this) return this;
+    if (scope == this) return this;
     return new IntersectionScope(this, scope, null);
   }
 
@@ -139,7 +138,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   }
 
   public GlobalSearchScope uniteWith(@NotNull GlobalSearchScope scope) {
-    if (ALL_SCOPE_NAME.equals(scope.getDisplayName()) || scope == this) return scope;
+    if (scope == this) return scope;
     return new UnionScope(this, scope, null);
   }
 

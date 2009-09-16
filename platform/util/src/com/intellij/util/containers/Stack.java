@@ -25,6 +25,13 @@ import java.util.List;
 import java.util.RandomAccess;
 
 public class Stack<T> extends ArrayList<T> {
+  public Stack(int initialCapacity) {
+    super(initialCapacity);
+  }
+
+  public Stack() {
+  }
+
   public void push(T t) {
     add(t);
   }

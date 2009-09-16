@@ -71,6 +71,20 @@ public class ProjectScope {
           public String toString() {
             return getDisplayName();
           }
+
+          @Override
+          public GlobalSearchScope uniteWith(@NotNull GlobalSearchScope scope) {
+            if (scope == this || !scope.isSearchInLibraries()) return this;
+            return super.uniteWith(scope);
+          }
+
+          @NotNull
+          @Override
+          public GlobalSearchScope intersectWith(@NotNull GlobalSearchScope scope) {
+            if (scope == this) return this;
+            if (!scope.isSearchInLibraries()) return scope;
+            return super.intersectWith(scope);
+          }
         };
       }
       projectScope = ((UserDataHolderEx)project).putUserDataIfAbsent(PROJECT_SCOPE_KEY, projectScope);

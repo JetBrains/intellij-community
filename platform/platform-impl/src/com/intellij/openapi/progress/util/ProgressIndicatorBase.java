@@ -32,9 +32,9 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
 
   private volatile boolean myIndeterminate;
 
-  private final Stack<String> myTextStack = new Stack<String>();
-  private final DoubleArrayList myFractionStack = new DoubleArrayList();
-  private final Stack<String> myText2Stack = new Stack<String>();
+  private final Stack<String> myTextStack = new Stack<String>(2);
+  private final DoubleArrayList myFractionStack = new DoubleArrayList(2);
+  private final Stack<String> myText2Stack = new Stack<String>(2);
   private volatile int myNonCancelableCount = 0;
 
   private ProgressIndicator myModalityProgress = null;
