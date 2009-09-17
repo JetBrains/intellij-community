@@ -13,6 +13,7 @@ import com.intellij.JavaTestUtil;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.Map;
 
 public class MoveMembersTest extends MultiFileTestCase {
   @Override
@@ -84,6 +85,16 @@ public class MoveMembersTest extends MultiFileTestCase {
     doTest("B", "A", 0);
   }
 
+  public void testWritableField() throws Exception {
+    try {
+      doTest("B", "A", 0);
+      fail("conflict expected");
+    }
+    catch (Exception e) {
+      assertEquals(e.getMessage(), "Found conflicts: Field <b><code>B.ONE</code></b> has write access but is moved to an interface");
+    }
+  }
+
   protected String getTestRoot() {
     return "/refactoring/moveMembers/";
   }
@@ -124,7 +135,15 @@ public class MoveMembersTest extends MultiFileTestCase {
 
     MockMoveMembersOptions options = new MockMoveMembersOptions(targetClass.getQualifiedName(), memberSet);
     options.setMemberVisibility(null);
-    new MoveMembersProcessor(myProject, null, options).run();
+    new MoveMembersProcessor(myProject, null, options){
+      @Override
+      protected boolean showConflicts(Map<PsiElement, String> conflicts) {
+        if (!conflicts.isEmpty()) {
+          throw new RuntimeException("Found conflicts: " + conflicts.values().iterator().next());
+        }
+        return super.showConflicts(conflicts);
+      }
+    }.run();
     FileDocumentManager.getInstance().saveAllDocuments();
   }
 }

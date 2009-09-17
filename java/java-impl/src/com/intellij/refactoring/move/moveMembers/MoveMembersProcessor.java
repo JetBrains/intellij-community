@@ -4,6 +4,7 @@
  */
 package com.intellij.refactoring.move.moveMembers;
 
+import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -269,6 +270,16 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
                 RefactoringBundle.message("0.with.1.visibility.is.not.accesible.from.2", RefactoringUIUtil.getDescription(member, true),
                                           newVisibility, RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(element), true));
               conflicts.put(member, message);
+            }
+          }
+
+          if (member instanceof PsiField && myTargetClass.isInterface()) {
+            final ReadWriteAccessDetector accessDetector = ReadWriteAccessDetector.findDetector(member);
+            if (accessDetector != null) {
+              final ReadWriteAccessDetector.Access access = accessDetector.getExpressionAccess(element);
+              if (access != ReadWriteAccessDetector.Access.Read) {
+                conflicts.put(element, CommonRefactoringUtil.capitalize(RefactoringUIUtil.getDescription(member, true)) + " has write access but is moved to an interface");
+              }
             }
           }
         }
