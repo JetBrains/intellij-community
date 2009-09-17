@@ -20,24 +20,27 @@
  */
 package com.intellij.refactoring.ui;
 
+import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 public class ConflictsDialog extends DialogWrapper{
   private static final int SHOW_CONFLICTS_EXIT_CODE = 4;
@@ -108,7 +111,7 @@ public class ConflictsDialog extends DialogWrapper{
   private class CancelAction extends AbstractAction {
     public CancelAction() {
       super(RefactoringBundle.message("cancel.button"));
-      putValue(DialogWrapper.DEFAULT_ACTION,Boolean.TRUE);
+      putValue(DEFAULT_ACTION,Boolean.TRUE);
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -133,6 +136,10 @@ public class ConflictsDialog extends DialogWrapper{
       final Usage[] usages = new Usage[myElementConflictDescription.size()];
       int i = 0;
       for (final PsiElement element : myElementConflictDescription.keySet()) {
+        if (element == null) {
+          usages[i++] = new DescriptionOnlyUsage();
+          continue;
+        }
         boolean isRead = false;
         boolean isWrite = false;
         for (ReadWriteAccessDetector detector : Extensions.getExtensions(ReadWriteAccessDetector.EP_NAME)) {
@@ -165,7 +172,7 @@ public class ConflictsDialog extends DialogWrapper{
     }
 
     private UsagePresentation getPresentation(final UsagePresentation usagePresentation, PsiElement element) {
-      final String conflictDescription = " (" + myElementConflictDescription.get(element) + ")";
+      final String conflictDescription = " (" + Pattern.compile("<[^<>]*>").matcher(myElementConflictDescription.get(element)).replaceAll("") + ")";
       return new UsagePresentation() {
         @NotNull
         public TextChunk[] getText() {
@@ -187,6 +194,58 @@ public class ConflictsDialog extends DialogWrapper{
           return usagePresentation.getTooltipText();
         }
       };
+    }
+
+    private class DescriptionOnlyUsage implements Usage {
+      private final String myConflictDescription = Pattern.compile("<[^<>]*>").matcher(myElementConflictDescription.get(null)).replaceAll("");
+
+      @NotNull
+      public UsagePresentation getPresentation() {
+        return new UsagePresentation() {
+          @NotNull
+          public TextChunk[] getText() {
+            return new TextChunk[0];
+          }
+
+          @Nullable
+          public Icon getIcon() {
+            return null;
+          }
+
+          public String getTooltipText() {
+            return myConflictDescription;
+          }
+
+          @NotNull
+          public String getPlainText() {
+            return myConflictDescription;
+          }
+        };
+      }
+
+      public boolean canNavigateToSource() {
+        return false;
+      }
+
+      public boolean canNavigate() {
+        return false;
+      }
+      public void navigate(boolean requestFocus) {}
+
+      public FileEditorLocation getLocation() {
+        return null;
+      }
+
+      public boolean isReadOnly() {
+        return false;
+      }
+
+      public boolean isValid() {
+        return true;
+      }
+
+      public void selectInEditor() {}
+      public void highlightInEditor() {}
     }
   }
 }
