@@ -2,25 +2,24 @@ package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageAnnotators;
-import com.intellij.lang.annotation.Annotator;
-import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiRecursiveElementVisitor;
-import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
-import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author yole
- */
 public class AnnotatorBasedInspection extends GlobalInspectionTool {
   @Override
   public boolean isGraphNeeded() {
@@ -62,17 +61,12 @@ public class AnnotatorBasedInspection extends GlobalInspectionTool {
   }
 
   private static class MyPsiRecursiveElementVisitor extends PsiRecursiveElementVisitor implements PsiLanguageInjectionHost.InjectedPsiVisitor {
-    private final InspectionManager manager;
-    private final GlobalInspectionContext globalContext;
-    private final ProblemDescriptionsProcessor problemDescriptionsProcessor;
     private AnnotationHolder myHolder;
     private List<Annotator> annotators;
+    private PsiFile myFile;
 
     public MyPsiRecursiveElementVisitor(final InspectionManager manager, final GlobalInspectionContext globalContext,
                                         final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-      this.manager = manager;
-      this.globalContext = globalContext;
-      this.problemDescriptionsProcessor = problemDescriptionsProcessor;
       myHolder = new AnnotationHolderImpl() {
         @Override
         public Annotation createErrorAnnotation(@NotNull PsiElement elt, String message) {
@@ -86,7 +80,7 @@ public class AnnotatorBasedInspection extends GlobalInspectionTool {
 
         @Override
         public Annotation createInfoAnnotation(PsiElement elt, String message) {
-          return createProblem(elt, message, ProblemHighlightType.INFO, HighlightSeverity.INFO, null);
+          return super.createInfoAnnotation(elt, message);
         }
 
         @Override
@@ -96,25 +90,52 @@ public class AnnotatorBasedInspection extends GlobalInspectionTool {
 
         private Annotation createProblem(PsiElement elt, String message, ProblemHighlightType problemHighlightType,
                                          HighlightSeverity severity, TextRange range) {
-          ProblemDescriptor descriptor = manager.createProblemDescriptor(
-              elt,
-              range,
-              GlobalInspectionUtil.createInspectionMessage(message),
-              problemHighlightType
-          );
-          problemDescriptionsProcessor.addProblemElement(
-            GlobalInspectionUtil.retrieveRefElement(elt, globalContext),
-            descriptor
-          );
+          GlobalInspectionUtil.createProblem(elt, message, problemHighlightType, range, manager, problemDescriptionsProcessor, globalContext);
           return super.createAnnotation(elt.getTextRange(), severity, message);
         }
 
         @Override
+        public Annotation createErrorAnnotation(ASTNode node, String message) {
+          return createErrorAnnotation(node.getPsi(), message);
+        }
+
+        @Override
+        public Annotation createWarningAnnotation(ASTNode node, String message) {
+          return createWarningAnnotation(node.getPsi(), message);
+        }
+
+        @Override
+        public Annotation createInformationAnnotation(ASTNode node, String message) {
+          return createInformationAnnotation(node.getPsi(), message);
+        }
+
+        @Override
+        public Annotation createInfoAnnotation(ASTNode node, String message) {
+          return createInfoAnnotation(node.getPsi(), message);
+        }
+
+        @Override
         protected Annotation createAnnotation(TextRange range, HighlightSeverity severity, String message) {
-          assert false;
+          if (severity != HighlightSeverity.INFORMATION) {
+            GlobalInspectionUtil.createProblem(
+              myFile,
+              message,
+              HighlightInfo.convertSeverityToProblemHighlight(severity),
+              range,
+              manager,
+              problemDescriptionsProcessor,
+              globalContext
+            );
+          }
           return super.createAnnotation(range, severity, message);
         }
       };
+    }
+
+    @Override
+    public void visitFile(PsiFile file) {
+      myFile = file;
+      super.visitFile(file);
     }
 
     @Override

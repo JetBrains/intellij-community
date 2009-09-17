@@ -2,7 +2,9 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ex.DescriptorProviderInspection;
+import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.util.IconLoader;
@@ -18,7 +20,9 @@ import javax.swing.*;
  * @author max
  */
 public class ProblemDescriptionNode extends InspectionTreeNode {
-  public static final Icon INFO = IconLoader.getIcon("/compiler/information.png");
+  private static final Icon INFO = IconLoader.getIcon("/compiler/information.png");
+  private static final Icon ERROR = IconLoader.getIcon("/compiler/error.png");
+  private static final Icon WARNING = IconLoader.getIcon("/compiler/warning.png");
   protected RefEntity myElement;
   private CommonProblemDescriptor myDescriptor;
   protected DescriptorProviderInspection myTool;
@@ -44,6 +48,9 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
   public CommonProblemDescriptor getDescriptor() { return myDescriptor; }
 
   public Icon getIcon(boolean expanded) {
+    ProblemHighlightType problemHighlightType = ((ProblemDescriptorImpl)myDescriptor).getHighlightType();
+    if (problemHighlightType == ProblemHighlightType.ERROR) return ERROR;
+    if (problemHighlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING) return WARNING;
     return INFO;
   }
 

@@ -314,6 +314,20 @@ public class HighlightInfo {
              : severity == HighlightSeverity.INFO ? HighlightInfoType.INFO : HighlightInfoType.INFORMATION;
   }
 
+  public static ProblemHighlightType convertType(HighlightInfoType infoType) {
+    if (infoType == HighlightInfoType.ERROR || infoType == HighlightInfoType.WRONG_REF) return ProblemHighlightType.ERROR;
+    if (infoType == HighlightInfoType.WARNING) return ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+    if (infoType == HighlightInfoType.INFORMATION) return ProblemHighlightType.INFORMATION;
+    return ProblemHighlightType.INFO;
+  }
+
+  public static ProblemHighlightType convertSeverityToProblemHighlight(HighlightSeverity severity) {
+    return severity == HighlightSeverity.ERROR? ProblemHighlightType.ERROR :
+           severity == HighlightSeverity.WARNING ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING :
+             severity == HighlightSeverity.INFO ? ProblemHighlightType.INFO : ProblemHighlightType.INFORMATION;
+  }
+
+
   public boolean hasHint() {
     return hasHint;
   }

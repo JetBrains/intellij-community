@@ -3,6 +3,7 @@ package com.intellij.codeInspection.htmlInspections;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.xml.util.*;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlUnboundNsPrefixInspection;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitorBasedInspection;
 
 /**
  * @author yole
@@ -21,7 +22,8 @@ public class XmlInspectionToolProvider implements InspectionToolProvider {
       XmlWrongRootElementInspection.class,
       HtmlUnknownTagInspection.class,
       HtmlUnknownAttributeInspection.class,
-      XmlUnboundNsPrefixInspection.class
+      XmlUnboundNsPrefixInspection.class,
+      XmlHighlightVisitorBasedInspection.class
     };
   }
 }
