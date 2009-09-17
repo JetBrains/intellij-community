@@ -10,6 +10,7 @@ import com.intellij.lang.refactoring.InlineActionHandler;
 import com.intellij.lang.refactoring.InlineHandlers;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.inline.InlineRefactoringActionHandler;
@@ -20,11 +21,16 @@ public class InlineAction extends BaseRefactoringAction {
     return false;
   }
 
+  @Override
+  protected boolean isAvailableOnElementInEditor(PsiElement element, Editor editor) {
+    return hasInlineActionHandler(element);
+  }
+
   public boolean isEnabledOnElements(PsiElement[] elements) {
     return elements.length == 1 && hasInlineActionHandler(elements [0]);
   }
 
-  private boolean hasInlineActionHandler(PsiElement element) {
+  private static boolean hasInlineActionHandler(PsiElement element) {
     for(InlineActionHandler handler: Extensions.getExtensions(InlineActionHandler.EP_NAME)) {
       if (handler.isEnabledOnElement(element)) {
         return true;
