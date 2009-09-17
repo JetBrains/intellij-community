@@ -44,7 +44,7 @@ public class PyResolveUtil {
 
 
   /**
-   * Tries to find nearest parent that conceals nams definded inside it. Such elements are 'class' and 'def':
+   * Tries to find nearest parent that conceals names defined inside it. Such elements are 'class' and 'def':
    * anything defined within it does not seep to the namespace below them, but is concealed within.
    * @param elt starting point of search.
    * @return 'class' or 'def' element, or null if not found.
@@ -54,12 +54,17 @@ public class PyResolveUtil {
     return PsiTreeUtil.getParentOfType(elt, PyClass.class, PyFunction.class);
   }
 
+  /**
+   * @param elt from which to start
+   * @return the rightmost and innermost (grand)child of elt.
+   */
+  @Nullable
   protected static PsiElement getInnermostChildOf(PsiElement elt) {
     PsiElement feeler = elt;
     PsiElement seeker;
     seeker = feeler;
     // find innermost last child of the subtree we're in
-    while (feeler != null) {
+    while (feeler != null && feeler.isValid()) {
       seeker = feeler;
       feeler = feeler.getLastChild();
     }
@@ -117,6 +122,7 @@ public class PyResolveUtil {
     PsiElement cap = getConcealingParent(elt);
     do {
       ProgressManager.getInstance().checkCanceled();
+      if (!seeker.isValid()) return null; 
       if (fromunder) {
         fromunder = false; // only honour fromunder once per call
         seeker = getPrevNodeOf(getInnermostChildOf(seeker), processor);
