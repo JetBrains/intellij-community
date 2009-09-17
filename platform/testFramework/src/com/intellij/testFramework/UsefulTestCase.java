@@ -315,6 +315,10 @@ public abstract class UsefulTestCase extends TestCase {
     assertEmpty(null, collection);
   }
 
+  public static void assertEmpty(final String s) {
+    assertTrue(s, StringUtil.isEmpty(s));
+  }
+
   public static void assertEmpty(final String errorMsg, final Collection<?> collection) {
     assertOrderedEquals(errorMsg, collection);
   }
