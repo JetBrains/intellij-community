@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 /**
@@ -51,6 +52,8 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   private ProjectManagerImpl myManager;
 
   private MyProjectManagerListener myProjectManagerListener;
+
+  private AtomicBoolean mySavingInProgress = new AtomicBoolean(false);
 
   @NonNls private static final String PROJECT_LAYER = "project-components";
 
@@ -243,21 +246,28 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   public void save() {
     if (ApplicationManagerEx.getApplicationEx().isDoNotSave()) return; //no need to save
 
-    try {
-      doSave();
-    }
-    catch (IComponentStore.SaveCancelledException e) {
-      LOG.info(e);
-    }
-    catch (PluginException e) {
-      PluginManager.disablePlugin(e.getPluginId().getIdString());
-      MessagesEx.error(this, "The plugin " + e.getPluginId() + " failed to save settings and has been disabled. Please restart " +
-                             ApplicationNamesInfo.getInstance().getFullProductName()
-                             + (ApplicationManagerEx.getApplicationEx().isInternal() ? "\n"+StringUtil.getThrowableText(e) : ""));
-    }
-    catch (IOException e) {
-      MessagesEx.error(this, ProjectBundle.message("project.save.error", ApplicationManagerEx.getApplicationEx().isInternal()?
-                                                                         StringUtil.getThrowableText(e) : e.getMessage())).showLater();
+    if (mySavingInProgress.compareAndSet(false, true)) {
+      try {
+        doSave();
+      }
+      catch (IComponentStore.SaveCancelledException e) {
+        LOG.info(e);
+      }
+      catch (PluginException e) {
+        PluginManager.disablePlugin(e.getPluginId().getIdString());
+        MessagesEx.error(this, "The plugin " +
+                               e.getPluginId() +
+                               " failed to save settings and has been disabled. Please restart " +
+                               ApplicationNamesInfo.getInstance().getFullProductName() +
+                               (ApplicationManagerEx.getApplicationEx().isInternal() ? "\n" + StringUtil.getThrowableText(e) : ""));
+      }
+      catch (IOException e) {
+        MessagesEx.error(this, ProjectBundle.message("project.save.error", ApplicationManagerEx.getApplicationEx().isInternal()
+                                                                           ? StringUtil.getThrowableText(e)
+                                                                           : e.getMessage())).showLater();
+      } finally {
+        mySavingInProgress.set(false);
+      }
     }
   }
 

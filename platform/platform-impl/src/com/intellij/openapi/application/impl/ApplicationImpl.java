@@ -60,6 +60,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public class ApplicationImpl extends ComponentManagerImpl implements ApplicationEx {
@@ -85,6 +86,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private long myStartTime = 0;
   private boolean myDoNotSave = false;
   private volatile boolean myDisposeInProgress = false;
+
+  private AtomicBoolean mySaveSettingsIsInProgress = new AtomicBoolean(false);
 
   private final ExecutorService ourThreadExecutorsService = new ThreadPoolExecutor(
     3,
@@ -946,32 +949,39 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   public void saveSettings() {
     if (myDoNotSave) return;
 
-    try {
-      doSave();
-    }
-    catch (final Throwable ex) {
-      if (isUnitTestMode()) {
-        System.out.println("Saving application settings failed");
-        ex.printStackTrace();
+    if (mySaveSettingsIsInProgress.compareAndSet(false, true)) {
+      try {
+        doSave();
       }
-      else {
-        LOG.info("Saving application settings failed", ex);
-        invokeLater(new Runnable() {
-          public void run() {
-            if (ex instanceof PluginException) {
-              final PluginException pluginException = (PluginException)ex;
-              PluginManager.disablePlugin(pluginException.getPluginId().getIdString());
-              Messages.showMessageDialog("The plugin " + pluginException.getPluginId() + " failed to save settings and has been disabled. Please restart " +
-                                           ApplicationNamesInfo.getInstance().getFullProductName(),
-                                         CommonBundle.getErrorTitle(), Messages.getErrorIcon());
-            }
-            else {
-              Messages.showMessageDialog(ApplicationBundle.message("application.save.settings.error", ex.getLocalizedMessage()),
-                                         CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+      catch (final Throwable ex) {
+        if (isUnitTestMode()) {
+          System.out.println("Saving application settings failed");
+          ex.printStackTrace();
+        }
+        else {
+          LOG.info("Saving application settings failed", ex);
+          invokeLater(new Runnable() {
+            public void run() {
+              if (ex instanceof PluginException) {
+                final PluginException pluginException = (PluginException)ex;
+                PluginManager.disablePlugin(pluginException.getPluginId().getIdString());
+                Messages.showMessageDialog("The plugin " +
+                                           pluginException.getPluginId() +
+                                           " failed to save settings and has been disabled. Please restart " +
+                                           ApplicationNamesInfo.getInstance().getFullProductName(), CommonBundle.getErrorTitle(),
+                                           Messages.getErrorIcon());
+              }
+              else {
+                Messages.showMessageDialog(ApplicationBundle.message("application.save.settings.error", ex.getLocalizedMessage()),
+                                           CommonBundle.getErrorTitle(), Messages.getErrorIcon());
 
+              }
             }
-          }
-        });
+          });
+        }
+      }
+      finally {
+        mySaveSettingsIsInProgress.set(false);
       }
     }
   }
