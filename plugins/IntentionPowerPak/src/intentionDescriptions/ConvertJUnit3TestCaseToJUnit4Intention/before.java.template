@@ -1,0 +1,9 @@
+<spot>public class X extends TestCase</spot> {
+  public void setUp() {}
+
+  public void tearDown() {}
+
+  public void testX() {
+    assertTrue(true);
+  }
+}

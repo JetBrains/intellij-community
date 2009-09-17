@@ -122,6 +122,11 @@
       <categoryKey>intention.category.junit</categoryKey>
     </intentionAction>
 
+    <intentionAction>
+      <className>com.siyeh.ipp.junit.ConvertJUnit3TestCaseToJUnit4Intention</className>
+      <categoryKey>intention.category.junit</categoryKey>
+    </intentionAction>
+
     <!-- Declaration -->
 
     <!--
@@ -274,7 +279,7 @@
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
     <intentionAction>
-      <className>com.siyeh.ipp.expression.FlipSetterCallIntention</className>      
+      <className>com.siyeh.ipp.expression.FlipSetterCallIntention</className>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
     <intentionAction>

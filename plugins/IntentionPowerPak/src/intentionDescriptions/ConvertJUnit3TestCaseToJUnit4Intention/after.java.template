@@ -1,0 +1,12 @@
+public class X {
+  @Before
+  public void setUp() {}
+
+  @After
+  public void tearDown() {}
+
+  @Test
+  public void testX() {
+    Assert.assertTrue(true);
+  }
+}
