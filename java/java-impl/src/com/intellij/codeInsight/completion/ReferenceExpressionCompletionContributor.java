@@ -142,6 +142,9 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
 
     try {
       PsiType itemType = JavaCompletionUtil.getLookupElementType(baseItem);
+      if (itemType instanceof PsiWildcardType) {
+        itemType = ((PsiWildcardType)itemType).getExtendsBound();
+      }
       if (itemType == null) return;
 
       final PsiElement qualifier = JavaCompletionUtil.getQualifier(reference.getElement());
