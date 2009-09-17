@@ -40,9 +40,9 @@ public class GroovyCompilerWrapper {
       unit.compile(forStubs ? Phases.CONVERSION : Phases.ALL);
       addCompiledFiles(unit, compiledFiles, forStubs, collector);
     } catch (CompilationFailedException e) {
-      processCompilationException(e, collector);
+      processCompilationException(e, collector, forStubs);
     } catch (IOException e) {
-      processException(e, collector);
+      processException(e, collector, forStubs);
     } finally {
       addWarnings(unit.getErrorCollector(), collector);
     }
@@ -102,26 +102,26 @@ public class GroovyCompilerWrapper {
     }
   }
 
-  private static void processCompilationException(Exception exception, List collector) {
+  private static void processCompilationException(Exception exception, List collector, boolean forStubs) {
     if (exception instanceof MultipleCompilationErrorsException) {
       MultipleCompilationErrorsException multipleCompilationErrorsException = (MultipleCompilationErrorsException) exception;
       ErrorCollector errorCollector = multipleCompilationErrorsException.getErrorCollector();
       for (int i = 0; i < errorCollector.getErrorCount(); i++) {
-        processException(errorCollector.getError(i), collector);
+        processException(errorCollector.getError(i), collector, forStubs);
       }
     } else {
-      processException(exception, collector);
+      processException(exception, collector, forStubs);
     }
   }
 
   /** @noinspection ThrowableResultOfMethodCallIgnored*/
-  private static void processException(Message message, List collector) {
+  private static void processException(Message message, List collector, boolean forStubs) {
     if (message instanceof SyntaxErrorMessage) {
       SyntaxErrorMessage syntaxErrorMessage = (SyntaxErrorMessage) message;
       addErrorMessage(syntaxErrorMessage.getCause(), collector);
     } else if (message instanceof ExceptionMessage) {
       ExceptionMessage exceptionMessage = (ExceptionMessage) message;
-      processException(exceptionMessage.getCause(), collector);
+      processException(exceptionMessage.getCause(), collector, forStubs);
     } else if (message instanceof SimpleMessage) {
       addErrorMessage((SimpleMessage) message, collector);
     } else {
@@ -129,9 +129,11 @@ public class GroovyCompilerWrapper {
     }
   }
 
-  private static void processException(Exception exception, List collector) {
+  private static void processException(Exception exception, List collector, boolean forStubs) {
     if (exception instanceof GroovyRuntimeException) {
       addErrorMessage((GroovyRuntimeException) exception, collector);
+    } else if (forStubs) {
+      collector.add(new CompilerMessage(CompilerMessage.WARNING, "Groovyc stub generation failed: " + exception.getMessage(), null, -1, -1));
     } else {
       collector.add(new CompilerMessage(CompilerMessage.ERROR, exception.getMessage(), null, -1, -1));
     }

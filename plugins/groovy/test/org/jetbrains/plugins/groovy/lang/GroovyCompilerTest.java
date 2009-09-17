@@ -34,13 +34,15 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
@@ -54,6 +56,8 @@ import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author peter
@@ -91,7 +95,7 @@ public class GroovyCompilerTest extends JavaCodeInsightFixtureTestCase {
 
   public void testPlainGroovy() throws Throwable {
     myFixture.addFileToProject("A.groovy", "println '239'");
-    make();
+    assertEmpty(make());
     assertOutput("A", "239");
   }
 
@@ -106,7 +110,7 @@ public class GroovyCompilerTest extends JavaCodeInsightFixtureTestCase {
                                              "    239" +
                                              "  }" +
                                              "}");
-    make();
+    assertEmpty(make());
     assertOutput("Foo", "239");
   }
 
@@ -118,7 +122,7 @@ public class GroovyCompilerTest extends JavaCodeInsightFixtureTestCase {
                        "}");
     final String barText = "class Bar {" + "  def foo() { 239  }" + "}";
     final PsiFile file = myFixture.addFileToProject("Bar.groovy", barText);
-    make();
+    assertEmpty(make());
     assertOutput("Foo", "239");
 
     setFileText(file, "class Bar {}");
@@ -133,7 +137,7 @@ public class GroovyCompilerTest extends JavaCodeInsightFixtureTestCase {
     }
 
     setFileText(file, barText);
-    make();
+    assertEmpty(make());
     assertOutput("Foo", "239");
   }
 
@@ -147,7 +151,7 @@ public class GroovyCompilerTest extends JavaCodeInsightFixtureTestCase {
     final PsiFile bar =
       myFixture.addFileToProject("Bar.groovy", "public class Bar {" + "public int foo() { " + "  return 239;" + "}" + "}");
 
-    make();
+    assertEmpty(make());
     assertOutput("Foo", "239");
 
     new WriteCommandAction(getProject()) {
@@ -156,21 +160,77 @@ public class GroovyCompilerTest extends JavaCodeInsightFixtureTestCase {
       }
     }.execute();
 
-    make();
+    assertEmpty(make());
     assertOutput("Foo", "239");
+  }
+
+  public void testTransitiveJavaDependency() throws Throwable {
+    final VirtualFile ifoo = myFixture.addClass("public interface IFoo { int foo(); }").getContainingFile().getVirtualFile();
+    myFixture.addClass("public class Foo implements IFoo {" +
+                       "  public int foo() { return 239; }" +
+                       "}");
+    final PsiFile bar = myFixture.addFileToProject("Bar.groovy", "class Bar {" +
+                                                                 "Foo foo\n" +
+                                                                 "public static void main(String[] args) { " +
+                                                                 "  System.out.println(new Foo().foo());" +
+                                                                 "}" +
+                                                                 "}");
+    assertEmpty(make());
+    assertOutput("Bar", "239");
+
+    touch(ifoo);
+    touch(bar.getVirtualFile());
+
+    assertTrue(assertOneElement(make()).contains("WARNING: Groovyc stub generation failed"));
+    assertOutput("Bar", "239");
+  }
+
+  public void testDeleteTransitiveJavaClass() throws Throwable {
+    myFixture.addClass("public interface IFoo { int foo(); }");
+    myFixture.addClass("public class Foo implements IFoo {" +
+                       "  public int foo() { return 239; }" +
+                       "}");
+    final PsiFile bar = myFixture.addFileToProject("Bar.groovy", "class Bar {" +
+                                                                 "Foo foo\n" +
+                                                                 "public static void main(String[] args) { " +
+                                                                 "  System.out.println(new Foo().foo());" +
+                                                                 "}" +
+                                                                 "}");
+    assertEmpty(make());
+    assertOutput("Bar", "239");
+
+    deleteClassFile("IFoo");
+    touch(bar.getVirtualFile());
+
+    assertTrue(assertOneElement(make()).contains("WARNING: Groovyc stub generation failed"));
+    assertOutput("Bar", "239");
+  }
+
+  private void deleteClassFile(final String className) throws IOException {
+    new WriteCommandAction(getProject()) {
+      protected void run(Result result) throws Throwable {
+        ModuleRootManager.getInstance(myModule).getModuleExtension(CompilerModuleExtension.class).getCompilerOutputPath()
+          .findChild(className + ".class").delete(this);
+      }
+    }.execute();
+  }
+
+  private static void touch(VirtualFile file) throws IOException {
+    file.setBinaryContent(file.contentsToByteArray(), file.getModificationStamp() + 1, file.getTimeStamp() + 1);
   }
 
   private static void setFileText(PsiFile file, String barText) throws IOException {
     VfsUtil.saveText(file.getVirtualFile(), barText);
   }
 
-  private void make() {
+  private List<String> make() {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     final ErrorReportingCallback callback = new ErrorReportingCallback(semaphore);
     CompilerManager.getInstance(getProject()).make(callback);
     semaphore.waitFor();
     callback.throwException();
+    return callback.getMessages();
   }
 
   private void compile(VirtualFile... files) {
@@ -219,6 +279,7 @@ public class GroovyCompilerTest extends JavaCodeInsightFixtureTestCase {
   private static class ErrorReportingCallback implements CompileStatusNotification {
     private final Semaphore mySemaphore;
     private Throwable myError;
+    private List<String> myMessages = new ArrayList<String>();
 
     public ErrorReportingCallback(Semaphore semaphore) {
       mySemaphore = semaphore;
@@ -227,14 +288,16 @@ public class GroovyCompilerTest extends JavaCodeInsightFixtureTestCase {
     public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
       try {
         assertFalse("Code did not compile!", aborted);
-        if (errors > 0) {
-          StringBuilder errorBuilder = new StringBuilder();
-          for (CompilerMessageCategory category : CompilerMessageCategory.values()) {
-            for (CompilerMessage message : compileContext.getMessages(category)) {
-              errorBuilder.append(category).append(": ").append(message.getMessage()).append("\n");
+        for (CompilerMessageCategory category : CompilerMessageCategory.values()) {
+          for (CompilerMessage message : compileContext.getMessages(category)) {
+            final String msg = message.getMessage();
+            if (category != CompilerMessageCategory.INFORMATION || !msg.startsWith("Compilation completed successfully")) {
+              myMessages.add(category + ": " + msg);
             }
           }
-          fail("Compiler errors occurred! " + errorBuilder.toString());
+        }
+        if (errors > 0) {
+          fail("Compiler errors occurred! " + StringUtil.join(myMessages, "\n"));
         }
       }
       catch (Throwable t) {
@@ -251,5 +314,8 @@ public class GroovyCompilerTest extends JavaCodeInsightFixtureTestCase {
       }
     }
 
+    public List<String> getMessages() {
+      return myMessages;
+    }
   }
 }
