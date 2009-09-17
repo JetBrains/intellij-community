@@ -43,7 +43,7 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
   @NonNls public static final String GROOVY_ALL_JAR_PATTERN = "groovy-all-(.*)\\.jar";
 
   private static GroovyConfigUtils myGroovyConfigUtils;
-  @NonNls private static final String GROOVY_JAR_PATTERN = "groovy-(\\d.*)\\.jar";
+  @NonNls public static final String GROOVY_JAR_PATTERN = "groovy-(\\d.*)\\.jar";
   public static final String NO_VERSION = "<no version>";
 
   private GroovyConfigUtils() {

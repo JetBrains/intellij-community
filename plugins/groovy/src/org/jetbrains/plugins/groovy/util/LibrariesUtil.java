@@ -88,33 +88,60 @@ public class LibrariesUtil {
   }
 
   public static boolean isEmbeddableDistribution(VirtualFile[] classRoots) {
-    for (VirtualFile file : classRoots) {
-      if (file.getName().matches(GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN)) {
-        return true;
-      }
+    if (getGroovySdkHome(classRoots) != null) {
+      return false;
     }
-    return false;
+    return getEmbeddableGroovyJar(classRoots) != null;
   }
 
-  public static String getGroovyLibraryHome(VirtualFile[] classRoots) {
+  @Nullable
+  private static String getGroovySdkHome(VirtualFile[] classRoots) {
     for (VirtualFile file : classRoots) {
-      if (GroovyConfigUtils.isAnyGroovyJar(file.getName())) {
+      final String name = file.getName();
+      if (name.matches(GroovyConfigUtils.GROOVY_JAR_PATTERN)) {
         String jarPath = file.getPresentableUrl();
         File realFile = new File(jarPath);
         if (realFile.exists()) {
           File parentFile = realFile.getParentFile();
-          if (parentFile != null) {
-            if (parentFile.isDirectory() && !("lib".equals(parentFile.getName()) || "embeddable".equals(parentFile.getName())) /*for non-traditional distributions*/) {
-              return parentFile.getPath();
-            }
-            else {
-              File libHome = parentFile.getParentFile();
-              if (libHome != null) {
-                return libHome.getPath();
-              }
-            }
+          if (parentFile != null && "lib".equals(parentFile.getName())) {
+            return parentFile.getParent();
           }
         }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static String getEmbeddableGroovyJar(VirtualFile[] classRoots) {
+    for (VirtualFile file : classRoots) {
+      final String name = file.getName();
+      if (name.matches(GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN)) {
+        String jarPath = file.getPresentableUrl();
+        File realFile = new File(jarPath);
+        if (realFile.exists()) {
+          return realFile.getPath();
+        }
+      }
+    }
+    return null;
+  }
+
+  public static String getGroovyLibraryHome(VirtualFile[] classRoots) {
+    final String sdkHome = getGroovySdkHome(classRoots);
+    if (sdkHome != null) {
+      return sdkHome;
+    }
+
+    final String embeddable = getEmbeddableGroovyJar(classRoots);
+    if (embeddable != null) {
+      final File emb = new File(embeddable);
+      if (emb.exists()) {
+        final File parent = emb.getParentFile();
+        if ("embeddable".equals(parent.getName())) {
+          return parent.getParent();
+        }
+        return emb.getPath();
       }
     }
     return "";
