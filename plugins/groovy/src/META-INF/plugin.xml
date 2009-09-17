@@ -363,6 +363,16 @@
       <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.conversions.RemoveParenthesesFromMethodCallIntention</className>
     </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.RemoveUnnecessaryBracesInGStringIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.ConvertConcatenationToGstringIntention</className>
+    </intentionAction>
 
     <!-- groovy style -->
     <intentionAction>

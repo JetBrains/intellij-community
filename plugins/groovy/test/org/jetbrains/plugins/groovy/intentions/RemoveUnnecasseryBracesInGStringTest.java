@@ -14,32 +14,26 @@
  *  limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.intentions.closure.eachToFor;
-
-import org.jetbrains.plugins.groovy.intentions.GrIntentionTestCase;
+package org.jetbrains.plugins.groovy.intentions;
 
 /**
  * @author Maxim.Medvedev
  */
-public class EachToForIntentionTest extends GrIntentionTestCase {
+public class RemoveUnnecasseryBracesInGStringTest extends GrIntentionTestCase {  
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/intentions/EachToFor/";
+    return "/svnPlugins/groovy/testdata/intentions/removeUnnecessaryBraces/";
   }
 
-  public void testEachToFor() throws Throwable {
-    doTest("Replace with For-In", true);
+  public void testIntention() throws Exception {
+    doTest("Remove unnecessary braces in GString", true);
   }
 
-  public void testEachToForWithFinal() throws Throwable {
-    doTest("Replace with For-In", true);
+  public void testRefWithQualifier() throws Exception {
+    doTest("Remove unnecessary braces in GString", true);
   }
 
-  public void testEachToForWithDefaultVariable() throws Throwable {
-    doTest("Replace with For-In", true);
-  }
-
-  public void testEachForInWithNoQualifier () throws Throwable {
-    doTest("Replace with For-In", true);
+  public void testNoIntention() throws Exception {
+    doTest("Remove unnecessary braces in GString", false);
   }
 }

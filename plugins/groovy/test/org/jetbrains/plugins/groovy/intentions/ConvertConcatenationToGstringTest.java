@@ -14,32 +14,16 @@
  *  limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.intentions.closure.eachToFor;
-
-import org.jetbrains.plugins.groovy.intentions.GrIntentionTestCase;
+package org.jetbrains.plugins.groovy.intentions;
 
 /**
  * @author Maxim.Medvedev
  */
-public class EachToForIntentionTest extends GrIntentionTestCase {
+public class ConvertConcatenationToGstringTest extends GrIntentionTestCase{
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/intentions/EachToFor/";
+    return "/svnPlugins/groovy/testdata/intentions/convertConcatenationToGstring/";
   }
-
-  public void testEachToFor() throws Throwable {
-    doTest("Replace with For-In", true);
-  }
-
-  public void testEachToForWithFinal() throws Throwable {
-    doTest("Replace with For-In", true);
-  }
-
-  public void testEachToForWithDefaultVariable() throws Throwable {
-    doTest("Replace with For-In", true);
-  }
-
-  public void testEachForInWithNoQualifier () throws Throwable {
-    doTest("Replace with For-In", true);
-  }
+  public void testSimpleCase() throws Exception {doTest("Convert to GString", true); }
+  public void testVeryComplicatedCase() throws Exception {doTest("Convert to GString", true); }
 }
