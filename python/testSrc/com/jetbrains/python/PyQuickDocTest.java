@@ -64,6 +64,14 @@ public class PyQuickDocTest extends MarkedTestCase {
     processRefDocPair();
   }
 
+  public void testClassConstructor() throws Exception {
+    processRefDocPair();
+  }
+
+  public void testCallFunc() throws Exception {
+    processRefDocPair();
+  }
+
   public void testModule() throws Exception {
     processRefDocPair();
   }
