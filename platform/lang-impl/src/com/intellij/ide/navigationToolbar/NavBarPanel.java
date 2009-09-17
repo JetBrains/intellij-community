@@ -207,7 +207,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     final boolean childPopupInactive = child == null || !child.isFocused();
     if (nodePopupInactive && childPopupInactive) {
       final Component opposite = e.getOppositeComponent();
-      if (opposite != null && opposite != this && !isAncestorOf(opposite)) {
+      if (opposite != null && opposite != this && !isAncestorOf(opposite) && !e.isTemporary()) {
         hideHint();
       }
     }
