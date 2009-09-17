@@ -20,7 +20,6 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeView;
-import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
@@ -28,7 +27,6 @@ import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.actionSystem.impl.WeakTimerListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,7 +40,6 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
-import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -55,7 +52,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.pom.Navigatable;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
@@ -72,74 +68,43 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Observable;
-import java.util.Observer;
 
 /**
  * User: anna
  * Date: 03-Nov-2005
  */
 public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
-  private final Object myUpdateLock = new Object();
-  private static final Icon LEFT_ICON = IconLoader.getIcon("/general/splitLeft.png");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.navigationToolbar.NavigationToolbarPanel");
+  /*private static final Icon LEFT_ICON = IconLoader.getIcon("/general/splitLeft.png");
   private static final Icon RIGHT_ICON = IconLoader.getIcon("/general/splitRight.png");
+*/
+  private final ArrayList<MyItemLabel> myList = new ArrayList<MyItemLabel>();
 
-  private final ArrayList<MyCompositeLabel> myList = new ArrayList<MyCompositeLabel>();
-
-  private int myFirstIndex = 0;
-
-  private final InplaceButton myLeftButton = new InplaceButton(new IconButton("Scroll Left", LEFT_ICON), new ActionListener() {
-    public void actionPerformed(final ActionEvent e) {
-      selectLast();
-      shiftFocus(-1);
-    }
-  });
-  private final InplaceButton myRightButton = new InplaceButton(new IconButton("Scroll Right", RIGHT_ICON), new ActionListener() {
-    public void actionPerformed(final ActionEvent e) {
-      selectLast();
-      shiftFocus(1);
-    }
-  });
-  private final JPanel myScrollablePanel = new JPanel(new GridBagLayout());
-  private int myPreferredWidth;
   private final NavBarModel myModel;
   private final Project myProject;
-  private final MyPsiTreeChangeAdapter myPsiTreeChangeAdapter = new MyPsiTreeChangeAdapter();
-  private final MyProblemListener myProblemListener = new MyProblemListener();
-  private final MyFileStatusListener myFileStatusListener = new MyFileStatusListener();
-  private final MyTimerListener myTimerListener = new MyTimerListener();
+
+  private Runnable myDetacher;
   private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
+
   private final IdeView myIdeView = new MyIdeView();
   private final CopyPasteDelegator myCopyPasteDelegator;
   private LightweightHint myHint = null;
   private ListPopupImpl myNodePopup = null;
-  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.navigationToolbar.NavigationToolbarPanel");
-  private MessageBusConnection myConnection;
-  private WeakTimerListener myWeakTimerListener;
-  private static final int GAP_BETWEEN_LIST_ITEMS = 10;
+
+  private final Alarm myListUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myModelUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   public NavBarPanel(final Project project) {
+    super(new FlowLayout(FlowLayout.LEFT, 5, 0));
+
     myProject = project;
     myModel = new NavBarModel(myProject);
-    setLayout(new BorderLayout());
     setBackground(UIUtil.getListBackground());
-
-    myScrollablePanel.setBackground(UIUtil.getListBackground());
-
-    add(myScrollablePanel, BorderLayout.CENTER);
-
-    add(myLeftButton, BorderLayout.WEST);
-    myLeftButton.setVisible(false);
-    myLeftButton.setBorder(new EmptyBorder(0, 2, 0, 2));
-    add(myRightButton, BorderLayout.EAST);
-    myRightButton.setVisible(false);
-    myRightButton.setBorder(new EmptyBorder(0, 2, 0, 2));
+    setOpaque(true);
 
     PopupHandler.installPopupHandler(this, IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionPlaces.NAVIGATION_BAR);
 
@@ -190,12 +155,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     registerKeyboardAction(new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         final Object o = myModel.getSelectedValue();
-        if (myModel.hasChildren(o)) {
-          navigateInsideBar(o);
-        }
-        else {
-          doubleClick(myModel.getSelectedIndex());
-        }
+        navigateInsideBar(o);
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), WHEN_FOCUSED);
 
@@ -207,13 +167,16 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), WHEN_FOCUSED);
 
     addFocusListener(new FocusListener() {
-      public void focusGained(final FocusEvent e) {}
+      public void focusGained(final FocusEvent e) {
+        updateItems();
+      }
 
       public void focusLost(final FocusEvent e) {
         if (myProject.isDisposed()) {
           hideHint();
           return;
         }
+
         // required invokeLater since in current call sequence KeyboardFocusManager is not initialized yet
         // but future focused component
         SwingUtilities.invokeLater(new Runnable() {
@@ -226,15 +189,16 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
 
     installBorder(-1);
 
-    updateList();
     myCopyPasteDelegator = new CopyPasteDelegator(myProject, NavBarPanel.this) {
-
       @NotNull
       protected PsiElement[] getSelectedElements() {
         final PsiElement element = getSelectedElement(PsiElement.class);
         return element == null ? PsiElement.EMPTY_ARRAY : new PsiElement[]{element};
       }
     };
+
+    updateModel();
+    updateList();
   }
 
   private void processFocusLost(final FocusEvent e) {
@@ -247,95 +211,86 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
         hideHint();
       }
     }
+
+    updateItems();
   }
 
-  private void selectLast() {
-    if (myModel.getSelectedIndex() == -1 && !myModel.isEmpty()) {
-      myModel.setSelectedIndex(myModel.size() - 1);
-      IdeFocusManager.getInstance(myProject).requestFocus(myList.get(myModel.getSelectedIndex()), true);
+  private void updateItems() {
+    for (MyItemLabel item : myList) {
+      item.update();
     }
   }
 
   public void select() {
+    updateModel();
+    updateList();
+    
     if (!myList.isEmpty()) {
       myModel.setSelectedIndex(myList.size() - 1);
-      rebuildComponent();
-      scrollSelectionToVisible(1);
       IdeFocusManager.getInstance(myProject).requestFocus(this, true);
     }
   }
 
   private void shiftFocus(int direction) {
-    if (myModel.setSelectedIndex(myModel.getIndexByMode(myModel.getSelectedIndex() + direction))) {
-      scrollSelectionToVisible(direction);
-    }
+    myModel.setSelectedIndex(myModel.getIndexByModel(myModel.getSelectedIndex() + direction));
   }
 
-  private void scrollSelectionToVisible(final int direction) {
+  private void scrollSelectionToVisible() {
     final int selectedIndex = myModel.getSelectedIndex();
     if (selectedIndex == -1 || selectedIndex >= myList.size()) return;
-    final int firstIndex = myFirstIndex;
-    while (!myList.get(selectedIndex).isShowing()) {
-      myFirstIndex = myModel.getIndexByMode(myFirstIndex + direction);
-      rebuildComponent();
-      if (firstIndex == myFirstIndex) break; //to be sure not to hang
-    }
-    setSize(getPreferredSize());  //not to miss right button && font corrections
-    repaint();
+
+    MyItemLabel selectedItem = myList.get(selectedIndex);
+    Rectangle rect = selectedItem.getBounds();
+    scrollRectToVisible(rect);
   }
 
   @Nullable
-  private MyCompositeLabel getItem(int index) {
+  private MyItemLabel getItem(int index) {
     if (index != -1 && index < myList.size()) {
       return myList.get(index);
     }
     return null;
   }
 
-  /**
-   * to be invoked by alarm
-   */
-  private void updateList() {
-    final DataManagerImpl dataManager = (DataManagerImpl)DataManager.getInstance();
-    final Component focusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(myProject);
-
-    final JBPopup childPopup = JBPopupFactory.getInstance().getChildPopup(this);
-
-    final boolean nodePopupShowing = focusedComponent == null ||
-                                     focusedComponent == this ||
-                                     isAncestorOf(focusedComponent) ||
-                                     (myNodePopup != null && myNodePopup.isVisible());
-    if (nodePopupShowing || (childPopup != null && childPopup.isFocused())) {
-      immediateUpdateList(false);
-    }
-    else {
-      final DataContext dataContext = dataManager.getDataContextTest(this);
-      immediateUpdateList(myModel.updateModel(dataContext));
+  private void scheduleModelUpdate() {
+    myModelUpdateAlarm.cancelAllRequests();
+    if (!isInFloatingMode() && !isNodePopupShowing()) {
+      myModelUpdateAlarm.addRequest(new Runnable() {
+        public void run() {
+          if (myProject.isDisposed()) return;
+          updateModel();
+        }
+      }, 300);
     }
   }
 
-  private void immediateUpdateList(boolean update) {
-    synchronized (myUpdateLock) {
-      if (update) {
-        myFirstIndex = 0;
-        final int selectedIndex1 = -1;
-        myModel.setSelectedIndex(selectedIndex1);
-        myList.clear();
-        for (int index = 0; index < myModel.size(); index++) {
-          final Object object = myModel.get(index);
-          final Icon closedIcon = getIcon(object, false);
-          final Icon openIcon = getIcon(object, true);
-          final MyCompositeLabel label = new MyCompositeLabel(index,
-                                                              wrapIcon(openIcon, closedIcon, index),
-                                                              NavBarModel.getPresentableText(object, getWindow()),
-                                                              myModel.getTextAttributes(object, false), myModel);
+  private boolean isInFloatingMode() {
+    return myHint != null && myHint.isVisible();
+  }
 
-          installActions(index, label);
-          myList.add(label);
-        }
-        rebuildComponent();
-      }
+  private void updateModel() {
+    DataContext context = DataManager.getInstance().getDataContext();
+
+    if (context.getData(DataConstants.IDE_VIEW) == myIdeView) return;
+
+    myModel.updateModel(context);
+  }
+
+  private void updateList() {
+    myList.clear();
+    for (int index = 0; index < myModel.size(); index++) {
+      final Object object = myModel.get(index);
+      final Icon closedIcon = getIcon(object, false);
+      final Icon openIcon = getIcon(object, true);
+      final MyItemLabel label =
+        new MyItemLabel(index, wrapIcon(openIcon, closedIcon, index), NavBarModel.getPresentableText(object, getWindow()),
+                             myModel.getTextAttributes(object, false));
+
+      installActions(index, label);
+      myList.add(label);
     }
+
+    rebuildComponent();
   }
 
   @Nullable
@@ -365,11 +320,11 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   private Icon wrapIcon(final Icon openIcon, final Icon closedIcon, final int idx) {
     return new Icon() {
       public void paintIcon(Component c, Graphics g, int x, int y) {
-        if (myModel.getSelectedIndex() != idx || myNodePopup == null || !myNodePopup.isVisible()) {
-          closedIcon.paintIcon(c, g, x, y);
+        if (myModel.getSelectedIndex() == idx && myNodePopup != null && myNodePopup.isVisible()) {
+          openIcon.paintIcon(c, g, x, y);
         }
         else {
-          openIcon.paintIcon(c, g, x, y);
+          closedIcon.paintIcon(c, g, x, y);
         }
       }
 
@@ -384,78 +339,20 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   }
 
   private void rebuildComponent() {
-    myPreferredWidth = 0;
-    myScrollablePanel.removeAll();
-    myScrollablePanel.invalidate();
-    final GridBagConstraints gc = new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 0, 1, GridBagConstraints.WEST,
-                                                         GridBagConstraints.NONE,
-                                                         new Insets(0, GAP_BETWEEN_LIST_ITEMS / 2, 0, GAP_BETWEEN_LIST_ITEMS / 2), 0, 0);
-    final MyCompositeLabel toBeContLabel = getDotsLabel();
-    final int additionalWidth = toBeContLabel.getPreferredSize().width;
-    final Window window = SwingUtilities.getWindowAncestor(this);
-    final int availableWidth = window != null ? window.getWidth() - 2 * LEFT_ICON.getIconWidth() - 2 * additionalWidth : 0;
-    int lastIndx = -1;
-    if (myModel.getSelectedIndex() != -1) {
-      myScrollablePanel.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
-      if (myFirstIndex > 0) {
-        final MyCompositeLabel preList = getDotsLabel();
-        myScrollablePanel.add(preList, gc);
-        myPreferredWidth += additionalWidth;
-      }
-      for (int i = myFirstIndex; i < myList.size(); i++) {
-        final MyCompositeLabel linkLabel = myList.get(i);
-        final int labelWidth = linkLabel.getPreferredSize().width;
-        if (myPreferredWidth + labelWidth < availableWidth) {
-          myScrollablePanel.add(linkLabel, gc);
-          myPreferredWidth += labelWidth + GAP_BETWEEN_LIST_ITEMS;
-        }
-        else {
-          myScrollablePanel.add(toBeContLabel, gc);
-          myPreferredWidth += additionalWidth;
-          lastIndx = i;
-          break;
-        }
-      }
-      gc.weightx = 1;
-      gc.fill = GridBagConstraints.HORIZONTAL;
-      myScrollablePanel.add(Box.createHorizontalBox(), gc);
+    removeAll();
+
+    for (MyItemLabel item : myList) {
+      add(item);
     }
-    else if (!myModel.isEmpty()) {
-      myScrollablePanel.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
-
-      gc.weightx = 1;
-      gc.fill = GridBagConstraints.HORIZONTAL;
-      myScrollablePanel.add(Box.createHorizontalBox(), gc);
-
-      gc.weightx = 0;
-      gc.fill = GridBagConstraints.NONE;
-      for (int i = myModel.size() - 1; i >= 0; i--) {
-        final MyCompositeLabel linkLabel = myList.get(i);
-        final int labelWidth = linkLabel.getPreferredSize().width;
-        if (availableWidth == 0 || myPreferredWidth + labelWidth < availableWidth) {
-          myScrollablePanel.add(linkLabel, gc);
-          myPreferredWidth += labelWidth + GAP_BETWEEN_LIST_ITEMS;
-        }
-        else {
-          myFirstIndex = i + 1;
-          myScrollablePanel.add(toBeContLabel, gc);
-          myPreferredWidth += additionalWidth;
-          break;
-        }
-      }
-    }
-
-    myPreferredWidth += 2 * LEFT_ICON.getIconWidth();
-    final boolean hasNavigationButtons = lastIndx > 0 || myFirstIndex > 0;
-    myLeftButton.setVisible(hasNavigationButtons);
-    myRightButton.setVisible(hasNavigationButtons);
 
     revalidate();
     repaint();
-  }
 
-  private MyCompositeLabel getDotsLabel() {
-    return new MyCompositeLabel(-1, null, "...", SimpleTextAttributes.REGULAR_ATTRIBUTES, myModel);
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        scrollSelectionToVisible();
+      }
+    });
   }
 
   private Window getWindow() {
@@ -463,7 +360,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   }
 
   // ------ NavBar actions -------------------------
-  private void installActions(final int index, final MyCompositeLabel component) {
+  private void installActions(final int index, final MyItemLabel component) {
     ListenerUtil.addMouseListener(component, new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
         if (!e.isConsumed() && !e.isPopupTrigger() && e.getClickCount() == 2) {
@@ -544,7 +441,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   }
 
   private void ctrlClick(final int index) {
-    if (myNodePopup != null && myNodePopup.isVisible()) {
+    if (isNodePopupShowing()) {
       cancelPopup();
       if (myModel.getSelectedIndex() == index) {
         return;
@@ -553,6 +450,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
 
     final Object object = myModel.getElement(index);
     final List<Object> objects = myModel.calcElementChildren(object);
+
     if (!objects.isEmpty()) {
       final Object[] siblings = new Object[objects.size()];
       final Icon[] icons = new Icon[objects.size()];
@@ -560,23 +458,14 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
         siblings[i] = objects.get(i);
         icons[i] = getIcon(siblings[i], false);
       }
-      final MyCompositeLabel item = getItem(index);
+      final MyItemLabel item = getItem(index);
       LOG.assertTrue(item != null);
       final BaseListPopupStep<Object> step = new BaseListPopupStep<Object>("", siblings, icons) {
         public boolean isSpeedSearchEnabled() { return true; }
         @NotNull public String getTextFor(final Object value) { return NavBarModel.getPresentableText(value, null);}
         public boolean isSelectable(Object value) { return true; }
         public PopupStep onChosen(final Object selectedValue, final boolean finalChoice) {
-          if (!myModel.hasChildren(selectedValue)) {
-            doubleClick(selectedValue);
-          }
-          else {
-            SwingUtilities.invokeLater(new Runnable(){
-              public void run() {
-                navigateInsideBar(selectedValue);
-              }
-            });
-          }
+          navigateInsideBar(selectedValue);
           return FINAL_CHOICE;
         }
 
@@ -629,15 +518,19 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
           }
         }
       });
-      validate();
-      myNodePopup.showUnderneathOf(item.getColoredComponent());
+
+      myNodePopup.showUnderneathOf(item);
     }
-    repaint();
   }
 
-  private void navigateInsideBar(Object object) {
+  private boolean isNodePopupShowing() {
+    return myNodePopup != null && myNodePopup.isVisible();
+  }
+
+  private void navigateInsideBar(final Object object) {
     myModel.updateModel(object);
-    immediateUpdateList(true);
+    updateList();
+    
     myModel.setSelectedIndex(myList.size() - 1);
 
     if (myHint != null) {
@@ -646,15 +539,23 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       myHint.setBounds(bounds.x, bounds.y, dimension.width, dimension.height);
     }
 
-    revalidate(); //calc bounds
-    restorePopup();
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        if (myModel.hasChildren(object)) {
+          restorePopup();
+        }
+        else {
+          doubleClick(object);
+        }
+      }
+    });
   }
 
   private void rightClick(final int index) {
     final ActionManager actionManager = ActionManager.getInstance();
     final ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_NAVBAR_POPUP);
     final ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.NAVIGATION_BAR, group);
-    final MyCompositeLabel item = getItem(index);
+    final MyItemLabel item = getItem(index);
     if (item != null) {
       popupMenu.getComponent().show(this, item.getX(), item.getY() + item.getHeight());
     }
@@ -677,14 +578,6 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       myHint.hide();
       myHint = null;
     }
-  }
-
-  public Dimension getPreferredSize() {
-    return new JButton("1").getPreferredSize();
-  }
-
-  protected int getPreferredWidth() {
-    return myPreferredWidth + 2 * LEFT_ICON.getIconWidth();
   }
 
   @Nullable
@@ -758,7 +651,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       index = modelSize - 1;
     }
     if (index > -1 && index < modelSize) {
-      final MyCompositeLabel item = getItem(index);
+      final MyItemLabel item = getItem(index);
       if (item != null) {
         return new Point(item.getX(), item.getY() + item.getHeight());
       }
@@ -768,23 +661,53 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
 
   // ----- inplace NavBar -----------
   public void installListeners() {
-    myConnection = myProject.getMessageBus().connect();
+    final MyPsiTreeChangeAdapter psiListener = new MyPsiTreeChangeAdapter();
+    final MyProblemListener problemListener = new MyProblemListener();
+    final MyFileStatusListener fileStatusListener = new MyFileStatusListener();
+    final MyTimerListener timerListener = new MyTimerListener();
 
-    PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeAdapter);
-    myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyModuleRootListener());
-    WolfTheProblemSolver.getInstance(myProject).addProblemListener(myProblemListener);
-    FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener);
+
+    PsiManager.getInstance(myProject).addPsiTreeChangeListener(psiListener);
+    WolfTheProblemSolver.getInstance(myProject).addProblemListener(problemListener);
+    FileStatusManager.getInstance(myProject).addFileStatusListener(fileStatusListener);
+
+    final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+    actionManager.addTimerListener(10000, timerListener);
+
+    final MessageBusConnection busConnection = myProject.getMessageBus().connect();
+    busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyModuleRootListener());
+    busConnection.subscribe(NavBarModelListener.NAV_BAR, new NavBarModelListener() {
+      public void modelChanged() {
+        scheduleListUpdate();
+      }
+
+      public void selectionChanged() {
+        updateItems();
+
+        scrollSelectionToVisible();
+      }
+    });
+
+    if (myDetacher != null) uninstallListeners();
+
+    myDetacher = new Runnable() {
+      public void run() {
+        ActionManagerEx.getInstanceEx().removeTimerListener(timerListener);
+        busConnection.disconnect();
+
+        WolfTheProblemSolver.getInstance(myProject).removeProblemListener(problemListener);
+        PsiManager.getInstance(myProject).removePsiTreeChangeListener(psiListener);
+        FileStatusManager.getInstance(myProject).removeFileStatusListener(fileStatusListener);
+      }
+    };
   }
 
   public void uninstallListeners() {
-    if (myConnection != null) {
-      myConnection.disconnect();
-    }
+    myDetacher.run();
+    myDetacher = null;
 
-    WolfTheProblemSolver.getInstance(myProject).removeProblemListener(myProblemListener);
-    PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeAdapter);
-    FileStatusManager.getInstance(myProject).removeFileStatusListener(myFileStatusListener);
-    myUpdateAlarm.cancelAllRequests();
+    myListUpdateAlarm.cancelAllRequests();
+    myModelUpdateAlarm.cancelAllRequests();
   }
 
   public void installBorder(final int rightOffset) {
@@ -805,7 +728,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       }
 
       public Insets getBorderInsets(final Component c) {
-        return new Insets(1, 1, 1, 1);
+        return new Insets(4, 4, 4, 4);
       }
 
       public boolean isBorderOpaque() {
@@ -816,20 +739,20 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
 
   public void addNotify() {
     super.addNotify();
-    final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    myWeakTimerListener = new WeakTimerListener(actionManager, myTimerListener);
-    actionManager.addTimerListener(10000, myWeakTimerListener);
+    installListeners();
   }
 
   public void removeNotify() {
     super.removeNotify();
-    ActionManagerEx.getInstanceEx().removeTimerListener(myWeakTimerListener);
+    uninstallListeners();
   }
 
   public void updateState(final boolean show) {
+    updateModel();
+    updateList();
     final int selectedIndex = myModel.getSelectedIndex();
     if (show && selectedIndex > -1 && selectedIndex < myModel.size()) {
-      final MyCompositeLabel item = getItem(selectedIndex);
+      final MyItemLabel item = getItem(selectedIndex);
       if (item != null) {
         IdeFocusManager.getInstance(myProject).requestFocus(item, true);
       }
@@ -838,7 +761,8 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
 
   // ------ popup NavBar ----------
   public void showHint(@Nullable final Editor editor, final DataContext dataContext) {
-    updateList();
+    updateModel();
+
     if (myModel.isEmpty()) return;
     myHint = new LightweightHint(this) {
       public void hide() {
@@ -893,95 +817,52 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     });
   }
 
-  protected static class MyCompositeLabel extends JPanel implements Observer {
-    private final JLabel myLabel;
-    private final SimpleColoredComponent myColoredComponent;
+  @Override
+  public void paint(Graphics g) {
+    super.paint(g);
+  }
 
+  protected class MyItemLabel extends SimpleColoredComponent {
     private final String myText;
     private final SimpleTextAttributes myAttributes;
     private final int myIndex;
-    private int myLastSelectedIndex = -1;
+    private final Icon myIcon;
 
-    private final NavBarModel myModel;
-
-    public MyCompositeLabel(final int idx, final Icon icon, @NotNull final String presentableText, final SimpleTextAttributes textAttributes, NavBarModel model) {
-      super(new GridBagLayout());
-      myModel = model;
+    public MyItemLabel(int idx, Icon icon, String presentableText, SimpleTextAttributes textAttributes) {
       myIndex = idx;
       myText = presentableText;
+      myIcon = icon;
       myAttributes = textAttributes;
-      final GridBagConstraints gc = new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0, GridBagConstraints.WEST,
-                                                           GridBagConstraints.NONE, new Insets(0, 2, 0, 0), 0, 0);
-      setFont(UIUtil.getLabelFont());
-      setBackground(UIUtil.getListBackground());
-      setOpaque(true);
-      myLabel = new JLabel(icon);
-      myLabel.setOpaque(false);
-      add(myLabel, gc);
 
-      myColoredComponent = new SimpleColoredComponent() {
-        {
-          setPaintFocusBorder(true);
-          setFocusBorderAroundIcon(true);
-          setOpaque(true);
-        }
-      };
-      myColoredComponent.setIpad(new Insets(0, -1, 0, -1));
-      myColoredComponent.append(presentableText, textAttributes);
-      myColoredComponent.setOpaque(true);
-      add(myColoredComponent, gc);
-
+      setIpad(new Insets(0, 2, 0, 2));
+      
       update();
     }
 
-    public JLabel getLabel() {
-      return myLabel;
-    }
-
-    public SimpleColoredComponent getColoredComponent() {
-      return myColoredComponent;
-    }
-
-    @Override
-    public void addNotify() {
-      super.addNotify();
-      myModel.addSelectionObserver(this);
-    }
-
-    @Override
-    public void removeNotify() {
-      super.removeNotify();
-      myModel.removeSelectionObserver(this);
-    }
-
-    public void update(final Observable o, final Object arg) {
-      if (myLastSelectedIndex != myModel.getSelectedIndex()) {
-        update();
-        myLastSelectedIndex = myModel.getSelectedIndex();
-      }
-    }
-
     private void update() {
-      final Runnable updateRunnable = new Runnable() {
-        public void run() {
-          myColoredComponent.clear();
-          final boolean selected = myModel.getSelectedIndex() == myIndex;
-          final Color fg = selected
-                           ? UIUtil.getListSelectionForeground()
-                           : myModel.getSelectedIndex() < myIndex && myModel.getSelectedIndex() != -1
-                             ? UIUtil.getInactiveTextColor()
-                             : myAttributes.getFgColor();
-          final Color bg = selected ? UIUtil.getListSelectionBackground() : myAttributes.getBgColor();
-          myColoredComponent.append(myText, new SimpleTextAttributes(bg, fg, myAttributes.getWaveColor(), myAttributes.getStyle()));
-          if (selected || (myModel.getSelectedIndex() == -1 && myIndex == myModel.size() - 1)) {
-            myColoredComponent.setBorder(new DottedBorder(new Insets(0, 0, 0, 0), UIUtil.getListForeground()));
-          }
-          else {
-            myColoredComponent.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-          }
-        }
-      };
-      SwingUtilities.invokeLater(updateRunnable);
+      clear();
+
+      setIcon(myIcon);
+      boolean focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == NavBarPanel.this;
+
+      boolean selected = myModel.getSelectedIndex() == myIndex;
+
+      setPaintFocusBorder(selected);
+      setFocusBorderAroundIcon(selected);
+
+      setBackground(selected && focused ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
+
+      final Color fg = selected && focused
+                       ? UIUtil.getListSelectionForeground()
+                       : myModel.getSelectedIndex() < myIndex && myModel.getSelectedIndex() != -1
+                         ? UIUtil.getInactiveTextColor()
+                         : myAttributes.getFgColor();
+
+      final Color bg = selected && focused ? UIUtil.getListSelectionBackground() : myAttributes.getBgColor();
+
+      append(myText, new SimpleTextAttributes(bg, fg, myAttributes.getWaveColor(), myAttributes.getStyle()));
+
+      repaint();
     }
   }
 
@@ -1007,7 +888,9 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
         }
       }
 
-      updateList();
+      if (isNodePopupShowing()) return;
+
+      scheduleModelUpdate();
     }
 
   }
@@ -1016,7 +899,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
 
     public void selectElement(PsiElement element) {
       myModel.updateModel(element);
-      immediateUpdateList(true);
+
       if (element instanceof Navigatable) {
         final Navigatable navigatable = (Navigatable)element;
         if (navigatable.canNavigate()) {
@@ -1065,49 +948,35 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
 
   }
 
-  private void updateListLater() {
-    myUpdateAlarm.cancelAllRequests();
-    myUpdateAlarm.addRequest(new Runnable() {
+  private void scheduleListUpdate() {
+    myListUpdateAlarm.cancelAllRequests();
+    myListUpdateAlarm.addRequest(new Runnable() {
       public void run() {
         if (myProject.isDisposed()) return;
-        immediateUpdateList(true);
-        //rebuildComponent();
+        updateList();
       }
-    }, 500);
+    }, 50);
   }
 
   private class MyPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
     public void childAdded(PsiTreeChangeEvent event) {
-      updateListLater();
-    }
-
-    public void beforeChildRemoval(final PsiTreeChangeEvent event) {
-      myUpdateAlarm.cancelAllRequests();
-      myUpdateAlarm.addRequest(new Runnable() {
-        public void run() {
-          if (myProject.isDisposed()) return;
-          immediateUpdateList(myModel.updateModel(event.getParent()));
-        }
-      }, 500);
+      scheduleModelUpdate();
     }
 
     public void childReplaced(PsiTreeChangeEvent event) {
-      updateListLater();
+      scheduleModelUpdate();
     }
 
     public void childMoved(PsiTreeChangeEvent event) {
-      updateListLater();
+      scheduleModelUpdate();
     }
 
     public void childrenChanged(PsiTreeChangeEvent event) {
-      updateListLater();
+      scheduleModelUpdate();
     }
 
     public void propertyChanged(final PsiTreeChangeEvent event) {
-      final String propertyName = event.getPropertyName();
-      if (propertyName.equals(PsiTreeChangeEvent.PROP_FILE_NAME) || propertyName.equals(PsiTreeChangeEvent.PROP_DIRECTORY_NAME)) {
-        updateListLater();
-      }
+      scheduleModelUpdate();
     }
   }
 
@@ -1116,18 +985,18 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     }
 
     public void rootsChanged(ModuleRootEvent event) {
-      updateListLater();
+      scheduleModelUpdate();
     }
   }
 
   private class MyProblemListener extends WolfTheProblemSolver.ProblemListener {
 
     public void problemsAppeared(VirtualFile file) {
-      updateListLater();
+      scheduleListUpdate();
     }
 
     public void problemsDisappeared(VirtualFile file) {
-      updateListLater();
+      scheduleListUpdate();
     }
 
   }
@@ -1135,11 +1004,11 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   private class MyFileStatusListener implements FileStatusListener {
 
     public void fileStatusesChanged() {
-      updateListLater();
+      scheduleListUpdate();
     }
 
     public void fileStatusChanged(@NotNull VirtualFile virtualFile) {
-      updateListLater();
+      scheduleListUpdate();
     }
   }
 

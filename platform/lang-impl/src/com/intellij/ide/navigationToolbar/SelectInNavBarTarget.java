@@ -29,6 +29,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import org.jetbrains.annotations.NonNls;
 
+import javax.swing.*;
+
 /**
  * User: anna
  * Date: 09-Nov-2005
@@ -61,7 +63,15 @@ public class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Du
 
   protected void select(final Object selector, VirtualFile virtualFile, final boolean requestFocus) {
     final IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(myProject);
-    ((NavBarPanel)((IdeRootPane)frame.getRootPane()).findByName(NavBarRootPaneExtension.NAV_BAR).getComponent()).select();
+    navBar(frame).select();
+  }
+
+  private static NavBarPanel navBar(IdeFrameImpl frame) {
+    return ((NavBarPanel)navBarComponent(frame).getClientProperty("NavBarPanel"));
+  }
+
+  private static JComponent navBarComponent(IdeFrameImpl frame) {
+    return ((IdeRootPane)frame.getRootPane()).findByName(NavBarRootPaneExtension.NAV_BAR).getComponent();
   }
 
   protected boolean canWorkWithCustomObjects() {
@@ -70,7 +80,7 @@ public class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Du
 
   protected void select(PsiElement element, boolean requestFocus) {
     final IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(myProject);
-    ((NavBarPanel)((IdeRootPane)frame.getRootPane()).findByName(NavBarRootPaneExtension.NAV_BAR).getComponent()).select();
+    navBar(frame).select();
   }
 
 }

@@ -20,7 +20,6 @@ import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -41,23 +40,16 @@ import java.util.List;
 public class NavBarModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.navigationToolbar.NavBarModel");
 
-  private final ArrayList<Object> myModel = new ArrayList<Object>();
+  private List<Object> myModel = Collections.emptyList();
   private int mySelectedIndex;
   private final Project myProject;
 
-  private final MyObservable myObservable = new MyObservable();
   private final static SimpleTextAttributes WOLFED = new SimpleTextAttributes(null, null, Color.red, SimpleTextAttributes.STYLE_WAVED);
+  private final NavBarModelListener myNotificator;
 
   public NavBarModel(final Project project) {
     myProject = project;
-  }
-
-  public void addElement(Object object) {
-    myModel.add(object);
-  }
-
-  public void removeAllElements() {
-    myModel.clear();
+    myNotificator = project.getMessageBus().syncPublisher(NavBarModelListener.NAV_BAR);
   }
 
   public int getSelectedIndex() {
@@ -85,49 +77,40 @@ public class NavBarModel {
     return myModel.isEmpty();
   }
 
-  public int getIndexByMode(int index) {
+  public int getIndexByModel(int index) {
     if (index < 0) return myModel.size() + index;
     if (index >= myModel.size() && myModel.size() > 0) return index % myModel.size();
     return index;
   }
 
-  protected boolean updateModel(DataContext dataContext) {
-    if (LaterInvocator.isInModalContext()) return false;
+  protected void updateModel(DataContext dataContext) {
+    if (LaterInvocator.isInModalContext()) return;
     PsiElement psiElement = LangDataKeys.PSI_FILE.getData(dataContext);
     if (psiElement == null) {
       psiElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     }
+
     psiElement = normalize(psiElement);
     if (psiElement != null && psiElement.isValid()) {
-      return updateModel(psiElement);
+      updateModel(psiElement);
     }
     else {
-      if (UISettings.getInstance().SHOW_NAVIGATION_BAR) {
-        return false;
-      }
+      if (UISettings.getInstance().SHOW_NAVIGATION_BAR) return;
+
       Object moduleOrProject = LangDataKeys.MODULE.getData(dataContext);
       if (moduleOrProject == null) {
         moduleOrProject = LangDataKeys.PROJECT.getData(dataContext);
       }
+
       if (moduleOrProject != null) {
-        if (size() == 1 && getElement(0) == moduleOrProject) { //no need to update
-          return false;
-        }
-        removeAllElements();
-        addElement(moduleOrProject);
+        setModel(Collections.singletonList(moduleOrProject));
       }
     }
-    return true;
+
   }
 
-  protected boolean updateModel(final PsiElement psiElement) {
-    final int oldModelSize = size();
-    final List<Object> oldModel = new ArrayList<Object>();
-    for (int i = 0; i < oldModelSize; i++) {
-      oldModel.add(getElement(i));
-    }
-    removeAllElements();
-    //addElement(myProject);
+  protected void updateModel(final PsiElement psiElement) {
+
     final Set<VirtualFile> roots = new HashSet<VirtualFile>();
     final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
     final ProjectFileIndex projectFileIndex = projectRootManager.getFileIndex();
@@ -139,19 +122,24 @@ public class NavBarModel {
       }
     }
 
+    final List<Object> updatedModel = new ArrayList<Object>();
+
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        traverseToRoot(psiElement, roots);
+        traverseToRoot(psiElement, roots, updatedModel);
       }
     });
-    if (oldModelSize == size()) {
-      for (int i = 0; i < oldModelSize; i++) {
-        if (!Comparing.equal(oldModel.get(i), getElement(i))) return true;
-      }
-      return false;
-    }
-    else {
-      return true;
+
+    setModel(updatedModel);
+  }
+
+  private void setModel(List<Object> model) {
+    if (!model.equals(myModel)) {
+      myModel = model;
+      myNotificator.modelChanged();
+
+      mySelectedIndex = myModel.size() - 1;
+      myNotificator.selectionChanged();
     }
   }
 
@@ -160,13 +148,14 @@ public class NavBarModel {
       updateModel((PsiElement)object);
     }
     else if (object instanceof Module) {
-      removeAllElements();
-      addElement(myProject);
-      addElement(object);
+      List<Object> l = new ArrayList<Object>();
+      l.add(myProject);
+      l.add(object);
+      setModel(l);
     }
   }
 
-  private void traverseToRoot(@NotNull PsiElement psiElement, Set<VirtualFile> roots) {
+  private void traverseToRoot(@NotNull PsiElement psiElement, Set<VirtualFile> roots, List<Object> model) {
     if (!psiElement.isValid()) return;
     final PsiFile containingFile = psiElement.getContainingFile();
     if (containingFile != null &&
@@ -179,7 +168,7 @@ public class NavBarModel {
       }
       final PsiDirectory containingDirectory = containingFile.getContainingDirectory();
       if (containingDirectory != null) {
-        traverseToRoot(containingDirectory, roots);
+        traverseToRoot(containingDirectory, roots, model);
       }
     }
     else if (psiElement instanceof PsiDirectory) {
@@ -197,7 +186,7 @@ public class NavBarModel {
 
 
         if (parentDirectory != null) {
-          traverseToRoot(parentDirectory, roots);
+          traverseToRoot(parentDirectory, roots, model);
         }
       }
     }
@@ -216,7 +205,7 @@ public class NavBarModel {
       if (parentVFile != null && !roots.contains(parentVFile)) {
         final PsiDirectory parentDirectory = psiManager.findDirectory(parentVFile);
         if (parentDirectory != null) {
-          traverseToRoot(parentDirectory, roots);
+          traverseToRoot(parentDirectory, roots, model);
         }
       }
     }
@@ -225,11 +214,11 @@ public class NavBarModel {
       for (final NavBarModelExtension modelExtension : Extensions.getExtensions(NavBarModelExtension.EP_NAME)) {
         final PsiElement parent = modelExtension.getParent(el);
         if (parent != null) {
-          traverseToRoot(parent, roots);
+          traverseToRoot(parent, roots, model);
         }
       }
     }
-    addElement(resultElement);
+    model.add(resultElement);
   }
 
 
@@ -424,19 +413,15 @@ public class NavBarModel {
     return result;
   }
 
-  public int indexOf(final Object object) {
-    return myModel.indexOf(object);
-  }
-
   public Object get(final int index) {
     return myModel.get(index);
   }
 
-  public boolean setSelectedIndex(final int selectedIndex) {
-    if (mySelectedIndex == selectedIndex) return false;
-    mySelectedIndex = selectedIndex;
-    myObservable.fireChange();
-    return true;
+  public void setSelectedIndex(final int selectedIndex) {
+    if (mySelectedIndex != selectedIndex) {
+      mySelectedIndex = selectedIndex;
+      myNotificator.selectionChanged();
+    }
   }
 
   private static final class SiblingsComparator implements Comparator<Object> {
@@ -469,22 +454,6 @@ public class NavBarModel {
         return Pair.create(3, ((PsiNamedElement)object).getName());
       }
       return null;
-    }
-  }
-
-  public void addSelectionObserver(Observer observer) {
-    myObservable.addObserver(observer);
-  }
-
-  public void removeSelectionObserver(Observer observer) {
-    myObservable.deleteObserver(observer);
-  }
-
-
-  private static class MyObservable extends Observable {
-    public void fireChange() {
-      setChanged();
-      notifyObservers();
     }
   }
 }

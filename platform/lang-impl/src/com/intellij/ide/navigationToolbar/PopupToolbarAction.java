@@ -9,8 +9,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 
-import java.awt.*;
-
 /**
  * User: anna
  * Date: 19-Dec-2005
@@ -28,12 +26,7 @@ public class PopupToolbarAction extends AnAction implements DumbAware {
       return;
     }
     final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    final NavBarPanel toolbarPanel = new NavBarPanel(project) {
-      public Dimension getPreferredSize() {
-        final Dimension dimension = super.getPreferredSize();
-        return new Dimension(getPreferredWidth(), dimension.height);
-      }
-    };
+    final NavBarPanel toolbarPanel = new NavBarPanel(project);
     toolbarPanel.showHint(editor, dataContext);
   }
 

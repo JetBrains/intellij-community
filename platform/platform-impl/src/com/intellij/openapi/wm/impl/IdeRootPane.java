@@ -45,7 +45,7 @@ public class IdeRootPane extends JRootPane{
   private JComponent myToolbar;
   private StatusBarImpl myStatusBar;
 
-  private final JPanel myNorthPanel = new JPanel(new GridBagLayout());
+  private final Box myNorthPanel = Box.createVerticalBox();
   private final List<IdeRootPaneNorthExtension> myNorthComponents = new ArrayList<IdeRootPaneNorthExtension>();
 
   /**
@@ -163,7 +163,7 @@ public class IdeRootPane extends JRootPane{
       myNorthPanel.remove(myToolbar);
     }
     myToolbar = createToolbar();
-    myNorthPanel.add(myToolbar, new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0,0));
+    myNorthPanel.add(myToolbar);
     updateToolbarVisibility();
     myContentPane.revalidate();
   }
@@ -210,14 +210,14 @@ public class IdeRootPane extends JRootPane{
   public void installNorthComponents(final Project project) {
     myNorthComponents.addAll(Arrays.asList(Extensions.getExtensions(IdeRootPaneNorthExtension.EP_NAME, project)));
     for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
-      northComponent.installComponent(project, myNorthPanel);
+      myNorthPanel.add(northComponent.getComponent());
       northComponent.uiSettingsChanged(myUISettings);
     }
   }
 
   public void deinstallNorthComponents(){
     for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
-      northComponent.deinstallComponent(myNorthPanel);
+      myNorthPanel.remove(northComponent.getComponent());
       Disposer.dispose(northComponent);
     }
     myNorthComponents.clear();
