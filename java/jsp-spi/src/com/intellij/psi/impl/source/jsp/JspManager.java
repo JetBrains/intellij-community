@@ -4,6 +4,7 @@
 package com.intellij.psi.impl.source.jsp;
 
 import com.intellij.lang.jsp.IBaseJspManager;
+import com.intellij.lang.jsp.JspVersion;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -70,5 +71,6 @@ public abstract class JspManager implements IBaseJspManager {
   @Nullable
   public abstract XmlFile getTldFileByUri(@NonNls String uri, @Nullable Module module, @Nullable JspFile jspFile);
 
-  public abstract boolean isJsp_2_1_OrBetter(final @NotNull PsiFile context);
+  @NotNull
+  public abstract JspVersion getJspVersion(@NotNull PsiFile context);
 }
