@@ -1354,6 +1354,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       final SuspendContextImpl suspendContext = getSuspendContext();
       final ThreadReferenceProxyImpl thread = suspendContext.getThread();
       RequestHint hint = new RequestHint(thread, suspendContext, StepRequest.STEP_OUT);
+      hint.setIgnoreFilters(mySession.shouldIgnoreSteppingFilters());
       if (myReturnValueWatcher != null) {
         myReturnValueWatcher.setTrackingEnabled(true);
       }
@@ -1363,12 +1364,12 @@ public abstract class DebugProcessImpl implements DebugProcess {
   }
 
   private class StepIntoCommand extends ResumeCommand {
-    private final boolean myIgnoreFilters;
+    private final boolean myForcedIgnoreFilters;
     private final RequestHint.SmartStepFilter mySmartStepFilter;
 
     public StepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters, final @Nullable RequestHint.SmartStepFilter smartStepFilter) {
       super(suspendContext);
-      myIgnoreFilters = ignoreFilters || smartStepFilter != null;
+      myForcedIgnoreFilters = ignoreFilters || smartStepFilter != null;
       mySmartStepFilter = smartStepFilter;
     }
 
@@ -1379,7 +1380,15 @@ public abstract class DebugProcessImpl implements DebugProcess {
       final RequestHint hint = mySmartStepFilter != null?
                                new RequestHint(stepThread, suspendContext, mySmartStepFilter) :
                                new RequestHint(stepThread, suspendContext, StepRequest.STEP_INTO);
-      hint.setIgnoreFilters(myIgnoreFilters);
+      if (myForcedIgnoreFilters) {
+        try {
+          mySession.setIgnoreStepFiltersFlag(stepThread.frameCount());
+        }
+        catch (EvaluateException e) {
+          LOG.info(e);
+        }
+      }
+      hint.setIgnoreFilters(myForcedIgnoreFilters || mySession.shouldIgnoreSteppingFilters());
       doStep(suspendContext, stepThread, StepRequest.STEP_INTO, hint);
       super.contextAction();
     }
@@ -1402,7 +1411,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       // from which the java code was generated
       RequestHint hint = new RequestHint(steppingThread, suspendContext, StepRequest.STEP_OVER);
       hint.setRestoreBreakpoints(myIsIgnoreBreakpoints);
-      hint.setIgnoreFilters(myIsIgnoreBreakpoints);
+      hint.setIgnoreFilters(myIsIgnoreBreakpoints || mySession.shouldIgnoreSteppingFilters());
 
       if (myReturnValueWatcher != null) {
         myReturnValueWatcher.setTrackingEnabled(true);

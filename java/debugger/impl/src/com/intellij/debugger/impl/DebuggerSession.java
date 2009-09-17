@@ -74,6 +74,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
   public static final int EVENT_REFRESH_VIEWS_ONLY = 11;
 
   private volatile boolean myIsEvaluating;
+  private volatile int myIgnoreFiltersFrameCountThreshold = 0;
 
   private DebuggerSessionState myState = null;
 
@@ -252,8 +253,21 @@ public class DebuggerSession implements AbstractDebuggerSession {
     final SuspendContextImpl suspendContext = getSuspendContext();
     if(suspendContext != null) {
       mySteppingThroughThreads.remove(suspendContext.getThread());
+      resetIgnoreStepFiltersFlag();
       resumeAction(myDebugProcess.createResumeCommand(suspendContext), EVENT_RESUME);
     }
+  }
+
+  private void resetIgnoreStepFiltersFlag() {
+    myIgnoreFiltersFrameCountThreshold = 0;
+  }
+
+  public void setIgnoreStepFiltersFlag(int currentStackFrameCount) {
+    myIgnoreFiltersFrameCountThreshold = currentStackFrameCount;
+  }
+
+  public boolean shouldIgnoreSteppingFilters() {
+    return myIgnoreFiltersFrameCountThreshold > 0;
   }
 
   public void pause() {
@@ -413,6 +427,19 @@ public class DebuggerSession implements AbstractDebuggerSession {
       }
       else {
         positionContext = suspendContext;
+      }
+
+      if (currentThread != null) {
+        try {
+          final int frameCount = currentThread.frameCount();
+          if (frameCount == 0 || (frameCount < myIgnoreFiltersFrameCountThreshold)) {
+            resetIgnoreStepFiltersFlag();
+          }
+        }
+        catch (EvaluateException e) {
+          LOG.info(e);
+          resetIgnoreStepFiltersFlag();
+        }
       }
 
       SourcePosition position = PsiDocumentManager.getInstance(getProject()).commitAndRunReadAction(new Computable<SourcePosition>() {

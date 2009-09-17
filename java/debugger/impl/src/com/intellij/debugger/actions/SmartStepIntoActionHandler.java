@@ -48,12 +48,12 @@ public class SmartStepIntoActionHandler extends DebuggerActionHandler {
       final List<PsiMethod> methods = findReferencedMethods(position);
       if (methods.size() > 0) {
         if (methods.size() == 1) {
-          session.stepInto(false, createSmartStepFilter(methods.get(0)));
+          session.stepInto(true, createSmartStepFilter(methods.get(0)));
         }
         else {
           final PsiMethodListPopupStep popupStep = new PsiMethodListPopupStep(methods, new PsiMethodListPopupStep.OnChooseRunnable() {
             public void execute(PsiMethod chosenMethod) {
-              session.stepInto(false, createSmartStepFilter(chosenMethod));
+              session.stepInto(true, createSmartStepFilter(chosenMethod));
             }
           });
           final ListPopup popup = JBPopupFactory.getInstance().createListPopup(popupStep);
@@ -63,7 +63,7 @@ public class SmartStepIntoActionHandler extends DebuggerActionHandler {
         return;
       }
     }
-    session.stepInto(false, null);
+    session.stepInto(true, null);
   }
 
   @Nullable
