@@ -138,10 +138,10 @@ public class LibrariesUtil {
       final File emb = new File(embeddable);
       if (emb.exists()) {
         final File parent = emb.getParentFile();
-        if ("embeddable".equals(parent.getName())) {
+        if ("embeddable".equals(parent.getName()) || "lib".equals(parent.getName())) {
           return parent.getParent();
         }
-        return emb.getPath();
+        return parent.getPath();
       }
     }
     return "";
