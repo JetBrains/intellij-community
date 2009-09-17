@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.PersistentRangeMarker;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -159,7 +160,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       if (result != null) {
         GrExpression expression = call.replaceWithExpression(result, false);
         TextRange range = expression.getTextRange();
-        return editor != null ? new PersistentRangeMarker(editor.getDocument(), range.getStartOffset(), range.getEndOffset()) : null;
+        return editor != null ? new PersistentRangeMarker((DocumentEx)editor.getDocument(), range.getStartOffset(), range.getEndOffset()) : null;
       }
 
       String resultName = InlineMethodConflictSolver.suggestNewName("result", newMethod, call);
@@ -245,7 +246,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
         assert replaced != null;
 
         TextRange range = replaced.getTextRange();
-        RangeMarker marker = editor != null ? new PersistentRangeMarker(editor.getDocument(), range.getStartOffset(), range.getEndOffset()) : null;
+        RangeMarker marker = editor != null ? new PersistentRangeMarker((DocumentEx)editor.getDocument(), range.getStartOffset(), range.getEndOffset()) : null;
         reformatOwner(owner);
         return marker;
       } else {
