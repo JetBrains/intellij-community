@@ -43,12 +43,12 @@ class Context {
     // ctype : <ctype>
     // Qualifier type to be augmented
     if (args.ctype) addFilter {GrReferenceExpression ref ->
+      PsiManager manager = PsiManager.getInstance(ref.getProject())
+      def scope = GlobalSearchScope.allScope(ref.getProject())
+      PsiType superType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName(args.ctype, scope)
       def qual = ref.getQualifier()
       if (qual instanceof GrExpression) {
         final expr = (GrExpression) qual;
-        PsiManager manager = PsiManager.getInstance(expr.getProject())
-        def scope = GlobalSearchScope.allScope(expr.getProject())
-        PsiType superType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName(args.ctype, scope)
         def type = expr.getType()
         return type && superType?.isAssignableFrom(type)
       } else false
@@ -89,6 +89,12 @@ class Context {
 
     // handling closure scope
       case org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClosureScope:
+        // Enhance only unqualified expressions
+        if (!args.ctype) {
+          addFilter {GrReferenceExpression elem -> !elem.getQualifierExpression()}
+        }
+
+        // Enhance closure contexts only
         addFilter {GrReferenceExpression elem ->
           def closParent = PsiTreeUtil.getParentOfType(elem, GrClosableBlock.class)
           if (closParent == null) return false

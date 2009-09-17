@@ -49,6 +49,16 @@ public class GroovyDslDefaultMembers implements GdslMembersProvider {
     }
   }
 
+  public void delegatesTo(@Nullable GrExpression expr, GdslMembersHolderConsumer consumer) {
+    if (expr != null) {
+      final PsiType type = expr.getType();
+      if (type instanceof PsiClassType) {
+        PsiClassType ctype = (PsiClassType)type;
+        delegatesTo(ctype.resolve(), consumer);
+      }
+    }
+  }
+
   /**
    * Find a class by its full-qulified name
    * @param fqn

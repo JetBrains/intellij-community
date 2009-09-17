@@ -36,4 +36,8 @@ public class PsiClassCategory implements PsiEnhancerCategory {
     return Arrays.asList(clazz.getAllMethods());
   }
 
+  public static String getQualName(PsiClass clazz) {
+    return clazz.getQualifiedName();
+  }
+
 }

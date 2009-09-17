@@ -12,8 +12,8 @@ class ClosureScope extends Scope {
   private final boolean isTransparent
 
   ClosureScope(Map args) {
-    isArg == args.isArgument
-    isTransparent = args.transparent
+    isArg == args && args.isArgument? args.isArgument : false
+    isTransparent = args && args.transparent ? args.transparent : false
   }
 
   def isArg() {
