@@ -56,7 +56,6 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
   public static boolean ourKeymapManagerInitialized = false;
 
   KeymapManagerImpl(DefaultKeymap defaultKeymap, SchemesManagerFactory factory) {
-    ourKeymapManagerInitialized = true;
     mySchemesManager = factory.createSchemesManager(
         "$ROOT_CONFIG$/keymaps",
         new SchemeProcessor<KeymapImpl>(){
@@ -98,6 +97,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
       }
     }
     load();
+    ourKeymapManagerInitialized = true;
   }
 
   @NotNull
