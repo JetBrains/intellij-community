@@ -76,7 +76,7 @@ public class GroovyCompilerWrapper {
           if (new File(stubPath).exists()) {
             compiledFiles.add(new OutputItemImpl(outputPath, stubPath, fileName));
           } else {
-            collector.add(new CompilerMessage(CompilerMessage.WARNING, "Couldn't generate stub for " + topLevel, fileName, classNode.getLineNumber(), classNode.getColumnNumber()));
+            collector.add(new CompilerMessage(CompilerMessage.WARNING, "Groovyc couldn't generate stub for " + topLevel, fileName, classNode.getLineNumber(), classNode.getColumnNumber()));
           }
         } else {
           final String nested = topLevel + "$";
