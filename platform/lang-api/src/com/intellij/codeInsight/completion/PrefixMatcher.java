@@ -10,18 +10,10 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public abstract class PrefixMatcher {
-  public static final PrefixMatcher FALSE_MATCHER = new PrefixMatcher() {
-    public boolean prefixMatches(@NotNull final LookupElement element) {
-      return false;
-    }
+  public static final PrefixMatcher FALSE_MATCHER = new PrefixMatcher("######################################") {
 
     public boolean prefixMatches(@NotNull final String name) {
       return false;
-    }
-
-    @NotNull
-    public String getPrefix() {
-      throw new UnsupportedOperationException("Method getPrefix is not yet implemented in " + getClass().getName());
     }
 
     @NotNull
@@ -29,14 +21,27 @@ public abstract class PrefixMatcher {
       return this;
     }
   };
+  protected final String myPrefix;
 
+  protected PrefixMatcher(String prefix) {
+    myPrefix = prefix;
+  }
 
-  public abstract boolean prefixMatches(@NotNull LookupElement element);
+  public boolean prefixMatches(@NotNull LookupElement element) {
+    for (String s : element.getAllLookupStrings()) {
+      if (prefixMatches(s)) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   public abstract boolean prefixMatches(@NotNull String name);
 
   @NotNull
-  public abstract String getPrefix();
+  public final String getPrefix() {
+    return myPrefix;
+  }
 
   @NotNull public abstract PrefixMatcher cloneWithPrefix(@NotNull String prefix);
 }

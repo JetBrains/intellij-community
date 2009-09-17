@@ -28,7 +28,6 @@ public class CamelHumpMatcher extends PrefixMatcher {
     }
   };
   private NameUtil.Matcher myMatcher;
-  private final String myPrefix;
   private final boolean myCaseSensitive;
 
   public CamelHumpMatcher(@NotNull final String prefix) {
@@ -36,7 +35,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
   }
 
   public CamelHumpMatcher(String prefix, boolean caseSensitive) {
-    myPrefix = prefix;
+    super(prefix);
     myCaseSensitive = caseSensitive;
   }
 
@@ -84,11 +83,6 @@ public class CamelHumpMatcher extends PrefixMatcher {
       }
     }
     return false;
-  }
-
-  @NotNull
-  public String getPrefix() {
-    return myPrefix;
   }
 
   @NotNull
