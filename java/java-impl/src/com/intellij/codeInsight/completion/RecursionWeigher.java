@@ -54,7 +54,7 @@ public class RecursionWeigher extends CompletionWeigher {
     if (expression != null) {
       final ExpectedTypeInfo[] expectedInfos = JavaCompletionUtil.EXPECTED_TYPES.getValue(location);
       if (expectedInfos != null) {
-        final PsiType itemType = JavaCompletionUtil.getPsiType(object);
+        final PsiType itemType = JavaCompletionUtil.getLookupElementType(element);
         if (itemType != null) {
           for (final ExpectedTypeInfo expectedInfo : expectedInfos) {
             if (positionMethod.equals(expectedInfo.getCalledMethod()) && expectedInfo.getType().isAssignableFrom(itemType)) {

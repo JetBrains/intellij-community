@@ -15,9 +15,9 @@ import com.intellij.psi.util.TypeConversionUtil;
 /**
  * @author peter
  */
-public class SkipAbstractExpectedTypeWeigher extends CompletionPreselectSkipper {
+public class AbstractExpectedTypeSkipper extends CompletionPreselectSkipper {
 
-  enum Result {
+  private enum Result {
     NON_DEFAULT,
     STRING,
     ABSTRACT,
@@ -26,10 +26,14 @@ public class SkipAbstractExpectedTypeWeigher extends CompletionPreselectSkipper 
 
   @Override
   public boolean skipElement(LookupElement element, CompletionLocation location) {
+    return skips(element, location);
+  }
+
+  public static boolean skips(LookupElement element, CompletionLocation location) {
     return getSkippingStatus(element, location) != Result.ACCEPT;
   }
 
-  public static Result getSkippingStatus(final LookupElement item, final CompletionLocation location) {
+  private static Result getSkippingStatus(final LookupElement item, final CompletionLocation location) {
     if (location.getCompletionType() != CompletionType.SMART) return Result.ACCEPT;
 
     final PsiExpression expression = PsiTreeUtil.getParentOfType(location.getCompletionParameters().getPosition(), PsiExpression.class);

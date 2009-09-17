@@ -680,7 +680,7 @@ public class JavaCompletionUtil {
   }
 
   @Nullable
-  public static PsiType getPsiType(final Object o) {
+  private static PsiType getPsiType(final Object o) {
     if (o instanceof PsiVariable) {
       return ((PsiVariable)o).getType();
     }
@@ -768,28 +768,18 @@ public class JavaCompletionUtil {
 
   @Nullable
   public static PsiType getLookupElementType(final LookupElement element) {
-    PsiType qualifierType = null;
     final TypedLookupItem typed = element.as(TypedLookupItem.class);
     if (typed != null) {
       return typed.getType();
     }
 
-    final Object o = element.getObject();
-    if (o instanceof PsiVariable) {
-      qualifierType = ((PsiVariable)o).getType();
-    }
-    else if (o instanceof PsiMethod) {
-      qualifierType = ((PsiMethod)o).getReturnType();
-    }
-    else if (o instanceof PsiExpression) {
-      qualifierType = ((PsiExpression) o).getType();
-    }
 
+    final PsiType qualifierType = getPsiType(element.getObject());
     final LookupItem lookupItem = element.as(LookupItem.class);
     if (lookupItem != null) {
       final PsiSubstitutor substitutor = (PsiSubstitutor)lookupItem.getAttribute(LookupItem.SUBSTITUTOR);
       if (substitutor != null) {
-        qualifierType = substitutor.substitute(qualifierType);
+        return substitutor.substitute(qualifierType);
       }
     }
     return qualifierType;
