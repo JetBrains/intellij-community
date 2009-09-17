@@ -119,7 +119,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   @Nullable
   PsiElement resolve() {
     final ResolveResult[] results = multiResolve(false);
-    return results.length == 1 ? results[0].getElement() : null;
+    return results.length >= 1 ? results[0].getElement() : null;
   }
 
 
@@ -385,6 +385,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   
   private static final Object[] NO_VARIANTS = new Object[0];
 
+  @NotNull
   public Object[] getVariants() {
     // qualifier limits the namespace
     final PyExpression qualifier = getQualifier();

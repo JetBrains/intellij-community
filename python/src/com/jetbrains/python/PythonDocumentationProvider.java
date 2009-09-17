@@ -15,7 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Provides qiuck docs for classes, methods, and functions.
+ * Provides quick docs for classes, methods, and functions.
  */
 public class PythonDocumentationProvider extends QuickDocumentationProvider {
 
@@ -280,13 +280,13 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
 
     public static <R> R fold(@NotNull Lambda2<R, R, R> lambda, @NotNull List<R> source, @NotNull final R unit) {
       R ret = unit;
-      for (R item : source) lambda.apply(ret, item);
+      for (R item : source) ret = lambda.apply(ret, item);
       return ret;
     }
 
     public static <R> R foldr(@NotNull Lambda2<R, R, R> lambda, @NotNull List<R> source, @NotNull final R unit) {
       R ret = unit;
-      for (R item : source) lambda.apply(item, ret);
+      for (R item : source) ret = lambda.apply(item, ret);
       return ret;
     }
 
