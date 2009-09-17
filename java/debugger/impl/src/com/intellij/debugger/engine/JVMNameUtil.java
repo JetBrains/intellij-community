@@ -71,24 +71,8 @@ public class JVMNameUtil {
       appendJVMSignature(buffer, ((PsiArrayType) psiType).getComponentType());
     }
     else if (psiType instanceof PsiClassType) {
-      buffer.append("L");
-
       final JVMName jvmName = getJVMQualifiedName(psiType);
-
-      if(jvmName instanceof JVMRawText) {
-        buffer.append(((JVMRawText)jvmName).getName().replace('.','/'));
-      } else {
-        buffer.append(new JVMName() {
-          public String getName(DebugProcessImpl process) throws EvaluateException {
-            return jvmName.getName(process).replace('.','/');
-          }
-
-          public String getDisplayName(DebugProcessImpl debugProcess) {
-            return jvmName.getDisplayName(debugProcess);
-          }
-        });
-      }
-      buffer.append(";");
+      appendJvmClassQualifiedName(buffer, jvmName);
     }
     else if (psiType instanceof PsiPrimitiveType) {
       buffer.append(getPrimitiveSignature(psiType.getCanonicalText()));
@@ -96,6 +80,25 @@ public class JVMNameUtil {
     else {
       LOG.assertTrue(false, "unknown type " + type.getCanonicalText());
     }
+  }
+
+  private static void appendJvmClassQualifiedName(JVMNameBuffer buffer, final JVMName jvmName) {
+    buffer.append("L");
+    if(jvmName instanceof JVMRawText) {
+      buffer.append(((JVMRawText)jvmName).getName().replace('.','/'));
+    }
+    else {
+      buffer.append(new JVMName() {
+        public String getName(DebugProcessImpl process) throws EvaluateException {
+          return jvmName.getName(process).replace('.','/');
+        }
+
+        public String getDisplayName(DebugProcessImpl debugProcess) {
+          return jvmName.getDisplayName(debugProcess);
+        }
+      });
+    }
+    buffer.append(";");
   }
 
   private static class JVMNameBuffer {
@@ -268,6 +271,19 @@ public class JVMNameUtil {
   public static JVMName getJVMSignature(PsiMethod method) {
     JVMNameBuffer signature = new JVMNameBuffer();
     signature.append("(");
+    
+    if (method.isConstructor()) {
+      final PsiClass declaringClass = method.getContainingClass();
+      if (declaringClass != null) {
+        final PsiClass outerClass = declaringClass.getContainingClass();
+        if (outerClass != null) {
+          // declaring class is an inner class
+          if (!declaringClass.hasModifierProperty(PsiModifier.STATIC)) {
+            appendJvmClassQualifiedName(signature, getJVMQualifiedName(outerClass));
+          }
+        }
+      }
+    }
     for (PsiParameter psiParameter : method.getParameterList().getParameters()) {
       appendJVMSignature(signature, psiParameter.getType());
     }
