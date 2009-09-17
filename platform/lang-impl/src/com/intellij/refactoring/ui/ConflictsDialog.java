@@ -59,9 +59,11 @@ public class ConflictsDialog extends DialogWrapper{
     init();
   }
 
+  @Deprecated
   public ConflictsDialog(Project project, Collection<String> conflictDescriptions) {
     this(project, ArrayUtil.toStringArray(conflictDescriptions));
   }
+  @Deprecated
   public ConflictsDialog(Project project, String... conflictDescriptions) {
     super(project, true);
     myProject = project;
