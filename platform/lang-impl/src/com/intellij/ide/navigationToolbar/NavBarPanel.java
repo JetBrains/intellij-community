@@ -271,7 +271,10 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   private void updateModel() {
     DataContext context = DataManager.getInstance().getDataContext();
 
-    if (context.getData(DataConstants.IDE_VIEW) == myIdeView) return;
+    if (context.getData(DataConstants.IDE_VIEW) == myIdeView || context.getData(DataConstants.PROJECT) != myProject) {
+      scheduleModelUpdate();
+      return;
+    }
 
     myModel.updateModel(context);
   }
@@ -749,12 +752,14 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
 
   public void updateState(final boolean show) {
     updateModel();
-    updateList();
-    final int selectedIndex = myModel.getSelectedIndex();
-    if (show && selectedIndex > -1 && selectedIndex < myModel.size()) {
-      final MyItemLabel item = getItem(selectedIndex);
-      if (item != null) {
-        IdeFocusManager.getInstance(myProject).requestFocus(item, true);
+    if (isShowing()) {
+      updateList();
+      final int selectedIndex = myModel.getSelectedIndex();
+      if (show && selectedIndex > -1 && selectedIndex < myModel.size()) {
+        final MyItemLabel item = getItem(selectedIndex);
+        if (item != null) {
+          IdeFocusManager.getInstance(myProject).requestFocus(item, true);
+        }
       }
     }
   }
