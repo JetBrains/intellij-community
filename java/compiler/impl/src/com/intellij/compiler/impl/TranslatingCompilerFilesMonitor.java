@@ -132,6 +132,15 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     return null;
   }
 
+  public boolean isScheduledForRecompilation(Project project, VirtualFile file) {
+    final TIntHashSet pathsToRecompile = mySourcesToRecompile.get(getProjectId(project));
+    if (pathsToRecompile == null || pathsToRecompile.isEmpty()) {
+      return false;
+    }
+    final int fileId = getFileId(file);
+    return pathsToRecompile.contains(fileId);
+  }
+
   public void collectFiles(CompileContext context, final TranslatingCompiler compiler, Iterator<VirtualFile> scopeSrcIterator, boolean forceCompile,
                            final boolean isRebuild,
                            Collection<VirtualFile> toCompile,
