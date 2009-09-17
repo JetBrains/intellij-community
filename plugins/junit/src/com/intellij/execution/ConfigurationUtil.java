@@ -27,6 +27,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.Processor;
 import junit.runner.BaseTestRunner;
 import org.jetbrains.annotations.Nullable;
@@ -92,11 +93,11 @@ public class ConfigurationUtil {
     if (testAnnotation != null) {
      ApplicationManager.getApplication().runReadAction(new Runnable() {
          public void run(){
-              AnnotatedMembersSearch.search(testAnnotation, scope).forEach(new Processor<PsiMember>() {
+              AnnotatedMembersSearch.search(testAnnotation, GlobalSearchScope.allScope(manager.getProject())).forEach(new Processor<PsiMember>() {
              public boolean process(final PsiMember annotated) {
                PsiClass containingClass = annotated instanceof PsiClass ? (PsiClass)annotated : annotated.getContainingClass();
                if (containingClass != null && annotated instanceof PsiMethod == isMethod) {
-                 if (testClassFilter.isAccepted(containingClass)) {
+                 if (scope.contains(PsiUtilBase.getVirtualFile(containingClass)) && testClassFilter.isAccepted(containingClass)) {
                    found.add(containingClass);
                    isJUnit4.set(Boolean.TRUE);
                  }
