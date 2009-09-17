@@ -1,6 +1,6 @@
 class MyDelegate {
-  def saySomething() {
-    println "hello!"
+  def saySomething(String str) {
+    println str
   }
 }
 

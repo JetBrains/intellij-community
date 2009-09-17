@@ -66,7 +66,8 @@ import java.util.concurrent.TimeUnit;
  * @author peter
  */
 public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
-  public static final Key<CachedValue<ConcurrentFactoryMap<ClassDescriptor, CustomMembersHolder>>> CACHED_ENHANCEMENTS = Key.create("CACHED_ENHANCEMENTS");
+  public static final Key<CachedValue<ConcurrentFactoryMap<ClassDescriptor, CustomMembersHolder>>> CACHED_ENHANCEMENTS =
+    Key.create("CACHED_ENHANCEMENTS");
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex");
   private static final FileAttribute ENABLED = new FileAttribute("ENABLED", 0);
 
@@ -75,12 +76,13 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   private final MyDataIndexer myDataIndexer = new MyDataIndexer();
   private final MyInputFilter myInputFilter = new MyInputFilter();
 
-  private static final Map<String, Pair<GroovyDslExecutor, Long>> ourMapping = new ConcurrentHashMap<String, Pair<GroovyDslExecutor, Long>>();
+  private static final Map<String, Pair<GroovyDslExecutor, Long>> ourMapping =
+    new ConcurrentHashMap<String, Pair<GroovyDslExecutor, Long>>();
 
   private final EnumeratorStringDescriptor myKeyDescriptor = new EnumeratorStringDescriptor();
   private static final byte[] ENABLED_FLAG = new byte[]{(byte)239};
 
-  public ID<String,Void> getName() {
+  public ID<String, Void> getName() {
     return NAME;
   }
 
@@ -192,7 +194,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
     final AdditionalIndexedRootsScope scope = new AdditionalIndexedRootsScope(GlobalSearchScope.allScope(project), standardSet);
-    for(VirtualFile vfile: FileBasedIndex.getInstance().getContainingFiles(NAME, OUR_KEY, scope)) {
+    for (VirtualFile vfile : FileBasedIndex.getInstance().getContainingFiles(NAME, OUR_KEY, scope)) {
       if (!vfile.isValid()) {
         continue;
       }
@@ -213,7 +215,8 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
       if (cached == null) {
         file.putUserData(CACHED_ENHANCEMENTS, null); //otherwise an old executor instance will be executed inside cachedValue
         scheduleParsing(queue, file, vfile, stamp, file.getText());
-      } else {
+      }
+      else {
         queue.offer(Pair.create(file, cached));
       }
     }
@@ -221,12 +224,16 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   }
 
 
-  private static boolean processExecutor(final GroovyDslExecutor executor, final ClassDescriptor descriptor, PsiScopeProcessor processor, final GroovyFile dslFile) {
+  private static boolean processExecutor(final GroovyDslExecutor executor,
+                                         final ClassDescriptor descriptor,
+                                         PsiScopeProcessor processor,
+                                         final GroovyFile dslFile) {
     final Project project = dslFile.getProject();
     final ConcurrentFactoryMap<ClassDescriptor, CustomMembersHolder> map = dslFile.getManager().getCachedValuesManager()
       .getCachedValue(dslFile, CACHED_ENHANCEMENTS, new CachedValueProvider<ConcurrentFactoryMap<ClassDescriptor, CustomMembersHolder>>() {
         public Result<ConcurrentFactoryMap<ClassDescriptor, CustomMembersHolder>> compute() {
-          final ConcurrentFactoryMap<ClassDescriptor, CustomMembersHolder> result = new ConcurrentFactoryMap<ClassDescriptor, CustomMembersHolder>() {
+          final ConcurrentFactoryMap<ClassDescriptor, CustomMembersHolder> result =
+            new ConcurrentFactoryMap<ClassDescriptor, CustomMembersHolder>() {
               @Override
               protected CustomMembersHolder create(ClassDescriptor key) {
                 final CustomMembersGenerator generator = new CustomMembersGenerator(project, key.getPlace());
@@ -235,7 +242,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
                 }
                 catch (ProcessCanceledException e) {
                   throw e;
-                }  
+                }
                 catch (Throwable e) { // To handle exceptions in definition script
                   if (project.isDisposed() || ApplicationManager.getApplication().isUnitTestMode()) {
                     LOG.error(e);
@@ -270,7 +277,9 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
   private static void scheduleParsing(final LinkedBlockingQueue<Pair<GroovyFile, GroovyDslExecutor>> queue,
                                       final GroovyFile file,
-                                      final VirtualFile vfile, final long stamp, final String text) {
+                                      final VirtualFile vfile,
+                                      final long stamp,
+                                      final String text) {
     final Project project = file.getProject();
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
@@ -303,6 +312,14 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
         return null;
       }
 
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        try {
+          LOG.error(e);
+        }
+        finally {
+          return null;
+        }
+      }
       invokeDslErrorPopup(e, project, vfile);
       return null;
     }
@@ -314,15 +331,15 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
     ApplicationManager.getApplication().getMessageBus().syncPublisher(Notifications.TOPIC).notify(
       new Notification("Groovy DSL parsing", "DSL script execution error",
-                       "<p>" + e.getMessage() + "</p><p><a href=\"\">Click here to investigate.</a></p>", NotificationType.ERROR, new NotificationListener() {
-          public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-            final UnscrambleDialog dialog = new UnscrambleDialog(project);
-            dialog.setText(writer.toString());
-            dialog.show();
-            notification.expire();
-          }
-        })
-    );
+                       "<p>" + e.getMessage() + "</p><p><a href=\"\">Click here to investigate.</a></p>", NotificationType.ERROR,
+                       new NotificationListener() {
+                         public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+                           final UnscrambleDialog dialog = new UnscrambleDialog(project);
+                           dialog.setText(writer.toString());
+                           dialog.show();
+                           notification.expire();
+                         }
+                       }));
 
     disableFile(vfile);
   }

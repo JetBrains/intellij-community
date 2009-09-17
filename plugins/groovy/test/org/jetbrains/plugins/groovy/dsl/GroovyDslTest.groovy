@@ -28,27 +28,28 @@ public class GroovyDslTest extends LightCodeInsightFixtureTestCase {
     "/svnPlugins/groovy/testdata/groovy/dsl"
   }
 
-  public void testCompleteMethod() throws Throwable { doTest() }
-  public void testCompleteProperty() throws Throwable { doTest() }
+  private def doCustomTest(String s) {
+    final PsiFile file = myFixture.addFileToProject(getTestName(false) + "Enhancer.gdsl", s);
+    GroovyDslFileIndex.activateUntilModification(file.virtualFile)
+    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy")
+  }
 
   private void doTest() throws Throwable {
     myFixture.testCompletion(getTestName(false) + ".gdsl", getTestName(false) + "_after.gdsl")
   }
 
+  public void testCompleteMethod() throws Throwable { doTest() }
+
+  public void testCompleteProperty() throws Throwable { doTest() }
+
   public void testCompleteClassMethod() throws Throwable {
     doCustomTest("""
       def ctx = context(ctype: "java.lang.String")
 
-      contributor [ctx] {
+      contributor ([ctx], {
         method name:"zzz", type:"void", params:[:]
-      }
+      })
 """)
-  }
-
-  private def doCustomTest(String s) {
-    final PsiFile file = myFixture.addFileToProject(getTestName(false) + "Enhancer.gdsl", s);
-    GroovyDslFileIndex.activateUntilModification(file.virtualFile)
-    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy")
   }
 
   public void testDelegateToThrowable() throws Throwable {
