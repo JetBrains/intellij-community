@@ -81,6 +81,10 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
       canBeVarargs |= data.type instanceof PsiArrayType;
     }
     myVariableData = inputVariables;
+    
+    if (inputVariables.isFoldable()) {
+      canBeVarargs |= inputVariables.isFoldingSelectedByDefault();
+    }
 
     setTitle(title);
     myHelpId = helpId;
@@ -207,6 +211,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
       public void actionPerformed(ActionEvent e) {
         myVariableData.setFoldingAvailable(myFoldCb.isSelected());
         myInputVariables = myVariableData.getInputVariables().toArray(new ParameterTablePanel.VariableData[myVariableData.getInputVariables().size()]);
+        updateVarargsEnabled();
         createParametersPanel();
         updateSignature();
       }

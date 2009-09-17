@@ -84,6 +84,7 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
     for (ParameterTablePanel.VariableData data : inputVariables.getInputVariables()) {
       canBeVarargs |= data.type instanceof PsiArrayType;
     }
+    canBeVarargs |= inputVariables.isFoldable()  && inputVariables.isFoldingSelectedByDefault();
     myWasStatic = canBeVarargs;
 
     myVariableData = inputVariables;
@@ -216,6 +217,7 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
         myParametersTableContainer.removeAll();
         myParametersTableContainer.add(createParametersPanel(), BorderLayout.CENTER);
         updateSignature();
+        updateVarargsEnabled();
       }
     });
     myParametersTableContainer.add(createParametersPanel(), BorderLayout.CENTER);
