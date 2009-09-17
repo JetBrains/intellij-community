@@ -166,6 +166,7 @@ public abstract class CompletionContributor extends AbstractCompletionContributo
 
   /**
    * @param parameters
+   * @deprecated use {@link com.intellij.codeInsight.completion.CompletionService#setAdvertisementText(String)}
    * @return text to be shown at the bottom of lookup list
    */
   @Nullable
