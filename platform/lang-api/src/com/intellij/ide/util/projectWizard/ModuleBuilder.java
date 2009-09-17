@@ -155,7 +155,7 @@ public abstract class ModuleBuilder extends ProjectBuilder{
     if (model == null) moduleModel.commit();
 
     if (runFromProjectWizard) {
-      StartupManager.getInstance(module.getProject()).registerPostStartupActivity(new DumbAwareRunnable() {
+      StartupManager.getInstance(module.getProject()).runWhenProjectIsInitialized(new DumbAwareRunnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
