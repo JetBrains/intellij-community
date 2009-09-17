@@ -5,7 +5,7 @@ package org.jetbrains.plugins.groovy.dsl.toplevel.scopes
  */
 abstract class Scope {}
 
-class Any extends Scope {}
+//class Any extends Scope {}
 
 class ClosureScope extends Scope {
   private final boolean isArg

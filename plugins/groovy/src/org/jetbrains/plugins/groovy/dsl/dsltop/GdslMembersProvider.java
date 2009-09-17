@@ -14,15 +14,18 @@
  *  limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.dsl.psi;
+package org.jetbrains.plugins.groovy.dsl.dsltop;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 
 /**
- * Category class to add new methods int IntelliJ PSI classes
+ * Container of methods, which will be available on a top-level of closures,
+ * passed to GroovyDSL contributors. See {@link org.jetbrains.plugins.groovy.dsl.dsltop.GroovyDslDefaultMembers} for an example.
+ * All methods to inject should take one extra parameter - an instance of {@link org.jetbrains.plugins.groovy.dsl.GdslMembersHolderConsumer}
+ * to be refer its properties.
  *
  * @author ilyas
  */
-public interface PsiEnhancerCategory {
-  ExtensionPointName<PsiEnhancerCategory> EP_NAME = ExtensionPointName.create("org.intellij.groovy.psiEnhancerCategory");
+public interface GdslMembersProvider {
+  ExtensionPointName<GdslMembersProvider> EP_NAME = ExtensionPointName.create("org.intellij.groovy.gdslTopLevelProvider");
 }

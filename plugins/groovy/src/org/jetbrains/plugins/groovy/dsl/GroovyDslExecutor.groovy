@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.groovy.dsl
 
-import org.jetbrains.plugins.groovy.dsl.toplevel.Context
 import org.jetbrains.plugins.groovy.dsl.toplevel.Contributor
 import org.jetbrains.plugins.groovy.dsl.toplevel.GdslMetaClassProperties
 
@@ -12,9 +11,6 @@ public class GroovyDslExecutor {
   private final List<Closure> myScriptEnhancers = []
   private final List<Closure> myClassEnhancers = []
   private final String myFileName;
-
-  private final List<Context> myContexts = []
-  private final List<Contributor> myContributors = []
 
   public GroovyDslExecutor(String text, String fileName) {
     myFileName = fileName
@@ -50,14 +46,6 @@ public class GroovyDslExecutor {
 
   def addScriptEnhancer(Closure cl) {
     myScriptEnhancers << cl
-  }
-
-  def addContext(Context ctx) {
-    myContexts << ctx
-  }
-
-  def addContributor(Contributor cb) {
-    myContributors << cb
   }
 
   public def runContributor(Contributor cb, ClassDescriptor cd, delegate) {
