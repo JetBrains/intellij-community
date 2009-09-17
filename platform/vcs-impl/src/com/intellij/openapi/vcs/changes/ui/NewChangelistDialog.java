@@ -23,7 +23,6 @@ public class NewChangelistDialog extends DialogWrapper {
     setTitle(VcsBundle.message("changes.dialog.newchangelist.title"));
 
     myPanel.init(project, null);
-    myPanel.getMakeActiveCheckBox().setSelected(VcsConfiguration.getInstance(project).MAKE_NEW_CHANGELIST_ACTIVE);
 
     init();
   }

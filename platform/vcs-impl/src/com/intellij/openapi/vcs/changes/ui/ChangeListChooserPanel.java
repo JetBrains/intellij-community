@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListEditHandler;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -88,9 +89,10 @@ public class ChangeListChooserPanel extends JPanel {
 
   @Nullable
   public LocalChangeList getSelectedList(Project project) {
+    ChangeListManager manager = ChangeListManager.getInstance(project);
     if (myRbNew.isSelected()) {
       String newText = myNewListPanel.getName();
-      if (ChangeListManager.getInstance(project).findChangeList(newText) != null) {
+      if (manager.findChangeList(newText) != null) {
         Messages.showErrorDialog(project,
                                  VcsBundle.message("changes.newchangelist.warning.already.exists.text", newText),
                                  VcsBundle.message("changes.newchangelist.warning.already.exists.title"));
@@ -102,9 +104,13 @@ public class ChangeListChooserPanel extends JPanel {
       return (LocalChangeList)myExisitingsCombo.getSelectedItem();
     }
     else {
-      LocalChangeList changeList =
-        ChangeListManager.getInstance(project).addChangeList(myNewListPanel.getName(), myNewListPanel.getDescription());
+      LocalChangeList changeList = manager.addChangeList(myNewListPanel.getName(), myNewListPanel.getDescription());
       myNewListPanel.changelistCreatedOrChanged(changeList);
+      if (myNewListPanel.getMakeActiveCheckBox().isSelected()) {
+        manager.setDefaultChangeList(changeList);
+      }
+      VcsConfiguration.getInstance(project).MAKE_NEW_CHANGELIST_ACTIVE = myNewListPanel.getMakeActiveCheckBox().isSelected();
+
       return changeList;
     }
   }
