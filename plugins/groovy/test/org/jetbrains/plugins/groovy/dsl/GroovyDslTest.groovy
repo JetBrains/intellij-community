@@ -15,8 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.dsl;
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import com.intellij.psi.PsiFile;
+
+import com.intellij.psi.PsiFile
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 /**
  * @author peter
@@ -37,9 +38,7 @@ public class GroovyDslTest extends LightCodeInsightFixtureTestCase {
 
   public void testCompleteClassMethod() throws Throwable {
     doCustomTest("""
-      def ctx = context(ctype: "java.lang.String")
-
-      contributor [ctx] {
+      enhanceClass(className:"java.lang.String") {
         method name:"zzz", type:"void", params:[:]
       }
 """)
@@ -61,19 +60,4 @@ public class GroovyDslTest extends LightCodeInsightFixtureTestCase {
 """)
   }
 
-  public void testDelegateToArgument() throws Throwable {
-    doCustomTest("""
-      def ctx = context(scope: closureScope(isArgument: true))
-
-      contributor([ctx], {
-        def call = enclosingCall("boo")
-        if (call) {
-          def method = call.bind()
-          if ("Runner".equals(method?.containingClass?.qualifiedName)) {
-            delegatesTo(call.arguments[0]?.classType)
-          }
-        }
-      })
-""")
-  }
 }

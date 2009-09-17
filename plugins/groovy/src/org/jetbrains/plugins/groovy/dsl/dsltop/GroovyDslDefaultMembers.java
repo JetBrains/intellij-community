@@ -22,15 +22,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.GdslMembersHolderConsumer;
 import org.jetbrains.plugins.groovy.dsl.holders.DelegatedMembersHolder;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 
 /**
  * @author ilyas
  */
-public class GroovyDslDefaultMembers implements GdslMembersProvider {
+public class GroovyDslDefaultMembers implements GdslTopLevelMembersProvider {
   
   /*************************************************************************************
    Methods and properties of the GroovyDSL language
@@ -77,30 +74,9 @@ public class GroovyDslDefaultMembers implements GdslMembersProvider {
    * Returns enclosing method call of a given context's place
    */
   @Nullable
-  public GrMethodCallExpression enclosingCall(String name, GdslMembersHolderConsumer consumer) {
+  public GrCallExpression getEnclosingCall(GdslMembersHolderConsumer consumer) {
     final PsiElement place = consumer.getPlace();
-    if (place == null) return null;
-    GrMethodCallExpression call = PsiTreeUtil.getParentOfType(place, GrMethodCallExpression.class, true);
-    if (call == null) return null;
-    while (call != null && !name.equals(getInvokedMethodName(call))) {
-      call = PsiTreeUtil.getParentOfType(call, GrMethodCallExpression.class, true);
-    }
-    if (call == null) return null;
-    for (GrExpression arg : call.getClosureArguments()) {
-      if (arg instanceof GrClosableBlock && PsiTreeUtil.findCommonParent(place, arg) == arg) {
-        return call;
-      }
-    }
-    return null;
-  }
-
-  private static String getInvokedMethodName(GrMethodCallExpression call) {
-    final GrExpression expr = call.getInvokedExpression();
-    if (expr instanceof GrReferenceExpression) {
-      GrReferenceExpression ref = (GrReferenceExpression)expr;
-      return ref.getName();
-    }
-    return null;
+    return place == null ? null : PsiTreeUtil.getParentOfType(place, GrCallExpression.class);
   }
   
 }

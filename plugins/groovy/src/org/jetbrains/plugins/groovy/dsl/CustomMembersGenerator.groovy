@@ -6,7 +6,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.util.Function
 import org.jetbrains.annotations.Nullable
-import org.jetbrains.plugins.groovy.dsl.dsltop.GdslMembersProvider
+import org.jetbrains.plugins.groovy.dsl.dsltop.GdslTopLevelMembersProvider
 import org.jetbrains.plugins.groovy.dsl.holders.CompoundMembersHolder
 import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder
 import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder
@@ -33,7 +33,7 @@ public class CustomMembersGenerator implements GdslMembersHolderConsumer {
     newArgs[args.length] = this
 
     // Get other DSL methods from extensions
-    for (d in GdslMembersProvider.EP_NAME.getExtensions()) {
+    for (d in GdslTopLevelMembersProvider.EP_NAME.getExtensions()) {
       final def variants = d.metaClass.respondsTo(d, name, newArgs)
       if (variants.size() == 1) {
         return d.invokeMethod(name, newArgs)
@@ -64,7 +64,7 @@ public class CustomMembersGenerator implements GdslMembersHolderConsumer {
   }
 
   /** **********************************************************
-   Methods to add new behavior
+   Obsolete methods.
    *********************************************************** */
   def property(Map args) {
     myClassText.append("def ").append(stringifyType(args.type)).append(" ").append(args.name).append("\n")

@@ -19,23 +19,17 @@ package org.jetbrains.plugins.groovy.dsl.psi;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
 /**
  * @author ilyas
  */
-public class PsiElementCategory implements PsiEnhancerCategory {
+public class PsiElementCategory implements PsiEnhancerCategory{
 
   @Nullable
-  public static PsiElement bind(PsiElement element) {
-    PsiElement elem = element instanceof GrMethodCallExpression ? ((GrMethodCallExpression)element).getInvokedExpression() : element;
-    final PsiReference ref = elem.getReference();
-    if (ref == null) {
-      return null;
-    }
-    else {
-      return ref.resolve();
-    }
+  public static PsiElement getBind(PsiElement element) {
+    final PsiReference ref = element.getReference();
+    if (ref == null) return null;
+    else return ref.resolve();
   }
 
 }

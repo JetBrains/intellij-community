@@ -229,7 +229,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
           final ConcurrentFactoryMap<ClassDescriptor, CustomMembersHolder> result = new ConcurrentFactoryMap<ClassDescriptor, CustomMembersHolder>() {
               @Override
               protected CustomMembersHolder create(ClassDescriptor key) {
-                final CustomMembersGenerator generator = new CustomMembersGenerator(project, key.getPlace());
+                final CustomMembersGenerator generator = new CustomMembersGenerator(project, descriptor.getPlace());
                 try {
                   executor.processVariants(key, generator);
                 }
