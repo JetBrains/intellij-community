@@ -61,6 +61,10 @@ public class MultiMap<K, V> {
     return true;    
   }
 
+  public boolean containsKey(K key) {
+    return myMap.containsKey(key);
+  }
+  
   public boolean containsScalarValue(V value) {
     for(Collection<V> valueList: myMap.values()) {
       if (valueList.contains(value)) {
