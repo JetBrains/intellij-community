@@ -434,7 +434,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
 
   private static void putKeywords(@NonNls @NotNull String[] words, TailType tail, final CompletionResultSet result) {
     for (String s : words) {
-      result.addElement(TailTypeDecorator.createDecorator(LookupElementBuilder.create(s).setBold(), tail));
+      result.addElement(TailTypeDecorator.withTail(LookupElementBuilder.create(s).setBold(), tail));
     }
   }
 
