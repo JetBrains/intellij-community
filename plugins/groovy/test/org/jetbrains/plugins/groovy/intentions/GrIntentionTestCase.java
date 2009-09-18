@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * @author Maxim.Medvedev
  */
-public class GrIntentionTestCase extends LightCodeInsightFixtureTestCase {
+public abstract class GrIntentionTestCase extends LightCodeInsightFixtureTestCase {
   /*@NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
