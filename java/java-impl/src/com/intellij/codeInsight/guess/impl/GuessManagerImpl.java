@@ -118,7 +118,7 @@ public class GuessManagerImpl extends GuessManager {
       return typeMap;
     }
 
-    return getAllTypeCasts(forPlace);
+    return Collections.emptyMap();
   }
 
   @Nullable
@@ -356,7 +356,7 @@ public class GuessManagerImpl extends GuessManager {
       return fromDfa.get(expr);
     }
 
-    return allCasts.get(expr);
+    return null;
   }
 
   private static class ExpressionTypeInstructionVisitor extends InstructionVisitor {
