@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,21 +44,16 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
 
       data.setPresentableText(directoryFile.getName());
       if (module != null) {
-        StringBuilder location = new StringBuilder();
+        if (Comparing.equal(module.getName(), directoryFile.getName())) {
+          data.addText(directoryFile.getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        }
+        else {
+          data.addText(directoryFile.getName() + " ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          data.addText("[" + module.getName() + "]", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        }
+
         if (getParentValue() instanceof Project) {
-          location.append(directoryFile.getPresentableUrl());
-        }
-
-        if (!Comparing.equal(module.getName(), directoryFile.getName())) {
-          if (location.length() > 0) {
-            location.append(", ");
-          }
-
-          location.append("Module '").append(module.getName()).append("'");
-        }
-
-        if (location.length() > 0) {
-          data.setLocationString(location.toString());
+          data.addText(" (" + directoryFile.getPresentableUrl() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
 
         setupIcon(data, psiDirectory);
