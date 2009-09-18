@@ -23,11 +23,11 @@ import java.awt.*;
 
 public class RunConfigurationAction extends ComboBoxAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.actions.RunConfigurationAction");
-  private static final Key<ComboBoxAction.ComboBoxButton> BUTTON_KEY = Key.create("COMBOBOX_BUTTON");
+  private static final Key<ComboBoxButton> BUTTON_KEY = Key.create("COMBOBOX_BUTTON");
 
   public void actionPerformed(final AnActionEvent e) {
     final IdeFrameImpl ideFrame = findFrame(e.getData(PlatformDataKeys.CONTEXT_COMPONENT));
-    final ComboBoxAction.ComboBoxButton button = (ComboBoxAction.ComboBoxButton)ideFrame.getRootPane().getClientProperty(BUTTON_KEY);
+    final ComboBoxButton button = (ComboBoxButton)ideFrame.getRootPane().getClientProperty(BUTTON_KEY);
     if (button == null || !button.isShowing()) return;
     button.showPopup();
   }

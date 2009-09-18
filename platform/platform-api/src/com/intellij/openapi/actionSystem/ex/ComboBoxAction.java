@@ -80,7 +80,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     }
 
     public void showPopup() {
-      DefaultActionGroup group = createPopupActionGroup(this);
       myForcePressed = true;
       repaint();
 
@@ -95,12 +94,19 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
           repaint();
         }
       };
+
+      ListPopup popup = createPopup(onDispose);
+
+      popup.showUnderneathOf(this);
+    }
+
+    protected ListPopup createPopup(Runnable onDispose) {
+      DefaultActionGroup group = createPopupActionGroup(this);
       final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, group, DataManager.getInstance().getDataContext(),
                                                                                   JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false,
                                                                                   onDispose,
                                                                                   30);
-
-      popup.showUnderneathOf(this);
+      return popup;
     }
 
     public void removeNotify() {
