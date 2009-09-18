@@ -21,7 +21,10 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.ModuleType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.config.ui.GroovyFacetEditor;
+
+import javax.swing.*;
 
 /**
  * @author peter
@@ -29,6 +32,11 @@ import org.jetbrains.plugins.groovy.config.ui.GroovyFacetEditor;
 public class GroovyFacetSupportProvider extends FrameworkSupportProvider {
   protected GroovyFacetSupportProvider() {
     super("Groovy", "Groovy");
+  }
+
+  @Override
+  public Icon getIcon() {
+    return GroovyIcons.GROOVY_ICON_16x16;
   }
 
   @Override
