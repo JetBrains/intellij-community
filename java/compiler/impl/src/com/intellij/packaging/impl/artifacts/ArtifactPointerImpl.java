@@ -55,24 +55,4 @@ public class ArtifactPointerImpl implements ArtifactPointer {
   void setName(String name) {
     myName = name;
   }
-
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    ArtifactPointerImpl that = (ArtifactPointerImpl)o;
-
-    if (myArtifact != null ? !myArtifact.equals(that.myArtifact) : that.myArtifact != null) return false;
-    if (!myName.equals(that.myName)) return false;
-    if (!myProject.equals(that.myProject)) return false;
-
-    return true;
-  }
-
-  public int hashCode() {
-    int result = myProject.hashCode();
-    result = 31 * result + myName.hashCode();
-    result = 31 * result + (myArtifact != null ? myArtifact.hashCode() : 0);
-    return result;
-  }
 }
