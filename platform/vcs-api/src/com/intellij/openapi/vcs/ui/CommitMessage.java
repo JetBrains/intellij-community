@@ -47,6 +47,7 @@ public class CommitMessage extends JPanel implements Disposable {
     separatorPanel.add(Box.createVerticalGlue(), BorderLayout.NORTH);
     labelPanel.add(separatorPanel, BorderLayout.CENTER);
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, getToolbarActions(), true);
+    toolbar.updateActionsImmediately();
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.getComponent().setBorder(BorderFactory.createEmptyBorder());
     labelPanel.add(toolbar.getComponent(), BorderLayout.EAST);

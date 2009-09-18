@@ -183,7 +183,7 @@
     <group id="Vcs.MessageActionGroup">
       <action id="Vcs.ShowMessageHistory"
               class="com.intellij.openapi.vcs.actions.ShowMessageHistoryAction"
-              icon="/debugger/console.png"/>
+              icon="/vcs/messageHistory.png"/>
     </group>
 
     <group id="VcsToobarActions">
