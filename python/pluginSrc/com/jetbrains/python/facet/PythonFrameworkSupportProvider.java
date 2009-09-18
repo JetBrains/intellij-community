@@ -9,12 +9,19 @@ import com.intellij.openapi.module.ModuleType;
 import com.jetbrains.python.module.PythonModuleType;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+
 /**
  * @author yole
  */
 public class PythonFrameworkSupportProvider extends FrameworkSupportProvider {
   public PythonFrameworkSupportProvider() {
     super("Python", PythonFacetType.getInstance().getPresentableName());
+  }
+
+  @Override
+  public Icon getIcon() {
+    return PythonFacetType.ICON;
   }
 
   @NotNull
