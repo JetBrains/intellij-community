@@ -1,4 +1,6 @@
-enhanceScript(extension:"gant") {
+def ctx = context(scope: scriptScope(), filetypes : ["gant"])
+
+contributor ([ctx], {
   property name:"ant", type:"org.codehaus.gant.GantBuilder"
   property name:"Ant", type:"org.codehaus.gant.GantBuilder"
   property name:"includeTargets", type:"org.codehaus.gant.IncludeTargets"
@@ -10,4 +12,4 @@ enhanceScript(extension:"gant") {
   method name:"setDefaultTarget", type:"void", params:[target: {}]
   method name:"depends", type:"void", params:[list: "List"]
   method name:"target", type:"void", params:[args:[:], target: {}]
-}
+})

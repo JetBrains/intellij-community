@@ -84,7 +84,7 @@ public class CustomMembersGenerator implements GdslMembersHolderConsumer {
   private def stringifyType(type) {
     type instanceof Closure ? "groovy.lang.Closure" :
     type instanceof Map ? "java.util.Map" :
-    type.toString()
+    type ? type.toString() : ""
   }
 
 }

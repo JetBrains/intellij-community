@@ -38,9 +38,11 @@ public class GroovyDslTest extends LightCodeInsightFixtureTestCase {
     myFixture.testCompletion(getTestName(false) + ".gdsl", getTestName(false) + "_after.gdsl")
   }
 
+  /*
   public void testCompleteMethod() throws Throwable { doTest() }
 
   public void testCompleteProperty() throws Throwable { doTest() }
+  */
 
   public void testCompleteClassMethod() throws Throwable {
     doCustomTest("""

@@ -85,6 +85,13 @@ class Context {
           }
           return false
         }
+        // Name matcher
+        addFilter {PsiElement elem -> elem.getContainingFile().getName().matches(scope.getName())}
+        // Process unqualified references only
+        if (!args.ctype) {
+          addFilter {GrReferenceExpression elem -> !elem.getQualifierExpression()}
+        }
+
         break
 
     // handling closure scope

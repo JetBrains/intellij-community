@@ -1,7 +1,19 @@
-enhanceScript(extension:"gdsl") {
-  method name:"method", type:"void", params:[args:[:]]
-  method name:"property", type:"void", params:[args:[:]]
+def gdslScriptContext = context(scope: scriptScope(), filetypes : ["gdsl"])
 
-  method name:"enhanceScript", type:"void", params:[args:[:], action:{}]
-  method name:"enhanceClass", type:"void", params:[args:[:], action:{}]
-}
+contributor ([gdslScriptContext], {
+  method name : "context", params: [args: [:]], type : "Context"
+  method name : "contributor", params: [contexts: "java.util.List", body: {}], type: void
+
+  // scopes
+  property name : "closureScope", type : {}
+  property name : "scriptScope", type : {}
+})
+
+def contributorBody = context(scope: closureScope(isArg: true))
+
+contributor ([contributorBody], {
+  if (enclosingCall("contributor")) {
+    method name:"method", type:"void", params:[args:[:]]
+    method name:"property", type:"void", params:[args:[:]]
+  }
+})

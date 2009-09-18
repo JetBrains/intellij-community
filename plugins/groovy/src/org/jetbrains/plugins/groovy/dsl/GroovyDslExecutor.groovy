@@ -8,7 +8,6 @@ import org.jetbrains.plugins.groovy.dsl.toplevel.GdslMetaClassProperties
  */
 
 public class GroovyDslExecutor {
-  private final List<Closure> myScriptEnhancers = []
   private final List<Closure> myClassEnhancers = []
   private final String myFileName;
 
@@ -44,16 +43,12 @@ public class GroovyDslExecutor {
     myClassEnhancers << cl
   }
 
-  def addScriptEnhancer(Closure cl) {
-    myScriptEnhancers << cl
-  }
-
   public def runContributor(Contributor cb, ClassDescriptor cd, delegate) {
     cb.getApplyFunction(delegate, cd.getPlace())()
   }
 
   def processVariants(ClassDescriptor descriptor, consumer) {
-    for (e in (descriptor instanceof ScriptDescriptor ? myScriptEnhancers : myClassEnhancers)) {
+    for (e in myClassEnhancers) {
       e(descriptor, consumer)
     }
   }

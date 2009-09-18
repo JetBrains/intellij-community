@@ -12,7 +12,7 @@ class ClosureScope extends Scope {
   private final boolean isTransparent
 
   ClosureScope(Map args) {
-    isArg == args && args.isArgument? args.isArgument : false
+    isArg == args && args.isArgument ? args.isArgument : false
     isTransparent = args && args.transparent ? args.transparent : false
   }
 
@@ -28,8 +28,8 @@ class ClosureScope extends Scope {
 class ScriptScope extends Scope {
   final private myNamePattern
 
-  ScriptScope(Map agrs) {
-    myNamePattern = args.name ?: /.*/
+  ScriptScope(Map args) {
+    myNamePattern = args && args.name ? args.name : /.*/
   }
 
   def getName() {
