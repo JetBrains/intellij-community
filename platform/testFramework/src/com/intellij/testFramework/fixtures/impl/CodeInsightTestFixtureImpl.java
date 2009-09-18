@@ -890,7 +890,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
     final VirtualFile vFile;
     if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
-      vFile = LightPlatformTestCase.getSourceRoot().createChildData(this, "aaa." + extension);
+      vFile = LightPlatformTestCase.getSourceRoot().findOrCreateChildData(this, "aaa." + extension);
     }
     else{
       final File tempFile = File.createTempFile("aaa", "." + extension, new File(getTempDirPath()));
