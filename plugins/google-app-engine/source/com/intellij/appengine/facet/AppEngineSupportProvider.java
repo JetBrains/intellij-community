@@ -9,11 +9,12 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetTypeRegistry;
-import com.intellij.facet.impl.ui.FacetTypeFrameworkSupportProvider;
-import com.intellij.facet.impl.ui.VersionConfigurable;
+import com.intellij.facet.ui.FacetBasedFrameworkSupportProvider;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurableBase;
+import com.intellij.ide.util.frameworkSupport.FrameworkVersion;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.util.newProjectWizard.FrameworkSupportModel;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
 import com.intellij.javaee.JavaeePersistenceDescriptorsConstants;
 import com.intellij.javaee.appServerIntegrations.ApplicationServer;
 import com.intellij.javaee.module.JavaeePackagingConfiguration;
@@ -30,9 +31,9 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +44,7 @@ import java.io.IOException;
 /**
  * @author nik
  */
-public class AppEngineSupportProvider extends FacetTypeFrameworkSupportProvider<AppEngineFacet> {
+public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider<AppEngineFacet> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.appengine.facet.AppEngineSupportProvider");
   private static final String JPA_PROVIDER_ID = "facet:jpa";
 
@@ -56,7 +57,7 @@ public class AppEngineSupportProvider extends FacetTypeFrameworkSupportProvider<
     return new String[]{JPA_PROVIDER_ID};
   }
 
-  protected void setupConfiguration(AppEngineFacet facet, ModifiableRootModel rootModel, String version) {
+  protected void setupConfiguration(AppEngineFacet facet, ModifiableRootModel rootModel, FrameworkVersion version) {
     final WebFacet webFacet = facet.getWebFacet();
     final VirtualFile webXml = webFacet.getWebXmlDescriptor().getVirtualFile();
     if (webXml == null) return;
@@ -173,29 +174,28 @@ public class AppEngineSupportProvider extends FacetTypeFrameworkSupportProvider<
 
   @NotNull
   @Override
-  public VersionConfigurable createConfigurable(@NotNull FrameworkSupportModel model) {
+  public FrameworkSupportConfigurableBase createConfigurable(@NotNull FrameworkSupportModel model) {
     return new AppEngineSupportConfigurable();
   }
 
-  private class AppEngineSupportConfigurable extends VersionConfigurable {
+  private class AppEngineSupportConfigurable extends FrameworkSupportConfigurableBase {
     private JPanel myMainPanel;
     private AppEngineSdkEditor mySdkEditor;
     private JComboBox myPersistenceApiComboBox;
-    private JPanel myOptionsPanel;
+    private JPanel mySdkPanel;
 
     private AppEngineSupportConfigurable() {
-      super(AppEngineSupportProvider.this, ArrayUtil.EMPTY_STRING_ARRAY, null);
+      super(AppEngineSupportProvider.this);
       mySdkEditor = new AppEngineSdkEditor(null, true);
-      myMainPanel = new JPanel(new BorderLayout());
-      myMainPanel.add(mySdkEditor.getMainComponent(), BorderLayout.CENTER);
-      myMainPanel.add(myOptionsPanel, BorderLayout.SOUTH);
+      mySdkPanel.add(LabeledComponent.create(mySdkEditor.getMainComponent(), "AppEngine SDK:"), BorderLayout.CENTER);
       PersistenceApiComboboxUtil.setComboboxModel(myPersistenceApiComboBox, true);
     }
 
     @Override
-    public void addSupport(Module module, ModifiableRootModel rootModel, @Nullable Library library) {
+    public void addSupport(@NotNull Module module, @NotNull ModifiableRootModel rootModel, @Nullable Library library) {
       AppEngineSupportProvider.this.addSupport(module, rootModel, mySdkEditor.getPath(), PersistenceApiComboboxUtil.getSelectedApi(myPersistenceApiComboBox));
     }
+
 
     @Override
     public JComponent getComponent() {
