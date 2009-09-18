@@ -33,14 +33,13 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
     mySourceRoot = null;
   }
 
-  public VirtualFile copyFile(final VirtualFile file, String targetPath) {
-    int pos = targetPath.lastIndexOf('/');
-    final String path = pos < 0 ? "" : targetPath.substring(0, pos);
+  public VirtualFile copyFile(final VirtualFile file, final String targetPath) {
+    final String path = PathUtil.getParentPath(targetPath);
     return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
       public VirtualFile compute() {
         try {
           VirtualFile targetDir = findOrCreateDir(path);
-          return VfsUtil.copyFile(this, file, targetDir);
+          return VfsUtil.copyFile(this, file, targetDir, PathUtil.getFileName(targetPath));
         }
         catch (IOException e) {
           throw new RuntimeException(e);
