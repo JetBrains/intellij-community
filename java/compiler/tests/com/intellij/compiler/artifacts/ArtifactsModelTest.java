@@ -12,6 +12,7 @@ public class ArtifactsModelTest extends ArtifactsTestCase {
   public void testAddArtifact() throws Exception {
     assertEmpty(getArtifacts());
 
+    final long count = getModificationCount();
     final ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
     final ModifiableArtifact artifact = model.addArtifact("new art", PlainArtifactType.getInstance());
     artifact.setBuildOnMake(true);
@@ -26,6 +27,11 @@ public class ArtifactsModelTest extends ArtifactsTestCase {
     assertTrue(newArt.isBuildOnMake());
     assertEquals("/myout", newArt.getOutputPath());
     assertEquals("added:xxx;", listener.clearMessages());
+    assertTrue(getModificationCount() > count);
+  }
+
+  private long getModificationCount() {
+    return getArtifactManager().getModificationTracker().getModificationCount();
   }
 
   public void testRemoveArtifact() throws Exception {
@@ -65,6 +71,8 @@ public class ArtifactsModelTest extends ArtifactsTestCase {
 
   public void testChangeArtifact() throws Exception {
     final Artifact artifact = addArtifact("xxx");
+
+    final long count = getModificationCount();
     final ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
     assertFalse(model.isModified());
     assertSame(artifact, model.getArtifactByOriginal(artifact));
@@ -94,6 +102,7 @@ public class ArtifactsModelTest extends ArtifactsTestCase {
     assertEquals("qqq", newArtifact.getName());
     assertEquals("/aaa", newArtifact.getOutputPath());
     assertSame(newArtifact, artifact);
+    assertTrue(getModificationCount() > count);
   }
 
 
