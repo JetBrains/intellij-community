@@ -254,7 +254,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
 
   private void scheduleModelUpdate() {
     myModelUpdateAlarm.cancelAllRequests();
-    if (!isInFloatingMode() && !isNodePopupShowing()) {
+    if (!isInFloatingMode()) {
       myModelUpdateAlarm.addRequest(new Runnable() {
         public void run() {
           if (myProject.isDisposed()) return;
@@ -271,7 +271,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   private void updateModel() {
     DataContext context = DataManager.getInstance().getDataContext();
 
-    if (context.getData(DataConstants.IDE_VIEW) == myIdeView || context.getData(DataConstants.PROJECT) != myProject) {
+    if (context.getData(DataConstants.IDE_VIEW) == myIdeView || context.getData(DataConstants.PROJECT) != myProject || isNodePopupShowing()) {
       scheduleModelUpdate();
       return;
     }
@@ -892,8 +892,6 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
           return;
         }
       }
-
-      if (isNodePopupShowing()) return;
 
       scheduleModelUpdate();
     }
