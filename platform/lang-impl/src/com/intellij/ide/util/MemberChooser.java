@@ -116,6 +116,8 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     myTree.setModel(myTreeModel);
     myTree.setRootVisible(false);
 
+    doSort();
+
     TreeUtil.expandAll(myTree);
     myCopyJavadocCheckbox = new NonFocusableCheckBox(IdeBundle.message("checkbox.copy.javadoc"));
     if (myIsInsertOverrideVisible) {
@@ -365,13 +367,16 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   private void setSorted(boolean sorted) {
     if (mySorted == sorted) return;
     mySorted = sorted;
+    doSort();
+  }
 
+  private void doSort() {
     Pair<ElementNode,List<ElementNode>> pair = storeSelection();
 
     Enumeration<ParentNode> children = getRootNodeChildren();
     while (children.hasMoreElements()) {
       ParentNode classNode = children.nextElement();
-      sortNode(classNode, sorted);
+      sortNode(classNode, mySorted);
       myTreeModel.nodeStructureChanged(classNode);
     }
 
@@ -695,6 +700,11 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
   private static class OrderComparator implements Comparator<ElementNode> {
     public int compare(ElementNode n1, ElementNode n2) {
+      if (n1.getDelegate() instanceof ClassMemberWithElement
+        &&  n2.getDelegate() instanceof ClassMemberWithElement) {
+        return ((ClassMemberWithElement)n1.getDelegate()).getElement().getTextOffset()
+          - ((ClassMemberWithElement)n2.getDelegate()).getElement().getTextOffset();
+      }
       return n1.getOrder() - n2.getOrder();
     }
   }
