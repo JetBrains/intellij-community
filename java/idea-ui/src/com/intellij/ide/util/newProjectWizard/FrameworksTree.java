@@ -60,7 +60,9 @@ public class FrameworksTree extends CheckboxTree {
     @Override
     public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       if (value instanceof FrameworkSupportNode) {
-        getTextRenderer().append(((FrameworkSupportNode)value).getTitle());
+        final FrameworkSupportNode node = (FrameworkSupportNode)value;
+        getTextRenderer().append(node.getTitle());
+        getTextRenderer().setIcon(node.getProvider().getIcon());
       }
     }
   }
