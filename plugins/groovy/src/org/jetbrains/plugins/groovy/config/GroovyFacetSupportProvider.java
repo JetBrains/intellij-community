@@ -14,10 +14,12 @@
  */
 package org.jetbrains.plugins.groovy.config;
 
-import com.intellij.ide.util.newProjectWizard.FrameworkSupportConfigurable;
-import com.intellij.ide.util.newProjectWizard.FrameworkSupportModel;
-import com.intellij.ide.util.newProjectWizard.FrameworkSupportProvider;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.openapi.module.JavaModuleType;
+import com.intellij.openapi.module.ModuleType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.config.ui.GroovyFacetEditor;
 
@@ -39,4 +41,7 @@ public class GroovyFacetSupportProvider extends FrameworkSupportProvider {
     return new GroovySupportConfigurable(new GroovyFacetEditor(model.getProject()));
   }
 
+  public boolean isEnabledForModuleType(@NotNull ModuleType moduleType) {
+    return moduleType instanceof JavaModuleType;
+  }
 }

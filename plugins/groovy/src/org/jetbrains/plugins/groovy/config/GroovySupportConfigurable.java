@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.groovy.config;
 
-import com.intellij.ide.util.newProjectWizard.FrameworkSupportConfigurable;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -29,7 +29,7 @@ public class GroovySupportConfigurable extends FrameworkSupportConfigurable {
     return facetEditor.getComponent();
   }
 
-  public void addSupport(final Module module, final ModifiableRootModel rootModel, @Nullable Library library) {
+  public void addSupport(@NotNull final Module module, @NotNull final ModifiableRootModel rootModel, @Nullable Library library) {
     addGroovySupport(module, rootModel);
   }
 
