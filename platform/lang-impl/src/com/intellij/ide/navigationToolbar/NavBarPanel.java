@@ -954,13 +954,18 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   }
 
   private void scheduleListUpdate() {
-    myListUpdateAlarm.cancelAllRequests();
-    myListUpdateAlarm.addRequest(new Runnable() {
+    // Can be called from other threads so invokeLater ensures we're in EDT
+    SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        if (myProject.isDisposed()) return;
-        updateList();
+        myListUpdateAlarm.cancelAllRequests();
+        myListUpdateAlarm.addRequest(new Runnable() {
+          public void run() {
+            if (myProject.isDisposed()) return;
+            updateList();
+          }
+        }, 50);
       }
-    }, 50);
+    });
   }
 
   private class MyPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
