@@ -2,6 +2,7 @@ package com.intellij.history.integration.stubs;
 
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.FileSystemSynchronizer;
+import org.jetbrains.annotations.NotNull;
 
 public class StubStartupManagerEx extends StartupManagerEx {
   public void registerStartupActivity(Runnable runnable) {
@@ -32,7 +33,7 @@ public class StubStartupManagerEx extends StartupManagerEx {
     throw new UnsupportedOperationException();
   }
 
-  public void registerPreStartupActivity(Runnable runnable) // should be used only to register to FileSystemSynchronizer!
+  public void registerPreStartupActivity(@NotNull Runnable runnable) // should be used only to register to FileSystemSynchronizer!
   {
     throw new UnsupportedOperationException();
   }

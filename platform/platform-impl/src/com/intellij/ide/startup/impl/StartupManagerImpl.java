@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
@@ -69,7 +70,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     return myPostStartupActivityPassed;
   }
 
-  public void registerPreStartupActivity(Runnable runnable) {
+  public void registerPreStartupActivity(@NotNull Runnable runnable) {
     myPreStartupActivities.add(runnable);
   }
 

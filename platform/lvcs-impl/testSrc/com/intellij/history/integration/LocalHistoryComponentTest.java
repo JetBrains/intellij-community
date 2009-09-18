@@ -8,6 +8,7 @@ import com.intellij.history.integration.stubs.StubStartupManagerEx;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.project.Project;
 import static org.easymock.classextension.EasyMock.*;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Test;
 
@@ -199,7 +200,7 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
   private static class MyStartupManager extends StubStartupManagerEx {
     private Runnable myActivity;
 
-    public void registerPreStartupActivity(Runnable r) {
+    public void registerPreStartupActivity(@NotNull Runnable r) {
       myActivity = r;
     }
 

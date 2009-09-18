@@ -127,14 +127,14 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   }
 
   public void disposeComponent() {
-    if (!isInitialized.getAndSet(false)) return;
+    if (isInitialized.getAndSet(false)) {
+      myVcs.purgeObsoleteAndSave(myConfiguration.PURGE_PERIOD);
 
-    myVcs.purgeObsoleteAndSave(myConfiguration.PURGE_PERIOD);
+      doCloseVcs();
+      doCloseService();
 
-    doCloseVcs();
-    doCloseService();
-
-    cleanupStorageAfterTestCase();
+      cleanupStorageAfterTestCase();
+    }
 
     ShutDownTracker.getInstance().unregisterShutdownTask(myShutdownTask);
   }

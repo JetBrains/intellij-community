@@ -17,7 +17,7 @@ public class FileFilter {
   }
 
   public boolean isAllowedAndUnderContentRoot(VirtualFile f) {
-    return isUnderContentRoot(f) && isAllowed(f);
+    return isAllowed(f) && isUnderContentRoot(f);
   }
 
   public boolean isUnderContentRoot(VirtualFile f) {

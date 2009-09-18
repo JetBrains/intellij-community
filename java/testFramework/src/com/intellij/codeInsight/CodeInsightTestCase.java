@@ -62,11 +62,6 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     return instance.openTextEditor(new OpenFileDescriptor(myProject, file, 0), false);
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-  }
-
   protected void tearDown() throws Exception {
     FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
     VirtualFile[] openFiles = editorManager.getOpenFiles();
