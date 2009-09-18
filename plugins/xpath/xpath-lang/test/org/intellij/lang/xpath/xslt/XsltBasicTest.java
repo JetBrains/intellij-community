@@ -4,6 +4,7 @@ import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.xml.XmlFile;
 
 import org.intellij.lang.xpath.TestBase;
+import org.intellij.lang.xpath.xslt.impl.XsltChecker;
 
 /*
 * Created by IntelliJ IDEA.
@@ -31,7 +32,7 @@ public class XsltBasicTest extends TestBase {
         doTestXsltSupport();
     }
 
-    public void testUnsupportedXslt20() throws Throwable {
+    public void testPartialXslt20() throws Throwable {
         doTestXsltSupport();
     }
 
@@ -62,12 +63,21 @@ public class XsltBasicTest extends TestBase {
 
     private void doTestXsltSupport() throws Throwable {
         configure();
-        final boolean b = XsltSupport.isXsltFile(myFixture.getFile());
-        if (getName().contains("Unsupported")) {
-            assertFalse(b);
-        } else {
-            assert getName().contains("Supported");
-            assertTrue(b);
+
+        final XsltChecker.SupportLevel level = XsltSupport.getXsltSupportLevel(myFixture.getFile());
+        switch (level) {
+            case FULL:
+                assertTrue(getName().contains("Supported"));
+                assertTrue(XsltSupport.isXsltFile(myFixture.getFile()));
+                break;
+            case NONE:
+                assertTrue(getName().contains("Unsupported"));
+                assertFalse(XsltSupport.isXsltFile(myFixture.getFile()));
+                break;
+            case PARTIAL:
+                assertTrue(getName().contains("Partial"));
+                assertTrue(XsltSupport.isXsltFile(myFixture.getFile()));
+                break;
         }
     }
 

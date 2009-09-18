@@ -25,6 +25,7 @@ import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.psi.util.ParameterizedCachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.SmartList;
@@ -47,7 +48,7 @@ public class XsltSupport {
     public static final String XALAN_EXTENSION_PREFIX = "http://xml.apache.org/xalan/";
     public static final String XSLT_NS = "http://www.w3.org/1999/XSL/Transform";
     public static final String PLUGIN_EXTENSIONS_NS = "urn:idea:xslt-plugin#extensions";
-    public static final Key<ParameterizedCachedValue<Boolean, PsiFile>> FORCE_XSLT_KEY = Key.create("FORCE_XSLT");
+    public static final Key<ParameterizedCachedValue<XsltChecker.SupportLevel, PsiFile>> FORCE_XSLT_KEY = Key.create("FORCE_XSLT");
 
     private static final Icon XSLT_OVERLAY = IconLoader.getIcon("/icons/xslt-filetype-overlay.png");
     private static final Map<String, String> XPATH_ATTR_MAP = new THashMap<String, String>(10);
@@ -105,10 +106,17 @@ public class XsltSupport {
             final String s = XPATH_ATTR_MAP.get(name);
             //noinspection StringEquality
             if (s == "" || tagName.equals(s)) return true;
-            return isAttributeValueTemplate(attribute, true);
+            if (!isAttributeValueTemplate(attribute, true)) {
+                return false;
+            }
         } else {
-            return isAttributeValueTemplate(attribute, false);
+            if (!isAttributeValueTemplate(attribute, false)) {
+                return false;
+            }
         }
+
+        final PsiFile file = attribute.getContainingFile();
+        return file != null && getXsltSupportLevel(file) == XsltChecker.SupportLevel.FULL;
     }
 
     private static boolean isAttributeValueTemplate(@NotNull XmlAttribute attribute, boolean isXsltAttribute) {
@@ -192,7 +200,13 @@ public class XsltSupport {
 
         if (!(psiFile instanceof XmlFile)) return false;
 
-        return psiFile.getManager().getCachedValuesManager().getParameterizedCachedValue(psiFile, FORCE_XSLT_KEY, XsltSupportProvider.INSTANCE, false, psiFile);
+        final XsltChecker.SupportLevel level = getXsltSupportLevel(psiFile);
+        return level == XsltChecker.SupportLevel.FULL || level == XsltChecker.SupportLevel.PARTIAL;
+    }
+
+    public static XsltChecker.SupportLevel getXsltSupportLevel(PsiFile psiFile) {
+        final CachedValuesManager mgr = psiFile.getManager().getCachedValuesManager();
+        return mgr.getParameterizedCachedValue(psiFile, FORCE_XSLT_KEY, XsltSupportProvider.INSTANCE, false, psiFile);
     }
 
     public static boolean isXsltRootTag(@NotNull XmlTag tag) {
@@ -297,34 +311,34 @@ public class XsltSupport {
         return LayeredIcon.create(icon, XSLT_OVERLAY);
     }
 
-    private static class XsltSupportProvider implements ParameterizedCachedValueProvider<Boolean, PsiFile> {
-        public static final ParameterizedCachedValueProvider<Boolean, PsiFile> INSTANCE = new XsltSupportProvider();
+    private static class XsltSupportProvider implements ParameterizedCachedValueProvider<XsltChecker.SupportLevel, PsiFile> {
+        public static final ParameterizedCachedValueProvider<XsltChecker.SupportLevel, PsiFile> INSTANCE = new XsltSupportProvider();
 
-        public CachedValueProvider.Result<Boolean> compute(PsiFile psiFile) {
+        public CachedValueProvider.Result<XsltChecker.SupportLevel> compute(PsiFile psiFile) {
             if (psiFile instanceof PsiFileEx) {
                 if (((PsiFileEx)psiFile).isContentsLoaded()) {
                     final XmlDocument doc = ((XmlFile)psiFile).getDocument();
                     if (doc != null) {
                         final XmlTag rootTag = doc.getRootTag();
                         if (rootTag != null) {
-                            final boolean supported;
                             XmlAttribute v;
+                            XsltChecker.SupportLevel level;
                             if (isXsltRootTag(rootTag)) {
                                 v = rootTag.getAttribute("version");
-                                supported = v != null && XsltChecker.isSupportedVersion(v.getValue());
+                                level = v != null ? XsltChecker.getSupportLevel(v.getValue()) : XsltChecker.SupportLevel.NONE;
                             } else {
                                 v = rootTag.getAttribute("version", XSLT_NS);
-                                supported = v != null && XsltChecker.isSupportedVersion(v.getValue());
+                                level = v != null ? XsltChecker.getSupportLevel(v.getValue()) : XsltChecker.SupportLevel.NONE;
                             }
-                            return CachedValueProvider.Result.create(supported, rootTag);
-                        }
+                            return CachedValueProvider.Result.create(level, rootTag);
+                       }
                     }
                 }
             }
 
             final XsltChecker xsltChecker = new XsltChecker();
             NanoXmlUtil.parseFile(psiFile, xsltChecker);
-            return CachedValueProvider.Result.create(xsltChecker.isSupportedXsltFile(), psiFile);
+            return CachedValueProvider.Result.create(xsltChecker.getSupportLevel(), psiFile);
         }
     }
 }

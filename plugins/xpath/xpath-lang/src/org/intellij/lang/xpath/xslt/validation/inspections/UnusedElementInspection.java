@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.lang.xpath.xslt.impl.XsltChecker;
 import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
 import org.intellij.lang.xpath.xslt.psi.XsltVariable;
 import org.intellij.lang.xpath.xslt.validation.XsltValidator;
@@ -61,7 +62,7 @@ public class UnusedElementInspection extends XsltInspection {
             if (!XsltSupport.isVariableOrParamName(attribute)) {
                 return;
             }
-            if (!XsltSupport.isXsltFile(attribute.getContainingFile())) {
+            if (XsltSupport.getXsltSupportLevel(attribute.getContainingFile()) != XsltChecker.SupportLevel.FULL) {
                 return;
             }
             final XmlTag tag = attribute.getParent();

@@ -132,7 +132,6 @@ class XPathLanguageInjector implements MultiHostInjector {
 
   public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
     final XmlAttribute attribute = (XmlAttribute)context;
-    if (!XsltSupport.isXsltFile(attribute.getContainingFile())) return;
     if (!XsltSupport.isXPathAttribute(attribute)) return;
 
     XmlAttributeValueImpl value = (XmlAttributeValueImpl)attribute.getValueElement();

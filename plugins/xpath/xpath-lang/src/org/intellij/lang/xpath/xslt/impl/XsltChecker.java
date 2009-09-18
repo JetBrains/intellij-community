@@ -21,8 +21,10 @@ import org.intellij.lang.xpath.xslt.XsltSupport;
 import com.intellij.util.xml.NanoXmlUtil;
 
 public class XsltChecker extends NanoXmlUtil.IXMLBuilderAdapter {
+    public enum SupportLevel { FULL, NONE, PARTIAL }
+
     enum State {
-        YES, SIMPLIFIED, NO, POSSIBLY, POSSIBLY_SIMPLIFIED_SYNTAX
+        YES, SIMPLIFIED, NO, POSSIBLY, POSSIBLY_SIMPLIFIED_SYNTAX, PARTIAL
     }
 
     private static final RuntimeException STOP = new NanoXmlUtil.ParserStoppedException();
@@ -59,15 +61,25 @@ public class XsltChecker extends NanoXmlUtil.IXMLBuilderAdapter {
     }
 
     private void checkVersion(String value, State yes) {
-        if (isSupportedVersion(value)) {
+        if (isFullySupportedVersion(value)) {
             myState = yes;
+        } else if (isPartiallySupportedVersion(value)) {
+            myState = State.PARTIAL;
         } else {
             myState = State.NO;
         }
     }
 
     public static boolean isSupportedVersion(String value) {
+        return isFullySupportedVersion(value) || isPartiallySupportedVersion(value);
+    }
+
+    public static boolean isFullySupportedVersion(String value) {
         return "1.0".equals(value) || "1.1".equals(value);
+    }
+
+    public static boolean isPartiallySupportedVersion(String value) {
+        return "2.0".equals(value);
     }
 
     @Override
@@ -80,11 +92,29 @@ public class XsltChecker extends NanoXmlUtil.IXMLBuilderAdapter {
         stopFast();  // the first element (or its attrs) decides - stop here
     }
 
-    public boolean isSupportedXsltFile() {
+    public boolean isFullySupportedXsltFile() {
         return myState == State.YES || myState == State.SIMPLIFIED;
     }
 
     public boolean isSimplifiedSyntax() {
         return myState == State.SIMPLIFIED;
+    }
+
+    public static SupportLevel getSupportLevel(String value) {
+        if (value == null) {
+            return SupportLevel.NONE;
+        }
+        if (isFullySupportedVersion(value)) {
+            return SupportLevel.FULL;
+        }
+        if (isPartiallySupportedVersion(value)) {
+            return SupportLevel.PARTIAL;
+        }
+        return SupportLevel.NONE;
+    }
+
+    public SupportLevel getSupportLevel() {
+        return myState == State.PARTIAL ? SupportLevel.PARTIAL :
+                (isFullySupportedXsltFile() ? SupportLevel.FULL : SupportLevel.NONE);
     }
 }
