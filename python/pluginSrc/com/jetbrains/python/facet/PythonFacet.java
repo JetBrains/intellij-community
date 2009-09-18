@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class PythonFacet extends Facet<PythonFacetConfiguration> {
-  public static final FacetTypeId<PythonFacet> ID = new FacetTypeId<PythonFacet>();
+  public static final FacetTypeId<PythonFacet> ID = new FacetTypeId<PythonFacet>("python");
 
   @NonNls
   public static final String PYTHON_FACET_LIBRARY_NAME_SUFFIX = " interpreter library";
