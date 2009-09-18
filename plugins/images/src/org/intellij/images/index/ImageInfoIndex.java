@@ -3,6 +3,7 @@ package org.intellij.images.index;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
@@ -22,7 +23,7 @@ public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfo
 
   private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
     public boolean acceptInput(final VirtualFile file) {
-      return file.getFileSystem() == LocalFileSystem.getInstance() &&
+      return (file.getFileSystem() == LocalFileSystem.getInstance() || file.getFileSystem() instanceof TempFileSystem) &&
              file.getFileType() == ImageFileTypeManager.getInstance().getImageFileType();
     }
   };
