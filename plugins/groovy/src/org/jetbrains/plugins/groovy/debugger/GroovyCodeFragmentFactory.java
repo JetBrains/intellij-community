@@ -104,6 +104,11 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
           return;
         }
 
+        if (resolved instanceof GrField && !referenceExpression.isQualified()) {
+          replaceWithReference(referenceExpression, (closure == null ? "delegate" : "owner") + "." + referenceExpression.getReferenceName());
+          return;
+        }
+
         if (resolved instanceof GrVariableBase && !(resolved instanceof GrField) && !PsiTreeUtil.isAncestor(toEval, resolved, false)) {
           final String name = ((GrVariableBase)resolved).getName();
           if (resolved instanceof ClosureSyntheticParameter && PsiTreeUtil.isAncestor(toEval, ((ClosureSyntheticParameter) resolved).getClosure(), false)) {
