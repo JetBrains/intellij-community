@@ -54,7 +54,6 @@ public abstract class ModuleBuilder extends ProjectBuilder{
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.ModuleBuilder");
   private String myName;
   @NonNls private String myModuleFilePath;
-  @Nullable
   private final List<ModuleConfigurationUpdater> myUpdaters = new ArrayList<ModuleConfigurationUpdater>();
   private final EventDispatcher<ModuleBuilderListener> myDispatcher = EventDispatcher.create(ModuleBuilderListener.class);
 
@@ -243,7 +242,7 @@ public abstract class ModuleBuilder extends ProjectBuilder{
 
   public static abstract class ModuleConfigurationUpdater {
 
-    public abstract void update(Module module, ModifiableRootModel rootModel);
+    public abstract void update(@NotNull Module module, @NotNull ModifiableRootModel rootModel);
 
   }
 }

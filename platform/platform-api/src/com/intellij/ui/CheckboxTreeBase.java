@@ -284,9 +284,15 @@ public class CheckboxTreeBase extends Tree {
   public static abstract class CheckboxTreeCellRendererBase extends JPanel implements TreeCellRenderer {
     private final ColoredTreeCellRenderer myTextRenderer;
     public final JCheckBox myCheckbox;
+    private final boolean myUsePartialStatusForParentNodes;
 
     public CheckboxTreeCellRendererBase(boolean opaque) {
+      this(opaque, true);
+    }
+
+    public CheckboxTreeCellRendererBase(boolean opaque, final boolean usePartialStatusForParentNodes) {
       super(new BorderLayout());
+      myUsePartialStatusForParentNodes = usePartialStatusForParentNodes;
       myCheckbox = new JCheckBox();
       myTextRenderer = new ColoredTreeCellRenderer() {
         public void customizeCellRenderer(JTree tree,
@@ -337,7 +343,7 @@ public class CheckboxTreeBase extends Tree {
 
     private NodeState getNodeStatus(final CheckedTreeNode node) {
       final boolean checked = node.isChecked();
-      if (node.getChildCount() == 0) return checked ? NodeState.FULL : NodeState.CLEAR;
+      if (node.getChildCount() == 0 || !myUsePartialStatusForParentNodes) return checked ? NodeState.FULL : NodeState.CLEAR;
 
       NodeState result = null;
 

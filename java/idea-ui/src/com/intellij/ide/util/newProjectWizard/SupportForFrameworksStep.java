@@ -9,6 +9,7 @@ import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ProjectBundle;
@@ -38,7 +39,7 @@ public class SupportForFrameworksStep extends ModuleWizardStep {
       }
     });
     builder.addModuleConfigurationUpdater(new ModuleBuilder.ModuleConfigurationUpdater() {
-      public void update(final Module module, final ModifiableRootModel rootModel) {
+      public void update(@NotNull final Module module, @NotNull final ModifiableRootModel rootModel) {
         mySupportForFrameworksPanel.addSupport(module, rootModel);
       }
     });

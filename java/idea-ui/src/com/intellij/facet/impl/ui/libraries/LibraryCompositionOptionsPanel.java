@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,14 +39,14 @@ public class LibraryCompositionOptionsPanel {
   private JButton myAddJarsButton;
   private JCheckBox myDownloadMissingJarsCheckBox;
   private TextFieldWithBrowseButton myDirectoryField;
-  private JTextArea myMissingLibrariesArea;
   private JComboBox myLibraryLevelComboBox;
   private JTextField myLibraryNameField;
   private JPanel myMissingLibrariesPanel;
-  private JTextArea myHiddenTextArea;
   private JPanel myNewLibraryPanel;
   private JPanel myLibraryPropertiesPanel;
   private JPanel myMirrorsPanel;
+  private JLabel myMissingLibrariesLabel;
+  private JLabel myHiddenLabel;
   private final List<VirtualFile> myAddedJars = new ArrayList<VirtualFile>();
   private final List<Library> myUsedLibraries = new ArrayList<Library>();
   private final LibrariesContainer myLibrariesContainer;
@@ -54,8 +55,8 @@ public class LibraryCompositionOptionsPanel {
   private final LibraryDownloadingMirrorsMap myMirrorsMap;
   private List<RemoteRepositoryMirrorPanel> myMirrorPanelsList;
 
-  public LibraryCompositionOptionsPanel(final LibrariesContainer librariesContainer, final LibraryCompositionSettings libraryCompositionSettings,
-                                        final LibraryDownloadingMirrorsMap mirrorsMap) {
+  public LibraryCompositionOptionsPanel(final @NotNull LibrariesContainer librariesContainer, final @NotNull LibraryCompositionSettings libraryCompositionSettings,
+                                        final @NotNull LibraryDownloadingMirrorsMap mirrorsMap) {
     myLibrariesContainer = librariesContainer;
     myLibraryCompositionSettings = libraryCompositionSettings;
     myMirrorsMap = mirrorsMap;
@@ -96,11 +97,10 @@ public class LibraryCompositionOptionsPanel {
     myLibraryLevelComboBox.setSelectedItem(myLibraryLevels.getValue(myLibraryCompositionSettings.getLibraryLevel()));
     myLibraryNameField.setText(myLibraryCompositionSettings.getLibraryName());
 
-    myMissingLibrariesArea.setBackground(myMainPanel.getBackground());
     myDirectoryField.setText(FileUtil.toSystemDependentName(myLibraryCompositionSettings.getDirectoryForDownloadedLibrariesPath()));
     String jars = RequiredLibrariesInfo.getLibrariesPresentableText(myLibraryCompositionSettings.getLibraryInfos());
 
-    myHiddenTextArea.setText(ProjectBundle.message("label.text.libraries.are.missing", jars));
+    myHiddenLabel.setText(UIUtil.toHtml(ProjectBundle.message("label.text.libraries.are.missing", jars)));
 
     updateAll();
     myMissingLibrariesPanel.getPreferredSize();
@@ -190,7 +190,7 @@ public class LibraryCompositionOptionsPanel {
     else {
       missingJarsText = ProjectBundle.message("label.text.all.library.files.found");
     }
-    myMissingLibrariesArea.setText(missingJarsText);
+    myMissingLibrariesLabel.setText(UIUtil.toHtml(missingJarsText));
     ((CardLayout)myMissingLibrariesPanel.getLayout()).show(myMissingLibrariesPanel, "shown");
     if (info == null) {
       myDownloadMissingJarsCheckBox.setSelected(false);

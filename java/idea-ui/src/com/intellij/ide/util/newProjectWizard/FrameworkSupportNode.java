@@ -1,0 +1,143 @@
+package com.intellij.ide.util.newProjectWizard;
+
+import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
+import com.intellij.facet.impl.ui.libraries.LibraryCompositionOptionsPanel;
+import com.intellij.facet.impl.ui.libraries.LibraryDownloadingMirrorsMap;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
+import com.intellij.ide.util.frameworkSupport.FrameworkVersion;
+import com.intellij.facet.ui.libraries.LibraryInfo;
+import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelImpl;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
+import com.intellij.ui.CheckedTreeNode;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
+/**
+* @author nik
+*/
+public class FrameworkSupportNode extends CheckedTreeNode {
+  private final FrameworkSupportProvider myProvider;
+  private final FrameworkSupportNode myParentNode;
+  private final FrameworkSupportConfigurable myConfigurable;
+  private final List<FrameworkSupportNode> myChildren = new ArrayList<FrameworkSupportNode>();
+  private LibraryCompositionSettings myLibraryCompositionSettings;
+  private final Computable<String> myBaseDirForLibrariesGetter;
+  private LibraryCompositionOptionsPanel myLibraryCompositionOptionsPanel;
+
+  FrameworkSupportNode(final FrameworkSupportProvider provider, final FrameworkSupportNode parentNode, final FrameworkSupportModelImpl model,
+                             Computable<String> baseDirForLibrariesGetter) {
+    super(provider);
+    myBaseDirForLibrariesGetter = baseDirForLibrariesGetter;
+    setChecked(false);
+    myProvider = provider;
+    myParentNode = parentNode;
+    model.registerComponent(provider, this);
+    myConfigurable = provider.createConfigurable(model);
+    if (parentNode != null) {
+      parentNode.add(this);
+      parentNode.myChildren.add(this);
+    }
+
+    setConfigurableComponentEnabled(false);
+  }
+
+  public List<FrameworkSupportNode> getChildren() {
+    return myChildren;
+  }
+
+  @Nullable
+  public LibraryCompositionOptionsPanel getLibraryCompositionOptionsPanel(LibrariesContainer librariesContainer,
+                                                                          LibraryDownloadingMirrorsMap mirrorsMap) {
+    final LibraryCompositionSettings libraryCompositionSettings = getLibraryCompositionSettings();
+    if (myLibraryCompositionOptionsPanel == null || !myLibraryCompositionOptionsPanel.getLibraryCompositionSettings().equals(libraryCompositionSettings)) {
+      if (libraryCompositionSettings != null) {
+        myLibraryCompositionOptionsPanel = new LibraryCompositionOptionsPanel(librariesContainer, libraryCompositionSettings, mirrorsMap);
+      }
+      else {
+        myLibraryCompositionOptionsPanel = null;
+      }
+    }
+    return myLibraryCompositionOptionsPanel;
+  }
+
+  public void setConfigurableComponentEnabled(final boolean enable) {
+    JComponent component = getConfigurable().getComponent();
+    if (component != null) {
+      UIUtil.setEnabled(component, enable, true);
+    }
+  }
+
+  public FrameworkSupportProvider getProvider() {
+    return myProvider;
+  }
+
+  public FrameworkSupportNode getParentNode() {
+    return myParentNode;
+  }
+
+  public FrameworkSupportConfigurable getConfigurable() {
+    return myConfigurable;
+  }
+
+  private boolean isObsolete(@NotNull LibraryCompositionSettings settings) {
+    final LibraryInfo[] libraries = getLibraries();
+    return !settings.getBaseDirectoryForDownloadedFiles().equals(myBaseDirForLibrariesGetter.compute())
+           || !Comparing.equal(settings.getLibraryInfos(), libraries);
+  }
+
+  public LibraryInfo[] getLibraries() {
+    final FrameworkVersion version = myConfigurable.getSelectedVersion();
+    return version != null ? version.getLibraries() : LibraryInfo.EMPTY_ARRAY;
+  }
+
+  @Nullable
+  public LibraryCompositionSettings getLibraryCompositionSettings() {
+    if (myLibraryCompositionSettings == null || isObsolete(myLibraryCompositionSettings)) {
+      final LibraryInfo[] libraries = getLibraries();
+      if (libraries.length != 0) {
+        myLibraryCompositionSettings = new LibraryCompositionSettings(libraries, myConfigurable.getSelectedVersion().getLibraryName(), myBaseDirForLibrariesGetter.compute(),
+                                                                      "Libraries", myProvider.getIcon());
+      }
+      else {
+        myLibraryCompositionSettings = null;
+      }
+    }
+    return myLibraryCompositionSettings;
+  }
+
+  public static void sortByTitle(List<FrameworkSupportNode> nodes) {
+    if (nodes.isEmpty()) return;
+
+    Collections.sort(nodes, new Comparator<FrameworkSupportNode>() {
+      public int compare(final FrameworkSupportNode o1, final FrameworkSupportNode o2) {
+        return getTitleWithoutMnemonic(o1.getProvider()).compareTo(getTitleWithoutMnemonic(o2.getProvider()));
+      }
+    });
+    for (FrameworkSupportNode node : nodes) {
+      node.sortChildren();
+    }
+  }
+
+  public String getTitle() {
+    return getTitleWithoutMnemonic(myProvider);
+  }
+
+  private static String getTitleWithoutMnemonic(final FrameworkSupportProvider provider) {
+    return StringUtil.replace(provider.getTitle(), String.valueOf(UIUtil.MNEMONIC), "");
+  }
+
+  private void sortChildren() {
+    sortByTitle(myChildren);
+  }
+}

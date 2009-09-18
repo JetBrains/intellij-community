@@ -4,37 +4,43 @@
 
 package com.intellij.ide.util.newProjectWizard;
 
-import com.intellij.facet.impl.ui.FacetTypeFrameworkSupportProvider;
-import com.intellij.facet.impl.ui.libraries.LibrariesCompositionDialog;
+import com.intellij.facet.ui.FacetBasedFrameworkSupportProvider;
+import com.intellij.facet.impl.ui.libraries.LibraryCompositionOptionsPanel;
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
 import com.intellij.facet.impl.ui.libraries.LibraryDownloadingMirrorsMap;
 import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
 import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.facet.ui.libraries.RemoteRepositoryInfo;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelImpl;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurableListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
+import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.CheckedTreeNode;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.TitledSeparator;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
@@ -43,20 +49,21 @@ import java.util.List;
  */
 public class AddSupportForFrameworksPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksStep");
-  private static final int INDENT = 20;
-  private static final int SPACE_AFTER_TITLE = 5;
-  private static final int VERTICAL_SPACE = 5;
-  private static final int GAP_BETWEEN_GROUPS = 10;
+  @NonNls private static final String UNCHECKED_CARD = "unchecked";
+  @NonNls private static final String EMPTY_CARD = "empty";
   private JPanel myMainPanel;
-  private JPanel myFrameworksTreePanel;
-  private JButton myChangeButton;
-  private JPanel myDownloadingOptionsPanel;
-  private List<List<FrameworkSupportSettings>> myGroups;
+  private JPanel myFrameworksPanel;
+  private List<List<FrameworkSupportNode>> myGroups;
   private final LibrariesContainer myLibrariesContainer;
   private final Computable<String> myBaseDirForLibrariesGetter;
   private final List<FrameworkSupportProvider> myProviders;
   private final LibraryDownloadingMirrorsMap myMirrorsMap;
   private final FrameworkSupportModelImpl myModel;
+  private JPanel myOptionsPanel;
+  private FrameworksTree myFrameworksTree;
+  private Set<String> myInitializedOptionsPanelIds = new HashSet<String>();
+  private FrameworkSupportNode myLastSelectedNode;
+  private JLabel myTickCheckboxLabel;
 
   public AddSupportForFrameworksPanel(final List<FrameworkSupportProvider> providers, final @NotNull LibrariesContainer librariesContainer,
                                       @Nullable ModuleBuilder builder, Computable<String> baseDirForLibrariesGetter) {
@@ -65,31 +72,127 @@ public class AddSupportForFrameworksPanel {
     myProviders = providers;
     myModel = new FrameworkSupportModelImpl(myLibrariesContainer.getProject(), builder);
     createNodes();
-    myMirrorsMap = creatMirrorsMap();
+    myMirrorsMap = createMirrorsMap();
 
-    final JPanel treePanel = new JPanel(new GridBagLayout());
-    addGroupPanels(myGroups, treePanel, 0);
-    myFrameworksTreePanel.add(treePanel, BorderLayout.WEST);
-    myChangeButton.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        final List<LibraryCompositionSettings> compositionSettingsList = getLibrariesCompositionSettingsList();
-        new LibrariesCompositionDialog(myMainPanel, myLibrariesContainer, compositionSettingsList, myMirrorsMap).show();
-        updateDownloadingOptionsPanel();
+    final Splitter splitter = new Splitter(false, 0.35f, 0.1f, 0.7f);
+    myFrameworksTree = new FrameworksTree(myGroups) {
+      @Override
+      protected void onNodeStateChanged(CheckedTreeNode node) {
+        if (!(node instanceof FrameworkSupportNode)) return;
+
+        final FrameworkSupportNode frameworkSupportNode = (FrameworkSupportNode)node;
+        frameworkSupportNode.setConfigurableComponentEnabled(node.isChecked());
+        updateOptionsPanel();
+        myModel.onFrameworkSelectionChanged(frameworkSupportNode);
+      }
+    };
+    myFrameworksTree.addTreeSelectionListener(new TreeSelectionListener() {
+      public void valueChanged(TreeSelectionEvent e) {
+        onSelectionChanged();
       }
     });
-    updateDownloadingOptionsPanel();
+    splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myFrameworksTree));
+    myOptionsPanel = new JPanel(new CardLayout());
+    myOptionsPanel.add(EMPTY_CARD, new JPanel());
+    final JPanel uncheckedLabelPanel = new JPanel(new BorderLayout());
+    myTickCheckboxLabel = new JLabel("Tick checkbox");
+    uncheckedLabelPanel.add(BorderLayout.NORTH, myTickCheckboxLabel);
+    myOptionsPanel.add(UNCHECKED_CARD, uncheckedLabelPanel);
+    splitter.setSecondComponent(myOptionsPanel);
+    myFrameworksPanel.add(splitter, BorderLayout.CENTER);
   }
 
-  private LibraryDownloadingMirrorsMap creatMirrorsMap() {
+  private void onSelectionChanged() {
+    if (!myFrameworksTree.isProcessingMouseEventOnCheckbox()) {
+      updateOptionsPanel();
+    }
+    
+    final FrameworkSupportNode selectedNode = getSelectedNode();
+    if (!Comparing.equal(selectedNode, myLastSelectedNode)) {
+      if (myLastSelectedNode != null) {
+        final LibraryCompositionOptionsPanel optionsPanel = myLastSelectedNode.getLibraryCompositionOptionsPanel(myLibrariesContainer, myMirrorsMap);
+        if (optionsPanel != null) {
+          optionsPanel.saveSelectedRepositoriesMirrors(myMirrorsMap);
+          optionsPanel.apply();
+        }
+      }
+
+      myLastSelectedNode = selectedNode;
+      if (selectedNode != null) {
+        final LibraryCompositionOptionsPanel newOptionsPanel = selectedNode.getLibraryCompositionOptionsPanel(myLibrariesContainer, myMirrorsMap);
+        if (newOptionsPanel != null) {
+          newOptionsPanel.updateRepositoriesMirrors(myMirrorsMap);
+        }
+      }
+    }
+  }
+
+  private void updateOptionsPanel() {
+    final FrameworkSupportNode node = getSelectedNode();
+    if (node != null) {
+      if (node.isChecked()) {
+        initializeOptionsPanel(node);
+        showCard(node.getProvider().getId());
+      }
+      else {
+        myTickCheckboxLabel.setText("Tick checkbox to add support for '" + node.getTitle() + "'");
+        showCard(UNCHECKED_CARD);
+      }
+    }
+    else {
+      showCard(EMPTY_CARD);
+    }
+  }
+
+  @Nullable
+  private FrameworkSupportNode getSelectedNode() {
+    final FrameworkSupportNode[] nodes = myFrameworksTree.getSelectedNodes(FrameworkSupportNode.class, null);
+    return nodes.length == 1 ? nodes[0] : null;
+  }
+
+  private void initializeOptionsPanel(final FrameworkSupportNode node) {
+    final String id = node.getProvider().getId();
+    if (!myInitializedOptionsPanelIds.contains(id)) {
+      final JPanel optionsPanel = new JPanel(new VerticalFlowLayout());
+      optionsPanel.add(new TitledSeparator(node.getTitle() + " Settings"));
+      final FrameworkSupportConfigurable configurable = node.getConfigurable();
+      optionsPanel.add(configurable.getComponent());
+      final JPanel librariesOptionsPanelWrapper = new JPanel(new BorderLayout());
+      optionsPanel.add(librariesOptionsPanelWrapper);
+      configurable.addListener(new FrameworkSupportConfigurableListener() {
+        public void frameworkVersionChanged() {
+          librariesOptionsPanelWrapper.removeAll();
+          addLibrariesOptionsPanel(node, librariesOptionsPanelWrapper);
+          librariesOptionsPanelWrapper.revalidate();
+        }
+      });
+      addLibrariesOptionsPanel(node, librariesOptionsPanelWrapper);
+      myOptionsPanel.add(id, optionsPanel);
+      myInitializedOptionsPanelIds.add(id);
+    }
+  }
+
+  private void addLibrariesOptionsPanel(FrameworkSupportNode node, JPanel librariesOptionsPanelWrapper) {
+    final LibraryCompositionOptionsPanel libraryOptionsPanel = node.getLibraryCompositionOptionsPanel(myLibrariesContainer, myMirrorsMap);
+    if (libraryOptionsPanel != null) {
+      librariesOptionsPanelWrapper.add(BorderLayout.CENTER, libraryOptionsPanel.getMainPanel());
+    }
+  }
+
+  private void showCard(String cardName) {
+    ((CardLayout)myOptionsPanel.getLayout()).show(myOptionsPanel, cardName);
+  }
+
+  private LibraryDownloadingMirrorsMap createMirrorsMap() {
     List<RemoteRepositoryInfo> repositoryInfos = getRemoteRepositories();
     return new LibraryDownloadingMirrorsMap(repositoryInfos.toArray(new RemoteRepositoryInfo[repositoryInfos.size()]));
   }
 
   private List<RemoteRepositoryInfo> getRemoteRepositories() {
     List<RemoteRepositoryInfo> repositoryInfos = new ArrayList<RemoteRepositoryInfo>();
-    List<FrameworkSupportSettings> frameworksSettingsList = getFrameworksSettingsList(false);
-    for (FrameworkSupportSettings settings : frameworksSettingsList) {
-      LibraryInfo[] libraries = settings.getConfigurable().getLibraries();
+    List<FrameworkSupportNode> frameworkNodes = getFrameworkNodes(false);
+    for (FrameworkSupportNode node : frameworkNodes) {
+      LibraryInfo[] libraries = node.getLibraries();
       for (LibraryInfo library : libraries) {
         LibraryDownloadInfo downloadInfo = library.getDownloadingInfo();
         if (downloadInfo != null) {
@@ -103,18 +206,13 @@ public class AddSupportForFrameworksPanel {
     return repositoryInfos;
   }
 
-  private void updateDownloadingOptionsPanel() {
-    @NonNls String card = getLibrariesCompositionSettingsList().isEmpty() ? "empty" : "options";
-    ((CardLayout)myDownloadingOptionsPanel.getLayout()).show(myDownloadingOptionsPanel, card);
-  }
-
   private List<LibraryCompositionSettings> getLibrariesCompositionSettingsList() {
     List<LibraryCompositionSettings> list = new ArrayList<LibraryCompositionSettings>();
-    List<FrameworkSupportSettings> selected = getFrameworksSettingsList(true);
-    for (FrameworkSupportSettings settings : selected) {
-      LibraryInfo[] libraries = settings.getConfigurable().getLibraries();
-      if (libraries.length > 0) {
-        list.add(settings.getLibraryCompositionSettings());
+    List<FrameworkSupportNode> selected = getFrameworkNodes(true);
+    for (FrameworkSupportNode node : selected) {
+      final LibraryCompositionSettings settings = node.getLibraryCompositionSettings();
+      if (settings != null) {
+        list.add(settings);
       }
     }
     return list;
@@ -128,80 +226,36 @@ public class AddSupportForFrameworksPanel {
     return true;
   }
 
-  private JPanel addGroupPanels(final List<List<FrameworkSupportSettings>> groups, JPanel treePanel, int level) {
-    boolean first = true;
-    for (List<FrameworkSupportSettings> group : groups) {
-      addSettingsComponents(group, treePanel, level, !first);
-      first = false;
-    }
-    return treePanel;
-  }
-
-  private void addSettingsComponents(final List<FrameworkSupportSettings> list, JPanel treePanel, int level, boolean addGapBefore) {
-    boolean first = true;
-    for (FrameworkSupportSettings root : list) {
-      addSettingsComponents(root, treePanel, level, first && addGapBefore);
-      first = false;
-    }
-  }
-
-  private void addSettingsComponents(final FrameworkSupportSettings frameworkSupport, JPanel parentPanel, int level, boolean addGapBefore) {
-    if (frameworkSupport.getParentNode() != null) {
-      frameworkSupport.setEnabled(false);
-    }
-    JComponent configurableComponent = frameworkSupport.getConfigurable().getComponent();
-    int gridwidth = configurableComponent != null ? 1 : GridBagConstraints.REMAINDER;
-    final int gap = addGapBefore ? GAP_BETWEEN_GROUPS : 0;
-    parentPanel.add(frameworkSupport.myCheckBox, createConstraints(0, GridBagConstraints.RELATIVE, gridwidth, 1,
-                                                                   new Insets(gap, INDENT * level, VERTICAL_SPACE, SPACE_AFTER_TITLE)));
-    if (configurableComponent != null) {
-      parentPanel.add(configurableComponent, createConstraints(1, GridBagConstraints.RELATIVE, GridBagConstraints.REMAINDER, 1,
-                                                               new Insets(gap, 0, VERTICAL_SPACE, 0)));
-    }
-
-    if (frameworkSupport.myChildren.isEmpty()) {
-      return;
-    }
-
-    addSettingsComponents(frameworkSupport.myChildren, parentPanel, level + 1, false);
-  }
-
-  private static GridBagConstraints createConstraints(final int gridx, final int gridy, final int gridwidth, final int gridheight,
-                                               final Insets insets) {
-    return new GridBagConstraints(gridx, gridy, gridwidth, gridheight, 1, 1, GridBagConstraints.NORTHWEST,
-                                                                        GridBagConstraints.NONE, insets, 0, 0);
-  }
-
   private void createNodes() {
-    Map<String, FrameworkSupportSettings> nodes = new HashMap<String, FrameworkSupportSettings>();
-    MultiValuesMap<String, FrameworkSupportSettings> groups = new MultiValuesMap<String, FrameworkSupportSettings>(true);
+    Map<String, FrameworkSupportNode> nodes = new HashMap<String, FrameworkSupportNode>();
+    MultiValuesMap<String, FrameworkSupportNode> groups = new MultiValuesMap<String, FrameworkSupportNode>(true);
     for (FrameworkSupportProvider frameworkSupport : myProviders) {
       createNode(frameworkSupport, nodes, groups);
     }
 
-    myGroups = new ArrayList<List<FrameworkSupportSettings>>();
+    myGroups = new ArrayList<List<FrameworkSupportNode>>();
     for (String groupId : groups.keySet()) {
-      final Collection<FrameworkSupportSettings> collection = groups.get(groupId);
+      final Collection<FrameworkSupportNode> collection = groups.get(groupId);
       if (collection != null) {
-        final List<FrameworkSupportSettings> group = new ArrayList<FrameworkSupportSettings>();
-        for (FrameworkSupportSettings settings : collection) {
-          if (settings.getParentNode() == null) {
-            group.add(settings);
+        final List<FrameworkSupportNode> group = new ArrayList<FrameworkSupportNode>();
+        for (FrameworkSupportNode node : collection) {
+          if (node.getParentNode() == null) {
+            group.add(node);
           }
         }
-        sortByTitle(group);
+        FrameworkSupportNode.sortByTitle(group);
         myGroups.add(group);
       }
     }
   }
 
   @Nullable
-  private FrameworkSupportSettings createNode(final FrameworkSupportProvider provider, final Map<String, FrameworkSupportSettings> nodes,
-                                              final MultiValuesMap<String, FrameworkSupportSettings> groups) {
-    FrameworkSupportSettings node = nodes.get(provider.getId());
+  private FrameworkSupportNode createNode(final FrameworkSupportProvider provider, final Map<String, FrameworkSupportNode> nodes,
+                                              final MultiValuesMap<String, FrameworkSupportNode> groups) {
+    FrameworkSupportNode node = nodes.get(provider.getId());
     if (node == null) {
       String underlyingFrameworkId = provider.getUnderlyingFrameworkId();
-      FrameworkSupportSettings parentNode = null;
+      FrameworkSupportNode parentNode = null;
       if (underlyingFrameworkId != null) {
         FrameworkSupportProvider parentProvider = findProvider(underlyingFrameworkId);
         if (parentProvider == null) {
@@ -210,15 +264,11 @@ public class AddSupportForFrameworksPanel {
         }
         parentNode = createNode(parentProvider, nodes, groups);
       }
-      node = new FrameworkSupportSettings(provider, parentNode, myModel);
+      node = new FrameworkSupportNode(provider, parentNode, myModel, myBaseDirForLibrariesGetter);
       nodes.put(provider.getId(), node);
       groups.put(provider.getGroupId(), node);
     }
     return node;
-  }
-
-  private String getBaseModuleDirectoryPath() {
-    return myBaseDirForLibrariesGetter.compute();
   }
 
   @Nullable
@@ -232,75 +282,50 @@ public class AddSupportForFrameworksPanel {
     return null;
   }
 
-  private static void setDescendantsEnabled(FrameworkSupportSettings frameworkSupport, final boolean enable) {
-    for (FrameworkSupportSettings child : frameworkSupport.myChildren) {
-      child.setEnabled(enable);
-      setDescendantsEnabled(child, enable);
-    }
-  }
-
   public JComponent getMainPanel() {
     return myMainPanel;
   }
 
-  private List<FrameworkSupportSettings> getFrameworksSettingsList(final boolean selectedOnly) {
-    ArrayList<FrameworkSupportSettings> list = new ArrayList<FrameworkSupportSettings>();
+  private List<FrameworkSupportNode> getFrameworkNodes(final boolean selectedOnly) {
+    ArrayList<FrameworkSupportNode> list = new ArrayList<FrameworkSupportNode>();
     if (myGroups != null) {
-      for (List<FrameworkSupportSettings> group : myGroups) {
+      for (List<FrameworkSupportNode> group : myGroups) {
         addChildFrameworks(group, list, selectedOnly);
       }
     }
     return list;
   }
 
-  private static void sortByTitle(List<FrameworkSupportSettings> settingsList) {
-    if (settingsList.isEmpty()) return;
-
-    Collections.sort(settingsList, new Comparator<FrameworkSupportSettings>() {
-      public int compare(final FrameworkSupportSettings o1, final FrameworkSupportSettings o2) {
-        return getTitleWithoutMnemonic(o1.getProvider()).compareTo(getTitleWithoutMnemonic(o2.getProvider()));
-      }
-    });
-    for (FrameworkSupportSettings settings : settingsList) {
-      sortByTitle(settings.myChildren);
-    }
-  }
-
-  private static String getTitleWithoutMnemonic(final FrameworkSupportProvider provider) {
-    return StringUtil.replace(provider.getTitle(), String.valueOf(UIUtil.MNEMONIC), "");
-  }
-
-  private static void addChildFrameworks(final List<FrameworkSupportSettings> list, final ArrayList<FrameworkSupportSettings> selected,
+  private static void addChildFrameworks(final List<FrameworkSupportNode> list, final List<FrameworkSupportNode> result,
                                          final boolean selectedOnly) {
-    for (FrameworkSupportSettings settings : list) {
-      if (!selectedOnly || settings.myCheckBox.isSelected()) {
-        selected.add(settings);
-        addChildFrameworks(settings.myChildren, selected, selectedOnly);
+    for (FrameworkSupportNode node : list) {
+      if (!selectedOnly || node.isChecked()) {
+        result.add(node);
+        addChildFrameworks(node.getChildren(), result, selectedOnly);
       }
     }
   }
 
-  public void addSupport(final Module module, final ModifiableRootModel rootModel) {
+  public void addSupport(final @NotNull Module module, final @NotNull ModifiableRootModel rootModel) {
     List<Library> addedLibraries = new ArrayList<Library>();
-    List<FrameworkSupportSettings> selectedFrameworks = getFrameworksSettingsList(true);
+    List<FrameworkSupportNode> selectedFrameworks = getFrameworkNodes(true);
     sortFrameworks(selectedFrameworks);
 
-    for (FrameworkSupportSettings settings : selectedFrameworks) {
-      FrameworkSupportConfigurable configurable = settings.getConfigurable();
-
-      Library library = settings.getLibraryCompositionSettings().addLibraries(rootModel, addedLibraries);
-
+    for (FrameworkSupportNode node : selectedFrameworks) {
+      FrameworkSupportConfigurable configurable = node.getConfigurable();
+      final LibraryCompositionSettings settings = node.getLibraryCompositionSettings();
+      Library library = settings != null ? settings.addLibraries(rootModel, addedLibraries) : null;
       configurable.addSupport(module, rootModel, library);
     }
-    for (FrameworkSupportSettings settings : selectedFrameworks) {
-      FrameworkSupportProvider provider = settings.myProvider;
-      if (provider instanceof FacetTypeFrameworkSupportProvider && !addedLibraries.isEmpty()) {
-        ((FacetTypeFrameworkSupportProvider)provider).processAddedLibraries(module, addedLibraries);
+    for (FrameworkSupportNode node : selectedFrameworks) {
+      FrameworkSupportProvider provider = node.getProvider();
+      if (provider instanceof FacetBasedFrameworkSupportProvider && !addedLibraries.isEmpty()) {
+        ((FacetBasedFrameworkSupportProvider)provider).processAddedLibraries(module, addedLibraries);
       }
     }
   }
 
-  private void sortFrameworks(final List<FrameworkSupportSettings> selectedFrameworks) {
+  private void sortFrameworks(final List<FrameworkSupportNode> nodes) {
     DFSTBuilder<FrameworkSupportProvider> builder = new DFSTBuilder<FrameworkSupportProvider>(GraphGenerator.create(CachingSemiGraph.create(new ProvidersGraph(myProviders))));
     if (!builder.isAcyclic()) {
       Pair<FrameworkSupportProvider,FrameworkSupportProvider> pair = builder.getCircularDependency();
@@ -308,91 +333,11 @@ public class AddSupportForFrameworksPanel {
     }
 
     final Comparator<FrameworkSupportProvider> comparator = builder.comparator();
-    Collections.sort(selectedFrameworks, new Comparator<FrameworkSupportSettings>() {
-      public int compare(final FrameworkSupportSettings o1, final FrameworkSupportSettings o2) {
+    Collections.sort(nodes, new Comparator<FrameworkSupportNode>() {
+      public int compare(final FrameworkSupportNode o1, final FrameworkSupportNode o2) {
         return comparator.compare(o1.getProvider(), o2.getProvider());
       }
     });
-  }
-
-  public class FrameworkSupportSettings {
-    private final FrameworkSupportProvider myProvider;
-    private final FrameworkSupportSettings myParentNode;
-    private final FrameworkSupportConfigurable myConfigurable;
-    private final JCheckBox myCheckBox;
-    private final List<FrameworkSupportSettings> myChildren = new ArrayList<FrameworkSupportSettings>();
-    private LibraryCompositionSettings myLibraryCompositionSettings;
-
-    private FrameworkSupportSettings(final FrameworkSupportProvider provider, final FrameworkSupportSettings parentNode,
-                                     final FrameworkSupportModelImpl context) {
-      myProvider = provider;
-      myParentNode = parentNode;
-      myCheckBox = new JCheckBox(provider.getTitle());
-      context.registerComponent(provider, this);
-      myConfigurable = provider.createConfigurable(context);
-      if (parentNode != null) {
-        parentNode.myChildren.add(this);
-      }
-
-      myCheckBox.addActionListener(new ActionListener() {
-        public void actionPerformed(final ActionEvent e) {
-          setConfigurableComponentEnabled(myCheckBox.isSelected());
-          setDescendantsEnabled(FrameworkSupportSettings.this, myCheckBox.isSelected());
-        }
-      });
-
-      setConfigurableComponentEnabled(false);
-    }
-
-    public JCheckBox getCheckBox() {
-      return myCheckBox;
-    }
-
-    public void setEnabled(final boolean enable) {
-      myCheckBox.setEnabled(enable);
-      if (!enable) {
-        myCheckBox.setSelected(false);
-        setConfigurableComponentEnabled(false);
-      }
-    }
-
-    private void setConfigurableComponentEnabled(final boolean enable) {
-      JComponent component = getConfigurable().getComponent();
-      if (component != null) {
-        UIUtil.setEnabled(component, enable, true);
-      }
-      updateDownloadingOptionsPanel();
-    }
-
-    public FrameworkSupportProvider getProvider() {
-      return myProvider;
-    }
-
-    public FrameworkSupportSettings getParentNode() {
-      return myParentNode;
-    }
-
-    public FrameworkSupportConfigurable getConfigurable() {
-      return myConfigurable;
-    }
-
-    public String getModuleDirectoryPath() {
-      return getBaseModuleDirectoryPath();
-    }
-
-    private boolean isObsolete(@NotNull LibraryCompositionSettings settings) {
-      return !settings.getBaseDirectoryForDownloadedFiles().equals(getBaseModuleDirectoryPath())
-             || !Comparing.equal(settings.getLibraryInfos(), myConfigurable.getLibraries());
-    }
-
-    public LibraryCompositionSettings getLibraryCompositionSettings() {
-      if (myLibraryCompositionSettings == null || isObsolete(myLibraryCompositionSettings)) {
-        final String title = getTitleWithoutMnemonic(myProvider);
-        myLibraryCompositionSettings = new LibraryCompositionSettings(myConfigurable.getLibraries(), myConfigurable.getLibraryName(), getBaseModuleDirectoryPath(),
-                                                                      title, myProvider.getIcon());
-      }
-      return myLibraryCompositionSettings;
-    }
   }
 
   private class ProvidersGraph implements GraphGenerator.SemiGraph<FrameworkSupportProvider> {

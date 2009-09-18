@@ -2,9 +2,11 @@
  * Copyright (c) 2000-2007 JetBrains s.r.o. All Rights Reserved.
  */
 
-package com.intellij.facet.impl.ui;
+package com.intellij.facet.ui;
 
 import com.intellij.facet.*;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportProviderBase;
+import com.intellij.ide.util.frameworkSupport.FrameworkVersion;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -20,12 +22,12 @@ import java.util.List;
 /**
  * @author nik
  */
-public abstract class FacetTypeFrameworkSupportProvider<F extends Facet> extends VersionedFrameworkSupportProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ui.FacetTypeFrameworkSupportProvider");
+public abstract class FacetBasedFrameworkSupportProvider<F extends Facet> extends FrameworkSupportProviderBase {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.facet.ui.FacetBasedFrameworkSupportProvider");
   @NonNls private static final String FACET_SUPPORT_PREFIX = "facet:";
   private final FacetType<F, ?> myFacetType;
 
-  protected FacetTypeFrameworkSupportProvider(FacetType<F, ?> facetType) {
+  protected FacetBasedFrameworkSupportProvider(FacetType<F, ?> facetType) {
     super(getProviderId(facetType), facetType.getPresentableName());
     myFacetType = facetType;
   }
@@ -62,7 +64,7 @@ public abstract class FacetTypeFrameworkSupportProvider<F extends Facet> extends
     return myFacetType.getIcon();
   }
 
-  protected void addSupport(final Module module, final ModifiableRootModel rootModel, final String version, final @Nullable Library library) {
+  protected void addSupport(@NotNull final Module module, @NotNull final ModifiableRootModel rootModel, final FrameworkVersion version, final @Nullable Library library) {
     FacetManager facetManager = FacetManager.getInstance(module);
     ModifiableFacetModel model = facetManager.createModifiableModel();
     Facet underlyingFacet = null;
@@ -81,13 +83,13 @@ public abstract class FacetTypeFrameworkSupportProvider<F extends Facet> extends
     onFacetCreated(facet, rootModel, version);
   }
 
-  protected void onFacetCreated(final F facet, final ModifiableRootModel rootModel, final String version) {
+  protected void onFacetCreated(final F facet, final ModifiableRootModel rootModel, final FrameworkVersion version) {
   }
 
   protected void onLibraryAdded(final F facet, final @NotNull Library library) {
   }
 
-  protected abstract void setupConfiguration(final F facet, final ModifiableRootModel rootModel, final String version);
+  protected abstract void setupConfiguration(final F facet, final ModifiableRootModel rootModel, final FrameworkVersion version);
 
   public void processAddedLibraries(final Module module, final List<Library> addedLibraries) {
   }

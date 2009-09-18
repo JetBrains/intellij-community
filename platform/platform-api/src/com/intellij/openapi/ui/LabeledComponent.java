@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,6 +34,14 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel {
     insertLabel();
     updateLabelBorder();
     updateUI();
+  }
+
+  @NotNull
+  public static <Comp extends JComponent> LabeledComponent<Comp> create(@NotNull Comp component, @NotNull String text) {
+    final LabeledComponent<Comp> labeledComponent = new LabeledComponent<Comp>();
+    labeledComponent.setComponent(component);
+    labeledComponent.setText(text);
+    return labeledComponent;
   }
 
   private void updateLabelBorder() {

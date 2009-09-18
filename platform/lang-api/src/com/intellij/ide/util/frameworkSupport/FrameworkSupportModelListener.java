@@ -1,4 +1,4 @@
-package com.intellij.ide.util.newProjectWizard;
+package com.intellij.ide.util.frameworkSupport;
 
 import org.jetbrains.annotations.NotNull;
 

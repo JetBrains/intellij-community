@@ -16,6 +16,10 @@ public class CheckboxTree extends CheckboxTreeBase {
     protected CheckboxTreeCellRenderer(final boolean opaque) {
       super(opaque);
     }
+
+    protected CheckboxTreeCellRenderer(boolean opaque, boolean usePartialStatusForParentNodes) {
+      super(opaque, usePartialStatusForParentNodes);
+    }
   }
 
   public CheckboxTree(final CheckboxTreeCellRenderer cellRenderer, CheckedTreeNode root) {

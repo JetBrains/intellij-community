@@ -123,7 +123,7 @@
     <extensionPoint name="semContributor"
                     interface="com.intellij.semantic.SemContributor" area="IDEA_PROJECT"/>
 
-    <extensionPoint name="frameworkSupport" interface="com.intellij.ide.util.newProjectWizard.FrameworkSupportProvider"/>
+    <extensionPoint name="frameworkSupport" interface="com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider"/>
 
     <!--new project wizard-->
     <extensionPoint name="wizardMode" interface="com.intellij.ide.util.newProjectWizard.modes.WizardMode"/>

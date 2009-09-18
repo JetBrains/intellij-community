@@ -2,15 +2,13 @@
  * Copyright (c) 2000-2007 JetBrains s.r.o. All Rights Reserved.
  */
 
-package com.intellij.ide.util.newProjectWizard;
+package com.intellij.ide.util.frameworkSupport;
 
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
-import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,18 +29,7 @@ public abstract class FrameworkSupportProvider {
   }
 
   @NotNull
-  public FrameworkSupportConfigurable createConfigurable(@NotNull FrameworkSupportModel model) {
-    return createConfigurable(model.getProject());
-  }
-
-  /**
-   * @deprecated override {@link FrameworkSupportProvider#createConfigurable(FrameworkSupportModel)} instead
-   */
-  @Deprecated
-  @NotNull
-  public FrameworkSupportConfigurable createConfigurable(@Nullable final Project project) {
-    return null;
-  }
+  public abstract FrameworkSupportConfigurable createConfigurable(@NotNull FrameworkSupportModel model);
 
   @NonNls
   @Nullable
@@ -69,9 +56,7 @@ public abstract class FrameworkSupportProvider {
     return null;
   }
 
-  public boolean isEnabledForModuleType(@NotNull ModuleType moduleType) {
-    return moduleType instanceof JavaModuleType;
-  }
+  public abstract boolean isEnabledForModuleType(@NotNull ModuleType moduleType);
 
   public boolean isEnabledForModuleBuilder(@NotNull ModuleBuilder builder) {
     return isEnabledForModuleType(builder.getModuleType());

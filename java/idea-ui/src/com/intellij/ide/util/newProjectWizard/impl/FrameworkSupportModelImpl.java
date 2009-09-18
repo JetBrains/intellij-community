@@ -1,7 +1,10 @@
 package com.intellij.ide.util.newProjectWizard.impl;
 
+import com.intellij.ide.util.frameworkSupport.*;
 import com.intellij.ide.util.newProjectWizard.*;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.EventDispatcher;
@@ -9,9 +12,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,26 +22,15 @@ public class FrameworkSupportModelImpl extends UserDataHolderBase implements Fra
   private final Project myProject;
   private final ModuleBuilder myModuleBuilder;
   private final EventDispatcher<FrameworkSupportModelListener> myDispatcher = EventDispatcher.create(FrameworkSupportModelListener.class);
-  private final Map<String, AddSupportForFrameworksPanel.FrameworkSupportSettings> mySettingsMap = new HashMap<String, AddSupportForFrameworksPanel.FrameworkSupportSettings>();
+  private final Map<String, FrameworkSupportNode> mySettingsMap = new HashMap<String, FrameworkSupportNode>();
 
   public FrameworkSupportModelImpl(final @Nullable Project project, @Nullable ModuleBuilder builder) {
     myProject = project;
     myModuleBuilder = builder;
   }
 
-  public void registerComponent(@NotNull final FrameworkSupportProvider provider, @NotNull final AddSupportForFrameworksPanel.FrameworkSupportSettings settings) {
-    mySettingsMap.put(provider.getId(), settings);
-    final JCheckBox checkBox = settings.getCheckBox();
-    checkBox.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        if (checkBox.isSelected()) {
-          myDispatcher.getMulticaster().frameworkSelected(provider);
-        }
-        else {
-          myDispatcher.getMulticaster().frameworkUnselected(provider);
-        }
-      }
-    });
+  public void registerComponent(@NotNull final FrameworkSupportProvider provider, @NotNull final FrameworkSupportNode node) {
+    mySettingsMap.put(provider.getId(), node);
   }
 
   public Project getProject() {
@@ -53,8 +42,8 @@ public class FrameworkSupportModelImpl extends UserDataHolderBase implements Fra
   }
 
   public boolean isFrameworkSelected(@NotNull @NonNls final String providerId) {
-    final AddSupportForFrameworksPanel.FrameworkSupportSettings settings = mySettingsMap.get(providerId);
-    return settings != null && settings.getCheckBox().isSelected();
+    final FrameworkSupportNode node = mySettingsMap.get(providerId);
+    return node != null && node.isChecked();
   }
 
   public void addFrameworkListener(@NotNull final FrameworkSupportModelListener listener) {
@@ -66,20 +55,30 @@ public class FrameworkSupportModelImpl extends UserDataHolderBase implements Fra
   }
 
   public void setFrameworkComponentEnabled(@NotNull @NonNls final String providerId, final boolean enable) {
-    final AddSupportForFrameworksPanel.FrameworkSupportSettings settings = mySettingsMap.get(providerId);
-    if (settings == null) {
+    final FrameworkSupportNode node = mySettingsMap.get(providerId);
+    if (node == null) {
       throw new IllegalArgumentException("provider '" + providerId + " not found");
     }
-    if (enable != settings.getCheckBox().isEnabled()) {
-      settings.setEnabled(enable);
+    if (enable != node.isChecked()) {
+      node.setChecked(enable);
     }
   }
 
   public FrameworkSupportConfigurable getFrameworkConfigurable(@NotNull @NonNls String providerId) {
-    final AddSupportForFrameworksPanel.FrameworkSupportSettings settings = mySettingsMap.get(providerId);
-    if (settings == null) {
+    final FrameworkSupportNode node = mySettingsMap.get(providerId);
+    if (node == null) {
       throw new IllegalArgumentException("provider '" + providerId + " not found");
     }
-    return settings.getConfigurable();
+    return node.getConfigurable();
+  }
+
+  public void onFrameworkSelectionChanged(FrameworkSupportNode node) {
+    final FrameworkSupportModelListener multicaster = myDispatcher.getMulticaster();
+    if (node.isChecked()) {
+      multicaster.frameworkSelected(node.getProvider());
+    }
+    else {
+      multicaster.frameworkUnselected(node.getProvider());
+    }
   }
 }

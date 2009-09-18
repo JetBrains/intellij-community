@@ -4,7 +4,7 @@
 
 package com.intellij.ide.util.frameworkSupport;
 
-import com.intellij.ide.util.newProjectWizard.FrameworkSupportProvider;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;

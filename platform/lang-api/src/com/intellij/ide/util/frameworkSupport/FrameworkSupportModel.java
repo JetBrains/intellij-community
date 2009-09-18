@@ -1,4 +1,4 @@
-package com.intellij.ide.util.newProjectWizard;
+package com.intellij.ide.util.frameworkSupport;
 
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.project.Project;
