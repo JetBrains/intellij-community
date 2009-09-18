@@ -62,6 +62,7 @@ import com.intellij.ui.popup.PopupOwner;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -283,8 +284,15 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     myList.clear();
     for (int index = 0; index < myModel.size(); index++) {
       final Object object = myModel.get(index);
-      final Icon closedIcon = getIcon(object, false);
-      final Icon openIcon = getIcon(object, true);
+      Icon closedIcon = getIcon(object, false);
+      Icon openIcon = getIcon(object, true);
+
+      if (closedIcon == null && openIcon != null) closedIcon = openIcon;
+      if (openIcon == null && closedIcon != null) openIcon = closedIcon;
+      if (openIcon == null) {
+        openIcon = closedIcon = new EmptyIcon(5, 5);
+      }
+
       final MyItemLabel label =
         new MyItemLabel(index, wrapIcon(openIcon, closedIcon, index), NavBarModel.getPresentableText(object, getWindow()),
                              myModel.getTextAttributes(object, false));
