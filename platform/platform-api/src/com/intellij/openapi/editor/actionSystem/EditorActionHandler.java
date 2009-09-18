@@ -46,4 +46,9 @@ public abstract class EditorActionHandler {
   public boolean executeInCommand(Editor editor, DataContext dataContext) {
     return true;
   }
+
+  public DocCommandGroupId getCommandGroupId(Editor editor) {
+    // by default avoid merging two consequential commands, and, in the same time, pass along the Document
+    return DocCommandGroupId.noneGroupId(editor.getDocument());
+  }
 }

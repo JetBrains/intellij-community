@@ -19,10 +19,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.actions.DiffActions;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.editor.actionSystem.TypedAction;
-import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
+import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -267,7 +264,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
           public void run() {
             document.deleteString(0, document.getTextLength());
           }
-        }, null, CommandProcessor.noneGroupId(document));
+        }, null, DocCommandGroupId.noneGroupId(document));
       }
     });
   }
@@ -457,7 +454,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
               fireChange();
             }
           }
-        }, null, CommandProcessor.noneGroupId(document));
+        }, null, DocCommandGroupId.noneGroupId(document));
       }
     });
     myPsiDisposedCheck.performCheck();

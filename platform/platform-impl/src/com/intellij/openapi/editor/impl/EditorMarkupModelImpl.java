@@ -20,6 +20,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -545,7 +546,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
             doMouseClicked(e);
           }
         },
-        EditorBundle.message("move.caret.command.name"), CommandProcessor.noneGroupId(getDocument()), UndoConfirmationPolicy.DEFAULT, getDocument()
+        EditorBundle.message("move.caret.command.name"), DocCommandGroupId.noneGroupId(getDocument()), UndoConfirmationPolicy.DEFAULT, getDocument()
       );
     }
 

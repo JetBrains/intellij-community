@@ -48,7 +48,7 @@ public abstract class EditorAction extends AnAction implements DumbAware {
     if (!myHandlersLoaded) {
       myHandlersLoaded = true;
       final String id = ActionManager.getInstance().getId(this);
-      for(EditorActionHandlerBean handlerBean: Extensions.getExtensions(EditorActionHandlerBean.EP_NAME)) {
+      for (EditorActionHandlerBean handlerBean : Extensions.getExtensions(EditorActionHandlerBean.EP_NAME)) {
         if (handlerBean.action.equals(id)) {
           myHandler = handlerBean.getHandler(myHandler);
         }
@@ -84,8 +84,12 @@ public abstract class EditorAction extends AnAction implements DumbAware {
 
     String commandName = getTemplatePresentation().getText();
     if (commandName == null) commandName = "";
-    // avoid merging two consequential commands, and, in the same time, pass along the Document
-    CommandProcessor.getInstance().executeCommand(editor.getProject(), command, commandName, CommandProcessor.noneGroupId(editor.getDocument()), UndoConfirmationPolicy.DEFAULT, editor.getDocument());
+    CommandProcessor.getInstance().executeCommand(editor.getProject(),
+                                                  command,
+                                                  commandName,
+                                                  handler.getCommandGroupId(editor),
+                                                  UndoConfirmationPolicy.DEFAULT,
+                                                  editor.getDocument());
   }
 
   public void update(Editor editor, Presentation presentation, DataContext dataContext) {

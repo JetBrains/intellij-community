@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
@@ -66,7 +67,7 @@ public abstract class CodeInsightAction extends AnAction {
           action.run();
         }
       }
-    }, getCommandName(), CommandProcessor.noneGroupId(editor.getDocument()));
+    }, getCommandName(), DocCommandGroupId.noneGroupId(editor.getDocument()));
   }
 
   public void update(AnActionEvent event) {

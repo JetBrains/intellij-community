@@ -16,6 +16,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
@@ -2823,7 +2824,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 mySelectionModel.setSelection(oldSelectionStart, getCaretModel().getOffset());
               }
             }
-          }, EditorBundle.message("move.cursor.command.name"), CommandProcessor.noneGroupId(getDocument()), UndoConfirmationPolicy.DEFAULT, getDocument());
+          }, EditorBundle.message("move.cursor.command.name"), DocCommandGroupId.noneGroupId(getDocument()), UndoConfirmationPolicy.DEFAULT, getDocument());
         }
       });
       myTimer.start();
@@ -3483,7 +3484,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             processMousePressed(e);
           }
         };
-        myCommandProcessor.executeCommand(myProject, runnable, "", CommandProcessor.noneGroupId(getDocument()), UndoConfirmationPolicy.DEFAULT, getDocument());
+        myCommandProcessor.executeCommand(myProject, runnable, "", DocCommandGroupId.noneGroupId(getDocument()), UndoConfirmationPolicy.DEFAULT, getDocument());
       }
       else {
         processMousePressed(e);
@@ -3518,7 +3519,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             processMouseReleased(e);
           }
         };
-        myCommandProcessor.executeCommand(myProject, runnable, "", CommandProcessor.noneGroupId(getDocument()), UndoConfirmationPolicy.DEFAULT, getDocument());
+        myCommandProcessor.executeCommand(myProject, runnable, "", DocCommandGroupId.noneGroupId(getDocument()), UndoConfirmationPolicy.DEFAULT, getDocument());
       }
       else {
         processMouseReleased(e);

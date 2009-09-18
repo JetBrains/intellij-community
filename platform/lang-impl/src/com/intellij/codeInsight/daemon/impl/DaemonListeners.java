@@ -15,6 +15,7 @@ import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -32,7 +33,6 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -316,8 +316,8 @@ public class DaemonListeners implements Disposable {
       if (id instanceof Document) {
         affectedDocument = (Document)id;
       }
-      else if (id instanceof Ref && ((Ref)id).get() instanceof Document) {
-        affectedDocument = (Document)((Ref)id).get();
+      else if (id instanceof DocCommandGroupId) {
+        affectedDocument = ((DocCommandGroupId)id).getDocument();
       }
       return affectedDocument;
     }
