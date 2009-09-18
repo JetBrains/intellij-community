@@ -15,21 +15,21 @@
 
 package org.jetbrains.plugins.groovy.lang.editor.actions;
 
+import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
@@ -43,51 +43,31 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 /**
  * @author ilyas
  */
-public class GroovyEnterHandler extends EditorWriteActionHandler {
-  protected EditorActionHandler myOriginalHandler;
+public class GroovyEnterHandler implements EnterHandlerDelegate {
 
-  public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEnterHandler");
-  public static final String DOC_COMMENT_START = "/**";
-
-  public GroovyEnterHandler(EditorActionHandler actionHandler) {
-    myOriginalHandler = actionHandler;
-  }
-
-  public boolean isEnabled(Editor editor, DataContext dataContext) {
-    return HandlerUtils.isEnabled(editor, dataContext, myOriginalHandler);
-  }
-
-  public void executeWriteAction(final Editor editor, final DataContext dataContext) {
-    executeWriteActionInner(editor, dataContext);
-  }
-
-  private void executeWriteActionInner(Editor editor, DataContext dataContext) {
-    Project project = DataKeys.PROJECT.getData(dataContext);
-    if (project != null) {
-      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+  public Result preprocessEnter(PsiFile file,
+                                Editor editor,
+                                Ref<Integer> caretOffset,
+                                Ref<Integer> caretAdvance,
+                                DataContext dataContext,
+                                EditorActionHandler originalHandler) {
+    if (handleEnter(editor, dataContext, file.getProject(), originalHandler)) {
+      return Result.Stop;
     }
-
-    if (project == null ||
-        !handleEnter(editor, dataContext, project) && myOriginalHandler != null && myOriginalHandler.isEnabled(editor, dataContext)) {
-      Document document = editor.getDocument();
-      if (project != null) {
-        PsiDocumentManager.getInstance(project).commitDocument(document);
-      }
-      myOriginalHandler.execute(editor, dataContext);
-    }
+    return Result.Continue;
   }
 
-  protected boolean handleEnter(Editor editor, DataContext dataContext, @NotNull Project project) {
+  protected static boolean handleEnter(Editor editor, DataContext dataContext, @NotNull Project project, EditorActionHandler originalHandler) {
     if (!HandlerUtils.canBeInvoked(editor, project)) {
       return false;
     }
     int caretOffset = editor.getCaretModel().getOffset();
     if (caretOffset < 1) return false;
 
-    if (handleBetweenSquareBraces(editor, caretOffset, dataContext, project)) {
+    if (handleBetweenSquareBraces(editor, caretOffset, dataContext, project, originalHandler)) {
       return true;
     }
-    if (handleBeforeCurlyBrace(editor, caretOffset, dataContext, project)) {
+    if (handleBeforeCurlyBrace(editor, caretOffset, dataContext, originalHandler)) {
       return true;
     }
     if (handleInString(editor, caretOffset, dataContext)) {
@@ -96,7 +76,7 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
     return false;
   }
 
-  private boolean handleBetweenSquareBraces(Editor editor, int caret, DataContext context, Project project) {
+  private static boolean handleBetweenSquareBraces(Editor editor, int caret, DataContext context, Project project, EditorActionHandler originalHandler) {
     String text = editor.getDocument().getText();
     if (text == null || text.length() == 0) return false;
     final EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
@@ -108,8 +88,8 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
       if (text.length() > caret) {
         iterator = highlighter.createIterator(caret);
         if (GroovyTokenTypes.mRBRACK == iterator.getTokenType()) {
-          myOriginalHandler.execute(editor, context);
-          myOriginalHandler.execute(editor, context);
+          originalHandler.execute(editor, context);
+          originalHandler.execute(editor, context);
           editor.getCaretModel().moveCaretRelatively(0, -1, false, false, true);
           GroovyEditorActionUtil.insertSpacesByGroovyContinuationIndent(editor, project);
           return true;
@@ -119,7 +99,7 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
     return false;
   }
 
-  private boolean handleBeforeCurlyBrace(Editor editor, int caret, DataContext context, Project project) {
+  private static boolean handleBeforeCurlyBrace(Editor editor, int caret, DataContext context, EditorActionHandler originalHandler) {
     String text = editor.getDocument().getText();
     if (text == null || text.length() == 0) return false;
     final EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
@@ -136,7 +116,7 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
             text.length() > caret) {
           iterator = highlighter.createIterator(caret);
           if (GroovyTokenTypes.mRCURLY == iterator.getTokenType()) {
-            myOriginalHandler.execute(editor, context);
+            originalHandler.execute(editor, context);
             return true;
           }
         }
@@ -164,7 +144,7 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
     TokenSet.create(GroovyTokenTypes.mSTRING_LITERAL, GroovyTokenTypes.mGSTRING_LITERAL, GroovyTokenTypes.mGSTRING_SINGLE_END);
 
 
-  private boolean handleInString(Editor editor, int caretOffset, DataContext dataContext) {
+  private static boolean handleInString(Editor editor, int caretOffset, DataContext dataContext) {
     Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
 
