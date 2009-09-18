@@ -1024,12 +1024,12 @@ class AbstractTreeUi {
   }
 
   void maybeReady() {
-    if (isReady()) {
-      if (myTree.isShowing()) {
-        if (getBuilder().isToEnsureSelectionOnFocusGained() && Registry.is("ide.tree.ensureSelectionOnFocusGained")) {
-          TreeUtil.ensureSelection(myTree);
-        }
-      }
+    if (!isReleased() &&
+        isReady() &&
+        myTree.isShowing() &&
+        getBuilder().isToEnsureSelectionOnFocusGained() &&
+        Registry.is("ide.tree.ensureSelectionOnFocusGained")) {
+      TreeUtil.ensureSelection(myTree);
     }
   }
 
