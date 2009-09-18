@@ -11,8 +11,7 @@ public class JavaDefaultLiveTemplatesProvider implements DefaultLiveTemplatesPro
     "/liveTemplates/other",
     "/liveTemplates/output",
     "/liveTemplates/plain",
-    "/liveTemplates/surround",
-    "/liveTemplates/css"
+    "/liveTemplates/surround"
   };
 
   public String[] getDefaultLiveTemplateFiles() {
