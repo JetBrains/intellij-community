@@ -6,6 +6,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.*;
@@ -41,6 +42,12 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
   private boolean myInsideCommit = false;
   @NonNls public static final String PACKAGING_ELEMENT_NAME = "element";
   @NonNls public static final String TYPE_ID_ATTRIBUTE = "id";
+  private long myModificationCount;
+  private final ModificationTracker myModificationTracker = new ModificationTracker() {
+    public long getModificationCount() {
+      return myModificationCount;
+    }
+  };
 
   public ArtifactManagerImpl(Project project) {
     myProject = project;
@@ -235,6 +242,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
       }
 
       myModel.setArtifactsList(allArtifacts);
+      myModificationCount++;
       final ArtifactListener publisher = myProject.getMessageBus().syncPublisher(TOPIC);
       for (ArtifactImpl artifact : added) {
         publisher.artifactAdded(artifact);
@@ -281,6 +289,11 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
         model.commit();
       }
     }.execute();
+  }
+
+  @Override
+  public ModificationTracker getModificationTracker() {
+    return myModificationTracker;
   }
 
   private static class ArtifactManagerModel extends ArtifactModelBase {

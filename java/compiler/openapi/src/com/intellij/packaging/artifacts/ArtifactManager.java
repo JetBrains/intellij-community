@@ -3,6 +3,7 @@ package com.intellij.packaging.artifacts;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
@@ -32,6 +33,8 @@ public abstract class ArtifactManager implements ArtifactModel {
 
   public abstract void addElementsToDirectory(@NotNull Artifact artifact, @NotNull String relativePath,
                                               @NotNull Collection<? extends PackagingElement<?>> elements);
+
+  public abstract ModificationTracker getModificationTracker();
 
   public static boolean useArtifactsForDeployment() {
     return Boolean.parseBoolean(System.getProperty("idea.use.artifacts.for.deployment"));
