@@ -15,48 +15,74 @@
 
 package org.jetbrains.plugins.groovy.actions;
 
+import com.intellij.CommonBundle;
+import com.intellij.ide.actions.CreateFileFromTemplateDialog;
+import com.intellij.ide.actions.CreateTemplateInPackageAction;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyIcons;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
-public class NewScriptAction extends NewGroovyActionBase {
+public class NewScriptAction extends CreateTemplateInPackageAction<GroovyFile> implements DumbAware {
+  private static final String GROOVY_DSL_SCRIPT_TMPL = "GroovyDslScript.gdsl";
+
   public NewScriptAction() {
-    super(GroovyBundle.message("newscript.menu.action.text"),
-        GroovyBundle.message("newscript.menu.action.description"),
-        GroovyIcons.GROOVY_ICON_16x16);
-  }
-
-  protected String getActionName(PsiDirectory directory, String newName) {
-    return null;
-  }
-
-  protected String getDialogPrompt() {
-    return GroovyBundle.message("newscript.dlg.prompt");
-  }
-
-  protected String getDialogTitle() {
-    return GroovyBundle.message("newscript.dlg.title");
-  }
-
-  protected String getCommandName() {
-    return GroovyBundle.message("newscript.command.name");
+    super(GroovyBundle.message("newscript.menu.action.text"), GroovyBundle.message("newscript.menu.action.description"), GroovyIcons.GROOVY_ICON_16x16);
   }
 
   @NotNull
-  protected PsiElement[] doCreate(String newName, PsiDirectory directory) throws Exception {
-    PsiFile file = createClassFromTemplate(directory, newName, "GroovyScript.groovy");
-    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(file.getProject());
-    PsiElement lastChild = file.getLastChild();
-    if (lastChild != null && lastChild.getNode() != null && lastChild.getNode().getElementType() != GroovyTokenTypes.mNLS) {
-      file.add(factory.createLineTerminator(1));
-    }
-    file.add(factory.createLineTerminator(1));
-    PsiElement child = file.getLastChild();
-    return child != null ? new PsiElement[]{file, child} : new PsiElement[]{file};
+  @Override
+  protected CreateFileFromTemplateDialog.Builder buildDialog(Project project, final PsiDirectory directory) {
+    final CreateFileFromTemplateDialog.Builder builder = CreateFileFromTemplateDialog.
+      createDialog(project, GroovyBundle.message("newscript.dlg.prompt"));
+    builder.addKind("Groovy script", GroovyIcons.GROOVY_ICON_16x16, "GroovyScript.groovy");
+    builder.addKind("GroovyDSL script", GroovyIcons.GROOVY_ICON_16x16, GROOVY_DSL_SCRIPT_TMPL);
+    return builder;
   }
+
+  @Override
+  protected boolean isAvailable(DataContext dataContext) {
+    return super.isAvailable(dataContext) && LibrariesUtil.hasGroovySdk(DataKeys.MODULE.getData(dataContext));
+  }
+
+  @Override
+  protected String getActionName(PsiDirectory directory, String newName, String templateName) {
+    return GroovyBundle.message("newscript.menu.action.text");
+  }
+
+  protected String getErrorTitle() {
+    return CommonBundle.getErrorTitle();
+  }
+
+  @Override
+  protected PsiElement getNavigationElement(@NotNull GroovyFile createdFile) {
+    return createdFile.getLastChild();
+  }
+
+
+  @NotNull
+  protected GroovyFile doCreate(PsiDirectory directory, String newName, String templateName) throws IncorrectOperationException {
+    PsiFile file = null;
+    if (GROOVY_DSL_SCRIPT_TMPL.equals(templateName)) {
+      file = GroovyTemplatesFactory
+        .createFromTemplate(directory, newName, newName + ".gdsl", templateName);
+    } else {
+      file = GroovyTemplatesFactory
+        .createFromTemplate(directory, newName, newName + "." + GroovyFileType.DEFAULT_EXTENSION, templateName);
+    }
+    assert file instanceof GroovyFile;
+    return ((GroovyFile)file);
+  }
+  
+
 }
