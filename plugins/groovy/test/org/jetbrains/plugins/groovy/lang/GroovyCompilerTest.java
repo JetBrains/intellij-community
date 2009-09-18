@@ -206,6 +206,24 @@ public class GroovyCompilerTest extends JavaCodeInsightFixtureTestCase {
     assertOutput("Bar", "239");
   }
 
+  public void testGroovyDependsOnGroovy() throws Throwable {
+    myFixture.addClass("public class JustToMakeGroovyGenerateStubs {}");
+    myFixture.addFileToProject("Foo.groovy", "class Foo { }");
+    final PsiFile bar = myFixture.addFileToProject("Bar.groovy", "class Bar {" +
+                                                                 "def foo(Foo f) {}\n" +
+                                                                 "public static void main(String[] args) { " +
+                                                                 "  System.out.println(239);" +
+                                                                 "}" +
+                                                                 "}");
+    assertEmpty(make());
+    assertOutput("Bar", "239");
+
+    touch(bar.getVirtualFile());
+
+    assertEmpty(make());
+    assertOutput("Bar", "239");
+  }
+
   private void deleteClassFile(final String className) throws IOException {
     new WriteCommandAction(getProject()) {
       protected void run(Result result) throws Throwable {

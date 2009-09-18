@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.compiler.generator;
 
+import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.compiler.CompileContext;
@@ -129,13 +130,16 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
   private void cleanDirectory(final VirtualFile dir) {
     new WriteCommandAction(myProject) {
       protected void run(Result result) throws Throwable {
+        deleteChildrenRecursively(dir);
+      }
+
+      private void deleteChildrenRecursively(final VirtualFile dir) throws IOException {
         for (final VirtualFile child : dir.getChildren()) {
-          try {
-            child.delete(this);
+          if (child.isDirectory()) {
+            deleteChildrenRecursively(dir);
           }
-          catch (IOException e) {
-            LOG.error(e);
-          }
+          TranslatingCompilerFilesMonitor.removeSourceInfo(child);
+          child.delete(this);
         }
       }
     }.execute();
