@@ -66,7 +66,7 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
     final TailType tail = method.isConstructor() || method.getReturnType() instanceof PsiPrimitiveType
                           ? TailTypes.CALL_RPARENTH_SEMICOLON
                           : TailTypes.CALL_RPARENTH;
-    return TailTypeDecorator.createDecorator(element, tail);
+    return TailTypeDecorator.withTail(element, tail);
   }
 
   private static List<Pair<PsiMethod, PsiSubstitutor>> getSuperMethodCandidates(PsiReferenceExpression expression) {

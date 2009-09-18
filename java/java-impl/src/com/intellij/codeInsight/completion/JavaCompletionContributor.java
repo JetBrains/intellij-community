@@ -193,7 +193,7 @@ public class JavaCompletionContributor extends CompletionContributor {
                                                                                      checkAccess,
                                                                                      result.getPrefixMatcher(), parameters)) {
                   if (isSwitchLabel) {
-                    result.addElement(TailTypeDecorator.createDecorator(element, TailType.createSimpleTailType(':')));
+                    result.addElement(TailTypeDecorator.withTail(element, TailType.createSimpleTailType(':')));
                   } else {
                     final LookupItem item = element.as(LookupItem.class);
                     if (file instanceof PsiJavaCodeReferenceCodeFragment &&

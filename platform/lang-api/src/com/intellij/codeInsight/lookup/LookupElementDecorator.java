@@ -108,7 +108,7 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
   }
 
   @NotNull
-  public static <T extends LookupElement> LookupElementDecorator<T> decorate(@NotNull final T element, @NotNull final LookupElementVisagiste<T> visagiste) {
+  public static <T extends LookupElement> LookupElementDecorator<T> withRenderer(@NotNull final T element, @NotNull final LookupElementRenderer<? super LookupElementDecorator<T>> visagiste) {
     return new VisagisteDecorator<T>(element, visagiste);
   }
 
@@ -153,19 +153,16 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
   }
 
   private static class VisagisteDecorator<T extends LookupElement> extends LookupElementDecorator<T> {
-    private final T myElement;
-    private final LookupElementVisagiste<T> myVisagiste;
+    private final LookupElementRenderer<? super LookupElementDecorator<T>> myVisagiste;
 
-    public VisagisteDecorator(T element, LookupElementVisagiste<T> visagiste) {
+    public VisagisteDecorator(T element, LookupElementRenderer<? super LookupElementDecorator<T>> visagiste) {
       super(element);
-      myElement = element;
       myVisagiste = visagiste;
     }
 
     @Override
     public void renderElement(final LookupElementPresentation presentation) {
-      getDelegate().renderElement(presentation);
-      myVisagiste.applyCosmetics(getDelegate(), presentation);
+      myVisagiste.renderElement(this, presentation);
     }
 
     @Override
@@ -176,7 +173,6 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
 
       VisagisteDecorator that = (VisagisteDecorator)o;
 
-      if (!myElement.equals(that.myElement)) return false;
       if (!myVisagiste.getClass().equals(that.myVisagiste.getClass())) return false;
 
       return true;
@@ -185,7 +181,6 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
     @Override
     public int hashCode() {
       int result = super.hashCode();
-      result = 31 * result + myElement.hashCode();
       result = 31 * result + myVisagiste.getClass().hashCode();
       return result;
     }

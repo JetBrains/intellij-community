@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -18,14 +17,6 @@ import org.jetbrains.annotations.Nullable;
 public class CastingLookupElementDecorator extends LookupElementDecorator<LookupElement> implements TypedLookupItem {
   private final LookupElement myCastItem;
   private final PsiType myCastType;
-  private static final LookupElementVisagiste<CastingLookupElementDecorator> CASTING_VISAGISTE = new LookupElementVisagiste<CastingLookupElementDecorator>() {
-    @Override
-    public void applyCosmetics(@NotNull CastingLookupElementDecorator item, @NotNull LookupElementPresentation base) {
-      final String castType = getItemText(base, item.getCastItem());
-      base.setItemText("(" + castType + ")" + base.getItemText());
-      base.setTypeText(castType);
-    }
-  };
 
   @Nullable
   private static String getItemText(LookupElementPresentation base, LookupElement castItem) {
@@ -49,6 +40,13 @@ public class CastingLookupElementDecorator extends LookupElementDecorator<Lookup
     return "(" + myCastItem.getLookupString() + ")" + getDelegate().getLookupString();
   }
 
+  public void renderElement(LookupElementPresentation presentation) {
+    getDelegate().renderElement(presentation);
+    final String castType = getItemText(presentation, getCastItem());
+    presentation.setItemText("(" + castType + ")" + presentation.getItemText());
+    presentation.setTypeText(castType);
+  }
+
   @Override
   public void handleInsert(InsertionContext context) {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(context.getProject());
@@ -66,6 +64,6 @@ public class CastingLookupElementDecorator extends LookupElementDecorator<Lookup
   }
 
   static LookupElement createCastingElement(final LookupElement delegate, PsiType castTo) {
-    return decorate(new CastingLookupElementDecorator(delegate, castTo), CASTING_VISAGISTE);
+    return new CastingLookupElementDecorator(delegate, castTo);
   }
 }

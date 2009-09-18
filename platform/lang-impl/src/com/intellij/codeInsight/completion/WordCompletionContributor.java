@@ -46,7 +46,7 @@ public class WordCompletionContributor extends CompletionContributor implements 
                                                                                                             character().javaIdentifierPart().andNot(character().equalTo('$')),
                                                                                                             character().javaIdentifierStart()));
     for (final String word : AllWordsGetter.getAllWords(insertedElement, startOffset)) {
-      final LookupElement item = TailTypeDecorator.createDecorator(LookupElementBuilder.create(word), TailType.SPACE);
+      final LookupElement item = TailTypeDecorator.withTail(LookupElementBuilder.create(word), TailType.SPACE);
       javaResultSet.addElement(item);
       plainResultSet.addElement(item);
     }

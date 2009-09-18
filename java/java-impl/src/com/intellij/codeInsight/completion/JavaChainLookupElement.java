@@ -20,16 +20,6 @@ import java.util.Set;
  */
 public class JavaChainLookupElement extends LookupElementDecorator<LookupElement> implements TypedLookupItem {
   private final LookupElement myQualifier;
-  private static final LookupElementVisagiste<JavaChainLookupElement> CHAINING_VISAGISTE = new LookupElementVisagiste<JavaChainLookupElement>() {
-    @Override
-    public void applyCosmetics(@NotNull JavaChainLookupElement item, @NotNull LookupElementPresentation base) {
-      final LookupElementPresentation qualifierPresentation = new LookupElementPresentation(base.isReal());
-      item.myQualifier.renderElement(qualifierPresentation);
-      String name = item.maybeAddParentheses(qualifierPresentation.getItemText());
-      final String qualifierText = item.myQualifier.as(CastingLookupElementDecorator.class) != null ? "(" + name + ")" : name;
-      base.setItemText(qualifierText + "." + base.getItemText());
-    }
-  };
 
   private JavaChainLookupElement(LookupElement qualifier, LookupElement main) {
     super(main);
@@ -63,6 +53,16 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
 
   private String maybeAddParentheses(String s) {
     return myQualifier.getObject() instanceof PsiMethod ? s + "()" : s;
+  }
+
+  @Override
+  public void renderElement(LookupElementPresentation presentation) {
+    super.renderElement(presentation);
+    final LookupElementPresentation qualifierPresentation = new LookupElementPresentation(presentation.isReal());
+    myQualifier.renderElement(qualifierPresentation);
+    String name = maybeAddParentheses(qualifierPresentation.getItemText());
+    final String qualifierText = myQualifier.as(CastingLookupElementDecorator.class) != null ? "(" + name + ")" : name;
+    presentation.setItemText(qualifierText + "." + presentation.getItemText());
   }
 
   @Override
@@ -138,6 +138,6 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
   }
 
   public static LookupElement chainElements(LookupElement qualifier, LookupElement main) {
-    return decorate(new JavaChainLookupElement(qualifier, main), CHAINING_VISAGISTE);
+    return new JavaChainLookupElement(qualifier, main);
   }
 }

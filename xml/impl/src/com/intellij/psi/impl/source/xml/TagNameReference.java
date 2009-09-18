@@ -166,7 +166,7 @@ public class TagNameReference implements PsiReference {
   }
 
   protected static LookupElement createClosingTagLookupElement(XmlTag tag) {
-    return TailTypeDecorator.createDecorator(LookupElementBuilder.create(tag.getName()).setAutoCompletionPolicy(
+    return TailTypeDecorator.withTail(LookupElementBuilder.create(tag.getName()).setAutoCompletionPolicy(
         AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE), TailType.createSimpleTailType('>'));
   }
 
