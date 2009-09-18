@@ -81,7 +81,7 @@ public class RegExpCompletionContributor extends CompletionContributor {
                                @NotNull final CompletionResultSet result) {
       for (String[] stringArray : RegExpPropertyImpl.PROPERTY_NAMES) {
         result.addElement(
-          TailTypeDecorator.createDecorator(createLookupElement(stringArray[0], null, emptyIcon), TailType.createSimpleTailType('}')));
+          TailTypeDecorator.withTail(createLookupElement(stringArray[0], null, emptyIcon), TailType.createSimpleTailType('}')));
       }
     }
   }
