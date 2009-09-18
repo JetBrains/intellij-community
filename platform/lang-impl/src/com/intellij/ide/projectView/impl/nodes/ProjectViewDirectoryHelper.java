@@ -15,29 +15,35 @@ import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 public class ProjectViewDirectoryHelper {
   protected static final Logger LOG = Logger.getInstance("#" + ProjectViewDirectoryHelper.class.getName());
 
   private final Project myProject;
+  private final DirectoryIndex myIndex;
 
   public static ProjectViewDirectoryHelper getInstance(Project project) {
     return ServiceManager.getService(project, ProjectViewDirectoryHelper.class);
   }
 
-  public ProjectViewDirectoryHelper(Project project) {
+  public ProjectViewDirectoryHelper(Project project, DirectoryIndex index) {
     myProject = project;
+    myIndex = index;
   }
 
   public Project getProject() {
@@ -104,8 +110,8 @@ public class ProjectViewDirectoryHelper {
     final Module module = fileIndex.getModuleForFile(psiDirectory.getVirtualFile());
     final ModuleFileIndex moduleFileIndex = module == null ? null : ModuleRootManager.getInstance(module).getFileIndex();
     if (!settings.isFlattenPackages() || skipDirectory(psiDirectory)) {
-      processPsiDirectoryChildren(psiDirectory, psiDirectory.getChildren(), children, fileIndex, null, settings,
-                                  withSubDirectories);
+      processPsiDirectoryChildren(psiDirectory, directoryChildrenInProject(psiDirectory),
+                                  children, fileIndex, null, settings, withSubDirectories);
     }
     else { // source directory in "flatten packages" mode
       final PsiDirectory parentDir = psiDirectory.getParentDirectory();
@@ -130,6 +136,49 @@ public class ProjectViewDirectoryHelper {
     return children;
   }
 
+  public List<VirtualFile> getTopLevelRoots() {
+    List<VirtualFile> topLevelContentRoots = new ArrayList<VirtualFile>();
+    ProjectRootManager prm = ProjectRootManager.getInstance(myProject);
+    ProjectFileIndex index = prm.getFileIndex();
+
+    for (VirtualFile root : prm.getContentRoots()) {
+      VirtualFile parent = root.getParent();
+      if (parent == null || !index.isInContent(parent)) {
+        topLevelContentRoots.add(root);
+      }
+    }
+    return topLevelContentRoots;
+  }
+
+  private PsiElement[] directoryChildrenInProject(PsiDirectory psiDirectory) {
+    VirtualFile dir = psiDirectory.getVirtualFile();
+    if (myIndex.getInfoForDirectory(dir) != null) {
+      return psiDirectory.getChildren();
+    }
+
+    Set<VirtualFile> directoriesOnTheWayToContentRoots = new THashSet<VirtualFile>();
+    for (VirtualFile root : getTopLevelRoots()) {
+      VirtualFile current = root;
+      while (current != null) {
+        VirtualFile parent = current.getParent();
+
+        if (parent == dir) {
+          directoriesOnTheWayToContentRoots.add(current);
+        }
+        current = parent;
+      }
+    }
+
+    PsiManager manager = psiDirectory.getManager();
+    PsiElement[] answer = new PsiElement[directoriesOnTheWayToContentRoots.size()];
+    int i = 0;
+    for (VirtualFile directory : directoriesOnTheWayToContentRoots) {
+      answer[i++] = manager.findDirectory(directory);
+    }
+
+    return answer;
+  }
+
   // used only for non-flatten packages mode
   public  void processPsiDirectoryChildren(final PsiDirectory psiDir,
                                                   PsiElement[] children,
@@ -152,8 +201,8 @@ public class ProjectViewDirectoryHelper {
           vFile = dir.getVirtualFile();
           if (!vFile.equals(projectFileIndex.getSourceRootForFile(vFile))) { // if is not a source root
             if (viewSettings.isHideEmptyMiddlePackages() && !skipDirectory(psiDir) && isEmptyMiddleDirectory(dir, true)) {
-              processPsiDirectoryChildren(dir, dir.getChildren(), container, projectFileIndex, moduleFileIndex, viewSettings,
-                                          withSubDirectories); // expand it recursively
+              processPsiDirectoryChildren(dir, directoryChildrenInProject(dir),
+                                          container, projectFileIndex, moduleFileIndex, viewSettings, withSubDirectories); // expand it recursively
               continue;
             }
           }

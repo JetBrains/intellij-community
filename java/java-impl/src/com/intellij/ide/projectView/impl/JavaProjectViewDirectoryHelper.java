@@ -11,6 +11,7 @@ import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.ide.util.treeView.TreeViewUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexUtil;
+import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
@@ -21,8 +22,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 
 public class JavaProjectViewDirectoryHelper extends ProjectViewDirectoryHelper {
-  public JavaProjectViewDirectoryHelper(Project project) {
-    super(project);
+  public JavaProjectViewDirectoryHelper(Project project, DirectoryIndex index) {
+    super(project, index);
   }
 
   @Override

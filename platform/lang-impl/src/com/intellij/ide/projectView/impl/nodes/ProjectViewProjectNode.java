@@ -6,15 +6,18 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 
 public class ProjectViewProjectNode extends AbstractProjectNode {
 
@@ -24,19 +27,13 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
 
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
-    final PsiManager psiManager = PsiManager.getInstance(getProject());
-    ProjectRootManager prm = ProjectRootManager.getInstance(getProject());
-    ProjectFileIndex index = prm.getFileIndex();
+    List<VirtualFile> topLevelContentRoots = ProjectViewDirectoryHelper.getInstance(myProject).getTopLevelRoots();
 
     ArrayList<AbstractTreeNode> nodes = new ArrayList<AbstractTreeNode>();
-
-    for (VirtualFile root : prm.getContentRoots()) {
-      VirtualFile parent = root.getParent();
-      if (parent == null || !index.isInContent(parent)) {
-        nodes.add(new PsiDirectoryNode(getProject(), psiManager.findDirectory(root), getSettings()));
-      }
+    final PsiManager psiManager = PsiManager.getInstance(getProject());
+    for (VirtualFile root : reduceRoots(topLevelContentRoots)) {
+      nodes.add(new PsiDirectoryNode(getProject(), psiManager.findDirectory(root), getSettings()));
     }
-
 
     final VirtualFile baseDir = getProject().getBaseDir();
     if (baseDir == null) return nodes;
@@ -55,6 +52,44 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
     }
 
     return nodes;
+  }
+
+  private static List<VirtualFile> reduceRoots(List<VirtualFile> roots) {
+    if (roots.isEmpty()) return Collections.emptyList();
+
+    String userHome;
+    try {
+      userHome = FileUtil.toSystemIndependentName(new File(SystemProperties.getUserHome()).getCanonicalPath());
+    }
+    catch (IOException e) {
+      userHome = null;
+    }
+
+    Collections.sort(roots, new Comparator<VirtualFile>() {
+      public int compare(VirtualFile o1, VirtualFile o2) {
+        return o1.getPath().compareTo(o2.getPath());
+      }
+    });
+
+    Iterator<VirtualFile> it = roots.iterator();
+    VirtualFile current = it.next();
+
+    List<VirtualFile> reducedRoots = new ArrayList<VirtualFile>();
+    while (it.hasNext()) {
+      VirtualFile next = it.next();
+      VirtualFile common = VfsUtil.getCommonAncestor(current, next);
+
+      if (common == null || common.getParent() == null || Comparing.equal(common.getPath(), userHome)) {
+        reducedRoots.add(current);
+        current = next;
+      }
+      else {
+        current = common;
+      }
+    }
+
+    reducedRoots.add(current);
+    return reducedRoots;
   }
 
   protected AbstractTreeNode createModuleGroup(final Module module)
