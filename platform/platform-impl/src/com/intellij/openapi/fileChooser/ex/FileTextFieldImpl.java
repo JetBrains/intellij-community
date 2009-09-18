@@ -412,8 +412,9 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
   public static Point getLocationForCaret(JTextComponent pathTextField) {
     Point point;
 
+    int position = pathTextField.getCaretPosition();
     try {
-      final Rectangle rec = pathTextField.modelToView(pathTextField.getCaretPosition());
+      final Rectangle rec = pathTextField.modelToView(position);
       point = new Point((int)rec.getMaxX(), (int)rec.getMaxY());
     }
     catch (BadLocationException e) {
