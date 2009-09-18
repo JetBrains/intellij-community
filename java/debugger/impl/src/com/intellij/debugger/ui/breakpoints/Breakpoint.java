@@ -11,16 +11,12 @@ import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
-import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
-import com.intellij.debugger.ui.DebuggerPanelsManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -136,12 +132,11 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
     return null;
   }
 
-  // returns whether should resume
-  public boolean processLocatableEvent(final SuspendContextCommandImpl action, final LocatableEvent event) {
+  public boolean processLocatableEvent(final SuspendContextCommandImpl action, final LocatableEvent event) throws EventProcessingException {
     final SuspendContextImpl context = action.getSuspendContext();
     if(!isValid()) {
       context.getDebugProcess().getRequestsManager().deleteRequest(this);
-      return true;
+      return false;
     }
 
     final String[] title = new String[] {DebuggerBundle.message("title.error.evaluating.breakpoint.condition") };
@@ -150,7 +145,7 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
       final StackFrameProxyImpl frameProxy = context.getThread().frame(0);
       if (frameProxy == null) {
         // might be if the thread has been collected
-        return true;
+        return false;
       }
 
       final EvaluationContextImpl evaluationContext = new EvaluationContextImpl(
@@ -160,7 +155,7 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
       );
 
       if(!evaluateCondition(evaluationContext, event)) {
-        return true;
+        return false;
       }
 
       title[0] = DebuggerBundle.message("title.error.evaluating.breakpoint.action");
@@ -169,26 +164,13 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
     catch (final EvaluateException ex) {
       if(ApplicationManager.getApplication().isUnitTestMode()) {
         System.out.println(ex.getMessage());
-        return true;
+        return false;
       }
 
-      final boolean[] shouldResume = new boolean[]{true};
-      DebuggerInvocationUtil.invokeAndWait(getProject(), new Runnable() {
-        public void run() {
-          DebuggerSession session = DebuggerManagerEx.getInstanceEx(getProject()).getSession(context.getDebugProcess());
-          DebuggerPanelsManager.getInstance(getProject()).toFront(session);
-          final String text = DebuggerBundle.message("error.evaluating.breakpoint.condition.or.action", getDisplayName(), ex.getMessage());
-          if (LOG.isDebugEnabled()) {
-            LOG.debug(text);
-          }
-          shouldResume[0] = Messages.showYesNoDialog(getProject(), text, title[0], Messages.getQuestionIcon()) != 0;
-        }
-      }, ModalityState.NON_MODAL);
-
-      return shouldResume[0];
+      throw new EventProcessingException(title[0], ex.getMessage(), ex);
     } 
 
-    return false;
+    return true;
   }
 
   private void runAction(final EvaluationContextImpl context, LocatableEvent event) {

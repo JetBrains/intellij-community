@@ -1,6 +1,7 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
@@ -10,13 +11,16 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.debugger.ui.DebuggerPanelsManager;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.ThreadReference;
@@ -351,17 +355,36 @@ public class DebugProcessEvents extends DebugProcessImpl {
           return;
         }
 
-        LocatableEventRequestor requestor = (LocatableEventRequestor) getRequestsManager().findRequestor(event.request());
+        final LocatableEventRequestor requestor = (LocatableEventRequestor) getRequestsManager().findRequestor(event.request());
 
-        final boolean requestorAsksResume = (requestor == null) || requestor.processLocatableEvent(this, event);
-        final boolean userWantsResume = (requestor instanceof Breakpoint) && DebuggerSettings.SUSPEND_NONE.equals(((Breakpoint)requestor).SUSPEND_POLICY);
+        boolean resumePreferred = requestor != null && DebuggerSettings.SUSPEND_NONE.equals(requestor.getSuspendPolicy());
+        boolean requestHit = false;
+        try {
+          requestHit = (requestor != null) && requestor.processLocatableEvent(this, event);
+        }
+        catch (final LocatableEventRequestor.EventProcessingException ex) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug(ex.getMessage());
+          }
+          final boolean[] considerRequestHit = new boolean[]{true};
+          DebuggerInvocationUtil.invokeAndWait(getProject(), new Runnable() {
+            public void run() {
+              DebuggerPanelsManager.getInstance(getProject()).toFront(mySession);
+              final String displayName = requestor instanceof Breakpoint? ((Breakpoint)requestor).getDisplayName() : requestor.getClass().getSimpleName();
+              final String message = DebuggerBundle.message("error.evaluating.breakpoint.condition.or.action", displayName, ex.getMessage());
+              considerRequestHit[0] = Messages.showYesNoDialog(getProject(), message, ex.getTitle(), Messages.getQuestionIcon()) == 0;
+            }
+          }, ModalityState.NON_MODAL);
+          requestHit = considerRequestHit[0];
+          resumePreferred = !requestHit;
+        }
 
-        if (requestor instanceof Breakpoint && !requestorAsksResume) {
+        if (requestHit && requestor instanceof Breakpoint) {
           // if requestor is a breakpoint and this breakpoint was hit, no matter its suspend policy
           myBreakpointManager.processBreakpointHit((Breakpoint)requestor);
         }
 
-        if(requestorAsksResume || userWantsResume) {
+        if(!requestHit || resumePreferred) {
           suspendManager.voteResume(suspendContext);
         }
         else {

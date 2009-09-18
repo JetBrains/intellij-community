@@ -66,6 +66,10 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
     myInstanceFilters = instanceFilters != null? instanceFilters : InstanceFilter.EMPTY_ARRAY;
   }
 
+  public String getSuspendPolicy() {
+    return SUSPEND_POLICY;
+  }
+
   /**
    * @return true if the ID was added or false otherwise
    */

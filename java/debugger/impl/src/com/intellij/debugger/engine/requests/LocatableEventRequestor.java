@@ -13,7 +13,25 @@ import com.sun.jdi.event.LocatableEvent;
  */
 public interface LocatableEventRequestor extends Requestor {
   /**
-   * returns whether should resume 
+   * @returns true if requesto was hit by the event, false otherwise
    */ 
-  boolean processLocatableEvent(SuspendContextCommandImpl action, LocatableEvent event);
+  boolean processLocatableEvent(SuspendContextCommandImpl action, LocatableEvent event) throws EventProcessingException;
+
+  /**
+   * @return either DebuggerSettings.SUSPEND_NONE or DebuggerSettings.SUSPEND_ALL or DebuggerSettings.SUSPEND_THREAD
+   */
+  String getSuspendPolicy();
+
+  class EventProcessingException extends Exception {
+    private final String myTitle;
+
+    public EventProcessingException(String title, String message, Throwable cause) {
+      super(message, cause);
+      myTitle = title;
+    }
+
+    public String getTitle() {
+      return myTitle;
+    }
+  }
 }

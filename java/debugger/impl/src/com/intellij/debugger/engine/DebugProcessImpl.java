@@ -124,7 +124,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
   private final Semaphore myWaitFor = new Semaphore();
   private final AtomicBoolean myBreakpointsMuted = new AtomicBoolean(false);
   private boolean myIsFailed = false;
-  private DebuggerSession mySession;
+  protected DebuggerSession mySession;
   protected @Nullable MethodReturnValueWatcher myReturnValueWatcher;
   private final Alarm myStatusUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 

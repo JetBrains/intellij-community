@@ -26,7 +26,7 @@ public class ProgramRunnerUtil {
       return;
     }
 
-    String message = ExecutionBundle.message("error.running.configuration.with.error.error.message", runProfile.getName(), e.getMessage());
+    String message = ExecutionBundle.message("error.running.configuration.with.error.error.message", runProfile != null? runProfile.getName() : "Run profile", e.getMessage());
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.assertTrue(false, message);
     }
