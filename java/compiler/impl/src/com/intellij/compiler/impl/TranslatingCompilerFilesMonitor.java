@@ -482,6 +482,10 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     return null;
   }
 
+  public static void removeSourceInfo(VirtualFile file) {
+    saveSourceInfo(file, new SourceFileInfo());
+  }
+
   private static void saveSourceInfo(VirtualFile file, SourceFileInfo descriptor) {
     final DataOutputStream out = ourSourceFileAttribute.writeAttribute(file);
     try {
