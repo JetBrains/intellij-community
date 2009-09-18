@@ -2,11 +2,13 @@ package com.jetbrains.python.facet;
 
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
-import com.intellij.ide.util.newProjectWizard.FrameworkSupportConfigurable;
-import com.intellij.ide.util.newProjectWizard.FrameworkSupportModel;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.ui.LabeledComponent;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -15,18 +17,20 @@ import javax.swing.*;
  * @author yole
  */
 public class PythonFrameworkSupportConfigurable extends FrameworkSupportConfigurable {
+  private JComponent myMainPanel;
   private PythonSdkComboBox mySdkComboBox;
 
   public PythonFrameworkSupportConfigurable(FrameworkSupportModel model) {
     mySdkComboBox = new PythonSdkComboBox();
     mySdkComboBox.setProject(model.getProject());
+    myMainPanel = LabeledComponent.create(mySdkComboBox, "Python SDK:");
   }
 
   public JComponent getComponent() {
-    return mySdkComboBox;
+    return myMainPanel;
   }
 
-  public void addSupport(Module module, ModifiableRootModel model, @Nullable Library library) {
+  public void addSupport(@NotNull Module module, @NotNull ModifiableRootModel model, @Nullable Library library) {
     final FacetManager facetManager = FacetManager.getInstance(module);
     ModifiableFacetModel facetModel = facetManager.createModifiableModel();
     PythonFacet facet = facetManager.createFacet(PythonFacetType.getInstance(), "Python", null);
