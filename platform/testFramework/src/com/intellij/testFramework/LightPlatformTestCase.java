@@ -64,7 +64,6 @@ import gnu.trove.THashMap;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
@@ -184,6 +183,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         //ourSourceRoot = DummyFileSystem.getInstance().createRoot("src");
 
         final VirtualFile dummyRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///");
+        dummyRoot.refresh(false, false);
 
         try {
           ourSourceRoot = dummyRoot.createChildDirectory(this, "src");
