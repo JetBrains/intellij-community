@@ -22,6 +22,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
+import com.intellij.refactoring.move.MoveMemberViewDescriptor;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;

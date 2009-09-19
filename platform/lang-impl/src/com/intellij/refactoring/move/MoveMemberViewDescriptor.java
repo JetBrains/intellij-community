@@ -2,7 +2,7 @@
  * created at Sep 11, 2001
  * @author Jeka
  */
-package com.intellij.refactoring.move.moveMembers;
+package com.intellij.refactoring.move;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -10,7 +10,7 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.refactoring.RefactoringBundle;
 import org.jetbrains.annotations.NotNull;
 
-class MoveMemberViewDescriptor implements UsageViewDescriptor {
+public class MoveMemberViewDescriptor implements UsageViewDescriptor {
   private final PsiElement[] myElementsToMove;
 
   public MoveMemberViewDescriptor(PsiElement[] elementsToMove) {
