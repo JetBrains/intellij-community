@@ -16,24 +16,24 @@
 
 package com.jetbrains.python.validation;
 
+import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.patterns.Matcher;
+import com.jetbrains.python.psi.patterns.ParentMatcher;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 02.07.2005
- * Time: 17:20:57
- * To change this template use File | Settings | File Templates.
+ * Checks for non-top-level star imports.
  */
 public class ImportAnnotator extends PyAnnotator {
-    @Override public void visitPyFromImportStatement(final PyFromImportStatement node) {
-        if (node.isStarImport()) {
-            if (node.getContainingElement(PyFunction.class) != null ||
-                    node.getContainingElement(PyClass.class) != null) {
-                getHolder().createWarningAnnotation(node, "import * only allowed at module level");
-            }
-        }
+
+  private static Matcher INAPPROPRIATE = new ParentMatcher(PyClass.class, PyFunction.class);
+
+  @Override
+  public void visitPyFromImportStatement(final PyFromImportStatement node) {
+    if (node.isStarImport() && INAPPROPRIATE.search(node) != null) {
+      getHolder().createWarningAnnotation(node, PyBundle.message("ANN.star.import.at.top.only"));
     }
+  }
 }

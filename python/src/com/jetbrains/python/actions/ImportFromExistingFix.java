@@ -4,6 +4,10 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInspection.HintAction;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -24,24 +28,38 @@ import java.util.List;
  * The object contains a list of import candidates and serves only to show the initial hint;
  * the actual work is done in ImportFromExistingAction..
  * User: dcheryasov
- * Date: Apr 15, 2009 2:06:25 PM
  */
-public class ImportFromExistingFix implements HintAction {
+public class ImportFromExistingFix implements HintAction, LocalQuickFix {
 
   PyElement myNode;
 
   List<ImportCandidateHolder> myImports; // from where and what to import
   String myName;
 
+  boolean myUseQualifiedImport;
+  private boolean myExpended;
+
   /**
    * Creates a new, empty fix object.
    * @param node to which the fix applies.
    * @param name the unresolved identifier portion of node's text
+   * @param qualify if true, add an "import ..." statement and qualify the name; else use "from ... import name" 
    */
-  public ImportFromExistingFix(PyElement node, String name) {
+  public ImportFromExistingFix(PyElement node, String name, boolean qualify) {
     myNode = node;
     myImports = new ArrayList<ImportCandidateHolder>();
     myName = name;
+    myUseQualifiedImport = qualify;
+    myExpended = false;
+  }
+
+  /**
+   * @return a fix that uses all the same data, but with 'qualify' parameter inverted.
+   */
+  public ImportFromExistingFix createDual() {
+    ImportFromExistingFix piggybacked = new ImportFromExistingFix(myNode, myName, ! myUseQualifiedImport);
+    piggybacked.myImports = myImports;
+    return piggybacked;
   }
 
   /**
@@ -71,7 +89,13 @@ public class ImportFromExistingFix implements HintAction {
 
   @NotNull
   public String getText() {
-    return PyBundle.message("ACT.NAME.use.import");
+    if (myUseQualifiedImport) return PyBundle.message("ACT.qualify.with.module");
+    else return PyBundle.message("ACT.NAME.use.import");
+  }
+
+  @NotNull
+  public String getName() {
+    return getText();
   }
 
   @NotNull
@@ -88,7 +112,7 @@ public class ImportFromExistingFix implements HintAction {
       myImports.size() > 1, 
       ImportCandidateHolder.getQualifiedName(myName, myImports.get(0).getPath(), myImports.get(0).getImportElement())
     );
-    final ImportFromExistingAction action = new ImportFromExistingAction(myNode, myImports, myName, editor);
+    final ImportFromExistingAction action = new ImportFromExistingAction(myNode, myImports, myName, editor, myUseQualifiedImport);
     HintManager.getInstance().showQuestionHint(
       editor, message,
       myNode.getTextOffset(),
@@ -97,15 +121,24 @@ public class ImportFromExistingFix implements HintAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myNode != null && myNode.isValid() && myImports.size() > 0; 
+    return !myExpended && myNode != null && myNode.isValid() && myImports.size() > 0;
+  }
+
+  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    Editor editor = (Editor)DataManager.getInstance().getDataContext().getData(DataConstants.EDITOR);
+    if (editor != null) {
+      invoke(project, editor, descriptor.getPsiElement().getContainingFile());
+    }
+    myExpended = true;
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     // make sure file is committed, writable, etc
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     // act
-    ImportFromExistingAction action = new ImportFromExistingAction(myNode, myImports, myName, editor);
+    ImportFromExistingAction action = new ImportFromExistingAction(myNode, myImports, myName, editor, myUseQualifiedImport);
     action.execute(); // assume that action runs in WriteAction on its own behalf
+    myExpended = true;
   }
 
   public boolean startInWriteAction() {

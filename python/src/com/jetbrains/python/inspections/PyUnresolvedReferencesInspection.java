@@ -3,6 +3,7 @@ package com.jetbrains.python.inspections;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -11,9 +12,9 @@ import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.actions.AddFieldQuickFix;
-import com.jetbrains.python.actions.AddImportAction;
 import com.jetbrains.python.actions.AddMethodQuickFix;
 import com.jetbrains.python.actions.ImportFromExistingFix;
+import com.jetbrains.python.actions.AddImportAction;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.CollectProcessor;
@@ -27,7 +28,6 @@ import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -83,18 +83,21 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
       else return name;
     }
 
-    @Nullable
-    static HintAction proposeImportFixes(final PyElement node, String ref_text) {
-      boolean worthy_fix = false;
+    static LocalQuickFix[] LQF_EMPTY = new LocalQuickFix[0];
+
+    @NotNull
+    static List<LocalQuickFix> proposeImportFixes(final PyElement node, String ref_text) {
+      PsiFile exisitng_import_file = null; // if there's a matching existing import, this it the file it imports
       ImportFromExistingFix fix = null;
+      List<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>(2);
       Set<String> seen_file_names = new HashSet<String>(); // true import names
-      // maybe the name is importable via some exisitng 'import foo' statement, and only needs a qualifier.
+      // maybe the name is importable via some existing 'import foo' statement, and only needs a qualifier.
       // walk up collecting all such statements and analyzing
       CollectProcessor import_prc = new CollectProcessor(PyImportStatement.class);
       PyResolveUtil.treeCrawlUp(import_prc, node);
       List<PsiElement> result = import_prc.getResult();
       if (result.size() > 0) {
-        fix = new ImportFromExistingFix(node, ref_text); // initially it is almost as lightweight as a plain list
+        fix = new ImportFromExistingFix(node, ref_text, true); // initially it is almost as lightweight as a plain list
         for (PsiElement stmt : import_prc.getResult()) {
           for (PyImportElement ielt : ((PyImportStatement)stmt).getImportElements()) {
             final PyReferenceExpression src = ielt.getImportReference();
@@ -106,21 +109,22 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
                 seen_file_names.add(name);
                 PsiElement res = (dst_file).findExportedName(ref_text);
                 if (res != null) {
+                  exisitng_import_file = dst_file;
                   fix.addImport(res, dst_file, ielt);
-                  worthy_fix = true;
+                  fixes.add(fix);
                 }
               }
             }
           }
         }
       }
-      // maybe the name is importable via some exisitng 'from foo import ...' statement, and only needs another name to be imported.
+      // maybe the name is importable via some existing 'from foo import ...' statement, and only needs another name to be imported.
       // walk up collecting all such statements and analyzing
       CollectProcessor from_import_prc = new CollectProcessor(PyFromImportStatement.class);
       PyResolveUtil.treeCrawlUp(from_import_prc, node);
       result = from_import_prc.getResult();
       if (result.size() > 0) {
-        if (fix == null) fix = new ImportFromExistingFix(node, ref_text); // it might have been created in the previous scan, or not.
+        if (fix == null) fix = new ImportFromExistingFix(node, ref_text, false); // it could have been created before, or not
         for (PsiElement stmt : from_import_prc.getResult()) {
           PyFromImportStatement from_stmt = (PyFromImportStatement)stmt;
           PyImportElement[] ielts = from_stmt.getImportElements();
@@ -134,8 +138,9 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
                 seen_file_names.add(name);
                 PsiElement res = (dst_file).findExportedName(ref_text);
                 if (res != null) {
+                  exisitng_import_file = dst_file;
                   fix.addImport(res, dst_file, ielts[ielts.length-1]); // last element; action expects to add to tail
-                  worthy_fix = true;
+                  fixes.add(fix);
                 }
               }
             }
@@ -143,34 +148,36 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
         }
       }
       // maybe some unimported file has it, too
+      ProgressManager.getInstance().checkCanceled(); // before expensive index searches
       // NOTE: current indices have limitations, only finding direct definitions of classes and functions.
       Project project = node.getProject();
       GlobalSearchScope scope = null; // GlobalSearchScope.projectScope(project);
       List<PsiElement> symbols = new ArrayList<PsiElement>();
       symbols.addAll(StubIndex.getInstance().get(PyClassNameIndex.KEY, ref_text, project, scope));
       symbols.addAll(StubIndex.getInstance().get(PyFunctionNameIndex.KEY, ref_text, project, scope));
+      /* XXX CPU hog? */
       if (symbols.size() > 0) {
-        if (fix == null) fix = new ImportFromExistingFix(node, ref_text); // it might have been created in the previous scan, or not.
+        if (fix == null) fix = new ImportFromExistingFix(node, ref_text, false); // it might have been created in the previous scan, or not.
         for (PsiElement symbol : symbols) {
           if (symbol.getParent() instanceof PsiFile) { // we only want top-level symbols
             PsiFile srcfile = symbol.getContainingFile();
-            if (srcfile != null) {
+            if (srcfile != null && srcfile != exisitng_import_file) {
               VirtualFile vfile = srcfile.getVirtualFile();
               if (vfile != null) {
                 String import_path = ResolveImportUtil.findShortestImportableName(node, vfile);
                 if (import_path != null && !seen_file_names.contains(import_path)) {
                   // a new, valid hit
-                  fix.addImport(symbol, srcfile, null, import_path, propseAsName(node.getContainingFile(), ref_text, import_path));
+                  fix.addImport(symbol, srcfile, null, import_path, proposeAsName(node.getContainingFile(), ref_text, import_path));
                   seen_file_names.add(import_path); // just in case, again
-                  worthy_fix = true;
                 }
               }
             }
           }
         }
+        fixes.add(fix);
+        fixes.add(fix.createDual());
       }
-      if (worthy_fix) return fix;
-      else return null;
+      return fixes;
     }
 
 
@@ -191,7 +198,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
     }
 
     // find an unique name that does not clash with anything in the file, using ref_name and import_path as hints
-    private static String propseAsName(PsiFile file, String ref_name, String import_path) {
+    private static String proposeAsName(PsiFile file, String ref_name, String import_path) {
       // a somehow brute-force approach: collect all identifiers wholesale and avoid clashes with any of them
       Set<String> ident_set = new HashSet<String>();
       collectIdentifiers(file, ident_set);
@@ -237,7 +244,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
           StringBuilder description_buf = new StringBuilder(""); // TODO: clear description_buf logic. maybe a flag is needed instead.
           String text = reference.getElement().getText();
           String ref_text = reference.getRangeInElement().substring(text); // text of the part we're working with
-          LocalQuickFix action = null;
+          List<LocalQuickFix> actions = new ArrayList<LocalQuickFix>(2);
           HintAction hint_action = null;
           if (ref_text.length() <= 0) return; // empty text, nothing to highlight
           if (reference instanceof PyReferenceExpression) {
@@ -262,7 +269,14 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
               // TODO: mark the node so that future references pointing to it won't result in a error, but in a warning
             }
             // look in other imported modules for this whole name
-            hint_action = proposeImportFixes(node, ref_text);
+            List<LocalQuickFix> import_fixes = proposeImportFixes(node, ref_text);
+            if (import_fixes.size() > 0) {
+              actions.addAll(import_fixes);
+              Object first_action = import_fixes.get(0);
+              if (first_action instanceof HintAction) {
+                hint_action = ((HintAction)first_action);
+              }
+            }
           }
           if (reference instanceof PsiReferenceEx) {
             final String s = ((PsiReferenceEx)reference).getUnresolvedDescription();
@@ -283,9 +297,9 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
                     PyClass cls = ((PyClassType)qtype).getPyClass();
                     if (cls != null) {
                       if (reference.getElement().getParent() instanceof PyCallExpression) {
-                        action = new AddMethodQuickFix(ref_text, cls);
+                        actions.add(new AddMethodQuickFix(ref_text, cls));
                       }
-                      else action = new AddFieldQuickFix(ref_text, cls);
+                      else actions.add(new AddFieldQuickFix(ref_text, cls));
                     }
                     description_buf.append(PyBundle.message("INSP.unresolved.ref.$0.for.class.$1", ref_text, qtype.getName()));
                     marked_qualified = true;
@@ -299,7 +313,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
             }
             if (! marked_qualified) {
               description_buf.append(PyBundle.message("INSP.unresolved.ref.$0", ref_text));
-              action = new AddImportAction(reference);
+              hint_action = new AddImportAction(reference); // unconditionally; action will fend for itself. 
             }
           }
           String description = description_buf.toString();
@@ -312,7 +326,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
           }
           PsiElement point = node.getLastChild(); // usually the identifier at the end of qual ref
           if (point == null) point = node;
-          registerProblem(point, description, hl_type, hint_action, action);
+          registerProblem(point, description, hl_type, hint_action, actions.toArray(LQF_EMPTY));
         }
       }
     }

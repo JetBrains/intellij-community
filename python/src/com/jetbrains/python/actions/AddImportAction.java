@@ -30,11 +30,11 @@ import org.jetbrains.annotations.Nullable;
 
 public class AddImportAction implements HintAction, QuestionAction, LocalQuickFix {
   private final PsiReference myReference;
-  private final Project myProject;
+  // private final Project myProject;
 
   public AddImportAction(final PsiReference reference) {
     myReference = reference;
-    myProject = reference.getElement().getProject();
+    // myProject = reference.getElement().getProject();
   }
 
   @NotNull

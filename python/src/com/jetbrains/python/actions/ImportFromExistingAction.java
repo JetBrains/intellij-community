@@ -1,53 +1,72 @@
 package com.jetbrains.python.actions;
 
-import com.intellij.codeInsight.hint.QuestionAction;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.List;
+import java.awt.*;
 
 /**
- * Turns an unqualified unresolved identifier into qualifed and resolvable.
+ * Turns an unqualified unresolved identifier into qualified and resolvable.
  * User: dcheryasov
  * Date: Apr 15, 2009 6:24:48 PM
  */
 public class ImportFromExistingAction implements QuestionAction {
-
   PyElement myTarget;
   List<ImportCandidateHolder> mySources; // list of <import, imported_item>
   Editor myEditor;
   String myName;
+  boolean myUseQualifiedImport;
 
   /**
    * @param target element to become qualified as imported.
    * @param sources clauses of import to be used.
-   * @param name relevant name ot the target element (e.g. of identifier in an experssion).
+   * @param name relevant name ot the target element (e.g. of identifier in an expression).
    * @param editor target's editor.
    */
   public ImportFromExistingAction(@NotNull PyElement target, @NotNull List<ImportCandidateHolder> sources, String name, Editor editor) {
-    mySources = sources;
     myTarget = target;
-    myEditor = editor;
+    mySources = sources;
     myName = name;
+    myEditor = editor;
+    myUseQualifiedImport = false;
   }
 
   /**
-   * Alters either target (by qualifying a name) or source (by explicitly importing the name). 
+   * @param target element to become qualified as imported.
+   * @param sources clauses of import to be used.
+   * @param name relevant name ot the target element (e.g. of identifier in an expression).
+   * @param editor target's editor.
+   * @param useQualified if True, use qualified "import modulename" instead of "from modulename import ...".
+   */
+  public ImportFromExistingAction(@NotNull PyElement target, @NotNull List<ImportCandidateHolder> sources, String name, Editor editor, boolean useQualified) {
+    myTarget = target;
+    mySources = sources;
+    myName = name;
+    myEditor = editor;
+    myUseQualifiedImport = useQualified;
+  }
+
+
+
+
+  /**
+   * Alters either target (by qualifying a name) or source (by explicitly importing the name).
    * @return true if action succeeded
    */
   public boolean execute() {
@@ -65,7 +84,7 @@ public class ImportFromExistingAction implements QuestionAction {
       selectSourceAndDo();
     }
     else doWriteAction(mySources.get(0));
-    return true; 
+    return true;
   }
 
   private void selectSourceAndDo() {
@@ -73,7 +92,7 @@ public class ImportFromExistingAction implements QuestionAction {
     ImportCandidateHolder[] items = mySources.toArray(new ImportCandidateHolder[mySources.size()]); // silly JList can't handle modern collections
     final JList list = new JList(items);
     list.setCellRenderer(new CellRenderer(myName));
-    
+
     Runnable runnable = new Runnable() {
       public void run() {
         int index = list.getSelectedIndex();
@@ -84,7 +103,7 @@ public class ImportFromExistingAction implements QuestionAction {
     };
 
     new PopupChooserBuilder(list).
-      setTitle(PyBundle.message("ACT.qualify.with.module")).
+      setTitle(myUseQualifiedImport? PyBundle.message("ACT.qualify.with.module") : PyBundle.message("ACT.from.some.module.import")).
       setItemChoosenCallback(runnable).
       createPopup().
       showInBestPositionFor(myEditor)
@@ -100,8 +119,7 @@ public class ImportFromExistingAction implements QuestionAction {
       if (parent instanceof PyFromImportStatement) {
         // add another import element right after the one we got
         final Project project = myTarget.getProject();
-        PsiElement new_elt = gen.
-          createFromText(project, PyImportElement.class, "from foo import " + myName, new int[]{0, 6});
+        PsiElement new_elt = gen.createFromText(project, PyImportElement.class, "from foo import " + myName, new int[]{0, 6});
         PyUtil.addListNode(parent, new_elt, null, false, true);
       }
       else { // just 'import'
@@ -111,11 +129,16 @@ public class ImportFromExistingAction implements QuestionAction {
     }
     else { // no existing import, add it then use it
       Project project = myTarget.getProject();
-      AddImportHelper.addImportStatement(myTarget.getContainingFile(), item.getPath(), item.getAsName(), project);
-      String qual_name;
-      if (item.getAsName() != null) qual_name = item.getAsName();
-      else qual_name = item.getPath();
-      myTarget.replace(gen.createExpressionFromText(project, qual_name + "." + myName));
+      if (myUseQualifiedImport) {
+        AddImportHelper.addImportStatement(myTarget.getContainingFile(), item.getPath(), null, project);
+        String qual_name;
+        if (item.getAsName() != null) qual_name = item.getAsName();
+        else qual_name = item.getPath();
+        myTarget.replace(gen.createExpressionFromText(project, qual_name + "." + myName));
+      }
+      else {
+        AddImportHelper.addImportFromStatement(myTarget.getContainingFile(), item.getPath(), myName, null, project);
+      }
     }
   }
 
@@ -132,7 +155,6 @@ public class ImportFromExistingAction implements QuestionAction {
     }, PyBundle.message("ACT.CMD.use.import"), null);
   }
 
-
   // Stolen from FQNameCellRenderer
   private static class CellRenderer extends SimpleColoredComponent implements ListCellRenderer {
     private final Font FONT;
@@ -148,7 +170,7 @@ public class ImportFromExistingAction implements QuestionAction {
     // value is a QualifiedHolder
     public Component getListCellRendererComponent(
       JList list,
-      Object value, // expected to be 
+      Object value, // expected to be
       int index,
       boolean isSelected,
       boolean cellHasFocus

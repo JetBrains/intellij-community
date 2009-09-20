@@ -23,10 +23,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyFromImportStatement;
-import com.jetbrains.python.psi.PyImportElement;
-import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +49,7 @@ public class PyFromImportStatementImpl extends PyElementImpl implements PyFromIm
   }
 
   public boolean isStarImport() {
-    return getNode().findChildByType(PyTokenTypes.MULT) != null;
+    return findChildByClass(PyStarImportElement.class) != null;//getNode().findChildByType(PyTokenTypes.MULT) != null;
   }
 
   @Nullable

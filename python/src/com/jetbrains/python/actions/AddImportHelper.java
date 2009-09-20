@@ -10,6 +10,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonDosStringFinder;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Does the actual job of adding an import statement into a file.
@@ -56,10 +57,10 @@ class AddImportHelper {
    * Adds an import statement, presumably below all other initial imports in the file.
    * @param file where to operate
    * @param name which to import (qualified is OK)
-   * @param asName optional na,e for 'as' clause
+   * @param asName optional name for 'as' clause
    * @param project to which the file presumably belongs
    */
-  public static void addImportStatement(PsiFile file, String name, String asName, Project project) {
+  public static void addImportStatement(PsiFile file, String name, @Nullable String asName, Project project) {
     String as_clause;
     if (asName == null) as_clause = "";
     else as_clause = " as " + asName;
@@ -72,7 +73,29 @@ class AddImportHelper {
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+  }
 
+  /**
+   * Adds an "import ... from ..." statement below other top-level imports.
+   * @param file where to operate
+   * @param from name of the module
+   * @param name imported name
+   * @param asName optional name for 'as' clause
+   * @param project where the file belongs
+   */
+  public static  void addImportFromStatement(PsiFile file, String from, String name, @Nullable String asName, Project project) {
+    String as_clause;
+    if (asName == null) as_clause = "";
+    else as_clause = " as " + asName;
+    final PyFromImportStatement importNodeToInsert = PythonLanguage.getInstance().getElementGenerator().createFromText(
+        project, PyFromImportStatement.class, "from " + from + " import " + name + as_clause + "\n\n"
+    );
+    try {
+      file.addBefore(importNodeToInsert, getInsertPosition(file));
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
   }
 
 }
