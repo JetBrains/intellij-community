@@ -24,7 +24,7 @@ public abstract class NonDocumentUndoableAction implements UndoableAction {
     return null;
   }
 
-  public final boolean shouldConfirmUndo() {
+  public final boolean isGlobal() {
     return true;
   }
 }

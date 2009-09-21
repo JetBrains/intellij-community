@@ -6,9 +6,6 @@ import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.containers.WeakValueHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -46,11 +43,6 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
         if (ref != null) {
           myDeletedFilePathToRef.put(new FilePath(f.getUrl()), ref);
         }
-      }
-    });
-    ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
-      @Override
-      public void projectOpened(Project project) {
       }
     });
   }

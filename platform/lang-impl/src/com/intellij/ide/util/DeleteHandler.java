@@ -3,6 +3,7 @@ package com.intellij.ide.util;
 import com.intellij.CommonBundle;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -11,8 +12,8 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -72,9 +73,7 @@ public class DeleteHandler {
         a.finish();
       }
     }
-
   }
-
 
   public static void deletePsiElement(final PsiElement[] elementsToDelete, final Project project) {
     if (elementsToDelete == null || elementsToDelete.length == 0) return;
@@ -139,6 +138,11 @@ public class DeleteHandler {
       public void run() {
         CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements), false);
 
+        // deleted from project view or something like that.
+        if (PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext()) == null) {
+          CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
+        }
+
         for (final PsiElement elementToDelete : elements) {
           if (!elementToDelete.isValid()) continue; //was already deleted
           if (elementToDelete instanceof PsiDirectory) {
@@ -151,7 +155,7 @@ public class DeleteHandler {
               if (readOnlyFiles.size() > 0) {
                 int _result = Messages.showYesNoDialog(project, IdeBundle.message("prompt.directory.contains.read.only.files",
                                                                                   virtualFile.getPresentableUrl()),
-                                                                IdeBundle.message("title.delete"), Messages.getQuestionIcon());
+                                                       IdeBundle.message("title.delete"), Messages.getQuestionIcon());
                 if (_result != 0) continue;
 
                 boolean success = true;
@@ -160,9 +164,7 @@ public class DeleteHandler {
                   if (!success) break;
                 }
                 if (!success) continue;
-
               }
-
             }
           }
           else if (!elementToDelete.isWritable()) {

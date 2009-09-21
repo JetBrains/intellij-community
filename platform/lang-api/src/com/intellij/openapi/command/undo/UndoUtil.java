@@ -47,7 +47,7 @@ public class UndoUtil {
         return new DocumentReference[]{ref};
       }
 
-      public boolean shouldConfirmUndo() {
+      public boolean isGlobal() {
         return false;
       }
 

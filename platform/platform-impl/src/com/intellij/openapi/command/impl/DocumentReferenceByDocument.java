@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.command.impl;
 
+import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.command.undo.DocumentReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,5 +36,11 @@ public class DocumentReferenceByDocument implements DocumentReference {
   @Nullable
   public VirtualFile getFile() {
     return null;
+  }
+
+  @Override
+  public String toString() {
+    CharSequence text = myDocument.getCharsSequence();
+    return text.subSequence(0, Math.min(80, text.length())).toString();
   }
 }

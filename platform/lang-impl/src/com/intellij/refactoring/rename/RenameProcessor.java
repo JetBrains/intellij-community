@@ -1,6 +1,5 @@
 package com.intellij.refactoring.rename;
 
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
@@ -236,10 +235,6 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     return false;
   }
 
-  protected boolean markCommandAsComplex() {
-    return false;
-  }
-
   public void performRefactoring(UsageInfo[] usages) {
     String message = null;
     try {
@@ -254,10 +249,6 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     if (message != null) {
       CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("rename.title"), message, getHelpID(), myProject);
       return;
-    }
-
-    if (markCommandAsComplex()) {
-      CommandProcessor.getInstance().markCurrentCommandAsComplex(myProject);
     }
 
     List<Runnable> postRenameCallbacks = new ArrayList<Runnable>();

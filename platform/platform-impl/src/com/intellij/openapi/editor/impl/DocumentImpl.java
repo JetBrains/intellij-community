@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -18,9 +19,9 @@ import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.LocalTimeCounter;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -701,11 +702,11 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
         replaceString(0, getTextLength(), text, LocalTimeCounter.currentTime(), true);
       }
     };
-    if (CommandProcessor.getInstance().isUndoTransparentActionInProgress()) {
+    if ((CommandProcessor.getInstance()).isUndoTransparentActionInProgress()) {
       runnable.run();
     }
     else {
-      CommandProcessor.getInstance().executeCommand(runnable, "file text set", CommandProcessor.noneGroupId(this));
+      CommandProcessor.getInstance().executeCommand(runnable, "file text set", DocCommandGroupId.noneGroupId(this));
     }
 
     clearLineModificationFlags();

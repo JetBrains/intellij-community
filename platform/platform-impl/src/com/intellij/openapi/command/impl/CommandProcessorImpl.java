@@ -37,7 +37,8 @@ public class CommandProcessorImpl extends CommandProcessorEx {
                              Project project,
                              String name,
                              Object groupId,
-                             UndoConfirmationPolicy undoConfirmationPolicy, Document document) {
+                             UndoConfirmationPolicy undoConfirmationPolicy,
+                             Document document) {
       myCommand = command;
       myProject = project;
       myName = name;
@@ -76,7 +77,8 @@ public class CommandProcessorImpl extends CommandProcessorEx {
                              final Runnable command,
                              final String name,
                              final Object groupId,
-                             UndoConfirmationPolicy undoConfirmationPolicy, Document document) {
+                             UndoConfirmationPolicy undoConfirmationPolicy,
+                             Document document) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (project != null && project.isDisposed()) return;
 
@@ -103,7 +105,10 @@ public class CommandProcessorImpl extends CommandProcessorEx {
   }
 
   @Nullable
-  public Object startCommand(final Project project, @Nls final String name, final Object groupId, final UndoConfirmationPolicy undoConfirmationPolicy) {
+  public Object startCommand(final Project project,
+                             @Nls final String name,
+                             final Object groupId,
+                             final UndoConfirmationPolicy undoConfirmationPolicy) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (project != null && project.isDisposed()) return null;
 
@@ -136,7 +141,9 @@ public class CommandProcessorImpl extends CommandProcessorEx {
       }
       else if (throwable != null) {
         failed = true;
-        if (throwable instanceof Error) throw (Error)throwable;
+        if (throwable instanceof Error) {
+          throw (Error)throwable;
+        }
         else if (throwable instanceof RuntimeException) throw (RuntimeException)throwable;
         LOG.error(throwable);
       }
@@ -160,8 +167,12 @@ public class CommandProcessorImpl extends CommandProcessorEx {
   }
 
   private void fireCommandFinished() {
-    CommandEvent event = new CommandEvent(this, myCurrentCommand.myCommand, myCurrentCommand.myName,
-                                            myCurrentCommand.myGroupId, myCurrentCommand.myProject, myCurrentCommand.myUndoConfirmationPolicy, myCurrentCommand.myDocument);
+    CommandEvent event = new CommandEvent(this, myCurrentCommand.myCommand,
+                                          myCurrentCommand.myName,
+                                          myCurrentCommand.myGroupId,
+                                          myCurrentCommand.myProject,
+                                          myCurrentCommand.myUndoConfirmationPolicy,
+                                          myCurrentCommand.myDocument);
     try {
       for (CommandListener listener : myListeners) {
         try {
@@ -273,13 +284,19 @@ public class CommandProcessorImpl extends CommandProcessorEx {
     return myUndoTransparentCount > 0;
   }
 
-  public void markCurrentCommandAsComplex(Project project) {
+  public void markCurrentCommandAsGlobal(Project project) {
     UndoManager manager = project != null ? UndoManager.getInstance(project) : UndoManager.getGlobalInstance();
-    manager.markCurrentCommandAsComplex();
+    ((UndoManagerImpl)manager).markCurrentCommandAsGlobal();
   }
 
   private void fireCommandStarted() {
-    CommandEvent event = new CommandEvent(this, myCurrentCommand.myCommand, myCurrentCommand.myName, myCurrentCommand.myGroupId, myCurrentCommand.myProject, myCurrentCommand.myUndoConfirmationPolicy, myCurrentCommand.myDocument);
+    CommandEvent event = new CommandEvent(this,
+                                          myCurrentCommand.myCommand,
+                                          myCurrentCommand.myName,
+                                          myCurrentCommand.myGroupId,
+                                          myCurrentCommand.myProject,
+                                          myCurrentCommand.myUndoConfirmationPolicy,
+                                          myCurrentCommand.myDocument);
     for (CommandListener listener : myListeners) {
       try {
         listener.commandStarted(event);
@@ -311,5 +328,4 @@ public class CommandProcessorImpl extends CommandProcessorEx {
       }
     }
   }
-
 }

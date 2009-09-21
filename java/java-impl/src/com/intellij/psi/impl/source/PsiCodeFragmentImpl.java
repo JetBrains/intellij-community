@@ -238,7 +238,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
       myReferences = new DocumentReference[]{DocumentReferenceManager.getInstance().create(document)};
     }
 
-    public boolean shouldConfirmUndo() {
+    public boolean isGlobal() {
       return false;
     }
 

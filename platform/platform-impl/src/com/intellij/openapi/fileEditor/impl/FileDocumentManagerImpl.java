@@ -55,13 +55,14 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl");
 
   private static final Key<String> LINE_SEPARATOR_KEY = Key.create("LINE_SEPARATOR_KEY");
-  public  static final Key<Reference<Document>> DOCUMENT_KEY = Key.create("DOCUMENT_KEY");
+  public static final Key<Reference<Document>> DOCUMENT_KEY = Key.create("DOCUMENT_KEY");
   private static final Key<VirtualFile> FILE_KEY = Key.create("FILE_KEY");
 
   private final Set<Document> myUnsavedDocuments = new HashSet<Document>();
   private final EditReadOnlyListener myReadOnlyListener = new MyEditReadOnlyListener();
 
-  private final EventDispatcher<FileDocumentSynchronizationVetoListener> myVetoDispatcher = EventDispatcher.create(FileDocumentSynchronizationVetoListener.class);
+  private final EventDispatcher<FileDocumentSynchronizationVetoListener> myVetoDispatcher = EventDispatcher.create(
+    FileDocumentSynchronizationVetoListener.class);
 
   private final VirtualFileManager myVirtualFileManager;
   private final MessageBus myBus;
@@ -107,7 +108,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
         if (!(file instanceof LightVirtualFile || file.getFileSystem() instanceof DummyFileSystem)) {
           document.addDocumentListener(
-          new DocumentAdapter() {
+            new DocumentAdapter() {
               public void documentChanged(DocumentEvent e) {
                 final Document document = e.getDocument();
                 myUnsavedDocuments.add(document);
@@ -137,7 +138,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     Reference<Document> reference = file.getUserData(DOCUMENT_KEY);
     Document document = reference != null ? reference.get() : null;
 
-    if (document != null && isBinaryWithoutDecompiler(file)){
+    if (document != null && isBinaryWithoutDecompiler(file)) {
       file.putUserData(DOCUMENT_KEY, null);
       document.putUserData(FILE_KEY, null);
       return null;
@@ -163,7 +164,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
   @TestOnly
   public void dropAllUnsavedDocuments() {
-    if (!ApplicationManager.getApplication().isUnitTestMode()){
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
       throw new RuntimeException("This method is only for test mode!");
     }
     ApplicationManager.getApplication().assertWriteAccessAllowed();
@@ -176,7 +177,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     if (myUnsavedDocuments.isEmpty()) return;
 
     HashSet<Document> failedToSave = new HashSet<Document>();
-    while(true){
+    while (true) {
       final Document[] unsavedDocuments = getUnsavedDocuments();
 
       int count = 0;
@@ -207,29 +208,29 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
   private void _saveDocument(final Document document) {
     boolean committed = false;
-    try{
+    try {
       VirtualFile file = getFile(document);
 
-      if (file == null || !file.isValid() || file instanceof LightVirtualFile){
+      if (file == null || !file.isValid() || file instanceof LightVirtualFile) {
         myUnsavedDocuments.remove(document);
         LOG.assertTrue(!myUnsavedDocuments.contains(document));
         return;
       }
 
-      if (!isFileModified(file)){
+      if (!isFileModified(file)) {
         myUnsavedDocuments.remove(document);
         LOG.assertTrue(!myUnsavedDocuments.contains(document));
         return;
       }
 
-      if (needsRefresh(file)){
+      if (needsRefresh(file)) {
         file.refresh(false, false);
         if (!myUnsavedDocuments.contains(document)) return;
         if (!file.isValid()) return;
       }
 
       try {
-        for(FileDocumentSynchronizationVetoListener listener: myVetoDispatcher.getListeners()) {
+        for (FileDocumentSynchronizationVetoListener listener : myVetoDispatcher.getListeners()) {
           listener.beforeDocumentSaving(document);
         }
       }
@@ -243,29 +244,29 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
       String text = document.getText();
       String lineSeparator = getLineSeparator(document, file);
-      if (!lineSeparator.equals("\n")){
+      if (!lineSeparator.equals("\n")) {
         text = StringUtil.convertLineSeparators(text, lineSeparator);
       }
       Project project = ProjectLocator.getInstance().guessProjectForFile(file);
 
       Writer writer = null;
-      try{
+      try {
         writer = LoadTextUtil.getWriter(project, file, this, text, document.getModificationStamp());
         writer.write(text);
       }
-      finally{
-        if (writer != null){
+      finally {
+        if (writer != null) {
           writer.close();
         }
       }
       committed = true;
     }
-    catch(IOException e){
+    catch (IOException e) {
       reportErrorOnSave(e);
       committed = false;
     }
-    finally{
-      if (committed){
+    finally {
+      if (committed) {
         myUnsavedDocuments.remove(document);
         LOG.assertTrue(!myUnsavedDocuments.contains(document));
         ((DocumentEx)document).clearLineModificationFlags();
@@ -280,7 +281,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
   private static String getLineSeparator(Document document, VirtualFile file) {
     String lineSeparator = file.getUserData(LoadTextUtil.DETECTED_LINE_SEPARATOR_KEY);
-    if (lineSeparator == null){
+    if (lineSeparator == null) {
       lineSeparator = document.getUserData(LINE_SEPARATOR_KEY);
     }
     return lineSeparator;
@@ -351,7 +352,9 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     myVetoDispatcher.removeListener(vetoer);
   }
 
-  private final Map<FileDocumentManagerListener, MessageBusConnection> myAdapters = new HashMap<FileDocumentManagerListener, MessageBusConnection>();
+  private final Map<FileDocumentManagerListener, MessageBusConnection> myAdapters
+    = new HashMap<FileDocumentManagerListener, MessageBusConnection>();
+
   public void addFileDocumentManagerListener(@NotNull FileDocumentManagerListener listener) {
     final MessageBusConnection connection = myBus.connect();
     myAdapters.put(listener, connection);
@@ -366,7 +369,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   public void propertyChanged(final VirtualFilePropertyEvent event) {
-    if (VirtualFile.PROP_WRITABLE.equals(event.getPropertyName())){
+    if (VirtualFile.PROP_WRITABLE.equals(event.getPropertyName())) {
       final VirtualFile file = event.getFile();
       final Document document = getCachedDocument(file);
       if (document == null) return;
@@ -407,7 +410,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
     long documentStamp = document.getModificationStamp();
     long oldFileStamp = event.getOldModificationStamp();
-    if (documentStamp != oldFileStamp){
+    if (documentStamp != oldFileStamp) {
       LOG.info("reaload from disk?");
       LOG.info("  documentStamp:" + documentStamp);
       LOG.info("  oldFileStamp:" + oldFileStamp);
@@ -415,7 +418,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       Runnable askReloadRunnable = new Runnable() {
         public void run() {
           if (!file.isValid()) return;
-          if (askReloadFromDisk(file, document)){
+          if (askReloadFromDisk(file, document)) {
             reloadFromDisk(document);
           }
         }
@@ -425,10 +428,10 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       //  LaterInvocator.invokeLater(askReloadRunnable);
       //}
       //else{
-        askReloadRunnable.run();
+      askReloadRunnable.run();
       //}
     }
-    else{
+    else {
       reloadFromDisk(document);
     }
   }
@@ -449,17 +452,34 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       LOG.error(e);
     }
 
-    ApplicationManager.getApplication().runWriteAction(
-      new ExternalChangeAction() {
-        public void run() {
-          boolean wasWritable = document.isWritable();
-          DocumentEx documentEx = (DocumentEx)document;
-          documentEx.setReadOnly(false);
-          documentEx.replaceText(LoadTextUtil.loadText(file), file.getModificationStamp());
-          documentEx.setReadOnly(!wasWritable);
-        }
+    Project project = ProjectLocator.getInstance().guessProjectForFile(file);
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(
+          new ExternalChangeAction() {
+            public void run() {
+              boolean wasWritable = document.isWritable();
+              DocumentEx documentEx = (DocumentEx)document;
+              documentEx.setReadOnly(false);
+              documentEx.replaceText(LoadTextUtil.loadText(file), file.getModificationStamp());
+              documentEx.setReadOnly(!wasWritable);
+            }
+          }
+        );
       }
-    );
+    }, UIBundle.message("file.cache.conflict.action"), null);
+    //ApplicationManager.getApplication().runWriteAction(
+    //  new ExternalChangeAction() {
+    //    public void run() {
+    //      boolean wasWritable = document.isWritable();
+    //      DocumentEx documentEx = (DocumentEx)document;
+    //      documentEx.setReadOnly(false);
+    //      documentEx.replaceText(LoadTextUtil.loadText(file), file.getModificationStamp());
+    //      documentEx.setReadOnly(!wasWritable);
+    //    }
+    //  }
+    //);
+
     myUnsavedDocuments.remove(document);
 
     try {
@@ -479,7 +499,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     builder.setCenterPanel(new JLabel(message, Messages.getQuestionIcon(), SwingConstants.CENTER));
     builder.addOkAction().setText(UIBundle.message("file.cache.conflict.load.fs.changes.button"));
     builder.addCancelAction().setText(UIBundle.message("file.cache.conflict.keep.memory.changes.button"));
-    builder.addAction(new AbstractAction(UIBundle.message("file.cache.conflict.show.difference.button")){
+    builder.addAction(new AbstractAction(UIBundle.message("file.cache.conflict.show.difference.button")) {
       public void actionPerformed(ActionEvent e) {
         String windowtitle = UIBundle.message("file.cache.conflict.for.file.dialog.title", file.getPresentableUrl());
         final ProjectEx project = (ProjectEx)ProjectLocator.getInstance().guessProjectForFile(file);
@@ -500,8 +520,9 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
         diffBuilder.addCancelAction();
         diffBuilder.setTitle(windowtitle);
         diffBuilder.addDisposable(diffPanel);
-        if (diffBuilder.show() == DialogWrapper.OK_EXIT_CODE)
+        if (diffBuilder.show() == DialogWrapper.OK_EXIT_CODE) {
           builder.getDialogWrapper().close(DialogWrapper.CANCEL_EXIT_CODE);
+        }
       }
     });
     //int option = Messages.showYesNoDialog(message, "File Cache Conflict", Messages.getQuestionIcon());

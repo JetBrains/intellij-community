@@ -15,7 +15,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -195,9 +194,7 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
       psiFiles.add(visitorClass.getContainingFile());
     }
     new WriteCommandAction(project, psiFiles.toArray(new PsiFile[psiFiles.size()])) {
-
       protected void run(final Result result) throws Throwable {
-        CommandProcessor.getInstance().markCurrentCommandAsComplex(project);
         if (visitorClass == null) {
           final String shortClassName = PsiNameHelper.getShortClassName(visitorName);
           final String packageName = visitorName.substring(0, visitorName.length() - shortClassName.length() - 1);
@@ -210,6 +207,11 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
         else {
           generateVisitorClass(visitorClass, classes, pathMap);
         }
+      }
+
+      @Override
+      protected boolean isGlobalUndoAction() {
+        return true;
       }
     }.execute();
   }

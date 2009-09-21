@@ -11,6 +11,7 @@ import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
@@ -22,45 +23,107 @@ class UndoableGroup {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.impl.UndoableGroup");
 
   private String myCommandName;
-  private boolean myComplex;
+  private boolean myGlobal;
   private int myCommandTimestamp;
   private boolean myTransparentsOnly;
-  private ArrayList<UndoableAction> myActions;
+  private List<UndoableAction> myActions;
   private EditorAndState myStateBefore;
   private EditorAndState myStateAfter;
   private Project myProject;
-  private final UndoConfirmationPolicy myUndoConfirmationPolicy;
+  private final UndoConfirmationPolicy myConfirmationPolicy;
   private boolean isValid = true;
 
   public UndoableGroup(String commandName,
-                       boolean isComplex,
+                       boolean isGlobal,
                        Project project,
                        EditorAndState stateBefore,
                        EditorAndState stateAfter,
+                       List<UndoableAction> actions,
                        int commandTimestamp,
-                       UndoConfirmationPolicy undoConfirmationPolicy,
+                       UndoConfirmationPolicy confirmationPolicy,
                        boolean transparentsOnly) {
     myCommandName = commandName;
-    myComplex = isComplex;
+    myGlobal = isGlobal;
     myCommandTimestamp = commandTimestamp;
-    myActions = new ArrayList<UndoableAction>();
+    myActions = actions;
     myProject = project;
     myStateBefore = stateBefore;
     myStateAfter = stateAfter;
-    myUndoConfirmationPolicy = undoConfirmationPolicy;
+    myConfirmationPolicy = confirmationPolicy;
     myTransparentsOnly = transparentsOnly;
   }
 
-  public boolean isComplex() {
-    return myComplex;
+  public boolean isGlobal() {
+    return myGlobal;
   }
 
-  public UndoableAction[] getActions() {
-    return myActions.toArray(new UndoableAction[myActions.size()]);
+  public boolean isTransparentsOnly() {
+    return myTransparentsOnly;
+  }
+
+  public boolean isUndoable() {
+    for (UndoableAction action : myActions) {
+      if (action instanceof NonUndoableAction) return false;
+    }
+    return true;
   }
 
   public void addTailActions(Collection<UndoableAction> actions) {
     myActions.addAll(actions);
+  }
+
+  public void undo() {
+    undoOrRedo(true);
+  }
+
+  public void redo() {
+    undoOrRedo(false);
+  }
+
+  private void undoOrRedo(boolean isUndo) {
+    LocalHistoryAction action = LocalHistoryAction.NULL;
+
+    if (myProject != null) {
+      if (isGlobal()) {
+        final String actionName;
+        if (isUndo) {
+          actionName = CommonBundle.message("local.vcs.action.name.undo.command", myCommandName);
+        }
+        else {
+          actionName = CommonBundle.message("local.vcs.action.name.redo.command", myCommandName);
+        }
+        action = LocalHistory.startAction(myProject, actionName);
+      }
+    }
+
+    try {
+      doUndoOrRedo(isUndo);
+    }
+    finally {
+      action.finish();
+    }
+  }
+
+  private void doUndoOrRedo(final boolean isUndo) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        Iterator<UndoableAction> it = isUndo ? reverseIterator(myActions.listIterator(myActions.size())) : myActions.iterator();
+        try {
+          while (it.hasNext()) {
+            UndoableAction each = it.next();
+            if (isUndo) {
+              each.undo();
+            }
+            else {
+              each.redo();
+            }
+          }
+        }
+        catch (UnexpectedUndoException e) {
+          reportUndoProblem(e, isUndo);
+        }
+      }
+    });
   }
 
   private Iterator<UndoableAction> reverseIterator(final ListIterator<UndoableAction> iter) {
@@ -79,82 +142,32 @@ class UndoableGroup {
     };
   }
 
-  private void undoOrRedo(final boolean isUndo) {
-    LocalHistoryAction action = LocalHistoryAction.NULL;
+  private void reportUndoProblem(UnexpectedUndoException e, boolean isUndo) {
+    String title;
+    String message;
 
-    if (myProject != null) {
-      if (isComplex()) {
-        final String actionName;
-        if (isUndo) {
-          actionName = CommonBundle.message("local.vcs.action.name.undo.command", myCommandName);
-        }
-        else {
-          actionName = CommonBundle.message("local.vcs.action.name.redo.command", myCommandName);
-        }
-        action = LocalHistory.startAction(myProject, actionName);
+    if (isUndo) {
+      title = CommonBundle.message("cannot.undo.dialog.title");
+      message = CommonBundle.message("cannot.undo.message");
+    }
+    else {
+      title = CommonBundle.message("cannot.redo.dialog.title");
+      message = CommonBundle.message("cannot.redo.message");
+    }
+
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      if (e.getMessage() != null) {
+        message += ".\n" + e.getMessage();
       }
+      Messages.showMessageDialog(myProject, message, title, Messages.getErrorIcon());
     }
-
-    try {
-      performWritableUndoOrRedoAction(isUndo);
+    else {
+      LOG.error(e);
     }
-    finally {
-      action.finish();
-    }
-  }
-
-  private void performWritableUndoOrRedoAction(final boolean isUndo) {
-    final Iterator<UndoableAction> actions = isUndo ? reverseIterator(myActions.listIterator(myActions.size())) : myActions.iterator();
-
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        String title;
-        String message;
-        if (isUndo) {
-          title = CommonBundle.message("cannot.undo.dialog.title");
-          message = CommonBundle.message("cannot.undo.message");
-        }
-        else {
-          title = CommonBundle.message("cannot.redo.dialog.title");
-          message = CommonBundle.message("cannot.redo.message");
-        }
-
-        while (actions.hasNext()) {
-          UndoableAction undoableAction = actions.next();
-          try {
-            if (isUndo) {
-              undoableAction.undo();
-            }
-            else {
-              undoableAction.redo();
-            }
-          }
-          catch (UnexpectedUndoException e) {
-            if (!ApplicationManager.getApplication().isUnitTestMode()) {
-              if (e.getMessage() != null) {
-                message += ".\n" + e.getMessage();
-              }
-              Messages.showMessageDialog(myProject, message, title, Messages.getErrorIcon());
-            }
-            else {
-              LOG.error(e);
-            }
-          }
-        }
-      }
-    });
-  }
-
-  public void undo() {
-    undoOrRedo(true);
-  }
-
-  public void redo() {
-    undoOrRedo(false);
   }
 
   public Collection<DocumentReference> getAffectedDocuments() {
-    Set<DocumentReference> result = new HashSet<DocumentReference>();
+    Set<DocumentReference> result = new THashSet<DocumentReference>();
     for (UndoableAction action : myActions) {
       DocumentReference[] refs = action.getAffectedDocuments();
       if (refs != null) Collections.addAll(result, refs);
@@ -186,28 +199,14 @@ class UndoableGroup {
     return myCommandTimestamp;
   }
 
-  public boolean askConfirmation() {
-    if (myUndoConfirmationPolicy == UndoConfirmationPolicy.REQUEST_CONFIRMATION) {
-      return true;
-    }
-    else if (myUndoConfirmationPolicy == UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION) {
-      return false;
-    }
-    else {
-      return isComplex() || affectsMultiplePhysicalDocs();
-    }
+  public boolean shouldAskConfirmation() {
+    if (myConfirmationPolicy == UndoConfirmationPolicy.REQUEST_CONFIRMATION) return true;
+    if (myConfirmationPolicy == UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION) return false;
+    return myGlobal;
   }
 
-  private boolean affectsMultiplePhysicalDocs() {
-    return CommandMerger.areMultiplePhysicalDocsAffected(getAffectedDocuments());
-  }
-
-  public boolean isTransparentsOnly() {
-    return myTransparentsOnly;
-  }
-
-  public void invalidateIfComplex() {
-    if (!myComplex) return;
+  public void invalidateIfGlobal() {
+    if (!myGlobal) return;
     isValid = false;
   }
 

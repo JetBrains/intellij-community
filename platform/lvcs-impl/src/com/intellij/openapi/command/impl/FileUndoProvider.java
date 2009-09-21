@@ -66,7 +66,7 @@ public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider
       }
 
       public void rootsChanged(final ModuleRootEvent event) {
-        ((UndoManagerImpl)UndoManager.getInstance(myProject)).invalidateAllComplexCommands();
+        ((UndoManagerImpl)UndoManager.getInstance(myProject)).invalidateAllGlobalActions();
       }
     });
   }
@@ -164,18 +164,7 @@ public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider
   }
 
   private void registerNonUndoableAction(VirtualFileEvent e) {
-    final DocumentReference r = createDocumentReference(e);
-    if (!getUndoManager().documentWasChanged(r)) return;
-
-    getUndoManager().undoableActionPerformed(new NonUndoableAction() {
-      public DocumentReference[] getAffectedDocuments() {
-        return new DocumentReference[]{r};
-      }
-
-      public boolean shouldConfirmUndo() {
-        return true;
-      }
-    });
+    getUndoManager().nonundoableActionPerformed(createDocumentReference(e), true);
   }
 
   private DocumentReference createDocumentReference(VirtualFileEvent e) {
@@ -201,7 +190,7 @@ public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider
 
     public void undo() throws UnexpectedUndoException {
       try {
-        myUndoChangeRange = myActionChangeRange.revert();
+        myUndoChangeRange = myActionChangeRange.revert(myUndoChangeRange);
       }
       catch (IOException e) {
         throw new UnexpectedUndoException(e.getMessage());
@@ -210,7 +199,7 @@ public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider
 
     public void redo() throws UnexpectedUndoException {
       try {
-        myActionChangeRange = myUndoChangeRange.revert();
+        myActionChangeRange = myUndoChangeRange.revert(myActionChangeRange);
       }
       catch (IOException e) {
         throw new UnexpectedUndoException(e.getMessage());
@@ -221,7 +210,7 @@ public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider
       return myReferences;
     }
 
-    public boolean shouldConfirmUndo() {
+    public boolean isGlobal() {
       return true;
     }
   }

@@ -446,7 +446,7 @@ public class Browser extends JPanel {
             public void run() {
               Runnable command = new Runnable() {
                 public void run() {
-                  CommandProcessor.getInstance().markCurrentCommandAsComplex(myView.getProject());
+                  CommandProcessor.getInstance().markCurrentCommandAsGlobal(myView.getProject());
 
                   //CCE here means QuickFix was incorrectly inherited
                   fixes[idx].applyFix(myView.getProject(), descriptor);
@@ -466,7 +466,7 @@ public class Browser extends JPanel {
             public void run() {
               Runnable command = new Runnable() {
                 public void run() {
-                  CommandProcessor.getInstance().markCurrentCommandAsComplex(myView.getProject());
+                  CommandProcessor.getInstance().markCurrentCommandAsGlobal(myView.getProject());
 
                   //CCE here means QuickFix was incorrectly inherited
                   fixes[idx].applyFix(myView.getProject(), descriptor);

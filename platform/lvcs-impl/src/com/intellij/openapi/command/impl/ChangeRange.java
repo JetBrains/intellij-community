@@ -3,7 +3,6 @@ package com.intellij.openapi.command.impl;
 import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.changes.Change;
 import com.intellij.history.integration.IdeaGateway;
-import com.intellij.history.integration.revertion.ChangeRevertionVisitor;
 
 import java.io.IOException;
 
@@ -24,7 +23,7 @@ public class ChangeRange {
     myToChange = to;
   }
 
-  public ChangeRange revert() throws IOException {
+  public ChangeRange revert(ChangeRange reverse) throws IOException {
     final Change[] first = {null};
     final Change[] last = {null};
     LocalVcs.Listener l = new LocalVcs.Listener() {
@@ -40,7 +39,11 @@ public class ChangeRange {
     finally {
       myVcs.removeListener(l);
     }
-    assert first[0] != null && first[0] != null;
+    
+    if (reverse != null) {
+      if (first[0] == null) first[0] = reverse.myFromChange;
+      if (last[0] == null) last[0] = reverse.myToChange;
+    }
     return new ChangeRange(myGateway, myVcs, first[0], last[0]);
   }
 }

@@ -24,8 +24,6 @@ public interface UndoableAction {
   void undo() throws UnexpectedUndoException;
   void redo() throws UnexpectedUndoException;
 
-  boolean shouldConfirmUndo();
-
   /**
    * Returns the documents, affected by this action.
    * If the returned value is null, all documents are "affected".
@@ -34,4 +32,9 @@ public interface UndoableAction {
    */
   @Nullable
   DocumentReference[] getAffectedDocuments();
+
+  /**
+   * Global actions are those, that can be undone not only from the document of the file, but also from the project tree view.
+   * */
+  boolean isGlobal();
 }

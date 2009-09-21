@@ -1,6 +1,5 @@
 package com.intellij.refactoring.typeCook;
 
-import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
@@ -93,8 +92,12 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
 
     myResult.apply (victims);
 
-    UndoManager.getInstance(myProject).markCurrentCommandAsComplex();
     WindowManager.getInstance().getStatusBar(myProject).setInfo(myResult.getReport());
+  }
+
+  @Override
+  protected boolean isGlobalUndoAction() {
+    return true;
   }
 
   protected String getCommandName() {

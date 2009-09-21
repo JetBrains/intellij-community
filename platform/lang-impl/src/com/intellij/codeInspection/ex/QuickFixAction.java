@@ -123,7 +123,7 @@ public class QuickFixAction extends AnAction {
 
       CommandProcessor.getInstance().executeCommand(project, new Runnable() {
         public void run() {
-          CommandProcessor.getInstance().markCurrentCommandAsComplex(project);
+          CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
               final PsiModificationTracker tracker = PsiManager.getInstance(project).getModificationTracker();
@@ -178,7 +178,7 @@ public class QuickFixAction extends AnAction {
         final Project project = refElements[0].getRefManager().getProject();
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
           public void run() {
-            CommandProcessor.getInstance().markCurrentCommandAsComplex(project);
+            CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
               public void run() {
                 refreshNeeded[0] = applyFix(refElements);

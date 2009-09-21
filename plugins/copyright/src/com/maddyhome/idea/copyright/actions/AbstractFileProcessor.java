@@ -17,7 +17,6 @@
 package com.maddyhome.idea.copyright.actions;
 
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -341,7 +340,6 @@ public abstract class AbstractFileProcessor {
         readAction.run();
         new WriteCommandAction(myProject, title, null) {
           protected void run(Result result) throws Throwable {
-            CommandProcessor.getInstance().markCurrentCommandAsComplex(myProject);
             writeAction.run();
           }
         }.execute();

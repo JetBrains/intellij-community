@@ -3,6 +3,8 @@ package com.intellij.cvsSupport2.application;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.DocumentReference;
+import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -91,7 +93,8 @@ public class CvsFileOperationsHandler implements LocalFileOperationsHandler {
     newFile.mkdir();
     copyDirectoryStructure(file, newFile);
     myComponent.getAddHandler().addFile(newFile);
-    UndoManager.getInstance(myProject).markCommandAsNonUndoable(file);
+    DocumentReference ref = DocumentReferenceManager.getInstance().create(file);
+    UndoManager.getInstance(myProject).nonundoableActionPerformed(ref, false);
     return true;
   }
 

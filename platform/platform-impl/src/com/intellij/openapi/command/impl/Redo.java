@@ -6,8 +6,8 @@ import com.intellij.openapi.fileEditor.FileEditor;
 /**
  * author: lesya
  */
-class Redo extends UndoOrRedo{
-  Redo(UndoManagerImpl manager, FileEditor editor) throws NothingToUndoException {
+class Redo extends UndoRedo {
+  Redo(UndoManagerImpl manager, FileEditor editor) {
     super(manager, editor);
   }
 

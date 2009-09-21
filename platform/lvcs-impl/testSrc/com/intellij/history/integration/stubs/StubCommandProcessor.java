@@ -79,7 +79,7 @@ public class StubCommandProcessor extends CommandProcessor {
     throw new UnsupportedOperationException();
   }
 
-  public void markCurrentCommandAsComplex(Project project) {
+  public void markCurrentCommandAsGlobal(Project project) {
     throw new UnsupportedOperationException();
   }
 }

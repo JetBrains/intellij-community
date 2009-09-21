@@ -126,6 +126,10 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     }, getCommandName(), getGroupID(), getUndoConfirmationPolicy());
   }
 
+  protected boolean isGlobalUndoAction() {
+    return false;
+  }
+
   protected UndoConfirmationPolicy getUndoConfirmationPolicy() {
     return UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION;
   }

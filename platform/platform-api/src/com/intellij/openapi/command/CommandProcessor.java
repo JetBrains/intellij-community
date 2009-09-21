@@ -16,14 +16,14 @@
 package com.intellij.openapi.command;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class CommandProcessor {
-  public static CommandProcessor getInstance(){
+  public static CommandProcessor getInstance() {
     return ServiceManager.getService(CommandProcessor.class);
   }
 
@@ -31,42 +31,47 @@ public abstract class CommandProcessor {
    * @deprecated use {@link #executeCommand(com.intellij.openapi.project.Project, java.lang.Runnable, java.lang.String, java.lang.Object)}
    */
   public abstract void executeCommand(Runnable runnable, @Nls String name, Object groupId);
+
   public abstract void executeCommand(Project project, Runnable runnable, @Nls String name, Object groupId);
-  public abstract void executeCommand(Project project, Runnable runnable, @Nls String name, Object groupId, UndoConfirmationPolicy undoConfirmationPolicy);
+
+  public abstract void executeCommand(Project project,
+                                      Runnable runnable,
+                                      @Nls String name,
+                                      Object groupId,
+                                      UndoConfirmationPolicy undoConfirmationPolicy);
+
+  public abstract void executeCommand(Project project,
+                                      Runnable command,
+                                      String name,
+                                      Object groupId,
+                                      UndoConfirmationPolicy undoConfirmationPolicy,
+                                      Document document);
 
   public abstract void setCurrentCommandName(@Nls String name);
+
   public abstract void setCurrentCommandGroupId(Object groupId);
 
   @Nullable
   public abstract Runnable getCurrentCommand();
+
   @Nullable
   public abstract String getCurrentCommandName();
+
   @Nullable
   public abstract Object getCurrentCommandGroupId();
+
   @Nullable
   public abstract Project getCurrentCommandProject();
 
   public abstract void addCommandListener(CommandListener listener);
+
   public abstract void addCommandListener(CommandListener listener, Disposable parentDisposable);
+
   public abstract void removeCommandListener(CommandListener listener);
 
   public abstract void runUndoTransparentAction(Runnable action);
+
   public abstract boolean isUndoTransparentActionInProgress();
 
-  public abstract void markCurrentCommandAsComplex(Project project);
-
-  public abstract void executeCommand(Project project,
-                             Runnable command,
-                             String name,
-                             Object groupId,
-                             UndoConfirmationPolicy undoConfirmationPolicy, Document document);
-
-  /**
-   * Use this to pass to com.intellij.openapi.command.CommandProcessor#executeCommand(java.lang.Runnable, java.lang.String, java.lang.Object) as groupId
-   * if the command should not be merged with any other
-   * @param param optional
-   */
-  public static NoneGroupId noneGroupId(Object param) {
-    return new NoneGroupId(param);
-  }
+  public abstract void markCurrentCommandAsGlobal(Project project);
 }

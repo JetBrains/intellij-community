@@ -5,13 +5,15 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.*;
-import com.intellij.openapi.command.undo.*;
+import com.intellij.openapi.command.undo.DocumentReference;
+import com.intellij.openapi.command.undo.DocumentReferenceManager;
+import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.FragmentContent;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
@@ -23,17 +25,13 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Set;
+import java.util.*;
 
 public class UndoManagerImpl extends UndoManager implements ProjectComponent, ApplicationComponent, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.impl.UndoManagerImpl");
@@ -55,8 +53,8 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
   private final CommandMerger myMerger;
 
-  private final UndoRedoStacksHolder myUndoStacksHolder = new UndoRedoStacksHolder();
-  private final UndoRedoStacksHolder myRedoStacksHolder = new UndoRedoStacksHolder();
+  private final UndoRedoStacksHolder myUndoStacksHolder = new UndoRedoStacksHolder(true);
+  private final UndoRedoStacksHolder myRedoStacksHolder = new UndoRedoStacksHolder(false);
 
   private CommandMerger myCurrentMerger;
   private CurrentEditorProvider myCurrentEditorProvider;
@@ -64,34 +62,24 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   private Project myCurrentActionProject = DummyProject.getInstance();
   private int myCommandTimestamp = 1;
   private final CommandProcessor myCommandProcessor;
-  private final EditorFactory myEditorFactory;
-  private final VirtualFileManager myVirtualFileManager;
   private final StartupManager myStartupManager;
   private UndoProvider[] myUndoProviders;
 
-  public UndoManagerImpl(ProjectEx project,
-                         Application application,
+  public UndoManagerImpl(Application application, CommandProcessor commandProcessor) {
+    this(application, null, commandProcessor, null);
+  }
+
+  public UndoManagerImpl(Application application,
+                         ProjectEx project,
                          CommandProcessor commandProcessor,
-                         EditorFactory editorFactory,
-                         VirtualFileManager virtualFileManager,
                          StartupManager startupManager) {
     myProject = project;
     myCommandProcessor = commandProcessor;
-    myEditorFactory = editorFactory;
-    myVirtualFileManager = virtualFileManager;
     myStartupManager = startupManager;
 
     init(application);
 
-    myMerger = new CommandMerger(this, myEditorFactory);
-    Disposer.register(this, myMerger);
-  }
-
-  public UndoManagerImpl(Application application,
-                         CommandProcessor commandProcessor,
-                         EditorFactory editorFactory,
-                         VirtualFileManager virtualFileManager) {
-    this(null, application, commandProcessor, editorFactory, virtualFileManager, null);
+    myMerger = new CommandMerger(this);
   }
 
   private void init(Application application) {
@@ -154,7 +142,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     };
     myCommandProcessor.addCommandListener(commandListener, this);
 
-    Disposer.register(this, new DocumentUndoProvider(myProject, myEditorFactory));
+    Disposer.register(this, new DocumentUndoProvider(myProject));
 
     myUndoProviders = myProject == null
                       ? Extensions.getExtensions(UndoProvider.EP_NAME)
@@ -164,8 +152,6 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
         Disposer.register(this, (Disposable)undoProvider);
       }
     }
-
-    //myVirtualFileManager.addVirtualFileListener(new MyFileListener(), this);
   }
 
   private void onCommandFinished(final Project project, final String commandName, final Object commandGroupId) {
@@ -175,7 +161,6 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
         undoProvider.commandFinished(project);
       }
       myCurrentActionProject = DummyProject.getInstance();
-      if (myProject == null) myMerger.clearDocumentRefs(); //do not leak document refs at app level
     }
     LOG.assertTrue(myCommandLevel == 0 || !(myCurrentActionProject instanceof DummyProject));
   }
@@ -193,43 +178,28 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     LOG.assertTrue(myCommandLevel == 0 || !(myCurrentActionProject instanceof DummyProject));
   }
 
-  public void dropHistory() {
-    dropMergers();
-
+  @TestOnly
+  public void dropHistoryInTests() {
+    flushMergers();
     LOG.assertTrue(myCommandLevel == 0);
 
-    myUndoStacksHolder.dropHistory();
-    myRedoStacksHolder.dropHistory();
+    myUndoStacksHolder.clearAllStacksInTests();
+    myRedoStacksHolder.clearAllStacksInTests();
   }
 
-  public void markCommandAsNonUndoable(@Nullable final VirtualFile affectedFile) {
-    final DocumentReference[] refs = affectedFile == null
-                                     ? null : new DocumentReference[]{DocumentReferenceManager.getInstance().create(affectedFile)};
-    undoableActionPerformed(new NonUndoableAction() {
-      public boolean shouldConfirmUndo() {
-        return false;
-      }
-
-      public DocumentReference[] getAffectedDocuments() {
-        return refs;
-      }
-    });
+  public void markCurrentCommandAsGlobal() {
+    myCurrentMerger.markAsGlobal();
   }
 
-  @Override
-  public void markCurrentCommandAsComplex() {
-    myCurrentMerger.markAsComplex();
+  public void invalidateAllGlobalActions() {
+    flushMergers();
+
+    myUndoStacksHolder.invalidateAllGlobalActions();
+    myRedoStacksHolder.invalidateAllGlobalActions();
   }
 
-  public void invalidateAllComplexCommands() {
-    dropMergers();
-
-    myUndoStacksHolder.invalidateAllComplexCommands();
-    myRedoStacksHolder.invalidateAllComplexCommands();
-  }
-
-  private void dropMergers() {
-    // Run dummy command in order to drop all mergers...
+  private void flushMergers() {
+    // Run dummy command in order to flush all mergers...
     CommandProcessor.getInstance()
       .executeCommand(myProject, EmptyRunnable.getInstance(), CommonBundle.message("drop.undo.history.command.name"), null);
   }
@@ -262,28 +232,16 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     myMerger.flushCurrentCommand();
   }
 
-  public void clearUndoRedoQueue(FileEditor editor) {
-    LOG.assertTrue(myCommandLevel == 0);
-    myMerger.flushCurrentCommand();
-    disposeCurrentMerger();
-
-    myUndoStacksHolder.clearEditorStack(editor);
-    myRedoStacksHolder.clearEditorStack(editor);
-  }
-
-  public void clearUndoRedoQueue(Document document) {
-    clearUndoRedoQueue(DocumentReferenceManager.getInstance().create(document));
-  }
-
   private void clearUndoRedoQueue(DocumentReference docRef) {
     myMerger.flushCurrentCommand();
     disposeCurrentMerger();
 
-    myUndoStacksHolder.clearFileStack(docRef);
-    myRedoStacksHolder.clearFileStack(docRef);
+    myUndoStacksHolder.clearStacks(false, Collections.singleton(docRef));
+    myRedoStacksHolder.clearStacks(false, Collections.singleton(docRef));
   }
 
-  public void clearUndoRedoQueue(VirtualFile file) {
+  @TestOnly
+  public void clearUndoRedoQueueInTests(VirtualFile file) {
     clearUndoRedoQueue(DocumentReferenceManager.getInstance().create(file));
   }
 
@@ -329,6 +287,13 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     }
   }
 
+  private Collection<DocumentReference> collectReferencesWithoutMergers() {
+    Set<DocumentReference> result = new THashSet<DocumentReference>();
+    myUndoStacksHolder.collectAllAffectedDocuments(result);
+    myRedoStacksHolder.collectAllAffectedDocuments(result);
+    return result;
+  }
+
   private int getLastCommandTimestamp(DocumentReference ref) {
     return Math.max(myUndoStacksHolder.getLastCommandTimestamp(ref), myRedoStacksHolder.getLastCommandTimestamp(ref));
   }
@@ -340,12 +305,17 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
       LOG.assertTrue(action instanceof NonUndoableAction,
                      "Undoable actions allowed inside commands only (see com.intellij.openapi.command.CommandProcessor.executeCommand())");
       commandStarted(UndoConfirmationPolicy.DEFAULT);
-      myCurrentMerger.add(action, false);
+      myCurrentMerger.addAction(action, false);
       commandFinished("", null);
       return;
     }
 
-    myCurrentMerger.add(action, CommandProcessor.getInstance().isUndoTransparentActionInProgress());
+    myCurrentMerger.addAction(action, CommandProcessor.getInstance().isUndoTransparentActionInProgress());
+  }
+
+  @Override
+  public void nonundoableActionPerformed(final DocumentReference ref, final boolean isGlobal) {
+    undoableActionPerformed(new NonUndoableAction(ref, isGlobal));
   }
 
   public boolean isUndoInProgress() {
@@ -396,48 +366,49 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   }
 
   public boolean isUndoAvailable(@Nullable FileEditor editor) {
-    return isUndoOrRedoAvailable(editor, myUndoStacksHolder, true);
+    Collection<DocumentReference> refs = getDocRefs(editor);
+    if (refs == null) return false;
+    return isUndoOrRedoAvailable(refs, true);
   }
 
   public boolean isRedoAvailable(@Nullable FileEditor editor) {
-    return isUndoOrRedoAvailable(editor, myRedoStacksHolder, false);
+    Collection<DocumentReference> refs = getDocRefs(editor);
+    if (refs == null) return false;
+    return isUndoOrRedoAvailable(refs, false);
   }
 
-  private boolean isUndoOrRedoAvailable(FileEditor editor, UndoRedoStacksHolder stackHolder, boolean shouldCheckMerger) {
-    if (editor instanceof TextEditor) {
-      Editor activeEditor = ((TextEditor)editor).getEditor();
-      if (activeEditor.isViewer()) {
-        return false;
-      }
-    }
-
-    Set<DocumentReference> refs = getDocumentReferences(editor);
-
-    if (refs.isEmpty()) {
-      if (shouldCheckMerger) {
-        if (myMerger != null && myMerger.isComplex() && !myMerger.isEmpty()) return true;
-      }
-      return !stackHolder.getGlobalStack().isEmpty();
-    }
-
-    for (DocumentReference each : refs) {
-      if (shouldCheckMerger) {
-        if (myMerger != null && (myMerger.hasChangesOf(each) || (myMerger.isComplex() && myMerger.getAffectedDocuments().isEmpty()))) {
-          return true;
-        }
-      }
-      if (stackHolder.hasUndoableActions(each)) return true;
-    }
-    return false;
+  private Collection<DocumentReference> getDocRefs(FileEditor editor) {
+    if (editor instanceof TextEditor && ((TextEditor)editor).getEditor().isViewer()) return null;
+    return getDocumentReferences(editor);
   }
 
-  public static Set<DocumentReference> getDocumentReferences(FileEditor editor) {
+  public boolean isUndoOrRedoAvailable(DocumentReference ref) {
+    Set<DocumentReference> refs = Collections.singleton(ref);
+    return isUndoOrRedoAvailable(refs, true) || isUndoOrRedoAvailable(refs, false);
+  }
+
+  private boolean isUndoOrRedoAvailable(Collection<DocumentReference> refs, boolean isUndo) {
+    if (isUndo && myMerger.isUndoAvailable(refs)) return true;
+    UndoRedoStacksHolder stackHolder = isUndo ? myUndoStacksHolder : myRedoStacksHolder;
+    return stackHolder.hasActions(refs);
+  }
+
+  @Override
+  @Nullable
+  public String formatAvailableUndoAction(FileEditor editor) {
+    Collection<DocumentReference> refs = getDocRefs(editor);
+    if (refs == null) return null;
+    if (myMerger.isUndoAvailable(refs)) return myMerger.getCommandName();
+    return myUndoStacksHolder.getLastAction(refs).getCommandName();
+  }
+
+  static Set<DocumentReference> getDocumentReferences(FileEditor editor) {
     Set<DocumentReference> result = new THashSet<DocumentReference>();
     Document[] documents = editor == null ? null : TextEditorProvider.getDocuments(editor);
     if (documents != null) {
       for (Document each : documents) {
         Document original = getOriginal(each);
-        // KirillK : in AnAction.update we may have an editor with an invalid file 
+        // KirillK : in AnAction.update we may have an editor with an invalid file
         VirtualFile f = FileDocumentManager.getInstance().getFile(each);
         if (f != null && !f.isValid()) continue;
         result.add(DocumentReferenceManager.getInstance().create(original));
@@ -452,8 +423,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
   private void commandStarted(UndoConfirmationPolicy undoConfirmationPolicy) {
     if (myCommandLevel == 0) {
-      myCurrentMerger = new CommandMerger(this, EditorFactory.getInstance());
-      Disposer.register(this, myCurrentMerger);
+      myCurrentMerger = new CommandMerger(this);
     }
     LOG.assertTrue(myCurrentMerger != null, String.valueOf(myCommandLevel));
     myCurrentMerger.setBeforeState(getCurrentState());
@@ -480,16 +450,9 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     disposeCurrentMerger();
   }
 
-  @TestOnly
-  public void clearHistory() {
-    if (myCurrentMerger != null) myCurrentMerger.flushCurrentCommand();
-    if (myMerger != null) myMerger.flushCurrentCommand();
-  }
-
   private void disposeCurrentMerger() {
     LOG.assertTrue(myCommandLevel == 0);
     if (myCurrentMerger != null) {
-      Disposer.dispose(myCurrentMerger);
       myCurrentMerger = null;
     }
   }
@@ -506,10 +469,6 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     return myCommandLevel > 0;
   }
 
-  public boolean documentWasChanged(DocumentReference ref) {
-    return collectReferencesWithoutRedo().contains(ref);
-  }
-
   public int nextCommandTimestamp() {
     return ++myCommandTimestamp;
   }
@@ -521,28 +480,5 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
   public static boolean isCopy(Document d) {
     return d.getUserData(FragmentContent.ORIGINAL_DOCUMENT) != null;
-  }
-
-  private Collection<DocumentReference> collectReferencesWithoutRedo() {
-    return doCollectReferences(false, true);
-  }
-
-  private Collection<DocumentReference> collectReferencesWithoutMergers() {
-    return doCollectReferences(true, false);
-  }
-
-  private Collection<DocumentReference> doCollectReferences(boolean collectRedo, boolean collectMergers) {
-    Set<DocumentReference> result = new THashSet<DocumentReference>();
-    result.addAll(myUndoStacksHolder.getAffectedDocuments());
-    result.addAll(myUndoStacksHolder.getGlobalStackAffectedDocuments());
-    if (collectRedo) {
-      result.addAll(myRedoStacksHolder.getAffectedDocuments());
-      result.addAll(myRedoStacksHolder.getGlobalStackAffectedDocuments());
-    }
-    if (collectMergers) {
-      if (myMerger != null) result.addAll(myMerger.getAffectedDocuments());
-      if (myCurrentMerger != null) result.addAll(myCurrentMerger.getAffectedDocuments());
-    }
-    return result;
   }
 }

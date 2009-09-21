@@ -19,7 +19,12 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Do not implement this directly. Use DocumentReferenceManager instead.
+ */
 public interface DocumentReference {
+  DocumentReference[] EMPTY_ARRAY = new DocumentReference[0];
+
   @Nullable
   Document getDocument();
 

@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -290,7 +291,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       try {
         disposeProject();
 
-        UndoManager.getGlobalInstance().dropHistory();
+        ((UndoManagerImpl)UndoManager.getGlobalInstance()).dropHistoryInTests();
 
         for (final File fileToDelete : myFilesToDelete) {
           delete(fileToDelete);

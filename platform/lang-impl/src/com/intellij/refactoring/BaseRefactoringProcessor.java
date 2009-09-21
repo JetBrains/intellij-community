@@ -3,16 +3,19 @@ package com.intellij.refactoring;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
+import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Factory;
@@ -242,10 +245,19 @@ public abstract class BaseRefactoringProcessor {
           public void run() {
             Collection<UsageInfo> usageInfos = new HashSet<UsageInfo>(Arrays.asList(usages));
             doRefactoring(usageInfos);
+            if (isGlobalUndoAction()) CommandProcessor.getInstance().markCurrentCommandAsGlobal(myProject);
           }
         });
       }
-    }, getCommandName(), null);
+    }, getCommandName(), null, getUndoConfirmationPolicy());
+  }
+
+  protected boolean isGlobalUndoAction() {
+    return PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext()) == null;
+  }
+
+  protected UndoConfirmationPolicy getUndoConfirmationPolicy() {
+    return UndoConfirmationPolicy.DEFAULT;
   }
 
   private static UsageViewPresentation createPresentation(UsageViewDescriptor descriptor, final Usage[] usages) {

@@ -15,20 +15,6 @@
  */
 package com.intellij.openapi.command;
 
-import org.jetbrains.annotations.NonNls;
-
-public class UndoConfirmationPolicy {
-  private final String myName;
-
-  private UndoConfirmationPolicy(@NonNls String name) {
-    myName = name;
-  }
-
-  public String toString() {
-    return myName;
-  }
-
-  public final static UndoConfirmationPolicy REQUEST_CONFIRMATION = new UndoConfirmationPolicy("REQUEST_CONFIRMATION");
-  public final static UndoConfirmationPolicy DO_NOT_REQUEST_CONFIRMATION = new UndoConfirmationPolicy("DO_NOT_REQUEST_CONFIRMATION");
-  public final static UndoConfirmationPolicy DEFAULT = new UndoConfirmationPolicy("DEFAULT");
+public enum UndoConfirmationPolicy {
+  DEFAULT, REQUEST_CONFIRMATION, DO_NOT_REQUEST_CONFIRMATION
 }

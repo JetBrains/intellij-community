@@ -1,5 +1,6 @@
 package com.intellij.ide.actions;
 
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -47,7 +48,9 @@ public class UndoAction extends AnAction implements DumbAware {
     final Project project = getProject(editor, dataContext);
 
     UndoManager undoManager = project != null ? UndoManager.getInstance(project) : UndoManager.getGlobalInstance();
-    boolean b = undoManager.isUndoAvailable(editor);
-    presentation.setEnabled(b);
+    boolean available = undoManager.isUndoAvailable(editor);
+    presentation.setEnabled(available);
+    String actionName = available ? undoManager.formatAvailableUndoAction(editor) : "";
+    presentation.setText(ActionsBundle.message("action.$Undo.text", actionName).trim());
   }
 }

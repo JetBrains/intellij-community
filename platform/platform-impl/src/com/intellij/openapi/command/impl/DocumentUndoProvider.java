@@ -4,14 +4,12 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
-import com.intellij.openapi.command.undo.NonUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.EditorEventMulticaster;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -21,12 +19,11 @@ import com.intellij.psi.ExternalChangeAction;
 class DocumentUndoProvider implements Disposable {
   private final Project myProject;
 
-  DocumentUndoProvider(Project project, EditorFactory editorFactory) {
+  DocumentUndoProvider(Project project) {
     MyEditorDocumentListener documentListener = new MyEditorDocumentListener();
     myProject = project;
 
-    EditorEventMulticaster m = editorFactory.getEventMulticaster();
-    m.addDocumentListener(documentListener, this);
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(documentListener, this);
   }
 
   public void dispose() {
@@ -46,10 +43,10 @@ class DocumentUndoProvider implements Disposable {
       if (UndoManagerImpl.isCopy(document)) return;
 
       if (allEditorsAreViewersFor(document)) return;
-      if (!isToRecordActions(document)) return;
+      if (!shouldRecordActions(document)) return;
 
       UndoManagerImpl undoManager = getUndoManager();
-      if (isExternalChange() || !undoManager.isActive()) {
+      if (!undoManager.isActive() || !isUndoable(document)) {
         registerNonUndoableAction(document);
         return;
       }
@@ -57,7 +54,7 @@ class DocumentUndoProvider implements Disposable {
       registerUndoableAction(e);
     }
 
-    private boolean isToRecordActions(final Document document) {
+    private boolean shouldRecordActions(final Document document) {
       if (document.getUserData(UndoManager.DONT_RECORD_UNDO) == Boolean.TRUE) return false;
 
       final VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
@@ -82,25 +79,15 @@ class DocumentUndoProvider implements Disposable {
     }
 
     private void registerNonUndoableAction(final Document document) {
-      final DocumentReference ref = DocumentReferenceManager.getInstance().create(document);
-      UndoManagerImpl undoManager = getUndoManager();
-      if (!undoManager.documentWasChanged(ref)) return;
-
-      undoManager.undoableActionPerformed(
-        new NonUndoableAction() {
-          public DocumentReference[] getAffectedDocuments() {
-            return new DocumentReference[]{ref};
-          }
-
-          public boolean shouldConfirmUndo() {
-            return false;
-          }
-        }
-      );
+      DocumentReference ref = DocumentReferenceManager.getInstance().create(document);
+      getUndoManager().nonundoableActionPerformed(ref, false);
     }
 
-    private boolean isExternalChange() {
-      return ApplicationManager.getApplication().getCurrentWriteAction(ExternalChangeAction.class) != null;
+    private boolean isUndoable(Document document) {
+      boolean isFromRefresh = ApplicationManager.getApplication().getCurrentWriteAction(ExternalChangeAction.class) != null;
+      if (!isFromRefresh) return true;
+
+      return getUndoManager().isUndoOrRedoAvailable(DocumentReferenceManager.getInstance().create(document));
     }
   }
 }

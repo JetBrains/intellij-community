@@ -364,7 +364,7 @@ public abstract class AbstractLayoutCodeProcessor {
           public void run() {
             CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
               public void run() {
-                CommandProcessor.getInstance().markCurrentCommandAsComplex(myProject);
+                CommandProcessor.getInstance().markCurrentCommandAsGlobal(myProject);
                 ApplicationManager.getApplication().runWriteAction(writeAction);
 
                 if (myPostRunnable != null) {

@@ -17,6 +17,7 @@ import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -124,7 +125,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   private void cleanupApplicationCaches() {
     ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).cleanupForNextTest();
     if (ourProject != null) {
-      UndoManager.getInstance(ourProject).dropHistory();
+      ((UndoManagerImpl)UndoManager.getInstance(ourProject)).dropHistoryInTests();
       ((PsiManagerEx)getPsiManager()).getFileManager().cleanupForNextTest();
     }
 
@@ -413,7 +414,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).clearUncommitedDocuments();
 
 
-    UndoManager.getGlobalInstance().dropHistory();
+    ((UndoManagerImpl)UndoManager.getGlobalInstance()).dropHistoryInTests();
 
     ProjectManagerEx.getInstanceEx().setCurrentTestProject(null);
     ourApplication.setDataProvider(null);

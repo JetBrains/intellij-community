@@ -16,11 +16,9 @@
 package com.intellij.openapi.command.undo;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class UndoManager {
@@ -35,6 +33,7 @@ public abstract class UndoManager {
   }
 
   public abstract void undoableActionPerformed(UndoableAction action);
+  public abstract void nonundoableActionPerformed(DocumentReference ref, boolean isGlobal);
 
   public abstract boolean isUndoInProgress();
   public abstract boolean isRedoInProgress();
@@ -44,12 +43,6 @@ public abstract class UndoManager {
   public abstract boolean isUndoAvailable(@Nullable FileEditor editor);
   public abstract boolean isRedoAvailable(@Nullable FileEditor editor);
 
-  public abstract void clearUndoRedoQueue(VirtualFile file);
-  public abstract void clearUndoRedoQueue(FileEditor editor);
-  public abstract void clearUndoRedoQueue(Document document);
-
-  public abstract void dropHistory();
-
-  public abstract void markCommandAsNonUndoable(@Nullable VirtualFile affectedFile);
-  public abstract void markCurrentCommandAsComplex();
+  @Nullable
+  public abstract String formatAvailableUndoAction(@Nullable FileEditor editor);
 }

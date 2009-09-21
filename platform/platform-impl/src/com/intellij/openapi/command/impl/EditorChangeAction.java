@@ -80,7 +80,7 @@ class EditorChangeAction implements UndoableAction {
     return new DocumentReference[]{myReference};
   }
 
-  public boolean shouldConfirmUndo() {
+  public boolean isGlobal() {
     return false;
   }
 

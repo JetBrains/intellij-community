@@ -15,7 +15,6 @@ import com.intellij.codeInsight.template.*;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -84,12 +83,16 @@ public class CreateFieldOrPropertyFix implements IntentionAction, LocalQuickFix 
         protected void run(Result result) throws Throwable {
           generateMembers(project, editor, file);
         }
+
+        @Override
+        protected boolean isGlobalUndoAction() {
+          return true; // todo check
+        }
       }.execute();
     }
   }
 
   private void generateMembers(final Project project, final Editor editor, final PsiFile file) {
-    CommandProcessor.getInstance().markCurrentCommandAsComplex(project);
     try {
       List<? extends GenerationInfo> prototypes = new GenerateFieldOrPropertyHandler(myName, myType, myMemberType, myAnnotations).generateMemberPrototypes(myClass, ClassMember.EMPTY_ARRAY);
       prototypes = GenerateMembersUtil.insertMembersAtOffset(myClass.getContainingFile(), editor.getCaretModel().getOffset(), prototypes);

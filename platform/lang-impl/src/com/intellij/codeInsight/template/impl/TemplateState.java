@@ -238,7 +238,7 @@ public class TemplateState implements Disposable {
           return refs;
         }
 
-        public boolean shouldConfirmUndo() {
+        public boolean isGlobal() {
           return false;
         }
       }

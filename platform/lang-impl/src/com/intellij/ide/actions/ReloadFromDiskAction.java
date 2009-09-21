@@ -37,7 +37,7 @@ public class ReloadFromDiskAction extends AnAction implements DumbAware {
             new Runnable() {
               public void run() {
                 PsiManager.getInstance(project).reloadFromDisk(psiFile);
-                CommandProcessor.getInstance().markCurrentCommandAsComplex(project);
+                CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
               }
             }
           );
