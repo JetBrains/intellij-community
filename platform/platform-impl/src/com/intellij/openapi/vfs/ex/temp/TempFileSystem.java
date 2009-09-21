@@ -130,7 +130,7 @@ public class TempFileSystem extends NewVirtualFileSystem {
 
   public long getTimeStamp(final VirtualFile file) {
     final FSItem fsItem = convert(file);
-    assert fsItem != null;
+    assert fsItem != null: "cannot find item for path " + file.getPath();
 
     return fsItem.myTimestamp;
   }
