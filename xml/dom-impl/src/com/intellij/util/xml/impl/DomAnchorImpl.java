@@ -4,10 +4,13 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +45,24 @@ public abstract class DomAnchorImpl<T extends DomElement> {
     final List<? extends DomElement> values = description.getValues(parent);
     final int index = values.indexOf(t);
     if (index < 0) {
-      LOG.assertTrue(false, "Index<0: description=" + description + "\nparent=" + parent + "\nt=" + t + "\nvalues=" + values);
+      final XmlTag parentTag = parent.getXmlTag();
+      StringBuilder diag = new StringBuilder("Index<0: description=" + description + "\nparent=" + parent + "\nt=" + t + "\nvalues=" + values + "\n");
+      if (parentTag != null) {
+        diag.append("Parent tag: ").append(parentTag.getName()).append("\n");
+        if (t instanceof GenericAttributeValue) {
+          for (XmlAttribute attribute : parentTag.getAttributes()) {
+            diag.append("attr: ").append(attribute.getName());
+          }
+          diag.append("\n");
+        } else {
+          for (XmlTag tag : parentTag.getSubTags()) {
+            diag.append("subtag: ").append(tag.getName());
+          }
+          diag.append("\n");
+        }
+      }
+      diag.append("Child name: ").append(t.getXmlElementName()).append(";").append(t.getXmlElementNamespaceKey());
+      LOG.assertTrue(false, diag);
     }
     return new IndexedAnchor<T>(parentAnchor, description, index);
   }
