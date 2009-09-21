@@ -72,7 +72,8 @@ public class TempFileSystem extends NewVirtualFileSystem {
 
   public VirtualFile createChildFile(final Object requestor, @NotNull final VirtualFile parent, @NotNull final String file) throws IOException {
     final FSItem fsItem = convert(parent);
-    assert fsItem != null && fsItem.isDirectory(): "cannot find parent directory " + parent.getPath();
+    assert fsItem != null: "cannot find parent directory: " + parent.getPath();
+    assert fsItem.isDirectory(): "parent is not a directory: " + parent.getPath();
 
     final FSDir fsDir = (FSDir)fsItem;
     fsDir.addChild(new FSFile(fsDir, file));
@@ -83,7 +84,6 @@ public class TempFileSystem extends NewVirtualFileSystem {
   public void deleteFile(final Object requestor, @NotNull final VirtualFile file) throws IOException {
     final FSItem fsItem = convert(file);
     assert fsItem != null: "failed to delete file " + file.getPath();
-
     fsItem.getParent().removeChild(fsItem);
   }
 
@@ -255,6 +255,9 @@ public class TempFileSystem extends NewVirtualFileSystem {
     }
 
     public void removeChild(final FSItem fsItem) {
+      if (fsItem.myName.equals("src") && getParent() == null) {
+        throw new RuntimeException("removing src directory");
+      }
       myChildren.remove(fsItem);
     }
 
