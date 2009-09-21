@@ -71,7 +71,9 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
   protected ActionToolbar createToolbar(final String place, final String helpID) {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     appendActions(actionGroup, helpID);
-    return ActionManager.getInstance().createActionToolbar(place, actionGroup, true);
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(place, actionGroup, true);
+    actionToolbar.setTargetComponent(this);
+    return actionToolbar;
   }
 
   protected void appendActions(@NotNull DefaultActionGroup actionGroup, @Nullable String helpID) {
