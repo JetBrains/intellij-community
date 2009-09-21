@@ -6,9 +6,11 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.documentation.actions.ShowJavaDocInfoAction;
 import com.intellij.codeInsight.hint.actions.ShowImplementationsAction;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Calendar;
@@ -67,6 +69,19 @@ public class DefaultCompletionContributor extends CompletionContributor {
 
   public String handleEmptyLookup(@NotNull final CompletionParameters parameters, final Editor editor) {
     return LangBundle.message("completion.no.suggestions");
+  }
+
+
+  @Override
+  public AutoCompletionDecision handleAutoCompletionPossibility(AutoCompletionContext context) {
+    final LookupElement[] items = context.getItems();
+    if (items.length == 1) {
+      final LookupElement item = items[0];
+      if (!StringUtil.isEmpty(item.getPrefixMatcher().getPrefix()) || context.getParameters().getCompletionType() == CompletionType.SMART) {
+        return AutoCompletionDecision.insertItem(item);
+      }
+    }
+    return null;
   }
 
   // So. You've managed to find this and now you can rather easily figure out what's written here. But is it necessary? Won't it be

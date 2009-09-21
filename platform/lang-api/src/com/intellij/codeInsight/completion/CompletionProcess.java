@@ -11,6 +11,4 @@ import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
  */
 public interface CompletionProcess {
 
-  boolean willAutoInsert(AutoCompletionPolicy policy, final PrefixMatcher matcher);
-
 }

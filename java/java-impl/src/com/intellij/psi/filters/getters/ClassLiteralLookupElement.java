@@ -40,11 +40,6 @@ public class ClassLiteralLookupElement extends LookupElement implements TypedLoo
     }
   }
 
-  @Override
-  public AutoCompletionPolicy getAutoCompletionPolicy() {
-    return AutoCompletionPolicy.NEVER_AUTOCOMPLETE;
-  }
-
   @NotNull
   @Override
   public Object getObject() {

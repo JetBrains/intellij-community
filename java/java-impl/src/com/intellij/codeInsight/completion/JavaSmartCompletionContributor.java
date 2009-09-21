@@ -123,11 +123,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
           final boolean overwrite = INSIDE_TYPECAST_TYPE.accepts(parameters.getOriginalPosition());
 
-          final LookupElement item = new LookupElementDecorator<LookupItem>(PsiTypeLookupItem.createLookupItem(type.getDefaultType())) {
-            @Override
-            public AutoCompletionPolicy getAutoCompletionPolicy() {
-              return AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE;
-            }
+          final LookupElement item = AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE.applyPolicy(new LookupElementDecorator<LookupItem>(PsiTypeLookupItem.createLookupItem(type.getDefaultType())) {
 
             @Override
             public void handleInsert(InsertionContext context) {
@@ -140,7 +136,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
               TailTypes.CAST_RPARENTH.processTail(editor, context.getTailOffset());
               DefaultInsertHandler.addImportForItem(context.getFile(), context.getStartOffset(), getDelegate());
             }
-          };
+          });
           item.putUserData(TYPE_CAST, Boolean.TRUE);
           result.addElement(item);
         }

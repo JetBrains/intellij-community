@@ -35,21 +35,19 @@ import java.util.Set;
 public class LookupElementBuilder extends LookupElement {
   @NotNull private final String myLookupString;
   @NotNull private final Object myObject;
-  private final AutoCompletionPolicy myAutoCompletionPolicy;
   private final boolean myCaseSensitive;
   @Nullable private final InsertHandler<LookupElement> myInsertHandler;
   @Nullable private final LookupElementRenderer<LookupElement> myRenderer;
   @Nullable private final LookupElementPresentation myHardcodedPresentation;
   @NotNull private final Set<String> myAllLookupStrings;
 
-  private LookupElementBuilder(String lookupString, Object object, AutoCompletionPolicy autoCompletionPolicy, InsertHandler<LookupElement> insertHandler,
+  private LookupElementBuilder(String lookupString, Object object, InsertHandler<LookupElement> insertHandler,
                                LookupElementRenderer<LookupElement> renderer,
                                LookupElementPresentation hardcodedPresentation,
                                Set<String> allLookupStrings,
                                boolean caseSensitive) {
     myLookupString = lookupString;
     myObject = object;
-    myAutoCompletionPolicy = autoCompletionPolicy;
     myInsertHandler = insertHandler;
     myRenderer = renderer;
     myHardcodedPresentation = hardcodedPresentation;
@@ -58,7 +56,7 @@ public class LookupElementBuilder extends LookupElement {
   }
 
   private LookupElementBuilder(@NotNull String lookupString, @NotNull Object object) {
-    this(lookupString, object, AutoCompletionPolicy.SETTINGS_DEPENDENT, null, null, null, Collections.singleton(lookupString), true);
+    this(lookupString, object, null, null, null, Collections.singleton(lookupString), true);
   }
 
   public static LookupElementBuilder create(@NotNull String lookupString) {
@@ -74,12 +72,12 @@ public class LookupElementBuilder extends LookupElement {
   }
 
   public LookupElementBuilder setInsertHandler(@Nullable InsertHandler<LookupElement> insertHandler) {
-    return new LookupElementBuilder(myLookupString, myObject, myAutoCompletionPolicy, insertHandler, myRenderer, myHardcodedPresentation,
+    return new LookupElementBuilder(myLookupString, myObject, insertHandler, myRenderer, myHardcodedPresentation,
                                     myAllLookupStrings, myCaseSensitive);
   }
 
   public LookupElementBuilder setRenderer(@Nullable LookupElementRenderer<LookupElement> renderer) {
-    return new LookupElementBuilder(myLookupString, myObject, myAutoCompletionPolicy, myInsertHandler, renderer, myHardcodedPresentation,
+    return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, renderer, myHardcodedPresentation,
                                     myAllLookupStrings, myCaseSensitive);
   }
 
@@ -92,7 +90,7 @@ public class LookupElementBuilder extends LookupElement {
   public LookupElementBuilder setIcon(@Nullable Icon icon) {
     final LookupElementPresentation presentation = copyPresentation();
     presentation.setIcon(icon);
-    return new LookupElementBuilder(myLookupString, myObject, myAutoCompletionPolicy, myInsertHandler, null, presentation,
+    return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, null, presentation,
                                     myAllLookupStrings, myCaseSensitive);
   }
 
@@ -110,7 +108,7 @@ public class LookupElementBuilder extends LookupElement {
   public LookupElementBuilder addLookupString(@NotNull String another) {
     final THashSet<String> set = new THashSet<String>(myAllLookupStrings);
     set.add(another);
-    return new LookupElementBuilder(myLookupString, myObject, myAutoCompletionPolicy, myInsertHandler, myRenderer, myHardcodedPresentation, 
+    return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, myRenderer, myHardcodedPresentation,
                                     Collections.unmodifiableSet(set), myCaseSensitive);
   }
 
@@ -119,26 +117,21 @@ public class LookupElementBuilder extends LookupElement {
   }
 
   public LookupElementBuilder setCaseSensitive(boolean caseSensitive) {
-    return new LookupElementBuilder(myLookupString, myObject, myAutoCompletionPolicy, myInsertHandler, myRenderer, myHardcodedPresentation,
+    return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, myRenderer, myHardcodedPresentation,
                                     myAllLookupStrings, caseSensitive);
   }
 
   public LookupElementBuilder setTypeText(@Nullable String typeText) {
     final LookupElementPresentation presentation = copyPresentation();
     presentation.setTypeText(typeText);
-    return new LookupElementBuilder(myLookupString, myObject, myAutoCompletionPolicy, myInsertHandler, null, presentation,
+    return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, null, presentation,
                                     myAllLookupStrings, myCaseSensitive);
   }
 
   public LookupElementBuilder setPresentableText(@NotNull String presentableText) {
     final LookupElementPresentation presentation = copyPresentation();
     presentation.setItemText(presentableText);
-    return new LookupElementBuilder(myLookupString, myObject, myAutoCompletionPolicy, myInsertHandler, null, presentation,
-                                    myAllLookupStrings, myCaseSensitive);
-  }
-
-  public LookupElementBuilder setAutoCompletionPolicy(@NotNull AutoCompletionPolicy policy) {
-    return new LookupElementBuilder(myLookupString, myObject, policy, myInsertHandler, myRenderer, myHardcodedPresentation,
+    return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, null, presentation,
                                     myAllLookupStrings, myCaseSensitive);
   }
 
@@ -149,7 +142,7 @@ public class LookupElementBuilder extends LookupElement {
   public LookupElementBuilder setBold(boolean bold) {
     final LookupElementPresentation presentation = copyPresentation();
     presentation.setItemTextBold(bold);
-    return new LookupElementBuilder(myLookupString, myObject, myAutoCompletionPolicy, myInsertHandler, null, presentation,
+    return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, null, presentation,
                                     myAllLookupStrings, myCaseSensitive);
   }
 
@@ -160,7 +153,7 @@ public class LookupElementBuilder extends LookupElement {
   public LookupElementBuilder setStrikeout(boolean strikeout) {
     final LookupElementPresentation presentation = copyPresentation();
     presentation.setStrikeout(strikeout);
-    return new LookupElementBuilder(myLookupString, myObject, myAutoCompletionPolicy, myInsertHandler, null, presentation,
+    return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, null, presentation,
                                     myAllLookupStrings, myCaseSensitive);
   }
 
@@ -171,12 +164,8 @@ public class LookupElementBuilder extends LookupElement {
   public LookupElementBuilder setTailText(@Nullable String tailText, boolean grayed) {
     final LookupElementPresentation presentation = copyPresentation();
     presentation.setTailText(tailText, grayed);
-    return new LookupElementBuilder(myLookupString, myObject, myAutoCompletionPolicy, myInsertHandler, null, presentation,
+    return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, null, presentation,
                                     myAllLookupStrings, myCaseSensitive);
-  }
-
-  public AutoCompletionPolicy getAutoCompletionPolicy() {
-    return myAutoCompletionPolicy;
   }
 
   @NotNull
@@ -221,7 +210,6 @@ public class LookupElementBuilder extends LookupElement {
 
     LookupElementBuilder that = (LookupElementBuilder)o;
 
-    if (myAutoCompletionPolicy != that.myAutoCompletionPolicy) return false;
     if (myInsertHandler != null ? !myInsertHandler.getClass().equals(that.myInsertHandler.getClass()) : that.myInsertHandler != null) return false;
     if (!myLookupString.equals(that.myLookupString)) return false;
     if (!myObject.equals(that.myObject)) return false;
@@ -237,7 +225,6 @@ public class LookupElementBuilder extends LookupElement {
     result = 31 * result + (myLookupString.hashCode());
     result = 31 * result + (myObject.hashCode());
     result = 31 * result + (myRenderer != null ? myRenderer.getClass().hashCode() : 0);
-    result = 31 * result + (myAutoCompletionPolicy != null ? myAutoCompletionPolicy.hashCode() : 0);
     return result;
   }
 

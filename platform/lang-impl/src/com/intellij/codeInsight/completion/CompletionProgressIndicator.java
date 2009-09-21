@@ -4,9 +4,11 @@
 
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.LookupAdapter;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupEvent;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,7 +24,6 @@ import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.concurrency.Semaphore;
@@ -247,36 +248,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return myCount;
   }
 
-  public boolean willAutoInsert(final AutoCompletionPolicy policy, final PrefixMatcher matcher) {
-    if (!myHandler.mayAutocompleteOnInvocation()) return false;
-
-    if (policy == AutoCompletionPolicy.NEVER_AUTOCOMPLETE) return false;
-    if (policy == AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE) return true;
-
-    if (!isAutocompleteOnInvocation()) return false;
-
-    if (isInsideIdentifier()) return false;
-    if (policy == AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE) return true;
-
-    if (StringUtil.isEmpty(matcher.getPrefix()) && myParameters.getCompletionType() != CompletionType.SMART) return false;
-    return true;
-  }
-
   private boolean isInsideIdentifier() {
     return myContextOriginal.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) != myContextOriginal.getSelectionEndOffset();
-  }
-
-  private boolean isAutocompleteOnInvocation() {
-    final CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    switch (myParameters.getCompletionType()) {
-      case CLASS_NAME:
-        return settings.AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION;
-      case SMART:
-        return settings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION;
-      case BASIC:
-        default:
-        return settings.AUTOCOMPLETE_ON_CODE_COMPLETION;
-    }
   }
 
 

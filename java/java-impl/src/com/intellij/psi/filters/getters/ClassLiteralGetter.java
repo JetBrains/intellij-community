@@ -3,6 +3,7 @@ package com.intellij.psi.filters.getters;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
@@ -65,7 +66,7 @@ public class ClassLiteralGetter {
   private static void createLookupElement(@Nullable final PsiType type, final List<LookupElement> list, PsiElement context) {
     if (type instanceof PsiClassType && !((PsiClassType)type).hasParameters() && !(((PsiClassType) type).resolve() instanceof PsiTypeParameter)) {
       try {
-        list.add(new ClassLiteralLookupElement((PsiClassType)type, context));
+        list.add(AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(new ClassLiteralLookupElement((PsiClassType)type, context)));
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);

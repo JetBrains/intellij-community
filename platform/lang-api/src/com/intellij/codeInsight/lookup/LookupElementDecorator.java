@@ -71,11 +71,6 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
   }
 
   @Override
-  public AutoCompletionPolicy getAutoCompletionPolicy() {
-    return myDelegate.getAutoCompletionPolicy();
-  }
-
-  @Override
   public String toString() {
     return myDelegate.toString();
   }

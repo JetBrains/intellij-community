@@ -37,8 +37,8 @@ public class AntEndElementNameReference extends AntElementNameReference {
             return xmlTag;
           }
         };
-    return new LookupElement[] {LookupElementBuilder.create(wrapper, completionText).setAutoCompletionPolicy(
-        AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE)};
+    return new LookupElement[] {AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE.applyPolicy(
+      LookupElementBuilder.create(wrapper, completionText))};
   }
 
   public TextRange getRangeInElement() {

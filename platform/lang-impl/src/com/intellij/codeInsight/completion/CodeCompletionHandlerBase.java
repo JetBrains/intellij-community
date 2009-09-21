@@ -50,6 +50,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -241,22 +242,76 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     completionFinished(offset1, offset2, context, indicator, data.get());
   }
 
+  private AutoCompletionDecision shouldAutoComplete(final CompletionContext context,
+                                        final CompletionProgressIndicator indicator,
+                                        final LookupElement[] items) {
+    if (!mayAutocompleteOnInvocation()) {
+      return AutoCompletionDecision.SHOW_LOOKUP;
+    }
+    final CompletionParameters parameters = indicator.getParameters();
+    final LookupElement item = items[0];
+    if (items.length == 1) {
+      final AutoCompletionPolicy policy = getAutocompletionPolicy(item);
+      if (policy == AutoCompletionPolicy.NEVER_AUTOCOMPLETE) return AutoCompletionDecision.SHOW_LOOKUP;
+      if (policy == AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE) return AutoCompletionDecision.insertItem(item);
+    }
+    if (!isAutocompleteOnInvocation(parameters.getCompletionType())) {
+      return AutoCompletionDecision.SHOW_LOOKUP;
+    }
+    if (isInsideIdentifier(context.getOffsetMap())) {
+      return AutoCompletionDecision.SHOW_LOOKUP;
+    }
+    if (items.length == 1 && getAutocompletionPolicy(item) == AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE) {
+      return AutoCompletionDecision.insertItem(item);
+    }
+
+    for (final CompletionContributor contributor : CompletionContributor.forParameters(parameters)) {
+      final AutoCompletionDecision decision = contributor.handleAutoCompletionPossibility(new AutoCompletionContext(parameters, items, context.getOffsetMap()));
+      if (decision != null) {
+        return decision;
+      }
+    }
+
+    return AutoCompletionDecision.SHOW_LOOKUP;
+  }
+
+  @Nullable
+  private static AutoCompletionPolicy getAutocompletionPolicy(LookupElement element) {
+    final AutoCompletionPolicy policy = AutoCompletionPolicy.getPolicy(element);
+    if (policy != null) {
+      return policy;
+    }
+
+    final LookupItem item = element.as(LookupItem.class);
+    if (item != null) {
+      return item.getAutoCompletionPolicy();
+    }
+
+    return null;
+  }
+
+  private static boolean isInsideIdentifier(final OffsetMap offsetMap) {
+    return offsetMap.getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) != offsetMap.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET);
+  }
+
+
   protected void completionFinished(final int offset1, final int offset2, final CompletionContext context, final CompletionProgressIndicator indicator,
                                     final LookupElement[] items) {
     if (items.length == 0) return;
 
-    LookupElement item = items[0];
-    if (items.length == 1 && indicator.willAutoInsert(item.getAutoCompletionPolicy(), item.getPrefixMatcher())) {
+    final AutoCompletionDecision decision = shouldAutoComplete(context, indicator, items);
+    if (decision == AutoCompletionDecision.SHOW_LOOKUP) {
+      indicator.showLookup();
+      if (isAutocompleteCommonPrefixOnInvocation() && items.length > 1) {
+        indicator.fillInCommonPrefix(false);
+      }
+    } else if (decision instanceof AutoCompletionDecision.InsertItem) {
+      final LookupElement item = ((AutoCompletionDecision.InsertItem)decision).getElement();
       indicator.closeAndFinish();
       indicator.rememberDocumentState();
       context.setStartOffset(offset1 - item.getPrefixMatcher().getPrefix().length());
       handleSingleItem(offset2, context, items, item.getLookupString(), item);
       indicator.liveAfterDeath(null);
-    } else {
-      indicator.showLookup();
-      if (isAutocompleteCommonPrefixOnInvocation() && items.length > 1) {
-        indicator.fillInCommonPrefix(false);
-      }
     }
   }
 
@@ -496,5 +551,18 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final PsiFile copy = (PsiFile)file.copy();
     file.putUserData(FILE_COPY_KEY, new SoftReference<PsiFile>(copy));
     return copy;
+  }
+
+  public static boolean isAutocompleteOnInvocation(final CompletionType type) {
+    final CodeInsightSettings settings = CodeInsightSettings.getInstance();
+    switch (type) {
+      case CLASS_NAME:
+        return settings.AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION;
+      case SMART:
+        return settings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION;
+      case BASIC:
+        default:
+        return settings.AUTOCOMPLETE_ON_CODE_COMPLETION;
+    }
   }
 }

@@ -4,9 +4,15 @@
  */
 package com.intellij.codeInsight.lookup;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 /**
- * What to do if there's only one element in completion lookup? Should IDEA show lookup or just insert this element? It'll
- * ask the element itself, using its {@link LookupElement#getAutoCompletionPolicy()} method.
+ * What to do if there's only one element in completion lookup? Should IDEA show lookup or just insert this element? Call
+ * {@link #applyPolicy(LookupElement)} to decorate {@link com.intellij.codeInsight.lookup.LookupElement} with correct policy.
+ *
+ * Use this only in simple cases, use {@link com.intellij.codeInsight.completion.CompletionContributor#handleAutoCompletionPossibility(com.intellij.codeInsight.completion.AutoCompletionContext)}
+ * for finer tuning.
  *
  * @author peter
  */
@@ -30,5 +36,29 @@ public enum AutoCompletionPolicy {
   /**
    * Self-explaining
    */
-  ALWAYS_AUTOCOMPLETE
+  ALWAYS_AUTOCOMPLETE;
+
+  @NotNull
+  public LookupElement applyPolicy(@NotNull LookupElement element) {
+    return new PolicyDecorator(element, this);
+  }
+
+  @Nullable
+  public static AutoCompletionPolicy getPolicy(LookupElement element) {
+    final PolicyDecorator decorator = element.as(PolicyDecorator.class);
+    if (decorator != null) {
+      return decorator.myPolicy;
+    }
+    return null;
+  }
+
+  private static class PolicyDecorator extends LookupElementDecorator<LookupElement> {
+    private final AutoCompletionPolicy myPolicy;
+
+    public PolicyDecorator(LookupElement element, AutoCompletionPolicy policy) {
+      super(element);
+      myPolicy = policy;
+    }
+
+  }
 }

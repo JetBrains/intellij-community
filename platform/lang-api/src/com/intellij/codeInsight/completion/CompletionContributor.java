@@ -186,6 +186,14 @@ public abstract class CompletionContributor extends AbstractCompletionContributo
   }
 
   /**
+   * Called when the completion is finished quickly, lookup hasn't been shown and gives possiblity to autoinsert some item (typically - the only one).
+   */
+  @Nullable
+  public AutoCompletionDecision handleAutoCompletionPossibility(AutoCompletionContext context) {
+    return null;
+  }
+
+  /**
    * @param actionId
    * @return String representation of action shortcut. Useful while advertising something
    * @see #advertise(CompletionParameters)
