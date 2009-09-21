@@ -281,8 +281,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
 
 
     private Mapper(LayerDescriptor descriptor) {
-      doc = new DocumentImpl("");
-      doc.dontAssertWriteAccess();
+      doc = new DocumentImpl(true);
 
       mySyntaxHighlighter = descriptor.getLayerHighlighter();
       myBackground = descriptor.getBackgroundKey();

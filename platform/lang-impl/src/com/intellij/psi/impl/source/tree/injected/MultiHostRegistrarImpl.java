@@ -169,9 +169,8 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
         decodedDocument = new DocumentImpl(outChars);
       }
       else {
-        decodedDocument = new DocumentImpl("");
+        decodedDocument = new DocumentImpl(true);
         decodedDocument.setAcceptSlashR(true);
-        decodedDocument.dontAssertWriteAccess();
         decodedDocument.replaceString(0,0,outChars);
       }
       FileDocumentManagerImpl.registerDocument(decodedDocument, virtualFile);

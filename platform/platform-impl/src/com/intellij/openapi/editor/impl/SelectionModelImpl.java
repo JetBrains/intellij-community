@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -52,7 +53,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   private class MyRangeMarker extends RangeMarkerImpl {
     private boolean myIsReleased;
 
-    private MyRangeMarker(Document document, int start, int end) {
+    private MyRangeMarker(DocumentEx document, int start, int end) {
       super(document, start, end);
       myIsReleased = false;
     }
@@ -62,22 +63,21 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     }
 
     public void documentChanged(DocumentEvent e) {
-      if (!myIsReleased) {
-        int startBefore = getStartOffset();
-        int endBefore = getEndOffset();
-        super.documentChanged(e);
+      if (myIsReleased) return;
+      int startBefore = getStartOffset();
+      int endBefore = getEndOffset();
+      super.documentChanged(e);
 
-        if (!isValid()) {
-          myLastSelectionStart = myEditor.getCaretModel().getOffset();
-          release();
-          mySelectionMarker = null;
-          fireSelectionChanged(startBefore, endBefore, myLastSelectionStart, myLastSelectionStart);
-          return;
-        }
+      if (!isValid()) {
+        myLastSelectionStart = myEditor.getCaretModel().getOffset();
+        release();
+        mySelectionMarker = null;
+        fireSelectionChanged(startBefore, endBefore, myLastSelectionStart, myLastSelectionStart);
+        return;
+      }
 
-        if (startBefore != getStartOffset() || endBefore != getStartOffset()) {
-          fireSelectionChanged(startBefore, endBefore, getStartOffset(), getEndOffset());
-        }
+      if (startBefore != getStartOffset() || endBefore != getStartOffset()) {
+        fireSelectionChanged(startBefore, endBefore, getStartOffset(), getEndOffset());
       }
     }
 
@@ -142,10 +142,10 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     Document doc = myEditor.getDocument();
 
     if (startOffset < 0 || startOffset > doc.getTextLength()) {
-      LOG.assertTrue(false, "Wrong startOffset: " + startOffset);
+      LOG.error("Wrong startOffset: " + startOffset);
     }
     if (endOffset < 0 || endOffset > doc.getTextLength()) {
-      LOG.assertTrue(false, "Wrong endOffset: " + endOffset);
+      LOG.error("Wrong endOffset: " + endOffset);
     }
 
     myLastSelectionStart = startOffset;
@@ -185,7 +185,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
       mySelectionMarker.release();
     }
 
-    mySelectionMarker = new MyRangeMarker(doc, startOffset, endOffset);
+    mySelectionMarker = new MyRangeMarker((DocumentEx)doc, startOffset, endOffset);
 
     fireSelectionChanged(oldSelectionStart, oldSelectionEnd, startOffset, endOffset);
   }

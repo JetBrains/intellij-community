@@ -11,6 +11,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +22,7 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
   private final FoldingGroup myGroup;
 
   public FoldRegionImpl(Editor editor, int startOffset, int endOffset, String placeholder, FoldingGroup group) {
-    super(editor.getDocument(), startOffset, endOffset);
+    super((DocumentEx)editor.getDocument(), startOffset, endOffset);
     myGroup = group;
     myIsExpanded = true;
     myEditor = editor;

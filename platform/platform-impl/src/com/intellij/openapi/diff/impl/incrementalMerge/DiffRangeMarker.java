@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.RangeMarkerImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -14,11 +15,11 @@ class DiffRangeMarker extends RangeMarkerImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.incrementalMerge.DiffRangeMarker");
   private RangeInvalidListener myListener;
 
-  public DiffRangeMarker(Document document, TextRange range, RangeInvalidListener listener) {
+  DiffRangeMarker(DocumentEx document, TextRange range, RangeInvalidListener listener) {
     this(document, range.getStartOffset(), range.getEndOffset(), listener);
   }
 
-  private DiffRangeMarker(Document document, int start, int end, RangeInvalidListener listener) {
+  private DiffRangeMarker(DocumentEx document, int start, int end, RangeInvalidListener listener) {
     super(document, start, end);
     myListener = listener;
     if (myListener != null) InvalidRangeDispatcher.addClient(document);

@@ -75,7 +75,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private int myCheckGuardedBlocks = 0;
   private boolean myGuardsSuppressed = false;
   private boolean myEventsHandling = false;
-  private boolean myAssertWriteAccess = true;
+  private final boolean myAssertWriteAccess;
   private boolean myDoingBulkUpdate = false;
   private static final Key<WeakReference<EditorHighlighter>> ourSomeEditorSyntaxHighlighter = Key.create("some editor highlighter");
   private boolean myAcceptSlashR = false;
@@ -83,11 +83,17 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private DocumentImpl() {
     setCyclicBufferSize(0);
     setModificationStamp(LocalTimeCounter.currentTime());
+    myAssertWriteAccess = true;
   }
 
   public DocumentImpl(String text) {
     this((CharSequence)text);
+  }
+
+  public DocumentImpl(boolean forUseInNonAWTThread) {
+    setCyclicBufferSize(0);
     setModificationStamp(LocalTimeCounter.currentTime());
+    myAssertWriteAccess = !forUseInNonAWTThread;
   }
 
   public boolean setAcceptSlashR(boolean accept) {
@@ -103,10 +109,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     this();
     assertValidSeparators(chars);
     setChars(chars);
-  }
-
-  public void dontAssertWriteAccess() {
-    myAssertWriteAccess = false;
   }
 
   public char[] getRawChars() {
@@ -264,7 +266,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return start <= offset && offset < end;
   }
 
-  private static boolean rangeIntersect(int[] start, int end[], boolean[] leftInclusive, boolean[] rightInclusive) {
+  private static boolean rangeIntersect(int[] start, int[] end, boolean[] leftInclusive, boolean[] rightInclusive) {
     if (start[0] > start[1] || start[0] == start[1] && !leftInclusive[0]) {
       ArrayUtil.swap(start, 0, 1);
       ArrayUtil.swap(end, 0, 1);
@@ -489,31 +491,27 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   private void updateRangeMarkers(final DocumentEvent event) {
-    try {
-      synchronized(myRangeMarkers) {
-        for(Iterator<RangeMarkerEx> rangeMarkerIterator = myRangeMarkers.keySet().iterator(); rangeMarkerIterator.hasNext();) {
-          try {
-            final RangeMarkerEx rangeMarker = rangeMarkerIterator.next();
+    synchronized(myRangeMarkers) {
+      for(Iterator<RangeMarkerEx> rangeMarkerIterator = myRangeMarkers.keySet().iterator(); rangeMarkerIterator.hasNext();) {
+        try {
+          final RangeMarkerEx rangeMarker = rangeMarkerIterator.next();
 
-            if (rangeMarker != null && rangeMarker.isValid()) {
-              if (event.getOffset() <= rangeMarker.getEndOffset()) {
-                rangeMarker.documentChanged(event);
-                if (!rangeMarker.isValid() && myGuardedBlocks.remove(rangeMarker)) {
-                  LOG.error("Guarded blocks should stay valid");
-                }
+          if (rangeMarker != null && rangeMarker.isValid()) {
+            if (event.getOffset() <= rangeMarker.getEndOffset()) {
+              rangeMarker.documentChanged(event);
+              if (!rangeMarker.isValid() && myGuardedBlocks.remove(rangeMarker)) {
+                LOG.error("Guarded blocks should stay valid: "+rangeMarker);
               }
             }
-            else {
-              rangeMarkerIterator.remove();
-            }
           }
-          catch (Exception e) {
-            LOG.error(e);
+          else {
+            rangeMarkerIterator.remove();
           }
         }
+        catch (Exception e) {
+          LOG.error(e);
+        }
       }
-    } catch(Exception e) {
-      LOG.error(e);
     }
   }
 

@@ -1,7 +1,7 @@
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 
 /**
@@ -13,7 +13,7 @@ public class PersistentRangeMarker extends RangeMarkerImpl {
   private int myEndLine;
   private int myEndColumn;
 
-  public PersistentRangeMarker(Document document, int startOffset, int endOffset) {
+  public PersistentRangeMarker(DocumentEx document, int startOffset, int endOffset) {
     super(document, startOffset, endOffset);
     storeLinesAndCols();
   }

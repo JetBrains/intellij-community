@@ -1,7 +1,6 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
@@ -14,17 +13,17 @@ import java.util.concurrent.atomic.AtomicLong;
 public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.RangeMarkerImpl");
 
-  protected final Document myDocument;
-  protected int myStart;
-  protected int myEnd;
-  private boolean isValid = true;
+  protected final DocumentEx myDocument;
+  protected volatile int myStart;
+  protected volatile int myEnd;
+  private volatile boolean isValid = true;
   private boolean isExpandToLeft = false;
   private boolean isExpandToRight = false;
 
   private static final AtomicLong counter = new AtomicLong();
   private final long myId;
 
-  protected RangeMarkerImpl(@NotNull Document document, int start, int end) {
+  protected RangeMarkerImpl(@NotNull DocumentEx document, int start, int end) {
     if (start < 0) {
       throw new IllegalArgumentException("Wrong start: " + start+"; end="+end);
     }
@@ -43,7 +42,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   }
 
   protected void registerInDocument() {
-    ((DocumentEx)myDocument).addRangeMarker(this);
+    myDocument.addRangeMarker(this);
   }
 
   public long getId() {
@@ -67,7 +66,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   }
 
   @NotNull
-  public Document getDocument() {
+  public DocumentEx getDocument() {
     return myDocument;
   }
 
@@ -90,9 +89,15 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   public void documentChanged(DocumentEvent e) {
     int oldStart = myStart;
     int oldEnd = myEnd;
+    if (isValid && (myStart > myEnd || myStart < 0 || myEnd > myDocument.getTextLength() - e.getNewLength() + e.getOldLength())) {
+      LOG.error("RangeMarker" + (isExpandToLeft ? "[" : "(") + oldStart + ", " + oldEnd + (isExpandToRight ? "]" : ")") +
+                " is invalid before update. Event = " + e + ". Result[" + myStart + ", " + myEnd + "], doc length=" + myDocument.getTextLength());
+      isValid = false;
+    }
     changedUpdateImpl(e);
     if (isValid && (myStart > myEnd || myStart < 0 || myEnd > myDocument.getTextLength())) {
-      LOG.error("RangeMarker[" + oldStart + ", " + oldEnd + "] update failed. Event = " + e + ". Result[" + myStart + ", " + myEnd + "], doc length=" + myDocument.getTextLength());
+      LOG.error("RangeMarker" + (isExpandToLeft ? "[" : "(") + oldStart + ", " + oldEnd + (isExpandToRight ? "]" : ")") +
+                " update failed. Event = " + e + ". Result[" + myStart + ", " + myEnd + "], doc length=" + myDocument.getTextLength());
       isValid = false;
     }
   }

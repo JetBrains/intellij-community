@@ -1,7 +1,7 @@
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 
 /**
@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
  */
 public class PersistentLineMarker extends RangeMarkerImpl {
   private int myLine;
-  public PersistentLineMarker(Document document, int offset) {
+  public PersistentLineMarker(DocumentEx document, int offset) {
     super(document, offset, offset);
     myLine = document.getLineNumber(offset);
   }

@@ -3,6 +3,7 @@ package com.intellij.openapi.diff.impl.incrementalMerge;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.util.TextRange;
 
 class MergeConflict extends ChangeType.ChangeSide implements DiffRangeMarker.RangeInvalidListener {
@@ -13,7 +14,7 @@ class MergeConflict extends ChangeType.ChangeSide implements DiffRangeMarker.Ran
   private ConflictChange[] myChanges;
 
   private MergeConflict(TextRange commonRange, MergeList mergeList) {
-    myCommonRange = new DiffRangeMarker(mergeList.getBaseDocument(),commonRange, this);
+    myCommonRange = new DiffRangeMarker((DocumentEx)mergeList.getBaseDocument(),commonRange, this);
     myMergeList = mergeList;
   }
 

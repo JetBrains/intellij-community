@@ -2,6 +2,7 @@ package com.intellij.openapi.diff.impl.incrementalMerge;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +20,7 @@ class SimpleChange extends Change implements DiffRangeMarker.RangeInvalidListene
   }
 
   private Change.Side createSide(ChangeList changeList, TextRange range1, FragmentSide side) {
-    return new Change.Side(side, new DiffRangeMarker(changeList.getDocument(side), range1, this));
+    return new Change.Side(side, new DiffRangeMarker((DocumentEx)changeList.getDocument(side), range1, this));
   }
 
   protected void removeFromList() {

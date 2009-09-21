@@ -1,6 +1,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.markup.*;
@@ -37,7 +38,7 @@ public class RangeHighlighterImpl implements RangeHighlighterEx {
                        TextAttributes textAttributes,
                        boolean persistent) {
     myRangeMarker = persistent
-                    ? new PersistentLineMarker(model.getDocument(), start)
+                    ? new PersistentLineMarker((DocumentEx)model.getDocument(), start)
                     : (RangeMarkerEx)model.getDocument().createRangeMarker(start, end);
     myTextAttributes = textAttributes;
     myTargetArea = target;

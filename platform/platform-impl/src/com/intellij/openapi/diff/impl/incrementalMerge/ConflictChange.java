@@ -1,6 +1,7 @@
 package com.intellij.openapi.diff.impl.incrementalMerge;
 
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.util.TextRange;
 
 class ConflictChange extends Change implements DiffRangeMarker.RangeInvalidListener {
@@ -9,7 +10,7 @@ class ConflictChange extends Change implements DiffRangeMarker.RangeInvalidListe
 
   public ConflictChange(MergeConflict conflict, FragmentSide mergeSide, TextRange range) {
     myConflict = conflict;
-    myOriginalSide = new Side(mergeSide, new DiffRangeMarker(conflict.getOriginalDocument(mergeSide), range, this));
+    myOriginalSide = new Side(mergeSide, new DiffRangeMarker((DocumentEx)conflict.getOriginalDocument(mergeSide), range, this));
   }
 
   protected void removeFromList() {
