@@ -46,7 +46,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   private static final PackagingElementType[] STANDARD_TYPES = {
       DIRECTORY_ELEMENT_TYPE, ARCHIVE_ELEMENT_TYPE,
       LibraryElementType.LIBRARY_ELEMENT_TYPE, ModuleOutputElementType.MODULE_OUTPUT_ELEMENT_TYPE,
-      ModuleWithDependenciesElementType.MODULE_WITH_DEPENDENCIES_TYPE, 
+      //ModuleWithDependenciesElementType.MODULE_WITH_DEPENDENCIES_TYPE, 
       ArtifactElementType.ARTIFACT_ELEMENT_TYPE, FILE_COPY_ELEMENT_TYPE,
   };
 

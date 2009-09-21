@@ -1,16 +1,18 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.module.Module;
-import com.intellij.packaging.ui.*;
 import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.impl.elements.ModuleWithDependenciesPackagingElement;
+import com.intellij.packaging.ui.ArtifactEditorContext;
+import com.intellij.packaging.ui.PackagingSourceItem;
+import com.intellij.packaging.ui.SourceItemPresentation;
+import com.intellij.packaging.ui.SourceItemWeights;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ide.projectView.PresentationData;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author nik
@@ -19,6 +21,7 @@ public class ModuleSourceItemGroup extends PackagingSourceItem {
   private final Module myModule;
 
   public ModuleSourceItemGroup(Module module) {
+    super(false);
     myModule = module;
   }
 
@@ -36,7 +39,7 @@ public class ModuleSourceItemGroup extends PackagingSourceItem {
 
   @NotNull
   public List<? extends PackagingElement<?>> createElements(@NotNull ArtifactEditorContext context) {
-    return Collections.singletonList(new ModuleWithDependenciesPackagingElement(myModule.getName()));
+    return Collections.emptyList();
   }
 
   public Module getModule() {
