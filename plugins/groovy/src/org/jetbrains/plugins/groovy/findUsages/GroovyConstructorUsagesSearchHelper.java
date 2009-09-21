@@ -64,11 +64,7 @@ public class GroovyConstructorUsagesSearchHelper {
 
     //this()
     if (clazz instanceof GrTypeDefinition) {
-      if (!ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-        public Boolean compute() {
-          return processClassConstructors(clazz, constructor, consumer, true);
-        }
-      }).booleanValue()) {
+      if (!processConstructors(constructor, consumer, clazz, true)) {
         return false;
       }
     }
@@ -76,7 +72,7 @@ public class GroovyConstructorUsagesSearchHelper {
     if (!DirectClassInheritorsSearch.search(clazz, searchScope).forEach(new Processor<PsiClass>() {
       public boolean process(PsiClass inheritor) {
         if (inheritor instanceof GrTypeDefinition) {
-          if (!processClassConstructors(inheritor, constructor, consumer, false)) return false;
+          if (!processConstructors(constructor, consumer, inheritor, false)) return false;
         }
         return true;
       }
@@ -85,6 +81,15 @@ public class GroovyConstructorUsagesSearchHelper {
     }
 
     return true;
+  }
+
+  private static boolean processConstructors(final PsiMethod constructor, final Processor<PsiReference> consumer, final PsiClass clazz,
+                                             final boolean processThisRefs) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      public Boolean compute() {
+        return processClassConstructors(clazz, constructor, consumer, processThisRefs);
+      }
+    });
   }
 
   private static boolean processClassConstructors(PsiClass clazz,
