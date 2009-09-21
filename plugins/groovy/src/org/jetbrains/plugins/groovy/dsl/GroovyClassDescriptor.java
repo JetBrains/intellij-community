@@ -3,13 +3,25 @@ package org.jetbrains.plugins.groovy.dsl;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.InheritanceUtil;
+import org.codehaus.groovy.runtime.GroovyCategorySupport;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
 * @author peter
 */
 class GroovyClassDescriptor implements ClassDescriptor {
+  static {
+    try {
+      final AtomicInteger integer = GroovyCategorySupport.getCategoryNameUsage("aaa");
+    }
+    catch (NoSuchMethodError e) {
+      throw new RuntimeException("Incompatible Groovy jar in classpath: " + GroovyCategorySupport.class.getResource("/") + ", please remove it");
+    }
+  }
+
   private final PsiClass myPsiClass;
   private final PsiElement myPlace;
 
