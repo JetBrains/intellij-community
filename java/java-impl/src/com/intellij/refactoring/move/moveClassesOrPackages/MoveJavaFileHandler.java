@@ -21,7 +21,7 @@ import java.util.Map;
 public class MoveJavaFileHandler extends MoveFileHandler {
   @Override
   public boolean canProcessElement(PsiFile element) {
-    return element instanceof PsiJavaFile && !JspPsiUtil.isInJspFile(element) && !CollectHighlightsUtil.isOutOfSourceRootJavaFile(element);
+    return element instanceof PsiJavaFile && !JspPsiUtil.isInJspFile(element) && !CollectHighlightsUtil.isOutsideSourceRootJavaFile(element);
   }
 
   @Override

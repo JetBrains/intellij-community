@@ -42,13 +42,11 @@ public class FileStatusMap implements Disposable {
   @Nullable
   public static TextRange getDirtyTextRange(@NotNull Editor editor, int passId) {
     Document document = editor.getDocument();
-    TextRange documentRange = TextRange.from(0, document.getTextLength());
 
     FileStatusMap me = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(editor.getProject())).getFileStatusMap();
     TextRange dirtyScope = me.getFileDirtyScope(document, passId);
-    if (dirtyScope == null || !documentRange.intersects(dirtyScope)) {
-      return null;
-    }
+    if (dirtyScope == null) return null;
+    TextRange documentRange = TextRange.from(0, document.getTextLength());
     return documentRange.intersection(dirtyScope);
   }
 
@@ -157,7 +155,7 @@ public class FileStatusMap implements Disposable {
   public TextRange getFileDirtyScope(@NotNull Document document, int passId) {
     synchronized(myDocumentToStatusMap){
       PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-      if (CollectHighlightsUtil.isOutOfSourceRootJavaFile(file)) return null;
+      if (CollectHighlightsUtil.isOutsideSourceRootJavaFile(file)) return null;
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null){
         return file == null ? null : file.getTextRange();
@@ -242,7 +240,7 @@ public class FileStatusMap implements Disposable {
   public boolean allDirtyScopesAreNull(@NotNull Document document) {
     synchronized (myDocumentToStatusMap) {
       PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-      if (CollectHighlightsUtil.isOutOfSourceRootJavaFile(file)) return true;
+      if (CollectHighlightsUtil.isOutsideSourceRootJavaFile(file)) return true;
 
       FileStatus status = myDocumentToStatusMap.get(document);
       return status != null && !status.defensivelyMarked && status.wolfPassFinfished && status.allDirtyScopesAreNull();

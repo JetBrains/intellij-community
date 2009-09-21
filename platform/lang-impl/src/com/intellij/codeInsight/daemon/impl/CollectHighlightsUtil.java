@@ -3,15 +3,12 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,34 +53,71 @@ public class CollectHighlightsUtil {
     final List<PsiElement> result = new ArrayList<PsiElement>();
     final int currentOffset = commonParent.getTextRange().getStartOffset();
     final Condition<PsiElement>[] filters = Extensions.getExtensions(EP_NAME);
+    if (commonParent.getContainingFile().getViewProvider().getAllFiles().size() > 1) {
+      commonParent.accept(new PsiRecursiveElementVisitor() {
+        int offset = currentOffset;
 
-    final PsiElementVisitor visitor = new PsiRecursiveElementVisitor() {
-      int offset = currentOffset;
-      @Override public void visitElement(PsiElement element) {
-        for (Condition<PsiElement> filter : filters) {
-          if (!filter.value(element)) return;
-        }
+        @Override
+        public void visitElement(PsiElement element) {
+          for (Condition<PsiElement> filter : filters) {
+            if (!filter.value(element)) return;
+          }
 
-        PsiElement child = element.getFirstChild();
-        if (child != null) {
-          // composite element
-          while (child != null) {
-            if (offset > endOffset) break;
+          PsiElement child = element.getFirstChild();
+          if (child == null) {
+            // leaf element
+            offset += element.getTextLength();
+          }
+          else {
+            // composite element
+            while (child != null) {
+              if (offset > endOffset) break;
 
-            int start = offset;
-            child.accept(this);
-            if (startOffset <= start && offset <= endOffset) result.add(child);
+              int start = offset;
+              child.accept(this);
+              if (startOffset <= start && offset <= endOffset) result.add(child);
 
-            child = child.getNextSibling();
+              child = child.getNextSibling();
+            }
           }
         }
-        else {
-          // leaf element
-          offset += element.getTextLength();
+      });
+    }
+    else {
+      commonParent.accept(new PsiRecursiveElementWalkingVisitor() {
+        int offset = currentOffset;
+        boolean isInsideRegion;
+
+        @Override
+        protected void elementFinished(PsiElement element) {
+          if (isInsideRegion && offset <= endOffset) {
+            for (Condition<PsiElement> filter : filters) {
+              if (!filter.value(element)) return;
+            }
+            result.add(element);
+          }
         }
-      }
-    };
-    commonParent.accept(visitor);
+
+        @Override
+        public void visitElement(PsiElement element) {
+          if (offset > endOffset) {
+            isInsideRegion = false;
+            return; //all children are after range
+          }
+          else if (offset >= startOffset) {
+            isInsideRegion = true;
+          }
+
+          PsiElement child = element.getFirstChild();
+          if (child == null) {
+            // leaf element
+            offset += element.getTextLength();
+            return;
+          }
+          super.visitElement(element);
+        }
+      });
+    }
     return result;
   }
 
@@ -112,18 +146,16 @@ public class CollectHighlightsUtil {
     return root.findElementAt(offset);
   }
 
-  public static boolean isOutOfSourceRootJavaFile(@Nullable PsiFile psiFile) {
+  public static boolean isOutsideSourceRootJavaFile(@Nullable PsiFile psiFile) {
     return psiFile != null && psiFile.getFileType() == StdFileTypes.JAVA && isOutsideSourceRoot(psiFile);
   }
 
-  public static boolean isOutsideSourceRoot(@NotNull PsiFile psiFile) {
+  public static boolean isOutsideSourceRoot(@Nullable PsiFile psiFile) {
+    if (psiFile == null) return false;
+    if (psiFile instanceof PsiCodeFragment) return false;
     final VirtualFile file = psiFile.getVirtualFile();
-    if (file != null) {
-      final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(psiFile.getProject()).getFileIndex();
-      if (!projectFileIndex.isInSource(file) && !projectFileIndex.isInLibraryClasses(file)) {
-        return true;
-      }
-    }
-    return false;
+    if (file == null) return false;
+    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(psiFile.getProject()).getFileIndex();
+    return !projectFileIndex.isInSource(file) && !projectFileIndex.isInLibraryClasses(file);
   }
 }

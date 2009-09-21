@@ -25,13 +25,14 @@ import java.util.List;
 
 public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.i18n.I18nizeQuickFix");
-  private PsiElement myElement;
-  private String myKey;
-  private List<PropertiesFile> myPropertiesFiles;
+  private final PsiElement myElement;
+  private final String myKey;
+  private final List<PropertiesFile> myPropertiesFiles;
 
   public static final String NAME = PropertiesBundle.message("create.property.quickfix.text");
 
   public CreatePropertyFix() {
+    this(null, null, null);
   }
 
   public CreatePropertyFix(PsiElement element, String key, final List<PropertiesFile> propertiesFiles) {

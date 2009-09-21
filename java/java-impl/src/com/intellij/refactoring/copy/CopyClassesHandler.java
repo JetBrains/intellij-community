@@ -27,7 +27,7 @@ public class CopyClassesHandler implements CopyHandlerDelegate {
 
   @Nullable
   private static PsiClass convertToTopLevelClass(final PsiElement[] elements) {
-    if (elements.length == 1 && !CollectHighlightsUtil.isOutOfSourceRootJavaFile(elements[0].getContainingFile())) {
+    if (elements.length == 1 && !CollectHighlightsUtil.isOutsideSourceRootJavaFile(elements[0].getContainingFile())) {
       return getTopLevelClass(elements [0]);
     }
     return null;

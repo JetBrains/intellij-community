@@ -18,7 +18,7 @@ public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHan
         allJava &= JavaCopyFilesOrDirectoriesHandler.hasPackages((PsiDirectory)element);
       }
       else if (element instanceof PsiFile) {
-        allJava &= element instanceof PsiJavaFile && !JspPsiUtil.isInJspFile(element) && !CollectHighlightsUtil.isOutOfSourceRootJavaFile((PsiJavaFile) element);
+        allJava &= element instanceof PsiJavaFile && !JspPsiUtil.isInJspFile(element) && !CollectHighlightsUtil.isOutsideSourceRootJavaFile((PsiJavaFile) element);
       }
       else {
         return false;
