@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.pom.java.LanguageLevel;
+import static com.intellij.psi.CommonClassNames.*;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
@@ -11,7 +12,7 @@ import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
@@ -31,6 +32,10 @@ public class TypesUtil {
   @NonNls
   public static final Map<String, PsiType> ourQNameToUnboxed = new HashMap<String, PsiType>();
 
+  private TypesUtil() {
+  }
+
+  @Nullable
   public static PsiType getNumericResultType(GrBinaryExpression binaryExpression, PsiType lType) {
     final GrExpression rop = binaryExpression.getRightOperand();
     PsiType rType = rop == null ? null : rop.getType();
@@ -50,6 +55,7 @@ public class TypesUtil {
     return getOverloadedOperatorType(lType, binaryExpression.getOperationTokenType(), binaryExpression, new PsiType[]{rType});
   }
 
+  @Nullable
   public static PsiType getOverloadedOperatorType(PsiType thisType,
                                                   IElementType tokenType,
                                                   GroovyPsiElement place,
@@ -57,6 +63,7 @@ public class TypesUtil {
     return getOverloadedOperatorType(thisType, ourOperationsToOperatorNames.get(tokenType), place, argumentTypes);
   }
 
+  @Nullable
   public static PsiType getOverloadedOperatorType(PsiType thisType, String operatorName, GroovyPsiElement place, PsiType[] argumentTypes) {
     if (operatorName != null) {
       MethodResolverProcessor processor =
@@ -81,75 +88,97 @@ public class TypesUtil {
     }
     return null;
   }
+  private static final Map<IElementType, String> ourPrimitiveTypesToClassNames = new HashMap<IElementType, String>();
+  private static final String NULL = "null";
+  private static final String JAVA_MATH_BIG_DECIMAL = "java.math.BigDecimal";
+  private static final String JAVA_MATH_BIG_INTEGER = "java.math.BigInteger";
+
+  static {
+    ourPrimitiveTypesToClassNames.put(mSTRING_LITERAL, JAVA_LANG_STRING);
+    ourPrimitiveTypesToClassNames.put(mGSTRING_LITERAL, JAVA_LANG_STRING);
+    ourPrimitiveTypesToClassNames.put(mREGEX_LITERAL, JAVA_LANG_STRING);
+    ourPrimitiveTypesToClassNames.put(mNUM_INT, JAVA_LANG_INTEGER);
+    ourPrimitiveTypesToClassNames.put(mNUM_LONG, JAVA_LANG_LONG);
+    ourPrimitiveTypesToClassNames.put(mNUM_FLOAT, JAVA_LANG_FLOAT);
+    ourPrimitiveTypesToClassNames.put(mNUM_DOUBLE, JAVA_LANG_DOUBLE);
+    ourPrimitiveTypesToClassNames.put(mNUM_BIG_INT, JAVA_MATH_BIG_INTEGER);
+    ourPrimitiveTypesToClassNames.put(mNUM_BIG_DECIMAL, JAVA_MATH_BIG_DECIMAL);
+    ourPrimitiveTypesToClassNames.put(kFALSE, JAVA_LANG_BOOLEAN);
+    ourPrimitiveTypesToClassNames.put(kTRUE, JAVA_LANG_BOOLEAN);
+    ourPrimitiveTypesToClassNames.put(kNULL, NULL);
+  }
 
   private static final Map<IElementType, String> ourOperationsToOperatorNames = new HashMap<IElementType, String>();
 
   static {
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mPLUS, "plus");
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mMINUS, "minus");
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mBAND, "and");
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mBOR, "or");
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mBXOR, "xor");
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mDIV, "div");
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mMOD, "mod");
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mSTAR, "multiply");
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mDEC, "previous");
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mINC, "next");
+    ourOperationsToOperatorNames.put(mPLUS, "plus");
+    ourOperationsToOperatorNames.put(mMINUS, "minus");
+    ourOperationsToOperatorNames.put(mBAND, "and");
+    ourOperationsToOperatorNames.put(mBOR, "or");
+    ourOperationsToOperatorNames.put(mBXOR, "xor");
+    ourOperationsToOperatorNames.put(mDIV, "div");
+    ourOperationsToOperatorNames.put(mMOD, "mod");
+    ourOperationsToOperatorNames.put(mSTAR, "multiply");
+    ourOperationsToOperatorNames.put(mDEC, "previous");
+    ourOperationsToOperatorNames.put(mINC, "next");
   }
 
   private static final TObjectIntHashMap<String> TYPE_TO_RANK = new TObjectIntHashMap<String>();
 
   static {
-    TYPE_TO_RANK.put("java.lang.Byte", 1);
-    TYPE_TO_RANK.put("java.lang.Short", 2);
-    TYPE_TO_RANK.put("java.lang.Character", 2);
-    TYPE_TO_RANK.put("java.lang.Integer", 3);
-    TYPE_TO_RANK.put("java.lang.Long", 4);
-    TYPE_TO_RANK.put("java.math.BigInteger", 5);
-    TYPE_TO_RANK.put("java.math.BigDecimal", 6);
-    TYPE_TO_RANK.put("java.lang.Float", 7);
-    TYPE_TO_RANK.put("java.lang.Double", 8);
+    TYPE_TO_RANK.put(JAVA_LANG_BYTE, 1);
+    TYPE_TO_RANK.put(JAVA_LANG_SHORT, 2);
+    TYPE_TO_RANK.put(JAVA_LANG_CHARACTER, 2);
+    TYPE_TO_RANK.put(JAVA_LANG_INTEGER, 3);
+    TYPE_TO_RANK.put(JAVA_LANG_LONG, 4);
+    TYPE_TO_RANK.put(JAVA_MATH_BIG_INTEGER, 5);
+    TYPE_TO_RANK.put(JAVA_MATH_BIG_DECIMAL, 6);
+    TYPE_TO_RANK.put(JAVA_LANG_FLOAT, 7);
+    TYPE_TO_RANK.put(JAVA_LANG_DOUBLE, 8);
+    TYPE_TO_RANK.put(JAVA_LANG_NUMBER, 9);
   }
 
   static {
-    ourQNameToUnboxed.put("java.lang.Boolean", PsiType.BOOLEAN);
-    ourQNameToUnboxed.put("java.lang.Byte", PsiType.BYTE);
-    ourQNameToUnboxed.put("java.lang.Character", PsiType.CHAR);
-    ourQNameToUnboxed.put("java.lang.Short", PsiType.SHORT);
-    ourQNameToUnboxed.put("java.lang.Integer", PsiType.INT);
-    ourQNameToUnboxed.put("java.lang.Long", PsiType.LONG);
-    ourQNameToUnboxed.put("java.lang.Float", PsiType.FLOAT);
-    ourQNameToUnboxed.put("java.lang.Double", PsiType.DOUBLE);
+    ourQNameToUnboxed.put(JAVA_LANG_BOOLEAN, PsiType.BOOLEAN);
+    ourQNameToUnboxed.put(JAVA_LANG_BYTE, PsiType.BYTE);
+    ourQNameToUnboxed.put(JAVA_LANG_CHARACTER, PsiType.CHAR);
+    ourQNameToUnboxed.put(JAVA_LANG_SHORT, PsiType.SHORT);
+    ourQNameToUnboxed.put(JAVA_LANG_INTEGER, PsiType.INT);
+    ourQNameToUnboxed.put(JAVA_LANG_LONG, PsiType.LONG);
+    ourQNameToUnboxed.put(JAVA_LANG_FLOAT, PsiType.FLOAT);
+    ourQNameToUnboxed.put(JAVA_LANG_DOUBLE, PsiType.DOUBLE);
   }
 
 
   private static final TIntObjectHashMap<String> RANK_TO_TYPE = new TIntObjectHashMap<String>();
 
   static {
-    RANK_TO_TYPE.put(1, "java.lang.Integer");
-    RANK_TO_TYPE.put(2, "java.lang.Integer");
-    RANK_TO_TYPE.put(3, "java.lang.Integer");
-    RANK_TO_TYPE.put(4, "java.lang.Long");
-    RANK_TO_TYPE.put(5, "java.lang.BigInteger");
-    RANK_TO_TYPE.put(6, "java.math.BigDecimal");
-    RANK_TO_TYPE.put(7, "java.lang.Double");
+    RANK_TO_TYPE.put(1, JAVA_LANG_INTEGER);
+    RANK_TO_TYPE.put(2, JAVA_LANG_INTEGER);
+    RANK_TO_TYPE.put(3, JAVA_LANG_INTEGER);
+    RANK_TO_TYPE.put(4, JAVA_LANG_LONG);
+    RANK_TO_TYPE.put(5, JAVA_MATH_BIG_INTEGER);
+    RANK_TO_TYPE.put(6, JAVA_MATH_BIG_DECIMAL);
+    RANK_TO_TYPE.put(7, JAVA_LANG_DOUBLE);
+    RANK_TO_TYPE.put(8, JAVA_LANG_DOUBLE);
+    RANK_TO_TYPE.put(9, JAVA_LANG_NUMBER);
   }
 
   public static boolean isAssignable(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope) {
     //all numeric types are assignable
     if (isNumericType(lType)) {
-      return isNumericType(rType) || rType.equalsToText("java.lang.String") || rType.equals(PsiType.NULL);
+      return isNumericType(rType) || rType.equalsToText(JAVA_LANG_STRING) || rType.equals(PsiType.NULL);
     }
     if (rType instanceof GrTupleType) {
       final GrTupleType tuple = (GrTupleType)rType;
       if (tuple.getComponentTypes().length == 0) {
-        if (lType instanceof PsiArrayType || InheritanceUtil.isInheritor(lType, CommonClassNames.JAVA_UTIL_LIST)) {
+        if (lType instanceof PsiArrayType || InheritanceUtil.isInheritor(lType, JAVA_UTIL_LIST)) {
           return true;
         }
       }
     }
 
-    if (lType.equalsToText("java.lang.String") && isNumericType(rType)) return true;
+    if (lType.equalsToText(JAVA_LANG_STRING) && isNumericType(rType)) return true;
 
     rType = boxPrimitiveType(rType, manager, scope);
     lType = boxPrimitiveType(lType, manager, scope);
@@ -162,9 +191,9 @@ public class TypesUtil {
 
     if (isNumericType(lType) && isNumericType(rType)) {
       lType = unboxPrimitiveTypeWrapper(lType);
-      if (lType.equalsToText("java.math.BigDecimal")) lType = PsiType.DOUBLE;
+      if (lType.equalsToText(JAVA_MATH_BIG_DECIMAL)) lType = PsiType.DOUBLE;
       rType = unboxPrimitiveTypeWrapper(rType);
-      if (rType.equalsToText("java.math.BigDecimal")) rType = PsiType.DOUBLE;
+      if (rType.equalsToText(JAVA_MATH_BIG_DECIMAL)) rType = PsiType.DOUBLE;
     }
     else {
       rType = boxPrimitiveType(rType, manager, scope);
@@ -219,6 +248,7 @@ public class TypesUtil {
     return result;
   }
 
+  @Nullable
   public static PsiType getTypeForIncOrDecExpression(GrUnaryExpression expr) {
     final GrExpression op = expr.getOperand();
     if (op != null) {
@@ -246,6 +276,7 @@ public class TypesUtil {
     return PsiType.getJavaLangObject(context.getManager(), context.getResolveScope());
   }
 
+  @Nullable
   public static PsiType getLeastUpperBound(PsiType type1, PsiType type2, PsiManager manager) {
     if (type1 instanceof GrTupleType && type2 instanceof GrTupleType) {
       GrTupleType tuple1 = (GrTupleType)type1;
@@ -289,7 +320,7 @@ public class TypesUtil {
 
   @Nullable
   public static PsiType getPsiType(PsiElement context, IElementType elemType) {
-    if (elemType == GroovyTokenTypes.kNULL) {
+    if (elemType == kNULL) {
       return PsiType.NULL;
     }
     final String typeName = getPsiTypeName(elemType);
@@ -301,34 +332,6 @@ public class TypesUtil {
 
   @Nullable
   private static String getPsiTypeName(IElementType elemType) {
-    if (elemType == org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mGSTRING_LITERAL || elemType == org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTRING_LITERAL || elemType ==
-                                                                                                                                                                                         org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mREGEX_LITERAL) {
-      return "java.lang.String";
-    }
-    else if (elemType == org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNUM_INT) {
-      return "java.lang.Integer";
-    }
-    else if (elemType == org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNUM_LONG) {
-      return "java.lang.Long";
-    }
-    else if (elemType == org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNUM_FLOAT) {
-      return "java.lang.Float";
-    }
-    else if (elemType == org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNUM_DOUBLE) {
-      return "java.lang.Double";
-    }
-    else if (elemType == org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNUM_BIG_INT) {
-      return "java.math.BigInteger";
-    }
-    else if (elemType == org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNUM_BIG_DECIMAL) {
-      return "java.math.BigDecimal";
-    }
-    else if (elemType == org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kFALSE || elemType == org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kTRUE) {
-      return "java.lang.Boolean";
-    }
-    else if (elemType == org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kNULL) {
-      return "null";
-    }
-    return null;
+    return ourPrimitiveTypesToClassNames.get(elemType);
   }
 }
