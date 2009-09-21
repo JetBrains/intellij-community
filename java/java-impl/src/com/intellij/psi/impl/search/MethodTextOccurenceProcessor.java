@@ -34,6 +34,10 @@ public class MethodTextOccurenceProcessor implements TextOccurenceProcessor {
     for (PsiReference ref : refs) {
       if (ref.getRangeInElement().contains(offsetInElement)) {
         for (PsiMethod method : myMethods) {
+          if (!method.isValid()) {
+            continue;
+          }
+
           if (ref instanceof ResolvingHint && !((ResolvingHint)ref).canResolveTo(method)) {
             return true;
           }
