@@ -16,6 +16,7 @@
 
 package com.intellij.ide.actions;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Ref;
@@ -33,6 +34,7 @@ import java.awt.*;
  * @author peter
  */
 public class CreateFileFromTemplateDialog extends DialogWrapper {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.CreateFileFromTemplateDialog");
   private JTextField myNameField;
   private JComboBox myKindCombo;
   private JPanel myPanel;
@@ -46,6 +48,10 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
       @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        if (value == null) {
+          LOG.error("Model: " + list.getModel().toString());
+        }
+
         @SuppressWarnings({"unchecked"}) Trinity<String, Icon, String> _value = (Trinity<String, Icon, String>) value;
         setText(_value.first);
         setIcon(_value.second);
