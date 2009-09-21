@@ -69,7 +69,7 @@ public class ProjectNameStep extends ModuleWizardStep {
     myStorageFormatCombo.insertItemAt(DIR_BASED, 0);
     myStorageFormatCombo.insertItemAt(FILE_BASED, 1);
 
-    myStorageFormatCombo.setSelectedItem(FILE_BASED);
+    myStorageFormatCombo.setSelectedItem(DIR_BASED);
 
     myAdditionalContentPanel = new JPanel(new GridBagLayout());
     myPanel.add(myAdditionalContentPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));

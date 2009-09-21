@@ -18,7 +18,7 @@ public class ProjectFormatPanel {
   public ProjectFormatPanel() {
     myStorageFormatCombo.insertItemAt(DIR_BASED, 0);
     myStorageFormatCombo.insertItemAt(FILE_BASED, 1);
-    myStorageFormatCombo.setSelectedItem(FILE_BASED);
+    myStorageFormatCombo.setSelectedItem(DIR_BASED);
   }
 
 
