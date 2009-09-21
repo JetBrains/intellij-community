@@ -84,11 +84,8 @@ abstract class Mover {
     // to prevent flicker
     caretModel.moveToOffset(0);
 
-    document.insertString(range1.getStartOffset(), textToInsert2);
-    document.deleteString(range1.getStartOffset() + textToInsert2.length(), range1.getEndOffset());
-
-    document.insertString(range2.getStartOffset(), textToInsert);
-    document.deleteString(range2.getStartOffset() + textToInsert.length(), range2.getEndOffset());
+    document.replaceString(range1.getStartOffset(), range1.getEndOffset(), textToInsert2);
+    document.replaceString(range2.getStartOffset(), range2.getEndOffset(), textToInsert);
 
     final Project project = file.getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
