@@ -12,6 +12,7 @@ import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -234,7 +235,7 @@ public class TodoView implements PersistentStateComponent<Element>, Disposable {
         updateFilters();
       }
       catch (ProcessCanceledException e) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
+        DumbService.getInstance(myProject).smartInvokeLater(new Runnable() {
           public void run() {
             _updateFilters();
           }
