@@ -136,7 +136,7 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
       private void deleteChildrenRecursively(final VirtualFile dir) throws IOException {
         for (final VirtualFile child : dir.getChildren()) {
           if (child.isDirectory()) {
-            deleteChildrenRecursively(dir);
+            deleteChildrenRecursively(child);
           }
           TranslatingCompilerFilesMonitor.removeSourceInfo(child);
           child.delete(this);
