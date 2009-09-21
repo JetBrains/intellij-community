@@ -78,7 +78,12 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
 
   private String getTemplateName() {
     //noinspection unchecked
-    return ((Trinity<String, Icon, String>)myKindCombo.getSelectedItem()).third;
+    final Trinity<String, Icon, String> trinity = (Trinity<String, Icon, String>)myKindCombo.getSelectedItem();
+    if (trinity == null) {
+      LOG.error("Model: " + myKindCombo.getModel());
+    }
+
+    return trinity.third;
   }
 
   @Override
