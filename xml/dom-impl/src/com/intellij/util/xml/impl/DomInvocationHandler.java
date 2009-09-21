@@ -713,6 +713,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       final DomInvocationHandler semElement = myManager.getSemService().getSemElement(key, subTag);
       if (semElement == null) {
         myManager.getSemService().getSemElement(key, subTag);
+        LOG.error("No child for subTag " + subTag.getName() + " in tag " + tag.getName());
       }
       elements.add(semElement.getProxy());
     }
