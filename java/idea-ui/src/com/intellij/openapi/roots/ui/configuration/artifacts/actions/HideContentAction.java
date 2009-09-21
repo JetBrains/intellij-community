@@ -27,13 +27,15 @@ public class HideContentAction extends AnAction {
     if (node != null) {
       final Collection<PackagingNodeSource> sources = node.getNodeSources();
       if (!sources.isEmpty()) {
-        StringBuilder description = new StringBuilder();
-        for (PackagingNodeSource source : sources) {
-          if (description.length() > 0) description.append(", ");
-          description.append("'").append(source.getPresentableName()).append("'");
+        String description;
+        if (sources.size() == 1) {
+          description = "Hide Content of '" + sources.iterator().next().getPresentableName() + "'";
+        }
+        else {
+          description = "Hide Content";
         }
         e.getPresentation().setVisible(true);
-        e.getPresentation().setText("Hide Content of " + description);
+        e.getPresentation().setText(description);
         return;
       }
     }
