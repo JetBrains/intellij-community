@@ -60,7 +60,7 @@ public class SemicolonFixer implements Fixer {
       int insertionOffset = leaf.getTextRange().getEndOffset();
       Document doc = editor.getDocument();
       if (psiElement instanceof PsiField && ((PsiField) psiElement).hasModifierProperty(PsiModifier.ABSTRACT)) {
-        // absract rarely seem to be field. It is rather incomplete method.
+        // abstract rarely seem to be field. It is rather incomplete method.
         doc.insertString(insertionOffset, "()");
         insertionOffset += "()".length();
       }
