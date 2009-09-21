@@ -529,21 +529,20 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         if (copy != null && copy.isValid() && copy.getClass().equals(file.getClass())) {
           final Document document = copy.getViewProvider().getDocument();
           assert document != null;
+          final String oldDocumentText = document.getText();
           final String oldCopyText = copy.getText();
           final String newText = file.getText();
           document.setText(newText);
           try {
             PsiDocumentManager.getInstance(copy.getProject()).commitDocument(document);
+            return copy;
           }
-          catch (IndexOutOfBoundsException e) {
+          catch (Throwable e) {
             document.setText("");
             if (((ApplicationEx)ApplicationManager.getApplication()).isInternal()) {
-              LOG.error("old text: " + oldCopyText + "; new text: " + newText, e);
-            } else {
-              throw e;
+              LOG.error("old text: " + oldCopyText + "; new text: " + newText + "; old document text: " + oldDocumentText, e);
             }
           }
-          return copy;
         }
       }
     }

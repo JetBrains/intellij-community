@@ -217,17 +217,25 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
         try {
           boolean hasCommits = false;
-          final FileViewProvider viewProvider = getCachedViewProvider(document);
-          if (viewProvider != null) {
-            final List<PsiFile> psiFiles = viewProvider.getAllFiles();
-            for (PsiFile file : psiFiles) {
-              if (file.isValid() && file != excludeFile) {
-                hasCommits |= commit(document, file);
+          try {
+            final FileViewProvider viewProvider = getCachedViewProvider(document);
+            if (viewProvider != null) {
+              final List<PsiFile> psiFiles = viewProvider.getAllFiles();
+              for (PsiFile file : psiFiles) {
+                if (file.isValid() && file != excludeFile) {
+                  hasCommits |= commit(document, file);
+                }
               }
+              viewProvider.contentsSynchronized();
             }
-            viewProvider.contentsSynchronized();
           }
-          myUncommittedDocuments.remove(document);
+          catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+          finally {
+            myUncommittedDocuments.remove(document);
+          }
+
           if (hasCommits) {
             InjectedLanguageUtil.commitAllInjectedDocuments(document, myProject);
           }
