@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.html.HtmlTag;
@@ -58,6 +59,12 @@ public class XmlDuplicatedIdInspection extends LocalInspectionTool {
             }
 
             if (!hasIdDeclaration) {
+              for(XmlIdContributor contributor: Extensions.getExtensions(XmlIdContributor.EP_NAME)) {
+                if (contributor.suppressExistingIdValidation((XmlFile)file)) {
+                  return;
+                }
+              }
+
               final FileViewProvider viewProvider = tag.getContainingFile().getViewProvider();
               if (viewProvider instanceof MultiplePsiFilesPerDocumentFileViewProvider) {
                 holder.registerProblem(value, XmlErrorMessages.message("invalid.id.reference"), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,

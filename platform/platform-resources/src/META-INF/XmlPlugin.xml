@@ -32,6 +32,9 @@
 
     <extensionPoint name="standardResourceProvider" interface="com.intellij.javaee.StandardResourceProvider"/>
 
+    <extensionPoint name="xml.idContributor"
+                    interface="com.intellij.xml.util.XmlIdContributor"/>
+
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
