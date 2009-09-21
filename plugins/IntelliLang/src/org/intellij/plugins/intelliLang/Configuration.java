@@ -447,10 +447,10 @@ public final class Configuration implements PersistentStateComponent<Element> {
       }
 
       public DocumentReference[] getAffectedDocuments() {
-        return null;
+        return DocumentReference.EMPTY_ARRAY;
       }
 
-      public boolean shouldConfirmUndo() {
+      public boolean isGlobal() {
         return true;
       }
     };

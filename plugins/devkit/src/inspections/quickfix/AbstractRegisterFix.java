@@ -101,7 +101,7 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
 
             DescriptorUtil.patchPluginXml(AbstractRegisterFix.this, myClass, pluginXmls);
           }
-          CommandProcessor.getInstance().markCurrentCommandAsComplex(project);
+          CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
         }
         catch (IncorrectOperationException e) {
           Messages.showMessageDialog(project,

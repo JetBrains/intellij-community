@@ -368,7 +368,7 @@ public abstract class DynamicDialog extends DialogWrapper {
             return refs;
           }
 
-          public boolean shouldConfirmUndo() {
+          public boolean isGlobal() {
             return true;
           }
         });
