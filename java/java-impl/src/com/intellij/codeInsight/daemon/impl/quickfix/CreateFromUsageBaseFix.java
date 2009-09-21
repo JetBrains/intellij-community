@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -134,16 +135,19 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
   }
 
-  protected static void setupVisibility(PsiClass parentClass, PsiClass targetClass, PsiModifierList list) throws IncorrectOperationException {
+  protected void setupVisibility(PsiClass parentClass, PsiClass targetClass, PsiModifierList list) throws IncorrectOperationException {
     if (targetClass.isInterface()) {
       list.deleteChildRange(list.getFirstChild(), list.getLastChild());
       return;
     }
+    RefactoringUtil.setVisibility(list, getVisibility(parentClass, targetClass));
+  }
 
+  protected String getVisibility(PsiClass parentClass, PsiClass targetClass) {
     if (parentClass != null && (parentClass.equals(targetClass) || PsiTreeUtil.isAncestor(targetClass, parentClass, true))) {
-      list.setModifierProperty(PsiModifier.PRIVATE, true);
+      return PsiModifier.PRIVATE;
     } else {
-      list.setModifierProperty(PsiModifier.PUBLIC, true);
+      return PsiModifier.PUBLIC;
     }
   }
 

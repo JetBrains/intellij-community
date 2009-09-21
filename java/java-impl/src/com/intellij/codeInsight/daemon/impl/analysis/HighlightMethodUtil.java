@@ -350,6 +350,7 @@ public class HighlightMethodUtil {
         else {
           TextRange range = getFixRange(methodCall);
           QuickFixAction.registerQuickFixAction(highlightInfo, range, new CreateMethodFromUsageFix(methodCall), null);
+          QuickFixAction.registerQuickFixAction(highlightInfo, range, new CreateAbstractMethodFromUsageFix(methodCall), null);
           QuickFixAction.registerQuickFixAction(highlightInfo, range, new CreatePropertyFromUsageFix(methodCall), null);
         }
       }
@@ -461,6 +462,7 @@ public class HighlightMethodUtil {
                                                    PsiExpressionList list, PsiResolveHelper resolveHelper) {
     TextRange fixRange = getFixRange(methodCall);
     QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new CreateMethodFromUsageFix(methodCall), null);
+    QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new CreateAbstractMethodFromUsageFix(methodCall), null);
     QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new CreateConstructorFromSuperFix(methodCall), null);
     QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new CreateConstructorFromThisFix(methodCall), null);
     QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new CreatePropertyFromUsageFix(methodCall), null);

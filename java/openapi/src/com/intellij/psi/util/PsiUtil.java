@@ -220,6 +220,11 @@ public final class PsiUtil extends PsiUtilBase {
     return parent instanceof PsiDeclarationStatement && parent.getParent() instanceof PsiCodeBlock;
   }
 
+  public static boolean isAbstractClass(PsiClass clazz) {
+    PsiModifierList modifierList = clazz.getModifierList();
+    return modifierList != null && modifierList.hasModifierProperty(PsiModifier.ABSTRACT);
+  }
+
   /**
    * @return codeblock topmost codeblock where variable makes sense
    */
