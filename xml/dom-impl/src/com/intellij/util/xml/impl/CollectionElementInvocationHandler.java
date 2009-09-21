@@ -18,13 +18,11 @@ import java.util.List;
  * @author peter
  */
 public class CollectionElementInvocationHandler extends DomInvocationHandler<AbstractDomChildDescriptionImpl>{
-  private final String myTagQName;
 
   public CollectionElementInvocationHandler(final Type type, @NotNull final XmlTag tag,
                                             final AbstractCollectionChildDescription description,
                                             final DomInvocationHandler parent) {
     super(type, new PhysicalDomParentStrategy(tag, parent.getManager()), description.createEvaluatedXmlName(parent, tag), (AbstractDomChildDescriptionImpl)description, parent.getManager(), true);
-    myTagQName = tag.getName();
   }
 
   protected Type narrowType(@NotNull final Type nominalType) {
@@ -39,10 +37,7 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler<Abs
 
   @Override
   public boolean isValid() {
-    if (!super.isValid()) return false;
-    final XmlTag tag = getXmlTag();
-    if (tag == null || !myTagQName.equals(tag.getName())) return false;
-    return true;
+    return super.isValid() && getXmlTag() != null;
   }
 
   public final void undefineInternal() {

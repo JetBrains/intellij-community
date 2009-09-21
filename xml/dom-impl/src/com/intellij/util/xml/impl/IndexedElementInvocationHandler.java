@@ -36,16 +36,6 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
     myNamespace = namespace;
   }
 
-  @Override
-  public boolean isValid() {
-    final XmlTag tag = getXmlTag();
-    if (!super.isValid()) return false;
-    if (tag == null) return true;
-    final String localName = getXmlElementName();
-    if (localName.indexOf(':') > 0 && localName.equals(tag.getName())) return true;
-    return localName.equals(tag.getLocalName()) && myNamespace.equals(tag.getNamespace());
-  }
-
   @SuppressWarnings({"EqualsWhichDoesntCheckParameterClass"})
   public boolean equals(final Object obj) {
     return super.equals(obj) && myIndex == ((IndexedElementInvocationHandler)obj).myIndex;
