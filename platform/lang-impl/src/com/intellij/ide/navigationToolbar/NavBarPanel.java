@@ -750,7 +750,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       }
 
       public Insets getBorderInsets(final Component c) {
-        return new Insets(4, 4, 4, 4);
+        return new Insets(3, 4, 3, 4);
       }
 
       public boolean isBorderOpaque() {
@@ -853,7 +853,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       myIcon = icon;
       myAttributes = textAttributes;
 
-      setIpad(new Insets(0, 2, 0, 2));
+      setIpad(new Insets(1, 2, 1, 2));
       
       update();
     }
