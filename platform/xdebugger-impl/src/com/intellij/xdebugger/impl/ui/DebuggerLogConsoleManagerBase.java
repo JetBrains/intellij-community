@@ -68,7 +68,7 @@ public abstract class DebuggerLogConsoleManagerBase implements DebuggerLogConsol
 
   public void addLogConsole(String name, Reader reader, long skippedContent, Icon icon) {
     final Ref<Content> content = new Ref<Content>();
-    addLogConsole(new LogConsoleBase(myProject, reader, skippedContent, name, false) {
+    addLogConsole(new LogConsoleBase(myProject, reader, skippedContent, name, false, new DefaultLogFilterModel(myProject)) {
       public boolean isActive() {
         final Content logContent = content.get();
         return logContent != null && logContent.isSelected();

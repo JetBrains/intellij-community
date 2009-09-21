@@ -8,11 +8,7 @@ public interface LogConsole {
 
   void setContentPreprocessor(LogContentPreprocessor contentPreprocessor);
 
-  boolean isShowStandardFilters();
+  void setFilterModel(LogFilterModel model);
 
-  void setShowStandardFilters(boolean showStandardFilters);
-
-  void registerLogFilter(LogFilter filter);
-
-  void unregisterLogFilter(LogFilter filter);
+  LogFilterModel getFilterModel();
 }

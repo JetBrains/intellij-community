@@ -13,7 +13,7 @@ public abstract class LogConsoleImpl extends LogConsoleBase {
   private final String myPath;
 
   public LogConsoleImpl(Project project, File file, long skippedContents, String title, final boolean buildInActions) {
-    super(project, file, skippedContents, title, buildInActions);
+    super(project, file, skippedContents, title, buildInActions, new DefaultLogFilterModel(project));
     myPath = file.getAbsolutePath();
   }
 

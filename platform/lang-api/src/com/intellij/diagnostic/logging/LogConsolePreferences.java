@@ -15,7 +15,6 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.util.StringBuilderSpinAllocator;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -58,11 +57,9 @@ public class LogConsolePreferences extends LogFilterRegistrar {
   public final static Pattern WARN_PATTERN = Pattern.compile(".*" + WARN + ".*");
   public final static Pattern INFO_PATTERN = Pattern.compile(".*" + INFO + ".*");
 
-  private static Pattern ourCustomPattern = null;
-
   @NonNls public final static Pattern EXCEPTION_PATTERN = Pattern.compile(".*at .*");
 
-  private final List<FilterListener> myListeners = new ArrayList<FilterListener>();
+  private final List<LogFilterListener> myListeners = new ArrayList<LogFilterListener>();
   private static final Logger LOG = Logger.getInstance("#" + LogConsolePreferences.class.getName());
 
   public static LogConsolePreferences getInstance(Project project) {
@@ -71,38 +68,11 @@ public class LogConsolePreferences extends LogFilterRegistrar {
 
   public void updateCustomFilter(String customFilter) {
     CUSTOM_FILTER = customFilter;
-    ourCustomPattern = null;
     fireStateChanged();
   }
 
-  @Nullable
-  private Pattern getCustomPattern() {
-    if (ourCustomPattern == null && CUSTOM_FILTER != null) {
-      final StringBuilder buf = StringBuilderSpinAllocator.alloc();
-      try {
-        for (int i = 0; i < CUSTOM_FILTER.length(); i++) {
-          final char c = CUSTOM_FILTER.charAt(i);
-          if (Character.isLetterOrDigit(c)) {
-            buf.append(Character.toUpperCase(c));
-          }
-          else {
-            buf.append("\\").append(c);
-          }
-        }
-        ourCustomPattern = Pattern.compile(".*" + buf + ".*");
-      }
-      finally {
-        StringBuilderSpinAllocator.dispose(buf);
-      }
-    }
-    return ourCustomPattern;
-  }
 
   public boolean isApplicable(@NotNull String text, String prevType, boolean checkStandartFilters) {
-    if (CUSTOM_FILTER != null) {
-      final Pattern pattern = getCustomPattern();
-      if (pattern != null && !pattern.matcher(text.toUpperCase()).matches()) return false;
-    }
     for (LogFilter filter : myRegisteredLogFilters.keySet()) {
       if (myRegisteredLogFilters.get(filter).booleanValue() && !filter.isAcceptable(text)) return false;
     }
@@ -220,28 +190,23 @@ public class LogConsolePreferences extends LogFilterRegistrar {
   }
 
   private void fireStateChanged(final LogFilter filter) {
-    for (FilterListener listener : myListeners) {
+    for (LogFilterListener listener : myListeners) {
       listener.onFilterStateChange(filter);
     }
   }
 
   private void fireStateChanged() {
-    for (FilterListener listener : myListeners) {
+    for (LogFilterListener listener : myListeners) {
       listener.onTextFilterChange();
     }
   }
 
-  public void addFilterListener(FilterListener l) {
+  public void addFilterListener(LogFilterListener l) {
     myListeners.add(l);
   }
 
-  public void removeFilterListener(FilterListener l) {
+  public void removeFilterListener(LogFilterListener l) {
     myListeners.remove(l);
   }
 
-  public interface FilterListener {
-    void onFilterStateChange(LogFilter filter);
-
-    void onTextFilterChange();
-  }
 }
