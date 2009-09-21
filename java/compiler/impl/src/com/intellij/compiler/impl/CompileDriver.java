@@ -423,7 +423,16 @@ public class CompileDriver {
     }
     catch (Throwable ex) {
       wereExceptions = true;
-      PluginId pluginId = IdeErrorsDialog.findPluginId(ex);
+      final PluginId pluginId = IdeErrorsDialog.findPluginId(ex);
+
+      final StringBuffer message = new StringBuffer();
+      message.append("Internal error");
+      if (pluginId != null) {
+        message.append(" (Plugin: ").append(pluginId).append(")");
+      }
+      message.append(": ").append(ex.getMessage());
+      compileContext.addMessage(CompilerMessageCategory.ERROR, message.toString(), null, -1, -1);
+      
       if (pluginId != null) {
         throw new PluginException(ex, pluginId);
       }
