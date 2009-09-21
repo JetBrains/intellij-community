@@ -73,6 +73,11 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
       return new ArrayList<TreeStructureProvider>();
     }
 
-    return DumbService.getInstance(myProject).filterByDumbAwareness(getProviders());
+    final List<TreeStructureProvider> providers = getProviders();
+    if (providers == null) {
+      return null;
+    }
+
+    return DumbService.getInstance(myProject).filterByDumbAwareness(providers);
   }
 }

@@ -15,6 +15,7 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -94,7 +95,7 @@ public abstract class DumbService {
     return INSTANCE_KEY.getValue(project);
   }
 
-  public <T> List<T> filterByDumbAwareness(Collection<T> collection) {
+  public <T> List<T> filterByDumbAwareness(@Nullable Collection<T> collection) {
     if (isDumb()) {
       final ArrayList<T> result = new ArrayList<T>(collection);
       for (Iterator<T> iterator = result.iterator(); iterator.hasNext();) {
