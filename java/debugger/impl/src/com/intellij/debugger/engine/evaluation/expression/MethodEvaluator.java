@@ -66,21 +66,11 @@ public class MethodEvaluator implements Evaluator {
 
       if(object instanceof ObjectReference) {
         final ReferenceType qualifierType = ((ObjectReference)object).referenceType();
-        //if (className != null) {
-        //  referenceType = (ReferenceType)DebuggerUtilsEx.getSuperType(qualifierType, className);
-        //}
-        //else {
-          referenceType = debugProcess.findClass(context, qualifierType.name(), qualifierType.classLoader());
-        //}
+        referenceType = debugProcess.findClass(context, qualifierType.name(), qualifierType.classLoader());
       }
       else if(object instanceof ClassType) {
         final ClassType qualifierType = (ClassType)object;
-        //if (className != null) {
-        //  referenceType = (ReferenceType)DebuggerUtilsEx.getSuperType(qualifierType, className);
-        //}
-        //else {
-          referenceType = debugProcess.findClass(context, qualifierType.name(), context.getClassLoader());
-        //}
+        referenceType = debugProcess.findClass(context, qualifierType.name(), context.getClassLoader());
       }
       else {
         final String className = myClassName != null? myClassName.getName(debugProcess) : null;
@@ -112,9 +102,13 @@ public class MethodEvaluator implements Evaluator {
         }
         throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.no.static.method", methodName));
       }
-      // object should be ObjectReference
-      ObjectReference objRef = (ObjectReference)object;
-      Method jdiMethod = DebuggerUtilsEx.findMethod(referenceType, myMethodName, signature);
+      // object should be an ObjectReference
+      final ObjectReference objRef = (ObjectReference)object;
+      ReferenceType _refType = referenceType;
+      if (requiresSuperObject && (referenceType instanceof ClassType)) {
+        _refType = ((ClassType)referenceType).superclass();
+      }
+      final Method jdiMethod = DebuggerUtilsEx.findMethod(_refType, myMethodName, signature);
       if (jdiMethod == null) {
         throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.no.instance.method", methodName));
       }
