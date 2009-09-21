@@ -9,11 +9,13 @@ import com.intellij.lang.Language;
 import com.intellij.lang.refactoring.InlineActionHandler;
 import com.intellij.lang.refactoring.InlineHandlers;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.inline.InlineRefactoringActionHandler;
+import org.jetbrains.annotations.Nullable;
 
 public class InlineAction extends BaseRefactoringAction {
 
@@ -23,20 +25,22 @@ public class InlineAction extends BaseRefactoringAction {
 
   @Override
   protected boolean isAvailableOnElementInEditor(PsiElement element, Editor editor) {
-    return hasInlineActionHandler(element);
+    return hasInlineActionHandler(element, PsiUtilBase.getLanguageInEditor(editor, element.getProject()));
   }
 
   public boolean isEnabledOnElements(PsiElement[] elements) {
-    return elements.length == 1 && hasInlineActionHandler(elements [0]);
+    return elements.length == 1 && hasInlineActionHandler(elements [0], null);
   }
 
-  private static boolean hasInlineActionHandler(PsiElement element) {
+  private static boolean hasInlineActionHandler(PsiElement element, @Nullable Language editorLanguage) {
     for(InlineActionHandler handler: Extensions.getExtensions(InlineActionHandler.EP_NAME)) {
       if (handler.isEnabledOnElement(element)) {
         return true;
       }
     }
-    return false;
+    return InlineHandlers.getInlineHandlers(
+      editorLanguage != null ? editorLanguage :element.getLanguage()
+    ).size() > 0;
   }
 
   public RefactoringActionHandler getHandler(DataContext dataContext) {
