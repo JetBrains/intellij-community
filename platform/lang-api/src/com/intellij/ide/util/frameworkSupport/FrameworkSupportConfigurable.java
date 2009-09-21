@@ -24,8 +24,7 @@ public abstract class FrameworkSupportConfigurable {
 
   public abstract void addSupport(@NotNull Module module, @NotNull ModifiableRootModel model, final @Nullable Library library);
 
-
-  @Nullable
+  @SuppressWarnings({"ConstantConditions"})
   public FrameworkVersion getSelectedVersion() {
     return null;
   }

@@ -4,18 +4,18 @@
 
 package com.intellij.ide.util.newProjectWizard;
 
-import com.intellij.facet.ui.FacetBasedFrameworkSupportProvider;
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionOptionsPanel;
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
 import com.intellij.facet.impl.ui.libraries.LibraryDownloadingMirrorsMap;
+import com.intellij.facet.ui.FacetBasedFrameworkSupportProvider;
 import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
 import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.facet.ui.libraries.RemoteRepositoryInfo;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurableListener;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelImpl;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
-import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurableListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -28,8 +28,9 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.CheckedTreeNode;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.TitledSeparator;
+import com.intellij.ui.SeparatorFactory;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
@@ -154,7 +155,10 @@ public class AddSupportForFrameworksPanel {
     final String id = node.getProvider().getId();
     if (!myInitializedOptionsPanelIds.contains(id)) {
       final JPanel optionsPanel = new JPanel(new VerticalFlowLayout());
-      optionsPanel.add(new TitledSeparator(node.getTitle() + " Settings"));
+      JComponent separator = SeparatorFactory.createSeparator(node.getTitle() + " Settings", null);
+      separator.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 5, 5));
+
+      optionsPanel.add(separator);
       final FrameworkSupportConfigurable configurable = node.getConfigurable();
       optionsPanel.add(configurable.getComponent());
       final JPanel librariesOptionsPanelWrapper = new JPanel(new BorderLayout());
