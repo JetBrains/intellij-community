@@ -19,6 +19,7 @@ package org.intellij.lang.xpath.xslt.impl.references;
 import org.intellij.lang.xpath.completion.NamespaceLookup;
 import org.intellij.lang.xpath.psi.impl.ResolveUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.lang.xpath.xslt.impl.XsltChecker;
 import org.intellij.lang.xpath.xslt.context.XsltNamespaceContext;
 import org.intellij.lang.xpath.xslt.psi.impl.ImplicitModeElement;
 import org.intellij.lang.xpath.xslt.util.MatchTemplateMatcher;
@@ -44,7 +45,16 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
 
     public ModeReference(XmlAttribute attribute, boolean isDeclaration) {
         super(attribute);
-        myIsDeclaration = isDeclaration;
+        if (isDeclaration) {
+            myIsDeclaration = true;
+        } else {
+            final PsiFile file = attribute.getContainingFile();
+            if (file != null && XsltSupport.getXsltSupportLevel(file) == XsltChecker.SupportLevel.PARTIAL) {
+                myIsDeclaration = "#current".equals(attribute.getValue());
+            } else {
+                myIsDeclaration = false;
+            }
+        }
         myImplicitModeElement = new ImplicitModeElement(attribute);
     }
 
@@ -107,6 +117,17 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
 
     public static PsiReference[] create(XmlAttribute attribute, boolean isDeclaration) {
         final String value = attribute.getValue();
+        if (value == null) {
+            return PsiReference.EMPTY_ARRAY;
+        }
+        if (value.trim().indexOf(' ') != -1) {
+            // TODO: fix for xslt 2.0
+            return PsiReference.EMPTY_ARRAY;
+        }
+        return createImpl(attribute, isDeclaration, value);
+    }
+
+    private static PsiReference[] createImpl(XmlAttribute attribute, boolean isDeclaration, String value) {
         final int p = value.indexOf(':');
         if (p == -1) {
             return new PsiReference[]{ new ModeReference(attribute, isDeclaration) };

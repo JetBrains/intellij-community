@@ -38,6 +38,10 @@ public class XsltHighlightingTest extends TestBase {
         doXsltHighlighting();
     }
 
+    public void testCurrentModeXslt2() throws Throwable {
+        doXsltHighlighting();
+    }
+
     public void testUndeclaredParam() throws Throwable {
         doXsltHighlighting();
     }
