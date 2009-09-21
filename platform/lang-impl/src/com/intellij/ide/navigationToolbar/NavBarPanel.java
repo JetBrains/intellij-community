@@ -61,6 +61,7 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupOwner;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Alarm;
+import com.intellij.util.Icons;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
@@ -278,6 +279,16 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     }
 
     myModel.updateModel(context);
+  }
+
+  @Override
+  public Dimension getPreferredSize() {
+    if (!myList.isEmpty()) {
+      return super.getPreferredSize();
+    }
+    else {
+      return new MyItemLabel(0, Icons.DIRECTORY_OPEN_ICON, "Sample", SimpleTextAttributes.REGULAR_ATTRIBUTES).getPreferredSize();
+    }
   }
 
   private void updateList() {
@@ -828,11 +839,6 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
         return false;
       }
     });
-  }
-
-  @Override
-  public void paint(Graphics g) {
-    super.paint(g);
   }
 
   protected class MyItemLabel extends SimpleColoredComponent {
