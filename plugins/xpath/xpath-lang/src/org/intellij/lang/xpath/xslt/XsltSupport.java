@@ -105,9 +105,10 @@ public class XsltSupport {
             final String tagName = attribute.getParent().getLocalName();
             final String s = XPATH_ATTR_MAP.get(name);
             //noinspection StringEquality
-            if (s == "" || tagName.equals(s)) return true;
-            if (!isAttributeValueTemplate(attribute, true)) {
-                return false;
+            if (s != "" && !tagName.equals(s)) {
+                if (!isAttributeValueTemplate(attribute, true)) {
+                    return false;
+                }
             }
         } else {
             if (!isAttributeValueTemplate(attribute, false)) {
