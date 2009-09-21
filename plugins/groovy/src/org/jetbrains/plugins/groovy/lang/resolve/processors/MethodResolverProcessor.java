@@ -15,6 +15,7 @@
 
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
@@ -42,6 +43,7 @@ import java.util.*;
  * @author ven
  */
 public class MethodResolverProcessor extends ResolverProcessor {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor");
   private final PsiType myThisType;
   @Nullable
   private PsiType[] myArgumentTypes;
@@ -114,6 +116,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
         argTypes = newArgTypes;
 
         method = ((GrGdkMethod) method).getStaticMethod();
+        LOG.assertTrue(method.isValid());
       }
       return inferMethodTypeParameters(method, substitutor, typeParameters, argTypes);
     }
