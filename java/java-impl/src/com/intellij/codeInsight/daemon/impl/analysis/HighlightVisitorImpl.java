@@ -674,7 +674,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override public void visitReferenceElement(PsiJavaCodeReferenceElement ref) {
-    JavaResolveResult result = ref.advancedResolve(true);
+    JavaResolveResult result = null;
+    try {
+      result = ref.advancedResolve(true);
+    }
+    catch (IndexNotReadyException e) {
+      return;
+    }
     PsiElement resolved = result.getElement();
     PsiElement parent = ref.getParent();
     if (myRefCountHolder != null) {
@@ -726,7 +732,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       visitExpression(expression);
       if (myHolder.hasErrorResults()) return;
     }
-    JavaResolveResult result = expression.advancedResolve(false);
+    JavaResolveResult result = null;
+    try {
+      result = expression.advancedResolve(false);
+    }
+    catch (IndexNotReadyException e) {
+      return;
+    }
     PsiElement resolved = result.getElement();
     if (resolved instanceof PsiVariable && resolved.getContainingFile() == expression.getContainingFile()) {
       if (!myHolder.hasErrorResults()) {
