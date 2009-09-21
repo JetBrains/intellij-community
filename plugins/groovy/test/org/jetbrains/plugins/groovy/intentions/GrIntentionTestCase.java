@@ -26,20 +26,6 @@ import java.util.List;
  * @author Maxim.Medvedev
  */
 public abstract class GrIntentionTestCase extends LightCodeInsightFixtureTestCase {
-  /*@NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return new DefaultLightProjectDescriptor() {
-      @Override
-      public void configureModule(Module module, ModifiableRootModel model) {
-        final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary("GROOVY").getModifiableModel();
-        final VirtualFile groovyJar = JarFileSystem.getInstance().refreshAndFindFileByPath(TestUtils.getMockGroovy1_7LibraryName() + "!/");
-        modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES);
-        modifiableModel.commit();
-      }
-    };
-  }*/
-
   protected void doTest(String hint, boolean intentionExists) throws Exception {
     myFixture.configureByFile(getTestName(false) + ".groovy");
     final List<IntentionAction> list = myFixture.filterAvailableIntentions(hint);

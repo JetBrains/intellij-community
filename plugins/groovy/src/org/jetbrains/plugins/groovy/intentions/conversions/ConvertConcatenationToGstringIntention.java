@@ -87,13 +87,13 @@ public class ConvertConcatenationToGstringIntention extends Intention {
     else if (operand instanceof GrLiteral) {
       final String text = operand.getText();
       if (text.startsWith("\"\"\"") || text.startsWith("'''")) {
-        builder.append(text.substring(3, text.length() - 3));
-        return true;
+        escape(text.substring(3, text.length() - 3), builder);
+        return text.contains("\n");
       }
       if (text.startsWith("\"") || text.startsWith("'") || text.startsWith("/")) {
-        builder.append(text.substring(1, text.length() - 1));
+        escape(text.substring(1, text.length() - 1), builder);
         return false;
-      }      
+      }
       builder.append(text);
       return false;
     }
@@ -150,6 +150,25 @@ public class ConvertConcatenationToGstringIntention extends Intention {
         element = ((GrParenthesizedExpression)element).getOperand();
       }
       return element;
+    }
+  }
+
+  private static void escape(String s, StringBuilder b) {
+    final char[] chars = s.toCharArray();
+    final int len = chars.length - 1;
+    int i;
+    for (i = 0; i < len; i++) {
+      if (chars[i] == '\\' && chars[i + 1] == '\'') {
+        b.append('\'');
+        i += 1;
+        continue;
+      }
+      if (chars[i] == '"' || chars[i] == '$') b.append('\\');
+      b.append(chars[i]);
+    }
+    if (i == len) {
+      if (chars[i] == '"') b.append('\\');
+      b.append(chars[i]);
     }
   }
 

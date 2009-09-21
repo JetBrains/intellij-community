@@ -16,15 +16,49 @@
 
 package org.jetbrains.plugins.groovy.intentions;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.util.TestUtils;
+
 /**
  * @author Maxim.Medvedev
  */
-public class ConvertConcatenationToGstringTest extends GrIntentionTestCase{
+public class ConvertConcatenationToGstringTest extends GrIntentionTestCase {
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return new DefaultLightProjectDescriptor() {
+      @Override
+      public void configureModule(Module module, ModifiableRootModel model) {
+        final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary("GROOVY").getModifiableModel();
+        final VirtualFile groovyJar = JarFileSystem.getInstance().refreshAndFindFileByPath(TestUtils.getMockGroovy1_7LibraryName() + "!/");
+        modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES);
+        modifiableModel.commit();
+      }
+    };
+  }
+
   @Override
   protected String getBasePath() {
     return "/svnPlugins/groovy/testdata/intentions/convertConcatenationToGstring/";
   }
-  public void testSimpleCase() throws Exception {doTest("Convert to GString", true); }
-  //todo fix
-  public void _testVeryComplicatedCase() throws Exception {doTest("Convert to GString", true); }
+
+  public void testSimpleCase() throws Exception {
+    doTest("Convert concatenation to GString", true);
+  }
+
+  public void testVeryComplicatedCase() throws Exception {
+    doTest("Convert concatenation to GString", true);
+  }
+
+  public void testQuotes() throws Exception {
+    doTest("Convert concatenation to GString", true);
+  }
 }
