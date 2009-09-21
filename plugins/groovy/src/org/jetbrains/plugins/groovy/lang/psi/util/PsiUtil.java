@@ -358,6 +358,7 @@ public class PsiUtil {
     }
   }
 
+  private static final Key<Boolean> SHORTENING = Key.create("SHORTENING");
   public static void shortenReference(GrCodeReferenceElement ref) {
     if (ref.getQualifier() != null &&
         (PsiTreeUtil.getParentOfType(ref, GrDocMemberReference.class) != null ||
@@ -366,12 +367,21 @@ public class PsiUtil {
          PsiTreeUtil.getParentOfType(ref, GroovyCodeFragment.class) == null) {
       final PsiElement resolved = ref.resolve();
       if (resolved instanceof PsiClass && mayShorten(ref)) {
+        if (ref.getUserData(SHORTENING) != null) {
+          LOG.error("Endless shortening. Ref=" + ref.getText() + "; parent=" + ref.getParent());
+          return;
+        }
+
         ref.setQualifier(null);
+        ref.putUserData(SHORTENING, Boolean.TRUE);
         try {
           ref.bindToElement(resolved);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
+        }
+        finally {
+          ref.putUserData(SHORTENING, null);
         }
       }
     }
