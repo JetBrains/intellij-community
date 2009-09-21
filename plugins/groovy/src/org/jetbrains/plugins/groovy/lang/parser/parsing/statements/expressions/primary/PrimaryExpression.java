@@ -164,7 +164,9 @@ public class PrimaryExpression implements GroovyElementTypes {
       PsiBuilder.Marker forArray = builder.mark();
       while (ParserUtils.getToken(builder, mLBRACK)) {
         ParserUtils.getToken(builder, mNLS);
-        AssignmentExpression.parse(builder, parser);
+        if (!AssignmentExpression.parse(builder, parser)) {
+          builder.error(GroovyBundle.message("expression.expected"));
+        }
         ParserUtils.getToken(builder, mNLS);
         ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected"));
       }
