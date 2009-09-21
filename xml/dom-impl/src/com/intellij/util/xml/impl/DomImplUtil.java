@@ -131,6 +131,7 @@ public class DomImplUtil {
   }
 
   private static boolean isNameSuitable(final EvaluatedXmlName evaluatedXmlName, final XmlTag tag, final XmlFile file) {
+    LOG.assertTrue(tag.isValid());
     return isNameSuitable(evaluatedXmlName, tag.getLocalName(), tag.getName(), tag.getNamespace(), file);
   }
 
