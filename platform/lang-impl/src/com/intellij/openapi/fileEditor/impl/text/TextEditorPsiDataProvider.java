@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.EditorDataProvider;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
@@ -100,7 +101,12 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
     final PsiFile psiFile = getPsiFile(editor, file);
     if (psiFile == null) return null;
 
-    return TargetElementUtilBase.findTargetElement(editor, TargetElementUtilBase.getInstance().getReferenceSearchFlags());
+    try {
+      return TargetElementUtilBase.findTargetElement(editor, TargetElementUtilBase.getInstance().getReferenceSearchFlags());
+    }
+    catch (IndexNotReadyException e) {
+      return null;
+    }
   }
 
   private static PsiFile getPsiFile(Editor e, VirtualFile file) {
