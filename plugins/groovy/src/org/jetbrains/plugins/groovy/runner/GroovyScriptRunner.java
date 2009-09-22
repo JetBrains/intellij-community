@@ -4,20 +4,24 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.Project;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.LinkedHashSet;
 import java.util.regex.Pattern;
 
 /**
@@ -91,12 +95,32 @@ public abstract class GroovyScriptRunner {
     }
 
     final JavaParameters tmp = new JavaParameters();
-    tmp.configureByModule(module, isTests ? JavaParameters.JDK_AND_CLASSES_AND_TESTS : JavaParameters.JDK_AND_CLASSES);
-    StringBuffer buffer = RunnerUtil.getClearClassPathString(tmp, module);
-    if (buffer.length() > 0) {
-      params.getProgramParametersList().add("--classpath");
-      params.getProgramParametersList().add(buffer.toString());
+    tmp.configureByModule(module, isTests ? JavaParameters.CLASSES_AND_TESTS : JavaParameters.CLASSES_ONLY);
+    if (tmp.getClassPath().getVirtualFiles().isEmpty()) {
+      return;
     }
+
+
+    final boolean embeddable =
+      LibrariesUtil.isEmbeddableDistribution(ModuleRootManager.getInstance(module).getFiles(OrderRootType.CLASSES));
+    if (embeddable) {
+      params.getProgramParametersList().add("--classpath");
+      params.getProgramParametersList().add(tmp.getClassPath().getPathsString());
+      return;
+    }
+
+    final LinkedHashSet<String> pathList = new LinkedHashSet<String>(tmp.getClassPath().getPathList());
+    for (Library library : GroovyConfigUtils.getInstance().getSDKLibrariesByModule(module)) {
+      for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
+        pathList.remove(file.getPresentableUrl());
+      }
+    }
+    if (pathList.isEmpty()) {
+      return;
+    }
+
+    params.getProgramParametersList().add("--classpath");
+    params.getProgramParametersList().add(StringUtil.join(pathList, File.pathSeparator));
   }
 
 }
