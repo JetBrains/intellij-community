@@ -1,21 +1,5 @@
 <idea-plugin>
-  <name>Regular Expression Support</name>
-  <id>RegExpLanguage</id>
-
-  <description>
-    Regular Expression Language implementation with full java.util.regex.Pattern syntax support,
-    detailed on-the-fly error highlighting, completion, some intention actions and more.
-  </description>
-
-  <version>8.0</version>
-  <vendor>Sascha Weinreuter</vendor>
-  <idea-version since-build="6656"/>
-
-  <depends>com.intellij.modules.xml</depends>
-
   <extensions defaultExtensionNs="com.intellij">
-    <errorHandler implementation="com.intellij.diagnostic.ITNReporter" />
-
     <lang.documentationProvider language="RegExp" implementationClass="org.intellij.lang.regexp.RegExpDocumentationProvider"/>
     <completion.contributor language="RegExp" implementationClass="org.intellij.lang.regexp.RegExpCompletionContributor"/>
     <fileTypeFactory implementation="org.intellij.lang.regexp.RegExpSupportLoader" />
