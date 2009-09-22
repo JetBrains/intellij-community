@@ -87,7 +87,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
                                     final List<VirtualFile> toCompile,
                                     boolean forStubs,
                                     VirtualFile outputDir,
-                                    OutputSink sink) {
+                                    OutputSink sink, boolean tests) {
     GeneralCommandLine commandLine = new GeneralCommandLine();
     final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
     assert sdk != null; //verified before
@@ -133,7 +133,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
 
     try {
       File fileWithParameters = File.createTempFile("toCompile", "");
-      fillFileWithGroovycParameters(module, toCompile, fileWithParameters, compileContext, outputDir, patchers);
+      fillFileWithGroovycParameters(module, toCompile, fileWithParameters, compileContext, outputDir, patchers, tests);
 
       commandLine.addParameter(forStubs ? "stubs" : "groovyc");
       commandLine.addParameter(fileWithParameters.getPath());
@@ -225,7 +225,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
   }
 
   private void fillFileWithGroovycParameters(Module module, List<VirtualFile> virtualFiles, File f, CompileContext context,
-                                             VirtualFile outputDir, final List<String> patchers) {
+                                             VirtualFile outputDir, final List<String> patchers, boolean tests) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Running groovyc on: " + virtualFiles.toString());
     }
@@ -259,7 +259,12 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
 
     printer.println(GroovycRunner.CLASSPATH);
     final ModuleChunk chunk = createChunk(module, context);
-    printer.println(chunk.getCompilationClasspath() + File.pathSeparator + CompilerPaths.getModuleOutputPath(module, false) + File.pathSeparator + CompilerPaths.getModuleOutputPath(module, true));
+    StringBuilder compileClasspath = new StringBuilder(chunk.getCompilationClasspath());
+    appendOutputPath(module, compileClasspath, false);
+    if (tests) {
+      appendOutputPath(module, compileClasspath, true);
+    }
+    printer.println(compileClasspath.toString());
 
     if (!patchers.isEmpty()) {
       printer.println(GroovycRunner.PATCHERS);
@@ -279,6 +284,14 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     printer.println(GroovycRunner.OUTPUTPATH);
     printer.println(PathUtil.getLocalPath(outputDir));
     printer.close();
+  }
+
+  private static void appendOutputPath(Module module, StringBuilder compileClasspath, final boolean forTestClasses) {
+    String output = CompilerPaths.getModuleOutputPath(module, forTestClasses);
+    if (output != null) {
+      compileClasspath.append(File.pathSeparator);
+      compileClasspath.append(FileUtil.toSystemDependentName(output));
+    }
   }
 
   private static ModuleChunk createChunk(Module module, CompileContext context) {
@@ -313,10 +326,10 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
         }
 
         if (!toCompile.isEmpty()) {
-          compileFiles(compileContext, module, toCompile, compileContext.getModuleOutputDirectory(module), sink);
+          compileFiles(compileContext, module, toCompile, compileContext.getModuleOutputDirectory(module), sink, false);
         }
         if (!toCompileTests.isEmpty()) {
-          compileFiles(compileContext, module, toCompileTests, compileContext.getModuleOutputDirectoryForTests(module), sink);
+          compileFiles(compileContext, module, toCompileTests, compileContext.getModuleOutputDirectoryForTests(module), sink, true);
         }
 
       }
@@ -326,7 +339,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
   protected abstract void compileFiles(CompileContext compileContext, Module module,
                                        List<VirtualFile> toCompile,
                                        VirtualFile outputDir,
-                                       OutputSink sink);
+                                       OutputSink sink, boolean tests);
 
   public boolean isCompilableFile(VirtualFile file, CompileContext context) {
     final boolean result = GroovyFileType.GROOVY_FILE_TYPE.equals(file.getFileType());

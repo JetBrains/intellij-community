@@ -80,7 +80,7 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
 
   @Override
   protected void compileFiles(CompileContext compileContext, Module module,
-                              final List<VirtualFile> toCompile, VirtualFile outputDir, OutputSink sink) {
+                              final List<VirtualFile> toCompile, VirtualFile outputDir, OutputSink sink, boolean tests) {
     boolean hasGroovy = false;
     boolean hasJava = false;
     for (final VirtualFile file : toCompile) {
@@ -109,9 +109,9 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
     assert tempOutput != null;
     cleanDirectory(tempOutput);
 
-    ((CompileContextEx)compileContext).assignModule(tempOutput, module, false);
+    ((CompileContextEx)compileContext).assignModule(tempOutput, module, tests);
 
-    runGroovycCompiler(compileContext, module, toCompile, true, tempOutput, sink);
+    runGroovycCompiler(compileContext, module, toCompile, true, tempOutput, sink, tests);
   }
 
   private VirtualFile createMockJavaFile(final String rootPath) {
