@@ -23,7 +23,7 @@ public class ExtractMethodObjectWithMultipleExitPointsTest extends LightCodeInsi
   }
 
   private void doTest(boolean createInnerClass) throws Exception {
-    final String testName = getTestName(true);
+    final String testName = getTestName(false);
     configureByFile("/refactoring/extractMethodObject/multipleExitPoints/" + testName + ".java");
     int startOffset = myEditor.getSelectionModel().getSelectionStart();
     int endOffset = myEditor.getSelectionModel().getSelectionEnd();
