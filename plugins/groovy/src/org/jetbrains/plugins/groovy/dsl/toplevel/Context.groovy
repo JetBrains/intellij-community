@@ -7,16 +7,17 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiType
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClosureScope
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ScriptScope
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
-import org.jetbrains.plugins.groovy.GroovyFileType
 
 /**
  * @author ilyas
@@ -27,10 +28,21 @@ class Context {
 
   public Context(Map args) {
     // Basic filter, all contexts are applicable for reference expressions only
-    myFilters << {PsiElement elem ->
-      elem instanceof GrReferenceExpression
+    myFilters << {PsiElement elem, fqn ->
+    elem instanceof GrReferenceExpression
     }
     init(args)
+  }
+
+  Closure getClassTypeFilter(ctype) {
+    return {GrReferenceExpression ref, String fqn ->
+      PsiManager manager = PsiManager.getInstance(ref.getProject())
+      def scope = GlobalSearchScope.allScope(ref.getProject())
+      PsiType superType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName(ctype, scope)
+      if (!superType) return false
+      def type = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName(fqn, scope)
+      return type && superType?.isAssignableFrom(type) && type.isAssignableFrom(superType)
+    }
   }
 
   /**
@@ -42,33 +54,26 @@ class Context {
 
     // ctype : <ctype>
     // Qualifier type to be augmented
-    if (args.ctype) addFilter {GrReferenceExpression ref ->
-      PsiManager manager = PsiManager.getInstance(ref.getProject())
-      def scope = GlobalSearchScope.allScope(ref.getProject())
-      PsiType superType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName(args.ctype, scope)
-      def qual = ref.getQualifier()
-      if (qual instanceof GrExpression) {
-        final expr = (GrExpression) qual;
-        def type = expr.getType()
-        return type && superType?.isAssignableFrom(type)
-      } else false
+    if (args.ctype) {
+      addFilter getClassTypeFilter(args.ctype)
     }
 
     // filetypes : [<file_ext>*]
     if (args.filetypes && args.filetypes instanceof List) {
-      addFilter {PsiElement elem ->
+      addFilter {PsiElement elem, fqn ->
         def file = elem.getContainingFile()
         if (!file) return false
-        def vFile = file.getVirtualFile()
-        if (!vFile) return false
-        def ext = vFile.getExtension()
+        final def name = file.getName()
+        final def idx = name.lastIndexOf(".")
+        if (idx < 0) return false;
+        def ext = name.substring(idx + 1)
         for (ft in args.filetypes) {
           if (ft && StringUtil.trimStart(ft, ".").equals(ext)) return true
         }
         return false
       }
     } else {
-      addFilter {PsiElement elem -> elem?.getContainingFile()?.getFileType() instanceof GroovyFileType}
+      addFilter {PsiElement elem, fqn -> elem?.getContainingFile()?.getFileType() instanceof GroovyFileType}
     }
 
     // scope: <scope>
@@ -78,7 +83,7 @@ class Context {
     // handling script scope
       case org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ScriptScope:
         def scope = (ScriptScope) args.scope
-        addFilter {PsiElement elem ->
+        addFilter {PsiElement elem, fqn ->
           def parent = PsiTreeUtil.getParentOfType(elem, GrTypeDefinition.class, GroovyFile.class)
           if (parent instanceof GroovyFile && ((GroovyFile) parent).isScript()) {
             return ((GroovyFile) parent).getName().matches(scope.getName())
@@ -86,10 +91,10 @@ class Context {
           return false
         }
         // Name matcher
-        addFilter {PsiElement elem -> elem.getContainingFile().getName().matches(scope.getName())}
+        addFilter {PsiElement elem, fqn -> elem.getContainingFile().getName().matches(scope.getName())}
         // Process unqualified references only
         if (!args.ctype) {
-          addFilter {GrReferenceExpression elem -> !elem.getQualifierExpression()}
+          addFilter getClassTypeFilter(GroovyFileBase.SCRIPT_BASE_CLASS_NAME)
         }
 
         break
@@ -98,11 +103,11 @@ class Context {
       case org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClosureScope:
         // Enhance only unqualified expressions
         if (!args.ctype) {
-          addFilter {GrReferenceExpression elem -> !elem.getQualifierExpression()}
+          addFilter getClassTypeFilter("groovy.lang.Closure")
         }
 
         // Enhance closure contexts only
-        addFilter {GrReferenceExpression elem ->
+        addFilter {GrReferenceExpression elem , fqn ->
           def closParent = PsiTreeUtil.getParentOfType(elem, GrClosableBlock.class)
           if (closParent == null) return false
           def scope = (ClosureScope) args.scope
@@ -137,9 +142,9 @@ class Context {
   /**
    * Check all available filters
    */
-  boolean isApplicable(PsiElement place) {
+  boolean isApplicable(PsiElement place, String fqn) {
     for (f in myFilters) {
-      if (!f(place)) return false
+      if (!f(place, fqn)) return false
     }
     return true
   }

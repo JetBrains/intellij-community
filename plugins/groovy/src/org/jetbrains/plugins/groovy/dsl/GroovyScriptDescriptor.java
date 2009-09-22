@@ -17,6 +17,11 @@ public class GroovyScriptDescriptor extends GroovyClassDescriptor implements Scr
     myFile = file;
   }
 
+  @Override
+  public String getQualifiedName() {
+    return "groovy.lang.Script";
+  }
+
   @Nullable
   public String getExtension() {
     return myFile.getViewProvider().getVirtualFile().getExtension();

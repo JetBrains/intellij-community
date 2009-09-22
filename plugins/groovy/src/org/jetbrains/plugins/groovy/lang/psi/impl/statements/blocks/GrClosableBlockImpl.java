@@ -61,10 +61,13 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     visitor.visitClosure(this);
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
     if (lastParent == null) return true;
 
-    if (processor instanceof ResolverProcessor) ((ResolverProcessor) processor).setCurrentFileResolveContext(this);
+    if (processor instanceof ResolverProcessor) ((ResolverProcessor)processor).setCurrentFileResolveContext(this);
     try {
       if (!super.processDeclarations(processor, state, lastParent, place)) return false;
 
@@ -79,11 +82,18 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
       if (!ResolveUtil.processElement(processor, getOwner())) return false;
 
       final PsiClass closureClass = JavaPsiFacade.getInstance(getProject()).findClass(GROOVY_LANG_CLOSURE, getResolveScope());
-      if (closureClass != null && !closureClass.processDeclarations(processor, state, lastParent, place)) return false;
+      if (closureClass != null) {
+        if (!closureClass.processDeclarations(processor, state, lastParent, place)) return false;
+
+        // Process non-code in closures
+        PsiType clType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(closureClass, PsiSubstitutor.EMPTY);
+        if (!ResolveUtil.processNonCodeMethods(clType, processor, getProject(), place, true)) return false;
+      }
 
       return true;
-    } finally {
-      if (processor instanceof ResolverProcessor) ((ResolverProcessor) processor).setCurrentFileResolveContext(null);
+    }
+    finally {
+      if (processor instanceof ResolverProcessor) ((ResolverProcessor)processor).setCurrentFileResolveContext(null);
     }
   }
 
@@ -154,11 +164,13 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
       final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
       PsiType type = null;
       if (context instanceof GrTypeDefinition) {
-        type = factory.createType((PsiClass) context);
-      } else if (context instanceof GrClosableBlock) {
-        type = GrClosureType.create((GrClosableBlock) context);
-      } else if (context instanceof GroovyFile) {
-        final PsiClass scriptClass = ((GroovyFile) context).getScriptClass();
+        type = factory.createType((PsiClass)context);
+      }
+      else if (context instanceof GrClosableBlock) {
+        type = GrClosureType.create((GrClosableBlock)context);
+      }
+      else if (context instanceof GroovyFile) {
+        final PsiClass scriptClass = ((GroovyFile)context).getScriptClass();
         if (scriptClass != null && GroovyNamesUtil.isIdentifier(scriptClass.getName())) type = factory.createType(scriptClass);
       }
       if (type == null) {

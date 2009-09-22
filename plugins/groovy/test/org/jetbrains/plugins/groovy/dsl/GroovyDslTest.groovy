@@ -15,13 +15,16 @@
  */
 package org.jetbrains.plugins.groovy.dsl;
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import com.intellij.psi.PsiFile;
+
+import com.intellij.psi.PsiFile
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
+import org.jetbrains.plugins.groovy.lang.completion.CompletionTestBase
+import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author peter
  */
-public class GroovyDslTest extends LightCodeInsightFixtureTestCase {
+public class GroovyDslTest extends CompletionTestBase {
 
   @Override
   protected String getBasePath() {
@@ -34,15 +37,13 @@ public class GroovyDslTest extends LightCodeInsightFixtureTestCase {
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy")
   }
 
-  private void doTest() throws Throwable {
+  public void doTest() throws Throwable {
     myFixture.testCompletion(getTestName(false) + ".gdsl", getTestName(false) + "_after.gdsl")
   }
 
-  /*
   public void testCompleteMethod() throws Throwable { doTest() }
 
   public void testCompleteProperty() throws Throwable { doTest() }
-  */
 
   public void testCompleteClassMethod() throws Throwable {
     doCustomTest("""
@@ -79,4 +80,10 @@ public class GroovyDslTest extends LightCodeInsightFixtureTestCase {
       })
 """)
   }
+
+  @Override
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
+    moduleBuilder.addLibraryJars("GROOVY", TestUtils.getMockGroovyLibraryHome(), TestUtils.GROOVY_JAR);
+  }
+
 }

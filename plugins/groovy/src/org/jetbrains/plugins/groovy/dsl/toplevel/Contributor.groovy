@@ -16,7 +16,7 @@ class Contributor {
     whatToDo = cl
   }
 
-  def getApplyFunction(delegate, PsiElement place) {
+  def getApplyFunction(delegate, PsiElement place, String fqn) {
     def f = whatToDo.clone()
 
     f.delegate = delegate
@@ -32,7 +32,7 @@ class Contributor {
     return {
       myContexts.each {Context ctx ->
         try {
-          if (ctx.isApplicable(place)) {
+          if (ctx.isApplicable(place, fqn)) {
             use(cats) {
               f()
             }

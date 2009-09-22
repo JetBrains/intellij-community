@@ -44,7 +44,7 @@ public class GroovyDslExecutor {
   }
 
   public def runContributor(Contributor cb, ClassDescriptor cd, delegate) {
-    cb.getApplyFunction(delegate, cd.getPlace())()
+    cb.getApplyFunction(delegate, cd.getPlace(), cd.getQualifiedName())()
   }
 
   def processVariants(ClassDescriptor descriptor, consumer) {

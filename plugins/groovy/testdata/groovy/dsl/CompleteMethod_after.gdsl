@@ -1,3 +1,5 @@
-enhanceScript(extension:"zzz") {
+def ctx = context(filetypes : ["unknown"])
+
+contributor([ctx]) {
   method <caret>
 }
