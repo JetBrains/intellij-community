@@ -16,7 +16,6 @@
 package com.intellij.openapi.compiler.make;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +30,7 @@ public interface BuildRecipe {
   void addAll(@NotNull BuildRecipe buildRecipe);
   void addFileCopyInstruction(@NotNull File file,
                               boolean isDirectory,
-                              @NotNull Module module,
+                              Module module,
                               String outputRelativePath,
                               @Nullable PackagingFileFilter fileFilter);
 }

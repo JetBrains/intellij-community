@@ -109,7 +109,7 @@ public class ArtifactUtil {
                                                                          final boolean processSubstitutions,
                                                                          ArtifactType artifactType,
                                                                          FList<CompositePackagingElement<?>> parents, Set<PackagingElement<?>> processed) {
-    if (!processed.add(element)) {
+    if (!processor.shouldProcess(element) || !processed.add(element)) {
       return true;
     }
     if (type == null || element.getType().equals(type)) {

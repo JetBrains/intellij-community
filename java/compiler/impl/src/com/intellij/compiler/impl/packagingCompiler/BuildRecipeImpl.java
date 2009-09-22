@@ -64,7 +64,7 @@ public class BuildRecipeImpl implements BuildRecipe {
 
   public void addFileCopyInstruction(@NotNull File file,
                                      boolean isDirectory,
-                                     @NotNull Module module,
+                                     Module module,
                                      String outputRelativePath,
                                      @Nullable PackagingFileFilter fileFilter) {
     addInstruction(new FileCopyInstructionImpl(file, isDirectory, module, DeploymentUtil.trimForwardSlashes(outputRelativePath),fileFilter));

@@ -13,8 +13,11 @@ import java.util.List;
  * @author nik
  */
 public abstract class PackagingElementProcessor<E extends PackagingElement<?>> {
-
   public boolean shouldProcessSubstitution(ComplexPackagingElement<?> element) {
+    return true;
+  }
+
+  public boolean shouldProcess(PackagingElement<?> element) {
     return true;
   }
 

@@ -238,7 +238,7 @@ public class DeploymentUtilImpl extends DeploymentUtil {
 
   public final boolean addItemsRecursively(@NotNull BuildRecipe items,
                                            @NotNull File root,
-                                           @NotNull Module module,
+                                           Module module,
                                            String outputRelativePath,
                                            @Nullable PackagingFileFilter fileFilter,
                                            @Nullable String possibleBaseOutputPath) {
@@ -512,13 +512,5 @@ public class DeploymentUtilImpl extends DeploymentUtil {
 
   public static BuildParticipantProvider<?>[] getBuildParticipantProviders() {
     return Extensions.getExtensions(BuildParticipantProvider.EXTENSION_POINT_NAME);
-  }
-
-  public static BuildParticipant[] getAllBuildParticipants(@NotNull Module module) {
-    List<BuildParticipant> participants = new ArrayList<BuildParticipant>();
-    for (BuildParticipantProvider<?> participantProvider : getBuildParticipantProviders()) {
-      participants.addAll(participantProvider.getParticipants(module));
-    }
-    return participants.toArray(new BuildParticipant[participants.size()]);
   }
 }

@@ -66,7 +66,7 @@ public abstract class DeploymentUtil {
 
   public abstract boolean addItemsRecursively(@NotNull BuildRecipe items,
                                               @NotNull File root,
-                                              @NotNull Module module,
+                                              Module module,
                                               String outputRelativePath,
                                               @Nullable PackagingFileFilter fileFilter,
                                               @Nullable String possibleBaseOutputPath);
