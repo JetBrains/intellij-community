@@ -51,6 +51,7 @@ public class JavaParameters extends SimpleJavaParameters {
   private static final int TESTS_ONLY = 0x4;
   public static final int JDK_AND_CLASSES = JDK_ONLY | CLASSES_ONLY;
   public static final int JDK_AND_CLASSES_AND_TESTS = JDK_ONLY | CLASSES_ONLY | TESTS_ONLY;
+  public static final int CLASSES_AND_TESTS = CLASSES_ONLY | TESTS_ONLY;
 
   public void configureByModule(final Module module, final int classPathType, final Sdk jdk) throws CantRunException {
     if ((classPathType & JDK_ONLY) != 0) {
