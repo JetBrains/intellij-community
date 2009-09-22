@@ -8,11 +8,12 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.Queue;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -34,30 +35,33 @@ public class ModuleWithDependentsScope extends GlobalSearchScope {
 
     myModules = new HashSet<Module>();
     myModules.add(myModule);
-    List<Module> dependents = ModuleManager.getInstance(myModule.getProject()).getModuleDependentModules(myModule);
-    for (Module dependent : dependents) {
-      addExportedModules(dependent, myModule);
-    }
-    myModules.addAll(dependents); //important to add after the previous loop
+
+    fillModules();
   }
 
-  private void addExportedModules(Module dependentModule, Module module) {
+  private void fillModules() {
+    Queue<Module> walkingQueue = new Queue<Module>(10);
+    walkingQueue.addLast(myModule);
 
-    OrderEntry[] orderEntries = ModuleRootManager.getInstance(dependentModule).getOrderEntries();
-    for (OrderEntry orderEntry : orderEntries) {
-      if (orderEntry instanceof ModuleOrderEntry && module.equals(((ModuleOrderEntry)orderEntry).getModule())) {
-        if (((ModuleOrderEntry)orderEntry).isExported()) {
-          List<Module> nextLevelModules = ModuleManager.getInstance(myModule.getProject()).getModuleDependentModules(dependentModule);
-          for (Module nextLevelModule : nextLevelModules) {
-            if (!myModules.contains(nextLevelModule)) { //Could be true in case of circular dependencies
-              myModules.add(nextLevelModule);
-              addExportedModules(nextLevelModule, dependentModule);
+    Module[] allModules = ModuleManager.getInstance(myModule.getProject()).getModules();
+    Set<Module> processed = new THashSet<Module>();
+
+    while (!walkingQueue.isEmpty()) {
+      Module current = walkingQueue.pullFirst();
+      processed.add(current);
+      for (Module dependent : allModules) {
+        for (OrderEntry orderEntry : ModuleRootManager.getInstance(dependent).getOrderEntries()) {
+          if (orderEntry instanceof ModuleOrderEntry && current.equals(((ModuleOrderEntry)orderEntry).getModule())) {
+            myModules.add(dependent);
+            if (!processed.contains(dependent) && ((ModuleOrderEntry)orderEntry).isExported()) {
+              walkingQueue.addLast(dependent);
             }
           }
         }
       }
     }
   }
+
 
   public boolean contains(VirtualFile file) {
     Module moduleOfFile = myProjectFileIndex.getModuleForFile(file);
