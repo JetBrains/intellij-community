@@ -340,10 +340,23 @@ public abstract class UsefulTestCase extends TestCase {
     if (StringUtil.isEmpty(name)) {
       return "";
     }
-    if (lowercaseFirstLetter && !name.toUpperCase().equals(name)) {
+    if (lowercaseFirstLetter && !isAllUppercaseName(name)) {
       name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
     }
     return name;
+  }
+
+  private static boolean isAllUppercaseName(String name) {
+    int uppercaseChars = 0;
+    for(int i=0; i<name.length(); i++) {
+      if (Character.isLowerCase(name.charAt(i))) {
+        return false;
+      }
+      if (Character.isUpperCase(name.charAt(i))) {
+        uppercaseChars++;
+      }
+    }
+    return uppercaseChars >= 3;
   }
 
   protected String getTestDirectoryName() {
