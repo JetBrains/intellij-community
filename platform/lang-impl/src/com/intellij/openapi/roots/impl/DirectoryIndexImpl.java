@@ -638,6 +638,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
   @Override
   public boolean isProjectExcludeRoot(VirtualFile dir) {
+    checkAvailability();
     return myProjectExcludeRoots.contains(dir);
   }
 
