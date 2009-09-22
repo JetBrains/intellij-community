@@ -2,10 +2,10 @@ package com.intellij.openapi.diff.impl.settings;
 
 import com.intellij.application.options.colors.ColorAndFontSettingsListener;
 import com.intellij.application.options.colors.PreviewPanel;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DiffRequest;
-import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.diff.impl.incrementalMerge.Change;
 import com.intellij.openapi.diff.impl.incrementalMerge.MergeList;
 import com.intellij.openapi.diff.impl.incrementalMerge.MergeSearchHelper;
@@ -15,11 +15,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.Disposable;
 import com.intellij.util.EventDispatcher;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -109,11 +106,7 @@ public class DiffPreviewPanel implements PreviewPanel {
     }
 
     public DiffContent[] getContents() {
-      return new DiffContent[]{createContent(LEFT_TEXT), createContent(CENTER_TEXT), createContent(RIGHT_TEXT)};
-    }
-
-    private static SimpleContent createContent(String text) {
-      return new SimpleContent(text, StdFileTypes.JAVA);
+      return DiffPreviewProvider.getContents();
     }
 
     public String[] getContentTitles() { return new String[]{"", "", ""}; }
@@ -123,33 +116,6 @@ public class DiffPreviewPanel implements PreviewPanel {
   public void addListener(final ColorAndFontSettingsListener listener) {
     myDispatcher.addListener(listener);
   }
-
-  @NonNls private static final String LEFT_TEXT = "class MyClass {\n" +
-                                                                            "  int value;\n" +
-                                                                            "\n" +
-                                                                            "  void leftOnly() {}\n" +
-                                                                            "\n" +
-                                                                            "  void foo() {\n" +
-                                                                            "   // Left changes\n" +
-                                                                            "  }\n" +
-                                                                            "}";
-  @NonNls private static final String CENTER_TEXT = "class MyClass {\n" +
-                                            "  int value;\n" +
-                                            "\n" +
-                                            "  void foo() {\n" +
-                                            "  }\n" +
-                                            "\n" +
-                                            "  void removedFromLeft() {}\n" +
-                                            "}";
-  @NonNls private static final String RIGHT_TEXT = "class MyClass {\n" +
-                                           "  long value;\n" +
-                                           "\n" +
-                                           "  void foo() {\n" +
-                                           "   // Left changes\n" +
-                                           "  }\n" +
-                                           "\n" +
-                                           "  void removedFromLeft() {}\n" +
-                                           "}";
 
   private class EditorClickListener extends EditorMouseAdapter implements CaretListener {
     private final int myIndex;
