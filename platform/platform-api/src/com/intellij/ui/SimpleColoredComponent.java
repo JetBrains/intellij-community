@@ -1,17 +1,17 @@
 /*
- * Copyright 2000-2007 JetBrains s.r.o.
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *  http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 package com.intellij.ui;
 
@@ -356,15 +356,7 @@ public class SimpleColoredComponent extends JComponent {
       xOffset = myIpad.left;
     }
 
-    // Paint focus border around the text and icon (if necessary)
-    if (myPaintFocusBorder) {
-      if (myFocusBorderAroundIcon || icon == null) {
-        myBorder.paintBorder(this, g, 0, 0, getWidth(), getHeight());
-      }
-      else {
-        myBorder.paintBorder(this, g, xOffset, 0, getWidth() - xOffset, getHeight());
-      }
-    }
+    int textStart = xOffset;
     xOffset += myBorder.getBorderInsets(this).left;
 
     // Paint text
@@ -424,6 +416,16 @@ public class SimpleColoredComponent extends JComponent {
       xOffset += fragmentWidth;
       if (i == myAlignIndex && xOffset < myAlignWidth) {
         xOffset = myAlignWidth;
+      }
+    }
+
+    // Paint focus border around the text and icon (if necessary)
+    if (myPaintFocusBorder) {
+      if (myFocusBorderAroundIcon || icon == null) {
+        myBorder.paintBorder(this, g, 0, 0, getWidth(), getHeight());
+      }
+      else {
+        myBorder.paintBorder(this, g, textStart, 0, getWidth() - textStart, getHeight());
       }
     }
   }
