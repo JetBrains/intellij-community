@@ -33,7 +33,7 @@ public class PyTestRunnerTest extends LightPlatformTestCase {
     String[] result = runUTRunner(testDir.getPath(), testFile.getPath());
     assertEquals(StringUtil.join(result, "\n"), 6, result.length);
     assertEquals("##teamcity[testCount count='2']", result [0]);
-    assertEquals("##teamcity[testStarted location='python_uttestid://unittest1.BadTest.test_fails' name='test_fails (unittest1.BadTest)']", result[1]);
+    assertEquals("##teamcity[testStarted locationHint='python_uttestid://unittest1.BadTest.test_fails' name='test_fails (unittest1.BadTest)']", result[1]);
     assertTrue(result [2], result[2].startsWith("##teamcity[testFailed") && result [2].contains("name='test_fails (unittest1.BadTest)'"));
   }
 
