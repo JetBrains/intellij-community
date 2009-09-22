@@ -22,13 +22,13 @@ class TeamcityServiceMessages:
         self.output.write(s)
 
     def testSuiteStarted(self, suiteName, location=None):
-        self.message('testSuiteStarted', name=suiteName, location=location)
+        self.message('testSuiteStarted', name=suiteName, locationHint=location)
 
     def testSuiteFinished(self, suiteName):
         self.message('testSuiteFinished', name=suiteName)
 
     def testStarted(self, testName, location=None):
-        self.message('testStarted', name=testName, location=location)
+        self.message('testStarted', name=testName, locationHint=location)
 
     def testFinished(self, testName, duration=None):
         self.message('testFinished', name=testName, duration=duration)
