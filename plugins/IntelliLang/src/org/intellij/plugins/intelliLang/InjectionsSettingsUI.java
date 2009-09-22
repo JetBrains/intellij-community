@@ -504,18 +504,20 @@ public class InjectionsSettingsUI implements Configurable {
 
   private static TableCellRenderer createLanguageCellRenderer() {
     return new TableCellRenderer() {
-      final JLabel label = new JLabel();
+      final JLabel myLabel = new JLabel();
 
       public Component getTableCellRendererComponent(final JTable table, final Object value, final boolean isSelected, final boolean hasFocus,
                                                      final int row,
                                                      final int column) {
         final BaseInjection injection = (BaseInjection)value;
+        // fix for a marvellous Swing peculiarity: AccessibleJTable likes to pass null here
+        if (injection == null) return myLabel;
         final Language language = InjectedLanguage.findLanguageById(injection.getInjectedLanguageId());
         final FileType fileType = language == null ? null : language.getAssociatedFileType();
-        label.setIcon(fileType == null ? null : fileType.getIcon());
-        label.setText(language == null ? injection.getInjectedLanguageId() : language.getDisplayName());
-        setLabelColors(label, table, isSelected, row);
-        return label;
+        myLabel.setIcon(fileType == null ? null : fileType.getIcon());
+        myLabel.setText(language == null ? injection.getInjectedLanguageId() : language.getDisplayName());
+        setLabelColors(myLabel, table, isSelected, row);
+        return myLabel;
       }
     };
   }
@@ -530,6 +532,8 @@ public class InjectionsSettingsUI implements Configurable {
                                                      final int column) {
         myLabel.clear();
         final BaseInjection injection = (BaseInjection)value;
+        // fix for a marvellous Swing peculiarity: AccessibleJTable likes to pass null here
+        if (injection == null) return myLabel;
         final SimpleTextAttributes grayAttrs = isSelected ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES;
         myText.append(injection.getSupportId() + ": ", grayAttrs);
         mySupports.get(injection.getSupportId()).setupPresentation(injection, myText, isSelected);
