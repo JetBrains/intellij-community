@@ -45,7 +45,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
-import com.intellij.openapi.ui.StripeTable;
 import gnu.trove.THashMap;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
@@ -106,8 +105,7 @@ public class InjectionsSettingsUI implements Configurable {
     myInjectionsTable = new InjectionsTable(myInjections);
     final JPanel tablePanel = new JPanel(new BorderLayout());
 
-    tablePanel.add(StripeTable.createScrollPane(myInjectionsTable), BorderLayout.CENTER);
-    //tablePanel.add(Box.createVerticalStrut(10), BorderLayout.SOUTH);
+    tablePanel.add(ScrollPaneFactory.createScrollPane(myInjectionsTable), BorderLayout.CENTER);
 
     final DefaultActionGroup group = createActions();
 
@@ -382,7 +380,6 @@ public class InjectionsSettingsUI implements Configurable {
       setShowGrid(false);
       setShowVerticalLines(false);
       setGridColor(getForeground());
-      setOpaque(false);
       getColumnModel().getColumn(0).setMaxWidth(new JCheckBox().getPreferredSize().width);
       final int[] preffered = new int[] {0} ;
       ContainerUtil.process(myInjections, new Processor<BaseInjection>() {
@@ -546,7 +543,7 @@ public class InjectionsSettingsUI implements Configurable {
 
   private static Component setLabelColors(final Component label, final JTable table, final boolean isSelected, final int row) {
     if (label instanceof JComponent) {
-      ((JComponent)label).setOpaque(isSelected);
+      ((JComponent)label).setOpaque(true);
     }
     label.setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());
     label.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
