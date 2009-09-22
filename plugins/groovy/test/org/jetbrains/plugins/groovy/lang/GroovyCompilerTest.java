@@ -37,6 +37,8 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.Key;
@@ -56,8 +58,8 @@ import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author peter
@@ -84,9 +86,8 @@ public class GroovyCompilerTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
     super.tuneFixture(moduleBuilder);
-    final String s = myMainOutput.getTempDirPath() + "/out/production";
-    new File(s).mkdirs();
-    moduleBuilder.setOutputPath(s);
+    moduleBuilder.setOutputPath(myMainOutput.getTempDirPath() + "/out/production");
+    moduleBuilder.setTestOutputPath(myMainOutput.getTempDirPath() + "/out/tests");
     final File[] groovyJars = GroovyUtils.getFilesInDirectoryByPattern(PathManager.getHomePath() + "/community/lib", GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN);
     assert groovyJars.length == 1;
     moduleBuilder.addLibrary("Groovy", groovyJars[0].getPath());
@@ -222,6 +223,32 @@ public class GroovyCompilerTest extends JavaCodeInsightFixtureTestCase {
 
     assertEmpty(make());
     assertOutput("Bar", "239");
+  }
+
+  public void testMakeInTests() throws Throwable {
+    new WriteCommandAction(getProject()) {
+      protected void run(Result result) throws Throwable {
+        final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
+        final ModifiableRootModel rootModel = rootManager.getModifiableModel();
+        final ContentEntry entry = rootModel.getContentEntries()[0];
+        entry.removeSourceFolder(entry.getSourceFolders()[0]);
+        entry.addSourceFolder(myFixture.getTempDirFixture().findOrCreateDir("src"), false);
+        entry.addSourceFolder(myFixture.getTempDirFixture().findOrCreateDir("tests"), true);
+        rootModel.commit();
+      }
+    }.execute();
+    myFixture.addFileToProject("tests/Super.groovy", "class Super {}");
+    assertEmpty(make());
+
+    myFixture.addFileToProject("tests/Sub.groovy", "class Sub {\n" +
+                                                                       "  Super xxx() {}\n" +
+                                                                       "  static void main(String[] args) {" +
+                                                                       "    println 'hello'" +
+                                                                       "  }" +
+                                                                       "}");
+    myFixture.addFileToProject("tests/Java.java", "public class Java {}");
+    assertEmpty(make());
+    assertOutput("Sub", "hello");
   }
 
   private void deleteClassFile(final String className) throws IOException {
