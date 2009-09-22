@@ -340,7 +340,7 @@ public abstract class UsefulTestCase extends TestCase {
     if (StringUtil.isEmpty(name)) {
       return "";
     }
-    if (lowercaseFirstLetter) {
+    if (lowercaseFirstLetter && !name.toUpperCase().equals(name)) {
       name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
     }
     return name;

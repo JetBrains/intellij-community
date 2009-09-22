@@ -15,115 +15,114 @@ public class TurnRefsToSuperTest extends MultiFileTestCase {
   }
 
   public void testSuperClass() throws Exception {
-    doTest("AClass", "ASuper", true, false);
+    doTest("AClass", "ASuper", true);
   }
 
   public void testMethodFromSuper() throws Exception {
-    doTest("AClass", "ASuper", true, false);
+    doTest("AClass", "ASuper", true);
   }
 
   public void testRemoveImport() throws Exception {
-    doTest("pack1.AClass", "pack1.AnInterface", true, false);
+    doTest("pack1.AClass", "pack1.AnInterface", true);
   }
 
   public void testToArray() throws Exception {
-    doTest("A", "I", true, false);
+    doTest("A", "I", true);
   }
 
 
   public void testArrayElementAssignment() throws Exception {
-    doTest("C", "I", true, false);
+    doTest("C", "I", true);
   }
 
   public void testReturnValue() throws Exception {
-    doTest("A", "I", true, false);
+    doTest("A", "I", true);
   }
 
   public void testReturnValue2() throws Exception {
-    doTest("A", "I", true, false);
+    doTest("A", "I", true);
   }
 
   public void testCast() throws Exception {
-    doTest("A", "I", true, false);
+    doTest("A", "I", true);
   }
 
 
   public void testUseAsArg() throws Exception {
-    doTest("AClass", "I", true, false);
+    doTest("AClass", "I", true);
   }
 
   public void testClassUsage() throws Exception {
-    doTest("A", "I", true, false);
+    doTest("A", "I", true);
   }
 
   public void testInstanceOf() throws Exception {
-    doTest("A", "I", false, false);
+    doTest("A", "I", false);
   }
 
   public void testFieldTest() throws Exception {
-    doTest("Component1", "IDoSomething", false, false);
+    doTest("Component1", "IDoSomething", false);
   }
 
   public void testScr34000() throws Exception {
-    doTest("SimpleModel", "Model", false, false);
+    doTest("SimpleModel", "Model", false);
   }
 
   public void testScr34020() throws Exception {
-    doTest("java.util.List", "java.util.Collection", false, false);
+    doTest("java.util.List", "java.util.Collection", false);
   }
 
    public void testCommonInheritor() throws Exception {
-    doTest("Client.V", "Client.L", false, false);
+    doTest("Client.V", "Client.L", false);
   }
 
   public void testCommonInheritorFail() throws Exception {
-    doTest("Client.V", "Client.L", false, false);
+    doTest("Client.V", "Client.L", false);
   }
 
   public void testCommonInheritorResults() throws Exception {
-    doTest("Client.V", "Client.L", false, false);
+    doTest("Client.V", "Client.L", false);
   }
 
   public void testCommonInheritorResultsFail() throws Exception {
-    doTest("Client.V", "Client.L", false, false);
+    doTest("Client.V", "Client.L", false);
   }
 
   public void testCommonInheritorResultsFail2() throws Exception {
-    doTest("Client.V", "Client.L", false, false);
+    doTest("Client.V", "Client.L", false);
   }
 
 
   public void testIDEA6505() throws Exception {
-    doTest("Impl", "IB", false, true);
+    doTest("Impl", "IB", false);
   }
 
   public void testIDEADEV5517() throws Exception {
-    doTest("Xyz", "Xint", false, true);
+    doTest("Xyz", "Xint", false);
   }
 
   public void testIDEADEV5517Noop() throws Exception {
-    doTest("Xyz", "Xint", false, true);
+    doTest("Xyz", "Xint", false);
   }
 
   public void testIDEADEV6136() throws Exception {
-    doTest("A", "B", false, true);
+    doTest("A", "B", false);
   }
 
   public void testIDEADEV25669() throws Exception {
-    doTest("p.A", "p.Base", false, true);
+    doTest("p.A", "p.Base", false);
   }
 
   public void testIDEADEV23807() throws Exception {
-    doTest("B", "A", false, true);
+    doTest("B", "A", false);
   }
 
-  private void doTest(@NonNls final String className, @NonNls final String superClassName, final boolean replaceInstanceOf,
-                      final boolean lowercaseFirstLetter) throws Exception {
+  private void doTest(@NonNls final String className, @NonNls final String superClassName, final boolean replaceInstanceOf) throws Exception {
     doTest(new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
         TurnRefsToSuperTest.this.performAction(className, superClassName, replaceInstanceOf);
       }
-    }, lowercaseFirstLetter);
+    }, true);
   }
 
   public String getTestRoot() {
