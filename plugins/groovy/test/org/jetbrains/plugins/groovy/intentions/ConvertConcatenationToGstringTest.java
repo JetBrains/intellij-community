@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.intentions;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
@@ -36,7 +37,7 @@ public class ConvertConcatenationToGstringTest extends GrIntentionTestCase {
   protected LightProjectDescriptor getProjectDescriptor() {
     return new DefaultLightProjectDescriptor() {
       @Override
-      public void configureModule(Module module, ModifiableRootModel model) {
+      public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
         final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary("GROOVY").getModifiableModel();
         final VirtualFile groovyJar = JarFileSystem.getInstance().refreshAndFindFileByPath(TestUtils.getMockGroovy1_7LibraryName() + "!/");
         modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES);

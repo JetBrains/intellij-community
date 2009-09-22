@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy;
 
+import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.openapi.module.ModuleType;
@@ -45,7 +46,7 @@ public abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCas
       return JavaSdkImpl.getMockJdk15("java 1.5");
     }
 
-    public void configureModule(Module module, ModifiableRootModel model) {
+    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
       final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary("GROOVY").getModifiableModel();
       final VirtualFile groovyJar =
         JarFileSystem.getInstance().refreshAndFindFileByPath(TestUtils.getMockJdkHome() + "/jre/lib/groovy-1.0.jar!/");
