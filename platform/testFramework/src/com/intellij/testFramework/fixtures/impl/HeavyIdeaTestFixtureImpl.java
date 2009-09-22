@@ -22,7 +22,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -50,7 +49,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -185,18 +183,9 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
   }
 
   public PsiFile addFileToProject(@NonNls String rootPath, @NonNls final String relativePath, @NonNls final String fileText) throws IOException {
-    final VirtualFile[] roots = ModuleRootManager.getInstance(getModule()).getSourceRoots();
-    final VirtualFile suggested = LocalFileSystem.getInstance().findFileByPath(rootPath);
-    final VirtualFile root;
-    if (roots.length == 0 || roots[0].getParent() == null || Arrays.asList(roots).contains(suggested)) {
-      // no real module in fixture
-      root = suggested;
-    } else {
-      root = roots[0];
-    }
-    final VirtualFile[] virtualFile = new VirtualFile[1];
-    final VirtualFile dir = VfsUtil.createDirectories(root.getPath() + "/" + PathUtil.getParentPath(relativePath));
+    final VirtualFile dir = VfsUtil.createDirectories(rootPath + "/" + PathUtil.getParentPath(relativePath));
 
+    final VirtualFile[] virtualFile = new VirtualFile[1];
     new WriteCommandAction.Simple(getProject()) {
       protected void run() throws Throwable {
         virtualFile[0] = dir.createChildData(this, StringUtil.getShortName(relativePath, '/'));

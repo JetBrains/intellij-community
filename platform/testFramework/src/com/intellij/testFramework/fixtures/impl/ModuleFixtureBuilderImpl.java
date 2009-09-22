@@ -37,6 +37,7 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
   protected final TestFixtureBuilder<? extends IdeaProjectTestFixture> myFixtureBuilder;
   private T myModuleFixture;
   protected String myOutputPath;
+  protected String myTestOutputPath;
 
   public ModuleFixtureBuilderImpl(@NotNull final ModuleType moduleType, TestFixtureBuilder<? extends IdeaProjectTestFixture> fixtureBuilder) {
     myModuleType = moduleType;
@@ -56,6 +57,10 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
 
   public void setOutputPath(final String outputPath) {
     myOutputPath = outputPath;
+  }
+
+  public void setTestOutputPath(String outputPath) {
+    myTestOutputPath = outputPath;
   }
 
   protected Module createModule() {

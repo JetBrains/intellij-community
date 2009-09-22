@@ -25,6 +25,7 @@ import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -144,9 +145,18 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
   @Override
   protected void setupRootModel(ModifiableRootModel rootModel) {
     if (myOutputPath != null) {
+      new File(myOutputPath).mkdirs();
       final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(myOutputPath);
       assert virtualFile != null : "cannot find output path: " + myOutputPath;
       rootModel.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPath(virtualFile);
+      rootModel.getModuleExtension(CompilerModuleExtension.class).inheritCompilerOutputPath(false);
+      rootModel.getModuleExtension(CompilerModuleExtension.class).setExcludeOutput(false);
+    }
+    if (myTestOutputPath != null) {
+      new File(myTestOutputPath).mkdirs();
+      final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(myTestOutputPath);
+      assert virtualFile != null : "cannot find test output path: " + myTestOutputPath;
+      rootModel.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPathForTests(virtualFile);
       rootModel.getModuleExtension(CompilerModuleExtension.class).inheritCompilerOutputPath(false);
       rootModel.getModuleExtension(CompilerModuleExtension.class).setExcludeOutput(false);
     }

@@ -47,6 +47,8 @@ public interface ModuleFixtureBuilder<T extends ModuleFixture> {
    */
   void setOutputPath(String outputPath);
 
+  void setTestOutputPath(String outputPath);
+
   T getFixture();
 
   void addSourceContentRoot(String path);
