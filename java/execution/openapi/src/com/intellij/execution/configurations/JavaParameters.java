@@ -106,8 +106,8 @@ public class JavaParameters extends SimpleJavaParameters {
 
   private ProjectRootsTraversing.RootTraversePolicy getPolicy(Project project, Module module, int classPathType) {
     ProjectRootsTraversing.RootTraversePolicy result = (classPathType & TESTS_ONLY) != 0
-                                                       ? ProjectClasspathTraversing.FULL_CLASSPATH_RECURSIVE
-                                                       : ProjectClasspathTraversing.FULL_CLASSPATH_WITHOUT_TESTS;
+                                                       ? (classPathType & JDK_ONLY) != 0 ? ProjectClasspathTraversing.FULL_CLASSPATH_RECURSIVE : ProjectClasspathTraversing.FULL_CLASS_RECURSIVE_WO_JDK
+                                                       : (classPathType & JDK_ONLY) != 0 ? ProjectClasspathTraversing.FULL_CLASSPATH_WITHOUT_TESTS : ProjectClasspathTraversing.FULL_CLASSPATH_WITHOUT_JDK_AND_TESTS;
 
     for (JavaClasspathPolicyExtender each : Extensions.getExtensions(JavaClasspathPolicyExtender.EP_NAME)) {
       if (project == null) {
