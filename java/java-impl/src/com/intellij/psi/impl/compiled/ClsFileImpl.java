@@ -33,6 +33,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
 import java.util.List;
@@ -355,33 +356,48 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   @NotNull
   public StubTree getStubTree() {
-    SoftReference<StubTree> stub = myStub;
-    StubTree stubHolder = stub == null ? null : stub.get();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+
+    final StubTree derefd = derefStub();
+    if (derefd != null) return derefd;
+
+    StubTree stubHolder = StubTree.readOrBuild(getProject(), getVirtualFile());
     if (stubHolder == null) {
-      synchronized (lock) {
-        stub = myStub;
-        stubHolder = stub == null ? null : stub.get();
-        if (stubHolder != null) {
-          return stubHolder;
-        }
-        stubHolder = StubTree.readOrBuild(getProject(), getVirtualFile());
-        if (stubHolder == null) {
-          // Must be corrupted classfile
-          LOG.info("Class file is corrupted: " + getVirtualFile().getPresentableUrl());
+      // Must be corrupted classfile
+      LOG.info("Class file is corrupted: " + getVirtualFile().getPresentableUrl());
 
-          stubHolder = new StubTree(new PsiJavaFileStubImpl("corrupted.classfiles", true));
-        }
-        
-        myStub = new SoftReference<StubTree>(stubHolder);
-        ((PsiFileStubImpl)stubHolder.getRoot()).setPsi(this);
-
-        synchronized (MIRROR_LOCK) {
-          myMirrorFileElement = null;
-        }
-        myPackageStatement = new ClsPackageStatementImpl(this);
-      }
+      StubTree emptyTree = new StubTree(new PsiJavaFileStubImpl("corrupted.classfiles", true));
+      setStubTree(emptyTree);
+      return emptyTree;
     }
-    return stubHolder;
+
+    synchronized (lock) {
+      final StubTree derefdOnLock = derefStub();
+      if (derefdOnLock != null) return derefdOnLock;
+
+      setStubTree(stubHolder);
+      return stubHolder;
+    }
+  }
+
+  private void setStubTree(StubTree tree) {
+    synchronized (lock) {
+      myStub = new SoftReference<StubTree>(tree);
+      ((PsiFileStubImpl)tree.getRoot()).setPsi(this);
+
+      synchronized (MIRROR_LOCK) {
+        myMirrorFileElement = null;
+      }
+      myPackageStatement = new ClsPackageStatementImpl(this);
+
+    }
+  }
+
+  @Nullable
+  private StubTree derefStub() {
+    synchronized (lock) {
+      return myStub != null ? myStub.get() : null;
+    }
   }
 
   public ASTNode findTreeForStub(final StubTree tree, final StubElement<?> stub) {
