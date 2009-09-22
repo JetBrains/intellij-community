@@ -742,6 +742,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(UnnecessaryFullyQualifiedNameInspection.class);
         m_inspectionClasses.add(UnnecessaryInheritDocInspection.class);
         m_inspectionClasses.add(UnnecessaryInterfaceModifierInspection.class);
+        m_inspectionClasses.add(UnnecessaryJavaDocLinkInspection.class);
         m_inspectionClasses.add(UnnecessaryParenthesesInspection.class);
         m_inspectionClasses.add(UnnecessaryQualifierForThisInspection.class);
         m_inspectionClasses.add(UnnecessarySemicolonInspection.class);

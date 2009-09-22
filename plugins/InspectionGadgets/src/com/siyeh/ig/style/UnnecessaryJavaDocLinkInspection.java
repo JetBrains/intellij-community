@@ -55,7 +55,8 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
         return new UnnecessaryJavaDocLinkFix((String) infos[0]);
     }
 
-    private class UnnecessaryJavaDocLinkFix extends InspectionGadgetsFix {
+    private static class UnnecessaryJavaDocLinkFix
+            extends InspectionGadgetsFix {
 
         private final String tagName;
 
@@ -79,7 +80,7 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
             final PsiDocTag docTag = (PsiDocTag) element;
             final PsiDocComment docComment = docTag.getContainingComment();
             if (docComment != null) {
-                if (shouldDeleteEntireCommet(docComment)) {
+                if (shouldDeleteEntireComment(docComment)) {
                     docComment.delete();
                     return;
                 }
@@ -87,7 +88,8 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
             docTag.delete();
         }
 
-        private boolean shouldDeleteEntireCommet(PsiDocComment docComment) {
+        private static boolean shouldDeleteEntireComment(
+                PsiDocComment docComment) {
             final PsiDocToken[] docTokens = PsiTreeUtil.getChildrenOfType(
                     docComment, PsiDocToken.class);
             if (docTokens == null) {
@@ -111,7 +113,8 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
         return new UnnecessaryJavaDocLinkVisitor();
     }
 
-    private class UnnecessaryJavaDocLinkVisitor extends BaseInspectionVisitor {
+    private static class UnnecessaryJavaDocLinkVisitor
+            extends BaseInspectionVisitor {
 
         @Override
         public void visitDocTag(PsiDocTag tag) {
@@ -176,8 +179,8 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
             registerError(tag, "@" + name);
         }
 
-        public boolean isSuperMethod(PsiMethod superMethodCandidate,
-                                     PsiMethod derivedMethod) {
+        public static boolean isSuperMethod(PsiMethod superMethodCandidate,
+                                            PsiMethod derivedMethod) {
             final PsiClass superClassCandidate =
                     superMethodCandidate.getContainingClass();
             final PsiClass derivedClass = derivedMethod.getContainingClass();
