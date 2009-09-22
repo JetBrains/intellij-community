@@ -32,6 +32,7 @@
 package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.ide.highlighter.HtmlFileHighlighter;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.XmlHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -54,6 +55,7 @@ public class HTMLColorsPage implements ColorSettingsPage {
     new AttributesDescriptor(OptionsBundle.message("options.html.attribute.descriptor.attribute.value"), XmlHighlighterColors.HTML_ATTRIBUTE_VALUE),
     new AttributesDescriptor(OptionsBundle.message("options.html.attribute.descriptor.entity.reference"), XmlHighlighterColors.HTML_ENTITY_REFERENCE),
   };
+  private static final String FULL_PRODUCT_NAME = ApplicationNamesInfo.getInstance().getFullProductName();
 
   @NotNull
   public String getDisplayName() {
@@ -87,12 +89,12 @@ public class HTMLColorsPage implements ColorSettingsPage {
            "-->\n" +
            "<HTML>\n" +
            "<head>\n" +
-           "<title>IntelliJ IDEA</title>\n" +
+           "<title>" + FULL_PRODUCT_NAME + "</title>\n" +
            "</head>\n" +
            "<body>\n" +
-           "<h1>IntelliJ IDEA</h1>\n" +
+           "<h1>" + FULL_PRODUCT_NAME + "</h1>\n" +
            "<p><br><b><IMG border=0 height=12 src=\"images/hg.gif\" width=18 >\n" +
-           "What is IntelliJ&nbsp;IDEA? &#x00B7; &Alpha; </b><br><br>\n" +
+           "What is " + FULL_PRODUCT_NAME.replaceAll(" ", "&nbsp;") + "? &#x00B7; &Alpha; </b><br><br>\n" +
            "</body>\n" +
            "</html>";
   }
