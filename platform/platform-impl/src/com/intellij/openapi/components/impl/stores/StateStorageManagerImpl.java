@@ -90,7 +90,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   public Collection<String> getStorageFileNames() {
-    return Collections.unmodifiableCollection(myStorages.keySet());
+    return Collections.unmodifiableCollection(new HashSet<String>(myStorages.keySet()));
   }
 
   private void putStorageToMap(final String key, final StateStorage stateStorage) {
