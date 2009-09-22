@@ -1,5 +1,6 @@
 package com.intellij.testFramework.fixtures;
 
+import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
@@ -20,6 +21,6 @@ public class DefaultLightProjectDescriptor implements LightProjectDescriptor {
     return JavaSdkImpl.getMockJdk15("java 1.5");
   }
 
-  public void configureModule(Module module, ModifiableRootModel model) {
+  public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
   }
 }

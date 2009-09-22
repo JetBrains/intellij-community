@@ -3,6 +3,7 @@ package com.intellij.testFramework;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 
 /**
@@ -11,5 +12,5 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 public interface LightProjectDescriptor {
   ModuleType getModuleType();
   Sdk getSdk();
-  void configureModule(Module module, ModifiableRootModel model);
+  void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry);
 }

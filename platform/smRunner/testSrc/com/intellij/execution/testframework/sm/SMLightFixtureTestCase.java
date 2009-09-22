@@ -4,6 +4,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -30,7 +31,7 @@ public abstract class SMLightFixtureTestCase extends UsefulTestCase {
       return null;
     }
 
-    public void configureModule(Module module, ModifiableRootModel model) {
+    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
       //Do nothing
     }
   };

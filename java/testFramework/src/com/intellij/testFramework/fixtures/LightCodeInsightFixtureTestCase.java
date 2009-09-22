@@ -15,6 +15,7 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.psi.*;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -38,7 +39,7 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
       return JavaSdkImpl.getMockJdk("java 1.4");
     }
 
-    public void configureModule(Module module, ModifiableRootModel model) {
+    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
     }
   };
   public static final LightProjectDescriptor JAVA_1_5 = new DefaultLightProjectDescriptor();

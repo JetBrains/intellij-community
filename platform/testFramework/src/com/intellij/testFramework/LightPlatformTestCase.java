@@ -222,7 +222,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         final ContentEntry contentEntry = rootModel.addContentEntry(ourSourceRoot);
         contentEntry.addSourceFolder(ourSourceRoot, false);
 
-        descriptor.configureModule(ourModule, rootModel);
+        descriptor.configureModule(ourModule, rootModel, contentEntry);
 
         rootModel.commit();
 
@@ -609,7 +609,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       return mySdk;
     }
 
-    public void configureModule(Module module, ModifiableRootModel model) {
+    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
     }
 
     @Override

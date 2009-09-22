@@ -8,6 +8,7 @@ import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
@@ -94,7 +95,7 @@ public class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
       return null;
     }
 
-    public void configureModule(Module module, ModifiableRootModel model) {
+    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
     }
   };
 }
