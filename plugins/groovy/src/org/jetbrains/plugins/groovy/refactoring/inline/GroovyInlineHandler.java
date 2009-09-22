@@ -76,7 +76,7 @@ public class GroovyInlineHandler implements InlineHandler {
   }
 
   @Nullable
-  public Inliner createInliner(PsiElement element) {
+  public Inliner createInliner(PsiElement element, Settings settings) {
     if (element instanceof GrVariable &&
         GroovyRefactoringUtil.isLocalVariable((GrVariable) element)) {
       return GroovyInlineVariableUtil.createInlinerForLocalVariable(((GrVariable) element));
