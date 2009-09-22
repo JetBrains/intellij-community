@@ -241,7 +241,11 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   }
 
   public static GlobalSearchScope fileScope(@NotNull PsiFile psiFile) {
-    return new FileScope(psiFile);
+    return new FileScope(psiFile.getProject(), psiFile.getVirtualFile());
+  }
+
+  public static GlobalSearchScope fileScope(final Project project, final VirtualFile virtualFile) {
+    return new FileScope(project, virtualFile);
   }
 
   private static class IntersectionScope extends GlobalSearchScope {
@@ -442,10 +446,9 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     private final VirtualFile myVirtualFile;
     private final Module myModule;
 
-    private FileScope(@NotNull PsiFile psiFile) {
-      super(psiFile.getProject());
-      myVirtualFile = psiFile.getVirtualFile();
-      Project project = psiFile.getProject();
+    private FileScope(final Project project, final VirtualFile virtualFile) {
+      super(project);
+      myVirtualFile = virtualFile;
       ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
       myModule = myVirtualFile != null ? fileIndex.getModuleForFile(myVirtualFile) : null;
     }

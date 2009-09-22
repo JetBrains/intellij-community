@@ -115,7 +115,7 @@ public class StubTree {
 
     final int id = Math.abs(FileBasedIndex.getFileId(vFile));
     if (id > 0) {
-      final List<SerializedStubTree> datas = FileBasedIndex.getInstance().getValues(StubUpdatingIndex.INDEX_ID, id, GlobalSearchScope.allScope(project));
+      final List<SerializedStubTree> datas = FileBasedIndex.getInstance().getValues(StubUpdatingIndex.INDEX_ID, id, GlobalSearchScope.fileScope(project, vFile));
       final int size = datas.size();
 
       if (size == 1) {
