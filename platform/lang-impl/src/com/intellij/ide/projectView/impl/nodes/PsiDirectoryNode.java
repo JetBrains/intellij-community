@@ -71,11 +71,8 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
     }
 
     data.setPresentableText(name);
-    if (ProjectRootsUtil.isModuleContentRoot(directoryFile, project) || ProjectRootsUtil.isLibraryRoot(directoryFile, project)) {
-      final String locationString = directoryFile.getPresentableUrl();
-      if (!locationString.equals(name)) {
-        data.setLocationString(locationString);
-      }
+    if (ProjectRootsUtil.isLibraryRoot(directoryFile, project)) {
+      data.setLocationString("library home");
     }
     else {
       data.setLocationString(ProjectViewDirectoryHelper.getInstance(project).getLocationString(psiDirectory));
