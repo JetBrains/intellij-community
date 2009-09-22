@@ -55,6 +55,14 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
         if (getParentValue() instanceof Project) {
           data.addText(" (" + directoryFile.getPresentableUrl() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
+        else if (ProjectRootsUtil.isSourceOrTestRoot(directoryFile, project)) {
+          if (ProjectRootsUtil.isInTestSource(directoryFile, project)) {
+            data.addText(" (test source root)", SimpleTextAttributes.GRAY_ATTRIBUTES);
+          }
+          else {
+            data.addText(" (source root)",  SimpleTextAttributes.GRAY_ATTRIBUTES);
+          }
+        }
 
         setupIcon(data, psiDirectory);
 
