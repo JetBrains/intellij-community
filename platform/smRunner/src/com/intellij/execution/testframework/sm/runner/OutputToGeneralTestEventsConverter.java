@@ -259,6 +259,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     @NonNls private static final String ATTR_KEY_TEST_COUNT = "count";
     @NonNls private static final String ATTR_KEY_TEST_DURATION = "duration";
     @NonNls private static final String ATTR_KEY_LOCATION_URL = "locationHint";
+    @NonNls private static final String ATTR_KEY_LOCATION_URL_OLD = "location";
     @NonNls private static final String ATTR_KEY_STACKTRACE_DETAILS = "details";
 
     @NonNls public static final String CUSTOM_STATUS = "customProgressStatus";
@@ -268,8 +269,24 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     @NonNls private static final String ATTR_VAL_TEST_FAILED = "testFailed";
 
     public void visitTestSuiteStarted(@NotNull final TestSuiteStarted suiteStarted) {
-      final String locationUrl = suiteStarted.getAttributes().get(ATTR_KEY_LOCATION_URL);
+      final String locationUrl = fetchTestLocation(suiteStarted);
       fireOnSuiteStarted(suiteStarted.getSuiteName(), locationUrl);
+    }
+
+    @Nullable
+    private String fetchTestLocation(TestSuiteStarted suiteStarted) {
+      final Map<String, String> attrs = suiteStarted.getAttributes();
+      final String location = attrs.get(ATTR_KEY_LOCATION_URL);
+      if (location == null) {
+        // try old API
+        final String oldLocation = attrs.get(ATTR_KEY_LOCATION_URL_OLD);
+        if (oldLocation != null) {
+          LOG.error("Test Runner API was changed for TeamCity 5.0 compatibility. Please use 'locationHint' attribute instead of 'location'.");
+          return oldLocation;
+        }
+        return null;
+      }
+      return location;
     }
 
     public void visitTestSuiteFinished(@NotNull final TestSuiteFinished suiteFinished) {
