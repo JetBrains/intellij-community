@@ -1,6 +1,6 @@
 package com.intellij.ide.browsers;
 
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -11,14 +11,14 @@ public class WebBrowserUrlProviders  {
   }
 
   @Nullable
-  public static WebBrowserUrlProvider getProvider(@Nullable PsiFile file) {
-    if (file == null) {
+  public static WebBrowserUrlProvider getProvider(@Nullable PsiElement element) {
+    if (element == null) {
       return null;
     }
     
     final WebBrowserUrlProvider[] urlProviders = WebBrowserUrlProvider.EP_NAME.getExtensions();
     for (WebBrowserUrlProvider urlProvider : urlProviders) {
-      if (urlProvider.canHandleFile(file)) {
+      if (urlProvider.canHandleElement(element)) {
         return urlProvider;
       }
     }

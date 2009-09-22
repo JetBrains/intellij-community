@@ -5,6 +5,7 @@ import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,14 +16,19 @@ public class HtmlWebBrowserUrlProvider extends WebBrowserUrlProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.browsers.HtmlWebBrowserUrlProvider");
 
   @NotNull
-  public String getUrl(@NotNull final PsiFile file, final boolean shiftDown) throws Exception {
+  public String getUrl(@NotNull final PsiElement element, final boolean shiftDown) throws Exception {
+    final PsiFile file = element instanceof PsiFile ? (PsiFile) element : element.getContainingFile();
     final VirtualFile virtualFile = file.getVirtualFile();
     LOG.assertTrue(virtualFile != null);
     return virtualFile.getUrl();
   }
 
   @Override
-  public boolean canHandleFile(@NotNull final PsiFile file) {
+  public boolean canHandleElement(@NotNull final PsiElement element) {
+    final PsiFile file = element instanceof PsiFile ? (PsiFile) element : element.getContainingFile();
+    if (file == null){
+      return false;
+    }
     final Language language = file.getViewProvider().getBaseLanguage();
     return HTMLLanguage.INSTANCE == language || XHTMLLanguage.INSTANCE == language;
   }
