@@ -14,10 +14,10 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
+import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClassScope
 
 /**
  * @author ilyas
@@ -72,7 +72,8 @@ class Context {
         }
         return false
       }
-    } else {
+    }
+    else {
       addFilter {PsiElement elem, fqn -> elem?.getContainingFile()?.getFileType() instanceof GroovyFileType}
     }
 
@@ -98,6 +99,20 @@ class Context {
         }
 
         break
+    // handling class scope
+      case org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClassScope:
+        addFilter {GrReferenceExpression elem, fqn ->
+          final def classScope = (ClassScope) args.scope
+          if (!classScope.getName()) return false;
+          final GrTypeDefinition clazz = PsiTreeUtil.getParentOfType(elem, GrTypeDefinition)
+          if (clazz) {
+            final def qualName = clazz.getQualifiedName()
+            return clazz.getName().matches(classScope.getName()) ||
+                   qualName && qualName.matches(classScope.getName())
+          }
+          return false
+        }
+        break
 
     // handling closure scope
       case org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClosureScope:
@@ -107,7 +122,7 @@ class Context {
         }
 
         // Enhance closure contexts only
-        addFilter {GrReferenceExpression elem , fqn ->
+        addFilter {GrReferenceExpression elem, fqn ->
           def closParent = PsiTreeUtil.getParentOfType(elem, GrClosableBlock.class)
           if (closParent == null) return false
           def scope = (ClosureScope) args.scope
@@ -115,8 +130,7 @@ class Context {
             def parent = closParent.getParent()
             if (parent instanceof GrArgumentList) {
               return parent.getParent() instanceof GrMethodCallExpression
-            }
-            else {
+            } else {
               return parent instanceof GrMethodCallExpression
             }
           }

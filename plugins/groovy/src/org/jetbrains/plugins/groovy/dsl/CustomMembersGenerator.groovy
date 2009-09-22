@@ -3,7 +3,10 @@ package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Function
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.dsl.dsltop.GdslMembersProvider
@@ -18,11 +21,13 @@ public class CustomMembersGenerator implements GdslMembersHolderConsumer {
   private final StringBuilder myClassText = new StringBuilder();
   private final Project myProject;
   private final PsiElement myPlace;
+  private final String myQualifiedName;
   private final CompoundMembersHolder myDepot = new CompoundMembersHolder();
 
-  public CustomMembersGenerator(Project project, PsiElement place) {
+  public CustomMembersGenerator(Project project, PsiElement place, String qualifiedName) {
     myProject = project;
     myPlace = place;
+    myQualifiedName = qualifiedName;
   }
 
   def methodMissing(String name, args) {
@@ -45,6 +50,12 @@ public class CustomMembersGenerator implements GdslMembersHolderConsumer {
   public PsiElement getPlace() {
     return myPlace
   }
+
+  public PsiClass getClassType() {
+    final def facade = JavaPsiFacade.getInstance(myProject)
+    return facade.findClass(myQualifiedName, GlobalSearchScope.allScope(myProject))
+  }
+
 
   @Nullable
   public CustomMembersHolder getMembersHolder() {
@@ -74,6 +85,9 @@ public class CustomMembersGenerator implements GdslMembersHolderConsumer {
     def params = [:]
     args.params.each {name, type ->
       params[name] = stringifyType(type)
+    }
+    if (args.isStatic) {
+      myClassText.append("static ")
     }
     myClassText.append("def ").append(stringifyType(args.type)).append(" ").append(args.name).append("(")
     myClassText.append(StringUtil.join(params.keySet(),

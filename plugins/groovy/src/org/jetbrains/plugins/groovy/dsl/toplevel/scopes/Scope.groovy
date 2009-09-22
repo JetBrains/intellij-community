@@ -5,7 +5,17 @@ package org.jetbrains.plugins.groovy.dsl.toplevel.scopes
  */
 abstract class Scope {}
 
-//class Any extends Scope {}
+class ClassScope extends Scope {
+  private final myNamePattern
+
+  ClassScope(Map args) {
+    myNamePattern = args && args.name ? args.name : /.*/
+  }
+
+  def getName() {
+    myNamePattern
+  }
+}
 
 class ClosureScope extends Scope {
   private final boolean isArg

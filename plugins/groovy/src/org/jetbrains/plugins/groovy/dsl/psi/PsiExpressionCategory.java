@@ -24,8 +24,9 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -53,8 +54,11 @@ public class PsiExpressionCategory implements PsiEnhancerCategory{
    * @param call
    * @return
    */
-  public static Collection<GrExpression> getArguments(GrCallExpression call) {
-    return Arrays.asList(call.getExpressionArguments());
+  public static Collection<GrExpression> getArguments(GrExpression call) {
+    if (call instanceof GrMethodCallExpression) {
+      return Arrays.asList(((GrMethodCallExpression)call).getExpressionArguments());
+    }
+    return new ArrayList<GrExpression>();
   }
 
 }

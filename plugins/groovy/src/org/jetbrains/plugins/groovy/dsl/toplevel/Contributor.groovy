@@ -11,8 +11,12 @@ class Contributor {
   private final List myContexts
   private final Closure whatToDo
 
-  Contributor(List cts, Closure cl) {
-    myContexts = cts
+  Contributor(cts, Closure cl) {
+    if (cts instanceof List) {
+      myContexts = cts
+    } else {
+      myContexts = [cts]
+    }
     whatToDo = cl
   }
 

@@ -28,7 +28,7 @@ class GdslMetaClassProperties {
   /**
    * Contributor definition
    */
-  Closure contributor = {List cts, Closure toDo ->
+  Closure contributor = {cts, Closure toDo ->
     def contrib = new Contributor(cts, toDo)
     myExecutor.addClassEnhancer {
       ClassDescriptor descriptor, consumer ->

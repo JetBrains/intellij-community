@@ -16,8 +16,10 @@
 
 package org.jetbrains.plugins.groovy.dsl.psi;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -29,6 +31,7 @@ public class PsiClassCategory implements PsiEnhancerCategory {
 
   /**
    * Adds property `methods' into PsiClass
+   *
    * @param clazz
    * @return
    */
@@ -36,8 +39,37 @@ public class PsiClassCategory implements PsiEnhancerCategory {
     return Arrays.asList(clazz.getAllMethods());
   }
 
+  @Nullable
   public static String getQualName(PsiClass clazz) {
     return clazz.getQualifiedName();
+  }
+
+  public static boolean hasAnnotation(PsiClass clazz, String annotName) {
+    if (annotName == null) return false;
+    final Project project = clazz.getProject();
+    final String fqn = clazz.getQualifiedName();
+    if (fqn == null) return false;
+    final PsiClassType type =
+      JavaPsiFacade.getInstance(project).getElementFactory().createTypeByFQClassName(fqn, GlobalSearchScope.allScope(project));
+    for (PsiAnnotation annotation : type.getAnnotations()) {
+      if (annotName.equals(annotation.getQualifiedName())) return true;
+    }
+
+    return false;
+  }
+
+  @Nullable
+  public static PsiAnnotation getAnnotation(PsiClass clazz, String annotName) {
+    if (annotName == null) return null;
+    final Project project = clazz.getProject();
+    final String fqn = clazz.getQualifiedName();
+    if (fqn == null) return null;
+    final PsiClassType type =
+      JavaPsiFacade.getInstance(project).getElementFactory().createTypeByFQClassName(fqn, GlobalSearchScope.allScope(project));
+    for (PsiAnnotation annotation : type.getAnnotations()) {
+      if (annotName.equals(annotation.getQualifiedName())) return annotation;
+    }
+    return null;
   }
 
 }

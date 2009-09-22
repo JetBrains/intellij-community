@@ -59,9 +59,9 @@ public class GroovyDslTest extends CompletionTestBase {
     doCustomTest("""
       def ctx = context(ctype: "java.lang.String")
 
-      contributor ([ctx], {
+      contributor ctx, {
         findClass("java.lang.Throwable")?.methods?.each{add it}
-      })
+      }
 """)
   }
 
@@ -69,7 +69,7 @@ public class GroovyDslTest extends CompletionTestBase {
     doCustomTest("""
       def ctx = context(scope: closureScope(isArgument: true))
 
-      contributor([ctx], {
+      contributor(ctx, {
         def call = enclosingCall("boo")
         if (call) {
           def method = call.bind()

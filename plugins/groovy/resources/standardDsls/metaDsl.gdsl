@@ -1,19 +1,55 @@
-def gdslScriptContext = context(scope: scriptScope(), filetypes : ["gdsl"])
+def gdslScriptContext = context(scope: scriptScope(), filetypes: ["gdsl"])
 
-contributor ([gdslScriptContext], {
-  method name : "context", params: [args: [:]], type : "Context"
-  method name : "contributor", params: [contexts: "java.util.List", body: {}], type: void
+contributor([gdslScriptContext]) {
+  method name: "context", params: [args: [:]], type: "java.lang.Object"
+  method name: "contributor", params: [contexts: "java.util.List", body: {}], type: void
 
   // scopes
-  property name : "closureScope", type : {}
-  property name : "scriptScope", type : {}
-})
+  property name: "closureScope", type: {}
+  property name: "scriptScope", type: {}
+}
 
 def contributorBody = context(scope: closureScope(isArg: true))
 
-contributor ([contributorBody], {
+contributor([contributorBody]) {
   if (enclosingCall("contributor")) {
-    method name:"method", type:"void", params:[args:[:]]
-    method name:"property", type:"void", params:[args:[:]]
+    method name: "method", type: "void", params: [args: [:]]
+    method name: "property", type: "void", params: [args: [:]]
+
+    method name: "add", type: "void", params: [member: "com.intellij.psi.PsiMember"]
+    method name: "findClass", type: "com.intellij.psi.PsiClass", params: [name: "java.lang.String"]
+    method name: "delegatesTo", type: "void", params: [clazz: "com.intellij.psi.PsiClass"]
+
+    method name: "delegatesTo",
+           type: "void",
+           params: [expr: "org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression"]
+
+    method name: "enclosingCall",
+           type: "com.intellij.psi.PsiElement",
+           params: [methodName: "java.lang.String"]
+
+    property name: "place", type: "com.intellij.psi.PsiElement"
+    property name: "classType", type: "com.intellij.psi.PsiClass"
   }
-})
+}
+
+def psiClassContext = context(scope: closureScope(isArg: true), ctype: "com.intellij.psi.PsiClass")
+contributor([psiClassContext]) {
+  method name: "getMethods", type: "java.util.Collection"
+  method name: "getQualName", type: "java.lang.String"
+  method name: "hasAnnotation", type: "boolean"
+  method name: "getAnnotation", type: "com.intellij.psi.PsiAnnotation"
+}
+
+def psiElementContext = context(scope: closureScope(isArg: true), ctype: "com.intellij.psi.PsiElement")
+contributor([psiElementContext]) {
+  method name: "bind", type: "com.intellij.psi.PsiElement"
+}
+
+def expressionContext = context(scope: closureScope(isArg: true),
+                                ctype: "org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression")
+contributor([expressionContext]) {
+  method name: "getArguments", type: "java.util.Collection"
+  method name: "getClassType", type: "com.intellij.psi.PsiClass"
+}
+

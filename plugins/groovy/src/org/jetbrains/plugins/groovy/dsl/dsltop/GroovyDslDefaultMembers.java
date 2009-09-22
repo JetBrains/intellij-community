@@ -31,7 +31,19 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
  * @author ilyas
  */
 public class GroovyDslDefaultMembers implements GdslMembersProvider {
-  
+
+  /**
+   * Find a class by its full-qulified name
+   * @param fqn
+   * @return
+   */
+  @Nullable
+  public PsiClass findClass(String fqn, GdslMembersHolderConsumer consumer) {
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(consumer.getProject());
+    final PsiClass clazz = facade.findClass(fqn, GlobalSearchScope.allScope(consumer.getProject()));
+    return clazz;
+  }
+
   /*************************************************************************************
    Methods and properties of the GroovyDSL language
    ************************************************************************************/
@@ -57,18 +69,6 @@ public class GroovyDslDefaultMembers implements GdslMembersProvider {
         delegatesTo(ctype.resolve(), consumer);
       }
     }
-  }
-
-  /**
-   * Find a class by its full-qulified name
-   * @param fqn
-   * @return
-   */
-  @Nullable
-  public PsiClass findClass(String fqn, GdslMembersHolderConsumer consumer) {
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(consumer.getProject());
-    final PsiClass clazz = facade.findClass(fqn, GlobalSearchScope.allScope(consumer.getProject()));
-    return clazz;
   }
 
 
@@ -97,6 +97,11 @@ public class GroovyDslDefaultMembers implements GdslMembersProvider {
     }
     if (call == null) return null;
     for (GrExpression arg : call.getClosureArguments()) {
+      if (arg instanceof GrClosableBlock && PsiTreeUtil.findCommonParent(place, arg) == arg) {
+        return call;
+      }
+    }
+    for (GrExpression arg: call.getExpressionArguments()) {
       if (arg instanceof GrClosableBlock && PsiTreeUtil.findCommonParent(place, arg) == arg) {
         return call;
       }
