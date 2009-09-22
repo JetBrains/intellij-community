@@ -107,6 +107,7 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
     final FilePropertyPusher<T> pusher = getFilePropertyPusher();
     if (pusher != null) {
       for (VirtualFile oldFile : oldFiles) {
+        if (oldFile == null) continue; // project
         oldFile.putUserData(pusher.getFileDataKey(), null);
       }
       PushedFilePropertiesUpdater.getInstance(myProject).pushAll(pusher);
