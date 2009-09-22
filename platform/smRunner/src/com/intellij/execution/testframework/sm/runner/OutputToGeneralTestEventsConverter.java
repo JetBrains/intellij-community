@@ -258,7 +258,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     @NonNls private static final String ATTR_KEY_TEST_ERROR = "error";
     @NonNls private static final String ATTR_KEY_TEST_COUNT = "count";
     @NonNls private static final String ATTR_KEY_TEST_DURATION = "duration";
-    @NonNls private static final String ATTR_KEY_LOCATION_URL = "location";
+    @NonNls private static final String ATTR_KEY_LOCATION_URL = "locationHint";
     @NonNls private static final String ATTR_KEY_STACKTRACE_DETAILS = "details";
 
     @NonNls public static final String CUSTOM_STATUS = "customProgressStatus";
