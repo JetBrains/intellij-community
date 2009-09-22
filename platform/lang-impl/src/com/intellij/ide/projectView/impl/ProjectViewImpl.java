@@ -32,6 +32,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -1509,6 +1510,26 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
                 if (newEditor instanceof TextEditor) {
                   Editor editor = ((TextEditor)newEditor).getEditor();
                   selectElementAtCaretNotLosingFocus(editor);
+                } else if (newEditor != null) {
+                  final VirtualFile file = FileEditorManagerEx.getInstanceEx(myProject).getFile(newEditor);
+                  if (file != null) {
+                    final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
+                    if (psiFile != null) {
+                      final SelectInTarget target = mySelectInTargets.get(getCurrentViewId());
+                      if (target != null) {
+                        final MySelectInContext selectInContext = new MySelectInContext(psiFile, null) {
+                          @Override
+                          public Object getSelectorInFile() {
+                            return psiFile;
+                          }
+                        };
+
+                        if (target.canSelect(selectInContext)) {
+                          target.selectIn(selectInContext, false);
+                        }
+                      }
+                    }
+                  }
                 }
               }
             }
