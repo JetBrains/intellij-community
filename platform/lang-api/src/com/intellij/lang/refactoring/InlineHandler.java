@@ -59,9 +59,10 @@ public interface InlineHandler {
 
   /**
    * @param element inlined element
-   * @return Inliner instance to be used for inlining references in this language 
+   * @param settings
+   * @return Inliner instance to be used for inlining references in this language
    */
-  @Nullable Inliner createInliner (PsiElement element);
+  @Nullable Inliner createInliner(PsiElement element, Settings settings);
 
   interface Inliner {
     /**

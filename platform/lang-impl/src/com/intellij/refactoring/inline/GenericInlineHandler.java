@@ -44,7 +44,7 @@ public class GenericInlineHandler {
       InlineHandler.Inliner inliner = null;
       final List<InlineHandler> handlers = InlineHandlers.getInlineHandlers(language);
       for (InlineHandler handler : handlers) {
-        inliner = handler.createInliner(element);
+        inliner = handler.createInliner(element, settings);
         if (inliner != null) {
           inliners.put(language, inliner);
           break;
