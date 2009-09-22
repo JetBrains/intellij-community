@@ -84,8 +84,12 @@ public class CreateMethodFromUsageFix implements IntentionAction {
     GrMemberOwner owner = myTargetClass;
     TypeConstraint[] constraints = GroovyExpectedTypesUtil.calculateTypeConstraints((GrExpression) myRefExpression.getParent());
     PsiElement parent = myTargetClass instanceof GrTypeDefinition ? ((GrTypeDefinition)myTargetClass).getBody() : ((GroovyScriptClass) myTargetClass).getContainingFile();
-    PsiElement prevParent = PsiTreeUtil.findPrevParent(parent, myRefExpression);
-    method = owner.addMemberDeclaration(method, prevParent.getNextSibling());
+    if (PsiTreeUtil.isAncestor(parent, myRefExpression, false)) {
+      PsiElement prevParent = PsiTreeUtil.findPrevParent(parent, myRefExpression);
+      method = owner.addMemberDeclaration(method, prevParent.getNextSibling());
+    } else {
+      method = owner.addMemberDeclaration(method, null);
+    }
 
     IntentionUtils.createTemplateForMethod(argTypes, paramTypesExpressions, method, owner, constraints, false);
   }
