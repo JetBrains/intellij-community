@@ -11,11 +11,15 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementFactory;
+import com.intellij.util.PathUtil;
+import com.intellij.util.text.StringTokenizer;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,11 +49,24 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
     return new PackagingElementBuilder(getFactory().createDirectory(name), null);
   }
 
-  protected VirtualFile createFile(final String name) throws IOException {
+  protected VirtualFile createFile(final String path) throws IOException {
+    return createFile(path, "");
+  }
+
+  protected VirtualFile createFile(final String path, final String text) throws IOException {
     return new WriteAction<VirtualFile>() {
       protected void run(final Result<VirtualFile> result) {
         try {
-          result.setResult(myProject.getBaseDir().createChildData(this, name));
+          VirtualFile parent = myProject.getBaseDir();
+          assertNotNull(parent);
+          StringTokenizer parents = new StringTokenizer(PathUtil.getParentPath(path), "/");
+          while (parents.hasMoreTokens()) {
+            final String name = parents.nextToken();
+            parent = parent.createChildDirectory(this, name);
+          }
+          final VirtualFile file = parent.createChildData(this, PathUtil.getFileName(path));
+          VfsUtil.saveText(file, text);
+          result.setResult(file);
         }
         catch (IOException e) {
           throw new AssertionError(e);
@@ -62,32 +79,44 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
     final File file = PathManager.findFileInLibDirectory("jdom.jar");
     final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
     assertNotNull(file.getAbsolutePath() + " not found", virtualFile);
-    return JarFileSystem.getInstance().getJarRootForLocalFile(virtualFile);
+    final VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(virtualFile);
+    assertNotNull(jarRoot);
+    return jarRoot;
   }
 
-  protected Library addProjectLibrary(Module module, String name, VirtualFile... jars) {
-    final Library library = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).createLibrary(name);
-    final Library.ModifiableModel libraryModel = library.getModifiableModel();
-    for (VirtualFile jar : jars) {
-      libraryModel.addRoot(jar, OrderRootType.CLASSES);
-    }
-    libraryModel.commit();
-    final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-    rootModel.addLibraryEntry(library);
-    rootModel.commit();
-    return library;
+  protected Library addProjectLibrary(final @Nullable Module module, final String name, final VirtualFile... jars) {
+    return new WriteAction<Library>() {
+      protected void run(final Result<Library> result) {
+        final Library library = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).createLibrary(name);
+        final Library.ModifiableModel libraryModel = library.getModifiableModel();
+        for (VirtualFile jar : jars) {
+          libraryModel.addRoot(jar, OrderRootType.CLASSES);
+        }
+        libraryModel.commit();
+        if (module != null) {
+          final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
+          rootModel.addLibraryEntry(library);
+          rootModel.commit();
+        }
+        result.setResult(library);
+      }
+    }.execute().getResultObject();
   }
 
-  protected Library addModuleLibrary(Module module, VirtualFile... jars) {
-    final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-    final Library library = rootModel.getModuleLibraryTable().createLibrary();
-    final Library.ModifiableModel libraryModel = library.getModifiableModel();
-    for (VirtualFile jar : jars) {
-      libraryModel.addRoot(jar, OrderRootType.CLASSES);
-    }
-    libraryModel.commit();
-    rootModel.commit();
-    return library;
+  protected Library addModuleLibrary(final Module module, final VirtualFile... jars) {
+    return new WriteAction<Library>() {
+      protected void run(final Result<Library> result) {
+        final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
+        final Library library = rootModel.getModuleLibraryTable().createLibrary();
+        final Library.ModifiableModel libraryModel = library.getModifiableModel();
+        for (VirtualFile jar : jars) {
+          libraryModel.addRoot(jar, OrderRootType.CLASSES);
+        }
+        libraryModel.commit();
+        rootModel.commit();
+        result.setResult(library);
+      }
+    }.execute().getResultObject();
   }
 
   protected class PackagingElementBuilder {

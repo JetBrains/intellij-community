@@ -1,7 +1,6 @@
 package com.intellij.compiler.artifacts;
 
-import com.intellij.openapi.roots.CompilerProjectExtension;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 
@@ -10,53 +9,147 @@ import com.intellij.packaging.impl.artifacts.PlainArtifactType;
  */
 public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
 
-  @Override
-  protected void setUpProject() throws Exception {
-    super.setUpProject();
-    final String baseUrl = myProject.getBaseDir().getUrl();
-    CompilerProjectExtension.getInstance(myProject).setCompilerOutputUrl(baseUrl + "/out");
-  }
-
-  public void testChangeFile() throws Exception {
-    final VirtualFile file = createFile("file.txt");
-    addArtifact(root().dir("dir").file(file.getPath()));
+  public void testFileCopy() throws Exception {
+    final Artifact a = addArtifact(
+      root().file(createFile("file.txt", "foo").getPath())
+    );
     compileProject();
-    changeFile(file);
-    compileProject().assertRecompiled("file.txt");
+    assertOutput(a, fs().file("file.txt", "foo").build());
   }
 
-  private void addArtifact(final PackagingElementBuilder rootBuilder) {
-    addArtifact("a", PlainArtifactType.getInstance(), rootBuilder.build());
-  }
-
-  public void testOneFileInTwoArtifacts() throws Exception {
-    final VirtualFile file = createFile("file.txt");
-    final Artifact a1 = addArtifact("a1", PlainArtifactType.getInstance(),
-                                    root().dir("dir").file(file.getPath()).build());
-
-    final Artifact a2 = addArtifact("a2", PlainArtifactType.getInstance(),
-                                    root().dir("dir2").file(file.getPath()).build());
-
+  public void testDir() throws Exception {
+    final Artifact a = addArtifact(
+      root()
+        .file(createFile("abc.txt").getPath())
+        .dir("dir")
+          .file(createFile("xxx.txt", "bar").getPath())
+    );
     compileProject();
-    compile(a1).assertUpToDate();
-    compile(a2).assertUpToDate();
-    compileProject().assertUpToDate();
-
-    changeFile(file);
-    compile(a1).assertRecompiled("file.txt");
-    compile(a1).assertUpToDate();
-    compile(a2).assertRecompiled("file.txt");
-    compile(a2).assertUpToDate();
-    compile(a1).assertUpToDate();
-    compileProject().assertUpToDate();
+    assertOutput(a, fs()
+      .file("abc.txt")
+      .dir("dir")
+        .file("xxx.txt", "bar").build()
+    );
   }
 
-  public void testDeleteFile() throws Exception {
-    final VirtualFile file = createFile("index.html");
-    addArtifact(root().file(file.getPath()));
-
+  public void testArchive() throws Exception {
+    final Artifact a = addArtifact(
+      root()
+        .archive("xxx.zip")
+          .file(createFile("X.class", "data").getPath())
+          .dir("dir")
+             .file(createFile("Y.class").getPath())
+    );
     compileProject();
-    deleteFile(file);
-    compileProject().assertDeleted("out/artifacts/a/index.html");
+    assertOutput(a, fs()
+      .archive("xxx.zip")
+        .file("X.class", "data")
+        .dir("dir")
+          .file("Y.class")
+          .end()
+        .dir("META-INF")
+          .file("MANIFEST.MF")
+      .build()
+    );
+  }
+
+  public void testArchiveInArchive() throws Exception {
+    final Artifact a = addArtifact(
+      root()
+        .archive("a.jar")
+          .archive("b.jar")
+            .file(createFile("xxx.txt", "foo").getPath())
+    );
+    compileProject();
+    assertOutput(a, fs()
+      .archive("a.jar")
+        .archive("b.jar")
+          .file("xxx.txt", "foo")
+          .dir("META-INF").file("MANIFEST.MF").end()
+          .end()
+        .dir("META-INF").file("MANIFEST.MF")
+      .build());
+  }
+
+  public void testIncludedArtifact() throws Exception {
+    final Artifact included = addArtifact("included", PlainArtifactType.getInstance(),
+                                          root()
+                                            .file(createFile("aaa.txt").getPath())
+                                            .build());
+    final Artifact a = addArtifact(
+      root()
+        .dir("dir")
+          .artifact(included)
+          .end()
+        .file(createFile("bbb.txt").getPath())
+    );
+    compileProject();
+
+    assertOutput(included, fs().file("aaa.txt").build());
+    assertOutput(a, fs()
+      .dir("dir")
+        .file("aaa.txt")
+        .end()
+      .file("bbb.txt")
+      .build());
+  }
+
+  public void testMergeDirectories() throws Exception {
+    final Artifact included = addArtifact("included", PlainArtifactType.getInstance(),
+                                          root().dir("dir").file(createFile("aaa.class").getPath()).build());
+    final Artifact a = addArtifact(
+      root()
+        .artifact(included)
+        .dir("dir")
+          .file(createFile("bbb.class").getPath()));
+    compileProject();
+    assertOutput(a, fs()
+      .dir("dir")
+        .file("aaa.class")
+        .file("bbb.class")
+      .build());
+  }
+
+  //todo[nik] fix
+  public void _testOverwriteArchives() throws Exception {
+    final Artifact included = addArtifact("included", PlainArtifactType.getInstance(),
+                                          root().archive("x.jar").file(createFile("aaa.class").getPath()).build());
+    final Artifact a = addArtifact(
+      root()
+        .artifact(included)
+        .archive("x.jar")
+          .file(createFile("bbb.class").getPath()));
+    compileProject();
+    assertOutput(a, fs()
+      .archive("x.jar")
+        .file("aaa.class")
+        .dir("META-INF").file("MANIFEST.MF")
+      .build());
+  }
+
+  public void testCopyLibrary() throws Exception {
+    final Library library = addProjectLibrary(null, "lib", getJDomJar());
+    final Artifact a = addArtifact(root().lib(library));
+    compileProject();
+    assertOutput(a, fs().file("jdom.jar").build());
+  }
+
+  public void testFileOrder() throws Exception {
+    final Artifact a1 = addArtifact("included1", PlainArtifactType.getInstance(),
+                                    root().dir("ddd").file(createFile("d1/xxx.txt", "first").getPath()).build());
+    final Artifact a2 = addArtifact("included2", PlainArtifactType.getInstance(),
+                                    root().dir("ddd").file(createFile("d2/xxx.txt", "second").getPath()).build());
+    final Artifact a = addArtifact(
+      root()
+      .artifact(a1)
+      .dir("ddd")
+        .file(createFile("d3/xxx.txt", "foo").getPath())
+        .end()
+      .artifact(a2)
+    );
+    compileProject();
+    assertOutput(a, fs()
+      .dir("ddd").file("xxx.txt", "first")
+      .build());
   }
 }

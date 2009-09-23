@@ -6,13 +6,16 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
+import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.util.concurrency.Semaphore;
 import gnu.trove.THashSet;
@@ -97,6 +100,29 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
         }
       }
     }.execute();
+  }
+
+  @Override
+  protected void setUpProject() throws Exception {
+    super.setUpProject();
+    final String baseUrl = myProject.getBaseDir().getUrl();
+    CompilerProjectExtension.getInstance(myProject).setCompilerOutputUrl(baseUrl + "/out");
+  }
+
+  protected Artifact addArtifact(final PackagingElementBuilder builder) {
+    return addArtifact("a", PlainArtifactType.getInstance(), builder.build());
+  }
+
+  protected static TestFileSystemBuilder fs() {
+    return new TestFileSystemBuilder(new TestFileSystemItem("root", false, true), null);
+  }
+
+  public void assertOutput(Artifact artifact, TestFileSystemItem item) throws IOException {
+    final String output = artifact.getOutputPath();
+    assertNotNull("output path not specified for " + artifact.getName(), output);
+    final VirtualFile outputFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(output);
+    assertNotNull("output file not found " + output);
+    item.assertDirectoryEqual(outputFile);
   }
 
   protected class CompilationLog {
