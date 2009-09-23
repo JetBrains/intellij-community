@@ -269,6 +269,13 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
     assertEquals "Script", clazz.name
   }
 
+  public void testBooleanGetterPropertyAccess() {
+    myFixture.configureByText("a.groovy", "print([].em<caret>pty)");
+    def ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
+    def resolved = ref.resolve()
+    assertInstanceOf resolved, PsiMethod
+  }
+
   private void doTest(String fileName) throws Exception {
     PsiReference ref = configureByFile(fileName);
     PsiElement resolved = ref.resolve();

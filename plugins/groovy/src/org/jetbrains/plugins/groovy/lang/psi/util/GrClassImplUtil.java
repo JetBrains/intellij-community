@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.infos.CandidateInfo;
@@ -271,22 +270,6 @@ public class GrClassImplUtil {
                 isMethodVisible(isPlaceGroovy, method) &&
                 !processor.execute(method, ResolveState.initial().put(PsiSubstitutor.KEY, state.get(PsiSubstitutor.KEY)))) {
               return false;
-            }
-          }
-        }
-
-        final boolean isGetter = GroovyPropertyUtils.isGetterName(name);
-        final boolean isSetter = GroovyPropertyUtils.isSetterName(name);
-        if (isGetter || isSetter) {
-          final String propName = StringUtil.decapitalize(name.substring(3));
-          if (propName.length() > 0) {
-            Map<String, CandidateInfo> fieldsMap = CollectClassMembersUtil.getAllFields(grType); //cached
-            final CandidateInfo info = fieldsMap.get(propName);
-            if (info != null) {
-              final PsiElement field = info.getElement();
-              if (field instanceof GrField && ((GrField)field).isProperty() && isPropertyReference(place, (PsiField)field, isGetter)) {
-                if (!processor.execute(field, ResolveState.initial().put(PsiSubstitutor.KEY, state.get(PsiSubstitutor.KEY)))) return false;
-              }
             }
           }
         }

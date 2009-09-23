@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
@@ -13,7 +14,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
  * @author ilyas
  */
 public class GroovyPropertyUtils {
+  private GroovyPropertyUtils() {
+  }
 
+  @Nullable
   public static PsiMethod findSetterForField(PsiField field) {
     final PsiClass containingClass = field.getContainingClass();
     final Project project = field.getProject();
@@ -22,6 +26,7 @@ public class GroovyPropertyUtils {
     return findPropertySetter(containingClass, propertyName, isStatic, true);
   }
 
+  @Nullable
   public static PsiMethod findGetterForField(PsiField field) {
     final PsiClass containingClass = field.getContainingClass();
     final Project project = field.getProject();
@@ -115,12 +120,10 @@ public class GroovyPropertyUtils {
     if (methodName.startsWith("get") && methodName.length() > 3) {
       return StringUtil.decapitalize(methodName.substring(3));
     }
-/*    else if (methodName.startsWith("is") && methodName.length() > 2) {
-      return StringUtil.capitalize(methodName.substring(2));
-    }*/
-    else {
-      return methodName;
+    else if (methodName.startsWith("is") && methodName.length() > 2 && PsiType.BOOLEAN.equals(getterMethod.getReturnType())) {
+      return StringUtil.decapitalize(methodName.substring(2));
     }
+    return methodName;
   }
 
   public static String getPropertyNameBySetter(PsiMethod setterMethod) {
@@ -143,8 +146,10 @@ public class GroovyPropertyUtils {
     return accessor.getName();
   }
 
-  public static boolean isGetterName(String name) {
-    return name != null && name.startsWith("get") && name.length() > 3 && isUpperCase(name.charAt(3));
+  public static boolean isGetterName(@NotNull String name) {
+    if (name.startsWith("get") && name.length() > 3 && isUpperCase(name.charAt(3))) return true;
+    if (name.startsWith("is") && name.length() > 2 && isUpperCase(name.charAt(2))) return true;
+    return false;
   }
 
   public static boolean isSetterName(String name) {
@@ -165,7 +170,7 @@ public class GroovyPropertyUtils {
 
   public static boolean isProperty(GrField field) {
     final PsiClass clazz = field.getContainingClass();
-    return GroovyPropertyUtils.isProperty(clazz, field.getName(), field.hasModifierProperty(PsiModifier.STATIC));
+    return isProperty(clazz, field.getName(), field.hasModifierProperty(PsiModifier.STATIC));
   }
 
   private static boolean isUpperCase(char c) {
