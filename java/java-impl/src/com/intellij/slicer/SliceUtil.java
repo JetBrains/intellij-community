@@ -7,15 +7,18 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.slicer.forward.SliceFUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -31,6 +34,11 @@ public class SliceUtil {
     expression = simplify(expression);
     PsiElement original = expression;
     if (expression instanceof PsiReferenceExpression) {
+      PsiElement element = SliceFUtil.complexify(expression);
+      if (element instanceof PsiExpression && PsiUtil.isOnAssignmentLeftHand((PsiExpression)element)) {
+        PsiExpression rightSide = ((PsiAssignmentExpression)element.getParent()).getRExpression();
+        return rightSide == null || handToProcessor(rightSide, processor, parent, parentSubstitutor);
+      }
       PsiReferenceExpression ref = (PsiReferenceExpression)expression;
       JavaResolveResult result = ref.advancedResolve(false);
       parentSubstitutor = result.getSubstitutor().putAll(parentSubstitutor);
@@ -106,6 +114,8 @@ public class SliceUtil {
     PsiType returnType = methodCalled.getReturnType();
     if (returnType == null) return true;
 
+    final PsiType parentType = parentSubstitutor.substitute(methodCallExpr.getType());
+    final PsiSubstitutor substitutor = resolved.getSubstitutor().putAll(parentSubstitutor);
     Collection<PsiMethod> overrides = new THashSet<PsiMethod>(OverridingMethodsSearch.search(methodCalled, parent.getScope().toSearchScope(), true).findAll());
     overrides.add(methodCalled);
 
@@ -114,6 +124,9 @@ public class SliceUtil {
       if (!result[0]) break;
       final PsiCodeBlock body = override.getBody();
       if (body == null) continue;
+
+      final PsiSubstitutor superSubstitutor = methodCalled == override ? substitutor :
+        MethodSignatureUtil.getSuperMethodSignatureSubstitutor(methodCalled.getSignature(substitutor), override.getSignature(substitutor));
 
       body.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
@@ -124,8 +137,7 @@ public class SliceUtil {
         public void visitReturnStatement(final PsiReturnStatement statement) {
           PsiExpression returnValue = statement.getReturnValue();
           if (returnValue == null) return;
-          PsiSubstitutor substitutor = resolved.getSubstitutor().putAll(parentSubstitutor);
-
+          if (!TypeConversionUtil.isAssignable(parentType, superSubstitutor.substitute(superSubstitutor.substitute(returnValue.getType())))) return;
           if (!handToProcessor(returnValue, processor, parent, substitutor)) {
             stopWalking();
             result[0] = false;
@@ -190,12 +202,12 @@ public class SliceUtil {
     Collection<PsiMethod> superMethods = new THashSet<PsiMethod>(Arrays.asList(method.findDeepestSuperMethods()));
     superMethods.add(method);
     Collection<PsiMethod> overrides = new THashSet<PsiMethod>(superMethods);
-    for (PsiMethod superMethod : superMethods) {
-      overrides.addAll(OverridingMethodsSearch.search(superMethod, parent.getScope().toSearchScope(), true).findAll());
-    }
+    //for (PsiMethod superMethod : superMethods) {
+    //  overrides.addAll(OverridingMethodsSearch.search(superMethod, parent.getScope().toSearchScope(), true).findAll());
+    //}
     final Set<PsiReference> processed = new THashSet<PsiReference>(); //usages of super method and overridden method can overlap
     for (final PsiMethod containingMethod : overrides) {
-      if (!MethodReferencesSearch.search(containingMethod, parent.getScope().toSearchScope(), true).forEach(new Processor<PsiReference>() {
+      if (!MethodReferencesSearch.search(containingMethod, parent.getScope().toSearchScope(), false).forEach(new Processor<PsiReference>() {
         public boolean process(final PsiReference reference) {
           SliceManager.getInstance(parameter.getProject()).checkCanceled();
           synchronized (processed) {
@@ -262,7 +274,8 @@ public class SliceUtil {
     return true;
   }
 
-  private static PsiSubstitutor removeRawMappingsLeftFromResolve(PsiSubstitutor substitutor) {
+  @NotNull
+  private static PsiSubstitutor removeRawMappingsLeftFromResolve(@NotNull PsiSubstitutor substitutor) {
     Map<PsiTypeParameter, PsiType> map = null;
     for (Map.Entry<PsiTypeParameter, PsiType> entry : substitutor.getSubstitutionMap().entrySet()) {
       if (entry.getValue() == null) {
@@ -270,15 +283,14 @@ public class SliceUtil {
         map.put(entry.getKey(), entry.getValue());
       }
     }
-    if (map != null) {
-      Map<PsiTypeParameter, PsiType> newmap = new THashMap<PsiTypeParameter, PsiType>(substitutor.getSubstitutionMap());
-      newmap.keySet().removeAll(map.keySet());
-      substitutor = PsiSubstitutorImpl.createSubstitutor(newmap);
-    }
-    return substitutor;
+    if (map == null) return substitutor;
+    Map<PsiTypeParameter, PsiType> newmap = new THashMap<PsiTypeParameter, PsiType>(substitutor.getSubstitutionMap());
+    newmap.keySet().removeAll(map.keySet());
+    return PsiSubstitutorImpl.createSubstitutor(newmap);
   }
 
-  private static PsiSubstitutor unify(PsiSubstitutor substitutor, PsiSubstitutor parentSubstitutor, final Project project) {
+  @Nullable
+  private static PsiSubstitutor unify(@NotNull PsiSubstitutor substitutor, @NotNull PsiSubstitutor parentSubstitutor, @NotNull Project project) {
     Map<PsiTypeParameter,PsiType> newMap = new THashMap<PsiTypeParameter, PsiType>(substitutor.getSubstitutionMap());
 
     for (Map.Entry<PsiTypeParameter, PsiType> entry : substitutor.getSubstitutionMap().entrySet()) {

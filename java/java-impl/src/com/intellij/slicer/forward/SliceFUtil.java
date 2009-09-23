@@ -203,7 +203,7 @@ public class SliceFUtil {
     return target;
   }
 
-  private static PsiElement complexify(@NotNull PsiElement element) {
+  public static PsiElement complexify(@NotNull PsiElement element) {
     PsiElement parent = element.getParent();
     if (parent instanceof PsiParenthesizedExpression && element.equals(((PsiParenthesizedExpression)parent).getExpression())) {
       return complexify(parent);
