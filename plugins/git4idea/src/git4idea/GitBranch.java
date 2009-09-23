@@ -301,6 +301,8 @@ public class GitBranch extends GitReference {
   public GitRevisionNumber getMergeBase(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitBranch branch)
     throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.MERGE_BASE);
+    h.setNoSSH(true);
+    h.setSilent(true);
     h.addParameters(this.getFullName(), branch.getFullName());
     String output = h.run().trim();
     if (output.length() == 0) {
