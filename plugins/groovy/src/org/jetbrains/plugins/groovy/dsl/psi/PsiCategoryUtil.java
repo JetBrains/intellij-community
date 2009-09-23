@@ -22,21 +22,19 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author ilyas
  */
-public class PsiMethodCategory implements PsiEnhancerCategory {
+public class PsiCategoryUtil {
 
   @Nullable
-  public static PsiClass getClassType(PsiField field) {
-    final PsiType type = field.getType();
-    return PsiCategoryUtil.getClassType(type, field);
-  }
-
-  public static boolean hasAnnotation(PsiMember member, String fqn) {
-    final PsiModifierList list = member.getModifierList();
-    if (list == null) return false;
-    for (PsiAnnotation annotation : list.getAnnotations()) {
-      if (fqn.equals(annotation.getQualifiedName())) return true;
+  public static PsiClass getClassType(PsiType type, PsiElement place) {
+    if (type instanceof PsiClassType) {
+      PsiClassType classType = (PsiClassType)type;
+      return classType.resolve();
+    } else if (type instanceof PsiPrimitiveType) {
+      final PsiClassType boxed = ((PsiPrimitiveType)type).getBoxedType(place);
+      if (boxed != null) return boxed.resolve();
+      else return null;
+    } else {
+      return null;
     }
-    return false;
   }
-
 }

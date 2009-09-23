@@ -41,6 +41,16 @@ contributor([psiClassContext]) {
   method name: "getAnnotation", type: "com.intellij.psi.PsiAnnotation"
 }
 
+def psiMemberContext = context(scope: closureScope(isArg: true), ctype: "com.intellij.psi.PsiMember")
+contributor([psiMemberContext]) {
+  method name: "hasAnnotation", params: [name: "java.lang.String"], type: "boolean"
+}
+
+def psiFieldContext = context(scope: closureScope(isArg: true), ctype: "com.intellij.psi.PsiField")
+contributor([psiFieldContext]) {
+  method name: "getClassType", type: "com.intellij.psi.PsiClass"
+}
+
 def psiElementContext = context(scope: closureScope(isArg: true), ctype: "com.intellij.psi.PsiElement")
 contributor([psiElementContext]) {
   method name: "bind", type: "com.intellij.psi.PsiElement"

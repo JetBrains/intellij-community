@@ -16,12 +16,7 @@
 
 package org.jetbrains.plugins.groovy.dsl.psi;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -38,15 +33,7 @@ public class PsiExpressionCategory implements PsiEnhancerCategory{
   @Nullable
   public static PsiClass getClassType(GrExpression expr) {
     final PsiType type = expr.getType();
-    if (type instanceof PsiClassType) {
-      PsiClassType classType = (PsiClassType)type;
-      return classType.resolve();
-    } else {
-      final String text = type.getPresentableText();
-      final Project project = expr.getProject();
-      final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-      return facade.findClass(text, GlobalSearchScope.allScope(project));
-    }
+    return PsiCategoryUtil.getClassType(type, expr);
   }
 
   /**

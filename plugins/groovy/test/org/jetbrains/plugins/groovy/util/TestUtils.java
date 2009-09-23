@@ -45,6 +45,7 @@ public abstract class TestUtils {
   public static final String END_MARKER = "<end>";
   public static final String GRAILS_JAR = "grails-web.jar";
   public static final String GROOVY_JAR = "groovy-all.jar";
+  public static final String GROOVY_JAR_17 = "groovy-all-1.7.jar";
 
   public static String getMockJdkHome() {
     return getTestDataPath() + "/mockJDK";

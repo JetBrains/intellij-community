@@ -41,6 +41,12 @@ public class GroovyDslTest extends CompletionTestBase {
     myFixture.testCompletion(getTestName(false) + ".gdsl", getTestName(false) + "_after.gdsl")
   }
 
+  public void doPlainTest() throws Throwable {
+    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy")
+  }
+
+  public void testDelegateAnnotation() throws Throwable { doPlainTest() }
+
   public void testCompleteMethod() throws Throwable { doTest() }
 
   public void testCompleteProperty() throws Throwable { doTest() }
@@ -83,7 +89,7 @@ public class GroovyDslTest extends CompletionTestBase {
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
-    moduleBuilder.addLibraryJars("GROOVY", TestUtils.getMockGroovyLibraryHome(), TestUtils.GROOVY_JAR);
+    moduleBuilder.addLibraryJars("GROOVY", TestUtils.getMockGroovy1_7LibraryHome(), TestUtils.GROOVY_JAR_17);
   }
 
 }
