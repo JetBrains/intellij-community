@@ -5,4 +5,5 @@ package org.intellij.lang.regexp;
  */
 public interface RegExpLanguageHost {
   boolean characterNeedsEscaping(char c);
+  boolean supportsPerl5EmbeddedComments();
 }

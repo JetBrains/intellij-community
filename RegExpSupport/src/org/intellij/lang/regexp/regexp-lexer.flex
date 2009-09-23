@@ -195,6 +195,7 @@ HEX_CHAR=[0-9a-fA-F]
   "(?!"       { return RegExpTT.NEG_LOOKAHEAD;   }
   "(?<="      { return RegExpTT.POS_LOOKBEHIND;  }
   "(?<!"      { return RegExpTT.NEG_LOOKBEHIND;  }
+  "(?#" [^)]+ ")" { return RegExpTT.COMMENT;    }
 
   "(?"        { yybegin(OPTIONS); return RegExpTT.SET_OPTIONS; }
 }

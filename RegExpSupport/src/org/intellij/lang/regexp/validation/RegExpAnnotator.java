@@ -22,6 +22,7 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -29,6 +30,7 @@ import org.intellij.lang.regexp.RegExpLanguageHost;
 import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.*;
 import org.intellij.lang.regexp.psi.impl.RegExpPropertyImpl;
+import org.jetbrains.annotations.Nullable;
 
 public final class RegExpAnnotator extends RegExpElementVisitor implements Annotator {
     private AnnotationHolder myHolder;
@@ -100,15 +102,24 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
 
     private static boolean isRedundantEscape(RegExpChar ch, String text) {
         if (text.length() <= 1) return false;
-        PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(ch.getProject()).getInjectionHost(ch);
-        if (host instanceof RegExpLanguageHost) {
+        RegExpLanguageHost host = findRegExpHost(ch);
+        if (host != null) {
           final char c = text.charAt(1);
-          final boolean needsEscaping = ((RegExpLanguageHost)host).characterNeedsEscaping(c);
+          final boolean needsEscaping = host.characterNeedsEscaping(c);
           return !needsEscaping;
         }
         else {
             return!("\\]".equals(text) || "\\}".equals(text));
         }
+    }
+
+    @Nullable
+    private static RegExpLanguageHost findRegExpHost(PsiElement element) {
+        PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(element.getProject()).getInjectionHost(element);
+        if (host instanceof RegExpLanguageHost) {
+            return (RegExpLanguageHost) host;
+        }
+        return null;
     }
 
     public void visitRegExpProperty(RegExpProperty property) {
@@ -147,6 +158,16 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
                 if (atoms.length == 1 && atoms[0] instanceof RegExpGroup) {
                     myHolder.createWarningAnnotation(group, "Redundant group nesting");
                 }
+            }
+        }
+    }
+
+    @Override
+    public void visitComment(PsiComment comment) {
+        if (comment.getText().startsWith("(?#")) {
+            RegExpLanguageHost host = findRegExpHost(comment);
+            if (host == null || !host.supportsPerl5EmbeddedComments()) {
+                myHolder.createErrorAnnotation(comment, "Embedded comments are not supported");                
             }
         }
     }
