@@ -210,6 +210,12 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
                 registerFix(a, new SimplifyQuantifierAction(quantifier, "+"));
             }
         }
+        if (quantifier.getType() == RegExpQuantifier.Type.POSSESSIVE) {
+            RegExpLanguageHost host = findRegExpHost(quantifier);
+            if (host != null && !host.supportsPossessiveQuantifiers()) {
+                myHolder.createErrorAnnotation(quantifier, "Nested quantifier in regexp");
+            }
+        }
     }
 
     private static void registerFix(Annotation a, IntentionAction action) {
