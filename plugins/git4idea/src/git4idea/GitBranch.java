@@ -287,4 +287,27 @@ public class GitBranch extends GitReference {
     }
     return new GitBranch(branch, false, remoteFlag);
   }
+
+  /**
+   * Get a merge base between the current branch and specified branch.
+   *
+   * @param project the current project
+   * @param root    the vcs root
+   * @param branch  the branch
+   * @return the common commit or null if the there is no common commit
+   * @throws VcsException the exception
+   */
+  @Nullable
+  public GitRevisionNumber getMergeBase(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitBranch branch)
+    throws VcsException {
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.MERGE_BASE);
+    h.addParameters(this.getFullName(), branch.getFullName());
+    String output = h.run().trim();
+    if (output.length() == 0) {
+      return null;
+    }
+    else {
+      return GitRevisionNumber.resolve(project, root, output);
+    }
+  }
 }

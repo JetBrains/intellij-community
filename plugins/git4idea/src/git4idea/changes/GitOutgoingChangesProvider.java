@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import git4idea.GitBranchesSearcher;
+import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.commands.GitSimpleHandler;
 
@@ -24,18 +25,22 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
     myProject = project;
   }
 
-  public Pair<VcsRevisionNumber, List<CommittedChangeList>> getOutgoingChanges(final VirtualFile vcsRoot, final boolean findRemote) throws VcsException {
+  public Pair<VcsRevisionNumber, List<CommittedChangeList>> getOutgoingChanges(final VirtualFile vcsRoot, final boolean findRemote)
+    throws VcsException {
     LOG.debug("getOutgoingChanges root: " + vcsRoot.getPath());
     final GitBranchesSearcher searcher = new GitBranchesSearcher(myProject, vcsRoot, findRemote);
     if (searcher.getLocal() == null || searcher.getRemote() == null) {
       return new Pair<VcsRevisionNumber, List<CommittedChangeList>>(null, Collections.<CommittedChangeList>emptyList());
     }
-
+    final GitRevisionNumber base = searcher.getLocal().getMergeBase(myProject, vcsRoot, searcher.getRemote());
+    if (base == null) {
+      return new Pair<VcsRevisionNumber, List<CommittedChangeList>>(null, Collections.<CommittedChangeList>emptyList());
+    }
     final List<CommittedChangeList> lists = GitUtil.getLocalCommittedChanges(myProject, vcsRoot, new Consumer<GitSimpleHandler>() {
       public void consume(final GitSimpleHandler handler) {
-        handler.addParameters(searcher.getRemote().getFullName() + "..HEAD");
+        handler.addParameters(base.asString() + "..HEAD");
       }
     });
-    return new Pair<VcsRevisionNumber, List<CommittedChangeList>>(null, lists);
+    return new Pair<VcsRevisionNumber, List<CommittedChangeList>>(base, lists);
   }
 }

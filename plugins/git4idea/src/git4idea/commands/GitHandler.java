@@ -169,6 +169,10 @@ public abstract class GitHandler {
   /**
    * The constant for git command {@value}
    */
+  @NonNls public static final String MERGE_BASE = "merge-base";
+  /**
+   * The constant for git command {@value}
+   */
   @NonNls public static final String PUSH = "push";
   /**
    * The constant for git command {@value}
