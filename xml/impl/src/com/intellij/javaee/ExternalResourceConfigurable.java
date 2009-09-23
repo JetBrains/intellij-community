@@ -1,6 +1,7 @@
 package com.intellij.javaee;
 
 import com.intellij.openapi.options.BaseConfigurable;
+import com.intellij.openapi.options.OptionalConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -24,7 +25,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class ExternalResourceConfigurable extends BaseConfigurable implements SearchableConfigurable {
+public class ExternalResourceConfigurable extends BaseConfigurable implements SearchableConfigurable, OptionalConfigurable {
 
   private JPanel myPanel;
   private List<EditLocationDialog.NameLocationPair> myPairs;
@@ -300,5 +301,9 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
   @Nullable
   public Runnable enableSearch(String option) {
     return null;
+  }
+
+  public boolean needDisplay() {
+    return !"Ruby".equals(System.getProperty("idea.platform.prefix"));
   }
 }
