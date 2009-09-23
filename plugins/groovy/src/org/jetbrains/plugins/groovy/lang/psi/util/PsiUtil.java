@@ -61,7 +61,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrPropertySelection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
@@ -477,7 +476,7 @@ public class PsiUtil {
     }
   }
 
-  public static boolean isInStaticContext(GrReferenceExpression refExpression, GrMemberOwner targetClass) {
+  public static boolean isInStaticContext(GrReferenceExpression refExpression, PsiClass targetClass) {
     if (refExpression.isQualified()) {
       GrExpression qualifer = refExpression.getQualifierExpression();
       if (qualifer instanceof GrReferenceExpression) return ((GrReferenceExpression)qualifer).resolve() instanceof PsiClass;

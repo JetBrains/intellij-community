@@ -170,7 +170,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
           element.processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, substitutor), null, ref);
 
         for (NonCodeMembersProcessor membersProcessor : NonCodeMembersProcessor.EP_NAME.getExtensions()) {
-          if (!membersProcessor.processNonCodeMethods(thisType, processor, this, true)) break;
+          if (!membersProcessor.processNonCodeMembers(thisType, processor, this, true)) break;
         }
         constructorResults.addAll(Arrays.asList(processor.getCandidates()));
         if (!toBreak) break;

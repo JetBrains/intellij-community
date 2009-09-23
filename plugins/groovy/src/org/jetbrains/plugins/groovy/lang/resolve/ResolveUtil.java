@@ -140,7 +140,7 @@ public class ResolveUtil {
       }
 
       for (NonCodeMembersProcessor membersProcessor : NonCodeMembersProcessor.EP_NAME.getExtensions()) {
-        if (!membersProcessor.processNonCodeMethods(type, processor, place, forCompletion)) return false;
+        if (!membersProcessor.processNonCodeMembers(type, processor, place, forCompletion)) return false;
       }
 
       if (type instanceof PsiArrayType) {

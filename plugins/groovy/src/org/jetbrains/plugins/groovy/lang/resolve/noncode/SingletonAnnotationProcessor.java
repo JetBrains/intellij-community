@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.noncode;
 
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import org.jetbrains.plugins.groovy.annotator.inspections.GroovySingletonAnnotationInspection;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
@@ -28,14 +29,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrAccessorMethodImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersProcessor;
-import org.jetbrains.plugins.groovy.annotator.inspections.GroovySingletonAnnotationInspection;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 29.04.2009
  */
 public class SingletonAnnotationProcessor implements NonCodeMembersProcessor {
-  public boolean processNonCodeMethods(PsiType type, PsiScopeProcessor processor, PsiElement place, boolean forCompletion) {
+  public boolean processNonCodeMembers(PsiType type, PsiScopeProcessor processor, PsiElement place, boolean forCompletion) {
     if (!(type instanceof PsiClassType)) return true;
 
     PsiClass psiClass = ((PsiClassType)type).resolve();

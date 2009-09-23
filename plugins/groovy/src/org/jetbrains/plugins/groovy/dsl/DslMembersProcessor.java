@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersProcessor;
  * @author peter
  */
 public class DslMembersProcessor implements NonCodeMembersProcessor {
-  public boolean processNonCodeMethods(PsiType type, final PsiScopeProcessor processor, final PsiElement place, boolean forCompletion) {
+  public boolean processNonCodeMembers(PsiType type, final PsiScopeProcessor processor, final PsiElement place, boolean forCompletion) {
     if (type instanceof PsiClassType) {
       final PsiClass psiClass = ((PsiClassType)type).resolve();
       if (psiClass != null && !(psiClass instanceof GroovyScriptClass)) {

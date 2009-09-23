@@ -101,7 +101,7 @@ public class GrConstructorInvocationImpl extends GroovyPsiElementImpl implements
       clazz.processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, substitutor), null, this);
 
       for (NonCodeMembersProcessor membersProcessor : NonCodeMembersProcessor.EP_NAME.getExtensions()) {
-        if (!membersProcessor.processNonCodeMethods(thisType, processor, this, true)) break;
+        if (!membersProcessor.processNonCodeMembers(thisType, processor, this, true)) break;
       }
 
       return processor.getCandidates();

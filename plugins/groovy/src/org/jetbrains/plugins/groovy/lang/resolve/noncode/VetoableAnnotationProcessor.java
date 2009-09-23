@@ -36,7 +36,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersProcessor;
 public class VetoableAnnotationProcessor implements NonCodeMembersProcessor {
   public static final String VETOABLE = "groovy.beans.Vetoable";
 
-  public boolean processNonCodeMethods(PsiType type, PsiScopeProcessor processor, PsiElement place, boolean forCompletion) {
+  public boolean processNonCodeMembers(PsiType type, PsiScopeProcessor processor, PsiElement place, boolean forCompletion) {
     if (!(type instanceof PsiClassType)) return true;
 
     PsiClass psiClass = ((PsiClassType)type).resolve();

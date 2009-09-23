@@ -31,5 +31,5 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 public interface NonCodeMembersProcessor {
   ExtensionPointName<NonCodeMembersProcessor> EP_NAME = ExtensionPointName.create("org.intellij.groovy.nonCodeProcessor");
 
-  boolean processNonCodeMethods(PsiType type, PsiScopeProcessor processor, PsiElement place, boolean forCompletion);
+  boolean processNonCodeMembers(PsiType type, PsiScopeProcessor processor, PsiElement place, boolean forCompletion);
 }

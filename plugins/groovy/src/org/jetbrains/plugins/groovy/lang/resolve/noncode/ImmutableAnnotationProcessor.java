@@ -38,7 +38,7 @@ import java.util.List;
  */
 public class ImmutableAnnotationProcessor implements NonCodeMembersProcessor {
 
-  public boolean processNonCodeMethods(PsiType type,
+  public boolean processNonCodeMembers(PsiType type,
                                        PsiScopeProcessor processor,
                                        PsiElement place,
                                        boolean forCompletion) {
