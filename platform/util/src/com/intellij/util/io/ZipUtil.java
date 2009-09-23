@@ -116,7 +116,7 @@ public class ZipUtil {
     return true;
   }
 
-  public static void extract(File file, File outputDir, FilenameFilter filenameFilter) throws IOException {
+  public static void extract(@NotNull File file, @NotNull File outputDir, @Nullable FilenameFilter filenameFilter) throws IOException {
     final ZipFile zipFile = new ZipFile(file);
     try {
       extract(zipFile, outputDir, filenameFilter);
@@ -126,9 +126,9 @@ public class ZipUtil {
     }
   }
 
-  public static void extract(final ZipFile zipFile,
-                             File outputDir,
-                             FilenameFilter filenameFilter) throws IOException {
+  public static void extract(final @NotNull ZipFile zipFile,
+                             @NotNull File outputDir,
+                             @Nullable FilenameFilter filenameFilter) throws IOException {
     final Enumeration entries = zipFile.entries();
     while (entries.hasMoreElements()) {
       ZipEntry entry = (ZipEntry)entries.nextElement();

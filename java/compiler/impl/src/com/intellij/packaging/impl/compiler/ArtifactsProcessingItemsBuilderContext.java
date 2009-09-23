@@ -19,7 +19,9 @@ public class ArtifactsProcessingItemsBuilderContext extends ProcessingItemsBuild
   }
 
   public void addDestination(VirtualFile sourceFile, DestinationInfo destinationInfo) {
-    getOrCreateProcessingItem(sourceFile).addDestination(destinationInfo, myCollectingEnabledItems);
+    if (checkOutputPath(destinationInfo.getOutputPath(), sourceFile)) {
+      getOrCreateProcessingItem(sourceFile).addDestination(destinationInfo, myCollectingEnabledItems);
+    }
   }
 
   protected ArtifactPackagingProcessingItem createProcessingItem(VirtualFile sourceFile) {
