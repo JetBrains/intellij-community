@@ -1,20 +1,17 @@
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.lifecycle.ControlledAlarmFactory;
-import com.intellij.lifecycle.SlowlyClosingAlarm;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ui.RemoteStatusChangeNodeDecorator;
 import com.intellij.openapi.vcs.update.UpdateFilesHelper;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.Topic;
 
@@ -38,6 +35,7 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
   private final Project myProject;
   private final Object myLock;
   private final Map<String, RemoteDifferenceStrategy> myKinds;
+  private ControlledCycle myControlledCycle;
 
   public static RemoteRevisionsCache getInstance(final Project project) {
     return ServiceManager.getService(project, RemoteRevisionsCache.class);
@@ -62,16 +60,27 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
       }
     });
     updateKinds();
-    final MyRecursiveUpdateRequest request = new MyRecursiveUpdateRequest(project, new Runnable() {
-      public void run() {
-        boolean somethingChanged = myRemoteRevisionsNumbersCache.updateStep();
-        somethingChanged |= myRemoteRevisionsStateCache.updateStep();
-        if (somethingChanged) {
-          myProject.getMessageBus().syncPublisher(REMOTE_VERSION_CHANGED).run();
+    myControlledCycle = new ControlledCycle(project, new Getter<Boolean>() {
+      public Boolean get() {
+        final boolean shouldBeDone = VcsConfiguration.getInstance(myProject).CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND;
+        if (shouldBeDone) {
+          boolean somethingChanged = myRemoteRevisionsNumbersCache.updateStep();
+          somethingChanged |= myRemoteRevisionsStateCache.updateStep();
+          if (somethingChanged) {
+            myProject.getMessageBus().syncPublisher(REMOTE_VERSION_CHANGED).run();
+          }
         }
+        return shouldBeDone;
       }
     });
-    request.start();
+    if ((! myProject.isDefault()) && VcsConfiguration.getInstance(myProject).CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND) {
+      myControlledCycle.start();
+    }
+  }
+
+  public void startRefreshInBackground() {
+    if (myProject.isDefault()) return;
+    myControlledCycle.start();
   }
 
   private void updateKinds() {
@@ -82,44 +91,6 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
         if (! myKinds.containsKey(vcs.getName())) {
           myKinds.put(vcs.getName(), vcs.getRemoteDifferenceStrategy());
         }
-      }
-    }
-  }
-
-  private static class MyRecursiveUpdateRequest implements Runnable {
-    private final Alarm mySimpleAlarm;
-    private final SlowlyClosingAlarm myControlledAlarm;
-    // this interval is also to check for not initialized paths, so it is rather small
-    private static final int ourRefreshInterval = 1000;
-    private final Runnable myRunnable;
-
-    private MyRecursiveUpdateRequest(final Project project, final Runnable runnable) {
-      myRunnable = new Runnable() {
-        public void run() {
-          try {
-            runnable.run();
-          } catch (ProcessCanceledException e) {
-            //
-          } catch (RuntimeException e) {
-            LOG.info(e);
-          }
-          mySimpleAlarm.addRequest(MyRecursiveUpdateRequest.this, ourRefreshInterval);
-        }
-      };
-      mySimpleAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, project);
-      myControlledAlarm = ControlledAlarmFactory.createOnApplicationPooledThread(project);
-    }
-
-    public void start() {
-      mySimpleAlarm.addRequest(this, ourRefreshInterval);
-    }
-
-    public void run() {
-      try {
-        myControlledAlarm.checkShouldExit();
-        myControlledAlarm.addRequest(myRunnable);
-      } catch (ProcessCanceledException e) {
-        //
       }
     }
   }

@@ -5,6 +5,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsShowOptionsSettingImpl;
+import com.intellij.openapi.vcs.changes.RemoteRevisionsCache;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
@@ -23,6 +24,7 @@ public class VcsBackgroundOperationsConfigurationPanel implements Configurable {
   private JCheckBox myCbAddRemoveInBackground;
   private JCheckBox myCbCheckoutInBackground;
   private JCheckBox myPerformRevertInBackgroundCheckBox;
+  private JCheckBox myTrackChangedOnServer;
 
   public VcsBackgroundOperationsConfigurationPanel(final Project project) {
 
@@ -40,6 +42,10 @@ public class VcsBackgroundOperationsConfigurationPanel implements Configurable {
     settings.PERFORM_EDIT_IN_BACKGROUND = myCbEditInBackground.isSelected();
     settings.PERFORM_ADD_REMOVE_IN_BACKGROUND = myCbAddRemoveInBackground.isSelected();
     settings.PERFORM_ROLLBACK_IN_BACKGROUND = myPerformRevertInBackgroundCheckBox.isSelected();
+    if ((! settings.CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND) && myTrackChangedOnServer.isSelected()) {
+      RemoteRevisionsCache.getInstance(myProject).startRefreshInBackground();
+    }
+    settings.CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND = myTrackChangedOnServer.isSelected();
 
     for (VcsShowOptionsSettingImpl setting : myPromptOptions.keySet()) {
       setting.setValue(myPromptOptions.get(setting).isSelected());
@@ -71,6 +77,9 @@ public class VcsBackgroundOperationsConfigurationPanel implements Configurable {
     if (settings.PERFORM_ROLLBACK_IN_BACKGROUND != myPerformRevertInBackgroundCheckBox.isSelected()) {
       return true;
     }
+    if (settings.CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND != myTrackChangedOnServer.isSelected()) {
+      return true;
+    }
 
     return false;
   }
@@ -83,6 +92,7 @@ public class VcsBackgroundOperationsConfigurationPanel implements Configurable {
     myCbEditInBackground.setSelected(settings.PERFORM_EDIT_IN_BACKGROUND);
     myCbAddRemoveInBackground.setSelected(settings.PERFORM_ADD_REMOVE_IN_BACKGROUND);
     myPerformRevertInBackgroundCheckBox.setSelected(settings.PERFORM_ROLLBACK_IN_BACKGROUND);
+    myTrackChangedOnServer.setSelected(settings.CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND);
     for (VcsShowOptionsSettingImpl setting : myPromptOptions.keySet()) {
       myPromptOptions.get(setting).setSelected(setting.getValue());
     }
