@@ -38,11 +38,13 @@ public class PathManager {
   @NonNls private static final String PROPERTY_CONFIG_PATH = "idea.config.path";
   @NonNls private static final String PROPERTY_PLUGINS_PATH = "idea.plugins.path";
   @NonNls private static final String PROPERTY_HOME_PATH = "idea.home.path";
+  @NonNls private static final String PROPERTY_LOG_PATH = "idea.log.path";
 
   @NonNls private static String ourHomePath;
   @NonNls private static String ourSystemPath;
   @NonNls private static String ourConfigPath;
   @NonNls private static String ourPluginsPath;
+  @NonNls private static String ourLogPath;
 
   @NonNls private static final String FILE = "file";
   @NonNls private static final String JAR = "jar";
@@ -52,6 +54,7 @@ public class PathManager {
   @NonNls private static final String LIB_FOLDER = "lib";
   @NonNls public static final String PLUGINS_DIRECTORY = "plugins";
   @NonNls private static final String BIN_FOLDER = "bin";
+  @NonNls private static final String LOG_DIRECTORY = "log";
   @NonNls private static final String OPTIONS_FOLDER = "options";
 
   public static String getHomePath() {
@@ -204,6 +207,19 @@ public class PathManager {
     }
 
     return ourPluginsPath;
+  }
+
+  public static String getLogPath() {
+    if (ourLogPath == null) {
+      if (System.getProperty(PROPERTY_LOG_PATH) != null) {
+        ourLogPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_LOG_PATH)));
+      }
+      else {
+        ourLogPath = getSystemPath() + File.separatorChar + LOG_DIRECTORY;
+      }
+    }
+
+    return ourLogPath;
   }
 
   private static String getAbsolutePath(String path) {

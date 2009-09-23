@@ -64,13 +64,13 @@ public class LoggerFactory implements Logger.Factory {
       String text = new String(FileUtil.loadFileText(logXmlFile));
       text = StringUtil.replace(text, SYSTEM_MACRO, StringUtil.replace(PathManager.getSystemPath(), "\\", "\\\\"));
       text = StringUtil.replace(text, APPLICATION_MACRO, StringUtil.replace(PathManager.getHomePath(), "\\", "\\\\"));
-      text = StringUtil.replace(text, LOGDIR_MACRO, StringUtil.replace(LOG_DIR, "\\", "\\\\"));
+      text = StringUtil.replace(text, LOGDIR_MACRO, StringUtil.replace(PathManager.getLogPath(), "\\", "\\\\"));
 
       if ("true".equals(System.getProperty("idea.test.test_mode"))) {
         text = commentTestModeLines(text);
       }
 
-      File file = new File(new File(PathManager.getSystemPath()), LOG_DIR);
+      File file = new File(PathManager.getLogPath());
       file.mkdirs();
 
       new DOMConfigurator().doConfigure(new StringReader(text), LogManager.getLoggerRepository());

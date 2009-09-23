@@ -37,7 +37,7 @@
   <appender name="FILE" class="org.apache.log4j.RollingFileAppender">
     <param name="MaxFileSize" value="1Mb"/>
     <param name="MaxBackupIndex" value="12"/>
-    <param name="file" value="$SYSTEM_DIR$/$LOG_DIR$/idea.log"/>
+    <param name="file" value="$LOG_DIR$/idea.log"/>
     <layout class="org.apache.log4j.PatternLayout">
       <param name="ConversionPattern" value="%d [%7r] %6p - %30.30c - %m \n"/>
     </layout>
@@ -46,7 +46,7 @@
   <appender name="INCOMING_CHANGES_FILE" class="org.apache.log4j.RollingFileAppender">
     <param name="MaxFileSize" value="1Mb"/>
     <param name="MaxBackupIndex" value="12"/>
-    <param name="file" value="$SYSTEM_DIR$/$LOG_DIR$/incoming.log"/>
+    <param name="file" value="$LOG_DIR$/incoming.log"/>
     <layout class="org.apache.log4j.PatternLayout">
       <param name="ConversionPattern" value="%d [%7r] %6p - %30.30c - %m \n"/>
     </layout>

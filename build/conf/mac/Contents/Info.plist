@@ -75,6 +75,8 @@
         <string>~/Library/Caches/@@system_selector@@/</string>
         <key>idea.plugins.path</key>
         <string>~/Library/Application Support/@@system_selector@@/</string>
+        <key>idea.log.path</key>
+        <string>~/Library/Logs/@@system_selector@@/</string>
         <key>java.endorsed.dirs</key>
         <string></string>
         <key>idea.smooth.progress</key>

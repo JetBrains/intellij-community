@@ -62,7 +62,7 @@ public class SocketLock {
         if (StartupUtil.isHeadless()) { //team server inspections
           throw new RuntimeException("Only one instance of " + productName + " can be run at a time.");
         }
-        @NonNls final String pathToLogFile = PathManager.getSystemPath() + "/log/idea.log file".replace('/', File.separatorChar);
+        @NonNls final String pathToLogFile = PathManager.getLogPath() + "/idea.log file".replace('/', File.separatorChar);
         JOptionPane.showMessageDialog(
           JOptionPane.getRootFrame(),
           CommonBundle.message("cannot.start.other.instance.is.running.error.message", productName, pathToLogFile),
