@@ -18,11 +18,14 @@ package org.jetbrains.plugins.groovy.dsl.psi;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -44,7 +47,17 @@ public class PsiElementCategory implements PsiEnhancerCategory {
     }
   }
 
-  public static Collection<? extends PsiElement> asList(PsiElement elem) {
+  @Nullable
+  public static PsiElement getQualifier(PsiElement elem){
+    if (elem instanceof GrReferenceExpression) {
+      return ((GrReferenceExpression)elem).getQualifierExpression();
+    }
+    return null;
+  }
+
+  @NotNull
+  public static Collection<? extends PsiElement> asList(@Nullable PsiElement elem) {
+    if (elem == null) return new ArrayList<PsiElement>();
     if (elem instanceof GrListOrMap) {
       return Arrays.asList(((GrListOrMap)elem).getInitializers());
     } else if (elem instanceof GrAnnotationArrayInitializer){

@@ -1,0 +1,30 @@
+contributor(context()) {
+
+  // For methods
+  def m = enclosingMethod()
+  if (m) {
+    for (a in m.getAnnotations("groovy.lang.Newify")) {
+      refs = a.findAttributeValue("value")
+
+      //For Python-like style
+      if (refs && !place.qualifier) {
+        for (c in refs.asList()) {
+          def targetClass = c.bind()
+          for (cons in (targetClass?.constructors ?: [])) {
+            method name: targetClass.name, params: cons.paramStringVector, type: targetClass.qualName
+          }
+        }
+      }
+
+
+      // For ruby-like style
+      for (cons in classType?.getConstructors()) {
+        method name: 'new', isStatic: true, params: cons.paramStringVector, type: classType?.qualName ?: "java.lang.Object"
+      }
+
+
+    }
+  }
+
+  //Todo for classes
+}

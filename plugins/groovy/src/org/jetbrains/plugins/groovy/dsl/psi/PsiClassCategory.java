@@ -16,10 +16,7 @@
 
 package org.jetbrains.plugins.groovy.dsl.psi;
 
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,9 +44,10 @@ public class PsiClassCategory implements PsiEnhancerCategory {
     return clazz.getQualifiedName();
   }
 
-  public static boolean hasAnnotation(PsiClass clazz, String annotName) {
+  public static boolean hasAnnotation(PsiMember clazz, String annotName) {
     if (annotName == null) return false;
     final PsiModifierList list = clazz.getModifierList();
+    if (list == null) return false;
     for (PsiAnnotation annotation : list.getAnnotations()) {
       if (annotName.equals(annotation.getQualifiedName())) return true;
     }
@@ -58,7 +56,7 @@ public class PsiClassCategory implements PsiEnhancerCategory {
   }
 
   @Nullable
-  public static PsiAnnotation getAnnotation(PsiClass clazz, String annotName) {
+  public static PsiAnnotation getAnnotation(PsiMember clazz, String annotName) {
     if (annotName == null) return null;
     final PsiModifierList list = clazz.getModifierList();
     if (list == null) return null;
@@ -69,7 +67,7 @@ public class PsiClassCategory implements PsiEnhancerCategory {
   }
 
   @NotNull
-  public static Collection<PsiAnnotation> getAnnotations(PsiClass clazz, String annotName) {
+  public static Collection<PsiAnnotation> getAnnotations(PsiMember clazz, String annotName) {
    final ArrayList<PsiAnnotation> list = new ArrayList<PsiAnnotation>();
     if (annotName == null) return list;
     final PsiModifierList mlist = clazz.getModifierList();

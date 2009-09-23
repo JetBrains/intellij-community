@@ -30,13 +30,12 @@ public class PsiMethodCategory implements PsiEnhancerCategory {
     return PsiCategoryUtil.getClassType(type, field);
   }
 
-  public static boolean hasAnnotation(PsiMember member, String fqn) {
-    final PsiModifierList list = member.getModifierList();
-    if (list == null) return false;
-    for (PsiAnnotation annotation : list.getAnnotations()) {
-      if (fqn.equals(annotation.getQualifiedName())) return true;
+  static Map getParamStringVector(PsiMethod method) {
+    def Map result = [:]
+    for (p in method.parameterList.parameters) {
+      result.put(p.getName(), p.getType().getCanonicalText())
     }
-    return false;
+    return result;
   }
 
 }

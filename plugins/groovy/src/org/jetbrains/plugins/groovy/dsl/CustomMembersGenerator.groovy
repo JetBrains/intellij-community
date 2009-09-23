@@ -13,6 +13,7 @@ import org.jetbrains.plugins.groovy.dsl.dsltop.GdslMembersProvider
 import org.jetbrains.plugins.groovy.dsl.holders.CompoundMembersHolder
 import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder
 import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder
+import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil
 
 /**
  * @author peter, ilyas
@@ -90,10 +91,16 @@ public class CustomMembersGenerator implements GdslMembersHolderConsumer {
     if (args.isStatic) {
       myClassText.append("static ")
     }
-    myClassText.append("def ").append(stringifyType(args.type)).append(" ").append(args.name).append("(")
+    def name = escapeKeywords(args.name)
+    myClassText.append("def ").append(stringifyType(args.type)).append(" ").append(name).append("(")
     myClassText.append(StringUtil.join(params.keySet(),
                                        [fun: {String s -> return params.get(s) + " " + s}] as Function, ", "))
     myClassText.append(") {}\n")
+  }
+
+  private static def escapeKeywords(String str){
+    if (GroovyNamesUtil.isKeyword(str)) return "'$str'"
+    else return str
   }
 
   private def stringifyType(type) {

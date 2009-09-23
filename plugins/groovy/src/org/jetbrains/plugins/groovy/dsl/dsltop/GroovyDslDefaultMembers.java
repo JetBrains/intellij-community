@@ -34,6 +34,7 @@ public class GroovyDslDefaultMembers implements GdslMembersProvider {
 
   /**
    * Find a class by its full-qulified name
+   *
    * @param fqn
    * @return
    */
@@ -44,9 +45,11 @@ public class GroovyDslDefaultMembers implements GdslMembersProvider {
     return clazz;
   }
 
-  /*************************************************************************************
-   Methods and properties of the GroovyDSL language
-   ************************************************************************************/
+  /**
+   * **********************************************************************************
+   * Methods and properties of the GroovyDSL language
+   * **********************************************************************************
+   */
 
   public void delegatesTo(@Nullable PsiElement elem, GdslMembersHolderConsumer consumer) {
     if (elem instanceof PsiClass) {
@@ -59,7 +62,8 @@ public class GroovyDslDefaultMembers implements GdslMembersProvider {
         holder.addMember(field);
       }
       consumer.addMemberHolder(holder);
-    } else if (elem instanceof GrExpression) {
+    }
+    else if (elem instanceof GrExpression) {
       GrExpression expr = (GrExpression)elem;
       final PsiType type = expr.getType();
       if (type instanceof PsiClassType) {
@@ -71,6 +75,7 @@ public class GroovyDslDefaultMembers implements GdslMembersProvider {
 
   /**
    * Add a member to a context's ctype
+   *
    * @param member
    */
   public PsiMember add(PsiMember member, GdslMembersHolderConsumer consumer) {
@@ -98,12 +103,19 @@ public class GroovyDslDefaultMembers implements GdslMembersProvider {
         return call;
       }
     }
-    for (GrExpression arg: call.getExpressionArguments()) {
+    for (GrExpression arg : call.getExpressionArguments()) {
       if (arg instanceof GrClosableBlock && PsiTreeUtil.findCommonParent(place, arg) == arg) {
         return call;
       }
     }
     return null;
+  }
+
+  @Nullable
+  public PsiMethod enclosingMethod(GdslMembersHolderConsumer consumer) {
+    final PsiElement place = consumer.getPlace();
+    if (place == null) return null;
+    return PsiTreeUtil.getParentOfType(place, PsiMethod.class, true);
   }
 
   private static String getInvokedMethodName(GrMethodCallExpression call) {
@@ -114,5 +126,5 @@ public class GroovyDslDefaultMembers implements GdslMembersProvider {
     }
     return null;
   }
-  
+
 }

@@ -24,6 +24,8 @@ contributor([contributorBody]) {
            type: "com.intellij.psi.PsiElement",
            params: [methodName: "java.lang.String"]
 
+    method name: "enclosingMethod", type: "com.intellij.psi.PsiMethod"
+
     property name: "place", type: "com.intellij.psi.PsiElement"
     property name: "classType", type: "com.intellij.psi.PsiClass"
   }
@@ -33,14 +35,14 @@ def psiClassContext = context(scope: closureScope(isArg: true), ctype: "com.inte
 contributor([psiClassContext]) {
   method name: "getMethods", type: "java.util.Collection"
   method name: "getQualName", type: "java.lang.String"
-  method name: "hasAnnotation", type: "boolean"
-  method name: "getAnnotation", params:[name: "java.lang.String"], type: "com.intellij.psi.PsiAnnotation"
-  method name: "getAnnotations", params:[name: "java.lang.String"], type: "java.util.Collection<com.intellij.psi.PsiAnnotation>"
 }
 
 def psiMemberContext = context(scope: closureScope(isArg: true), ctype: "com.intellij.psi.PsiMember")
 contributor([psiMemberContext]) {
   method name: "hasAnnotation", params: [name: "java.lang.String"], type: "boolean"
+  method name: "hasAnnotation", type: "boolean"
+  method name: "getAnnotation", params: [name: "java.lang.String"], type: "com.intellij.psi.PsiAnnotation"
+  method name: "getAnnotations", params: [name: "java.lang.String"], type: "java.util.Collection<com.intellij.psi.PsiAnnotation>"
 }
 
 def psiFieldContext = context(scope: closureScope(isArg: true), ctype: "com.intellij.psi.PsiField")
@@ -48,10 +50,16 @@ contributor([psiFieldContext]) {
   method name: "getClassType", type: "com.intellij.psi.PsiClass"
 }
 
+def psiMethodContext = context(scope: closureScope(isArg: true), ctype: "com.intellij.psi.PsiMethod")
+contributor([psiMethodContext]) {
+  method name: "getParamStringVector", type: "java.util.Map"
+}
+
 def psiElementContext = context(scope: closureScope(isArg: true), ctype: "com.intellij.psi.PsiElement")
 contributor([psiElementContext]) {
   method name: "bind", type: "com.intellij.psi.PsiElement"
   method name: "asList", type: "java.util.collection<com.intellij.psi.PsiElement>"
+  method name: "getQualifier", type: "com.intellij.psi.PsiElement"
 }
 
 def expressionContext = context(scope: closureScope(isArg: true),

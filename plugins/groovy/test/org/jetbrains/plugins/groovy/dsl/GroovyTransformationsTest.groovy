@@ -19,6 +19,10 @@ class GroovyTransformationsTest extends CompletionTestBase {
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy")
   }
 
+  public void doVariantsTest(String ... variants) throws Throwable {
+    myFixture.testCompletionVariants(getTestName(false) + ".groovy", variants)
+  }
+
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.addLibraryJars("GROOVY", TestUtils.getMockGroovy1_7LibraryHome(), TestUtils.GROOVY_JAR_17);
@@ -31,5 +35,10 @@ class GroovyTransformationsTest extends CompletionTestBase {
   public void testCategoryTransform() throws Throwable { doPlainTest() }
 
   public void testMixinTransform() throws Throwable { doPlainTest() }
+
+  public void testNewifyTransform1() throws Throwable { doVariantsTest('newInstance', 'new', 'new', 'new',
+                                                                       'newInstance', 'newInstance0', 'newInstanceCallerCache', 'next') }
+
+  public void testNewifyTransform2() throws Throwable { doVariantsTest('Leaf', 'Leaf', 'Leaf') }
 
 }
