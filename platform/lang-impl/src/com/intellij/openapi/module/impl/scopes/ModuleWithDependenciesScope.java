@@ -88,10 +88,8 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
           }
         }
         if (orderEntry instanceof ExportableOrderEntry) {
-          if (((ExportableOrderEntry)orderEntry).getScope() == DependencyScope.RUNTIME) {
-            continue;
-          }
-          if (!myIncludeTests && ((ExportableOrderEntry)orderEntry).getScope() == DependencyScope.TEST) {
+          DependencyScope scope = ((ExportableOrderEntry)orderEntry).getScope();
+          if (!myIncludeTests && (scope == DependencyScope.TEST || scope == DependencyScope.RUNTIME)) {
             continue;
           }
         }

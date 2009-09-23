@@ -73,9 +73,6 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
   @NotNull
   public VirtualFile[] getFiles(OrderRootType type) {
     if (type == OrderRootType.COMPILATION_CLASSES) {
-      if (myScope == DependencyScope.RUNTIME) {
-        return VirtualFile.EMPTY_ARRAY;
-      }
       return myRootContainers.get(OrderRootType.CLASSES).getDirectories();
     }
     else if (type == OrderRootType.PRODUCTION_COMPILATION_CLASSES) {
@@ -94,9 +91,6 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
   public String[] getUrls(OrderRootType type) {
     LOG.assertTrue(!getRootModel().getModule().isDisposed());
     if (type == OrderRootType.COMPILATION_CLASSES) {
-      if (myScope == DependencyScope.RUNTIME) {
-        return ArrayUtil.EMPTY_STRING_ARRAY;
-      }
       return myRootContainers.get(OrderRootType.CLASSES).getUrls();
     }
     else if (type == OrderRootType.PRODUCTION_COMPILATION_CLASSES) {
