@@ -42,7 +42,7 @@ public abstract class DebuggerLogConsoleManagerBase implements DebuggerLogConsol
 
   public DebuggerLogConsoleManagerBase(Project project) {
     myProject = project;
-    myManager = new LogFilesManager(project, this);
+    myManager = new LogFilesManager(project, this, this);
   }
 
   public abstract RunContentDescriptor getRunContentDescriptor();
@@ -173,6 +173,5 @@ public abstract class DebuggerLogConsoleManagerBase implements DebuggerLogConsol
   }
 
   public void dispose() {
-    myManager.unregisterFileMatcher();
   }
 }

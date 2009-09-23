@@ -65,7 +65,7 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
     myProject = project;
     myRunner = runner;
     myExecutor = executor;
-    myManager = new LogFilesManager(project, this);
+    myManager = new LogFilesManager(project, this, this);
   }
 
   public ExecutionResult getExecutionResult() {
@@ -278,7 +278,6 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
       for (final Disposable disposable : myAdditionalDisposables) {
         Disposer.dispose(disposable);
       }
-      myManager.unregisterFileMatcher();
       super.dispose();
     }
   }
