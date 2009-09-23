@@ -532,7 +532,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     String name = getName();
     assertTrue("Test name should start with 'test'", name.startsWith("test"));
     name = name.substring("test".length());
-    if (lowercaseFirstLetter) {
+    if (lowercaseFirstLetter && !UsefulTestCase.isAllUppercaseName(name)) {
       name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
     }
     return name;

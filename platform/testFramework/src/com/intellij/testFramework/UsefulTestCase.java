@@ -346,7 +346,7 @@ public abstract class UsefulTestCase extends TestCase {
     return name;
   }
 
-  private static boolean isAllUppercaseName(String name) {
+  public static boolean isAllUppercaseName(String name) {
     int uppercaseChars = 0;
     for(int i=0; i<name.length(); i++) {
       if (Character.isLowerCase(name.charAt(i))) {
