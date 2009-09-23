@@ -58,7 +58,7 @@ public final class VariableInplaceRenameHandler implements RenameHandler {
 
   private void doRename(final PsiElement elementToRename, final Editor editor, final DataContext dataContext) {
     if (!isAvailableOnDataContext(dataContext)) {
-      LOG.error("Recursive invokation");
+      LOG.error("Recursive invocation");
       RenameHandlerRegistry.getInstance().getRenameHandler(dataContext).invoke(
         elementToRename.getProject(),
         editor,
