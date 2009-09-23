@@ -19,6 +19,7 @@ package com.intellij.testFramework.fixtures;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionTool;
@@ -85,11 +86,11 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @param inspections inspections to be enabled in highliting tests.
    * @see #enableInspections(com.intellij.codeInspection.InspectionToolProvider[])
    */
-  void enableInspections(LocalInspectionTool... inspections);
+  void enableInspections(InspectionProfileEntry... inspections);
 
   void enableInspections(Class<? extends LocalInspectionTool>... inspections);
 
-  void disableInspections(LocalInspectionTool... inspections);
+  void disableInspections(InspectionProfileEntry... inspections);
 
   /**
    * Enable all inspections provided by given providers.

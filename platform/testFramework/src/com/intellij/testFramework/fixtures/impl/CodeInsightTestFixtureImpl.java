@@ -114,9 +114,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private String myTestDataPath;
   private boolean myEmptyLookup;
 
-  private LocalInspectionTool[] myInspections;
-  private final Map<String, LocalInspectionTool> myAvailableTools = new THashMap<String, LocalInspectionTool>();
-  private final Map<String, LocalInspectionToolWrapper> myAvailableLocalTools = new THashMap<String, LocalInspectionToolWrapper>();
+  private InspectionProfileEntry[] myInspections;
+  private final Map<String, InspectionProfileEntry> myAvailableTools = new THashMap<String, InspectionProfileEntry>();
+  private final Map<String, InspectionTool> myAvailableLocalTools = new THashMap<String, InspectionTool>();
 
   private final TempDirTestFixture myTempDirFixture;
   protected final IdeaProjectTestFixture myProjectFixture;
@@ -190,7 +190,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return copyFileToProject(sourceFilePath, sourceFilePath);
   }
 
-  public void enableInspections(LocalInspectionTool... inspections) {
+  public void enableInspections(InspectionProfileEntry... inspections) {
     myInspections = inspections;
     if (isInitialized()) {
       configureInspections(myInspections);
@@ -215,20 +215,20 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     enableInspections(tools.toArray(new LocalInspectionTool[tools.size()]));
   }
 
-  public void disableInspections(LocalInspectionTool... inspections) {
+  public void disableInspections(InspectionProfileEntry... inspections) {
     myAvailableTools.clear();
     myAvailableLocalTools.clear();
-    final ArrayList<LocalInspectionTool> tools = new ArrayList<LocalInspectionTool>(Arrays.asList(myInspections));
-    for (Iterator<LocalInspectionTool> i = tools.iterator(); i.hasNext();) {
-      final LocalInspectionTool tool = i.next();
-      for (LocalInspectionTool toRemove: inspections) {
+    final ArrayList<InspectionProfileEntry> tools = new ArrayList<InspectionProfileEntry>(Arrays.asList(myInspections));
+    for (Iterator<InspectionProfileEntry> i = tools.iterator(); i.hasNext();) {
+      final InspectionProfileEntry tool = i.next();
+      for (InspectionProfileEntry toRemove: inspections) {
         if (tool.getShortName().equals(toRemove.getShortName())) {
           i.remove();
           break;
         }
       }
     }
-    myInspections = tools.toArray(new LocalInspectionTool[tools.size()]);
+    myInspections = tools.toArray(new InspectionProfileEntry[tools.size()]);
     configureInspections(myInspections);
   }
 
@@ -760,18 +760,21 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     configureInspections(myInspections == null ? new LocalInspectionTool[0] : myInspections);
   }
 
-  private void enableInspectionTool(LocalInspectionTool tool){
+  private void enableInspectionTool(InspectionProfileEntry tool){
     final String shortName = tool.getShortName();
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null){
-      HighlightDisplayKey.register(shortName, tool.getDisplayName(), tool.getID());
+      String id = tool instanceof LocalInspectionTool ? ((LocalInspectionTool)tool).getID() : shortName;
+      HighlightDisplayKey.register(shortName, tool.getDisplayName(), id);
     }
     myAvailableTools.put(shortName, tool);
-    myAvailableLocalTools.put(shortName, new LocalInspectionToolWrapper(tool));
+    myAvailableLocalTools.put(shortName, tool instanceof LocalInspectionTool ?
+                                         new LocalInspectionToolWrapper((LocalInspectionTool)tool) :
+                                         (InspectionTool)tool);
   }
 
-  private void configureInspections(final LocalInspectionTool[] tools) {
-    for (LocalInspectionTool tool : tools) {
+  private void configureInspections(final InspectionProfileEntry[] tools) {
+    for (InspectionProfileEntry tool : tools) {
       enableInspectionTool(tool);
     }
 
@@ -784,8 +787,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
       @NotNull
       public InspectionProfileEntry[] getInspectionTools(PsiElement element) {
-        final Collection<LocalInspectionToolWrapper> tools = myAvailableLocalTools.values();
-        return tools.toArray(new LocalInspectionToolWrapper[tools.size()]);
+        final Collection<InspectionTool> tools = myAvailableLocalTools.values();
+        return tools.toArray(new InspectionTool[tools.size()]);
       }
 
       @Override
@@ -798,12 +801,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       }
 
       public boolean isToolEnabled(HighlightDisplayKey key, PsiElement element) {
-        return key != null && key.toString() != null && myAvailableTools != null && myAvailableTools.containsKey(key.toString());
+        return key != null && key.toString() != null && myAvailableTools.containsKey(key.toString());
       }
 
       public HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key, PsiElement element) {
-        final LocalInspectionTool localInspectionTool = key == null ? null : myAvailableTools.get(key.toString());
-        return localInspectionTool != null ? localInspectionTool.getDefaultLevel() : HighlightDisplayLevel.WARNING;
+        final InspectionProfileEntry entry = myAvailableTools.get(key.toString());
+        return entry != null ? entry.getDefaultLevel() : HighlightDisplayLevel.WARNING;
       }
 
       public InspectionTool getInspectionTool(@NotNull String shortName, @NotNull PsiElement element) {
@@ -871,10 +874,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         configureByFilesInner(files);
       }
     }.execute();
-  }
-
-  public void configureByDirectory(final String dir) {
-    //To change body of implemented methods use File | Settings | File Templates.
   }
 
   public PsiFile configureByText(final FileType fileType, @NonNls final String text) throws IOException {

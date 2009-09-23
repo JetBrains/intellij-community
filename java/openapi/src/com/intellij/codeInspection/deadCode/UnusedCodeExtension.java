@@ -30,6 +30,10 @@ public abstract class UnusedCodeExtension implements JDOMExternalizable {
   public abstract boolean isSelected();
   public abstract void setSelected(boolean selected);
 
+  public boolean showUI() {
+    return true;
+  }
+
   @Nullable
   public String [] getIgnoreAnnotations() {
     return null;

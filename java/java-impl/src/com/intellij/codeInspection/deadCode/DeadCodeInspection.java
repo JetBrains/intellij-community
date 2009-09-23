@@ -10,6 +10,7 @@
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.ExtensionPoints;
+import com.intellij.ui.SeparatorFactory;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
@@ -40,7 +41,6 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.CharArrayUtil;
@@ -148,15 +148,17 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       add(myServletToEntries, gc);
 
       for (final UnusedCodeExtension extension : myExtensions) {
-        final JCheckBox extCheckbox = new JCheckBox(extension.getDisplayName());
-        extCheckbox.setSelected(extension.isSelected());
-        extCheckbox.addActionListener(new ActionListener() {
-          public void actionPerformed(ActionEvent e) {
-            extension.setSelected(extCheckbox.isSelected());
-          }
-        });
-        gc.gridy++;
-        add(extCheckbox, gc);
+        if (extension.showUI()) {
+          final JCheckBox extCheckbox = new JCheckBox(extension.getDisplayName());
+          extCheckbox.setSelected(extension.isSelected());
+          extCheckbox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+              extension.setSelected(extCheckbox.isSelected());
+            }
+          });
+          gc.gridy++;
+          add(extCheckbox, gc);
+        }
       }
 
       myNonJavaCheckbox =
@@ -180,8 +182,9 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   }
 
   public JComponent createOptionsPanel() {
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(new OptionsPanel());
-    scrollPane.setBorder(BorderFactory.createEtchedBorder());
+    final JPanel scrollPane = new JPanel(new BorderLayout());
+    scrollPane.add(SeparatorFactory.createSeparator("Entry points", null), BorderLayout.NORTH);
+    scrollPane.add(new OptionsPanel(), BorderLayout.CENTER);
     return scrollPane;
   }
 
