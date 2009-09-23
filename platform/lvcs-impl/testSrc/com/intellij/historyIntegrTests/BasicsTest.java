@@ -154,13 +154,13 @@ public class BasicsTest extends IntegrationTestCase {
 
   public void testContentAtDate() throws Exception {
     VirtualFile f = root.createChildData(null, "f.txt");
-    f.setBinaryContent(new byte[]{1}, -1, 1111);
-    f.setBinaryContent(new byte[]{2}, -1, 2222);
+    f.setBinaryContent(new byte[]{1}, -1, 1000);
+    f.setBinaryContent(new byte[]{2}, -1, 2000);
 
-    assertEquals(1, LocalHistory.getByteContent(myProject, f, comparator(1111))[0]);
-    assertNull(LocalHistory.getByteContent(myProject, f, comparator(1555)));
-    assertEquals(2, LocalHistory.getByteContent(myProject, f, comparator(2222))[0]);
-    assertNull(LocalHistory.getByteContent(myProject, f, comparator(3333)));
+    assertEquals(1, LocalHistory.getByteContent(myProject, f, comparator(1000))[0]);
+    assertNull(LocalHistory.getByteContent(myProject, f, comparator(1500)));
+    assertEquals(2, LocalHistory.getByteContent(myProject, f, comparator(2000))[0]);
+    assertNull(LocalHistory.getByteContent(myProject, f, comparator(3000)));
   }
 
   public void testContentAtDateForFilteredFilesIsNull() throws Exception {

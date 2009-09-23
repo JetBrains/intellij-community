@@ -86,16 +86,16 @@ public class LocalVcsSavingTest extends TempDirTestCase {
     vcs.createFile("f1", cf(""), timestamp, false);
     vcs.save();
     File f = new File(tempDir, "storage");
-    f.setLastModified(1234);
+    f.setLastModified(1000);
 
     vcs.save();
-    assertTrue(1234 == f.lastModified());
+    assertTrue(1000 == f.lastModified());
 
     long timestamp1 = -1;
     vcs.createFile("f2", cf(""), timestamp1, false);
     vcs.save();
 
-    assertTrue(1234 != f.lastModified());
+    assertTrue(1000 != f.lastModified());
   }
   
   @Test
