@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.util.PairProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,7 +108,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   }
 
   public boolean startTemplate(@NotNull Editor editor, char shortcutChar) {
-    return startTemplate(this, editor, shortcutChar);
+    return startTemplate(this, editor, shortcutChar, null);
   }
 
   public void startTemplate(@NotNull final Editor editor, @NotNull Template template) {
@@ -115,10 +116,16 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   }
 
   public void startTemplate(@NotNull Editor editor, String selectionString, @NotNull Template template) {
-    startTemplate(editor, selectionString, template, null);
+    startTemplate(editor, selectionString, template, null, null);
   }
 
-  private void startTemplate(final Editor editor, final String selectionString, final Template template, TemplateEditingListener listener) {
+  public void startTemplate(@NotNull Editor editor, @NotNull Template template, TemplateEditingListener listener,
+                            final PairProcessor<String, String> processor) {
+    startTemplate(editor, null, template, listener, processor);
+  }
+
+  private void startTemplate(final Editor editor, final String selectionString, final Template template, TemplateEditingListener listener,
+                             final PairProcessor<String, String> processor) {
     final TemplateState templateState = initTemplateState(editor);
 
     templateState.getProperties().put(ExpressionContext.SELECTION, selectionString);
@@ -138,7 +145,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
           } else {
             editor.getSelectionModel().removeSelection();
           }
-          templateState.start((TemplateImpl) template);
+          templateState.start((TemplateImpl) template, processor);
         }
       },
       CodeInsightBundle.message("insert.code.template.command"), null
@@ -154,10 +161,14 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   }
 
   public void startTemplate(@NotNull final Editor editor, @NotNull final Template template, TemplateEditingListener listener) {
-    startTemplate(editor, null, template, listener);
+    startTemplate(editor, null, template, listener, null);
   }
 
   public boolean startTemplate(TemplateManagerImpl templateManager, final Editor editor, char shortcutChar) {
+    return startTemplate(templateManager, editor, shortcutChar, null);
+  }
+
+  public boolean startTemplate(TemplateManagerImpl templateManager, final Editor editor, char shortcutChar, final PairProcessor<String, String> processor) {
     final Document document = editor.getDocument();
     PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, myProject);
     if (file == null) return false;
@@ -221,7 +232,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
           editor.getCaretModel().moveToOffset(wordStart0);
           editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
           editor.getSelectionModel().removeSelection();
-          templateState0.start(template0);
+          templateState0.start(template0, processor);
         }
       },
       CodeInsightBundle.message("insert.code.template.command"), null

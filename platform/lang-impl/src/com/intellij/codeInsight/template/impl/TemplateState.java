@@ -32,6 +32,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NonNls;
@@ -72,6 +73,7 @@ public class TemplateState implements Disposable {
   private boolean myTemplateIndented = false;
   private Document myDocument;
   private boolean myFinished;
+  private PairProcessor<String, String> myProcessor;
 
   public TemplateState(@NotNull Project project, final Editor editor) {
     myProject = project;
@@ -118,6 +120,8 @@ public class TemplateState implements Disposable {
       CommandProcessor.getInstance().removeCommandListener(myCommandListener);
       myCommandListener = null;
     }
+
+    myProcessor = null;
 
     //Avoid the leak of the editor
     releaseEditor();
@@ -210,8 +214,10 @@ public class TemplateState implements Disposable {
     }
   }
 
-  public void start(TemplateImpl template) {
+  public void start(TemplateImpl template, final PairProcessor<String, String> processor) {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+
+    myProcessor = processor;
 
     final DocumentReference[] refs = myDocument == null
                                      ? null
@@ -499,6 +505,17 @@ public class TemplateState implements Disposable {
   }
 
   private void calcResults(final boolean isQuick) {
+    if (myProcessor != null && myCurrentVariableNumber >= 0) {
+      final String variableName = myTemplate.getVariableNameAt(myCurrentVariableNumber);
+      final TextResult value = getVariableValue(variableName);
+      if (value != null && value.getText().length() > 0) {
+        if (!myProcessor.process(variableName, value.getText())) {
+          finishTemplateEditing(); // nextTab(); ?
+          return;
+        }
+      }
+    }
+
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
         public void run() {

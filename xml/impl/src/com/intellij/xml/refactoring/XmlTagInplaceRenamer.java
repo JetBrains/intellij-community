@@ -24,6 +24,7 @@ import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -88,6 +89,10 @@ public class XmlTagInplaceRenamer {
 
                 public void templateCancelled(final Template template) {
                   finish();
+                }
+              }, new PairProcessor<String, String>() {
+                public boolean process(final String variableName, final String value) {
+                  return value.length() == 0 || value.charAt(value.length() - 1) != ' ';
                 }
               });
 
