@@ -25,6 +25,8 @@ contributor([contributorBody]) {
            params: [methodName: "java.lang.String"]
 
     method name: "enclosingMethod", type: "com.intellij.psi.PsiMethod"
+    method name: "enclosingMember", type: "com.intellij.psi.PsiMember"
+    method name: "enclosingClass", type: "com.intellij.psi.PsiClass"
 
     property name: "place", type: "com.intellij.psi.PsiElement"
     property name: "classType", type: "com.intellij.psi.PsiClass"
@@ -58,6 +60,7 @@ contributor([psiMethodContext]) {
 def psiElementContext = context(scope: closureScope(isArg: true), ctype: "com.intellij.psi.PsiElement")
 contributor([psiElementContext]) {
   method name: "bind", type: "com.intellij.psi.PsiElement"
+  method name: "eval", type: "java.lang.Object"
   method name: "asList", type: "java.util.collection<com.intellij.psi.PsiElement>"
   method name: "getQualifier", type: "com.intellij.psi.PsiElement"
 }

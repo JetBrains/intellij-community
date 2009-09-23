@@ -1,10 +1,13 @@
 contributor(context()) {
 
   // For methods
-  def m = enclosingMethod()
-  if (m) {
-    for (a in m.getAnnotations("groovy.lang.Newify")) {
-      refs = a.findAttributeValue("value")
+  def memb = enclosingMember()
+  def clazz = enclosingClass()
+  if (memb) {
+    def newifyName = "groovy.lang.Newify"
+    for (a in memb?.getAnnotations(newifyName) + clazz?.getAnnotation(newifyName)) {
+      def refs = a?.findAttributeValue("value")
+      def auto  = a?.findAttributeValue("auto")
 
       //For Python-like style
       if (refs && !place.qualifier) {
@@ -16,12 +19,12 @@ contributor(context()) {
         }
       }
 
-
-      // For ruby-like style
-      for (cons in classType?.getConstructors()) {
-        method name: 'new', isStatic: true, params: cons.paramStringVector, type: classType?.qualName ?: "java.lang.Object"
+      // For Ruby-like style
+      if (!auto || auto.eval()) {
+        for (cons in classType?.getConstructors()) {
+          method name: 'new', isStatic: true, params: cons.paramStringVector, type: classType?.qualName ?: "java.lang.Object"
+        }
       }
-
 
     }
   }

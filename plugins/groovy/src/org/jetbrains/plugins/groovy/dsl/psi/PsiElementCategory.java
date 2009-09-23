@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
 import java.util.ArrayList;
@@ -65,6 +66,14 @@ public class PsiElementCategory implements PsiEnhancerCategory {
     } else {
       return Collections.singleton(elem);
     }
+  }
+
+  public static Object eval(PsiElement elem) {
+    if (elem instanceof GrLiteral) {
+      GrLiteral literal = (GrLiteral)elem;
+      return literal.getValue();
+    }
+    return elem;
   }
 
 }

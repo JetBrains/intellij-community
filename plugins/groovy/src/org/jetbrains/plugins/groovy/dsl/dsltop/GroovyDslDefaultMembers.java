@@ -118,6 +118,22 @@ public class GroovyDslDefaultMembers implements GdslMembersProvider {
     return PsiTreeUtil.getParentOfType(place, PsiMethod.class, true);
   }
 
+  @Nullable
+  public PsiMember enclosingMember(GdslMembersHolderConsumer consumer) {
+    final PsiElement place = consumer.getPlace();
+    if (place == null) return null;
+    final PsiMember member = PsiTreeUtil.getParentOfType(place, PsiMember.class, true);
+    if (member instanceof PsiClass) return null;
+    return member;
+  }
+
+  @Nullable
+  public PsiClass enclosingClass(GdslMembersHolderConsumer consumer) {
+    final PsiElement place = consumer.getPlace();
+    if (place == null) return null;
+    return PsiTreeUtil.getParentOfType(place, PsiClass.class, true);
+  }
+
   private static String getInvokedMethodName(GrMethodCallExpression call) {
     final GrExpression expr = call.getInvokedExpression();
     if (expr instanceof GrReferenceExpression) {
