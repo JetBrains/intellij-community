@@ -15,6 +15,7 @@
  */
 package git4idea.history;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -39,6 +40,11 @@ import java.util.List;
  * History utilities for Git
  */
 public class GitHistoryUtils {
+  /**
+   * The logger for the utilities
+   */
+  private final static Logger LOG = Logger.getInstance("#git4idea.history.GitHistoryUtils");
+
   /**
    * A private constructor
    */
@@ -100,6 +106,10 @@ public class GitHistoryUtils {
       return null;
     }
     String[] lines = result.split("\n");
+    if (lines.length < 3) {
+      LOG.error("Unsupported result format: " + result);
+      return null;
+    }
     String hash = lines[0];
     Date commitDate = GitUtil.parseTimestamp(lines[1]);
     return new ItemLatestState(new GitRevisionNumber(hash, commitDate), lines[2].charAt(0) != 'D');
