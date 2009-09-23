@@ -28,4 +28,8 @@ class GroovyTransformationsTest extends CompletionTestBase {
 
   public void testSingletonTransform() throws Throwable { doPlainTest() }
 
+  public void testCategoryTransform() throws Throwable { doPlainTest() }
+
+  public void testMixinTransform() throws Throwable { doPlainTest() }
+
 }

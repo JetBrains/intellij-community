@@ -16,11 +16,14 @@
 
 package org.jetbrains.plugins.groovy.dsl.psi;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -57,15 +60,27 @@ public class PsiClassCategory implements PsiEnhancerCategory {
   @Nullable
   public static PsiAnnotation getAnnotation(PsiClass clazz, String annotName) {
     if (annotName == null) return null;
-    final Project project = clazz.getProject();
-    final String fqn = clazz.getQualifiedName();
-    if (fqn == null) return null;
-    final PsiClassType type =
-      JavaPsiFacade.getInstance(project).getElementFactory().createTypeByFQClassName(fqn, GlobalSearchScope.allScope(project));
-    for (PsiAnnotation annotation : type.getAnnotations()) {
+    final PsiModifierList list = clazz.getModifierList();
+    if (list == null) return null;
+    for (PsiAnnotation annotation : list.getAnnotations()) {
       if (annotName.equals(annotation.getQualifiedName())) return annotation;
     }
     return null;
+  }
+
+  @NotNull
+  public static Collection<PsiAnnotation> getAnnotations(PsiClass clazz, String annotName) {
+   final ArrayList<PsiAnnotation> list = new ArrayList<PsiAnnotation>();
+    if (annotName == null) return list;
+    final PsiModifierList mlist = clazz.getModifierList();
+    if (mlist == null) return list;
+    for (PsiAnnotation annotation : mlist.getAnnotations()) {
+      if (annotName.equals(annotation.getQualifiedName())) {
+        list.add(annotation);
+      }
+    }
+    return list;
+
   }
 
 }

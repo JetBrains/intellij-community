@@ -48,8 +48,9 @@ public class GroovyDslDefaultMembers implements GdslMembersProvider {
    Methods and properties of the GroovyDSL language
    ************************************************************************************/
 
-  public void delegatesTo(@Nullable PsiClass clazz, GdslMembersHolderConsumer consumer) {
-    if (clazz != null) {
+  public void delegatesTo(@Nullable PsiElement elem, GdslMembersHolderConsumer consumer) {
+    if (elem instanceof PsiClass) {
+      final PsiClass clazz = (PsiClass)elem;
       final DelegatedMembersHolder holder = new DelegatedMembersHolder();
       for (PsiMethod method : clazz.getAllMethods()) {
         if (!method.isConstructor()) holder.addMember(method);
@@ -58,11 +59,8 @@ public class GroovyDslDefaultMembers implements GdslMembersProvider {
         holder.addMember(field);
       }
       consumer.addMemberHolder(holder);
-    }
-  }
-
-  public void delegatesTo(@Nullable GrExpression expr, GdslMembersHolderConsumer consumer) {
-    if (expr != null) {
+    } else if (elem instanceof GrExpression) {
+      GrExpression expr = (GrExpression)elem;
       final PsiType type = expr.getType();
       if (type instanceof PsiClassType) {
         PsiClassType ctype = (PsiClassType)type;
@@ -70,7 +68,6 @@ public class GroovyDslDefaultMembers implements GdslMembersProvider {
       }
     }
   }
-
 
   /**
    * Add a member to a context's ctype

@@ -16,11 +16,10 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiNameValuePair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
@@ -38,5 +37,10 @@ public class GrAnnotationArrrayInitializerImpl extends GroovyPsiElementImpl impl
 
   public String toString() {
     return "Annotation array initializer";
+  }
+
+  @NotNull
+  public GrExpression[] getInitializers() {
+    return findChildrenByClass(GrExpression.class);
   }
 }

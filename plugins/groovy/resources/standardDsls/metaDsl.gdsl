@@ -18,11 +18,7 @@ contributor([contributorBody]) {
 
     method name: "add", type: "void", params: [member: "com.intellij.psi.PsiMember"]
     method name: "findClass", type: "com.intellij.psi.PsiClass", params: [name: "java.lang.String"]
-    method name: "delegatesTo", type: "void", params: [clazz: "com.intellij.psi.PsiClass"]
-
-    method name: "delegatesTo",
-           type: "void",
-           params: [expr: "org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression"]
+    method name: "delegatesTo", type: "void", params: [elem: "com.intellij.psi.PsiElement"]
 
     method name: "enclosingCall",
            type: "com.intellij.psi.PsiElement",
@@ -38,7 +34,8 @@ contributor([psiClassContext]) {
   method name: "getMethods", type: "java.util.Collection"
   method name: "getQualName", type: "java.lang.String"
   method name: "hasAnnotation", type: "boolean"
-  method name: "getAnnotation", type: "com.intellij.psi.PsiAnnotation"
+  method name: "getAnnotation", params:[name: "java.lang.String"], type: "com.intellij.psi.PsiAnnotation"
+  method name: "getAnnotations", params:[name: "java.lang.String"], type: "java.util.Collection<com.intellij.psi.PsiAnnotation>"
 }
 
 def psiMemberContext = context(scope: closureScope(isArg: true), ctype: "com.intellij.psi.PsiMember")
@@ -54,6 +51,7 @@ contributor([psiFieldContext]) {
 def psiElementContext = context(scope: closureScope(isArg: true), ctype: "com.intellij.psi.PsiElement")
 contributor([psiElementContext]) {
   method name: "bind", type: "com.intellij.psi.PsiElement"
+  method name: "asList", type: "java.util.collection<com.intellij.psi.PsiElement>"
 }
 
 def expressionContext = context(scope: closureScope(isArg: true),
