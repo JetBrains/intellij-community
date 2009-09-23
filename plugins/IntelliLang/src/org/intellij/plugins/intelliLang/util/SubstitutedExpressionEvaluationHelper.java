@@ -52,10 +52,11 @@ public class SubstitutedExpressionEvaluationHelper {
     return computeExpression(e, includeUncomputablesAsLiterals, null);
   }
 
-  private Object computeExpression(final PsiExpression e, final boolean includeUncomputablesAsLiterals, final List<PsiExpression> uncomputables) {
+  public Object computeExpression(final PsiExpression e, final boolean includeUncomputablesAsLiterals, final List<PsiExpression> uncomputables) {
     final ConcurrentMap<PsiElement, Object> map = new ConcurrentHashMap<PsiElement, Object>();
     //if (true) return myHelper.computeConstantExpression(e, false);
     return myHelper.computeExpression(e, false, new PsiConstantEvaluationHelper.AuxEvaluator() {
+      @Nullable
       public Object computeExpression(final PsiExpression o, final PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
         if (o instanceof PsiMethodCallExpression) {
           final PsiMethodCallExpression c = (PsiMethodCallExpression)o;
@@ -86,12 +87,12 @@ public class SubstitutedExpressionEvaluationHelper {
             }
           }
         }
+        if (uncomputables != null) uncomputables.add(o);
         if (includeUncomputablesAsLiterals) {
           final PsiExpression expression = o instanceof PsiMethodCallExpression ? ((PsiMethodCallExpression)o).getMethodExpression() : o;
           final String text = expression.getText().replaceAll("\\s", "");
           return "\"" + StringUtil.escapeStringCharacters(text) + "\"";
         }
-        if (uncomputables != null) uncomputables.add(o);
         return null;
       }
 
@@ -102,6 +103,7 @@ public class SubstitutedExpressionEvaluationHelper {
     });
   }
 
+  @Nullable
   private Object calcSubstituted(final PsiModifierListOwner owner) {
     final PsiAnnotation annotation = AnnotationUtil.findAnnotation(owner, myConfiguration.getSubstAnnotationPair().second);
     if (annotation != null) {

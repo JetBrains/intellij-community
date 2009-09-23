@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -93,9 +94,16 @@ public class ContextComputationProcessor {
       result.add(expression);
     }
     else {
-      final Object o = expression instanceof PsiExpression? myEvaluationHelper.computeExpression((PsiExpression)expression, true) : null;
-      if (o == null) result.add(expression);
-      else addStringFragment(String.valueOf(o), result);
+      final SmartList<PsiExpression> uncomputables = new SmartList<PsiExpression>();
+      final Object o = expression instanceof PsiExpression? myEvaluationHelper.computeExpression((PsiExpression)expression, true, uncomputables) : null;
+      if (uncomputables.size() > 0) {
+        unparsable.set(Boolean.TRUE);
+      }
+      if (o == null) {
+        result.add(expression);
+      } else {
+        addStringFragment(String.valueOf(o), result);
+      }
     }
   }
 
