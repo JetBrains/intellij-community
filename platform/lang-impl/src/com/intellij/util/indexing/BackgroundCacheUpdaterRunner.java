@@ -74,13 +74,13 @@ public class BackgroundCacheUpdaterRunner {
               }
             };
 
-            while (!project.isDisposed()) {
+            while (project == null || !project.isDisposed()) {
               indicator.checkCanceled();
               if (runWhileUserInactive(project, queue, uiUpdater, updater)) {
                 break;
               }
             }
-            if (project.isDisposed()) {
+            if (project != null && project.isDisposed()) {
               indicator.cancel();
             }
           }
