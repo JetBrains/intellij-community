@@ -1,7 +1,7 @@
 contributor(context()) {
-
   // For methods
   def memb = enclosingMember()
+  // For classes
   def clazz = enclosingClass()
   if (memb) {
     def newifyName = "groovy.lang.Newify"
@@ -25,9 +25,6 @@ contributor(context()) {
           method name: 'new', isStatic: true, params: cons.paramStringVector, type: classType?.qualName ?: "java.lang.Object"
         }
       }
-
     }
   }
-
-  //Todo for classes
 }
