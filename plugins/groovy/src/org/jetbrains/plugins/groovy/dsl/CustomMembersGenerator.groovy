@@ -78,6 +78,7 @@ public class CustomMembersGenerator implements GdslMembersHolderConsumer {
    Methods to add new behavior
    *********************************************************** */
   def property(Map args) {
+    if (args.isStatic) myClassText.append("static ")
     myClassText.append("def ").append(stringifyType(args.type)).append(" ").append(args.name).append("\n")
   }
 

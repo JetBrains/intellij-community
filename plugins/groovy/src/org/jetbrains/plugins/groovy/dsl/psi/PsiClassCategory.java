@@ -46,12 +46,8 @@ public class PsiClassCategory implements PsiEnhancerCategory {
 
   public static boolean hasAnnotation(PsiClass clazz, String annotName) {
     if (annotName == null) return false;
-    final Project project = clazz.getProject();
-    final String fqn = clazz.getQualifiedName();
-    if (fqn == null) return false;
-    final PsiClassType type =
-      JavaPsiFacade.getInstance(project).getElementFactory().createTypeByFQClassName(fqn, GlobalSearchScope.allScope(project));
-    for (PsiAnnotation annotation : type.getAnnotations()) {
+    final PsiModifierList list = clazz.getModifierList();
+    for (PsiAnnotation annotation : list.getAnnotations()) {
       if (annotName.equals(annotation.getQualifiedName())) return true;
     }
 

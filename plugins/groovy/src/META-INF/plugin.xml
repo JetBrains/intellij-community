@@ -40,8 +40,8 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
+    <!--<nonCodeProcessor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.SingletonAnnotationProcessor"/>-->
     <nonCodeProcessor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.ImmutableAnnotationProcessor"/>
-    <nonCodeProcessor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.SingletonAnnotationProcessor"/>
     <nonCodeProcessor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.BindableAnnotationProcessor"/>
     <nonCodeProcessor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.VetoableAnnotationProcessor"/>
     <nonCodeProcessor implementation="org.jetbrains.plugins.groovy.dsl.DslMembersProcessor"/>
