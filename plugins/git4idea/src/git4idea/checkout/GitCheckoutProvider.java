@@ -61,10 +61,12 @@ public class GitCheckoutProvider implements CheckoutProvider {
       clone(project, sourceRepositoryURL, new File(dialog.getParentDirectory()), dialog.getDirectoryName(), dialog.getOriginName());
     int code = GitHandlerUtil.doSynchronously(handler, GitBundle.message("cloning.repository", sourceRepositoryURL), "git clone");
 
-    final VcsDirtyScopeManager mgr = VcsDirtyScopeManager.getInstance(project);
     destinationParent.refresh(true, true, new Runnable() {
       public void run() {
-        mgr.fileDirty(destinationParent);
+        if (!project.isDefault()) {
+          final VcsDirtyScopeManager mgr = VcsDirtyScopeManager.getInstance(project);
+          mgr.fileDirty(destinationParent);
+        }
       }
     });
 
