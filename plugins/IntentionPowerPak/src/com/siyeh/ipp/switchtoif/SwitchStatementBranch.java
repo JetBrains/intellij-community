@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 package com.siyeh.ipp.switchtoif;
 
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLocalVariable;
 
@@ -26,7 +24,7 @@ class SwitchStatementBranch{
 
     private final Set<PsiLocalVariable> m_pendingVariableDeclarations =
             new HashSet<PsiLocalVariable>(5);
-    private final List<String> m_labels =
+    private final List<String> m_caseValues =
             new ArrayList<String>(2);
     private final List<PsiElement> m_bodyElements =
             new ArrayList<PsiElement>(5);
@@ -35,8 +33,8 @@ class SwitchStatementBranch{
     private boolean m_default = false;
     private boolean m_hasStatements = false;
 
-    public void addLabel(String labelString){
-        m_labels.add(labelString);
+    public void addCaseValue(String labelString){
+        m_caseValues.add(labelString);
     }
 
     public void addStatement(PsiElement statement){
@@ -56,18 +54,12 @@ class SwitchStatementBranch{
 
     public void addWhiteSpace(PsiElement statement){
         if(!m_bodyElements.isEmpty()){
-          // a whitespace after the END_OF_LINE comment should be added immediately (fixes IDEADEV-14143)  
-          final PsiElement lastElement = m_bodyElements.get(m_bodyElements.size() - 1);
-          if ( lastElement instanceof PsiComment && ((PsiComment)lastElement).getTokenType()== JavaTokenType.END_OF_LINE_COMMENT){
-            m_bodyElements.add(statement);
-          } else {
             m_pendingWhiteSpace.add(statement);
-          }
         }
     }
 
-    public List<String> getLabels(){
-        return Collections.unmodifiableList(m_labels);
+    public List<String> getCaseValues(){
+        return Collections.unmodifiableList(m_caseValues);
     }
 
     public List<PsiElement> getBodyElements(){
