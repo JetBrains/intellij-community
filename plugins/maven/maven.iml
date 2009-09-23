@@ -19,7 +19,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/maven-2.2.0-uber.jar!/" />
@@ -135,28 +135,23 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="openapi" />
-    <orderEntry type="module" module-name="dom-openapi" />
-    <orderEntry type="module" module-name="idea" />
-    <orderEntry type="module" module-name="forms_rt" />
+    <orderEntry type="module" module-name="idea" exported="" />
+    <orderEntry type="module" module-name="idea-ui" exported="" />
+    <orderEntry type="module" module-name="openapi" exported="" />
+    <orderEntry type="module" module-name="xml" exported="" />
+    <orderEntry type="module" module-name="dom-openapi" exported="" />
+    <orderEntry type="module" module-name="dom-impl" exported="" />
+    <orderEntry type="module" module-name="properties" />
+    <orderEntry type="module" module-name="compiler-openapi" exported="" />
+    <orderEntry type="module" module-name="compiler-impl" exported="" />
+    <orderEntry type="module" module-name="execution-openapi" exported="" />
+    <orderEntry type="module" module-name="execution-impl" exported="" />
+    <orderEntry type="module" module-name="forms_rt" exported="" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />
-    <orderEntry type="module" module-name="execution-impl" />
-    <orderEntry type="module" module-name="j2ee-openapi" />
-    <orderEntry type="module" module-name="J2EE" />
-    <orderEntry type="module" module-name="web-impl" />
-    <orderEntry type="module" module-name="EJB" />
-    <orderEntry type="module" module-name="GwtStudio" />
-    <orderEntry type="module" module-name="dom-impl" />
-    <orderEntry type="module" module-name="JavaScriptLanguage" />
-    <orderEntry type="module" module-name="FlexSupport" />
-    <orderEntry type="module" module-name="jetgroovy" />
-    <orderEntry type="module" module-name="xml" />
-    <orderEntry type="module" module-name="execution-openapi" />
-    <orderEntry type="module" module-name="graph-openapi" />
-    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
-    <orderEntry type="module" module-name="idea-tests" scope="TEST" />
-    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
-    <orderEntry type="module" module-name="compiler-tests" scope="TEST" />
+    <orderEntry type="library" exported="" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="idea-tests" exported="" scope="TEST" />
+    <orderEntry type="module" module-name="testFramework-java" exported="" scope="TEST" />
+    <orderEntry type="module" module-name="compiler-tests" exported="" scope="TEST" />
   </component>
   <component name="copyright">
     <Base>

@@ -1,9 +1,7 @@
-package org.jetbrains.idea.maven.facets;
+package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
-import org.jetbrains.idea.maven.importing.MavenModifiableModelsProvider;
-import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.project.*;
 
 import java.util.ArrayList;

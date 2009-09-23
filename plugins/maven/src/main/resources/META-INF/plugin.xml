@@ -1,23 +1,16 @@
 <idea-plugin>
-  <name>Maven Integration</name>
   <id>org.jetbrains.idea.maven</id>
-  <description>Provides means to import Maven pom.xml files and to run Maven goals</description>
-  <version>2.0</version>
-  <vendor url="http://www.jetbrains.com">JetBrains s.r.o.</vendor>
-  <change-notes>
-    <![CDATA[]]>
-  </change-notes>
-  <idea-version since-build="6800"/>
+
+  <name>Maven Integration</name>
+  <description>Import Maven projects and execute Maven goals</description>
+  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+
   <extensionPoints>
-    <extensionPoint name="importer" interface="org.jetbrains.idea.maven.facets.MavenImporter"/>
+    <extensionPoint name="importer" interface="org.jetbrains.idea.maven.importing.MavenImporter"/>
     <extensionPoint name="archetypesProvider" interface="org.jetbrains.idea.maven.indices.MavenArchetypesProvider"/>
   </extensionPoints>
 
   <depends>com.intellij.properties</depends>
-  <depends optional="true" config-file="jee-support.xml">com.intellij.javaee</depends>
-  <depends optional="true" config-file="gwt-support.xml">com.intellij.gwt</depends>
-  <depends optional="true" config-file="flex-support.xml">com.intellij.flex</depends>
-  <depends optional="true" config-file="groovy-support.xml">org.intellij.groovy</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <projectImportProvider implementation="org.jetbrains.idea.maven.wizards.MavenProjectImportProvider"/>
@@ -208,13 +201,6 @@
             icon="/actions/execute.png">
     </action>
 
-    <action id="Maven.ShowGraph"
-            class="org.jetbrains.idea.maven.graph.actions.ShowGraphAction"
-            text="_Dependency Graph"
-            description="Show Maven dependency graph"
-            icon="/images/graph.png">
-    </action>
-
     <action id="Maven.ShowSettings"
             class="org.jetbrains.idea.maven.project.actions.EditSettingsAction" text="Maven Settings"
             description="Edit Maven integration settings for the current project"
@@ -310,7 +296,6 @@
       <reference id="Maven.OpenProfilesXml"/>
       <reference id="Maven.OpenSettingsXml"/>
       <separator/>
-      <reference id="Maven.ShowGraph"/>
     </group>
 
     <group id="Maven.NavigatorProjectMenu" popup="true">

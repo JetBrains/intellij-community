@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
-import org.jetbrains.idea.maven.facets.MavenImporter;
+import org.jetbrains.idea.maven.importing.MavenImporter;
 import org.jetbrains.idea.maven.utils.*;
 
 import java.io.*;
@@ -652,7 +652,7 @@ public class MavenProject {
       return true;
     }
 
-    for (MavenImporter each : getSuitableFacetImporters()) {
+    for (MavenImporter each : getSuitableImporters()) {
       if (each.isSupportedDependency(artifact)) return true;
     }
     return false;
@@ -790,7 +790,7 @@ public class MavenProject {
     return myState.myRemoteRepositories;
   }
 
-  public List<MavenImporter> getSuitableFacetImporters() {
+  public List<MavenImporter> getSuitableImporters() {
     return MavenImporter.getSuitableImporters(this);
   }
 

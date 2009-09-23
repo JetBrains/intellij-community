@@ -6,7 +6,6 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.facets.MavenImporter;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenConstants;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -53,7 +52,7 @@ public class MavenModuleImporter {
   }
 
   public void preConfigFacets() {
-    for (final MavenImporter importer : getSuitableFacetImporters()) {
+    for (final MavenImporter importer : getSuitableImporters()) {
       // facets use FacetConfiguration and like that do not have modifiable models,
       // therefore we have to take write lock
       MavenUtil.invokeAndWaitWriteAction(myModule.getProject(), new Runnable() {
@@ -65,7 +64,7 @@ public class MavenModuleImporter {
   }
 
   public void configFacets(final List<MavenProjectsProcessorTask> postTasks) {
-    for (final MavenImporter importer : getSuitableFacetImporters()) {
+    for (final MavenImporter importer : getSuitableImporters()) {
       // facets use FacetConfiguration and like that do not have modifiable models,
       // therefore we have to take write lock
       MavenUtil.invokeAndWaitWriteAction(myModule.getProject(), new Runnable() {
@@ -83,8 +82,8 @@ public class MavenModuleImporter {
     }
   }
 
-  private List<MavenImporter> getSuitableFacetImporters() {
-    return myMavenProject.getSuitableFacetImporters();
+  private List<MavenImporter> getSuitableImporters() {
+    return myMavenProject.getSuitableImporters();
   }
 
   private void configFolders() {

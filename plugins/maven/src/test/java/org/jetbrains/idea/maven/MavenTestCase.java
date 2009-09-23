@@ -199,13 +199,15 @@ public abstract class MavenTestCase extends TestCase {
   }
 
   private String createSettingsXmlContent(String content) {
+    String mirror = System.getProperty("idea.maven.test.mirror",
+                                       "http://maven.labs.intellij.net:8081/nexus/content/groups/public/");
     return "<settings>" +
            content +
            "<mirrors>" +
            "  <mirror>" +
            "    <id>Nexus</id>" +
            "    <name>Nexus Public Mirror</name>" +
-           "    <url>http://maven.labs.intellij.net:8081/nexus/content/groups/public/</url>" +
+           "    <url>" + mirror + "</url>" +
            "    <mirrorOf>*</mirrorOf>" +
            "  </mirror>" +
            "</mirrors>" +
