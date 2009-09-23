@@ -53,73 +53,37 @@ public class CollectHighlightsUtil {
     final List<PsiElement> result = new ArrayList<PsiElement>();
     final int currentOffset = commonParent.getTextRange().getStartOffset();
     final Condition<PsiElement>[] filters = Extensions.getExtensions(EP_NAME);
-    if (commonParent.getContainingFile().getViewProvider().getAllFiles().size() > 1) {
-      commonParent.accept(new PsiRecursiveElementVisitor() {
-        int offset = currentOffset;
 
-        @Override
-        public void visitElement(PsiElement element) {
-          for (Condition<PsiElement> filter : filters) {
-            if (!filter.value(element)) return;
-          }
-
-          PsiElement child = element.getFirstChild();
-          if (child == null) {
-            // leaf element
-            offset += element.getTextLength();
-          }
-          else {
-            // composite element
-            while (child != null) {
-              if (offset > endOffset) break;
-
-              int start = offset;
-              child.accept(this);
-              if (startOffset <= start && offset <= endOffset) result.add(child);
-
-              child = child.getNextSibling();
-            }
-          }
-        }
-      });
-    }
-    else {
-      commonParent.accept(new PsiRecursiveElementWalkingVisitor() {
-        int offset = currentOffset;
-        boolean isInsideRegion;
-
-        @Override
-        protected void elementFinished(PsiElement element) {
-          if (isInsideRegion && offset <= endOffset) {
-            for (Condition<PsiElement> filter : filters) {
-              if (!filter.value(element)) return;
-            }
-            result.add(element);
-          }
+    final PsiElementVisitor visitor = new PsiRecursiveElementVisitor() {
+      int offset = currentOffset;
+      @Override public void visitElement(PsiElement element) {
+        for (Condition<PsiElement> filter : filters) {
+          if (!filter.value(element)) return;
         }
 
-        @Override
-        public void visitElement(PsiElement element) {
-          if (offset > endOffset) {
-            isInsideRegion = false;
-            return; //all children are after range
-          }
-          else if (offset >= startOffset) {
-            isInsideRegion = true;
-          }
+        PsiElement child = element.getFirstChild();
+        if (child != null) {
+          // composite element
+          while (child != null) {
+            if (offset > endOffset) break;
 
-          PsiElement child = element.getFirstChild();
-          if (child == null) {
-            // leaf element
-            offset += element.getTextLength();
-            return;
+            int start = offset;
+            child.accept(this);
+            if (startOffset <= start && offset <= endOffset) result.add(child);
+
+            child = child.getNextSibling();
           }
-          super.visitElement(element);
         }
-      });
-    }
+        else {
+          // leaf element
+          offset += element.getTextLength();
+        }
+      }
+    };
+    commonParent.accept(visitor);
     return result;
   }
+
 
   @Nullable
   public static PsiElement findCommonParent(final PsiElement root, final int startOffset, final int endOffset) {
