@@ -21,19 +21,13 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.intellij.lang.regexp.RegExpLanguageHost;
 import org.intellij.lang.regexp.RegExpTT;
-import org.intellij.lang.regexp.psi.RegExpAtom;
-import org.intellij.lang.regexp.psi.RegExpBackref;
-import org.intellij.lang.regexp.psi.RegExpBranch;
-import org.intellij.lang.regexp.psi.RegExpChar;
-import org.intellij.lang.regexp.psi.RegExpCharRange;
-import org.intellij.lang.regexp.psi.RegExpElementVisitor;
-import org.intellij.lang.regexp.psi.RegExpGroup;
-import org.intellij.lang.regexp.psi.RegExpPattern;
-import org.intellij.lang.regexp.psi.RegExpProperty;
-import org.intellij.lang.regexp.psi.RegExpQuantifier;
+import org.intellij.lang.regexp.psi.*;
 import org.intellij.lang.regexp.psi.impl.RegExpPropertyImpl;
 
 public final class RegExpAnnotator extends RegExpElementVisitor implements Annotator {
@@ -94,13 +88,26 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
             }
         } else {
             final String text = ch.getUnescapedText();
-            if (text.startsWith("\\") && !("\\]".equals(text) || "\\}".equals(text))) {
-                final ASTNode astNode = ch.getNode().getFirstChildNode();
-                if (astNode != null && astNode.getElementType() == RegExpTT.REDUNDANT_ESCAPE) {
-                    final Annotation a = myHolder.createInformationAnnotation(ch, "Redundant character escape");
-                    registerFix(a, new RemoveRedundantEscapeAction(ch));
-                }
+            if (text.startsWith("\\") && isRedundantEscape(ch, text)) {
+              final ASTNode astNode = ch.getNode().getFirstChildNode();
+              if (astNode != null && astNode.getElementType() == RegExpTT.REDUNDANT_ESCAPE) {
+                  final Annotation a = myHolder.createInformationAnnotation(ch, "Redundant character escape");
+                  registerFix(a, new RemoveRedundantEscapeAction(ch));
+              }
             }
+        }
+    }
+
+    private static boolean isRedundantEscape(RegExpChar ch, String text) {
+        if (text.length() <= 1) return false;
+        PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(ch.getProject()).getInjectionHost(ch);
+        if (host instanceof RegExpLanguageHost) {
+          final char c = text.charAt(1);
+          final boolean needsEscaping = ((RegExpLanguageHost)host).characterNeedsEscaping(c);
+          return !needsEscaping;
+        }
+        else {
+            return!("\\]".equals(text) || "\\}".equals(text));
         }
     }
 
