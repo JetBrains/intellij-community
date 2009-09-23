@@ -6,7 +6,6 @@ import com.intellij.history.integration.ui.models.FileHistoryDialogModel;
 import com.intellij.history.integration.ui.models.NullRevisionsProgress;
 import com.intellij.history.integration.ui.models.RevisionProcessingProgress;
 import com.intellij.history.integration.ui.views.FileHistoryDialog;
-import com.intellij.historyIntegrTests.IntegrationTestCase;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DocumentContent;
 import com.intellij.openapi.diff.SimpleContent;
@@ -15,7 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import java.io.IOException;
 import java.util.Date;
 
-public class FileHistoryDialogTest extends IntegrationTestCase {
+public class FileHistoryDialogTest extends LocalHistoryUITestCase {
   public void testDialogWorks() throws IOException {
     VirtualFile file = root.createChildData(null, "f.txt");
 

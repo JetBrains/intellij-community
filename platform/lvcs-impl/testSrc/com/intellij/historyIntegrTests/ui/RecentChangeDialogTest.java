@@ -4,12 +4,11 @@ import com.intellij.history.core.revisions.RecentChange;
 import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.history.integration.ui.models.RecentChangeDialogModel;
 import com.intellij.history.integration.ui.views.RecentChangeDialog;
-import com.intellij.historyIntegrTests.IntegrationTestCase;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
 
-public class RecentChangeDialogTest extends IntegrationTestCase {
+public class RecentChangeDialogTest extends LocalHistoryUITestCase {
   public void testDialogWork() throws IOException {
     getVcs().beginChangeSet();
     root.createChildData(null, "f.txt");

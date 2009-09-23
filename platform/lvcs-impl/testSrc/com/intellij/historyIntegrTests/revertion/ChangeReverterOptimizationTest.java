@@ -11,10 +11,10 @@ import java.io.IOException;
 public class ChangeReverterOptimizationTest extends ChangeReverterTestCase {
   public void testApplyingOnlyLastContent() throws Exception {
     VirtualFile f = root.createChildData(null, "f.txt");
-    f.setBinaryContent(new byte[]{1}, -1, 11);
-    f.setBinaryContent(new byte[]{2}, -1, 22);
-    f.setBinaryContent(new byte[]{3}, -1, 33);
-    f.setBinaryContent(new byte[]{4}, -1, 44);
+    f.setBinaryContent(new byte[]{1}, -1, 1111);
+    f.setBinaryContent(new byte[]{2}, -1, 2222);
+    f.setBinaryContent(new byte[]{3}, -1, 3333);
+    f.setBinaryContent(new byte[]{4}, -1, 4444);
 
     LoggingVirtualFileAdapter a = new LoggingVirtualFileAdapter();
     addFileListenerDuring(a, new RunnableAdapter() {
@@ -26,7 +26,7 @@ public class ChangeReverterOptimizationTest extends ChangeReverterTestCase {
 
     assertEquals("contentChanged ", a.getLog());
     assertEquals(1, f.contentsToByteArray()[0]);
-    assertEquals(11, f.getTimeStamp());
+    assertEquals(1111, f.getTimeStamp());
   }
 
   public void testApplyingRightContentEvenIfFileWasMoved() throws Exception {

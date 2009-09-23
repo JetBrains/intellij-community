@@ -6,12 +6,11 @@ import com.intellij.history.integration.TestIdeaGateway;
 import com.intellij.history.integration.TestVirtualFile;
 import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
 import com.intellij.history.integration.ui.views.DirectoryChange;
-import com.intellij.historyIntegrTests.IntegrationTestCase;
 import com.intellij.openapi.vcs.changes.Change;
 
 import java.util.List;
 
-public class DirectoryHistoryDialogModelTest extends IntegrationTestCase {
+public class DirectoryHistoryDialogModelTest extends LocalHistoryUITestCase {
   private final LocalVcs vcs = new InMemoryLocalVcs();
   private DirectoryHistoryDialogModel m;
 

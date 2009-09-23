@@ -1,12 +1,11 @@
 package com.intellij.historyIntegrTests.ui;
 
 import com.intellij.history.integration.ui.views.PutLabelDialog;
-import com.intellij.historyIntegrTests.IntegrationTestCase;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
 
-public class PutLabelDialogTest extends IntegrationTestCase {
+public class PutLabelDialogTest extends LocalHistoryUITestCase {
   PutLabelDialog d;
   VirtualFile f;
 

@@ -6,7 +6,6 @@ import com.intellij.history.integration.ui.models.HistoryDialogModel;
 import com.intellij.history.integration.ui.models.NullRevisionsProgress;
 import com.intellij.history.integration.ui.views.DirectoryChange;
 import com.intellij.history.integration.ui.views.DirectoryHistoryDialog;
-import com.intellij.historyIntegrTests.PatchingTestCase;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DocumentContent;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -15,7 +14,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Collections;
 
-public class DirectoryHistoryDialogTest extends PatchingTestCase {
+public class DirectoryHistoryDialogTest extends LocalHistoryUITestCase {
   public void testDialogWorks() throws IOException {
     DirectoryHistoryDialog d = new DirectoryHistoryDialog(gateway, root);
     d.close(0);
@@ -111,22 +110,6 @@ public class DirectoryHistoryDialogTest extends PatchingTestCase {
 
     assertEquals("oldDir", dir.getName());
     assertEquals(dir, f.getParent());
-  }
-
-  public void testPatchCreation() throws Exception {
-    root.createChildData(null, "f1.txt");
-    root.createChildData(null, "f2.txt");
-    root.createChildData(null, "f3.txt");
-
-    HistoryDialogModel m = createModelAndSelectRevisions(1, 3);
-    m.createPatch(patchFilePath, false);
-    clearRoot();
-
-    applyPatch();
-
-    assertNotNull(root.findChild("f1.txt"));
-    assertNotNull(root.findChild("f2.txt"));
-    assertNull(root.findChild("f3.txt"));
   }
 
   private DirectoryHistoryDialogModel createModelAndSelectRevision(int rev) {

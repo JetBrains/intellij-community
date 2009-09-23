@@ -7,7 +7,6 @@ import com.intellij.history.integration.ui.models.NullRevisionsProgress;
 import com.intellij.history.integration.ui.models.RevisionProcessingProgress;
 import com.intellij.history.integration.ui.views.SelectionHistoryDialog;
 import com.intellij.history.integration.ui.views.SelectionHistoryDialogModel;
-import com.intellij.historyIntegrTests.IntegrationTestCase;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.FragmentContent;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,7 +15,7 @@ import static org.easymock.classextension.EasyMock.*;
 import java.io.IOException;
 import java.util.List;
 
-public class SelectionHistoryDialogTest extends IntegrationTestCase {
+public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
   private VirtualFile f;
   private FileDifferenceModel dm;
   private SelectionHistoryDialogModel m;

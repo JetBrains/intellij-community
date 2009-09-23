@@ -154,20 +154,20 @@ public class BasicsTest extends IntegrationTestCase {
 
   public void testContentAtDate() throws Exception {
     VirtualFile f = root.createChildData(null, "f.txt");
-    f.setBinaryContent(new byte[]{1}, -1, 10);
-    f.setBinaryContent(new byte[]{2}, -1, 20);
+    f.setBinaryContent(new byte[]{1}, -1, 1111);
+    f.setBinaryContent(new byte[]{2}, -1, 2222);
 
-    assertEquals(1, LocalHistory.getByteContent(myProject, f, comparator(10))[0]);
-    assertNull(LocalHistory.getByteContent(myProject, f, comparator(15)));
-    assertEquals(2, LocalHistory.getByteContent(myProject, f, comparator(20))[0]);
-    assertNull(LocalHistory.getByteContent(myProject, f, comparator(30)));
+    assertEquals(1, LocalHistory.getByteContent(myProject, f, comparator(1111))[0]);
+    assertNull(LocalHistory.getByteContent(myProject, f, comparator(1555)));
+    assertEquals(2, LocalHistory.getByteContent(myProject, f, comparator(2222))[0]);
+    assertNull(LocalHistory.getByteContent(myProject, f, comparator(3333)));
   }
 
   public void testContentAtDateForFilteredFilesIsNull() throws Exception {
     VirtualFile f = root.createChildData(null, "f.xxx");
-    f.setBinaryContent(new byte[]{1}, -1, 10);
+    f.setBinaryContent(new byte[]{1}, -1, 1111);
 
-    assertNull(LocalHistory.getByteContent(myProject, f, comparator(10)));
+    assertNull(LocalHistory.getByteContent(myProject, f, comparator(1111)));
   }
 
   public void testRevisionsIfThereWasFileThatBecameUnversioned() throws IOException {
