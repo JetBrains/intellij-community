@@ -42,7 +42,7 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     doTest(false);
   }
 
-  public void testIDEADEV9404 () throws Exception {
+  public void testIdeaDEV9404 () throws Exception {
     doTest(false);
   }
 
