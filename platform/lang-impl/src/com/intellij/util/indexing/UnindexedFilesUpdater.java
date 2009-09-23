@@ -2,32 +2,24 @@ package com.intellij.util.indexing;
 
 import com.intellij.ide.startup.BackgroundableCacheUpdater;
 import com.intellij.ide.startup.FileContent;
-import com.intellij.ide.startup.FileContentQueue;
-import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -94,121 +86,13 @@ public class UnindexedFilesUpdater implements BackgroundableCacheUpdater {
   }
 
   public void backgrounded(final Collection<VirtualFile> remaining) {
-    DumbServiceImpl.getInstance(myProject).queueIndexUpdate(new Consumer<ProgressIndicator>() {
-      public void consume(final ProgressIndicator indicator) {
-        final MyFileContentQueue queue = new MyFileContentQueue();
-
-        try {
-          final double count = remaining.size();
-          queue.queue(remaining, indicator);
-
-          final Consumer<VirtualFile> uiUpdater = new Consumer<VirtualFile>() {
-            final Set<VirtualFile> processed = new THashSet<VirtualFile>();
-
-            public void consume(VirtualFile virtualFile) {
-              indicator.checkCanceled();
-              indicator.setFraction(processed.size() / count);
-              processed.add(virtualFile);
-              indicator.setText2(virtualFile.getPresentableUrl());
-            }
-          };
-
-          while (!myProject.isDisposed()) {
-            indicator.checkCanceled();
-            if (runUntilNextWriteAction(queue, uiUpdater)) {
-              break;
-            }
-          }
-          if (myProject.isDisposed()) {
-            indicator.cancel();
-          }
-        }
-        finally {
-          queue.clear();
-          updatingDone();
-        }
-      }
-    });
-  }
-
-  private boolean runUntilNextWriteAction(final MyFileContentQueue queue, final Consumer<VirtualFile> updateUi) {
-    final ProgressIndicatorBase innerIndicator = new ProgressIndicatorBase();
-    final ApplicationAdapter canceller = new ApplicationAdapter() {
-      @Override
-      public void beforeWriteActionStart(Object action) {
-        innerIndicator.cancel();
-      }
-    };
-
-    final Ref<Boolean> finished = Ref.create(Boolean.FALSE);
-    ProgressManager.getInstance().runProcess(new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().addApplicationListener(canceller);
-        try {
-          while (true) {
-            if (myProject.isDisposed()) return;
-
-            final FileContent fileContent = queue.take();
-            if (fileContent == null) {
-              finished.set(Boolean.TRUE);
-              return;
-            }
-
-            final VirtualFile file = fileContent.getVirtualFile();
-            if (file == null) {
-              finished.set(Boolean.TRUE);
-              return;
-            }
-
-            try {
-              ApplicationManager.getApplication().runReadAction(new Runnable() {
-                public void run() {
-                  innerIndicator.checkCanceled();
-
-                  if (!file.isValid()) {
-                    return;
-                  }
-
-                  if (myProject.isDisposed()) {
-                    return;
-                  }
-
-                  updateUi.consume(file);
-
-                  doProcessFile(fileContent);
-
-                  innerIndicator.checkCanceled();
-                }
-              });
-            }
-            catch (ProcessCanceledException e) {
-              queue.pushback(fileContent);
-              return;
-            }
-            catch (Throwable e) {
-              LOG.error("Error while indexing " + file.getPresentableUrl() + "\n" + "To reindex this file IDEA has to be restarted",
-                        e);
-              file.putUserData(DONT_INDEX_AGAIN_KEY, Boolean.TRUE);
-            }
-          }
-        }
-        finally {
-          ApplicationManager.getApplication().removeApplicationListener(canceller);
-        }
-      }
-    }, innerIndicator);
-
-    return finished.get().booleanValue();
+    new BackgroundCacheUpdaterRunner(myProject, remaining).processFiles(this);
   }
 
   public void processFile(final FileContent fileContent) {
-    doProcessFile(fileContent);
-    IndexingStamp.flushCache();
-  }
-
-  private void doProcessFile(FileContent fileContent) {
     fileContent.putUserData(FileBasedIndex.PROJECT, myProject);
     myIndex.indexFileContent(fileContent);
+    IndexingStamp.flushCache();
   }
 
   private void iterateIndexableFiles(final ContentIterator processor) {
@@ -278,31 +162,5 @@ public class UnindexedFilesUpdater implements BackgroundableCacheUpdater {
 
   public void canceled() {
     myIndex.flushCaches();
-  }
-
-  private static class MyFileContentQueue extends FileContentQueue {
-    @Nullable private FileContent myBuffer;
-
-    @Override
-    protected void addLast(VirtualFile file) throws InterruptedException {
-      IndexingStamp.flushCache();
-      super.addLast(file);
-    }
-
-    @Override
-    public FileContent take() {
-      final FileContent buffer = myBuffer;
-      if (buffer != null) {
-        myBuffer = null;
-        return buffer;
-      }
-
-      return super.take();
-    }
-
-    public void pushback(@NotNull FileContent content) {
-      myBuffer = content;
-    }
-
   }
 }

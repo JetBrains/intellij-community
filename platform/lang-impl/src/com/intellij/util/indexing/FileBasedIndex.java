@@ -3,7 +3,7 @@ package com.intellij.util.indexing;
 import com.intellij.AppTopics;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.ide.startup.CacheUpdater;
+import com.intellij.ide.startup.BackgroundableCacheUpdater;
 import com.intellij.ide.startup.impl.FileSystemSynchronizerImpl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.*;
@@ -1197,7 +1197,7 @@ public class FileBasedIndex implements ApplicationComponent {
     return !myNotRequiringContentIndices.contains(indexId);
   }
 
-  private final class ChangedFilesUpdater extends VirtualFileAdapter implements CacheUpdater{
+  private final class ChangedFilesUpdater extends VirtualFileAdapter implements BackgroundableCacheUpdater {
     private final Set<VirtualFile> myFilesToUpdate = new LinkedHashSet<VirtualFile>();
     private final JBReentrantReadWriteLock myLock = LockFactory.createReadWriteLock();
     private final JBLock r = myLock.readLock();
@@ -1386,6 +1386,21 @@ public class FileBasedIndex implements ApplicationComponent {
           }
         }
       }
+    }
+
+    public boolean initiallyBackgrounded() {
+      if (ApplicationManager.getApplication().isCommandLine() || ApplicationManager.getApplication().isUnitTestMode()) {
+        return false;
+      }
+      return Registry.get(DumbServiceImpl.FILE_INDEX_BACKGROUND).asBoolean();
+    }
+
+    public boolean canBeSentToBackground(Collection<VirtualFile> remaining) {
+      return true;
+    }
+
+    public void backgrounded(Collection<VirtualFile> remaining) {
+      new BackgroundCacheUpdaterRunner(remaining).processFiles(this);
     }
 
     public VirtualFile[] queryNeededFiles() {
