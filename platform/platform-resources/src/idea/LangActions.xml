@@ -424,7 +424,7 @@
     </group>
 
     <group id="NavbarPopupMenu">
-      <reference ref="NewGroup"/>
+      <reference ref="WeighingNewGroup"/>
       <reference ref="AssociateWithFileType"/>
       <separator/>
       <reference ref="CutCopyPasteGroup"/>

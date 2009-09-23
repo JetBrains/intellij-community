@@ -22,6 +22,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
+import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.DirectoryChooserUtil;
@@ -617,8 +618,14 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       return null;
     }
     if (dataId.equals(DataConstants.MODULE_CONTEXT)) {
-      final Module module = getSelectedElement(Module.class);
-      return module != null && module.isDisposed() ? null : module;
+      final PsiDirectory directory = getSelectedElement(PsiDirectory.class);
+      if (directory != null) {
+        final VirtualFile dir = directory.getVirtualFile();
+        if (ProjectRootsUtil.isModuleContentRoot(dir, myProject)) {
+          return ModuleUtil.findModuleForPsiElement(directory);
+        }
+      }
+      return null;
     }
     if (dataId.equals(DataConstants.PSI_ELEMENT)) {
       final PsiElement element = getSelectedElement(PsiElement.class);
