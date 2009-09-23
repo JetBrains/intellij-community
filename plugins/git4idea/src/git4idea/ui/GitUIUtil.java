@@ -60,7 +60,8 @@ public class GitUIUtil {
                                                     final int index,
                                                     final boolean isSelected,
                                                     final boolean cellHasFocus) {
-        String text = ((VirtualFile)value).getPresentableUrl();
+        VirtualFile file = (VirtualFile)value;
+        String text = file == null || !file.isValid() ? "(invalid)" : file.getPresentableUrl();
         return super.getListCellRendererComponent(list, text, index, isSelected, cellHasFocus);
       }
     };
