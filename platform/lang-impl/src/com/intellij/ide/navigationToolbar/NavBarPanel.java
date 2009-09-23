@@ -806,7 +806,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       final RelativePoint relativePoint = JBPopupFactory.getInstance().guessBestPopupLocation(dataContext);
       final Component owner = focusManager.getFocusOwner();
       final Component cmp = relativePoint.getComponent();
-      if (cmp instanceof JComponent) {
+      if (cmp instanceof JComponent && cmp.isShowing()) {
         myHint.show((JComponent)cmp, relativePoint.getPoint().x, relativePoint.getPoint().y,
                     owner instanceof JComponent ? (JComponent)owner : null);
       }
