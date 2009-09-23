@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * @author Eugene Zhuravlev
@@ -51,6 +53,25 @@ public class BackgroundCacheUpdaterRunner {
   }
 
   public void processFiles(final CacheUpdater updater) {
+    final CountDownLatch latch = new CountDownLatch(myProjectToFileMap.size());
+    
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      if (!myProjectToFileMap.containsKey(project)) {
+        // if the project is not affected still need to enter dumb mode to keep indices updating in background
+        // otherwise index access from this project may cause forceUpdate() which will index all the files in the calling thread
+        DumbServiceImpl.getInstance(project).queueIndexUpdate(new Consumer<ProgressIndicator>() {
+          public void consume(ProgressIndicator progressIndicator) {
+            try {
+              // just wait until update ends and exit dumb mode
+              latch.await();
+            }
+            catch (InterruptedException ignored) {
+            }
+          }
+        });
+      }
+    }
+
     for (Map.Entry<Project, Collection<VirtualFile>> entry : myProjectToFileMap.entrySet()) {
       final Project project = entry.getKey();
       final Collection<VirtualFile> files = entry.getValue();
@@ -85,8 +106,14 @@ public class BackgroundCacheUpdaterRunner {
             }
           }
           finally {
+            latch.countDown();
             queue.clear();
             updater.updatingDone();
+            try {
+              latch.await();
+            }
+            catch (InterruptedException ignored) {
+            }
           }
         }
       };
@@ -94,8 +121,13 @@ public class BackgroundCacheUpdaterRunner {
         DumbServiceImpl.getInstance(project).queueIndexUpdate(action);
       }
       else {
-        final ProgressIndicator currentIndicator = ProgressManager.getInstance().getProgressIndicator();
-        action.consume(currentIndicator != null? currentIndicator : new EmptyProgressIndicator());
+        try {
+          final ProgressIndicator currentIndicator = ProgressManager.getInstance().getProgressIndicator();
+          action.consume(currentIndicator != null? currentIndicator : new EmptyProgressIndicator());
+        }
+        finally {
+          latch.countDown();
+        }
       }
     }
   }
