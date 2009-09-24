@@ -44,7 +44,7 @@ public class FileColorsConfigurable implements Configurable, NonDefaultProjectCo
   }
 
   public boolean isModified() {
-    return myPanel.isModified();
+    return myPanel != null && myPanel.isModified();
   }
 
   public void apply() throws ConfigurationException {
