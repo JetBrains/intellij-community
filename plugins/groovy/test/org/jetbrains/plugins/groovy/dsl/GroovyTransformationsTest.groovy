@@ -36,6 +36,10 @@ class GroovyTransformationsTest extends CompletionTestBase {
 
   public void testMixinTransform() throws Throwable { doPlainTest() }
 
+  public void testBindableTransform() throws Throwable { doPlainTest() }
+
+  public void testVetoableTransform() throws Throwable { doPlainTest() }
+
   public void testNewifyTransform1() throws Throwable { doVariantsTest('newInstance', 'new', 'new', 'new',
                                                                        'newInstance', 'newInstance0', 'newInstanceCallerCache', 'next') }
 

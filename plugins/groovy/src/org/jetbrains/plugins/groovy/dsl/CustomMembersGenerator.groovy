@@ -85,8 +85,10 @@ public class CustomMembersGenerator implements GdslMembersHolderConsumer {
 
   def method(Map args) {
     def params = [:]
-    args.params.each {name, type ->
-      params[name] = stringifyType(type)
+    if (args.params) {
+      args.params.each {name, type ->
+        params[name] = stringifyType(type)
+      }
     }
     if (args.isStatic) {
       myClassText.append("static ")

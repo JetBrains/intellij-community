@@ -1,0 +1,14 @@
+contributor(context()) {
+  if (classType?.fields?.find {it.hasAnnotation("groovy.beans.Bindable")}) {
+    method name: "addVetoableChangeListener", type: "void", params: [s: "java.lang.String", l: "java.beans.VetoableChangeListener"]
+    method name: "addVetoableChangeListener", type: "void", params: [l: "java.beans.VetoableChangeListener"]
+
+    method name: "removeVetoableChangeListener", type: "void", params: [s: "java.lang.String", l: "java.beans.VetoableChangeListener"]
+    method name: "removeVetoableChangeListener", type: "void", params: [l: "java.beans.VetoableChangeListener"]
+
+    method name: "fireVetoableChange", type: "void", params: [s: "java.lang.String", o1: "java.lang.Object", o2: "java.lang.Object"]
+
+    method name: "getVetoableChangeListeners", type: "java.beans.VetoableChangeListener[]"
+    method name: "getVetoableChangeListeners", type: "java.beans.VetoableChangeListener[]", params: [s: "java.lang.String"]
+  }
+}
