@@ -91,7 +91,7 @@ public class GroovyDslTest extends CompletionTestBase {
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
-    moduleBuilder.addLibraryJars("GROOVY", TestUtils.getMockGroovy1_7LibraryHome(), TestUtils.GROOVY_JAR_17);
+    moduleBuilder.addLibraryJars("GROOVY", TestUtils.getMockGroovyLibraryHome(), TestUtils.GROOVY_JAR);
   }
 
 }
