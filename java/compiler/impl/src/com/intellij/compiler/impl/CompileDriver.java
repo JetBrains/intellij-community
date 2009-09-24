@@ -359,7 +359,7 @@ public class CompileDriver {
           if (message != null) {
             compileContext.addMessage(message);
           }
-          TranslatingCompilerFilesMonitor.getInstance().ensureInitializationCompleted();
+          TranslatingCompilerFilesMonitor.getInstance().ensureInitializationCompleted(myProject);
           doCompile(compileContext, isRebuild, forceCompile, callback, checkCachesVersion, trackDependencies);
         }
         finally {

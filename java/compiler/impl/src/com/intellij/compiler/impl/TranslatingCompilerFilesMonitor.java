@@ -34,7 +34,6 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.IndexInfrastructure;
@@ -107,7 +106,8 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
   };
   private final ProjectManager myProjectManager;
-  private final Semaphore myInitializationInProgress = new Semaphore();
+  private final TIntHashSet mySuccessfullyInitialized = new TIntHashSet(); // projectId fior successfully initialized projects
+  private final Object myInitializationLock = new Object();
 
   public TranslatingCompilerFilesMonitor(VirtualFileManager vfsManager, ProjectManager projectManager, Application application) {
     myProjectManager = projectManager;
@@ -862,8 +862,22 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
   }
 
-  public void ensureInitializationCompleted() {
-    myInitializationInProgress.waitFor();
+  public void ensureInitializationCompleted(Project project) {
+    final int id = getProjectId(project);
+    synchronized (myInitializationLock) {
+      while (!mySuccessfullyInitialized.contains(id)) {
+        if (!project.isOpen() || project.isDisposed()) {
+          // makes no sense to continue waiting
+          break;
+        }
+        try {
+          myInitializationLock.wait();
+        }
+        catch (InterruptedException ignored) {
+          break;
+        }
+      }
+    }
   }
 
   private void markOldOutputRoots(final Project project, final TIntObjectHashMap<Pair<Integer, Integer>> currentLayout) {
@@ -961,7 +975,6 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         }
       });
 
-      myInitializationInProgress.down();
       StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
         public void run() {
           new Task.Backgroundable(project, CompilerBundle.message("compiler.initial.scanning.progress.text"), false) {
@@ -1014,7 +1027,10 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
                 markOldOutputRoots(project, buildOutputRootsLayout(project));
               }
               finally {
-                myInitializationInProgress.up();
+                synchronized (myInitializationLock) {
+                  mySuccessfullyInitialized.add(getProjectId(project));
+                  myInitializationLock.notifyAll();
+                }
               }
             }
           }.queue();
@@ -1023,9 +1039,14 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
 
     public void projectClosed(final Project project) {
+      final int projectId = getProjectId(project);
+      synchronized (myInitializationLock) {
+        mySuccessfullyInitialized.remove(projectId);
+        myInitializationLock.notifyAll();
+      }
       myConnections.remove(project).disconnect();
       synchronized (mySourcesToRecompile) {
-        mySourcesToRecompile.remove(getProjectId(project));
+        mySourcesToRecompile.remove(projectId);
       }
     }
   }
