@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 
 public class GroovyExpressionPattern<T extends GrExpression, Self extends GroovyExpressionPattern<T,Self>> extends GroovyElementPattern<T,Self> {
   protected GroovyExpressionPattern(final Class<T> aClass) {
@@ -40,8 +40,8 @@ public class GroovyExpressionPattern<T extends GrExpression, Self extends Groovy
   }
 
   public GroovyMethodCallPattern methodCall(final ElementPattern<? extends PsiMethod> method) {
-    return new GroovyMethodCallPattern().and(this).with(new PatternCondition<GrMethodCallExpression>("methodCall") {
-      public boolean accepts(@NotNull GrMethodCallExpression callExpression, ProcessingContext context) {
+    return new GroovyMethodCallPattern().and(this).with(new PatternCondition<GrCallExpression>("methodCall") {
+      public boolean accepts(@NotNull GrCallExpression callExpression, ProcessingContext context) {
         final GroovyResolveResult[] results = callExpression.getMethodVariants();
         for (GroovyResolveResult result : results) {
           if (method.getCondition().accepts(result.getElement(), context)) {

@@ -22,17 +22,17 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 
-public class GroovyMethodCallPattern extends GroovyExpressionPattern<GrMethodCallExpression, GroovyMethodCallPattern> {
+public class GroovyMethodCallPattern extends GroovyExpressionPattern<GrCallExpression, GroovyMethodCallPattern> {
   GroovyMethodCallPattern() {
-    super(GrMethodCallExpression.class);
+    super(GrCallExpression.class);
   }
 
   public GroovyMethodCallPattern withArguments(final ElementPattern<? extends GrExpression>... arguments) {
-    return with(new PatternCondition<GrMethodCallExpression>("withArguments") {
+    return with(new PatternCondition<GrCallExpression>("withArguments") {
       @Override
-      public boolean accepts(@NotNull GrMethodCallExpression callExpression, ProcessingContext context) {
+      public boolean accepts(@NotNull GrCallExpression callExpression, ProcessingContext context) {
         final GrArgumentList argumentList = callExpression.getArgumentList();
         if (argumentList == null) return false;
         final GrExpression[] actualArguments = argumentList.getExpressionArguments();

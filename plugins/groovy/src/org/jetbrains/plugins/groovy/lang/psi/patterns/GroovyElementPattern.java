@@ -27,7 +27,10 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
 public class GroovyElementPattern<T extends GroovyPsiElement,Self extends GroovyElementPattern<T,Self>> extends PsiJavaElementPattern<T,Self> {
@@ -49,8 +52,12 @@ public class GroovyElementPattern<T extends GroovyPsiElement,Self extends Groovy
           if (!(psiExpressions.length > index && psiExpressions[index] == literal)) return false;
 
           final PsiElement element = psiExpressionList.getParent();
-          if (element instanceof GrMethodCallExpression) {
-            final GrExpression expression = ((GrMethodCallExpression)element).getInvokedExpression();
+          if (element instanceof GrCall) {
+            final GroovyPsiElement expression =
+              element instanceof GrApplicationStatement? ((GrApplicationStatement)element).getFunExpression() :
+              element instanceof GrMethodCallExpression? ((GrMethodCallExpression)element).getInvokedExpression() :
+              element instanceof GrNewExpression? ((GrNewExpression)element).getReferenceElement() :
+              null;
             final GroovyResolveResult[] results =
               expression instanceof GrReferenceElement? ((GrReferenceElement)expression).multiResolve(false) : GroovyResolveResult.EMPTY_ARRAY;
             for (GroovyResolveResult result : results) {
