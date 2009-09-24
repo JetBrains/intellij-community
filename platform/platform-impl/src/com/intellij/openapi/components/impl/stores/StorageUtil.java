@@ -151,12 +151,7 @@ public class StorageUtil {
   }
 
   static String printElement(Element element) throws StateStorage.StateStorageException {
-    try {
-      return JDOMUtil.writeElement(element, SystemProperties.getLineSeparator());
-    }
-    catch (IOException e) {
-      throw new StateStorage.StateStorageException(e);
-    }
+    return JDOMUtil.writeElement(element, SystemProperties.getLineSeparator());
   }
 
   static void save(IFile file, Element element) throws StateStorage.StateStorageException {

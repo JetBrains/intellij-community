@@ -15,7 +15,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
-import java.io.IOException;
 
 
 @SuppressWarnings({"deprecation"})
@@ -80,13 +79,8 @@ class DefaultStateSerializer {
     }
     else if (JDOMExternalizable.class.isAssignableFrom(stateClass)) {
       if (mergeInto != null) {
-        try {
-          String elementText = JDOMUtil.writeElement(stateElement, "\n");
-          LOG.error("State is " + stateClass.getName() + ", merge into is " + mergeInto.toString() + ", state element text is " + elementText);
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
+        String elementText = JDOMUtil.writeElement(stateElement, "\n");
+        LOG.error("State is " + stateClass.getName() + ", merge into is " + mergeInto.toString() + ", state element text is " + elementText);
       }
       try {
         final T t = stateClass.newInstance();

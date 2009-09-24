@@ -17,6 +17,8 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.JDOMUtil;
+import org.jdom.Element;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,7 +29,13 @@ public class SkipDefaultValuesSerializationFilters implements SerializationFilte
   public boolean accepts(final Accessor accessor, final Object bean) {
     Object defaultBean = getDefaultBean(bean);
 
-    return !Comparing.equal(accessor.read(bean), accessor.read(defaultBean));
+    final Object defValue = accessor.read(defaultBean);
+    final Object beanValue = accessor.read(bean);
+    if (defValue instanceof Element && beanValue instanceof Element) {
+      return !JDOMUtil.writeElement((Element)defValue, "\n").equals(JDOMUtil.writeElement((Element)beanValue, "\n"));
+    }
+
+    return !Comparing.equal(beanValue, defValue);
   }
 
   private Object getDefaultBean(final Object bean) {

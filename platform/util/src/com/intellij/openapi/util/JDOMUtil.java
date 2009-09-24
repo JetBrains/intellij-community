@@ -403,10 +403,15 @@ public class JDOMUtil {
   }
 
   @NotNull
-  public static String writeElement(Element element, String lineSeparator) throws IOException {
-    final StringWriter writer = new StringWriter();
-    writeElement(element, writer, lineSeparator);
-    return writer.toString();
+  public static String writeElement(Element element, String lineSeparator) {
+    try {
+      final StringWriter writer = new StringWriter();
+      writeElement(element, writer, lineSeparator);
+      return writer.toString();
+    }
+    catch (IOException ignored) {
+      throw new RuntimeException(ignored);
+    }
   }
 
   public static void writeDocument(Document document, Writer writer, String lineSeparator) throws IOException {

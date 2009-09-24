@@ -21,8 +21,6 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
-import java.io.IOException;
-
 public class CodeFormatterFacade {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade");
 
@@ -123,15 +121,10 @@ public class CodeFormatterFacade {
   }
 
   private void printToConsole(final Block rootBlock, final FormattingModel model) {
-    try {
-      String tree = JDOMUtil.writeElement(new FormatInfoPrinter(rootBlock, model.getDocumentModel()).blocksAsTree(), "\n");
-      System.out.println("---TREE---");
-      System.out.println(tree);
-      System.out.println("---/TREE---");
-    }
-    catch (IOException e) {
-      e.printStackTrace();
-    }
+    String tree = JDOMUtil.writeElement(new FormatInfoPrinter(rootBlock, model.getDocumentModel()).blocksAsTree(), "\n");
+    System.out.println("---TREE---");
+    System.out.println(tree);
+    System.out.println("---/TREE---");
   }
 
   public void processTextWithoutHeadWhitespace(final PsiFile file, final int startOffset, final int endOffset) {
