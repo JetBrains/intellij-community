@@ -120,8 +120,9 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
 
   private static File checkDataFiles(final File file) {
     if (!file.exists()) {
-      final String baseName = file.getName() + ".";
-      final File[] files = file.getParentFile().listFiles(new FileFilter() {
+      final File dataFile = getDataFile(file);
+      final String baseName = dataFile.getName();
+      final File[] files = dataFile.getParentFile().listFiles(new FileFilter() {
         public boolean accept(final File pathname) {
           return pathname.getName().startsWith(baseName);
         }
