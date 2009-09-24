@@ -385,6 +385,30 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return myPopFrames.isAvailable();
   }
 
+  private final Capability myCanGetInstanceInfo = new Capability() {
+    protected boolean calcValue() {
+      if (!myVersionHigher_15) {
+        return false;
+      }
+      try {
+        final Method method = VirtualMachine.class.getMethod("canGetInstanceInfo");
+        return (Boolean)method.invoke(myVirtualMachine);
+      }
+      catch (NoSuchMethodException ignored) {
+      }
+      catch (IllegalAccessException e) {
+        LOG.error(e);
+      }
+      catch (InvocationTargetException e) {
+        LOG.error(e);
+      }
+      return false;
+    }
+  };
+  public boolean canGetInstanceInfo() {
+    return myCanGetInstanceInfo.isAvailable();
+  }
+
   public final boolean versionHigher(String version) {
     return myVirtualMachine.version().compareTo(version) >= 0;
   }
