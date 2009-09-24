@@ -241,7 +241,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
         public Object getValueAt(int row, int col) {
           ExcludeEntryDescription description = myExcludeEntryDescriptions.get(row);
           if(col == 0) {
-            return description;
+            return description.getPresentableUrl();
           }
           if(col == 1) {
             if(!description.isFile()) {
@@ -260,7 +260,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
 
         public Class getColumnClass(int c) {
           if(c == 0) {
-            return Object.class;
+            return String.class;
           }
           if(c == 1) {
             return Boolean.class;
@@ -273,12 +273,17 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
             ExcludeEntryDescription description = myExcludeEntryDescriptions.get(row);
             return !description.isFile();
           }
-          return false;
+          return true;
         }
 
         public void setValueAt(Object aValue, int row, int col) {
           ExcludeEntryDescription description = myExcludeEntryDescriptions.get(row);
-          description.setIncludeSubdirectories(aValue.equals(Boolean.TRUE));
+          if (col == 1) {
+            description.setIncludeSubdirectories(aValue.equals(Boolean.TRUE));
+          } else {
+            final String path = (String)aValue;
+            description.setPresentableUrl(path);
+          }
         }
       };
 

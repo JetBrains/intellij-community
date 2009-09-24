@@ -158,8 +158,12 @@ public class PathsList  {
   
   public void addAllFiles(List<File> classpathList) {
     for (File file : classpathList) {
-      add(PathUtil.getCanonicalPath(file.getAbsolutePath()).replace('/', File.separatorChar));
+      add(file);
     }
+  }
+
+  public void add(File file) {
+    add(PathUtil.getCanonicalPath(file.getAbsolutePath()).replace('/', File.separatorChar));
   }
 
 }

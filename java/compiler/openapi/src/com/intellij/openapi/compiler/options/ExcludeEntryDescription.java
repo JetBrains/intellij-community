@@ -22,20 +22,21 @@ package com.intellij.openapi.compiler.options;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jetbrains.annotations.Nullable;
 
 public class ExcludeEntryDescription implements Disposable {
-
-  private final String myUrl;
-  private final boolean myIsFile;
+  private boolean myIsFile;
   private boolean myIncludeSubdirectories;
   private VirtualFilePointer myFilePointer;
+  private final Disposable myParentDisposable;
 
   public ExcludeEntryDescription(String url, boolean includeSubdirectories, boolean isFile, Disposable parent) {
-    myUrl = url;
+    myParentDisposable = parent;
     myFilePointer = VirtualFilePointerManager.getInstance().create(url, parent, null);
     myIncludeSubdirectories = includeSubdirectories;
     myIsFile = isFile;
@@ -47,6 +48,14 @@ public class ExcludeEntryDescription implements Disposable {
 
   public ExcludeEntryDescription copy(Disposable parent) {
     return new ExcludeEntryDescription(getUrl(), myIncludeSubdirectories, myIsFile,parent);
+  }
+
+  public void setPresentableUrl(String newUrl) {
+    myFilePointer = VirtualFilePointerManager.getInstance().create(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(newUrl)), myParentDisposable, null);
+    final VirtualFile file = getVirtualFile();
+    if (file != null) {
+      myIsFile = !file.isDirectory();
+    }
   }
 
   public boolean isFile() {
