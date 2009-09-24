@@ -1,5 +1,5 @@
 contributor(context()) {
-  if (classType?.fields?.find {it.hasAnnotation("groovy.beans.Bindable")}) {
+  if (classType?.fields?.find {it.hasAnnotation("groovy.beans.Vetoable")}) {
     method name: "addVetoableChangeListener", type: "void", params: [s: "java.lang.String", l: "java.beans.VetoableChangeListener"]
     method name: "addVetoableChangeListener", type: "void", params: [l: "java.beans.VetoableChangeListener"]
 
