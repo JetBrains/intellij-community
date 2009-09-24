@@ -120,38 +120,7 @@ public class ReplaceSwitchWithIfIntention extends Intention {
                     currentBranch.setDefault();
                 } else {
                     final PsiExpression value = label.getCaseValue();
-                    final String valueText;
-                    if (value instanceof PsiReferenceExpression) {
-                        PsiReferenceExpression referenceExpression =
-                                (PsiReferenceExpression) value;
-                        final PsiElement target = referenceExpression.resolve();
-                        final String text = referenceExpression.getText();
-                        if (target instanceof PsiEnumConstant) {
-                            PsiEnumConstant enumConstant =
-                                    (PsiEnumConstant) target;
-                            final PsiClass aClass =
-                                    enumConstant.getContainingClass();
-                            if (aClass != null) {
-                                final String name = aClass.getQualifiedName();
-                                valueText = name + "." + text;
-                            } else {
-                                valueText = text;
-                            }
-                        } else {
-                            valueText = text;
-                        }
-                    } else {
-                        PsiExpression unwrappedValue = value;
-                        while (unwrappedValue instanceof PsiParenthesizedExpression) {
-                            final PsiParenthesizedExpression parenthesizedExpression =
-                                    (PsiParenthesizedExpression)unwrappedValue;
-                            unwrappedValue = parenthesizedExpression.getExpression();
-                        }
-                        if (unwrappedValue == null) {
-                            return;
-                        }
-                        valueText = unwrappedValue.getText();
-                    }
+                    final String valueText = getCaseValueText(value);
                     currentBranch.addCaseValue(valueText);
                 }
             } else {
@@ -242,6 +211,36 @@ public class ReplaceSwitchWithIfIntention extends Intention {
                     switchStatement.replace(newStatement);
             codeStyleMgr.reformat(replacedStatement);
         }
+    }
+
+    private String getCaseValueText(PsiExpression value) {
+        if (value == null) {
+            return "";
+        }
+        if (value instanceof PsiParenthesizedExpression) {
+            PsiParenthesizedExpression parenthesizedExpression =
+                    (PsiParenthesizedExpression) value;
+            final PsiExpression expression =
+                    parenthesizedExpression.getExpression();
+            return getCaseValueText(expression);
+        }
+        if (!(value instanceof PsiReferenceExpression)) {
+            return value.getText();
+        }
+        PsiReferenceExpression referenceExpression =
+                (PsiReferenceExpression) value;
+        final PsiElement target = referenceExpression.resolve();
+        final String text = referenceExpression.getText();
+        if (!(target instanceof PsiEnumConstant)) {
+            return value.getText();
+        }
+        PsiEnumConstant enumConstant = (PsiEnumConstant) target;
+        final PsiClass aClass = enumConstant.getContainingClass();
+        if (aClass == null) {
+            return value.getText();
+        }
+        final String name = aClass.getQualifiedName();
+        return name + "." + text;
     }
 
     private static void dumpBranch(@NonNls StringBuilder ifStatementString,
