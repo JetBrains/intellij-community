@@ -113,8 +113,9 @@ class Project {
     if (stagePrinter != null) {
       stagePrinter(message)
     }
-
-    info(message)
+    else {
+      info(message)
+    }
   }
 
   def info(String message) {
