@@ -62,7 +62,6 @@ import org.jetbrains.groovy.compiler.rt.CompilerMessage;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.io.*;
@@ -197,8 +196,13 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       final String home = LibrariesUtil.getGroovyLibraryHome(classEntries);
       assert StringUtil.isNotEmpty(home);
       final String libPath = home + "/lib";
-      if (new File(FileUtil.toSystemDependentName(libPath)).exists()) {
-        to.addAllFiles(GroovyUtils.getFilesInDirectoryByPattern(libPath, GROOVYC_RUNNER_REQUIRED));
+      final File libDir = new File(FileUtil.toSystemDependentName(libPath));
+      if (libDir.exists()) {
+        for (File file : libDir.listFiles()) {
+          if (file.getName().endsWith(".jar")) {
+            to.add(file);
+          }
+        }
         return;
       }
     }
