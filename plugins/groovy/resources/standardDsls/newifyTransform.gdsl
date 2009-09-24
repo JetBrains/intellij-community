@@ -5,10 +5,9 @@ contributor(context()) {
   def clazz = enclosingClass()
   if (memb) {
     def newifyName = "groovy.lang.Newify"
-    for (a in memb?.getAnnotations(newifyName) + clazz?.getAnnotation(newifyName)) {
+    for (a in memb?.getAnnotations(newifyName) + clazz?.getAnnotations(newifyName)) {
       def refs = a?.findAttributeValue("value")
       def auto  = a?.findAttributeValue("auto")
-
       //For Python-like style
       if (refs && !place.qualifier) {
         for (c in refs.asList()) {

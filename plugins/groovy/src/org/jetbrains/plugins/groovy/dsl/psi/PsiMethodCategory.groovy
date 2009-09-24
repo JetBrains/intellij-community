@@ -32,8 +32,10 @@ public class PsiMethodCategory implements PsiEnhancerCategory {
 
   static Map getParamStringVector(PsiMethod method) {
     def Map result = [:]
+    int idx = 1
     for (p in method.parameterList.parameters) {
-      result.put(p.getName(), p.getType().getCanonicalText())
+      result.put("value$idx", p.getType().getCanonicalText())
+      idx++
     }
     return result;
   }
