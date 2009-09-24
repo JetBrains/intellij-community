@@ -41,9 +41,9 @@ import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -61,8 +61,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.groovy.compiler.rt.CompilerMessage;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -97,12 +97,22 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     final PathsList classPathBuilder = new PathsList();
     classPathBuilder.add(PathUtil.getJarPathForClass(GroovycRunner.class));
 
-    addGroovyJars(module, classPathBuilder);
-
     final ModuleChunk chunk = createChunk(module, compileContext);
+
+    final Library[] libraries = GroovyConfigUtils.getInstance().getSDKLibrariesByModule(module);
+    if (libraries.length > 0) {
+      classPathBuilder.addVirtualFiles(Arrays.asList(libraries[0].getFiles(OrderRootType.COMPILATION_CLASSES)));
+    }
+
+    classPathBuilder.addVirtualFiles(chunk.getCompilationClasspathFiles());
+    appendOutputPath(module, classPathBuilder, false);
+    if (tests) {
+      appendOutputPath(module, classPathBuilder, true);
+    }
+
     final List<String> patchers = new SmartList<String>();
     for (final GroovyCompilerExtension extension : GroovyCompilerExtension.EP_NAME.getExtensions()) {
-      extension.enhanceCompilerClassPath(chunk, classPathBuilder);
+      extension.enhanceCompilationClassPath(chunk, classPathBuilder);
       patchers.addAll(extension.getCompilationUnitPatchers(chunk));
     }
 
@@ -132,7 +142,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
 
     try {
       File fileWithParameters = File.createTempFile("toCompile", "");
-      fillFileWithGroovycParameters(module, toCompile, fileWithParameters, compileContext, outputDir, patchers, tests);
+      fillFileWithGroovycParameters(toCompile, fileWithParameters, outputDir, patchers);
 
       commandLine.addParameter(forStubs ? "stubs" : "groovyc");
       commandLine.addParameter(fileWithParameters.getPath());
@@ -190,32 +200,6 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     }
   }
 
-  private static void addGroovyJars(Module module, PathsList to) {
-    final VirtualFile[] classEntries = ModuleRootManager.getInstance(module).getFiles(OrderRootType.CLASSES);
-    if (!LibrariesUtil.isEmbeddableDistribution(classEntries)) {
-      final String home = LibrariesUtil.getGroovyLibraryHome(classEntries);
-      assert StringUtil.isNotEmpty(home);
-      final String libPath = home + "/lib";
-      final File libDir = new File(FileUtil.toSystemDependentName(libPath));
-      if (libDir.exists()) {
-        for (File file : libDir.listFiles()) {
-          if (file.getName().endsWith(".jar")) {
-            to.add(file);
-          }
-        }
-        return;
-      }
-    }
-
-    //non-traditional distribution
-    //groovy-all.jar doesn't contain some dependencies like JUnit, so we should find them ourselves in module classpath
-    for (VirtualFile file : classEntries) {
-      if (NONTRADITIONAL_GROOVYC_RUNNER_REQUIRED.matcher(file.getName()).matches()) {
-        to.add(file);
-      }
-    }
-  }
-
   private static CompilerMessageCategory getMessageCategory(CompilerMessage compilerMessage) {
     String category;
     category = compilerMessage.getCategory();
@@ -228,8 +212,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     return CompilerMessageCategory.ERROR;
   }
 
-  private void fillFileWithGroovycParameters(Module module, List<VirtualFile> virtualFiles, File f, CompileContext context,
-                                             VirtualFile outputDir, final List<String> patchers, boolean tests) {
+  private void fillFileWithGroovycParameters(List<VirtualFile> virtualFiles, File f, VirtualFile outputDir, final List<String> patchers) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Running groovyc on: " + virtualFiles.toString());
     }
@@ -261,15 +244,6 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       printer.println(GroovycRunner.END);
     }
 
-    printer.println(GroovycRunner.CLASSPATH);
-    final ModuleChunk chunk = createChunk(module, context);
-    StringBuilder compileClasspath = new StringBuilder(chunk.getCompilationClasspath());
-    appendOutputPath(module, compileClasspath, false);
-    if (tests) {
-      appendOutputPath(module, compileClasspath, true);
-    }
-    printer.println(compileClasspath.toString());
-
     if (!patchers.isEmpty()) {
       printer.println(GroovycRunner.PATCHERS);
       for (final String patcher : patchers) {
@@ -290,11 +264,10 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     printer.close();
   }
 
-  private static void appendOutputPath(Module module, StringBuilder compileClasspath, final boolean forTestClasses) {
+  private static void appendOutputPath(Module module, PathsList compileClasspath, final boolean forTestClasses) {
     String output = CompilerPaths.getModuleOutputPath(module, forTestClasses);
     if (output != null) {
-      compileClasspath.append(File.pathSeparator);
-      compileClasspath.append(FileUtil.toSystemDependentName(output));
+      compileClasspath.add(FileUtil.toSystemDependentName(output));
     }
   }
 

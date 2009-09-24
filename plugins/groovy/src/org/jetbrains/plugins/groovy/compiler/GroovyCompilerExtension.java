@@ -29,7 +29,7 @@ import java.util.List;
 public abstract class GroovyCompilerExtension {
   public static final ExtensionPointName<GroovyCompilerExtension> EP_NAME = ExtensionPointName.create("org.intellij.groovy.compilerExtension");
 
-  public abstract void enhanceCompilerClassPath(@NotNull ModuleChunk chunk, @NotNull PathsList classPath);
+  public abstract void enhanceCompilationClassPath(@NotNull ModuleChunk chunk, @NotNull PathsList classPath);
 
   @NotNull public abstract List<String> getCompilationUnitPatchers(@NotNull ModuleChunk chunk);
 

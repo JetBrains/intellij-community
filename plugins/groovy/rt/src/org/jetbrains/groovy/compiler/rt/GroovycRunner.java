@@ -23,7 +23,6 @@ import org.codehaus.groovy.control.messages.WarningMessage;
 import org.codehaus.groovy.tools.javac.JavaStubCompilationUnit;
 
 import java.io.*;
-import java.net.URLClassLoader;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.*;
@@ -36,7 +35,6 @@ import java.util.*;
 
 public class GroovycRunner {
 
-  public static final String CLASSPATH = "classpath";
   public static final String PATCHERS = "patchers";
   public static final String ENCODING = "encoding";
   public static final String OUTPUTPATH = "outputpath";
@@ -109,11 +107,11 @@ public class GroovycRunner {
       final List srcFiles = new ArrayList();
       final Map class2File = new HashMap();
 
-      final String moduleClasspath = fillFromArgsFile(argsFile, compilerConfiguration, patchers, compilerMessages, srcFiles, class2File);
+      fillFromArgsFile(argsFile, compilerConfiguration, patchers, compilerMessages, srcFiles, class2File);
       if (srcFiles.isEmpty()) return;
 
       System.out.println(PRESENTABLE_MESSAGE + "Groovy compiler: loading sources...");
-      final CompilationUnit unit = createCompilationUnit(moduleClasspath, forStubs, compilerConfiguration);
+      final CompilationUnit unit = createCompilationUnit(forStubs, compilerConfiguration);
       addSources(forStubs, srcFiles, unit);
       runPatchers(patchers, compilerMessages, class2File, unit);
 
@@ -172,7 +170,7 @@ public class GroovycRunner {
 
       String line;
 
-      while ((line = reader.readLine()) != null && !line.equals(CLASSPATH)) {
+      while ((line = reader.readLine()) != null && !line.equals(OUTPUTPATH)) {
         if (SRC_FILE.equals(line)) {
           final File file = new File(reader.readLine());
           srcFiles.add(file);
@@ -184,10 +182,6 @@ public class GroovycRunner {
       }
 
       while (line != null) {
-        if (line.startsWith(CLASSPATH)) {
-          moduleClasspath = reader.readLine();
-        }
-
         if (line.startsWith(PATCHERS)) {
           String s;
           while (!END.equals(s = reader.readLine())) {
@@ -323,9 +317,8 @@ public class GroovycRunner {
     compilerMessages.add(new CompilerMessage(CompilerMessage.WARNING, message + ":\n" + writer, "<exception>", -1, -1));
   }
 
-  private static CompilationUnit createCompilationUnit(String classpath, boolean forStubs,
-                                                       final CompilerConfiguration compilerConfiguration) {
-    compilerConfiguration.setClasspath(classpath);
+  private static CompilationUnit createCompilationUnit(boolean forStubs, final CompilerConfiguration compilerConfiguration) {
+    compilerConfiguration.setClasspathList(Collections.EMPTY_LIST);
 
     final GroovyClassLoader classLoader = buildClassLoaderFor(compilerConfiguration);
 
@@ -353,8 +346,7 @@ public class GroovycRunner {
   static GroovyClassLoader buildClassLoaderFor(final CompilerConfiguration compilerConfiguration) {
     return (GroovyClassLoader) AccessController.doPrivileged(new PrivilegedAction() {
       public Object run() {
-        URLClassLoader urlClassLoader = new URLClassLoader(GroovyCompilerUtil.convertClasspathToUrls(compilerConfiguration));
-        return new GroovyClassLoader(urlClassLoader, compilerConfiguration) {
+        return new GroovyClassLoader(getClass().getClassLoader(), compilerConfiguration) {
           public Class loadClass(String name, boolean lookupScriptFiles, boolean preferClassOverScript)
             throws ClassNotFoundException, CompilationFailedException {
             try {
@@ -362,6 +354,7 @@ public class GroovycRunner {
             }
             catch (NoClassDefFoundError e) {
               final String ncdfe = e.getMessage();
+              
               throw new RuntimeException("Groovyc error: " + ncdfe + " class not found while resolving class " + name + "; try compiling " + ncdfe + " explicitly", e);
             }
             catch (LinkageError e) {
