@@ -158,7 +158,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     registerKeyboardAction(new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         final Object o = myModel.getSelectedValue();
-        navigateInsideBar(o);
+        navigateInsideBar(optimizeTarget(o));
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), WHEN_FOCUSED);
 
@@ -202,6 +202,16 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
 
     updateModel();
     updateList();
+  }
+
+  private static Object optimizeTarget(Object target) {
+    if (target instanceof PsiDirectory && ((PsiDirectory)target).getFiles().length == 0) {
+      final PsiDirectory[] subDir = ((PsiDirectory)target).getSubdirectories();
+      if (subDir.length == 1) {
+        return optimizeTarget(subDir[0]);
+      }
+    }
+    return target;
   }
 
   private void processFocusLost(final FocusEvent e) {
@@ -488,7 +498,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
         @NotNull public String getTextFor(final Object value) { return NavBarModel.getPresentableText(value, null);}
         public boolean isSelectable(Object value) { return true; }
         public PopupStep onChosen(final Object selectedValue, final boolean finalChoice) {
-          navigateInsideBar(selectedValue);
+          navigateInsideBar(optimizeTarget(selectedValue));
           return FINAL_CHOICE;
         }
 
