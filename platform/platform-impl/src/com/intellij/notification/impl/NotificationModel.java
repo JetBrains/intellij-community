@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Array;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * @author spleaner
@@ -89,7 +90,8 @@ public class NotificationModel {
 
   private LinkedList<Notification> filterNotifications(@NotNull PairFunction<Notification, Project, Boolean> filter) {
     final LinkedList<Notification> result = new LinkedList<Notification>();
-    for (final Map.Entry<Notification, Pair<Project, Boolean>> entry : myNotifications.entrySet()) {
+    final HashSet<Map.Entry<Notification, Pair<Project, Boolean>>> entries = new HashSet<Map.Entry<Notification, Pair<Project, Boolean>>>(myNotifications.entrySet());
+    for (final Map.Entry<Notification, Pair<Project, Boolean>> entry : entries) {
       if (filter.fun(entry.getKey(), entry.getValue().first)) {
         result.addFirst(entry.getKey());
       }
