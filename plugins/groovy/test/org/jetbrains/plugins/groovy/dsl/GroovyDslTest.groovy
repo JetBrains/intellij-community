@@ -85,10 +85,6 @@ public class GroovyDslTest extends CompletionTestBase {
 """)
   }
 
-  public void testDelegateAnnotation() throws Throwable { doPlainTest() }
-
-  public void testSingletonTransform() throws Throwable { doPlainTest() }
-
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.addLibraryJars("GROOVY", TestUtils.getMockGroovyLibraryHome(), TestUtils.GROOVY_JAR);
