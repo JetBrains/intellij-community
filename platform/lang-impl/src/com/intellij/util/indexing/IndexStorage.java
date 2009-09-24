@@ -18,8 +18,6 @@ public interface IndexStorage<Key, Value> extends Flushable{
 
   void removeAllValues(Key key, int inputId) throws StorageException;
 
-  void remove(Key key) throws StorageException;
-
   void clear() throws StorageException;
   
   @NotNull

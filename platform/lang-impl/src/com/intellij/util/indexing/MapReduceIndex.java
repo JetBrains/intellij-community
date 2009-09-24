@@ -1,6 +1,8 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
@@ -9,6 +11,7 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -57,6 +60,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
       return true;
     }
   };
+  private Factory<PersistentHashMap<Integer, Collection<Key>>> myInputsIndexFactory;
 
 
   public MapReduceIndex(@Nullable final ID<Key, Value> indexId, DataIndexer<Key, Value, Input> indexer, final IndexStorage<Key, Value> storage) {
@@ -73,8 +77,21 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     try {
       getWriteLock().lock();
       myStorage.clear();
+      if (myInputsIndex != null) {
+        final File baseFile = myInputsIndex.getBaseFile();
+        try {
+          myInputsIndex.close();
+        }
+        catch (IOException ignored) {
+        }
+        FileUtil.delete(baseFile);
+        myInputsIndex = createInputsIndex();
+      }
     }
     catch (StorageException e) {
+      LOG.error(e);
+    }
+    catch (IOException e) {
       LOG.error(e);
     }
     finally {
@@ -86,6 +103,9 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     try {
       getReadLock().lock();
       myStorage.flush();
+      if (myInputsIndex != null) {
+        myInputsIndex.flush();
+      }
     }
     catch (IOException e) {
       throw new StorageException(e);
@@ -167,20 +187,25 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     }
   }
 
-  public void removeData(final Key key) throws StorageException {
-    final Lock lock = getWriteLock();
-    try {
-      lock.lock();
-      myStorage.remove(key);
-    }
-    finally {
-      lock.unlock();
-      scheduleFlush();
-    }
+  public void setInputIdToDataKeysIndex(Factory<PersistentHashMap<Integer, Collection<Key>>> factory) throws IOException {
+    myInputsIndexFactory = factory;
+    myInputsIndex = createInputsIndex();
   }
 
-  public void setInputIdToDataKeysIndex(PersistentHashMap<Integer, Collection<Key>> metaIndex) {
-    myInputsIndex = metaIndex;
+  private PersistentHashMap<Integer, Collection<Key>> createInputsIndex() throws IOException {
+    Factory<PersistentHashMap<Integer, Collection<Key>>> factory = myInputsIndexFactory;
+    if (factory != null) {
+      try {
+        return factory.create();
+      }
+      catch (RuntimeException e) {
+        if (e.getCause() instanceof IOException) {
+          throw (IOException)e.getCause();
+        }
+        throw e;
+      }
+    }
+    return null;
   }
 
   public final void update(final int inputId, @Nullable Input content) throws StorageException {

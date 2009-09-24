@@ -24,6 +24,7 @@ import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.CollectingContentIterator;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
@@ -364,7 +365,23 @@ public class FileBasedIndex implements ApplicationComponent {
     }
 
     final KeyDescriptor<K> keyDescriptor = extension.getKeyDescriptor();
-    index.setInputIdToDataKeysIndex(new PersistentHashMap<Integer, Collection<K>>(IndexInfrastructure.getInputIndexStorageFile(indexId), new EnumeratorIntegerDescriptor(), new DataExternalizer<Collection<K>>() {
+    index.setInputIdToDataKeysIndex(new Factory<PersistentHashMap<Integer, Collection<K>>>() {
+      public PersistentHashMap<Integer, Collection<K>> create() {
+        try {
+          return createIdToDataKeysIndex(indexId, keyDescriptor);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
+
+    return index;
+  }
+
+  private static <K> PersistentHashMap<Integer, Collection<K>> createIdToDataKeysIndex(ID<K, ?> indexId, final KeyDescriptor<K> keyDescriptor) throws IOException {
+    final File indexStorageFile = IndexInfrastructure.getInputIndexStorageFile(indexId);
+    return new PersistentHashMap<Integer, Collection<K>>(indexStorageFile, new EnumeratorIntegerDescriptor(), new DataExternalizer<Collection<K>>() {
       public void save(DataOutput out, Collection<K> value) throws IOException {
         DataInputOutputUtil.writeINT(out, value.size());
         for (K key : value) {
@@ -380,9 +397,7 @@ public class FileBasedIndex implements ApplicationComponent {
         }
         return list;
       }
-    }));
-
-    return index;
+    });
   }
 
   @NonNls

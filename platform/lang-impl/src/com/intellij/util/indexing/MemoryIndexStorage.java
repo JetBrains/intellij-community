@@ -153,12 +153,4 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
     return myBackendStorage.read(key);
   }
 
-  public synchronized void remove(final Key key) throws StorageException {
-    if (myBufferingEnabled.get()) {
-      myMap.put(key, new ValueContainerImpl<Value>());
-    }
-    else {
-      myBackendStorage.remove(key);
-    }
-  }
 }

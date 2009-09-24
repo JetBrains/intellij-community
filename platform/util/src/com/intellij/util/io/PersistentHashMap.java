@@ -25,7 +25,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
 
   @NonNls
   public static final String DATA_FILE_EXTENSION = ".values";
-  private File myFile;
+  private final File myFile;
   private int myGarbageSize;
   private static final int VALUE_REF_OFFSET = RECORD_SIZE;
   private final byte[] myRecordBuffer = new byte[RECORD_SIZE + 8 + 4];
@@ -89,7 +89,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   }
   
   public PersistentHashMap(final File file, KeyDescriptor<Key> keyDescriptor, DataExternalizer<Value> valueExternalizer, final int initialSize) throws IOException {
-    super(checkDataFile(file), keyDescriptor, initialSize);
+    super(checkDataFiles(file), keyDescriptor, initialSize);
     try {
       myFile = file;
       myValueExternalizer = valueExternalizer;
@@ -108,17 +108,20 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
       throw new CorruptedException(file);
     }
   }
-  
+
+  public File getBaseFile() {
+    return myFile;
+  }
+
   private boolean makesSenceToCompact() {
     final long filesize = getDataFile(myFile).length();
     return filesize > 5 * 1024 * 1024 && myGarbageSize * 2 > filesize; // file is longer than 5MB and more than 50% of data is garbage
   }
 
-  private static File checkDataFile(final File file) {
+  private static File checkDataFiles(final File file) {
     if (!file.exists()) {
-      final File dataFile = getDataFile(file);
-      final String baseName = dataFile.getName();
-      final File[] files = dataFile.getParentFile().listFiles(new FileFilter() {
+      final String baseName = file.getName() + ".";
+      final File[] files = file.getParentFile().listFiles(new FileFilter() {
         public boolean accept(final File pathname) {
           return pathname.getName().startsWith(baseName);
         }
@@ -261,7 +264,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   
   // made public for tests
   public synchronized void compact() throws IOException {
-    long now = System.currentTimeMillis();
+    final long now = System.currentTimeMillis();
     final String newPath = getDataFile(myFile).getPath() + ".new";
     final PersistentHashMapValueStorage newStorage = PersistentHashMapValueStorage.create(newPath);
     myValueStorage.switchToCompactionMode();

@@ -26,7 +26,6 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.MapIndexStorage");
   private PersistentHashMap<Key, ValueContainer<Value>> myMap;
   private SLRUCache<Key, ChangeTrackingValueContainer<Value>> myCache;
-  private Key myKeyBeingRemoved = null;
   private final File myStorageFile;
   private final KeyDescriptor<Key> myKeyDescriptor;
   private final ValueContainerExternalizer<Value> myValueContainerExternalizer;
@@ -70,7 +69,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
       }
 
       protected void onDropFromCache(final Key key, final ChangeTrackingValueContainer<Value> valueContainer) {
-        if (key.equals(myKeyBeingRemoved) || !valueContainer.isDirty()) {
+        if (!valueContainer.isDirty()) {
           return;
         }
         try {
@@ -220,33 +219,10 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
   }
 
   public void removeAllValues(Key key, int inputId) throws StorageException {
+    // important: assuming the key exists in the index
     read(key).removeAllValues(inputId);
   }
 
-  public synchronized void remove(final Key key) throws StorageException {
-    try {
-      myKeyBeingRemoved = key;
-      myCache.remove(key);
-      myMap.remove(key);
-    }
-    catch (IOException e) {
-      throw new StorageException(e);
-    }
-    catch (RuntimeException e) {
-      final Throwable cause = e.getCause();
-      if (cause instanceof IOException) {
-        throw new StorageException(cause);
-      }
-      if (cause instanceof StorageException) {
-        throw (StorageException)cause;
-      }
-      throw e;
-    }
-    finally {
-      myKeyBeingRemoved = null;
-    }
-  }
-  
   private static final class ValueContainerExternalizer<T> implements DataExternalizer<ValueContainer<T>> {
     private final DataExternalizer<T> myExternalizer;
 
