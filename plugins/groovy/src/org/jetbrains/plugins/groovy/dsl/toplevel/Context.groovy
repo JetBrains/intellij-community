@@ -1,13 +1,10 @@
 package org.jetbrains.plugins.groovy.dsl.toplevel
 
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiManager
-import com.intellij.psi.PsiType
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.groovy.GroovyFileType
+import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClassScope
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClosureScope
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ScriptScope
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
@@ -17,7 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
-import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClassScope
+import com.intellij.psi.*
 
 /**
  * @author ilyas
@@ -28,9 +25,8 @@ class Context {
 
   public Context(Map args) {
     // Basic filter, all contexts are applicable for reference expressions only
-    myFilters << {PsiElement elem, fqn ->
-    elem instanceof GrReferenceExpression
-    }
+    myFilters << {PsiElement elem, fqn -> elem instanceof GrReferenceExpression}
+    myFilters << {PsiElement element, fqn -> PsiTreeUtil.getParentOfType(element, PsiAnnotation) == null}
     init(args)
   }
 
@@ -72,8 +68,7 @@ class Context {
         }
         return false
       }
-    }
-    else {
+    } else {
       addFilter {PsiElement elem, fqn -> elem?.getContainingFile()?.getFileType() instanceof GroovyFileType}
     }
 
@@ -130,7 +125,8 @@ class Context {
             def parent = closParent.getParent()
             if (parent instanceof GrArgumentList) {
               return parent.getParent() instanceof GrMethodCallExpression
-            } else {
+            }
+            else {
               return parent instanceof GrMethodCallExpression
             }
           }
