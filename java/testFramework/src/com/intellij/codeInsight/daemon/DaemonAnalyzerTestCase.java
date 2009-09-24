@@ -318,7 +318,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
                                               final PsiFile file) throws IncorrectOperationException {
     IntentionAction intentionAction = findIntentionAction(infos, intentionActionName, editor, file);
 
-    assertNotNull(intentionAction);
+    assertNotNull(intentionActionName, intentionAction);
     intentionAction.invoke(file.getProject(), editor, file);
   }
 
