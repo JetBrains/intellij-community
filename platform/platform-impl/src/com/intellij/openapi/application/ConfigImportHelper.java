@@ -243,8 +243,9 @@ public class ConfigImportHelper {
   }
 
   public static boolean isInstallationHome(String installationHome) {
+    String mainJarName = StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getProductName()) + ".jar";
     //noinspection HardCodedStringLiteral
-    boolean quickTest = new File(new File(installationHome, "lib"), "idea.jar").exists() &&
+    boolean quickTest = new File(new File(installationHome, "lib"), mainJarName).exists() &&
                         new File(installationHome, BIN_FOLDER).exists();
     if (!quickTest) return false;
 
