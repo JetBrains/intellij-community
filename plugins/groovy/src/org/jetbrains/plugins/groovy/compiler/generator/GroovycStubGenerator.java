@@ -60,7 +60,7 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
     }
 
     boolean hasGroovy = false;
-    final ExcludedEntriesConfiguration excluded = GroovyCompilerConfiguration.getInstance(myProject).getState().excludeFromStubGeneration;
+    final ExcludedEntriesConfiguration excluded = GroovyCompilerConfiguration.getExcludeConfiguration(myProject);
     List<VirtualFile> total = new ArrayList<VirtualFile>();
     for (final VirtualFile virtualFile : virtualFiles) {
       if (!excluded.isExcluded(virtualFile)) {

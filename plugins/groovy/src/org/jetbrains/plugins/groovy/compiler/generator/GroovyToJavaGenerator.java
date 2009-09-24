@@ -104,7 +104,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     GenerationItem item;
     final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
     final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(myProject);
-    final ExcludedEntriesConfiguration excluded = GroovyCompilerConfiguration.getInstance(myProject).getState().excludeFromStubGeneration;
+    final ExcludedEntriesConfiguration excluded = GroovyCompilerConfiguration.getExcludeConfiguration(myProject);
     for (VirtualFile file : getGroovyFilesToGenerate(context)) {
       if (compilerManager.isExcludedFromCompilation(file)) continue;
       if (excluded.isExcluded(file)) continue;

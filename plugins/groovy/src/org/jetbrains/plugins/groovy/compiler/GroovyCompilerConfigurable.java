@@ -17,20 +17,20 @@
 package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.compiler.CompilerSettingsFactory;
+import com.intellij.openapi.compiler.options.ExcludedEntriesConfigurable;
+import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.compiler.options.ExcludedEntriesConfigurable;
-import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 
@@ -57,7 +57,7 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Compi
   }
 
   private ExcludedEntriesConfigurable createExcludedConfigurable(final Project project) {
-    final ExcludedEntriesConfiguration configuration = myConfig.getState().excludeFromStubGeneration;
+    final ExcludedEntriesConfiguration configuration = myConfig.getExcludeFromStubGeneration();
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, true) {
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
@@ -100,17 +100,16 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Compi
   }
 
   public boolean isModified() {
-    final GroovyCompilerConfiguration.GroovyCompilerConfigurationBean state = myConfig.getState();
-    return !Comparing.equal(state.heapSize, myHeapSize.getText()) || myExcludes.isModified();
+    return !Comparing.equal(myConfig.getHeapSize(), myHeapSize.getText()) || myExcludes.isModified();
   }
 
   public void apply() throws ConfigurationException {
     myExcludes.apply();
-    myConfig.getState().heapSize = myHeapSize.getText();
+    myConfig.setHeapSize(myHeapSize.getText());
   }
 
   public void reset() {
-    myHeapSize.setText(myConfig.getState().heapSize);
+    myHeapSize.setText(myConfig.getHeapSize());
     myExcludes.reset();
   }
 

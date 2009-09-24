@@ -118,7 +118,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     commandLine.addParameter(classPathBuilder.getPathsString());
 
 
-    commandLine.addParameter("-Xmx" + GroovyCompilerConfiguration.getInstance(myProject).getState().heapSize + "m");
+    commandLine.addParameter("-Xmx" + GroovyCompilerConfiguration.getInstance(myProject).getHeapSize() + "m");
     commandLine.addParameter("-XX:+HeapDumpOnOutOfMemoryError");
 
     //debug

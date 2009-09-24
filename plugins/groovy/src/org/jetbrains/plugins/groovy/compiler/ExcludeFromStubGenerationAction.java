@@ -64,7 +64,7 @@ public class ExcludeFromStubGenerationAction extends AnAction implements DumbAwa
     }
 
     final VirtualFile virtualFile = file.getVirtualFile();
-    return virtualFile != null && !GroovyCompilerConfiguration.getInstance(file.getProject()).getState().excludeFromStubGeneration.isExcluded(virtualFile);
+    return virtualFile != null && !GroovyCompilerConfiguration.getExcludeConfiguration(file.getProject()).isExcluded(virtualFile);
   }
 
 }
