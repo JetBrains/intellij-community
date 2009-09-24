@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,10 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 public class StringBufferReplaceableByStringBuilderInspection
         extends BaseInspection {
@@ -86,7 +90,11 @@ public class StringBufferReplaceableByStringBuilderInspection
     private static class StringBufferReplaceableByStringBuilderVisitor
             extends BaseInspectionVisitor {
 
-        @Override public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
+        private static final Set<String> excludes = new HashSet(Arrays.asList(
+                "java.lang.StringBuilder", "java.lang.StringBuffer"));
+
+        @Override public void visitLocalVariable(
+                @NotNull PsiLocalVariable variable) {
             super.visitLocalVariable(variable);
             if (!PsiUtil.isLanguageLevel5OrHigher(variable)) {
                 return;
@@ -118,7 +126,7 @@ public class StringBufferReplaceableByStringBuilderInspection
                 return;
             }
             if (VariableAccessUtils.variableIsPassedAsMethodArgument(variable,
-                    codeBlock)) {
+                    excludes, codeBlock)) {
                 return;
             }
             if (VariableAccessUtils.variableIsUsedInInnerClass(variable,

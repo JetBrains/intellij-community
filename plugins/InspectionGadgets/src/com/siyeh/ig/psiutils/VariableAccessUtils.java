@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
 
 public class VariableAccessUtils{
 
@@ -42,6 +44,18 @@ public class VariableAccessUtils{
         }
         final VariablePassedAsArgumentVisitor visitor =
                 new VariablePassedAsArgumentVisitor(variable);
+        context.accept(visitor);
+        return visitor.isPassed();
+    }
+
+    public static boolean variableIsPassedAsMethodArgument(
+            @NotNull PsiVariable variable, Set<String> excludes,
+            @Nullable PsiElement context) {
+        if (context == null) {
+            return false;
+        }
+        final VariablePassedAsArgumentExcludedVisitor visitor =
+                new VariablePassedAsArgumentExcludedVisitor(variable, excludes);
         context.accept(visitor);
         return visitor.isPassed();
     }

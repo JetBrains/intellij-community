@@ -18,16 +18,21 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public class VariablePassedAsArgumentVisitor
+import java.util.Set;
+
+public class VariablePassedAsArgumentExcludedVisitor
         extends JavaRecursiveElementVisitor{
 
     @NotNull
     private final PsiVariable variable;
+    private final Set<String> excludes;
     private boolean passed = false;
 
-    public VariablePassedAsArgumentVisitor(@NotNull PsiVariable variable){
+    public VariablePassedAsArgumentExcludedVisitor(
+            @NotNull PsiVariable variable, @NotNull Set<String> excludes) {
         super();
         this.variable = variable;
+        this.excludes = excludes;
     }
 
     @Override public void visitElement(@NotNull PsiElement element){
@@ -45,9 +50,20 @@ public class VariablePassedAsArgumentVisitor
         final PsiExpressionList argumentList = call.getArgumentList();
         final PsiExpression[] arguments = argumentList.getExpressions();
         for(PsiExpression argument : arguments){
-            if(VariableAccessUtils.mayEvaluateToVariable(argument, variable)){
-                passed = true;
+            if(!VariableAccessUtils.mayEvaluateToVariable(argument, variable)){
+                continue;
             }
+            final PsiMethod method = call.resolveMethod();
+            if(method != null){
+                final PsiClass aClass = method.getContainingClass();
+                if(aClass != null){
+                    final String name = aClass.getQualifiedName();
+                    if(excludes.contains(name)){
+                        continue;
+                    }
+                }
+            }
+            passed = true;
         }
     }
 
@@ -63,9 +79,20 @@ public class VariablePassedAsArgumentVisitor
         }
         final PsiExpression[] arguments = argumentList.getExpressions();
         for(PsiExpression argument : arguments){
-            if(VariableAccessUtils.mayEvaluateToVariable(argument, variable)){
-                passed = true;
+            if(!VariableAccessUtils.mayEvaluateToVariable(argument, variable)){
+                continue;
             }
+            final PsiMethod constructor = newExpression.resolveConstructor();
+            if(constructor != null){
+                final PsiClass aClass = constructor.getContainingClass();
+                if(aClass != null){
+                    final String name = aClass.getQualifiedName();
+                    if(excludes.contains(name)){
+                        continue;
+                    }
+                }
+            }
+            passed = true;
         }
     }
 
