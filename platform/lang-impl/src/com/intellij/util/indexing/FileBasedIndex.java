@@ -1421,7 +1421,9 @@ public class FileBasedIndex implements ApplicationComponent {
     public VirtualFile[] queryNeededFiles() {
       r.lock();
       try {
-        if (myFilesToUpdate.isEmpty()) return VirtualFile.EMPTY_ARRAY;
+        if (myFilesToUpdate.isEmpty()) {
+          return VirtualFile.EMPTY_ARRAY;
+        }
         return myFilesToUpdate.toArray(new VirtualFile[myFilesToUpdate.size()]);
       }
       finally {
@@ -1446,7 +1448,17 @@ public class FileBasedIndex implements ApplicationComponent {
         }
         finally {
           myForceUpdateSemaphore.up();
-          myForceUpdateSemaphore.waitFor(); // possibly wait until another thread completes indexing
+        }
+      }
+
+      // If several threads entered the method at the same time and there were files to update,
+      // all the threads should leave the method synchronously after all the files scheduled for update are reindexed,
+      // no matter which thread will do reindexing job.
+      // Thus we ensure that all the threads that entered the method will get the most recent data
+
+      while (!myForceUpdateSemaphore.waitFor(500)) { // may need to wait until another thread is done with indexing
+        if (Thread.holdsLock(PsiLock.LOCK)) {
+          break; // hack. Most probably that other indexing threads is waiting for PsiLock, which we're are holding.
         }
       }
     }
