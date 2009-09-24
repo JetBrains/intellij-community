@@ -141,7 +141,7 @@ public class FileChooserDescriptor implements Cloneable{
     }
 
     // do not include ignored files
-    if (isHideIgnored() && !showHiddenFiles && FileTypeManager.getInstance().isFileIgnored(file.getName())) {
+    if (isHideIgnored() && FileTypeManager.getInstance().isFileIgnored(file.getName())) {
       return false;
     }
 
