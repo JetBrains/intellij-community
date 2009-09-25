@@ -4,8 +4,8 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -25,11 +25,11 @@ public class InspectionProfilesConverterTest extends LightIdeaTestCase {
     doTest("scope");
   }
 
-  public void doTest(final String dirName) throws Exception {
+  public static void doTest(final String dirName) throws Exception {
     try {
       final String relativePath = "/inspection/converter/";
       final List children =
-        JDOMUtil.loadDocument(new File(PathManagerEx.getTestDataPath() + relativePath + dirName + "/options.ipr")).getRootElement()
+        JDOMUtil.loadDocument(new File(JavaTestUtil.getJavaTestDataPath() + relativePath + dirName + "/options.ipr")).getRootElement()
           .getChildren("component");
 
       for (Object child : children) {
@@ -42,7 +42,7 @@ public class InspectionProfilesConverterTest extends LightIdeaTestCase {
           final Element confElement = new Element("config");
           profileManager.writeExternal(confElement);
           assertTrue(new String(JDOMUtil.printDocument(new Document(confElement), "\n")),
-                     JDOMUtil.areElementsEqual(confElement, JDOMUtil.loadDocument(new File(PathManagerEx.getTestDataPath() +
+                     JDOMUtil.areElementsEqual(confElement, JDOMUtil.loadDocument(new File(JavaTestUtil.getJavaTestDataPath() +
                                                                                            relativePath + dirName + "/options.after.xml")).getRootElement()));
           break;
         }
