@@ -127,8 +127,11 @@ public class PersistentEnumerator<Data> implements Forceable {
   public PersistentEnumerator(File file, KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
     myDataDescriptor = dataDescriptor;
     myFile = file;
-    if (!FileUtil.createIfDoesntExist(file)) {
-      throw new IOException("Cannot create empty file: " + file);
+    if (!file.exists()) {
+      FileUtil.delete(keystreamFile());
+      if (!FileUtil.createIfDoesntExist(file)) {
+        throw new IOException("Cannot create empty file: " + file);
+      }
     }
 
     myStorage = new ResizeableMappedFile(myFile, initialSize);
