@@ -1,5 +1,6 @@
 package com.intellij.codeInspection;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal;
 import com.intellij.testFramework.InspectionTestCase;
 
@@ -10,6 +11,11 @@ import com.intellij.testFramework.InspectionTestCase;
 public class LocalCanBeFinalTest extends InspectionTestCase {
   private LocalCanBeFinal myTool;
 
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection";
+  }
+  
   protected void setUp() throws Exception {
     super.setUp();
     myTool = new LocalCanBeFinal();
