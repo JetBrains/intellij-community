@@ -12,6 +12,8 @@ import com.intellij.debugger.ui.impl.tree.TreeBuilder;
 import com.intellij.debugger.ui.impl.tree.TreeBuilderNode;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
+import com.intellij.debugger.ui.tree.ValueDescriptor;
+import com.intellij.debugger.ui.tree.ValueMarkup;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Map;
@@ -26,6 +29,7 @@ import java.util.Map;
 public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTreeNode{
   private Icon myIcon;
   private SimpleColoredText myText;
+  private String myMarkupTooltipText;
   private final DebuggerTree myTree;
   private final Map myProperties = new HashMap();
 
@@ -66,7 +70,15 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
   private void updateCaches() {
     final NodeDescriptorImpl descriptor = getDescriptor();
     myIcon = DebuggerTreeRenderer.getDescriptorIcon(descriptor);
-    myText = DebuggerTreeRenderer.getDescriptorText(getTree().getDebuggerContext(), descriptor, false);
+    final DebuggerContextImpl context = getTree().getDebuggerContext();
+    myText = DebuggerTreeRenderer.getDescriptorText(context, descriptor, false);
+    if (descriptor instanceof ValueDescriptor) {
+      final ValueMarkup markup = ((ValueDescriptor)descriptor).getMarkup(context.getDebugProcess());
+      myMarkupTooltipText = markup != null? markup.getToolTipText() : null;
+    }
+    else {
+      myMarkupTooltipText = null;
+    }
   }
 
   public Icon getIcon() {
@@ -75,6 +87,11 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
 
   public SimpleColoredText getText() {
     return myText;
+  }
+
+  @Nullable
+  public String getMarkupTooltipText() {
+    return myMarkupTooltipText;
   }
 
   public void clear() {

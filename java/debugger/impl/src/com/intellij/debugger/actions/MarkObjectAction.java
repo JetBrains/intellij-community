@@ -1,5 +1,7 @@
 package com.intellij.debugger.actions;
 
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
@@ -11,12 +13,25 @@ import com.intellij.debugger.ui.tree.ValueMarkup;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.util.containers.HashMap;
+import com.sun.jdi.*;
+
+import javax.swing.*;
+import java.awt.*;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /*
  * Class SetValueAction
  * @author Jeka
  */
 public class MarkObjectAction extends DebuggerAction {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.actions.MarkObjectAction");
   private final String MARK_TEXT = ActionsBundle.message("action.Debugger.MarkObject.text");
   private final String UNMARK_TEXT = ActionsBundle.message("action.Debugger.MarkObject.unmark.text");
 
@@ -35,31 +50,159 @@ public class MarkObjectAction extends DebuggerAction {
     
     final ValueDescriptorImpl valueDescriptor = ((ValueDescriptorImpl)descriptor);
     final DebuggerContextImpl debuggerContext = tree.getDebuggerContext();
-    final ValueMarkup markup = valueDescriptor.getMarkup(debuggerContext.getDebugProcess());
-    try {
-      if (markup != null) {
-        valueDescriptor.setMarkup(debuggerContext.getDebugProcess(), null);
+    final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
+    final ValueMarkup markup = valueDescriptor.getMarkup(debugProcess);
+    debugProcess.getManagerThread().invoke(new DebuggerContextCommandImpl(debuggerContext) {
+      public Priority getPriority() {
+        return Priority.HIGH;
       }
-      else {
-        final ValueMarkup valueMarkup = ObjectMarkupPropertiesDialog.chooseMarkup(valueDescriptor.getName());
-        if (valueMarkup != null) {
-          valueDescriptor.setMarkup(debuggerContext.getDebugProcess(), valueMarkup);
+      public void threadAction() {
+        boolean sessionRefreshNeeded = true;
+        try {
+          if (markup != null) {
+            valueDescriptor.setMarkup(debugProcess, null);
+          }
+          else {
+            final Value value = valueDescriptor.getValue();
+            final Map<Long, ValueMarkup> additionalMarkup = suggestMarkup(debugProcess, value);
+            ValueMarkup valueMarkup = null;
+            if (value instanceof ObjectReference) {
+              valueMarkup = additionalMarkup.get(((ObjectReference)value).uniqueID());
+            }
+            if (valueMarkup == null) {
+              valueMarkup = new ValueMarkup(valueDescriptor.getName(), Color.RED);
+            }
+            final Ref<Pair<ValueMarkup,Boolean>> result = new Ref<Pair<ValueMarkup, Boolean>>(null);
+            try {
+              final ValueMarkup _suggestion = valueMarkup;
+              SwingUtilities.invokeAndWait(new Runnable() {
+                public void run() {
+                  result.set(ObjectMarkupPropertiesDialog.chooseMarkup(_suggestion, additionalMarkup));
+                }
+              });
+            }
+            catch (InterruptedException ignored) {
+            }
+            catch (InvocationTargetException e) {
+              LOG.error(e);
+            }
+            final Pair<ValueMarkup, Boolean> pair = result.get();
+            if (pair != null) {
+              valueDescriptor.setMarkup(debugProcess, pair.first);
+              if (pair.second) {
+                final Map<Long, ValueMarkup> map = NodeDescriptorImpl.getMarkupMap(debugProcess);
+                if (map != null) {
+                  for (Map.Entry<Long,ValueMarkup> entry : additionalMarkup.entrySet()) {
+                    final Long key = entry.getKey();
+                    if (!map.containsKey(key)) {
+                      map.put(key, entry.getValue());
+                    }
+                  }
+                }
+              }
+            }
+            else {
+              sessionRefreshNeeded = false;
+            }
+          }
         }
-        else {
-          return;
+        finally {
+          final boolean _sessionRefreshNeeded = sessionRefreshNeeded;
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              tree.restoreState(node);
+              node.labelChanged();
+              if (_sessionRefreshNeeded) {
+                final DebuggerSession session = debuggerContext.getDebuggerSession();
+                if (session != null) {
+                  session.refresh(true);
+                }
+              }
+            }
+          });
         }
       }
-    }
-    finally {
-      tree.restoreState(node);
-      node.labelChanged();
-    }
-    
-    final DebuggerSession session = debuggerContext.getDebuggerSession();
-    if (session != null) {
-      session.refresh(true);
-    }
+    });
   }
+
+  private static Map<Long, ValueMarkup> suggestMarkup(DebugProcessImpl debugProcess, Value value) {
+    if (!(value instanceof ObjectReference)) {
+      return Collections.emptyMap();
+    }
+    final ObjectReference objRef = (ObjectReference)value;
+    if (objRef instanceof ArrayReference || objRef instanceof ClassObjectReference || objRef instanceof ThreadReference || objRef instanceof ThreadGroupReference || objRef instanceof ClassLoaderReference) {
+      return Collections.emptyMap();
+    }
+    final Map<Long, ValueMarkup> result = new HashMap<Long, ValueMarkup>();
+    if (debugProcess.getVirtualMachineProxy().canGetInstanceInfo()) {
+      for (ObjectReference ref : getReferringObjects(objRef)) {
+        if (!(ref instanceof ClassObjectReference)) {
+          // consider references from statisc fields only
+          continue;
+        }
+        final ReferenceType refType = ((ClassObjectReference)ref).reflectedType();
+        if (!refType.isAbstract()) {
+          continue;
+        }
+        for (Field field : refType.fields()) {
+          if (!(field.isStatic() && field.isFinal())) {
+            continue;
+          }
+          final Value fieldValue = refType.getValue(field);
+          if (!(fieldValue instanceof ObjectReference)) {
+            continue;
+          }
+          final long id = ((ObjectReference)fieldValue).uniqueID();
+          final ValueMarkup markup = result.get(id);
+
+          final String fieldName = field.name();
+          final Color autoMarkupColor = ValueMarkup.getAutoMarkupColor();
+          if (markup == null) {
+            result.put(id, new ValueMarkup(fieldName, autoMarkupColor, createMarkupTooltipText(null, refType, fieldName)));
+          }
+          else {
+            final String currentText = markup.getText();
+            if (!currentText.contains(fieldName)) {
+              final String currentTooltip = markup.getToolTipText();
+              final String tooltip = createMarkupTooltipText(currentTooltip, refType, fieldName);
+              result.put(id, new ValueMarkup(currentText + ", " + fieldName, autoMarkupColor, tooltip));
+            }
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+  private static List<ObjectReference> getReferringObjects(ObjectReference value) {
+    // invoke the following method using Reflection in order to remain compilable on jdk 1.5
+    //  java.util.List<com.sun.jdi.ObjectReference> referringObjects(long l);
+    try {
+      final java.lang.reflect.Method apiMethod = ObjectReference.class.getMethod("referringObjects", long.class);
+      return (List<ObjectReference>)apiMethod.invoke(value, ValueMarkup.AUTO_MARKUP_REFERRING_OBJECTS_LIMIT);
+    }
+    catch (IllegalAccessException e) {
+      LOG.error(e); // should not happen
+    }
+    catch (InvocationTargetException e) {
+      throw new RuntimeException(e);
+    }
+    catch (NoSuchMethodException ignored) {
+    }
+    return Collections.emptyList();
+  }
+
+  private static String createMarkupTooltipText(String prefix, ReferenceType refType, String fieldName) {
+    final StringBuilder builder = new StringBuilder();
+    if (prefix == null) {
+      builder.append("Value referenced from:");
+    }
+    else {
+      builder.append(prefix);
+    }
+    return builder.append("<br><b>").append(refType.name()).append(".").append(fieldName).append("</b>").toString();
+  }
+
 
   public void update(AnActionEvent e) {
     boolean enable = false;

@@ -12,8 +12,8 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
-import com.intellij.xdebugger.ui.DebuggerIcons;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
+import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -125,7 +125,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
     if (descriptor instanceof ValueDescriptor) {
       final ValueMarkup markup = ((ValueDescriptor)descriptor).getMarkup(debuggerContext.getDebugProcess());
       if (markup != null) {
-        descriptorText.append(markup.getText(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, markup.getColor()));
+        descriptorText.append("[" + markup.getText() + "] ", new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, markup.getColor()));
       }
     }
 

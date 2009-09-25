@@ -83,7 +83,7 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
     return minChar;
   }
 
-  private JComponent createTipContent(String tipText) {
+  private JComponent createTipContent(String tipText, DebuggerTreeNodeImpl node) {
     final JToolTip tooltip = new JToolTip();
 
     if (tipText == null) {
@@ -98,12 +98,21 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
       //noinspection HardCodedStringLiteral
       final StringBuffer tipBuilder = new StringBuffer();
       try {
-        final StringTokenizer tokenizer = new StringTokenizer(tipText, "\n");
+        final String markupText = node.getMarkupTooltipText();
+        if (markupText != null) {
+          tipBuilder.append(markupText);
+        }
 
-        while (tokenizer.hasMoreElements()) {
-          final String each = tokenizer.nextElement();
-          tipBuilder.append(JDOMUtil.legalizeText(each));
-          tipBuilder.append("<br>");
+        if (tipText.length() > 0) {
+          tipBuilder.append("<br><br>").append("Value=");
+
+          final StringTokenizer tokenizer = new StringTokenizer(tipText, "\n");
+
+          while (tokenizer.hasMoreElements()) {
+            final String each = tokenizer.nextElement();
+            tipBuilder.append(JDOMUtil.legalizeText(each));
+            tipBuilder.append("<br>");
+          }
         }
 
         tooltip.setTipText(UIUtil.toHtml(tipBuilder.toString(), 0));
@@ -162,7 +171,7 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
       return null;
     }
 
-    final JComponent tipContent = createTipContent(toolTipText);
+    final JComponent tipContent = createTipContent(toolTipText, node);
     final JScrollPane scrollPane = new JScrollPane(tipContent);
     scrollPane.setBorder(null);
     scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -260,7 +269,7 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
         }
       }
     }
-    return null;
+    return node.getMarkupTooltipText() != null? "" : null;
   }
 
   @Nullable

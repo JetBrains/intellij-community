@@ -139,7 +139,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
   }
 
   @Nullable
-  protected static Map<Long, ValueMarkup> getMarkupMap(final DebugProcess process) {
+  public static Map<Long, ValueMarkup> getMarkupMap(final DebugProcess process) {
     if (process == null) {
       return null;
     }

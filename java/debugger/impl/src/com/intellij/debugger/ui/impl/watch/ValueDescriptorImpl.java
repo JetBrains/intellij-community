@@ -407,7 +407,12 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       final Map<Long, ValueMarkup> map = getMarkupMap(debugProcess);
       if (map != null) {
         final long id = ((ObjectReference)value).uniqueID();
-        map.put(id, markup);
+        if (markup != null) {
+          map.put(id, markup);
+        }
+        else {
+          map.remove(id);
+        }
       }
     }
   }
