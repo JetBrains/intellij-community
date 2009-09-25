@@ -132,7 +132,7 @@ public class GradleScriptType extends GroovyScriptType {
         params.getVMParametersList().addParametersString(configuration.vmParams);
 
 
-        params.getVMParametersList().add("-Dgradle.home=\"" + FileUtil.toSystemDependentName(gradleHome.getPath()) + "\"");
+        params.getVMParametersList().add("-Dgradle.home=" + FileUtil.toSystemDependentName(gradleHome.getPath()) + "");
 
         setToolsJar(params);
 
