@@ -1,5 +1,6 @@
 package com.intellij.codeInspection;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.miscGenerics.RedundantArrayForVarargsCallInspection;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.testFramework.InspectionTestCase;
@@ -8,6 +9,11 @@ import com.intellij.testFramework.InspectionTestCase;
  * @author cdr
  */
 public class RedundantArrayForVarargsCallInspectionTest extends InspectionTestCase {
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection";
+  }
+
   private void doTest() throws Exception {
     doTest("redundantArrayForVarargs/" + getTestName(true), new LocalInspectionToolWrapper(new RedundantArrayForVarargsCallInspection()),"java 1.5");
   }
