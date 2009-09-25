@@ -26,14 +26,18 @@ import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
@@ -244,6 +248,24 @@ public class GroovyPositionManager implements PositionManager {
     if (res != null) {
       return res;
     }
+
+    if (StringUtil.isEmpty(packageName)) {
+      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+      for (final String extension : extensions) {
+        for (final PsiFile file : FilenameIndex.getFilesByName(project, runtimeName + "." + extension, GlobalSearchScope.projectScope(project))) {
+          final VirtualFile vFile = file.getVirtualFile();
+          if (file instanceof GroovyFile && vFile != null && !fileIndex.isInSource(vFile)) {
+            for (PsiClass aClass : ((GroovyFile)file).getClasses()) {
+              if (qName.equals(aClass.getQualifiedName())) {
+                return file;
+              }
+            }
+          }
+        }
+      }
+    }
+
+
     for (ScriptPositionManagerHelper helper : ScriptPositionManagerHelper.EP_NAME.getExtensions()) {
       if (helper.isAppropriateRuntimeName(runtimeName)) {
         PsiFile file = helper.getExtraScriptIfNotFound(refType, runtimeName, project);
