@@ -343,7 +343,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
         if (shouldScheduleProject(projectWithChanges)) {
           scheduleForNextImport(projectWithChanges);
         }
-        processMessage( message);
+        processMessage(message);
       }
 
       private boolean shouldScheduleProject(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
@@ -352,10 +352,11 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
       private void processMessage(Object message) {
         if (getScheduledProjectsCount() == 0) return;
-        
+
         if (message == SCHEDULE_IMPORT_MESSAGE) {
           scheduleImport(false);
-        } else if (message == FORCE_IMPORT_MESSAGE) {
+        }
+        else if (message == FORCE_IMPORT_MESSAGE) {
           scheduleImport(true);
         }
       }
@@ -722,14 +723,17 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     runWhenFullyOpen(new Runnable() {
       public void run() {
         final boolean autoImport = getImportingSettings().isImportAutomatically();
-        if (autoImport || forceImport) {
-          // postpone activation to prevent import from being called from events poster
-          mySchedulesQueue.queue(new Update(new Object()) {
-            public void run() {
+        // postpone activation to prevent import from being called from events poster
+        mySchedulesQueue.queue(new Update(new Object()) {
+          public void run() {
+            if (autoImport || forceImport) {
               myImportingQueue.activate();
             }
-          });
-        }
+            else {
+              myImportingQueue.deactivate();
+            }
+          }
+        });
         myImportingQueue.queue(new Update(MavenProjectsManager.this) {
           public void run() {
             importProjects();
@@ -795,6 +799,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
       public void run() {
         if (!StartupManagerEx.getInstanceEx(myProject).postStartupActivityPassed()) {
           mySchedulesQueue.queue(new Update(runnable) { // should not remove previously schedules tasks
+
             public void run() {
               wrapper.get().run();
             }
