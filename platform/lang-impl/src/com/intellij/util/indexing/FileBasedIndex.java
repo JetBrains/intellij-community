@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -1320,8 +1321,11 @@ public class FileBasedIndex implements ApplicationComponent {
       }
       if (file.isDirectory()) {
         if (isMock(file) || myManagingFS.wereChildrenAccessed(file)) {
-          for (VirtualFile child : file.getChildren()) {
-            invalidateIndices(child, markForReindex);
+          final Collection<VirtualFile> children = (file instanceof NewVirtualFile)? ((NewVirtualFile)file).getInDbChildren() : Arrays.asList(file.getChildren());
+          for (VirtualFile child : children) {
+            if (NullVirtualFile.INSTANCE != child) {
+              invalidateIndices(child, markForReindex);
+            }
           }
         }
       }
