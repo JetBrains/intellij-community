@@ -233,7 +233,6 @@
 
     <group text="IDEA Internal Actions" internal="true">
       <separator/>
-      <action id="PsiViewer" internal="true" class="com.intellij.internal.psiView.ViewerAction"/>
       <action id="DebugListen" internal="true" class="com.intellij.debugger.actions.ThrowDebugExceptionAction"/>
       <action id="VirtualFileInfo" internal="true" class="com.intellij.openapi.vfs.impl.local.VirtualFileInfoAction"/>
       <action id="Merge3Files" internal="true" class="com.intellij.openapi.diff.actions.MergeFilesAction"/>
