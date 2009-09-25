@@ -70,7 +70,7 @@ public class GroovyEnterHandler implements EnterHandlerDelegate {
     if (handleBeforeCurlyBrace(editor, caretOffset, dataContext, originalHandler)) {
       return true;
     }
-    if (handleInString(editor, caretOffset, dataContext)) {
+    if (handleInString(editor, caretOffset, dataContext, originalHandler)) {
       return true;
     }
     return false;
@@ -144,7 +144,7 @@ public class GroovyEnterHandler implements EnterHandlerDelegate {
     TokenSet.create(GroovyTokenTypes.mSTRING_LITERAL, GroovyTokenTypes.mGSTRING_LITERAL, GroovyTokenTypes.mGSTRING_SINGLE_END);
 
 
-  private static boolean handleInString(Editor editor, int caretOffset, DataContext dataContext) {
+  private static boolean handleInString(Editor editor, int caretOffset, DataContext dataContext, EditorActionHandler originalHandler) {
     Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
 
@@ -208,7 +208,7 @@ public class GroovyEnterHandler implements EnterHandlerDelegate {
           editor.getCaretModel().moveCaretRelatively(1, 0, false, false, true);
         }
       } else {
-        EditorModificationUtil.insertStringAtCaret(editor, "\n");
+        originalHandler.execute(editor, dataContext);
       }
       return true;
     }

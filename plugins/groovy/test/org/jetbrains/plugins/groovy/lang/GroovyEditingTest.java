@@ -35,5 +35,6 @@ public class GroovyEditingTest extends LightCodeInsightFixtureTestCase {
   public void testCodeBlockRightBrace() throws Throwable { doTest('{'); }
   public void testInterpolationInsideStringRightBrace() throws Throwable { doTest('{'); }
   public void testStructuralInterpolationInsideStringRightBrace() throws Throwable { doTest('{'); }
+  public void testEnterInMultilineString() throws Throwable { doTest('\n'); }
 
 }
