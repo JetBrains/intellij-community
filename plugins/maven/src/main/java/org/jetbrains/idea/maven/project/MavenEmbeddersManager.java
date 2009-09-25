@@ -16,6 +16,7 @@ public class MavenEmbeddersManager {
     FOR_PLUGINS_RESOLVE,
     FOR_FOLDERS_RESOLVE,
     FOR_DOWNLOAD,
+    FOR_FLEX_CONFIG_GENERATION,
   }
 
   private final MavenGeneralSettings myGeneralSettings;

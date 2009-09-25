@@ -43,7 +43,7 @@ public class MavenProjectsTree {
   private final Map<MavenProject, MavenProjectTimestamp> myTimestamps = new THashMap<MavenProject, MavenProjectTimestamp>();
   private final Map<VirtualFile, MavenProject> myVirtualFileToProjectMapping = new THashMap<VirtualFile, MavenProject>();
   private final Map<MavenId, MavenProject> myMavenIdToProjectMapping = new THashMap<MavenId, MavenProject>();
-  private final Map<MavenId, VirtualFile> myMavenIdToFileMapping  = new THashMap<MavenId, VirtualFile>();
+  private final Map<MavenId, VirtualFile> myMavenIdToFileMapping = new THashMap<MavenId, VirtualFile>();
   private final Map<MavenProject, List<MavenProject>> myAggregatorToModuleMapping = new THashMap<MavenProject, List<MavenProject>>();
   private final Map<MavenProject, MavenProject> myModuleToAggregatorMapping = new THashMap<MavenProject, MavenProject>();
 
@@ -830,7 +830,7 @@ public class MavenProjectsTree {
     return findProject(new MavenId(artifact));
   }
 
-  public Map<MavenId, VirtualFile> getProjectIdToFileMapping() {
+  private Map<MavenId, VirtualFile> getProjectIdToFileMapping() {
     readLock();
     try {
       return new THashMap<MavenId, VirtualFile>(myMavenIdToFileMapping);
@@ -931,7 +931,7 @@ public class MavenProjectsTree {
                       Object message) throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.EmbedderKind.FOR_DEPENDENCIES_RESOLVE);
     embedder.customizeForResolve(getProjectIdToFileMapping(), console, process);
-    
+
     try {
       process.checkCanceled();
       process.setText(ProjectBundle.message("maven.resolving.pom", mavenProject.getDisplayName()));
@@ -970,32 +970,32 @@ public class MavenProjectsTree {
     }
   }
 
-  public void resolveFolders(MavenProject mavenProject,
-                             MavenImportingSettings importingSettings,
-                             MavenEmbeddersManager embeddersManager,
-                             MavenConsole console,
-                             MavenProgressIndicator process,
-                             Object message) throws MavenProcessCanceledException {
-    MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.EmbedderKind.FOR_FOLDERS_RESOLVE);
-    embedder.customizeForStrictResolve(getProjectIdToFileMapping(), console, process);
-    embedder.clearCachesFor(mavenProject);
+  public void resolveFolders(final MavenProject mavenProject,
+                             final MavenImportingSettings importingSettings,
+                             final MavenEmbeddersManager embeddersManager,
+                             final MavenConsole console,
+                             final MavenProgressIndicator process,
+                             final Object message) throws MavenProcessCanceledException {
+    doWithEmbedder(mavenProject,
+                   embeddersManager,
+                   MavenEmbeddersManager.EmbedderKind.FOR_FOLDERS_RESOLVE,
+                   console,
+                   process,
+                   new EmbedderTask() {
+                     public void run(MavenEmbedderWrapper embedder) throws MavenProcessCanceledException {
+                       process.checkCanceled();
+                       process.setText(ProjectBundle.message("maven.updating.folders.pom", mavenProject.getDisplayName()));
+                       process.setText2("");
 
-    try {
-      process.checkCanceled();
-      process.setText(ProjectBundle.message("maven.updating.folders.pom", mavenProject.getDisplayName()));
-      process.setText2("");
-
-      Pair<Boolean, MavenProjectChanges> resolveResult = mavenProject.resolveFolders(embedder,
-                                                                                     importingSettings,
-                                                                                     new MavenProjectReader(),
-                                                                                     console);
-      if (resolveResult.first) {
-        fireFoldersResolved(Pair.create(mavenProject, resolveResult.second), message);
-      }
-    }
-    finally {
-      embeddersManager.release(embedder);
-    }
+                       Pair<Boolean, MavenProjectChanges> resolveResult = mavenProject.resolveFolders(embedder,
+                                                                                                      importingSettings,
+                                                                                                      new MavenProjectReader(),
+                                                                                                      console);
+                       if (resolveResult.first) {
+                         fireFoldersResolved(Pair.create(mavenProject, resolveResult.second), message);
+                       }
+                     }
+                   });
   }
 
   public void downloadArtifacts(MavenProject mavenProject,
@@ -1031,6 +1031,23 @@ public class MavenProjectsTree {
       artifact.setScope(Artifact.SCOPE_COMPILE);
       embedder.resolve(artifact, mavenProject.getRemoteRepositories());
       return new MavenArtifact(artifact, mavenProject.getLocalRepository());
+    }
+    finally {
+      embeddersManager.release(embedder);
+    }
+  }
+
+  public void doWithEmbedder(MavenProject mavenProject,
+                             MavenEmbeddersManager embeddersManager,
+                             MavenEmbeddersManager.EmbedderKind embedderKind,
+                             MavenConsole console,
+                             MavenProgressIndicator process,
+                             EmbedderTask task) throws MavenProcessCanceledException {
+    MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(embedderKind);
+    embedder.customizeForStrictResolve(getProjectIdToFileMapping(), console, process);
+    embedder.clearCachesFor(mavenProject);
+    try {
+      task.run(embedder);
     }
     finally {
       embeddersManager.release(embedder);
@@ -1150,6 +1167,10 @@ public class MavenProjectsTree {
                           : new ArrayList<MavenProject>(deletedProjects),
                           message);
     }
+  }
+
+  public interface EmbedderTask {
+    void run(MavenEmbedderWrapper embedder) throws MavenProcessCanceledException;
   }
 
   public static abstract class Visitor<Result> {
