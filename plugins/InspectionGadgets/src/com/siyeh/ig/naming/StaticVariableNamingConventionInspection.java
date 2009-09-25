@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,12 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.ui.CheckBox;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.JComponent;
+import java.util.Arrays;
+import java.util.Collection;
 
 public class StaticVariableNamingConventionInspection
         extends ConventionInspection {
@@ -31,20 +36,27 @@ public class StaticVariableNamingConventionInspection
     private static final int DEFAULT_MIN_LENGTH = 5;
     private static final int DEFAULT_MAX_LENGTH = 32;
 
+    @SuppressWarnings({"PublicField"})
+    public boolean checkMutableFinals = false;
+
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "static.variable.naming.convention.display.name");
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new RenameFix();
     }
 
+    @Override
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
         return true;
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         final String fieldName = (String)infos[0];
@@ -61,18 +73,30 @@ public class StaticVariableNamingConventionInspection
                 getRegex());
     }
 
+    @Override
     protected String getDefaultRegex() {
         return "s_[a-z][A-Za-z\\d]*";
     }
 
+    @Override
     protected int getDefaultMinLength() {
         return DEFAULT_MIN_LENGTH;
     }
 
+    @Override
     protected int getDefaultMaxLength() {
         return DEFAULT_MAX_LENGTH;
     }
 
+    @Override
+    public Collection<? extends JComponent> createExtraOptions() {
+        return Arrays.asList(
+                new CheckBox(InspectionGadgetsBundle.message(
+                        "static.variable.naming.convention.mutable.option"),
+                        this, "checkMutableFinals"));
+    }
+
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new NamingConventionsVisitor();
     }
@@ -84,15 +108,17 @@ public class StaticVariableNamingConventionInspection
                 return;
             }
             if (field.hasModifierProperty(PsiModifier.FINAL)) {
-                return;
+                if (!checkMutableFinals) {
+                    return;
+                } else {
+                    final PsiType type = field.getType();
+                    if (ClassUtils.isImmutable(type)) {
+                        return;
+                    }
+                }
             }
             final String name = field.getName();
             if (name == null) {
-                return;
-            }
-
-            final PsiType type = field.getType();
-            if (!ClassUtils.isImmutable(type)) {
                 return;
             }
             if (isValid(name)) {

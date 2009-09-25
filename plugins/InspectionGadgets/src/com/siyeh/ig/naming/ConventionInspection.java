@@ -86,6 +86,7 @@ public abstract class ConventionInspection extends BaseInspection {
         return matcher.matches();
     }
 
+    @Override
     public void readSettings(Element element) throws InvalidDataException {
         super.readSettings(element);
         m_regexPattern = Pattern.compile(m_regex);
@@ -97,6 +98,7 @@ public abstract class ConventionInspection extends BaseInspection {
         return Collections.EMPTY_LIST;
     }
 
+    @Override
     public final JComponent createOptionsPanel() {
         final GridBagLayout layout = new GridBagLayout();
         final JPanel panel = new JPanel(layout);
@@ -124,14 +126,14 @@ public abstract class ConventionInspection extends BaseInspection {
                 new JFormattedTextField(formatter);
         final Font panelFont = panel.getFont();
         minLengthField.setFont(panelFont);
-        minLengthField.setValue(m_minLength);
+        minLengthField.setValue(Integer.valueOf(m_minLength));
         minLengthField.setColumns(2);
         FormattedTextFieldMacFix.apply(minLengthField);
 
         final JFormattedTextField maxLengthField =
                 new JFormattedTextField(formatter);
         maxLengthField.setFont(panelFont);
-        maxLengthField.setValue(m_maxLength);
+        maxLengthField.setValue(Integer.valueOf(m_maxLength));
         maxLengthField.setColumns(2);
         FormattedTextFieldMacFix.apply(maxLengthField);
 
@@ -144,6 +146,7 @@ public abstract class ConventionInspection extends BaseInspection {
         regexField.setFocusLostBehavior(JFormattedTextField.COMMIT);
         FormattedTextFieldMacFix.apply(regexField);
         final DocumentListener listener = new DocumentAdapter() {
+            @Override
             public void textChanged(DocumentEvent evt) {
                 try {
                     regexField.commitEdit();
