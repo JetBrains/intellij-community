@@ -22,6 +22,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.ui.DocumentAdapter;
 import com.siyeh.ig.ui.FormattedTextFieldMacFix;
@@ -94,7 +95,7 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
     private String m_shortName = null;
     private long timeStamp = -1;
 
-    @NotNull
+    @Override @NotNull
     public final String getShortName() {
         if (m_shortName == null) {
             final Class<? extends BaseInspection> aClass = getClass();
@@ -109,7 +110,7 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
     }
 
 
-    @Nls @NotNull
+    @Override @Nls @NotNull
     public final String getGroupDisplayName() {
         final Class<? extends BaseInspection> thisClass = getClass();
         final Package thisPackage = thisClass.getPackage();
@@ -155,7 +156,7 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
 
     public abstract BaseInspectionVisitor buildVisitor();
 
-    @NotNull
+    @Override @NotNull
     public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                           boolean isOnTheFly) {
         final BaseInspectionVisitor visitor = buildVisitor();
@@ -177,6 +178,7 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
             FormattedTextFieldMacFix.apply(valueField);
             final Document document = valueField.getDocument();
             document.addDocumentListener(new DocumentAdapter() {
+                @Override
                 public void textChanged(DocumentEvent evt) {
                     try {
                         valueField.commitEdit();
@@ -198,17 +200,17 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
     }
 
     protected static void parseString(String string, List<String>... outs){
-        final String[] strings = string.split(",");
+        final List<String> strings = StringUtil.split(string, ",");
         for (List<String> out : outs) {
             out.clear();
         }
-        for (int i = 0; i < strings.length; i += outs.length) {
+        for (int i = 0, iMax = strings.size(); i < iMax; i += outs.length) {
             for (int j = 0; j < outs.length; j++) {
                 final List<String> out = outs[j];
-                if (i + j >= strings.length) {
+                if (i + j >= iMax) {
                     out.add("");
                 } else {
-                    out.add(strings[i + j]);
+                    out.add(strings.get(i + j));
                 }
             }
         }
