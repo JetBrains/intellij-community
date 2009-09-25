@@ -10,10 +10,16 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.unusedParameters.UnusedParametersInspection;
 import com.intellij.testFramework.InspectionTestCase;
 
 public class UnusedMethodParameterTest extends InspectionTestCase {
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection";
+  }
+
   private final UnusedParametersInspection myTool = new UnusedParametersInspection();
 
   private void doTest() throws Exception {
