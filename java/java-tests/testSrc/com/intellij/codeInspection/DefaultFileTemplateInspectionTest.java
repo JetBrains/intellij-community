@@ -1,11 +1,13 @@
 package com.intellij.codeInspection;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.defaultFileTemplateUsage.DefaultFileTemplateUsageInspection;
 import com.intellij.testFramework.InspectionTestCase;
 
 public class DefaultFileTemplateInspectionTest extends InspectionTestCase {
-  protected void setUp() throws Exception {
-    super.setUp();
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection";
   }
 
   private void doTest() throws Exception {
