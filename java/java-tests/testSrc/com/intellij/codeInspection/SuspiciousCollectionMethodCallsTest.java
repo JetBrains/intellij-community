@@ -1,19 +1,17 @@
 package com.intellij.codeInspection;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.miscGenerics.SuspiciousCollectionsMethodCallsInspection;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.InspectionTestCase;
 
 public class SuspiciousCollectionMethodCallsTest extends InspectionTestCase {
   private final SuspiciousCollectionsMethodCallsInspection myTool = new SuspiciousCollectionsMethodCallsInspection();
 
-  protected void setUp() throws Exception {
-    super.setUp();
-    LanguageLevelProjectExtension.getInstance(myJavaFacade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection";
   }
-
 
   private void doTest() throws Exception {
     final LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(myTool);
