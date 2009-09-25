@@ -15,12 +15,12 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.codeInspection.ui.CheckBox;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
+import com.siyeh.ig.ui.CheckBox;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
@@ -38,12 +38,14 @@ public class LocalVariableNamingConventionInspection
     private static final int DEFAULT_MIN_LENGTH = 1;
     private static final int DEFAULT_MAX_LENGTH = 20;
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "local.variable.naming.convention.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         final String varName = (String)infos[0];
@@ -60,26 +62,32 @@ public class LocalVariableNamingConventionInspection
         }
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new RenameFix();
     }
 
+    @Override
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
         return true;
     }
 
+    @Override
     protected String getDefaultRegex() {
         return "[a-z][A-Za-z\\d]*";
     }
 
+    @Override
     protected int getDefaultMinLength() {
         return DEFAULT_MIN_LENGTH;
     }
 
+    @Override
     protected int getDefaultMaxLength() {
         return DEFAULT_MAX_LENGTH;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new NamingConventionsVisitor();
     }

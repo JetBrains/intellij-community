@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInspection.ui;
+package com.siyeh.ig.ui;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.ButtonModel;
+import javax.swing.JCheckBox;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.*;
 import java.lang.reflect.Field;
 
 public class CheckBox extends JCheckBox {
