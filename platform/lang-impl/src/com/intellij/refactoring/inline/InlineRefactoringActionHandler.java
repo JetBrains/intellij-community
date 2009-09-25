@@ -55,15 +55,20 @@ public class InlineRefactoringActionHandler implements RefactoringActionHandler 
         }
       }
 
-      final List<InlineHandler> handlers = InlineHandlers.getInlineHandlers(element.getLanguage());
-      for (InlineHandler handler : handlers) {
-        if (GenericInlineHandler.invoke(element, editor, handler)) {
-          return;
-        }
-      }
+      if (invokeInliner(editor, element)) return;
 
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.method.or.local.name"));
       CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, null);
     }
+  }
+
+  public static boolean invokeInliner(Editor editor, PsiElement element) {
+    final List<InlineHandler> handlers = InlineHandlers.getInlineHandlers(element.getLanguage());
+    for (InlineHandler handler : handlers) {
+      if (GenericInlineHandler.invoke(element, editor, handler)) {
+        return true;
+      }
+    }
+    return false;
   }
 }
