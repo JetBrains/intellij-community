@@ -33,8 +33,21 @@ public class MavenImportNotifier extends SimpleProjectComponent {
     myFileEditorManager = fileEditorManager;
     myMavenProjectsManager = mavenProjectsManager;
 
-    myUpdatesQueue = new MergingUpdateQueue(getComponentName(), 500, true, MergingUpdateQueue.ANY_COMPONENT, myProject);
+    myUpdatesQueue = new MergingUpdateQueue(getComponentName(), 500, false, MergingUpdateQueue.ANY_COMPONENT, myProject);
 
+    myMavenProjectsManager.addManagerListener(new MavenProjectsManager.Listener() {
+      public void activated() {
+        init();
+        scheduleUpdate();
+      }
+
+      public void scheduledImportsChanged() {
+        scheduleUpdate();
+      }
+    });
+  }
+
+  private void init() {
     myFileEditorManager.addFileEditorManagerListener(new FileEditorManagerAdapter() {
       @Override
       public void fileOpened(FileEditorManager source, VirtualFile file) {
@@ -43,16 +56,7 @@ public class MavenImportNotifier extends SimpleProjectComponent {
         }
       }
     }, myProject);
-
-    myMavenProjectsManager.addManagerListener(new MavenProjectsManager.Listener() {
-      public void activated() {
-        scheduleUpdate();
-      }
-
-      public void scheduledImportsChanged() {
-        scheduleUpdate();
-      }
-    });
+    myUpdatesQueue.activate();
   }
 
   private void scheduleUpdate() {
