@@ -11,7 +11,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     return "navigation.goto.implementation";
   }
 
-  protected Pair<PsiElement, PsiElement[]> getSourceAndTargetElements(Editor editor, PsiFile file) {
+  public Pair<PsiElement, PsiElement[]> getSourceAndTargetElements(Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement source = TargetElementUtilBase.getInstance().findTargetElement(editor, ImplementationSearcher.getFlags(), offset);
     PsiElement[] target = new ImplementationSearcher().searchImplementations(editor, source, offset);
