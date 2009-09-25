@@ -301,6 +301,9 @@
   <fileBasedIndex implementation="com.intellij.psi.search.FilenameIndex"/>
   <fileBasedIndex implementation="com.intellij.psi.search.PropertyFileIndex"/>
   <fileBasedIndex implementation="com.intellij.psi.stubs.StubUpdatingIndex"/>
+
+  <fileBasedIndex implementation="com.intellij.find.ngrams.TrigramIndex"/> 
+
   <fileBasedIndex implementation="com.intellij.psi.impl.include.FileIncludeIndex"/>
 
   <syntaxHighlighter factoryClass="com.intellij.openapi.fileTypes.LanguageFileTypeHighlighterProvider"/>
@@ -484,6 +487,11 @@
                   serviceImplementation="com.intellij.usageView.impl.UsageViewManagerImpl"/>
   <projectService serviceInterface="com.intellij.ide.projectView.ProjectView"
                   serviceImplementation="com.intellij.ide.projectView.impl.ProjectViewImpl"/>
+
+  <!--
+  <projectService serviceInterface="com.intellij.ide.bookmarks.BookmarkManager"
+                  serviceImplementation="com.intellij.ide.bookmarks.BookmarkManager"/>
+  -->
 
   <toolWindow id="Project" anchor="left" icon="/general/toolWindowProject.png"
               factoryClass="com.intellij.ide.projectView.impl.ProjectViewToolWindowFactory"/>

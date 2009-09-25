@@ -1,6 +1,7 @@
 package com.intellij.find.impl;
 
 import com.intellij.find.*;
+import com.intellij.find.ngrams.TrigramIndex;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -20,8 +21,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.FileIndexImplUtil;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -30,6 +31,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -51,7 +53,10 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Function;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.indexing.FileBasedIndex;
 import gnu.trove.THashSet;
+import gnu.trove.TIntHashSet;
+import gnu.trove.TIntIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -476,7 +481,8 @@ public class FindInProjectUtil {
       return null;
     }
 
-    CacheManager cacheManager = ((PsiManagerEx)PsiManager.getInstance(project)).getCacheManager();
+    PsiManager pm = PsiManager.getInstance(project);
+    CacheManager cacheManager = ((PsiManagerEx)pm).getCacheManager();
     SearchScope customScope = findModel.getCustomScope();
     @NotNull GlobalSearchScope scope = psiDirectory != null
                                        ? GlobalSearchScope.directoryScope(psiDirectory, true)
@@ -485,39 +491,76 @@ public class FindInProjectUtil {
                                          : customScope instanceof GlobalSearchScope
                                            ? (GlobalSearchScope)customScope
                                            : GlobalSearchScope.projectScope(project);
-    List<String> words = StringUtil.getWordsIn(findModel.getStringToFind());
-    // if no words specified in search box, fallback to brute force search
-    if (words.isEmpty()) return null;
-    // hope long words are rare
-    Collections.sort(words, new Comparator<String>() {
-      public int compare(final String o1, final String o2) {
-        return o2.length() - o1.length();
-      }
-    });
+
+    Set<Integer> keys = new THashSet<Integer>(30);
     Set<PsiFile> resultFiles = new THashSet<PsiFile>();
-    for (int i = 0; i < words.size(); i++) {
-      String word = words.get(i);
-      PsiFile[] files = cacheManager.getFilesWithWord(word, UsageSearchContext.ANY, scope, findModel.isCaseSensitive());
-      if (files.length == 0) {
-        resultFiles.clear();
-        break;
+
+    if (TrigramIndex.ENABLED) {
+      TIntHashSet trigrams = TrigramBuilder.buildTrigram(findModel.getStringToFind());
+      TIntIterator it = trigrams.iterator();
+      while (it.hasNext()) {
+        keys.add(it.next());
       }
 
-      final List<PsiFile> psiFiles = Arrays.asList(files);
-      if (i == 0) {
-        resultFiles.addAll(psiFiles);
+      if (!keys.isEmpty()) {
+        List<VirtualFile> hits = new ArrayList<VirtualFile>();
+        FileBasedIndex.getInstance()
+          .getFilesWithKey(TrigramIndex.INDEX_ID, keys, new CommonProcessors.CollectProcessor<VirtualFile>(hits), scope);
+
+        for (VirtualFile hit : hits) {
+          resultFiles.add(pm.findFile(hit));
+        }
+
+        filterMaskedFiles(resultFiles, fileMaskRegExp);
+        if (resultFiles.isEmpty()) return resultFiles;
       }
-      else {
-        resultFiles.retainAll(psiFiles);
-      }
-      filterMaskedFiles(resultFiles, fileMaskRegExp);
-      if (resultFiles.isEmpty()) break;
     }
 
-    // in case our word splitting is incorrect
-    PsiFile[] allWordsFiles =
-      cacheManager.getFilesWithWord(findModel.getStringToFind(), UsageSearchContext.ANY, scope, findModel.isCaseSensitive());
-    resultFiles.addAll(Arrays.asList(allWordsFiles));
+
+    // $ is used to separate words when indexing plain-text files but not when indexing
+    // Java identifiers, so we can't consistently break a string containing $ characters into words
+
+    if (findModel.isWholeWordsOnly() && findModel.getStringToFind().indexOf('$') < 0) {
+      List<String> words = StringUtil.getWordsIn(findModel.getStringToFind());
+
+      // hope long words are rare
+      Collections.sort(words, new Comparator<String>() {
+        public int compare(final String o1, final String o2) {
+          return o2.length() - o1.length();
+        }
+      });
+
+      for (int i = 0; i < words.size(); i++) {
+        String word = words.get(i);
+
+        PsiFile[] files = cacheManager.getFilesWithWord(word, UsageSearchContext.ANY, scope, findModel.isCaseSensitive());
+        if (files.length == 0) {
+          resultFiles.clear();
+          break;
+        }
+  
+        final List<PsiFile> psiFiles = Arrays.asList(files);
+
+        if (i == 0 && keys.isEmpty()) {
+          resultFiles.addAll(psiFiles);
+        }
+        else {
+          resultFiles.retainAll(psiFiles);
+        }
+
+        filterMaskedFiles(resultFiles, fileMaskRegExp);
+        if (resultFiles.isEmpty()) break;
+      }
+
+      // in case our word splitting is incorrect
+      PsiFile[] allWordsFiles =
+        cacheManager.getFilesWithWord(findModel.getStringToFind(), UsageSearchContext.ANY, scope, findModel.isCaseSensitive());
+      resultFiles.addAll(Arrays.asList(allWordsFiles));
+    }
+    else if (!TrigramIndex.ENABLED) {
+      return null;
+    }
+
     filterMaskedFiles(resultFiles, fileMaskRegExp);
 
     return resultFiles;
@@ -552,12 +595,7 @@ public class FindInProjectUtil {
   }
 
   private static boolean canOptimizeForFastWordSearch(final FindModel findModel) {
-    // $ is used to separate words when indexing plain-text files but not when indexing
-    // Java identifiers, so we can't consistently break a string containing $ characters
-    // into words
-    return findModel.isWholeWordsOnly()
-           && !findModel.isRegularExpressions()
-           && findModel.getStringToFind().indexOf('$') < 0
+    return !findModel.isRegularExpressions()
            && (findModel.getCustomScope() == null || findModel.getCustomScope() instanceof GlobalSearchScope)
       ;
   }
