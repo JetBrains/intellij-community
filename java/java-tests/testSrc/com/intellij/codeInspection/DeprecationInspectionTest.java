@@ -4,6 +4,7 @@
 
 package com.intellij.codeInspection;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.deprecation.DeprecationInspection;
 import com.intellij.testFramework.InspectionTestCase;
 
@@ -11,6 +12,11 @@ import com.intellij.testFramework.InspectionTestCase;
  * @author max
  */
 public class DeprecationInspectionTest extends InspectionTestCase {
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection";
+  }
+
   private void doTest() throws Exception {
     doTest("deprecation/" + getTestName(true), new DeprecationInspection());
   }
