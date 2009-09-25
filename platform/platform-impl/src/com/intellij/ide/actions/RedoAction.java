@@ -1,51 +1,36 @@
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
 
-public class RedoAction extends AnAction implements DumbAware {
-  public RedoAction() {
-    setEnabledInModalContext(true);
+public class RedoAction extends UndoRedoAction implements DumbAware {
+  @Override
+  protected boolean isAvailable(FileEditor editor, UndoManager undoManager) {
+    return undoManager.isRedoAvailable(editor);
   }
 
-  public void actionPerformed(AnActionEvent e) {
-    DataContext dataContext = e.getDataContext();
-    FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
-
-    Project project = getProject(editor, dataContext);
-    UndoManager undoManager = project != null ? UndoManager.getInstance(project) : UndoManager.getGlobalInstance();
+  @Override
+  protected void perform(FileEditor editor, UndoManager undoManager) {
     undoManager.redo(editor);
   }
 
-  private Project getProject(FileEditor editor, DataContext dataContext) {
-    final Project project;
-    if (editor instanceof TextEditor){
-      project = ((TextEditor)editor).getEditor().getProject();
-    }
-    else {
-      project = PlatformDataKeys.PROJECT.getData(dataContext);
-    }
-    return project;
+  @Override
+  protected String formatAction(FileEditor editor, UndoManager undoManager) {
+    return undoManager.formatAvailableRedoAction(editor);
   }
 
-  public void update(AnActionEvent event){
-    Presentation presentation = event.getPresentation();
-    DataContext dataContext = event.getDataContext();
-    FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
+  protected String getActionMessageKey() {
+    return "action.$Redo.text";
+  }
 
-    // do not allow global redo in dialogs
-    if (editor == null && dataContext.getData(DataConstants.IS_MODAL_CONTEXT) == Boolean.TRUE){
-      presentation.setEnabled(false);
-      return;
-    }
+  @Override
+  protected String getActionDescriptionMessageKey() {
+    return "action.$Redo.description";
+  }
 
-    Project project = getProject(editor, dataContext);
-    UndoManager undoManager = project != null ? UndoManager.getInstance(project) : UndoManager.getGlobalInstance();
-    boolean b = undoManager.isRedoAvailable(editor);
-    presentation.setEnabled(b);
+  @Override
+  protected String getActionDescriptionEmptyMessageKey() {
+    return "action.$Redo.description.empty";
   }
 }

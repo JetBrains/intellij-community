@@ -45,4 +45,6 @@ public abstract class UndoManager {
 
   @Nullable
   public abstract String formatAvailableUndoAction(@Nullable FileEditor editor);
+  @Nullable
+  public abstract String formatAvailableRedoAction(@Nullable FileEditor editor);
 }

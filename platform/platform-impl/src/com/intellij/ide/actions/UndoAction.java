@@ -1,56 +1,36 @@
 package com.intellij.ide.actions;
 
-import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
 
-public class UndoAction extends AnAction implements DumbAware {
-  public UndoAction() {
-    setEnabledInModalContext(true);
+public class UndoAction extends UndoRedoAction implements DumbAware {
+  @Override
+  protected boolean isAvailable(FileEditor editor, UndoManager undoManager) {
+    return undoManager.isUndoAvailable(editor);
   }
 
-  public void actionPerformed(AnActionEvent e) {
-    DataContext dataContext = e.getDataContext();
-    FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
-
-    Project project = getProject(editor, dataContext);
-
-    UndoManager undoManager = project != null ? UndoManager.getInstance(project) : UndoManager.getGlobalInstance();
+  @Override
+  protected void perform(FileEditor editor, UndoManager undoManager) {
     undoManager.undo(editor);
   }
 
-  private static Project getProject(FileEditor editor, DataContext dataContext) {
-    final Project project;
-    if (editor instanceof TextEditor){
-      project = ((TextEditor)editor).getEditor().getProject();
-    }
-    else {
-      project = PlatformDataKeys.PROJECT.getData(dataContext);
-    }
-    return project;
+  @Override
+  protected String formatAction(FileEditor editor, UndoManager undoManager) {
+    return undoManager.formatAvailableUndoAction(editor);
   }
 
-  public void update(AnActionEvent event){
-    Presentation presentation = event.getPresentation();
-    DataContext dataContext = event.getDataContext();
-    FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
+  protected String getActionMessageKey() {
+    return "action.$Undo.text";
+  }
 
-    // do not allow global undo in dialogs
-    if (editor == null && dataContext.getData(DataConstants.IS_MODAL_CONTEXT) == Boolean.TRUE){
-      presentation.setEnabled(false);
-      return;
-    }
+  @Override
+  protected String getActionDescriptionMessageKey() {
+    return "action.$Undo.description";
+  }
 
-    final Project project = getProject(editor, dataContext);
-
-    UndoManager undoManager = project != null ? UndoManager.getInstance(project) : UndoManager.getGlobalInstance();
-    boolean available = undoManager.isUndoAvailable(editor);
-    presentation.setEnabled(available);
-    String actionName = available ? undoManager.formatAvailableUndoAction(editor) : "";
-    presentation.setText(ActionsBundle.message("action.$Undo.text", actionName).trim());
+  @Override
+  protected String getActionDescriptionEmptyMessageKey() {
+    return "action.$Undo.description.empty";
   }
 }

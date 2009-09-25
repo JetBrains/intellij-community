@@ -389,17 +389,31 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
   private boolean isUndoOrRedoAvailable(Collection<DocumentReference> refs, boolean isUndo) {
     if (isUndo && myMerger.isUndoAvailable(refs)) return true;
-    UndoRedoStacksHolder stackHolder = isUndo ? myUndoStacksHolder : myRedoStacksHolder;
+    UndoRedoStacksHolder stackHolder = getStackHolder(isUndo);
     return stackHolder.hasActions(refs);
+  }
+
+  private UndoRedoStacksHolder getStackHolder(boolean isUndo) {
+    return isUndo ? myUndoStacksHolder : myRedoStacksHolder;
   }
 
   @Override
   @Nullable
   public String formatAvailableUndoAction(FileEditor editor) {
+    return doFormatAvailableUndoRedoAction(editor, true);
+  }
+
+  @Override
+  @Nullable
+  public String formatAvailableRedoAction(FileEditor editor) {
+    return doFormatAvailableUndoRedoAction(editor, false);
+  }
+
+  private String doFormatAvailableUndoRedoAction(FileEditor editor, boolean isUndo) {
     Collection<DocumentReference> refs = getDocRefs(editor);
     if (refs == null) return null;
-    if (myMerger.isUndoAvailable(refs)) return myMerger.getCommandName();
-    return myUndoStacksHolder.getLastAction(refs).getCommandName();
+    if (isUndo && myMerger.isUndoAvailable(refs)) return myMerger.getCommandName();
+    return getStackHolder(isUndo).getLastAction(refs).getCommandName();
   }
 
   static Set<DocumentReference> getDocumentReferences(FileEditor editor) {
