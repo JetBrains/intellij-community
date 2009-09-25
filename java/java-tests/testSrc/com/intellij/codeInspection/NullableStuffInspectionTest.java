@@ -6,6 +6,7 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
 import com.intellij.testFramework.InspectionTestCase;
@@ -14,6 +15,11 @@ public class NullableStuffInspectionTest extends InspectionTestCase {
   private final NullableStuffInspection myInspection = new NullableStuffInspection();
   {
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = false;
+  }
+
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection";
   }
 
   private void doTest() throws Exception {
