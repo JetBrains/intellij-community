@@ -10,11 +10,17 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.equalsAndHashcode.EqualsAndHashcode;
 import com.intellij.testFramework.InspectionTestCase;
 
 public class EqualsAndHashCodeTest extends InspectionTestCase {
   private final EqualsAndHashcode myTool = new EqualsAndHashcode();
+
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection";
+  }
 
   protected void setUp() throws Exception {
     super.setUp();

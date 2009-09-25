@@ -23,7 +23,7 @@ public class EntryPointsConverterTest extends TestCase {
     doTest("field", "java.lang.String.myFakeField", "java.lang.String myFakeField");
   }
 
-  private void doTest(String type, String fqName, String expectedFQName) throws Exception {
+  private static void doTest(String type, String fqName, String expectedFQName) throws Exception {
     final Element entryPoints = setUpEntryPoint(type, fqName);
 
     final EntryPointsManagerImpl manager = new EntryPointsManagerImpl(null);
@@ -40,7 +40,7 @@ public class EntryPointsConverterTest extends TestCase {
     assertTrue(JDOMUtil.areElementsEqual(testElement, expected));
   }
 
-  private Element setUpEntryPoint(String type, String fqName) {
+  private static Element setUpEntryPoint(String type, String fqName) {
     Element entryPoints = new Element("entry_points");
     Element entryPoint = new Element("entry_point");
     entryPoint.setAttribute("TYPE", type);
