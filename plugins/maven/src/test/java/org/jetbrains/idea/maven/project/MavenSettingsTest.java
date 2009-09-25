@@ -27,6 +27,9 @@ public class MavenSettingsTest extends MavenTestCase {
 
     MavenImportingSettings s = new MavenImportingSettings();
     s.addListener(new MavenImportingSettings.Listener() {
+      public void autoImportChanged() {
+      }
+
       public void createModuleGroupsChanged() {
       }
 

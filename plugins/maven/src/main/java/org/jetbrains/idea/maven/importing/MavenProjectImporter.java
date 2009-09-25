@@ -191,7 +191,7 @@ public class MavenProjectImporter {
       return true;
     }
     else {
-      myProjectsTree.setIgnoredState(MavenUtil.collectFirsts(incompatible), true, true);
+      myProjectsTree.setIgnoredState(MavenUtil.collectFirsts(incompatible), true, this);
       return false;
     }
   }

@@ -196,7 +196,7 @@ public class MavenProjectsManagerWatcher {
   }
 
   private void scheduleUpdateAll(boolean force) {
-    myReadingProcessor.scheduleTask(new MavenProjectsProcessorReadingTask(force, myProjectsTree, myGeneralSettings));
+    myReadingProcessor.scheduleTask(new MavenProjectsProcessorReadingTask(force, myProjectsTree, myGeneralSettings, null));
   }
 
   private void scheduleUpdate(List<VirtualFile> filesToUpdate, List<VirtualFile> filesToDelete) {
@@ -204,7 +204,8 @@ public class MavenProjectsManagerWatcher {
                                                                           filesToDelete,
                                                                           false,
                                                                           myProjectsTree,
-                                                                          myGeneralSettings));
+                                                                          myGeneralSettings,
+                                                                          null));
   }
 
   private void onSettingsChange() {

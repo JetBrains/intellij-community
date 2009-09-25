@@ -217,7 +217,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
 
     myProjectsManager.addManagedFiles(Arrays.asList(m2));
     waitForReadingCompletion();
-    myProjectsManager.flushPendingImportRequestsInTests();
+    myProjectsManager.performScheduledImport();
 
     assertModules("m1", "m2");
 
@@ -225,7 +225,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
 
     myProjectsManager.removeManagedFiles(Arrays.asList(m2));
     waitForReadingCompletion();
-    myProjectsManager.flushPendingImportRequestsInTests();
+    myProjectsManager.performScheduledImport();
 
     assertModules("m1");
   }
@@ -603,14 +603,14 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                                     "<artifactId>m</artifactId>" +
                                     "<version>1</version>");
     importProject();
-    myProjectsManager.flushPendingImportRequestsInTests(); // ensure no pending requests
+    myProjectsManager.performScheduledImport(); // ensure no pending requests
     assertModules("project", "m");
 
     configConfirmationForYesAnswer();
     m.delete(this);
     waitForReadingCompletion();
 
-    myProjectsManager.flushPendingImportRequestsInTests();
+    myProjectsManager.performScheduledImport();
     assertModules("project");
   }
 
@@ -725,7 +725,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     myProjectsManager.addProjectsTreeListener(new MavenProjectsTree.ListenerAdapter() {
       @Override
       public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                                  org.apache.maven.project.MavenProject nativeMavenProject) {
+                                  org.apache.maven.project.MavenProject nativeMavenProject, Object message) {
         called[0] = true;
       }
     });
@@ -817,7 +817,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     myProjectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
     waitForReadingCompletion();
     myProjectsManager.waitForResolvingCompletion();
-    myProjectsManager.flushPendingImportRequestsInTests();
+    myProjectsManager.performScheduledImport();
 
     assertSources("project", "src/main/java");
     assertModuleLibDeps("project", "Maven: junit:junit:4.0");

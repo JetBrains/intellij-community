@@ -549,7 +549,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertModuleGroupPath("module2");
 
     getMavenImporterSettings().setCreateModuleGroups(true);
-    myProjectsManager.flushPendingImportRequestsInTests();
+    myProjectsManager.performScheduledImport();
     assertModuleGroupPath("module2", "module1 and modules");
   }
 

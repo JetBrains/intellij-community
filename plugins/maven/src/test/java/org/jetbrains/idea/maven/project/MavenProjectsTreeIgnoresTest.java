@@ -63,7 +63,7 @@ public class MavenProjectsTreeIgnoresTest extends MavenProjectsTreeTestCase {
 
   private class MyLoggingListener extends MavenProjectsTree.ListenerAdapter {
     @Override
-    public void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, boolean fromImport) {
+    public void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, Object message) {
       if (!ignored.isEmpty()) myLog += "ignored: " + format(ignored) + " ";
       if (!unignored.isEmpty()) myLog += "unignored: " + format(unignored) + " ";
       if (ignored.isEmpty() && unignored.isEmpty()) myLog += "empty ";

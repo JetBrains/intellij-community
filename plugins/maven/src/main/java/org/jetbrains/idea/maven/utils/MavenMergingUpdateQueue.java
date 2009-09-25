@@ -20,7 +20,7 @@ import javax.swing.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MavenMergingUpdateQueue extends MergingUpdateQueue {
-  private final SuspendHelper mySuppendHelper = new SuspendHelper();
+  private final AtomicInteger mySuspendCounter = new AtomicInteger(0);
 
   public MavenMergingUpdateQueue(String name,
                                  int mergingTimeSpan,
@@ -72,16 +72,16 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
         }, MavenMergingUpdateQueue.this);
 
         if (CommandProcessor.getInstance().getCurrentCommand() != null) {
-          mySuppendHelper.suspend();
+          suspend();
         }
 
         ProjectRootManager.getInstance(project).addModuleRootListener(new ModuleRootListener() {
           public void beforeRootsChange(ModuleRootEvent event) {
-            mySuppendHelper.suspend();
+            suspend();
           }
 
           public void rootsChanged(ModuleRootEvent event) {
-            mySuppendHelper.resume();
+            resume();
             MavenMergingUpdateQueue.this.restartTimer();
           }
         }, MavenMergingUpdateQueue.this);
@@ -96,15 +96,15 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
         connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
 
           public void enteredDumbMode() {
-            mySuppendHelper.suspend();
+            suspend();
           }
 
           public void exitDumbMode() {
-            mySuppendHelper.resume();
+            resume();
           }
         });
         if (DumbService.getInstance(project).isDumb()) {
-          mySuppendHelper.suspend();
+          suspend();
         }
       }
     }.execute();
@@ -116,16 +116,16 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
         final ModalityStateListener listener = new ModalityStateListener() {
           public void beforeModalityStateChanged(boolean entering) {
             if (entering) {
-              mySuppendHelper.suspend();
+              suspend();
             }
             else {
-              mySuppendHelper.resume();
+              resume();
             }
           }
         };
         LaterInvocator.addModalityStateListener(listener);
         if (MavenUtil.isInModalContext()) {
-          mySuppendHelper.suspend();
+          suspend();
         }
         Disposer.register(MavenMergingUpdateQueue.this, new Disposable() {
           public void dispose() {
@@ -136,21 +136,19 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
     });
   }
 
-  private class SuspendHelper {
-    private final AtomicInteger myCounter = new AtomicInteger(0);
-
-    public void suspend() {
-      assert myCounter.get() >= 0;
-      if (myCounter.incrementAndGet() == 1) {
-        MavenMergingUpdateQueue.this.suspend();
-      }
+  @Override
+  public void suspend() {
+    assert mySuspendCounter.get() >= 0;
+    if (mySuspendCounter.incrementAndGet() == 1) {
+      super.suspend();
     }
+  }
 
-    public void resume() {
-      assert myCounter.get() > 0;
-      if (myCounter.decrementAndGet() == 0) {
-        MavenMergingUpdateQueue.this.resume();
-      }
+  @Override
+  public void resume() {
+    assert mySuspendCounter.get() > 0;
+    if (mySuspendCounter.decrementAndGet() == 0) {
+      super.resume();
     }
   }
 }

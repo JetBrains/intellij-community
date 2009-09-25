@@ -354,7 +354,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     }
     myProjectsManager.forceUpdateProjects(projects);
     waitForReadingCompletion();
-    myProjectsManager.flushPendingImportRequestsInTests();
+    myProjectsManager.performScheduledImport();
   }
 
   protected void initProjectsManager(boolean enableEventHandling) {
@@ -373,13 +373,13 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   protected void resolveDependenciesAndImport() {
     myProjectsManager.waitForResolvingCompletion();
-    myProjectsManager.flushPendingImportRequestsInTests();
+    myProjectsManager.performScheduledImport();
   }
 
   protected void resolveFoldersAndImport() {
     myProjectsManager.scheduleFoldersResolvingForAllProjects();
     myProjectsManager.waitForFoldersResolvingCompletion();
-    myProjectsManager.flushPendingImportRequestsInTests();
+    myProjectsManager.performScheduledImport();
   }
 
   protected void resolvePlugins() {

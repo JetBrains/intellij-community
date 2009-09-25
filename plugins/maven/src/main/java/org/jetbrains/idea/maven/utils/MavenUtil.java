@@ -90,7 +90,7 @@ public class MavenUtil {
   }
 
   public static void invokeAndWaitWriteAction(Project p, final Runnable r) {
-    MavenUtil.invokeAndWait(p, new Runnable() {
+    invokeAndWait(p, new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(r);
       }

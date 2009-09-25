@@ -342,11 +342,11 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals("updated: project m deleted: <none> ", l.log);
     l.log = "";
 
-    myTree.updateAll(false, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+    myTree.updateAll(false, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS, null);
     assertEquals("", l.log);
     l.log = "";
 
-    myTree.updateAll(true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+    myTree.updateAll(true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS, null);
     assertEquals("updated: project m deleted: <none> ", l.log);
   }
 
@@ -372,11 +372,11 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals("updated: project m deleted: <none> ", l.log);
     l.log = "";
 
-    myTree.update(Collections.singletonList(myProjectPom), false, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+    myTree.update(Collections.singletonList(myProjectPom), false, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS, null);
     assertEquals("", l.log);
     l.log = "";
 
-    myTree.update(Collections.singletonList(myProjectPom), true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+    myTree.update(Collections.singletonList(myProjectPom), true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS, null);
     assertEquals("updated: project deleted: <none> ", l.log);
     l.log = "";
   }
@@ -573,7 +573,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
       myTree.addListener(new MavenProjectsTree.ListenerAdapter() {
         @Override
         public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                                    org.apache.maven.project.MavenProject nativeMavenProject) {
+                                    org.apache.maven.project.MavenProject nativeMavenProject, Object message) {
           nativeProject[0] = nativeMavenProject;
         }
       });
@@ -581,7 +581,8 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                      getMavenGeneralSettings(),
                      embeddersManager,
                      NULL_MAVEN_CONSOLE,
-                     EMPTY_MAVEN_PROCESS);
+                     EMPTY_MAVEN_PROCESS,
+                     null);
     }
     finally {
       embeddersManager.release();
@@ -620,7 +621,9 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
       final org.apache.maven.project.MavenProject[] nativeProject = new org.apache.maven.project.MavenProject[1];
       myTree.addListener(new MavenProjectsTree.ListenerAdapter() {
         @Override
-        public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges, org.apache.maven.project.MavenProject nativeMavenProject) {
+        public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
+                                    org.apache.maven.project.MavenProject nativeMavenProject,
+                                    Object message) {
           nativeProject[0] = nativeMavenProject;
         }
       });
@@ -628,16 +631,17 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                      getMavenGeneralSettings(),
                      embeddersManager,
                      NULL_MAVEN_CONSOLE,
-                     EMPTY_MAVEN_PROCESS);
+                     EMPTY_MAVEN_PROCESS,
+                     null);
       myTree.resolvePlugins(parentProject, nativeProject[0], embeddersManager, NULL_MAVEN_CONSOLE, EMPTY_MAVEN_PROCESS);
-      myTree.resolveFolders(parentProject, getMavenImporterSettings(), embeddersManager, NULL_MAVEN_CONSOLE, EMPTY_MAVEN_PROCESS);
+      myTree.resolveFolders(parentProject, getMavenImporterSettings(), embeddersManager, NULL_MAVEN_CONSOLE, EMPTY_MAVEN_PROCESS, null);
     }
     finally {
       embeddersManager.release();
     }
 
     assertEquals("updated: parent child deleted: <none> resolved: parent plugins: parent folders: parent ", listener.log);
-    myTree.updateAll(false, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+    myTree.updateAll(false, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS, null);
     assertEquals("updated: parent child deleted: <none> resolved: parent plugins: parent folders: parent ", listener.log);
   }
 
@@ -1488,13 +1492,13 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     myTree.addListener(l);
 
     myTree.addManagedFilesWithProfiles(Collections.singletonList(myProjectPom), Collections.<String>emptyList());
-    myTree.updateAll(false, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+    myTree.updateAll(false, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS, null);
 
     assertEquals("updated: parent m1 m2 deleted: <none> ", l.log);
     l.log = "";
 
     myTree.removeManagedFiles(Arrays.asList(myProjectPom));
-    myTree.updateAll(false, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+    myTree.updateAll(false, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS, null);
 
     assertEquals("updated: <none> deleted: m1 m2 parent ", l.log);
   }
@@ -1803,7 +1807,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     MavenEmbeddersManager embeddersManager = new MavenEmbeddersManager(getMavenGeneralSettings());
     try {
-      myTree.resolve(parentProject, getMavenGeneralSettings(), embeddersManager, NULL_MAVEN_CONSOLE, EMPTY_MAVEN_PROCESS);
+      myTree.resolve(parentProject, getMavenGeneralSettings(), embeddersManager, NULL_MAVEN_CONSOLE, EMPTY_MAVEN_PROCESS, null);
     }
     finally {
       embeddersManager.release();
@@ -1880,7 +1884,8 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                      getMavenGeneralSettings(),
                      embeddersManager,
                      NULL_MAVEN_CONSOLE,
-                     EMPTY_MAVEN_PROCESS);
+                     EMPTY_MAVEN_PROCESS,
+                     null);
     }
     finally {
       embeddersManager.release();
@@ -2000,11 +2005,8 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     MavenEmbeddersManager embeddersManager = new MavenEmbeddersManager(getMavenGeneralSettings());
     try {
-      myTree.resolve(project,
-                     getMavenGeneralSettings(),
-                     embeddersManager,
-                     NULL_MAVEN_CONSOLE,
-                     EMPTY_MAVEN_PROCESS);
+      myTree.resolve(project, getMavenGeneralSettings(), embeddersManager, NULL_MAVEN_CONSOLE, EMPTY_MAVEN_PROCESS,
+                     null);
     }
     finally {
       embeddersManager.release();
@@ -2019,7 +2021,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     String log = "";
 
     @Override
-    public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
+    public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted, Object message) {
       append(MavenUtil.collectFirsts(updated), "updated:");
       append(deleted, "deleted:");
     }
@@ -2038,7 +2040,9 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     }
 
     @Override
-    public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges, org.apache.maven.project.MavenProject nativeMavenProject) {
+    public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
+                                org.apache.maven.project.MavenProject nativeMavenProject,
+                                Object message) {
       log += "resolved: " + projectWithChanges.first.getMavenId().getArtifactId() + " ";
     }
 
@@ -2048,7 +2052,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     }
 
     @Override
-    public void foldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
+    public void foldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges, Object message) {
       log += "folders: " + projectWithChanges.first.getMavenId().getArtifactId() + " ";
     }
   }

@@ -116,6 +116,9 @@
     <component>
       <implementation-class>org.jetbrains.idea.maven.utils.MavenEditorTabTitleUpdater</implementation-class>
     </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.maven.utils.MavenImportNotifier</implementation-class>
+    </component>
   </project-components>
 
   <actions>

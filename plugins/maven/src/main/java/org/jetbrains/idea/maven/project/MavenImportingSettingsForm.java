@@ -22,6 +22,7 @@ public class MavenImportingSettingsForm {
   private JCheckBox mySeparateModulesDirCheckBox;
   private TextFieldWithBrowseButton mySeparateModulesDirChooser;
 
+  private JCheckBox myImportAutomaticallyBox;
   private JCheckBox myCreateModulesForAggregators;
   private JCheckBox myCreateGroupsCheckBox;
   private JComboBox myUpdateFoldersOnImportPhaseComboBox;
@@ -74,6 +75,7 @@ public class MavenImportingSettingsForm {
     data.setLookForNested(mySearchRecursivelyCheckBox.isSelected());
     data.setDedicatedModuleDir(mySeparateModulesDirCheckBox.isSelected() ? mySeparateModulesDirChooser.getText() : "");
 
+    data.setImportAutomatically(myImportAutomaticallyBox.isSelected());
     data.setCreateModulesForAggregators(myCreateModulesForAggregators.isSelected());
     data.setCreateModuleGroups(myCreateGroupsCheckBox.isSelected());
 
@@ -88,6 +90,7 @@ public class MavenImportingSettingsForm {
     mySeparateModulesDirCheckBox.setSelected(!StringUtil.isEmptyOrSpaces(data.getDedicatedModuleDir()));
     mySeparateModulesDirChooser.setText(data.getDedicatedModuleDir());
 
+    myImportAutomaticallyBox.setSelected(data.isImportAutomatically());
     myCreateModulesForAggregators.setSelected(data.isCreateModulesForAggregators());
     myCreateGroupsCheckBox.setSelected(data.isCreateModuleGroups());
 

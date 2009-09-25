@@ -180,6 +180,9 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
         });
         listenForProjectsChanges();
       }
+
+      public void scheduledImportsChanged() {
+      }
     });
   }
 
@@ -236,7 +239,7 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
 
   private class MyProjectsListener extends MavenProjectsTree.ListenerAdapter {
     @Override
-    public void projectsIgnoredStateChanged(final List<MavenProject> ignored, final List<MavenProject> unignored, boolean fromImport) {
+    public void projectsIgnoredStateChanged(final List<MavenProject> ignored, final List<MavenProject> unignored, Object message) {
       scheduleStructureUpdate(new Runnable() {
         public void run() {
           myStructure.updateIgnored(ContainerUtil.concat(ignored, unignored));
@@ -254,7 +257,9 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
     }
 
     @Override
-    public void projectsUpdated(final List<Pair<MavenProject,MavenProjectChanges>> updated, final List<MavenProject> deleted) {
+    public void projectsUpdated(final List<Pair<MavenProject, MavenProjectChanges>> updated,
+                                final List<MavenProject> deleted,
+                                Object message) {
       scheduleStructureUpdate(new Runnable() {
         public void run() {
           myStructure.updateProjects(MavenUtil.collectFirsts(updated), deleted);
@@ -262,7 +267,9 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
       });
     }
 
-    public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges, org.apache.maven.project.MavenProject nativeMavenProject) {
+    public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
+                                org.apache.maven.project.MavenProject nativeMavenProject,
+                                Object message) {
       updateProject(projectWithChanges.first);
     }
 

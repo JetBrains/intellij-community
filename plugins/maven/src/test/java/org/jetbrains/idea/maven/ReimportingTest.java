@@ -135,11 +135,11 @@ public class ReimportingTest extends MavenImportingTestCase {
     configConfirmationForYesAnswer();
 
     getMavenImporterSettings().setCreateModulesForAggregators(false);
-    myProjectsManager.flushPendingImportRequestsInTests();
+    myProjectsManager.performScheduledImport();
     assertModules("m2");
 
     getMavenImporterSettings().setCreateModulesForAggregators(true);
-    myProjectsManager.flushPendingImportRequestsInTests();
+    myProjectsManager.performScheduledImport();
     assertModules("project", "m1", "m2");
   }
 

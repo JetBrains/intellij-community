@@ -47,16 +47,21 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
       public void activated() {
         scheduleUpdateIndicesList();
       }
+
+      public void scheduledImportsChanged() {
+      }
     });
 
     getMavenProjectManager().addProjectsTreeListener(new MavenProjectsTree.ListenerAdapter() {
       @Override
-      public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
+      public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted, Object message) {
         scheduleUpdateIndicesList();
       }
 
       @Override
-      public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges, org.apache.maven.project.MavenProject nativeMavenProject) {
+      public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
+                                  org.apache.maven.project.MavenProject nativeMavenProject,
+                                  Object message) {
         scheduleUpdateIndicesList();
       }
     });

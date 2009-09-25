@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.execution.MavenRunner;
+import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.SimpleProjectComponent;
@@ -162,20 +163,25 @@ public class MavenShortcutsManager extends SimpleProjectComponent {
       scheduleKeymapUpdate(myProjectsManager.getNonIgnoredProjects(), true);
     }
 
+    public void scheduledImportsChanged() {
+    }
+
     @Override
-    public void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, boolean fromImport) {
+    public void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, Object message) {
       scheduleKeymapUpdate(unignored, true);
       scheduleKeymapUpdate(ignored, false);
     }
 
     @Override
-    public void projectsUpdated(List<Pair<MavenProject,MavenProjectChanges>> updated, List<MavenProject> deleted) {
+    public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted, Object message) {
       scheduleKeymapUpdate(MavenUtil.collectFirsts(updated), true);
       scheduleKeymapUpdate(deleted, false);
     }
 
     @Override
-    public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges, org.apache.maven.project.MavenProject nativeMavenProject) {
+    public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
+                                org.apache.maven.project.MavenProject nativeMavenProject,
+                                Object message) {
       scheduleKeymapUpdate(Collections.singletonList(projectWithChanges.first), true);
     }
 

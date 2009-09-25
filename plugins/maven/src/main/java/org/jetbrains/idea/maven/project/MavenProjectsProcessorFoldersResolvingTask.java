@@ -1,20 +1,25 @@
 package org.jetbrains.idea.maven.project;
 
-import org.jetbrains.idea.maven.embedder.MavenConsole;
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.idea.maven.embedder.MavenConsole;
+import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 public class MavenProjectsProcessorFoldersResolvingTask extends MavenProjectsProcessorBasicTask {
-  private MavenImportingSettings myImportingSettings;
+  private final MavenImportingSettings myImportingSettings;
+  private final Object myMessage;
 
-  public MavenProjectsProcessorFoldersResolvingTask(MavenProject project, MavenImportingSettings importingSettings, MavenProjectsTree tree) {
+  public MavenProjectsProcessorFoldersResolvingTask(MavenProject project,
+                                                    MavenImportingSettings importingSettings,
+                                                    MavenProjectsTree tree,
+                                                    Object message) {
     super(project, tree);
     myImportingSettings = importingSettings;
+    myMessage = message;
   }
 
   public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
-    myTree.resolveFolders(myMavenProject, myImportingSettings, embeddersManager, console, indicator);
+    myTree.resolveFolders(myMavenProject, myImportingSettings, embeddersManager, console, indicator, myMessage);
   }
 }
