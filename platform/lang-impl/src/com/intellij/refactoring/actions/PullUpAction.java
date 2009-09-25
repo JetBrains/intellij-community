@@ -11,6 +11,11 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.lang.ElementsHandler;
 
 public class PullUpAction extends BaseRefactoringAction {
+
+  public PullUpAction() {
+    setInjectedContext(true);
+  }
+
   public boolean isAvailableInEditorOnly() {
     return false;
   }
