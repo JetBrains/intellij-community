@@ -769,16 +769,19 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   public boolean hasScheduledImports() {
+    if (!isInitialized()) return false;
     return !myImportingQueue.isEmpty();
   }
 
   public int getScheduledProjectsCount() {
+    if (!isInitialized()) return 0;
     synchronized (myImportingDataLock) {
       return myProjectsToImport.size();
     }
   }
 
   public void performScheduledImport() {
+    if (!isInitialized()) return;
     runWhenFullyOpen(new Runnable() {
       public void run() {
         myImportingQueue.flush();
