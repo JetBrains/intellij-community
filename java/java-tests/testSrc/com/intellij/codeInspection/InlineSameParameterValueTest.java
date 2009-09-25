@@ -4,12 +4,17 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInspection.sameParameterValue.SameParameterValueInspection;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
 
 public class InlineSameParameterValueTest extends LightQuickFixTestCase {
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection";
+  }
 
   public void test() throws Exception {
     doAllTests();
@@ -32,6 +37,6 @@ public class InlineSameParameterValueTest extends LightQuickFixTestCase {
 
   @NonNls
   protected String getBasePath() {
-    return "/inspection/quickFix/SameParameterValue";
+    return "/quickFix/SameParameterValue";
   }
 }
