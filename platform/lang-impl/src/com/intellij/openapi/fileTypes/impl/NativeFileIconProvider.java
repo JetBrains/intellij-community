@@ -20,24 +20,33 @@ import java.util.*;
 public class NativeFileIconProvider implements FileIconProvider {
   private JFileChooser myFileChooser = new JFileChooser();
   private final Map<String, Icon> myIconCache = new HashMap<String, Icon>();
-  // on Windows .exe and .ico files provide their own icons which can differ for each file, don't cache them
-  private final Set<String> myNoCacheExtensions = SystemInfo.isWindows ? new HashSet<String>(Arrays.asList("exe", "ico")) : new HashSet<String>();
+  // on Windows .exe and .ico files provide their own icons which can differ for each file, cache them by full file path
+  private final Set<String> myCustomIconExtensions =
+    SystemInfo.isWindows ? new HashSet<String>(Arrays.asList("exe", "ico")) : new HashSet<String>();
+  private final Map<String, Icon> myCustomIconCache = new HashMap<String, Icon>();
 
   public Icon getIcon(VirtualFile file, int flags, @Nullable Project project) {
     if (!(file.getFileType() instanceof NativeFileType) && !(file.getFileType() instanceof UnknownFileType)) {
       return null;
     }
     final String ext = file.getExtension();
+    final String filePath = file.getPath();
+
     Icon icon;
     synchronized (myIconCache) {
-      icon = ext != null && !myNoCacheExtensions.contains(ext) ? myIconCache.get(ext) : null;
+      if (!myCustomIconExtensions.contains(ext)) {
+        icon = ext != null ? myIconCache.get(ext) : null;
+      }
+      else {
+        icon = filePath != null ? myCustomIconCache.get(filePath) : null;
+      }
     }
     if (icon != null) {
       return icon;
     }
     return new DeferredIconImpl<VirtualFile>(file.getFileType().getIcon(), file, false, new Function<VirtualFile, Icon>() {
       public Icon fun(VirtualFile virtualFile) {
-        final File f = new File(virtualFile.getPath());
+        final File f = new File(filePath);
         if (!f.exists()) {
           return null;
         }
@@ -50,7 +59,12 @@ public class NativeFileIconProvider implements FileIconProvider {
         }
         if (ext != null) {
           synchronized (myIconCache) {
-            myIconCache.put(ext, icon);
+            if (!myCustomIconExtensions.contains(ext)) {
+              myIconCache.put(ext, icon);
+            }
+            else if (filePath != null) {
+              myCustomIconCache.put(filePath, icon);
+            }
           }
         }
         return icon;
