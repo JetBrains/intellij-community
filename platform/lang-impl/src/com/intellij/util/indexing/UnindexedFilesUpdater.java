@@ -3,6 +3,7 @@ package com.intellij.util.indexing;
 import com.intellij.ide.startup.BackgroundableCacheUpdater;
 import com.intellij.ide.startup.FileContent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -71,7 +72,7 @@ public class UnindexedFilesUpdater implements BackgroundableCacheUpdater {
     if (!value.asBoolean()) {
       if (Messages.showDialog(myProject, "<html>" +
                                          "Sending indices update to background allows you to immediately use the most<br>" +
-                                         "basic editing capabilities of IntelliJ IDEA, plus version control operations.<p>" +
+                                         "basic editing capabilities of " + ApplicationNamesInfo.getInstance().getFullProductName() + ", plus version control operations.<p>" +
                                          "However, many advanced functions such as 'Go to Class', advanced error highlighting,<br>" +
                                          "refactorings and some others <b>will not be available</b> until indexing is complete.<p>" +
                                          "Do you still want to send indexing to background?</html>", "Background Indexing",
