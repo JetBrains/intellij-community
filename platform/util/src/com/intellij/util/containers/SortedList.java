@@ -29,6 +29,17 @@ public class SortedList<T> extends AbstractList<T>{
     return myDelegate.remove(index);
   }
 
+  @Override
+  public boolean remove(Object o) {
+    ensureSorted();
+    final int i = Collections.binarySearch(myDelegate, (T)o, myComparator);
+    if (i >= 0) {
+      myDelegate.remove(i);
+      return true;
+    }
+    return false;
+  }
+
   public T get(final int index) {
     ensureSorted();
     return myDelegate.get(index);
