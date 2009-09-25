@@ -6,10 +6,7 @@ package com.intellij.ide.structureView.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.StructureViewWrapperImpl;
-import com.intellij.ide.structureView.StructureView;
-import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.ide.structureView.StructureViewFactoryEx;
-import com.intellij.ide.structureView.StructureViewWrapper;
+import com.intellij.ide.structureView.*;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageStructureViewBuilder;
@@ -199,7 +196,7 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
     if (viewProvider == null) return null;
 
     final PsiFile dataFile = viewProvider.getPsi(language);
-    if (dataFile == null) return null;
+    if (dataFile == null || !isAcceptableBaseLanguageFile(dataFile)) return null;
 
     final PsiStructureViewFactory factory = LanguageStructureViewBuilder.INSTANCE.forLanguage(language);
     if (factory == null) return null;
@@ -209,6 +206,10 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
 
     StructureView structureView = builder.createStructureView(fileEditor, myProject);
     return new StructureViewComposite.StructureViewDescriptor(IdeBundle.message("tab.structureview.baselanguage.view", language.getDisplayName()), structureView, findFileType(language).getIcon());
+  }
+
+  protected boolean isAcceptableBaseLanguageFile(PsiFile dataFile) {
+    return true;
   }
 
   private void updateTemplateDataFileView() {
