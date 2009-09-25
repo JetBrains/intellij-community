@@ -72,14 +72,6 @@
     <checkoutCompletedListener implementation="com.intellij.openapi.vcs.checkout.PlatformProjectCheckoutListener"/>
 
   </extensions>
-  <project-components>
-    <component>
-      <interface-class>com.intellij.ide.bookmarks.BookmarkManager</interface-class>
-      <implementation-class>com.intellij.ide.bookmarks.BookmarkManager</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
-  </project-components>
 
   <xi:include href="xdebugger.xml" xpointer="xpointer(/root/*)"/>
   <xi:include href="/META-INF/ultimate.xml" xpointer="xpointer(/idea-plugin/*)">

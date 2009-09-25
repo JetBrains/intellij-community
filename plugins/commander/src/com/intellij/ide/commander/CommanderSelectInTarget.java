@@ -25,7 +25,7 @@ public final class CommanderSelectInTarget extends SelectInTargetPsiWrapper {
 
   protected void select(PsiElement element, boolean requestFocus) {
     while (true) {
-      if (element instanceof PsiFile) {
+      if (element instanceof PsiFile || element instanceof PsiDirectory) {
         break;
       }
       if (element instanceof PsiClass && element.getParent() instanceof PsiFile) {

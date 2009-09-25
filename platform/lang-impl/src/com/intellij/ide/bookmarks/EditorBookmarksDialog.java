@@ -1,9 +1,6 @@
 package com.intellij.ide.bookmarks;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.project.Project;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,12 +33,10 @@ public class EditorBookmarksDialog extends BookmarksDialog {
   }
 
   protected void gotoSelectedBookmark(boolean closeWindow) {
-    EditorBookmark bookmark = (EditorBookmark)getSelectedBookmark();
+    Bookmark bookmark = getSelectedBookmark();
     if (bookmark == null) return;
-    final Project project = myBookmarkManager.getProject();
-    OpenFileDescriptor editSourceDescriptor = bookmark.getOpenFileDescriptor();
-    if (editSourceDescriptor == null) return;
-    FileEditorManager.getInstance(project).openTextEditor(editSourceDescriptor, false);
+
+    bookmark.navigate();
 
     if (closeWindow){
       close(CANCEL_EXIT_CODE);
@@ -64,7 +59,7 @@ public class EditorBookmarksDialog extends BookmarksDialog {
   public static void execute(BookmarkManager manager, Bookmark currentBookmark) {
     BookmarksDialog dialog = new EditorBookmarksDialog(manager);
     dialog.setTitle(IdeBundle.message("title.editor.bookmarks"));
-    dialog.fillList(manager.getValidEditorBookmarks(), currentBookmark);
+    dialog.fillList(manager.getValidBookmarks(), currentBookmark);
     dialog.show();
   }
 

@@ -488,10 +488,8 @@
   <projectService serviceInterface="com.intellij.ide.projectView.ProjectView"
                   serviceImplementation="com.intellij.ide.projectView.impl.ProjectViewImpl"/>
 
-  <!--
   <projectService serviceInterface="com.intellij.ide.bookmarks.BookmarkManager"
                   serviceImplementation="com.intellij.ide.bookmarks.BookmarkManager"/>
-  -->
 
   <toolWindow id="Project" anchor="left" icon="/general/toolWindowProject.png"
               factoryClass="com.intellij.ide.projectView.impl.ProjectViewToolWindowFactory"/>

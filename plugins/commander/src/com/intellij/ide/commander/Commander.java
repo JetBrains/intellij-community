@@ -1,10 +1,6 @@
 package com.intellij.ide.commander;
 
 import com.intellij.ide.TwoPaneIdeView;
-import com.intellij.ide.bookmarks.BookmarkContainer;
-import com.intellij.ide.bookmarks.BookmarkManager;
-import com.intellij.ide.bookmarks.CommanderBookmark;
-import com.intellij.ide.bookmarks.CommanderBookmarksDialog;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
@@ -19,7 +15,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diff.actions.CompareFiles;
-import com.intellij.ide.commander.PsiDiffContentFactory;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
@@ -60,7 +55,7 @@ import java.util.ArrayList;
       file = "$WORKSPACE_FILE$"
     )}
 )
-public class Commander extends JPanel implements PersistentStateComponent<Element>, DataProvider, BookmarkContainer, TwoPaneIdeView, Disposable {
+public class Commander extends JPanel implements PersistentStateComponent<Element>, DataProvider, TwoPaneIdeView, Disposable {
   private Project myProject;
   private CommanderPanel myLeftPanel;
   private CommanderPanel myRightPanel;
@@ -468,9 +463,6 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
       }
       return null;
     }
-    else if (BookmarkContainer.KEY.getName().equals(dataId)) {
-      return this;
-    }
     else {
       return getActivePanel().getDataImpl(dataId);
     }
@@ -559,34 +551,6 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
 
   public CommanderPanel getLeftPanel() {
     return myLeftPanel;
-  }
-
-  public void showBookmarks() {
-    BookmarkManager manager = BookmarkManager.getInstance(myProject);
-    AbstractTreeNode parentNode = getActivePanel().getBuilder().getParentNode();
-    final Object parentElement = parentNode != null? parentNode.getValue() : null;
-    CommanderBookmark currentBookmark;
-    if (parentElement instanceof PsiElement) {
-      currentBookmark = manager.findCommanderBookmark((PsiElement)parentElement);
-    }
-    else {
-      currentBookmark = null;
-    }
-    CommanderBookmarksDialog.execute(manager, currentBookmark);
-  }
-
-  public void toggleBookmark() {
-    AbstractTreeNode parentNode = getActivePanel().getBuilder().getParentNode();
-    final Object element = parentNode != null? parentNode.getValue() : null;
-    if (element instanceof PsiElement) {
-      BookmarkManager.getInstance(myProject).addCommanderBookmark((PsiElement)element);
-    }
-  }
-
-  public boolean canToggleBookmark() {
-    final AbstractTreeNode parentNode = getActivePanel().getBuilder().getParentNode();
-    final Object parentElement = parentNode != null? parentNode.getValue() : null;
-    return parentElement instanceof PsiElement;
   }
 
   public void selectElement(PsiElement element, boolean selectInActivePanel) {

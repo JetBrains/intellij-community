@@ -1,7 +1,9 @@
 package com.intellij.ide.bookmarks;
 
-import com.intellij.openapi.components.AbstractProjectComponent;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -9,42 +11,37 @@ import com.intellij.openapi.editor.event.EditorMouseAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
-import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.event.InputEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
 
-public class BookmarkManager extends AbstractProjectComponent implements JDOMExternalizable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.bookmarks.BookmarkManager");
-  private final BookmarksCollection.ForEditors myEditorBookmarks = new BookmarksCollection.ForEditors();
-  private final BookmarksCollection.ForPsiElements myCommanderBookmarks = new BookmarksCollection.ForPsiElements();
+@State(
+  name = "BookmarkManager",
+  storages = {
+    @Storage(id = "default", file = "$WORKSPACE_FILE$")
+  }
+)
+public class BookmarkManager implements PersistentStateComponent<Element> {
+  private static final int MAX_AUTO_DESCRIPTION_SIZE = 50;
+  private final List<Bookmark> myBookmarks = new ArrayList<Bookmark>();
   private final MyEditorMouseListener myEditorMouseListener = new MyEditorMouseListener();
-  public static final int MAX_AUTO_DESCRIPTION_SIZE = 50;
+  private final Project myProject;
 
   public static BookmarkManager getInstance(Project project) {
-    return project.getComponent(BookmarkManager.class);
+    return ServiceManager.getService(project, BookmarkManager.class);
   }
 
   public BookmarkManager(Project project) {
-    super(project);
+    myProject = project;
   }
 
   public void projectOpened() {
@@ -57,23 +54,19 @@ public class BookmarkManager extends AbstractProjectComponent implements JDOMExt
     return myProject;
   }
 
-  public void addEditorBookmark(Editor editor, int lineIndex, int number) {
+  public void addEditorBookmark(Editor editor, int lineIndex) {
     Document document = editor.getDocument();
     PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     if (psiFile == null) return;
+
     final VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) return;
-    String name = virtualFile.getPath();
-    if (name == null) return;
-    RangeHighlighter lineMarker = ((MarkupModelEx)document.getMarkupModel(myProject)).addPersistentLineHighlighter(
-      lineIndex, HighlighterLayer.ERROR + 1, null);
-    if (lineMarker == null) return;
-    myEditorBookmarks.addBookmark(createEditorBookmark(editor, lineIndex, number, document, lineMarker));
+
+    addTextBookmark(virtualFile, lineIndex, getAutoDescription(editor, lineIndex));
   }
 
-  protected EditorBookmark createEditorBookmark(final Editor editor, final int lineIndex, final int number, final Document document,
-                                              final RangeHighlighter lineMarker) {
-    return new EditorBookmark(document, myProject, lineMarker, getAutoDescription(editor, lineIndex), number);
+  public void addTextBookmark(VirtualFile file, int lineIndex, String description) {
+    myBookmarks.add(new Bookmark(myProject, file, lineIndex, description));
   }
 
   public static String getAutoDescription(final Editor editor, final int lineIndex) {
@@ -89,84 +82,109 @@ public class BookmarkManager extends AbstractProjectComponent implements JDOMExt
     return autoDescription;
   }
 
-  public void addCommanderBookmark(PsiElement element) {
-    addCommanderBookmark(element, "", false);
+  public void addFileBookmark(VirtualFile file, String description) {
+    if (file == null) return;
+    if (findFileBookmark(file) != null) return;
+
+    myBookmarks.add(new Bookmark(myProject, file, description));
   }
 
-  public void addCommanderBookmark(PsiElement element, final String description, boolean last) {
-    if (element == null) return;
-    if (myCommanderBookmarks.findByPsiElement(element) != null) return;
 
-    final CommanderBookmark bookmark = createCommanderBookmark(element, description);
-    if (bookmark != null) {
-      if (last) {
-        myCommanderBookmarks.addLast(bookmark);
-      }
-      else {
-        myCommanderBookmarks.addBookmark(bookmark);
-      }
+  public List<Bookmark> getValidBookmarks() {
+    List<Bookmark> answer = new ArrayList<Bookmark>();
+    for (Bookmark bookmark : myBookmarks) {
+      if (bookmark.isValid()) answer.add(bookmark);
     }
+    return answer;
   }
+
 
   @Nullable
-  protected CommanderBookmark createCommanderBookmark(final PsiElement element, final String description) {
-    if (element instanceof PsiDirectory) {
-      return new CommanderBookmark(myProject, element, description);
+  public Bookmark findEditorBookmark(Document document, int lineIndex) {
+    for (Bookmark bookmark : myBookmarks) {
+      if (bookmark.getDocument() == document && bookmark.getLine() == lineIndex) {
+        return bookmark;
+      }
     }
+
     return null;
   }
 
   @Nullable
-  protected CommanderBookmark createCommanderBookmark(String type, String url, String description) {
-    final CommanderBookmark commanderBookmark = new CommanderBookmark(myProject, type, url, description);
-    if (commanderBookmark.getPsiElement() != null) return commanderBookmark;
+  public Bookmark findFileBookmark(VirtualFile file) {
+    for (Bookmark bookmark : myBookmarks) {
+      if (bookmark.getFile() == file && bookmark.getLine() == -1) return bookmark;
+    }
+
     return null;
-  }
-
-  public List<EditorBookmark> getValidEditorBookmarks() {
-    return myEditorBookmarks.getValidBookmarks();
-  }
-
-  public List<? extends Bookmark> getValidCommanderBookmarks() {
-    return myCommanderBookmarks.getValidBookmarks();
-  }
-
-  public EditorBookmark findEditorBookmark(Document document, int lineIndex) {
-    myEditorBookmarks.removeInvalidBookmarks();
-    return myEditorBookmarks.findByDocumnetLine(document, lineIndex);
-  }
-
-  public EditorBookmark findNumberedEditorBookmark(int number) {
-    myEditorBookmarks.removeInvalidBookmarks();
-    return myEditorBookmarks.findByNumber(number);
-  }
-
-  public CommanderBookmark findCommanderBookmark(PsiElement element) {
-    myCommanderBookmarks.removeInvalidBookmarks();
-    return myCommanderBookmarks.findByPsiElement(element);
   }
 
   public void removeBookmark(Bookmark bookmark) {
-    if (bookmark == null) return;
-    selectBookmarksOfSameType(bookmark).removeBookmark(bookmark);
+    myBookmarks.remove(bookmark);
+    bookmark.release();
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
+  public Element getState() {
+    Element container = new Element("BookmarkManager");
+    writeExternal(container);
+    return container;
+  }
+
+  public void loadState(Element state) {
+    for (Bookmark bookmark : myBookmarks) {
+      bookmark.release();
+    }
+    myBookmarks.clear();
+
+    readExternal(state);
+  }
+
+  private void readExternal(Element element) {
     for (final Object o : element.getChildren()) {
       Element bookmarkElement = (Element)o;
 
-      if (BookmarksCollection.ForEditors.ELEMENT_NAME.equals(bookmarkElement.getName())) {
-        myEditorBookmarks.readBookmark(bookmarkElement, myProject);
-      }
-      else if (BookmarksCollection.ForPsiElements.ELEMENT_NAME.equals(bookmarkElement.getName())) {
-        myCommanderBookmarks.readBookmark(bookmarkElement, this);
+      if ("bookmark".equals(bookmarkElement.getName())) {
+        String url = bookmarkElement.getAttributeValue("url");
+        String line = bookmarkElement.getAttributeValue("line");
+        String description = bookmarkElement.getAttributeValue("description");
+
+        VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
+        if (file != null) {
+          if (line != null) {
+            try {
+              int lineIndex = Integer.parseInt(line);
+              addTextBookmark(file, lineIndex, description);
+            }
+            catch (NumberFormatException e) {
+              // Ignore. Will miss bookmark if line number cannot be parsed
+            }
+          }
+          else {
+            addFileBookmark(file, description);
+          }
+        }
       }
     }
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
-    myEditorBookmarks.writeBookmarks(element);
-    myCommanderBookmarks.writeBookmarks(element);
+  private void writeExternal(Element element) {
+    for (Bookmark bookmark : myBookmarks) {
+      Element bookmarkElement = new Element("bookmark");
+
+      bookmarkElement.setAttribute("url", bookmark.getFile().getUrl());
+
+      String description = bookmark.getNotEmptyDescription();
+      if (description != null) {
+        bookmarkElement.setAttribute("description", description);
+      }
+
+      int line = bookmark.getLine();
+      if (line >= 0) {
+        bookmarkElement.setAttribute("line", String.valueOf(line));
+      }
+
+      element.addContent(bookmarkElement);
+    }
   }
 
   /**
@@ -175,21 +193,14 @@ public class BookmarkManager extends AbstractProjectComponent implements JDOMExt
    * @return bookmark list after moving
    */
   public List<Bookmark> moveBookmarkUp(Bookmark bookmark) {
-    BookmarksCollection bookmarks = selectBookmarksOfSameType(bookmark);
-    return bookmarks.moveUp(bookmark);
+    int index = myBookmarks.indexOf(bookmark);
+    if (index > 0) {
+      Collections.swap(myBookmarks, index, index - 1);
+    }
+
+    return myBookmarks;
   }
 
-  private BookmarksCollection selectBookmarksOfSameType(Bookmark bookmark) {
-    if (bookmark instanceof EditorBookmark) return myEditorBookmarks;
-    if (bookmark instanceof CommanderBookmark) return myCommanderBookmarks;
-    if (bookmark == null) {
-      LOG.error("null");
-    }
-    else {
-      LOG.error(bookmark.getClass().getName());
-    }
-    return null;
-  }
 
   /**
    * Try to move bookmark one position down in the list
@@ -197,15 +208,20 @@ public class BookmarkManager extends AbstractProjectComponent implements JDOMExt
    * @return bookmark list after moving
    */
   public List<Bookmark> moveBookmarkDown(Bookmark bookmark) {
-    BookmarksCollection bookmarks = selectBookmarksOfSameType(bookmark);
-    return bookmarks.moveDown(bookmark);
+    int index = myBookmarks.indexOf(bookmark);
+    if (index < myBookmarks.size() - 1) {
+      Collections.swap(myBookmarks, index, index + 1);
+    }
+
+    return myBookmarks;
   }
 
-  public EditorBookmark getNextBookmark(Editor editor, boolean isWrapped) {
-    EditorBookmark[] bookmarksForDocument = getBookmarksForDocument(editor.getDocument());
+  @Nullable
+  public Bookmark getNextBookmark(Editor editor, boolean isWrapped) {
+    Bookmark[] bookmarksForDocument = getBookmarksForDocument(editor.getDocument());
     int lineNumber = editor.getCaretModel().getLogicalPosition().line;
-    for (EditorBookmark bookmark : bookmarksForDocument) {
-      if (bookmark.getLineIndex() > lineNumber) return bookmark;
+    for (Bookmark bookmark : bookmarksForDocument) {
+      if (bookmark.getLine() > lineNumber) return bookmark;
     }
     if (isWrapped && bookmarksForDocument.length > 0) {
       return bookmarksForDocument[0];
@@ -213,12 +229,13 @@ public class BookmarkManager extends AbstractProjectComponent implements JDOMExt
     return null;
   }
 
-  public EditorBookmark getPreviousBookmark(Editor editor, boolean isWrapped) {
-    EditorBookmark[] bookmarksForDocument = getBookmarksForDocument(editor.getDocument());
+  @Nullable
+  public Bookmark getPreviousBookmark(Editor editor, boolean isWrapped) {
+    Bookmark[] bookmarksForDocument = getBookmarksForDocument(editor.getDocument());
     int lineNumber = editor.getCaretModel().getLogicalPosition().line;
     for (int i = bookmarksForDocument.length - 1; i >= 0; i--) {
-      EditorBookmark bookmark = bookmarksForDocument[i];
-      if (bookmark.getLineIndex() < lineNumber) return bookmark;
+      Bookmark bookmark = bookmarksForDocument[i];
+      if (bookmark.getLine() < lineNumber) return bookmark;
     }
     if (isWrapped && bookmarksForDocument.length > 0) {
       return bookmarksForDocument[bookmarksForDocument.length - 1];
@@ -226,22 +243,23 @@ public class BookmarkManager extends AbstractProjectComponent implements JDOMExt
     return null;
   }
 
-  private EditorBookmark[] getBookmarksForDocument(Document document) {
-    ArrayList<EditorBookmark> bookmarksVector = new ArrayList<EditorBookmark>();
-    List<EditorBookmark> validEditorBookmarks = getValidEditorBookmarks();
-    for (EditorBookmark bookmark : validEditorBookmarks) {
+  private Bookmark[] getBookmarksForDocument(Document document) {
+    ArrayList<Bookmark> answer = new ArrayList<Bookmark>();
+    for (Bookmark bookmark : getValidBookmarks()) {
       if (document.equals(bookmark.getDocument())) {
-        bookmarksVector.add(bookmark);
+        answer.add(bookmark);
       }
     }
-    EditorBookmark[] bookmarks = bookmarksVector.toArray(new EditorBookmark[bookmarksVector.size()]);
-    Arrays.sort(bookmarks, new Comparator<EditorBookmark>() {
-      public int compare(final EditorBookmark o1, final EditorBookmark o2) {
-        return o1.getLineIndex() - o2.getLineIndex();
+
+    Bookmark[] bookmarks = answer.toArray(new Bookmark[answer.size()]);
+    Arrays.sort(bookmarks, new Comparator<Bookmark>() {
+      public int compare(final Bookmark o1, final Bookmark o2) {
+        return o1.getLine() - o2.getLine();
       }
     });
     return bookmarks;
   }
+
 
   private class MyEditorMouseListener extends EditorMouseAdapter {
     public void mouseClicked(final EditorMouseEvent e) {
@@ -255,20 +273,15 @@ public class BookmarkManager extends AbstractProjectComponent implements JDOMExt
 
       Document document = editor.getDocument();
 
-      EditorBookmark bookmark = findEditorBookmark(document, line);
+      Bookmark bookmark = findEditorBookmark(document, line);
       if (bookmark == null) {
-        addEditorBookmark(editor, line, EditorBookmark.NOT_NUMBERED);
+        addEditorBookmark(editor, line);
       }
       else {
         removeBookmark(bookmark);
       }
       e.consume();
     }
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "BookmarkManager";
   }
 }
 

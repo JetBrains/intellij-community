@@ -147,67 +147,6 @@
       <mouse-shortcut keystroke="ctrl shift button1"/>
       <mouse-shortcut keystroke="shift button2"/>
     </action>
-    <action id="GotoBookmark0">
-      <keyboard-shortcut first-keystroke="control 0"/>
-    </action>
-    <action id="GotoBookmark1">
-      <keyboard-shortcut first-keystroke="control 1"/>
-    </action>
-    <action id="GotoBookmark2">
-      <keyboard-shortcut first-keystroke="control 2"/>
-    </action>
-    <action id="GotoBookmark3">
-      <keyboard-shortcut first-keystroke="control 3"/>
-    </action>
-    <action id="GotoBookmark4">
-      <keyboard-shortcut first-keystroke="control 4"/>
-    </action>
-    <action id="GotoBookmark5">
-      <keyboard-shortcut first-keystroke="control 5"/>
-    </action>
-    <action id="GotoBookmark6">
-      <keyboard-shortcut first-keystroke="control 6"/>
-    </action>
-    <action id="GotoBookmark7">
-      <keyboard-shortcut first-keystroke="control 7"/>
-    </action>
-    <action id="GotoBookmark8">
-      <keyboard-shortcut first-keystroke="control 8"/>
-    </action>
-    <action id="GotoBookmark9">
-      <keyboard-shortcut first-keystroke="control 9"/>
-    </action>
-    <action id="ToggleBookmark0">
-      <keyboard-shortcut first-keystroke="shift control 0"/>
-    </action>
-    <action id="ToggleBookmark1">
-      <keyboard-shortcut first-keystroke="shift control 1"/>
-    </action>
-    <action id="ToggleBookmark2">
-      <keyboard-shortcut first-keystroke="shift control 2"/>
-    </action>
-    <action id="ToggleBookmark3">
-      <keyboard-shortcut first-keystroke="shift control 3"/>
-    </action>
-    <action id="ToggleBookmark4">
-      <keyboard-shortcut first-keystroke="shift control 4"/>
-    </action>
-    <action id="ToggleBookmark5">
-      <keyboard-shortcut first-keystroke="shift control 5"/>
-    </action>
-    <action id="ToggleBookmark6">
-      <keyboard-shortcut first-keystroke="shift control 6"/>
-    </action>
-    <action id="ToggleBookmark7">
-      <keyboard-shortcut first-keystroke="shift control 7"/>
-    </action>
-    <action id="ToggleBookmark8">
-      <keyboard-shortcut first-keystroke="shift control 8"/>
-    </action>
-    <action id="ToggleBookmark9">
-      <keyboard-shortcut first-keystroke="shift control 9"/>
-    </action>
-
 
     <action id="$Undo">
       <keyboard-shortcut first-keystroke="control Z"/>
@@ -314,7 +253,7 @@
       <mouse-shortcut keystroke="alt button2"/>
     </action>
     <action id="ShowBookmarks">
-      <keyboard-shortcut first-keystroke="shift F11"/>
+      <keyboard-shortcut first-keystroke="F11"/>
     </action>
     <action id="HighlightUsagesInFile">
       <keyboard-shortcut first-keystroke="control shift F7"/>
@@ -621,7 +560,7 @@
       <keyboard-shortcut first-keystroke="shift F4"/>
     </action>
     <action id="ToggleBookmark">
-      <keyboard-shortcut first-keystroke="F11"/>
+      <keyboard-shortcut first-keystroke="shift F11"/>
     </action>
     <action id="MoveStatementDown">
       <keyboard-shortcut first-keystroke="control shift DOWN"/>
@@ -1030,21 +969,6 @@
     <action id="RunGc"/>
     <action id="RunClass"/>
 
-    <action id="GotoBookmark0">
-      <keyboard-shortcut first-keystroke="control 0"/>
-    </action>
-    <action id="GotoBookmark3">
-      <keyboard-shortcut first-keystroke="control 3"/>
-    </action>
-    <action id="GotoBookmark6">
-      <keyboard-shortcut first-keystroke="control 6"/>
-    </action>
-    <action id="GotoBookmark7">
-      <keyboard-shortcut first-keystroke="control 7"/>
-    </action>
-    <action id="GotoBookmark9">
-      <keyboard-shortcut first-keystroke="control 9"/>
-    </action>
     <action id="MethodUp">
       <keyboard-shortcut first-keystroke="control UP"/>
     </action>
@@ -1070,12 +994,6 @@
       <keyboard-shortcut first-keystroke="control H"/>
     </action>
     <action id="ToggleReadOnlyAttribute"/>
-    <action id="GotoBookmark5">
-      <keyboard-shortcut first-keystroke="control 5"/>
-    </action>
-    <action id="GotoBookmark4">
-      <keyboard-shortcut first-keystroke="control 4"/>
-    </action>
     <action id="ShowPopupMenu"/>
     <action id="EditorLineStartWithSelection">
       <keyboard-shortcut first-keystroke="shift HOME"/>
@@ -1114,9 +1032,6 @@
     <action id="ActivateChangesToolWindow">
       <keyboard-shortcut first-keystroke="meta 9"/>
     </action>
-    <action id="GotoBookmark8">
-      <keyboard-shortcut first-keystroke="control 8"/>
-    </action>
     <action id="NewElement">
       <keyboard-shortcut first-keystroke="control N"/>
       <keyboard-shortcut first-keystroke="control ENTER"/>
@@ -1134,9 +1049,6 @@
     </action>
     <action id="ExportToTextFile">
       <keyboard-shortcut first-keystroke="control O"/>
-    </action>
-    <action id="GotoBookmark2">
-      <keyboard-shortcut first-keystroke="control 2"/>
     </action>
     <action id="EditorLineEnd">
       <keyboard-shortcut first-keystroke="END"/>
@@ -1157,67 +1069,6 @@
       <keyboard-shortcut first-keystroke="control shift B"/>
       <mouse-shortcut keystroke="meta shift button1"/>
       <mouse-shortcut keystroke="shift button2"/>
-    </action>
-
-    <action id="GotoBookmark0">
-      <keyboard-shortcut first-keystroke="control 0"/>
-    </action>
-    <action id="GotoBookmark1">
-      <keyboard-shortcut first-keystroke="control 1"/>
-    </action>
-    <action id="GotoBookmark2">
-      <keyboard-shortcut first-keystroke="control 2"/>
-    </action>
-    <action id="GotoBookmark3">
-      <keyboard-shortcut first-keystroke="control 3"/>
-    </action>
-    <action id="GotoBookmark4">
-      <keyboard-shortcut first-keystroke="control 4"/>
-    </action>
-    <action id="GotoBookmark5">
-      <keyboard-shortcut first-keystroke="control 5"/>
-    </action>
-    <action id="GotoBookmark6">
-      <keyboard-shortcut first-keystroke="control 6"/>
-    </action>
-    <action id="GotoBookmark7">
-      <keyboard-shortcut first-keystroke="control 7"/>
-    </action>
-    <action id="GotoBookmark8">
-      <keyboard-shortcut first-keystroke="control 8"/>
-    </action>
-    <action id="GotoBookmark9">
-      <keyboard-shortcut first-keystroke="control 9"/>
-    </action>
-    <action id="ToggleBookmark0">
-      <keyboard-shortcut first-keystroke="shift control 0"/>
-    </action>
-    <action id="ToggleBookmark1">
-      <keyboard-shortcut first-keystroke="shift control 1"/>
-    </action>
-    <action id="ToggleBookmark2">
-      <keyboard-shortcut first-keystroke="shift control 2"/>
-    </action>
-    <action id="ToggleBookmark3">
-      <keyboard-shortcut first-keystroke="shift control 3"/>
-    </action>
-    <action id="ToggleBookmark4">
-      <keyboard-shortcut first-keystroke="shift control 4"/>
-    </action>
-    <action id="ToggleBookmark5">
-      <keyboard-shortcut first-keystroke="shift control 5"/>
-    </action>
-    <action id="ToggleBookmark6">
-      <keyboard-shortcut first-keystroke="shift control 6"/>
-    </action>
-    <action id="ToggleBookmark7">
-      <keyboard-shortcut first-keystroke="shift control 7"/>
-    </action>
-    <action id="ToggleBookmark8">
-      <keyboard-shortcut first-keystroke="shift control 8"/>
-    </action>
-    <action id="ToggleBookmark9">
-      <keyboard-shortcut first-keystroke="shift control 9"/>
     </action>
 
     <action id="EditorJoinLines">
@@ -2227,16 +2078,6 @@
   <action id="FindWordAtCaret">
     <keyboard-shortcut first-keystroke="control 3" />
   </action>
-  <action id="GotoBookmark0" />
-  <action id="GotoBookmark1" />
-  <action id="GotoBookmark2" />
-  <action id="GotoBookmark3" />
-  <action id="GotoBookmark4" />
-  <action id="GotoBookmark5" />
-  <action id="GotoBookmark6" />
-  <action id="GotoBookmark7" />
-  <action id="GotoBookmark8" />
-  <action id="GotoBookmark9" />
   <action id="HighlightUsagesInFile">
     <keyboard-shortcut first-keystroke="shift control 7" />
   </action>
@@ -2279,16 +2120,6 @@
   <action id="Stop">
     <keyboard-shortcut first-keystroke="control 2" />
   </action>
-  <action id="ToggleBookmark0" />
-  <action id="ToggleBookmark1" />
-  <action id="ToggleBookmark2" />
-  <action id="ToggleBookmark3" />
-  <action id="ToggleBookmark4" />
-  <action id="ToggleBookmark5" />
-  <action id="ToggleBookmark6" />
-  <action id="ToggleBookmark7" />
-  <action id="ToggleBookmark8" />
-  <action id="ToggleBookmark9" />
   <action id="ToggleLineBreakpoint">
     <keyboard-shortcut first-keystroke="control 8" />
   </action>
@@ -2449,16 +2280,6 @@
   <action id="GotoAction">
     <keyboard-shortcut first-keystroke="control I" />
   </action>
-  <action id="GotoBookmark0" />
-  <action id="GotoBookmark1" />
-  <action id="GotoBookmark2" />
-  <action id="GotoBookmark3" />
-  <action id="GotoBookmark4" />
-  <action id="GotoBookmark5" />
-  <action id="GotoBookmark6" />
-  <action id="GotoBookmark7" />
-  <action id="GotoBookmark8" />
-  <action id="GotoBookmark9" />
   <action id="GotoClass">
     <keyboard-shortcut first-keystroke="control O" />
   </action>
@@ -2616,7 +2437,9 @@
     <keyboard-shortcut first-keystroke="shift control 3" />
     <keyboard-shortcut first-keystroke="shift control 9" />
   </action>
-  <action id="ShowBookmarks" />
+  <action id="ShowBookmarks">
+    <keyboard-shortcut first-keystroke="shift control M" />
+  </action>
   <action id="ShowPopupMenu">
     <keyboard-shortcut first-keystroke="CONTEXT_MENU" />
     <keyboard-shortcut first-keystroke="shift F10" />
@@ -2634,19 +2457,7 @@
   </action>
   <action id="StructuralSearchPlugin.StructuralReplaceAction" />
   <action id="StructuralSearchPlugin.StructuralSearchAction" />
-  <action id="ToggleBookmark">
-    <keyboard-shortcut first-keystroke="shift control M" />
-  </action>
-  <action id="ToggleBookmark0" />
-  <action id="ToggleBookmark1" />
-  <action id="ToggleBookmark2" />
-  <action id="ToggleBookmark3" />
-  <action id="ToggleBookmark4" />
-  <action id="ToggleBookmark5" />
-  <action id="ToggleBookmark6" />
-  <action id="ToggleBookmark7" />
-  <action id="ToggleBookmark8" />
-  <action id="ToggleBookmark9" />
+  <action id="ToggleBookmark" />
   <action id="ToggleDockMode">
     <keyboard-shortcut first-keystroke="control BACK_SPACE" />
   </action>

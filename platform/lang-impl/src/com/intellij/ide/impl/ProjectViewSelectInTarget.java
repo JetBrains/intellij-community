@@ -15,10 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -112,7 +109,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
       if (toSelect != null) break;
     }
     if (toSelect == null) {
-      if (element instanceof PsiFile) {
+      if (element instanceof PsiFile || element instanceof PsiDirectory) {
         toSelect = element;
       }
       else {

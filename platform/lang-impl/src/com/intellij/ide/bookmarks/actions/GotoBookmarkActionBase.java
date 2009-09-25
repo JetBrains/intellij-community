@@ -2,7 +2,7 @@ package com.intellij.ide.bookmarks.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
-import com.intellij.ide.bookmarks.EditorBookmark;
+import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
@@ -22,13 +22,13 @@ abstract class GotoBookmarkActionBase extends BaseCodeInsightAction implements C
 
   public void invoke(Project project, final Editor editor, PsiFile file) {
     if (ToolWindowManager.getInstance(project).isEditorComponentActive()) {
-      final EditorBookmark bookmark = getBookmarkToGo(project, editor);
+      final Bookmark bookmark = getBookmarkToGo(project, editor);
       if (bookmark == null) return;
-      if (bookmark.getLineIndex() >= editor.getDocument().getLineCount()) return;
-      LogicalPosition pos = new LogicalPosition(bookmark.getLineIndex(), 0);
+      if (bookmark.getLine() >= editor.getDocument().getLineCount()) return;
+      LogicalPosition pos = new LogicalPosition(bookmark.getLine(), 0);
       editor.getSelectionModel().removeSelection();
       editor.getCaretModel().moveToLogicalPosition(pos);
-      editor.getScrollingModel().scrollTo(new LogicalPosition(bookmark.getLineIndex(), 0), ScrollType.CENTER);
+      editor.getScrollingModel().scrollTo(new LogicalPosition(bookmark.getLine(), 0), ScrollType.CENTER);
     }
   }
 
@@ -40,5 +40,5 @@ abstract class GotoBookmarkActionBase extends BaseCodeInsightAction implements C
     return getBookmarkToGo(project, editor) != null;
   }
 
-  abstract protected EditorBookmark getBookmarkToGo(Project project, Editor editor);
+  abstract protected Bookmark getBookmarkToGo(Project project, Editor editor);
 }

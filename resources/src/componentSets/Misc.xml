@@ -1,6 +1,5 @@
 <components>
   <application-components>
-    
     <component>
       <interface-class>com.intellij.openapi.projectRoots.JavaSdk</interface-class>
       <implementation-class>com.intellij.openapi.projectRoots.impl.JavaSdkImpl</implementation-class>
@@ -9,18 +8,10 @@
 
   <project-components>
     <component>
-      <interface-class>com.intellij.ide.bookmarks.BookmarkManager</interface-class>
-      <implementation-class>com.intellij.ide.bookmarks.JavaBookmarkManager</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
-    <component>
       <interface-class>com.intellij.javadoc.JavadocGenerationManager</interface-class>
       <implementation-class>com.intellij.javadoc.JavadocGenerationManager</implementation-class>
       <skipForDummyProject/>
     </component>
-    
-
   </project-components>
 
   <module-components>
