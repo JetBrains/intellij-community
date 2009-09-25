@@ -601,13 +601,13 @@ public class GroovyAnnotator implements Annotator {
     else if (typeDefinition.isAnonymous()) {
       if (!configUtils.isAtLeastGroovy1_7(typeDefinition)) {
         holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(),
-                                     GroovyBundle.message("anonymous.classes.are.not.suported", configUtils.getSDKVersion(typeDefinition)));
+                                     GroovyBundle.message("anonymous.classes.are.not.supported", configUtils.getSDKVersion(typeDefinition)));
       }
     }
-    else if (typeDefinition.getContainingClass() != null) {
+    else if (typeDefinition.getContainingClass() != null && !(typeDefinition instanceof GrEnumTypeDefinition)) {
       if (!configUtils.isAtLeastGroovy1_7(typeDefinition)) {
         holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(),
-                                     GroovyBundle.message("inner.classes.are.not.suported", configUtils.getSDKVersion(typeDefinition)));
+                                     GroovyBundle.message("inner.classes.are.not.supported", configUtils.getSDKVersion(typeDefinition)));
       }
     }
 
