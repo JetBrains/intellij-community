@@ -1,8 +1,9 @@
 package com.intellij.codeInspection;
 
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
+import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
 /**
  * @author peter
@@ -14,8 +15,8 @@ public class DataFlowInspectionFixtureTest extends JavaCodeInsightFixtureTestCas
   }
 
   @Override
-  protected String getBasePath() {
-    return "/testdata/inspection/dataFlow/fixture/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/fixture/";
   }
 
   private void doTest() throws Throwable {

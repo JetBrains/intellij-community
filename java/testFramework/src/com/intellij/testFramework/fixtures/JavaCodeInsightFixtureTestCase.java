@@ -54,7 +54,7 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase{
    * @return absolute path to the test data.
    */
   @NonNls
-  protected final String getTestDataPath() {
+  protected String getTestDataPath() {
     return PathManager.getHomePath().replace(File.separatorChar, '/') + getBasePath();
   }
 

@@ -8,12 +8,18 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.testFramework.InspectionTestCase;
 import org.jetbrains.annotations.NonNls;
 
 public class DataFlowInspectionTest extends InspectionTestCase {
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection";
+  }
+
   private void doTest() throws Exception {
     doTest("dataFlow/" + getTestName(false), new DataFlowInspection());
   }
