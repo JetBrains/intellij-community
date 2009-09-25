@@ -36,7 +36,7 @@ class Contributor {
     return {
       myContexts.each {Context ctx ->
         try {
-          if (ctx.isApplicable(place, fqn)) {
+          if (ctx && ctx.isApplicable(place, fqn)) {
             use(cats) {
               f()
             }
