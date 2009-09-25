@@ -125,7 +125,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
 
   protected void setupRootModel(final String testDir, final VirtualFile[] sourceDir, final String sdkName) {
     VirtualFile projectDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(testDir));
-    assertNotNull(projectDir);
+    assertNotNull("could not find project dir " + testDir, projectDir);
     sourceDir[0] = projectDir.findChild("src");
     if (sourceDir[0] == null) {
       sourceDir[0] = projectDir;
