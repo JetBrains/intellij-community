@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.RegExFormatter;
 import com.siyeh.ig.RegExInputVerifier;
+import com.siyeh.ig.ui.BlankFiller;
 import com.siyeh.ig.ui.FormattedTextFieldMacFix;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -34,6 +35,8 @@ import javax.swing.text.InternationalFormatter;
 import java.awt.*;
 import java.text.NumberFormat;
 import java.text.ParseException;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -42,7 +45,7 @@ public abstract class ConventionInspection extends BaseInspection {
     /**
      * public fields for the DefaultJDomExternalizer
      * @noinspection PublicField
-     * */
+     */
     public String m_regex = getDefaultRegex();
     /** @noinspection PublicField*/
     public int m_minLength = getDefaultMinLength();
@@ -90,7 +93,11 @@ public abstract class ConventionInspection extends BaseInspection {
 
     private static final int REGEX_COLUMN_COUNT = 25;
 
-    public JComponent createOptionsPanel() {
+    public Collection<? extends JComponent> createExtraOptions() {
+        return Collections.EMPTY_LIST;
+    }
+
+    public final JComponent createOptionsPanel() {
         final GridBagLayout layout = new GridBagLayout();
         final JPanel panel = new JPanel(layout);
 
@@ -161,20 +168,24 @@ public abstract class ConventionInspection extends BaseInspection {
         final GridBagConstraints constraints = new GridBagConstraints();
         constraints.gridx = 0;
         constraints.gridy = 0;
-        constraints.weightx = 1.0;
+        constraints.insets.left = 4;
+        constraints.insets.right = 4;
+        constraints.insets.top = 2;
+        constraints.insets.bottom = 2;
         constraints.anchor = GridBagConstraints.EAST;
-        constraints.fill = GridBagConstraints.HORIZONTAL;
         panel.add(patternLabel, constraints);
 
         constraints.gridx = 1;
         constraints.gridy = 0;
         constraints.gridwidth = 3;
+        constraints.weightx = 1.0;
         constraints.anchor = GridBagConstraints.WEST;
         panel.add(regexField, constraints);
 
         constraints.gridx = 0;
         constraints.gridy = 1;
         constraints.gridwidth = 1;
+        constraints.weightx = 0.0;
         constraints.anchor = GridBagConstraints.EAST;
         panel.add(minLengthLabel, constraints);
 
@@ -192,6 +203,22 @@ public abstract class ConventionInspection extends BaseInspection {
         constraints.gridy = 1;
         constraints.anchor = GridBagConstraints.WEST;
         panel.add(maxLengthField, constraints);
+
+        final Collection<? extends JComponent> extraOptions =
+                createExtraOptions();
+        constraints.gridx = 0;
+        constraints.gridwidth = 4;
+        constraints.insets.top = 0;
+        constraints.insets.bottom = 0;
+        for (JComponent extraOption : extraOptions) {
+            constraints.gridy++;
+            panel.add(extraOption, constraints);
+        }
+
+        constraints.gridx = 0;
+        constraints.gridy++;
+        constraints.weighty = 1.0;
+        panel.add(new BlankFiller(), constraints);
 
         return panel;
     }
