@@ -106,7 +106,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
   };
   private final ProjectManager myProjectManager;
-  private final TIntHashSet mySuccessfullyInitialized = new TIntHashSet(); // projectId fior successfully initialized projects
+  private final TIntHashSet myInitInProgress = new TIntHashSet(); // projectId fior successfully initialized projects
   private final Object myInitializationLock = new Object();
 
   public TranslatingCompilerFilesMonitor(VirtualFileManager vfsManager, ProjectManager projectManager, Application application) {
@@ -865,7 +865,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   public void ensureInitializationCompleted(Project project) {
     final int id = getProjectId(project);
     synchronized (myInitializationLock) {
-      while (!mySuccessfullyInitialized.contains(id)) {
+      while (myInitInProgress.contains(id)) {
         if (!project.isOpen() || project.isDisposed()) {
           // makes no sense to continue waiting
           break;
@@ -975,6 +975,11 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         }
       });
 
+      final int projectId = getProjectId(project);
+      synchronized (myInitializationLock) {
+        myInitInProgress.add(projectId);
+        myInitializationLock.notifyAll();
+      }
       StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
         public void run() {
           new Task.Backgroundable(project, CompilerBundle.message("compiler.initial.scanning.progress.text"), false) {
@@ -1005,7 +1010,6 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
                 scanSourceContent(project, projectRoots, totalRootsCount, true);
 
                 if (!intermediateRoots.isEmpty()) {
-                  final int projectId = getProjectId(project);
                   final FileProcessor processor = new FileProcessor() {
                     public void execute(final VirtualFile file) {
                       if (!isMarkedForRecompilation(projectId, getFileId(file))) {
@@ -1028,8 +1032,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
               }
               finally {
                 synchronized (myInitializationLock) {
-                  mySuccessfullyInitialized.add(getProjectId(project));
-                  myInitializationLock.notifyAll();
+                  if (myInitInProgress.remove(projectId)) {
+                    myInitializationLock.notifyAll();
+                  }
                 }
               }
             }
@@ -1041,8 +1046,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     public void projectClosed(final Project project) {
       final int projectId = getProjectId(project);
       synchronized (myInitializationLock) {
-        mySuccessfullyInitialized.remove(projectId);
-        myInitializationLock.notifyAll();
+        if (myInitInProgress.remove(projectId)) {
+          myInitializationLock.notifyAll();
+        }
       }
       myConnections.remove(project).disconnect();
       synchronized (mySourcesToRecompile) {
