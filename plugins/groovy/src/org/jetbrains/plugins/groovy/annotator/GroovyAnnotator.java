@@ -209,8 +209,12 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private static PsiElement findModifierStatic(GrMember grMember) {
-    final PsiElement[] modifiers = grMember.getModifierList().getModifiers();
-    for (PsiElement modifier : modifiers) {
+    final GrModifierList list = grMember.getModifierList();
+    if (list == null) {
+      return null;
+    }
+
+    for (PsiElement modifier : list.getModifiers()) {
       if (PsiModifier.STATIC.equals(modifier.getText())) {
         return modifier;
       }
