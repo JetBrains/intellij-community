@@ -58,6 +58,20 @@
     <orderEntry type="module" module-name="cvs-plugin" />
     <orderEntry type="module" module-name="java-i18n" />
     <orderEntry type="module" module-name="ui-designer" />
+    <orderEntry type="module" module-name="devkit" />
+    <orderEntry type="module" module-name="eclipse" />
+    <orderEntry type="module" module-name="generate-tostring" />
+    <orderEntry type="module" module-name="git4idea" />
+    <orderEntry type="module" module-name="images" />
+    <orderEntry type="module" module-name="InspectionGadgetsPlugin" />
+    <orderEntry type="module" module-name="IntentionPowerPackPlugin" />
+    <orderEntry type="module" module-name="jetgroovy" />
+    <orderEntry type="module" module-name="junit" />
+    <orderEntry type="module" module-name="maven" />
+    <orderEntry type="module" module-name="RegExpSupport" />
+    <orderEntry type="module" module-name="svn4idea" />
+    <orderEntry type="module" module-name="svn4idea-tests" />
+    <orderEntry type="module" module-name="testng" />
   </component>
 </module>
 
