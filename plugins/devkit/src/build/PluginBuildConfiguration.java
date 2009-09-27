@@ -103,7 +103,7 @@ public class PluginBuildConfiguration extends BuildConfiguration implements Modu
   }
 
   public void initComponent() {
-    StartupManager.getInstance(myModule.getProject()).registerPostStartupActivity(new Runnable() {
+    StartupManager.getInstance(myModule.getProject()).runWhenProjectIsInitialized(new Runnable() {
       public void run() {
         if (myPluginXmlUrl != null) {
           setPluginXmlUrl(myPluginXmlUrl);
