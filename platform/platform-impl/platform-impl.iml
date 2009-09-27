@@ -9,10 +9,12 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../../lib/ui.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../lib/eawtstub.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/../../lib/src/eawtstub_src.zip!/src" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="inheritedJdk" />
