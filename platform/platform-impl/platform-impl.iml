@@ -32,7 +32,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../../lib/jh.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../lib/jh.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
