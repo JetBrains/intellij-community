@@ -42,6 +42,7 @@
     <orderEntry type="module" module-name="testFramework-java" />
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="java-impl" />
+    <orderEntry type="module" module-name="jsp-openapi" />
   </component>
   <component name="copyright">
     <Base>
