@@ -22,11 +22,6 @@
     <RunnerSettings RunnerId="Run" />
     <ConfigurationWrapper RunnerId="Debug" />
     <ConfigurationWrapper RunnerId="Run" />
-    <method>
-      <option name="AntTarget" enabled="false" />
-      <option name="BuildArtifacts" enabled="false" />
-      <option name="Make" enabled="true" />
-      <option name="Maven.BeforeRunTask" enabled="false" />
-    </method>
+    <method />
   </configuration>
 </component>
