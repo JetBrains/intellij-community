@@ -15,8 +15,6 @@
 
 package org.jetbrains.groovy.compiler.rt;
 
-import com.yourkit.api.Controller;
-import com.yourkit.api.ProfilingModes;
 import groovy.lang.GroovyClassLoader;
 import org.codehaus.groovy.control.*;
 import org.codehaus.groovy.control.messages.WarningMessage;
@@ -52,13 +50,14 @@ public class GroovycRunner {
   public static final String MESSAGES_END = "/%m";
   public static final String SEPARATOR = "#%%#%%%#%%%%%%%%%#";
 
-  public static final Controller ourController = initController();
+  //public static final Controller ourController = initController();
   public static final String PRESENTABLE_MESSAGE = "@#$%@# Presentable:";
   public static final String CLEAR_PRESENTABLE = "$@#$%^ CLEAR_PRESENTABLE";
 
   private GroovycRunner() {
   }
 
+  /*
   private static Controller initController() {
     if (!"true".equals(System.getProperty("profile.groovy.compiler"))) {
       return null;
@@ -72,9 +71,11 @@ public class GroovycRunner {
       return null;
     }
   }
+  */
 
 
   public static void main(String[] args) {
+    /*
     if (ourController != null) {
       try {
         ourController.startCPUProfiling(ProfilingModes.CPU_SAMPLING, null);
@@ -83,6 +84,7 @@ public class GroovycRunner {
         e.printStackTrace();
       }
     }
+    */
 
     if (args.length != 2) {
       System.err.println("There is no arguments for groovy compiler");
@@ -144,6 +146,7 @@ public class GroovycRunner {
     catch (Throwable e) {
       e.printStackTrace();
     }
+    /*
     finally {
       if (ourController != null) {
         try {
@@ -155,6 +158,7 @@ public class GroovycRunner {
         }
       }
     }
+    */
   }
 
   private static String fillFromArgsFile(File argsFile, CompilerConfiguration compilerConfiguration, List patchers, List compilerMessages,
