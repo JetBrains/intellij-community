@@ -10,7 +10,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="execution-impl" />
-    <orderEntry type="module" module-name="idea" />
     <orderEntry type="module" module-name="debugger-impl" />
     <orderEntry type="module" module-name="debugger-openapi" />
     <orderEntry type="module-library">
@@ -42,6 +41,7 @@
     <orderEntry type="module" module-name="java-i18n" />
     <orderEntry type="module" module-name="testFramework-java" />
     <orderEntry type="module" module-name="execution-openapi" />
+    <orderEntry type="module" module-name="java-impl" />
   </component>
   <component name="copyright">
     <Base>

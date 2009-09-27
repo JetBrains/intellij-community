@@ -135,7 +135,6 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="idea" exported="" />
     <orderEntry type="module" module-name="idea-ui" exported="" />
     <orderEntry type="module" module-name="openapi" exported="" />
     <orderEntry type="module" module-name="xml" exported="" />
@@ -149,9 +148,8 @@
     <orderEntry type="module" module-name="forms_rt" exported="" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="JUnit4" level="project" />
-    <orderEntry type="module" module-name="idea-tests" exported="" scope="TEST" />
     <orderEntry type="module" module-name="testFramework-java" exported="" scope="TEST" />
-    <orderEntry type="module" module-name="compiler-tests" exported="" scope="TEST" />
+    <orderEntry type="module" module-name="java-impl" />
   </component>
   <component name="copyright">
     <Base>

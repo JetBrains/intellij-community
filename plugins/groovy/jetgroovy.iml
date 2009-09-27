@@ -9,17 +9,14 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="openapi" />
-    <orderEntry type="module" module-name="idea" />
     <orderEntry type="module" module-name="debugger-openapi" />
     <orderEntry type="module" module-name="groovy-rt" />
     <orderEntry type="module" module-name="compiler-impl" />
-    <orderEntry type="module" module-name="css-api" />
     <orderEntry type="module" module-name="debugger-impl" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="properties" />
     <orderEntry type="module" module-name="execution-impl" />
     <orderEntry type="library" name="Ant" level="project" />
-    <orderEntry type="module" module-name="refactoring-impl" />
     <orderEntry type="module" module-name="compiler-openapi" />
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="idea-ui" />
@@ -33,6 +30,7 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="java-impl" />
   </component>
 </module>
 

@@ -2,6 +2,9 @@
 <project relativePaths="false" version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/plugins/InspectionGadgets/InspectionGadgetsPlugin.iml" filepath="$PROJECT_DIR$/plugins/InspectionGadgets/InspectionGadgetsPlugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/IntentionPowerPak/IntentionPowerPackPlugin.iml" filepath="$PROJECT_DIR$/plugins/IntentionPowerPak/IntentionPowerPackPlugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/RegExpSupport/RegExpSupport.iml" filepath="$PROJECT_DIR$/RegExpSupport/RegExpSupport.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/annotations/annotations.iml" filepath="$PROJECT_DIR$/platform/annotations/annotations.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ant/ant.iml" filepath="$PROJECT_DIR$/plugins/ant/ant.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/platform/boot/boot.iml" filepath="$PROJECT_DIR$/platform/boot/boot.iml" group="platform" />
@@ -17,28 +20,39 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/cvs/cvs-plugin/cvs-plugin.iml" filepath="$PROJECT_DIR$/plugins/cvs/cvs-plugin/cvs-plugin.iml" group="plugins/cvs" />
       <module fileurl="file://$PROJECT_DIR$/java/debugger/impl/debugger-impl.iml" filepath="$PROJECT_DIR$/java/debugger/impl/debugger-impl.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/debugger/openapi/debugger-openapi.iml" filepath="$PROJECT_DIR$/java/debugger/openapi/debugger-openapi.iml" group="java" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/devkit/devkit.iml" filepath="$PROJECT_DIR$/plugins/devkit/devkit.iml" />
       <module fileurl="file://$PROJECT_DIR$/xml/dom-impl/dom-impl.iml" filepath="$PROJECT_DIR$/xml/dom-impl/dom-impl.iml" group="xml" />
       <module fileurl="file://$PROJECT_DIR$/xml/dom-openapi/dom-openapi.iml" filepath="$PROJECT_DIR$/xml/dom-openapi/dom-openapi.iml" group="xml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/eclipse/eclipse.iml" filepath="$PROJECT_DIR$/plugins/eclipse/eclipse.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/execution/impl/execution-impl.iml" filepath="$PROJECT_DIR$/java/execution/impl/execution-impl.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/execution/openapi/execution-openapi.iml" filepath="$PROJECT_DIR$/java/execution/openapi/execution-openapi.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/platform/extensions/extensions.iml" filepath="$PROJECT_DIR$/platform/extensions/extensions.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/java/compiler/forms-compiler/forms-compiler.iml" filepath="$PROJECT_DIR$/java/compiler/forms-compiler/forms-compiler.iml" group="java/compiler" />
       <module fileurl="file://$PROJECT_DIR$/platform/forms_rt/forms_rt.iml" filepath="$PROJECT_DIR$/platform/forms_rt/forms_rt.iml" group="platform" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/generate-tostring/generate-tostring.iml" filepath="$PROJECT_DIR$/plugins/generate-tostring/generate-tostring.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/git4idea/git4idea.iml" filepath="$PROJECT_DIR$/plugins/git4idea/git4idea.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/groovy/rt/groovy-rt.iml" filepath="$PROJECT_DIR$/plugins/groovy/rt/groovy-rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/icons/icons.iml" filepath="$PROJECT_DIR$/platform/icons/icons.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/java/idea-ui/idea-ui.iml" filepath="$PROJECT_DIR$/java/idea-ui/idea-ui.iml" group="java" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/images/images.iml" filepath="$PROJECT_DIR$/plugins/images/images.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/java-i18n/java-i18n.iml" filepath="$PROJECT_DIR$/plugins/java-i18n/java-i18n.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/java/java-impl/java-impl.iml" filepath="$PROJECT_DIR$/java/java-impl/java-impl.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/java-runtime/java-runtime.iml" filepath="$PROJECT_DIR$/java/java-runtime/java-runtime.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/java-tests/java-tests.iml" filepath="$PROJECT_DIR$/java/java-tests/java-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/compiler/javac2/javac2.iml" filepath="$PROJECT_DIR$/java/compiler/javac2/javac2.iml" group="java/compiler" />
       <module fileurl="file://$PROJECT_DIR$/plugins/cvs/javacvs-src/javacvs-src.iml" filepath="$PROJECT_DIR$/plugins/cvs/javacvs-src/javacvs-src.iml" group="plugins/cvs" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/groovy/jetgroovy.iml" filepath="$PROJECT_DIR$/plugins/groovy/jetgroovy.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/groovy/jetgroovy-tests.iml" filepath="$PROJECT_DIR$/plugins/groovy/jetgroovy-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/jsp-base-openapi/jsp-base-openapi.iml" filepath="$PROJECT_DIR$/java/jsp-base-openapi/jsp-base-openapi.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/jsp-openapi/jsp-openapi.iml" filepath="$PROJECT_DIR$/java/jsp-openapi/jsp-openapi.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/jsp-spi/jsp-spi.iml" filepath="$PROJECT_DIR$/java/jsp-spi/jsp-spi.iml" group="java" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/junit/junit.iml" filepath="$PROJECT_DIR$/plugins/junit/junit.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/junit_rt/junit_rt.iml" filepath="$PROJECT_DIR$/plugins/junit_rt/junit_rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/lang-api/lang-api.iml" filepath="$PROJECT_DIR$/platform/lang-api/lang-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/lang-impl/lang-impl.iml" filepath="$PROJECT_DIR$/platform/lang-impl/lang-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/lvcs-api/lvcs-api.iml" filepath="$PROJECT_DIR$/platform/lvcs-api/lvcs-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/lvcs-impl/lvcs-impl.iml" filepath="$PROJECT_DIR$/platform/lvcs-impl/lvcs-impl.iml" group="platform" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven.iml" filepath="$PROJECT_DIR$/plugins/maven/maven.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/compiler/notNull/notNull.iml" filepath="$PROJECT_DIR$/java/compiler/notNull/notNull.iml" group="java/compiler" />
       <module fileurl="file://$PROJECT_DIR$/java/openapi/openapi.iml" filepath="$PROJECT_DIR$/java/openapi/openapi.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-api/platform-api.iml" filepath="$PROJECT_DIR$/platform/platform-api/platform-api.iml" group="platform" />
@@ -52,9 +66,13 @@
       <module fileurl="file://$PROJECT_DIR$/platform/smRunner/smRunner.iml" filepath="$PROJECT_DIR$/platform/smRunner/smRunner.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/cvs/smartcvs-src/smartcvs-src.iml" filepath="$PROJECT_DIR$/plugins/cvs/smartcvs-src/smartcvs-src.iml" group="plugins/cvs" />
       <module fileurl="file://$PROJECT_DIR$/plugins/spellchecker/spellchecker.iml" filepath="$PROJECT_DIR$/plugins/spellchecker/spellchecker.iml" group="plugins" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/svn4idea/svn4idea.iml" filepath="$PROJECT_DIR$/plugins/svn4idea/svn4idea.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/svn4idea/svn4idea-tests.iml" filepath="$PROJECT_DIR$/plugins/svn4idea/svn4idea-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/testFramework/testFramework.iml" filepath="$PROJECT_DIR$/platform/testFramework/testFramework.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/java/testFramework/testFramework-java.iml" filepath="$PROJECT_DIR$/java/testFramework/testFramework-java.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/platform/testRunner/testRunner.iml" filepath="$PROJECT_DIR$/platform/testRunner/testRunner.iml" group="platform" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/testng/testng.iml" filepath="$PROJECT_DIR$/plugins/testng/testng.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/testng_rt/testng_rt.iml" filepath="$PROJECT_DIR$/plugins/testng_rt/testng_rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ui-designer/ui-designer.iml" filepath="$PROJECT_DIR$/plugins/ui-designer/ui-designer.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/platform/usageView/usageView.iml" filepath="$PROJECT_DIR$/platform/usageView/usageView.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/util.iml" filepath="$PROJECT_DIR$/platform/util/util.iml" group="platform" />

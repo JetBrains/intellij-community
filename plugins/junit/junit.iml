@@ -10,7 +10,6 @@
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="execution-impl" />
-    <orderEntry type="module" module-name="idea" />
     <orderEntry type="module" module-name="java-runtime" />
     <orderEntry type="module" module-name="debugger-impl" />
     <orderEntry type="module" module-name="testRunner" />
@@ -18,6 +17,7 @@
     <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="junit_rt" />
     <orderEntry type="module" module-name="compiler-openapi" />
+    <orderEntry type="module" module-name="java-impl" />
   </component>
   <component name="copyright">
     <Base>
