@@ -7,6 +7,7 @@
       <sourceFolder url="file://$MODULE_DIR$/pluginResources" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/pySrc" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/lib/cachedir" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
