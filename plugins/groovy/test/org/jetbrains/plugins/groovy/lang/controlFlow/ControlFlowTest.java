@@ -19,7 +19,7 @@ import java.util.List;
 public class ControlFlowTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/groovy/controlFlow/";
+    return TestUtils.getTestDataPath() + "groovy/controlFlow/";
   }
 
   public void testAssignment() throws Throwable { doTest(); }

@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
  * @author peter
@@ -25,7 +26,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 public class Groovy16HighlightingTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/highlighting/";
+    return TestUtils.getTestDataPath() + "highlighting/";
   }
 
   private void doTest(LocalInspectionTool... tools) throws Exception {

@@ -29,6 +29,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -41,7 +42,7 @@ import java.util.LinkedHashSet;
 public class GroovyMoveMembersTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testData/refactoring/move/moveMembers/";
+    return TestUtils.getTestDataPath() + "refactoring/move/moveMembers/";
   }
 
 /*public void testJavadocRefs() throws Exception {

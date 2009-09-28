@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
  * @author Maxim.Medvedev
@@ -30,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 public class GroovyGotoTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/goto/";
+    return TestUtils.getTestDataPath() + "goto/";
   }
 
   private void doTest(Condition<PsiElement> verifier) throws Throwable {

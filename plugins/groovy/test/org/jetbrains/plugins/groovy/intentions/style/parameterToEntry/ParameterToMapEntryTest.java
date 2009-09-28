@@ -9,6 +9,7 @@ import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.formatter.GroovyFormatterTestCase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.io.*;
 
@@ -18,7 +19,7 @@ import java.io.*;
 public class ParameterToMapEntryTest extends GroovyFormatterTestCase {
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/paramToMap/" + getTestName(true) + "/";
+    return TestUtils.getTestDataPath() + "paramToMap/" + getTestName(true) + "/";
   }
 
   /*

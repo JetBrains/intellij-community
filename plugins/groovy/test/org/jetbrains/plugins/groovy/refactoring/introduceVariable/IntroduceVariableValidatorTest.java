@@ -38,7 +38,7 @@ public class IntroduceVariableValidatorTest extends LightCodeInsightFixtureTestC
 
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/groovy/refactoring/introduceVariableValidator/";
+    return TestUtils.getTestDataPath() + "groovy/refactoring/introduceVariableValidator/";
   }
 
   public void testAll1() throws Throwable { doTest(); }

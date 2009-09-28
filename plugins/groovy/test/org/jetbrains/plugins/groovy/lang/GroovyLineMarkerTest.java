@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.List;
 
@@ -34,7 +35,7 @@ import java.util.List;
 public class GroovyLineMarkerTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/lineMarker/";
+    return TestUtils.getTestDataPath() + "lineMarker/";
   }
 
   public void testInterface() throws Throwable {

@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.intentions.closure.eachToFor;
 
 import org.jetbrains.plugins.groovy.intentions.GrIntentionTestCase;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
  * @author Maxim.Medvedev
@@ -24,7 +25,7 @@ import org.jetbrains.plugins.groovy.intentions.GrIntentionTestCase;
 public class EachToForIntentionTest extends GrIntentionTestCase {
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/intentions/EachToFor/";
+    return TestUtils.getTestDataPath() + "intentions/EachToFor/";
   }
 
   public void testEachToFor() throws Throwable {

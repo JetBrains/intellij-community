@@ -2,6 +2,7 @@ package org.jetbrains.plugins.groovy.lang.surroundWith;
 
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.GroovySurrounderByClosure;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.blocks.open.*;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -13,7 +14,7 @@ public class SurroundStatementsTest extends SurroundTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/groovy/surround/statements/";
+    return TestUtils.getTestDataPath() + "groovy/surround/statements/";
   }
 
   public void testClosure1() throws Exception { doTest(new GroovySurrounderByClosure()); }

@@ -31,6 +31,7 @@ import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackages
 import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import junit.framework.AssertionFailedError;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.io.File;
 import java.io.FileReader;
@@ -44,7 +45,7 @@ import java.util.Comparator;
  */
 public class GroovyMoveClassTest extends LightCodeInsightFixtureTestCase {
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/refactoring/move/moveClass/";
+    return TestUtils.getTestDataPath() + "refactoring/move/moveClass/";
   }
 
   @Override

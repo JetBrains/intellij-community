@@ -20,7 +20,7 @@ public class SmartEnterTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/groovy/actions/smartEnter/";
+    return TestUtils.getTestDataPath() + "groovy/actions/smartEnter/";
   }
 
   public void testMethCallComma() throws Throwable { doTest(); }

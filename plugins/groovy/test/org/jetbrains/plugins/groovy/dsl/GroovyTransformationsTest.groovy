@@ -12,7 +12,7 @@ class GroovyTransformationsTest extends CompletionTestBase {
 
   @Override
   protected String getBasePath() {
-    "/svnPlugins/groovy/testdata/groovy/dsl/transform"
+    TestUtils.getTestDataPath() + "groovy/dsl/transform"
   }
 
   public void doPlainTest() throws Throwable {

@@ -34,7 +34,7 @@ public class GroovyCodeStyleFormatterTest extends GroovyFormatterTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/groovy/codeStyle/";
+    return TestUtils.getTestDataPath() + "groovy/codeStyle/";
   }
 
   private void doTest() throws Throwable {
