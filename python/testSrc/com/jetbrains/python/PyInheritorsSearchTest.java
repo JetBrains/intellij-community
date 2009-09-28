@@ -1,7 +1,6 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.search.ProjectScope;
@@ -40,7 +39,7 @@ public class PyInheritorsSearchTest extends CodeInsightTestCase {
 
   private void setupProject() throws Exception {
     String testName = getTestName(true);
-    String root = PathManager.getHomePath() + "/plugins/python/testData/inheritors/" + testName;
+    String root = PythonTestUtil.getTestDataPath() + "/inheritors/" + testName;
     VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete, false);
     PsiTestUtil.addSourceContentToRoots(myModule, rootDir);
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();

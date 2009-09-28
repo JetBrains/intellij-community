@@ -5,14 +5,13 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.inspections.PyMethodParametersInspection;
-import com.jetbrains.python.inspections.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.inspections.PyTrailingSemicolonInspection;
+import com.jetbrains.python.inspections.PyUnresolvedReferencesInspection;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 
@@ -122,7 +121,7 @@ public class QuickFixTest extends DaemonAnalyzerTestCase {
   }
 
   protected @NonNls String getTestDataPath() {
-    return PathManager.getHomePath() + "/plugins/python/testData/inspections/";
+    return PythonTestUtil.getTestDataPath() + "/inspections/";
   }
 
   protected void doInspectionTest(@NonNls String testFileName,

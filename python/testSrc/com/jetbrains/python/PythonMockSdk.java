@@ -29,7 +29,7 @@ public class PythonMockSdk {
   }
 
   public static Sdk create() {
-    String sdkHome = new File(PathManager.getHomePath(), "plugins/python/lib").getPath();
+    String sdkHome = new File(PathManager.getHomePath(), "python/lib").getPath();
     SdkType sdkType = PythonSdkType.getInstance();
 
     final Sdk sdk = new ProjectJdkImpl(MOCK_SDK_NAME, sdkType);

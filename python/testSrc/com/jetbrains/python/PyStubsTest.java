@@ -4,7 +4,6 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -19,7 +18,6 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.stubs.PyClassStub;
-import com.jetbrains.python.psi.PyDecorator;
 
 import java.util.List;
 
@@ -40,7 +38,7 @@ public class PyStubsTest extends CodeInsightTestCase {
   private void prepareRoots() throws Exception {
     new WriteAction() {
       protected void run(final Result result) throws Throwable {
-        String root = PathManager.getHomePath() + "/plugins/python/testData/stubs/";
+        String root = PythonTestUtil.getTestDataPath() + "/stubs/";
         myRootDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete, false);
         PsiTestUtil.addSourceContentToRoots(myModule, myRootDir);
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();

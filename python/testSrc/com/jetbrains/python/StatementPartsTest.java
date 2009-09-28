@@ -1,6 +1,5 @@
 package com.jetbrains.python;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.*;
 
@@ -14,7 +13,7 @@ import java.util.Map;
 public class StatementPartsTest extends MarkedTestCase {
 
   protected String getTestDataPath() {
-    return PathManager.getHomePath() + "/plugins/python/testData/psi/parts/";
+    return PythonTestUtil.getTestDataPath() + "/psi/parts/";
   }
 
   public void testIf() throws Exception {

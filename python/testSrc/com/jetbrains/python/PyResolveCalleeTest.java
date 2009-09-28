@@ -1,6 +1,5 @@
 package com.jetbrains.python;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.ResolveTestCase;
@@ -47,6 +46,6 @@ public class PyResolveCalleeTest extends ResolveTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return PathManager.getHomePath() + "/plugins/python/testData/resolve/callee/";
+    return PythonTestUtil.getTestDataPath() + "/resolve/callee/";
   }
 }

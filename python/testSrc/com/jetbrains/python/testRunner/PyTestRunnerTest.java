@@ -12,6 +12,7 @@ import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.SystemProperties;
+import com.jetbrains.python.PythonTestUtil;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -28,7 +29,7 @@ public class PyTestRunnerTest extends LightPlatformTestCase {
   }
 
   public void testFile() throws ExecutionException {
-    final File testDir = new File(PathManager.getHomePath(), "plugins/python/testData/testRunner/tests");
+    final File testDir = getTestDataDir();
     File testFile = new File(testDir, "unittest1.py");
     String[] result = runUTRunner(testDir.getPath(), testFile.getPath());
     assertEquals(StringUtil.join(result, "\n"), 6, result.length);
@@ -37,34 +38,38 @@ public class PyTestRunnerTest extends LightPlatformTestCase {
     assertTrue(result [2], result[2].startsWith("##teamcity[testFailed") && result [2].contains("name='test_fails (unittest1.BadTest)'"));
   }
 
+  private static File getTestDataDir() {
+    return new File(PythonTestUtil.getTestDataPath(), "/testRunner/tests");
+  }
+
   public void testClass() throws ExecutionException {
-    final File testDir = new File(PathManager.getHomePath(), "plugins/python/testData/testRunner/tests");
+    final File testDir = getTestDataDir();
     File testFile = new File(testDir, "unittest1.py");
     String[] result = runUTRunner(testDir.getPath(), testFile.getPath() + "::GoodTest");
     assertEquals(StringUtil.join(result, "\n"), 3, result.length);
   }
 
   public void testMethod() throws ExecutionException {
-    final File testDir = new File(PathManager.getHomePath(), "plugins/python/testData/testRunner/tests");
+    final File testDir = getTestDataDir();
     File testFile = new File(testDir, "unittest1.py");
     String[] result = runUTRunner(testDir.getPath(), testFile.getPath() + "::GoodTest::test_passes");
     assertEquals(StringUtil.join(result, "\n"), 3, result.length);
   }
 
   public void testFolder() throws ExecutionException {
-    final File testDir = new File(PathManager.getHomePath(), "plugins/python/testData/testRunner/tests");
+    final File testDir = getTestDataDir();
     String[] result = runUTRunner(testDir.getPath(), testDir.getPath() + "/");
     assertEquals(StringUtil.join(result, "\n"), 8, result.length);
   }
 
   public void testDependent() throws ExecutionException {
-    final File testDir = new File(PathManager.getHomePath(), "plugins/python/testData/testRunner");
+    final File testDir = new File(PythonTestUtil.getTestDataPath(), "testRunner");
     String[] result = runUTRunner(testDir.getPath(), new File(testDir, "dependentTests/my_class_test.py").getPath());
     assertEquals(StringUtil.join(result, "\n"), 3, result.length);
   }
 
   private static String[] runUTRunner(String workDir, String... args) throws ExecutionException {
-    File helpersDir = new File(PathManager.getHomePath(), "plugins/python/helpers");
+    File helpersDir = new File(PathManager.getHomePath(), "python/helpers");
     File utRunner = new File(helpersDir, "pycharm/utrunner.py");
     List<String> allArgs = new ArrayList<String>();
     allArgs.add(utRunner.getPath());
@@ -92,7 +97,7 @@ public class PyTestRunnerTest extends LightPlatformTestCase {
     parameters.setJdk(ideaJdk);
     parameters.setMainClass("org.python.util.jython");
 
-    File jythonJar = new File(PathManager.getHomePath(), "plugins/python/lib/jython.jar");
+    File jythonJar = new File(PathManager.getHomePath(), "python/lib/jython.jar");
     parameters.getClassPath().add(jythonJar.getPath());
 
     parameters.getProgramParametersList().add("-Dpython.path=" + pythonPath + ";" + workDir);

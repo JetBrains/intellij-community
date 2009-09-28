@@ -4,11 +4,10 @@
  */
 package com.jetbrains.python;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
-import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.ResolveTestCase;
 import com.jetbrains.python.psi.*;
@@ -186,6 +185,6 @@ public class PyResolveTest extends ResolveTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return PathManager.getHomePath() + "/plugins/python/testData/resolve/";
+    return PythonTestUtil.getTestDataPath() + "/resolve/";
   }
 }

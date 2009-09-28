@@ -1,7 +1,6 @@
 package com.jetbrains.python;
 
 import com.intellij.testFramework.ParsingTestCase;
-import com.intellij.openapi.application.PathManager;
 
 /**
  * @author yole
@@ -12,7 +11,7 @@ public class PythonParsingTest extends ParsingTestCase {
   }
 
   protected String getTestDataPath() {
-    return PathManager.getHomePath() + "/plugins/python/testData";
+    return PythonTestUtil.getTestDataPath();
   }
 
   public void testHelloWorld() throws Exception {

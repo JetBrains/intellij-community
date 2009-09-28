@@ -1,7 +1,6 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -18,7 +17,7 @@ import java.awt.*;
 public class PythonHighlightingTest extends DaemonAnalyzerTestCase {
   @NonNls
   protected String getTestDataPath() {
-    return PathManager.getHomePath() + "/plugins/python/testData/highlighting/";
+    return PythonTestUtil.getTestDataPath() + "/highlighting/";
   }
 
   public void testDeclarations() throws Exception {

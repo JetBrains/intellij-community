@@ -1,7 +1,6 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -112,7 +111,7 @@ public class PyMultiFileResolveTest extends CodeInsightTestCase {
   private PsiFile prepareFile() throws Exception {
     String testName = getTestName(true);
     String fileName = getTestName(false) + ".py";
-    String root = PathManager.getHomePath() + "/plugins/python/testData/resolve/multiFile/" + testName;
+    String root = PythonTestUtil.getTestDataPath() + "/resolve/multiFile/" + testName;
     VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete, false);
     PsiTestUtil.addSourceContentToRoots(myModule, rootDir);
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();

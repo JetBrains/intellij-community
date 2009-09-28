@@ -5,7 +5,6 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
-import com.intellij.openapi.application.PathManager;
 
 public class PythonDemorganLawIntentionTest extends LightIntentionActionTestCase {
   public void test() throws Exception { doAllTests(); }
@@ -15,7 +14,7 @@ public class PythonDemorganLawIntentionTest extends LightIntentionActionTestCase
   }
 
   protected String getTestDataPath() {
-    return PathManager.getHomePath() + "/plugins/python/testData/intentions";
+    return PythonTestUtil.getTestDataPath() + "/intentions";
   }
 
   @Override

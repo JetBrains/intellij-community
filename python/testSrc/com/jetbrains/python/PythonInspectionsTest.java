@@ -2,7 +2,6 @@ package com.jetbrains.python;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.openapi.application.PathManager;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.inspections.*;
 
@@ -61,6 +60,6 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   }
 
   protected String getTestDataPath() {
-    return PathManager.getHomePath() + "/plugins/python/testData/inspections/";
+    return PythonTestUtil.getTestDataPath() + "/inspections/";
   }
 }

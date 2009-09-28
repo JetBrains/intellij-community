@@ -27,7 +27,7 @@ import java.util.Set;
  */
 public class PyParameterInfoTest extends MarkedTestCase {
   protected String getTestDataPath() {
-    return PathManager.getHomePath() + "/plugins/python/testData/paramInfo/";
+    return PythonTestUtil.getTestDataPath()+ "/paramInfo/";
   }
 
   public void testSimpleFunction() throws Exception {

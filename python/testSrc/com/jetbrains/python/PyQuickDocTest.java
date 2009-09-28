@@ -1,12 +1,13 @@
 package com.jetbrains.python;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyDocStringOwner;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
 
 import java.io.File;
 import java.util.Map;
@@ -27,7 +28,7 @@ public class PyQuickDocTest extends MarkedTestCase {
   }
 
   protected String getTestDataPath() {
-    return PathManager.getHomePath() + "/plugins/python/testData/quickdoc/";
+    return PythonTestUtil.getTestDataPath() + "/quickdoc/";
   }
 
   private void checkByHTML(String text) throws Exception {

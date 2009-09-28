@@ -1,13 +1,12 @@
 package com.jetbrains.python;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.ResolveTestCase;
 import com.jetbrains.python.psi.PyArgumentList;
 import com.jetbrains.python.psi.PyDecorator;
-import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFunction;
 
 /**
  * Decorator-specific tests.
@@ -49,6 +48,6 @@ public class PyDecoratorTest extends ResolveTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return PathManager.getHomePath() + "/plugins/python/testData/resolve/decorators/";
+    return PythonTestUtil.getTestDataPath() + "/resolve/decorators/";
   }
 }

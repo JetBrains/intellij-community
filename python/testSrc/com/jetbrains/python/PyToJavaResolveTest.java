@@ -1,6 +1,5 @@
 package com.jetbrains.python;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.psi.*;
@@ -45,6 +44,6 @@ public class PyToJavaResolveTest extends ResolveTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return PathManager.getHomePath() + "/plugins/python/testData/resolve/pyToJava/";
+    return PythonTestUtil.getTestDataPath() + "/resolve/pyToJava/";
   }
 }

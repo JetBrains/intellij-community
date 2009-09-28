@@ -2,7 +2,6 @@ package com.jetbrains.python;
 
 import com.intellij.codeInsight.editorActions.SelectWordHandler;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 
@@ -42,6 +41,6 @@ public class PySelectWordTest extends LightCodeInsightTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return PathManager.getHomePath() + "/plugins/python/testData/selectWord/";
+    return PythonTestUtil.getTestDataPath() + "/selectWord/";
   }
 }
