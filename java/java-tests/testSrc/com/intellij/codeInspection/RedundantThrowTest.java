@@ -31,10 +31,10 @@ public class RedundantThrowTest extends InspectionTestCase {
 
   public void testEntryPoint() throws Exception {
     final RedundantThrows tool = new RedundantThrows();
-    doTest("redundantThrow/" + getTestName(false), tool, false, true);
+    doTest("redundantThrow/" + getTestName(true), tool, false, true);
   }
 
-  public void testInherited() throws Exception {
+  public void testinherited() throws Exception {
     doTest();
   }
 }

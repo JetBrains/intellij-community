@@ -23,7 +23,7 @@ public class UnusedMethodParameterTest extends InspectionTestCase {
   private final UnusedParametersInspection myTool = new UnusedParametersInspection();
 
   private void doTest() throws Exception {
-    doTest("unusedMethodParameter/" + getTestName(false), myTool);
+    doTest("unusedMethodParameter/" + getTestName(true), myTool);
   }
 
   public void testFieldInAnonymousClass() throws Exception {

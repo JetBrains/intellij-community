@@ -13,7 +13,7 @@ public class SameParameterValueTest extends InspectionTestCase {
   }
 
   private String getTestDir() {
-    return "sameParameterValue/" + getTestName(false);
+    return "sameParameterValue/" + getTestName(true);
   }
 
   public void testEntryPoint() throws Exception {
