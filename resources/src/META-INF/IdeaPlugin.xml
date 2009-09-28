@@ -214,7 +214,6 @@
     <inspectionToolProvider implementation="com.intellij.codeInspection.ex.StandardInspectionToolsProvider"/>
 
     <renameHandler implementation="com.intellij.ide.projectView.impl.RenameModuleHandler"/>
-    <renameHandler implementation="com.intellij.psi.impl.rename.AliasingPomTargetRenameHandler"/>
 
     <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.DefaultFileTypeFactory"/>
 
