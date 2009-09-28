@@ -4,6 +4,7 @@
  */
 package org.jetbrains.idea.devkit.codeInsight;
 
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.testFramework.PsiTestUtil;
@@ -29,7 +30,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/community/plugins/devkit/testData/codeInsight";
+    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/codeInsight";
   }
 
   public void testExtensionsHighlighting() throws Throwable {

@@ -21,7 +21,7 @@
 package com.siyeh.ig.fixes.bugs;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
 import com.siyeh.ig.bugs.CastConflictsWithInstanceofInspection;
@@ -38,7 +38,7 @@ public abstract class IGQuickFixesTestCase {
     final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createFixtureBuilder();
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(testFixtureBuilder.getFixture());
     myFixture.enableInspections(new CastConflictsWithInstanceofInspection());
-    final String dataPath = PathManager.getHomePath() + "/community/plugins/InspectionGadgets/test/com/siyeh/igfixes/";
+    final String dataPath = PluginPathManager.getPluginHomePath("InspectionGadgets") + "/test/com/siyeh/igfixes/";
     myFixture.setTestDataPath(dataPath);
     final JavaModuleFixtureBuilder builder = testFixtureBuilder.addModule(JavaModuleFixtureBuilder.class);
 
