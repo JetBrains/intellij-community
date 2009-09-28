@@ -1,6 +1,7 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsConfiguration;
@@ -35,7 +36,7 @@ public class SvnRootAboveTest extends SvnTestCase {
     final File svnRoot = new File(myTempDirFixture.getTempDirPath(), "svnroot");
     svnRoot.mkdir();
 
-    File pluginRoot = new File(PathManager.getHomePath(), "svnPlugins/svn4idea");
+    File pluginRoot = new File(PluginPathManager.getPluginHomePath("svn4idea"));
     if (!pluginRoot.isDirectory()) {
       // try standalone mode
       Class aClass = SvnTestCase.class;
