@@ -115,20 +115,20 @@ public class DataFlowInspectionTest extends InspectionTestCase {
   public void testForEachNPE() throws Exception { doTest15(); }
   public void testArrayAccessNPE() throws Exception { doTest15(); }
   public void testArrayAccessDoesntCancelAnalysis() throws Exception { doTest15(); }
-  public void testCompileTimeConst() throws Exception { doTest15(); }
-  public void testAutoboxing() throws Exception { doTest15(); }
-  public void testUnboxingNPE() throws Exception { doTest15(); }
+  public void testcompileTimeConst() throws Exception { doTest15(); }
+  public void testautoboxing() throws Exception { doTest15(); }
+  public void testunboxingNPE() throws Exception { doTest15(); }
 
   public void testStrangeArrayIndexOutOfBounds() throws Exception { doTest15(); }
   public void testIDEADEV2605() throws Exception { doTest15(); }
   public void testConstantsDifferentTypes() throws Exception { doTest15(); }
   public void testBoxingNaN() throws Exception { doTest15(); }
-  public void testJspTemplateStatement() throws Exception {
+  public void testjspTemplateStatement() throws Exception {
     @NonNls final String testDir = getTestDataPath() + "/"+ "dataFlow/" + getTestName(false);
     runTool(testDir, "java 1.4", new LocalInspectionToolWrapper(new DataFlowInspection()));
     // should not crash
   }
-  public void testBoxingBoolean() throws Exception { doTest15();}
+  public void testboxingBoolean() throws Exception { doTest15();}
 
   public void testCheckedExceptionDominance() throws Exception { doTest15();}
   public void testIDEADEV10489() throws Exception { doTest15();}
