@@ -1,0 +1,55 @@
+println """Pre${ list.each;
+println "bugaga" ;  
+import java.lang.*;
+'ved'}!"""
+-----
+Groovy script
+  Call expression
+    Reference expression
+      PsiElement(identifier)('println')
+    PsiWhiteSpace(' ')
+    Command arguments
+      Compound Gstring
+        PsiElement(Gstring begin)('"""Pre$')
+        Closable block
+          PsiElement({)('{')
+          PsiWhiteSpace(' ')
+          Parameter list
+            <empty list>
+          Reference expression
+            Reference expression
+              PsiElement(identifier)('list')
+            PsiElement(.)('.')
+            PsiElement(identifier)('each')
+          PsiElement(;)(';')
+          PsiElement(new line)('\n')
+          Call expression
+            Reference expression
+              PsiElement(identifier)('println')
+            PsiWhiteSpace(' ')
+            Command arguments
+              Literal
+                PsiElement(Gstring)('"bugaga"')
+          PsiWhiteSpace(' ')
+          PsiElement(;)(';')
+          PsiWhiteSpace('  ')
+          PsiElement(new line)('\n')
+          PsiErrorElement:Imports are not allowed inside blocks
+            Import statement
+              Modifiers
+                <empty list>
+              PsiElement(import)('import')
+              PsiWhiteSpace(' ')
+              Reference element
+                Reference element
+                  PsiElement(identifier)('java')
+                PsiElement(.)('.')
+                PsiElement(identifier)('lang')
+              PsiElement(.)('.')
+              PsiElement(*)('*')
+          PsiElement(;)(';')
+          PsiElement(new line)('\n')
+          Literal
+            PsiElement(string)(''ved'')
+          PsiElement(})('}')
+        PsiElement(Gstring end)('!"""')

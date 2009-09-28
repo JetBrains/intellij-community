@@ -1,0 +1,500 @@
+<!--
+  ~  Copyright 2000-2009 JetBrains s.r.o.
+  ~  Licensed under the Apache License, Version 2.0 (the "License");
+  ~  you may not use this file except in compliance with the License.
+  ~  You may obtain a copy of the License at
+  ~
+  ~  http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~  Unless required by applicable law or agreed to in writing, software
+  ~  distributed under the License is distributed on an "AS IS" BASIS,
+  ~  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~  See the License for the specific language governing permissions and
+  ~  limitations under the License.
+  ~
+  -->
+
+<idea-plugin url="http://www.jetbrains.net/confluence/display/GRVY/Groovy+Home">
+  <id>org.intellij.groovy</id>
+  <name>JetGroovy</name>
+  <description>Plugin for Groovy language support</description>
+  <version>9.0</version>
+  <vendor logo="/org/jetbrains/plugins/groovy/images/groovy_16x16.png" url="http://www.jetbrains.com">JetBrains Inc.
+  </vendor>
+  <depends>com.intellij.properties</depends>
+
+  <extensionPoints>
+    <extensionPoint name="libraryManager" interface="org.jetbrains.plugins.groovy.config.AbstractGroovyLibraryManager"/>
+
+    <extensionPoint name="nonCodeProcessor" interface="org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersProcessor"/>
+    <extensionPoint name="propertyEnhancer" interface="org.jetbrains.plugins.groovy.lang.psi.PropertyEnhancer"/>
+
+    <extensionPoint name="positionManagerDelegate" interface="org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelper"/>
+    <extensionPoint name="compilerExtension" interface="org.jetbrains.plugins.groovy.compiler.GroovyCompilerExtension"/>
+    <extensionPoint name="scriptType" interface="org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeEP"/>
+
+    <!-- Groovy DSL extension points -->
+    <extensionPoint name="psiEnhancerCategory" interface="org.jetbrains.plugins.groovy.dsl.psi.PsiEnhancerCategory"/>
+    <extensionPoint name="gdslTopLevelProvider" interface="org.jetbrains.plugins.groovy.dsl.dsltop.GdslMembersProvider"/>
+
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="org.intellij.groovy">
+    <!--<nonCodeProcessor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.SingletonAnnotationProcessor"/>-->
+    <!--<nonCodeProcessor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.BindableAnnotationProcessor"/>-->
+    <!--<nonCodeProcessor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.VetoableAnnotationProcessor"/>-->
+    <nonCodeProcessor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.ImmutableAnnotationProcessor"/>
+    <nonCodeProcessor implementation="org.jetbrains.plugins.groovy.dsl.DslMembersProcessor"/>
+    <libraryManager implementation="org.jetbrains.plugins.groovy.config.GroovyLibraryManager"/>
+    <libraryManager implementation="org.jetbrains.plugins.groovy.gant.GantLibraryManager" order="last"/>
+    <libraryManager implementation="org.jetbrains.plugins.groovy.gradle.GradleLibraryManager" order="last"/>
+    <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
+    <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gradle.GradlePositionManager"/>
+
+    <scriptType extensions="gant" descriptorClass="org.jetbrains.plugins.groovy.gant.GantScriptType"/>
+    <scriptType extensions="gradle" descriptorClass="org.jetbrains.plugins.groovy.gradle.GradleScriptType"/>
+
+    <!-- GroovyDSL extensions -->
+    <gdslTopLevelProvider implementation="org.jetbrains.plugins.groovy.dsl.dsltop.GroovyDslDefaultMembers"/>
+    <psiEnhancerCategory implementation="org.jetbrains.plugins.groovy.dsl.psi.PsiClassCategory"/>
+    <psiEnhancerCategory implementation="org.jetbrains.plugins.groovy.dsl.psi.PsiElementCategory"/>
+    <psiEnhancerCategory implementation="org.jetbrains.plugins.groovy.dsl.psi.PsiMethodCategory"/>
+    <psiEnhancerCategory implementation="org.jetbrains.plugins.groovy.dsl.psi.PsiExpressionCategory"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <refactoring.introduceParameterMethodUsagesProcessor implementation="org.jetbrains.plugins.groovy.refactoring.introduceParameter.java2groovy.GroovyIntroduceParameterMethodUsagesProcessor"/>
+
+    <constantExpressionEvaluator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator"/>
+    <annotationSupport language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GroovyAnnotationSupport"/>
+
+    <!--<expectedTypesProvider implementation="org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider"/>-->
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    <fileTypeFactory implementation="org.jetbrains.plugins.groovy.GroovyFileTypeLoader"/>
+
+    <projectConfigurable implementation="org.jetbrains.plugins.groovy.gant.GantConfigurable"/>
+    <projectConfigurable implementation="org.jetbrains.plugins.groovy.gradle.GradleConfigurable"/>
+
+    <projectService serviceInterface="org.jetbrains.plugins.groovy.gant.GantSettings" serviceImplementation="org.jetbrains.plugins.groovy.gant.GantSettings"/>
+    <projectService serviceInterface="org.jetbrains.plugins.groovy.gradle.GradleSettings" serviceImplementation="org.jetbrains.plugins.groovy.gradle.GradleSettings"/>
+
+    <concatenationAwareInjector implementation="org.jetbrains.plugins.groovy.GroovyInjector"/>
+
+    <colorSettingsPage implementation="org.jetbrains.plugins.groovy.highlighter.GroovyColorsAndFontsPage"/>
+    <frameworkSupport implementation="org.jetbrains.plugins.groovy.config.GroovyFacetSupportProvider"/>
+    <renameHandler implementation="org.jetbrains.plugins.groovy.refactoring.rename.PropertyRenameHandler"/>
+    <renamePsiElementProcessor implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameGroovyPropertyProcessor"
+                               order="first"/>
+    <applicationService serviceInterface="org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings"
+                        serviceImplementation="org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings"/>
+
+    <!-- Groovy language -->
+    <syntaxHighlighter key="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter"/>
+
+    <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.annotator.GroovyAnnotator"/>
+    <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.dsl.GroovyDslAnnotator"/>
+
+    <lang.psiStructureViewFactory language="Groovy"
+                                  implementationClass="org.jetbrains.plugins.groovy.structure.GroovyStructureViewFactory"/>
+    <lang.parserDefinition language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition"/>
+    <lang.commenter language="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovyCommenter"/>
+    <lang.foldingBuilder language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.folding.GroovyFoldingBuilder"/>
+    <lang.formatter language="Groovy" implementationClass="org.jetbrains.plugins.groovy.formatter.GroovyFormattingModelBuilder"/>
+
+    <enterHandlerDelegate implementation="org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEnterHandler"/>
+
+    <liveTemplateContext implementation="org.jetbrains.plugins.groovy.GroovyTemplateContextType"/>
+
+
+    <gotoSymbolContributor implementation="org.jetbrains.plugins.groovy.gotoclass.GroovyGoToSymbolContributor"/>
+    <lang.refactoringSupport language="Groovy"
+                             implementationClass="org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringSupportProvider"/>
+    <lang.surroundDescriptor language="Groovy"
+                             implementationClass="org.jetbrains.plugins.groovy.lang.surroundWith.descriptors.GroovyStmtsSurroundDescriptor"/>
+    <lang.findUsagesProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.findUsages.GroovyFindUsagesProvider"/>
+    <lang.braceMatcher language="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovyBraceMatcher"/>
+    <lang.importOptimizer language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer"/>
+    <lang.documentationProvider language="Groovy"
+                                implementationClass="org.jetbrains.plugins.groovy.lang.documentation.GroovyDocumentationProvider"/>
+    <lang.smartEnterProcessor language="Groovy"
+                              implementationClass="org.jetbrains.plugins.groovy.lang.completion.smartEnter.GroovySmartEnterProcessor"/>
+    <codeInsight.overrideMethod language="Groovy"
+                                implementationClass="org.jetbrains.plugins.groovy.overrideImplement.GroovyOverrideMethodsHandler"/>
+    <codeInsight.implementMethod language="Groovy"
+                                 implementationClass="org.jetbrains.plugins.groovy.overrideImplement.GroovyImplementMethodsHandler"/>
+    <codeInsight.parameterInfo language="Groovy"
+                               implementationClass="org.jetbrains.plugins.groovy.lang.parameterInfo.GroovyParameterInfoHandler"/>
+    <refactoring.inlineHandler language="Groovy" implementationClass="org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineHandler"/>
+    <refactoring.moveClassHandler implementation="org.jetbrains.plugins.groovy.refactoring.move.MoveGroovyClassHandler"/>
+    <refactoring.moveMemberHandler language="Groovy" implementationClass="org.jetbrains.plugins.groovy.refactoring.move.MoveGroovyMemberHandler"/>
+    <refactoring.moveHandler implementation="org.jetbrains.plugins.groovy.refactoring.move.MoveGroovyScriptHandler" id="moveGroovyScript" order="before moveFileOrDir, before moveJavaFileOrDir"/>
+    <refactoring.helper implementation="org.jetbrains.plugins.groovy.refactoring.GroovyImportOptimizerRefactoringHelper"/>
+    <codeInsight.lineMarkerProvider language="Groovy"
+                                    implementationClass="org.jetbrains.plugins.groovy.codeInsight.GroovyLineMarkerProvider"/>
+    <codeInsight.gotoSuper language="Groovy" implementationClass="com.intellij.codeInsight.navigation.JavaGotoSuperHandler"/>
+    <lookup.charFilter implementation="org.jetbrains.plugins.groovy.lang.completion.GroovyReferenceCharFilter"/>
+    <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionContributor"/>
+
+    <debuggerClassFilterProvider implementation="org.jetbrains.plugins.groovy.debugger.filters.GroovyDebuggerClassFilterProvider"/>
+    <xdebugger.settings implementation="org.jetbrains.plugins.groovy.debugger.filters.GroovyDebuggerSettings"/>
+    <fileTypeIndentOptionsProvider implementation="org.jetbrains.plugins.groovy.formatter.GroovyIndentOptionsProvider"/>
+
+    <typeHierarchyProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.GroovyTypeHierarchyProvider"/>
+
+
+    <lang.elementManipulator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral"
+                             implementationClass="org.jetbrains.plugins.groovy.lang.resolve.GroovyStringLiteralManipulator"/>
+
+    <directClassInheritorsSearch implementation="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyDirectInheritorsSearcher"/>
+
+    <!--Run/debug-->
+    <configurationType implementation="org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType"/>
+    <configurationProducer implementation="org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationProducer"/>
+
+    <quoteHandler fileType="Groovy" className="org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler"/>
+
+    <indexPatternBuilder implementation="org.jetbrains.plugins.groovy.util.GroovyIndexPatternBuilder"/>
+
+    <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyLiteralSelectioner"/>
+    <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyBlockStatementsSelectioner"/>
+    <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyTypeCastSelectioner"/>
+    <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyDocParamsSelectioner"/>
+    <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyArgListSelectioner"/>
+
+    <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.AccessorReferencesSearcher"/>
+    <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.MethodLateBoundReferencesSearcher"/>
+    <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.GroovyConstructorUsagesSearcher"/>
+    <annotatedElementsSearch implementation="org.jetbrains.plugins.groovy.findUsages.AnnotatedMembersSearcher"/>
+    <superMethodsSearch implementation="org.jetbrains.plugins.groovy.findUsages.GDKSuperMethodSearcher"/>
+
+    <!--<gotoDeclarationHandler implementation="org.jetbrains.plugins.groovy.actions.GotoConstructorDeclarationHandler"/>-->
+    <targetElementEvaluator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.GroovyTargetElementEvaluator"/>
+
+    <!--<compiler implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompiler"/>-->
+
+    <fileTemplateGroup implementation="org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory"/>
+
+    <usageGroupingRuleProvider implementation="org.jetbrains.plugins.groovy.findUsages.GroovyUsageViewGroupingRuleProvider"/>
+
+    <compilerSettingsFactory implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfigurable"/>
+
+    <stubElementTypeHolder class="org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes"/>
+    <!--Stubs index-->
+    <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrShortClassNameIndex"/>
+    <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullClassNameIndex"/>
+    <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullScriptNameIndex"/>
+    <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFieldNameIndex"/>
+    <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrMethodNameIndex"/>
+    <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotationMethodNameIndex"/>
+    <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotatedMemberIndex"/>
+    <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrScriptClassNameIndex"/>
+    <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrDirectInheritorsIndex"/>
+    <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnonymousClassIndex"/>
+
+    <referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.ConstructorReferencesSearcher"/>
+    <antCustomCompiler implementation="org.jetbrains.plugins.groovy.ant.GroovyAntCustomCompilerProvider"/>
+
+    <project.converterProvider implementation="org.jetbrains.plugins.groovy.config.GroovyModuleConverterProvider"/>
+
+    <iconProvider implementation="org.jetbrains.plugins.groovy.GroovyIconProvider"/>
+
+    <projectService serviceInterface="org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory"
+                    serviceImplementation="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementFactoryImpl"/>
+    <projectService serviceInterface="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration"
+                    serviceImplementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration"/>
+    <projectService serviceInterface="org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker"
+                    serviceImplementation="org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker"/>
+
+    <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.gant.GantReferenceContributor"/>
+    <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.providers.GroovyReferenceContributor"/>
+
+    <projectService serviceInterface="org.jetbrains.plugins.groovy.gant.AntTasksProvider"
+                    serviceImplementation="org.jetbrains.plugins.groovy.gant.AntTasksProvider"/>
+
+    <java.elementFinder implementation="org.jetbrains.plugins.groovy.lang.psi.impl.javaView.GroovyClassFinder"/>
+    <java.elementFinder implementation="org.jetbrains.plugins.groovy.gant.GantClassFinder"/>
+    <java.elementFinder implementation="org.jetbrains.plugins.groovy.gradle.GradleClassFinder"/>
+    <java.shortNamesCache implementation="org.jetbrains.plugins.groovy.lang.stubs.GroovyShortNamesCache"/>
+
+    <projectService serviceInterface="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager"
+                    serviceImplementation="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager"/>
+
+    <inspectionToolProvider implementation="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionProvider"/>
+
+    <problemFileHighlightFilter implementation="org.jetbrains.plugins.groovy.GroovyProblemFileHighlightFilter"/>
+
+    <!-- Groovy DSL support -->
+    <indexedRootsProvider implementation="org.jetbrains.plugins.groovy.dsl.StandardDslIndexedRootsProvider"/>
+    <fileBasedIndex implementation="org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex"/>
+
+    <!-- control flow -->
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.control.flow</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.control.DemorgansLawIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.control.flow</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.control.MergeIfAndIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.control.flow</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.control.ExpandBooleanIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.control.flow</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.control.FlipConjunctionIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.control.flow</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.control.FlipComparisonIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.control.flow</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.control.NegateComparisonIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.control.flow</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.control.MergeElseIfIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.control.flow</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.control.SplitElseIfIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.control.flow</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.control.FlipConditionalIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.control.flow</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.control.ConditionalToElvisIntention</className>
+    </intentionAction>
+
+    <!-- closures -->
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.closures</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.closure.MakeClosureCallExplicitIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.closures</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.closure.MakeClosureCallImplicitIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.closures</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.closure.ForToEachIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.closures</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.closure.EachToForIntention</className>
+    </intentionAction>
+    <!--
+    todo make this work
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.closures</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.closure.ConvertClosureArgToItIntention</className>
+    </intentionAction>
+    -->
+
+    <!-- comments -->
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.comments</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.comments.ChangeToCStyleCommentIntention</className>
+    </intentionAction>
+    <!--
+    todo make this work
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.comments</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.comments.ChangeToEndOfLineCommentIntention</className>
+    </intentionAction>
+    -->
+
+    <!-- conversions -->
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.ConvertIntegerToDecimalIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.ConvertIntegerToHexIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.ConvertIntegerToOctalIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.IndexingMethodConversionIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.IndexedExpressionConversionIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.ConvertStringToGStringIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.ConvertGStringToStringIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.RemoveParenthesesFromMethodCallIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.RemoveUnnecessaryBracesInGStringIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.ConvertConcatenationToGstringIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.ConvertMethodToClosureIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.ConvertClosureToMethodIntention</className>
+    </intentionAction>
+
+    <!-- groovy style -->
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.groovy.style</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.style.JavaStylePropertiesInvocationIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.groovy.style</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.style.parameterToEntry.ConvertParameterToMapEntryIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.groovy.style</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.style.ReplaceAbstractClassInstanceByMapIntention</className>
+    </intentionAction>
+
+    <projectService serviceInterface="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper"
+                    serviceImplementation="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper"/>
+
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij.debugger">
+    <codeFragmentFactory implementation="org.jetbrains.plugins.groovy.debugger.GroovyCodeFragmentFactory"/>
+  </extensions>
+
+  <actions>
+    <action id="Groovy.NewScript" class="org.jetbrains.plugins.groovy.actions.NewScriptAction"
+            text="Groovy Script" description="Create new Groovy script">
+      <add-to-group group-id="NewGroup" anchor="last"/>
+    </action>
+    <action id="Groovy.NewClass" class="org.jetbrains.plugins.groovy.actions.NewGroovyClassAction"
+            text="Groovy Class" description="Create new Groovy class">
+      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="Groovy.NewScript"/>
+    </action>
+    <action id="Gant.NewScript" class="org.jetbrains.plugins.groovy.gant.NewGantScriptAction"
+            text="Gant Script" description="Create new Gant script">
+      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="Groovy.NewClass"/>
+    </action>
+
+
+    <action id="RenameJavaFileToGroovyFileAction"
+            class="org.jetbrains.plugins.groovy.refactoring.javaToGrovyRename.RenameJavaFileToGroovyFileAction"
+            text="Rename To Groovy" description="Rename Java File to Groovy">
+      <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
+    </action>
+    <action id="ExcludeFromStubGeneration"
+            class="org.jetbrains.plugins.groovy.compiler.ExcludeFromStubGenerationAction"
+            text="Exclude from stub generation" description="Don't generate Java stubs for this Groovy file on compilation">
+      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="RenameJavaFileToGroovyFileAction"/>
+    </action>
+    <action id="org.jetbrains.plugins.groovy.actions.generate.equals.EqualsGenerateAction"
+            class="org.jetbrains.plugins.groovy.actions.generate.equals.EqualsGenerateAction"
+            text="equals() and hashCode()" description="Action generates equals and hashCode now">
+      <add-to-group group-id="GenerateGroup" anchor="first"/>
+    </action>
+    <action id="org.jetbrains.plugins.groovy.actions.generate.constructors.CostructorGenerateAction"
+            class="org.jetbrains.plugins.groovy.actions.generate.constructors.CostructorGenerateAction"
+            text="Constructor" description="Generates constructor">
+      <add-to-group group-id="GenerateGroup" anchor="first"/>
+    </action>
+
+    <action id="Groovy.Doc.Generating"
+            class="org.jetbrains.plugins.groovy.doc.actions.GenerateGroovyDocAction"
+            text="Generate GroovyDoc" description="Generating Groovy Documentation"
+            icon="/org/jetbrains/plugins/groovy/images/GroovyDoc.png">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+      <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt D"/>
+    </action>
+
+  </actions>
+
+  <application-components>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.GroovyLoader</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.gant.GantLoader</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.extensions.completion.InsertHandlerRegistry</implementation-class>
+    </component>
+  </application-components>
+
+  <project-components>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.compiler.GroovyCompilerLoader</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory</implementation-class>
+    </component>
+    <component>
+      <interface-class>org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager</interface-class>
+      <implementation-class>org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManagerImpl</implementation-class>
+    </component>
+  </project-components>
+
+  <actions>
+    <!-- Add your actions here -->
+      <action id="show-gradle" class="org.jetbrains.plugins.groovy.gradle.ui.ShowGradleUIAction"
+              text="Gradle UI" description="Run native Gradle UI for current project" icon="/icons/gradle/gradle.png">
+          <add-to-group group-id="ViewMenu" anchor="after" relative-to-action="HierarchyGroup"/>
+          <keyboard-shortcut keymap="$default" first-keystroke="shift ctrl G"/>
+      </action>
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="org.jetbrains.plugins.groovy.gradle.ui.GradleUISettings"
+                    serviceImplementation="org.jetbrains.plugins.groovy.gradle.ui.GradleUISettings"/>
+  </extensions>
+
+</idea-plugin>

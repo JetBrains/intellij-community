@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+
+  <problem>
+    <file>UnnecessaryThisInspection.java</file>
+    <line>40</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary 'this' qualifier</problem_class>
+    <description>&lt;code&gt;this&lt;/code&gt; is unnecessary in this context #loc</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryThisInspection.java</file>
+    <line>9</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary 'this' qualifier</problem_class>
+    <description>&lt;code&gt;this&lt;/code&gt; is unnecessary in this context #loc</description>
+  </problem>
+</problems>

@@ -1,0 +1,116 @@
+<project name="testng" default="dist">
+
+    <property file="build.properties"/>
+    <property name="src.dir" value="src"/>
+    <property name="test.dir" value="tests"/>
+    <property name="lib.dir" value="lib"/>
+    <property name="bin.dir" value="build"/>
+    <property name="dst.dir" value="dist"/>
+
+    <property name="idea.home" value="/Users/amrk/Applications/Selena.app"/>
+    <property name="idea.plugins.home" value="/Users/amrk/Applications/Selena.app/plugins"/>
+
+    <path id="compile.classpath">
+        <fileset dir="${idea.home}/lib">
+            <include name="openapi.jar"/>
+            <include name="idea.jar"/>
+            <include name="idea_rt.jar"/>
+            <include name="jdom.jar"/>
+            <include name="bcel.jar"/>
+            <include name="junit.jar"/>
+            <include name="log4j.jar"/>
+            <include name="extensions.jar"/>
+            <include name="picocontainer.jar"/>
+            <include name="trove4j.jar"/>
+        </fileset>
+        <fileset dir="${idea.home}/redist">
+            <include name="annotations.jar"/>
+            <include name="forms_rt.jar"/>
+            <include name="extensions.jar"/>
+            <include name="javac2.jar"/>
+        </fileset>
+        <fileset dir="lib">
+            <include name="testng-*.jar"/>
+        </fileset>
+    </path>
+
+
+    <path id="uidesigner.classpath">
+        <fileset dir="${idea.home}/lib">
+            <include name="jdom.jar"/>
+            <include name="bcel.jar"/>
+            <include name="asm.jar"/>
+            <include name="asm-commons.jar"/>
+            <include name="jgoodies-forms.jar"/>
+        </fileset>
+        <fileset dir="${idea.home}/redist">
+            <include name="annotations.jar"/>
+            <include name="forms_rt.jar"/>
+            <include name="extensions.jar"/>
+            <include name="javac2.jar"/>
+        </fileset>
+    </path>
+
+    <taskdef name="javac2"
+             classname="com.intellij.ant.Javac2"
+             classpathref="uidesigner.classpath"/>
+
+    <target name="init">
+        <mkdir dir="${bin.dir}/classes"/>
+        <mkdir dir="${bin.dir}/classes.test"/>
+        <mkdir dir="${bin.dir}/jars"/>
+        <mkdir dir="${dst.dir}"/>
+    </target>
+
+    <target name="clean">
+        <delete dir="${bin.dir}"/>
+        <delete dir="${dst.dir}"/>
+    </target>
+
+    <target name="compile" depends="init">
+        <javac2 srcdir="${src.dir}" destdir="${bin.dir}/classes" debug="true" classpathref="compile.classpath"
+                deprecation="true" source="1.5" target="jsr14"/>
+        <copy todir="${bin.dir}/classes">
+            <fileset dir="${src.dir}">
+                <include name="**/*.properties"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="build" depends="clean, compile"/>
+
+
+    <target name="dist" depends="build">
+
+        <jar jarfile="${bin.dir}/jars/${ant.project.name}.jar">
+            <zipfileset dir="${bin.dir}/classes"/>
+            <zipfileset dir="${src.dir}/resources" prefix="resources"/>
+            <zipfileset dir="src/META-INF" prefix="META-INF">
+                <include name="plugin.xml"/>
+            </zipfileset>
+        </jar>
+        <jar jarfile="${bin.dir}/jars/resources_en.jar">
+            <zipfileset dir="${src.dir}">
+                <include name="**/*.html"/>
+            </zipfileset>
+        </jar>
+        <zip destfile="${dst.dir}/${ant.project.name}.zip" compress="true">
+            <zipfileset dir="${lib.dir}" prefix="${ant.project.name}/lib">
+                <include name="testng-jdk15.jar"/>
+            </zipfileset>
+            <zipfileset dir="${bin.dir}/jars" prefix="${ant.project.name}/lib" includes="*.jar"/>
+            <zipfileset dir="${lib.dir}" prefix="${ant.project.name}/lib-jdk14">
+                <include name="testng-jdk14.jar"/>
+            </zipfileset>
+            <zipfileset dir="src/META-INF" prefix="${ant.project.name}/META-INF">
+                <include name="plugin.xml"/>
+            </zipfileset>
+        </zip>
+
+    </target>
+
+    <target name="deploy" depends="dist">
+        <unzip src="${dst.dir}/${ant.project.name}.zip" dest="${idea.plugins.home}"/>
+    </target>
+
+</project>

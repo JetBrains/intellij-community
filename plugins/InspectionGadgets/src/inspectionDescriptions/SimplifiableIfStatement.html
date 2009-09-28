@@ -1,0 +1,15 @@
+<html>
+<body><table> <tr> <td valign="top" height="150">
+<font face="verdana" size="-2">
+This inspection is intended for J2ME and other highly resource constrained environments.
+Applying the results of this inspection without consideration might have negative effects on code clarity and design.
+</font>
+<font face="verdana" size="-1">
+<p>This inspection reports any instances of if statements of the form
+<b><font color="#000080">if (<i>condition</i>) return true else return <i>foo</i></font></b>
+or <b><font color="#000080">if (<i>condition</i>) return false else return <i>foo</i></font></b>.
+These expressions may be safely simplified to
+<b><font color="#000080">return <i>condition</i> && <i>foo</i></font></b> or
+<b><font color="#000080">return !<i>condition</i> || <i>foo</i></font></b>, respectively.</p>
+</font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
+</html>

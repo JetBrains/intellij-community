@@ -1,0 +1,16 @@
+<html>
+  <body> <table> <tr> <td valign="top" height="150">
+  <font face="verdana" size="-2">
+    This inspection is intended for J2ME and other highly resource constrained environments.
+    Applying the results of this inspection without consideration might have negative effects on code clarity and design.
+  </font>
+  <font face="verdana" size="-1"><p>
+    An inner class and its containing class are compiled to separate
+    class files. The virtual machine normally prohibits access from a class to private fields and methods of
+    another class.  To enable access from an inner class to private members of a
+    containing class or the other way around javac and other compilers create package private
+    synthetic accessor methods. Less use of memory and greater performance may be achieved by making the
+    member package local, thus allowing direct access without the creation of synthetic accessor methods.
+  </p></font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table>
+  </body>
+</html>

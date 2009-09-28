@@ -1,0 +1,5 @@
+<idea-plugin>
+    <actions>
+        <action class="foo.Foo$Fubar<caret>"/>
+    </actions>
+</idea-plugin>

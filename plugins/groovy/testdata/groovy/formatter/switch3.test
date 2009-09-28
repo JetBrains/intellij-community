@@ -1,0 +1,13 @@
+switch (x){
+  case 1:
+  {
+  foo
+  }
+}
+-----
+switch (x) {
+  case 1:
+    {
+      foo
+    }
+}

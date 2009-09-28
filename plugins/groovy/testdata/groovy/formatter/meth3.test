@@ -1,0 +1,9 @@
+class a {
+  def s (   String s   ) {
+  }
+}
+-----
+class a {
+  def s(String s) {
+  }
+}

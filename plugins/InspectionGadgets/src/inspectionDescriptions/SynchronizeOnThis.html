@@ -1,0 +1,12 @@
+<html>
+<body><table> <tr> <td valign="top" height="150">
+<font face="verdana" size="-1">
+This inspection reports any instances of synchronization which use <b><font color="#000080">this</font></b> as their lock
+expression.  Constructs reported include <b><font color="#000080">synchronized</font></b>
+blocks which lock <b><font color="#000080">this</font></b>, and calls to <b><font color="#000080">wait()</font></b>,
+<b><font color="#000080">notify()</font></b> or <b><font color="#000080">notifyAll()</font></b> which target <b><font color="#000080">wait()</font></b>.
+Such constructs, like synchronized methods, make it hard to track just who is locking on a given
+object, and make possible "denial of service" attacks on objects.  As an alternative, consider
+locking on a private instance variable, access to which can be completely controlled.
+</font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
+</html>

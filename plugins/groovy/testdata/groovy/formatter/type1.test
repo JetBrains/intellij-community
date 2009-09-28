@@ -1,0 +1,7 @@
+{ def Map<  String   > map, c
+return 1+2 }
+-----
+{
+  def Map<String> map, c
+  return 1 + 2
+}

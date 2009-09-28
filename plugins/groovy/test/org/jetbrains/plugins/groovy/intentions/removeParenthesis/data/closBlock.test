@@ -1,0 +1,13 @@
+runTest([
+            john,
+            {
+                type<caret>>("file", "C:\\acceptance_files\\test.txt")
+            }
+        ])
+-----
+runTest([
+            john,
+            {
+                type "file", "C:\\acceptance_files\\test.txt"
+            }
+        ])

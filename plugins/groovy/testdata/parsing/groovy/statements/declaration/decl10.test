@@ -1,0 +1,18 @@
+def void "abc" ()
+-----
+Groovy script
+  Method
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    Built in type
+      PsiElement(void)('void')
+    PsiWhiteSpace(' ')
+    PsiElement(Gstring)('"abc"')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Parameter list
+      <empty list>
+    PsiElement())(')')
+    Throw clause
+      <empty list>

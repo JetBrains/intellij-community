@@ -1,0 +1,24 @@
+(double [][ ) 3
+-----
+Groovy script
+  Parenthesized expression
+    PsiElement(()('(')
+    Property by index
+      Property by index
+        builtin type class expression
+          PsiElement(double)('double')
+        PsiWhiteSpace(' ')
+        Arguments
+          PsiElement([)('[')
+          PsiElement(])(']')
+      Arguments
+        PsiElement([)('[')
+        PsiErrorElement:Expression expected
+          <empty list>
+        PsiWhiteSpace(' ')
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(Integer)('3')
+        PsiErrorElement:']' expected
+          <empty list>

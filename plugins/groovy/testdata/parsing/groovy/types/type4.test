@@ -1,0 +1,25 @@
+def a (String[] s)
+-----
+Groovy script
+  Method
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Parameter list
+      Parameter
+        Modifiers
+          <empty list>
+        Array type
+          Type element
+            Reference element
+              PsiElement(identifier)('String')
+          PsiElement([)('[')
+          PsiElement(])(']')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('s')
+    PsiElement())(')')
+    Throw clause
+      <empty list>

@@ -1,0 +1,9 @@
+Object existing = null
+
+run((Runnable) {
+    <selection>println(existing)</selection>
+})
+-----
+input:
+existing
+output:

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.siyeh.ig.controlflow.OverlyComplexBooleanExpressionInspection">
+  <grid id="f1d35" binding="m_contentPanel" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="4" left="4" bottom="4" right="4"/>
+    <constraints>
+      <xy x="69" y="73" width="360" height="202"/>
+      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <component id="fcc4" class="javax.swing.JCheckBox" binding="m_ignoreConjunctionsDisjunctionsCheckBox">
+        <constraints>
+          <xy x="4" y="29" width="226" height="22"/>
+          <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+        </constraints>
+        <properties>
+          <selected value="false"/>
+          <text resource-bundle="com/siyeh/InspectionGadgetsBundle" key="ovetly.complex.boolean.expression.ignore.pure.conjunctions.and.disjunctions.option"/>
+        </properties>
+      </component>
+      <vspacer id="41baa">
+        <constraints>
+          <xy x="65" y="51" width="11" height="147"/>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
+        </constraints>
+      </vspacer>
+      <component id="47185" class="javax.swing.JFormattedTextField" binding="m_termLimitTextField">
+        <constraints>
+          <xy x="148" y="4" width="20" height="20"/>
+          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0">
+            <preferred-size width="20" height="-1"/>
+          </grid>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="427a" class="javax.swing.JLabel">
+        <constraints>
+          <xy x="4" y="7" width="134" height="14"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="com/siyeh/InspectionGadgetsBundle" key="overly.complex.boolean.expression.overly.option"/>
+        </properties>
+      </component>
+    </children>
+  </grid>
+</form>

@@ -1,0 +1,13 @@
+<html>
+<body><table> <tr> <td valign="top" height="150">
+<font face="verdana" size="-1">This inspection reports any calls to
+<b><font color="#000080">java.lang.Class.newInstance()</font></b>.
+The <b><font color="#000080">newInstance</font></b> method propagates any
+exception thrown by the no-arg constructor, including checked exceptions. Use
+of this method effectively bypasses the compile-time exception checking that
+would otherwise be performed by the compiler. Replacing such a method call with
+a call to the <b><font color="#000080">java.lang.reflect.Constructor.newInstance()</font></b>
+method avoids this problem by wrapping any exception thrown by the constructor
+in a <b><font color="#000080">java.lang.reflect.InvocationTargetException</font></b>.
+</font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">New in 9, Powered by InspectionGadgets </font> </td> </tr> </table> </body>
+</html>

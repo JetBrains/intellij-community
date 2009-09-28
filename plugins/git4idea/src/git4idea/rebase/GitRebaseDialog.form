@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="git4idea.rebase.GitRebaseDialog">
+  <grid id="27dc6" binding="myPanel" layout-manager="GridLayoutManager" row-count="8" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="0" left="0" bottom="0" right="0"/>
+    <constraints>
+      <xy x="20" y="20" width="583" height="255"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <component id="76105" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <labelFor value="bebca"/>
+          <text resource-bundle="git4idea/i18n/GitBundle" key="common.git.root"/>
+        </properties>
+      </component>
+      <vspacer id="67a13">
+        <constraints>
+          <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+        </constraints>
+      </vspacer>
+      <component id="bebca" class="javax.swing.JComboBox" binding="myGitRootComboBox" default-binding="true">
+        <constraints>
+          <grid row="0" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="common.git.root.tooltip"/>
+        </properties>
+      </component>
+      <component id="141cd" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <labelFor value="e8e3d"/>
+          <text resource-bundle="git4idea/i18n/GitBundle" key="rebase.branch"/>
+        </properties>
+      </component>
+      <component id="e8e3d" class="javax.swing.JComboBox" binding="myBranchComboBox" default-binding="true">
+        <constraints>
+          <grid row="1" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="rebase.branch.tooltip"/>
+        </properties>
+      </component>
+      <component id="2b513" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <labelFor value="b3800"/>
+          <text resource-bundle="git4idea/i18n/GitBundle" key="rebase.onto"/>
+        </properties>
+      </component>
+      <component id="b3800" class="javax.swing.JComboBox" binding="myOntoComboBox" default-binding="true">
+        <constraints>
+          <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <editable value="true"/>
+          <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="rebase.onto.tooltip"/>
+        </properties>
+      </component>
+      <component id="ddd04" class="javax.swing.JButton" binding="myOntoValidateButton">
+        <constraints>
+          <grid row="3" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="git4idea/i18n/GitBundle" key="rebase.onto.validate"/>
+          <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="rebase.valdate.onto.tooltip"/>
+        </properties>
+      </component>
+      <component id="cb44a" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <labelFor value="b0f9a"/>
+          <text resource-bundle="git4idea/i18n/GitBundle" key="rebase.merge.strategy"/>
+        </properties>
+      </component>
+      <component id="4aaae" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <labelFor value="438d6"/>
+          <text resource-bundle="git4idea/i18n/GitBundle" key="rebase.from"/>
+        </properties>
+      </component>
+      <component id="438d6" class="javax.swing.JComboBox" binding="myFromComboBox">
+        <constraints>
+          <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <editable value="true"/>
+          <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="rebase.from.tooltip"/>
+        </properties>
+      </component>
+      <component id="775c4" class="javax.swing.JButton" binding="myFromValidateButton">
+        <constraints>
+          <grid row="4" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="git4idea/i18n/GitBundle" key="rebase.validate.from"/>
+          <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="rebase.validate.from.tooltip"/>
+        </properties>
+      </component>
+      <grid id="f939d" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <grid row="6" column="1" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="b0f9a" class="javax.swing.JComboBox" binding="myMergeStrategyComboBox" default-binding="true">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="rebase.merge.strategy.tooltip"/>
+            </properties>
+          </component>
+          <hspacer id="1ba1f">
+            <constraints>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+          </hspacer>
+          <component id="3a627" class="javax.swing.JCheckBox" binding="myDoNotUseMergeCheckBox" default-binding="true">
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="1" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <selected value="false"/>
+              <text resource-bundle="git4idea/i18n/GitBundle" key="rebase.no.merge"/>
+              <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="rebase.no.merge.tooltip"/>
+            </properties>
+          </component>
+        </children>
+      </grid>
+      <grid id="63e88" layout-manager="GridLayoutManager" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <grid row="2" column="1" row-span="1" col-span="2" vsize-policy="3" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <hspacer id="7eb2f">
+            <constraints>
+              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+          </hspacer>
+          <component id="e5f3b" class="javax.swing.JCheckBox" binding="myPreserveMergesCheckBox" default-binding="true">
+            <constraints>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <selected value="false"/>
+              <text resource-bundle="git4idea/i18n/GitBundle" key="rebase.preserve.merges"/>
+              <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="rebase.preserve.merges.tooltip"/>
+            </properties>
+          </component>
+          <component id="281fe" class="javax.swing.JCheckBox" binding="myInteractiveCheckBox" default-binding="true">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <enabled value="true"/>
+              <selected value="true"/>
+              <text resource-bundle="git4idea/i18n/GitBundle" key="rebase.interactive"/>
+              <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="rebase.interactive.tooltip"/>
+            </properties>
+          </component>
+        </children>
+      </grid>
+      <grid id="46bb8" layout-manager="GridLayoutManager" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <grid row="5" column="1" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="de965" class="javax.swing.JCheckBox" binding="myShowTagsCheckBox" default-binding="true">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="git4idea/i18n/GitBundle" key="regase.show.tags"/>
+              <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="rebase.show.tags.tooltip"/>
+            </properties>
+          </component>
+          <component id="a0269" class="javax.swing.JCheckBox" binding="myShowRemoteBranchesCheckBox" default-binding="true">
+            <constraints>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="git4idea/i18n/GitBundle" key="rebase.show.remote.branches"/>
+              <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="rebase.show.remote.branches.tooltip"/>
+            </properties>
+          </component>
+          <hspacer id="b158">
+            <constraints>
+              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+          </hspacer>
+        </children>
+      </grid>
+    </children>
+  </grid>
+</form>

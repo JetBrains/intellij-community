@@ -1,0 +1,10 @@
+<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
+<idea-plugin>
+  <idea-version since-build="3000"/>
+  <application-components>
+    <component>
+      <implementation-class></implementation-class>
+      <interface-class>Intf</interface-class>
+    </component>
+  </application-components>
+</idea-plugin>

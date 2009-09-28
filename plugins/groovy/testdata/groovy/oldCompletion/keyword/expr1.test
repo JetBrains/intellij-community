@@ -1,0 +1,4 @@
+return t<caret>
+-----
+this
+true

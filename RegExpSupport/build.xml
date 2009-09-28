@@ -1,0 +1,120 @@
+<project default="zips" name="Regular Expression Support">
+
+  <property file="regexp-lang.properties" />
+
+  <fail unless="jdk.home.idea_8.0">
+    Please set the property 'jdk.home.idea_8.0' to point to your IntelliJ IDEA 8.0 installation directory.
+  </fail>
+
+  <!-- override for embedded build -->
+  <property name="src.zip" value="build/src_RegExpSupport.zip" />
+  <property name="src.zip.update" value="false" />
+
+  <import file="regexp-lang.xml" />
+
+  <path id="jdk.bootclasspath.idea_6.0">
+    <path>
+      <fileset dir="${jdk.home.idea_8.0}">
+        <include name="jre/lib/charsets.jar" />
+        <include name="jre/lib/deploy.jar" />
+        <include name="jre/lib/javaws.jar" />
+        <include name="jre/lib/jce.jar" />
+        <include name="jre/lib/jsse.jar" />
+        <include name="jre/lib/plugin.jar" />
+        <include name="jre/lib/rt.jar" />
+        <include name="jre/lib/resources.jar" />
+        <include name="jre/lib/tools.jar" />
+        <include name="jre/lib/ext/dnsns.jar" />
+        <include name="jre/lib/ext/localedata.jar" />
+        <include name="jre/lib/ext/sunjce_provider.jar" />
+        <include name="jre/lib/ext/sunpkcs11.jar" />
+      </fileset>
+    </path>
+    <pathelement location="${jdk.home.idea_8.0}/lib/boot.jar" />
+  </path>
+
+  <target name="build" depends="jflex, all" />
+
+  <target name="jar" depends="build">
+    <mkdir dir="build" />
+    <jar file="build/RegExpSupport.jar" compress="false">
+      <fileset dir="${regexp-lang.output.dir}">
+        <include name="**/*.*" />
+        <exclude name="${excluded-stuff}" />
+      </fileset>
+      <fileset dir=".">
+        <include name="META-INF/plugin.xml" unless="regexp-lang.embedded"/>
+      </fileset>
+    </jar>
+  </target>
+
+  <target name="jflex">
+    <taskdef name="jflex" classname="JFlex.anttask.JFlexTask">
+      <classpath location="${jdk.home.idea_8.0}/tools/jflex/lib/JFlex.jar" />
+    </taskdef>
+
+    <jflex skeleton="${jdk.home.idea_8.0}/tools/jflex/idea-flex.skeleton"
+           file="src/org/intellij/lang/regexp/regexp-lexer.flex"
+           destdir="src"
+           nobak="true"
+           charat="true" />
+  </target>
+
+  <target name="test" depends="build" description="run tests">
+    <junit fork="true" dir="${basedir}" failureproperty="junit.failed" errorproperty="junit.failed">
+      <sysproperty key="idea.load.plugins" value="false" />
+
+      <bootclasspath refid="jdk.bootclasspath.idea_6.0" />
+      <classpath refid="jdk.classpath.idea_8.0" />
+
+      <classpath>
+        <pathelement location="${regexp-lang.output.dir}" />
+        <pathelement location="${regexp-lang.testoutput.dir}" />
+      </classpath>
+
+      <test name="test.MainParseTest">
+        <formatter type="plain" />
+      </test>
+    </junit>
+
+    <fail if="junit.failed" />
+  </target>
+
+  <target name="src.zip">
+    <zip file="${src.zip}" update="${src.zip.update}">
+      <zipfileset dir="src" prefix="RegExpSupport/src">
+        <include name="org/**/*.java" />
+        <include name="org/**/*.png" />
+        <include name="**/*.flex" />
+      </zipfileset>
+      <zipfileset dir="test" prefix="RegExpSupport/test">
+        <include name="**/*.java" />
+      </zipfileset>
+      <zipfileset dir="testData" prefix="RegExpSupport/testData">
+        <include name="**/*.regexp" />
+        <exclude name="psi/gen/**/*" />
+        <include name="**/*.xml" />
+      </zipfileset>
+      <zipfileset dir="." prefix="RegExpSupport">
+        <include name="build.xml" />
+        <include name="log4j.dtd" />
+        <include name="regexp-lang.xml" />
+        <include name="regexp-lang.ipr" />
+        <include name="regexp-lang.iml" />
+        <include name="regexp-lang-java.iml" />
+        <include name="META-INF/plugin.xml" />
+      </zipfileset>
+    </zip>
+  </target>
+
+  <target name="bin.zip" depends="jar">
+    <zip file="build/RegExpSupport.zip">
+      <zipfileset dir="build" prefix="RegExpSupport/lib">
+        <include name="*.jar" />
+      </zipfileset>
+    </zip>
+  </target>
+
+  <target name="zips" depends="bin.zip, src.zip" />
+
+</project>

@@ -1,0 +1,36 @@
+for (; i<3 ; a, , b, )
+-----
+Groovy script
+  For statement
+    PsiElement(for)('for')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Traditional FOR clause
+      PsiElement(;)(';')
+      PsiWhiteSpace(' ')
+      Relational expression
+        Reference expression
+          PsiElement(identifier)('i')
+        PsiElement(<)('<')
+        Literal
+          PsiElement(Integer)('3')
+      PsiWhiteSpace(' ')
+      PsiElement(;)(';')
+      PsiWhiteSpace(' ')
+      Reference expression
+        PsiElement(identifier)('a')
+      PsiElement(,)(',')
+      PsiErrorElement:Expression expected
+        <empty list>
+      PsiWhiteSpace(' ')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Reference expression
+        PsiElement(identifier)('b')
+      PsiElement(,)(',')
+      PsiErrorElement:Expression expected
+        <empty list>
+    PsiWhiteSpace(' ')
+    PsiElement())(')')
+    PsiErrorElement:Expression expected
+      <empty list>

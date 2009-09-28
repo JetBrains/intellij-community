@@ -1,0 +1,12 @@
+<html>
+<body><table> <tr> <td valign="top" height="150">
+<font face="verdana" size="-1">
+This inspection reports on subclasses of <b><font color="#000080">java.lang.Comparator</font></b> which are not
+also <b><font color="#000080">Serializable</font></b>.  Objects of <b><font color="#000080">java.util.TreeMap</font></b>
+or <b><font color="#000080">java.util.TreeSet</font></b> will become non-<b><font color="#000080">Serializable</font></b>
+if instantated with such <b><font color="#000080">Comparator</font></b>s.  This can result in unexpected and difficult-to-diagnose
+bugs.  Since subclasses of <b><font color="#000080">java.lang.Comparator</font></b> are often stateless, simply marking
+them <b><font color="#000080">Serializable</font></b> is a small cost to avoid such issues.
+    
+</font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
+</html>

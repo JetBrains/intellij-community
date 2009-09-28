@@ -1,0 +1,16 @@
+<html>
+<body><table> <tr> <td valign="top" height="150">
+<font face="verdana" size="-1">This inspection reports any instances of labelled statements inside of <b><font color="#000080">switch</font></b> statements.
+While occasionally intended, this construction is often the result of a typo.
+
+<pre>
+    <b><font color="#000080">switch</font></b>(x)
+    {
+        <b><font color="#000080">case</font></b> 1:
+        case2:   //typo!
+        <b><font color="#000080">case</font></b> 3:
+            <b><font color="#000080">break</font></b>;
+    }
+</pre>
+</font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
+</html>

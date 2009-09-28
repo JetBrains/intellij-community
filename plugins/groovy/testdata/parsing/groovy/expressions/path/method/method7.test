@@ -1,0 +1,20 @@
+A.foo(a,
+b,)
+-----
+Groovy script
+  Method call
+    Reference expression
+      Reference expression
+        PsiElement(identifier)('A')
+      PsiElement(.)('.')
+      PsiElement(identifier)('foo')
+    Arguments
+      PsiElement(()('(')
+      Reference expression
+        PsiElement(identifier)('a')
+      PsiElement(,)(',')
+      PsiWhiteSpace('\n')
+      Reference expression
+        PsiElement(identifier)('b')
+      PsiElement(,)(',')
+      PsiElement())(')')

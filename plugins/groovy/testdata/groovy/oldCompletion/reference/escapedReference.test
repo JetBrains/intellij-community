@@ -1,0 +1,3 @@
+print String.'pa<caret>'.name
+-----
+'package'

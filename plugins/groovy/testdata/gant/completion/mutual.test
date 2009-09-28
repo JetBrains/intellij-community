@@ -1,0 +1,9 @@
+target(genga: "") {
+}
+
+target(aaa: "") {
+    depends(gen<caret>)
+}
+-----
+generateKey
+genga

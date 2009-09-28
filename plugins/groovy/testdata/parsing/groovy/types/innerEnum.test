@@ -1,0 +1,62 @@
+class Person
+ {
+   enum Day
+   {
+     SUNDAY, MONDAY, TUESDAY, WEDNESDAY,
+     THURSDAY, FRIDAY, SATURDAY
+   }
+
+ }
+-----
+Groovy script
+  Class definition
+    Modifiers
+      <empty list>
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('Person')
+    PsiElement(new line)('\n ')
+    Type definition body
+      PsiElement({)('{')
+      PsiWhiteSpace('\n   ')
+      Enumeration definition
+        Modifiers
+          <empty list>
+        PsiElement(enum)('enum')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('Day')
+        PsiElement(new line)('\n   ')
+        Type definition body
+          PsiElement({)('{')
+          PsiWhiteSpace('\n     ')
+          Enumeration constants
+            Enumeration constant
+              PsiElement(identifier)('SUNDAY')
+            PsiElement(,)(',')
+            PsiWhiteSpace(' ')
+            Enumeration constant
+              PsiElement(identifier)('MONDAY')
+            PsiElement(,)(',')
+            PsiWhiteSpace(' ')
+            Enumeration constant
+              PsiElement(identifier)('TUESDAY')
+            PsiElement(,)(',')
+            PsiWhiteSpace(' ')
+            Enumeration constant
+              PsiElement(identifier)('WEDNESDAY')
+            PsiElement(,)(',')
+            Enumeration constant
+              PsiElement(new line)('\n     ')
+              PsiElement(identifier)('THURSDAY')
+            PsiElement(,)(',')
+            PsiWhiteSpace(' ')
+            Enumeration constant
+              PsiElement(identifier)('FRIDAY')
+            PsiElement(,)(',')
+            PsiWhiteSpace(' ')
+            Enumeration constant
+              PsiElement(identifier)('SATURDAY')
+          PsiElement(new line)('\n   ')
+          PsiElement(})('}')
+      PsiElement(new line)('\n\n ')
+      PsiElement(})('}')

@@ -1,0 +1,20 @@
+enum B {
+  foo
+}
+-----
+Groovy script
+  Enumeration definition
+    Modifiers
+      <empty list>
+    PsiElement(enum)('enum')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('B')
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiWhiteSpace('\n  ')
+      Enumeration constants
+        Enumeration constant
+          PsiElement(identifier)('foo')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

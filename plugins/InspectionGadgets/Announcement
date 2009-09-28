@@ -1,0 +1,371 @@
+
+Announcing version 1.0 of the InspectionGadgets plugin, available via the PluginManager
+or at http://www.intellij.org/twiki/bin/view/Main/InspectionGadgets.
+
+Changes in version 1.0
+
+New inspections:
+
+*   Use of '$' in identifier
+*   Infinite Recursion
+*   Auto-Boxing
+*   Auto-Unboxing
+*   Unnecessary boxing
+*   Unnecessary unboxing
+*   Class without no-arg constructor
+*   Unnecessary 'final' for method parameter
+*   Unnecessarily qualified static method call
+*   Unqualified static method call
+*   setUp() with incorrect signature
+*   tearDown() with incorrect signature
+*   setUp() doesn't call super.setUp()
+*   tearDown() doesn't call super.tearDown()
+*   Test method with incorrect signature
+*   'assert' statement
+*   Use of 'enum' as identifier
+
+plus huge numbers of bugfixes.
+
+Special thanks go to Bas Lejsdekkers and Keith Lea for their help and ideas on this release.
+
+With the 1.0 release, development on InspectionGadgets will be going into "bugfixes-only"
+mode for the next several months.   Thanks to everyone for your ideas, code, and
+criticism as I developed InspectionGadgets.  It's thanks to your interest and support
+that InspectionGadgets has become the most full-featured and powerful Java static analysis
+tool available today, and the most-downloaded IDEA plugin.  I hope I've helped you kill a
+lot of bugs.
+
+
+
+
+   * Abstraction issues
+      * Cast to a concrete class
+      * Class references one of its subclasses
+      * Collection declared by class, not interface
+      * Concrete class for instance variable
+      * Concrete class for local variable
+      * Concrete class for method parameter
+      * Concrete class for method return
+      * Concrete class for static variable
+      * 'instanceof' a concrete class
+      * "Magic number"
+      * 'switch' statement
+
+   * Class metrics
+      * Class too deep in inheritance tree
+      * Class with too many constructors
+      * Class with too many fields
+      * Class with too many methods
+      * Inner class too deeply nested
+      * Overly complex class
+      * Overly coupled class
+
+   * Class structure
+      * Abstract class extends concrete class
+      * Abstract class without abstract methods
+      * Abstract method overrides abstract method
+      * Abstract method overrides concrete method
+      * Class may be interface
+      * Class without constructor
+      * Class without no-arg constructor
+      * Class without package statement
+      * Constant declared in abstract class
+      * Constant declared in interface
+      * constructor not 'protected' in 'abstract' class(*)
+      * 'final' method in 'final' class(*)
+      * Inner class of interface
+      * No-op method in abstract class
+      * 'private' method declared 'final'(*)
+      * 'protected' member in 'final' class(*)
+      * 'public' constructor in non-'public' class(*)
+      * Static inheritance
+      * 'static' method declared 'final'(*)
+      * 'static', non-'final' field
+      * Utility class
+      * Utility class with public constructor
+      * Utility class without private constructor
+
+   * Cloning issues
+      * clone() doesn't call super.clone()
+      * clone() doesn't declare CloneNotSupportedException
+      * clone() instantiates objects with constructor
+      * Cloneable class without 'clone()'
+
+   * Code maturity issues
+      * Call to printStackTrace()
+      * Call to Thread.dumpStack()
+      * Class without toString()
+      * Use of obsolete collection type
+      * Use of System.out or System.err
+
+   * Code style issues
+      * C-style array declaration(*)
+      * Constant on left side of comparison(*)
+      * Constant on right side of comparison(*)
+      * expression.equals("literal") rather than "literal".equals(expression)(*)
+      * Missorted modifers(*)
+      * Multiple variables in one declaration(*)
+      * Return of 'this'
+      * Unnecessarily qualified static method call(*)
+      * Unqualified static method call(*)
+      * Variables of different types in one declaration(*)
+
+   * Encapsulation issues
+      * Assignment to Collection or array field from parameter
+      * Package-visible field
+      * Package-visible inner class
+      * Protected field
+      * Protected inner class
+      * Public field
+      * Public inner class
+      * Return of Collection or array field
+
+   * Error handling
+      * 'catch' generic class
+      * Checked exception class
+      * Empty 'catch' block
+      * Empty 'finally' block
+      * Empty 'try' block
+      * Error not rethrown
+      * 'instanceof' on 'catch' parameter
+      * Nested 'try' statement
+      * Overly broad 'catch' block
+      * 'return' inside 'finally' block
+      * ThreadDeath not rethrown
+      * 'throw' generic class
+      * 'throw' inside 'catch' block which ignores the caught exception
+      * 'throw' inside 'finally' block
+      * Unchecked exception class
+
+   * Finalization issues
+      * finalize() called explicitly
+      * finalize() doesn't call super.finalize()
+      * finalize() not declared 'protected'(*)
+      * Use of finalize()
+
+   * Imports
+      * * import
+      * Import from same package
+      * java.lang import
+      * Redundant import
+      * Single class import
+      * Unused import
+
+   * Initialization issues
+      * Abstract method call in constructor
+      * Instance variable may not be initialized
+      * Overridable method call in constructor
+      * Static variable may not be initialized
+
+   * Internationalization issues
+      * Call to Date.toString()
+      * Call to Numeric .toString()
+      * Call to String.compareTo()
+      * Call to String.equals()
+      * Call to String.equalsIgnoreCase()
+      * Call to Time.toString()
+      * Character comparison
+      * Hardcoded string literal
+      * "Magic character"
+      * String concatenation
+      * Use of StringTokenizer
+
+   * JUnit issues
+      * JUnit TestCase with non-trivial constructors
+      * Missing message on JUnit assertion
+      * setUp() doesn't call super.setUp()
+      * setUp() with incorrect signature
+      * 'setup()' instead of 'setUp()'(*)
+      * 'suite()' method not declared 'static'
+      * tearDown() doesn't call super.tearDown()
+      * tearDown() with incorrect signature
+      * 'teardown()' instead of 'tearDown()'(*)
+      * Test method with incorrect signature
+
+   * Method metrics
+      * Method with more than three negations
+      * Method with multiple loops
+      * Method with multiple return points.
+      * Method with too many parameters
+      * Overly complex method
+      * Overly coupled method
+      * Overly long method
+      * Overly nested method
+
+   * Naming conventions
+      * Class name prefixed with package name(*)
+      * Class naming convention(*)
+      * Confusing 'main()' method(*)
+      * Constant naming convention(*)
+      * Exception class name doesn't end with Exception(*)
+      * Instance method naming convention(*)
+      * Instance variable naming convention(*)
+      * Interface naming convention(*)
+      * Local Variable naming convention(*)
+      * Method name same as class name(*)
+      * Method name same as parent class name(*)
+      * Method parameter naming convention(*)
+      * Non-exception class name ends with 'Exception'(*)
+      * Standard variable names(*)
+      * Static method naming convention(*)
+      * Static variable naming convention(*)
+      * Use of '$' in identifier(*)
+
+   * Performance issues
+      * Boolean constructor call(*)
+      * Calls to System.gc() or Runtime.gc()
+      * Collection without initial capacity
+      * Field may be 'static'(*)
+      * Field repeatedly accessed in method
+      * Manual array copy(*)
+      * Multiply or divide by power of two(*)
+      * Object allocation in loop
+      * Redundant String constructor call(*)
+      * Redundant String.toString()(*)
+      * Single character .startsWith() or .endsWith()
+      * Single character string concatenation(*)
+      * Static collection
+      * String concatenation in loop
+      * StringBuffer without initial capacity
+      * StringBuffer.toString() in concatenation(*)
+      * Tail recursion
+      * Unnecessary temporary object in conversion from String(*)
+      * Unnecessary temporary object in conversion to String(*)
+      * Use of java.lang.reflect
+      * Zero-length array allocation
+
+   * Portability issues
+      * 'assert' statement
+      * Auto-boxing(*)
+      * Auto-unboxing(*)
+      * Call to Runtime.exec()
+      * Call to System.exit()
+      * Call to System.getenv()
+      * Hardcoded file separator
+      * Hardcoded line separator
+      * Native method
+      * Use of 'assert' as identifier(*)
+      * Use of 'enum' as identifier(*)
+
+   * Potentially confusing code constructs
+      * Assignment to for-loop parameter
+      * Assignment to method parameter
+      * 'break' statement
+      * 'break' statement with label
+      * Chained equality comparisons
+      * Chained method calls
+      * Conditional expression (?:)
+      * Confusing else branch
+      * Confusing floating-point literal(*)
+      * 'continue' statement
+      * 'continue' statement with label
+      * If statement with negated condition
+      * Implicit call to super()(*)
+      * Implicit numeric conversions(*)
+      * Local variable used and declared in different 'switch' branches
+      * Long literal ending with 'l' instead of 'L'(*)
+      * Method names differing only by case
+      * Nested 'switch' statement
+      * Nested assignment
+      * Nested conditional expression
+      * Nested method calls
+      * Numeric cast that loses precision
+      * Overloaded methods with same number of parameters
+      * Overly complex arithmetic expression
+      * Overly complex boolean expression
+      * Switch statement with too few branches
+      * Switch statement with too many branches
+      * Value of ++ or -- used
+
+   * Probable bugs
+      * Assignment to 'null'
+      * Assignment used as condition
+      * 'compareto()' instead of 'compareTo()'(*)
+      * Comparison of short and char values
+      * Covariant compareTo()
+      * Covariant equals()
+      * 'default' not last case in 'switch'
+      * equals() between objects of inconvertible types
+      * Fallthrough in 'switch' statement
+      * Floating point equality comparison
+      * For loop where update or condition doesn't use loop variable
+      * For loop with missing components
+      * 'hashcode()' instead of 'hashCode()'(*)
+      * Infinite loop statement
+      * Infinite recursion
+      * Loop statement that doesn't loop
+      * Non-final field referenced in 'compareTo()'
+      * Non-final field referenced in 'equals()'
+      * Non-final field referenced in 'hashCode()'
+      * Object comparison using ==, instead of '.equals()'(*)
+      * Octal and decimal integers in same array
+      * Result of InputStream.read() ignored
+      * Return of 'null'
+      * Statement with empty body
+      * String comparison using ==, instead of '.equals()'(*)
+      * Subtraction in compareTo()
+      * 'switch' statement without 'default' branch
+      * Text label in 'switch' statement
+
+   * Security issues
+      * Cloneable class in secure context
+      * Deserializable class in secure context
+      * Non-static inner class in secure context
+      * Serializable class in secure context
+
+   * Serialization issues
+      * Instance variable may not be initialized by readObject
+      * Non-serializable class with 'readObject()' or 'writeObject()'
+      * Non-serializable class with serialVersionUID
+      * 'readObject()' or 'writeObject()' not declared 'private'(*)
+      * 'readResolve()' or 'writeReplace()' not declared 'protected'(*)
+      * Serializable class with unconstructable ancestor
+      * Serializable class without 'readObject()' and 'writeObject()'
+      * Serializable class without serialVersionUID
+      * 'serialVersionUID' field not declared 'static final'(*)
+      * Transient field in non-serializable class(*)
+
+   * Threading issues
+      * Busy wait
+      * Call to notify() instead of notifyAll()(*)
+      * Call to Thread.run()(*)
+      * Double-checked locking
+      * Empty 'synchronized' statement
+      * Field accessed in both synchronized and unsynchronized contexts
+      * Nested 'synchronized' statement
+      * Non-private field accessed in synchronized context
+      * Non-synchronized method overrides synchronized method
+      * Synchronization on 'this'
+      * Synchronization on a non-final field
+      * 'synchronized' method
+      * 'wait()' not in loop
+
+   * Verbose or redundant code constructs
+      * Assignment replacable with operator assignment(*)
+      * Class explicitly extends java.lang.Object
+      * 'for' loop may be replaced by 'while' loop(*)
+      * Pointless arithmetic expression(*)
+      * Redundant boolean comparison(*)
+      * Redundant field initialization(*)
+      * Unnecessary 'final' for method parameter(*)
+      * Unnecessary 'if' statement(*)
+      * Unnecessary 'return' statement(*)
+      * Unnecessary 'super()' statement(*)
+      * Unnecessary 'this' qualifier(*)
+      * Unnecessary boxing(*)
+      * Unnecessary code block(*)
+      * Unnecessary fully qualified name(*)
+      * Unnecessary interface modifier(*)
+      * Unnecessary parentheses(*)
+      * Unnecessary semicolon(*)
+      * Unnecessary unboxing(*)
+      * Unused label(*)
+
+   * Visibility issues
+      * Field name hides field in superclass(*)
+      * Inner class field hides outer class field(*)
+      * Local variable hides member variable(*)
+      * Method overloads method of superclass(*)
+      * Method overrides private method of superclass(*)
+      * Method overrides static method of superclass(*)
+      * Parameter hides member variable(*)

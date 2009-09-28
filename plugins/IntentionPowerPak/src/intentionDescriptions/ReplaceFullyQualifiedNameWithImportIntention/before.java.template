@@ -1,0 +1,5 @@
+public class X {
+  Object createList() {
+    return new <spot>java.util.ArrayList</spot>();
+  }
+}

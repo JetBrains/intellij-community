@@ -1,0 +1,334 @@
+<idea-plugin>
+  <id>org.jetbrains.idea.maven</id>
+
+  <name>Maven Integration</name>
+  <description>Import Maven projects and execute Maven goals</description>
+  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+
+  <extensionPoints>
+    <extensionPoint name="importer" interface="org.jetbrains.idea.maven.importing.MavenImporter"/>
+    <extensionPoint name="archetypesProvider" interface="org.jetbrains.idea.maven.indices.MavenArchetypesProvider"/>
+  </extensionPoints>
+
+  <depends>com.intellij.properties</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectImportProvider implementation="org.jetbrains.idea.maven.wizards.MavenProjectImportProvider"/>
+    <projectOpenProcessor implementation="org.jetbrains.idea.maven.wizards.MavenProjectOpenProcessor"/>
+    <projectImportBuilder implementation="org.jetbrains.idea.maven.wizards.MavenProjectBuilder"/>
+    <moduleBuilder builderClass="org.jetbrains.idea.maven.wizards.MavenModuleBuilder"/>
+
+    <projectConfigurable implementation="org.jetbrains.idea.maven.utils.MavenSettings" order="last"/>
+
+    <stepsBeforeRunProvider implementation="org.jetbrains.idea.maven.tasks.MavenBeforeRunTasksProvider"/>
+    <keymapExtension implementation="org.jetbrains.idea.maven.tasks.MavenKeymapExtension"/>
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    <configurationType implementation="org.jetbrains.idea.maven.execution.MavenRunConfigurationType"/>
+    <javaClasspathPolicyExtender implementation="org.jetbrains.idea.maven.execution.MavenJavaClasspathPolicyExtender"/>
+
+    <compiler implementation="org.jetbrains.idea.maven.compiler.MavenResourceCompiler" order="last"/>
+
+    <selectInTarget implementation="org.jetbrains.idea.maven.navigator.SelectInMavenNavigatorTarget"/>
+
+    <iconProvider implementation="org.jetbrains.idea.maven.utils.MavenIconProvider"/>
+    <editorTabTitleProvider implementation="org.jetbrains.idea.maven.utils.MavenEditorTabTitleProvider"/>
+
+    <xml.elementDescriptorProvider implementation="org.jetbrains.idea.maven.dom.MavenDomElementDescriptorProvider"/>
+    <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomProjectModelDescription"/>
+    <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomProfilesModelDescription"/>
+    <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomOldProfilesModelDescription"/>
+    <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomSettingsModelDescription"/>
+    <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomPluginModelDescription"/>
+    <lang.documentationProvider language="XML" implementationClass="org.jetbrains.idea.maven.dom.MavenPluginModelDocumentationProvider"
+                                order="first"/>
+    <inspectionToolProvider implementation="org.jetbrains.idea.maven.dom.MavenModelInspection"/>
+    <dom.extender domClass="org.jetbrains.idea.maven.dom.model.MavenDomConfiguration"
+                  extenderClass="org.jetbrains.idea.maven.dom.MavenPluginConfigurationDomExtender"/>
+    <dom.extender domClass="org.jetbrains.idea.maven.dom.model.MavenDomConfigurationParameter"
+                  extenderClass="org.jetbrains.idea.maven.dom.MavenPluginConfigurationParameterDomExtender"/>
+
+    <elementDescriptionProvider implementation="org.jetbrains.idea.maven.dom.MavenElementDescriptionProvider" order="first"/>
+    
+    <completion.contributor language="any" implementationClass="org.jetbrains.idea.maven.dom.references.MavenPropertyCompletionContributor" id="Maven"/>
+
+    <psi.referenceContributor implementation="org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReferenceContributor"/>
+    <usageTargetProvider implementation="org.jetbrains.idea.maven.dom.references.MavenUsageTargetProvider"/>
+
+    <renameHandler implementation="org.jetbrains.idea.maven.dom.refactorings.MavenPropertyRenameHandler" order="first"/>
+    <vetoRenameCondition implementation="org.jetbrains.idea.maven.dom.refactorings.MavenVetoModelRenameCondition"/>
+
+    <standardResourceProvider implementation="org.jetbrains.idea.maven.dom.MavenSchemaProvider"/>
+
+    <projectService serviceInterface="org.jetbrains.idea.maven.dom.MavenDomElementDescriptorHolder"
+                    serviceImplementation="org.jetbrains.idea.maven.dom.MavenDomElementDescriptorHolder"/>
+
+    <typedHandler implementation="org.jetbrains.idea.maven.dom.code.MavenTypedHandlerDelegate"/>
+    <backspaceHandlerDelegate implementation="org.jetbrains.idea.maven.dom.code.MavenBackspaceHandlerDelegate"/>
+
+    <intentionAction>
+      <className>org.jetbrains.idea.maven.dom.intentions.ChooseFileIntentionAction</className>
+    </intentionAction>
+
+    <codeInsight.unresolvedReferenceQuickFixProvider
+        implementation="org.jetbrains.idea.maven.dom.intentions.ResolveReferenceQuickFixProvider"/>
+
+    <gotoFileContributor implementation="org.jetbrains.idea.maven.vfs.MavenGotoPropertyFileContibutor"/>
+    <gotoFileContributor implementation="org.jetbrains.idea.maven.utils.MavenGotoSettingsFileContibutor"/>
+    <fileTemplateGroup implementation="org.jetbrains.idea.maven.utils.MavenFileTemplateGroupFactory"/>
+  </extensions>
+
+  <application-components>
+    <component>
+      <implementation-class>org.jetbrains.idea.maven.indices.MavenIndicesManager</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.maven.utils.MavenEnvironmentRegistrar</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem</implementation-class>
+    </component>
+  </application-components>
+
+  <project-components>
+    <component>
+      <implementation-class>org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent</implementation-class>
+      <option name="workspace" value="true"/>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.maven.project.MavenProjectsManager</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.maven.execution.MavenRunner</implementation-class>
+      <option name="workspace" value="true"/>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.maven.indices.MavenProjectIndicesManager</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.maven.navigator.MavenProjectsNavigator</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.maven.tasks.MavenTasksManager</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.maven.tasks.MavenShortcutsManager</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.maven.utils.MavenEditorTabTitleUpdater</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.maven.utils.MavenImportNotifier</implementation-class>
+    </component>
+  </project-components>
+
+  <actions>
+    <action id="Maven.Reimport" class="org.jetbrains.idea.maven.project.actions.ReimportAction"
+            text="Force Reimport All Maven Projects" description="Force IDEA to reimport all Maven projects"
+            icon="/actions/sync.png">
+    </action>
+
+    <action id="Maven.ReimportProject" class="org.jetbrains.idea.maven.project.actions.ReimportProjectAction"
+            text="Force Reimport" description="Force IDEA to reimport selected Maven projects"
+            icon="/actions/sync.png">
+    </action>
+
+    <action id="Maven.UpdateFolders" class="org.jetbrains.idea.maven.project.actions.UpdateFoldersAction"
+            text="Update Folders For All Projects" description="Generate sources and update project folders"
+            icon="/images/updateFolders.png">
+    </action>
+
+    <action id="Maven.UpdateFoldersForProject" class="org.jetbrains.idea.maven.project.actions.UpdateFoldersForProjectAction"
+            text="Update Folders" description="Generate sources and update folders for selected projects"
+            icon="/images/updateFolders.png">
+    </action>
+
+    <action id="Maven.DownloadArtifacts" class="org.jetbrains.idea.maven.project.actions.DownloadArtifactsAction"
+            text="Download Sources And Javadoc For All Projects" description="Download sources and javadoc for all dependencies"
+            icon="/images/download.png">
+    </action>
+
+    <action id="Maven.DownloadArtifactsForProject" class="org.jetbrains.idea.maven.project.actions.DownloadArtifactsForProjectAction"
+            text="Download Sources And Javadoc" description="Download sources and javadoc for all dependencies for selected projects"
+            icon="/images/download.png">
+    </action>
+
+    <action id="Maven.AddManagedFiles"
+            class="org.jetbrains.idea.maven.project.actions.AddManagedFilesAction"
+            text="Add Maven Projects"
+            description="Add and import Maven projects to the projects tree"
+            icon="/general/add.png">
+    </action>
+
+    <action id="Maven.AddFileAsMavenProject"
+            class="org.jetbrains.idea.maven.project.actions.AddFileAsMavenProjectAction"
+            text="Add as Maven Project"
+            description="Add and import Maven project to the projects tree"
+            icon="/general/add.png">
+      <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="Maven.GlobalProjectMenu"/>
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="Maven.GlobalProjectMenu"/>
+    </action>
+
+    <action id="Maven.RemoveManagedFiles"
+            class="org.jetbrains.idea.maven.project.actions.RemoveManagedFilesAction"
+            text="Remove Projects"
+            description="Remove selected Maven projects from the project tree"
+            icon="/general/remove.png">
+      <keyboard-shortcut first-keystroke="DELETE" keymap="$default"/>
+    </action>
+
+    <action id="Maven.OpenProfilesXml"
+            class="org.jetbrains.idea.maven.project.actions.OpenOrCreateProfilesXmlAction"
+            text="Open profiles.xml"
+            description="Open profiles.xml for selected projects"/>
+
+    <action id="Maven.OpenSettingsXml"
+            class="org.jetbrains.idea.maven.project.actions.OpenOrCreateSettingsXmlAction"
+            text="Open settings.xml"
+            description="Open Maven settings.xml"/>
+
+    <action id="Maven.IgnoreProjects"
+            class="org.jetbrains.idea.maven.project.actions.ToggleIgnoredProjectsAction"
+            text="_Ignore Projects"
+            description="Exclude/Include selected Maven projects from being imported">
+    </action>
+    <action id="Maven.ToggleProfile"
+            class="org.jetbrains.idea.maven.project.actions.ToggleProfileAction"
+            text="Toggle Profile"
+            description="Activate/deactivate profile">
+    </action>
+
+    <action id="Maven.RunBuild"
+            class="org.jetbrains.idea.maven.project.actions.RunBuildAction"
+            text="_Run Maven Build"
+            description="Execute selected phases or goals"
+            icon="/actions/execute.png">
+    </action>
+
+    <action id="Maven.ShowSettings"
+            class="org.jetbrains.idea.maven.project.actions.EditSettingsAction" text="Maven Settings"
+            description="Edit Maven integration settings for the current project"
+            icon="/images/mavenSettings.png">
+    </action>
+
+    <action id="Maven.ShowTemplateSettings"
+            class="org.jetbrains.idea.maven.project.actions.EditTemplateSettingsAction" text="Template Maven Settings"
+            description="Edit Maven integration settings for the template project"
+            icon="/general/applicationSettings.png">
+    </action>
+
+    <action id="Maven.ToggleOffline"
+            class="org.jetbrains.idea.maven.project.actions.ToggleOfflineAction" text="Toggle Offline Mode"
+            description="Toggle offline mode for Maven builds"
+            icon="/images/offlineMode.png">
+    </action>
+
+    <action id="Maven.ToggleSkipTests"
+            class="org.jetbrains.idea.maven.project.actions.ToggleSkipTestsAction" text="Toggle 'Skip Tests' Mode"
+            description="Toggle 'Skip tests' mode for Maven builds"
+            icon="/nodes/exceptionClass.png">
+    </action>
+
+    <action id="Maven.Help"
+            class="com.intellij.ide.actions.ContextHelpAction" text="Help"/>
+
+    <group id="Maven.NavigatorSettingsGroup">
+      <action id="Maven.GroupProjects"
+              class="org.jetbrains.idea.maven.navigator.actions.GroupProjectsAction"
+              text="Group Projects"
+              description="Group projects according to Maven structure"
+              icon="/nodes/folder.png"/>
+      <action id="Maven.ShowIgnored"
+              class="org.jetbrains.idea.maven.navigator.actions.ShowIgnoredProjectsAction"
+              text="Show Ignored Projects"
+              description="Show ignored projects"
+              icon="/actions/showHiddens.png"/>
+      <action id="Maven.ShowBasicPhasesOnly"
+              class="org.jetbrains.idea.maven.navigator.actions.ShowBasicPhasesOnlyAction"
+              text="Show Basic Phases Only"
+              description="Show basic phases only"
+              icon="/images/filterPhases.png"/>
+    </group>
+
+    <group id="Maven.TasksGroup">
+      <action id="Maven.BeforeCompile"
+              class="org.jetbrains.idea.maven.tasks.actions.ToggleBeforeCompileTasksAction" text="Execute Before Make"
+              description="Execute selected phase/goal before Make">
+      </action>
+      <action id="Maven.AfterCompile"
+              class="org.jetbrains.idea.maven.tasks.actions.ToggleAfterCompileTasksAction" text="Execute After Make"
+              description="Execute selected phase/goal after Make">
+      </action>
+      <action id="Maven.BeforeRun"
+              class="org.jetbrains.idea.maven.tasks.actions.ToggleBeforeRunTaskAction" text="Execute Before Run/Debug..."
+              description="Execute selected phase/goal before launching Run/Debug configuration">
+      </action>
+      <separator/>
+      <action id="Maven.AssignShortcut"
+              class="org.jetbrains.idea.maven.tasks.actions.AssignShortcutAction" text="Assign Shortcut..."
+              description="Assign shortcutto selected phase/goal">
+      </action>
+    </group>
+
+    <group id="Maven.NavigatorToolbar" description="Maven Projects Navigator Toolbar">
+      <reference id="Maven.Reimport"/>
+      <reference id="Maven.UpdateFolders"/>
+      <reference id="Maven.DownloadArtifacts"/>
+      <separator/>
+      <reference id="Maven.AddManagedFiles"/>
+      <separator/>
+      <reference id="Maven.RunBuild"/>
+      <reference id="Maven.ToggleOffline"/>
+      <reference id="Maven.ToggleSkipTests"/>
+      <separator/>
+      <reference id="Maven.ShowSettings"/>
+      <reference id="Maven.ShowTemplateSettings"/>
+      <separator/>
+      <reference id="Maven.NavigatorSettingsGroup"/>
+      <separator/>
+      <reference id="Maven.Help"/>
+    </group>
+
+    <group id="Maven.BaseProjectMenu">
+      <reference id="Maven.ReimportProject"/>
+      <reference id="Maven.UpdateFoldersForProject"/>
+      <reference id="Maven.DownloadArtifactsForProject"/>
+      <separator/>
+      <reference id="Maven.IgnoreProjects"/>
+      <reference id="Maven.RemoveManagedFiles"/>
+      <separator/>
+      <reference id="Maven.OpenProfilesXml"/>
+      <reference id="Maven.OpenSettingsXml"/>
+      <separator/>
+    </group>
+
+    <group id="Maven.NavigatorProjectMenu" popup="true">
+      <reference ref="Maven.BaseProjectMenu"/>
+      <separator/>
+      <reference id="Maven.RunBuild"/>
+      <reference ref="RunContextGroup"/>
+      <separator/>
+      <reference id="EditSource"/>
+    </group>
+
+    <group id="Maven.BuildMenu" popup="true">
+      <reference id="Maven.RunBuild"/>
+      <reference ref="RunContextGroup"/>
+      <separator/>
+      <reference ref="Maven.TasksGroup"/>
+    </group>
+
+    <group id="Maven.GlobalProjectMenu" class="org.jetbrains.idea.maven.utils.actions.MavenActionGroup" popup="true" text="Maven"
+           icon="/images/mavenLogo.png">
+      <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+      <reference ref="Maven.BaseProjectMenu"/>
+    </group>
+
+    <group id="Maven.GenerateGroup" text="Generate">
+      <add-to-group group-id="GenerateGroup" anchor="last"/>
+
+      <action id="GenerateDependency" text="Dependency" class="org.jetbrains.idea.maven.dom.generate.GenerateDependencyAction"/>
+      <action id="GenerateParent" text="Parent" class="org.jetbrains.idea.maven.dom.generate.GenerateParentAction"/>
+    </group>
+  </actions>
+</idea-plugin>

@@ -1,0 +1,1 @@
+class B extends <ref>A {}

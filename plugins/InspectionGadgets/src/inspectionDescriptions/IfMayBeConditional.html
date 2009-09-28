@@ -1,0 +1,22 @@
+<html>
+<body><table> <tr> <td valign="top" height="150">
+<font face="verdana" size="-1">
+This inspection reports any <b><font color="#000080">if</font></b>
+statements with then and <b><font color="#000080">else</font></b> branches which
+are both assignment expressions or both <b><font color="#000080">return</font></b>
+statements. The same semantics can be expressed more compactly, and arguably
+more clearly, with a conditional expression. Example:
+</font>
+<pre>
+  <b><font color="#000080">if</font></b> (foo == null) {
+    bar = null;
+  } <b><font color="#000080">else</font></b> {
+    bar = foo.get();
+  }
+</pre>
+<font face="verdana" size="-1">may be expressed as:</font>
+<pre>
+  bar = foo ==  null ? null : foo.get();
+</pre>
+</td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">New in 8, Powered by InspectionGadgets </font> </td> </tr> </table> </body>
+</html>

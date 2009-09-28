@@ -1,0 +1,52 @@
+strictfp int evaluate (int a, int b) {
+  def class a {}
+}
+-----
+Groovy script
+  Method
+    Modifiers
+      PsiElement(strictfp)('strictfp')
+    PsiWhiteSpace(' ')
+    Built in type
+      PsiElement(int)('int')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('evaluate')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Parameter list
+      Parameter
+        Modifiers
+          <empty list>
+        Built in type
+          PsiElement(int)('int')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('a')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Parameter
+        Modifiers
+          <empty list>
+        Built in type
+          PsiElement(int)('int')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('b')
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Throw clause
+      <empty list>
+    Open block
+      PsiElement({)('{')
+      PsiWhiteSpace('\n  ')
+      Class definition
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        PsiElement(class)('class')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('a')
+        PsiWhiteSpace(' ')
+        Type definition body
+          PsiElement({)('{')
+          PsiElement(})('}')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

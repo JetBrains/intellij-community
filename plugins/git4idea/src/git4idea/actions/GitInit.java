@@ -1,0 +1,123 @@
+/*
+ * Copyright 2000-2008 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package git4idea.actions;
+
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitUtil;
+import git4idea.GitVcs;
+import git4idea.commands.GitHandler;
+import git4idea.commands.GitSimpleHandler;
+import git4idea.i18n.GitBundle;
+import git4idea.ui.GitUIUtil;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+/**
+ * Initialize git repository action
+ */
+public class GitInit extends AnAction {
+  /**
+   * {@inheritDoc}
+   */
+  public void actionPerformed(final AnActionEvent e) {
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    if (project == null) {
+      return;
+    }
+    FileChooserDescriptor fcd = new FileChooserDescriptor(false, true, false, false, false, false);
+    fcd.setShowFileSystemRoots(true);
+    fcd.setTitle(GitBundle.getString("init.destination.directory.title"));
+    fcd.setDescription(GitBundle.getString("init.destination.directory.description"));
+    fcd.setHideIgnored(false);
+    final VirtualFile baseDir = project.getBaseDir();
+    final VirtualFile[] files = FileChooser.chooseFiles(project, fcd, baseDir);
+    if (files.length == 0) {
+      return;
+    }
+    VirtualFile root = files[0];
+    if (GitUtil.isUnderGit(root)) {
+      Messages.showErrorDialog(project, GitBundle.message("init.error.already.under.git", root.getPresentableUrl()),
+                               GitBundle.getString("init.error.title"));
+      return;
+    }
+    try {
+      GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.INIT);
+      h.setNoSSH(true);
+      h.run();
+    }
+    catch (VcsException ex) {
+      GitUIUtil.showOperationError(project, ex, "git init");
+    }
+    int rc = Messages.showYesNoDialog(project, GitBundle.getString("init.add.root.message"), GitBundle.getString("init.add.root.title"),
+                                      Messages.getQuestionIcon());
+    if (rc != 0) {
+      return;
+    }
+    final String path = root.equals(baseDir) ? "" : root.getPath();
+    ProjectLevelVcsManager vcs = ProjectLevelVcsManager.getInstance(project);
+    final List<VcsDirectoryMapping> vcsDirectoryMappings = new ArrayList<VcsDirectoryMapping>(vcs.getDirectoryMappings());
+    VcsDirectoryMapping mapping = new VcsDirectoryMapping(path, GitVcs.getInstance(project).getName());
+    for (int i = 0; i < vcsDirectoryMappings.size(); i++) {
+      final VcsDirectoryMapping m = vcsDirectoryMappings.get(i);
+      if (m.getDirectory().equals(path)) {
+        if (m.getVcs().length() == 0) {
+          vcsDirectoryMappings.set(i, mapping);
+          mapping = null;
+          break;
+        }
+        else if (m.getVcs().equals(mapping.getVcs())) {
+          mapping = null;
+          break;
+        }
+      }
+    }
+    if (mapping != null) {
+      vcsDirectoryMappings.add(mapping);
+    }
+    vcs.setDirectoryMappings(vcsDirectoryMappings);
+    vcs.updateActiveVcss();
+    GitUtil.refreshFiles(project, Collections.singleton(root));
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void update(AnActionEvent e) {
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    Presentation presentation = e.getPresentation();
+    if (project == null) {
+      presentation.setEnabled(false);
+      presentation.setVisible(false);
+      return;
+    }
+    presentation.setEnabled(true);
+    presentation.setVisible(true);
+  }
+}

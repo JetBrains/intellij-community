@@ -1,0 +1,10 @@
+protected static def getGeneratedFileNames() {
+    foo = ""
+    if (true) {
+        <selection>println( foo)</selection>
+    }
+}
+-----
+input:
+foo
+output:

@@ -1,0 +1,20 @@
+<html>
+<body><table> <tr> <td valign="top" height="150">
+<font face="verdana" size="-1">
+This inspection reports on instances of non-<b><font color="#000080">Serializable</font></b>
+fields in <b><font color="#000080">Serializable</font></b> classes.  Such fields will result
+in runtime exceptions if the object is serialized.  Fields declared
+<b><font color="#000080">transient</font></b> or <b><font color="#000080">static</font></b>
+are not reported, nor are fields of classes which have defined a <b><font color="#000080">writeObject</font></b>
+method. For purposes of this inspection, fields with
+<b><font color="#000080">java.util.Collection</font></b> or
+<b><font color="#000080">java.util.Map</font></b> types are assumed to be
+<b><font color="#000080">Serializable</font></b>, unless the types
+they are declared to contain are non-<b><font color="#000080">Serializable</font></b>.
+<p>
+Use the table below to specify what specific classes and inheritors should be excluded
+from being checked by this inspection. This is meant for those classes which, although they inherit
+Serializable from a superclass, are not intended for serialization. Such classes would lead this
+inspection to report unnecessarily.
+</font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
+</html>

@@ -1,0 +1,41 @@
+{ def Map<String> map, c
+return 1+2 }
+-----
+Groovy script
+  Closable block
+    PsiElement({)('{')
+    PsiWhiteSpace(' ')
+    Parameter list
+      <empty list>
+    Variable definitions
+      Modifiers
+        PsiElement(def)('def')
+      PsiWhiteSpace(' ')
+      Type element
+        Reference element
+          PsiElement(identifier)('Map')
+          Type arguments
+            PsiElement(<)('<')
+            Type element
+              Reference element
+                PsiElement(identifier)('String')
+            PsiElement(>)('>')
+      PsiWhiteSpace(' ')
+      Variable
+        PsiElement(identifier)('map')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Variable
+        PsiElement(identifier)('c')
+    PsiElement(new line)('\n')
+    RETURN statement
+      PsiElement(return)('return')
+      PsiWhiteSpace(' ')
+      Additive expression
+        Literal
+          PsiElement(Integer)('1')
+        PsiElement(+)('+')
+        Literal
+          PsiElement(Integer)('2')
+    PsiWhiteSpace(' ')
+    PsiElement(})('}')

@@ -1,0 +1,15 @@
+<html>
+<body><table> <tr> <td valign="top" height="150">
+<font face="verdana" size="-1">
+This inspection reports on instances of exceptions constructed and thrown
+from inside <b><font color="#000080">catch</font></b> blocks, which do not "wrap" the caught
+exception.  It is considered good practice when throwing an exception in response to an exception
+to wrap the initial exception, so that valuable context information
+such as stack frames and line numbers are not lost.
+<p>
+Use the checkbox below to indicate if the inspection should ignore exceptions which
+receive the result of a method call on the original exception, such as 'getMessage()',
+as an argument.
+</p>
+</font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
+</html>

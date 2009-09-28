@@ -1,0 +1,36 @@
+class BacklogItem { String code String title }
+-----
+Groovy script
+  Class definition
+    Modifiers
+      <empty list>
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('BacklogItem')
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiWhiteSpace(' ')
+      Variable definitions
+        Modifiers
+          <empty list>
+        Type element
+          Reference element
+            PsiElement(identifier)('String')
+        PsiWhiteSpace(' ')
+        Field
+          PsiElement(identifier)('code')
+      PsiErrorElement:';', '}' or new line expected
+        <empty list>
+      PsiWhiteSpace(' ')
+      Variable definitions
+        Modifiers
+          <empty list>
+        Type element
+          Reference element
+            PsiElement(identifier)('String')
+        PsiWhiteSpace(' ')
+        Field
+          PsiElement(identifier)('title')
+      PsiWhiteSpace(' ')
+      PsiElement(})('}')

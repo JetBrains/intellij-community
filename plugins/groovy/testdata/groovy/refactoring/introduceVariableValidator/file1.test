@@ -1,0 +1,8 @@
+<begin>0<end>
+
+def foo(int preved) {
+  def k = 5
+  pritnln preved
+}
+-----
+ok

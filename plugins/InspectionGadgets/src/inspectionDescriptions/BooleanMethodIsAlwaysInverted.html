@@ -1,0 +1,19 @@
+<html>
+<body>
+<font face="verdana" size="-1">This inspection reports methods with <code>boolean</code> return type
+  which usages are always occur in negated context.
+ <p>
+For example:
+<code><pre>
+<b><font color="#000080">class</font></b> C {
+ <b><font color="#000080">boolean</font></b> inverted() { return <b><font color="#000080">true</font></b>; }
+ <b><font color="#000080">void</font></b> f() {
+    <b><font color="#000080">if</font></b> (!inverted()) { <b><font color="#000080">return</font></b>; }
+ }
+ <b><font color="#000080">boolean</font></b> member = !inverted();
+}  
+</pre></code>
+
+</font>
+</body>
+</html>

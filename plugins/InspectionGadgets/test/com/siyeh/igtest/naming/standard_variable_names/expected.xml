@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+
+  <problem>
+    <file>StandardVariableNames.java</file>
+    <line>6</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Standard variable names</problem_class>
+    <description>Variable named &lt;code&gt;c&lt;/code&gt; doesn't have type 'char' or 'java.lang.Character' #loc</description>
+  </problem>
+
+  <problem>
+    <file>StandardVariableNames.java</file>
+    <line>7</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Standard variable names</problem_class>
+    <description>Variable named &lt;code&gt;ch&lt;/code&gt; doesn't have type 'char' or 'java.lang.Character' #loc</description>
+  </problem>
+
+  <problem>
+    <file>StandardVariableNames.java</file>
+    <line>8</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Standard variable names</problem_class>
+    <description>Variable named &lt;code&gt;d&lt;/code&gt; doesn't have type 'double' or 'java.lang.Double' #loc</description>
+  </problem>
+
+  <problem>
+    <file>StandardVariableNames.java</file>
+    <line>9</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Standard variable names</problem_class>
+    <description>Variable named &lt;code&gt;f&lt;/code&gt; doesn't have type 'float' or 'java.lang.Float' #loc</description>
+  </problem>
+
+  <problem>
+    <file>StandardVariableNames.java</file>
+    <line>10</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Standard variable names</problem_class>
+    <description>Variable named &lt;code&gt;i&lt;/code&gt; doesn't have type 'int' or 'java.lang.Integer' #loc</description>
+  </problem>
+
+  <problem>
+    <file>StandardVariableNames.java</file>
+    <line>10</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Standard variable names</problem_class>
+    <description>Variable named &lt;code&gt;j&lt;/code&gt; doesn't have type 'int' or 'java.lang.Integer' #loc</description>
+  </problem>
+
+  <problem>
+    <file>StandardVariableNames.java</file>
+    <line>10</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Standard variable names</problem_class>
+    <description>Variable named &lt;code&gt;k&lt;/code&gt; doesn't have type 'int' or 'java.lang.Integer' #loc</description>
+  </problem>
+
+  <problem>
+    <file>StandardVariableNames.java</file>
+    <line>10</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Standard variable names</problem_class>
+    <description>Variable named &lt;code&gt;m&lt;/code&gt; doesn't have type 'int' or 'java.lang.Integer' #loc</description>
+  </problem>
+
+  <problem>
+    <file>StandardVariableNames.java</file>
+    <line>10</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Standard variable names</problem_class>
+    <description>Variable named &lt;code&gt;n&lt;/code&gt; doesn't have type 'int' or 'java.lang.Integer' #loc</description>
+  </problem>
+
+  <problem>
+    <file>StandardVariableNames.java</file>
+    <line>11</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Standard variable names</problem_class>
+    <description>Variable named &lt;code&gt;l&lt;/code&gt; doesn't have type 'long' or 'java.lang.Long' #loc</description>
+  </problem>
+
+  <problem>
+    <file>StandardVariableNames.java</file>
+    <line>12</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Standard variable names</problem_class>
+    <description>Variable named &lt;code&gt;s&lt;/code&gt; doesn't have type 'java.lang.String' #loc</description>
+  </problem>
+
+  <problem>
+    <file>StandardVariableNames.java</file>
+    <line>13</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Standard variable names</problem_class>
+    <description>Variable named &lt;code&gt;str&lt;/code&gt; doesn't have type 'java.lang.String' #loc</description>
+  </problem>
+</problems>

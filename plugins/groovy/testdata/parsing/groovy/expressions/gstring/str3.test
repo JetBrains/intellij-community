@@ -1,0 +1,8 @@
+"My $str. ing"
+-----
+Groovy script
+  Compound Gstring
+    PsiElement(Gstring begin)('"My $')
+    Reference expression
+      PsiElement(identifier)('str')
+    PsiElement(Gstring end)('. ing"')

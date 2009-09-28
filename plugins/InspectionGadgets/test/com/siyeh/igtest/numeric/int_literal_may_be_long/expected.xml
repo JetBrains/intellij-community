@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  
+  <problem>
+    <file>IntLiteralMayBeLong.java</file>
+    <line>6</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">int literal cast to long could be long literal</problem_class>
+    <description>&lt;code&gt;(long) 1&lt;/code&gt; could be replaced with '1L'</description>
+  </problem>
+</problems>

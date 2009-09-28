@@ -1,0 +1,16 @@
+<html>
+<body><table> <tr> <td valign="top" height="150">
+<font face="verdana" size="-1">
+This inspection reports any instances of static variables being lazily initialized
+in an non-thread-safe manner. Lazy initialization of static variables should be done
+in an appropriate synchronization construct, to prevent different threads from
+performing conflicting initialization.<br>
+  If applicable, quick-fix is suggested
+  which introduces static holder pattern described in
+  <a  href="http://en.wikipedia.org/wiki/Initialization_on_demand_holder_idiom">
+    http://en.wikipedia.org/wiki/Initialization_on_demand_holder_idiom
+  </a>
+  
+where the JVM guarantees thread-safety of such initializations.
+</font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
+</html>

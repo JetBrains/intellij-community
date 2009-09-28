@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+
+  <problem>
+    <file>ExceptionNameDoesntEndWithException.java</file>
+    <line>7</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Exception class name does not end with 'Exception'</problem_class>
+    <description>Exception class name &lt;code&gt;X&lt;/code&gt; does not end with 'Exception' #loc</description>
+  </problem>
+  
+</problems>

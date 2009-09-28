@@ -1,0 +1,8 @@
+<xsl:choose>
+  <xsl:when test="true()">
+    something
+  </xsl:when>
+  <xsl:otherwise>
+  
+  </xsl:otherwise>
+</xsl:choose>

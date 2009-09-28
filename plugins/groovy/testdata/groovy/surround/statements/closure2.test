@@ -1,0 +1,20 @@
+def a() {
+    <selection>call()</selection>
+}
+
+def call() {
+    print "in call"
+}
+
+a()
+-----
+def a() {
+  {-> owner.call()
+  }.call()
+}
+
+def call() {
+  print "in call"
+}
+
+a()

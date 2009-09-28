@@ -1,0 +1,11 @@
+<html>
+<body><table> <tr> <td valign="top" height="150">
+<font face="verdana" size="-1">
+This inspection reports any attempt to return a  <b><font color="#000080">java.lang.Date</font></b> or
+<b><font color="#000080">java.lang.Calendar</font></b> field from a method. Since
+<b><font color="#000080">Date</font></b> or <b><font color="#000080">Calendar</font></b> are often
+treated as immutable values but are actually mutable, this construct may
+result in an object having its state modified unexpectedly.  While occasionally useful for performance
+reasons, this construct is inherently bug-prone.
+</font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
+</html>

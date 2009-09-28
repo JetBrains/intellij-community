@@ -1,0 +1,7 @@
+contributor(context()) {
+  if (classType?.hasAnnotation("groovy.lang.Singleton")) {
+    property name: "instance",
+             type: classType?.getQualifiedName() ?: "java.lang.Object",
+             isStatic: true
+  }
+}

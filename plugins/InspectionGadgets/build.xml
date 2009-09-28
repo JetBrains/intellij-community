@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<project name="InspectionGadgets" default="compile">
+    <taskdef name="javac2" classname="com.intellij.ant.Javac2" classpathref="project.class.path"/>
+    <property name="src.dir" value="src"/>
+    <property name="idea.dir" value="\Applications\Demetra"/>
+    <property name="idea.plugin.dir" value="\Users\dgriffith\Library\Application Support\IntelliJIdea60"/>
+    <property name="debug" value="true"/>
+    <property name="optimize" value="off"/>
+    <property name="deprecation" value="off"/>
+    <property name="project.fullname" value="InspectionGadgets"/>
+    <property name="project.version" value="1.0"/>
+    <property name="jar.file" value="InspectionGadgets.jar"/>
+    <property name="resources.file" value="resources_en.jar"/>
+    <property name="dist.zip.file" value="${project.fullname}.${project.version}.zip"/>
+
+    <path id="project.class.path">
+        <pathelement location="${idea.dir}/lib/openAPI.jar"/>
+        <pathelement location="${idea.dir}/lib/idea.jar"/>
+        <pathelement location="${idea.dir}/lib/jdom.jar"/>
+        <pathelement location="${idea.dir}/lib/extensions.jar"/>
+    </path>
+
+    <target name="init">
+        <property name="build.classes.dir" value="classes"/>
+        <property name="src.dir" value="src"/>
+        <property name="build.compiler" value="modern"/>
+    </target>
+
+    <target name="prepare" depends="init">
+        <mkdir dir="${build.classes.dir}"/>
+    </target>
+
+    <target name="compile" depends="prepare">
+        <javac2 srcdir="${src.dir}" destdir="${build.classes.dir}" includes="com/siyeh/**" debug="${debug}">
+            <classpath refid="project.class.path"/>
+        </javac2>
+    </target>
+
+    <target name="deploy" depends="clean, compile" description="deploy the plugin">
+        <delete file="${jar.file}"/>
+        <jar
+            jarfile="${jar.file}">
+            <fileset dir="${build.classes.dir}"/>
+            <fileset dir="${src.dir}">
+                <include name="META-INF/plugin.xml"/>
+            </fileset>
+
+        </jar>
+        <delete file="${resources.file}"/>
+        <jar
+            jarfile="${resources.file}">
+            <fileset dir="${src.dir}">
+                <include name="inspectionDescriptions/**"/>
+            </fileset>
+            <fileset dir="src">
+                <include name="com/siyeh/InspectionGadgetsBundle.properties"/>
+            </fileset>
+
+        </jar>
+        <mkdir dir="${idea.plugin.dir}"/>
+        <mkdir dir="${idea.plugin.dir}/InspectionGadgets"/>
+        <mkdir dir="${idea.plugin.dir}/InspectionGadgets/lib"/>
+        <copy file="${jar.file}" todir="${idea.plugin.dir}/InspectionGadgets/lib" overwrite="true" />
+        <copy file="${resources.file}" todir="${idea.plugin.dir}/InspectionGadgets/lib" overwrite="true" />
+    </target>
+
+    <target name="clean" depends="init" description="Cleans up the distribution">
+        <delete failonerror="false"  dir="${build.classes.dir}"/>
+        <delete failonerror="false"  file="${jar.file}"/>
+    </target>
+
+
+</project>

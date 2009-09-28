@@ -1,0 +1,17 @@
+matcher = "\$abc." =~ /\$(.*)\./
+-----
+Groovy script
+  Assignment expression
+    Reference expression
+      PsiElement(identifier)('matcher')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    RegexFindExpression
+      Literal
+        PsiElement(Gstring)('"\$abc."')
+      PsiWhiteSpace(' ')
+      PsiElement(=~)('=~')
+      PsiWhiteSpace(' ')
+      Literal
+        PsiElement(regexp)('/\$(.*)\./')

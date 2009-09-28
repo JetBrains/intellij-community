@@ -1,0 +1,4 @@
+foo(""<caret>)
+-----
+foo(""
+<caret>)

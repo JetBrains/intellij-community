@@ -1,0 +1,24 @@
+public String toString() {
+#if ( $members.size() > 0 )
+#set ( $i = 0 )
+    return "$classname{" +
+#foreach( $member in $members )
+#if ( $i == 0 )
+    "##
+#else
+    ", ##
+#end
+#if ( $member.objectArray )
+$member.name=" + ($member.accessor == null ? null : Arrays.asList($member.accessor)) +
+#elseif ( $member.string )
+$member.name='" + $member.accessor + '\'' +
+#else
+$member.name=" + $member.accessor +
+#end
+#set ( $i = $i + 1 )
+#end
+    '}';
+#else
+    return "$classname{}";
+#end
+}

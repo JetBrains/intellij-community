@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>CharUsedInArithmeticContext.java</file>
+    <line>10</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Char expression used in arithmetic context</problem_class>
+    <description>char &lt;code&gt;'a'&lt;/code&gt; used in arithmetic context</description>
+  </problem>
+
+  <problem>
+    <file>CharUsedInArithmeticContext.java</file>
+    <line>14</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Char expression used in arithmetic context</problem_class>
+    <description>char &lt;code&gt;'-'&lt;/code&gt; used in arithmetic context</description>
+  </problem>
+</problems>

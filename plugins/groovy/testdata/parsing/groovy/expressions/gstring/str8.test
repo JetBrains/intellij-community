@@ -1,0 +1,26 @@
+"My $str$ing nax"
+"My ${str}$ing nax"
+-----
+Groovy script
+  Compound Gstring
+    PsiElement(Gstring begin)('"My $')
+    Reference expression
+      PsiElement(identifier)('str')
+    PsiElement(Gstring content)('$')
+    Reference expression
+      PsiElement(identifier)('ing')
+    PsiElement(Gstring end)(' nax"')
+  PsiElement(new line)('\n')
+  Compound Gstring
+    PsiElement(Gstring begin)('"My $')
+    Closable block
+      PsiElement({)('{')
+      Parameter list
+        <empty list>
+      Reference expression
+        PsiElement(identifier)('str')
+      PsiElement(})('}')
+    PsiElement(Gstring content)('$')
+    Reference expression
+      PsiElement(identifier)('ing')
+    PsiElement(Gstring end)(' nax"')

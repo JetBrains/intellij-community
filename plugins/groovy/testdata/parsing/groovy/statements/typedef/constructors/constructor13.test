@@ -1,0 +1,73 @@
+class a {
+  def a = 8
+  private a (s, p) { 5; super (s, p)}
+}
+-----
+Groovy script
+  Class definition
+    Modifiers
+      <empty list>
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiWhiteSpace('\n  ')
+      Variable definitions
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        Field
+          PsiElement(identifier)('a')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiWhiteSpace(' ')
+          Literal
+            PsiElement(Integer)('8')
+      PsiElement(new line)('\n  ')
+      Constructor
+        Modifiers
+          PsiElement(private)('private')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('a')
+        PsiWhiteSpace(' ')
+        PsiElement(()('(')
+        Parameter list
+          Parameter
+            Modifiers
+              <empty list>
+            PsiElement(identifier)('s')
+          PsiElement(,)(',')
+          PsiWhiteSpace(' ')
+          Parameter
+            Modifiers
+              <empty list>
+            PsiElement(identifier)('p')
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        Throw clause
+          <empty list>
+        Open block
+          PsiElement({)('{')
+          PsiWhiteSpace(' ')
+          Literal
+            PsiElement(Integer)('5')
+          PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          Method call
+            'super' reference expression
+              PsiElement(super)('super')
+            PsiWhiteSpace(' ')
+            Arguments
+              PsiElement(()('(')
+              Reference expression
+                PsiElement(identifier)('s')
+              PsiElement(,)(',')
+              PsiWhiteSpace(' ')
+              Reference expression
+                PsiElement(identifier)('p')
+              PsiElement())(')')
+          PsiElement(})('}')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

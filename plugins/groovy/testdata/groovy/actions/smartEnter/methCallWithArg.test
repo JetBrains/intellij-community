@@ -1,0 +1,8 @@
+def () {
+  a(<caret>
+}
+-----
+def () {
+  a(
+<caret>
+}

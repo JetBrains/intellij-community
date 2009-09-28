@@ -1,0 +1,31 @@
+    Logging not wrapped in if block
+    Public method without logging
+    Logger constructed without the current class name as argument.
+    Configure Log4J in a file
+    Prohibitted Log4J levels
+    Class name with forbidden name component
+    JDBC close order
+    JDBC connection createStatement()
+    Look for ArrayIndexOutOfBounds errors statically
+    Read or write on non-buffered stream
+    Static initializer which creates an instance before all static variables are initialized
+    getClass().getResource()
+    Inefficient use of keySet iterator rather than entrySet iterator
+    Constant month outside range of 0..11
+    Duplicate switch branches
+    Command-Query separation
+    Long Mesage chain
+    Constants with equal value
+    Inaccessible matching methods
+    Complex assignments
+    Mixed logical operators without parentheses
+    Use of XML class without factory
+    Thread started multiple times
+    Thread started without being named.
+    Eternal thread
+    Poor handling of interrupted flag
+    lock for atomic operation
+    Daemon thread
+    Looping thread doesn't check for interrupt
+    join() on eternal thread
+    Splittable lock

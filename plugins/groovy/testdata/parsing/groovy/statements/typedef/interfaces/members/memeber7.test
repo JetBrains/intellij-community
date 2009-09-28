@@ -1,0 +1,68 @@
+interface a {
+  def a ()
+
+  def b ();
+  String c () {};;
+}
+-----
+Groovy script
+  Interface definition
+    Modifiers
+      <empty list>
+    PsiElement(interface)('interface')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiWhiteSpace('\n  ')
+      Method
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('a')
+        PsiWhiteSpace(' ')
+        PsiElement(()('(')
+        Parameter list
+          <empty list>
+        PsiElement())(')')
+        Throw clause
+          <empty list>
+      PsiElement(new line)('\n\n  ')
+      Method
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('b')
+        PsiWhiteSpace(' ')
+        PsiElement(()('(')
+        Parameter list
+          <empty list>
+        PsiElement())(')')
+        Throw clause
+          <empty list>
+      PsiElement(;)(';')
+      PsiElement(new line)('\n  ')
+      Method
+        Modifiers
+          <empty list>
+        Type element
+          Reference element
+            PsiElement(identifier)('String')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('c')
+        PsiWhiteSpace(' ')
+        PsiElement(()('(')
+        Parameter list
+          <empty list>
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        Throw clause
+          <empty list>
+        Open block
+          PsiElement({)('{')
+          PsiElement(})('}')
+      PsiElement(;)(';')
+      PsiElement(;)(';')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

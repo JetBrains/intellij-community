@@ -1,0 +1,15 @@
+<html>
+<body><table> <tr> <td valign="top" height="150">
+<font face="verdana" size="-1">
+This inspection reports any <b><font color="#000080">while</font></b>,
+<b><font color="#000080">do-while</font></b> and <b><font color="#000080">for</font></b>
+loops which have the constant <b><font color="#000080">true</font></b> as their
+only condition, but which still can be terminated by a containing
+<b><font color="#000080">if</font></b> statement which can break out of the loop.
+This <b><font color="#000080">if</font></b> statement must be the first or only statement
+in a <b><font color="#000080">while</font></b> or <b><font color="#000080">for</font></b>
+loops and the last or only statement in a <b><font color="#000080">do-while</font></b> loop.
+Such a loop would be clearer if the if statement was removed and its condition
+was made an explicit loop condition.
+</font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">New in 7, Powered by InspectionGadgets </font> </td> </tr> </table> </body>
+</html>

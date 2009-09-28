@@ -1,0 +1,20 @@
+A b, d =
+-----
+Groovy script
+  Variable definitions
+    Modifiers
+      <empty list>
+    Type element
+      Reference element
+        PsiElement(identifier)('A')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('b')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('d')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiErrorElement:Expression expected
+        <empty list>

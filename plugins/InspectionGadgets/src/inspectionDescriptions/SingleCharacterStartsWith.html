@@ -1,0 +1,15 @@
+<html>
+<body><table> <tr> <td valign="top" height="150">
+<font face="verdana" size="-2">
+This inspection is intended for J2ME and other highly resource constrained environments.
+Applying the results of this inspection without consideration might have negative effects on code clarity and design.
+</font>
+<font face="verdana" size="-1"><p>
+This inspection reports any calls to <b><font color="#000080">String.startsWith()</font></b> or
+<b><font color="#000080">String.endsWith()</font></b> which are passed single character string
+literals as parameter. Such calls may be more efficiently implemented with
+<b><font color="#000080">String.charAt()</font></b>. Because the performance gain is
+minimal, the needed extra check for non-zero length, and the negative effect on
+code clarity, it is recommended to do so only inside tight loops.
+</p></font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
+</html>

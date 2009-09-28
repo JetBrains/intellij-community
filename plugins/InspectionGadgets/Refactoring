@@ -1,0 +1,182 @@
+Just going through to see what's new/changed, and a couple small
+thoughts to do with as you will.  I know this is a lot, but I hope it's
+useful feedback, whatever you do with it.
+
+>(*) Abstraction->Raw types
+>Shouldn't this be disabled unless under 1.5 (like @Deprecated), or at
+>least have that as an option?  Probably a general thing about generics
+>-- some folks used the 1.4 version but others did not.  I don't know
+>how to do it, but maybe a checkbox to disable/enable all generic checks
+>under 1.4?
+
+This is one that actually only turns itself on under 1.5 more or less automatically,
+since you'll only see this if you are coding against classes that have type arguments.
+If you're using the 1.5 libraries, you should probably be using them with parameters.
+
+
+>(*) Class Struct->Static inheritence
+>This is only avoidable easily with 1.5 imports of fields.  Maybe this
+>also should have a "enable only if 1.5".
+
+Strongly disagree.  Static inheritance can easily be avoided even with earlier JVMs,
+simply by qualifying all the references. Indeed, there's now a quickfix that does
+just that.  This is a best practice, as static inheritance unnecessarily pollutes
+generated Javadoc, as well as being very iffy from an OO theory standpoint.
+
+>(*) Cloning->doesn't throw CNSE
+>I don't know who should ever turn this on.  If you are making a class
+>cloneable, you often will not throw CNSE.
+You want clone() to throw CNSE so that subclasses which don't wish to support cloning
+can be written.  Not a major use, but somewhat important for those writing libraries,
+and often forgotten.
+
+(*) General
+>Just a question: How do you decide whether a check is "General" or
+>"Code Style"?  Just wondering.
+
+All of the "General" and "Local Analysis" inspections are built-in by JetBrains.
+I've asked them about making more descriptive names, but haven't got a response.
+
+>Maybe I should be clear -- I want to use one setting for errors and
+>switch between projects in 1.5 and 1.4.  So I don't want to play around
+>with these settings.  For example, I want to use annotations properly
+>in 1.5 code and not see them at all in code that I want to keep 1.4
+>compatible.
+
+I have two separate but largely similar profiles for just that purpose.
+
+>Should be able to say "Same as <drop down list of other conventions>".
+
+Sadly, the current API prohibits that.  I'll open a ticket.
+
+>(*) Performance issues
+>I just want to mark some disquiet here.
+
+I generally agree, but will note that there is one compelling counterargument.
+J2ME environments count cycles and class file bytes like a supermodel counts
+calories, and for good solid engineering and economic reasons.  They generally
+lack JITs and state-of-the-art GC.  I'm adding some (frankly odd) J2ME specific
+inspections in the next release, and will probably move some of the "Performance"
+issues to the new "J2ME" category.  Certainly
+"Field repeatedly accessed in method" and "Anonymous inner class may be made
+named static inner class" will be moved to J2ME, as you
+are quite right that stuff like that simply doesn't matter to any rational
+J2SE or J2EE application.  "Inner class may be static" will probably be kept
+where it is, although that's up in the air.
+
+>(*) Performance issues -> StringBuffer field
+>This is not a performance issue, is it?
+I'm probably also splitting out a "Memory management" category.  StringBuffer fields
+are only a problem to the extent that they can grow larger than you expect,
+and are thus good places to search for memory leaks.
+
+>(*) Performance issues -> multiply/div by power of 2
+>This is flat wrong.
+Yup, this one will either be killed or moved to the "J2ME" category.
+
+>(*) Performance issues -> static collection
+>Should have an option to ignore WeakHashMap or possibly some list of
+>types (as in "prohibited exception" checks) that are weak collection
+>types.
+Ooh, good call.
+
+>(*) Portability issues -> Hardcoded file sep
+>Maybe an exception for URL classes?  Or strings that look like URLS?
+>In them, the slash dir is pre-defined.  (This is the reason I leave
+>this off -- it flags too many URL contents.)
+
+It should be filtering this already, the logic for guessing URL's is quite involved.
+'ll look into it.
+
+>(*) Confusing Code -> COnfusing 'else'
+>The description could use a simple example to show what you mean.
+Yup.
+
+>(*) Probable bugs -> compareto vs. compareTo
+>This is a special case of a general problem -- a subclass that provides
+>a method whose name differs only in case from that of an inherited
+>method.
+
+Good ideas.
+
+>(*) Probably bugs -> floating point equality
+>Have an option to ignore checks for 0.0 and -0.0?  And the constants in
+>Float and Double?  It's reasonable to say "if (f ==
+>Double.POSITIVE_INFINITY)", and 0.0 is a very well-defined value.
+
+Good idea.
+
+>A new check for comparsion to Double.NaN?  That's always false:
+>Double.NaN != Double.NaN.
+
+May already be implemented as a "constant condition" by IDEA.  If not, it's
+certainly a worthwhile candidate.
+
+>Compressible: the non-constant string exceptions.
+
+These were literally just added this weekend, and I'm going to let people play
+with them a bit before seeing how to modify them.  Compression and a general list
+solution are definitely within possible future scope.
+
+>(*) Security -> serializable
+>When would I have a serializable class that wasn't deserializable?  Is
+>this really two checks?  (If so, maybe they're compressible?)
+
+Say you subclass a Serializable library class, and want it to include secure
+information (or generally just want to make your project hyper-secure).  What
+you need to do then is explicitly make readObject() and writeObject() throw exceptions,
+to keep the bad guys from either writing your objects to a file or loading garbage
+objects into your application somehow.  Yes, these are probably compressible.
+
+(*) Serialization -> Instance var ...
+Two things: (1) "Instance var" is a "field".  Other places you use
+"field".  Probably ought to be consistent overall.  (I used -- nay,
+insisted upon -- "field" in my book because it's the thing people
+regularly say.); (2) You don't say whether you take
+
+>readObject and writeObject mismatched check?  Same for
+>readResolve/writeReplace?
+
+Good ones.
+
+>Why is there a separate check for being without serialVersionUID for
+>class and non-static inner class?
+
+Because the second is much more dangerous, as many more changes can cause the
+default serialVersionUID to break.
+
+>Check for readobject vs. readObject (as in compareto vs. compareTo)?
+>And for the other methods, or any other signature mismatch (a
+>readObject(Foo) method)?
+
+Reasonable.
+
+>(*) Verbose -> Redundant no-arg
+>This is a problem -- if you don't declare the no-arg ctor, then you
+>can't javadoc it, and that's bad.  At the least it should, by default,
+>not complain about such ctors that have javadoc.  Removing them is not
+>harmless.
+Good eye. I'll add a "ignore redundant no-arg constructors if javadoced" flag.
+
+>(*) Verbose -> Redundant type cast
+>Isn't this already somewhere about "Overly strong type casts"?
+>Wouldn't that catch all the same things?
+
+"Redundant" is JetBrains.  "Overly strong" is one of mine.  If one were designing
+from a blank sheet of paper, you would merge these
+
+>(*) Verbose -> Unn 'continue'
+>As a way of showing that a loop is *meant* to be empty, a common style
+>is this:
+>	while (...)
+>		continue;
+>In this case I would want that warning suppressed.  Probably need an
+>option.
+
+I've never seen such a style, but am not doubting you.  Perhaps an option.
+
+>(*) Verbose -> Unn boxing
+>Is there any reason someone would want to set this a different way than
+>they set Unn unboxing?  At least these seem compressible.
+
+Reasonable.

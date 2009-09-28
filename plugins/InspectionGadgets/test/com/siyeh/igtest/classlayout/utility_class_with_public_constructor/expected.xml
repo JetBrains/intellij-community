@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+
+  <problem>
+    <file>UtilityClassWithPublicConstructorInspection.java</file>
+    <line>3</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Utility class with 'public' constructor</problem_class>
+    <description>Class &lt;code&gt;UtilityClassWithPublicConstructorInspection&lt;/code&gt; has only 'static' members, and a 'public' constructor #loc</description>
+  </problem>
+
+</problems>

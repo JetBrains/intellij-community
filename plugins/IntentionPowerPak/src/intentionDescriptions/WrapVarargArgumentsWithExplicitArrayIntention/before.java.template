@@ -1,0 +1,5 @@
+public class X {
+  List f(<spot>int x, int y</spot>) {
+    return java.util.Arrays.asList(x, y);
+  }
+}

@@ -1,0 +1,15 @@
+Map i+i
+-----
+Groovy script
+  Variable definitions
+    Modifiers
+      <empty list>
+    Type element
+      Reference element
+        PsiElement(identifier)('Map')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('i')
+  PsiErrorElement:';' or new line expected
+    PsiElement(+)('+')
+    PsiElement(identifier)('i')

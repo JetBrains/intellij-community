@@ -1,0 +1,4 @@
+public class X {
+  void f(a,  b) {
+    return a?:b
+}

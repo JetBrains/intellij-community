@@ -1,0 +1,16 @@
+<html>
+<body><table> <tr> <td valign="top" height="150">
+<font face="verdana" size="-1">
+This inspection reports any attempt to instantiate a new <b><font color="#000080">Long</font></b>,
+<b><font color="#000080">Integer</font></b>, <b><font color="#000080">Short</font></b> or
+<b><font color="#000080">Byte</font></b> object from a primitive <b><font color="#000080">long</font></b>,
+<b><font color="#000080">integer</font></b>, <b><font color="#000080">short</font></b> or
+<b><font color="#000080">byte</font></b>
+argument. It may be more efficient to use the static method <b><font color="#000080">valueOf()</font></b>
+here (introduced in JDK 5.0), which will cache objects for values between -128 and
+127 inclusive. This inspection ignores calls to number constructors using a
+<b><font color="#000080">String</font></b> argument.
+<p>
+For safety, this inspection is disabled unless the project uses JDK 5.0.
+</font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
+</html>

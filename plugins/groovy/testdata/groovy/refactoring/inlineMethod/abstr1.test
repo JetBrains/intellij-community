@@ -1,0 +1,11 @@
+abstract class A{
+
+  abstract def foo()
+
+  def boo() {
+    <begin>foo<end>()
+  }
+
+}
+------
+FAIL: Refactoring cannot be applied to abstract methods

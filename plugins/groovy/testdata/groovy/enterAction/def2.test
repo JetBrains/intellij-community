@@ -1,0 +1,8 @@
+def boo = {
+  def foo = 3<caret>
+}
+-----
+def boo = {
+  def foo = 3
+  <caret>
+}

@@ -1,0 +1,8 @@
+"""preved   \"$ident   medved"""
+-----
+Groovy script
+  Compound Gstring
+    PsiElement(Gstring begin)('"""preved   \"$')
+    Reference expression
+      PsiElement(identifier)('ident')
+    PsiElement(Gstring end)('   medved"""')

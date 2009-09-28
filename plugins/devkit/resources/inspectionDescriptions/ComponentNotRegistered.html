@@ -1,0 +1,14 @@
+<html>
+<body>
+This inspection detects plugin components and actions that are not (yet) registered in a plugin.xml
+descriptor and offers a QuickFix to register the component. This eases developing new components when
+making use of the "Create Class" intention and helps to keep track of potentially obsolete
+components.
+<p>
+    There's an option to turn off the check for Actions as they may be intentionally created and
+    registered dynamically. Note that the inspection can also be suppressed on a per-class level,
+    so it normally shouldn't be necessary to switch off the inspection completely. Especially
+    because the inspection ignores abstract classes and by default non-public classes as well.
+</p>
+</body>
+</html>

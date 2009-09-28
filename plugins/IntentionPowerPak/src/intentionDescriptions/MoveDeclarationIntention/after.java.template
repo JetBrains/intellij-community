@@ -1,0 +1,7 @@
+public class X {
+  void f(int a) {
+    f(0);
+    f(1);
+    int i = 9;
+  }
+}

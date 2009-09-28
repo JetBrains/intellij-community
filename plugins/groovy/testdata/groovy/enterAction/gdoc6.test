@@ -1,0 +1,8 @@
+/**<caret>def foo() {
+}
+-----
+/**
+ * <caret>
+ */
+def foo() {
+}

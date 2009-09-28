@@ -1,0 +1,11 @@
+/abcde $2$$  $ident  $$ $ident2 asd/
+-----
+Groovy script
+  Compound regular expression
+    PsiElement(regex begin)('/abcde $2$$  $')
+    Reference expression
+      PsiElement(identifier)('ident')
+    PsiElement(regex content)('  $$ $')
+    Reference expression
+      PsiElement(identifier)('ident2')
+    PsiElement(regex end)(' asd/')

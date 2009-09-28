@@ -1,0 +1,11 @@
+3.toString*.'preved'
+-----
+Groovy script
+  Reference expression
+    Reference expression
+      Literal
+        PsiElement(Integer)('3')
+      PsiElement(.)('.')
+      PsiElement(identifier)('toString')
+    PsiElement(*.)('*.')
+    PsiElement(string)(''preved'')

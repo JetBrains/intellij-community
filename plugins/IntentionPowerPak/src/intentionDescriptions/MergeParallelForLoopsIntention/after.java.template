@@ -1,0 +1,8 @@
+public class X {
+  int f(int a) {
+    for(int i = 0;i<a;i++)
+      System.out.println(i);
+      System.out.println(i*2);
+    }
+  }
+}

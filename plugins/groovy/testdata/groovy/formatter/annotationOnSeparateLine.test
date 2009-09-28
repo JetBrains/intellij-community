@@ -1,0 +1,6 @@
+@SuppressWarnings ("GroovyMissingReturnStatement") String r() {
+}
+-----
+@SuppressWarnings("GroovyMissingReturnStatement")
+String r() {
+}

@@ -1,0 +1,53 @@
+
+Field can be moved to subclass
+Method can be moved to subclass
+Method may be moved to inner class
+Cyclic class initialization
+Fields from subclasses can be merged into superclass
+Methods from subclasses can be merged into superclass
+Unnecessary interface
+Unnecessary abstract class
+Pure delegation
+Method too small
+Incohesive class
+Incohesive package
+Incohesive module
+Tangled class
+Tangled package
+Tangled module
+Class not dependent on its module
+Method always returns constant (and thus may be an annotation)
+Method whose return value is always ignored
+Parameter may be interface
+Field may be interface
+Local variable may be interface
+   --Local inspection
+   --Look for local variables whose type is a concrete class which implements an interface
+   --Test every access of the variable, and see if it the expected type is
+   --Generics make thes
+Method return may be interface
+   --Look for methods whose return value is a concrete class which implements
+     an interface
+   --Test every call to that method (or siblings), and see if the expected type
+     of the call is that interface
+Field always cast
+Parameter always cast
+Local variable always cast
+Method return always cast
+Subclass never accessed as superclass
+
+
+Class not dependent on its package
+Class with too many dependencies
+Class with too many dependents
+Class with too many transitive dependencies
+Class with too many transitive dependets
+Cyclic class dependency
+Cyclic package dependency
+Package with too many classes
+Package with too few classes
+Module with too many classes
+Module with too few classes
+Package in multiple modules
+Package naming convention
+Top-level package name not domain

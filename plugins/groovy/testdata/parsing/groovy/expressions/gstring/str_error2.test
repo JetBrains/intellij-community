@@ -1,0 +1,17 @@
+st = "
+3
+-----
+Groovy script
+  Assignment expression
+    Reference expression
+      PsiElement(identifier)('st')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    Literal
+      PsiElement(wrong gstring)('"')
+      PsiErrorElement:Wrong string literal
+        <empty list>
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(Integer)('3')

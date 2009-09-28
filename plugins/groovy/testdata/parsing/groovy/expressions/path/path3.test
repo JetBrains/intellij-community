@@ -1,0 +1,16 @@
+expr.
+@while.
+parse
+-----
+Groovy script
+  Reference expression
+    Reference expression
+      Reference expression
+        PsiElement(identifier)('expr')
+      PsiElement(.)('.')
+      PsiElement(new line)('\n')
+      PsiElement(@)('@')
+      PsiElement(while)('while')
+    PsiElement(.)('.')
+    PsiElement(new line)('\n')
+    PsiElement(identifier)('parse')

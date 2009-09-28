@@ -1,0 +1,59 @@
+class a {
+  private b (def x, final y) {
+    def interface d {}
+  }
+}
+-----
+Groovy script
+  Class definition
+    Modifiers
+      <empty list>
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiWhiteSpace('\n  ')
+      Method
+        Modifiers
+          PsiElement(private)('private')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('b')
+        PsiWhiteSpace(' ')
+        PsiElement(()('(')
+        Parameter list
+          Parameter
+            Modifiers
+              PsiElement(def)('def')
+            PsiWhiteSpace(' ')
+            PsiElement(identifier)('x')
+          PsiElement(,)(',')
+          PsiWhiteSpace(' ')
+          Parameter
+            Modifiers
+              PsiElement(final)('final')
+            PsiWhiteSpace(' ')
+            PsiElement(identifier)('y')
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        Throw clause
+          <empty list>
+        Open block
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          Interface definition
+            Modifiers
+              PsiElement(def)('def')
+            PsiWhiteSpace(' ')
+            PsiElement(interface)('interface')
+            PsiWhiteSpace(' ')
+            PsiElement(identifier)('d')
+            PsiWhiteSpace(' ')
+            Type definition body
+              PsiElement({)('{')
+              PsiElement(})('}')
+          PsiElement(new line)('\n  ')
+          PsiElement(})('}')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

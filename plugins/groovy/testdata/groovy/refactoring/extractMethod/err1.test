@@ -1,0 +1,15 @@
+iii = 6
+int kkk = 5
+def vv = 6
+def gg = 7
+
+<begin>
+println(kkk + iii + (vv + gg))
+yyy = kkk + 2
+www = kkk + 3
+<end>
+
+println(yyy)
+println(www)
+-----
+FAILED: There are multiple output values for the selected code fragment

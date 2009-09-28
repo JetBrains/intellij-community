@@ -1,0 +1,29 @@
+contributor(context()) {
+  // For methods
+  def memb = enclosingMember()
+  // For classes
+  def clazz = enclosingClass()
+  if (memb) {
+    def newifyName = "groovy.lang.Newify"
+    for (a in memb?.getAnnotations(newifyName) + clazz?.getAnnotations(newifyName)) {
+      def refs = a?.findAttributeValue("value")
+      def auto  = a?.findAttributeValue("auto")
+      //For Python-like style
+      if (refs && !place.qualifier) {
+        for (c in refs.asList()) {
+          def targetClass = c.bind()
+          for (cons in (targetClass?.constructors ?: [])) {
+            method name: targetClass.name, params: cons.paramStringVector, type: targetClass.qualName
+          }
+        }
+      }
+
+      // For Ruby-like style
+      if (!auto || auto.eval()) {
+        for (cons in classType?.getConstructors()) {
+          method name: 'new', isStatic: true, params: cons.paramStringVector, type: classType?.qualName ?: "java.lang.Object"
+        }
+      }
+    }
+  }
+}

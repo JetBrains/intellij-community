@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>UnnecessaryAnnotationParentheses.java</file>
+    <line>7</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary annotation parentheses</problem_class>
+    <description>&lt;code&gt;()&lt;/code&gt; has unnecessary parentheses #loc</description>
+  </problem>
+</problems>

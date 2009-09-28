@@ -1,0 +1,6 @@
+class A{
+  public st<caret>
+}
+-----
+static
+strictfp

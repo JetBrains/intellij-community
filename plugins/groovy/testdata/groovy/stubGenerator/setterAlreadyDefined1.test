@@ -1,0 +1,37 @@
+class D {
+  def DDD
+  void setDDD (def ddd) {}
+}
+-----
+public class D implements groovy.lang.GroovyObject {
+  public void setDDD(java.lang.Object ddd) {
+    return ;
+  }
+
+  public java.lang.Object getDDD() {
+    return null;
+  }
+
+  public groovy.lang.MetaClass getMetaClass() {
+    return null;
+  }
+
+  public void setMetaClass(groovy.lang.MetaClass mc) {
+    return ;
+  }
+
+  public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object args) {
+    return null;
+  }
+
+  public java.lang.Object getProperty(java.lang.String propertyName) {
+    return null;
+  }
+
+  public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
+    return ;
+  }
+
+  private java.lang.Object DDD = null;
+}
+---

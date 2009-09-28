@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>ForCanBeForEach.java</file>
+    <line>10</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'for' loop replaceable by 'for each'</problem_class>
+    <description>&lt;code&gt;for&lt;/code&gt; loop replaceable by 'for each'</description>
+  </problem>
+
+  <problem>
+    <file>ForCanBeForEach.java</file>
+    <line>15</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'for' loop replaceable by 'for each'</problem_class>
+    <description>&lt;code&gt;for&lt;/code&gt; loop replaceable by 'for each'</description>
+  </problem>
+
+  <problem>
+    <file>ForCanBeForEach.java</file>
+    <line>24</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'for' loop replaceable by 'for each'</problem_class>
+    <description>&lt;code&gt;for&lt;/code&gt; loop replaceable by 'for each'</description>
+  </problem>
+
+  <problem>
+    <file>ForCanBeForEach.java</file>
+    <line>34</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'for' loop replaceable by 'for each'</problem_class>
+    <description>&lt;code&gt;for&lt;/code&gt; loop replaceable by 'for each'</description>
+  </problem>
+
+  <problem>
+    <file>ForCanBeForEach.java</file>
+    <line>43</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'for' loop replaceable by 'for each'</problem_class>
+    <description>&lt;code&gt;for&lt;/code&gt; loop replaceable by 'for each'</description>
+  </problem>
+
+  <problem>
+    <file>ForCanBeForEach.java</file>
+    <line>53</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'for' loop replaceable by 'for each'</problem_class>
+    <description>&lt;code&gt;for&lt;/code&gt; loop replaceable by 'for each'</description>
+  </problem>
+
+  <problem>
+    <file>ForCanBeForEach.java</file>
+    <line>63</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'for' loop replaceable by 'for each'</problem_class>
+    <description>&lt;code&gt;for&lt;/code&gt; loop replaceable by 'for each'</description>
+  </problem>
+
+  <problem>
+    <file>ForCanBeForEach.java</file>
+    <line>83</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'for' loop replaceable by 'for each'</problem_class>
+    <description>&lt;code&gt;for&lt;/code&gt; loop replaceable by 'for each'</description>
+  </problem>
+
+  <problem>
+    <file>ForCanBeForEach.java</file>
+    <line>106</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'for' loop replaceable by 'for each'</problem_class>
+    <description>&lt;code&gt;for&lt;/code&gt; loop replaceable by 'for each'</description>
+  </problem>
+
+  <problem>
+    <file>ForCanBeForEach.java</file>
+    <line>128</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'for' loop replaceable by 'for each'</problem_class>
+    <description>&lt;code&gt;for&lt;/code&gt; loop replaceable by 'for each'</description>
+  </problem>
+</problems>

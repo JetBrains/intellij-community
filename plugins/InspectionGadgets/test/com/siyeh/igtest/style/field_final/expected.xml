@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+
+    <problem>
+        <file>FieldMayBeFinal.java</file>
+        <line>15</line>
+        <problem_class>Field may be final</problem_class>
+        <description>Field &lt;code&gt;other&lt;/code&gt; may be 'final' #loc</description>
+    </problem>
+
+
+    <problem>
+        <file>FieldMayBeFinal.java</file>
+        <line>27</line>
+        <problem_class>Field may be final</problem_class>
+        <description>Field &lt;code&gt;number&lt;/code&gt; may be 'final' #loc</description>
+    </problem>
+
+  <problem>
+    <file>FieldMayBeFinal.java</file>
+    <line>96</line>
+    <problem_class>Field may be final</problem_class>
+    <description>Field &lt;code&gt;pleaseTellMeIt&lt;/code&gt; may be 'final' #loc</description>
+  </problem>
+
+  <problem>
+    <file>FieldMayBeFinal.java</file>
+    <line>112</line>
+    <problem_class>Field may be final</problem_class>
+    <description>Field &lt;code&gt;hostName&lt;/code&gt; may be 'final' #loc</description>
+  </problem>
+
+</problems>

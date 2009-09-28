@@ -1,0 +1,11 @@
+"My $aaa your $bbb string"
+-----
+Groovy script
+  Compound Gstring
+    PsiElement(Gstring begin)('"My $')
+    Reference expression
+      PsiElement(identifier)('aaa')
+    PsiElement(Gstring content)(' your $')
+    Reference expression
+      PsiElement(identifier)('bbb')
+    PsiElement(Gstring end)(' string"')

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  
+  <problem>
+    <file>ClassNewInstance.java</file>
+    <line>6</line>
+    <problem_class>Unsafe call to 'Class.newInstance()'</problem_class>
+    <description>Call to &lt;code&gt;newInstance()&lt;/code&gt; may throw undeclared checked exceptions #loc</description>
+  </problem>
+  
+</problems>

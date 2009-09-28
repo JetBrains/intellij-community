@@ -1,0 +1,28 @@
+while (true
+{doSomenthing();}
+-----
+Groovy script
+  WHILE statement
+    PsiElement(while)('while')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Method call
+      Literal
+        PsiElement(true)('true')
+      PsiWhiteSpace('\n')
+      Arguments
+        <empty list>
+      Closable block
+        PsiElement({)('{')
+        Parameter list
+          <empty list>
+        Method call
+          Reference expression
+            PsiElement(identifier)('doSomenthing')
+          Arguments
+            PsiElement(()('(')
+            PsiElement())(')')
+        PsiElement(;)(';')
+        PsiElement(})('}')
+    PsiErrorElement:')' expected
+      <empty list>

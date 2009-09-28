@@ -1,0 +1,12 @@
+class WWW {
+  def foo () {
+    int i = 42<caret>
+  }
+}
+-----
+class WWW {
+  def foo () {
+    int i = 42
+    <caret>
+  }
+}

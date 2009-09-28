@@ -1,0 +1,19 @@
+def foo () {}
+-----
+Groovy script
+  Method
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('foo')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Parameter list
+      <empty list>
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Throw clause
+      <empty list>
+    Open block
+      PsiElement({)('{')
+      PsiElement(})('}')

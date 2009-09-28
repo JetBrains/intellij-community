@@ -1,0 +1,12 @@
+def a
+if (true) {
+  a = 1
+} else
+  a = 2
+-----
+0(1) element: null
+1(2,4) element: IF statement
+2(3) WRITE a
+3(5) element: Assignment expression MAYBE_RETURN
+4(5) WRITE a
+5() element: null

@@ -1,0 +1,3 @@
+showing.asType(bool<caret>)
+-----
+boolean

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Test.java</file>
+    <line>8</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'wait()' while not synchronized</problem_class>
+    <description>Call to &lt;code&gt;otherLock.wait()&lt;/code&gt; while not synchronized on 'otherLock' #loc</description>
+  </problem>
+  
+  <problem>
+    <file>Test.java</file>
+    <line>10</line>
+    <problem_class>'wait()' while not synced</problem_class>
+    <description>Call to &lt;code&gt;lock.wait()()&lt;/code&gt; while not synchronized on 'lock' #loc</description>
+  </problem>
+
+  <problem>
+    <file>Test.java</file>
+    <line>13</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'wait()' while not synced</problem_class>
+    <description>Call to &lt;code&gt;wait()&lt;/code&gt; while not synchronized on 'this' #loc</description>
+  </problem>
+  
+</problems>

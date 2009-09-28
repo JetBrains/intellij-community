@@ -1,0 +1,12 @@
+<idea-plugin>
+  <id>com.intellij.myPlugin</id>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.myPlugin.ext" interface="java.lang.Runnable"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij.myPlugin">
+    <ext implementation="java.lang.Runnable"/>
+  </extensions>
+
+</idea-plugin>

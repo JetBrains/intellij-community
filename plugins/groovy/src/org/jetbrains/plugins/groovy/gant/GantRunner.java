@@ -1,0 +1,113 @@
+package org.jetbrains.plugins.groovy.gant;
+
+import com.intellij.execution.CantRunException;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
+import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
+import org.jetbrains.plugins.groovy.util.GroovyUtils;
+
+import java.io.File;
+
+/**
+ * @author ilyas
+ */
+public class GantRunner extends GroovyScriptRunner {
+
+  @Override
+  public boolean isValidModule(@NotNull Module module) {
+    return GantUtils.isSDKConfiguredToRun(module);
+  }
+
+  @Override
+  public boolean ensureRunnerConfigured(@Nullable Module module, final String confName, final Project project) {
+    if (!(GantUtils.getSDKInstallPath(module, project).length() > 0)) {
+      int result = Messages
+        .showOkCancelDialog("Gant is not configured. Do you want to configure it?", "Configure Gant SDK",
+                            GantIcons.GANT_ICON_16x16);
+      if (result == 0) {
+        final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
+        util.editConfigurable(project, util.findProjectConfigurable(project, GantConfigurable.class));
+      }
+      if (!(GantUtils.getSDKInstallPath(module, project).length() > 0)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private static String getGantConfPath(final String gantHome) {
+    String confPath = FileUtil.toSystemDependentName(gantHome + "/conf/gant-starter.conf");
+    if (new File(confPath).exists()) {
+      return confPath;
+    }
+
+    return getConfPath(gantHome);
+  }
+
+  @Override
+  public void configureCommandLine(JavaParameters params, @Nullable Module module, boolean tests, VirtualFile script, GroovyScriptRunConfiguration configuration) throws CantRunException {
+    String gantHome = GantUtils.getSDKInstallPath(module, configuration.getProject());
+
+    final File[] groovyJars = GroovyUtils.getFilesInDirectoryByPattern(gantHome + "/lib/", GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN);
+    if (groovyJars.length > 0) {
+      params.getClassPath().add(groovyJars[0].getAbsolutePath());
+    } else if (module != null) {
+      final VirtualFile groovyJar = findGroovyJar(module);
+      if (groovyJar != null) {
+        params.getClassPath().add(groovyJar);
+      }
+    }
+
+
+    setToolsJar(params);
+
+    setGroovyHome(params, gantHome);
+
+    final String confPath = getGantConfPath(gantHome);
+    params.getVMParametersList().add("-Dgroovy.starter.conf=" + confPath);
+
+    params.getVMParametersList().addParametersString(configuration.vmParams);
+    params.setMainClass("org.codehaus.groovy.tools.GroovyStarter");
+
+    params.getProgramParametersList().add("--conf");
+    params.getProgramParametersList().add(confPath);
+
+    addClasspathFromRootModel(module, tests, params);
+
+    if (gantHome.contains("grails")) {
+      params.getClassPath().addAllFiles(GroovyUtils.getFilesInDirectoryByPattern(gantHome + "/lib", ".*\\.jar"));
+    }
+
+    String antHome = System.getenv("ANT_HOME");
+    if (StringUtil.isEmpty(antHome)) {
+      antHome = gantHome;
+    }
+
+    params.getVMParametersList().addParametersString("-Dant.home=" + antHome);
+    params.getVMParametersList().addParametersString("-Dgant.home=" + gantHome + "");
+
+    params.getProgramParametersList().add("--main");
+    params.getProgramParametersList().add("gant.Gant");
+
+    params.getProgramParametersList().add("--file");
+    params.getProgramParametersList().add(FileUtil.toSystemDependentName(configuration.scriptPath));
+
+    params.getProgramParametersList().addParametersString(configuration.scriptParams);
+
+    if (configuration.isDebugEnabled) {
+      params.getProgramParametersList().add("--debug");
+    }
+  }
+
+}

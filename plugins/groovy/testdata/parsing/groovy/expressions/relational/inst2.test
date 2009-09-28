@@ -1,0 +1,14 @@
+a instanceof
+3
+-----
+Groovy script
+  Instanceof expression
+    Reference expression
+      PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    PsiElement(instanceof)('instanceof')
+    PsiErrorElement:Type specification expected
+      <empty list>
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(Integer)('3')

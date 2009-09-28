@@ -1,0 +1,7 @@
+<selection>a - b
+a - b</selection>
+-----
+shouldFail() {
+  a - b
+  a - b
+}

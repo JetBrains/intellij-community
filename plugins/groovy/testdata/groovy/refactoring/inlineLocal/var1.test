@@ -1,0 +1,4 @@
+def var = 1
+<begin>var<end>
+-----
+1<caret>

@@ -1,0 +1,23 @@
+foo(
+a=
+, 3)
+-----
+Groovy script
+  Method call
+    Reference expression
+      PsiElement(identifier)('foo')
+    Arguments
+      PsiElement(()('(')
+      PsiWhiteSpace('\n')
+      Assignment expression
+        Reference expression
+          PsiElement(identifier)('a')
+        PsiElement(=)('=')
+        PsiErrorElement:Expression expected
+          <empty list>
+      PsiWhiteSpace('\n')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Literal
+        PsiElement(Integer)('3')
+      PsiElement())(')')

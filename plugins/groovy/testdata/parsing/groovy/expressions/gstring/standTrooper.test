@@ -1,0 +1,27 @@
+def sp = """DELIMITER $$
+
+DROP PROCEDURE IF EXISTS `gearloop`.`sp_CustomProductProfile_ins_upd`$$
+
+CREATE PROCEDURE `gearloop`.`sp_CustomProductProfile_ins_upd`()
+    BEGIN
+
+    END$$
+
+DELIMITER ;""";
+-----
+Groovy script
+  Variable definitions
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('sp')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      Compound Gstring
+        PsiElement(Gstring begin)('"""DELIMITER $')
+        PsiErrorElement:Identifier or code block expected
+          <empty list>
+  PsiErrorElement:';' or new line expected
+    PsiElement(wrong gstring)('$\n\nDROP PROCEDURE IF EXISTS `gearloop`.`sp_CustomProductProfile_ins_upd`$$\n\nCREATE PROCEDURE `gearloop`.`sp_CustomProductProfile_ins_upd`()\n    BEGIN\n\n    END$$\n\nDELIMITER ;""";')

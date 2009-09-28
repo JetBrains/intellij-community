@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<idea-plugin version="2">
+
+  <extensions defaultExtensionNs="com.intellij">
+    <compiler implementation="org.intellij.plugins.intelliLang.pattern.compiler.impl.PatternValidationCompiler"/>
+
+    <inspectionToolProvider implementation="org.intellij.plugins.intelliLang.inject.java.validation.InspectionProvider"/>
+    <inspectionToolProvider implementation="org.intellij.plugins.intelliLang.pattern.InspectionProvider"/>
+
+
+    <concatenationAwareInjector implementation="org.intellij.plugins.intelliLang.inject.java.ConcatenationInjector"/>
+
+    <psi.referenceContributor implementation="org.intellij.plugins.intelliLang.inject.java.LanguageReferenceProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.intellij.intelliLang">
+    <languageSupport implementation="org.intellij.plugins.intelliLang.inject.java.JavaLanguageInjectionSupport"/>
+  </extensions>
+
+</idea-plugin>

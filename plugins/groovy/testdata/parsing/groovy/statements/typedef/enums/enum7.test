@@ -1,0 +1,28 @@
+enum A {
+  @Property a
+}
+-----
+Groovy script
+  Enumeration definition
+    Modifiers
+      <empty list>
+    PsiElement(enum)('enum')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('A')
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiWhiteSpace('\n  ')
+      Enumeration constants
+        Enumeration constant
+          Modifiers
+            Annotation
+              PsiElement(@)('@')
+              Reference element
+                PsiElement(identifier)('Property')
+              PsiWhiteSpace(' ')
+              Annotation arguments
+                <empty list>
+          PsiElement(identifier)('a')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

@@ -1,0 +1,33 @@
+package a.b.c
+
+import org.*
+
+class A  {
+  def foo()   {
+    switch (k){
+
+    }
+  }
+  <caret>
+}
+-----
+abstract
+boolean
+byte
+char
+double
+final
+float
+int
+long
+native
+private
+protected
+public
+short
+static
+strictfp
+synchronized
+transient
+void
+volatile

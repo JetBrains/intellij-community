@@ -1,0 +1,5 @@
+public class X {
+  int f() {
+    return (2 * 3) + (4 * 5);
+  }
+}

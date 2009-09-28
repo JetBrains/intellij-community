@@ -1,0 +1,23 @@
+String[] taskNames = []
+
+try {
+    for (String scriptName: []) {}
+}
+finally {
+}
+
+for (String taskName: taskNames) {}
+-----
+0(1) element: null
+1(2) WRITE taskNames
+2(3) element: Open block
+3(4,6) element: For statement
+4(3) element: Block statement
+5(8) element: Finally clause
+6(5,7)  CALL 5
+7(9) AFTER CALL 6
+8(7)  RETURN
+9(10) READ taskNames
+10(11,12) element: For statement
+11(10) element: Block statement
+12() element: null

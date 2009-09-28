@@ -1,0 +1,9 @@
+private List createProjectStructureForRecursiveTargetTest() {
+   // something
+           [project, child1, child2, childchild]
+}
+-----
+private List createProjectStructureForRecursiveTargetTest() {
+  // something
+  [project, child1, child2, childchild]
+}

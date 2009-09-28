@@ -1,0 +1,58 @@
+<idea-plugin url="http://www.jetbrains.net/confluence/display/CONTEST/IntelliLang" version="2">
+  <name>IntelliLang</name>
+  <id>org.intellij.intelliLang</id>
+  <description>
+    <![CDATA[
+    This plugin provides the following features, inspired by <a href="http://www.jetbrains.net/jira/browse/IDEADEV-2599">IDEADEV-2599</a>:
+    <p>
+    - Annotation based and UI configurable language injection<br>
+    - Annotation based pattern validation<br>
+    - Regular Expression Language implementation with full java.util.regex.Pattern syntax support,
+      detailed on-the-fly error highlighting, completion, some intention actions and more.<br>
+    </p>
+   ]]></description>
+
+  <version>8.0</version>
+
+  <depends optional="true" config-file="intellilang-xpath-support.xml">XPathView</depends>
+  <depends optional="true" config-file="intellilang-java-support.xml">com.intellij.modules.java</depends>
+  <depends optional="true" config-file="intellilang-xml-support.xml">com.intellij.modules.xml</depends>
+  <depends optional="true" config-file="intellilang-groovy-support.xml">org.intellij.groovy</depends>
+
+  <idea-version since-build="8300" />
+
+  <vendor email="sascha.weinreuter@cit.de" logo="/org/intellij/plugins/intelliLang/icon_small.png">Sascha Weinreuter</vendor>
+
+  <extensionPoints>
+    <extensionPoint name="languageSupport"
+                    interface="org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter" />
+    <intentionAction>
+      <className>org.intellij.plugins.intelliLang.inject.InjectLanguageAction</className>
+    </intentionAction>
+    <intentionAction>
+      <className>org.intellij.plugins.intelliLang.inject.UnInjectLanguageAction</className>
+    </intentionAction>
+    <intentionAction>
+      <className>org.intellij.plugins.intelliLang.inject.EditInjectionSettingsAction</className>
+    </intentionAction>
+
+    <intentionAction>
+      <className>org.intellij.plugins.intelliLang.inject.quickedit.QuickEditAction</className>
+    </intentionAction>
+
+    <highlightErrorFilter implementation="org.intellij.plugins.intelliLang.inject.CustomErrorElementFilter"/>
+
+    <applicationService serviceInterface="org.intellij.plugins.intelliLang.Configuration"
+                        serviceImplementation="org.intellij.plugins.intelliLang.Configuration"/>
+    <applicationConfigurable implementation="org.intellij.plugins.intelliLang.Settings"/>
+
+    <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.TemporaryPlacesInjector"/>
+    <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.DefaultLanguageInjector" order="last"/>
+
+    <projectService serviceInterface="org.intellij.plugins.intelliLang.inject.TemporaryPlacesRegistry"
+                    serviceImplementation="org.intellij.plugins.intelliLang.inject.TemporaryPlacesRegistry"/>
+  </extensions>
+</idea-plugin>

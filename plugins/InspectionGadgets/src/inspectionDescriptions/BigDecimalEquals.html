@@ -1,0 +1,11 @@
+<html>
+<body><table> <tr> <td valign="top" height="150">
+<font face="verdana" size="-1">
+This inspection reports any instances of <b><font color="#000080">.equals()</font></b> being called
+to compare two <b><font color="#000080">java.math.BigDecimal</font></b> numbers.  This is normaly
+a mistake, as two <b><font color="#000080">java.math.BigDecimal</font></b>s are only equal if
+they are equal in both value and scale, so that 2.0 is not equal to 2.00
+To compare <b><font color="#000080">java.math.BigDecimal</font></b>s for mathematical equality,
+use <b><font color="#000080">.compareTo()</font></b> instead.
+</font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
+</html>

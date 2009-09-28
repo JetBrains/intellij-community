@@ -1,0 +1,8 @@
+/aaaa $str... bbb/
+-----
+Groovy script
+  Compound regular expression
+    PsiElement(regex begin)('/aaaa $')
+    Reference expression
+      PsiElement(identifier)('str')
+    PsiElement(regex end)('... bbb/')

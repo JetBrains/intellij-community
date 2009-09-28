@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+
+  <problem>
+    <file>TooBroadCatchBlock.java</file>
+    <line>18</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Overly broad 'catch' block</problem_class>
+    <description>Catch of &lt;code&gt;IOException&lt;/code&gt; is too broad, masking exception 'EOFException' #loc</description>
+  </problem>
+
+  <problem>
+    <file>TooBroadCatchBlock.java</file>
+    <line>31</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Overly broad 'catch' block</problem_class>
+    <description>Catch of &lt;code&gt;IOException&lt;/code&gt; is too broad, masking exception 'MalformedURLException' #loc</description>
+  </problem>
+
+  <problem>
+    <file>TooBroadCatchBlock.java</file>
+    <line>33</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Overly broad 'catch' block</problem_class>
+    <description>Catch of &lt;code&gt;RuntimeException&lt;/code&gt; is too broad, masking exception 'NullPointerException' #loc</description>
+  </problem>
+</problems>

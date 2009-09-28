@@ -1,0 +1,4 @@
+New var = new New();
+<begin>var<end>.foo()
+-----
+new New()<caret>.foo()

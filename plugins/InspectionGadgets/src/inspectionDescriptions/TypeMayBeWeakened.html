@@ -1,0 +1,26 @@
+<html>
+<body><table> <tr> <td valign="top" height="150">
+<font face="verdana" size="-1">
+This inspection reports any variables which may be declared with a weaker type. For instance,
+a variable may be of type <b><font color="#000080">ArrayList</font></b>, and only the method
+<b><font color="#000080">isEmpty()</font></b> is called on it. In this case the type
+<b><font color="#000080">List</font></b> would do just as well.
+<p>
+Enable the first checkbox below to prevent weakening the left side of assignments when the right side is not
+a type cast or new expression. When storing the result of a method call in a variable, it is
+useful to retain the type of the method call result instead of unnecessarily weakening it.
+<p>
+Enable the second checkbox below to use the parameterized type of the collection as weakest type when
+the object evaluated is used as an argument to a collection method with a parameter type of
+<b><font color="#000080">java.lang.Object</font></b>. Use this option to prevent weakening to
+<b><font color="#000080">Object</font></b> when passing an object to the collection methods
+<b><font color="#000080">get()</font></b>, <b><font color="#000080">remove()</font></b>,
+<b><font color="#000080">contains()</font></b>, <b><font color="#000080">indexOf()</font></b>,
+<b><font color="#000080">lastIndexOf()</font></b>, <b><font color="#000080">containsKey()</font></b>
+and <b><font color="#000080">containsValue()</font></b>.
+<p>
+Use the third checkbox below to specify if this inspection should warn when a type can be
+weakened to <b><font color="#000080">java.lang.Object</font></b>. Weakening to
+<b><font color="#000080">java.lang.Object</font></b> is often not very useful.
+</font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">New in 7, Powered by InspectionGadgets</font> </td> </tr> </table> </body>
+</html>

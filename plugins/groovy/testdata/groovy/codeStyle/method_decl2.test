@@ -1,0 +1,5 @@
+<option>METHOD_BRACE_STYLE=NEXT_LINE</option>
+def foo()    {}
+-----
+def foo()
+{}

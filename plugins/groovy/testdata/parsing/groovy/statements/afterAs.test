@@ -1,0 +1,38 @@
+def test = [] as Set<String>
+test<<"test"
+-----
+Groovy script
+  Variable definitions
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('test')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      Safe cast expression
+        Generalized list
+          PsiElement([)('[')
+          PsiElement(])(']')
+        PsiWhiteSpace(' ')
+        PsiElement(as)('as')
+        PsiWhiteSpace(' ')
+        Type element
+          Reference element
+            PsiElement(identifier)('Set')
+            Type arguments
+              PsiElement(<)('<')
+              Type element
+                Reference element
+                  PsiElement(identifier)('String')
+              PsiElement(>)('>')
+  PsiElement(new line)('\n')
+  Shift expression
+    Reference expression
+      PsiElement(identifier)('test')
+    Composite shift operator
+      PsiElement(<)('<')
+      PsiElement(<)('<')
+    Literal
+      PsiElement(Gstring)('"test"')

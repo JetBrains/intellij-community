@@ -1,0 +1,16 @@
+println (a.toString
+-----
+Groovy script
+  Method call
+    Reference expression
+      PsiElement(identifier)('println')
+    PsiWhiteSpace(' ')
+    Arguments
+      PsiElement(()('(')
+      Reference expression
+        Reference expression
+          PsiElement(identifier)('a')
+        PsiElement(.)('.')
+        PsiElement(identifier)('toString')
+      PsiErrorElement:')' expected
+        <empty list>

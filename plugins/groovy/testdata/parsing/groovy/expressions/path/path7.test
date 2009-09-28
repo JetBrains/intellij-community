@@ -1,0 +1,18 @@
+A.<T,S>'preved'
+-----
+Groovy script
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('A')
+    PsiElement(.)('.')
+    Type arguments
+      PsiElement(<)('<')
+      Type element
+        Reference element
+          PsiElement(identifier)('T')
+      PsiElement(,)(',')
+      Type element
+        Reference element
+          PsiElement(identifier)('S')
+      PsiElement(>)('>')
+    PsiElement(string)(''preved'')

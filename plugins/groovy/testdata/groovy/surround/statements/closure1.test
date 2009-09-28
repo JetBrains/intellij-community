@@ -1,0 +1,4 @@
+<selection>return a = b</selection>
+-----
+{-> return a = b
+}.call()

@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.intellij.lang.xpath.xslt.run.XsltRunSettingsEditor.Editor">
+  <tabbedpane id="fb52f" binding="myComponent">
+    <constraints>
+      <xy x="115" y="24" width="566" height="497"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <grid id="de627" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <tabbedpane title="Settings"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <grid id="4a3d1" layout-manager="GridLayoutManager" row-count="5" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="2">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+            <border type="none" title="Output"/>
+            <children>
+              <component id="d9a22" class="javax.swing.JRadioButton" binding="mySaveToFile">
+                <constraints>
+                  <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Save &amp;to File:"/>
+                  <toolTipText value="&lt;html&gt;Save XSLT output to specified file.&lt;br&gt;&lt;em&gt;Warning:&lt;/em&gt; This file will be overwritten without confirmation &lt;/html&gt;"/>
+                </properties>
+              </component>
+              <component id="4756e" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myOutputFile">
+                <constraints>
+                  <grid row="2" column="2" row-span="1" col-span="2" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+              </component>
+              <hspacer id="da0d9">
+                <constraints>
+                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false">
+                    <minimum-size width="10" height="-1"/>
+                    <preferred-size width="10" height="-1"/>
+                    <maximum-size width="10" height="-1"/>
+                  </grid>
+                </constraints>
+              </hspacer>
+              <component id="39d7b" class="javax.swing.JCheckBox" binding="myOpenOutputFile">
+                <constraints>
+                  <grid row="3" column="1" row-span="1" col-span="3" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="&amp;Open file in editor after execution"/>
+                </properties>
+              </component>
+              <component id="6e98c" class="javax.swing.JRadioButton" binding="myShowInConsole">
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Show in &amp;extra console tab"/>
+                  <toolTipText value="Show XSLT output in separate Tab, stdout will just receive XSLT (error-) messages"/>
+                </properties>
+              </component>
+              <component id="5eb85" class="javax.swing.JRadioButton" binding="myShowInStdout">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="&amp;Show in default console"/>
+                  <toolTipText value="Show XSLT output in standard Run Console mixed with other (error-)messages"/>
+                </properties>
+              </component>
+              <grid id="2d7da" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                <margin top="0" left="0" bottom="0" right="0"/>
+                <constraints>
+                  <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="2c89a" class="javax.swing.JLabel">
+                    <constraints>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text value="Highlight output as:"/>
+                    </properties>
+                  </component>
+                  <component id="ea75d" class="com.intellij.openapi.ui.ComboBox" binding="myFileType">
+                    <constraints>
+                      <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="1" anchor="8" fill="1" indent="0" use-parent-layout="false">
+                        <minimum-size width="170" height="-1"/>
+                      </grid>
+                    </constraints>
+                    <properties>
+                      <toolTipText value="Output highlighting is experimental. Please turn it off if it's causing trouble."/>
+                    </properties>
+                  </component>
+                </children>
+              </grid>
+              <hspacer id="ab4f0">
+                <constraints>
+                  <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+              </hspacer>
+              <component id="ef135" class="javax.swing.JCheckBox" binding="myOpenInBrowser">
+                <constraints>
+                  <grid row="4" column="1" row-span="1" col-span="3" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Open file in web &amp;browser after execution"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+          <grid id="46598" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+            <border type="etched" title="Input"/>
+            <children>
+              <component id="13095" class="javax.swing.JLabel">
+                <constraints>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <labelFor value="39930"/>
+                  <text value="&amp;Choose XML input file:"/>
+                </properties>
+              </component>
+              <component id="39930" class="com.intellij.ui.ComboboxWithBrowseButton" binding="myXmlInputFile">
+                <constraints>
+                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+              </component>
+              <component id="a3132" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myXsltFile">
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+              </component>
+              <component id="1a243" class="javax.swing.JLabel">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <enabled value="true"/>
+                  <labelFor value="a3132"/>
+                  <text value="&amp;XSLT script file:"/>
+                  <verticalAlignment value="0"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+          <grid id="30b22" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="1" fill="3" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+            <border type="none" title="Parameters"/>
+            <children>
+              <scrollpane id="fabc7">
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <opaque value="true"/>
+                </properties>
+                <border type="none"/>
+                <children>
+                  <component id="3ff92" class="com.intellij.util.ui.Table" binding="myParameters">
+                    <constraints/>
+                    <properties>
+                      <preferredScrollableViewportSize width="350" height="80"/>
+                    </properties>
+                  </component>
+                </children>
+              </scrollpane>
+              <component id="ddf85" class="javax.swing.JPanel" binding="myParamsToolbar">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+              </component>
+            </children>
+          </grid>
+        </children>
+      </grid>
+      <grid id="764ea" layout-manager="GridLayoutManager" row-count="7" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="5" left="5" bottom="0" right="5"/>
+        <constraints>
+          <tabbedpane title="Advanced"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="de5b1" class="javax.swing.JLabel">
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <labelFor value="7eae5"/>
+              <text value="&amp;VM Arguments:"/>
+            </properties>
+          </component>
+          <component id="7eae5" class="com.intellij.ui.RawCommandLineEditor" binding="myVmArguments">
+            <constraints>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+          </component>
+          <vspacer id="12efc">
+            <constraints>
+              <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+            </constraints>
+          </vspacer>
+          <component id="3c82" class="javax.swing.JCheckBox" binding="mySmartErrorHandling">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="&amp;Smart error handling"/>
+            </properties>
+          </component>
+          <grid id="a66df" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+            <border type="none" title="Classpath and JDK"/>
+            <children>
+              <component id="62b8e" class="javax.swing.JRadioButton" binding="myModuleChoice">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="&amp;From module:"/>
+                </properties>
+              </component>
+              <component id="4ca54" class="javax.swing.JRadioButton" binding="myJdkChoice">
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="&amp;Use JDK:"/>
+                </properties>
+              </component>
+              <component id="32dea" class="com.intellij.openapi.ui.ComboBox" binding="myModule">
+                <constraints>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+              </component>
+              <component id="b9f3" class="com.intellij.openapi.ui.ComboBox" binding="myJDK">
+                <constraints>
+                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+              </component>
+            </children>
+          </grid>
+          <component id="abb10" class="javax.swing.JLabel">
+            <constraints>
+              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <labelFor value="63c49"/>
+              <text value="&amp;Working directory:"/>
+            </properties>
+          </component>
+          <component id="63c49" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myWorkingDirectory">
+            <constraints>
+              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+          </component>
+        </children>
+      </grid>
+    </children>
+  </tabbedpane>
+  <buttonGroups>
+    <group name="myOutputOptions" bound="true">
+      <member id="6e98c"/>
+      <member id="5eb85"/>
+      <member id="d9a22"/>
+    </group>
+    <group name="myJdkOptions" bound="true">
+      <member id="62b8e"/>
+      <member id="4ca54"/>
+    </group>
+  </buttonGroups>
+  <inspectionSuppressions>
+    <suppress inspection="NoLabelFor" id="b9f3"/>
+    <suppress inspection="NoLabelFor" id="32dea"/>
+    <suppress inspection="NoLabelFor" id="ea75d"/>
+    <suppress inspection="NoLabelFor" id="4756e"/>
+    <suppress inspection="NoLabelFor" id="fabc7"/>
+  </inspectionSuppressions>
+</form>

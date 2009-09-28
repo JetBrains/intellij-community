@@ -1,0 +1,17 @@
+for (;true;){}
+-----
+Groovy script
+  For statement
+    PsiElement(for)('for')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Traditional FOR clause
+      PsiElement(;)(';')
+      Literal
+        PsiElement(true)('true')
+      PsiElement(;)(';')
+    PsiElement())(')')
+    Block statement
+      Open block
+        PsiElement({)('{')
+        PsiElement(})('}')

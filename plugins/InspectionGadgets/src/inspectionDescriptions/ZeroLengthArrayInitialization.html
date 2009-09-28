@@ -1,0 +1,10 @@
+<html>
+<body><table> <tr> <td valign="top" height="150">
+<font face="verdana" size="-1">
+This inspection reports on allocations of arrays with known lengths of zero.  Since array lengths in
+Java are non-modifiable, it is almost always possible to share zero-length arrays, rather than repeatedly
+allocating new zero-length arrays.  Such sharing may provide useful optimizations in program runtime or
+footprint.  Note that this inspection does not report zero-length arrays allocated as static final fields,
+as it is assumed that those arrays are being used to implement array sharing.
+</font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
+</html>

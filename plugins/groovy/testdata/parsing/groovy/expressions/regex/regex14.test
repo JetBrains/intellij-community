@@ -1,0 +1,23 @@
+i = ( /asd ${/bugaga/} asd/)
+-----
+Groovy script
+  Assignment expression
+    Reference expression
+      PsiElement(identifier)('i')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    Parenthesized expression
+      PsiElement(()('(')
+      PsiWhiteSpace(' ')
+      Compound regular expression
+        PsiElement(regex begin)('/asd $')
+        Closable block
+          PsiElement({)('{')
+          Parameter list
+            <empty list>
+          Literal
+            PsiElement(regexp)('/bugaga/')
+          PsiElement(})('}')
+        PsiElement(regex end)(' asd/')
+      PsiElement())(')')

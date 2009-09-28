@@ -1,0 +1,9 @@
+class Stub {
+  def foo = null
+}
+class Boo{}
+-----
+[Groovy script]
+  [Class definition : Stub]
+    [Field : foo]
+  [Class definition : Boo]

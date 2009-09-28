@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>NonSerializableWithSerializationMethods.java</file>
+    <line>16</line>
+    <problem_class>Non-serializable class with 'readObject()' or 'writeObject()'</problem_class>
+    <description>Non-serializable anonymous class extending &lt;code&gt;Object&lt;/code&gt; defines readObject() #loc</description>
+  </problem>
+
+  <problem>
+    <file>NonSerializableWithSerializationMethods.java</file>
+    <line>5</line>
+    <problem_class>Non-serializable class with 'readObject()' or 'writeObject()'</problem_class>
+    <description>Non-serializable class &lt;code&gt;NonSerializableWithSerializationMethods&lt;/code&gt; defines readObject() and writeObject() #loc</description>
+  </problem>
+</problems>

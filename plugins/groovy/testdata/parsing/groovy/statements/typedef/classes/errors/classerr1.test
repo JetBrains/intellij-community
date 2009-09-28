@@ -1,0 +1,40 @@
+class a {
+  def a =
+
+  def String str
+}
+-----
+Groovy script
+  Class definition
+    Modifiers
+      <empty list>
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiWhiteSpace('\n  ')
+      Variable definitions
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        Field
+          PsiElement(identifier)('a')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiErrorElement:Expression expected
+            <empty list>
+      PsiElement(new line)('\n\n  ')
+      Variable definitions
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        Type element
+          Reference element
+            PsiElement(identifier)('String')
+        PsiWhiteSpace(' ')
+        Field
+          PsiElement(identifier)('str')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

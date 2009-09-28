@@ -1,0 +1,11 @@
+throw
+#
+-----
+Groovy script
+  THROW statement
+    PsiElement(throw)('throw')
+    PsiErrorElement:Expression expected
+      <empty list>
+  PsiElement(new line)('\n')
+  PsiErrorElement:';' or new line expected
+    PsiElement(wrong token)('#')

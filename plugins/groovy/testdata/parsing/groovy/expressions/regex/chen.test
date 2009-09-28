@@ -1,0 +1,32 @@
+url = (url =~ /[;\/\?:@&=\+\$,%-\.]/).replaceAll('')
+-----
+Groovy script
+  Assignment expression
+    Reference expression
+      PsiElement(identifier)('url')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    Method call
+      Reference expression
+        Parenthesized expression
+          PsiElement(()('(')
+          RegexFindExpression
+            Reference expression
+              PsiElement(identifier)('url')
+            PsiWhiteSpace(' ')
+            PsiElement(=~)('=~')
+            PsiWhiteSpace(' ')
+            Literal
+              PsiElement(regexp)('/[;\/\?:@&=\+\$,%-\.]/')
+          PsiElement())(')')
+        PsiElement(.)('.')
+        PsiElement(identifier)('replaceAll')
+      Arguments
+        PsiElement(()('(')
+        Literal
+          PsiElement(string)('''')
+        PsiElement())(')')
+
+
+

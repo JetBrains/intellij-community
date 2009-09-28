@@ -1,0 +1,31 @@
+<html>
+<head>
+  <style type="text/css">
+    body, table {
+      font-family: Verdana, sans-serif;
+      font-size: 100%;
+      padding-left: 2mm;
+    }
+
+    #footer {
+      font-size: 95%;
+      padding-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+<p>
+  This inspecton Checks whether a method without any <code>@Pattern</code> or derived annotation overrides an annotated
+  method from its base classes. This is not necessary for the error-highlighting inside the editor, however the
+  runtime-check instrumentation doesn't pick up annotations from base-class methods.
+</p>
+
+<p>
+  A QuickFix is provided to add an annotation that matches the one from the base-class method. This ensures the
+  runtime-check instrumentation works correctly.
+</p>
+
+<p id="footer">Powered by IntelliLang</p>
+</body>
+</html>

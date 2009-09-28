@@ -1,0 +1,382 @@
+<idea-plugin version="2">
+  <name>Intention Power Pack</name>
+  <id>IntentionPowerPack</id>
+  <version>1.0</version>
+
+  <vendor>InspectionGadgets Software</vendor>
+  <idea-version since-build="8000"/>
+  <resource-bundle>com.siyeh.IntentionPowerPackBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+
+    <!-- Numbers -->
+    <intentionAction>
+      <className>com.siyeh.ipp.integer.ConvertIntegerToDecimalIntention</className>
+      <categoryKey>intention.category.numbers</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.integer.ConvertIntegerToHexIntention</className>
+      <categoryKey>intention.category.numbers</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.integer.ConvertIntegerToOctalIntention</className>
+      <categoryKey>intention.category.numbers</categoryKey>
+    </intentionAction>
+
+    <!-- Boolean -->
+    <intentionAction>
+      <className>com.siyeh.ipp.bool.DemorgansIntention</className>
+      <categoryKey>intention.category.boolean</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.bool.RemoveBooleanEqualityIntention</className>
+      <categoryKey>intention.category.boolean</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.bool.NegateComparisonIntention</className>
+      <categoryKey>intention.category.boolean</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.bool.FlipComparisonIntention</className>
+      <categoryKey>intention.category.boolean</categoryKey>
+    </intentionAction>
+
+<!--
+    <intentionAction>
+      <className>com.siyeh.ipp.bool.FlipConjunctionIntention</className>
+      <categoryKey>intention.category.boolean</categoryKey>
+    </intentionAction>
+-->
+
+    <intentionAction>
+      <className>com.siyeh.ipp.equality.ReplaceEqualsWithEqualityIntention</className>
+      <categoryKey>intention.category.boolean</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.equality.ReplaceEqualityWithEqualsIntention</className>
+      <categoryKey>intention.category.boolean</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.trivialif.ExpandBooleanIntention</className>
+      <categoryKey>intention.category.boolean</categoryKey>
+    </intentionAction>
+
+    <!-- Conditional Operator -->
+    <intentionAction>
+      <className>com.siyeh.ipp.conditional.FlipConditionalIntention</className>
+      <categoryKey>intention.category.conditional.operator</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.conditional.ReplaceConditionalWithIfIntention</className>
+      <categoryKey>intention.category.conditional.operator</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.trivialif.ReplaceIfWithConditionalIntention</className>
+      <categoryKey>intention.category.conditional.operator</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.conditional.RemoveConditionalIntention</className>
+      <categoryKey>intention.category.conditional.operator</categoryKey>
+    </intentionAction>
+
+    <!-- Shift -->
+    <intentionAction>
+      <className>com.siyeh.ipp.shift.ReplaceMultiplyWithShiftIntention</className>
+      <categoryKey>intention.category.shift.operation</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.shift.ReplaceShiftWithMultiplyIntention</className>
+      <categoryKey>intention.category.shift.operation</categoryKey>
+    </intentionAction>
+
+    <!-- JUnit -->
+    <intentionAction>
+      <className>com.siyeh.ipp.junit.ReplaceAssertEqualsWithAssertLiteralIntention</className>
+      <categoryKey>intention.category.junit</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.junit.ReplaceAssertLiteralWithAssertEqualsIntention</className>
+      <categoryKey>intention.category.junit</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.junit.CreateAssertIntention</className>
+      <categoryKey>intention.category.junit</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.junit.FlipAssertLiteralIntention</className>
+      <categoryKey>intention.category.junit</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.junit.ConvertJUnit3TestCaseToJUnit4Intention</className>
+      <categoryKey>intention.category.junit</categoryKey>
+    </intentionAction>
+
+    <!-- Declaration -->
+
+    <!--
+    <intentionAction>
+      <className>com.siyeh.ipp.decls.MoveDeclarationIntention</className>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+    -->
+
+    <intentionAction>
+      <className>com.siyeh.ipp.decls.SimplifyVariableIntention</className>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.initialization.SplitDeclarationAndInitializationIntention</className>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.interfacetoclass.ConvertInterfaceToClassIntention</className>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.varargs.MakeMethodVarargsIntention</className>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.varargs.ConvertVarargParameterToArrayIntention</className>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.varargs.WrapVarargArgumentsWithExplicitArrayIntention</className>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.adapter.AdapterToListenerIntention</className>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+
+    <!-- Imports -->
+
+    <intentionAction>
+      <className>com.siyeh.ipp.fqnames.ReplaceFullyQualifiedNameWithImportIntention</className>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.imports.ReplaceOnDemandImportIntention</className>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+
+    <!-- Comments -->
+    <intentionAction>
+      <className>com.siyeh.ipp.comment.ChangeToCStyleCommentIntention</className>
+      <categoryKey>intention.category.comments</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.comment.ChangeToEndOfLineCommentIntention</className>
+      <categoryKey>intention.category.comments</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.comment.MoveCommentToSeparateLineIntention</className>
+      <categoryKey>intention.category.comments</categoryKey>
+    </intentionAction>
+
+
+    <!-- Control Flow -->
+    <intentionAction>
+      <className>com.siyeh.ipp.trivialif.SplitElseIfIntention</className>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.trivialif.MergeElseIfIntention</className>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.trivialif.MergeIfAndIntention</className>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.trivialif.MergeIfOrIntention</className>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.trivialif.MergeParallelIfsIntention</className>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.switchtoif.ReplaceSwitchWithIfIntention</className>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.switchtoif.ReplaceIfWithSwitchIntention</className>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.trivialif.SimplifyIfElseIntention</className>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.forloop.ReplaceForEachLoopWithIndexedForLoopIntention</className>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.forloop.ReplaceForEachLoopWithIteratorForLoopIntention</className>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.forloop.ReplaceForLoopWithWhileLoopIntention</className>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.whileloop.ReplaceWhileLoopWithDoWhileLoopIntention</className>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.whileloop.ReplaceDoWhileLoopWithWhileLoopIntention</className>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.whileloop.ExtractWhileLoopConditionToIfStatementIntention</className>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.braces.AddBracesIntention</className>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.forloop.ReverseForLoopDirectionIntention</className>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+
+    <!--
+    <intentionAction>
+      <className>com.siyeh.ipp.braces.RemoveBracesIntention</className>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+    -->
+
+    <!-- Other -->
+    <intentionAction>
+      <className>com.siyeh.ipp.expression.FlipExpressionIntention</className>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.expression.FlipSetterCallIntention</className>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.commutative.FlipCommutativeMethodCallIntention</className>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.commutative.SwapMethodCallArgumentsIntention</className>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.parenthesis.RemoveUnnecessaryParenthesesIntention</className>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.concatenation.ReplaceConcatenationWithStringBufferIntention</className>
+      <categoryKey>intention.category.strings</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.concatenation.ReplaceConcatenationWithFormatStringIntention</className>
+      <categoryKey>intention.category.strings</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.concatenation.CopyConcatenatedStringToClipboardIntention</className>
+      <categoryKey>intention.category.strings</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.concatenation.JoinConcatenatedStringLiteralsIntention</className>
+      <categoryKey>intention.category.strings</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.concatenation.MakeAppendChainIntoAppendSequenceIntention</className>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.exceptions.DetailExceptionsIntention</className>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.exceptions.ConvertCatchToThrowsIntention</className>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.opassign.ReplaceWithOperatorAssignmentIntention</className>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.opassign.ReplaceOperatorAssignmentWithAssignmentIntention</className>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.opassign.ReplaceOperatorAssignmentWithPostfixExpressionIntention</className>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.opassign.ReplacePostfixExpressionWithOperatorAssignmentIntention</className>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.opassign.ReplacePostfixExpressionWithAssignmentIntention</className>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.opassign.ReplaceAssignmentWithPostfixExpressionIntention</className>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.chartostring.CharToStringIntention</className>
+      <categoryKey>intention.category.strings</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.chartostring.StringToCharIntention</className>
+      <categoryKey>intention.category.strings</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.asserttoif.AssertToIfIntention</className>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.enumswitch.CreateEnumSwitchBranchesIntention</className>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.constant.ConstantExpressionIntention</className>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.constant.ConstantSubexpressionIntention</className>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.increment.ExtractIncrementIntention</className>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.parenthesis.AddClarifyingParenthesesIntention</className>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+  </extensions>
+</idea-plugin>

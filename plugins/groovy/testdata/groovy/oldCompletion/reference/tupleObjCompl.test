@@ -1,0 +1,4 @@
+def (street, home, postCode)
+def s = street.toS<caret>
+-----
+toString

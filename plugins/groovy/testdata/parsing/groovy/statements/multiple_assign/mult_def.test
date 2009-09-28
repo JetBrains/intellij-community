@@ -1,0 +1,27 @@
+def (c, int d, e) = list
+-----
+Groovy script
+  Multiple variable definitions
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    Tuple
+      PsiElement(()('(')
+      Variable
+        PsiElement(identifier)('c')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      PsiElement(int)('int')
+      PsiWhiteSpace(' ')
+      Variable
+        PsiElement(identifier)('d')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Variable
+        PsiElement(identifier)('e')
+      PsiElement())(')')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    Reference expression
+      PsiElement(identifier)('list')

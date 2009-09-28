@@ -1,0 +1,12 @@
+<html>
+<body><table> <tr> <td valign="top" height="150">
+<font face="verdana" size="-1">
+This inspection reports any <b><font color="#000080">synchronized</font></b>
+block which locks on an object which is initilized with a literal.
+String literals are interned and Number literals can be allocated from a cache.
+Because of this, it is possible that some other part of the system
+which uses an object initialized with the same literal, is actually holding a
+reference to the exact same object. This can create unexpected dead-lock situations,
+if the string was thought to be private.
+</font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">New in 7, Powered by InspectionGadgets</font> </td> </tr> </table> </body>
+</html>

@@ -1,0 +1,16 @@
+A a =
+-----
+Groovy script
+  Variable definitions
+    Modifiers
+      <empty list>
+    Type element
+      Reference element
+        PsiElement(identifier)('A')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('a')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiErrorElement:Expression expected
+        <empty list>

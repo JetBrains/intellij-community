@@ -1,0 +1,17 @@
+a ?: b ?: "default value"
+-----
+Groovy script
+  Elvis expression
+    Reference expression
+      PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    PsiElement(?:)('?:')
+    PsiWhiteSpace(' ')
+    Elvis expression
+      Reference expression
+        PsiElement(identifier)('b')
+      PsiWhiteSpace(' ')
+      PsiElement(?:)('?:')
+      PsiWhiteSpace(' ')
+      Literal
+        PsiElement(Gstring)('"default value"')

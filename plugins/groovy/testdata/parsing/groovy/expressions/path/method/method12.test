@@ -1,0 +1,14 @@
+f([]
+)
+-----
+Groovy script
+  Method call
+    Reference expression
+      PsiElement(identifier)('f')
+    Arguments
+      PsiElement(()('(')
+      Generalized list
+        PsiElement([)('[')
+        PsiElement(])(']')
+      PsiWhiteSpace('\n')
+      PsiElement())(')')

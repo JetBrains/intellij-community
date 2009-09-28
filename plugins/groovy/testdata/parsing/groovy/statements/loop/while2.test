@@ -1,0 +1,16 @@
+while true {doSomething()}
+-----
+Groovy script
+  WHILE statement
+    PsiElement(while)('while')
+    PsiErrorElement:'(' expected
+      <empty list>
+  PsiWhiteSpace(' ')
+  PsiErrorElement:';' or new line expected
+    PsiElement(true)('true')
+    PsiWhiteSpace(' ')
+    PsiElement({)('{')
+    PsiElement(identifier)('doSomething')
+    PsiElement(()('(')
+    PsiElement())(')')
+    PsiElement(})('}')

@@ -1,0 +1,62 @@
+class Base {
+  final int getP() {0}
+}
+
+class Derived extends Base {
+  int p = 0 //should not create a getter here
+}
+-----
+public class Base implements groovy.lang.GroovyObject {
+  public final int getP() {
+    return 0;
+  }
+
+  public groovy.lang.MetaClass getMetaClass() {
+    return null;
+  }
+
+  public void setMetaClass(groovy.lang.MetaClass mc) {
+    return ;
+  }
+
+  public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object args) {
+    return null;
+  }
+
+  public java.lang.Object getProperty(java.lang.String propertyName) {
+    return null;
+  }
+
+  public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
+    return ;
+  }
+}
+---
+public class Derived extends Base implements groovy.lang.GroovyObject {
+  public void setP(int p) {
+    return ;
+  }
+
+  public groovy.lang.MetaClass getMetaClass() {
+    return null;
+  }
+
+  public void setMetaClass(groovy.lang.MetaClass mc) {
+    return ;
+  }
+
+  public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object args) {
+    return null;
+  }
+
+  public java.lang.Object getProperty(java.lang.String propertyName) {
+    return null;
+  }
+
+  public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
+    return ;
+  }
+
+  private int p = 0;
+}
+---

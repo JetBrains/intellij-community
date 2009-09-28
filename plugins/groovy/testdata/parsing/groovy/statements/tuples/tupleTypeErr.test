@@ -1,0 +1,36 @@
+def A (s,h,t)=[sd, gh]
+-----
+Groovy script
+  Method
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('A')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Parameter list
+      Parameter
+        Modifiers
+          <empty list>
+        PsiElement(identifier)('s')
+      PsiElement(,)(',')
+      Parameter
+        Modifiers
+          <empty list>
+        PsiElement(identifier)('h')
+      PsiElement(,)(',')
+      Parameter
+        Modifiers
+          <empty list>
+        PsiElement(identifier)('t')
+    PsiElement())(')')
+    Throw clause
+      <empty list>
+  PsiErrorElement:';' or new line expected
+    PsiElement(=)('=')
+    PsiElement([)('[')
+    PsiElement(identifier)('sd')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('gh')
+    PsiElement(])(']')

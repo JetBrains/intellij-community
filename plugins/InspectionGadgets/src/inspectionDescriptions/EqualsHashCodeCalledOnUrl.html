@@ -1,0 +1,12 @@
+<html>
+<body><table> <tr> <td valign="top" height="150">
+<font face="verdana" size="-1">
+This inspection reports any instances of <b><font color="#000080">.equals()</font></b> or
+<b><font color="#000080">.hashCode()</font></b> being called
+on <b><font color="#000080">java.net.URL</font></b> objects. This can cause performance
+problems because those methods uses a DNS lookup
+to determine the equality of two <b><font color="#000080">java.net.URL</font></b> objects.
+Depending on the availability of the network and the speed of the DNS server, this can cause
+significant delays.
+</font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">New in 7, Powered by InspectionGadgets </font> </td> </tr> </table> </body>
+</html>

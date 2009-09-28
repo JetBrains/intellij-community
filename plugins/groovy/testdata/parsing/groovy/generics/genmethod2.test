@@ -1,0 +1,51 @@
+class A<T> {
+def <T> T getT() {}
+}
+-----
+Groovy script
+  Class definition
+    Modifiers
+      <empty list>
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('A')
+    Type parameter list
+      PsiElement(<)('<')
+      Type parameter
+        PsiElement(identifier)('T')
+        Type extends bounds list
+          <empty list>
+      PsiElement(>)('>')
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiWhiteSpace('\n')
+      Method
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        Type parameter list
+          PsiElement(<)('<')
+          Type parameter
+            PsiElement(identifier)('T')
+            Type extends bounds list
+              <empty list>
+          PsiElement(>)('>')
+        PsiWhiteSpace(' ')
+        Type element
+          Reference element
+            PsiElement(identifier)('T')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('getT')
+        PsiElement(()('(')
+        Parameter list
+          <empty list>
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        Throw clause
+          <empty list>
+        Open block
+          PsiElement({)('{')
+          PsiElement(})('}')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

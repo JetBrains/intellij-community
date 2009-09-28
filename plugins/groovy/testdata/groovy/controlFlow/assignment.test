@@ -1,0 +1,12 @@
+def k = 9
+k = sss(k)
+def t = k
+-----
+0(1) element: null
+1(2) WRITE k
+2(3) READ sss
+3(4) READ k
+4(5) WRITE k
+5(6) READ k
+6(7) WRITE t
+7() element: null

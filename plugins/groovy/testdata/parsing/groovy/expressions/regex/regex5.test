@@ -1,0 +1,17 @@
+m = "foobarfoo" =~ /o(b.*r)f/
+-----
+Groovy script
+  Assignment expression
+    Reference expression
+      PsiElement(identifier)('m')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    RegexFindExpression
+      Literal
+        PsiElement(Gstring)('"foobarfoo"')
+      PsiWhiteSpace(' ')
+      PsiElement(=~)('=~')
+      PsiWhiteSpace(' ')
+      Literal
+        PsiElement(regexp)('/o(b.*r)f/')

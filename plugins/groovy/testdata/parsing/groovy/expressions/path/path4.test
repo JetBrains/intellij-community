@@ -1,0 +1,23 @@
+a.b.
+c*."My $import.bugaga aga"
+-----
+Groovy script
+  Property selection
+    Reference expression
+      Reference expression
+        Reference expression
+          PsiElement(identifier)('a')
+        PsiElement(.)('.')
+        PsiElement(identifier)('b')
+      PsiElement(.)('.')
+      PsiElement(new line)('\n')
+      PsiElement(identifier)('c')
+    PsiElement(*.)('*.')
+    Compound Gstring
+      PsiElement(Gstring begin)('"My $')
+      Reference expression
+        Reference expression
+          PsiElement(identifier)('import')
+        PsiElement(.)('.')
+        PsiElement(identifier)('bugaga')
+      PsiElement(Gstring end)(' aga"')

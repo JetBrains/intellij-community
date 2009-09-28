@@ -1,0 +1,1 @@
+assert [1,[2,3]].<ref>flatten() == [1,2,3]

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>AssertEqualsBetweenInconvertibleTypes.java</file>
+    <line>13</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'assertEquals()' between objects of inconvertible types</problem_class>
+    <description>&lt;code&gt;assertEquals()&lt;/code&gt; between objects of inconvertible types 'int' and 'Double' #loc</description>
+  </problem>
+
+  <problem>
+    <file>AssertEqualsBetweenInconvertibleTypes.java</file>
+    <line>17</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'assertEquals()' between objects of inconvertible types</problem_class>
+    <description>&lt;code&gt;assertEquals()&lt;/code&gt; between objects of inconvertible types 'String' and 'double' #loc</description>
+  </problem>
+</problems>

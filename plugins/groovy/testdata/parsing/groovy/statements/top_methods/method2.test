@@ -1,0 +1,23 @@
+def a () throws A {}
+-----
+Groovy script
+  Method
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Parameter list
+      <empty list>
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Throw clause
+      PsiElement(throws)('throws')
+      PsiWhiteSpace(' ')
+      Reference element
+        PsiElement(identifier)('A')
+    PsiWhiteSpace(' ')
+    Open block
+      PsiElement({)('{')
+      PsiElement(})('}')

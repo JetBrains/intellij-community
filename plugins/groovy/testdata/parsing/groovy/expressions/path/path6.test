@@ -1,0 +1,11 @@
+a.b.
+-----
+Groovy script
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('a')
+    PsiElement(.)('.')
+    PsiElement(identifier)('b')
+  PsiElement(.)('.')
+  PsiErrorElement:Property selector expected
+    <empty list>

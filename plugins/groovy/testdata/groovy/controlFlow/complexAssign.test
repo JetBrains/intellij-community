@@ -1,0 +1,8 @@
+def msg = new StringBuffer()
+msg += "aaa"
+-----
+0(1) element: null
+1(2) WRITE msg
+2(3) READ msg
+3(4) WRITE msg
+4() element: null

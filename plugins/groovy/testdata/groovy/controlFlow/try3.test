@@ -1,0 +1,23 @@
+def a
+
+try {
+} catch (Exception e) {
+    a = 1
+} finally {
+     a.abs()
+}
+-----
+0(1) element: null
+1(2,6) element: Open block
+2(3) element: Catch clause
+3(4) WRITE a
+4(8) element: Assignment expression MAYBE_RETURN
+5(10) element: Finally clause
+6(5,7)  CALL 5
+7(13) AFTER CALL 6
+8(5,9)  CALL 5
+9(13) AFTER CALL 8
+10(11) READ a
+11(12) element: Method call MAYBE_RETURN
+12(7,9)  RETURN
+13() element: null

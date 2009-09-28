@@ -1,0 +1,11 @@
+public class X {
+  private boolean flag;
+
+  void f() {
+    if (flag) {
+      do {
+        System.out.println("looping");
+      } while (flag);
+    }
+  }
+}

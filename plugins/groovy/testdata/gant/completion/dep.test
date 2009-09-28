@@ -1,0 +1,7 @@
+target(aaa: "") {
+    dep<caret>
+}
+-----
+dep
+dependSet
+depends

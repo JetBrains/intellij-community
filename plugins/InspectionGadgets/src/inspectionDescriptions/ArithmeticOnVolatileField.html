@@ -1,0 +1,10 @@
+<html>
+<body><table> <tr> <td valign="top" height="150">
+<font face="verdana" size="-1">
+This inspection reports any uses of volatile fields in arithmetic operations.
+It's a common misconception that such operations are effectively atomic, but the
+Java Memory Model only specifies that loads and stores on volatile variables are
+atomic. This can lead to unexpected results, including lost updates, when using
+volatile fields in arithmetic operations.
+</font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
+</html>

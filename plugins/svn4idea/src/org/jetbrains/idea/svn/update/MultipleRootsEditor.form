@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.jetbrains.idea.svn.update.MultipleRootsEditor">
+  <grid id="e4403" binding="myPanel" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="4" left="4" bottom="0" right="0"/>
+    <constraints>
+      <xy x="90" y="82" width="261" height="156"/>
+      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <xy id="dc026" binding="myConfigureRootPanel" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <xy x="167" y="4" width="94" height="152"/>
+          <grid row="0" column="1" row-span="2" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+        </constraints>
+        <properties/>
+        <border type="etched" title-resource-bundle="org/jetbrains/idea/svn/SvnBundle" title-key="nulty.roots.update.configuration.selected.root.setting.group.title"/>
+        <children/>
+      </xy>
+      <scrollpane id="90f51">
+        <constraints>
+          <xy x="4" y="29" width="153" height="127"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="1e1ab" class="javax.swing.JList" binding="myList">
+            <constraints/>
+            <properties/>
+          </component>
+        </children>
+      </scrollpane>
+      <component id="9e222" class="javax.swing.JLabel">
+        <constraints>
+          <xy x="4" y="7" width="78" height="14"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="nulty.roots.update.configuration.affected.roots.label"/>
+        </properties>
+      </component>
+    </children>
+  </grid>
+</form>

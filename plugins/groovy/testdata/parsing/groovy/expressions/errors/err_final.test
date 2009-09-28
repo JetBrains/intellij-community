@@ -1,0 +1,8 @@
+def final 
+-----
+Groovy script
+  PsiErrorElement:';' or new line expected
+    PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(final)('final')
+  PsiWhiteSpace(' ')

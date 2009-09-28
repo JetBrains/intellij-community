@@ -1,0 +1,7 @@
+target(aaa: "") {
+    jav<caret>
+}
+-----
+java
+javac
+javadoc

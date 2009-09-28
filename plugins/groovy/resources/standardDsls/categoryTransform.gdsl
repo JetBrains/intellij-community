@@ -1,0 +1,18 @@
+def ctx = context()
+
+contributor(ctx) {
+  def annotations = classType?.getAnnotations("groovy.lang.Category")
+  for (a in annotations) {
+    delegatesTo a.findAttributeValue("value")?.bind()
+  }
+}
+
+contributor(ctx) {
+  def annotations = classType?.getAnnotations("groovy.lang.Mixin")
+  for (a in annotations) {
+    refs = a.findAttributeValue("value")
+    for (c in refs.asList()) {
+      delegatesTo c?.bind()
+    }
+  }
+}

@@ -1,0 +1,7 @@
+class A{
+  def foo(){
+    return a i<caret> b
+  }
+}
+-----
+instanceof

@@ -1,0 +1,39 @@
+class Foos {
+	def Foos()
+	throws NullPointerException
+	{ }
+}
+-----
+Groovy script
+  Class definition
+    Modifiers
+      <empty list>
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('Foos')
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiWhiteSpace('\n\t')
+      Constructor
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('Foos')
+        PsiElement(()('(')
+        Parameter list
+          <empty list>
+        PsiElement())(')')
+        PsiElement(new line)('\n\t')
+        Throw clause
+          PsiElement(throws)('throws')
+          PsiWhiteSpace(' ')
+          Reference element
+            PsiElement(identifier)('NullPointerException')
+        PsiElement(new line)('\n\t')
+        Open block
+          PsiElement({)('{')
+          PsiWhiteSpace(' ')
+          PsiElement(})('}')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

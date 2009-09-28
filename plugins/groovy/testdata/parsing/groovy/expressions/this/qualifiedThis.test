@@ -1,0 +1,49 @@
+class X {
+    def foo() {
+        X.this.foo();
+    }
+}
+-----
+Groovy script
+  Class definition
+    Modifiers
+      <empty list>
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('X')
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiWhiteSpace('\n    ')
+      Method
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('foo')
+        PsiElement(()('(')
+        Parameter list
+          <empty list>
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        Throw clause
+          <empty list>
+        Open block
+          PsiElement({)('{')
+          PsiWhiteSpace('\n        ')
+          Method call
+            Reference expression
+              'this' reference expression
+                Reference expression
+                  PsiElement(identifier)('X')
+                PsiElement(.)('.')
+                PsiElement(this)('this')
+              PsiElement(.)('.')
+              PsiElement(identifier)('foo')
+            Arguments
+              PsiElement(()('(')
+              PsiElement())(')')
+          PsiElement(;)(';')
+          PsiElement(new line)('\n    ')
+          PsiElement(})('}')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

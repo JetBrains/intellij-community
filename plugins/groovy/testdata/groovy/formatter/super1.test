@@ -1,0 +1,11 @@
+class w  {
+  def w ()  {
+    super  ()
+  }
+}
+-----
+class w {
+  def w() {
+    super()
+  }
+}

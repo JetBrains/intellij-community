@@ -1,0 +1,42 @@
+interface s {
+  def s () {
+    this()
+  }
+}
+-----
+Groovy script
+  Interface definition
+    Modifiers
+      <empty list>
+    PsiElement(interface)('interface')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('s')
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiWhiteSpace('\n  ')
+      Constructor
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('s')
+        PsiWhiteSpace(' ')
+        PsiElement(()('(')
+        Parameter list
+          <empty list>
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        Throw clause
+          <empty list>
+        Open block
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          Constructor invocation
+            PsiElement(this)('this')
+            Arguments
+              PsiElement(()('(')
+              PsiElement())(')')
+          PsiElement(new line)('\n  ')
+          PsiElement(})('}')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

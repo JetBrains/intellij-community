@@ -1,0 +1,9 @@
+class First {
+
+    def foo() {
+        new java.lan<caret>
+    }
+
+}
+-----
+lang

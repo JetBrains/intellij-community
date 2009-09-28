@@ -1,0 +1,74 @@
+class a {
+  def a (String s, int B) {}
+  def b () {this();}
+}
+-----
+Groovy script
+  Class definition
+    Modifiers
+      <empty list>
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiWhiteSpace('\n  ')
+      Constructor
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('a')
+        PsiWhiteSpace(' ')
+        PsiElement(()('(')
+        Parameter list
+          Parameter
+            Modifiers
+              <empty list>
+            Type element
+              Reference element
+                PsiElement(identifier)('String')
+            PsiWhiteSpace(' ')
+            PsiElement(identifier)('s')
+          PsiElement(,)(',')
+          PsiWhiteSpace(' ')
+          Parameter
+            Modifiers
+              <empty list>
+            Built in type
+              PsiElement(int)('int')
+            PsiWhiteSpace(' ')
+            PsiElement(identifier)('B')
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        Throw clause
+          <empty list>
+        Open block
+          PsiElement({)('{')
+          PsiElement(})('}')
+      PsiElement(new line)('\n  ')
+      Method
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('b')
+        PsiWhiteSpace(' ')
+        PsiElement(()('(')
+        Parameter list
+          <empty list>
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        Throw clause
+          <empty list>
+        Open block
+          PsiElement({)('{')
+          Method call
+            'this' reference expression
+              PsiElement(this)('this')
+            Arguments
+              PsiElement(()('(')
+              PsiElement())(')')
+          PsiElement(;)(';')
+          PsiElement(})('}')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

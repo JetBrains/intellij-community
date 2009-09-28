@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<project name ="IntentionPowerPack" default ="compile">
+
+    <property name="src.dir" value="src"/>
+    <property name="idea.dir" value="c:/Demetra"/>
+    <property name="idea.plugin.dir" value="C:\Documents and Settings\dgriffith\.IntelliJIdea60\config\plugins"/>
+
+    <property name="debug" value="true"/>
+    <property name="optimize" value="off"/>
+    <property name="deprecation" value="off"/>
+    <property name="project.fullname" value="IntentionPowerPack"/>
+    <property name="project.version" value="1.0"/>
+    <property name="jar.file" value="ipp.jar"/>
+    <property name="dist.zip.file" value="${project.fullname}.${project.version}.zip"/>
+
+    <path id="project.class.path">
+        <pathelement location="${idea.dir}/lib/openAPI.jar"/>
+        <pathelement location="${idea.dir}/lib/idea.jar"/>
+        <pathelement location="${idea.dir}/lib/jdom.jar"/>
+    </path>
+
+    <target name="init">
+        <property name="build.classes.dir" value="classes"/>
+        <property name="src.dir" value="src"/>
+        <property name="build.compiler" value="modern"/>
+    </target>
+
+    <target name="prepare" depends="init">
+        <mkdir dir="${build.classes.dir}"/>
+    </target>
+
+    <target name="compile" depends="prepare">
+        <javac srcdir="${src.dir}" destdir="${build.classes.dir}" includes="com/siyeh/**" debug="${debug}">
+            <classpath refid="project.class.path"/>
+        </javac>
+    </target>
+
+    <target name="deploy" depends="clean, compile" description="deploy the plugin">
+        <delete file="${jar.file}"/>
+        <copy file = "${src.dir}/IPPIcon.png" todir="${build.classes.dir}/com/siyeh/ipp"/>
+        <jar
+            jarfile="${jar.file}">
+            <fileset dir="${build.classes.dir}"/>
+            <fileset dir=".">
+                <include name="META-INF/plugin.xml"/>
+            </fileset>
+            <fileset dir="src">
+                <include name="intentionDescriptions/**/*"/>
+            </fileset>
+            <fileset dir="src">
+                <include name="**/*.properties"/>
+            </fileset>
+        </jar>
+        <mkdir dir="${idea.plugin.dir}"/>
+        <copy file="${jar.file}" todir="${idea.plugin.dir}" overwrite="true" />
+    </target>
+
+    <target name="clean" depends="init" description="Cleans up the distribution">
+        <delete dir="${build.classes.dir}"/>
+        <delete file="${jar.file}"/>
+    </target>
+
+    <target name="ship" depends="init" description="Cleans up the distribution">
+        <delete dir="${build.classes.dir}"/>
+        <move file="${jar.file}" todir="C:\"/>
+        <zip zipfile="C:\IntentionPowerPack.zip">
+            <fileset dir=".">
+                <include name="*/**"/>
+            </fileset>
+        </zip>
+    </target>
+
+    <target name="sync" depends="clean" description="Dump it to the watch">
+        <delete file="${jar.file}"/>
+        <sync todir="E:\IntentionPowerPack">
+        <fileset dir=".">
+            <include name="**/*"/>
+        </fileset>
+        </sync>
+    </target>
+</project>

@@ -1,0 +1,12 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <lang.documentationProvider language="RegExp" implementationClass="org.intellij.lang.regexp.RegExpDocumentationProvider"/>
+    <completion.contributor language="RegExp" implementationClass="org.intellij.lang.regexp.RegExpCompletionContributor"/>
+    <fileTypeFactory implementation="org.intellij.lang.regexp.RegExpSupportLoader" />
+    <annotator language="RegExp" implementationClass="org.intellij.lang.regexp.validation.RegExpAnnotator"/>
+    <lang.parserDefinition language="RegExp" implementationClass="org.intellij.lang.regexp.RegExpParserDefinition"/>
+    <lang.syntaxHighlighterFactory key="RegExp" implementationClass="org.intellij.lang.regexp.RegExpSyntaxHighlighterFactory"/>
+    <lang.braceMatcher language="RegExp" implementationClass="org.intellij.lang.regexp.RegExpBraceMatcher"/>
+    <lang.surroundDescriptor language="RegExp" implementationClass="org.intellij.lang.regexp.surroundWith.SimpleSurroundDescriptor"/>
+  </extensions>
+</idea-plugin>

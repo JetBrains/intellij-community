@@ -1,0 +1,27 @@
+<idea-plugin url="http://code.google.com/p/generate-tostring" version="3">
+    <name>GenerateToString</name>
+    <description>Adds a new action 'toString()' in the generate menu (alt + ins). The action generates a toString()
+        method that dumps the classes fields. Java body code is generated using Velocity Macro and you can change this
+        to fit your needs. Full documentation included (Click hyperlink from Settings).
+    </description>
+    <version>5.0</version>
+    <vendor email="cib_rejse@yahoo.dk" url="http://generate-tostring.googlecode.com">Claus Ibsen</vendor>
+    <idea-version since-build="8000"/>
+
+    <actions>
+        <action id="Actions.ActionsPlugin.GenerateToString"
+                class="org.jetbrains.generate.tostring.GenerateToStringAction" text="to_String()"
+                description="Generate toString() method">
+            <add-to-group group-id="GenerateGroup" anchor="after" relative-to-action="GenerateEquals"/>
+        </action>
+    </actions>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+        <applicationService serviceInterface="org.jetbrains.generate.tostring.template.TemplatesManager"
+                            serviceImplementation="org.jetbrains.generate.tostring.template.TemplatesManager"/>
+        <applicationService serviceInterface="org.jetbrains.generate.tostring.GenerateToStringContext"
+                            serviceImplementation="org.jetbrains.generate.tostring.GenerateToStringContext"/>
+        <inspectionToolProvider implementation="org.jetbrains.generate.tostring.GenerateToStringInspectionsProvider"/>
+    </extensions>
+</idea-plugin>

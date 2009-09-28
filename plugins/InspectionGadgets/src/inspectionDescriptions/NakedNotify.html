@@ -1,0 +1,12 @@
+<html>
+<body><table> <tr> <td valign="top" height="150">
+<font face="verdana" size="-1">
+This inspection reports any instances of <b><font color="#000080">.notify()</font></b> or
+<b><font color="#000080">.notifyAll()</font></b> being called without any detectable state change occuring.
+Normally, <b><font color="#000080">.notify()</font></b> and <b><font color="#000080">.notifyAll()</font></b> are
+used to inform other threads that a state change has occured.  That state change should occur in a synchronized
+context that contains the <b><font color="#000080">.notify()</font></b> or
+ <b><font color="#000080">.notifyAll()</font></b> call, and prior to the call.  While not having such a state change
+ isn't necessarily incorrect, it is certainly worth examining.
+</font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
+</html>

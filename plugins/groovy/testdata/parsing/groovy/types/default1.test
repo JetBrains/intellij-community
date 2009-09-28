@@ -1,0 +1,48 @@
+@interface b {
+ def @ann int foo() default @Bar 
+}
+-----
+Groovy script
+  Annotation definition
+    Modifiers
+      <empty list>
+    PsiElement(@)('@')
+    PsiElement(interface)('interface')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('b')
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiWhiteSpace('\n ')
+      Default annotation member
+        Modifiers
+          PsiElement(def)('def')
+          PsiWhiteSpace(' ')
+          Annotation
+            PsiElement(@)('@')
+            Reference element
+              PsiElement(identifier)('ann')
+            PsiWhiteSpace(' ')
+            Annotation arguments
+              <empty list>
+        Built in type
+          PsiElement(int)('int')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('foo')
+        PsiElement(()('(')
+        Parameter list
+          <empty list>
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        Default annotation value
+          PsiElement(default)('default')
+          PsiWhiteSpace(' ')
+          Annotation
+            PsiElement(@)('@')
+            Reference element
+              PsiElement(identifier)('Bar')
+            PsiWhiteSpace(' ')
+            Annotation arguments
+              <empty list>
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

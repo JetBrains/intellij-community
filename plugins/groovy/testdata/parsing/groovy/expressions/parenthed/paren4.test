@@ -1,0 +1,31 @@
+i=[('a'+'b'):3,'c':4]
+-----
+Groovy script
+  Assignment expression
+    Reference expression
+      PsiElement(identifier)('i')
+    PsiElement(=)('=')
+    Generalized list
+      PsiElement([)('[')
+      Named argument
+        Argument label
+          Parenthesized expression
+            PsiElement(()('(')
+            Additive expression
+              Literal
+                PsiElement(string)(''a'')
+              PsiElement(+)('+')
+              Literal
+                PsiElement(string)(''b'')
+            PsiElement())(')')
+        PsiElement(:)(':')
+        Literal
+          PsiElement(Integer)('3')
+      PsiElement(,)(',')
+      Named argument
+        Argument label
+          PsiElement(string)(''c'')
+        PsiElement(:)(':')
+        Literal
+          PsiElement(Integer)('4')
+      PsiElement(])(']')

@@ -1,0 +1,49 @@
+interface a {
+  def f() throws Exception
+  def g() throws Exception
+}
+-----
+Groovy script
+  Interface definition
+    Modifiers
+      <empty list>
+    PsiElement(interface)('interface')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiWhiteSpace('\n  ')
+      Method
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('f')
+        PsiElement(()('(')
+        Parameter list
+          <empty list>
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        Throw clause
+          PsiElement(throws)('throws')
+          PsiWhiteSpace(' ')
+          Reference element
+            PsiElement(identifier)('Exception')
+      PsiElement(new line)('\n  ')
+      Method
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('g')
+        PsiElement(()('(')
+        Parameter list
+          <empty list>
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        Throw clause
+          PsiElement(throws)('throws')
+          PsiWhiteSpace(' ')
+          Reference element
+            PsiElement(identifier)('Exception')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

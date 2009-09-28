@@ -1,0 +1,7 @@
+public class X {
+  void f(Object foo) {
+     if(foo==null){
+        throw new IllegalArgumentException("Argument is null");
+     }
+  }
+}

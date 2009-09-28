@@ -1,0 +1,11 @@
+<html>
+<body><table> <tr> <td valign="top" height="150">
+<font face="verdana" size="-1">
+This inspection reports on any instances of <b><font color="#000080">while</font></b> loops which spin on the
+value of a non-volatile field, waiting for it to be changed by another thread.  In addition to being potentially
+extremely CPU intensive when little work is done inside the loop, such
+loops are likely have different semantics than intended, as the Java Memory Model allows such field accesses
+to be hoisted out of the loop, causing the loop to never complete even if another thread does change the
+field's value.
+</font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets</font> </td> </tr> </table> </body>
+</html>

@@ -1,0 +1,461 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Package JetGroovy plugin" default="all">
+
+  <!--
+   In order for plugin packaging to work, you should have a groovy.properties file
+   next to this one, under the module content root. The template file is groovy.template.properties
+  -->
+
+  
+  <property file="groovy.properties"/>
+  <property name="idea.home" value="${jdk.home.jetgroovy_idea_sdk}"/>
+  <property name="javac2.home" value="${idea.home}/lib"/>
+  <path id="javac2.classpath">
+    <pathelement location="${javac2.home}/javac2.jar"/>
+    <pathelement location="${javac2.home}/jdom.jar"/>
+    <pathelement location="${javac2.home}/jgoodies-forms.jar"/>
+    <pathelement location="${javac2.home}/asm.jar"/>
+    <pathelement location="${javac2.home}/asm-commons.jar"/>
+  </path>
+  <taskdef name="javac2" classname="com.intellij.ant.Javac2" classpathref="javac2.classpath"/>
+  <taskdef name="instrumentIdeaExtensions" classname="com.intellij.ant.InstrumentIdeaExtensions" classpathref="javac2.classpath"/>
+  
+  <!-- Compiler options -->
+  
+  <property name="compiler.debug" value="on"/>
+  <property name="compiler.generate.no.warnings" value="off"/>
+  <property name="compiler.args" value=""/>
+  <property name="compiler.max.memory" value="128m"/>
+  <patternset id="ignored.files">
+    <exclude name="**/CVS/**"/>
+    <exclude name="**/SCCS/**"/>
+    <exclude name="**/RCS/**"/>
+    <exclude name="**/rcs/**"/>
+    <exclude name="**/.DS_Store/**"/>
+    <exclude name="**/.svn/**"/>
+    <exclude name="**/vssver.scc/**"/>
+    <exclude name="**/vssver2.scc/**"/>
+    <exclude name="**/.sbas/**"/>
+    <exclude name="**/.IJI.*/**"/>
+    <exclude name="**/.pyc/**"/>
+    <exclude name="**/.pyo/**"/>
+    <exclude name="**/*.pyc/**"/>
+    <exclude name="**/*.pyo/**"/>
+    <exclude name="**/.git/**"/>
+  </patternset>
+  <patternset id="library.patterns">
+    <include name="*.zip"/>
+    <include name="*.war"/>
+    <include name="*.egg"/>
+    <include name="*.ear"/>
+    <include name="*.swc"/>
+    <include name="*.jar"/>
+  </patternset>
+  <patternset id="compiler.resources">
+    <include name="**/?*.properties"/>
+    <include name="**/?*.xml"/>
+    <include name="**/?*.gif"/>
+    <include name="**/?*.png"/>
+    <include name="**/?*.jpeg"/>
+    <include name="**/?*.jpg"/>
+    <include name="**/?*.html"/>
+    <include name="**/?*.ft"/>
+    <include name="**/?*.dtd"/>
+    <include name="**/?*.tld"/>
+    <include name="**/?*.groovy"/>
+  </patternset>
+  
+  <!-- JDK definitions -->
+  
+  <property name="jdk.bin.jetgroovy_idea_sdk" value="${jdk.home.jetgroovy_compile_with_jdk}/bin"/>
+  <path id="jdk.classpath.jetgroovy_idea_sdk">
+    <fileset dir="${jdk.home.jetgroovy_idea_sdk}">
+      <include name="lib/alloy.jar"/>
+      <include name="lib/annotations.jar"/>
+      <include name="lib/asm-commons.jar"/>
+      <include name="lib/asm-tree-3.0.jar"/>
+      <include name="lib/asm.jar"/>
+      <include name="lib/boot.jar"/>
+      <include name="lib/bootstrap.jar"/>
+      <include name="lib/cglib-nodep-2.1_3.jar"/>
+      <include name="lib/commons-codec-1.3.jar"/>
+      <include name="lib/commons-collections.jar"/>
+      <include name="lib/commons-lang-2.4.jar"/>
+      <include name="lib/commons-net-1.4.1.jar"/>
+      <include name="lib/coverage-agent.jar"/>
+      <include name="lib/emma-agent.jar"/>
+      <include name="lib/emma.jar"/>
+      <include name="lib/extensions.jar"/>
+      <include name="lib/forms_rt.jar"/>
+      <include name="lib/icons.jar"/>
+      <include name="lib/idea_rt.jar"/>
+      <include name="lib/j2ee.jar"/>
+      <include name="lib/jasper21_rt.jar"/>
+      <include name="lib/jasper2_rt.jar"/>
+      <include name="lib/javac2.jar"/>
+      <include name="lib/javaee.jar"/>
+      <include name="lib/jaxen-1.1.1.jar"/>
+      <include name="lib/jdom.jar"/>
+      <include name="lib/jgoodies-forms.jar"/>
+      <include name="lib/jh.jar"/>
+      <include name="lib/jna-utils.jar"/>
+      <include name="lib/jna.jar"/>
+      <include name="lib/JNIWrap.jar"/>
+      <include name="lib/jsf-api.jar"/>
+      <include name="lib/jsp-api.jar"/>
+      <include name="lib/junit-4.6.jar"/>
+      <include name="lib/junit.jar"/>
+      <include name="lib/log4j.jar"/>
+      <include name="lib/microba.jar"/>
+      <include name="lib/nanoxml-2.2.3.jar"/>
+      <include name="lib/openapi.jar"/>
+      <include name="lib/org.eclipse.jdt.core*.jar"/>
+      <include name="lib/oromatcher.jar"/>
+      <include name="lib/picocontainer.jar"/>
+      <include name="lib/resolver.jar"/>
+      <include name="lib/resources.jar"/>
+      <include name="lib/resources_en.jar"/>
+      <include name="lib/serviceMessages.jar"/>
+      <include name="lib/servlet-api.jar"/>
+      <include name="lib/trove4j.jar"/>
+      <include name="lib/trove4j_src.jar"/>
+      <include name="lib/util.jar"/>
+      <include name="lib/velocity.jar"/>
+      <include name="lib/xerces.jar"/>
+      <include name="lib/xml-apis.jar"/>
+      <include name="lib/xmlrpc-2.0.jar"/>
+      <include name="lib/xpp3-1.1.4-min.jar"/>
+      <include name="lib/xstream.jar"/>
+      <include name="lib/yjp-controller-api-redist.jar"/>
+      <include name="plugins/JavaEE/lib/javaee-openapi.jar"/>
+      <include name="plugins/JavaEE/lib/resources_en.jar"/>
+      <include name="plugins/JSF/lib/jsf-openapi.jar"/>
+      <include name="plugins/JSF/lib/resources_en.jar"/>
+      <include name="plugins/PersistenceSupport/lib/persistence-openapi.jar"/>
+      <include name="plugins/PersistenceSupport/lib/resources_en.jar"/>
+      <include name="lib/idea.jar"/>
+      <include name="plugins/Spring/lib/spring.jar"/>
+      <include name="plugins/JavaEE/lib/javaee-impl.jar"/>
+      <include name="plugins/JavaScriptLanguage/lib/JavascriptLanguage.jar"/>
+      <include name="plugins/CSS/lib/css-openapi.jar"/>
+      <include name="plugins/CSS/lib/css.jar"/>
+      <include name="${jdk.home.jetgroovy_compile_with_jdk}/lib/tools.jar"/>
+      <include name="lib/ant/lib/ant.jar"/>
+      <include name="lib/groovy-all-1.6.3.jar"/>
+      <include name="${jdk.home.jetgroovy_compile_with_jdk}/jre/lib/charsets.jar"/>
+      <include name="${jdk.home.jetgroovy_compile_with_jdk}/jre/lib/deploy.jar"/>
+      <include name="${jdk.home.jetgroovy_compile_with_jdk}/jre/lib/javaws.jar"/>
+      <include name="${jdk.home.jetgroovy_compile_with_jdk}/jre/lib/jce.jar"/>
+      <include name="${jdk.home.jetgroovy_compile_with_jdk}/jre/lib/jsse.jar"/>
+      <include name="${jdk.home.jetgroovy_compile_with_jdk}/jre/lib/plugin.jar"/>
+      <include name="${jdk.home.jetgroovy_compile_with_jdk}/jre/lib/rt.jar"/>
+      <include name="${jdk.home.jetgroovy_compile_with_jdk}/jre/lib/ext/dnsns.jar"/>
+      <include name="${jdk.home.jetgroovy_compile_with_jdk}/jre/lib/ext/localedata.jar"/>
+      <include name="${jdk.home.jetgroovy_compile_with_jdk}/jre/lib/ext/sunjce_provider.jar"/>
+      <include name="${jdk.home.jetgroovy_compile_with_jdk}/jre/lib/ext/sunpkcs11.jar"/>
+    </fileset>
+  </path>
+  
+  <property name="jdk.bin.jetgroovy_runtime_jdk" value="${jdk.home.jetgroovy_runtime_jdk}/bin"/>
+  <path id="jdk.classpath.jetgroovy_runtime_jdk">
+    <fileset dir="${jdk.home.jetgroovy_runtime_jdk}">
+      <include name="jre/lib/charsets.jar"/>
+      <include name="jre/lib/deploy.jar"/>
+      <include name="jre/lib/javaws.jar"/>
+      <include name="jre/lib/jce.jar"/>
+      <include name="jre/lib/jsse.jar"/>
+      <include name="jre/lib/plugin.jar"/>
+      <include name="jre/lib/rt.jar"/>
+      <include name="jre/lib/ext/dnsns.jar"/>
+      <include name="jre/lib/ext/localedata.jar"/>
+      <include name="jre/lib/ext/sunjce_provider.jar"/>
+      <include name="jre/lib/ext/sunpkcs11.jar"/>
+      <include name="${path.variable.groovy_sdk_path}/lib/groovy-all*.jar"/>
+    </fileset>
+  </path>
+  
+  <property name="project.jdk.home" value="${jdk.home.jetgroovy_idea_sdk}"/>
+  <property name="project.jdk.bin" value="${jdk.bin.jetgroovy_idea_sdk}"/>
+  <property name="project.jdk.classpath" value="jdk.classpath.jetgroovy_idea_sdk"/>
+  
+  
+  <!-- Project Libraries -->
+  
+  <path id="library.groovy.classpath">
+    <fileset dir="${path.variable.groovy_sdk_path}/lib" includes="ant-*.jar"/>
+    <fileset dir="${path.variable.groovy_sdk_path}/lib" includes="antlr-*.jar"/>
+    <fileset dir="${path.variable.groovy_sdk_path}/lib" includes="asm-*.jar"/>
+    <fileset dir="${path.variable.groovy_sdk_path}/lib" includes="bsf-*.jar"/>
+    <fileset dir="${path.variable.groovy_sdk_path}/lib" includes="commons-cli-*.jar"/>
+    <fileset dir="${path.variable.groovy_sdk_path}/lib" includes="commons-logging-*.jar"/>
+    <fileset dir="${path.variable.groovy_sdk_path}/lib" includes="groovy-*.jar"/>
+    <fileset dir="${path.variable.groovy_sdk_path}/lib" includes="jline-*.jar"/>
+    <fileset dir="${path.variable.groovy_sdk_path}/lib" includes="jsp-api-*.jar"/>
+    <fileset dir="${path.variable.groovy_sdk_path}/lib" includes="junit-*.jar"/>
+    <fileset dir="${path.variable.groovy_sdk_path}/lib" includes="mockobjects-core-*.jar"/>
+    <fileset dir="${path.variable.groovy_sdk_path}/lib" includes="mx4j-*.jar"/>
+    <fileset dir="${path.variable.groovy_sdk_path}/lib" includes="servlet-api-*.jar"/>
+    <fileset dir="${path.variable.groovy_sdk_path}/lib" includes="xpp3_min-*.jar"/>
+    <fileset dir="${path.variable.groovy_sdk_path}/lib" includes="xstream-*.jar"/>
+  </path>
+  
+  <path id="library.idea.classpath"/>
+  
+  
+  <!-- Global Libraries -->
+  
+  <!-- Modules -->
+  
+  
+  <!-- Module rt -->
+  
+  <dirname property="module.rt.basedir" file="${ant.file}"/>
+  
+  
+  <property name="module.jdk.home.rt" value="${jdk.home.jetgroovy_runtime_jdk}"/>
+  <property name="module.jdk.bin.rt" value="${jdk.bin.jetgroovy_runtime_jdk}"/>
+  <property name="module.jdk.classpath.rt" value="jdk.classpath.jetgroovy_runtime_jdk"/>
+  
+  <property name="compiler.args.rt" value="${compiler.args}"/>
+  
+  <property name="rt.output.dir" value="${module.rt.basedir}/classes/production/rt"/>
+  <property name="rt.testoutput.dir" value="${module.rt.basedir}/classes/test/rt"/>
+  
+  <path id="rt.module.bootclasspath">
+    <!-- Paths to be included in compilation bootclasspath -->
+  </path>
+  
+  <path id="rt.module.classpath">
+    <path refid="${module.jdk.classpath.rt}"/>
+    <path refid="library.groovy.classpath"/>
+  </path>
+  
+  <path id="rt.runtime.module.classpath">
+    <pathelement location="${rt.output.dir}"/>
+    <pathelement location="${rt.testoutput.dir}"/>
+    <path refid="library.groovy.classpath"/>
+  </path>
+  
+  
+  <patternset id="excluded.from.module.rt">
+    <patternset refid="ignored.files"/>
+  </patternset>
+  
+  <patternset id="excluded.from.compilation.rt">
+    <patternset refid="excluded.from.module.rt"/>
+  </patternset>
+  
+  <path id="rt.module.sourcepath">
+    <dirset dir="${module.rt.basedir}/rt">
+      <include name="src"/>
+    </dirset>
+  </path>
+  
+  
+  <target name="compile.module.rt" depends="compile.module.rt.production,compile.module.rt.tests" description="Compile module rt"/>
+  
+  <target name="compile.module.rt.production" description="Compile module rt; production classes">
+    <mkdir dir="${rt.output.dir}"/>
+    <javac2 destdir="${rt.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.rt}/javac">
+      <compilerarg line="${compiler.args.rt}"/>
+      <bootclasspath refid="rt.module.bootclasspath"/>
+      <classpath refid="rt.module.classpath"/>
+      <src refid="rt.module.sourcepath"/>
+      <patternset refid="excluded.from.compilation.rt"/>
+    </javac2>
+    
+    <copy todir="${rt.output.dir}">
+      <fileset dir="${module.rt.basedir}/rt/src">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+    </copy>
+  </target>
+  
+  <target name="compile.module.rt.tests" depends="compile.module.rt.production" description="compile module rt; test classes" unless="skip.tests"/>
+  
+  <target name="clean.module.rt" description="cleanup module">
+    <delete dir="${rt.output.dir}"/>
+    <delete dir="${rt.testoutput.dir}"/>
+  </target>
+  
+  
+  <!-- Module groovy -->
+  
+  <dirname property="module.groovy.basedir" file="${ant.file}"/>
+  
+  
+  <property name="module.jdk.home.groovy" value="${project.jdk.home}"/>
+  <property name="module.jdk.bin.groovy" value="${project.jdk.bin}"/>
+  <property name="module.jdk.classpath.groovy" value="${project.jdk.classpath}"/>
+  
+  <property name="compiler.args.groovy" value="${compiler.args}"/>
+  
+  <property name="groovy.output.dir" value="${module.groovy.basedir}/classes/production/groovy"/>
+  <property name="groovy.testoutput.dir" value="${module.groovy.basedir}/classes/test/groovy"/>
+  
+  <path id="groovy.module.bootclasspath">
+    <!-- Paths to be included in compilation bootclasspath -->
+  </path>
+  
+  <path id="groovy.module.classpath">
+    <path refid="${module.jdk.classpath.groovy}"/>
+    <pathelement location="${rt.output.dir}"/>
+    <pathelement location="${rt.testoutput.dir}"/>
+    <path refid="library.groovy.classpath"/>
+    <path refid="library.idea.classpath"/>
+  </path>
+  
+  <path id="groovy.runtime.module.classpath">
+    <pathelement location="${groovy.output.dir}"/>
+    <pathelement location="${groovy.testoutput.dir}"/>
+    <path refid="rt.runtime.module.classpath"/>
+    <path refid="library.groovy.classpath"/>
+    <path refid="library.idea.classpath"/>
+  </path>
+  
+  
+  <patternset id="excluded.from.module.groovy">
+    <patternset refid="ignored.files"/>
+  </patternset>
+  
+  <patternset id="excluded.from.compilation.groovy">
+    <patternset refid="excluded.from.module.groovy"/>
+  </patternset>
+  
+  <path id="groovy.module.sourcepath">
+    <dirset dir="${module.groovy.basedir}">
+      <include name="resources"/>
+      <include name="src"/>
+    </dirset>
+  </path>
+  
+  <path id="groovy.module.test.sourcepath">
+    <dirset dir="${module.groovy.basedir}">
+      <include name="test"/>
+    </dirset>
+  </path>
+  
+  
+  <target name="compile.module.groovy" depends="compile.module.groovy.production,compile.module.groovy.tests" description="Compile module groovy"/>
+  
+  <target name="compile.module.groovy.production" depends="compile.module.rt" description="Compile module groovy; production classes">
+    <mkdir dir="${groovy.output.dir}"/>
+    <javac2 destdir="${groovy.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.groovy}/javac">
+      <compilerarg line="${compiler.args.groovy}"/>
+      <bootclasspath refid="groovy.module.bootclasspath"/>
+      <classpath refid="groovy.module.classpath"/>
+      <src refid="groovy.module.sourcepath"/>
+      <patternset refid="excluded.from.compilation.groovy"/>
+    </javac2>
+    
+    <copy todir="${groovy.output.dir}">
+      <fileset dir="${module.groovy.basedir}/resources">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+      <fileset dir="${module.groovy.basedir}/src">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+    </copy>
+  </target>
+  
+  <target name="compile.module.groovy.tests" depends="compile.module.groovy.production" description="compile module groovy; test classes" unless="skip.tests">
+    <mkdir dir="${groovy.testoutput.dir}"/>
+    <javac2 destdir="${groovy.testoutput.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.groovy}/javac">
+      <compilerarg line="${compiler.args.groovy}"/>
+      <classpath refid="groovy.module.classpath"/>
+      <classpath>
+        <path refid="groovy.module.classpath"/>
+        <pathelement location="${groovy.output.dir}"/>
+      </classpath>
+      <src refid="groovy.module.test.sourcepath"/>
+      <patternset refid="excluded.from.compilation.groovy"/>
+    </javac2>
+    
+    <copy todir="${groovy.testoutput.dir}">
+      <fileset dir="${module.groovy.basedir}/test">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+    </copy>
+  </target>
+  
+  <target name="clean.module.groovy" description="cleanup module">
+    <delete dir="${groovy.output.dir}"/>
+    <delete dir="${groovy.testoutput.dir}"/>
+  </target>
+  
+  <property name="groovy.plugin.exploded.dir" value="${idea.home}/system/plugins-sandbox/plugins/groovy"/>
+  <property name="groovy.path.jar" value="${module.groovy.basedir}/Groovy.zip"/>
+  <target name="plugin.build.groovy" depends="compile.module.groovy" description="Build configured plugin directories and archives for module &apos;groovy&apos;">
+    <antcall target="plugin.build.exploded.groovy">
+      <param name="plugin.dir.exploded" value="${groovy.plugin.exploded.dir}"/>
+    </antcall>
+    <antcall target="plugin.build.jar.groovy">
+      <param name="plugin.path.jar" value="${groovy.path.jar}"/>
+    </antcall>
+  </target>
+  
+  <!-- Call the target to build exploded directory for module 'groovy'.\n       Path to the exploded directory is specified by parameter 'plugin.dir.exploded' -->
+  <target name="plugin.build.exploded.groovy" description="Plugin exploded directory for module &apos;groovy&apos;">
+  
+    <copy todir="${plugin.dir.exploded}/lib/">
+        <fileset dir="${path.variable.groovy_sdk_path}/lib/">
+            <include name="xstream-*.jar"/>
+            <include name="xpp3_min-*.jar"/>
+            <include name="servlet-api-*.jar"/>
+            <include name="mx4j-*.jar"/>
+            <include name="mockobjects-core-*.jar"/>
+            <include name="junit-*.jar"/>
+            <include name="jsp-api-*.jar"/>
+            <include name="jline-*.jar"/>
+            <include name="groovy-*.jar"/>
+            <include name="commons-logging-*.jar"/>
+            <include name="commons-cli-*.jar"/>
+            <include name="bsf-*.jar"/>
+            <include name="asm-*.jar"/>
+            <include name="antlr-*.jar"/>
+            <include name="ant-*.jar"/>
+        </fileset>
+    </copy>
+
+    <copy todir="${plugin.dir.exploded}/classes">
+      <fileset dir="${module.groovy.basedir}/classes/production/rt"/>
+    </copy>
+    <copy todir="${plugin.dir.exploded}/classes">
+      <fileset dir="${module.groovy.basedir}/classes/production/groovy"/>
+    </copy>
+    <copy file="${module.groovy.basedir}/src/META-INF/groovy-javaee-integration.xml" tofile="${plugin.dir.exploded}/META-INF/groovy-javaee-integration.xml"/>
+    <copy file="${module.groovy.basedir}/src/META-INF/groovy-spring-integration.xml" tofile="${plugin.dir.exploded}/META-INF/groovy-spring-integration.xml"/>
+    <copy file="${module.groovy.basedir}/src/META-INF/groovy-js-integration.xml" tofile="${plugin.dir.exploded}/META-INF/groovy-js-integration.xml"/>
+    <copy file="${module.groovy.basedir}/src/META-INF/plugin.xml" tofile="${plugin.dir.exploded}/META-INF/plugin.xml"/>
+  </target>
+  
+  <!-- Call the target to build archive for module 'groovy'.\n       Path to the archive file is specified by parameter 'plugin.path.jar' -->
+  <target name="plugin.build.jar.groovy" description="Build plugin archive for module &apos;groovy&apos;">
+    <property name="tmp.dir.groovy" value="${module.groovy.basedir}/temp"/>
+    <mkdir dir="${tmp.dir.groovy}"/>
+    <mkdir dir="${tmp.dir.groovy}/lib"/>
+    <jar destfile="${tmp.dir.groovy}/lib/Groovy.jar" duplicate="preserve">
+      <zipfileset dir="${module.groovy.basedir}/classes/production/groovy" prefix=""/>
+    </jar>
+    <jar destfile="${tmp.dir.groovy}/lib/groovy-rt.jar" duplicate="preserve">
+      <zipfileset dir="${module.groovy.basedir}/classes/production/rt" prefix=""/>
+    </jar>
+    <copy file="${module.groovy.basedir}/resources/conf/groovy-starter.conf" todir="${tmp.dir.groovy}/lib"/>
+    <zip destfile="${groovy.path.jar}">
+      <fileset dir="${module.groovy.basedir}/temp"/>
+    </zip>
+    <delete dir="${tmp.dir.groovy}"/>
+  </target>
+  
+  <target name="init" description="Build initialization">
+    <!-- Perform any build initialization in this target -->
+  </target>
+  
+  <target name="clean" depends="clean.module.rt, clean.module.groovy" description="cleanup all"/>
+  
+  <target name="all" depends="init, clean, compile.module.rt, plugin.build.groovy" description="build all"/>
+</project>

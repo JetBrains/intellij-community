@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module version="4" relativePaths="true" type="PLUGIN_MODULE">
+  <component name="DevKit.ModuleBuildProperties">
+    <option name="myJarPlugin" value="false" />
+    <option name="myPluginXMLPath" value="$MODULE_DIR$" />
+  </component>
+  <component name="DevKit.ModuleSandboxManager">
+    <option name="SANDBOX_NAME" value="3103-2" />
+  </component>
+  <component name="ModuleRootManager" />
+  <component name="NewModuleRootManager">
+    <output url="file://$MODULE_DIR$/classes" />
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="3103-2" level="IDEA_LIB_LAYER" />
+    <orderEntryProperties />
+  </component>
+</module>
+

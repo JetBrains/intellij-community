@@ -1,0 +1,8 @@
+"aaaa $str... bbb"
+-----
+Groovy script
+  Compound Gstring
+    PsiElement(Gstring begin)('"aaaa $')
+    Reference expression
+      PsiElement(identifier)('str')
+    PsiElement(Gstring end)('... bbb"')

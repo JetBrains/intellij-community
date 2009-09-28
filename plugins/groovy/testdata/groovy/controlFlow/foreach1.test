@@ -1,0 +1,10 @@
+for (e in [1,2,3,4]) {
+  print e
+}
+-----
+0(1) element: null
+1(2,5) element: For statement
+2(3) element: Block statement
+3(4) READ print
+4(1) READ e
+5() element: null

@@ -1,0 +1,5 @@
+public class X {
+  void p(String s, String t) {
+    System.out.println(<spot>"s: " + s + " t: " + t</spot>);
+  }
+}

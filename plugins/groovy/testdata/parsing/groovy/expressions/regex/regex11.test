@@ -1,0 +1,18 @@
+i=/ab \
+cd/
+j=5
+-----
+Groovy script
+  Assignment expression
+    Reference expression
+      PsiElement(identifier)('i')
+    PsiElement(=)('=')
+    Literal
+      PsiElement(regexp)('/ab \\ncd/')
+  PsiElement(new line)('\n')
+  Assignment expression
+    Reference expression
+      PsiElement(identifier)('j')
+    PsiElement(=)('=')
+    Literal
+      PsiElement(Integer)('5')

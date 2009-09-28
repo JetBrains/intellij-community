@@ -1,0 +1,25 @@
+"""aaa $a.b.c
+bbb
+$c.d.e fff"""
+-----
+Groovy script
+  Compound Gstring
+    PsiElement(Gstring begin)('"""aaa $')
+    Reference expression
+      Reference expression
+        Reference expression
+          PsiElement(identifier)('a')
+        PsiElement(.)('.')
+        PsiElement(identifier)('b')
+      PsiElement(.)('.')
+      PsiElement(identifier)('c')
+    PsiElement(Gstring content)('\nbbb\n$')
+    Reference expression
+      Reference expression
+        Reference expression
+          PsiElement(identifier)('c')
+        PsiElement(.)('.')
+        PsiElement(identifier)('d')
+      PsiElement(.)('.')
+      PsiElement(identifier)('e')
+    PsiElement(Gstring end)(' fff"""')

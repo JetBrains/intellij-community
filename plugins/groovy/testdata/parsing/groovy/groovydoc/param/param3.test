@@ -1,0 +1,39 @@
+/**
+* @param <T     the type of the element
+*/
+-----
+Groovy script
+  GrDocComment
+    PsiElement(GDOC_COMMENT_START)('/**')
+    PsiWhiteSpace('\n')
+    PsiElement(GDOC_LEADING_ASTERISKS)('*')
+    PsiElement(GDOC_COMMENT_DATA)(' ')
+    GroovyDocTag
+      PsiElement(GDOC_TAG_NAME)('@param')
+      PsiWhiteSpace(' ')
+      GrDocParameterReference
+        PsiElement(GDOC_TAG_VALUE_LT)('<')
+        GrDocTagValueToken
+          PsiElement(GDOC_TAG_VALUE_TOKEN)('T')
+      PsiElement(DOC_COMMENT_BAD_CHARACTER)(' ')
+      PsiElement(DOC_COMMENT_BAD_CHARACTER)(' ')
+      PsiElement(DOC_COMMENT_BAD_CHARACTER)(' ')
+      PsiElement(DOC_COMMENT_BAD_CHARACTER)(' ')
+      PsiElement(DOC_COMMENT_BAD_CHARACTER)(' ')
+      GrDocTagValueToken
+        PsiElement(GDOC_TAG_VALUE_TOKEN)('the')
+      PsiElement(DOC_COMMENT_BAD_CHARACTER)(' ')
+      GrDocTagValueToken
+        PsiElement(GDOC_TAG_VALUE_TOKEN)('type')
+      PsiElement(DOC_COMMENT_BAD_CHARACTER)(' ')
+      GrDocTagValueToken
+        PsiElement(GDOC_TAG_VALUE_TOKEN)('of')
+      PsiElement(DOC_COMMENT_BAD_CHARACTER)(' ')
+      GrDocTagValueToken
+        PsiElement(GDOC_TAG_VALUE_TOKEN)('the')
+      PsiElement(DOC_COMMENT_BAD_CHARACTER)(' ')
+      GrDocTagValueToken
+        PsiElement(GDOC_TAG_VALUE_TOKEN)('element')
+      PsiElement(DOC_COMMENT_BAD_CHARACTER)('\n')
+    PsiElement(GDOC_COMMENT_END)('*/')
+

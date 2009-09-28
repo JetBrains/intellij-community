@@ -1,0 +1,10 @@
+"""My
+$a.
+b.c string """
+-----
+Groovy script
+  Compound Gstring
+    PsiElement(Gstring begin)('"""My\n$')
+    Reference expression
+      PsiElement(identifier)('a')
+    PsiElement(Gstring end)('.\nb.c string """')

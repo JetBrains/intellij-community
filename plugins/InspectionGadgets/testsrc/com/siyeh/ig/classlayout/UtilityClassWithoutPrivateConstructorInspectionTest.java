@@ -1,0 +1,15 @@
+package com.siyeh.ig.classlayout;
+
+import com.IGInspectionTestCase;
+
+public class UtilityClassWithoutPrivateConstructorInspectionTest
+        extends IGInspectionTestCase {
+
+    public void test() throws Exception {
+        final UtilityClassWithoutPrivateConstructorInspection inspection =
+                new UtilityClassWithoutPrivateConstructorInspection();
+        inspection.ignoreClassesWithOnlyMain = true;
+        doTest("com/siyeh/igtest/classlayout/utility_class_without_private_constructor",
+                inspection);
+    }
+}
