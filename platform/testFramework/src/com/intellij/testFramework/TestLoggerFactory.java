@@ -52,9 +52,10 @@ import java.io.StringReader;
       }
       System.setProperty("log4j.defaultInitOverride", "true");
       String text = new String(FileUtil.loadFileText(logXmlFile));
+      String logDir = PathManager.getSystemPath() + "/" + LOG_DIR;
       text = StringUtil.replace(text, SYSTEM_MACRO, StringUtil.replace(PathManager.getSystemPath(), "\\", "\\\\"));
       text = StringUtil.replace(text, APPLICATION_MACRO, StringUtil.replace(PathManager.getHomePath(), "\\", "\\\\"));
-      text = StringUtil.replace(text, LOGDIR_MACRO, StringUtil.replace(LOG_DIR, "\\", "\\\\"));
+      text = StringUtil.replace(text, LOGDIR_MACRO, StringUtil.replace(logDir, "\\", "\\\\"));
 
       File file = new File(PathManager.getSystemPath() + File.separator + LOG_DIR);
       file.mkdirs();
