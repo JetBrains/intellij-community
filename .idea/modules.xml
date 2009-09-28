@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/plugins/InspectionGadgets/InspectionGadgetsPlugin.iml" filepath="$PROJECT_DIR$/plugins/InspectionGadgets/InspectionGadgetsPlugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/IntelliLangJava.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/IntelliLangJava.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntentionPowerPak/IntentionPowerPackPlugin.iml" filepath="$PROJECT_DIR$/plugins/IntentionPowerPak/IntentionPowerPackPlugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/RegExpSupport/RegExpSupport.iml" filepath="$PROJECT_DIR$/RegExpSupport/RegExpSupport.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/annotations/annotations.iml" filepath="$PROJECT_DIR$/platform/annotations/annotations.iml" group="platform" />
@@ -82,6 +83,8 @@
       <module fileurl="file://$PROJECT_DIR$/platform/xdebugger-impl/xdebugger-impl.iml" filepath="$PROJECT_DIR$/platform/xdebugger-impl/xdebugger-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/xml/impl/xml.iml" filepath="$PROJECT_DIR$/xml/impl/xml.iml" group="xml" />
       <module fileurl="file://$PROJECT_DIR$/xml/openapi/xml-openapi.iml" filepath="$PROJECT_DIR$/xml/openapi/xml-openapi.iml" group="xml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/xpath/xpath.iml" filepath="$PROJECT_DIR$/plugins/xpath/xpath.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/xpath/xslt-rt/xslt-rt.iml" filepath="$PROJECT_DIR$/plugins/xpath/xslt-rt/xslt-rt.iml" />
     </modules>
   </component>
 </project>
