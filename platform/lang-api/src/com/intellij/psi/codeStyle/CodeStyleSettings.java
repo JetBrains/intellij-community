@@ -1129,7 +1129,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
           if (fileTypeId != null && fileTypeId.length() > 0) {
             FileType target = FileTypeManager.getInstance().getFileTypeByExtension(fileTypeId);
-            if (FileTypes.UNKNOWN == target) {
+            if (FileTypes.UNKNOWN == target || FileTypes.PLAIN_TEXT == target) {
               target = new TempFileType(fileTypeId);
             }
 
@@ -1148,7 +1148,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
   private void copyOldIndentOptions(@NonNls final String extension, final IndentOptions options) {
     final FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(extension);
-    if (fileType != FileTypes.UNKNOWN && !myAdditionalIndentOptions.containsKey(fileType)) {
+    if (fileType != FileTypes.UNKNOWN && fileType != FileTypes.PLAIN_TEXT && !myAdditionalIndentOptions.containsKey(fileType)) {
       registerAdditionalIndentOptions(fileType, options);
     }
   }
