@@ -27,18 +27,18 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="testng_rt" />
+    <orderEntry type="module" module-name="junit_rt" />
+    <orderEntry type="module" module-name="compiler-openapi" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../svnPlugins/testng/lib/testng-jdk15.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../community/plugins/testng/lib/testng-jdk15.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="testng_rt" />
-    <orderEntry type="module" module-name="junit_rt" />
-    <orderEntry type="module" module-name="compiler-openapi" />
   </component>
 </module>
 
