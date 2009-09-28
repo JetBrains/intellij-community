@@ -165,16 +165,16 @@ def layoutFull(String targetDirectory) {
 
 
       layoutPlugin("maven") {
-        fileset(dir: "$home/svnPlugins/maven/lib")
+        fileset(dir: "$home/plugins/maven/lib")
       }
 
 
       layoutPlugin("git4idea") {
-        fileset(dir: "$home/svnPlugins/git4idea/lib", excludes: "**/trilead-ssh2-src.zip")
+        fileset(dir: "$home/plugins/git4idea/lib", excludes: "**/trilead-ssh2-src.zip")
       }
 
       layoutPlugin("svn4idea") {
-        fileset(dir: "$home/svnPlugins/svn4idea/lib", excludes: "**/svnkitsrc.zip")
+        fileset(dir: "$home/plugins/svn4idea/lib", excludes: "**/svnkitsrc.zip")
       }
 
 
@@ -223,13 +223,13 @@ def layoutFull(String targetDirectory) {
 
           resources("testng")
 
-          fileset(dir: "$home/svnPlugins/testng/lib") {
+          fileset(dir: "$home/plugins/testng/lib") {
             include(name: "testng-jdk15.jar")
           }
         }
 
         dir("lib-jdk14") {
-          fileset(dir: "$home/svnPlugins/testng/lib") {
+          fileset(dir: "$home/plugins/testng/lib") {
             include(name: "testng-jdk14.jar")
           }
         }
@@ -246,11 +246,11 @@ def layoutFull(String targetDirectory) {
 
           jar("groovy_rt.jar") {module("groovy-rt")}
           dir("standardDsls") {
-            fileset(dir: "$home/svnPlugins/groovy/resources/standardDsls")
+            fileset(dir: "$home/plugins/groovy/resources/standardDsls")
           }
 
-          fileset(dir: "$home/svnPlugins/groovy/resources/conf")
-          fileset(dir: "${home}/svnPlugins/groovy/lib")
+          fileset(dir: "$home/plugins/groovy/resources/conf")
+          fileset(dir: "${home}/plugins/groovy/lib")
         }
       }
     }
