@@ -38,7 +38,7 @@ public abstract class IGQuickFixesTestCase {
     final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createFixtureBuilder();
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(testFixtureBuilder.getFixture());
     myFixture.enableInspections(new CastConflictsWithInstanceofInspection());
-    final String dataPath = PathManager.getHomePath() + "/svnPlugins/InspectionGadgets/test/com/siyeh/igfixes/";
+    final String dataPath = PathManager.getHomePath() + "/community/plugins/InspectionGadgets/test/com/siyeh/igfixes/";
     myFixture.setTestDataPath(dataPath);
     final JavaModuleFixtureBuilder builder = testFixtureBuilder.addModule(JavaModuleFixtureBuilder.class);
 

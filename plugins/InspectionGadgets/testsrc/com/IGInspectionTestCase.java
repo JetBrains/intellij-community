@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NonNls;
  */
 public abstract class IGInspectionTestCase extends InspectionTestCase {
   protected String getTestDataPath() {
-      return PathManager.getHomePath() + "/svnPlugins/InspectionGadgets/test";
+      return PathManager.getHomePath() + "/community/plugins/InspectionGadgets/test";
   }
 
   public void doTest(@NonNls final String folderName, final LocalInspectionTool tool) throws Exception {
