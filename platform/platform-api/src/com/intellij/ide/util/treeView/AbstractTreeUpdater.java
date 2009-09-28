@@ -194,7 +194,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
 
       beforeUpdate(eachPass).doWhenDone(new Runnable() {
         public void run() {
-          myTreeBuilder.getUi().updateSubtreeNow(eachPass);
+          myTreeBuilder.getUi().updateSubtreeNow(eachPass, false);
         }
       });
 

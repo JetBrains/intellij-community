@@ -24,4 +24,12 @@ public interface Activatable {
   void showNotify();
   void hideNotify();
 
+  class Adapter implements Activatable {
+    public void hideNotify() {
+    }
+
+    public void showNotify() {
+    }
+  }
+
 }
