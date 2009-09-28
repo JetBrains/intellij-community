@@ -45,12 +45,12 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   public void registerStartupActivity(Runnable runnable) {
-    assert !myStartupActivityPassed : "Registering startup activity that will never be run" ;
+    LOG.assertTrue(!myStartupActivityPassed, "Registering startup activity that will never be run");
     myActivities.add(runnable);
   }
 
   public synchronized void registerPostStartupActivity(Runnable runnable) {
-    assert !myPostStartupActivityPassed : "Registering post-startup activity that will never be run" ;
+    LOG.assertTrue(!myPostStartupActivityPassed, "Registering post-startup activity that will never be run");
     myPostStartupActivities.add(runnable);
   }
 
