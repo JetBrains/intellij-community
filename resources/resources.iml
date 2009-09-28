@@ -8,6 +8,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="platform-resources" />
+    <orderEntry type="module" module-name="RegExpSupport" exported="" scope="RUNTIME" />
   </component>
   <component name="copyright">
     <Base>
