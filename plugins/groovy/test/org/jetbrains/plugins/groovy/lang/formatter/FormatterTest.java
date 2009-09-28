@@ -31,7 +31,7 @@ public class FormatterTest extends GroovyFormatterTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/groovy/formatter/";
+    return TestUtils.getTestDataPath() + "groovy/formatter/";
   }
 
   protected void setUp() throws Exception {

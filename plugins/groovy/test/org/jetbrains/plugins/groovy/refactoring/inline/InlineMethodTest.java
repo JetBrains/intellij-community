@@ -50,7 +50,7 @@ public class InlineMethodTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/groovy/refactoring/inlineMethod/";
+    return TestUtils.getTestDataPath() + "groovy/refactoring/inlineMethod/";
   }
 
   public void testAbstr1() throws Throwable { doTest(); }

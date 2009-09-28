@@ -29,7 +29,7 @@ import java.util.List;
 public class ExtractMethodTest extends LightGroovyTestCase {
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/groovy/refactoring/extractMethod/";
+    return TestUtils.getTestDataPath() + "groovy/refactoring/extractMethod/";
   }
 
   private void doAntiTest(String errorMessage) throws Exception {

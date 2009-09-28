@@ -27,7 +27,7 @@ public class GeneratorTest extends JavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/groovy/stubGenerator";
+    return TestUtils.getTestDataPath() + "groovy/stubGenerator";
   }
 
 public void testArrayType1() throws Throwable { doTest(); }

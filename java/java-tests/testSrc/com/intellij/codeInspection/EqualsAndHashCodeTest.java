@@ -34,7 +34,7 @@ public class EqualsAndHashCodeTest extends InspectionTestCase {
   }
 
   private void doTest() throws Exception {
-    doTest("equalsAndHashcode/" + getTestName(false), myTool);
+    doTest("equalsAndHashcode/" + getTestName(true), myTool);
   }
 
 

@@ -15,7 +15,7 @@ public class GroovyGoToSuperTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/groovy/gotoSuper/";
+    return TestUtils.getTestDataPath() + "groovy/gotoSuper/";
   }
 
   public void testGts1() throws Throwable { doTest(); }

@@ -51,7 +51,7 @@ public class ReferenceCompletionTest extends CompletionTestBase {
 
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/groovy/oldCompletion/reference";
+    return TestUtils.getTestDataPath() + "groovy/oldCompletion/reference";
   }
 
   protected boolean addKeywords() {

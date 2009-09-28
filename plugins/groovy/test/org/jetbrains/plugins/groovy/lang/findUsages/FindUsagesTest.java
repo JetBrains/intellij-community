@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -39,7 +40,7 @@ import java.util.Iterator;
 public class FindUsagesTest extends LightGroovyTestCase {
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/findUsages/" + getTestName(true) + "/";
+    return TestUtils.getTestDataPath() + "findUsages/" + getTestName(true) + "/";
   }
 
   private void doConstructorTest(String filePath, int expectedCount) throws Throwable {

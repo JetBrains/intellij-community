@@ -6,6 +6,7 @@ import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImp
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.conditions.GroovyWithIfElseExprSurrounder;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.conditions.GroovyWithIfExprSurrounder;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.conditions.GroovyWithWhileExprSurrounder;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -22,7 +23,7 @@ public class SurroundExpressionTest extends SurroundTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/groovy/surround/expr/";
+    return TestUtils.getTestDataPath() + "groovy/surround/expr/";
   }
 
 }
