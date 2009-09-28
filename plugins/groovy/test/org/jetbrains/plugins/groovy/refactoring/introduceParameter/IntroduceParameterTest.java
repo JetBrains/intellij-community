@@ -30,6 +30,7 @@ import com.intellij.refactoring.introduceParameter.Util;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
  * @author Maxim.Medvedev
@@ -38,7 +39,7 @@ import org.jetbrains.annotations.NonNls;
 public class IntroduceParameterTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/refactoring/introduceParameter/" + getTestName(true) + '/';
+    return TestUtils.getTestDataPath() + "refactoring/introduceParameter/" + getTestName(true) + '/';
   }
 
   private void doTest(int replaceFieldsWithGetters, boolean removeUnusedParameters, boolean searchForSuper, boolean declareFinal)

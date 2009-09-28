@@ -48,7 +48,7 @@ public class ConvertConcatenationToGstringTest extends GrIntentionTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/intentions/convertConcatenationToGstring/";
+    return TestUtils.getTestDataPath() + "intentions/convertConcatenationToGstring/";
   }
 
   public void testSimpleCase() throws Exception {

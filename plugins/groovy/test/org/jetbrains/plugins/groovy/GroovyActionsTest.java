@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
  * @author peter
@@ -28,7 +29,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 public class GroovyActionsTest extends LightCodeInsightFixtureTestCase {
 
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/groovy/actions/";
+    return TestUtils.getTestDataPath() + "groovy/actions/";
   }
 
   public void testSelectWordBeforeMethod() throws Throwable {

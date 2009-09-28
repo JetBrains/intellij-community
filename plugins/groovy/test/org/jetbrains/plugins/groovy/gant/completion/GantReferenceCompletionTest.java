@@ -11,7 +11,7 @@ public class GantReferenceCompletionTest extends CompletionTestBase {
 
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/gant/completion";
+    return TestUtils.getTestDataPath() + "gant/completion";
   }
 
   @Override
@@ -30,7 +30,7 @@ public class GantReferenceCompletionTest extends CompletionTestBase {
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.addLibraryJars("GROOVY", TestUtils.getMockGroovyLibraryHome(), TestUtils.GROOVY_JAR);
-    moduleBuilder.addLibraryJars("GANT", TestUtils.getTestDataPath() + "/mockGantLib", GANT_JARS);
+    moduleBuilder.addLibraryJars("GANT", TestUtils.getAbsoluteTestDataPath() + "/mockGantLib", GANT_JARS);
   }
 
 }

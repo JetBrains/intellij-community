@@ -4,14 +4,15 @@
  */
 package org.jetbrains.plugins.groovy.lang;
 
-import com.intellij.codeInsight.template.impl.actions.ListTemplatesAction;
-import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeInsight.template.impl.actions.ListTemplatesAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
  * @author peter
@@ -19,7 +20,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 public class GroovyLiveTemplatesTest extends LightCodeInsightFixtureTestCase{
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/liveTemplates/";
+    return TestUtils.getTestDataPath() + "liveTemplates/";
   }
 
   public void testJavaTemplatesWorkInGroovyContext() throws Throwable {

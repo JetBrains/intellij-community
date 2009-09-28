@@ -30,7 +30,7 @@ public class SecondUnsafeCallTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/groovy/inspections/secondUnsafeCall";
+    return TestUtils.getTestDataPath() + "groovy/inspections/secondUnsafeCall";
   }
 
   public void doTest() throws Exception {

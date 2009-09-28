@@ -20,7 +20,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.refactoring.copy.CopyClassesHandler;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
  * @author peter
@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 public class GroovyCopyClassTest extends LightCodeInsightFixtureTestCase {
 
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/refactoring/copy/";
+    return TestUtils.getTestDataPath() + "refactoring/copy/";
   }
 
   public void testBetweenPackages() throws Throwable {

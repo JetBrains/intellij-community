@@ -28,7 +28,7 @@ public class GroovyDslTest extends CompletionTestBase {
 
   @Override
   protected String getBasePath() {
-    "/svnPlugins/groovy/testdata/groovy/dsl"
+    TestUtils.getTestDataPath() + "groovy/dsl"
   }
 
   private def doCustomTest(String s) {

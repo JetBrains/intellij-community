@@ -35,7 +35,7 @@ import java.util.List;
 public class GroovyMoveStatementTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/groovy/actions/moveStatement/";
+    return TestUtils.getTestDataPath() + "groovy/actions/moveStatement/";
   }
 
   public void testClazz1() throws Throwable { downTest(); }

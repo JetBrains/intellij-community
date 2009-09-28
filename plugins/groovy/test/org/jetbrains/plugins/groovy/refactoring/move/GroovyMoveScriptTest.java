@@ -26,6 +26,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.io.File;
 
@@ -34,7 +35,7 @@ import java.io.File;
  */
 public class GroovyMoveScriptTest extends JavaCodeInsightFixtureTestCase {
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/refactoring/move/moveScript/";
+    return TestUtils.getTestDataPath() + "refactoring/move/moveScript/";
   }
 
   public void testMoveScriptBasic() throws Exception {

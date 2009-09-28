@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy;
 
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
  * @author Maxim.Medvedev
@@ -25,7 +26,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 public class GroovyCompletionTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/groovy/completion/";
+    return TestUtils.getTestDataPath() + "groovy/completion/";
   }
 
   public void testFinishMethodWithLParen() throws Throwable {

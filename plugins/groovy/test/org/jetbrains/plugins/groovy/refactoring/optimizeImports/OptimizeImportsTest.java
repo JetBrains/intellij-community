@@ -22,8 +22,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
  * @author ilyas
@@ -32,7 +32,7 @@ public class OptimizeImportsTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/optimizeImports/";
+    return TestUtils.getTestDataPath() + "optimizeImports/";
   }
 
   public void testNewline() throws Throwable {

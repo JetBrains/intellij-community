@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
  * @author ven
@@ -25,7 +26,7 @@ import com.intellij.psi.PsiReference;
 public class ResolveClassTest extends GroovyResolveTestCase {
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/resolve/class/";
+    return TestUtils.getTestDataPath() + "resolve/class/";
   }
 
   public void testInnerJavaClass() throws Exception {

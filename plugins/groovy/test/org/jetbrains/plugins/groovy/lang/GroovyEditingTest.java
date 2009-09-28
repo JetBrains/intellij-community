@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
  * @author peter
@@ -23,7 +24,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 public class GroovyEditingTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/editing/";
+    return TestUtils.getTestDataPath() + "editing/";
   }
 
   private void doTest(final char c) throws Throwable {

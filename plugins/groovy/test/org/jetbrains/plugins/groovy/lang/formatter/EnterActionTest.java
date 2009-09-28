@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.formatter;
 
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.util.TestUtils;
-import org.jetbrains.plugins.groovy.lang.formatter.GroovyFormatterTestCase;
 
 import java.util.List;
 
@@ -29,7 +28,7 @@ public class EnterActionTest extends GroovyFormatterTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/groovy/enterAction/";
+    return TestUtils.getTestDataPath() + "groovy/enterAction/";
   }
 
 

@@ -35,7 +35,7 @@ import java.io.IOException;
 public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/highlighting/";
+    return TestUtils.getTestDataPath() + "highlighting/";
   }
 
   @NotNull

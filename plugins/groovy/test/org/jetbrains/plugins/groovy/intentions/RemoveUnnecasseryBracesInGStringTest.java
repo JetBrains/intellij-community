@@ -16,13 +16,15 @@
 
 package org.jetbrains.plugins.groovy.intentions;
 
+import org.jetbrains.plugins.groovy.util.TestUtils;
+
 /**
  * @author Maxim.Medvedev
  */
 public class RemoveUnnecasseryBracesInGStringTest extends GrIntentionTestCase {  
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/intentions/removeUnnecessaryBraces/";
+    return TestUtils.getTestDataPath() + "intentions/removeUnnecessaryBraces/";
   }
 
   public void testIntention() throws Exception {
