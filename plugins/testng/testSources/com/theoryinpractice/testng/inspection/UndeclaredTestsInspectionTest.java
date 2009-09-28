@@ -4,7 +4,7 @@
  */
 package com.theoryinpractice.testng.inspection;
 
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.InspectionTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.testng.annotations.AfterMethod;
@@ -26,7 +26,7 @@ public class UndeclaredTestsInspectionTest extends InspectionTestCase {
 
   @NonNls
   protected String getTestDataPath() {
-    return PathManager.getHomePath() + "/svnPlugins/testng/testData/inspection";
+    return PluginPathManager.getPluginHomePath("testng") + "/testData/inspection";
   }
 
   @DataProvider

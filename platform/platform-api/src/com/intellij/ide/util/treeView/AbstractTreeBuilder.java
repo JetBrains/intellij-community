@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.MergingUpdateQueue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -115,7 +116,9 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   protected AbstractTreeUpdater createUpdater() {
-    return new AbstractTreeUpdater(this);
+    AbstractTreeUpdater updater = new AbstractTreeUpdater(this);
+    updater.setModalityStateComponent(MergingUpdateQueue.ANY_COMPONENT);
+    return updater;
   }
 
   protected final AbstractTreeUpdater getUpdater() {
@@ -243,7 +246,7 @@ public class AbstractTreeBuilder implements Disposable {
    * @param node
    */
   public final void updateSubtree(final DefaultMutableTreeNode node) {
-    getUi().updateSubtree(node);
+    getUi().updateSubtree(node, true);
   }
 
   public final boolean wasRootNodeInitialized() {
@@ -312,6 +315,10 @@ public class AbstractTreeBuilder implements Disposable {
 
   protected void updateAfterLoadedInBackground(Runnable runnable) {
     UIUtil.invokeLaterIfNeeded(runnable);
+  }
+
+  public final ActionCallback getReady() {
+    return myUi.getInitialized();
   }
 
   public static class AbstractTreeNodeWrapper extends AbstractTreeNode<Object> {

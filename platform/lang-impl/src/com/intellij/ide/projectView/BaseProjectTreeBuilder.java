@@ -8,10 +8,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.AsyncResult;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDirectory;
@@ -104,14 +101,13 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     return _select(element, null, requestFocus, nonStopCondition);
   }
 
-  private ActionCallback _select(Object element,
+  private ActionCallback _select(final Object element,
                                  VirtualFile file,
                                  final boolean requestFocus,
                                  final Condition<AbstractTreeNode> nonStopCondition) {
     final ActionCallback result = new ActionCallback();
 
     AbstractTreeNode alreadySelected = alreadySelectedNode(element);
-
 
     final Runnable onDone = new Runnable() {
       public void run() {
@@ -174,7 +170,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
                                                      final AbstractTreeNode root,
                                                      final Object element,
                                                      final Condition<AbstractTreeNode> nonStopCondition) {
-    final AsyncResult<AbstractTreeNode> async = new AsyncResult<AbstractTreeNode>(); 
+    final AsyncResult<AbstractTreeNode> async = new AsyncResult<AbstractTreeNode>();
 
     if (root.canRepresent(element)) {
       expand(root, new Runnable() {

@@ -9,7 +9,7 @@ import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
@@ -43,7 +43,7 @@ public class ConfigurationsTest {
     myFixture = fixtureFactory.createTempDirTestFixture();
     myFixture.setUp();
 
-    FileUtil.copyDir(new File(PathManager.getHomePath() + "/svnPlugins/testng/testData/runConfiguration/module1"),
+    FileUtil.copyDir(new File(PluginPathManager.getPluginHomePath("testng") + "/testData/runConfiguration/module1"),
                      new File(myFixture.getTempDirPath()), false);
 
     myProjectFixture = testFixtureBuilder.getFixture();

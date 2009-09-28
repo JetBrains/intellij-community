@@ -27,6 +27,8 @@ import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import junit.framework.TestCase;
 import org.intellij.lang.regexp.RegExpFileType;
 
+import java.io.File;
+
 public abstract class BaseParseTestcase extends TestCase {
   protected CodeInsightTestFixture myFixture;
 
@@ -49,8 +51,13 @@ public abstract class BaseParseTestcase extends TestCase {
 
   }
 
-  protected String getTestDataRoot() {
-    return PathManager.getHomePath() + "/svnPlugins/RegExpSupport/testData";
+  public static String getTestDataRoot() {
+    String homePath = PathManager.getHomePath();
+    File candidate = new File(homePath, "community/RegExpSupport");
+    if (candidate.isDirectory()) {
+      return new File(candidate, "testData").getPath();
+    }
+    return new File(homePath, "RegExpSupport/testData").getPath();
   }
 
   protected String getTestDataPath() {

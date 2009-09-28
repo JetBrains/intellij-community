@@ -1,6 +1,6 @@
 package org.intellij.lang.xpath;
 
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
@@ -27,7 +27,7 @@ public abstract class TestBase extends TestCase {
 
     private String getTestDataPath() {
         // path logic taken from RegExpSupport tests
-        final String def = PathManager.getHomePath() + "/svnPlugins/xpath/xpath-lang/testData";
+        final String def = PluginPathManager.getPluginHomePath("xpath") + "/xpath-lang/testData";
         return System.getProperty("idea.xpath.testdata-path", def) + "/" + getSubPath();
     }
 
