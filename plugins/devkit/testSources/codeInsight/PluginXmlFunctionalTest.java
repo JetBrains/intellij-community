@@ -29,7 +29,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/devkit/testData/codeInsight";
+    return "/community/plugins/devkit/testData/codeInsight";
   }
 
   public void testExtensionsHighlighting() throws Throwable {
