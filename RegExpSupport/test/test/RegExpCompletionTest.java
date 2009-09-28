@@ -1,8 +1,10 @@
 package test;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import org.intellij.lang.regexp.psi.impl.RegExpPropertyImpl;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -15,11 +17,11 @@ import java.util.Arrays;
 public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
 
     // util methods
-    private String getInputDataFileName(String testName) {
+    private static String getInputDataFileName(String testName) {
         return Character.toUpperCase(testName.charAt(0)) + testName.substring(1) + ".regexp";
     }
 
-    private String getExpectedResultFileName(String testName) {
+    private static String getExpectedResultFileName(String testName) {
         return Character.toUpperCase(testName.charAt(0)) + testName.substring(1) + "Expected" + ".regexp";
     }
 
@@ -60,6 +62,11 @@ public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
 
     @Override
     protected String getBasePath() {
-        return "/svnPlugins/RegExpSupport/testData/completion";
+      String homePath = PathManager.getHomePath();
+      File candidate = new File(homePath, "community/RegExpSupport");
+      if (candidate.isDirectory()) {
+        return "/community/RegExpSupport/testData/completion";
+      }
+      return "/RegExpSupport/testData/completion";
     }
 }

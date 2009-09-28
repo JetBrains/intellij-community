@@ -3,6 +3,7 @@ package org.jetbrains.idea.svn;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.lifecycle.AtomicSectionsAware;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -45,7 +46,7 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
     final File svnRoot = new File(myTempDirFixture.getTempDirPath(), "svnroot");
     svnRoot.mkdir();
 
-    File pluginRoot = new File(PathManager.getHomePath(), "svnPlugins/svn4idea");
+    File pluginRoot = new File(PluginPathManager.getPluginHomePath("svn4idea"));
     if (!pluginRoot.isDirectory()) {
       // try standalone mode
       Class aClass = SvnTestCase.class;

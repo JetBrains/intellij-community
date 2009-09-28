@@ -161,8 +161,8 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
       return;
     }
 
-    restartTimer();
     myActive = true;
+    restartTimer();
     flush();
   }
 

@@ -413,9 +413,6 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
         newPane.select(selectedPsiElement, virtualFile, true);
       }
     }
-    else if (selectedModule != null) {
-      newPane.select(selectedModule, selectedModule.getModuleFile(), true);
-    }
     myAutoScrollToSourceHandler.onMouseClicked(newPane.myTree);
     installLabelFocusListener();
   }

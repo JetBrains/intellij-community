@@ -1,6 +1,6 @@
 package org.jetbrains.idea.maven.indices;
 
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.io.FileUtil;
 
 import java.io.File;
@@ -27,7 +27,7 @@ public class MavenCustomRepositoryHelper {
   }
 
   private String getOriginalTestDataPath() {
-    String sourcesDir = System.getProperty("maven.sources.dir", PathManager.getHomePath() + "/svnPlugins/maven");
+    String sourcesDir = System.getProperty("maven.sources.dir", PluginPathManager.getPluginHomePath("maven"));
     return FileUtil.toSystemIndependentName(sourcesDir + "/src/test/data");
   }
 
