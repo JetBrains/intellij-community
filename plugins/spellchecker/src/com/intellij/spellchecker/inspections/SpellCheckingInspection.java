@@ -112,7 +112,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
             if (!processComments){
               return;
             }
-          } else if (!processLiterals){
+          } else if (!processCode){
             return;
           }
         }
