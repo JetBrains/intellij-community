@@ -1019,44 +1019,6 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertTrue(myProjectsTree.findProject(myProjectPom).hasUnresolvedArtifacts());
   }
 
-  public void testArtifactTypeProvidedByExtensionPlugin() throws Exception {
-    // This test ensures that we download all necessary extension plugins.
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<packaging>swf</packaging>" +
-
-                  "<dependencies>" +
-                  "  <dependency>" +
-                  "    <groupId>com.adobe.flex.framework</groupId>" +
-                  "    <artifactId>framework</artifactId>" +
-                  "    <version>3.2.0.3959</version>" +
-                  "    <type>resource-bundle</type>" +
-                  "    <classifier>en_US</classifier>" +
-                  "  </dependency>" +
-                  "</dependencies>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.sonatype.flexmojos</groupId>" +
-                  "      <artifactId>flexmojos-maven-plugin</artifactId>" +
-                  "      <extensions>true</extensions>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
-
-    // flex plugin handles 'resource-bundle' dependencies in a special way.
-    //
-    assertModuleLibDep("project", "Maven: com.adobe.flex.framework:framework:resource-bundle:en_US:3.2.0.3959",
-                       "jar://" + getRepositoryPath() +
-                       "/com/adobe/flex/framework/framework/3.2.0.3959/framework-3.2.0.3959-en_US.rb.swc!/",
-                       "jar://" + getRepositoryPath() +
-                       "/com/adobe/flex/framework/framework/3.2.0.3959/framework-3.2.0.3959-en_US.rb-sources.jar!/",
-                       "jar://" + getRepositoryPath() +
-                       "/com/adobe/flex/framework/framework/3.2.0.3959/framework-3.2.0.3959-en_US.rb-javadoc.jar!/");
-  }
-
   public void testCanResolveDependenciesWhenExtensionPluginNotFound() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -1129,7 +1091,6 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
-                  "<packaging>war</packaging>" +
 
                   "<dependencies>" +
                   "  <dependency>" +
@@ -1141,7 +1102,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "    <groupId>junit</groupId>" +
                   "    <artifactId>junit</artifactId>" +
                   "    <version>4.0</version>" +
-                  "    <type>war</type>" +
+                  "    <type>test-jar</type>" +
                   "  </dependency>" +
                   "  <dependency>" +
                   "    <groupId>junit</groupId>" +
@@ -1152,11 +1113,11 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "</dependencies>");
 
     assertProjectLibraries("Maven: junit:junit:4.0",
-                           "Maven: junit:junit:war:4.0",
+                           "Maven: junit:junit:test-jar:tests:4.0",
                            "Maven: junit:junit:jdk5:4.0");
     assertModuleLibDeps("project",
                         "Maven: junit:junit:4.0",
-                        "Maven: junit:junit:war:4.0",
+                        "Maven: junit:junit:test-jar:tests:4.0",
                         "Maven: junit:junit:jdk5:4.0");
   }
 
@@ -1347,63 +1308,6 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/");
-  }
-
-  public void testUpdateRootEntriesWithActualPathForNonJarDependencies() throws Exception {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<packaging>swf</packaging>" +
-
-                  "<dependencies>" +
-                  "  <dependency>" +
-                  "    <groupId>com.adobe.flex.framework</groupId>" +
-                  "    <artifactId>framework</artifactId>" +
-                  "    <version>3.2.0.3959</version>" +
-                  "    <type>swc</type>" +
-                  "  </dependency>" +
-                  "</dependencies>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>info.flex-mojos</groupId>" +
-                  "      <artifactId>flex-compiler-mojo</artifactId>" +
-                  "      <version>2.0M10</version>" +
-                  "      <extensions>true</extensions>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>" +
-
-                  "<repositories>" +
-                  "  <repository>" +
-                  "    <id>flex-mojos-repository</id>" +
-                  "    <url>http://svn.sonatype.org/flexmojos/repository/</url>" +
-                  "    <releases>" +
-                  "      <enabled>true</enabled>" +
-                  "    </releases>" +
-                  "  </repository>" +
-                  "</repositories>");
-
-    assertModuleLibDeps("project", "Maven: com.adobe.flex.framework:framework:swc:3.2.0.3959");
-    assertModuleLibDep("project", "Maven: com.adobe.flex.framework:framework:swc:3.2.0.3959",
-                       "jar://" + getRepositoryPath() + "/com/adobe/flex/framework/framework/3.2.0.3959/framework-3.2.0.3959.swc!/",
-                       "jar://" + getRepositoryPath() + "/com/adobe/flex/framework/framework/3.2.0.3959/framework-3.2.0.3959-sources.jar!/",
-                       "jar://" + getRepositoryPath() +
-                       "/com/adobe/flex/framework/framework/3.2.0.3959/framework-3.2.0.3959-javadoc.jar!/");
-
-    myProjectsManager.listenForExternalChanges(); // to recognize repository change
-    setRepositoryPath(new File(myDir, "__repo").getPath());
-
-    scheduleResolveAll();
-
-    resolveDependenciesAndImport();
-
-    assertModuleLibDep("project", "Maven: com.adobe.flex.framework:framework:swc:3.2.0.3959",
-                       "jar://" + getRepositoryPath() + "/com/adobe/flex/framework/framework/3.2.0.3959/framework-3.2.0.3959.swc!/",
-                       "jar://" + getRepositoryPath() + "/com/adobe/flex/framework/framework/3.2.0.3959/framework-3.2.0.3959-sources.jar!/",
-                       "jar://" + getRepositoryPath() +
-                       "/com/adobe/flex/framework/framework/3.2.0.3959/framework-3.2.0.3959-javadoc.jar!/");
   }
 
   public void testUpdateRootEntriesWithActualPathForDependenciesWithClassifiers() throws Exception {
@@ -1617,43 +1521,10 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertProjectLibraries("Maven: group:lib1:1");
   }
 
-  public void testRemovingUnusedNonJARLibrary() throws Exception {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<packaging>war</packaging>" +
-
-                  "<dependencies>" +
-                  "  <dependency>" +
-                  "    <groupId>group</groupId>" +
-                  "    <artifactId>lib1</artifactId>" +
-                  "    <version>1</version>" +
-                  "    <type>ear</type>" +
-                  "  </dependency>" +
-                  "  <dependency>" +
-                  "    <groupId>group</groupId>" +
-                  "    <artifactId>lib2</artifactId>" +
-                  "    <version>1</version>" +
-                  "    <type>war</type>" +
-                  "  </dependency>" +
-                  "</dependencies>");
-
-    assertProjectLibraries("Maven: group:lib1:ear:1",
-                           "Maven: group:lib2:war:1");
-
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<packaging>war</packaging>");
-
-    assertProjectLibraries();
-  }
-
   public void testRemovingUnusedLibraryWithClassifier() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
-                  "<packaging>war</packaging>" +
 
                   "<dependencies>" +
                   "  <dependency>" +
@@ -1666,18 +1537,17 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "    <groupId>group</groupId>" +
                   "    <artifactId>lib2</artifactId>" +
                   "    <version>1</version>" +
-                  "    <type>war</type>" +
+                  "    <type>test-jar</type>" +
                   "    <classifier>tests</classifier>" +
                   "  </dependency>" +
                   "</dependencies>");
 
     assertProjectLibraries("Maven: group:lib1:tests:1",
-                           "Maven: group:lib2:war:tests:1");
+                           "Maven: group:lib2:test-jar:tests:1");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<packaging>war</packaging>");
+                  "<version>1</version>");
 
     assertProjectLibraries();
   }

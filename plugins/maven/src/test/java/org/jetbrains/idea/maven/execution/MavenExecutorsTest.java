@@ -9,6 +9,8 @@ import java.util.Arrays;
 
 public class MavenExecutorsTest extends MavenTestCase {
   public void testExternalExecutor() throws Exception {
+    if (!hasM2Home()) return;
+
     VfsUtil.saveText(createProjectSubFile("src/main/java/A.java"), "public class A {}");
 
     createProjectPom("<groupId>test</groupId>" +

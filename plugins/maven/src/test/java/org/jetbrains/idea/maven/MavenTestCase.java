@@ -390,4 +390,10 @@ public abstract class MavenTestCase extends TestCase {
     System.out.println("Ignored: " + getClass().getSimpleName() + "." + getName());
     return true;
   }
+
+  protected boolean hasM2Home() {
+    boolean result = System.getenv("M2_HOME") != null;
+    if (!result) System.out.println("Ignored, because Maven installation not found: " + getClass().getSimpleName() + "." + getName());
+    return result;
+  }
 }
