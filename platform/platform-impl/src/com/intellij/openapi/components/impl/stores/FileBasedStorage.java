@@ -133,7 +133,7 @@ public class FileBasedStorage extends XmlElementStorage {
 
     @Override
     protected boolean physicalContentNeedsSave() {
-      if (!myFile.exists()) return true;
+      if (!myFile.exists()) return !myStorageData.isEmpty();
       return !StorageUtil.contentEquals(getDocumentToSave(), myFile);
     }
 
