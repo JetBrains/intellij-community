@@ -186,7 +186,7 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
         compilerMessages.add(new CompilerMessage(category, message, url, linenumInt, colomnnumInt));
       }
       else {
-        if (error) unparsedOutput.append(outputBuffer);
+        if (error) unparsedOutput.append(outputBuffer).append("\n");
         outputBuffer.setLength(0);
       }
     }
