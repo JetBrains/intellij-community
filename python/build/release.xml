@@ -1,5 +1,5 @@
 <project name="Python IDE Release Build" default="release">
-  <property name="idea.home" value="${basedir}/../../.."/>
+  <property name="idea.home" value="${basedir}/../.."/>
   <property name="out.dir" value="${idea.home}/out/python"/>
   <property name="classes.dir" value="${out.dir}/classes"/>
   <property name="platform.dir" value="${out.dir}/platform/platform15"/>
