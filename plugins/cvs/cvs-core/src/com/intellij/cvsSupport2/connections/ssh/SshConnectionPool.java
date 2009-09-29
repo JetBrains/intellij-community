@@ -52,6 +52,11 @@ public class SshConnectionPool implements ConnectionPoolI {
     }
     synchronized (myLock) {
       SshSharedConnection connection = myPool.get(key);
+      if ((connection != null) && (! connection.isValid())) {
+        SshLogger.debug("removing invalid connection from pool: " + connectionSettings.getHostName());
+        myPool.remove(key);
+        connection = null;
+      }
       SshLogger.debug("(group of) connections found in pool: " + (connection != null));
       if (connection == null) {
         connection = new SshSharedConnection(repository, connectionSettings, authentication);

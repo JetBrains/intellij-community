@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class UndoRedoAction extends AnAction implements DumbAware {
   public UndoRedoAction() {
@@ -36,7 +37,8 @@ public abstract class UndoRedoAction extends AnAction implements DumbAware {
     UndoManager undoManager = getUndoManager(editor, dataContext);
     boolean available = isAvailable(editor, undoManager);
     presentation.setEnabled(available);
-    String actionName = available ? formatAction(editor, undoManager) : "";
+    String actionName = available ? formatAction(editor, undoManager) : null;
+    if (actionName == null) actionName = "";
     String shortActionName = StringUtil.first(actionName, 30, true);
     if (actionName.length() == 0) actionName = ActionsBundle.message(getActionDescriptionEmptyMessageKey());
 
@@ -70,5 +72,6 @@ public abstract class UndoRedoAction extends AnAction implements DumbAware {
 
   protected abstract String getActionDescriptionEmptyMessageKey();
 
+  @Nullable
   protected abstract String formatAction(FileEditor editor, UndoManager undoManager);
 }

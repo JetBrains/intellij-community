@@ -1,23 +1,12 @@
 package com.intellij.cvsSupport2.connections;
 
-import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.*;
 import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsListenerWithProgress;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDate;
 import com.intellij.cvsSupport2.errorHandling.ErrorRegistry;
 import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
 import org.netbeans.lib.cvsclient.CvsRoot;
-import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
-
-import java.net.ConnectException;
-import java.net.NoRouteToHostException;
-import java.net.SocketTimeoutException;
-import java.net.UnknownHostException;
 
 
 /**
@@ -102,35 +91,4 @@ public abstract class CvsConnectionSettings extends CvsRootData implements CvsEn
     myOffline = offline;
   }
 
-  public void showConnectionErrorMessage(final String message, final Project project) {
-    Runnable showErrorAction = new Runnable() {
-      public void run() {
-        new ChangesViewBalloonProblemNotifier(project, message, MessageType.ERROR).run();
-      }
-    };
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      showErrorAction.run();
-    }
-    else {
-      ApplicationManager.getApplication().invokeLater(showErrorAction);
-    }
-  }
-
-  public boolean checkReportOfflineException(final AuthenticationException e, Project project) {
-    if (isOffline()) return true;
-    Throwable cause = e.getCause();
-    if (cause instanceof SocketTimeoutException) {
-      showConnectionErrorMessage(CvsBundle.message("error.message.timeout.error"), project);
-      return true;
-    }
-    else if (cause instanceof UnknownHostException) {
-      showConnectionErrorMessage(CvsBundle.message("error.message.unknown.host", HOST), project);
-      return true;
-    }
-    else if (cause instanceof ConnectException || cause instanceof NoRouteToHostException) {
-      showConnectionErrorMessage(CvsBundle.message("error.message.connection.error", HOST), project);
-      return true;
-    }
-    return false;
-  }
 }

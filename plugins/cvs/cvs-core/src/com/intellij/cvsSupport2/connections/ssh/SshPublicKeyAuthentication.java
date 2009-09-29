@@ -1,6 +1,5 @@
 package com.intellij.cvsSupport2.connections.ssh;
 
-import com.intellij.cvsSupport2.connections.ssh.SolveableAuthenticationException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.trilead.ssh2.Connection;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
@@ -20,13 +19,14 @@ public class SshPublicKeyAuthentication implements SshAuthentication {
   }
 
   public void authenticate(final Connection connection) throws AuthenticationException, SolveableAuthenticationException {
-    final char[] keyChars;
+    char[] keyChars;
     try {
       keyChars = FileUtil.loadFileText(myFile);
     }
     catch (IOException e) {
       throw new SolveableAuthenticationException("Cannot load public key file.");
     }
+
     try {
       connection.authenticateWithPublicKey(myLogin, keyChars, myPassword);
     }

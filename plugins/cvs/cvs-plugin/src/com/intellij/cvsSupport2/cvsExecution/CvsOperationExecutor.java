@@ -35,9 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 /**
  * author: lesya
@@ -124,14 +122,7 @@ public class CvsOperationExecutor {
 
           handler.beforeLogin();
 
-
           if (myResult.finishedUnsuccessfully(false, handler)) return;
-
-          setText(CvsBundle.message("progress.text.login"));
-          setCancelText(handler);
-
-          login(handler);
-          if (myResult.finishedUnsuccessfully(true, handler)) return;
 
           setText(CvsBundle.message("progress.text.preparing.for.action", handler.getTitle()));
 
@@ -173,35 +164,6 @@ public class CvsOperationExecutor {
         }
       }
     }
-  }
-
-  private void login(final CvsHandler handler) {
-    myExecutor.runInDispatchThread(new Runnable() {
-      public void run() {
-        try {
-          if (handler.login(myExecutor)) {
-            myResult.setIsLoggedIn();
-          }
-        }
-        catch (ProcessCanceledException ex) {
-          myResult.setIsCanceled();
-        }
-        catch (CvsException ex) {
-          Set<VcsException> vcsExceptions = Collections.singleton((VcsException)ex);
-          myResult.addAllErrors(vcsExceptions);
-          showErrors(new ArrayList<VcsException>(vcsExceptions),
-                     openTabbedWindow(handler));
-
-        }
-        catch (Exception e) {
-          Set<VcsException> vcsExceptions = Collections.singleton(new VcsException(e));
-          myResult.addAllErrors(vcsExceptions);
-          showErrors(new ArrayList<VcsException>(vcsExceptions),
-                     openTabbedWindow(handler));
-        }
-
-      }
-    }, myProject);
   }
 
   private static void setText(String text) {
@@ -337,10 +299,6 @@ public class CvsOperationExecutor {
 
   public VcsException getFirstError() {
     return myResult.composeError();
-  }
-
-  public boolean isLoggedIn() {
-    return myResult.isLoggedIn();
   }
 
   public boolean hasNoErrors() {

@@ -23,11 +23,13 @@ public class SshSharedConnection {
   private final ConnectionSettings myConnectionSettings;
 
   private final Object myLock;
+  private boolean myValid;
 
   private final ThrowableComputable<Connection, AuthenticationException> myConnectionFactory;
   private final List<Cell> myQueue;
 
   public SshSharedConnection(final String repository, final ConnectionSettings connectionSettings, final SshAuthentication authentication) {
+    myValid = true;
     myRepository = repository;
     myConnectionSettings = connectionSettings;
     myLock = new Object();
@@ -38,12 +40,28 @@ public class SshSharedConnection {
           SshLogger.debug("connection factory called");
           return SshConnectionUtils.openConnection(connectionSettings, authentication);
         }
-        catch (IOException e) {
+        catch (AuthenticationException e) {
+          synchronized (myLock) {
+            // todo +-
+            myValid = false;
+          }
+          throw e;
+        } catch (IOException e) {
+          // todo +-
+          synchronized (myLock) {
+            myValid = false;
+          }
           throw new AuthenticationException(e.getMessage(), e);
         }
       }
     };
     myQueue = new LinkedList<Cell>();
+  }
+
+  public boolean isValid() {
+    synchronized (myLock) {
+      return myValid;
+    }
   }
 
   @Nullable

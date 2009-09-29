@@ -21,6 +21,9 @@ public class SshPasswordAuthentication implements SshAuthentication {
   }
 
   public void authenticate(final Connection connection) throws AuthenticationException, SolveableAuthenticationException {
+    if (myPassword == null) {
+      throw new SolveableAuthenticationException("Authentication rejected.");
+    }
     try {
       final String[] methodsArr = connection.getRemainingAuthMethods(myLogin);
       if ((methodsArr == null) || (methodsArr.length == 0)) return;

@@ -16,7 +16,7 @@ public class RevertChangeListAction extends RevertCommittedStuffAbstractAction {
       }
     }, new Convertor<AnActionEvent, Change[]>() {
       public Change[] convert(AnActionEvent e) {
-        return e.getRequiredData(VcsDataKeys.CHANGES_WITH_MOVED_CHILDREN);
+        return e.getData(VcsDataKeys.CHANGES_WITH_MOVED_CHILDREN);
       }
     });
   }

@@ -16,6 +16,7 @@ package org.netbeans.lib.cvsclient.command.status;
 
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.command.AbstractCommand;
 import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.command.ICvsFiles;
@@ -60,7 +61,8 @@ public final class StatusCommand extends AbstractCommand {
 	 * services to this command, including the ability to actually process
 	 * all the requests.
 	 */
-	public boolean execute(IRequestProcessor requestProcessor, IEventSender eventSender, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException {
+	public boolean execute(IRequestProcessor requestProcessor, IEventSender eventSender, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException,
+                                                                                                                                                                                                                 AuthenticationException {
 		final ICvsFiles cvsFiles;
 		try {
 			cvsFiles = scanFileSystem(getFileObjects(), clientEnvironment);

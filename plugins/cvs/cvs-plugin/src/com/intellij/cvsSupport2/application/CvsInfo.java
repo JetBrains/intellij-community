@@ -1,23 +1,27 @@
 package com.intellij.cvsSupport2.application;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
+import com.intellij.cvsSupport2.connections.login.CvsLoginWorker;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvsIgnore.IgnoredFilesInfo;
 import com.intellij.cvsSupport2.cvsIgnore.IgnoredFilesInfoImpl;
 import com.intellij.cvsSupport2.errorHandling.ErrorRegistry;
 import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.CvsBundle;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
+import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entries;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -257,12 +261,36 @@ public class CvsInfo {
       return t;
     }
 
-    public boolean login(ModalityContext executor, Project project) {
-      Messages.showMessageDialog(CvsBundle.message("message.error.invalid.cvs.root", myStringRepsentation),
-                                 CvsBundle.message("message.error.cannot.connect.to.cvs.title"),
-                                 Messages.getErrorIcon());
+    @Override
+    public void setOffline(boolean offline) {
+      throw new RuntimeException(CvsBundle.message("exception.text.cannot.do.setoffline.with.invalid.root"));
+    }
 
-      return false;
+    @Override
+    public boolean isOffline() {
+      return true;
+    }
+
+    public CvsLoginWorker getLoginWorker(ModalityContext executor, final Project project) {
+      return new CvsLoginWorker() {
+        public boolean promptForPassword() {
+          return true;
+        }
+
+        public ThreeState silentLogin(boolean forceCheck) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              new ChangesViewBalloonProblemNotifier(project, CvsBundle.message("message.error.invalid.cvs.root", myStringRepsentation),
+                                                    MessageType.ERROR).run();
+            }
+          });
+          return ThreeState.NO;
+        }
+
+        public void goOffline() {
+          setOffline(true);
+        }
+      };
     }
 
     public boolean isValid() {

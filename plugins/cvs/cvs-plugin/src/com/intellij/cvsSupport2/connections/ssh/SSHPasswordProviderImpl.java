@@ -26,6 +26,8 @@ public class SSHPasswordProviderImpl implements ApplicationComponent, JDOMExtern
   private final Map<String, String> myCvsRootToPPKPasswordMap = new HashMap<String, String>();
   private final Map<String, String> myCvsRootToStoringPPKPasswordMap = new HashMap<String, String>();
 
+  private final Object myLock = new Object();
+
   @NonNls private static final String PASSWORDS = "passwords";
   @NonNls private static final String PASSWORD = "password";
 
@@ -50,39 +52,45 @@ public class SSHPasswordProviderImpl implements ApplicationComponent, JDOMExtern
 
   @Nullable
   public String getPasswordForCvsRoot(String cvsRoot) {
-    if (myCvsRootToStoringPasswordMap.containsKey(cvsRoot))
-      return myCvsRootToStoringPasswordMap.get(cvsRoot);
-    if (myCvsRootToPasswordMap.containsKey(cvsRoot))
+    synchronized (myLock) {
+      String password = myCvsRootToStoringPasswordMap.get(cvsRoot);
+      if (password != null) {
+        return password;
+      }
       return myCvsRootToPasswordMap.get(cvsRoot);
-
-    return null;
+    }
   }
 
   public void storePasswordForCvsRoot(String cvsRoot, String password, boolean storeInWorkspace) {
-    if (storeInWorkspace) {
-      myCvsRootToStoringPasswordMap.put(cvsRoot, password);
-    }
-    else {
-      myCvsRootToPasswordMap.put(cvsRoot, password);
+    synchronized (myLock) {
+      if (storeInWorkspace) {
+        myCvsRootToStoringPasswordMap.put(cvsRoot, password);
+      }
+      else {
+        myCvsRootToPasswordMap.put(cvsRoot, password);
+      }
     }
   }
 
   @Nullable
   public String getPPKPasswordForCvsRoot(String cvsRoot) {
-    if (myCvsRootToStoringPPKPasswordMap.containsKey(cvsRoot))
-      return myCvsRootToStoringPPKPasswordMap.get(cvsRoot);
-    if (myCvsRootToPPKPasswordMap.containsKey(cvsRoot))
+    synchronized (myLock) {
+      String password = myCvsRootToStoringPPKPasswordMap.get(cvsRoot);
+      if (password != null) {
+        return password;
+      }
       return myCvsRootToPPKPasswordMap.get(cvsRoot);
-
-    return null;
+    }
   }
 
   public void storePPKPasswordForCvsRoot(String cvsRoot, String password, boolean storeInWorkspace) {
-    if (storeInWorkspace) {
-      myCvsRootToStoringPPKPasswordMap.put(cvsRoot, password);
-    }
-    else {
-      myCvsRootToPPKPasswordMap.put(cvsRoot, password);
+    synchronized (myLock) {
+      if (storeInWorkspace) {
+        myCvsRootToStoringPPKPasswordMap.put(cvsRoot, password);
+      }
+      else {
+        myCvsRootToPPKPasswordMap.put(cvsRoot, password);
+      }
     }
   }
 
@@ -132,13 +140,17 @@ public class SSHPasswordProviderImpl implements ApplicationComponent, JDOMExtern
   }
 
   public void removePasswordFor(String stringRepsentation) {
-    myCvsRootToPasswordMap.remove(stringRepsentation);
-    myCvsRootToStoringPasswordMap.remove(stringRepsentation);
+    synchronized (myLock) {
+      myCvsRootToPasswordMap.remove(stringRepsentation);
+      myCvsRootToStoringPasswordMap.remove(stringRepsentation);
+    }
   }
 
   public void removePPKPasswordFor(String stringRepsentation) {
-    myCvsRootToPPKPasswordMap.remove(stringRepsentation);
-    myCvsRootToStoringPPKPasswordMap.remove(stringRepsentation);
+    synchronized (myLock) {
+      myCvsRootToPPKPasswordMap.remove(stringRepsentation);
+      myCvsRootToStoringPPKPasswordMap.remove(stringRepsentation);
+    }
   }
 
 }

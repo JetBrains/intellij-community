@@ -16,7 +16,6 @@ public class CvsResultEx implements CvsResult {
   private final List<VcsException> myErrors = new ArrayList<VcsException>();
   private final List<VcsException> myWarnings = new ArrayList<VcsException>();
   private boolean myIsCanceled = false;
-  private boolean myIsLoggedIn = false;
 
   public void setIsCanceled() {
     myIsCanceled = true;
@@ -34,20 +33,12 @@ public class CvsResultEx implements CvsResult {
     return myIsCanceled;
   }
 
-  public boolean isLoggedIn() {
-    return myIsLoggedIn;
-  }
-
   public void addAllErrors(Collection<VcsException> errors) {
     myErrors.addAll(errors);
   }
 
   public void addAllWarnings(Collection<VcsException> warnings) {
     myWarnings.addAll(warnings);
-  }
-
-  public void setIsLoggedIn() {
-    myIsLoggedIn = true;
   }
 
   public boolean hasNoErrors() {
@@ -76,7 +67,6 @@ public class CvsResultEx implements CvsResult {
   public boolean finishedUnsuccessfully(boolean shouldBeLoggedIn, CvsHandler handler) {
     checkIsCanceled(handler);
     if (!hasNoErrors()) return true;
-    if (shouldBeLoggedIn && !isLoggedIn()) return true;
     if (isCanceled()) return true;
     return false;
   }

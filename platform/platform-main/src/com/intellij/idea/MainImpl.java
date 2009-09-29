@@ -87,12 +87,12 @@ public class MainImpl {
   }
 
   private static void startApplication(final String[] args) {
-    if (runStartupWizard) {
-      StartupUtil.runStartupWizard();
-    }
-    final IdeaApplication app = new IdeaApplication(args);
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
+        if (runStartupWizard) {
+          StartupUtil.runStartupWizard();
+        }
+        final IdeaApplication app = new IdeaApplication(args);
         app.run();
       }
     });

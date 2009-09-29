@@ -2,6 +2,7 @@ package org.netbeans.lib.cvsclient.command.checkout;
 
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.command.AbstractMessageParser;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.CommandException;
@@ -39,7 +40,7 @@ public class ListModulesCommand extends Command {
   public boolean execute(IRequestProcessor requestProcessor, IEventSender eventManager,
                          ICvsListenerRegistry listenerRegistry,
                          IClientEnvironment clientEnvironment,
-                         IProgressViewer progressViewer) throws CommandException {
+                         IProgressViewer progressViewer) throws CommandException, AuthenticationException {
     modules.clear();
 
     final Requests requests = new Requests(CommandRequest.CHECKOUT, clientEnvironment);

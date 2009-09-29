@@ -350,7 +350,8 @@ public class NewMappings {
     // already sorted
     mySortedMappings = items.toArray(new VcsDirectoryMapping[items.size()]);
 
-    return filter.getRemovedRequests();
+    final List<LocalFileSystem.WatchRequest> watchRequestList = filter.getRemovedRequests();
+    return watchRequestList;
   }
 
   private boolean trySwitchVcs(final String path, final String activeVcsName) {

@@ -1,5 +1,6 @@
 package com.intellij.cvsSupport2.connections;
 
+import com.intellij.cvsSupport2.connections.login.CvsLoginWorker;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDate;
 import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
@@ -13,7 +14,7 @@ public interface CvsEnvironment {
 
   String getCvsRootAsString();
 
-  boolean login(ModalityContext executor, Project project);
+  CvsLoginWorker getLoginWorker(ModalityContext executor, Project project);
 
   RevisionOrDate getRevisionOrDate();
 

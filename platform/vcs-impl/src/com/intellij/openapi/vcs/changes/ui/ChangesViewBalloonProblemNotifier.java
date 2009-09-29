@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,6 +26,20 @@ public class ChangesViewBalloonProblemNotifier implements Runnable {
     myProject = project;
     myMessage = message;
     myMessageType = messageType;
+  }
+
+  public static void showMe(final Project project, final String message, final MessageType type) {
+    final Runnable showErrorAction = new Runnable() {
+      public void run() {
+        new ChangesViewBalloonProblemNotifier(project, message, type).run();
+      }
+    };
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      showErrorAction.run();
+    }
+    else {
+      ApplicationManager.getApplication().invokeLater(showErrorAction);
+    }
   }
 
   public void run() {

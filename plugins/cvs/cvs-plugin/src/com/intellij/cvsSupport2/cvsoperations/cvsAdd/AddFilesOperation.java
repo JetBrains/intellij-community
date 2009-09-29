@@ -1,9 +1,7 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsAdd;
 
-import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvsoperations.common.CompositeOperaton;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsOperation;
-import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 
@@ -18,13 +16,10 @@ public class AddFilesOperation extends CompositeOperaton {
   private final Map<KeywordSubstitution, AddFileOperation> mySubstitutionToOperation = new HashMap<KeywordSubstitution, AddFileOperation>();
   private final Map<VirtualFile, AddFileOperation> myAlreadyProcessedParentToOperation = new HashMap<VirtualFile, AddFileOperation>();
   private int myFilesCount = -1;
+  private int myMainPartSize;
 
-
-  public boolean login(ModalityContext executor) throws CannotFindCvsRootException {
-    for (final KeywordSubstitution keywordSubstitution : mySubstitutionToOperation.keySet()) {
-      addOperation(mySubstitutionToOperation.get(keywordSubstitution));
-    }
-    return super.login(executor);
+  public AddFilesOperation() {
+    myMainPartSize = 0;
   }
 
   public void addFile(VirtualFile file, KeywordSubstitution keywordSubstitution) {
@@ -32,14 +27,21 @@ public class AddFilesOperation extends CompositeOperaton {
 
       AddFileOperation op = getOperationForFile(file);
       op.addFile(file);
-      if (!containsSubOperation(op)) {
-        addOperation(op);
+      if (! containsSubOperation(op)) {
+        if (myMainPartSize == getSubOperationsCount()) {
+          addOperation(op);
+        } else {
+          addOperation(myMainPartSize, op);
+        }
+        ++ myMainPartSize;
       }
 
     }
     else {
-      if (!mySubstitutionToOperation.containsKey(keywordSubstitution)) {
-        mySubstitutionToOperation.put(keywordSubstitution, new AddFileOperation(keywordSubstitution));
+      if (! mySubstitutionToOperation.containsKey(keywordSubstitution)) {
+        final AddFileOperation substitutionOperation = new AddFileOperation(keywordSubstitution);
+        mySubstitutionToOperation.put(keywordSubstitution, substitutionOperation);
+        addOperation(substitutionOperation);
       }
       mySubstitutionToOperation.get(keywordSubstitution).addFile(file);
     }

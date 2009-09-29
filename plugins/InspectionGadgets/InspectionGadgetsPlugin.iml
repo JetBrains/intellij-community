@@ -17,14 +17,5 @@
     <orderEntry type="module" module-name="testFramework-java" />
     <orderEntry type="module" module-name="java-impl" />
   </component>
-  <component name="VcsManagerConfiguration">
-    <option name="ACTIVE_VCS_NAME" value="svn" />
-    <option name="USE_PROJECT_VCS" value="false" />
-  </component>
-  <component name="copyright">
-    <Base>
-      <setting name="state" value="2" />
-    </Base>
-  </component>
 </module>
 

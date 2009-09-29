@@ -29,7 +29,14 @@ class ConnectionLifeCycle {
 
   public Connection getConnection() throws AuthenticationException {
     if (myConnection == null) {
-      myConnection = myFactory.compute();
+      try {
+        myConnection = myFactory.compute();
+      }
+      catch (AuthenticationException e) {
+        // do NOT try to reuse broken-authorization that was put into factory...
+        myState = LifeStages.CLOSED;
+        throw e;
+      }
       myState = LifeStages.CREATED;
       SshLogger.debug("Connection opened");
     }

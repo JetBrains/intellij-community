@@ -5,13 +5,12 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ui.RemoteStatusChangeNodeDecorator;
 import com.intellij.openapi.vcs.update.UpdateFilesHelper;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.Topic;
 
@@ -29,7 +28,6 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
   private final RemoteRevisionsStateCache myRemoteRevisionsStateCache;
 
   private final ProjectLevelVcsManager myVcsManager;
-  private final LocalFileSystem myLfs;
 
   private final RemoteStatusChangeNodeDecorator myChangeDecorator;
   private final Project myProject;
@@ -43,7 +41,6 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
 
   private RemoteRevisionsCache(final Project project) {
     myProject = project;
-    myLfs = LocalFileSystem.getInstance();
     myLock = new Object();
 
     myRemoteRevisionsNumbersCache = new RemoteRevisionsNumbersCache(myProject);
