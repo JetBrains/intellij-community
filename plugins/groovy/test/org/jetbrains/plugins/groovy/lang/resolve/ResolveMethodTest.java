@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
  * @author ven
@@ -33,7 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 public class ResolveMethodTest extends GroovyResolveTestCase {
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/resolve/method/";
+    return TestUtils.getTestDataPath() + "resolve/method/";
   }
 
 

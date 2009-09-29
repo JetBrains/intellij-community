@@ -21,7 +21,7 @@ public class ReachingDefsTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testData/groovy/reachingDefs/";
+    return TestUtils.getTestDataPath() + "groovy/reachingDefs/";
   }
 
   public void testAssign() throws Throwable { doTest(); }

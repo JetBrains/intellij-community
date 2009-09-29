@@ -19,7 +19,7 @@ public class ImplementsExtendsQuickFixTest extends LightCodeInsightFixtureTestCa
 
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/groovy/extendsImplementsFix/";
+    return TestUtils.getTestDataPath() + "groovy/extendsImplementsFix/";
   }
 
   public void testClass1() throws Throwable { doTest(); }

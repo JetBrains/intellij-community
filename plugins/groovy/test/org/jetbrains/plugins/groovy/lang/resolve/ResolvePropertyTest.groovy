@@ -33,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement
+import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author ven
@@ -40,7 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement
 public class ResolvePropertyTest extends GroovyResolveTestCase {
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/resolve/property/";
+    return TestUtils.getTestDataPath() + "resolve/property/";
   }
 
   public void testParameter1() throws Exception {

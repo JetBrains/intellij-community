@@ -19,7 +19,7 @@ public abstract class GroovyParsingTestCase extends LightCodeInsightFixtureTestC
 
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/parsing/groovy/";
+    return TestUtils.getTestDataPath() + "parsing/groovy/";
   }
 
   public void doTest() throws IOException {

@@ -15,7 +15,7 @@
 
 package org.jetbrains.plugins.groovy.util;
 
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -24,7 +24,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
-import org.jetbrains.annotations.NonNls;
 import org.junit.Assert;
 
 import java.io.File;
@@ -48,15 +47,15 @@ public abstract class TestUtils {
   public static final String GROOVY_JAR_17 = "groovy-all-1.7.jar";
 
   public static String getMockJdkHome() {
-    return getTestDataPath() + "/mockJDK";
+    return getAbsoluteTestDataPath() + "/mockJDK";
   }
 
   public static String getMockGroovyLibraryHome() {
-    return getTestDataPath() + "/mockGroovyLib";
+    return getAbsoluteTestDataPath() + "/mockGroovyLib";
   }
 
   public static String getMockGroovy1_7LibraryHome() {
-    return getTestDataPath() + "/mockGroovyLib1.7";
+    return getAbsoluteTestDataPath() + "/mockGroovyLib1.7";
   }
 
   public static String getMockGroovy1_7LibraryName() {
@@ -77,13 +76,12 @@ public abstract class TestUtils {
         true);
   }
 
-  private static @NonNls String TEST_DATA_PATH = null;
+  public static String getAbsoluteTestDataPath() {
+    return FileUtil.toSystemIndependentName(PluginPathManager.getPluginHomePath("groovy")) + "/testdata/";
+  }
 
   public static String getTestDataPath() {
-    if (TEST_DATA_PATH == null) {
-      TEST_DATA_PATH = FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/svnPlugins/groovy/testdata";
-    }
-    return TEST_DATA_PATH;
+    return FileUtil.toSystemIndependentName(PluginPathManager.getPluginHomePathRelative("groovy")) + "/testdata/";
   }
 
   public static String removeBeginMarker(String text) {

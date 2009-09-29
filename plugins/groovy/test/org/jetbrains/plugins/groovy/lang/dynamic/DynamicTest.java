@@ -13,6 +13,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DClass
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DRootElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.List;
 
@@ -24,7 +25,7 @@ public class DynamicTest extends JavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/dynamic/";
+    return TestUtils.getTestDataPath() + "dynamic/";
   }
 
   public void testMethod() throws Throwable {

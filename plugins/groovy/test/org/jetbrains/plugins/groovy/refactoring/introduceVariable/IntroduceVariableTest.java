@@ -42,7 +42,7 @@ public class IntroduceVariableTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/groovy/refactoring/introduceVariable/";
+    return TestUtils.getTestDataPath() + "groovy/refactoring/introduceVariable/";
   }
 
   public void testAbs() throws Throwable { doTest(); }

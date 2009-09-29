@@ -15,6 +15,8 @@
 
 package org.jetbrains.plugins.groovy.lang.completion;
 
+import org.jetbrains.plugins.groovy.util.TestUtils;
+
 /**
  * @author ilyas
  */
@@ -86,7 +88,7 @@ public class KeywordCompletionTest extends CompletionTestBase {
 
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/groovy/oldCompletion/keyword";
+    return TestUtils.getTestDataPath() + "groovy/oldCompletion/keyword";
   }
 
   protected boolean addReferenceVariants() {

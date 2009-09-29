@@ -8,6 +8,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.actions.generate.constructors.ConstructorGenerateHandler;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
  * @author peter
@@ -38,6 +39,6 @@ public class GroovyGenerateMembersTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/generate";
+    return TestUtils.getTestDataPath() + "generate";
   }
 }

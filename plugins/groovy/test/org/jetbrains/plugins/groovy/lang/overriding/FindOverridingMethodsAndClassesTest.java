@@ -23,6 +23,7 @@ import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.Collection;
 
@@ -32,7 +33,7 @@ import java.util.Collection;
 public class FindOverridingMethodsAndClassesTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testData/overriding/findOverridingMethodsAndClasses";
+    return TestUtils.getTestDataPath() + "overriding/findOverridingMethodsAndClasses";
   }
 
   public void testSimpleCase() throws Throwable {

@@ -23,11 +23,11 @@ public class UnusedReturnValueTest extends InspectionTestCase {
   }
 
   private void doTest() throws Exception {
-    doTest("unusedReturnValue/" + getTestName(false), myTool);
+    doTest("unusedReturnValue/" + getTestName(true), myTool);
   }
 
 
-  public void testnonLiteral() throws Exception {
+  public void testNonLiteral() throws Exception {
     doTest();
   }
 

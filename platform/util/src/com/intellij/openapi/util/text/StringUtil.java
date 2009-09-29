@@ -170,7 +170,7 @@ public class StringUtil {
     if (a < 'A' || a >= 'a' && a <= 'z') {
       return a;
     }
-    
+
     if (a >= 'A' && a <= 'Z') {
       return (char)(a + ('a' - 'A'));
     }
@@ -194,7 +194,7 @@ public class StringUtil {
   @NotNull public static String getPackageName(@NotNull String fqName) {
     return getPackageName(fqName, '.');
   }
-  
+
   @NotNull public static String getPackageName(@NotNull String fqName, char separator) {
     int lastPointIdx = fqName.lastIndexOf(separator);
     if (lastPointIdx >= 0) {
@@ -1496,5 +1496,12 @@ public class StringUtil {
         LOG.error("Wrong line separators: '"+context+"' at offset "+i);
       }
     }
+  }
+
+  public static int compare(@Nullable String s1, @Nullable String s2) {
+    if (s1 == s2) return 0;
+    if (s1 == null) return 1;
+    if (s2 == null) return -1;
+    return s1.compareTo(s2);
   }
 }

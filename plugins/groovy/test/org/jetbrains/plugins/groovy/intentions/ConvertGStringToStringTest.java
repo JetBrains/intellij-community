@@ -16,13 +16,15 @@
 
 package org.jetbrains.plugins.groovy.intentions;
 
+import org.jetbrains.plugins.groovy.util.TestUtils;
+
 /**
  * @author Maxim.Medvedev
  */
 public class ConvertGStringToStringTest extends GrIntentionTestCase {
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/intentions/convertGStringToString/";
+    return TestUtils.getTestDataPath() + "intentions/convertGStringToString/";
   }
 
   public void testSimpleCase() throws Exception {

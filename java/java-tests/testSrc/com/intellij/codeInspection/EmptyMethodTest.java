@@ -19,18 +19,18 @@ public class EmptyMethodTest extends InspectionTestCase {
 
   private void doTest(final boolean checkRange) throws Exception {
     final EmptyMethodInspection tool = new EmptyMethodInspection();
-    doTest("emptyMethod/" + getTestName(false), tool, checkRange);
+    doTest("emptyMethod/" + getTestName(true), tool, checkRange);
   }
 
-  public void testsuperCall() throws Exception {
+  public void testSuperCall() throws Exception {
     doTest();
   }
 
-  public void testsuperCallByRange() throws Exception {
+  public void testSuperCallByRange() throws Exception {
     doTest(true);
   }
 
-  public void testexternalOverride() throws Exception {
+  public void testExternalOverride() throws Exception {
     doTest();
   }
 
@@ -42,7 +42,7 @@ public class EmptyMethodTest extends InspectionTestCase {
     doTest(true);
   }
 
-  public void testsuperFromAnotherPackageCall() throws Exception {
+  public void testSuperFromAnotherPackageCall() throws Exception {
     doTest();
   }
 }

@@ -62,11 +62,23 @@ public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierList
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
+  private boolean isAnnotationFormattingAllowed() {
+    final PsiElement element = getParent();
+    return element instanceof PsiClass
+        || element instanceof PsiMethod
+        || element instanceof PsiField;
+  }
+
   public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
     PsiAnnotation[] annotations = getAnnotations();
+    final boolean formattingAllowed = isAnnotationFormattingAllowed();
     for (PsiAnnotation annotation : annotations) {
       ((ClsAnnotationImpl)annotation).appendMirrorText(indentLevel, buffer);
-      buffer.append(' ');
+      if (formattingAllowed) {
+        goNextLine(indentLevel, buffer);
+      } else {
+        buffer.append(' ');
+      }
     }
 
     PsiElement parent = getParent();

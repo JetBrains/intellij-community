@@ -16,7 +16,7 @@ import java.util.List;
 public abstract class OverridingTester extends CodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testData/overriding/";
+    return TestUtils.getTestDataPath() + "overriding/";
   }
 
   public void doTest() throws Throwable {
