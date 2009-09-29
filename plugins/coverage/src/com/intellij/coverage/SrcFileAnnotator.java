@@ -35,6 +35,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
@@ -273,7 +274,7 @@ public class SrcFileAnnotator implements Disposable {
     final TreeMap<Integer, LineData> executableLines = new TreeMap<Integer, LineData>();
     final TreeMap<Integer, ClassData> classLines = new TreeMap<Integer, ClassData>();
     for (VirtualFile classFile : classFiles) {
-      final String qualifiedName = packageFQName + "." + classFile.getNameWithoutExtension();
+      final String qualifiedName = StringUtil.getQualifiedName(packageFQName, classFile.getNameWithoutExtension());
       final ClassData classData = data.getClassData(qualifiedName);
       if (classData != null) {
         final Object[] lines = classData.getLines();
