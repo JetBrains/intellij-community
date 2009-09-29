@@ -2,23 +2,24 @@ package com.intellij.spellchecker.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageExtensionPoint;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.lang.*;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.spellchecker.CheckArea;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.TextSplitter;
 import com.intellij.spellchecker.quickfixes.AcceptWordAsCorrect;
 import com.intellij.spellchecker.quickfixes.ChangeTo;
 import com.intellij.spellchecker.quickfixes.RenameTo;
+import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
 import com.intellij.spellchecker.tokenizer.Token;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
-import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.Nls;
@@ -26,10 +27,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Collection;
 
 
 public class SpellCheckingInspection extends LocalInspectionTool {
@@ -84,18 +87,42 @@ public class SpellCheckingInspection extends LocalInspectionTool {
 
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-
     return new PsiElementVisitor() {
 
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(final PsiElement element) {
+
+        final ASTNode node = element.getNode();
+        if (node == null){
+          return;
+        }
+        // Extract parser definition from element
+        final Language language = element.getLanguage();
+        final IElementType elementType = node.getElementType();
+        final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
+
+        // Handle selected options
+        if (parserDefinition != null){
+          if (parserDefinition.getStringLiteralElements().contains(elementType)) {
+            if (!processLiterals){
+              return;
+            }
+          }
+          else if (parserDefinition.getCommentTokens().contains(elementType)) {
+            if (!processComments){
+              return;
+            }
+          } else if (!processLiterals){
+            return;
+          }
+        }
 
         ensureFactoriesAreLoaded();
 
-        final SpellcheckingStrategy factoryByLanguage = getFactoryByLanguage(element.getLanguage());
+        final SpellcheckingStrategy factoryByLanguage = getFactoryByLanguage(language);
         final Tokenizer tokenizer = factoryByLanguage.getTokenizer(element);
-
-        @SuppressWarnings({"unchecked"}) Token[] tokens = tokenizer.tokenize(element);
+        @SuppressWarnings({"unchecked"})
+        final Token[] tokens = tokenizer.tokenize(element);
         if (tokens == null) {
           return;
         }
@@ -192,5 +219,22 @@ public class SpellCheckingInspection extends LocalInspectionTool {
       }
     }
     return false;
+  }
+
+  @SuppressWarnings({"PublicField"})
+  public boolean processCode = true;
+  public boolean processLiterals = true;
+  public boolean processComments = true;
+
+  @Override
+  public JComponent createOptionsPanel() {
+    final Box verticalBox = Box.createVerticalBox();
+    verticalBox.add(new SingleCheckboxOptionsPanel("Process code", this, "processCode"));
+    verticalBox.add(new SingleCheckboxOptionsPanel("Process literals", this, "processLiterals"));
+    verticalBox.add(new SingleCheckboxOptionsPanel("Process comments", this, "processComments"));
+    final JPanel panel = new JPanel(new BorderLayout());
+    panel.add(verticalBox, BorderLayout.NORTH);
+    return panel;
+
   }
 }
