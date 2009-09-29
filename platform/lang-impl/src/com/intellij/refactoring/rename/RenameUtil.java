@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.*;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
@@ -23,10 +24,8 @@ import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
-import com.intellij.pom.PomTargetPsiElement;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.util.*;
 
 public class RenameUtil {
@@ -283,7 +282,7 @@ public class RenameUtil {
       return inputValidator.value(newName);
     }
     if (psiElement instanceof PsiFile || psiElement instanceof PsiDirectory) {
-      return newName.indexOf(File.separatorChar) < 0 && newName.indexOf('/') < 0;
+      return newName.indexOf('\\') < 0 && newName.indexOf('/') < 0;
     }
     if (psiElement instanceof PomTargetPsiElement) {
       return !StringUtil.isEmptyOrSpaces(newName);
