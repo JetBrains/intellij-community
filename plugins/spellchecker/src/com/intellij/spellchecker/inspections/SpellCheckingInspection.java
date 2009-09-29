@@ -229,9 +229,9 @@ public class SpellCheckingInspection extends LocalInspectionTool {
   @Override
   public JComponent createOptionsPanel() {
     final Box verticalBox = Box.createVerticalBox();
-    verticalBox.add(new SingleCheckboxOptionsPanel("Process code", this, "processCode"));
-    verticalBox.add(new SingleCheckboxOptionsPanel("Process literals", this, "processLiterals"));
-    verticalBox.add(new SingleCheckboxOptionsPanel("Process comments", this, "processComments"));
+    verticalBox.add(new SingleCheckboxOptionsPanel(SpellCheckerBundle.message("process.code"), this, "processCode"));
+    verticalBox.add(new SingleCheckboxOptionsPanel(SpellCheckerBundle.message("process.literals"), this, "processLiterals"));
+    verticalBox.add(new SingleCheckboxOptionsPanel(SpellCheckerBundle.message("process.comments"), this, "processComments"));
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(verticalBox, BorderLayout.NORTH);
     return panel;
