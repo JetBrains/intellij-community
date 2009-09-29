@@ -13,4 +13,9 @@ public class SolveableAuthenticationException extends AuthenticationException{
   public SolveableAuthenticationException(String message, Throwable cause) {
     super(message, cause);
   }
+
+  @Override
+  public boolean isSolveable() {
+    return true;
+  }
 }

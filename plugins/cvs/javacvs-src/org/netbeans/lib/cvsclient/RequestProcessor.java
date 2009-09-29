@@ -88,7 +88,8 @@ public final class RequestProcessor implements IRequestProcessor {
 
   // Implemented ============================================================
 
-  public boolean processRequests(Requests requests, IRequestsProgressHandler communicationProgressHandler) throws CommandException {
+  public boolean processRequests(Requests requests, IRequestsProgressHandler communicationProgressHandler) throws CommandException,
+                                                                                                                  AuthenticationException {
     IConnectionStreams connectionStreams = openConnection();
     try {
       return processRequests(requests, connectionStreams, communicationProgressHandler);
@@ -100,13 +101,8 @@ public final class RequestProcessor implements IRequestProcessor {
 
   // Utils ==================================================================
 
-  private IConnectionStreams openConnection() throws CommandException {
-    try {
-      clientEnvironment.getConnection().open(streamLogger);
-    }
-    catch (AuthenticationException ex) {
-      throw new CommandException(ex, JavaCvsSrcBundle.message("could.not.establish.connection.error.message"));
-    }
+  private IConnectionStreams openConnection() throws CommandException, AuthenticationException {
+    clientEnvironment.getConnection().open(streamLogger);
 
     ConnectionStreams connectionStreams =
       new ConnectionStreams(clientEnvironment.getConnection(), streamLogger, clientEnvironment.getCharset());

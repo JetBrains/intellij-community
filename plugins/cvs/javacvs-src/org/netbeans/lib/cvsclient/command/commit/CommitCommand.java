@@ -16,6 +16,7 @@ package org.netbeans.lib.cvsclient.command.commit;
 
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.command.*;
 import org.netbeans.lib.cvsclient.event.DualListener;
 import org.netbeans.lib.cvsclient.event.ICvsListener;
@@ -64,7 +65,8 @@ public final class CommitCommand extends AbstractCommand {
 	 *               services to this command, including the ability to actually
 	 *               process all the requests
 	 */
-	public boolean execute(IRequestProcessor requestProcessor, IEventSender eventSender, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException {
+	public boolean execute(IRequestProcessor requestProcessor, IEventSender eventSender, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException,
+                                                                                                                                                                                                                 AuthenticationException {
 		final ICvsFiles cvsFiles;
 		try {
 			cvsFiles = scanFileSystem(getFileObjects(), clientEnvironment);

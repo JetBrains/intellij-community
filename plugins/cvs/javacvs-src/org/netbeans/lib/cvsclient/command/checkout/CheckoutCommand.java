@@ -18,6 +18,7 @@ import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.command.*;
 import org.netbeans.lib.cvsclient.event.ICvsListenerRegistry;
 import org.netbeans.lib.cvsclient.event.IEventSender;
@@ -76,7 +77,7 @@ public final class CheckoutCommand extends AbstractCommand implements IUpdatingC
                          IEventSender eventSender,
                          ICvsListenerRegistry listenerRegistry,
                          IClientEnvironment clientEnvironment,
-                         IProgressViewer progressViewer) throws CommandException {
+                         IProgressViewer progressViewer) throws CommandException, AuthenticationException {
     final ExpandedModules expandedModules = new ExpandedModules();
     if (!expandModules(expandedModules, listenerRegistry, requestProcessor, clientEnvironment)) {
       return false;
@@ -196,7 +197,7 @@ public final class CheckoutCommand extends AbstractCommand implements IUpdatingC
   private boolean expandModules(ExpandedModules expandedModules,
                                 ICvsListenerRegistry listenerRegistry,
                                 IRequestProcessor requestProcessor,
-                                IClientEnvironment clientEnvironment) throws CommandException {
+                                IClientEnvironment clientEnvironment) throws CommandException, AuthenticationException {
     final Requests requests = new Requests(new ExpandModulesRequest(), clientEnvironment);
 
     addModuleArguments(requests);
@@ -214,7 +215,7 @@ public final class CheckoutCommand extends AbstractCommand implements IUpdatingC
   private boolean checkout(ExpandedModules expandedModules,
                            IRequestProcessor requestProcessor,
                            ICvsListenerRegistry listenerRegistry,
-                           IClientEnvironment clientEnvironment) throws CommandException {
+                           IClientEnvironment clientEnvironment) throws CommandException, AuthenticationException {
     // we first see whether the modules specified actually exist
     // checked out already. If so, we must work something like an update
     // command and send modified files to the server.

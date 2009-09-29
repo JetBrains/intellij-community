@@ -31,7 +31,6 @@
  */
 package com.intellij.cvsSupport2.connections.ssh;
 
-import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.cvsSupport2.config.ProxySettings;
@@ -39,17 +38,13 @@ import com.intellij.cvsSupport2.config.SshSettings;
 import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
 import com.intellij.cvsSupport2.connections.CvsConnectionUtil;
 import com.intellij.cvsSupport2.connections.CvsRootData;
-import com.intellij.cvsSupport2.connections.ssh.ui.SshPasswordDialog;
-import com.intellij.cvsSupport2.connections.ssh.SolveableAuthenticationException;
+import com.intellij.cvsSupport2.connections.login.CvsLoginWorkerImpl;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.errorHandling.ErrorRegistry;
 import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
 import com.intellij.cvsSupport2.javacvsImpl.io.StreamLogger;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
-import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
@@ -88,83 +83,42 @@ public class SshConnectionSettings extends CvsConnectionSettings {
     return CvsConnectionUtil.createSshConnection(settings, sshConfiguration, proxy_settings, SSHPasswordProviderImpl.getInstance(),timeout);
   }
 
-  public static boolean login(String cvsRoot, SshSettings settings, Project project) {
-    if (!settings.USE_PPK) {
-      SSHPasswordProviderImpl sshPasswordProvider = SSHPasswordProviderImpl.getInstance();
-      String password = sshPasswordProvider.getPasswordForCvsRoot(cvsRoot);
-
-      if (password == null) {
-        SshPasswordDialog sshPasswordDialog = new SshPasswordDialog(CvsBundle.message("propmt.text.enter.password.for", cvsRoot));
-        sshPasswordDialog.show();
-        if (!sshPasswordDialog.isOK()) return false;
-        password = sshPasswordDialog.getPassword();
-        sshPasswordProvider.storePasswordForCvsRoot(cvsRoot, password, sshPasswordDialog.saveThisPassword());
-      }
-
-      if (password == null) return false;
-    } else {
-      SSHPasswordProviderImpl sshPasswordProvider = SSHPasswordProviderImpl.getInstance();
-      String password = sshPasswordProvider.getPPKPasswordForCvsRoot(cvsRoot);
-
-      if (password == null) {
-        SshPasswordDialog sshPasswordDialog = new SshPasswordDialog(CvsBundle.message("propmt.text.enter.private.key.password.for", cvsRoot));
-        sshPasswordDialog.show();
-        if (!sshPasswordDialog.isOK()) return false;
-        password = sshPasswordDialog.getPassword();
-        sshPasswordProvider.storePPKPasswordForCvsRoot(cvsRoot, password, sshPasswordDialog.saveThisPassword());
-      }
-
-      if (password == null) return false;
-
-    }
-
-    return true;
-
+  public CvsLoginWorkerImpl getLoginWorker(ModalityContext executor, Project project) {
+    return new MyLoginWorker(project, executor, myStringRepsentation, this);
   }
 
-  public boolean login(ModalityContext executor, @Nullable Project project) {
-    if (!login(myStringRepsentation, getSshConfiguration(), project)) {
-      return false;
-    }
-    try {
-      IConnection connection = createConnection(new ReadWriteStatistics());
-      connection.open(new StreamLogger());
-      try {
-        connection.close();
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    }
-    catch (AuthenticationException e) {
-      if (checkReportOfflineException(e, project)) {
-        return false;
-      }
-      else if (e instanceof SolveableAuthenticationException) {
-        notifyOnException(e, project);
+  private class MyLoginWorker extends CvsLoginWorkerImpl<SshConnectionSettings> {
+    private final String myCvsRoot;
 
-        if (getSshConfiguration().USE_PPK) {
-          SSHPasswordProviderImpl.getInstance().removePPKPasswordFor(myStringRepsentation);
-          return login(executor, project);
-        } else {
-          SSHPasswordProviderImpl.getInstance().removePasswordFor(myStringRepsentation);
-          return login(executor, project);
-        }
+    private MyLoginWorker(Project project, ModalityContext executor, String cvsRoot, final SshConnectionSettings sshConnectionSettings) {
+      super(project, sshConnectionSettings, executor);
+      myCvsRoot = cvsRoot;
+    }
+
+    @Override
+    protected void clearOldCredentials() {
+      if (getSshConfiguration().USE_PPK) {
+        SSHPasswordProviderImpl.getInstance().removePPKPasswordFor(myStringRepsentation);
       } else {
-        notifyOnException(e, project);
-        return false;
+        SSHPasswordProviderImpl.getInstance().removePasswordFor(myStringRepsentation);
       }
-
     }
-    return true;
-  }
 
-  private void notifyOnException(final Exception e, final Project project) {
-    String localizedMessage = e.getLocalizedMessage();
-    localizedMessage = (localizedMessage == null) ? e.getMessage() : localizedMessage;
-    localizedMessage = (localizedMessage == null) ? CvsBundle.message("error.dialog.title.cannot.connect.to.cvs") :
-      localizedMessage;
-    new ChangesViewBalloonProblemNotifier(project, localizedMessage, MessageType.ERROR).run();
+    @Override
+    protected void silentLoginImpl(boolean forceCheck) throws AuthenticationException {
+        IConnection connection = createConnection(new ReadWriteStatistics());
+        connection.open(new StreamLogger());
+        try {
+          connection.close();
+        }
+        catch (IOException e) {
+          throw new AuthenticationException("IOException occurred", e);
+        }
+    }
+
+    public boolean promptForPassword() {
+      return SshConnectionUtil.promptForPassword(getSshConfiguration(), myCvsRoot);
+    }
   }
 
   public CommandException processException(CommandException t) {

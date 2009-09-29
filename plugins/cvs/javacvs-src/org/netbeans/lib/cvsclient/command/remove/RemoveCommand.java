@@ -16,6 +16,7 @@ package org.netbeans.lib.cvsclient.command.remove;
 
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.AbstractCommand;
 import org.netbeans.lib.cvsclient.command.CommandException;
@@ -55,7 +56,7 @@ public final class RemoveCommand extends AbstractCommand {
                          IEventSender eventSender,
                          ICvsListenerRegistry listenerRegistry,
                          IClientEnvironment clientEnvironment,
-                         IProgressViewer progressViewer) throws CommandException {
+                         IProgressViewer progressViewer) throws CommandException, AuthenticationException {
     final ICvsFiles cvsFiles;
     try {
       cvsFiles = scanFileSystem(getFileObjects(), clientEnvironment);

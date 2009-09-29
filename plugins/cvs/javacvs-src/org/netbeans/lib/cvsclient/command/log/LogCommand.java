@@ -14,6 +14,7 @@ package org.netbeans.lib.cvsclient.command.log;
 
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.AbstractCommand;
 import org.netbeans.lib.cvsclient.command.CommandException;
@@ -63,7 +64,8 @@ public class LogCommand extends AbstractCommand {
 
 	// Implemented ============================================================
 
-	public final boolean execute(IRequestProcessor requestProcessor, IEventSender eventSender, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException {
+	public final boolean execute(IRequestProcessor requestProcessor, IEventSender eventSender, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException,
+                                                                                                                                                                                                                       AuthenticationException {
 		final ICvsFiles cvsFiles;
 		try {
 			cvsFiles = scanFileSystem(getFileObjects(), clientEnvironment);

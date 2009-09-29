@@ -5,11 +5,13 @@ import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.cvsSupport2.config.SshSettings;
 import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
 import com.intellij.cvsSupport2.connections.CvsConnectionUtil;
+import com.intellij.cvsSupport2.connections.login.CvsLoginWorker;
 import com.intellij.cvsSupport2.connections.ssh.SSHPasswordProviderImpl;
-import com.intellij.cvsSupport2.connections.ssh.SshConnectionSettings;
+import com.intellij.cvsSupport2.connections.ssh.SshConnectionUtil;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.errorHandling.ErrorRegistry;
 import com.intellij.CvsBundle;
+import com.intellij.util.ThreeState;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
@@ -44,11 +46,36 @@ public class ExtConnectionCvsSettings extends CvsConnectionSettings {
     return ExtConnection.DEFAULT_PORT;
   }
 
-  public boolean login(ModalityContext executor, Project project) {
-    if (!SshConnectionSettings.login(myStringRepsentation, mySshSettings, project)){
-      return false;
+  public CvsLoginWorker getLoginWorker(ModalityContext executor, Project project) {
+    return new MyLoginWorker(project, this, executor);
+  }
+
+  private class MyLoginWorker implements CvsLoginWorker {
+    private final CvsLoginWorker myWorker;
+    private boolean mySshChecked;
+    private final Project myProject;
+
+    private MyLoginWorker(final Project project, final ExtConnectionCvsSettings settings, final ModalityContext executor) {
+      myProject = project;
+      myWorker = new ExtLoginWorker(project, settings, executor);
     }
-    return new ExtLoginProvider().login(this, executor, project);
+
+    // todo check!!!
+    public boolean promptForPassword() {
+      if (! mySshChecked) {
+        mySshChecked = true;
+        return SshConnectionUtil.promptForPassword(mySshSettings, myStringRepsentation);
+      }
+      return myWorker.promptForPassword();
+    }
+
+    public ThreeState silentLogin(boolean forceCheck) {
+      return myWorker.silentLogin(forceCheck);
+    }
+
+    public void goOffline() {
+      myWorker.goOffline();
+    }
   }
 
   public CommandException processException(CommandException t) {

@@ -14,6 +14,7 @@ package org.netbeans.lib.cvsclient.command.admin;
 
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.command.AbstractCommand;
 import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.command.ICvsFiles;
@@ -53,7 +54,8 @@ public class AdminCommand extends AbstractCommand {
 		setResetLock(false);
 	}
 
-	public boolean execute(IRequestProcessor requestProcessor, IEventSender eventManager, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException {
+	public boolean execute(IRequestProcessor requestProcessor, IEventSender eventManager, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException,
+                                                                                                                                                                                                                  AuthenticationException {
 		BugLog.getInstance().assertTrue(isSetLock() || isResetLock(), "Nothing specified");
 
 		final ICvsFiles cvsFiles;

@@ -29,13 +29,9 @@ public interface CvsResult {
 
   boolean isCanceled();
 
-  boolean isLoggedIn();
-
   void addAllErrors(Collection<VcsException> errors);
 
   void addAllWarnings(Collection<VcsException> warnings);
-
-  void setIsLoggedIn();
 
   boolean hasNoErrors();
 

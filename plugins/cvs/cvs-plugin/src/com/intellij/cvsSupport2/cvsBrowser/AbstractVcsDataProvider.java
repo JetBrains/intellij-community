@@ -101,14 +101,9 @@ public abstract class AbstractVcsDataProvider implements RemoteResourceDataProvi
       new CvsOperationExecutorCallback() {
         public void executionFinished(boolean successfully) {
           callback.finished();
-          if (!executor1.isLoggedIn()) {
-            callback.loginAborted();
-          }
-          else {
-            DirectoryContent directoryContent = command.getDirectoryContent();
-            ArrayList<CvsElement> children = directoryContentToElements(directoryContent, parent, project);
-            callback.fillDirectoryContent(children);
-          }
+          DirectoryContent directoryContent = command.getDirectoryContent();
+          ArrayList<CvsElement> children = directoryContentToElements(directoryContent, parent, project);
+          callback.fillDirectoryContent(children);
         }
 
         public void executeInProgressAfterAction(ModalityContext modaityContext) {

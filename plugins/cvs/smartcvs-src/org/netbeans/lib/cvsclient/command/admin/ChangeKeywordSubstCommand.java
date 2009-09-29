@@ -14,6 +14,7 @@ package org.netbeans.lib.cvsclient.command.admin;
 
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.command.*;
 import org.netbeans.lib.cvsclient.event.ICvsListenerRegistry;
 import org.netbeans.lib.cvsclient.event.IEventSender;
@@ -47,7 +48,8 @@ public class ChangeKeywordSubstCommand extends AbstractCommand {
 		setKeywordSubstitution(null);
 	}
 
-	public boolean execute(IRequestProcessor requestProcessor, IEventSender eventManager, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException {
+	public boolean execute(IRequestProcessor requestProcessor, IEventSender eventManager, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException,
+                                                                                                                                                                                                                  AuthenticationException {
 		BugLog.getInstance().assertNotNull(keywordSubstitution);
 
 		final ICvsFiles cvsFiles;
