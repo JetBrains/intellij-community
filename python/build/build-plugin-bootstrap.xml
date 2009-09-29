@@ -1,5 +1,5 @@
 <project name="Python Plugin Build Bootstrap" default="main">
-  <property name="project.home" value="${basedir}/../../.."/>
+  <property name="project.home" value="${basedir}/../.."/>
   <property name="out.dir" value="${project.home}/out/python"/>
   <property name="idea.dir" value="${out.dir}/idea"/>
 
