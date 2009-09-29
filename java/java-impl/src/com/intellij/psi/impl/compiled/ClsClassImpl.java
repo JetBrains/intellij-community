@@ -359,6 +359,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
     PsiClass[] classes = getInnerClasses();
     if (classes.length > 0) {
       goNextLine(newIndentLevel, buffer);
+      goNextLine(newIndentLevel, buffer);
       for (int i = 0; i < classes.length; i++) {
         PsiClass aClass = classes[i];
         ((ClsElementImpl)aClass).appendMirrorText(newIndentLevel, buffer);
