@@ -66,7 +66,9 @@ public class MavenExternalParameters {
     params.setMainClass(MAVEN_LAUNCHER_CLASS);
 
     for (String parameter : createMavenParameters(new ArrayList<String>(), coreSettings, runnerSettings, parameters)) {
-      params.getProgramParametersList().add(parameter);
+      if (!StringUtil.isEmpty(parameter)) {
+        params.getProgramParametersList().add(parameter);
+      }
     }
 
     return params;

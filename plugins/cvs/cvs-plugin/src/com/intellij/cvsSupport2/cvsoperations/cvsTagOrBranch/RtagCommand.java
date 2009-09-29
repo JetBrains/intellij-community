@@ -1,9 +1,12 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch;
 
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
 import org.netbeans.lib.cvsclient.command.AbstractCommand;
 import org.netbeans.lib.cvsclient.command.CommandException;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.event.ICvsListenerRegistry;
 import org.netbeans.lib.cvsclient.event.IEventSender;
 import org.netbeans.lib.cvsclient.file.FileObject;
@@ -11,11 +14,8 @@ import org.netbeans.lib.cvsclient.progress.IProgressViewer;
 import org.netbeans.lib.cvsclient.progress.sending.DummyRequestsProgressHandler;
 import org.netbeans.lib.cvsclient.request.CommandRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.Iterator;
-
-import com.intellij.openapi.util.text.StringUtil;
 
 public class RtagCommand extends AbstractCommand{
   private final String myTagName;
@@ -29,7 +29,7 @@ public class RtagCommand extends AbstractCommand{
                                IEventSender eventSender,
                                ICvsListenerRegistry listenerRegistry,
                                IClientEnvironment clientEnvironment,
-                               IProgressViewer progressViewer) throws CommandException {
+                               IProgressViewer progressViewer) throws CommandException, AuthenticationException {
     final Requests requests = new Requests(CommandRequest.RTAG, clientEnvironment);
     requests.addArgumentRequest(myOverrideExistings, "-F");
     requests.addArgumentRequest(true, myTagName);

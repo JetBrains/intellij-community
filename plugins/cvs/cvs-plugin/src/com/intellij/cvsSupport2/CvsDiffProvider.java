@@ -20,7 +20,6 @@ import com.intellij.cvsSupport2.cvsoperations.cvsStatus.StatusOperation;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDate;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDateImpl;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.SimpleRevision;
-import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.project.Project;
@@ -33,6 +32,7 @@ import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.CommandAbortedException;
@@ -40,7 +40,6 @@ import org.netbeans.lib.cvsclient.command.log.LogCommand;
 import org.netbeans.lib.cvsclient.command.log.LogInformation;
 import org.netbeans.lib.cvsclient.command.status.StatusCommand;
 import org.netbeans.lib.cvsclient.file.FileStatus;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Collections;
@@ -169,16 +168,14 @@ public class CvsDiffProvider implements DiffProvider{
       }
     }, context, PostCvsActivity.DEAF);
     try {
-      operation.login(context);
+      // should already be logged in
+      //operation.login(context);
       operation.execute(cvsExecutionEnvironment);
     }
     catch (VcsException e) {
       //
     }
     catch (CommandAbortedException e) {
-      //
-    }
-    catch (CannotFindCvsRootException e) {
       //
     }
     if (Boolean.TRUE.equals(logSuccess.get())) {

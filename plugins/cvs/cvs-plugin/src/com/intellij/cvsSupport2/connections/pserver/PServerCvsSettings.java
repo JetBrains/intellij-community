@@ -4,6 +4,7 @@ import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
 import com.intellij.cvsSupport2.connections.CvsConnectionUtil;
+import com.intellij.cvsSupport2.connections.login.CvsLoginWorker;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.errorHandling.ErrorRegistry;
 import com.intellij.openapi.project.Project;
@@ -36,8 +37,8 @@ public class PServerCvsSettings extends CvsConnectionSettings {
     return CvsConnectionUtil.DEFAULT_PSERVER_PORT;
   }
 
-  public boolean login(ModalityContext executor, Project project) {
-    return PServerLoginProvider.getInstance().login(this, executor, project);
+  public CvsLoginWorker getLoginWorker(ModalityContext executor, Project project) {
+    return PServerLoginProvider.getInstance().getLoginWorker(executor, project, this);
   }
 
   public void releasePassword() {

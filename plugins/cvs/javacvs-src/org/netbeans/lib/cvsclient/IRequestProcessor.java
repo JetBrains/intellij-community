@@ -17,11 +17,13 @@ package org.netbeans.lib.cvsclient;
 import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.progress.sending.IRequestsProgressHandler;
 import org.netbeans.lib.cvsclient.request.Requests;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 
 /**
  * @author  Thomas Singer
  */
 public interface IRequestProcessor {
 
-	boolean processRequests(Requests requests, IRequestsProgressHandler communicationProgressHandler) throws CommandException;
+	boolean processRequests(Requests requests, IRequestsProgressHandler communicationProgressHandler) throws CommandException,
+                                                                                                                 AuthenticationException;
 }

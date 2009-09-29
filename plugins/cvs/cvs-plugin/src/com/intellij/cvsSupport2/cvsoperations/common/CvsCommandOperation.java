@@ -38,6 +38,7 @@ import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
 import com.intellij.cvsSupport2.connections.pserver.PServerCvsSettings;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
+import com.intellij.cvsSupport2.cvsExecution.ModalityContextImpl;
 import com.intellij.cvsSupport2.cvsIgnore.IgnoreFileFilterBasedOnCvsEntriesManager;
 import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsMessagesListener;
 import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsMessagesTranslator;
@@ -50,15 +51,15 @@ import com.intellij.cvsSupport2.javacvsImpl.FileReadOnlyHandler;
 import com.intellij.cvsSupport2.javacvsImpl.ProjectContentInfoProvider;
 import com.intellij.cvsSupport2.javacvsImpl.io.*;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.netbeans.lib.cvsclient.ClientEnvironment;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
@@ -68,6 +69,7 @@ import org.netbeans.lib.cvsclient.admin.IAdminReader;
 import org.netbeans.lib.cvsclient.admin.IAdminWriter;
 import org.netbeans.lib.cvsclient.command.*;
 import org.netbeans.lib.cvsclient.command.update.UpdateFileInfo;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
 import org.netbeans.lib.cvsclient.event.*;
 import org.netbeans.lib.cvsclient.file.FileObject;
@@ -79,6 +81,7 @@ import org.netbeans.lib.cvsclient.util.IIgnoreFileFilter;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -94,7 +97,6 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
   protected final IAdminWriter myAdminWriter;
 
   protected static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsoperations.common.CvsCommandOperation");
-  private boolean myLoggedIn = false;
   private String myLastProcessedCvsRoot;
   private final UpdatedFilesManager myUpdatedFilesManager = new UpdatedFilesManager();
 
@@ -115,31 +117,8 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
   abstract protected Command createCommand(CvsRootProvider root,
                                            CvsExecutionEnvironment cvsExecutionEnvironment);
 
-  protected boolean login(Collection<CvsRootProvider> processedCvsRoots, ModalityContext executor)
-    throws CannotFindCvsRootException {
-    setIsLoggedIn();
-    Collection<CvsRootProvider> allCvsRoots = getAllCvsRoots();
-
-    final ProjectLocator projectLocator = ProjectLocator.getInstance();
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
-    for (final CvsRootProvider cvsRootProvider : allCvsRoots) {
-      if (processedCvsRoots.contains(cvsRootProvider)) continue;
-      processedCvsRoots.add(cvsRootProvider);
-      final VirtualFile vf = cvsRootProvider.getLocalRoot() == null ? null : lfs.findFileByIoFile(cvsRootProvider.getLocalRoot());
-      final Project project = (vf == null) ? null : projectLocator.guessProjectForFile(vf);
-      if (!cvsRootProvider.login(executor, project)) return false;
-    }
-    return true;
-
-  }
-
-  public void setIsLoggedIn() {
-    myLoggedIn = true;
-  }
-
   public void execute(CvsExecutionEnvironment executionEnvironment) throws VcsException,
                                                                            CommandAbortedException {
-    LOG.assertTrue(myLoggedIn);
     CvsEntriesManager.getInstance().lockSynchronizationActions();
     try {
       if (runInExclusiveLock()) {
@@ -154,6 +133,11 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
     finally {
       CvsEntriesManager.getInstance().unlockSynchronizationActions();
     }
+  }
+
+  @Override
+  public void appendSelfCvsRootProvider(@NotNull Collection<CvsRootProvider> roots) throws CannotFindCvsRootException {
+    roots.addAll(getAllCvsRoots());
   }
 
   private void doExecute(final CvsExecutionEnvironment executionEnvironment) throws VcsException {
@@ -217,7 +201,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
 
   }
 
-  public void execute(CvsRootProvider root,
+  public void execute(final CvsRootProvider root,
                       final CvsExecutionEnvironment executionEnvironment,
                       IConnection connection) throws CommandException {
     Command command = createCommand(root, executionEnvironment);
@@ -268,10 +252,30 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
       String commandString = composeCommandString(root, command);
       cvsMessagesListener.commandStarted(commandString);
       setProgressText(CvsBundle.message("progress.text.command.running.for.file", getOperationName(), root.getCvsRootAsString()));
-      command.execute(requestProcessor, eventManager, eventManager, clientEnvironment, new IProgressViewer() {
-        public void setProgress(double value) {
+      try {
+        command.execute(requestProcessor, eventManager, eventManager, clientEnvironment, new IProgressViewer() {
+          public void setProgress(double value) {
+          }
+        });
+      }
+      catch (AuthenticationException e) {
+        if (! root.isOffline()) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              final LoginPerformer.MyForRootProvider performer =
+                new LoginPerformer.MyForRootProvider(Collections.singletonList(root), new Consumer<VcsException>() {
+                  public void consume(VcsException e) {
+                    LOG.info(e);
+                  }
+                });
+              // for pserver to check password matches connection
+              performer.setForceCheck(true);                       
+              performer.loginAll(ModalityContextImpl.NON_MODAL);
+            }
+          });
         }
-      });
+        throw root.processException(new CommandException(e, "Authentication problem"));
+      }
       cvsMessagesTranslator.operationCompleted();
     }
     catch (CommandException t) {

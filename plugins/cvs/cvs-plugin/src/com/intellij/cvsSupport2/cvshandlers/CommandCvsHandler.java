@@ -7,11 +7,9 @@ import com.intellij.cvsSupport2.actions.update.UpdateSettings;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
+import com.intellij.cvsSupport2.connections.CvsRootProvider;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
-import com.intellij.cvsSupport2.cvsoperations.common.CompositeOperaton;
-import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
-import com.intellij.cvsSupport2.cvsoperations.common.CvsOperation;
-import com.intellij.cvsSupport2.cvsoperations.common.PostCvsActivity;
+import com.intellij.cvsSupport2.cvsoperations.common.*;
 import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddFilesOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddedFileInfo;
 import com.intellij.cvsSupport2.cvsoperations.cvsCheckOut.CheckoutFileByRevisionOperation;
@@ -44,6 +42,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
@@ -68,8 +67,8 @@ public class CommandCvsHandler extends AbstractCvsHandler {
   protected boolean myIsCanceled = false;
   private PerformInBackgroundOption myBackgroundOption;
 
-  public boolean login(ModalityContext executor) throws CannotFindCvsRootException {
-    return myCvsOperation.login(executor);
+  public boolean login(ModalityContext executor) {
+    return loginAll(executor);
   }
 
   public CommandCvsHandler(String title, CvsOperation cvsOperation, boolean canBeCanceled) {
@@ -298,7 +297,30 @@ public class CommandCvsHandler extends AbstractCvsHandler {
     return myIsCanceled;
   }
 
+  private boolean loginAll(final ModalityContext executor) {
+    final Set<CvsRootProvider> allRoots = new HashSet<CvsRootProvider>();
+    try {
+      myCvsOperation.appendSelfCvsRootProvider(allRoots);
+      for (CvsOperation postActivity : myPostActivities) {
+        postActivity.appendSelfCvsRootProvider(allRoots);
+      }
+    }
+    catch (CannotFindCvsRootException e) {
+      myErrors.add(new VcsException(e));
+      return false;
+    }
+
+    final LoginPerformer.MyForRootProvider performer = new LoginPerformer.MyForRootProvider(allRoots, new Consumer<VcsException>() {
+      public void consume(VcsException e) {
+        myErrors.add(e);
+      }
+    });
+    return performer.loginAll(executor);
+  }
+
   public void internalRun(final ModalityContext executor, final boolean runInReadAction) {
+    if (! login(executor)) return;
+
     try {
       final CvsExecutionEnvironment executionEnvironment = new CvsExecutionEnvironment(myCompositeListener,
                                                                                  getProgressListener(),
@@ -310,10 +332,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
 
       while (!myPostActivities.isEmpty()) {
         CvsOperation cvsOperation = myPostActivities.get(0);
-        if (cvsOperation.login(executor)) {
-          runOperation(executionEnvironment, runInReadAction, cvsOperation);
-          cvsOperation.execute(executionEnvironment);
-        }
+        runOperation(executionEnvironment, runInReadAction, cvsOperation);
         myPostActivities.remove(cvsOperation);
       }
     }
@@ -359,11 +378,11 @@ public class CommandCvsHandler extends AbstractCvsHandler {
             myErrors.add(new VcsException(CvsBundle.message("exception.text.entries.file.is.corrupted", e.getEntriesFile())));
           }
           catch (CvsProcessException ex) {
-            myErrors.add(new CvsException(ex, myCvsOperation.getLastProcessedCvsRoot()));
+            myErrors.add(new CvsException(ex, cvsOperation.getLastProcessedCvsRoot()));
           }
           catch (CommandAbortedException ex) {
             LOG.error(ex);
-            myErrors.add(new CvsException(ex, myCvsOperation.getLastProcessedCvsRoot()));
+            myErrors.add(new CvsException(ex, cvsOperation.getLastProcessedCvsRoot()));
           }
           catch(ProcessCanceledException ex) {
             myIsCanceled = true;

@@ -3,6 +3,7 @@ package com.intellij.cvsSupport2.config;
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsResultEx;
 import com.intellij.cvsSupport2.connections.*;
+import com.intellij.cvsSupport2.connections.login.CvsLoginWorker;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContextImpl;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
@@ -19,9 +20,9 @@ import com.intellij.openapi.cvsIntegration.CvsResult;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.project.Project;
 import org.netbeans.lib.cvsclient.CvsRoot;
 import org.netbeans.lib.cvsclient.ValidRequestsExpectedException;
 import org.netbeans.lib.cvsclient.command.CommandException;
@@ -205,8 +206,8 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
            Comparing.equal(EXT_CONFIGURATION, another.EXT_CONFIGURATION);
   }
 
-  public boolean login(ModalityContext executor, Project project) {
-    return getSettings().login(executor, project);
+  public CvsLoginWorker getLoginWorker(ModalityContext executor, Project project) {
+    return getSettings().getLoginWorker(executor, project);
   }
 
   public RevisionOrDate getRevisionOrDate() {

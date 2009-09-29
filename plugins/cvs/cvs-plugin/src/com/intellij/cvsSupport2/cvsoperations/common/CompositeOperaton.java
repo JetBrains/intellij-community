@@ -2,10 +2,10 @@ package com.intellij.cvsSupport2.cvsoperations.common;
 
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
-import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddFileOperation;
 import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
 import com.intellij.openapi.vcs.VcsException;
+import org.jetbrains.annotations.NotNull;
 import org.netbeans.lib.cvsclient.command.CommandAbortedException;
 
 import java.util.ArrayList;
@@ -20,11 +20,15 @@ public class CompositeOperaton extends CvsOperation {
     mySubOperations.add(operation);
   }
 
-  protected boolean login(Collection<CvsRootProvider> processedCvsRoots, ModalityContext executor) throws CannotFindCvsRootException {
-    for (final CvsOperation operation : getSubOperations()) {
-      if (!operation.login(processedCvsRoots, executor)) return false;
+  protected void addOperation(final int i, final CvsOperation operation) {
+    mySubOperations.add(i, operation);
+  }
+
+  @Override
+  public void appendSelfCvsRootProvider(@NotNull final Collection<CvsRootProvider> roots) throws CannotFindCvsRootException {
+    for (CvsOperation operation : mySubOperations) {
+      operation.appendSelfCvsRootProvider(roots);
     }
-    return true;
   }
 
   public void execute(CvsExecutionEnvironment executionEnvironment) throws VcsException, CommandAbortedException {
@@ -65,5 +69,9 @@ public class CompositeOperaton extends CvsOperation {
       if (op.runInReadThread()) return true;
     }
     return false;
+  }
+
+  protected int getSubOperationsCount() {
+    return mySubOperations.size();
   }
 }

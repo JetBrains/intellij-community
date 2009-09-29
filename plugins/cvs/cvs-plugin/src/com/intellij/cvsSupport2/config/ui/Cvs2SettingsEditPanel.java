@@ -1,5 +1,6 @@
 package com.intellij.cvsSupport2.config.ui;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.cvsSupport2.config.CvsRootEditor;
@@ -7,6 +8,7 @@ import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.connections.CvsMethod;
 import com.intellij.cvsSupport2.connections.CvsRootData;
 import com.intellij.cvsSupport2.connections.CvsRootDataBuilder;
+import com.intellij.cvsSupport2.connections.login.CvsLoginWorker;
 import com.intellij.cvsSupport2.connections.ext.ui.ExtConnectionDualPanel;
 import com.intellij.cvsSupport2.connections.local.ui.LocalConnectionSettingsPanel;
 import com.intellij.cvsSupport2.connections.pserver.ui.PServerSettingsPanel;
@@ -21,7 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.BooleanValueHolder;
-import com.intellij.CvsBundle;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -184,10 +186,13 @@ public class Cvs2SettingsEditPanel implements CvsRootEditor {
 
   public static void testConnection(CvsRootConfiguration configuration, Component component, Project project) {
     try {
-      boolean loggedIn = configuration.login(new ModalityContextImpl(true), project);
-      if (!loggedIn) {
-        Messages.showMessageDialog(component, CvsBundle.message("test.connection.login.failed.text"),
-                                   CvsBundle.message("operation.name.test.connection"), Messages.getErrorIcon());
+      final ModalityContextImpl executor = new ModalityContextImpl(true);
+      final CvsLoginWorker loginWorker = configuration.getLoginWorker(executor, project);
+      // to force pserver to check whether password matches
+      final ThreeState result = loginWorker.silentLogin(true);
+
+      if (! ThreeState.YES.equals(result)) {
+        Messages.showMessageDialog(component, CvsBundle.message("test.connection.login.failed.text"), CvsBundle.message("operation.name.test.connection"), Messages.getErrorIcon());
         return;
       }
 
