@@ -14,14 +14,5 @@
     <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="jsp-openapi" />
   </component>
-  <component name="VcsManagerConfiguration">
-    <option name="ACTIVE_VCS_NAME" value="svn" />
-    <option name="USE_PROJECT_VCS" value="false" />
-  </component>
-  <component name="copyright">
-    <Base>
-      <setting name="state" value="2" />
-    </Base>
-  </component>
 </module>
 
