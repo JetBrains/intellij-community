@@ -56,7 +56,7 @@ class ClassPath {
       final File orderFile = new File(PathManager.getBinPath() + File.separator + "order.txt");
       try {
         if (!FileUtil.ensureCanCreateFile(orderFile)) return;
-        ourOrder = new PrintStream(new FileOutputStream(orderFile));
+        ourOrder = new PrintStream(new FileOutputStream(orderFile, true));
         ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
           public void run() {
             ourOrder.close();
@@ -97,7 +97,7 @@ class ClassPath {
         for (Loader loader : loaders) {
           final Resource resource = loader.getResource(s, flag);
           if (resource != null) {
-            //printOrder(loader, s);
+            printOrder(loader, s);
             return resource;
           }
         }
