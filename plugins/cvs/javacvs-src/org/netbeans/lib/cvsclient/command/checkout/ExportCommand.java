@@ -17,6 +17,7 @@ package org.netbeans.lib.cvsclient.command.checkout;
 import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.command.AbstractCommand;
 import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
@@ -67,7 +68,8 @@ public final class ExportCommand extends AbstractCommand {
 	 * services to this command, including the ability to actually process
 	 * all the requests
 	 */
-	public boolean execute(IRequestProcessor requestProcessor, IEventSender eventSender, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException {
+	public boolean execute(IRequestProcessor requestProcessor, IEventSender eventSender, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException,
+                                                                                                                                                                                                                 AuthenticationException {
 		final ExpandedModules expandedModules = new ExpandedModules();
 		if (!expandModules(expandedModules, listenerRegistry, requestProcessor, clientEnvironment)) {
 			return false;
@@ -148,7 +150,8 @@ public final class ExportCommand extends AbstractCommand {
 	}
 	// Utils ==================================================================
 
-	private boolean expandModules(ExpandedModules expandedModules, ICvsListenerRegistry listenerRegistry, IRequestProcessor requestProcessor, IClientEnvironment clientEnvironment) throws CommandException {
+	private boolean expandModules(ExpandedModules expandedModules, ICvsListenerRegistry listenerRegistry, IRequestProcessor requestProcessor, IClientEnvironment clientEnvironment)
+          throws CommandException, AuthenticationException {
 		final Requests requests = new Requests(new ExpandModulesRequest(), clientEnvironment);
 
 		addModuleArguments(requests);
@@ -163,7 +166,8 @@ public final class ExportCommand extends AbstractCommand {
 		}
 	}
 
-	private boolean checkout(ExpandedModules expandedModules, IRequestProcessor requestProcessor, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment) throws CommandException {
+	private boolean checkout(ExpandedModules expandedModules, IRequestProcessor requestProcessor, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment)
+          throws CommandException, AuthenticationException {
 		// we first see whether the modules specified actually exist
 		// checked out already. If so, we must work something like an update
 		// command and send modified files to the server.

@@ -155,7 +155,7 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
   }
 
   private UpdateSessionAdapter createUpdateSessionAdapter(final UpdatedFiles updatedFiles, final CvsResult result) {
-    return new UpdateSessionAdapter(result.getErrorsAndWarnings(), result.isCanceled() || !result.isLoggedIn()) {
+    return new UpdateSessionAdapter(result.getErrorsAndWarnings(), result.isCanceled()) {
       public void onRefreshFilesCompleted() {
         final FileGroup mergedWithConflictsGroup = updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID);
         final FileGroup binaryMergedGroup = updatedFiles.getGroupById(CvsUpdatePolicy.BINARY_MERGED_ID);

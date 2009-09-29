@@ -2,19 +2,22 @@ package com.intellij.cvsSupport2.connections.pserver;
 
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
+import com.intellij.cvsSupport2.connections.login.CvsLoginWorker;
+import com.intellij.cvsSupport2.connections.login.CvsLoginWorkerImpl;
+import com.intellij.cvsSupport2.connections.ssh.SolveableAuthenticationException;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
 import com.intellij.cvsSupport2.javacvsImpl.io.StreamLogger;
 import com.intellij.cvsSupport2.util.CvsFileUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.PasswordPromptDialog;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
 import org.netbeans.lib.cvsclient.connection.PServerPasswordScrambler;
+import org.netbeans.lib.cvsclient.connection.UnknownUserException;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -41,37 +44,37 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
     return PServerPasswordScrambler.getInstance().scramble(passwordDialog.getPassword());
   }
 
-  private static String getMessageFrom(AuthenticationException e) {
-    Throwable underlyingThrowable = e.getCause();
-    if (underlyingThrowable == null) {
-      return e.getLocalizedMessage() == null ? e.getMessage() : e.getLocalizedMessage();
-    }
-
-    return underlyingThrowable.getLocalizedMessage() == null ? underlyingThrowable.getMessage()
-        : underlyingThrowable.getLocalizedMessage();
+  public CvsLoginWorker getLoginWorker(final ModalityContext executor, final Project project, final PServerCvsSettings pServerCvsSettings) {
+    return new MyLoginWorker(project, pServerCvsSettings, executor);
   }
 
-  public boolean login(PServerCvsSettings settings, ModalityContext executor, Project project) {
-    String cvsRoot = settings.getCvsRootAsString();
-    String stored = getPassword(cvsRoot);
-    if (stored != null) {
-      IConnection connection = settings.createConnection(new ReadWriteStatistics());
+  private static class MyLoginWorker extends CvsLoginWorkerImpl<PServerCvsSettings> {
+    private MyLoginWorker(final Project project, final PServerCvsSettings settings, final ModalityContext executor) {
+      super(project, settings, executor);
+    }
+
+    @Override
+    protected void silentLoginImpl(final boolean forceCheck) throws AuthenticationException {
+      final String cvsRoot = mySettings.getCvsRootAsString();
+      final String stored = getPassword(cvsRoot);
+      if (stored == null) throw new SolveableAuthenticationException(null);
+      if (forceCheck) {
+        tryConnection();
+      }
+    }
+
+    private void tryConnection() throws AuthenticationException {
+      IConnection connection = mySettings.createConnection(new ReadWriteStatistics());
       try {
         connection.open(new StreamLogger());
-        settings.setOffline(false);
-        return true;
-      }
-      catch (AuthenticationException e) {
-        if (settings.checkReportOfflineException(e, project)) {
-          return false;
+        mySettings.setOffline(false);
+      } catch (AuthenticationException e) {
+        if (e instanceof UnknownUserException) {
+          throw new SolveableAuthenticationException(e.getMessage(), e);
+        } else {
+          throw e;
         }
-        else {
-          settings.showConnectionErrorMessage(getMessageFrom(e), project);
-          settings.releasePassword();
-          return relogin(settings, executor, project);
-        }
-      }
-      finally {
+      } finally {
         try {
           connection.close();
         }
@@ -80,34 +83,30 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
         }
       }
     }
-    String password = requestForPassword(cvsRoot);
-    if (password == null) return false;
-    try {
-      storePassword(cvsRoot, password);
+
+    @Override
+    public boolean promptForPassword() {
+      final String cvsRoot = mySettings.getCvsRootAsString();
+      final String password = requestForPassword(cvsRoot);
+      if (password == null) return false;
+      removeAllPasswordsForThisCvsRootFromPasswordFile(cvsRoot);
+      try {
+        storePassword(cvsRoot, password);
+      } catch (IOException e) {
+        showConnectionErrorMessage(myProject, CvsBundle.message("error.message.cannot.store.password", e.getLocalizedMessage()));
+        return false;
+      }
+      mySettings.storePassword(password);
+      return true;
     }
-    catch (IOException e) {
-      Messages.showMessageDialog(CvsBundle.message("error.message.cannot.store.password", e.getLocalizedMessage()),
-                                 CvsBundle.message("error.title.storing.cvs.password"), Messages.getErrorIcon());
-      return false;
+
+    @Override
+    protected void clearOldCredentials() {
+      mySettings.releasePassword();
     }
-    settings.storePassword(password);
-    return login(settings, executor, project);
   }
 
-  public boolean relogin(PServerCvsSettings settings, ModalityContext executor, Project project) {
-    String cvsRoot = settings.getCvsRootAsString();
-    String password = requestForPassword(cvsRoot);
-    if (password == null) return false;
-    removeAllPasswordsForThisCvsRootFromPasswordFile(cvsRoot);
-    try {
-      storePassword(cvsRoot, password);
-    } catch (IOException e) {
-      Messages.showMessageDialog(e.getLocalizedMessage(), CvsBundle.message("error.title.cannot.store.password"), Messages.getErrorIcon());
-      return false;
-    }
-    settings.storePassword(password);
-    return login(settings, executor, project);
-  }
+  // TODO do release password ! when opening a connection and there's a problem with authorization
 
   private static ArrayList<String> readConfigurationNotMatchedWith(String cvsRoot, File passFile) {
     FileInputStream input;

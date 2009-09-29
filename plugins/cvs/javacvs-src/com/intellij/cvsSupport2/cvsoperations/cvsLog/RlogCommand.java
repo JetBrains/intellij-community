@@ -3,6 +3,7 @@ package com.intellij.cvsSupport2.cvsoperations.cvsLog;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.AbstractCommand;
 import org.netbeans.lib.cvsclient.command.CommandException;
@@ -35,7 +36,7 @@ public class RlogCommand extends AbstractCommand {
                                IEventSender eventSender,
                                ICvsListenerRegistry listenerRegistry,
                                IClientEnvironment clientEnvironment,
-                               IProgressViewer progressViewer) throws CommandException {
+                               IProgressViewer progressViewer) throws CommandException, AuthenticationException {
     final Requests requests = new Requests(CommandRequest.RLOG, clientEnvironment);
     requests.addArgumentRequest(myHeadersOnly, "-h");
     requests.addArgumentRequest(myNoTags, "-N");

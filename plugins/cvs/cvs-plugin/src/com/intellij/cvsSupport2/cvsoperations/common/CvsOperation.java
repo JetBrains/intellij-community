@@ -2,18 +2,17 @@ package com.intellij.cvsSupport2.cvsoperations.common;
 
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
-import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.EnvironmentUtil;
+import org.jetbrains.annotations.NotNull;
 import org.netbeans.lib.cvsclient.command.CommandAbortedException;
 import org.netbeans.lib.cvsclient.command.GlobalOptions;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 
 public abstract class CvsOperation {
 
@@ -21,11 +20,7 @@ public abstract class CvsOperation {
 
   public abstract void execute(CvsExecutionEnvironment executionEnvironment) throws VcsException, CommandAbortedException;
 
-  public boolean login(ModalityContext executor) throws CannotFindCvsRootException {
-    return login(new HashSet<CvsRootProvider>(), executor);
-  }
-
-  protected abstract boolean login(Collection<CvsRootProvider> processedCvsRoots, ModalityContext executor) throws CannotFindCvsRootException;
+  public abstract void appendSelfCvsRootProvider(@NotNull final Collection<CvsRootProvider> roots) throws CannotFindCvsRootException;
 
   public void addFinishAction(Runnable action) {
     myFinishActions.add(action);

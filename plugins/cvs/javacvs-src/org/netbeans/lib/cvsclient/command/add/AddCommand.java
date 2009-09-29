@@ -16,6 +16,7 @@ package org.netbeans.lib.cvsclient.command.add;
 
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.AbstractCommand;
 import org.netbeans.lib.cvsclient.command.CommandException;
@@ -100,7 +101,8 @@ public final class AddCommand extends AbstractCommand {
 
 	// Implemented ============================================================
 
-	public boolean execute(IRequestProcessor requestProcessor, IEventSender eventManager, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException {
+	public boolean execute(IRequestProcessor requestProcessor, IEventSender eventManager, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer)
+          throws CommandException, AuthenticationException {
 		BugLog.getInstance().assertTrue(getFileObjects().getFileObjects().size() > 0, "No file specified.");
 
 		repositoryPathToDirectoryObject.clear();
