@@ -20,6 +20,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.DocumentAdapter;
@@ -285,6 +286,38 @@ public class Messages {
     }
     else {
       InputDialog dialog = new InputDialog(project, message, title, icon, initialValue, validator);
+      dialog.show();
+      return dialog.getInputString();
+    }
+  }
+
+  @Nullable
+  public static String showInputDialog(Project project,
+                                       @Nls String message,
+                                       @Nls String title,
+                                       Icon icon,
+                                       @NonNls String initialValue,
+                                       @Nullable InputValidator validator,
+                                       @Nullable TextRange selection) {
+    final Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
+      return ourTestInputImplementation.show(message);
+    }
+    else {
+      InputDialog dialog = new InputDialog(project, message, title, icon, initialValue, validator);
+
+      final JTextField field = dialog.getTextField();
+      if (selection != null) {
+        // set custom selection
+        field.select(selection.getStartOffset(),
+                     selection.getEndOffset());
+      } else {
+        // reset selection
+        final int length = field.getDocument().getLength();
+        field.select(length, length);
+      }
+      field.putClientProperty(DialogWrapperPeer.HAVE_INITIAL_SELECTION, true);
+
       dialog.show();
       return dialog.getInputString();
     }
