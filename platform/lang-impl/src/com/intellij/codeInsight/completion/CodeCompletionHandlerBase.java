@@ -67,7 +67,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     invoke(project, editor, PsiUtilBase.getPsiFileInEditor(editor, project));
   }
   
-  public final void invoke(final Project project, final Editor editor, PsiFile psiFile) {
+  public final void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile psiFile) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       assert !ApplicationManager.getApplication().isWriteAccessAllowed();
     }

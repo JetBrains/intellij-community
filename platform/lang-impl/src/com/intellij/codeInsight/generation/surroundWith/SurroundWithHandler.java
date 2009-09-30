@@ -19,6 +19,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +28,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler");
   private static final String CHOOSER_TITLE = CodeInsightBundle.message("surround.with.chooser.title");
 
-  public void invoke(final Project project, final Editor editor, PsiFile file){
+  public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file){
     invoke(project, editor, file, null);
   }
 

@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -16,7 +17,7 @@ public class CollapseBlockHandler implements CodeInsightActionHandler {
   public static final String ourPlaceHolderText = "{...}";
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.CollapseBlockHandler");
 
-  public void invoke(final Project project, final Editor editor, final PsiFile file) {
+  public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
     editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
       public void run() {
         final EditorFoldingInfo info = EditorFoldingInfo.get(editor);

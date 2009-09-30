@@ -16,6 +16,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements HintManagerImpl.ActionToIgnore, DumbAware {
   @NonNls public static final String CODEASSISTS_QUICKJAVADOC_LOOKUP_FEATURE = "codeassists.quickjavadoc.lookup";
@@ -28,7 +29,7 @@ public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements Hint
 
   protected CodeInsightActionHandler getHandler() {
     return new CodeInsightActionHandler() {
-      public void invoke(Project project, Editor editor, PsiFile file) {
+      public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
         DocumentationManager.getInstance(project).showJavaDocInfo(editor, file, true);
       }
 

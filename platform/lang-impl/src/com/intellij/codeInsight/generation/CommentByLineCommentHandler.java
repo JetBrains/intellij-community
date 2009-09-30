@@ -42,7 +42,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
   private Commenter[] myCommenters;
   private CodeStyleManager myCodeStyleManager;
 
-  public void invoke(Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     myProject = project;
     myFile = file.getViewProvider().getPsi(file.getViewProvider().getBaseLanguage());
     myDocument = editor.getDocument();

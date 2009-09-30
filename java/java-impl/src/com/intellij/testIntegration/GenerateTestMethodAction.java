@@ -47,7 +47,7 @@ public class GenerateTestMethodAction extends BaseGenerateAction {
   }
 
   private static class MyHandler implements CodeInsightActionHandler {
-    public void invoke(Project project, Editor editor, PsiFile file) {
+    public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
       try {
         PsiMethod method = generateDummyMethod(editor, file);
 

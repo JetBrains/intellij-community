@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -19,7 +20,7 @@ import java.util.*;
  * @author mike
  */
 public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
-  public void invoke(final Project project, final Editor editor, PsiFile file) {
+  public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
     if (!editor.getSelectionModel().hasSelection()) {
       editor.getSelectionModel().selectLineAtCaret();
       if (!editor.getSelectionModel().hasSelection()) return;

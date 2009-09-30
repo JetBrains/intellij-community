@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -24,7 +25,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     myGoForward = goForward;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     int caretOffset = editor.getCaretModel().getOffset();
     gotoNextError(project, editor, file, caretOffset);
   }
