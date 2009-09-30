@@ -21,8 +21,5 @@
   <plugins url="http://plugins.intellij.net"/>
 
   <plugins-page category="VCS Integration" title="Select VCS Integration Plugins"/>
-  <plugins-page category="Web/JavaEE Technologies" title="Select Web/JavaEE Technology Plugins"/>
-  <plugins-page category="Application Servers" title="Select Application Server Plugins" depends="com.intellij.javaee"/>
-  <plugins-page category="HTML/JavaScript Development" title="Select HTML/JavaScript Development Plugins"/>
   <plugins-page title="Select Other Plugins"/>
 </component>
