@@ -1131,7 +1131,9 @@ public class FileBasedIndex implements ApplicationComponent {
             try {
               updateSingleIndex(indexId, file, _fc);
             }
-            catch (ProcessCanceledException ignored) {
+            catch (ProcessCanceledException e) {
+              LOG.info("Re-scheduling file indexing for " + file.getPresentableUrl(), e);
+              myChangedFilesUpdater.scheduleForUpdate(file);
             }
             catch (StorageException e) {
               requestRebuild(indexId);
@@ -1297,14 +1299,8 @@ public class FileBasedIndex implements ApplicationComponent {
           if (!isTooLarge(file)) {
             for (ID<?, ?> indexId : myIndices.keySet()) {
               if (needsFileContentLoading(indexId) && getInputFilter(indexId).acceptInput(file)) {
-                w.lock();
-                try {
-                  myFilesToUpdate.add(file);
-                  break; // no need to iterate further, as the file is already marked 
-                }
-                finally {
-                  w.unlock();
-                }
+                scheduleForUpdate(file);
+                break; // no need to iterate further, as the file is already marked
               }
             }
           }
@@ -1313,6 +1309,16 @@ public class FileBasedIndex implements ApplicationComponent {
         }
       });
       IndexingStamp.flushCache();
+    }
+
+    public void scheduleForUpdate(VirtualFile file) {
+      w.lock();
+      try {
+        myFilesToUpdate.add(file);
+      }
+      finally {
+        w.unlock();
+      }
     }
 
     void invalidateIndices(final VirtualFile file, final boolean markForReindex) {
@@ -1368,13 +1374,7 @@ public class FileBasedIndex implements ApplicationComponent {
         if (indicesAffected && markForReindex) {
           iterateIndexableFiles(file, new Processor<VirtualFile>() {
             public boolean process(final VirtualFile file) {
-              w.lock();
-              try {
-                myFilesToUpdate.add(file);
-              }
-              finally {
-                w.unlock();
-              }
+              scheduleForUpdate(file);
               return true;
             }
           });
