@@ -87,10 +87,6 @@ public class ModuleChunk {
     return CompilerModuleExtension.getInstance(myMainModule).getCompilerOutputUrlForTests();
   }
 
-  public boolean isSavePathsRelative() {
-    return myMainModule.isSavePathsRelative();
-  }
-
   public boolean isJdkInherited() {
     return ModuleRootManager.getInstance(myMainModule).isSdkInherited();
   }

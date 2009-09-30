@@ -1,7 +1,6 @@
 package org.jetbrains.idea.maven;
 
 import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -13,24 +12,6 @@ import java.io.File;
 import java.util.List;
 
 public class StructureImportingTest extends MavenImportingTestCase {
-  public void testUsingRelativePathForTheProject() throws Exception {
-    assertFalse(((ProjectEx)myProject).isSavePathsRelative());
-
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
-
-    assertTrue(((ProjectEx)myProject).isSavePathsRelative());
-  }
-
-  public void testUsingRelativePathForModules() throws Exception {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
-
-    assertTrue(getModule("project").isSavePathsRelative());
-  }
-
   public void testInheritProjectJdkForModules() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -44,11 +25,9 @@ public class StructureImportingTest extends MavenImportingTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    getModule("project").setSavePathsRelative(false);
     Sdk sdk = setupJdkForModule("project");
 
     importProject();
-    assertFalse(getModule("project").isSavePathsRelative());
     assertFalse(ModuleRootManager.getInstance(getModule("project")).isSdkInherited());
     assertEquals(sdk, ModuleRootManager.getInstance(getModule("project")).getSdk());
   }

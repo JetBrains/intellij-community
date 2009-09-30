@@ -36,13 +36,13 @@ public class ChunkBuild extends CompositeGenerator{
 
       final String outputPathUrl = chunk.getOutputDirUrl();
       String location = outputPathUrl != null?
-                        GenerationUtils.toRelativePath(VirtualFileManager.extractPath(outputPathUrl), chunkBaseDir, BuildProperties.getModuleChunkBasedirProperty(chunk), genOptions, !chunk.isSavePathsRelative()) :
+                        GenerationUtils.toRelativePath(VirtualFileManager.extractPath(outputPathUrl), chunkBaseDir, BuildProperties.getModuleChunkBasedirProperty(chunk), genOptions) :
                         CompilerBundle.message("value.undefined");
       add(new Property(BuildProperties.getOutputPathProperty(chunk.getName()), location), 1);
 
       final String testOutputPathUrl = chunk.getTestsOutputDirUrl();
       if (testOutputPathUrl != null) {
-        location = GenerationUtils.toRelativePath(VirtualFileManager.extractPath(testOutputPathUrl), chunkBaseDir, BuildProperties.getModuleChunkBasedirProperty(chunk), genOptions, !chunk.isSavePathsRelative());
+        location = GenerationUtils.toRelativePath(VirtualFileManager.extractPath(testOutputPathUrl), chunkBaseDir, BuildProperties.getModuleChunkBasedirProperty(chunk), genOptions);
       }
       add(new Property(BuildProperties.getOutputPathForTestsProperty(chunk.getName()), location));
 

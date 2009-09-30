@@ -5,9 +5,6 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 public interface ProjectEx extends Project {
-  boolean isSavePathsRelative();
-
-  void setSavePathsRelative(boolean b);
 
   @NotNull
   IProjectStore getStateStore();

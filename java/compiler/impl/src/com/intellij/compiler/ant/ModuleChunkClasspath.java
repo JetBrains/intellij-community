@@ -147,8 +147,7 @@ public class ModuleChunkClasspath extends Path {
                 else {
                   final String path = VirtualFileManager.extractPath(url);
                   pathItems.add(new PathElementItem(
-                    GenerationUtils.toRelativePath(path, chunk.getBaseDir(), moduleChunkBasedirProperty, genOptions,
-                                                   !chunk.isSavePathsRelative())));
+                    GenerationUtils.toRelativePath(path, chunk.getBaseDir(), moduleChunkBasedirProperty, genOptions)));
                 }
               }
             }

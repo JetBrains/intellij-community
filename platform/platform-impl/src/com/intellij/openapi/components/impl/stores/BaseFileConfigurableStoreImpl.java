@@ -18,7 +18,6 @@ import java.util.Set;
 abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.BaseFileConfigurableStoreImpl");
 
-  @NonNls protected static final String RELATIVE_PATHS_OPTION = "relativePaths";
   @NonNls protected static final String VERSION_OPTION = "version";
   @NonNls public static final String ATTRIBUTE_NAME = "name";
   private final ComponentManager myComponentManager;
@@ -56,10 +55,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     protected void load(@NotNull final Element rootElement) throws IOException {
       super.load(rootElement);
 
-      final String rel = rootElement.getAttributeValue(RELATIVE_PATHS_OPTION);
-      if (rel != null) mySavePathsRelative = Boolean.parseBoolean(rel);
       final String v = rootElement.getAttributeValue(VERSION_OPTION);
-
       if (v != null) {
         myVersion = Integer.parseInt(v);
       }
@@ -71,10 +67,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     @NotNull
     protected Element save() {
       final Element root = super.save();
-
-      root.setAttribute(RELATIVE_PATHS_OPTION, String.valueOf(mySavePathsRelative));
       root.setAttribute(VERSION_OPTION, Integer.toString(myVersion));
-
       return root;
     }
 
@@ -108,25 +101,6 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
 
   public void load() throws IOException, StateStorage.StateStorageException {
     getMainStorageData(); //load it
-  }
-
-  public boolean isSavePathsRelative() {
-    try {
-      return getMainStorageData().mySavePathsRelative;
-    }
-    catch (StateStorage.StateStorageException e) {
-      LOG.error(e);
-      return false;
-    }
-  }
-
-  public void setSavePathsRelative(boolean b) {
-    try {
-      getMainStorageData().mySavePathsRelative = b;
-    }
-    catch (StateStorage.StateStorageException e) {
-      LOG.error(e);
-    }
   }
 
   public BaseStorageData getMainStorageData() throws StateStorage.StateStorageException {

@@ -7,7 +7,6 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
@@ -326,8 +325,6 @@ public class MavenProjectImporter {
   private void configSettings() {
     MavenUtil.invokeAndWaitWriteAction(myProject, new Runnable() {
       public void run() {
-        ((ProjectEx)myProject).setSavePathsRelative(true);
-
         String level = calcTargetLevel();
         if (level == null) return;
 

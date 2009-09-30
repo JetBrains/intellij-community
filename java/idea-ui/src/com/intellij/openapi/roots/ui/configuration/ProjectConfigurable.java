@@ -11,7 +11,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -56,9 +55,6 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
   private boolean myStartModuleWizardOnShow;
   private LanguageLevelCombo myLanguageLevelCombo;
   private ProjectJdkConfigurable myProjectJdkConfigurable;
-  private JRadioButton myRbRelativePaths;
-
-  private JRadioButton myRbAbsolutePaths;
 
   private FieldPanel myProjectCompilerOutput;
 
@@ -97,16 +93,6 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
   private void init(final ProjectJdksModel model) {
     myPanel = new MyJPanel();
     myPanel.setPreferredSize(new Dimension(700, 500));
-
-    myRbRelativePaths.setText(ProjectBundle.message("module.paths.outside.module.dir.relative.radio"));
-    myRbAbsolutePaths.setText(ProjectBundle.message("module.paths.outside.module.dir.absolute.radio"));
-
-    if (((ProjectEx)myProject).isSavePathsRelative()) {
-      myRbRelativePaths.setSelected(true);
-    }
-    else {
-      myRbAbsolutePaths.setSelected(true);
-    }
 
     myProjectJdkConfigurable = new ProjectJdkConfigurable(myProject, model);
     myPanel.add(myProjectJdkConfigurable.createComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0,
@@ -215,7 +201,6 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
 
         final LanguageLevel newLevel = (LanguageLevel)myLanguageLevelCombo.getSelectedItem();
         LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(newLevel);
-        ((ProjectEx)myProject).setSavePathsRelative(myRbRelativePaths.isSelected());
         try {
           myProjectJdkConfigurable.apply();
         }
@@ -264,7 +249,7 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
     if (!Comparing.strEqual(FileUtil.toSystemIndependentName(VfsUtil.urlToPath(compilerOutput)),
                             FileUtil.toSystemIndependentName(myProjectCompilerOutput.getText()))) return true;
     if (myProjectJdkConfigurable.isModified()) return true;
-    return ((ProjectEx)myProject).isSavePathsRelative() != myRbRelativePaths.isSelected();
+    return false;
   }
 
   private void createUIComponents() {

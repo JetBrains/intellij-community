@@ -19,12 +19,7 @@ public interface IProjectStore extends IComponentStore {
 
   boolean checkVersion();
 
-  @SuppressWarnings({"EmptyMethod"})
-  boolean isSavePathsRelative();
-
   void setProjectFilePath(final String filePath);
-
-  void setSavePathsRelative(final boolean b);
 
   @Nullable
   VirtualFile getProjectBaseDir();

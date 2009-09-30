@@ -14,13 +14,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-public class ModulePathMacroManager extends BasePathMacroManager {
+public class ModulePathMacroManager extends BasePathMacroManager /*ProjectPathMacroManager*/ {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.ModulePathMacroManager");
 
   private final Module myModule;
 
 
   public ModulePathMacroManager(final Module module) {
+    //super((ProjectEx) module.getProject());
     myModule = module;
   }
 
@@ -35,7 +36,7 @@ public class ModulePathMacroManager extends BasePathMacroManager {
     ReplacePathToMacroMap result = new ReplacePathToMacroMap();
     getModuleHomeReplacements(result, false);
     result.putAll(super.getReplacePathMap());
-    getModuleHomeReplacements(result, myModule.isSavePathsRelative());
+    getModuleHomeReplacements(result, true); // TODO: change to false and remove previous call to this method to save ABSOLUTE paths 
     return result;
   }
 
