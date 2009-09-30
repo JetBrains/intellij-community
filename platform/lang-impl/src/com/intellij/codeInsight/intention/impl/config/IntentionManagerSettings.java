@@ -73,8 +73,8 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
   private final Set<String> myIgnoredActions = new LinkedHashSet<String>();
 
   private final Map<MetaDataKey, IntentionActionMetaData> myMetaData = new LinkedHashMap<MetaDataKey, IntentionActionMetaData>();
-  private static final @NonNls String IGNORE_ACTION_TAG = "ignoreAction";
-  private static final @NonNls String NAME_ATT = "name";
+  @NonNls private static final String IGNORE_ACTION_TAG = "ignoreAction";
+  @NonNls private static final String NAME_ATT = "name";
   private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
 
 
@@ -87,12 +87,9 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
   }
 
   private static ClassLoader getClassLoader(final IntentionAction intentionAction) {
-    if (intentionAction instanceof IntentionActionWrapper) {
-      return ((IntentionActionWrapper)intentionAction).getImplementationClassLoader();
-    }
-    else {
-      return intentionAction.getClass().getClassLoader();
-    }
+    return intentionAction instanceof IntentionActionWrapper
+           ? ((IntentionActionWrapper)intentionAction).getImplementationClassLoader()
+           : intentionAction.getClass().getClassLoader();
   }
 
   public void registerIntentionMetaData(final IntentionAction intentionAction, final String[] category, final String descriptionDirectoryName,
@@ -130,17 +127,12 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
     return !myIgnoredActions.contains(getFamilyName(metaData));
   }
 
-  private String getFamilyName(final IntentionActionMetaData metaData) {
+  private static String getFamilyName(final IntentionActionMetaData metaData) {
     return StringUtil.join(metaData.myCategory, "/") + "/" + metaData.getFamily();
   }
 
-  private String getFamilyName(final IntentionAction action) {
-    if (action instanceof IntentionActionWrapper) {
-      return ((IntentionActionWrapper)action).getFullFamilyName();
-    }
-    else {
-      return action.getFamilyName();
-    }
+  private static String getFamilyName(final IntentionAction action) {
+    return action instanceof IntentionActionWrapper ? ((IntentionActionWrapper)action).getFullFamilyName() : action.getFamilyName();
   }
 
   public synchronized void setEnabled(IntentionActionMetaData metaData, boolean enabled) {
@@ -173,31 +165,29 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
     myMetaData.put(key, metaData);
   }
 
-  private synchronized static void processMetaData(@NotNull final IntentionActionMetaData metaData) {
+  private static synchronized void processMetaData(@NotNull final IntentionActionMetaData metaData) {
     final Application app = ApplicationManager.getApplication();
     if (app.isUnitTestMode() || app.isHeadlessEnvironment()) return;
 
     final TextDescriptor description = metaData.getDescription();
-    if (description != null) {
-      app.executeOnPooledThread(new Runnable(){
-        public void run() {
-          try {
-            SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
-            if (registrar == null) return;
-            @NonNls String descriptionText = description.getText().toLowerCase();
-            descriptionText = HTML_PATTERN.matcher(descriptionText).replaceAll(" ");
-            final Set<String> words = registrar.getProcessedWordsWithoutStemming(descriptionText);
-            words.addAll(registrar.getProcessedWords(metaData.getFamily()));
-            for (String word : words) {
-              registrar.addOption(word, metaData.getFamily(), metaData.getFamily(), IntentionSettingsConfigurable.HELP_ID, IntentionSettingsConfigurable.DISPLAY_NAME);
-            }
-          }
-          catch (IOException e) {
-            LOG.error(e);
+    app.executeOnPooledThread(new Runnable(){
+      public void run() {
+        try {
+          SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
+          if (registrar == null) return;
+          @NonNls String descriptionText = description.getText().toLowerCase();
+          descriptionText = HTML_PATTERN.matcher(descriptionText).replaceAll(" ");
+          final Set<String> words = registrar.getProcessedWordsWithoutStemming(descriptionText);
+          words.addAll(registrar.getProcessedWords(metaData.getFamily()));
+          for (String word : words) {
+            registrar.addOption(word, metaData.getFamily(), metaData.getFamily(), IntentionSettingsConfigurable.HELP_ID, IntentionSettingsConfigurable.DISPLAY_NAME);
           }
         }
-      });
-    }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
+    });
   }
 
   public synchronized void unregisterMetaData(IntentionAction intentionAction) {
