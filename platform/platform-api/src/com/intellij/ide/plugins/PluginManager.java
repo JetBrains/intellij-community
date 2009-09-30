@@ -1,3 +1,19 @@
+/*
+ * Copyright 2000-2009 JetBrains s.r.o.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.ClassloaderUtil;
@@ -13,6 +29,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.LogProvider;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
@@ -56,7 +73,7 @@ public class PluginManager {
 
   static final Object lock = new Object();
 
-  private static String ourBuildNumber;
+  private static BuildNumber ourBuildNumber;
   @NonNls public static final String PLUGIN_XML = "plugin.xml";
   @NonNls public static final String META_INF = "META-INF";
   private static final Map<PluginId,Integer> ourId2Index = new THashMap<PluginId, Integer>();
@@ -381,37 +398,20 @@ public class PluginManager {
   }
 
   public static boolean isIncompatible(final IdeaPluginDescriptor descriptor) {
-    final String buildNumberString = getBuildNumber();
-    if (buildNumberString != null) {
-      int buildNumber;
-      try {
-        buildNumber = Integer.parseInt(buildNumberString);
-      }
-      catch (NumberFormatException e) {
-        return false;
-      }
-      final String sinceBuild = descriptor.getSinceBuild();
-      try {
-        int sinceBuildNumber = Integer.parseInt(sinceBuild);
-        if (sinceBuildNumber > buildNumber) {
-          return true;
-        }
-      }
-      catch (NumberFormatException e) {
-        //skip invalid numbers
-      }
+    BuildNumber buildNumber = getBuildNumber();
 
-      final String untilBuild = descriptor.getUntilBuild();
-      try {
-        int untilBuildNumber = Integer.parseInt(untilBuild);
-        if (untilBuildNumber < buildNumber) {
-          return true;
-        }
-      }
-      catch (NumberFormatException e) {
-        //skip invalid numbers
+    if (descriptor.getSinceBuild() != null) {
+      BuildNumber sinceBuild = BuildNumber.fromString(descriptor.getSinceBuild());
+      if (sinceBuild.compareTo(buildNumber) > 0) {
+        return true;
       }
     }
+
+    if (descriptor.getUntilBuild() != null && !buildNumber.isSnapshot()) {
+      BuildNumber untilBuild = BuildNumber.fromString(descriptor.getUntilBuild());
+      if (untilBuild.compareTo(buildNumber) < 0) return true;
+    }
+
     return false;
   }
 
@@ -687,16 +687,23 @@ public class PluginManager {
     return true;
   }
 
-  @Nullable
-  static String getBuildNumber() {
+  static BuildNumber getBuildNumber() {
     if (ourBuildNumber == null) {
-      ourBuildNumber = System.getProperty("idea.plugins.compatible.build");
+      ourBuildNumber = BuildNumber.fromString(System.getProperty("idea.plugins.compatible.build"));
       if (ourBuildNumber == null) {
         try {
-          ourBuildNumber = new String(FileUtil.loadFileText(new File(PathManager.getHomePath() + "/build.txt"))).trim();
+          File buildTxtFile =
+            FileUtil.findFirstThatExist(PathManager.getHomePath() + "/build.txt", PathManager.getHomePath() + "/community/build.txt");
+
+          if (buildTxtFile != null) {
+            ourBuildNumber = BuildNumber.fromString(new String(FileUtil.loadFileText(buildTxtFile)).trim());
+          }
+          else {
+            ourBuildNumber = BuildNumber.fromString("90.SNAPSHOT");
+          }
         }
         catch (IOException e) {
-          ourBuildNumber = null;
+          ourBuildNumber = BuildNumber.fromString("90.SNAPSHOT");
         }
       }
     }

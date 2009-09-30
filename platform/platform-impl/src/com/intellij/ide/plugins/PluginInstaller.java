@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.ui.GuiUtils;
 import org.jetbrains.annotations.NonNls;
 
@@ -138,10 +139,10 @@ public class PluginInstaller {
     }
 
     synchronized (PluginManager.lock) {
-      final String buildNumber = RepositoryHelper.extractBuildNumber();
+      final BuildNumber buildNumber = PluginManager.getBuildNumber();
       final @NonNls String url = RepositoryHelper.DOWNLOAD_URL +
                          URLEncoder.encode(pluginNode.getPluginId().getIdString(), "UTF8") +
-                         "&build=" + buildNumber;
+                         "&build=" + buildNumber.asString();
       final PluginDownloader downloader =
         new PluginDownloader(pluginNode.getPluginId().getIdString(), url, null, null, pluginNode.getName());
       if (downloader.prepareToInstall(ProgressManager.getInstance().getProgressIndicator())) {
