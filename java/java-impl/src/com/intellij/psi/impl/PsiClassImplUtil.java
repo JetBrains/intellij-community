@@ -10,6 +10,7 @@ import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.OrFilter;
+import com.intellij.psi.impl.compiled.ClsElementImpl;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.ElementClassFilter;
@@ -833,7 +834,7 @@ public class PsiClassImplUtil {
       return false;
     }
 
-    if (aClass.getOriginalElement().equals(another.getOriginalElement())) {
+    if (originalElement(aClass).equals(originalElement((PsiClass)another))) {
       return true;
     }
 
@@ -852,6 +853,15 @@ public class PsiClassImplUtil {
     }
 
     return false;
+  }
+
+  private static PsiElement originalElement(PsiClass aClass) {
+    final PsiElement originalElement = aClass.getOriginalElement();
+    final PsiCompiledElement compiled = originalElement.getUserData(ClsElementImpl.COMPILED_ELEMENT);
+    if (compiled != null) {
+      return compiled;
+    }
+    return originalElement;
   }
 
   public static boolean isFieldEquivalentTo(PsiField field, PsiElement another) {

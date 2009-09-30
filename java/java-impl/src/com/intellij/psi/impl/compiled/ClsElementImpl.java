@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -19,6 +20,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsElementImpl");
   private static final boolean CHECK_MIRROR_ENABLED = false;
   protected static final Object LAZY_BUILT_LOCK = new String("lazy cls tree initialization lock");
+  public static final Key<PsiCompiledElement> COMPILED_ELEMENT = Key.create("COMPILED_ELEMENT");
 
   private TreeElement myMirror = null;
 
@@ -216,7 +218,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
     return null;
   }
 
-  protected void setMirrorCheckingType(TreeElement element, IElementType type) {
+  protected void setMirrorCheckingType(@NotNull TreeElement element, IElementType type) {
     if (CHECK_MIRROR_ENABLED) {
       LOG.assertTrue(myMirror == null);
     }
@@ -225,6 +227,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
       LOG.assertTrue(element.getElementType() == type);
     }
 
+    element.putUserData(COMPILED_ELEMENT, this);
     myMirror = element;
   }
 }
