@@ -13,7 +13,7 @@ public class YAMLFileType extends LanguageFileType {
   @NonNls public static final String DEFAULT_EXTENSION = "yml";
   @NonNls private static final String NAME = "YAML";
   @NonNls private static final String DESCRIPTION = YAMLBundle.message("filetype.description.yaml");
-  public static final Icon YAML_ICON = IconLoader.findIcon("/nodes/DataTables.png");
+  public static final Icon YAML_ICON = IconLoader.getIcon("/nodes/DataTables.png");
 
   private YAMLFileType() {
     super(YAMLLanguage.INSTANCE);
