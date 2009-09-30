@@ -87,6 +87,14 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings> 
    * IDEA SSH should be used instead of native SSH.
    */
   public SshExecutable SSH_EXECUTABLE = DEFAULT_SSH;
+  /**
+   * True if stash/unstash operation should be performed before update.
+   */
+  public boolean UPDATE_STASH = true;
+  /**
+   * The type of update operation to perform
+   */
+  public UpdateType UPDATE_TYPE = UpdateType.BRANCH_DEFAULT;
 
   /**
    * Save an author of the commit and make it the first one. If amount of authors exceeds the limit, remove least recently selected author.
@@ -200,4 +208,16 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings> 
      * Naive SSH.
      */
     NATIVE_SSH, }
+
+  /**
+   * The type of update to perform
+   */
+  public enum UpdateType {
+    /** Use default specified in the config file for the branch */
+    BRANCH_DEFAULT,
+    /** Merge fetched commits with local branch */
+    MERGE,
+    /** Rebase local commits upon the fetched branch*/
+    REBASE
+  }
 }

@@ -49,7 +49,27 @@ import java.util.*;
  * Git utility/helper methods
  */
 public class GitUtil {
+  /**
+   * The logger instance
+   */
   private final static Logger LOG = Logger.getInstance("#git4idea.GitUtil");
+  /**
+   * Comparator for virtual files by name
+   */
+  public static final Comparator<VirtualFile> VIRTUAL_FILE_COMPARATOR = new Comparator<VirtualFile>() {
+    public int compare(final VirtualFile o1, final VirtualFile o2) {
+      if (o1 == null && o2 == null) {
+        return 0;
+      }
+      if (o1 == null) {
+        return -1;
+      }
+      if (o2 == null) {
+        return 1;
+      }
+      return o1.getPresentableUrl().compareTo(o2.getPresentableUrl());
+    }
+  };
 
   /**
    * A private constructor to suppress instance creation
@@ -269,8 +289,8 @@ public class GitUtil {
    * @return timestamp as {@link Date} object
    */
   public static Date parseTimestamp(String value) {
-      return new Date(Long.parseLong(value.trim()) * 1000);
-    }
+    return new Date(Long.parseLong(value.trim()) * 1000);
+  }
 
   /**
    * Get git roots from content roots
@@ -629,8 +649,10 @@ public class GitUtil {
     return getPossibleBase(file, n - 1, path);
   }
 
-  public static List<CommittedChangeList> getLocalCommittedChanges(final Project project, final VirtualFile root,
-                                                                   final Consumer<GitSimpleHandler> parametersSpecifier) throws VcsException {
+  public static List<CommittedChangeList> getLocalCommittedChanges(final Project project,
+                                                                   final VirtualFile root,
+                                                                   final Consumer<GitSimpleHandler> parametersSpecifier)
+    throws VcsException {
     final List<CommittedChangeList> rc = new ArrayList<CommittedChangeList>();
 
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.LOG);
@@ -649,5 +671,24 @@ public class GitUtil {
       throw new IllegalStateException("More input is avaialble: " + s.line());
     }
     return rc;
+  }
+
+  /**
+   * Cast or wrap exception into a vcs exception, errors and runtime exceptions are just thrown throw.
+   *
+   * @param t an exception to throw
+   * @return a wrapped exception
+   */
+  public static VcsException rethrowVcsException(Throwable t) {
+    if (t instanceof Error) {
+      throw (Error)t;
+    }
+    if (t instanceof RuntimeException) {
+      throw (RuntimeException)t;
+    }
+    if (t instanceof VcsException) {
+      return (VcsException)t;
+    }
+    return new VcsException(t.getMessage(), t);
   }
 }
