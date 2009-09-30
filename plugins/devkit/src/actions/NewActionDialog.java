@@ -157,7 +157,7 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
     myFirstKeystrokeEdit.getDocument().addDocumentListener(listener);
     myClearFirstKeystroke.setText(null);
 
-    final Icon icon = IconLoader.findIcon("/actions/cancel.png");
+    final Icon icon = IconLoader.getIcon("/actions/cancel.png");
     final Dimension size = new Dimension(icon.getIconWidth(), icon.getIconHeight());
     myClearFirstKeystroke.setIcon(icon);
     myClearFirstKeystroke.setPreferredSize(size);

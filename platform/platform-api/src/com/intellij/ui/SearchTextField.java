@@ -78,7 +78,7 @@ public class SearchTextField extends JPanel {
       }
     }
     else {
-      myToggleHistoryLabel = new JLabel(IconLoader.findIcon("/actions/search.png"));
+      myToggleHistoryLabel = new JLabel(IconLoader.getIcon("/actions/search.png"));
       myToggleHistoryLabel.setOpaque(true);
       myToggleHistoryLabel.setBackground(myTextField.getBackground());
       myToggleHistoryLabel.addMouseListener(new MouseAdapter() {
@@ -90,7 +90,7 @@ public class SearchTextField extends JPanel {
         add(myToggleHistoryLabel, BorderLayout.WEST);
       }
 
-      myClearFieldLabel = new JLabel(IconLoader.findIcon("/actions/cleanLight.png"));
+      myClearFieldLabel = new JLabel(IconLoader.getIcon("/actions/cleanLight.png"));
       myClearFieldLabel.setOpaque(true);
       myClearFieldLabel.setBackground(myTextField.getBackground());
       add(myClearFieldLabel, BorderLayout.EAST);

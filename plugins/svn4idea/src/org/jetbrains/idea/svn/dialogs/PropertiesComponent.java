@@ -211,7 +211,7 @@ public class PropertiesComponent extends JPanel {
     public void update(AnActionEvent e) {
       e.getPresentation().setText("Close");
       e.getPresentation().setDescription("Close this tool window");
-      e.getPresentation().setIcon(IconLoader.findIcon("/actions/cancel.png"));
+      e.getPresentation().setIcon(IconLoader.getIcon("/actions/cancel.png"));
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -224,7 +224,7 @@ public class PropertiesComponent extends JPanel {
     public void update(AnActionEvent e) {
       e.getPresentation().setText("Refresh");
       e.getPresentation().setDescription("Reload properties");
-      e.getPresentation().setIcon(IconLoader.findIcon("/actions/sync.png"));
+      e.getPresentation().setIcon(IconLoader.getIcon("/actions/sync.png"));
       e.getPresentation().setEnabled(myFile != null);
     }
 
@@ -240,7 +240,7 @@ public class PropertiesComponent extends JPanel {
       e.getPresentation().setText("Edit Keywords");
       e.getPresentation().setDescription("Manage svn:keywords property");
       if (!CONTEXT_ID.equals(e.getPlace())) {
-        e.getPresentation().setIcon(IconLoader.findIcon("/actions/properties.png"));
+        e.getPresentation().setIcon(IconLoader.getIcon("/actions/properties.png"));
       }
       e.getPresentation().setEnabled(myFile != null && myFile.isFile());
     }
@@ -277,7 +277,7 @@ public class PropertiesComponent extends JPanel {
       e.getPresentation().setText("Delete Property");
       e.getPresentation().setDescription("Delete selected property");
       if (!CONTEXT_ID.equals(e.getPlace())) {
-        e.getPresentation().setIcon(IconLoader.findIcon("/general/remove.png"));
+        e.getPresentation().setIcon(IconLoader.getIcon("/general/remove.png"));
       }
       e.getPresentation().setEnabled(myFile != null && getSelectedPropertyName() != null);
     }
@@ -299,7 +299,7 @@ public class PropertiesComponent extends JPanel {
       e.getPresentation().setText("Add Property");
       e.getPresentation().setDescription("Add new property");
       if (!CONTEXT_ID.equals(e.getPlace())) {
-        e.getPresentation().setIcon(IconLoader.findIcon("/general/add.png"));
+        e.getPresentation().setIcon(IconLoader.getIcon("/general/add.png"));
       }
       e.getPresentation().setEnabled(myFile != null);
     }
@@ -332,7 +332,7 @@ public class PropertiesComponent extends JPanel {
       e.getPresentation().setText("Edit Property");
       e.getPresentation().setDescription("Edit selected property value");
       if (!CONTEXT_ID.equals(e.getPlace())) {
-        e.getPresentation().setIcon(IconLoader.findIcon("/actions/editSource.png"));
+        e.getPresentation().setIcon(IconLoader.getIcon("/actions/editSource.png"));
       }
       e.getPresentation().setEnabled(myFile != null && getSelectedPropertyName() != null);
     }
@@ -373,7 +373,7 @@ public class PropertiesComponent extends JPanel {
 
     public void update(final AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setIcon(IconLoader.findIcon("/general/autoscrollFromSource.png"));
+      e.getPresentation().setIcon(IconLoader.getIcon("/general/autoscrollFromSource.png"));
       e.getPresentation().setText("Follow Selection");
       e.getPresentation().setDescription("Follow Selection");
       // change file

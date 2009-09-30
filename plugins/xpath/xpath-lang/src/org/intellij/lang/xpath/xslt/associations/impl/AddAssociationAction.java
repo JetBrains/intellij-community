@@ -32,7 +32,7 @@ class AddAssociationAction extends AnAction {
     private final FileAssociationsManager myManager;
 
     public AddAssociationAction(FileAssociationsManager manager) {
-        super("Add...", "Add File Association", IconLoader.findIcon("/general/add.png"));
+        super("Add...", "Add File Association", IconLoader.getIcon("/general/add.png"));
         myManager = manager;
     }
 

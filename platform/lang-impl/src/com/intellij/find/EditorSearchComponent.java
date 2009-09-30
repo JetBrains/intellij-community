@@ -598,7 +598,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
 
   private class ShowHistoryAction extends AnAction implements DumbAware {
     private ShowHistoryAction() {
-      getTemplatePresentation().setIcon(IconLoader.findIcon("/actions/search.png"));
+      getTemplatePresentation().setIcon(IconLoader.getIcon("/actions/search.png"));
       getTemplatePresentation().setDescription("Search history");
       getTemplatePresentation().setText("Search History");
 
@@ -619,7 +619,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
 
   private class FindAllAction extends AnAction implements DumbAware {
     private FindAllAction() {
-      getTemplatePresentation().setIcon(IconLoader.findIcon("/actions/export.png"));
+      getTemplatePresentation().setIcon(IconLoader.getIcon("/actions/export.png"));
       getTemplatePresentation().setDescription("Export matches to Find tool window");
       getTemplatePresentation().setText("Find All");
       registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_USAGES).getShortcutSet(), mySearchField);

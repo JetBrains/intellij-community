@@ -58,7 +58,7 @@ public class XsltTreeStructureProvider implements TreeStructureProvider {
   }
 
   private static class XsltFileNode extends PsiFileNode {
-    private static final Icon LINK_OVERLAY = IconLoader.findIcon("/icons/association_small.png");
+    private static final Icon LINK_OVERLAY = IconLoader.getIcon("/icons/association_small.png");
     private final FileAssociationsManager myInstance;
     private final XsltConfig myConfig;
 

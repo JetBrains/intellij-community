@@ -115,7 +115,7 @@ public class XPathEvalAction extends XPathAction {
 
     private static final Logger LOG = Logger.getInstance("org.intellij.plugins.xpathView.XPathEvalAction");
 
-    private final Icon myIcon = IconLoader.findIcon("/icons/xml.png");
+    private final Icon myIcon = IconLoader.getIcon("/icons/xml.png");
 
     protected void updateToolbar(AnActionEvent event) {
         super.updateToolbar(event);

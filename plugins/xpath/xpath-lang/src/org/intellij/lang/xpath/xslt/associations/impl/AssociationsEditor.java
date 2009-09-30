@@ -41,7 +41,7 @@ import java.util.List;
 
 class AssociationsEditor {
     private static final String KEY = "#XsltSupport.AssociationsEditor";
-    private static final Icon LINK_OVERLAY = IconLoader.findIcon("/icons/association_small.png");
+    private static final Icon LINK_OVERLAY = IconLoader.getIcon("/icons/association_small.png");
 
     private JPanel myComponent;
     private JPanel myToolbar;
@@ -191,7 +191,7 @@ class AssociationsEditor {
 
     class RemoveAssociationAction extends AnAction {
         public RemoveAssociationAction() {
-            super(null, "Remove Association", IconLoader.findIcon("/general/remove.png"));
+            super(null, "Remove Association", IconLoader.getIcon("/general/remove.png"));
         }
 
         public void actionPerformed(AnActionEvent e) {
