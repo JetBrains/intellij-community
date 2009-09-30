@@ -3,6 +3,7 @@ package com.jetbrains.python.editor;
 import com.intellij.codeInsight.editorActions.BackspaceHandler;
 import com.intellij.codeInsight.editorActions.BackspaceHandlerDelegate;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PythonFileType;
@@ -20,6 +21,9 @@ public class PythonBackspaceHandler extends BackspaceHandlerDelegate {
 
   public boolean charDeleted(final char c, final PsiFile file, final Editor editor) {
     if (myTargetPosition != null) {
+      // Remove all the following spaces before moving to targetPosition
+      editor.getSelectionModel().setSelection(myTargetPosition.column, editor.getCaretModel().getVisualPosition().column);
+      EditorModificationUtil.deleteSelectedText(editor);
       editor.getCaretModel().moveToLogicalPosition(myTargetPosition);
       myTargetPosition = null;
       return true;
