@@ -88,6 +88,11 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
       }
     }
 
+    @Override
+    public boolean isEmpty() {
+      return super.isEmpty() && myOptions.isEmpty();
+    }
+
     @NotNull
     protected Element save() {
       final Element root = super.save();

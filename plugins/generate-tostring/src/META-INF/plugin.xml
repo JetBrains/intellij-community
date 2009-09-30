@@ -6,7 +6,6 @@
     </description>
     <version>5.0</version>
     <vendor email="cib_rejse@yahoo.dk" url="http://generate-tostring.googlecode.com">Claus Ibsen</vendor>
-    <idea-version since-build="8000"/>
 
     <actions>
         <action id="Actions.ActionsPlugin.GenerateToString"
