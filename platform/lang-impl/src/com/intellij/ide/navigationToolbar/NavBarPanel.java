@@ -831,7 +831,8 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     else {
       final Container container = focusedWindow != null ? focusedWindow : editor.getContentComponent();
       final Point p = AbstractPopup.getCenterOf(container, this);
-      p.y = container.getHeight() / 4;
+      p.x -= container.getLocation().x; //make NavBar visible in case of two monitors; p should be relative
+      p.y = container.getHeight() / 4;      
       HintManagerImpl.getInstanceImpl().showEditorHint(myHint, editor, p, HintManagerImpl.HIDE_BY_ESCAPE, 0, true);
     }
     select();

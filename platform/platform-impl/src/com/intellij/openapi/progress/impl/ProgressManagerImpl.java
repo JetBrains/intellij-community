@@ -289,9 +289,16 @@ public class ProgressManagerImpl extends ProgressManager {
   }
 
   public static void runProcessWithProgressAsynchronously(final Task.Backgroundable task) {
-    final BackgroundableProcessIndicator progressIndicator = new BackgroundableProcessIndicator(task);
+    final ProgressIndicator progressIndicator;
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      progressIndicator = new EmptyProgressIndicator();
+    }
+    else {
+      final BackgroundableProcessIndicator indicator = new BackgroundableProcessIndicator(task);
+      Disposer.register(ApplicationManager.getApplication(), indicator);
+      progressIndicator = indicator;
+    }
 
-    Disposer.register(ApplicationManager.getApplication(), progressIndicator);
 
     final Runnable process = new TaskRunnable(task, progressIndicator);
 
