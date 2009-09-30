@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -18,7 +19,7 @@ public class PyOverrideMethodsHandler implements LanguageCodeInsightActionHandle
     return (file instanceof PyFile) && (PyOverrideImplementUtil.getContextClass(file.getProject(), editor, file) != null);
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     PyClass aClass = PyOverrideImplementUtil.getContextClass(project, editor, file);
     if (aClass != null) {
       PyOverrideImplementUtil.chooseAndOverrideMethods(project, editor, aClass);
