@@ -155,7 +155,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
     myOrder.retainAll(knownSeverities);
 
     if (myOrder.isEmpty()) {
-      initOrder();
+      myOrder.addAll(getDefaultOrder());
     }
     //enforce include all known
     for (int i = 0; i < knownSeverities.size(); i++) {
@@ -175,7 +175,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    for (String severity : myOrder) {
+    for (String severity : getOrder()) {
       Element info = new Element(INFO);
       final SeverityBasedTextAttributes infoType = ourMap.get(severity);
       if (infoType != null) {
@@ -187,10 +187,12 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
         element.addContent(info);
       }
     }
-    if (myReadOrder != null) {
+    if (myReadOrder != null && !myReadOrder.isEmpty()) {
       myReadOrder.writeExternal(element);
     } else {
-      myOrder.writeExternal(element);
+      if (!getDefaultOrder().equals(getOrder())) {
+        getOrder().writeExternal(element);
+      }
     }
   }
 
@@ -238,12 +240,12 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
 
   private JDOMExternalizableStringList getOrder() {
     if (myOrder.isEmpty()) {
-      initOrder();
+      myOrder.addAll(getDefaultOrder());
     }
     return myOrder;
   }
 
-  private void initOrder() {
+  private List<String> getDefaultOrder() {
     final List<HighlightSeverity> order = new ArrayList<HighlightSeverity>();
     for (HighlightInfoType type : STANDART_SEVERITIES.values()) {
       order.add(type.getSeverity(null));
@@ -252,9 +254,11 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
       order.add(attributes.getSeverity());
     }
     Collections.sort(order);
+    final List<String> result = new ArrayList<String>();
     for (HighlightSeverity severity : order) {
-      myOrder.add(severity.toString());
+      result.add(severity.toString());
     }
+    return result;
   }
 
   public void setOrder(List<String> order) {
