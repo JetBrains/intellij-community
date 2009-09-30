@@ -161,6 +161,9 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
                         }
                       }
                     }
+                    if(!GitUpdateLocallyModifiedDialog.showIfNeeded(myProject, root)) {
+                      cancelled.set(true);
+                    }
                   }
                   catch (Throwable t) {
                     ex.set(t);
