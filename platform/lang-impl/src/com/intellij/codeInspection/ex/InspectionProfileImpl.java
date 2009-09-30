@@ -87,6 +87,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     myRegistrar = inspectionProfile.myRegistrar;
     myTools = new HashMap<String, ToolsImpl>();
     myVisibleTreeState = new VisibleTreeState(inspectionProfile.myVisibleTreeState);
+    myDeinstalledInspectionsSettings = new LinkedHashMap<String, Element>(inspectionProfile.myDeinstalledInspectionsSettings);
 
     myBaseProfile = inspectionProfile.myBaseProfile;
     myLocal = inspectionProfile.myLocal;

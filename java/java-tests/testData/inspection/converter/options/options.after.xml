@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <config>
-  <option name="PROJECT_PROFILE" value="p1" />
-  <option name="USE_PROJECT_PROFILE" value="true" />
-  <version value="1.0" />
   <profiles>
     <profile version="1.0" is_locked="false">
       <option name="myName" value="Project Default" />
@@ -17,6 +14,9 @@
       </inspection_tool>
     </profile>
   </profiles>
+  <option name="PROJECT_PROFILE" value="p1" />
+  <option name="USE_PROJECT_PROFILE" value="true" />
+  <version value="1.0" />
   <list size="5">
     <item index="0" class="java.lang.String" itemvalue="TYPO" />
     <item index="1" class="java.lang.String" itemvalue="SERVER PROBLEM" />

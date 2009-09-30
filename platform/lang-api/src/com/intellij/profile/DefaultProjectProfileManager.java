@@ -115,22 +115,39 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
-    Element version = new Element("version");
-    version.setAttribute("value", VERSION);
-    element.addContent(version);
+
     final List<String> sortedProfiles = new ArrayList<String>(myProfiles.keySet());
+    Element profiles = null;
     Collections.sort(sortedProfiles);
-    final Element profiles = new Element(PROFILES);
     for (String profile : sortedProfiles) {
       final Profile projectProfile = myProfiles.get(profile);
       if (projectProfile != null) {
         final Element profileElement = new Element(PROFILE);
         projectProfile.writeExternal(profileElement);
+        boolean hasSmthToSave = sortedProfiles.size() > 1;
+        for (Object child : profileElement.getChildren()) {
+          if (!((Element)child).getName().equals("option")) {
+            hasSmthToSave = true;
+            break;
+          }
+        }
+        if (!hasSmthToSave) continue;
+
+        if (profiles == null) {
+          profiles = new Element(PROFILES);
+          element.addContent(profiles);
+        }
+
         profiles.addContent(profileElement);
       }
     }
-    element.addContent(profiles);
+
+    if (profiles != null) {
+      DefaultJDOMExternalizer.writeExternal(this, element);
+      final Element version = new Element("version");
+      version.setAttribute("value", VERSION);
+      element.addContent(version);
+    }
   }
 
   public NamedScopesHolder getScopesManager() {
@@ -230,7 +247,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
       }
 
 
-      result.add(new Pair<Element, String>(e, generator.generateUniqueName("profiles_settings") + ".xml"));
+      if (!e.getContent().isEmpty()) result.add(new Pair<Element, String>(e, generator.generateUniqueName("profiles_settings") + ".xml"));
 
       return result;
     }
