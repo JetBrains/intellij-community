@@ -22,6 +22,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
@@ -200,8 +201,8 @@ public class GroovyMoveClassTest extends LightCodeInsightFixtureTestCase {
     final byte[] bytes1 = contentsToByteArray(f1);
     final byte[] bytes2 = f2.contentsToByteArray();
 
-    String s1 = new String(bytes1);
-    String s2 = new String(bytes2);
+    String s1 = StringUtil.convertLineSeparators(new String(bytes1));
+    String s2 = StringUtil.convertLineSeparators(new String(bytes2));
 
     try {
       assertEquals(s1, s2);

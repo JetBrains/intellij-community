@@ -57,12 +57,12 @@ public abstract class GroovyScriptRunner {
   }
 
   protected static void setGroovyHome(JavaParameters params, String groovyHome) {
-    params.getVMParametersList().addParametersString("-Dgroovy.home=" + groovyHome);
+    params.getVMParametersList().add("-Dgroovy.home=" + groovyHome);
     if (groovyHome.contains("grails")) { //a bit of a hack
-      params.getVMParametersList().addParametersString("-Dgrails.home=" + groovyHome);
+      params.getVMParametersList().add("-Dgrails.home=" + groovyHome);
     }
     if (groovyHome.contains("griffon")) { //a bit of a hack
-      params.getVMParametersList().addParametersString("-Dgriffon.home=" + groovyHome);
+      params.getVMParametersList().add("-Dgriffon.home=" + groovyHome);
     }
   }
 

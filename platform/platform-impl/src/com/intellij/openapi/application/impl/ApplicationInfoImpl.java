@@ -6,10 +6,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -107,8 +104,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     return myBuildDate;
   }
 
-  public String getBuildNumber() {
-    return myBuildNumber;
+  @Override
+  public BuildNumber getBuild() {
+    return BuildNumber.fromString(myBuildNumber);
   }
 
   public String getMajorVersion() {

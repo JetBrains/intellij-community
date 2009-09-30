@@ -3,6 +3,7 @@ package com.intellij.ide.plugins;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.ui.UIUtil;
@@ -38,8 +39,8 @@ public class RepositoryHelper {
   public static ArrayList<IdeaPluginDescriptor> process(JLabel label) throws IOException, ParserConfigurationException, SAXException {
     ArrayList<IdeaPluginDescriptor> plugins = null;
     try {
-      String buildNumber = extractBuildNumber();
-      @NonNls String url = getListUrl() + "?build=" + buildNumber;
+      BuildNumber buildNumber = PluginManager.getBuildNumber();
+      @NonNls String url = getListUrl() + "?build=" + buildNumber.asString();
 
       setLabelText(label, IdeBundle.message("progress.connecting.to.plugin.manager", getRepositoryHost()));
       HttpConfigurable.getInstance().prepareURL(getRepositoryHost());
@@ -121,17 +122,6 @@ public class RepositoryHelper {
         fos.close();
       }
     }
-  }
-
-  public static String extractBuildNumber() {
-    String build;
-    try {
-      build = Integer.valueOf(PluginManager.getBuildNumber()).toString();
-    }
-    catch (NumberFormatException e) {
-      build = "3000";
-    }
-    return build;
   }
 
   public static String getRepositoryHost() {

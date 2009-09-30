@@ -62,23 +62,23 @@ public class XsltHighlightingTest extends TestBase {
         doXsltHighlighting();
     }
 
-    public void testInValidPattern1() throws Throwable {
+    public void testInvalidPattern1() throws Throwable {
         doXsltHighlighting();
     }
 
-    public void testInValidPattern2() throws Throwable {
+    public void testInvalidPattern2() throws Throwable {
         doXsltHighlighting();
     }
 
-    public void testInValidPattern3() throws Throwable {
+    public void testInvalidPattern3() throws Throwable {
         doXsltHighlighting();
     }
 
-    public void testInValidPattern4() throws Throwable {
+    public void testInvalidPattern4() throws Throwable {
         doXsltHighlighting();
     }
 
-    public void testInValidPattern5() throws Throwable {
+    public void testInvalidPattern5() throws Throwable {
         doXsltHighlighting();
     }
 

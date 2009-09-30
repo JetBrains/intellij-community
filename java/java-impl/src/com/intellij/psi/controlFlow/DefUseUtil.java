@@ -452,42 +452,4 @@ public class DefUseUtil {
     }
   };
 
-  @NotNull
-  public static PsiElement[] getDefsRefs (final boolean defs, PsiFile file, final PsiElement target) {
-    if (!(target instanceof PsiIdentifier)) {
-      return PsiElement.EMPTY_ARRAY;
-    }
-
-    if (file instanceof PsiCompiledElement) {
-      file = (PsiFile)((PsiCompiledElement)file).getMirror();
-    }
-
-    if (file instanceof PsiJavaFile) {
-      final PsiElement def;
-      final PsiElement refElem = target.getParent ();
-      if (refElem instanceof PsiReference) {
-        def = ((PsiReference)refElem).resolve();
-      }
-      else {
-        def = refElem;
-      }
-
-      if (def instanceof PsiLocalVariable || def instanceof PsiParameter) {
-        final PsiVariable var = (PsiVariable) def;
-        PsiElement p = var;
-        while (!(p instanceof PsiMethod)) {
-          final PsiElement parent = p.getParent();
-          LOG.assertTrue (parent != null);
-          p = parent;
-        }
-        final PsiMethod method = (PsiMethod)p;
-        final PsiCodeBlock body = method.getBody();
-        return defs
-               ? getDefs(body, var, refElem)
-               : getRefs(body, var, refElem);
-      }
-    }
-    return PsiElement.EMPTY_ARRAY;
-  }
-
 }
