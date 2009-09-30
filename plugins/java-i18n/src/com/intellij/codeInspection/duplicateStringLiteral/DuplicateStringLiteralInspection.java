@@ -45,23 +45,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   private JPanel myPanel;
   private JCheckBox myIgnorePropertyKeyExpressions;
   @NonNls private static final String BR = "<br>";
-
-  public DuplicateStringLiteralInspection() {
-    myIgnorePropertyKeyExpressions.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        IGNORE_PROPERTY_KEYS = myIgnorePropertyKeyExpressions.isSelected();
-      }
-    });
-    myMinStringLengthField.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
-        try {
-          MIN_STRING_LENGTH = Integer.parseInt(myMinStringLengthField.getText());
-        }
-        catch (NumberFormatException e1) {
-        }
-      }
-    });
-  }
+  private boolean UIInitialized = false;
 
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
@@ -277,6 +261,23 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   }
 
   public JComponent createOptionsPanel() {
+    if (!UIInitialized) {
+      UIInitialized = true;
+      myIgnorePropertyKeyExpressions.addActionListener(new ActionListener() {
+        public void actionPerformed(final ActionEvent e) {
+          IGNORE_PROPERTY_KEYS = myIgnorePropertyKeyExpressions.isSelected();
+        }
+      });
+      myMinStringLengthField.getDocument().addDocumentListener(new DocumentAdapter() {
+        protected void textChanged(final DocumentEvent e) {
+          try {
+            MIN_STRING_LENGTH = Integer.parseInt(myMinStringLengthField.getText());
+          }
+          catch (NumberFormatException e1) {
+          }
+        }
+      });
+    }
     myIgnorePropertyKeyExpressions.setSelected(IGNORE_PROPERTY_KEYS);
     myMinStringLengthField.setText(Integer.toString(MIN_STRING_LENGTH));
     return myPanel;

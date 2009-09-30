@@ -24,10 +24,7 @@ import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.CollectingContentIterator;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
@@ -1100,6 +1097,8 @@ public class FileBasedIndex implements ApplicationComponent {
 
     PsiFile psiFile = null;
 
+    final Ref<ProcessCanceledException> pce = Ref.create(null);
+
     final List<Runnable> tasks = new ArrayList<Runnable>();
     for (final ID<?, ?> indexId : myIndices.keySet()) {
       if (shouldIndexFile(file, indexId)) {
@@ -1131,7 +1130,8 @@ public class FileBasedIndex implements ApplicationComponent {
             try {
               updateSingleIndex(indexId, file, _fc);
             }
-            catch (ProcessCanceledException ignored) {
+            catch (ProcessCanceledException e) {
+              pce.set(e);
             }
             catch (StorageException e) {
               requestRebuild(indexId);
@@ -1160,6 +1160,10 @@ public class FileBasedIndex implements ApplicationComponent {
           task.run();
         }
       }
+    }
+
+    if (!pce.isNull()) {
+      throw pce.get();
     }
 
     if (psiFile != null) {
@@ -1297,14 +1301,8 @@ public class FileBasedIndex implements ApplicationComponent {
           if (!isTooLarge(file)) {
             for (ID<?, ?> indexId : myIndices.keySet()) {
               if (needsFileContentLoading(indexId) && getInputFilter(indexId).acceptInput(file)) {
-                w.lock();
-                try {
-                  myFilesToUpdate.add(file);
-                  break; // no need to iterate further, as the file is already marked 
-                }
-                finally {
-                  w.unlock();
-                }
+                scheduleForUpdate(file);
+                break; // no need to iterate further, as the file is already marked
               }
             }
           }
@@ -1313,6 +1311,16 @@ public class FileBasedIndex implements ApplicationComponent {
         }
       });
       IndexingStamp.flushCache();
+    }
+
+    public void scheduleForUpdate(VirtualFile file) {
+      w.lock();
+      try {
+        myFilesToUpdate.add(file);
+      }
+      finally {
+        w.unlock();
+      }
     }
 
     void invalidateIndices(final VirtualFile file, final boolean markForReindex) {
@@ -1368,13 +1376,7 @@ public class FileBasedIndex implements ApplicationComponent {
         if (indicesAffected && markForReindex) {
           iterateIndexableFiles(file, new Processor<VirtualFile>() {
             public boolean process(final VirtualFile file) {
-              w.lock();
-              try {
-                myFilesToUpdate.add(file);
-              }
-              finally {
-                w.unlock();
-              }
+              scheduleForUpdate(file);
               return true;
             }
           });
