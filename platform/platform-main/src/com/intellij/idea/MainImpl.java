@@ -13,7 +13,6 @@ import javax.swing.*;
 public class MainImpl {
   final static String APPLICATION_NAME = "idea";
   private static final String LOG_CATEGORY = "#com.intellij.idea.Main";
-  private static boolean runStartupWizard = false;
 
   private MainImpl() {
   }
@@ -26,7 +25,6 @@ public class MainImpl {
     StartupUtil.isHeadless = Main.isHeadless(args);
     boolean isNewConfigFolder = PathManager.ensureConfigFolderExists(true);
     if (!StartupUtil.isHeadless && isNewConfigFolder) {
-      runStartupWizard = true;
       try {
         if (SystemInfo.isWindowsVista || SystemInfo.isMac) {
           UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -87,12 +85,9 @@ public class MainImpl {
   }
 
   private static void startApplication(final String[] args) {
-    SwingUtilities.invokeLater(new Runnable() {
+    final IdeaApplication app = new IdeaApplication(args);
+     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        if (runStartupWizard) {
-          StartupUtil.runStartupWizard();
-        }
-        final IdeaApplication app = new IdeaApplication(args);
         app.run();
       }
     });
