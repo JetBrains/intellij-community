@@ -97,7 +97,7 @@ class ClassPath {
         for (Loader loader : loaders) {
           final Resource resource = loader.getResource(s, flag);
           if (resource != null) {
-            printOrder(loader, s);
+            //printOrder(loader, s);
             return resource;
           }
         }

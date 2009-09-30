@@ -101,7 +101,7 @@ public class TurnRefsToSuperTest extends MultiFileTestCase {
     doTest("Xyz", "Xint", false);
   }
 
-  public void testIDEADEV5517Noop() throws Exception {
+  public void testIDEADEV5517NOOP() throws Exception {
     doTest("Xyz", "Xint", false);
   }
 
