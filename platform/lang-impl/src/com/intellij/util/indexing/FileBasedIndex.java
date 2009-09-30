@@ -15,10 +15,7 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.CollectingContentIterator;
@@ -539,6 +536,7 @@ public class FileBasedIndex implements ApplicationComponent {
     myReentrancyGuard.set(Boolean.TRUE);
 
     try {
+      myChangedFilesUpdater.ensureAllInvalidateTasksCompleted();
       if (isUpToDateCheckEnabled()) {
         try {
           checkRebuild(indexId, false);
@@ -1092,6 +1090,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   public void indexFileContent(com.intellij.ide.startup.FileContent content) {
+    myChangedFilesUpdater.ensureAllInvalidateTasksCompleted();
     final VirtualFile file = content.getVirtualFile();
     FileContent fc = null;
 
@@ -1217,8 +1216,21 @@ public class FileBasedIndex implements ApplicationComponent {
     return !myNotRequiringContentIndices.contains(indexId);
   }
 
+  private abstract static class InvalidationTask implements Runnable {
+    private final VirtualFile mySubj;
+
+    protected InvalidationTask(final VirtualFile subj) {
+      mySubj = subj;
+    }
+
+    public VirtualFile getSubj() {
+      return mySubj;
+    }
+  }
+
   private final class ChangedFilesUpdater extends VirtualFileAdapter implements BackgroundableCacheUpdater {
     private final Set<VirtualFile> myFilesToUpdate = new LinkedHashSet<VirtualFile>();
+    private final Queue<InvalidationTask> myFutureInvalidations = new LinkedList<InvalidationTask>();
     private final JBReentrantReadWriteLock myLock = LockFactory.createReadWriteLock();
     private final JBLock r = myLock.readLock();
     private final JBLock w = myLock.writeLock();
@@ -1340,7 +1352,7 @@ public class FileBasedIndex implements ApplicationComponent {
       else {
         cleanProcessedFlag(file);
         IndexingStamp.flushCache();
-        boolean indicesAffected = false;
+        final List<ID<?, ?>> affectedIndices = new ArrayList<ID<?, ?>>(myIndices.size());
 
         final boolean isTooLarge = isTooLarge(file);
         for (final ID<?, ?> indexId : myIndices.keySet()) {
@@ -1352,18 +1364,7 @@ public class FileBasedIndex implements ApplicationComponent {
             }
             else { // the index requires file content
               if (!isTooLarge && shouldUpdateIndex(file, indexId)) {
-                indicesAffected = true;
-                if (markForReindex) {
-                  // only mark the file as unindexed, reindex will be done lazily
-                  ApplicationManager.getApplication().runReadAction(new Runnable() {
-                    public void run() {
-                      IndexingStamp.update(file, indexId, -1L);
-                    }
-                  });
-                }
-                else {
-                  updateSingleIndex(indexId, file, null);
-                }
+                affectedIndices.add(indexId);
               }
             }
           }
@@ -1372,15 +1373,95 @@ public class FileBasedIndex implements ApplicationComponent {
             requestRebuild(indexId);
           }
         }
-        IndexingStamp.flushCache();
-        if (indicesAffected && markForReindex) {
-          iterateIndexableFiles(file, new Processor<VirtualFile>() {
-            public boolean process(final VirtualFile file) {
-              scheduleForUpdate(file);
-              return true;
+
+        if (affectedIndices.size() > 0) {
+          if (markForReindex) {
+            // only mark the file as unindexed, reindex will be done lazily
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
+              public void run() {
+                for (ID<?, ?> indexId : affectedIndices) {
+                  IndexingStamp.update(file, indexId, -1L);
+                }
+              }
+            });
+            iterateIndexableFiles(file, new Processor<VirtualFile>() {
+              public boolean process(final VirtualFile file) {
+                scheduleForUpdate(file);
+                return true;
+              }
+            });
+          }
+          else {
+            final InvalidationTask invalidator = new InvalidationTask(file) {
+              public void run() {
+                Throwable unexpectedError = null;
+                for (ID<?, ?> indexId : affectedIndices) {
+                  try {
+                    updateSingleIndex(indexId, file, null);
+                  }
+                  catch (StorageException e) {
+                    LOG.info(e);
+                    requestRebuild(indexId);
+                  }
+                  catch (ProcessCanceledException ignored) {
+                  }
+                  catch (Throwable e) {
+                    LOG.info(e);
+                    if (unexpectedError == null) {
+                      unexpectedError = e;
+                    }
+                  }
+                }
+                IndexingStamp.flushCache();
+                if (unexpectedError != null) {
+                  LOG.error(unexpectedError);
+                }
+              }
+            };
+
+            w.lock();
+            try {
+              myFutureInvalidations.offer(invalidator);
             }
-          });
+            finally {
+              w.unlock();
+            }
+          }
         }
+        IndexingStamp.flushCache();
+      }
+    }
+
+    public void ensureAllInvalidateTasksCompleted() {
+      final int size;
+      r.lock();
+      try {
+        size = myFutureInvalidations.size();
+        if (size == 0) return;
+      }
+      finally {
+        r.unlock();
+      }
+      final ProgressIndicator current = ProgressManager.getInstance().getProgressIndicator();
+      final ProgressIndicator indicator = current != null ? current : new EmptyProgressIndicator();
+      indicator.setText("");
+      int count = 0;
+      while (true) {
+        InvalidationTask task;
+        w.lock();
+        try {
+          task = myFutureInvalidations.poll();
+        }
+        finally {
+          w.unlock();
+        }
+
+        if (task == null) {
+          break;
+        }
+        indicator.setFraction(((double)count++)/size);
+        indicator.setText2(task.getSubj().getPresentableUrl());
+        task.run();
       }
     }
 
@@ -1438,12 +1519,14 @@ public class FileBasedIndex implements ApplicationComponent {
     }
 
     public void processFile(final com.intellij.ide.startup.FileContent fileContent) {
+      myChangedFilesUpdater.ensureAllInvalidateTasksCompleted();
       processFileImpl(fileContent);
     }
 
     private final Semaphore myForceUpdateSemaphore = new Semaphore();
 
     public void forceUpdate() {
+      myChangedFilesUpdater.ensureAllInvalidateTasksCompleted();
       final VirtualFile[] files = queryNeededFiles();
       if (files.length > 0) {
         myForceUpdateSemaphore.down();
