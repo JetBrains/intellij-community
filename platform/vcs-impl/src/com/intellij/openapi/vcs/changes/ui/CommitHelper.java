@@ -9,6 +9,7 @@ import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -34,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 
 public class CommitHelper {
+  private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ui.CommitHelper");
   private final Project myProject;
 
   private final ChangeList myChangeList;
@@ -151,8 +153,14 @@ public class CommitHelper {
       processor.doBeforeRefresh();
 
       AbstractVcsHelper.getInstanceChecked(myProject).showErrors(processor.getVcsExceptions(), myActionName);
-    }
-    finally {
+    } catch (Exception e) {
+      LOG.error(e);
+      if (e instanceof RuntimeException) {
+        throw (RuntimeException) e;
+      } else {
+        throw new RuntimeException(e);
+      }
+    } finally {
       commitCompleted(processor.getVcsExceptions(), processor);
       processor.customRefresh();
       ApplicationManager.getApplication().invokeLater(new Runnable() {
