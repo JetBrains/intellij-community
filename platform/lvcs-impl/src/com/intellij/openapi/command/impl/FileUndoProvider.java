@@ -7,6 +7,7 @@ import com.intellij.history.core.changes.Change;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryComponent;
 import com.intellij.openapi.command.undo.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -18,6 +19,8 @@ import com.intellij.util.messages.MessageBusConnection;
 import java.io.IOException;
 
 public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider {
+  public static final Logger LOG = Logger.getInstance("#" + FileUndoProvider.class.getName());
+
   private final Key<DocumentReference> DELETION_WAS_UNDOABLE = new Key<DocumentReference>("DeletionWasUndoable");
 
   private final Project myProject;
@@ -193,6 +196,7 @@ public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider
         myUndoChangeRange = myActionChangeRange.revert(myUndoChangeRange);
       }
       catch (IOException e) {
+        LOG.warn(e);
         throw new UnexpectedUndoException(e.getMessage());
       }
     }
@@ -202,6 +206,7 @@ public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider
         myActionChangeRange = myUndoChangeRange.revert(myActionChangeRange);
       }
       catch (IOException e) {
+        LOG.warn(e);
         throw new UnexpectedUndoException(e.getMessage());
       }
     }

@@ -1,10 +1,13 @@
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.OrFilter;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
@@ -826,7 +829,29 @@ public class PsiClassImplUtil {
         return false;
       }
     }
-    return qName1.hashCode() == qName2.hashCode() && qName1.equals(qName2);
+    if (qName1.hashCode() != qName2.hashCode() || !qName1.equals(qName2)) {
+      return false;
+    }
+
+    if (aClass.getOriginalElement().equals(another.getOriginalElement())) {
+      return true;
+    }
+
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(aClass.getProject()).getFileIndex();
+    final PsiFile file1 = aClass.getContainingFile().getOriginalFile();
+    final PsiFile file2 = another.getContainingFile().getOriginalFile();
+    if (file1.equals(file2)) {
+      return true;
+    }
+
+    final VirtualFile vfile1 = file1.getViewProvider().getVirtualFile();
+    final VirtualFile vfile2 = file2.getViewProvider().getVirtualFile();
+    if ((fileIndex.isInSource(vfile1) || fileIndex.isInLibraryClasses(vfile1)) &&
+        (fileIndex.isInSource(vfile2) || fileIndex.isInLibraryClasses(vfile2))) {
+      return true;
+    }
+
+    return false;
   }
 
   public static boolean isFieldEquivalentTo(PsiField field, PsiElement another) {

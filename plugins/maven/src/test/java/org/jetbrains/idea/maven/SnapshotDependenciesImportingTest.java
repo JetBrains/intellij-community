@@ -33,6 +33,8 @@ public class SnapshotDependenciesImportingTest extends MavenImportingTestCase {
   }
 
   private void performTestWithDependencyVersion(String version) throws Exception {
+    if (!hasM2Home()) return;
+
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -79,6 +81,8 @@ public class SnapshotDependenciesImportingTest extends MavenImportingTestCase {
   }
 
   public void testNamingLibraryTheSameWayRegardlessAvailableSnapshotVersion() throws Exception {
+    if (!hasM2Home()) return;
+
     deployArtifact("test", "foo", "1-SNAPSHOT");
 
     importProject("<groupId>test</groupId>" +
@@ -103,6 +107,8 @@ public class SnapshotDependenciesImportingTest extends MavenImportingTestCase {
   }
 
   public void testAttachingCorrectJavaDocsAndSources() throws Exception {
+    if (!hasM2Home()) return;
+
     deployArtifact("test", "foo", "1-SNAPSHOT",
                    "<build>" +
                    "  <plugins>" +
@@ -161,6 +167,8 @@ public class SnapshotDependenciesImportingTest extends MavenImportingTestCase {
   }
 
   public void testCorrectlryUpdateRootEntriesWithActualPathForSnapshotDependencies() throws Exception {
+    if (!hasM2Home()) return;
+
     deployArtifact("test", "foo", "1-SNAPSHOT",
                    "<build>" +
                    "  <plugins>" +

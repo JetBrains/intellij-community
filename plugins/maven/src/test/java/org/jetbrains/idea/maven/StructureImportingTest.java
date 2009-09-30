@@ -344,6 +344,8 @@ public class StructureImportingTest extends MavenImportingTestCase {
   }
 
   public void testParentInLocalRepository() throws Exception {
+    if (!hasM2Home()) return;
+
     VirtualFile parent = createModulePom("parent",
                                          "<groupId>test</groupId>" +
                                          "<artifactId>parent</artifactId>" +

@@ -50,6 +50,8 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
   @NonNls private static final String COMPONENT = "component";
   @NonNls private static final String NAME = "name";
 
+  private static final IFile[] EMPTY_FILES = new IFile[0];
+
   private final FileTypeManager myFileTypeManager;
 
   public DirectoryBasedStorage(final TrackingPathMacroSubstitutor pathMacroSubstitutor,
@@ -242,12 +244,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
       assert mySession == this;
       final Set<String> currentNames = new HashSet<String>();
 
-      if (!myDir.exists()) {
-        myDir.createParentDirs();
-        myDir.mkDir();
-      }
-
-      IFile[] children = myDir.listFiles();
+      IFile[] children = myDir.exists() ? myDir.listFiles() : EMPTY_FILES;
       for (IFile child : children) {
         final String fileName = child.getName();
         if (!myFileTypeManager.isFileIgnored(fileName)) {
@@ -264,6 +261,11 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
           }
 
           if (file.getTimeStamp() <= myStorageData.getLastTimeStamp()) {
+            if (!myDir.exists()) {
+              myDir.createParentDirs();
+              myDir.mkDir();
+            }
+
             StorageUtil.save(file, element);
             myStorageData.updateLastTimestamp(file);
           }
@@ -272,23 +274,25 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
 
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          for (String name : currentNames) {
-            IFile child = myDir.getChild(name);
+          if (myDir.exists()) {
+            for (String name : currentNames) {
+              IFile child = myDir.getChild(name);
 
-            if (child.getTimeStamp() > myStorageData.getLastTimeStamp()) {
-              // do not touch new files during VC update (which aren't read yet)
-              // now got an opposite problem: file is recreated if was removed by VC during update.
-              return;
-            }
-
-            final VirtualFile virtualFile = StorageUtil.getVirtualFile(child);
-            if (virtualFile != null) {
-              try {
-                LOG.debug("Removing configuration file: " + virtualFile.getPresentableUrl());
-                virtualFile.delete(DirectoryBasedStorage.this);
+              if (child.getTimeStamp() > myStorageData.getLastTimeStamp()) {
+                // do not touch new files during VC update (which aren't read yet)
+                // now got an opposite problem: file is recreated if was removed by VC during update.
+                return;
               }
-              catch (IOException e) {
-                LOG.error(e);
+
+              final VirtualFile virtualFile = StorageUtil.getVirtualFile(child);
+              if (virtualFile != null) {
+                try {
+                  LOG.debug("Removing configuration file: " + virtualFile.getPresentableUrl());
+                  virtualFile.delete(DirectoryBasedStorage.this);
+                }
+                catch (IOException e) {
+                  LOG.error(e);
+                }
               }
             }
           }

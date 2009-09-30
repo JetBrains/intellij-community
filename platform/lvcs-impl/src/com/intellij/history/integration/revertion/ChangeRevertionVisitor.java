@@ -61,7 +61,7 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
 
       String newName = getName(e);
       VirtualFile existing = f.getParent().findChild(newName);
-      if (existing != null) {
+      if (existing != null && existing != f) {
         existing.delete(this);
       }
       f.rename(this, newName);

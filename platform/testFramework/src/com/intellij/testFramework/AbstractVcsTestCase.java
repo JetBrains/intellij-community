@@ -24,6 +24,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diff.LineTokenizer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -58,7 +59,13 @@ public class AbstractVcsTestCase {
 
   protected ProcessOutput runClient(String exeName, @Nullable String stdin, @Nullable final File workingDir, String[] commandLine) throws IOException {
     final List<String> arguments = new ArrayList<String>();
-    arguments.add(new File(myClientBinaryPath, exeName).toString());
+    if (SystemInfo.isWindows) {
+      arguments.add(new File(myClientBinaryPath, exeName).toString());
+    }
+    else {
+      // assume client is in path
+      arguments.add(exeName);
+    }
     Collections.addAll(arguments, commandLine);
     final ProcessBuilder builder = new ProcessBuilder().command(arguments);
     if (workingDir != null) {
@@ -85,7 +92,7 @@ public class AbstractVcsTestCase {
     return result;
   }
 
-  protected ProcessOutput runArbitrary(final String command, final String[] args) throws IOException {
+  protected static ProcessOutput runArbitrary(final String command, final String[] args) throws IOException {
     final List<String> arguments = new ArrayList<String>();
     arguments.add(command);
     Collections.addAll(arguments, args);

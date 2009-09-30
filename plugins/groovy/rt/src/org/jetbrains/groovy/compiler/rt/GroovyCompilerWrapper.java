@@ -39,11 +39,17 @@ public class GroovyCompilerWrapper {
     try {
       unit.compile(forStubs ? Phases.CONVERSION : Phases.ALL);
       addCompiledFiles(unit, compiledFiles, forStubs, collector);
-    } catch (CompilationFailedException e) {
+    }
+    catch (CompilationFailedException e) {
       processCompilationException(e, collector, forStubs);
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
       processException(e, collector, forStubs);
-    } finally {
+    }
+    catch (NoClassDefFoundError e) {
+      addMessageWithoutLocation(collector, "Groovyc error: " + e.getMessage() + " class not found, try compiling it explicitly", !forStubs);
+    }
+    finally {
       addWarnings(unit.getErrorCollector(), collector);
     }
     return compiledFiles;
@@ -125,7 +131,7 @@ public class GroovyCompilerWrapper {
     } else if (message instanceof SimpleMessage) {
       addErrorMessage((SimpleMessage) message, collector);
     } else {
-      collector.add(new CompilerMessage(CompilerMessage.ERROR, "An unknown error occurred.", null, -1, -1));
+      addMessageWithoutLocation(collector, "An unknown error occurred: " + message, true);
     }
   }
 
@@ -133,10 +139,14 @@ public class GroovyCompilerWrapper {
     if (exception instanceof GroovyRuntimeException) {
       addErrorMessage((GroovyRuntimeException) exception, collector);
     } else if (forStubs) {
-      collector.add(new CompilerMessage(CompilerMessage.WARNING, "Groovyc stub generation failed: " + exception.getMessage(), null, -1, -1));
+      addMessageWithoutLocation(collector, "Groovyc stub generation failed: " + exception.getMessage(), false);
     } else {
-      collector.add(new CompilerMessage(CompilerMessage.ERROR, exception.getMessage(), null, -1, -1));
+      addMessageWithoutLocation(collector, exception.getMessage(), true);
     }
+  }
+
+  private static void addMessageWithoutLocation(List collector, String message, boolean error) {
+    collector.add(new CompilerMessage(error ? CompilerMessage.ERROR : CompilerMessage.WARNING, message, null, -1, -1));
   }
 
   private static final String LINE_AT = " @ line ";
@@ -173,7 +183,7 @@ public class GroovyCompilerWrapper {
   }
 
   private static void addErrorMessage(SimpleMessage message, List collector) {
-    collector.add(new CompilerMessage(CompilerMessage.ERROR, message.getMessage(), null, -1, -1));
+    addMessageWithoutLocation(collector, message.getMessage(), true);
   }
 
   public interface OutputItem {

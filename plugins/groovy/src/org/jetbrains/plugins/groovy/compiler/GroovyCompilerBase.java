@@ -167,7 +167,8 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
         toRecompile.add(vFile);
       }
 
-      for (CompilerMessage compilerMessage : processHandler.getCompilerMessages()) {
+      final List<CompilerMessage> messages = processHandler.getCompilerMessages();
+      for (CompilerMessage compilerMessage : messages) {
         final CompilerMessageCategory category;
         category = getMessageCategory(compilerMessage);
 
@@ -177,8 +178,18 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
                                   compilerMessage.getColumnNum());
       }
 
+      boolean hasMessages = !messages.isEmpty();
+
       StringBuffer unparsedBuffer = processHandler.getUnparsedOutput();
-      if (unparsedBuffer.length() != 0) compileContext.addMessage(CompilerMessageCategory.ERROR, unparsedBuffer.toString(), null, -1, -1);
+      if (unparsedBuffer.length() != 0) {
+        compileContext.addMessage(CompilerMessageCategory.ERROR, unparsedBuffer.toString(), null, -1, -1);
+        hasMessages = true;
+      }
+
+      final int exitCode = processHandler.getProcess().exitValue();
+      if (!hasMessages && exitCode != 0) {
+        compileContext.addMessage(CompilerMessageCategory.ERROR, "Internal groovyc error: code " + exitCode, null, -1, -1);
+      }
 
       List<OutputItem> outputItems = processHandler.getSuccessfullyCompiled();
       if (forStubs) {

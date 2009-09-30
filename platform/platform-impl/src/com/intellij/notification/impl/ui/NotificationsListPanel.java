@@ -366,6 +366,10 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
           final Notification notification = (Notification)value;
           final Component renderer = getCellRenderer().getListCellRendererComponent(this, value, index, false, false);
           if (renderer instanceof NotificationsListRenderer) {
+            final Rectangle bounds = getCellBounds(index, index);
+            renderer.setBounds(bounds);
+            renderer.doLayout();
+
             final JTextPane text = ((NotificationsListRenderer)renderer).getText();
 
             Processor<Cursor> processor;
@@ -384,9 +388,6 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
 
               ((NotificationsListRenderer)renderer).setCursorHandler(processor);
             }
-
-            final Rectangle bounds = getCellBounds(index, index);
-            renderer.setBounds(bounds);
 
             final Point point = e.getPoint();
             point.translate(-bounds.x, -bounds.y);

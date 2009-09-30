@@ -382,6 +382,7 @@
       <action internal="true" id="ReloadProjectAction" class="com.intellij.internal.ReloadProjectAction"/>
       <action internal="true" id="RestartInfo" class="com.intellij.internal.RestartInfoAction" text="Restart Info"/>
       <action internal="true" id="PruneEmptyDirectories" class="com.intellij.ide.actions.PruneEmptyDirectoriesAction" text="Prune Empty Directories"/>
+      <action internal="true" id="FixLineSeparators" class="com.intellij.ide.actions.FixLineSeparatorsAction" text="Fix Line Separators"/>
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 

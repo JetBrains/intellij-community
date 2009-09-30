@@ -27,6 +27,8 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
   }
 
   public void testCreatingBlank() throws Exception {
+    if (!hasM2Home()) return;
+
     MavenId id = new MavenId("org.foo", "module", "1.0");
     createNewModule(id);
 
@@ -48,12 +50,16 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
   }
 
   public void testInheritJdkFromProject() throws Exception {
+    if (!hasM2Home()) return;
+
     createNewModule(new MavenId("org.foo", "module", "1.0"));
     ModuleRootManager manager = ModuleRootManager.getInstance(getModule("module"));
     assertTrue(manager.isSdkInherited());
   }
 
   public void testCreatingFromArchetype() throws Exception {
+    if (!hasM2Home()) return;
+
     setArchetype(new ArchetypeInfo("org.apache.maven.archetypes", "maven-archetype-quickstart", "1.0", null, null));
     MavenId id = new MavenId("org.foo", "module", "1.0");
     createNewModule(id);
@@ -72,6 +78,8 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
   }
 
   public void testAddingNewlyCreatedModuleToTheAggregator() throws Exception {
+    if (!hasM2Home()) return;
+
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -91,6 +99,8 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
   }
 
   public void testAddingManagedProjectIfNoArrgerator() throws Exception {
+    if (!hasM2Home()) return;
+
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -106,6 +116,8 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
   }
 
   public void testDoNotAddManagedProjectIfAddingAsModuleToAggregator() throws Exception {
+    if (!hasM2Home()) return;
+
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -121,6 +133,8 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
   }
 
   public void testAddingParent() throws Exception {
+    if (!hasM2Home()) return;
+
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -150,6 +164,8 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
   }
 
   public void testAddingParentWithInheritedProperties() throws Exception {
+    if (!hasM2Home()) return;
+
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -178,6 +194,8 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
   }
 
   public void testAddingParentAndInheritWhenGeneratingFromArchetype() throws Exception {
+    if (!hasM2Home()) return;
+
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -213,6 +231,8 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
   }
 
   public void testAddingParentWithRelativePath() throws Exception {
+    if (!hasM2Home()) return;
+
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -243,6 +263,8 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
   }
 
   public void testFindingPotentialParentInNotMavenizedProject() throws Exception {
+    if (!hasM2Home()) return;
+
     Module module = createModule("project");
     VirtualFile dir = module.getModuleFile().getParent();
     dir.createChildData(this, "pom.xml");
