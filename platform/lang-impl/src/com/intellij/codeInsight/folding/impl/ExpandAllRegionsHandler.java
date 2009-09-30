@@ -8,9 +8,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 public class ExpandAllRegionsHandler implements CodeInsightActionHandler {
-  public void invoke(Project project, final Editor editor, PsiFile file){
+  public void invoke(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file){
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     CodeFoldingManager foldingManager = CodeFoldingManager.getInstance(project);

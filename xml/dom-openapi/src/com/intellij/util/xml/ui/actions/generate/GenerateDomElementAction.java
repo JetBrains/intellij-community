@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User: Sergey.Vasiliev
@@ -42,7 +43,7 @@ public class GenerateDomElementAction extends CodeInsightAction {
 
   protected CodeInsightActionHandler getHandler() {
     return new CodeInsightActionHandler() {
-      public void invoke(final Project project, final Editor editor, final PsiFile file) {
+      public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
         final Runnable runnable = new Runnable() {
           public void run() {
             final DomElement element = myProvider.generate(project, editor, file);

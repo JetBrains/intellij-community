@@ -10,6 +10,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 abstract class GotoBookmarkActionBase extends BaseCodeInsightAction implements CodeInsightActionHandler, DumbAware {
   protected GotoBookmarkActionBase() {
@@ -20,7 +21,7 @@ abstract class GotoBookmarkActionBase extends BaseCodeInsightAction implements C
     return this;
   }
 
-  public void invoke(Project project, final Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
     if (ToolWindowManager.getInstance(project).isEditorComponentActive()) {
       final Bookmark bookmark = getBookmarkToGo(project, editor);
       if (bookmark == null) return;

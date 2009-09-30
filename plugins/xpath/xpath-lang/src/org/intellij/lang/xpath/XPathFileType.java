@@ -45,6 +45,6 @@ public class XPathFileType extends LanguageFileType {
     }
 
     public Icon getIcon() {
-        return IconLoader.findIcon("/icons/xpath.png");
+        return IconLoader.getIcon("/icons/xpath.png");
     }
 }

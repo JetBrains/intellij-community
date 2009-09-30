@@ -25,6 +25,8 @@ import java.awt.event.MouseMotionListener;
 import java.util.List;
 
 public abstract class DialogWrapperPeer {
+  public static Object HAVE_INITIAL_SELECTION = new Object();
+
   public abstract void setUndecorated(boolean undecorated);
 
   /**

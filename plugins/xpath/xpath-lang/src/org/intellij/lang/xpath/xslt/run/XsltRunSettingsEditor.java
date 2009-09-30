@@ -72,7 +72,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
         private final JTable myParams;
 
         public AddParameterAction(JTable params) {
-            super("Add", "Add Parameter", IconLoader.findIcon("/general/add.png"));
+            super("Add", "Add Parameter", IconLoader.getIcon("/general/add.png"));
             myParams = params;
         }
 
@@ -85,7 +85,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
         private final JTable myParams;
 
         public RemoveParameterAction(Table paramModel) {
-            super("Remove", "Remove Parameter", IconLoader.findIcon("/general/remove.png"));
+            super("Remove", "Remove Parameter", IconLoader.getIcon("/general/remove.png"));
             myParams = paramModel;
         }
 
@@ -234,7 +234,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
                 public Component getListCellRendererComponent(JList jList, Object object, int i, boolean b, boolean b1) {
                     if (object == null) {
                         super.getListCellRendererComponent(jList, StdFileTypes.ARCHIVE, i, b, b1);
-                        setIcon(IconLoader.findIcon("/actions/cancel.png"));
+                        setIcon(IconLoader.getIcon("/actions/cancel.png"));
                         setText("Disabled");
                         return this;
                     }

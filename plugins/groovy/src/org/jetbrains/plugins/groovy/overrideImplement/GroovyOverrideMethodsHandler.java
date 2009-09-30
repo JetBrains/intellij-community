@@ -4,6 +4,7 @@ import com.intellij.lang.LanguageCodeInsightActionHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
@@ -15,7 +16,7 @@ public class GroovyOverrideMethodsHandler implements LanguageCodeInsightActionHa
     return psiFile != null && GroovyFileType.GROOVY_FILE_TYPE.equals(psiFile.getFileType());
   }
 
-  public void invoke(final Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     GroovyOverrideImplementUtil.invokeOverrideImplement(project, editor, file, false);
   }
 

@@ -55,7 +55,7 @@ public class Settings implements Configurable {
 
   @Nullable
   public Icon getIcon() {
-    return IconLoader.findIcon("icon.png");
+    return IconLoader.getIcon("icon.png");
   }
 
   @Nullable

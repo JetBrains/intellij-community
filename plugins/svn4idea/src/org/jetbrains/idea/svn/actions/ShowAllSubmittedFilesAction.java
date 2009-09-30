@@ -51,7 +51,7 @@ public class ShowAllSubmittedFilesAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.actions.ShowAllSubmittedFilesAction");
 
   public ShowAllSubmittedFilesAction() {
-    super(SvnBundle.message("action.name.show.all.paths.affected"), null, IconLoader.findIcon("/icons/allRevisions.png"));
+    super(SvnBundle.message("action.name.show.all.paths.affected"), null, IconLoader.getIcon("/icons/allRevisions.png"));
   }
 
   public void update(AnActionEvent e) {

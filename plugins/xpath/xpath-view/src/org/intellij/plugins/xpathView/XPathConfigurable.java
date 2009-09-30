@@ -33,7 +33,7 @@ public class XPathConfigurable implements Configurable {
     }
 
     public Icon getIcon() {
-        return IconLoader.findIcon("/icons/xml_big.png");
+        return IconLoader.getIcon("/icons/xml_big.png");
     }
 
     @Nullable

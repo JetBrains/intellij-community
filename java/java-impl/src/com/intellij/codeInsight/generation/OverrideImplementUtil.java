@@ -465,7 +465,7 @@ public class OverrideImplementUtil {
         super.fillToolbarActions(group);
         if (toImplement) return;
 
-        final ToggleAction mergeAction = new ToggleAction("Show methods to implement", "Show methods to implement", IconLoader.findIcon("/general/show_to_implement.png")) {
+        final ToggleAction mergeAction = new ToggleAction("Show methods to implement", "Show methods to implement", IconLoader.getIcon("/general/show_to_implement.png")) {
           @Override
           public boolean isSelected(AnActionEvent e) {
             return merge.get().booleanValue();

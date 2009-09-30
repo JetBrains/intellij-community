@@ -125,7 +125,6 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       if (element == null) return null;
     }
 
-    if (target instanceof PsiCompiledElement) target = ((PsiCompiledElement)target).getMirror();
     return target;
   }
 

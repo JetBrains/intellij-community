@@ -40,7 +40,7 @@ public class XsltTemplateImpl extends XsltElementImpl implements XsltTemplate {
 
     @Override
     public Icon getIcon(int flags) {
-        return IconLoader.findIcon("/icons/template.png");
+        return IconLoader.getIcon("/icons/template.png");
     }
 
     @Override

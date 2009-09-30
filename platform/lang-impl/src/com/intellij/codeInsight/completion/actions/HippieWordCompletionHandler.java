@@ -38,7 +38,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     BACKWARD
   }
 
-  public void invoke(Project project, final Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     final CharSequence charsSequence = editor.getDocument().getCharsSequence();
 

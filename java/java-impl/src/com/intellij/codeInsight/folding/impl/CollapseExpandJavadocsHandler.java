@@ -9,6 +9,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.javadoc.PsiDocComment;
+import org.jetbrains.annotations.NotNull;
 
 public class CollapseExpandJavadocsHandler implements CodeInsightActionHandler {
   private final boolean myExpand;
@@ -17,7 +18,7 @@ public class CollapseExpandJavadocsHandler implements CodeInsightActionHandler {
     myExpand = isExpand;
   }
 
-  public void invoke(Project project, final Editor editor, PsiFile file){
+  public void invoke(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file){
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     CodeFoldingManager foldingManager = CodeFoldingManager.getInstance(project);

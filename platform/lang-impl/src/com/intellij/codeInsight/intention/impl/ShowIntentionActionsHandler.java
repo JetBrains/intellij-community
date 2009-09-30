@@ -36,7 +36,7 @@ import javax.swing.*;
  * @author mike
  */
 public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
-  public void invoke(final Project project, final Editor editor, final PsiFile file) {
+  public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     if (HintManagerImpl.getInstanceImpl().performCurrentQuestionAction()) return;

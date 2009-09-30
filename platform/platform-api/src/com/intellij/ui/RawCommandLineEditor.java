@@ -37,10 +37,7 @@ public class RawCommandLineEditor extends JPanel {
         Messages.showTextAreaDialog(myTextField.getTextField(), myDialogCaption, "EditParametersPopupWindow");
       }
     });
-    final Icon icon = IconLoader.findIcon("/actions/showViewer.png");
-    if (icon != null) {
-      myTextField.setButtonIcon(icon);
-    }
+    myTextField.setButtonIcon(IconLoader.getIcon("/actions/showViewer.png"));
     add(myTextField, BorderLayout.CENTER);
     setDescriptor(null);
   }

@@ -50,8 +50,6 @@ import java.util.List;
 import java.util.Map;
 
 public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTrackbackProvider {
-  public static Object HAVE_INITIAL_SELECTION = new Object();
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.DialogWrapper");
 
   private DialogWrapper myWrapper;
