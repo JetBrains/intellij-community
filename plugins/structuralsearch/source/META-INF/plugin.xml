@@ -5,6 +5,7 @@
   <version>9.0</version>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
   <extensions defaultExtensionNs="com.intellij">
+      <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
       <inspectionToolProvider implementation="com.intellij.structuralsearch.inspection.highlightTemplate.SSRInspectionsLoader"/>
   </extensions>
   <resource-bundle>messages.SSRBundle</resource-bundle>
