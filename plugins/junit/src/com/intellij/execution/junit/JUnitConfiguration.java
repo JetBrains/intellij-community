@@ -27,7 +27,6 @@ import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
@@ -98,6 +97,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
 
   public void checkConfiguration() throws RuntimeConfigurationException {
     myData.getTestObject(getProject(), this).checkConfiguration();
+    RunConfigurationExtension.checkConfigurationIsValid(this);
   }
 
   public Collection<Module> getValidModules() {
@@ -211,9 +211,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
   public void readExternal(final Element element) throws InvalidDataException {
     PathMacroManager.getInstance(getProject()).expandPaths(element);
     super.readExternal(element);
-    for (RunConfigurationExtension extension : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
-      extension.readExternal(this, element);
-    }
+    RunConfigurationExtension.readSettings(this, element);
     readModule(element);
     DefaultJDOMExternalizer.readExternal(this, element);
     DefaultJDOMExternalizer.readExternal(getPersistentData(), element);
@@ -222,9 +220,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
 
   public void writeExternal(final Element element) throws WriteExternalException {
     super.writeExternal(element);
-    for (RunConfigurationExtension extension : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
-      extension.writeExternal(this, element);
-    }
+    RunConfigurationExtension.writeSettings(this, element);
     writeModule(element);
     DefaultJDOMExternalizer.writeExternal(this, element);
     DefaultJDOMExternalizer.writeExternal(getPersistentData(), element);

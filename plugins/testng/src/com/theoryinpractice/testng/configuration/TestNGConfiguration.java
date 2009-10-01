@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -32,10 +31,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.xml.Parser;
 
+import java.io.FileInputStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.io.FileInputStream;
 
 public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule> implements RunJavaConfiguration, RefactoringListenerProvider {
   //private TestNGResultsContainer resultsContainer;
@@ -260,6 +259,7 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
         throw new RuntimeConfigurationException("Unable to parse '" + data.getSuiteName() + "' specified");
       }
     }
+    RunConfigurationExtension.checkConfigurationIsValid(this);
     //TODO add various checks here
   }
 
@@ -267,9 +267,7 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   public void readExternal(Element element) throws InvalidDataException {
     PathMacroManager.getInstance(getProject()).expandPaths(element);
     super.readExternal(element);
-    for (RunConfigurationExtension extension : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
-      extension.readExternal(this, element);
-    }
+    RunConfigurationExtension.readSettings(this, element);
     readModule(element);
     DefaultJDOMExternalizer.readExternal(this, element);
     DefaultJDOMExternalizer.readExternal(getPersistantData(), element);
@@ -299,9 +297,7 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
-    for (RunConfigurationExtension extension : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
-      extension.writeExternal(this, element);
-    }
+    RunConfigurationExtension.writeSettings(this, element);
     writeModule(element);
     DefaultJDOMExternalizer.writeExternal(this, element);
     DefaultJDOMExternalizer.writeExternal(getPersistantData(), element);

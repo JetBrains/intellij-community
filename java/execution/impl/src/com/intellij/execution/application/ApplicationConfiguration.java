@@ -125,6 +125,8 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     if (!PsiMethodUtil.hasMainMethod(psiClass)) {
       throw new RuntimeConfigurationWarning(ExecutionBundle.message("main.method.not.found.in.class.error.message", MAIN_CLASS_NAME));
     }
+
+    RunConfigurationExtension.checkConfigurationIsValid(this);
   }
 
   public void setProperty(final int property, final String value) {
@@ -199,9 +201,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   public void readExternal(final Element element) throws InvalidDataException {
     PathMacroManager.getInstance(getProject()).expandPaths(element);
     super.readExternal(element);
-    for (RunConfigurationExtension extension : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
-      extension.readExternal(this, element);
-    }
+    RunConfigurationExtension.readSettings(this, element);
     DefaultJDOMExternalizer.readExternal(this, element);
     readModule(element);
     EnvironmentVariablesComponent.readExternal(element, getEnvs());
@@ -209,9 +209,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
   public void writeExternal(final Element element) throws WriteExternalException {
     super.writeExternal(element);
-    for (RunConfigurationExtension extension : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
-      extension.writeExternal(this, element);
-    }
+    RunConfigurationExtension.writeSettings(this, element);
     DefaultJDOMExternalizer.writeExternal(this, element);
     writeModule(element);
     EnvironmentVariablesComponent.writeExternal(element, getEnvs());
