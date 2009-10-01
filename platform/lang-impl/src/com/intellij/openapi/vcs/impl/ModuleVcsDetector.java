@@ -112,14 +112,18 @@ public class ModuleVcsDetector implements ProjectComponent {
   }
 
   private void autoDetectModuleVcsMapping(final Module module) {
+    boolean mappingsUpdated = false;
     final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
     for(VirtualFile file: files) {
       AbstractVcs vcs = myVcsManager.findVersioningVcs(file);
       if (vcs != null && vcs != myVcsManager.getVcsFor(file)) {
         myVcsManager.setAutoDirectoryMapping(file.getPath(), vcs.getName());
+        mappingsUpdated = true;
       }
     }
-    myVcsManager.cleanupMappings();
+    if (mappingsUpdated) {
+      myVcsManager.cleanupMappings();
+    }
   }
 
   private void checkRemoveVcsRoot(final Module module) {

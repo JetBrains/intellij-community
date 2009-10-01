@@ -7,6 +7,8 @@ import java.util.Arrays;
 
 public class DependenciesManagementTest extends MavenImportingTestCase {
   public void testImportingDependencies() throws Exception {
+    if (!hasM2Home()) return;
+
     setRepositoryPath(new File(myDir, "/repo").getPath());
     updateSettingsXml("<localRepository>" + getRepositoryPath() + "</localRepository>");
 
@@ -55,6 +57,8 @@ public class DependenciesManagementTest extends MavenImportingTestCase {
   }
 
   public void testImportingNotInstalledDependencies() throws Exception {
+    if (ignore()) return;
+    
     setRepositoryPath(new File(myDir, "/repo").getPath());
     updateSettingsXml("<localRepository>" + getRepositoryPath() + "</localRepository>");
 

@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -20,7 +21,7 @@ public class CollapseSelectionHandler implements CodeInsightActionHandler {
   private static final String ourPlaceHolderText = "...";
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.CollapseSelectionHandler");
 
-  public void invoke(Project project, final Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
     editor.getFoldingModel().runBatchFoldingOperation(
             new Runnable() {
               public void run() {

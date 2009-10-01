@@ -50,6 +50,7 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
 import junit.framework.AssertionFailedError;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompilerLoader;
@@ -186,6 +187,27 @@ public class GroovyCompilerTest extends JavaCodeInsightFixtureTestCase {
     assertOutput("Bar", "239");
   }
 
+  public void testTransitiveJavaDependencyThroughGroovy() throws Throwable {
+    myFixture.addClass("public class IFoo { void foo() {} }").getContainingFile().getVirtualFile();
+    myFixture.addFileToProject("Foo.groovy", "class Foo {\n" +
+                       "  static IFoo f\n" +
+                       "  public int foo() { return 239; }\n" +
+                       "}");
+    final PsiFile bar = myFixture.addFileToProject("Bar.groovy", "class Bar extends Foo {" +
+                                                                 "public static void main(String[] args) { " +
+                                                                 "  System.out.println(new Foo().foo());" +
+                                                                 "}" +
+                                                                 "}");
+    assertTrue(assertOneElement(make()).contains("WARNING: Groovyc couldn't generate stub"));
+    assertOutput("Bar", "239");
+
+    deleteClassFile("IFoo");
+    touch(bar.getVirtualFile());
+
+    assertTrue(assertOneElement(make()).contains("WARNING: Groovyc error"));
+    assertOutput("Bar", "239");
+  }
+
   public void testDeleteTransitiveJavaClass() throws Throwable {
     myFixture.addClass("public interface IFoo { int foo(); }");
     myFixture.addClass("public class Foo implements IFoo {" +
@@ -254,8 +276,9 @@ public class GroovyCompilerTest extends JavaCodeInsightFixtureTestCase {
   private void deleteClassFile(final String className) throws IOException {
     new WriteCommandAction(getProject()) {
       protected void run(Result result) throws Throwable {
-        ModuleRootManager.getInstance(myModule).getModuleExtension(CompilerModuleExtension.class).getCompilerOutputPath()
-          .findChild(className + ".class").delete(this);
+        final CompilerModuleExtension extension = ModuleRootManager.getInstance(myModule).getModuleExtension(CompilerModuleExtension.class);
+        //noinspection ConstantConditions
+        extension.getCompilerOutputPath().findChild(className + ".class").delete(this);
       }
     }.execute();
   }
@@ -265,7 +288,7 @@ public class GroovyCompilerTest extends JavaCodeInsightFixtureTestCase {
   }
 
   private static void setFileText(PsiFile file, String barText) throws IOException {
-    VfsUtil.saveText(file.getVirtualFile(), barText);
+    VfsUtil.saveText(ObjectUtils.assertNotNull(file.getVirtualFile()), barText);
   }
 
   private List<String> make() {
@@ -278,6 +301,7 @@ public class GroovyCompilerTest extends JavaCodeInsightFixtureTestCase {
     return callback.getMessages();
   }
 
+  /*
   private void compile(VirtualFile... files) {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
@@ -286,6 +310,7 @@ public class GroovyCompilerTest extends JavaCodeInsightFixtureTestCase {
     semaphore.waitFor();
     callback.throwException();
   }
+  */
 
   private void assertOutput(String className, String output) throws ExecutionException {
     final ApplicationConfiguration configuration =

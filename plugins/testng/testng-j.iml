@@ -32,14 +32,5 @@
     </orderEntry>
     <orderEntryProperties />
   </component>
-  <component name="VcsManagerConfiguration">
-    <option name="ACTIVE_VCS_NAME" value="svn" />
-    <option name="USE_PROJECT_VCS" value="false" />
-  </component>
-  <component name="org.mevenide.idea.module.ModuleSettings">
-    <favoriteGoals>
-      <list size="0" />
-    </favoriteGoals>
-  </component>
 </module>
 

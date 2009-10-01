@@ -730,6 +730,10 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       return diffs;
     }
 
+    public boolean isEmpty() {
+      return myComponentStates.size() == 0;
+    }
+
     public boolean hasState(final String componentName) {
         return myComponentStates.containsKey(componentName);
     }

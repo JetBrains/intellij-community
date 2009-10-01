@@ -9,9 +9,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
+import org.jetbrains.annotations.NotNull;
 
 public class ImplementMethodsHandler implements CodeInsightActionHandler{
-  public final void invoke(final Project project, final Editor editor, PsiFile file) {
+  public final void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
     if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)){
       return;
     }

@@ -44,7 +44,7 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
     }
   }
 
-  public void invoke(final Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     int offset = editor.getCaretModel().getOffset();

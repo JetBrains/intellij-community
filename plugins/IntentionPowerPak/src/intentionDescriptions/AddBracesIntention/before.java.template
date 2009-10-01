@@ -1,0 +1,6 @@
+public class X {
+  int f(boolean b) {
+    if (b) <spot>return 1</spot>;
+    return 0;
+  }
+}

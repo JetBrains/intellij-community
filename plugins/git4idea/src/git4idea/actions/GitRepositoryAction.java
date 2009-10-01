@@ -70,11 +70,7 @@ public abstract class GitRepositoryAction extends AnAction {
                                GitBundle.getString("repository.action.missing.roots.title"));
       return;
     }
-    Collections.sort(roots, new Comparator<VirtualFile>() {
-      public int compare(final VirtualFile o1, final VirtualFile o2) {
-        return o1.getPresentableUrl().compareTo(o2.getPresentableUrl());
-      }
-    });
+    Collections.sort(roots, GitUtil.VIRTUAL_FILE_COMPARATOR);
     // get default root
     final VirtualFile[] vFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
     VirtualFile defaultRootVar = null;

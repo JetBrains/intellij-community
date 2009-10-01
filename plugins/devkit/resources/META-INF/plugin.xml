@@ -5,7 +5,6 @@
 
   <category>inspection</category>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
-  <idea-version since-build="3000"/>
   <resource-bundle xmlns="">org.jetbrains.idea.devkit.DevKitBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">

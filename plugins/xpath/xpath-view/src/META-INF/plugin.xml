@@ -30,8 +30,6 @@
   ]]>
   </change-notes>
 
-  <!-- Minimum and maximum IDEA version plugin is supposed to work with -->
-  <idea-version since-build="8300" />
   <depends>com.intellij.modules.xml</depends>
   
   <!-- wasn't sure if the plugin manager correctly handles dependent plugins -->

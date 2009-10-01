@@ -49,7 +49,7 @@ public class FileAssociationsConfigurable implements SearchableConfigurable, Non
     }
 
     public Icon getIcon() {
-        return IconLoader.findIcon("/icons/association_large.png");
+        return IconLoader.getIcon("/icons/association_large.png");
     }
 
     @NotNull

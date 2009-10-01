@@ -212,7 +212,7 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
             }
 
             public Icon getIcon(int i) {
-                return IconLoader.findIcon("/icons/function.png");
+                return IconLoader.getIcon("/icons/function.png");
             }
 
             public void accept(@NotNull PsiElementVisitor visitor) {

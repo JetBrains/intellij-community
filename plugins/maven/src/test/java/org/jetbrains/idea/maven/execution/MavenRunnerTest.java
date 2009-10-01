@@ -6,6 +6,8 @@ import java.util.Arrays;
 
 public class MavenRunnerTest extends MavenImportingTestCase {
   public void testUpdatingExcludedFoldersAfterRun() throws Exception {
+    if (!hasM2Home()) return;
+
     createStdProjectFolders();
 
     importProject("<groupId>test</groupId>" +

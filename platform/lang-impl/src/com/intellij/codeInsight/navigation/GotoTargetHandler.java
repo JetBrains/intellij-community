@@ -17,6 +17,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -26,7 +27,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     return false;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed(getFeatureUsedKey());
 
     try {

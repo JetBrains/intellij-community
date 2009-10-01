@@ -19,8 +19,6 @@
   <depends optional="true" config-file="intellilang-xml-support.xml">com.intellij.modules.xml</depends>
   <depends optional="true" config-file="intellilang-groovy-support.xml">org.intellij.groovy</depends>
 
-  <idea-version since-build="8300" />
-
   <vendor email="sascha.weinreuter@cit.de" logo="/org/intellij/plugins/intelliLang/icon_small.png">Sascha Weinreuter</vendor>
 
   <extensionPoints>

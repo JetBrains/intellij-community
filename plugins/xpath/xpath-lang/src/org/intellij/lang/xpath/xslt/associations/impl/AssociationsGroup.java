@@ -29,7 +29,7 @@ import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
 public class AssociationsGroup extends ActionGroup {
 
     public AssociationsGroup() {
-        getTemplatePresentation().setIcon(IconLoader.findIcon("/icons/association.png"));
+        getTemplatePresentation().setIcon(IconLoader.getIcon("/icons/association.png"));
     }
 
     @NotNull

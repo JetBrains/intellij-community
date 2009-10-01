@@ -14,6 +14,7 @@ import com.intellij.psi.xml.XmlProlog;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -26,7 +27,7 @@ public class GenerateDTDAction extends BaseCodeInsightAction{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.actions.GenerateDTDAction");
   protected CodeInsightActionHandler getHandler(){
     return new CodeInsightActionHandler(){
-      public void invoke(Project project, Editor editor, PsiFile file){
+      public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file){
         if(file instanceof XmlFile && file.getVirtualFile() != null && file.getVirtualFile().isWritable()){
           final @NonNls StringBuffer buffer = new StringBuffer();
           final XmlDocument document = ((XmlFile) file).getDocument();

@@ -32,7 +32,7 @@ public class ChangeRange {
         last[0] = c;
       }
     };
-    myVcs.removeListener(l);
+    myVcs.addListener(l);
     try {
       myVcs.acceptWrite(new ChangeRangeRevertionVisitor(myGateway, myToChange, myFromChange));
     }

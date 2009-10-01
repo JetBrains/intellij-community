@@ -11,7 +11,7 @@ public class DefaultFileTemplateInspectionTest extends InspectionTestCase {
   }
 
   private void doTest() throws Exception {
-    doTest("defaultFileTemplateUsage/" + getTestName(false), new DefaultFileTemplateUsageInspection());
+    doTest("defaultFileTemplateUsage/" + getTestName(true), new DefaultFileTemplateUsageInspection());
   }
 
   public void testDefaultFile() throws Exception{

@@ -4,7 +4,6 @@
   <version>1.0</version>
 
   <vendor>InspectionGadgets Software</vendor>
-  <idea-version since-build="8000"/>
   <resource-bundle>com.siyeh.IntentionPowerPackBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -43,7 +43,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     myChooserTitle = chooserTitle;
   }
 
-  public final void invoke(final Project project, final Editor editor, PsiFile file) {
+  public final void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
     if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
       return;
     }

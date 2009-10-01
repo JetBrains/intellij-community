@@ -64,10 +64,6 @@ public class VcsManagerPerModuleConfiguration implements JDOMExternalizable, Mod
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    if (!USE_PROJECT_VCS) {
-      DefaultJDOMExternalizer.writeExternal(this, element);
-    } else {
-      throw new WriteExternalException();
-    }
+    throw new WriteExternalException();
   }
 }

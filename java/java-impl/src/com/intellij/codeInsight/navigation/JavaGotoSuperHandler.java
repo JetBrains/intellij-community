@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -17,7 +18,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class JavaGotoSuperHandler implements CodeInsightActionHandler {
-  public void invoke(final Project project, final Editor editor, final PsiFile file) {
+  public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement[] superElements = findSuperElements(file, offset);
     if (superElements == null || superElements.length == 0) return;

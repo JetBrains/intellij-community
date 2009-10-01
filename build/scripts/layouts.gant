@@ -62,7 +62,8 @@ def layoutFull(String targetDirectory) {
           "dom-impl",
           "execution-impl",
           "jsp-spi",
-          "idea-ui"].flatten()
+          "idea-ui",
+          "RegExpSupport"].flatten()
 
   ant.patternset(id: "resources.included") {
     include(name: "**/*.properties")

@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *
@@ -20,7 +21,7 @@ public class GotoSuperAction extends BaseCodeInsightAction implements CodeInsigh
     return this;
   }
 
-  public void invoke(final Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     int offset = editor.getCaretModel().getOffset();

@@ -49,14 +49,5 @@
     </orderEntry>
     <orderEntry type="module" module-name="lvcs-openapi" />
   </component>
-  <component name="VcsManagerConfiguration">
-    <option name="ACTIVE_VCS_NAME" value="svn" />
-    <option name="USE_PROJECT_VCS" value="false" />
-  </component>
-  <component name="copyright">
-    <option name="body" value="/*&#10; * Copyright (c) $today.year Your Corporation. All Rights Reserved.&#10; */" />
-    <option name="location" value="1" />
-    <option name="remove" value="true" />
-  </component>
 </module>
 

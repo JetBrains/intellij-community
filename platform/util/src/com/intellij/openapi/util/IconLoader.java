@@ -80,6 +80,10 @@ public final class IconLoader {
 
 
   @Nullable
+  /**
+   * Might return null if icon was not found.
+   * Use only if you expected null return value, otherwise see {@link IconLoader#getIcon(java.lang.String)}
+   */
   public static Icon findIcon(@NonNls final String path) {
     int stackFrameCount = 2;
     Class callerClass = Reflection.getCallerClass(stackFrameCount);
@@ -110,6 +114,10 @@ public final class IconLoader {
   }
 
   @Nullable
+  /**
+   * Might return null if icon was not found.
+   * Use only if you expected null return value, otherwise see {@link IconLoader#getIcon(java.lang.String, java.lang.Class)}
+   */
   public static Icon findIcon(@NotNull final String path, @NotNull final Class aClass) {
     URL url = aClass.getResource(path);
     return findIcon(url);

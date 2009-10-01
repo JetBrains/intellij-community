@@ -42,7 +42,7 @@ public class GitShowAllSubmittedFilesAction extends AnAction implements DumbAwar
    * A constructor
    */
   public GitShowAllSubmittedFilesAction() {
-    super(GitBundle.message("show.all.paths.affected.action.name"), null, IconLoader.findIcon("/icons/allRevisions.png"));
+    super(GitBundle.message("show.all.paths.affected.action.name"), null, IconLoader.getIcon("/icons/allRevisions.png"));
   }
 
   /**

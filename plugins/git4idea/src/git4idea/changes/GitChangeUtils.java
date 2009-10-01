@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
@@ -39,6 +40,45 @@ public class GitChangeUtils {
    * Parse changes from lines
    *
    * @param project        the context project
+   * @param root        the git root
+   * @return a set of unmerged files
+   * @throws VcsException if the input format does not matches expected format
+   */
+  public static List<VirtualFile> unmergedFiles(Project project, VirtualFile root) throws VcsException {
+    HashSet<VirtualFile> unmerged = new HashSet<VirtualFile>();
+    String rootPath = root.getPath();
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.LS_FILES);
+    h.setNoSSH(true);
+    h.setSilent(true);
+    h.addParameters("--unmerged");
+    LocalFileSystem lfs = LocalFileSystem.getInstance();
+    for (StringScanner s = new StringScanner(h.run()); s.hasMoreData();) {
+      if (s.isEol()) {
+        s.nextLine();
+        continue;
+      }
+      s.boundedToken('\t');
+      final String relative = s.line();
+      String path = rootPath + "/" + GitUtil.unescapePath(relative);
+      VirtualFile file = lfs.refreshAndFindFileByPath(path);
+      assert file != null : "The unmerged file is not found " + path;
+      file.refresh(false, false);
+      unmerged.add(file);
+    }
+    if(unmerged.size() == 0) {
+      return Collections.emptyList();
+    } else {
+      ArrayList<VirtualFile> rc = new ArrayList<VirtualFile>(unmerged.size());
+      rc.addAll(unmerged);
+      Collections.sort(rc, GitUtil.VIRTUAL_FILE_COMPARATOR);
+      return rc;
+    }
+  }
+
+  /**
+   * Parse changes from lines
+   *
+   * @param project        the context project
    * @param vcsRoot        the git root
    * @param thisRevision   the current revision
    * @param parentRevision the parent revision for this change list
@@ -57,7 +97,7 @@ public class GitChangeUtils {
     StringScanner sc = new StringScanner(s);
     parseChanges(project, vcsRoot, thisRevision, parentRevision, sc, changes, ignoreNames);
     if (sc.hasMoreData()) {
-      throw new IllegalStateException("Uknown file status: " + sc.line());
+      throw new IllegalStateException("Unknown file status: " + sc.line());
     }
   }
 

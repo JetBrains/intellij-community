@@ -14,6 +14,8 @@ import java.util.Map;
 
 public class ArchetypesTest extends MavenTestCase {
   public void testGenerating() throws Exception {
+    if (!hasM2Home()) return;
+
     File dir = new File(myDir.getPath(), "generated");
     dir.mkdirs();
 

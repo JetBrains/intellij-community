@@ -358,7 +358,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     public void update(AnActionEvent e) {
       e.getPresentation().setText(SvnBundle.message("action.name.refresh"));
       e.getPresentation().setDescription(SvnBundle.message("repository.browser.refresh.action"));
-      e.getPresentation().setIcon(IconLoader.findIcon("/actions/sync.png"));
+      e.getPresentation().setIcon(IconLoader.getIcon("/actions/sync.png"));
       e.getPresentation().setEnabled(getRepositoryBrowser().getSelectedNode() != null);
     }
 
@@ -380,7 +380,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       if (e.getPlace().equals(PLACE_TOOLBAR)) {
         e.getPresentation().setDescription(SvnBundle.message("repository.browser.add.location.action"));
         e.getPresentation().setText(SvnBundle.message("repository.browser.add.location.action"));
-        e.getPresentation().setIcon(IconLoader.findIcon("/general/add.png"));
+        e.getPresentation().setIcon(IconLoader.getIcon("/general/add.png"));
       }
     }
 
@@ -409,7 +409,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       if (e.getPlace().equals(PLACE_TOOLBAR)) {
         e.getPresentation().setDescription(SvnBundle.message("repository.browser.edit.location.menu.item"));
         e.getPresentation().setText(SvnBundle.message("repository.browser.edit.location.menu.item"));
-        e.getPresentation().setIcon(IconLoader.findIcon("/actions/editSource.png"));
+        e.getPresentation().setIcon(IconLoader.getIcon("/actions/editSource.png"));
       }
       e.getPresentation().setEnabled(node != null && node.getParent() instanceof RepositoryTreeRootNode);
     }
@@ -451,7 +451,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     public void update(AnActionEvent e) {
       RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
       e.getPresentation().setText(SvnBundle.message("repository.browser.discard.location.action"), true);
-      e.getPresentation().setIcon(IconLoader.findIcon("/general/remove.png"));
+      e.getPresentation().setIcon(IconLoader.getIcon("/general/remove.png"));
       e.getPresentation().setEnabled(node != null && node.getParent() instanceof RepositoryTreeRootNode);
     }
 
@@ -889,7 +889,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     public void update(final AnActionEvent e) {
       e.getPresentation().setDescription(SvnBundle.message("repository.browser.details.action"));
       e.getPresentation().setText(SvnBundle.message("repository.browser.details.action"));
-      e.getPresentation().setIcon(IconLoader.findIcon("/actions/annotate.png"));
+      e.getPresentation().setIcon(IconLoader.getIcon("/actions/annotate.png"));
       super.update(e);
     }
 
@@ -1169,7 +1169,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     public void update(AnActionEvent e) {
       e.getPresentation().setText("Close");
       e.getPresentation().setDescription("Close this tool window");
-      e.getPresentation().setIcon(IconLoader.findIcon("/actions/cancel.png"));
+      e.getPresentation().setIcon(IconLoader.getIcon("/actions/cancel.png"));
     }
   }
 

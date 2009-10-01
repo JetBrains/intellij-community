@@ -6,11 +6,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
 public class ExpandRegionHandler implements CodeInsightActionHandler {
-  public void invoke(Project project, final Editor editor, PsiFile file){
+  public void invoke(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file){
     expandRegionAtCaret(project, editor);
   }
 
