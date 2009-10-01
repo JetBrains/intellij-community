@@ -44,6 +44,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
@@ -54,8 +55,8 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author ilyas
@@ -87,6 +88,7 @@ public class GroovyInlineVariableUtil {
 
       public void inlineUsage(final UsageInfo usage, final PsiElement referenced) {
         GrExpression exprToBeReplaced = (GrExpression) usage.getElement();
+        if (exprToBeReplaced == null) return;
         assert variable.getInitializerGroovy() != null;
         GrExpression initializerGroovy = variable.getInitializerGroovy();
         assert initializerGroovy != null;
@@ -96,8 +98,13 @@ public class GroovyInlineVariableUtil {
         }
         Project project = variable.getProject();
         GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
-        GrExpression newExpr = factory.createExpressionFromText(tempExpr.getText());
-
+        GrExpression newExpr;
+        if (exprToBeReplaced.getParent() instanceof GrString && !(tempExpr instanceof GrReferenceExpression)) {
+          newExpr = factory.createExpressionFromText("{" + tempExpr.getText() + "}");
+        }
+        else {
+          newExpr = factory.createExpressionFromText(tempExpr.getText());
+        }
         newExpr = exprToBeReplaced.replaceWithExpression(newExpr, true);
         FileEditorManager manager = FileEditorManager.getInstance(project);
         Editor editor = manager.getSelectedTextEditor();
