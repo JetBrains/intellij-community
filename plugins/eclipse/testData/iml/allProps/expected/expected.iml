@@ -26,26 +26,26 @@
     <orderEntry type="module-library" exported="">
       <library name="lib-2">
         <CLASSES>
-          <root url="file://$PROJECT_DIR$/eclipse-ws-3.4.1-a/ws-internals/lib-2/copy-every/lib-2" />
+          <root url="file://$MODULE_DIR$/../ws-internals/lib-2/copy-every/lib-2" />
         </CLASSES>
         <JAVADOC>
-          <root url="jar://$PROJECT_DIR$/eclipse-ws-3.4.1-a/ws-internals/lib-2/jar-all-2.zip!/" />
+          <root url="jar://$MODULE_DIR$/../ws-internals/lib-2/jar-all-2.zip!/" />
         </JAVADOC>
         <SOURCES>
-          <root url="file://$PROJECT_DIR$/eclipse-ws-3.4.1-a/ws-internals/lib-2/copy-every/src" />
+          <root url="file://$MODULE_DIR$/../ws-internals/lib-2/copy-every/src" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" exported="">
       <library name="lib-3">
         <CLASSES>
-          <root url="file://$PROJECT_DIR$/eclipse-externals/lib-3/copy-every/lib-3" />
+          <root url="file://$MODULE_DIR$/../../eclipse-externals/lib-3/copy-every/lib-3" />
         </CLASSES>
         <JAVADOC>
           <root url="http://open-space.org" />
         </JAVADOC>
         <SOURCES>
-          <root url="file://$PROJECT_DIR$/eclipse-externals/lib-3/copy-every/src" />
+          <root url="file://$MODULE_DIR$/../../eclipse-externals/lib-3/copy-every/src" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -65,26 +65,26 @@
     <orderEntry type="module-library" exported="">
       <library name="lib-5.jar">
         <CLASSES>
-          <root url="jar://$PROJECT_DIR$/eclipse-ws-3.4.1-a/ws-internals/lib-5/jar-every/lib-5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../ws-internals/lib-5/jar-every/lib-5.jar!/" />
         </CLASSES>
         <JAVADOC>
-          <root url="jar://$PROJECT_DIR$/eclipse-ws-3.4.1-a/ws-internals/lib-5/jar-all-5.zip!/doc/api" />
+          <root url="jar://$MODULE_DIR$/../ws-internals/lib-5/jar-all-5.zip!/doc/api" />
         </JAVADOC>
         <SOURCES>
-          <root url="jar://$PROJECT_DIR$/eclipse-ws-3.4.1-a/ws-internals/lib-5/jar-every/src.zip!/" />
+          <root url="jar://$MODULE_DIR$/../ws-internals/lib-5/jar-every/src.zip!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" exported="">
       <library name="lib-6.jar">
         <CLASSES>
-          <root url="jar://$PROJECT_DIR$/eclipse-externals/lib-6/jar-every/lib-6.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../eclipse-externals/lib-6/jar-every/lib-6.jar!/" />
         </CLASSES>
         <JAVADOC>
-          <root url="jar://$PROJECT_DIR$/eclipse-externals/lib-6/jar-all-6.zip!/doc/api" />
+          <root url="jar://$MODULE_DIR$/../../eclipse-externals/lib-6/jar-all-6.zip!/doc/api" />
         </JAVADOC>
         <SOURCES>
-          <root url="jar://$PROJECT_DIR$/eclipse-externals/lib-6/jar-every/src.zip!/" />
+          <root url="jar://$MODULE_DIR$/../../eclipse-externals/lib-6/jar-every/src.zip!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -92,7 +92,7 @@
     <orderEntry type="module-library">
       <library name="junit3">
         <CLASSES>
-          <root url="jar://$APPLICATION_HOME_DIR$/lib/junit.jar!/" />
+          <root url="jar://$APPLICATION_HOME_DIR$/community/lib/junit.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -101,7 +101,7 @@
     <orderEntry type="module-library">
       <library name="junit4">
         <CLASSES>
-          <root url="jar://$APPLICATION_HOME_DIR$/lib/junit-4.6.jar!/" />
+          <root url="jar://$APPLICATION_HOME_DIR$/community/lib/junit-4.6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

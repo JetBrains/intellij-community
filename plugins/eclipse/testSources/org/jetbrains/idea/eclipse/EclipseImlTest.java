@@ -20,7 +20,6 @@
  */
 package org.jetbrains.idea.eclipse;
 
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.components.PathMacroManager;
@@ -43,7 +42,6 @@ import org.jetbrains.idea.eclipse.importWizard.EclipseProjectFinder;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.HashSet;
 
 public class EclipseImlTest extends IdeaTestCase {
@@ -119,7 +117,6 @@ public class EclipseImlTest extends IdeaTestCase {
     doTest();
   }
 
-  @Bombed(day = 28, month = Calendar.SEPTEMBER)
   public void testAllProps() throws Exception {
     doTest("/eclipse-ws-3.4.1-a/all-props");
   }
