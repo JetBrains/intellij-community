@@ -16,7 +16,6 @@
 
 package com.intellij.ide.util.treeView;
 
-import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +32,10 @@ public abstract class AbstractTreeStructure {
   public abstract boolean hasSomethingToCommit();
 
   public boolean isToBuildChildrenInBackground(Object element){
+    return false;
+  }
+
+  public boolean isAlwaysLeaf() {
     return false;
   }
 

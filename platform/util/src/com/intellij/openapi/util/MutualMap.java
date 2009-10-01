@@ -94,4 +94,9 @@ public class MutualMap<Key, Value> {
   public int hashCode() {
     return 31 * myKey2Value.hashCode() + myValue2Key.hashCode();
   }
+
+  @Override
+  public String toString() {
+    return myKey2Value.toString();
+  }
 }
