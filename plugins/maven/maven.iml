@@ -145,6 +145,7 @@
     <orderEntry type="library" name="jgoodies-forms" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="testFramework-java" exported="" scope="TEST" />
+    <orderEntry type="module" module-name="jetgroovy" scope="TEST" />
     <orderEntry type="module" module-name="java-impl" />
   </component>
   <component name="copyright">
