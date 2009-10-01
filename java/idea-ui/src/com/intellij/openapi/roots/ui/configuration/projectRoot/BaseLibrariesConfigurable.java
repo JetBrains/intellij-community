@@ -195,6 +195,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     if (table != null) {
       getModelProvider(true).getModifiableModel().removeLibrary(library);
       myContext.getDaemonAnalyzer().removeElement(new LibraryProjectStructureElement(myContext, library));
+      // TODO: myContext.invalidateModules(myContext.myLibraryDependencyCache.get(library.getName()));
     }
   }
 

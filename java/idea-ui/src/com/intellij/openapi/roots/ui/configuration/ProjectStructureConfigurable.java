@@ -267,14 +267,8 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
       }
     }
 
-    //cleanup
-    myContext.getDaemonAnalyzer().clearCaches();
-    SwingUtilities.invokeLater(new Runnable(){
-      public void run() {
-        if (myWasUiDisposed) return;
-        reset();
-      }
-    });
+    myContext.clearCaches(false);
+    myContext.resetLibraries();
   }
 
   public void reset() {

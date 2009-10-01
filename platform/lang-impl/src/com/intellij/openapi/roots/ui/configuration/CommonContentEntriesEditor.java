@@ -28,8 +28,8 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel;
 import com.intellij.openapi.roots.ui.componentsList.layout.VerticalStackLayout;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
@@ -75,11 +75,13 @@ public abstract class CommonContentEntriesEditor extends ModuleElementsEditor {
   private VirtualFile myLastSelectedDir = null;
   private final String myModuleName;
   private final ModulesProvider myModulesProvider;
+  private ModuleConfigurationState myState;
 
-  public CommonContentEntriesEditor(Project project, String moduleName, ModifiableRootModel model, ModulesProvider modulesProvider) {
-    super(project, model);
+  public CommonContentEntriesEditor(String moduleName, ModuleConfigurationState state) {
+    super(state);
+    myState = state;
     myModuleName = moduleName;
-    myModulesProvider = modulesProvider;
+    myModulesProvider = state.getModulesProvider();
     final VirtualFileManagerAdapter fileManagerListener = new VirtualFileManagerAdapter() {
       public void afterRefreshFinish(boolean asynchronous) {
         final Module module = getModule();
@@ -99,6 +101,11 @@ public abstract class CommonContentEntriesEditor extends ModuleElementsEditor {
         fileManager.removeVirtualFileManagerListener(fileManagerListener);
       }
     });
+  }
+
+  @Override
+  protected ModifiableRootModel getModel() {
+    return myState.getRootModel();
   }
 
   public String getHelpTopic() {
@@ -163,7 +170,7 @@ public abstract class CommonContentEntriesEditor extends ModuleElementsEditor {
       mainPanel.add(innerPanel, BorderLayout.SOUTH);
     }
 
-    final ContentEntry[] contentEntries = myModel.getContentEntries();
+    final ContentEntry[] contentEntries = getModel().getContentEntries();
     if (contentEntries.length > 0) {
       for (final ContentEntry contentEntry : contentEntries) {
         addContentEntryPanel(contentEntry);
@@ -256,7 +263,7 @@ public abstract class CommonContentEntriesEditor extends ModuleElementsEditor {
 
   @Nullable
   private ContentEntry getAdjacentContentEntry(ContentEntry contentEntry, int delta) {
-    final ContentEntry[] contentEntries = myModel.getContentEntries();
+    final ContentEntry[] contentEntries = getModel().getContentEntries();
     for (int idx = 0; idx < contentEntries.length; idx++) {
       ContentEntry entry = contentEntries[idx];
       if (contentEntry.equals(entry)) {
@@ -276,14 +283,14 @@ public abstract class CommonContentEntriesEditor extends ModuleElementsEditor {
       if (isAlreadyAdded(file)) {
         continue;
       }
-      final ContentEntry contentEntry = myModel.addContentEntry(file);
+      final ContentEntry contentEntry = getModel().addContentEntry(file);
       contentEntries.add(contentEntry);
     }
     return contentEntries;
   }
 
   private boolean isAlreadyAdded(VirtualFile file) {
-    final VirtualFile[] contentRoots = myModel.getContentRoots();
+    final VirtualFile[] contentRoots = getModel().getContentRoots();
     for (VirtualFile contentRoot : contentRoots) {
       if (contentRoot.equals(file)) {
         return true;

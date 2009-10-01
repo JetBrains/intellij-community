@@ -24,10 +24,8 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -57,11 +55,9 @@ public class BuildElementsEditor extends ModuleElementsEditor {
   private JCheckBox myCbExcludeOutput;
   private JLabel myOutputLabel;
   private JLabel myTestOutputLabel;
-  public CompilerModuleExtension myCompilerExtension;
 
-  protected BuildElementsEditor(final Project project, final ModifiableRootModel model) {
-    super(project, model);
-    myCompilerExtension = myModel.getModuleExtension(CompilerModuleExtension.class);
+  protected BuildElementsEditor(final ModuleConfigurationState state) {
+    super(state);
   }
 
   public JComponent createComponentImpl() {
@@ -82,21 +78,21 @@ public class BuildElementsEditor extends ModuleElementsEditor {
 
     myOutputPathPanel = createOutputPathPanel(ProjectBundle.message("module.paths.output.title"), new CommitPathRunnable() {
       public void saveUrl(String url) {
-        if (myCompilerExtension.isCompilerOutputPathInherited()) return;  //do not override settings if any
-        myCompilerExtension.setCompilerOutputPath(url);
+        if (getCompilerExtension().isCompilerOutputPathInherited()) return;  //do not override settings if any
+        getCompilerExtension().setCompilerOutputPath(url);
       }
     });
     myTestsOutputPathPanel = createOutputPathPanel(ProjectBundle.message("module.paths.test.output.title"), new CommitPathRunnable() {
       public void saveUrl(String url) {
-        if (myCompilerExtension.isCompilerOutputPathInherited()) return; //do not override settings if any
-        myCompilerExtension.setCompilerOutputPathForTests(url);
+        if (getCompilerExtension().isCompilerOutputPathInherited()) return; //do not override settings if any
+        getCompilerExtension().setCompilerOutputPathForTests(url);
       }
     });
 
-    myCbExcludeOutput = new JCheckBox(ProjectBundle.message("module.paths.exclude.output.checkbox"), myCompilerExtension.isExcludeOutput());
+    myCbExcludeOutput = new JCheckBox(ProjectBundle.message("module.paths.exclude.output.checkbox"), getCompilerExtension().isExcludeOutput());
     myCbExcludeOutput.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        myCompilerExtension.setExcludeOutput(myCbExcludeOutput.isSelected());
+        getCompilerExtension().setExcludeOutput(myCbExcludeOutput.isSelected());
       }
     });
 
@@ -130,7 +126,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     updateOutputPathPresentation();
 
     //compiler settings
-    final boolean outputPathInherited = myCompilerExtension.isCompilerOutputPathInherited();
+    final boolean outputPathInherited = getCompilerExtension().isCompilerOutputPathInherited();
     myInheritCompilerOutput.setSelected(outputPathInherited);
     myPerModuleCompilerOutput.setSelected(!outputPathInherited);
     enableCompilerSettings(!outputPathInherited);
@@ -142,26 +138,26 @@ public class BuildElementsEditor extends ModuleElementsEditor {
   }
 
   private void updateOutputPathPresentation() {
-    if (myCompilerExtension.isCompilerOutputPathInherited()) {
+    if (getCompilerExtension().isCompilerOutputPathInherited()) {
       final String baseUrl = ProjectStructureConfigurable.getInstance(myProject).getProjectConfig().getCompilerOutputUrl();
-      moduleCompileOutputChanged(baseUrl, myModel.getModule().getName());
+      moduleCompileOutputChanged(baseUrl, getModel().getModule().getName());
     } else {
-      final VirtualFile compilerOutputPath = myCompilerExtension.getCompilerOutputPath();
+      final VirtualFile compilerOutputPath = getCompilerExtension().getCompilerOutputPath();
       if (compilerOutputPath != null) {
         myOutputPathPanel.setText(FileUtil.toSystemDependentName(compilerOutputPath.getPath()));
       }
       else {
-        final String compilerOutputUrl = myCompilerExtension.getCompilerOutputUrl();
+        final String compilerOutputUrl = getCompilerExtension().getCompilerOutputUrl();
         if (compilerOutputUrl != null) {
           myOutputPathPanel.setText(FileUtil.toSystemDependentName(VfsUtil.urlToPath(compilerOutputUrl)));
         }
       }
-      final VirtualFile testsOutputPath = myCompilerExtension.getCompilerOutputPathForTests();
+      final VirtualFile testsOutputPath = getCompilerExtension().getCompilerOutputPathForTests();
       if (testsOutputPath != null) {
         myTestsOutputPathPanel.setText(FileUtil.toSystemDependentName(testsOutputPath.getPath()));
       }
       else {
-        final String testsOutputUrl = myCompilerExtension.getCompilerOutputUrlForTests();
+        final String testsOutputUrl = getCompilerExtension().getCompilerOutputUrlForTests();
         if (testsOutputUrl != null) {
           myTestsOutputPathPanel.setText(FileUtil.toSystemDependentName(VfsUtil.urlToPath(testsOutputUrl)));
         }
@@ -175,7 +171,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     UIUtil.setEnabled(myTestsOutputPathPanel, enabled, true);
     UIUtil.setEnabled(myTestOutputLabel, enabled, true);
     myCbExcludeOutput.setEnabled(enabled);
-    myCompilerExtension.inheritCompilerOutputPath(!enabled);
+    getCompilerExtension().inheritCompilerOutputPath(!enabled);
     updateOutputPathPresentation();
   }
 
@@ -187,7 +183,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
 
     final Runnable commitRunnable = new Runnable() {
       public void run() {
-        if (!myModel.isWritable()) {
+        if (!getModel().isWritable()) {
           return;
         }
         final String path = textField.getText().trim();
@@ -225,7 +221,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
   public void saveData() {
     myOutputPathPanel.commit();
     myTestsOutputPathPanel.commit();
-    myCompilerExtension.commit();
+    getCompilerExtension().commit();
   }
 
   public String getDisplayName() {
@@ -245,11 +241,11 @@ public class BuildElementsEditor extends ModuleElementsEditor {
 
   public void moduleStateChanged() {
     //if content enties tree was changed
-    myCbExcludeOutput.setSelected(myCompilerExtension.isExcludeOutput());
+    myCbExcludeOutput.setSelected(getCompilerExtension().isExcludeOutput());
   }
 
   public void moduleCompileOutputChanged(final String baseUrl, final String moduleName) {
-    if (myCompilerExtension.isCompilerOutputPathInherited()) {
+    if (getCompilerExtension().isCompilerOutputPathInherited()) {
       if (baseUrl != null) {
         myOutputPathPanel.setText(FileUtil.toSystemDependentName(VfsUtil.urlToPath(baseUrl + "/" + CompilerModuleExtension
           .PRODUCTION + "/" + moduleName)));
@@ -261,6 +257,10 @@ public class BuildElementsEditor extends ModuleElementsEditor {
         myTestsOutputPathPanel.setText(null);
       }
     }
+  }
+
+  public CompilerModuleExtension getCompilerExtension() {
+    return getModel().getModuleExtension(CompilerModuleExtension.class);
   }
 
   private static interface CommitPathRunnable {
