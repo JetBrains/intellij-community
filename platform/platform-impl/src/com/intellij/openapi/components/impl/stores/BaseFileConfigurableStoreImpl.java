@@ -37,9 +37,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   }
 
   protected static class BaseStorageData extends FileBasedStorage.FileStorageData {
-    private boolean mySavePathsRelative;
     protected int myVersion;
-
 
     public BaseStorageData(final String rootElementName) {
       super(rootElementName);
@@ -48,7 +46,6 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     protected BaseStorageData(BaseStorageData storageData) {
       super(storageData);
 
-      mySavePathsRelative = storageData.mySavePathsRelative;
       myVersion = ProjectManagerImpl.CURRENT_FORMAT_VERSION;
     }
 
@@ -77,17 +74,14 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
 
     protected int computeHash() {
       int result = super.computeHash();
-
-      if (mySavePathsRelative) result = result*31 + 1;
       result = result*31 + myVersion;
-
       return result;
     }
 
     @Nullable
     public Set<String> getDifference(final XmlElementStorage.StorageData storageData, PathMacroSubstitutor substitutor) {
       final BaseStorageData data = (BaseStorageData)storageData;
-      if (mySavePathsRelative != data.mySavePathsRelative || myVersion != data.myVersion) return null;
+      if (myVersion != data.myVersion) return null;
       return super.getDifference(storageData, substitutor);
     }
   }
