@@ -2,8 +2,10 @@ package com.intellij.structuralsearch.plugin.replace.impl;
 
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.idea.LoggerFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -312,6 +314,11 @@ public class ReplacerImpl {
           break;
         }
         ++i;
+        if (statements.length == i) {
+          Logger logger = LoggerFactory.getInstance().getLoggerInstance(getClass().getName());
+          logger.error("Unexpected replacement structure:" + replacementToMake);
+          break;
+        }
       }
 
       if (i != 0) {
