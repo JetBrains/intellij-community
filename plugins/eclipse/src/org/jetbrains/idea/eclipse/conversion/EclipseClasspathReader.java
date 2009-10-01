@@ -468,6 +468,11 @@ public class EclipseClasspathReader {
       final String libName = libElement.getAttributeValue("name");
       final Library libraryByName = model.getModuleLibraryTable().getLibraryByName(libName);
       if (libraryByName != null) {
+        final LibraryOrderEntry libraryOrderEntry = model.findLibraryOrderEntry(libraryByName);
+        if (libraryOrderEntry != null) {
+          final String scopeAttribute = libElement.getAttributeValue("scope");
+          libraryOrderEntry.setScope(scopeAttribute == null ? DependencyScope.COMPILE : DependencyScope.valueOf(scopeAttribute));
+        }
         final Library.ModifiableModel modifiableModel = libraryByName.getModifiableModel();
         for (Object r : libElement.getChildren("srcroot")) {
           modifiableModel.addRoot(((Element)r).getAttributeValue("url"), OrderRootType.SOURCES);
