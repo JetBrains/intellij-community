@@ -391,8 +391,8 @@ public abstract class MavenTestCase extends UsefulTestCase {
     return true;
   }
 
-  protected boolean hasM2Home() {
-    boolean result = System.getenv("M2_HOME") != null;
+  protected boolean hasMavenInstallation() {
+    boolean result = "true".equals(System.getProperty("idea.maven.test.has.installation"));
     if (!result) System.out.println("Ignored, because Maven installation not found: " + getClass().getSimpleName() + "." + getName());
     return result;
   }
