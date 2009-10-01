@@ -20,6 +20,7 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,14 +48,15 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyValidationUtil;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author ilyas
  */
 public class ConvertParameterToMapEntryIntention extends Intention {
 
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.intentions.style.ConvertParameterToMapEntryIntention")
-    ;
+  private static final Logger LOG =
+    Logger.getInstance("#org.jetbrains.plugins.groovy.intentions.style.ConvertParameterToMapEntryIntention");
   @NonNls private static final String CLOSURE_CAPTION = "closure";
   @NonNls private static final String CLOSURE_CAPTION_CAP = "Closure";
   @NonNls private static final String METHOD_CAPTION = "method";
@@ -104,7 +106,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
             @Override
             protected void doOKAction() {
               String name = getEnteredName();
-              ArrayList<String> conflicts = new ArrayList<String>();
+              Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
               GroovyValidationUtil.validateNewParameterName(firstParam, conflicts, name);
               if (reportConflicts(conflicts, project)) {
                 performRefactoring(element, owner, occurrences, createNewFirst(), name, specifyTypeExplicitly());
@@ -118,7 +120,8 @@ public class ConvertParameterToMapEntryIntention extends Intention {
               dialog.show();
             }
           });
-        } else {
+        }
+        else {
           //todo add statictics manager
           performRefactoring(element, owner, occurrences, true,
                              (new GroovyValidationUtil.ParameterNameSuggester("attrs", firstParam)).generateName(), false);
@@ -144,7 +147,6 @@ public class ConvertParameterToMapEntryIntention extends Intention {
                                          final boolean specifyMapType) {
     final GrParameter param = getAppropriateParameter(element);
     assert param != null;
-    // todo check for parameter invocations as map property
     final String paramName = param.getName();
     final String mapName = createNewFirstParam ? mapParamName : getFirstParameter(owner).getName();
 
@@ -152,13 +154,12 @@ public class ConvertParameterToMapEntryIntention extends Intention {
     final Project project = element.getProject();
     final Runnable runnable = new Runnable() {
       public void run() {
-        boolean doCreate = createNewFirstParam;
         final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
         final GrParameterList list = owner.getParameterList();
         assert list != null;
         final int index = list.getParameterNumber(param);
         final int newIndex = createNewFirstParam ? index : index - 1;
-        if (!doCreate && index <= 0) { // bad undo
+        if (!createNewFirstParam && index <= 0) { // bad undo
           return;
         }
 
@@ -174,7 +175,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
         }
 
         //Add new map parameter to closure/method if it's necessary
-        if (doCreate) {
+        if (createNewFirstParam) {
           try {
             final GrParameter newParam = factory.createParameter(mapName, specifyMapType ? MAP_TYPE_TEXT : "", null);
             list.addParameterToHead(newParam);
@@ -372,22 +373,32 @@ public class ConvertParameterToMapEntryIntention extends Intention {
 
   private static class MyPsiElementPredicate implements PsiElementPredicate {
     public boolean satisfiedBy(final PsiElement element) {
+      GrParametersOwner owner = null;
       if (element instanceof GrParameter) {
-        final GrParametersOwner owner = PsiTreeUtil.getParentOfType(element, GrParametersOwner.class);
-        if (owner instanceof GrClosableBlock || owner instanceof GrMethodImpl) return true;
-        return false;
+        owner = PsiTreeUtil.getParentOfType(element, GrParametersOwner.class);
       }
-
-      if (element instanceof GrReferenceExpression) {
+      else if (element instanceof GrReferenceExpression) {
         GrReferenceExpression expr = (GrReferenceExpression)element;
         if (expr.getQualifierExpression() != null) return false;
         final PsiElement resolved = expr.resolve();
         if (!(resolved instanceof GrParameter)) return false;
-        final GrParametersOwner owner = PsiTreeUtil.getParentOfType(resolved, GrParametersOwner.class);
-        if (owner instanceof GrClosableBlock || owner instanceof GrMethodImpl) return true;
+        owner = PsiTreeUtil.getParentOfType(resolved, GrParametersOwner.class);
       }
-      return false;
+      if (!(owner instanceof GrClosableBlock || owner instanceof GrMethodImpl)) return false;
+      return checkForMapParameters(owner);
     }
+  }
+
+  private static boolean checkForMapParameters(GrParametersOwner owner) {
+    final GrParameter[] parameters = owner.getParameters();
+    if (parameters.length != 1) return true;
+
+    final GrParameter parameter = parameters[0];
+    final PsiType type = parameter.getTypeGroovy();
+    if (!(type instanceof PsiClassType)) return true;
+
+    final PsiClass psiClass = ((PsiClassType)type).resolve();
+    return psiClass == null || !CommonClassNames.JAVA_UTIL_MAP.equals(psiClass.getQualifiedName());
   }
 
   private static void showErrorMessage(String message, final Project project) {
@@ -399,7 +410,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
     CodeStyleManager.getInstance(owner.getProject()).reformat(owner);
   }
 
-  private static boolean reportConflicts(final ArrayList<String> conflicts, final Project project) {
+  private static boolean reportConflicts(final Map<PsiElement, String> conflicts, final Project project) {
     if (conflicts.size() == 0) return true;
     ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
     conflictsDialog.show();

@@ -13,7 +13,7 @@
         <root url="jar://$MODULE_DIR$/test.jar!/" />
       </CLASSES>
       <JAVADOC>
-        <root url="jar://$PROJECT_DIR$//test/testJavadoc.jar!/a" />
+        <root url="jar://$MODULE_DIR$/..//test/testJavadoc.jar!/a" />
       </JAVADOC>
       <SOURCES>
         <root url="jar://$MODULE_DIR$/testSrc.jar!/" />
@@ -23,11 +23,11 @@
   <orderEntry type="module-library">
     <library name="testOut.jar">
       <CLASSES>
-        <root url="jar://$PROJECT_DIR$/testOut.jar!/" />
+        <root url="jar://$MODULE_DIR$/../testOut.jar!/" />
       </CLASSES>
       <JAVADOC />
       <SOURCES>
-        <root url="jar://$PROJECT_DIR$/testOutSrc.jar!/" />
+        <root url="jar://$MODULE_DIR$/../testOutSrc.jar!/" />
       </SOURCES>
     </library>
   </orderEntry>
