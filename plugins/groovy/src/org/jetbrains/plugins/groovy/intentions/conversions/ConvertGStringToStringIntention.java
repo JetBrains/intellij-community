@@ -10,7 +10,6 @@ import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
@@ -18,7 +17,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinary
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
 import java.util.ArrayList;
 
@@ -100,11 +98,8 @@ public class ConvertGStringToStringIntention extends Intention {
         return text;
       }
     }
-    else if (needParents(expr)) {
-      return '(' + text + ").toString()";
-    }
     else {
-      return text + ".toString()";
+      return "String.valueOf(" + text + ")";
     }
   }
 
@@ -131,28 +126,35 @@ public class ConvertGStringToStringIntention extends Intention {
     }
     if (text.length() == 0) return null;
 
-    StringBuilder builder = new StringBuilder(text.length() * 2);
-    if (text.contains("\n")) {
-      builder.append("'''");
-      escape(text, builder);
-      builder.append("'''");
+    String escaped = escape(text);
+    if (escaped.contains("\n")) {
+      return "'''" + escaped + "'''";
     }
     else {
-      builder.append("'");
-      escape(text, builder);
-      builder.append("'");
+      return "'" + escaped + "'";
     }
-    return builder.toString();
   }
 
-  private static void escape(String contents, StringBuilder b) {
+  private static String escape(String contents) {
+    StringBuilder b = new StringBuilder(contents.length() * 2);
     final char[] chars = contents.toCharArray();
     final int len = chars.length - 1;
     int i;
     for (i = 0; i < len; i++) {
-      if (chars[i] == '\\' && (chars[i + 1] == '"' || chars[i + 1] == '$')) {
-        i++;
-        b.append(chars[i]);
+      if (chars[i] == '\\') {
+        if (chars[i + 1] == '"' || chars[i + 1] == '$') {
+          i++;
+          b.append(chars[i]);
+        }
+        else if (chars[i + 1] == 'n') {
+          b.append('\n');
+          i++;
+        }
+        else {
+          b.append('\\');
+          i++;
+          b.append(chars[i]);
+        }
         continue;
       }
       if (chars[i] == '\'') b.append('\\');
@@ -162,13 +164,6 @@ public class ConvertGStringToStringIntention extends Intention {
       if (chars[i] == '\'') b.append('\\');
       b.append(chars[i]);
     }
-  }
-
-  private static boolean needParents(GrExpression expr) {
-    final String text1 = expr.getText() + ".toString()";
-
-    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expr.getProject());
-    final GrExpression newExpr = factory.createExpressionFromText(text1);
-    return !(newExpr instanceof GrMethodCallExpression);
+    return b.toString();
   }
 }

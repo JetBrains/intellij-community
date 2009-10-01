@@ -51,27 +51,29 @@ public class ConvertConcatenationToGstringIntention extends Intention {
   @Override
   protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
     StringBuilder builder = new StringBuilder(element.getTextLength());
-    boolean isMultiLine = performIntention((GrBinaryExpression)element, builder);
-    final String text;
-    if (isMultiLine) {
-      text = "\"\"\"" + builder.toString() + "\"\"\"";
+    performIntention((GrBinaryExpression)element, builder);
+    final String delimiter;
+    final String content = builder.toString();
+    if (content.contains("\n")) {
+      delimiter = "\"\"\"";
     }
     else {
-      text = "\"" + builder.toString() + "\"";
+      delimiter = "\"";
     }
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(element.getProject());
-    final GrExpression newExpr = factory.createExpressionFromText(text);
+    final GrExpression newExpr = factory.createExpressionFromText(delimiter + content + delimiter);
     final GrExpression expression = ((GrBinaryExpression)element).replaceWithExpression(newExpr, true);
     RemoveUnnecessaryBracesInGStringIntention.performIntention(expression, true);
   }
 
-  private static boolean performIntention(GrBinaryExpression expr, StringBuilder builder) {
+  private static void performIntention(GrBinaryExpression expr, StringBuilder builder) {
     GrExpression left = (GrExpression)skipParentheses(expr.getLeftOperand(), false);
     GrExpression right = (GrExpression)skipParentheses(expr.getRightOperand(), false);
-    return getOperandText(left, builder) | getOperandText(right, builder);
+    getOperandText(left, builder);
+    getOperandText(right, builder);
   }
 
-  private static boolean getOperandText(GrExpression operand, StringBuilder builder) {
+  private static void getOperandText(GrExpression operand, StringBuilder builder) {
     if (operand instanceof GrString) {
       final GrString grString = (GrString)operand;
       final String text = operand.getText();
@@ -82,32 +84,33 @@ public class ConvertConcatenationToGstringIntention extends Intention {
       else {
         builder.append(text.substring(3, text.length() - 3));
       }
-      return !isPlain;
     }
     else if (operand instanceof GrLiteral) {
       final String text = operand.getText();
       if (text.startsWith("\"\"\"") || text.startsWith("'''")) {
         escape(text.substring(3, text.length() - 3), builder);
-        return text.contains("\n");
       }
-      if (text.startsWith("\"") || text.startsWith("'") || text.startsWith("/")) {
+      else if (text.startsWith("\"") || text.startsWith("'") || text.startsWith("/")) {
         escape(text.substring(1, text.length() - 1), builder);
-        return false;
       }
-      builder.append(text);
-      return false;
+      else {
+        builder.append(text);
+      }
     }
     else if (MyPredicate.satisfiedBy(operand, false)) {
-      return performIntention((GrBinaryExpression)operand, builder);
+      performIntention((GrBinaryExpression)operand, builder);
     }
     else if (isToStringMethod(operand, builder)) {
-      return false;
+      //nothing to do
     }
-
-    builder.append(START_BRACE).append(operand.getText()).append(END_BRACE);
-    return false;
+    else {
+      builder.append(START_BRACE).append(operand.getText()).append(END_BRACE);
+    }
   }
 
+  /**
+   * append text to builder if the operand is 'something'.toString()
+   */
   private static boolean isToStringMethod(GrExpression operand, StringBuilder builder) {
     if (!(operand instanceof GrMethodCallExpression)) return false;
 
@@ -158,9 +161,20 @@ public class ConvertConcatenationToGstringIntention extends Intention {
     final int len = chars.length - 1;
     int i;
     for (i = 0; i < len; i++) {
-      if (chars[i] == '\\' && chars[i + 1] == '\'') {
-        b.append('\'');
-        i += 1;
+      if (chars[i] == '\\') {
+        if (chars[i + 1] == '\'') {
+          b.append('\'');
+          i++;
+        }
+        else if (chars[i + 1] == 'n') {
+          b.append('\n');
+          i++;
+        }
+        else {
+          b.append(chars[i]);
+          i++;
+          b.append(chars[i]);
+        }
         continue;
       }
       if (chars[i] == '"' || chars[i] == '$') b.append('\\');
