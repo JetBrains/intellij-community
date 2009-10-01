@@ -41,7 +41,6 @@ public class MavenRootModelAdapter {
       myRootModel.inheritSdk();
     }
     if (newlyCreatedModule) {
-      myRootModel.getModule().setSavePathsRelative(true);
       getCompilerExtension().setExcludeOutput(true);
     }
   }

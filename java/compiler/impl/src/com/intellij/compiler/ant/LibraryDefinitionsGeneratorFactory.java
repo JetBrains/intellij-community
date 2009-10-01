@@ -111,7 +111,7 @@ public class LibraryDefinitionsGeneratorFactory {
       TreeSet<String> visitedPaths = new TreeSet<String>();
       for (final VirtualFile file : files) {
         final String path = GenerationUtils
-          .toRelativePath(file, baseDir, BuildProperties.getProjectBaseDirProperty(), genOptions, !project.isSavePathsRelative());
+          .toRelativePath(file, baseDir, BuildProperties.getProjectBaseDirProperty(), genOptions);
         visitedPaths.add(path);
       }
       for (final String path : visitedPaths) {
@@ -123,7 +123,7 @@ public class LibraryDefinitionsGeneratorFactory {
       for (String url : urls) {
         File file = fileFromUrl(url);
         final String path = GenerationUtils
-          .toRelativePath(file.getPath(), baseDir, BuildProperties.getProjectBaseDirProperty(), genOptions, !project.isSavePathsRelative());
+          .toRelativePath(file.getPath(), baseDir, BuildProperties.getProjectBaseDirProperty(), genOptions);
         if (url.startsWith(JarFileSystem.PROTOCOL_PREFIX)) {
           libraryPath.add(new PathElement(path));
         }

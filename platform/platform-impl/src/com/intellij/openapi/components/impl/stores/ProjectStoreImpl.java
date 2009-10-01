@@ -414,7 +414,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
     @Override
     protected int computeHash() {
-      return super.computeHash() + (((ProjectEx)myProject).isSavePathsRelative() ? 1 : 0); 
+      return super.computeHash(); 
     }
   }
 

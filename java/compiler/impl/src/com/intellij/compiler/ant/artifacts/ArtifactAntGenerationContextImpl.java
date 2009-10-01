@@ -4,10 +4,9 @@ import com.intellij.compiler.ant.BuildProperties;
 import com.intellij.compiler.ant.GenerationOptions;
 import com.intellij.compiler.ant.GenerationUtils;
 import com.intellij.compiler.ant.Generator;
-import com.intellij.compiler.ant.taskdefs.Property;
 import com.intellij.compiler.ant.taskdefs.Mkdir;
+import com.intellij.compiler.ant.taskdefs.Property;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.packaging.artifacts.Artifact;
@@ -80,8 +79,7 @@ public class ArtifactAntGenerationContextImpl implements ArtifactAntGenerationCo
   }
 
   public String getSubstitutedPath(String path) {
-    return GenerationUtils.toRelativePath(path, VfsUtil.virtualToIoFile(myProject.getBaseDir()), BuildProperties.getProjectBaseDirProperty(), myGenerationOptions,
-                                          ((ProjectEx)myProject).isSavePathsRelative());
+    return GenerationUtils.toRelativePath(path, VfsUtil.virtualToIoFile(myProject.getBaseDir()), BuildProperties.getProjectBaseDirProperty(), myGenerationOptions);
   }
 
   public void runBeforeCurrentArtifact(Generator generator) {

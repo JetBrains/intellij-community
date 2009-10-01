@@ -29,17 +29,8 @@ public class MockProjectStore implements IProjectStore {
     throw new UnsupportedOperationException("Method checkVersion is not yet implemented in " + getClass().getName());
   }
 
-  @SuppressWarnings({"EmptyMethod"})
-  public boolean isSavePathsRelative() {
-    throw new UnsupportedOperationException("Method isSavePathsRelative is not yet implemented in " + getClass().getName());
-  }
-
   public void setProjectFilePath(final String filePath) {
     throw new UnsupportedOperationException("Method setProjectFilePath is not yet implemented in " + getClass().getName());
-  }
-
-  public void setSavePathsRelative(final boolean b) {
-    throw new UnsupportedOperationException("Method setSavePathsRelative is not yet implemented in " + getClass().getName());
   }
 
   @Nullable

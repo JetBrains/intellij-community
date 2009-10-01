@@ -207,10 +207,6 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
     return isModuleAdded;
   }
 
-  public boolean isSavePathsRelative() {
-    return getStateStore().isSavePathsRelative();
-  }
-
   public void moduleAdded() {
     isModuleAdded = true;
     for (ModuleComponent component : getComponents(ModuleComponent.class)) {
@@ -350,7 +346,4 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   }
 
 
-  public void setSavePathsRelative(final boolean b) {
-    getStateStore().setSavePathsRelative(b);
-  }
 }

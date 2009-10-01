@@ -19,13 +19,6 @@ public class MockProject extends MockComponentManager implements ProjectEx {
     super(ApplicationManager.getApplication() != null ? ApplicationManager.getApplication().getPicoContainer() : null);
   }
 
-  public boolean isSavePathsRelative() {
-    return false;
-  }
-
-  public void setSavePathsRelative(boolean b) {
-  }
-
   public boolean isDefault() {
     return false;
   }

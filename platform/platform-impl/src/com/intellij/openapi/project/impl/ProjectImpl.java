@@ -139,14 +139,6 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     return (IProjectStore)super.getStateStore();
   }
 
-  public boolean isSavePathsRelative() {
-    return getStateStore().isSavePathsRelative();
-  }
-
-  public void setSavePathsRelative(boolean b) {
-    getStateStore().setSavePathsRelative(b);
-  }
-
   public boolean isOpen() {
     return ProjectManagerEx.getInstanceEx().isProjectOpened(this);
   }

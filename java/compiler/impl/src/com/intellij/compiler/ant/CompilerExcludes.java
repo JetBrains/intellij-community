@@ -6,7 +6,6 @@ import com.intellij.compiler.ant.taskdefs.Exclude;
 import com.intellij.compiler.ant.taskdefs.PatternSet;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectEx;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -24,10 +23,9 @@ public class CompilerExcludes extends Generator {
       compilerConfiguration.getExcludedEntriesConfiguration().getExcludeEntryDescriptions();
     myPatternSet = new PatternSet(BuildProperties.PROPERTY_COMPILER_EXCLUDES);
     for (final ExcludeEntryDescription entry : excludeEntryDescriptions) {
-      final boolean relative = project instanceof ProjectEx && ((ProjectEx)project).isSavePathsRelative();
       final String path = GenerationUtils
         .toRelativePath(entry.getVirtualFile(), BuildProperties.getProjectBaseDir(project), BuildProperties.getProjectBaseDirProperty(),
-                        genOptions, !relative);
+                        genOptions);
       if (path == null) {
         // entry is invalid, skip it
         continue;

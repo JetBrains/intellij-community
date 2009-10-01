@@ -188,9 +188,6 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
       updater.updateModule(descriptor, module, modifiableModel);
     }
     modifiableModel.commit();
-
-    module.setSavePathsRelative(true); // default setting
-
     return module;
   }
 

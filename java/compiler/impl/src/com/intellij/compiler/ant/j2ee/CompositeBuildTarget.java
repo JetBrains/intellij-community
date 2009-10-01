@@ -38,7 +38,7 @@ public class CompositeBuildTarget extends CompositeGenerator {
       final String explodedPath = buildConfiguration.getExplodedPath();
       if (explodedPath != null) {
         String location = GenerationUtils.toRelativePath(VirtualFileManager.extractPath(explodedPath), moduleBaseDir, baseDirProperty,
-                                                         parameters.getGenerationOptions(), !containingModule.isSavePathsRelative());
+                                                         parameters.getGenerationOptions());
         add(new Property(parameters.getExplodedPathProperty(), location));
       }
 
@@ -53,7 +53,7 @@ public class CompositeBuildTarget extends CompositeGenerator {
 
     if (jarPath != null) {
       String location = GenerationUtils.toRelativePath(VirtualFileManager.extractPath(jarPath), moduleBaseDir, baseDirProperty,
-                                                       parameters.getGenerationOptions(), !containingModule.isSavePathsRelative());
+                                                       parameters.getGenerationOptions());
       add(new Property(parameters.getJarPathProperty(), location));
 
       final AntCall antCall = new AntCall(parameters.getBuildJarTargetName());
