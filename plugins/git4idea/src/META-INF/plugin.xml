@@ -48,14 +48,16 @@
       <separator/>
 
       <action id="Git.Tag" class="git4idea.actions.GitTag" text="Tag Files..."/>
-      <action id="Git.Fetch" class="git4idea.actions.GitFetch" text="Fetch Changes..."/>
-      <action id="Git.Pull" class="git4idea.actions.GitPull" text="Pull Changes..." icon="/actions/checkOut.png"/>
       <action id="Git.Merge" class="git4idea.actions.GitMerge" text="Merge Changes..." icon="/vcs/mergeSourcesTree.png"/>
       <action id="Git.MergeTool" class="git4idea.actions.GitMergeTool" text="Merge Tool..."/>
-      <action id="Git.Push" class="git4idea.actions.GitPush" text="Push Changes..." icon="/actions/commit.png"/>
       <action id="Git.Stash" class="git4idea.actions.GitStash" text="Stash Changes..."/>
       <action id="Git.Unstash" class="git4idea.actions.GitUnstash" text="UnStash Changes..."/>
       <action id="Git.Reset" class="git4idea.actions.GitResetHead" text="Reset HEAD..." icon="/actions/reset.png"/>
+      <separator/>
+      <action id="Git.Fetch" class="git4idea.actions.GitFetch" text="Fetch Changes..."/>
+      <action id="Git.Pull" class="git4idea.actions.GitPull" text="Pull Changes..." icon="/actions/checkOut.png"/>
+      <action id="Git.Push" class="git4idea.actions.GitPush" text="Push Changes..." icon="/actions/commit.png"/>
+      <action id="Git.Push.Active.Branches" class="git4idea.actions.GitPushActiveBranches" text="Push Active Branches..."/>
       <separator/>
       <action id="Git.Rebase" class="git4idea.actions.GitRebase" text="Rebase..."/>
       <action id="Git.Rebase.Abort" class="git4idea.actions.GitRebaseAbort" text="Abort Rebasing"/>
