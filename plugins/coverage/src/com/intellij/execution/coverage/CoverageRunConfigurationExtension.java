@@ -89,8 +89,9 @@ public class CoverageRunConfigurationExtension extends RunConfigurationExtension
   @Override
   public <T extends ModuleBasedConfiguration & RunJavaConfiguration> void checkConfiguration(T runJavaConfiguration)
     throws RuntimeConfigurationException {
-    if (CoverageEnabledConfiguration.get(runJavaConfiguration).getCoverageRunner() == null) {
-      throw new RuntimeConfigurationException("Coverage runner invalid");
+    CoverageEnabledConfiguration configuration = CoverageEnabledConfiguration.get(runJavaConfiguration);
+    if (configuration.isCoverageEnabled() && configuration.getCoverageRunner() == null) {
+      throw new RuntimeConfigurationException("Coverage runner is not set");
     }
   }
 }
