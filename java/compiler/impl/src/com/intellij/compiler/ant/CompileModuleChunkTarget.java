@@ -177,8 +177,7 @@ public class CompileModuleChunkTarget extends CompositeGenerator {
                 composite.add(copy);
             }
             final FileSet fileSet = new FileSet(
-                    GenerationUtils.toRelativePath(root, baseDir, BuildProperties.getModuleChunkBasedirProperty(chunk), genOptions,
-                                                   !chunk.isSavePathsRelative()));
+                    GenerationUtils.toRelativePath(root, baseDir, BuildProperties.getModuleChunkBasedirProperty(chunk), genOptions));
             fileSet.add(resourcePatternsPatternSet);
             fileSet.add(filesSelector);
             if (excludes != null) {

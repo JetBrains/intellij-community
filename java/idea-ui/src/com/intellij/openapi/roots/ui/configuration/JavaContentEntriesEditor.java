@@ -2,6 +2,7 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.Patches;
 import com.intellij.ide.util.JavaUtil;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWindow;
@@ -14,20 +15,16 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.util.concurrency.SwingWorker;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.awt.*;
 
 public class JavaContentEntriesEditor extends CommonContentEntriesEditor {
-  private JRadioButton myRbRelativePaths;
-
   public JavaContentEntriesEditor(Project project, String moduleName, ModifiableRootModel model, ModulesProvider modulesProvider) {
     super(project, moduleName, model, modulesProvider);
   }
@@ -121,38 +118,6 @@ public class JavaContentEntriesEditor extends CommonContentEntriesEditor {
   protected JPanel createBottomControl(Module module) {
     final JPanel innerPanel = new JPanel(new GridBagLayout());
     innerPanel.setBorder(BorderFactory.createEmptyBorder(6, 0, 0, 6));
-    myRbRelativePaths = new JRadioButton(ProjectBundle.message("module.paths.outside.module.dir.relative.radio"));
-    final JRadioButton rbAbsolutePaths = new JRadioButton(ProjectBundle.message("module.paths.outside.module.dir.absolute.radio"));
-    ButtonGroup buttonGroup = new ButtonGroup();
-    buttonGroup.add(myRbRelativePaths);
-    buttonGroup.add(rbAbsolutePaths);
-    innerPanel.add(new JLabel(ProjectBundle.message("module.paths.outside.module.dir.label")),
-                   new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0),
-                                          0, 0));
-    innerPanel.add(rbAbsolutePaths,
-                   new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0),
-                                          0, 0));
-    innerPanel.add(myRbRelativePaths,
-                   new GridBagConstraints(2, 0, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0),
-                                          0, 0));
-    if (module.isSavePathsRelative()) {
-      myRbRelativePaths.setSelected(true);
-    }
-    else {
-      rbAbsolutePaths.setSelected(true);
-    }
     return innerPanel;
-  }
-
-  @Override
-  public boolean isModified() {
-    if (super.isModified()) return true;
-    final Module selfModule = getModule();
-    return selfModule != null && myRbRelativePaths != null && selfModule.isSavePathsRelative() != myRbRelativePaths.isSelected();
-  }
-
-  public void apply() throws ConfigurationException {
-    final Module module = getModule();
-    module.setSavePathsRelative(myRbRelativePaths.isSelected());
   }
 }

@@ -5,7 +5,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface IModuleStore extends IComponentStore {
-  boolean isSavePathsRelative();
 
   void setModuleFilePath(final String filePath);
 
@@ -17,8 +16,6 @@ public interface IModuleStore extends IComponentStore {
 
   @NotNull
   String getModuleFileName();
-
-  void setSavePathsRelative(final boolean b);
 
   void setOption(final String optionName, final String optionValue);
 

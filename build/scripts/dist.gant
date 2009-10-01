@@ -4,12 +4,7 @@ import static org.jetbrains.jps.idea.IdeaProjectLoader.*
 includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
 includeTool << Jps
 
-requireProperty("buildNumber", requireProperty("build.number", "SNAPSHOT"))
 requireProperty("out", "$home/out")
-
-setProperty("version", "MaiaCE")
-setProperty("vmoptions", "-Xms32m -Xmx256m -XX:MaxPermSize=150m -ea")
-setProperty("system_selector", "IntelliJIdeaCE90")
 
 class Paths {
   final sandbox
@@ -19,7 +14,7 @@ class Paths {
   final distMac
   final artifacts
 
-  def Paths(String home, String out) {
+  def Paths(String out) {
     sandbox = out
     distWin = "$sandbox/dist.win"
     distAll = "$sandbox/dist.all"
@@ -30,9 +25,9 @@ class Paths {
   }
 }
 
-setProperty("paths", new Paths(home, out))
+setProperty("paths", new Paths(out))
 
-def paths = new Paths(home, out)
+def paths = new Paths(out)
 
 def includeFile(String filename) {
   Script s = groovyShell.parse(new File("$home/build/scripts/$filename"))
@@ -64,26 +59,37 @@ String appInfoFile() {
   return "${this["community-resources"].output}/idea/IdeaApplicationInfo.xml"
 }
 
-def wire_build_date() {
+def wire_build_date(String buildNumber) {
   ant.replace(token: "__BUILD_NUMBER__", value: buildNumber, file: appInfoFile())
   ant.replace(token: "__BUILD_DATE__", value: DSTAMP, file: appInfoFile())
 }
 
 target('default': 'The default target') {
   depends(compile)
-  wire_build_date()
+  layoutAll(
+          buildNumber: "IC-$buildNumber",
+          version: "MaiaCE",
+          system_selector: "IntelliJIdeaCE90",
+          vmoptions: "-Xms32m -Xmx256m -XX:MaxPermSize=150m -ea",
+          home, out)
+}
+
+public def layoutAll(Map args, String home, String out) {
+  Paths paths = new Paths(out)
+
+  wire_build_date(buildNumber)
 
   def layouts = includeFile("layouts.gant")
   layouts.layoutFull(paths.distAll)
 
-  ant.echo(message: buildNumber, file: "$paths.distAll/build.txt")
+  ant.echo(message: args.buildNumber, file: "$paths.distAll/build.txt")
   ant.copy(todir: "$paths.distAll/license", preservelastmodified: "true") {
     fileset(dir: "$home/license")
   }
 
-  layoutMac()
-  layoutLinux()
-  layoutWin()
+  layoutMac(args, home, paths)
+  layoutLinux(args, home, paths)
+  layoutWin(args, home, paths)
 }
 
 private def patchPropertiesFile(String where) {
@@ -99,7 +105,7 @@ idea.fatal.error.notification=enabled
   )
 }
 
-private def layoutWin() {
+private def layoutWin(Map args, String home, Paths paths) {
   layout("$paths.distWin") {
     dir("bin") {
       fileset(dir: "$home/bin") { include(name: "*.*") }
@@ -108,7 +114,7 @@ private def layoutWin() {
   }
 
   patchPropertiesFile(paths.distWin)
-  ant.echo(file: "$paths.distWin/bin/idea.exe.vmoptions", message: vmoptions.replace(' ', '\n'))
+  ant.echo(file: "$paths.distWin/bin/idea.exe.vmoptions", message: args.vmoptions.replace(' ', '\n'))
 
   ant.zip(zipfile: "$paths.artifacts/idea${buildNumber}.win.zip") {
     fileset(dir: paths.distAll)
@@ -116,7 +122,7 @@ private def layoutWin() {
   }
 }
 
-private def layoutMac() {
+private def layoutMac(Map args, String home, Paths paths) {
   project.stage("Cleaning up sandbox folder")
 
   ant.copy(todir: "$paths.distMac/bin") {
@@ -132,16 +138,16 @@ private def layoutMac() {
   }
 
   ant.replace(file: "${paths.distMac}/Contents/Info.plist") {
-    replacefilter(token: "@@build@@", value: buildNumber)
+    replacefilter(token: "@@build@@", value: args.buildNumber)
 
 
-    replacefilter(token: "@@version@@", value: version)
-    replacefilter(token: "@@vmoptions@@", value: vmoptions)
-    replacefilter(token: "@@system_selector@@", value: system_selector)
+    replacefilter(token: "@@version@@", value: args.version)
+    replacefilter(token: "@@vmoptions@@", value: args.vmoptions)
+    replacefilter(token: "@@system_selector@@", value: args.system_selector)
   }
 
-  def root = "$version-${buildNumber}.app"
-  ant.zip(zipfile: "$paths.artifacts/idea${buildNumber}.mac.zip") {
+  def root = "$args.version-${args.buildNumber}.app"
+  ant.zip(zipfile: "$paths.artifacts/idea${args.buildNumber}.mac.zip") {
     [paths.distAll, paths.distMac].each {
       tarfileset(dir: it, prefix: root) {
         exclude(name: "bin/*.sh")
@@ -156,7 +162,7 @@ private def layoutMac() {
   }
 }
 
-def layoutLinux() {
+def layoutLinux(Map args, String home, Paths paths) {
   project.stage("tar.gz")
   layout(paths.distUnix) {
     dir("bin") {
@@ -168,13 +174,13 @@ def layoutLinux() {
 
   patchPropertiesFile(paths.distUnix)
 
-  ant.echo(file: "$paths.distUnix/bin/idea.vmoptions", message: vmoptions.replace(' ', '\n') )
+  ant.echo(file: "$paths.distUnix/bin/idea.vmoptions", message: args.vmoptions.replace(' ', '\n') )
   ant.fixcrlf(srcdir: "$paths.distUnix/bin", includes: "idea.vmoptions", eol: "unix")
   ant.fixcrlf(srcdir: "$paths.distUnix/bin", includes: "*.sh", eol: "unix")
 
 
-  def tarRoot = "idea-$buildNumber"
-  def tarPath = "$paths.artifacts/idea${buildNumber}.tar"
+  def tarRoot = "idea-$args.buildNumber"
+  def tarPath = "$paths.artifacts/idea${args.buildNumber}.tar"
   ant.tar(tarfile: tarPath) {
     [paths.distAll, paths.distUnix].each {
       tarfileset(dir: it, prefix: tarRoot) {

@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Array;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * @author spleaner
@@ -125,7 +124,7 @@ public class NotificationModel {
     }
 
     if (!result.isEmpty()) {
-      final Notification[] removed = result.toArray((Notification[])Array.newInstance(result.get(0).getClass(), result.size()));
+      final Notification[] removed = result.toArray(new Notification[result.size()]);
       for (NotificationModelListener listener : myListeners) {
         listener.notificationsRemoved(removed);
       }

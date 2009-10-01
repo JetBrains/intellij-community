@@ -39,7 +39,7 @@ public class DummyHolder extends PsiFileImpl {
     super(TokenType.DUMMY_HOLDER, TokenType.DUMMY_HOLDER, new DummyHolderViewProvider(manager));
     ((DummyHolderViewProvider)getViewProvider()).setDummyHolder(this);
     myContext = context;
-    myTable = table != null ? table : new IdentityCharTable();
+    myTable = table != null ? table : IdentityCharTable.INSTANCE;
     if(contentElement != null) {
       getTreeElement().rawAddChildren(contentElement);
       clearCaches();

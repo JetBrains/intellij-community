@@ -1,7 +1,6 @@
 package com.intellij.compiler.ant;
 
 import com.intellij.compiler.ant.taskdefs.Import;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 
 import java.io.File;
@@ -20,8 +19,7 @@ public class MultipleFileProjectBuild extends ProjectBuild{
     final String chunkBuildFile = BuildProperties.getModuleChunkBaseDir(chunk).getPath() + File.separator + BuildProperties.getModuleChunkBuildFileName(chunk) + ".xml";
     final File projectBaseDir = BuildProperties.getProjectBaseDir(myProject);
     final String pathToFile = GenerationUtils.toRelativePath(
-      chunkBuildFile, projectBaseDir, BuildProperties.getProjectBaseDirProperty(), genOptions, !chunk.isSavePathsRelative()
-    );
+      chunkBuildFile, projectBaseDir, BuildProperties.getProjectBaseDirProperty(), genOptions);
     return new Import(pathToFile);
   }
 

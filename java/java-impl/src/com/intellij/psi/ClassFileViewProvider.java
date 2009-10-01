@@ -23,7 +23,7 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
   }
 
   @Override
-  protected PsiFile creatFile(final Project project, final VirtualFile vFile, final FileType fileType) {
+  protected PsiFile createFile(final Project project, final VirtualFile vFile, final FileType fileType) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     if (fileIndex.isInLibraryClasses(vFile) || !fileIndex.isInSource(vFile)) {
       String name = vFile.getName();

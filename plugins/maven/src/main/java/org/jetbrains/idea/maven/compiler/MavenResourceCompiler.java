@@ -377,7 +377,15 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
       try {
         outputFile.getParentFile().mkdirs();
 
-        if (eachItem.isFiltered()) {
+        boolean shouldFilter = eachItem.isFiltered();
+        if (sourceFile.length() > 10 * 1024 * 1024) {
+          context.addMessage(CompilerMessageCategory.WARNING,
+                             "Maven: File is too big to be filtered. Most likely it is a binary file and should be excluded from filtering.",
+                             sourceVirtualFile.getUrl(), -1, -1);
+          shouldFilter = false;
+        }
+
+        if (shouldFilter) {
           String charset = sourceVirtualFile.getCharset().name();
           String text = new String(FileUtil.loadFileBytes(sourceFile), charset);
           String escapedCharacters = "properties".equals(sourceVirtualFile.getExtension()) ? "\\" : null;

@@ -364,6 +364,8 @@ public class EclipseClasspathWriter {
       if (entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).isModuleLevel()) {
         final Element element = new Element("lib");
         element.setAttribute("name", entry.getPresentableName());
+        final DependencyScope scope = ((LibraryOrderEntry)entry).getScope();
+        element.setAttribute("scope", scope.name());
         final String[] urls = entry.getUrls(OrderRootType.SOURCES);
         if (urls.length > 1) {
           for (int i = 0; i < urls.length - 1; i++) {
@@ -379,7 +381,7 @@ public class EclipseClasspathWriter {
         for (String classesUrl : entry.getUrls(OrderRootType.CLASSES)) {
           appendModuleRelatedRoot(element, classesUrl, "relative-module-cls");
         }
-        if (!element.getChildren().isEmpty()) root.addContent(element);
+        if (!element.getChildren().isEmpty() || !scope.equals(DependencyScope.COMPILE)) root.addContent(element);
       }
     }
 

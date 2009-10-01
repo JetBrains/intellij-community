@@ -169,11 +169,6 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     return storage.getFileName();
   }
 
-  public void setSavePathsRelative(final boolean b) {
-    super.setSavePathsRelative(b);
-    setOption(RELATIVE_PATHS_OPTION, String.valueOf(b));
-  }
-
   public void setOption(final String optionName, final String optionValue) {
     try {
       getMainStorageData().setOption(optionName,  optionValue);

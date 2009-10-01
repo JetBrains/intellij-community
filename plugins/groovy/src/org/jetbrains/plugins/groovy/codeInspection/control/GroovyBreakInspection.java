@@ -52,7 +52,7 @@ public class GroovyBreakInspection extends BaseInspection {
     public void visitBreakStatement(GrBreakStatement breakStatement) {
 
       super.visitBreakStatement(breakStatement);
-      final GrStatement target = breakStatement.getBreakedLoop();
+      final GrStatement target = breakStatement.findTargetStatement();
       if (target instanceof GrSwitchStatement) {
         return;
       }

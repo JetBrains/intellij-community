@@ -39,7 +39,7 @@ public class DefaultExplodedAndJarBuildGenerator extends ExplodedAndJarBuildGene
 
         final String baseDirProperty = BuildProperties.getModuleBasedirProperty(instruction.getModule());
         final String sourceLocation = GenerationUtils.toRelativePath(sourceFile.getPath(), moduleBaseDir, baseDirProperty,
-                                                                     parameters.getGenerationOptions(), !parameters.getContainingModule().isSavePathsRelative());
+                                                                     parameters.getGenerationOptions());
 
         final Copy copy;
         if (instruction.isDirectory()) {

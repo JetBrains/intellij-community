@@ -109,7 +109,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
     element.setAttribute(TYPE_ID_ATTRIBUTE, packagingElement.getType().getId());
     final Object bean = packagingElement.getState();
     if (bean != null) {
-      XmlSerializer.serializeInto(bean, element);
+      XmlSerializer.serializeInto(bean, element, new SkipDefaultValuesSerializationFilters());
     }
     if (packagingElement instanceof CompositePackagingElement) {
       for (PackagingElement<?> child : ((CompositePackagingElement<?>)packagingElement).getChildren()) {

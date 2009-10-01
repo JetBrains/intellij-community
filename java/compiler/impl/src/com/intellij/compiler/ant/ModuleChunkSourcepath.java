@@ -5,18 +5,17 @@
 package com.intellij.compiler.ant;
 
 import com.intellij.compiler.ant.taskdefs.*;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ModuleFileIndex;
-import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModuleFileIndex;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -61,7 +60,7 @@ public class ModuleChunkSourcepath extends CompositeGenerator{
         final VirtualFile dirSetRoot = getDirSetRoot(contentEntry);
 
         final String dirSetRootRelativeToBasedir = GenerationUtils
-          .toRelativePath(dirSetRoot, chunk.getBaseDir(), moduleChunkBasedirProperty, genOptions, !module.isSavePathsRelative());
+          .toRelativePath(dirSetRoot, chunk.getBaseDir(), moduleChunkBasedirProperty, genOptions);
         final DirSet sourcesDirSet = new DirSet(dirSetRootRelativeToBasedir);
         final DirSet testSourcesDirSet = new DirSet(dirSetRootRelativeToBasedir);
 

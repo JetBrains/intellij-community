@@ -42,7 +42,11 @@ public class ConvertMethodToClosureIntention extends Intention {
   protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
     final GrMethod method = (GrMethod)element;
     StringBuilder builder = new StringBuilder(method.getTextLength());
-    builder.append(method.getModifierList().getText()).append(' ');
+    String modifiers = method.getModifierList().getText();
+    if (modifiers.trim().length() == 0) {
+      modifiers = "def";
+    }
+    builder.append(modifiers).append(' ');
     builder.append(method.getName()).append("={");
     builder.append(method.getParameterList().getText()).append(" ->");
     final GrOpenBlock block = method.getBlock();

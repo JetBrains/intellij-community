@@ -129,8 +129,6 @@ public abstract class ModuleBuilder extends ProjectBuilder{
     }
     modifiableModel.commit();
 
-    module.setSavePathsRelative(true); // default setting
-
     return module;
   }
 

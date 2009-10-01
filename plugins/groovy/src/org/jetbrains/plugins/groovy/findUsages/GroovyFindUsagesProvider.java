@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
@@ -55,6 +56,7 @@ public class GroovyFindUsagesProvider implements FindUsagesProvider {
         if (element instanceof PsiField) return "field";
         if (element instanceof PsiParameter) return "parameter";
         if (element instanceof PsiVariable || element instanceof GrReferenceExpression) return "variable";
+        if (element instanceof GrLabeledStatement) return "label";
         return "";
     }
 
@@ -80,6 +82,8 @@ public class GroovyFindUsagesProvider implements FindUsagesProvider {
             if (name != null) {
                 return name;
             }
+        } else if (element instanceof GrLabeledStatement) {
+            return ((GrLabeledStatement)element).getLabelName();
         }
 
         return "";

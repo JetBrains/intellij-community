@@ -56,7 +56,7 @@ public class GroovyContinueOrBreakFromFinallyBlockInspection extends BaseInspect
       if (!ControlFlowUtils.isInFinallyBlock(continueStatement)) {
         return;
       }
-      final GrStatement continuedStatement = continueStatement.findTarget();
+      final GrStatement continuedStatement = continueStatement.findTargetStatement();
       if (continuedStatement == null) {
         return;
       }
@@ -72,11 +72,11 @@ public class GroovyContinueOrBreakFromFinallyBlockInspection extends BaseInspect
       if (!ControlFlowUtils.isInFinallyBlock(breakStatement)) {
         return;
       }
-      final GrStatement breakdStatement = breakStatement.getBreakedLoop();
-      if (breakdStatement == null) {
+      final GrStatement target = breakStatement.findTargetStatement();
+      if (target == null) {
         return;
       }
-      if (ControlFlowUtils.isInFinallyBlock(breakdStatement)) {
+      if (ControlFlowUtils.isInFinallyBlock(target)) {
         return;
       }
       registerStatementError(breakStatement);

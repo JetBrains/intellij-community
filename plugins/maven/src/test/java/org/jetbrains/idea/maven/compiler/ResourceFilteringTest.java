@@ -3,8 +3,8 @@ package org.jetbrains.idea.maven.compiler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
-import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
+import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 
 import java.io.IOException;
 
@@ -673,6 +673,26 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
     assertResult("target/classes/file.properties",
                  "value1=${xxx}\n" +
                  "value2=\\value\n");
+  }
+
+  public void testDoNotFilterButCopyBigFiles() throws Exception {
+    createProjectSubFile("resources/file.xyz").setBinaryContent(new byte[1024 * 1024 * 20]);
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>resources</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+    compileModules("project");
+
+    assertNotNull(myProjectPom.getParent().findFileByRelativePath("target/classes/file.xyz"));
   }
 
   private void assertResult(String relativePath, String content) throws IOException {

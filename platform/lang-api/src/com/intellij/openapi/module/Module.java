@@ -82,22 +82,6 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
   boolean isLoaded();
 
   /**
-   * Returns the value of the option "Use absolute/relative paths for files outside
-   * the module file directory" for this module.
-   *
-   * @return true if relative paths are used, false if absolute paths are used.
-   */
-  boolean isSavePathsRelative();
-
-  /**
-   * Sets the value of the option "Use absolute/relative paths for files outside
-   * the module file directory" for this module.
-   *
-   * @param b true if relative paths are used, false if absolute paths are used.
-   */
-  void setSavePathsRelative(boolean b);
-
-  /**
    * Sets a custom option for this module.
    *
    * @param optionName the name of the custom option.

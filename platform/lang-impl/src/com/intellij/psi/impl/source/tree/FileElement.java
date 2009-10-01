@@ -4,13 +4,11 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 
 public class FileElement extends LazyParseableElement {
-  private CharTable myCharTable = new CharTableImpl();
-  private PsiManagerEx myManager;
+  private volatile CharTable myCharTable = new CharTableImpl();
 
   public CharTable getCharTable() {
     return myCharTable;
@@ -25,16 +23,9 @@ public class FileElement extends LazyParseableElement {
     super(type, null);
   }
 
-  public void setManager(final PsiManagerEx manager) {
-    myManager = manager;
-  }
-
   public PsiManagerEx getManager() {
-    if (myManager == null) {
-      if (getTreeParent() != null) return getTreeParent().getManager();
-      return (PsiManagerEx)SourceTreeToPsiMap.treeElementToPsi(this).getManager(); //TODO: cache?
-    }
-    return myManager;
+    if (getTreeParent() != null) return getTreeParent().getManager();
+    return (PsiManagerEx)getPsi().getManager(); //TODO: cache?
   }
 
   public ASTNode copyElement() {

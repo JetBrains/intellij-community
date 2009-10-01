@@ -48,17 +48,15 @@ public class GenerationUtils {
     public static String toRelativePath(final VirtualFile file, final ModuleChunk chunk, final GenerationOptions genOptions) {
         final Module module = chunk.getModules()[0];
         final File moduleBaseDir = chunk.getBaseDir();
-        return toRelativePath(file, moduleBaseDir, BuildProperties.getModuleBasedirProperty(module), genOptions,
-                              !chunk.isSavePathsRelative());
+        return toRelativePath(file, moduleBaseDir, BuildProperties.getModuleBasedirProperty(module), genOptions);
     }
 
     public static String toRelativePath(final String file, final File baseDir, final Module module, final GenerationOptions genOptions) {
-        return toRelativePath(file, baseDir, BuildProperties.getModuleBasedirProperty(module), genOptions, !module.isSavePathsRelative());
+        return toRelativePath(file, baseDir, BuildProperties.getModuleBasedirProperty(module), genOptions);
     }
 
     public static String toRelativePath(final String path, final ModuleChunk chunk, final GenerationOptions genOptions) {
-        return GenerationUtils.toRelativePath(path, chunk.getBaseDir(), BuildProperties.getModuleChunkBasedirProperty(chunk), genOptions,
-                                              !chunk.isSavePathsRelative());
+        return toRelativePath(path, chunk.getBaseDir(), BuildProperties.getModuleChunkBasedirProperty(chunk), genOptions);
     }
 
     /**
@@ -76,20 +74,18 @@ public class GenerationUtils {
     public static String toRelativePath(final VirtualFile file,
                                         final File baseDir,
                                         final String baseDirPropertyName,
-                                        final GenerationOptions genOptions,
-                                        final boolean useAbsolutePathsForOuterPaths) {
+                                        final GenerationOptions genOptions) {
         final String localPath = PathUtil.getLocalPath(file);
         if (localPath == null) {
             return null;
         }
-        return toRelativePath(localPath, baseDir, baseDirPropertyName, genOptions, useAbsolutePathsForOuterPaths);
+        return toRelativePath(localPath, baseDir, baseDirPropertyName, genOptions);
     }
 
     public static String toRelativePath(String path,
                                         File baseDir,
                                         @NonNls final String baseDirPropertyName,
-                                        GenerationOptions genOptions,
-                                        boolean useAbsolutePathsForOuterPaths) {
+                                        GenerationOptions genOptions) {
         path = normalizePath(path);
         final String substitutedPath = genOptions.subsitutePathWithMacros(path);
         if (!substitutedPath.equals(path)) {
@@ -107,7 +103,7 @@ public class GenerationUtils {
             }
             final String relativepath = FileUtil.getRelativePath(base, new File(path));
             if (relativepath != null) {
-                final boolean shouldUseAbsolutePath = useAbsolutePathsForOuterPaths && relativepath.indexOf("..") >= 0;
+                final boolean shouldUseAbsolutePath = relativepath.indexOf("..") >= 0;
                 if (!shouldUseAbsolutePath) {
                     final String _relativePath = relativepath.replace(File.separatorChar, '/');
                     final String root = BuildProperties.propertyRef(baseDirPropertyName);

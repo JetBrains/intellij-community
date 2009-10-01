@@ -206,7 +206,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
         if (psiDir == null) return null;
       }
 
-      return creatFile(project, vFile, vFile.getFileType());
+      return createFile(project, vFile, vFile.getFileType());
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -225,7 +225,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   @Nullable
-  protected PsiFile creatFile(final Project project, final VirtualFile vFile, final FileType fileType) {
+  protected PsiFile createFile(final Project project, final VirtualFile vFile, final FileType fileType) {
     if (fileType.isBinary()) {
       return new PsiBinaryFileImpl((PsiManagerImpl)getManager(), this);
     }
