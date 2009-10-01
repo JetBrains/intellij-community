@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.refactoring.inline;
 import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
@@ -36,7 +35,6 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
  */
 public class GroovyInlineHandler implements InlineHandler {
 
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineHandler");
   private static final String INLINE_REFACTORING = GroovyRefactoringBundle.message("inline.refactoring.title");
 
   @Nullable
