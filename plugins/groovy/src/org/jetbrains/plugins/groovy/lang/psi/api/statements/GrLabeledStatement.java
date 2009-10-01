@@ -15,13 +15,21 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
+import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
 
 /**
  * @author ilyas
  */
-public interface GrLabeledStatement extends GrStatement{
-  @NotNull String getLabel();
+public interface GrLabeledStatement extends GrStatement, PsiNamedElement{
+  @NotNull
+  String getLabelName();
 
+  @Nullable
   GrStatement getStatement();
+
+  @NotNull
+  GrLabel getLabel();
 }

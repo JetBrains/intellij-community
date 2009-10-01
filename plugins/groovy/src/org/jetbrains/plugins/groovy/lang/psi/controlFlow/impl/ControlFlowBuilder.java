@@ -173,7 +173,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   public void visitBreakStatement(GrBreakStatement breakStatement) {
     super.visitBreakStatement(breakStatement);
-    final GrStatement target = breakStatement.getBreakedLoop();
+    final GrStatement target = breakStatement.findTargetStatement();
     if (target != null && myHead != null) {
       addPendingEdge(target, myHead);
     }
@@ -183,7 +183,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   public void visitContinueStatement(GrContinueStatement continueStatement) {
     super.visitContinueStatement(continueStatement);
-    final GrStatement target = continueStatement.findTarget();
+    final GrStatement target = continueStatement.findTargetStatement();
     if (target != null && myHead != null) {
       final InstructionImpl instruction = findInstruction(target);
       if (instruction != null) {

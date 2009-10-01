@@ -16,22 +16,18 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.branch;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLoopStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueStatement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 /**
  * @author ilyas
  */
-public class GrContinueStatementImpl extends GroovyPsiElementImpl implements GrContinueStatement {
+public class GrContinueStatementImpl extends GrFlowInterruptingStatementImpl implements GrContinueStatement {
   public GrContinueStatementImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -45,16 +41,11 @@ public class GrContinueStatementImpl extends GroovyPsiElementImpl implements GrC
   }
 
   @Nullable
-  public String getLabel() {
-    final PsiElement id = findChildByType(GroovyElementTypes.mIDENT);
-    if (id == null) return null;
-    return id.getText();
+  public GrStatement findTargetStatement() {
+    return  ResolveUtil.resolveLabelTargetStatement(getLabelName(), this, false);
   }
 
-  @Nullable
-  public GrStatement findTarget() {
-    final String label = getLabel();
-    if (label == null) return PsiTreeUtil.getParentOfType(this, GrLoopStatement.class);
-    return ResolveUtil.resolveLabeledStatement(label, this);
+  public GrLabeledStatement resolveLabel() {
+    return  ResolveUtil.resolveLabeledStatement(getLabelName(), this, false);
   }
 }

@@ -172,9 +172,11 @@ public class FindUsagesTest extends LightGroovyTestCase {
     doSuperMethodTest("Map");
   }
 
-  /*public void testGDKSuperMethodForListIteratorSearch() throws Exception {
-    doSuperMethodTest("Collection", "Iterator");
-  }*/
+  public void testLabels() throws Exception {
+    myFixture.configureByFile(getTestName(false) + ".groovy");
+    final GroovyFile file = (GroovyFile)myFixture.getFile();
+    assertEquals(2, ReferencesSearch.search(file.getTopStatements()[0]).findAll().size());
+  }
 
   private void doSuperMethodTest(String... firstParameterTypes) throws Exception {
     myFixture.configureByFile(getTestName(false) + ".groovy");

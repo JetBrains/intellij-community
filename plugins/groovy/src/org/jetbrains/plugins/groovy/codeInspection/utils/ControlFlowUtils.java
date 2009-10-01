@@ -477,8 +477,7 @@ public class ControlFlowUtils {
         return;
       }
       super.visitBreakStatement(breakStatement);
-      final GrStatement exitedStatement =
-          breakStatement.getBreakedLoop();
+      final GrStatement exitedStatement = breakStatement.findTargetStatement();
       if (exitedStatement == null) {
         return;
       }
@@ -508,7 +507,7 @@ public class ControlFlowUtils {
       }
       super.visitContinueStatement(continueStatement);
       final GrStatement exitedStatement =
-          continueStatement.findTarget();
+          continueStatement.findTargetStatement();
       if (exitedStatement == null) {
         return;
       }

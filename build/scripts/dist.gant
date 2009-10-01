@@ -6,10 +6,6 @@ includeTool << Jps
 
 requireProperty("out", "$home/out")
 
-setProperty("version", "MaiaCE")
-setProperty("vmoptions", "-Xms32m -Xmx256m -XX:MaxPermSize=150m -ea")
-setProperty("system_selector", "IntelliJIdeaCE90")
-
 class Paths {
   final sandbox
   final distWin
@@ -70,10 +66,15 @@ def wire_build_date(String buildNumber) {
 
 target('default': 'The default target') {
   depends(compile)
-  layoutAll(home, out, "90.SNAPSHOT")
+  layoutAll(
+          buildNumber: "IC-$buildNumber",
+          version: "MaiaCE",
+          system_selector: "IntelliJIdeaCE90",
+          vmoptions: "-Xms32m -Xmx256m -XX:MaxPermSize=150m -ea",
+          home, out)
 }
 
-public def layoutAll(String home, String out, String buildNumber) {
+public def layoutAll(Map args, String home, String out) {
   Paths paths = new Paths(out)
 
   wire_build_date(buildNumber)
@@ -81,14 +82,14 @@ public def layoutAll(String home, String out, String buildNumber) {
   def layouts = includeFile("layouts.gant")
   layouts.layoutFull(paths.distAll)
 
-  ant.echo(message: buildNumber, file: "$paths.distAll/build.txt")
+  ant.echo(message: args.buildNumber, file: "$paths.distAll/build.txt")
   ant.copy(todir: "$paths.distAll/license", preservelastmodified: "true") {
     fileset(dir: "$home/license")
   }
 
-  layoutMac(home, paths)
-  layoutLinux(home, paths)
-  layoutWin(home, paths)
+  layoutMac(args, home, paths)
+  layoutLinux(args, home, paths)
+  layoutWin(args, home, paths)
 }
 
 private def patchPropertiesFile(String where) {
@@ -104,7 +105,7 @@ idea.fatal.error.notification=enabled
   )
 }
 
-private def layoutWin(String home, Paths paths) {
+private def layoutWin(Map args, String home, Paths paths) {
   layout("$paths.distWin") {
     dir("bin") {
       fileset(dir: "$home/bin") { include(name: "*.*") }
@@ -113,7 +114,7 @@ private def layoutWin(String home, Paths paths) {
   }
 
   patchPropertiesFile(paths.distWin)
-  ant.echo(file: "$paths.distWin/bin/idea.exe.vmoptions", message: vmoptions.replace(' ', '\n'))
+  ant.echo(file: "$paths.distWin/bin/idea.exe.vmoptions", message: args.vmoptions.replace(' ', '\n'))
 
   ant.zip(zipfile: "$paths.artifacts/idea${buildNumber}.win.zip") {
     fileset(dir: paths.distAll)
@@ -121,7 +122,7 @@ private def layoutWin(String home, Paths paths) {
   }
 }
 
-private def layoutMac(String home, Paths paths) {
+private def layoutMac(Map args, String home, Paths paths) {
   project.stage("Cleaning up sandbox folder")
 
   ant.copy(todir: "$paths.distMac/bin") {
@@ -137,16 +138,16 @@ private def layoutMac(String home, Paths paths) {
   }
 
   ant.replace(file: "${paths.distMac}/Contents/Info.plist") {
-    replacefilter(token: "@@build@@", value: buildNumber)
+    replacefilter(token: "@@build@@", value: args.buildNumber)
 
 
-    replacefilter(token: "@@version@@", value: version)
-    replacefilter(token: "@@vmoptions@@", value: vmoptions)
-    replacefilter(token: "@@system_selector@@", value: system_selector)
+    replacefilter(token: "@@version@@", value: args.version)
+    replacefilter(token: "@@vmoptions@@", value: args.vmoptions)
+    replacefilter(token: "@@system_selector@@", value: args.system_selector)
   }
 
-  def root = "$version-${buildNumber}.app"
-  ant.zip(zipfile: "$paths.artifacts/idea${buildNumber}.mac.zip") {
+  def root = "$args.version-${args.buildNumber}.app"
+  ant.zip(zipfile: "$paths.artifacts/idea${args.buildNumber}.mac.zip") {
     [paths.distAll, paths.distMac].each {
       tarfileset(dir: it, prefix: root) {
         exclude(name: "bin/*.sh")
@@ -161,7 +162,7 @@ private def layoutMac(String home, Paths paths) {
   }
 }
 
-def layoutLinux(String home, Paths paths) {
+def layoutLinux(Map args, String home, Paths paths) {
   project.stage("tar.gz")
   layout(paths.distUnix) {
     dir("bin") {
@@ -173,13 +174,13 @@ def layoutLinux(String home, Paths paths) {
 
   patchPropertiesFile(paths.distUnix)
 
-  ant.echo(file: "$paths.distUnix/bin/idea.vmoptions", message: vmoptions.replace(' ', '\n') )
+  ant.echo(file: "$paths.distUnix/bin/idea.vmoptions", message: args.vmoptions.replace(' ', '\n') )
   ant.fixcrlf(srcdir: "$paths.distUnix/bin", includes: "idea.vmoptions", eol: "unix")
   ant.fixcrlf(srcdir: "$paths.distUnix/bin", includes: "*.sh", eol: "unix")
 
 
-  def tarRoot = "idea-$buildNumber"
-  def tarPath = "$paths.artifacts/idea${buildNumber}.tar"
+  def tarRoot = "idea-$args.buildNumber"
+  def tarPath = "$paths.artifacts/idea${args.buildNumber}.tar"
   ant.tar(tarfile: tarPath) {
     [paths.distAll, paths.distUnix].each {
       tarfileset(dir: it, prefix: tarRoot) {

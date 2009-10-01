@@ -56,6 +56,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrFlowInterruptingStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -137,6 +140,11 @@ public class GroovyAnnotator implements Annotator {
     else if (element instanceof GrConstructorInvocation) {
       checkConstructorInvocation(holder, (GrConstructorInvocation)element);
     }
+    else if (element instanceof GrFlowInterruptingStatement) {
+      checkFlowInterruptStatement(((GrFlowInterruptingStatement)element), holder);
+    } else if (element instanceof GrLabeledStatement) {
+      checkLabeledStatement(((GrLabeledStatement) element), holder);
+    }
     else if (element.getParent() instanceof GrDocReferenceElement) {
       checkGrDocReferenceElement(holder, element);
     }
@@ -166,6 +174,44 @@ public class GroovyAnnotator implements Annotator {
         GroovyImportsTracker.getInstance(element.getProject()).markFileAnnotated((GroovyFile)element.getContainingFile());
       }
     }
+  }
+
+  private static void checkLabeledStatement(GrLabeledStatement statement, AnnotationHolder holder) {
+    final String name = statement.getLabelName();
+    if (ResolveUtil.resolveLabeledStatement(name, statement, true) != null) {
+      holder.createErrorAnnotation(statement.getLabel(), GroovyBundle.message("label.already.used", name));
+    }
+  }
+
+  private static void checkFlowInterruptStatement(GrFlowInterruptingStatement statement, AnnotationHolder holder) {
+    final PsiElement label = statement.getLabelIdentifier();
+
+    if (label != null) {
+      final GrLabeledStatement resolved = statement.resolveLabel();
+      if (resolved == null) {
+        holder.createErrorAnnotation(label, GroovyBundle.message("undefined.label", statement.getLabelName()));
+      }
+    }
+
+    final PsiElement targetStatement = statement.findTargetStatement();
+    if (targetStatement == null) {
+      if (statement instanceof GrContinueStatement && label == null) {
+        holder.createErrorAnnotation(statement, GroovyBundle.message("continue.outside.loop"));
+      }
+      else if (statement instanceof GrBreakStatement) {
+        if (label == null) {
+          holder.createErrorAnnotation(statement, GroovyBundle.message("break.outside.loop.or.switch"));
+        }
+        else if (findFirstLoop(statement) == null) {
+          holder.createErrorAnnotation(statement, GroovyBundle.message("break.outside.loop"));
+        }
+      }
+    }
+  }
+
+  @Nullable
+  private static GrLoopStatement findFirstLoop(GrFlowInterruptingStatement statement) {
+    return PsiTreeUtil.getParentOfType(statement, GrLoopStatement.class, true, GrClosableBlock.class, GrMember.class, GroovyFile.class);
   }
 
   private static void checkThisOrSuperReferenceExpression(GrExpression expression, AnnotationHolder holder) {
@@ -208,6 +254,7 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
+  @Nullable
   private static PsiElement findModifierStatic(GrMember grMember) {
     final GrModifierList list = grMember.getModifierList();
     if (list == null) {
@@ -1045,6 +1092,7 @@ public class GroovyAnnotator implements Annotator {
 
   private static void registerAddImportFixes(GrReferenceElement refElement, Annotation annotation) {
     final String referenceName = refElement.getReferenceName();
+    //noinspection ConstantConditions
     if (StringUtil.isEmpty(referenceName) || Character.isLowerCase(referenceName.charAt(0))) {
       return;
     }

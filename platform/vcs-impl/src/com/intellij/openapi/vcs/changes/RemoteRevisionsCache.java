@@ -149,6 +149,7 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
    */
   public boolean isUpToDate(final Change change) {
     final AbstractVcs vcs = ChangesUtil.getVcsForChange(change, myProject);
+    if (vcs == null) return true;
     final RemoteDifferenceStrategy strategy = vcs.getRemoteDifferenceStrategy();
     if (RemoteDifferenceStrategy.ASK_TREE_PROVIDER.equals(strategy)) {
       return myRemoteRevisionsStateCache.isUpToDate(change);
