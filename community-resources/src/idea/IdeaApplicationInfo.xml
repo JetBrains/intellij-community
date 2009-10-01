@@ -3,14 +3,13 @@
   <version codename="Community Edition" major="9" minor="0" eap="true"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <install-over minbuild="0" maxbuild="0" version="9.0"/>
-  <!--<logo url="/idea_logo.png" textcolor="002387"/>-->
-  <logo url="/idea_logo.png" textcolor="FFFFFF"/>
-  <about url="/idea_about.png"/>
+  <logo url="/idea_community_logo.png" textcolor="FFFFFF"/>
+  <about url="/idea_community_about.png"/>
   <icon size32="/icon.png" size16="/icon_small.png" size32opaque="/icon_white.png" size12="/general/toolWindowProject.png"/>
   <package code="__PACKAGE_CODE__"/>
   <names product="IDEA" fullname="IntelliJ IDEA"/>
 
-  <welcome-screen caption-url="/general/welcomeCaption.png" slogan-url="/general/developSlogan.png"/>
+  <welcome-screen caption-url="/welcomeCaption_community.png" slogan-url="/developSlogan_community.png"/>
 
   <update-urls check="http://www.jetbrains.com/updates/update.xml" patches="http://download.jetbrains.com/idea/" download="http://www.jetbrains.com/idea/download/"/>
   <eap-update-urls check="http://www.jetbrains.com/updates/eap-update.xml" patches="http://download.jetbrains.com/idea/" download="http://www.jetbrains.net/confluence/display/IDEADEV/Maia+EAP"/>

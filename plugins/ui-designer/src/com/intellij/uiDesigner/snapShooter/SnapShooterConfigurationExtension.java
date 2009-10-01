@@ -113,6 +113,11 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
   }
 
   @Override
+  public String getName() {
+    return "snapshooter";
+  }
+
+  @Override
   public <T extends ModuleBasedConfiguration & RunJavaConfiguration> Icon getIcon(T runConfiguration) {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
@@ -129,5 +134,11 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
 
   @Override
   public <T extends ModuleBasedConfiguration & RunJavaConfiguration> void patchConfiguration(T runJavaConfiguration) {
+  }
+
+  @Override
+  public <T extends ModuleBasedConfiguration & RunJavaConfiguration> void checkConfiguration(T runJavaConfiguration)
+    throws RuntimeConfigurationException {
+
   }
 }
