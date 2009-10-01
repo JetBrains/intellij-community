@@ -117,7 +117,17 @@ public class CoverageConfigurable<T extends ModuleBasedConfiguration & RunJavaCo
     if (runner != null) {
       myCoverageRunnerCb.setSelectedItem(runner);
     } else {
-      myCoverageRunnerCb.setSelectedIndex(0);
+      final String runnerId = configuration.getRunnerId();
+      if (runnerId != null){
+        final CoverageRunnerItem runnerItem = new CoverageRunnerItem(runnerId);
+        final DefaultComboBoxModel model = (DefaultComboBoxModel)myCoverageRunnerCb.getModel();
+        if (model.getIndexOf(runnerItem) == -1) {
+          model.addElement(runnerItem);
+        }
+        myCoverageRunnerCb.setSelectedItem(runnerItem);
+      } else {
+        myCoverageRunnerCb.setSelectedIndex(0);
+      }
     }
     UIUtil.setEnabled(myRunnerPanel, isJre50 && configuration.isCoverageEnabled(), true);
 
@@ -159,7 +169,7 @@ public class CoverageConfigurable<T extends ModuleBasedConfiguration & RunJavaCo
     configuration.setMergeWithPreviousResults(myMergeDataCheckbox.isSelected());
     configuration.setCoveragePatterns(myClassFilterEditor.getFilters());
     configuration.setSuiteToMergeWith((String)myMergedCoverageSuiteCombo.getSelectedItem());
-    configuration.setCoverageRunner((CoverageRunner)myCoverageRunnerCb.getSelectedItem());
+    configuration.setCoverageRunner(((CoverageRunnerItem)myCoverageRunnerCb.getSelectedItem()).getRunner());
     configuration.setTrackPerTestCoverage(myTrackPerTestCoverageCb.isSelected());
     configuration.setSampling(mySamplingRb.isSelected());
     configuration.setTrackTestFolders(myTrackTestSourcesCb.isSelected());
@@ -175,7 +185,7 @@ public class CoverageConfigurable<T extends ModuleBasedConfiguration & RunJavaCo
     final DefaultComboBoxModel runnersModel = new DefaultComboBoxModel();
     myCoverageRunnerCb = new JComboBox(runnersModel);
     for (CoverageRunner runner : Extensions.getExtensions(CoverageRunner.EP_NAME)) {
-      runnersModel.addElement(runner);
+      runnersModel.addElement(new CoverageRunnerItem(runner));
     }
     myCoverageRunnerCb.setRenderer(new DefaultListCellRenderer(){
       @Override
@@ -183,13 +193,13 @@ public class CoverageConfigurable<T extends ModuleBasedConfiguration & RunJavaCo
                                                     final Object value,
                                                     final int index, final boolean isSelected, final boolean cellHasFocus) {
         final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        setText(((CoverageRunner)value).getPresentableName());
+        setText(((CoverageRunnerItem)value).getPresentableName());
         return rendererComponent;
       }
     });
     myCoverageRunnerCb.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        final CoverageRunner runner = (CoverageRunner)myCoverageRunnerCb.getSelectedItem();
+        final CoverageRunner runner = ((CoverageRunnerItem)myCoverageRunnerCb.getSelectedItem()).getRunner();
         enableTracingPanel(runner != null && runner.isCoverageByTestApplicable());
         myTrackPerTestCoverageCb.setEnabled(myTracingRb.isSelected() && canHavePerTestCoverage() && runner != null && runner.isCoverageByTestApplicable());
       }
@@ -211,7 +221,7 @@ public class CoverageConfigurable<T extends ModuleBasedConfiguration & RunJavaCo
 
     ActionListener samplingListener = new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        final CoverageRunner runner = (CoverageRunner)myCoverageRunnerCb.getSelectedItem();
+        final CoverageRunner runner = ((CoverageRunnerItem)myCoverageRunnerCb.getSelectedItem()).getRunner();
         myTrackPerTestCoverageCb.setEnabled(canHavePerTestCoverage() && myTracingRb.isSelected() && runner != null && runner.isCoverageByTestApplicable());
       }
     };
@@ -257,7 +267,7 @@ public class CoverageConfigurable<T extends ModuleBasedConfiguration & RunJavaCo
         myMergeDataCheckbox.setEnabled(isCoverageEnabled);
         UIUtil.setEnabled(myRunnerPanel, isCoverageEnabled, true);
         myMergedCoverageSuiteCombo.setEnabled(isCoverageEnabled && myMergeDataCheckbox.isSelected());
-        final CoverageRunner runner = (CoverageRunner)myCoverageRunnerCb.getSelectedItem();
+        final CoverageRunner runner = ((CoverageRunnerItem)myCoverageRunnerCb.getSelectedItem()).getRunner();
         enableTracingPanel(isCoverageEnabled && runner != null && runner.isCoverageByTestApplicable());
         myTrackPerTestCoverageCb.setEnabled(myTracingRb.isSelected() && isCoverageEnabled && canHavePerTestCoverage() && runner != null && runner.isCoverageByTestApplicable());
       }
@@ -277,4 +287,47 @@ public class CoverageConfigurable<T extends ModuleBasedConfiguration & RunJavaCo
   }
 
   protected void disposeEditor() {}
+
+  private static class CoverageRunnerItem {
+    private CoverageRunner myRunner;
+    private @NotNull String myRunnerId;
+
+    private CoverageRunnerItem(@NotNull CoverageRunner runner) {
+      myRunner = runner;
+      myRunnerId = runner.getId();
+    }
+
+    private CoverageRunnerItem(String runnerId) {
+      myRunnerId = runnerId;
+    }
+
+    public CoverageRunner getRunner() {
+      return myRunner;
+    }
+
+    public String getRunnerId() {
+      return myRunnerId;
+    }
+
+    public String getPresentableName() {
+      return myRunner != null ? myRunner.getPresentableName() : myRunnerId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      CoverageRunnerItem that = (CoverageRunnerItem)o;
+
+      if (!myRunnerId.equals(that.myRunnerId)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return myRunnerId.hashCode();
+    }
+  }
 }

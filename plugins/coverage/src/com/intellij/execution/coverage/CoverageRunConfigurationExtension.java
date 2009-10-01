@@ -9,10 +9,7 @@ import com.intellij.coverage.CoverageSuite;
 import com.intellij.coverage.IDEACoverageRunner;
 import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.RunJavaConfiguration;
-import com.intellij.execution.configurations.DebuggingRunnerData;
-import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
-import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.configurations.coverage.CoverageConfigurable;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.process.OSProcessHandler;
@@ -49,6 +46,11 @@ public class CoverageRunConfigurationExtension extends RunConfigurationExtension
     return "Code Coverage";
   }
 
+  @Override
+  public String getName() {
+    return "coverage";
+  }
+
   @Nullable
   public <T extends ModuleBasedConfiguration & RunJavaConfiguration> Icon getIcon(T runConfiguration) {
     final CoverageEnabledConfiguration coverageEnabledConfiguration = CoverageEnabledConfiguration.get(runConfiguration);
@@ -82,5 +84,13 @@ public class CoverageRunConfigurationExtension extends RunConfigurationExtension
   @Override
   public <T extends ModuleBasedConfiguration & RunJavaConfiguration> void patchConfiguration(T runJavaConfiguration) {
     CoverageEnabledConfiguration.get(runJavaConfiguration).setUpCoverageFilters(runJavaConfiguration.getRunClass(), runJavaConfiguration.getPackage());
+  }
+
+  @Override
+  public <T extends ModuleBasedConfiguration & RunJavaConfiguration> void checkConfiguration(T runJavaConfiguration)
+    throws RuntimeConfigurationException {
+    if (CoverageEnabledConfiguration.get(runJavaConfiguration).getCoverageRunner() == null) {
+      throw new RuntimeConfigurationException("Coverage runner invalid");
+    }
   }
 }

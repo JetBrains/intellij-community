@@ -18,6 +18,7 @@ package com.intellij.execution.configurations.coverage;
 
 import com.intellij.coverage.CoverageRunner;
 import com.intellij.coverage.CoverageSuite;
+import com.intellij.coverage.IDEACoverageRunner;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
@@ -73,6 +74,7 @@ public class CoverageEnabledConfiguration implements JDOMExternalizable{
   private final Project myProject;
   private CoverageSuite myCurrentCoverageSuite;
   private final ModuleBasedConfiguration myConfiguration;
+  private String myRunnerId;
 
   public CoverageEnabledConfiguration(ModuleBasedConfiguration configuration) {
     myConfiguration = configuration;
@@ -94,8 +96,13 @@ public class CoverageEnabledConfiguration implements JDOMExternalizable{
   }
 
   public void readExternal(Element element) throws InvalidDataException {
-    final String enabledAttribute = element.getAttributeValue(COVERAGE_ENABLED_ATTRIBUTE_NAME);
-    myIsCoverageEnabled = enabledAttribute != null && Boolean.valueOf(enabledAttribute).booleanValue();
+    if (element.getAttributeValue(COVERAGE_ENABLED_ATTRIBUTE_NAME) == null) { //try old format
+      Element parentElement = element.getParentElement();
+      if (parentElement != null && parentElement.getAttributeValue(COVERAGE_ENABLED_ATTRIBUTE_NAME) != null && parentElement.getAttributeValue(COVERAGE_MERGE_ATTRIBUTE_NAME) != null) {
+        element = parentElement;
+      }
+    }
+    myIsCoverageEnabled = element.getAttributeValue(COVERAGE_ENABLED_ATTRIBUTE_NAME) != null && Boolean.valueOf(element.getAttributeValue(COVERAGE_ENABLED_ATTRIBUTE_NAME)).booleanValue();
 
     final String mergeAttribute = element.getAttributeValue(COVERAGE_MERGE_ATTRIBUTE_NAME);
     myIsMergeWithPreviousResults = mergeAttribute != null && Boolean.valueOf(mergeAttribute).booleanValue();
@@ -123,10 +130,10 @@ public class CoverageEnabledConfiguration implements JDOMExternalizable{
         }
       }
     }
-    String runner = element.getAttributeValue(COVERAGE_RUNNER);
-    if (runner == null) runner = "idea";
+    myRunnerId = element.getAttributeValue(COVERAGE_RUNNER);
+    myCoverageRunner = null;
     for (CoverageRunner coverageRunner : Extensions.getExtensions(CoverageRunner.EP_NAME)) {
-      if (Comparing.strEqual(coverageRunner.getId(), runner)) {
+      if (Comparing.strEqual(coverageRunner.getId(), myRunnerId)) {
         myCoverageRunner = coverageRunner;
         break;
       }
@@ -194,6 +201,8 @@ public class CoverageEnabledConfiguration implements JDOMExternalizable{
     if (myTrackTestFolders) element.setAttribute(TRACK_TEST_FOLDERS, String.valueOf(myTrackTestFolders));
     if (myCoverageRunner != null) {
       element.setAttribute(COVERAGE_RUNNER, myCoverageRunner.getId());
+    } else if (myRunnerId != null) {
+      element.setAttribute(COVERAGE_RUNNER, myRunnerId);
     }
     if (myCoveragePatterns != null) {
       for (ClassFilter pattern : myCoveragePatterns) {
@@ -206,8 +215,10 @@ public class CoverageEnabledConfiguration implements JDOMExternalizable{
 
   public void appendCoverageArgument(JavaParameters javaParameters) {
     try {
-      myCoverageRunner.appendCoverageArgument(new File(getCoverageFilePath()).getCanonicalPath(), getPatterns(), javaParameters, myTrackPerTestCoverage,
-                                              mySampling);
+      if (myCoverageRunner != null) {
+        myCoverageRunner.appendCoverageArgument(new File(getCoverageFilePath()).getCanonicalPath(), getPatterns(), javaParameters, myTrackPerTestCoverage,
+                                                mySampling);
+      }
     }
     catch (IOException e) {
       LOG.info(e);
@@ -219,7 +230,8 @@ public class CoverageEnabledConfiguration implements JDOMExternalizable{
     if (myCoverageFilePath == null || !isMergeWithPreviousResults()) {
       @NonNls final String coverageRootPath = PathManager.getSystemPath() + File.separator + "coverage";
       myCoverageFilePath =
-          coverageRootPath + File.separator + myProject.getName() + '$' + FileUtil.sanitizeFileName(myName) + "." + myCoverageRunner.getDataFileExtension();
+          coverageRootPath + File.separator + myProject.getName() + '$' + FileUtil.sanitizeFileName(myName) + "." +
+          (myCoverageRunner != null ? myCoverageRunner.getDataFileExtension() : CoverageRunner.getInstance(IDEACoverageRunner.class).getDataFileExtension());
       new File(coverageRootPath).mkdirs();
     }
     return myCoverageFilePath;
@@ -297,5 +309,9 @@ public class CoverageEnabledConfiguration implements JDOMExternalizable{
         setCoveragePatterns(new ClassFilter[]{new ClassFilter(pattern + ".*")});
       }
     }
+  }
+
+  public String getRunnerId() {
+    return myRunnerId;
   }
 }
