@@ -77,5 +77,5 @@
   <xi:include href="/META-INF/ultimate.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
-
+  <xi:include href="/META-INF/GraphPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
 </idea-plugin>
