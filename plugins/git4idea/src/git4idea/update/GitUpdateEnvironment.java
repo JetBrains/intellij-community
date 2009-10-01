@@ -19,6 +19,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -36,7 +37,10 @@ import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.changes.GitChangeUtils;
-import git4idea.commands.*;
+import git4idea.commands.GitHandler;
+import git4idea.commands.GitHandlerUtil;
+import git4idea.commands.GitLineHandler;
+import git4idea.commands.GitLineHandlerAdapter;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.MergeChangeCollector;
@@ -95,6 +99,7 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
                                          @NotNull Ref<SequentialUpdatesContext> sequentialUpdatesContextRef)
     throws ProcessCanceledException {
     List<VcsException> exceptions = new ArrayList<VcsException>();
+    ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     for (final VirtualFile root : GitUtil.gitRoots(Arrays.asList(filePaths))) {
       try {
         // check if there is a remote for the branch
@@ -106,122 +111,119 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
         if (value == null || value.length() == 0) {
           continue;
         }
-        boolean stashCreated =
-          mySettings.UPDATE_STASH && GitStashUtils.saveStash(myProject, root, "Uncommitted changes before update operation");
+        final Ref<Boolean> cancelled = new Ref<Boolean>(false);
+        final Ref<Throwable> ex = new Ref<Throwable>();
+        projectManager.blockReloadingProjectOnExternalChanges();
         try {
-          // remember the current position
-          GitRevisionNumber before = GitRevisionNumber.resolve(myProject, root, "HEAD");
-          // do pull
-          GitLineHandler h = new GitLineHandler(myProject, root, GitHandler.PULL);
-          // ignore merge failure for the pull
-          h.ignoreErrorCode(1);
-          switch (mySettings.UPDATE_TYPE) {
-            case REBASE:
-              h.addParameters("--rebase");
-              break;
-            case MERGE:
-              h.addParameters("--no-rebase");
-              break;
-            case BRANCH_DEFAULT:
-              // use default for the branch
-              break;
-            default:
-              assert false : "Unknown update type: " + mySettings.UPDATE_TYPE;
-          }
-          h.addParameters("--no-stat");
-          h.addParameters("-v");
-          final Ref<Boolean> cancelled = new Ref<Boolean>(false);
+          boolean stashCreated =
+            mySettings.UPDATE_STASH && GitStashUtils.saveStash(myProject, root, "Uncommitted changes before update operation");
           try {
-            RebaseConflictDetector rebaseConflictDetector = new RebaseConflictDetector();
-            h.addLineListener(rebaseConflictDetector);
+            // remember the current position
+            GitRevisionNumber before = GitRevisionNumber.resolve(myProject, root, "HEAD");
+            // do pull
+            GitLineHandler h = new GitLineHandler(myProject, root, GitHandler.PULL);
+            // ignore merge failure for the pull
+            h.ignoreErrorCode(1);
+            switch (mySettings.UPDATE_TYPE) {
+              case REBASE:
+                h.addParameters("--rebase");
+                break;
+              case MERGE:
+                h.addParameters("--no-rebase");
+                break;
+              case BRANCH_DEFAULT:
+                // use default for the branch
+                break;
+              default:
+                assert false : "Unknown update type: " + mySettings.UPDATE_TYPE;
+            }
+            h.addParameters("--no-stat");
+            h.addParameters("-v");
             try {
-              GitHandlerUtil.doSynchronouslyWithExceptions(h, progressIndicator);
+              RebaseConflictDetector rebaseConflictDetector = new RebaseConflictDetector();
+              h.addLineListener(rebaseConflictDetector);
+              try {
+                GitHandlerUtil.doSynchronouslyWithExceptions(h, progressIndicator);
+              }
+              finally {
+                if (!rebaseConflictDetector.isRebaseConflict()) {
+                  exceptions.addAll(h.errors());
+                }
+              }
+              do {
+                mergeFiles(root, cancelled, ex);
+                //noinspection ThrowableResultOfMethodCallIgnored
+                if (ex.get() != null) {
+                  //noinspection ThrowableResultOfMethodCallIgnored
+                  throw GitUtil.rethrowVcsException(ex.get());
+                }
+                checkLocallyModified(root, cancelled, ex);
+                //noinspection ThrowableResultOfMethodCallIgnored
+                if (ex.get() != null) {
+                  //noinspection ThrowableResultOfMethodCallIgnored
+                  throw GitUtil.rethrowVcsException(ex.get());
+                }
+                if (cancelled.get()) {
+                  break;
+                }
+                doRebase(progressIndicator, root, rebaseConflictDetector, "--continue");
+                final Ref<Integer> result = new Ref<Integer>();
+                noChangeLoop:
+                while (rebaseConflictDetector.isNoChange()) {
+                  UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+                    public void run() {
+                      int rc = Messages.showDialog(myProject, GitBundle.message("update.rebase.no.change", root.getPresentableUrl()),
+                                                   GitBundle.getString("update.rebase.no.change.title"),
+                                                   new String[]{GitBundle.getString("update.rebase.no.change.skip"),
+                                                     GitBundle.getString("update.rebase.no.change.retry"),
+                                                     GitBundle.getString("update.rebase.no.change.cancel")}, 0, Messages.getErrorIcon());
+                      result.set(rc);
+                    }
+                  });
+                  switch (result.get()) {
+                    case 0:
+                      doRebase(progressIndicator, root, rebaseConflictDetector, "--skip");
+                      continue noChangeLoop;
+                    case 1:
+                      continue noChangeLoop;
+                    case 2:
+                      cancelled.set(true);
+                      break noChangeLoop;
+                  }
+                }
+              }
+              while (rebaseConflictDetector.isRebaseConflict() && !cancelled.get());
+              if (cancelled.get()) {
+                //noinspection ThrowableInstanceNeverThrown
+                exceptions.add(new VcsException("The update process was cancelled for " + root.getPresentableUrl()));
+                doRebase(progressIndicator, root, rebaseConflictDetector, "--abort");
+              }
             }
             finally {
-              if (!rebaseConflictDetector.isRebaseConflict()) {
-                exceptions.addAll(h.errors());
+              if (!cancelled.get()) {
+                // find out what have changed
+                MergeChangeCollector collector = new MergeChangeCollector(myProject, root, before, updatedFiles);
+                collector.collect(exceptions);
               }
-            }
-            do {
-              final Ref<Throwable> ex = new Ref<Throwable>();
-              UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-                public void run() {
-                  try {
-                    List<VirtualFile> affectedFiles = GitChangeUtils.unmergedFiles(myProject, root);
-                    while (affectedFiles.size() != 0) {
-                      AbstractVcsHelper.getInstance(myProject).showMergeDialog(affectedFiles, myVcs.getMergeProvider());
-                      affectedFiles = GitChangeUtils.unmergedFiles(myProject, root);
-                      if (affectedFiles.size() != 0) {
-                        int result = Messages.showYesNoDialog(myProject, GitBundle.message("update.rebase.unmerged", affectedFiles.size(),
-                                                                                           root.getPresentableUrl()),
-                                                              GitBundle.getString("update.rebase.unmerged.title"), Messages.getErrorIcon());
-                        if (result != 0) {
-                          cancelled.set(true);
-                          return;
-                        }
-                      }
-                    }
-                    if(!GitUpdateLocallyModifiedDialog.showIfNeeded(myProject, root)) {
-                      cancelled.set(true);
-                    }
-                  }
-                  catch (Throwable t) {
-                    ex.set(t);
-                  }
-                }
-              });
-              //noinspection ThrowableResultOfMethodCallIgnored
-              if (ex.get() != null) {
-                //noinspection ThrowableResultOfMethodCallIgnored
-                throw GitUtil.rethrowVcsException(ex.get());
-              }
-              if (cancelled.get()) {
-                break;
-              }
-              doRebase(progressIndicator, root, rebaseConflictDetector, "--continue");
-              final Ref<Integer> result = new Ref<Integer>();
-              noChangeLoop:
-              while (rebaseConflictDetector.isNoChange()) {
-                UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-                  public void run() {
-                    int rc = Messages.showDialog(myProject, GitBundle.message("update.rebase.no.change", root.getPresentableUrl()),
-                                                 GitBundle.getString("update.rebase.no.change.title"),
-                                                 new String[]{GitBundle.getString("update.rebase.no.change.skip"),
-                                                   GitBundle.getString("update.rebase.no.change.retry"),
-                                                   GitBundle.getString("update.rebase.no.change.cancel")}, 0, Messages.getErrorIcon());
-                    result.set(rc);
-                  }
-                });
-                switch (result.get()) {
-                  case 0:
-                    doRebase(progressIndicator, root, rebaseConflictDetector, "--skip");
-                    continue noChangeLoop;
-                  case 1:
-                    continue noChangeLoop;
-                  case 2:
-                    cancelled.set(true);
-                    break noChangeLoop;
-                }
-              }
-            }
-            while (rebaseConflictDetector.isRebaseConflict() && !cancelled.get());
-            if (cancelled.get()) {
-              //noinspection ThrowableInstanceNeverThrown
-              exceptions.add(new VcsException("The update process was cancelled for " + root.getPresentableUrl()));
-              doRebase(progressIndicator, root, rebaseConflictDetector, "--abort");
             }
           }
           finally {
-            if (!cancelled.get()) {
-              // find out what have changed
-              MergeChangeCollector collector = new MergeChangeCollector(myProject, root, before, updatedFiles);
-              collector.collect(exceptions);
+            if (stashCreated) {
+              GitStashUtils.popLastStash(myProject, root);
             }
           }
         }
         finally {
-          if (stashCreated) {
-            GitStashUtils.popLastStash(myProject, root);
+          try {
+            mergeFiles(root, cancelled, ex);
+            //noinspection ThrowableResultOfMethodCallIgnored
+            if (ex.get() != null) {
+              //noinspection ThrowableResultOfMethodCallIgnored
+              exceptions.add(GitUtil.rethrowVcsException(ex.get()));
+            }
+          }
+          finally {
+            projectManager.unblockReloadingProjectOnExternalChanges();
           }
         }
       }
@@ -230,6 +232,61 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
       }
     }
     return new GitUpdateSession(exceptions);
+  }
+
+  /**
+   * Merge files
+   *
+   * @param root      the project root
+   * @param cancelled the cancelled indicator
+   * @param ex        the exception holder
+   */
+  private void mergeFiles(final VirtualFile root, final Ref<Boolean> cancelled, final Ref<Throwable> ex) {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      public void run() {
+        try {
+          List<VirtualFile> affectedFiles = GitChangeUtils.unmergedFiles(myProject, root);
+          while (affectedFiles.size() != 0) {
+            AbstractVcsHelper.getInstance(myProject).showMergeDialog(affectedFiles, myVcs.getMergeProvider());
+            affectedFiles = GitChangeUtils.unmergedFiles(myProject, root);
+            if (affectedFiles.size() != 0) {
+              int result = Messages
+                .showYesNoDialog(myProject, GitBundle.message("update.rebase.unmerged", affectedFiles.size(), root.getPresentableUrl()),
+                                 GitBundle.getString("update.rebase.unmerged.title"), Messages.getErrorIcon());
+              if (result != 0) {
+                cancelled.set(true);
+                return;
+              }
+            }
+          }
+        }
+        catch (Throwable t) {
+          ex.set(t);
+        }
+      }
+    });
+  }
+
+  /**
+   * Check and process locally modified files
+   *
+   * @param root      the project root
+   * @param cancelled the cancelled indicator
+   * @param ex        the exception holder
+   */
+  private void checkLocallyModified(final VirtualFile root, final Ref<Boolean> cancelled, final Ref<Throwable> ex) {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      public void run() {
+        try {
+          if (!GitUpdateLocallyModifiedDialog.showIfNeeded(myProject, root)) {
+            cancelled.set(true);
+          }
+        }
+        catch (Throwable t) {
+          ex.set(t);
+        }
+      }
+    });
   }
 
   /**
