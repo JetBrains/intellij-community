@@ -4,7 +4,6 @@ import static org.jetbrains.jps.idea.IdeaProjectLoader.*
 includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
 includeTool << Jps
 
-requireProperty("buildNumber", requireProperty("build.number", "SNAPSHOT"))
 requireProperty("out", "$home/out")
 
 setProperty("version", "MaiaCE")
@@ -71,7 +70,7 @@ def wire_build_date(String buildNumber) {
 
 target('default': 'The default target') {
   depends(compile)
-  layoutAll(home, out, buildNumber)
+  layoutAll(home, out, "90.SNAPSHOT")
 }
 
 public def layoutAll(String home, String out, String buildNumber) {
