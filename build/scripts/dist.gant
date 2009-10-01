@@ -19,7 +19,7 @@ class Paths {
   final distMac
   final artifacts
 
-  def Paths(String home, String out) {
+  def Paths(String out) {
     sandbox = out
     distWin = "$sandbox/dist.win"
     distAll = "$sandbox/dist.all"
@@ -30,9 +30,9 @@ class Paths {
   }
 }
 
-setProperty("paths", new Paths(home, out))
+setProperty("paths", new Paths(out))
 
-def paths = new Paths(home, out)
+def paths = new Paths(out)
 
 def includeFile(String filename) {
   Script s = groovyShell.parse(new File("$home/build/scripts/$filename"))
@@ -64,14 +64,20 @@ String appInfoFile() {
   return "${this["community-resources"].output}/idea/IdeaApplicationInfo.xml"
 }
 
-def wire_build_date() {
+def wire_build_date(String buildNumber) {
   ant.replace(token: "__BUILD_NUMBER__", value: buildNumber, file: appInfoFile())
   ant.replace(token: "__BUILD_DATE__", value: DSTAMP, file: appInfoFile())
 }
 
 target('default': 'The default target') {
   depends(compile)
-  wire_build_date()
+  layoutAll(home, out, buildNumber)
+}
+
+public def layoutAll(String home, String out, String buildNumber) {
+  Paths paths = new Paths(out)
+
+  wire_build_date(buildNumber)
 
   def layouts = includeFile("layouts.gant")
   layouts.layoutFull(paths.distAll)
@@ -81,9 +87,9 @@ target('default': 'The default target') {
     fileset(dir: "$home/license")
   }
 
-  layoutMac()
-  layoutLinux()
-  layoutWin()
+  layoutMac(home, paths)
+  layoutLinux(home, paths)
+  layoutWin(home, paths)
 }
 
 private def patchPropertiesFile(String where) {
@@ -99,7 +105,7 @@ idea.fatal.error.notification=enabled
   )
 }
 
-private def layoutWin() {
+private def layoutWin(String home, Paths paths) {
   layout("$paths.distWin") {
     dir("bin") {
       fileset(dir: "$home/bin") { include(name: "*.*") }
@@ -116,7 +122,7 @@ private def layoutWin() {
   }
 }
 
-private def layoutMac() {
+private def layoutMac(String home, Paths paths) {
   project.stage("Cleaning up sandbox folder")
 
   ant.copy(todir: "$paths.distMac/bin") {
@@ -156,7 +162,7 @@ private def layoutMac() {
   }
 }
 
-def layoutLinux() {
+def layoutLinux(String home, Paths paths) {
   project.stage("tar.gz")
   layout(paths.distUnix) {
     dir("bin") {

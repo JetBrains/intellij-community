@@ -9,6 +9,10 @@ package com.intellij.psi.impl.source;
 import com.intellij.util.CharTable;
 
 public class IdentityCharTable implements CharTable {
+  public IdentityCharTable() {
+  }
+
+  public static final IdentityCharTable INSTANCE = new IdentityCharTable();
   public CharSequence intern(final CharSequence text) {
     return text;
   }
