@@ -299,7 +299,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
 
     if (CacheUtil.isCopy(this)) {
-      treeElement.setCharTable(new IdentityCharTable());
+      treeElement.setCharTable(IdentityCharTable.INSTANCE);
     }
 
     return treeElement;

@@ -23,7 +23,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.*;
@@ -202,8 +201,6 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
           throw new RuntimeException(exceptionContext("Patch error"), e);
         }
         assert parsedNode.getText().equals(documentText) : exceptionContext("After patch: doc:\n" + documentText + "\n---PSI:\n" + parsedNode.getText() + "\n---chars:\n"+outChars);
-
-        ((FileElement)parsedNode).setManager((PsiManagerEx)myPsiManager);
 
         virtualFile.setContent(null, documentWindow.getText(), false);
         FileDocumentManagerImpl.registerDocument(documentWindow, virtualFile);
@@ -496,10 +493,6 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
       }
     }
     return tokens;
-  }
-
-  PsiElement getContextElement() {
-    return myContextElement;
   }
 
   void addToResults(Places places) {
