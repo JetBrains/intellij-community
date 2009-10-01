@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -326,6 +327,14 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     final PsiMethod constructor = ((GrClassDefinition) defintion).getMethods()[0];
     assert constructor instanceof GrConstructorImpl;
     return ((GrConstructorImpl) constructor);
+  }
+
+  @Override
+  public GrLabel createLabel(@NotNull String name) {
+    GroovyFileBase file = createDummyFile(name + ": println()");
+    GrTopStatement definition = file.getTopStatements()[0];
+    assert definition instanceof GrLabeledStatement;
+    return ((GrLabeledStatement)definition).getLabel();
   }
 
   public GrMethod createMethodFromText(@NotNull String methodText) {

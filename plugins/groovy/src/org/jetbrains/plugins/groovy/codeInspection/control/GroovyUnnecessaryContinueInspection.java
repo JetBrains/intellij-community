@@ -89,7 +89,7 @@ public class GroovyUnnecessaryContinueInspection extends BaseInspection {
       if (continueStatement.getContainingFile().getViewProvider() instanceof TemplateLanguageFileViewProvider) {
         return;
       }
-      final GrStatement continuedStatement = continueStatement.findTarget();
+      final GrStatement continuedStatement = continueStatement.findTargetStatement();
       if (continuedStatement == null) {
         return;
       }

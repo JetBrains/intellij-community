@@ -22,6 +22,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -135,4 +136,6 @@ public abstract class GroovyPsiElementFactory {
   public abstract GrMethod createMethodFromText(String modifier, String name, String type, String[] paramTypes);
 
   public abstract GrMethod createConstructorFromText(@NotNull String constructorName, String[] paramTypes, String[] paramNames, String body);
+
+  public abstract GrLabel createLabel(@NotNull String name); 
 }

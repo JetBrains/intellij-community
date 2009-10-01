@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.NameHint;
@@ -25,13 +26,13 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -219,21 +220,68 @@ public class ResolveUtil {
     return null;
   }
 
-  @Nullable
-  public static GrLabeledStatement resolveLabeledStatement(String label, PsiElement place) {
-    while (place != null) {
-      PsiElement run = place;
-      while (run != null) {
-        if (run instanceof GrLabeledStatement && label.equals(((GrLabeledStatement)run).getLabel())) return (GrLabeledStatement)run;
+  @NotNull
+  public static Pair<GrStatement, GrLabeledStatement> resolveLabelTargets(@Nullable String labelName,
+                                                                          @Nullable PsiElement element,
+                                                                          boolean isBreak) {
+    if (element == null) return new Pair<GrStatement, GrLabeledStatement>(null, null);
 
-        run = run.getPrevSibling();
+    if (labelName == null) {
+      do {
+        element = element.getParent();
+        if (element == null || element instanceof GrClosableBlock || element instanceof GrMember || element instanceof GroovyFile) {
+          return new Pair<GrStatement, GrLabeledStatement>(null, null);
+        }
       }
+      while (!(element instanceof GrLoopStatement) && !(isBreak && element instanceof GrSwitchStatement));
+      return new Pair<GrStatement, GrLabeledStatement>(((GrStatement)element), null);
+    }
 
-      place = place.getContext();
+    GrStatement statement = null;
+    do {
+      PsiElement last = element;
+      element = element.getParent();
+      if (element == null || element instanceof GrMember || element instanceof GrClosableBlock || element instanceof GroovyFile) break;
+      if (element instanceof GrStatement) {
+        statement = (GrStatement)element;
+      }
+      PsiElement sibling = element;
+      while (sibling != null) {
+        final GrLabeledStatement labelStatement = findLabelStatementIn(sibling, last, labelName);
+        if (labelStatement != null) {
+          return new Pair<GrStatement, GrLabeledStatement>(statement, labelStatement);
+        }
+        sibling = sibling.getPrevSibling();
+      }
+    }
+    while (true);
+    return new Pair<GrStatement, GrLabeledStatement>(null, null);
+  }
 
-      if (place instanceof GrMember || place instanceof GrClosableBlock) break;
+  private static boolean isApplicableLabelStatement(PsiElement element, String labelName) {
+    return ((element instanceof GrLabeledStatement && labelName.equals(((GrLabeledStatement)element).getLabelName())));
+  }
+
+  @Nullable
+  private static GrLabeledStatement findLabelStatementIn(PsiElement element, PsiElement lastChild, String labelName) {
+    if (isApplicableLabelStatement(element, labelName)) {
+      return (GrLabeledStatement)element;
+    }
+    for (PsiElement child = element.getFirstChild(); child != null && child != lastChild; child = child.getNextSibling()) {
+      final GrLabeledStatement statement = findLabelStatementIn(child, child, labelName);
+      if (statement != null) return statement;
     }
     return null;
+  }
+
+  @Nullable
+  public static GrLabeledStatement resolveLabeledStatement(@Nullable String labelName, @Nullable PsiElement element, boolean isBreak) {
+    return resolveLabelTargets(labelName, element, isBreak).second;
+  }
+
+  @Nullable
+  public static GrStatement resolveLabelTargetStatement(@Nullable String labelName, @Nullable PsiElement element, boolean isBreak) {
+    return resolveLabelTargets(labelName, element, isBreak).first;
   }
 
   public static boolean processCategoryMembers(PsiElement place, ResolverProcessor processor, PsiClassType thisType) {

@@ -15,12 +15,8 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.branch;
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-
 /**
  * @author ilyas
  */
 public interface GrBreakStatement extends GrFlowInterruptingStatement {
-  @Nullable GrStatement getBreakedLoop();
 }

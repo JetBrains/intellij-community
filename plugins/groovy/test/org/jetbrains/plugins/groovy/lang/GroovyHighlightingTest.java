@@ -174,6 +174,10 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
     myFixture.testHighlighting(true, false, false, "x/"+getTestName(false)+".groovy");
   }
 
+  public void testBreakOutside() throws Exception {doTest();}
+  public void testUndefinedLabel() throws Exception {doTest();}
+  public void testUsedLabel() throws Exception {doTest();}
+
   public void testNestedMethods() throws Throwable {
     doTest();
   }
