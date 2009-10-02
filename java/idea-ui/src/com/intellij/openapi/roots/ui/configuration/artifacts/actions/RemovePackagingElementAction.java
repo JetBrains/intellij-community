@@ -1,7 +1,7 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.util.Icons;
@@ -9,7 +9,7 @@ import com.intellij.util.Icons;
 /**
  * @author nik
  */
-public class RemovePackagingElementAction extends AnAction {
+public class RemovePackagingElementAction extends DumbAwareAction {
   private final ArtifactEditorEx myArtifactEditor;
 
   public RemovePackagingElementAction(ArtifactEditorEx artifactEditor) {

@@ -1,7 +1,7 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeSelection;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
@@ -12,7 +12,7 @@ import java.util.Collection;
 /**
  * @author nik
  */
-public class HideContentAction extends AnAction {
+public class HideContentAction extends DumbAwareAction {
   private ArtifactEditorEx myArtifactEditor;
 
   public HideContentAction(ArtifactEditorEx artifactEditor) {

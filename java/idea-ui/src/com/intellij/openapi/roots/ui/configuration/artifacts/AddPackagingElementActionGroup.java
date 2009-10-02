@@ -3,6 +3,8 @@ package com.intellij.openapi.roots.ui.configuration.artifacts;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.packaging.elements.PackagingElementType;
@@ -16,7 +18,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public class AddPackagingElementActionGroup extends ActionGroup {
+public class AddPackagingElementActionGroup extends ActionGroup implements DumbAware {
   private final ArtifactEditorEx myArtifactEditor;
 
   public AddPackagingElementActionGroup(ArtifactEditorEx artifactEditor) {
@@ -34,7 +36,7 @@ public class AddPackagingElementActionGroup extends ActionGroup {
     for (final PackagingElementType<?> type : types) {
       if (!type.canCreate(myArtifactEditor.getContext(), myArtifactEditor.getArtifact())) continue;
 
-      final AnAction action = new AnAction(type.getPresentableName()) {
+      final AnAction action = new DumbAwareAction(type.getPresentableName()) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           myArtifactEditor.addNewPackagingElement(type);
