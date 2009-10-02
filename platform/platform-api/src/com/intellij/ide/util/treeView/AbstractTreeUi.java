@@ -805,10 +805,6 @@ class AbstractTreeUi {
           if (expanded) {
             expand(node, canSmartExpand);
           }
-
-          if (expanded || wasLeaf) {
-            expand(node, descriptor, wasLeaf, canSmartExpand);
-          }
         }
 
         removeFromUpdating(node);
@@ -2610,7 +2606,9 @@ class AbstractTreeUi {
       public void onReady(final DefaultMutableTreeNode node) {
 
         if (node.getChildCount() > 0 && !myTree.isExpanded(new TreePath(node.getPath()))) {
-          expand(node, canSmartExpand);
+          if (!isAutoExpand(node)) {
+            expand(node, canSmartExpand);
+          }
         }
 
         if (expandIndex <= 0) {
