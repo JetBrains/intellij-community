@@ -31,12 +31,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.lang.ref.WeakReference;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Set;
+import java.util.*;
 
 public class AbstractTreeBuilder implements Disposable {
   private AbstractTreeUi myUi;
@@ -319,6 +317,10 @@ public class AbstractTreeBuilder implements Disposable {
 
   public final ActionCallback getReady() {
     return myUi.getInitialized();
+  }
+
+  protected void sortChildren(Comparator<TreeNode> nodeComparator, DefaultMutableTreeNode node, ArrayList<TreeNode> children) {
+    Collections.sort(children, nodeComparator);
   }
 
   public static class AbstractTreeNodeWrapper extends AbstractTreeNode<Object> {
