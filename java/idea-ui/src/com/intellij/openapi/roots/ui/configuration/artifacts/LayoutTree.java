@@ -176,6 +176,7 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
       if (stopped && currentElement != null) {
         currentElement.rename(newValue);
         myArtifactsEditor.queueValidation();
+        myArtifactsEditor.getLayoutTreeComponent().updatePropertiesPanel(true);
         addSubtreeToUpdate((DefaultMutableTreeNode)path.getLastPathComponent());
       }
       return stopped;
