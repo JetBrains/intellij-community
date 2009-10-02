@@ -30,6 +30,7 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Configu
   private JButton myEditButton;
   private JButton myDeleteButton;
   private JButton myAddJiraPatternButton;
+  private JButton myAddYouTrackPatternButton;
   private JLabel myDescriptionLabel;
   private final Project myProject;
   private List<IssueNavigationLink> myLinks;
@@ -75,6 +76,20 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Configu
           s += "/";
         }
         myLinks.add(new IssueNavigationLink("[A-Z]+\\-\\d+", s + "browse/$0"));
+        myModel.fireTableDataChanged();
+      }
+    });
+    myAddYouTrackPatternButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        String s = Messages.showInputDialog(IssueNavigationConfigurationPanel.this, "Enter YouTrack installation URL:",
+                                            "Add YouTrack Issue Navigation Pattern", Messages.getQuestionIcon());
+        if (s == null) {
+          return;
+        }
+        if (!s.endsWith("/")) {
+          s += "/";
+        }
+        myLinks.add(new IssueNavigationLink("[A-Z]+\\-\\d+", s + "issue/$0"));
         myModel.fireTableDataChanged();
       }
     });
