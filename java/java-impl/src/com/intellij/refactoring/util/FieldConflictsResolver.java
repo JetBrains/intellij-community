@@ -101,12 +101,15 @@ public class FieldConflictsResolver {
     PsiReferenceExpression expressionFromText;
     final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     if (qualifyingClass == null) {
-      final PsiClass parentClass = PsiTreeUtil.getParentOfType(referenceExpression, PsiClass.class);
+      PsiClass parentClass = PsiTreeUtil.getParentOfType(referenceExpression, PsiClass.class);
       final PsiClass containingClass = member.getContainingClass();
       if (parentClass != null && !InheritanceUtil.isInheritorOrSelf(parentClass, containingClass, true)) {
+        while (parentClass != null && !InheritanceUtil.isInheritorOrSelf(parentClass, containingClass, true)) {
+          parentClass = PsiTreeUtil.getParentOfType(parentClass, PsiClass.class, true);
+        }
+        LOG.assertTrue(parentClass != null);
         expressionFromText = (PsiReferenceExpression)factory.createExpressionFromText("A.this." + member.getName(), null);
-        final PsiJavaCodeReferenceElement classQualifier = ((PsiThisExpression)expressionFromText.getQualifierExpression()).getQualifier();
-        classQualifier.replace(factory.createClassReferenceElement(containingClass));
+        ((PsiThisExpression)expressionFromText.getQualifierExpression()).getQualifier().replace(factory.createClassReferenceElement(parentClass));
       }
       else {
         expressionFromText = (PsiReferenceExpression)factory.createExpressionFromText("this." + member.getName(), null);
@@ -114,8 +117,7 @@ public class FieldConflictsResolver {
     }
     else {
       expressionFromText = (PsiReferenceExpression)factory.createExpressionFromText("A." + member.getName(), null);
-      final PsiReferenceExpression qualifier = factory.createReferenceExpression(qualifyingClass);
-      expressionFromText.getQualifierExpression().replace(qualifier);
+      expressionFromText.setQualifierExpression(factory.createReferenceExpression(qualifyingClass));
     }
     CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
     expressionFromText = (PsiReferenceExpression)codeStyleManager.reformat(expressionFromText);
