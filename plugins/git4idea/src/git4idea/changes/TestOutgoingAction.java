@@ -4,16 +4,18 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsOutgoingChangesProvider;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.util.Pair;
 import git4idea.GitVcs;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Collection;
 
 public class TestOutgoingAction extends AnAction {
   @Override
@@ -21,14 +23,34 @@ public class TestOutgoingAction extends AnAction {
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) return;
     final GitVcs vcs = GitVcs.getInstance(project);
+
     final VcsOutgoingChangesProvider<CommittedChangeList> provider = vcs.getOutgoingChangesProvider();
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    final VirtualFile vf = (VirtualFile)e.getDataContext().getData(PlatformDataKeys.VIRTUAL_FILE.getName());
+    try {
+      if (vf != null) {
+        final VirtualFile root = vcsManager.getVcsRootFor(vf);
+        final Pair<VcsRevisionNumber, List<CommittedChangeList>> revisionNumberListPair = provider.getOutgoingChanges(root, true);
+        final VcsRevisionNumber revisionNumber = provider.getMergeBaseNumber(vf);
+        System.out.println("revisionNumber = " + revisionNumber);
+
+        final CurrentContentRevision contentRevision = new CurrentContentRevision(new FilePathImpl(vf));
+        final Collection<Pair<VcsRevisionNumber,List<CommittedChangeList>>> rootsForChanges =
+          OutgoingChangesUtil.getVcsRootsForChanges(vcs, Collections.singletonList(new Change(contentRevision, contentRevision)));
+      }
+    }
+    catch (VcsException e1) {
+      e1.printStackTrace();
+    }
+
     final VirtualFile[] roots = vcsManager.getRootsUnderVcs(vcs);
     if (roots == null) return;
     for (VirtualFile root : roots) {
       try {
         final Pair<VcsRevisionNumber, List<CommittedChangeList>> pair = provider.getOutgoingChanges(root, true);
-        System.out.println("list.size() = " + pair.getSecond().size());
+        final VcsRevisionNumber number = provider.getMergeBaseNumber(root);
+        System.out.println("list.size() = " + pair.getSecond().size() + " number = " + number);
+        assert number.equals(pair.getFirst());
       }
       catch (VcsException e1) {
         e1.printStackTrace();
