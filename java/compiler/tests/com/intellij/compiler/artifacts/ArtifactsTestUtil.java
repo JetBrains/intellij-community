@@ -1,9 +1,12 @@
 package com.intellij.compiler.artifacts;
 
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
+import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.impl.elements.ArchivePackagingElement;
@@ -71,7 +74,17 @@ public class ArtifactsTestUtil {
     assertEquals(expected, findArtifact(project, artifactName).getRootElement().getName());
   }
 
-  private static Artifact findArtifact(Project project, String artifactName) {
+  public static void setOutput(final Project project, final String artifactName, final String outputPath) {
+    new WriteAction() {
+      protected void run(final Result result) {
+        final ModifiableArtifactModel model = ArtifactManager.getInstance(project).createModifiableModel();
+        model.getOrCreateModifiableArtifact(findArtifact(project, artifactName)).setOutputPath(outputPath);
+        model.commit();
+      }
+    }.execute();
+  }
+
+  public static Artifact findArtifact(Project project, String artifactName) {
     final ArtifactManager manager = ArtifactManager.getInstance(project);
     final Artifact artifact = manager.findArtifact(artifactName);
     assertNotNull("'" + artifactName + "' artifact not found", artifact);
