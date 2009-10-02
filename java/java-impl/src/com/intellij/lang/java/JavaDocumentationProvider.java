@@ -17,7 +17,6 @@ import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
-import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -225,12 +224,13 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider {
 
     generateModifiers(buffer, aClass);
 
-    final String classString = aClass.isInterface()
-                               ? "java.terms.interface"
-                               : aClass instanceof PsiTypeParameter
-                                 ? "java.terms.type.parameter"
-                                 : aClass.isEnum() ? "java.terms.enum" : "java.terms.class";
-    buffer.append(LangBundle.message(classString) + " ");
+    final String classString = aClass.isAnnotationType() ? "java.terms.annotation.interface"
+                               : aClass.isInterface()
+                                 ? "java.terms.interface"
+                                 : aClass instanceof PsiTypeParameter
+                                   ? "java.terms.type.parameter"
+                                   : aClass.isEnum() ? "java.terms.enum" : "java.terms.class";
+    buffer.append(LangBundle.message(classString)).append(" ");
 
     buffer.append(JavaDocUtil.getShortestClassName(aClass, aClass));
 
