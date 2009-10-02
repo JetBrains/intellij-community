@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.fileChooser.ex.FileNodeDescriptor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +18,7 @@ import javax.swing.tree.TreePath;
  * @author 2003
  *         Time: 3:07:14 PM
  */
-public abstract class ContentEntryEditingAction extends ToggleAction implements CustomComponentAction{
+public abstract class ContentEntryEditingAction extends ToggleAction implements CustomComponentAction, DumbAware {
   protected final JTree myTree;
 
   protected ContentEntryEditingAction(JTree tree) {
