@@ -1076,6 +1076,10 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       processNewFile(event.getFile());
     }
 
+    public void fileMoved(VirtualFileMoveEvent event) {
+      processNewFile(event.getFile());
+    }
+
     public void beforeFileDeletion(final VirtualFileEvent event) {
       final VirtualFile eventFile = event.getFile();
       if (LOG.isDebugEnabled() && eventFile.isDirectory()) {
