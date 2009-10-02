@@ -2,18 +2,19 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.lang.StdLanguages;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
-import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -32,6 +33,14 @@ import java.util.*;
 public class CodeInsightUtil {
   public static PsiExpression findExpressionInRange(PsiFile file, int startOffset, int endOffset) {
     if (!file.getViewProvider().getLanguages().contains(StdLanguages.JAVA)) return null;
+    PsiElement element2 = file.getViewProvider().findElementAt(endOffset - 1, StdLanguages.JAVA);
+    if (element2 instanceof PsiJavaToken) {
+      final PsiJavaToken token = (PsiJavaToken)element2;
+      final IElementType tokenType = token.getTokenType();
+      if (tokenType.equals(JavaTokenType.SEMICOLON)) {
+        endOffset = element2.getTextRange().getStartOffset();
+      }
+    }
     final PsiExpression expression = findElementInRange(file, startOffset, endOffset, PsiExpression.class);
     if (expression instanceof PsiReferenceExpression && expression.getParent() instanceof PsiMethodCallExpression) return null;
     return expression;
