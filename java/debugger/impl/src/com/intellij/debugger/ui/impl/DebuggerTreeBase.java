@@ -366,6 +366,12 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
   }
 
   public void dispose() {
+    final JComponent tooltip = myCurrentTooltip;
+    if (tooltip != null) {
+      tooltip.setVisible(false);
+    }
+    myCurrentTooltip = null;
+    myCurrentTooltipNode = null;
     Disposer.dispose(myTipManager);
   }
 
