@@ -10,8 +10,11 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -110,6 +113,8 @@ public class BookmarksAction extends AnAction implements DumbAware {
       }
     });
 
+    final PreviewPanel previewPanel = new PreviewPanel(project);
+
     list.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       private String getTitle2Text(String fullText) {
         int labelWidth = pathLabel.getWidth();
@@ -135,9 +140,12 @@ public class BookmarksAction extends AnAction implements DumbAware {
       private void updatePathLabel() {
         final Object[] values = list.getSelectedValues();
         if (values != null && values.length == 1) {
-          pathLabel.setText(getTitle2Text(((ItemWrapper)values[0]).footerText()));
+          ItemWrapper wrapper = (ItemWrapper)values[0];
+          pathLabel.setText(getTitle2Text(wrapper.footerText()));
+          previewPanel.updateWithItem(wrapper);
         }
         else {
+          previewPanel.updateWithItem(null);
           pathLabel.setText(" ");
         }
       }
@@ -193,6 +201,7 @@ public class BookmarksAction extends AnAction implements DumbAware {
       setTitle("Bookmarks").
       setMovable(true).
       setSouthComponent(footerPanel).
+      setEastComponent(previewPanel).
       setItemChoosenCallback(runnable).
       createPopup().showCenteredInCurrentWindow(project);
   }
@@ -335,6 +344,10 @@ public class BookmarksAction extends AnAction implements DumbAware {
       FileStatus fileStatus = FileStatusManager.getInstance(project).getStatus(file);
       TextAttributes attributes = new TextAttributes(fileStatus.getColor(), null, null, EffectType.LINE_UNDERSCORE, Font.PLAIN);
       renderer.append(file.getName(), SimpleTextAttributes.fromTextAttributes(attributes));
+      if (myBookmark.getLine() >= 0) {
+        renderer.append(":", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        renderer.append(String.valueOf(myBookmark.getLine() + 1), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      }
 
       if (!selected && FileEditorManager.getInstance(project).isFileOpen(file)) {
         renderer.setBackground(LightColors.SLIGHTLY_GREEN);
@@ -431,4 +444,69 @@ public class BookmarksAction extends AnAction implements DumbAware {
       return this;
     }
   }
+
+  private static class PreviewPanel extends JPanel {
+    private final Project myProject;
+    private Editor myEditor;
+    private ItemWrapper myWrapper;
+
+    public PreviewPanel(Project project) {
+      super(new BorderLayout());
+      myProject = project;
+      setPreferredSize(new Dimension(600, 400));
+    }
+
+    public void updateWithItem(ItemWrapper wrapper) {
+      if (myWrapper != wrapper) {
+        myWrapper = wrapper;
+
+        if (wrapper instanceof BookmarkItem) {
+          final Bookmark bookmark = ((BookmarkItem)wrapper).myBookmark;
+          VirtualFile file = bookmark.getFile();
+          Document document = FileDocumentManager.getInstance().getDocument(file);
+
+          if (document != null) {
+            if (myEditor == null || myEditor.getDocument() != document) {
+              cleanup();
+              myEditor = EditorFactory.getInstance().createViewer(document, myProject);
+              EditorHighlighter highlighter = EditorHighlighterFactory.getInstance()
+                .createEditorHighlighter(file, EditorColorsManager.getInstance().getGlobalScheme(), myProject);
+              ((EditorEx)myEditor).setHighlighter(highlighter);
+              ((EditorEx)myEditor).setFile(file);
+
+              myEditor.getSettings().setAnimatedScrolling(false);
+              myEditor.getSettings().setLineNumbersShown(true);
+              myEditor.getSettings().setFoldingOutlineShown(false);
+              add(myEditor.getComponent(), BorderLayout.CENTER);
+            }
+
+            myEditor.getCaretModel().moveToLogicalPosition(new LogicalPosition(bookmark.getLine(), 0));
+            myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER_UP);
+          }
+          else {
+            cleanup();
+          }
+        }
+        else {
+          cleanup();
+          add(new JLabel("select file in the list"));
+        }
+      }
+    }
+
+    private void cleanup() {
+      removeAll();
+      if (myEditor != null) {
+        EditorFactory.getInstance().releaseEditor(myEditor);
+        myEditor = null;
+      }
+    }
+
+    @Override
+    public void removeNotify() {
+      super.removeNotify();
+      cleanup();
+    }
+  }
+
 }
