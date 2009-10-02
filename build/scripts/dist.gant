@@ -67,7 +67,7 @@ def wire_build_date(String buildNumber) {
 target('default': 'The default target') {
   depends(compile)
   layoutAll(
-          buildNumber: "IC-$buildNumber",
+          buildNumber: "IC-SNAPSHOT",
           version: "MaiaCE",
           system_selector: "IntelliJIdeaCE90",
           vmoptions: "-Xms32m -Xmx256m -XX:MaxPermSize=150m -ea",
@@ -77,7 +77,7 @@ target('default': 'The default target') {
 public def layoutAll(Map args, String home, String out) {
   Paths paths = new Paths(out)
 
-  wire_build_date(buildNumber)
+  wire_build_date(args.buildNumber)
 
   def layouts = includeFile("layouts.gant")
   layouts.layoutFull(paths.distAll)
@@ -116,7 +116,7 @@ private def layoutWin(Map args, String home, Paths paths) {
   patchPropertiesFile(paths.distWin)
   ant.echo(file: "$paths.distWin/bin/idea.exe.vmoptions", message: args.vmoptions.replace(' ', '\n'))
 
-  ant.zip(zipfile: "$paths.artifacts/idea${buildNumber}.win.zip") {
+  ant.zip(zipfile: "$paths.artifacts/idea${args.buildNumber}.win.zip") {
     fileset(dir: paths.distAll)
     fileset(dir: paths.distWin)
   }
