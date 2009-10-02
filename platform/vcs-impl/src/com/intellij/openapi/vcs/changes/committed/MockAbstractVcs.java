@@ -26,6 +26,10 @@ public class MockAbstractVcs extends AbstractVcs {
     super(project, NAME);
   }
 
+  public MockAbstractVcs(final Project project, final String name) {
+    super(project, name);
+  }
+
   public CheckinEnvironment getCheckinEnvironment() {
     return myCheckinEnvironment;
   }
@@ -39,7 +43,7 @@ public class MockAbstractVcs extends AbstractVcs {
   }
 
   public String getDisplayName() {
-    return NAME;
+    return getName();
   }
 
   public Configurable getConfigurable() {

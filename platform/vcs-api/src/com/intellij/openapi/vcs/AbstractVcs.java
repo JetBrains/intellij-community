@@ -33,6 +33,8 @@ import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
+import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -380,8 +382,13 @@ public abstract class AbstractVcs extends StartedActivated {
     return false;
   }
 
-  public List<VirtualFile> filterUniqueRoots(final List<VirtualFile> in) {
-    FilterDescendantVirtualFiles.filter(in);
+  public <S> List<S> filterUniqueRoots(final List<S> in, final Convertor<S, VirtualFile> convertor) {
+    new FilterDescendantVirtualFileConvertible(convertor, FilePathComparator.getInstance()).doFilter(in);
+    return in;
+  }
+
+  public static <S> List<S> filterUniqueRootsDefault(final List<S> in, final Convertor<S, VirtualFile> convertor) {
+    new FilterDescendantVirtualFileConvertible(convertor, FilePathComparator.getInstance()).doFilter(in);
     return in;
   }
 

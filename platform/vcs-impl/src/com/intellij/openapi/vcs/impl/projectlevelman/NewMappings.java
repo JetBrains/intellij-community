@@ -2,13 +2,16 @@ package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -311,6 +314,7 @@ public class NewMappings {
     }
 
     protected void sortAscending(List<VcsDirectoryMapping> vcsDirectoryMappings) {
+      // todo ordering is actually here
       Collections.sort(vcsDirectoryMappings, MyMappingsComparator.getInstance());
     }
 
@@ -339,19 +343,68 @@ public class NewMappings {
     }
   }
 
+  // todo area for optimization
   private List<LocalFileSystem.WatchRequest> removeRedundantMappings() {
-    final List<VcsDirectoryMapping> items = new ArrayList<VcsDirectoryMapping>(mySortedMappings.length);
-    Collections.addAll(items, mySortedMappings);
-    final MyMappingsFilter filter = new MyMappingsFilter();
-    filter.doFilter(items);
-    for (VcsDirectoryMapping mapping : items) {
-      listForVcsFromMap(mapping.getVcs()).add(mapping);
-    }
-    // already sorted
-    mySortedMappings = items.toArray(new VcsDirectoryMapping[items.size()]);
+    final Set<Map.Entry<String, List<VcsDirectoryMapping>>> entries = myVcsToPaths.entrySet();
 
-    final List<LocalFileSystem.WatchRequest> watchRequestList = filter.getRemovedRequests();
-    return watchRequestList;
+    final LocalFileSystem lfs = LocalFileSystem.getInstance();
+    final AllVcsesI allVcses = AllVcses.getInstance(myProject);
+
+    final List<LocalFileSystem.WatchRequest> removedRequests = new LinkedList<LocalFileSystem.WatchRequest>();
+
+    for (Iterator<String> iterator = myVcsToPaths.keySet().iterator(); iterator.hasNext();) {
+      final String vcsName = iterator.next();
+      final List<VcsDirectoryMapping> mappings = myVcsToPaths.get(vcsName);
+
+      final List<Pair<VirtualFile, VcsDirectoryMapping>> objects = ObjectsConvertor.convert(mappings,
+        new Convertor<VcsDirectoryMapping, Pair<VirtualFile, VcsDirectoryMapping>>() {
+        public Pair<VirtualFile, VcsDirectoryMapping> convert(final VcsDirectoryMapping dm) {
+          VirtualFile vf = lfs.findFileByPath(dm.getDirectory());
+          if (vf == null) {
+            vf = lfs.refreshAndFindFileByPath(dm.getDirectory());
+          }
+          return vf == null ? null : new Pair<VirtualFile, VcsDirectoryMapping>(vf, dm);
+        }
+      }, ObjectsConvertor.NOT_NULL);
+
+      final List<Pair<VirtualFile, VcsDirectoryMapping>> filteredFiles;
+      // todo static
+      final Convertor<Pair<VirtualFile, VcsDirectoryMapping>, VirtualFile> fileConvertor =
+        new Convertor<Pair<VirtualFile, VcsDirectoryMapping>, VirtualFile>() {
+          public VirtualFile convert(Pair<VirtualFile, VcsDirectoryMapping> o) {
+            return o.getFirst();
+          }
+        };
+      if (StringUtil.isEmptyOrSpaces(vcsName)) {
+        filteredFiles = AbstractVcs.filterUniqueRootsDefault(objects, fileConvertor);
+      } else {
+        final AbstractVcs vcs = allVcses.getByName(vcsName);
+        filteredFiles = vcs.filterUniqueRoots(objects, fileConvertor);
+      }
+
+      final List<VcsDirectoryMapping> filteredMappings =
+        ObjectsConvertor.convert(filteredFiles, new Convertor<Pair<VirtualFile, VcsDirectoryMapping>, VcsDirectoryMapping>() {
+          public VcsDirectoryMapping convert(final Pair<VirtualFile, VcsDirectoryMapping> o) {
+            return o.getSecond();
+          }
+        });
+
+      // to calculate what had been removed
+      mappings.removeAll(filteredMappings);
+      for (VcsDirectoryMapping mapping : mappings) {
+        removedRequests.add(myDirectoryMappingWatches.remove(mapping));
+      }
+
+      if (filteredMappings.isEmpty()) {
+        iterator.remove();
+      } else {
+        mappings.clear();
+        mappings.addAll(filteredMappings);
+      }
+    }
+
+    sortedMappingsByMap();
+    return removedRequests;
   }
 
   private boolean trySwitchVcs(final String path, final String activeVcsName) {

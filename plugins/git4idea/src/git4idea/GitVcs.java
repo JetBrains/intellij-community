@@ -38,6 +38,8 @@ import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.containers.ComparatorDelegate;
+import com.intellij.util.containers.Convertor;
 import git4idea.annotate.GitAnnotationProvider;
 import git4idea.changes.GitChangeProvider;
 import git4idea.changes.GitCommittedChangeListProvider;
@@ -587,18 +589,20 @@ public class GitVcs extends AbstractVcs {
    * {@inheritDoc}
    */
   @Override
-  public List<VirtualFile> filterUniqueRoots(List<VirtualFile> in) {
-    Collections.sort(in, FilePathComparator.getInstance());
+  public <S> List<S> filterUniqueRoots(final List<S> in, final Convertor<S, VirtualFile> convertor) {
+    Collections.sort(in, new ComparatorDelegate<S, VirtualFile>(convertor, FilePathComparator.getInstance()));
 
     for (int i = 1; i < in.size(); i++) {
-      final VirtualFile child = in.get(i);
+      final S sChild = in.get(i);
+      final VirtualFile child = convertor.convert(sChild);
       final VirtualFile childRoot = GitUtil.gitRootOrNull(child);
       if (childRoot == null) {
         // non-git file actually, skip it
         continue;
       }
       for (int j = i - 1; j >= 0; --j) {
-        final VirtualFile parent = in.get(j);
+        final S sParent = in.get(j);
+        final VirtualFile parent = convertor.convert(sParent);
         // the method check both that parent is an ancestor of the child and that they share common git root
         if (VfsUtil.isAncestor(parent, child, false) && VfsUtil.isAncestor(childRoot, parent, false)) {
           in.remove(i);

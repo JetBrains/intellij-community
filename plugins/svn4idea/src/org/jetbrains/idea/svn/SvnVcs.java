@@ -871,38 +871,42 @@ public class SvnVcs extends AbstractVcs {
   }
 
   @Override
-  public List<VirtualFile> filterUniqueRoots(final List<VirtualFile> in) {
+  public <S> List<S> filterUniqueRoots(final List<S> in, final Convertor<S, VirtualFile> convertor) {
     if (in.size() <= 1) return in;
     
-    final List<RootUrlPair> infos = new ArrayList<RootUrlPair>(in.size());
+    final List<MyPair<S>> infos = new ArrayList<MyPair<S>>(in.size());
     final SvnFileUrlMappingImpl mapping = (SvnFileUrlMappingImpl) getSvnFileUrlMapping();
-    for (VirtualFile vf : in) {
+    for (S s : in) {
+      final VirtualFile vf = convertor.convert(s);
+
       final File ioFile = new File(vf.getPath());
       final SVNURL url = mapping.getUrlForFile(ioFile);
       if (url == null) continue;
-      /*if ((info == null) || (! ioFile.getAbsolutePath().equals(info.getIoFile().getAbsolutePath()))) {
-        // we get one of roots there, there shouldn't be other paths
-        continue;
-      }*/
-      infos.add(new MyPair(vf, url.toString()));
+      infos.add(new MyPair<S>(vf, url.toString(), s));
     }
-    final List<RootUrlPair> filtered = new ArrayList<RootUrlPair>(infos.size());
+    final List<MyPair<S>> filtered = new ArrayList<MyPair<S>>(infos.size());
     ForNestedRootChecker.filterOutSuperfluousChildren(this, infos, filtered);
 
-    return ObjectsConvertor.convert(filtered, new Convertor<RootUrlPair, VirtualFile>() {
-      public VirtualFile convert(RootUrlPair o) {
-        return o.getVirtualFile();
+    return ObjectsConvertor.convert(filtered, new Convertor<MyPair<S>, S>() {
+      public S convert(final MyPair<S> o) {
+        return o.getSrc();
       }
     });
   }
 
-  private static class MyPair implements RootUrlPair {
+  private static class MyPair<T> implements RootUrlPair {
     private final VirtualFile myFile;
     private final String myUrl;
+    private final T mySrc;
 
-    private MyPair(VirtualFile file, String url) {
+    private MyPair(VirtualFile file, String url, T src) {
       myFile = file;
       myUrl = url;
+      mySrc = src;
+    }
+
+    public T getSrc() {
+      return mySrc;
     }
 
     public VirtualFile getVirtualFile() {

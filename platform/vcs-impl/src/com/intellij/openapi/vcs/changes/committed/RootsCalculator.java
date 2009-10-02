@@ -47,7 +47,7 @@ public class RootsCalculator {
     for (VirtualFile contentRoot : myContentRoots) {
       roots.add(contentRoot);
     }
-    roots = myVcs.filterUniqueRoots(roots);
+    roots = myVcs.filterUniqueRoots(roots, IntoSelfVirtualFileConvertor.getInstance());
 
     logRoots(roots);
     return roots;

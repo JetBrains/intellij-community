@@ -51,11 +51,12 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.AbstractVcsAction;
 import com.intellij.openapi.vcs.actions.VcsContext;
+import com.intellij.openapi.vcs.changes.RemoteRevisionsCache;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl;
-import com.intellij.openapi.vcs.changes.RemoteRevisionsCache;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesAdapter;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
+import com.intellij.openapi.vcs.changes.committed.IntoSelfVirtualFileConvertor;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -200,7 +201,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       final AbstractVcs vcs = entry.getKey();
       final List<FilePath> paths = new ArrayList<FilePath>(entry.getValue());
       final List<VirtualFile> files = ObjectsConvertor.convert(paths, ObjectsConvertor.FILEPATH_TO_VIRTUAL, ObjectsConvertor.NOT_NULL);
-      result.put(vcs, ObjectsConvertor.vf2fp(vcs.filterUniqueRoots(files)));
+      result.put(vcs, ObjectsConvertor.vf2fp(vcs.filterUniqueRoots(files, IntoSelfVirtualFileConvertor.getInstance())));
     }
 
     return result;
