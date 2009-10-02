@@ -186,7 +186,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
   }
 
   public String getHelpTopic() {
-    return "preferences.errorHighlight";
+    return "preferences.inspections";
   }
 
   public JComponent createComponent() {

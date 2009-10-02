@@ -1,16 +1,16 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeComponent;
+import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
 
 /**
 * @author nik
 */
-public class ArtifactEditorNavigateAction extends AnAction {
+public class ArtifactEditorNavigateAction extends DumbAwareAction {
   private LayoutTreeComponent myLayoutTreeComponent;
 
   public ArtifactEditorNavigateAction(LayoutTreeComponent layoutTreeComponent) {

@@ -1,8 +1,8 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeSelection;
@@ -15,7 +15,7 @@ import javax.swing.tree.TreePath;
 /**
  * @author nik
  */
-public class RenamePackagingElementAction extends AnAction {
+public class RenamePackagingElementAction extends DumbAwareAction {
   private final ArtifactEditorEx myArtifactEditor;
 
   public RenamePackagingElementAction(ArtifactEditorEx artifactEditor) {

@@ -61,7 +61,7 @@ public class PlatformInspectionsConfigurable implements ErrorsConfigurable {
   }
 
   public String getHelpTopic() {
-    return "preferences.inspections.ruby";
+    return "preferences.inspections";
   }
 
   public SingleInspectionProfilePanel getPanel() {

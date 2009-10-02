@@ -36,13 +36,12 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.ui.LayeredIcon;
-import org.jdom.Content;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.TreeMap;
 
 public abstract class RunConfigurationExtension {
   public static final ExtensionPointName<RunConfigurationExtension> EP_NAME = new ExtensionPointName<RunConfigurationExtension>("com.intellij.runConfigurationExtension");
@@ -97,29 +96,24 @@ public abstract class RunConfigurationExtension {
   }
 
   public static void writeSettings(ModuleBasedConfiguration runConfiguration, Element element) throws WriteExternalException {
+    final TreeMap<String, Element> map = new TreeMap<String, Element>();
+    final List<Element> elements = runConfiguration.getCopyableUserData(RUN_EXTENSIONS);
+    if (elements != null) {
+      for (Element el : elements) {
+        final String name = el.getAttributeValue("name");
+        map.put(name, (Element)el.clone());
+      }
+    }
+
     for (RunConfigurationExtension extension : Extensions.getExtensions(EP_NAME)) {
       Element el = new Element("extension");
       el.setAttribute("name", extension.getName());
       extension.writeExternal(runConfiguration, el);
-      element.addContent(el);
+      map.put(extension.getName(), el);
     }
-    List<Element> elements = runConfiguration.getCopyableUserData(RUN_EXTENSIONS);
-    if (elements != null && !elements.isEmpty()) {
-      final List<String> foundNames = new ArrayList<String>();
-      final List children = element.getChildren("extension");
-      for (Object o : children) {
-        foundNames.add(((Element)o).getAttributeValue("name"));
-      }
 
-      int idx = children.isEmpty() ? element.getContentSize() : element.indexOf((Content)children.get(0));
-      for (Element el : elements) {
-        final String name = el.getAttributeValue("name");
-        int i = foundNames.indexOf(name);
-        if (i == -1) {
-          element.addContent(idx, (Content)el.clone());
-        }
-        idx ++;
-      }
+    for (Element val : map.values()) {
+      element.addContent(val);
     }
   }
 

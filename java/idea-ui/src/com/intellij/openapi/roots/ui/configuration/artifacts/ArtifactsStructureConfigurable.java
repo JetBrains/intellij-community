@@ -7,6 +7,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.BaseStructureConfigurable;
@@ -163,7 +164,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   }
 
 
-  private class AddArtifactAction extends AnAction {
+  private class AddArtifactAction extends DumbAwareAction {
     private final ArtifactType myType;
 
     public AddArtifactAction(ArtifactType type) {

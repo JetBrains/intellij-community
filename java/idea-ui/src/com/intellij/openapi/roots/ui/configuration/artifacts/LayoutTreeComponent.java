@@ -69,7 +69,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
 
     myTree.addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {
-        updatePropertiesPanel();
+        updatePropertiesPanel(false);
       }
     });
     createPropertiesPanel();
@@ -114,9 +114,9 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     return myTree;
   }
 
-  public void updatePropertiesPanel() {
+  public void updatePropertiesPanel(final boolean force) {
     final PackagingElement<?> selected = getSelection().getElementIfSingle();
-    if (Comparing.equal(selected, mySelectedElementInfo.myElement)) {
+    if (force || Comparing.equal(selected, mySelectedElementInfo.myElement)) {
       return;
     }
     mySelectedElementInfo.save();
@@ -130,7 +130,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
 
   public void rebuildTree() {
     myBuilder.updateFromRoot(true);
-    updatePropertiesPanel();
+    updatePropertiesPanel(true);
     myArtifactsEditor.queueValidation();
   }
 
