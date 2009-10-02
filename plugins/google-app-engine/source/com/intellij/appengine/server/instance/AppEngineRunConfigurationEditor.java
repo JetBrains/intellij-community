@@ -1,12 +1,11 @@
 package com.intellij.appengine.server.instance;
 
+import com.intellij.appengine.util.AppEngineUtil;
 import com.intellij.javaee.run.configuration.CommonModel;
-import com.intellij.javaee.web.facet.WebFacet;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.appengine.util.AppEngineUtil;
-import com.intellij.appengine.facet.AppEngineFacet;
+import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.ui.RawCommandLineEditor;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,7 +16,7 @@ import javax.swing.*;
  */
 public class AppEngineRunConfigurationEditor extends SettingsEditor<CommonModel> {
   private JPanel myMainPanel;
-  private JComboBox myAppEngineFacetComboBox;
+  private JComboBox myArtifactComboBox;
   private JTextField myPortField;
   private RawCommandLineEditor myServerParametersEditor;
   private final Project myProject;
@@ -29,10 +28,10 @@ public class AppEngineRunConfigurationEditor extends SettingsEditor<CommonModel>
   protected void resetEditorFrom(CommonModel s) {
     final AppEngineServerModel serverModel = (AppEngineServerModel)s.getServerModel();
     myPortField.setText(String.valueOf(serverModel.getLocalPort()));
-    final WebFacet webFacet = serverModel.getWebFacet();
-    myAppEngineFacetComboBox.setSelectedItem(webFacet);
-    if (webFacet == null && myAppEngineFacetComboBox.getItemCount() == 1) {
-      myAppEngineFacetComboBox.setSelectedIndex(0);
+    final Artifact artifact = serverModel.getArtifact();
+    myArtifactComboBox.setSelectedItem(artifact);
+    if (artifact == null && myArtifactComboBox.getItemCount() == 1) {
+      myArtifactComboBox.setSelectedIndex(0);
     }
     myServerParametersEditor.setDialogCaption("Server Parameters");
     myServerParametersEditor.setText(serverModel.getServerParameters());
@@ -47,13 +46,13 @@ public class AppEngineRunConfigurationEditor extends SettingsEditor<CommonModel>
       throw new ConfigurationException("'" + myPortField.getText() + "' is not valid port number");
     }
     serverModel.setServerParameters(myServerParametersEditor.getText());
-    final AppEngineFacet appEngineFacet = (AppEngineFacet)myAppEngineFacetComboBox.getSelectedItem();
-    serverModel.setWebFacet(appEngineFacet != null ? appEngineFacet.getWebFacet() : null);
+    final Artifact artifact = (Artifact)myArtifactComboBox.getSelectedItem();
+    serverModel.setArtifact(artifact);
   }
 
   @NotNull
   protected JComponent createEditor() {
-    AppEngineUtil.setupAppEngineFacetCombobox(myProject, myAppEngineFacetComboBox);
+    AppEngineUtil.setupAppEngineArtifactCombobox(myProject, myArtifactComboBox);
     return myMainPanel;
   }
 

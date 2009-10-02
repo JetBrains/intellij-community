@@ -14,7 +14,7 @@
         </constraints>
         <properties>
           <labelFor value="89e0d"/>
-          <text value="&amp;Web Facet to upload:"/>
+          <text value="&amp;Web Artifact to upload:"/>
         </properties>
       </component>
       <vspacer id="b1ee3">
@@ -22,7 +22,7 @@
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
         </constraints>
       </vspacer>
-      <component id="89e0d" class="javax.swing.JComboBox" binding="myFacetComboBox">
+      <component id="89e0d" class="javax.swing.JComboBox" binding="myArtifactComboBox">
         <constraints>
           <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>

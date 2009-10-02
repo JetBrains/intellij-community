@@ -4,19 +4,19 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.facet.pointers.FacetPointer;
-import com.intellij.facet.pointers.FacetPointersManager;
 import com.intellij.javaee.deployment.DeploymentProvider;
 import com.intellij.javaee.run.configuration.CommonModel;
 import com.intellij.javaee.run.configuration.ServerModel;
 import com.intellij.javaee.run.execution.DefaultOutputProcessor;
 import com.intellij.javaee.run.execution.OutputProcessor;
 import com.intellij.javaee.serverInstances.J2EEServerInstance;
-import com.intellij.javaee.web.facet.WebFacet;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactPointer;
+import com.intellij.packaging.artifacts.ArtifactPointerManager;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -30,7 +30,7 @@ import java.util.List;
  * @author nik
  */
 public class AppEngineServerModel implements ServerModel {
-  private FacetPointer<WebFacet> myWebFacetPointer;
+  private ArtifactPointer myArtifactPointer;
   private int myPort = 8080;
   private String myServerParameters = "";
   private CommonModel myCommonModel;
@@ -60,8 +60,8 @@ public class AppEngineServerModel implements ServerModel {
   }
 
   public void checkConfiguration() throws RuntimeConfigurationException {
-    if (myWebFacetPointer == null || myWebFacetPointer.getFacet() == null) {
-      throw new RuntimeConfigurationError("Web Facet isn't specified");
+    if (myArtifactPointer == null || myArtifactPointer.getArtifact() == null) {
+      throw new RuntimeConfigurationError("Artifact isn't specified");
     }
   }
 
@@ -86,21 +86,22 @@ public class AppEngineServerModel implements ServerModel {
     XmlSerializer.deserializeInto(settings, element);
     myPort = settings.getPort();
     myServerParameters = settings.getServerParameters();
-    if (settings.myWebFacet != null) {
-      myWebFacetPointer = FacetPointersManager.getInstance(myCommonModel.getProject()).create(settings.getWebFacet());
+    final String artifactName = settings.getArtifact();
+    if (artifactName != null) {
+      myArtifactPointer = ArtifactPointerManager.getInstance(myCommonModel.getProject()).create(artifactName);
     }
     else {
-      myWebFacetPointer = null;
+      myArtifactPointer = null;
     }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    XmlSerializer.serializeInto(new AppEngineModelSettings(myPort, myWebFacetPointer, myServerParameters), element, new SkipDefaultValuesSerializationFilters());
+    XmlSerializer.serializeInto(new AppEngineModelSettings(myPort, myArtifactPointer, myServerParameters), element, new SkipDefaultValuesSerializationFilters());
   }
 
   @Nullable
-  public WebFacet getWebFacet() {
-    return myWebFacetPointer != null ? myWebFacetPointer.getFacet() : null;
+  public Artifact getArtifact() {
+    return myArtifactPointer != null ? myArtifactPointer.getArtifact() : null;
   }
 
   public void setPort(int port) {
@@ -115,30 +116,30 @@ public class AppEngineServerModel implements ServerModel {
     myServerParameters = serverParameters;
   }
 
-  public void setWebFacet(@Nullable WebFacet webFacet) {
-    if (webFacet != null) {
-      myWebFacetPointer = FacetPointersManager.getInstance(myCommonModel.getProject()).create(webFacet);
+  public void setArtifact(@Nullable Artifact artifact) {
+    if (artifact != null) {
+      myArtifactPointer = ArtifactPointerManager.getInstance(myCommonModel.getProject()).create(artifact);
     }
     else {
-      myWebFacetPointer = null;
+      myArtifactPointer = null;
     }
   }
 
   public static class AppEngineModelSettings {
     @Tag("port")
     private int myPort = 8080;
-    @Tag("web-facet")
-    private String myWebFacet;
+    @Tag("artifact")
+    private String myArtifact;
     @Tag("server-parameters")
     private String myServerParameters = "";
 
     public AppEngineModelSettings() {
     }
 
-    public AppEngineModelSettings(int port, FacetPointer<WebFacet> pointer, String serverParameters) {
+    public AppEngineModelSettings(int port, ArtifactPointer pointer, String serverParameters) {
       myPort = port;
       myServerParameters = serverParameters;
-      myWebFacet = pointer != null ? pointer.getId() : null;
+      myArtifact = pointer != null ? pointer.getName() : null;
     }
 
     public int getPort() {
@@ -149,12 +150,12 @@ public class AppEngineServerModel implements ServerModel {
       myPort = port;
     }
 
-    public String getWebFacet() {
-      return myWebFacet;
+    public String getArtifact() {
+      return myArtifact;
     }
 
-    public void setWebFacet(String webFacet) {
-      myWebFacet = webFacet;
+    public void setArtifact(String artifact) {
+      myArtifact = artifact;
     }
 
     public String getServerParameters() {

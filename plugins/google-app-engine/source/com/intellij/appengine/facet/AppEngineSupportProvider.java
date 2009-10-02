@@ -10,15 +10,16 @@ import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetTypeRegistry;
 import com.intellij.facet.ui.FacetBasedFrameworkSupportProvider;
-import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurableBase;
-import com.intellij.ide.util.frameworkSupport.FrameworkVersion;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurableBase;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
+import com.intellij.ide.util.frameworkSupport.FrameworkVersion;
 import com.intellij.javaee.JavaeePersistenceDescriptorsConstants;
 import com.intellij.javaee.appServerIntegrations.ApplicationServer;
-import com.intellij.javaee.module.JavaeePackagingConfiguration;
+import com.intellij.javaee.artifact.JavaeeArtifactUtil;
 import com.intellij.javaee.run.configuration.CommonStrategy;
+import com.intellij.javaee.web.artifact.WebArtifactUtil;
 import com.intellij.javaee.web.facet.WebFacet;
 import com.intellij.jpa.facet.JpaFacet;
 import com.intellij.jpa.facet.JpaFacetType;
@@ -34,12 +35,20 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactManager;
+import com.intellij.packaging.artifacts.ArtifactType;
+import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author nik
@@ -90,6 +99,8 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
     final AppEngineFacetConfiguration facetConfiguration = appEngineFacet.getConfiguration();
     facetConfiguration.setSdkHomePath(sdkPath);
     final AppEngineSdk sdk = appEngineFacet.getSdk();
+    final Artifact artifact = findContainingArtifact(module, appEngineFacet);
+
     final ApplicationServer appServer = sdk.getOrCreateAppServer();
     if (appServer != null) {
       final ConfigurationFactory type = AppEngineServerConfigurationType.getInstance().getConfigurationFactories()[0];
@@ -99,7 +110,8 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
       final CommonStrategy configuration = (CommonStrategy)runSettings.getConfiguration();
       configuration.setApplicationServer(appServer);
       configuration.setUrlToOpenInBrowser(configuration.getDefaultUrlForBrowser());
-      ((AppEngineServerModel)configuration.getServerModel()).setWebFacet(appEngineFacet.getWebFacet());
+
+      ((AppEngineServerModel)configuration.getServerModel()).setArtifact(artifact);
 
       runManager.addConfiguration(runSettings, false);
       runManager.setActiveConfiguration(runSettings);
@@ -139,10 +151,20 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
       }
       final Library library = addProjectLibrary(module, "AppEngine ORM", sdk.getOrmLibDirectoryPath(), sdk.getOrmLibSources());
       rootModel.addLibraryEntry(library);
-      final JavaeePackagingConfiguration configuration = appEngineFacet.getWebFacet().getPackagingConfiguration();
-      configuration.addLibraryLink(library);
-      configuration.addLibraryLink(apiJar);
+      if (artifact != null) {
+        WebArtifactUtil.getInstance().addLibrary(library, artifact, module.getProject());
+        WebArtifactUtil.getInstance().addLibrary(apiJar, artifact, module.getProject());
+      }
     }
+  }
+
+  private static Artifact findContainingArtifact(Module module, AppEngineFacet appEngineFacet) {
+    final PackagingElementResolvingContext context = ArtifactManager.getInstance(module.getProject()).getResolvingContext();
+    final List<ArtifactType> artifactTypes =
+      Collections.singletonList(WebArtifactUtil.getInstance().getExplodedWarArtifactType());
+    final Collection<Artifact> artifacts = JavaeeArtifactUtil.getInstance().getArtifactsContainingFacet(appEngineFacet.getWebFacet(), context,
+                                                                                                        artifactTypes, true);
+    return ContainerUtil.getFirstItem(artifacts, null);
   }
 
   private static Library addProjectLibrary(final Module module, final String name, final String path, final VirtualFile[] sources) {

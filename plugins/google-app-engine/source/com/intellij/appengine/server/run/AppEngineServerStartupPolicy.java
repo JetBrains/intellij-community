@@ -8,14 +8,12 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.javaee.run.configuration.CommonModel;
 import com.intellij.javaee.run.configuration.JavaCommandLineStartupPolicy;
-import com.intellij.javaee.run.configuration.ServerModel;
-import com.intellij.javaee.web.facet.WebFacet;
-import com.intellij.openapi.compiler.make.BuildConfiguration;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.packaging.artifacts.Artifact;
 
 import java.io.File;
 
@@ -38,13 +36,13 @@ public class AppEngineServerStartupPolicy implements JavaCommandLineStartupPolic
     javaParameters.setMainClass("com.google.appengine.tools.development.DevAppServerMain");
 
     final AppEngineServerModel serverModel = (AppEngineServerModel) commonModel.getServerModel();
-    final WebFacet webFacet = serverModel.getWebFacet();
-    if (webFacet == null) {
+    final Artifact artifact = serverModel.getArtifact();
+    if (artifact == null) {
       throw new ExecutionException("Web Facet isn't specified");
     }
-    final Sdk jdk = ModuleRootManager.getInstance(webFacet.getModule()).getSdk();
+    final Sdk jdk = ProjectRootManager.getInstance(commonModel.getProject()).getProjectJdk();
     if (jdk == null) {
-      throw new ExecutionException("JDK isn't specified for module '" + webFacet.getModule().getName() + "'");
+      throw new ExecutionException("JDK isn't specified for the project");
     }
     javaParameters.setJdk(jdk);
 
@@ -55,12 +53,11 @@ public class AppEngineServerStartupPolicy implements JavaCommandLineStartupPolic
     parameters.add("-p", String.valueOf(serverModel.getLocalPort()));
     parameters.add("--disable_update_check");
 
-    final BuildConfiguration buildProperties = webFacet.getBuildConfiguration().getBuildProperties();
-    final String explodedPath = buildProperties.getExplodedPath();
-    if (!buildProperties.isExplodedEnabled() || explodedPath == null) {
-      throw new ExecutionException("Exploded directory isn't specified for '" + webFacet.getName() + "' Facet");
+    final String outputPath = artifact.getOutputPath();
+    if (outputPath == null || outputPath.length() == 0) {
+      throw new ExecutionException("Output path isn't specified for '" + artifact.getName() + "' artifact");
     }
-    final String explodedPathParameter = FileUtil.toSystemDependentName(explodedPath);
+    final String explodedPathParameter = FileUtil.toSystemDependentName(outputPath);
     parameters.add(explodedPathParameter);
     javaParameters.setWorkingDirectory(explodedPathParameter);
     if (SystemInfo.isMac) {
