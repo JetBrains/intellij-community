@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author nik
@@ -31,4 +32,11 @@ public interface ModuleSettings extends ComponentManagerSettings {
 
   @NotNull
   Collection<File> getSourceRoots(boolean includeTests);
+
+  @NotNull
+  Collection<File> getContentRoots();
+
+  void addExcludedFolder(@NotNull File directory);
+
+  List<File> getModuleLibraryRootUrls(String libraryName);
 }

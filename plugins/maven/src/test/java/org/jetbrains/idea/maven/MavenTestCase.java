@@ -65,6 +65,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
+        
         try {
           setUpInWriteAction();
         }

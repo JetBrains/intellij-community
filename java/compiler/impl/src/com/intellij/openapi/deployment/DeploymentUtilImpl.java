@@ -12,7 +12,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
@@ -413,16 +412,6 @@ public class DeploymentUtilImpl extends DeploymentUtil {
     }
   }
 
-  public void addModuleOutputJarToParent(@NotNull BuildRecipe instructions,
-                                         @NotNull Module module,
-                                         @NotNull String relativePath,
-                                         @NotNull CompileContext context,
-                                         String linkContainerDescription,
-                                         @Nullable PackagingFileFilter fileFilter) {
-    String path = getRelativePathForManifestLinking(relativePath);
-    addJarJavaModuleOutput(instructions, module, path, context, linkContainerDescription, fileFilter);
-  }
-
   private static void addJarJavaModuleOutput(BuildRecipe instructions,
                                              Module module,
                                              String relativePath,
@@ -449,36 +438,8 @@ public class DeploymentUtilImpl extends DeploymentUtil {
     return new LibraryLinkImpl(library, parentModule);
   }
 
-  public PackagingConfiguration createPackagingConfiguration(@NotNull Module module) {
-    return new PackagingConfigurationImpl(module);
-  }
-
   public BuildRecipe createBuildRecipe() {
     return new BuildRecipeImpl();
-  }
-
-  public @Nullable ContainerElement findElementByOrderEntry(PackagingConfiguration packagingConfiguration, OrderEntry entry) {
-    if (entry instanceof ModuleOrderEntry) {
-      final Module module = ((ModuleOrderEntry)entry).getModule();
-      if (module == null) return null;
-
-      for (ModuleLink link : packagingConfiguration.getContainingModules()) {
-        if (link.getModule() == module) {
-          return link;
-        }
-      }
-    }
-    else if (entry instanceof LibraryOrderEntry) {
-      final Library library = ((LibraryOrderEntry)entry).getLibrary();
-      if (library == null) return null;
-
-      for (LibraryLink link : packagingConfiguration.getContainingLibraries()) {
-        if (OrderEntryUtil.equals(library, link.getLibrary())) {
-          return link;
-        }
-      }
-    }
-    return null;
   }
 
   @Nullable

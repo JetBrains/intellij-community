@@ -192,7 +192,6 @@
       <action id="GenerateAntBuild" class="com.intellij.compiler.actions.GenerateAntBuildAction"/>
       <separator/>
       <group id="BuildArtifactsGroup" class="com.intellij.compiler.actions.BuildArtifactActionGroup"/>
-      <action id="BuildJar" class="com.intellij.jar.BuildJarAction"/>
 
       <add-to-group group-id="MainMenu" anchor="before" relative-to-action="RunMenu"/>
     </group>

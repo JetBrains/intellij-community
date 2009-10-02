@@ -1,5 +1,6 @@
 package com.intellij.packaging.impl.artifacts;
 
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.packaging.artifacts.ArtifactProperties;
 import com.intellij.packaging.artifacts.ArtifactPropertiesProvider;
 import com.intellij.packaging.artifacts.ArtifactType;
@@ -16,7 +17,7 @@ import java.util.Map;
 /**
  * @author nik
  */
-public class ArtifactImpl implements ModifiableArtifact {
+public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifact {
   private CompositePackagingElement<?> myRootElement;
   private String myName;
   private boolean myBuildOnMake;

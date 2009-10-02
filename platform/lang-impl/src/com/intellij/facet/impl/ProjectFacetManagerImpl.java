@@ -34,7 +34,6 @@ public class ProjectFacetManagerImpl extends ProjectFacetManagerEx implements Pe
   @NonNls public static final String COMPONENT_NAME = "ProjectFacetManager";
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ProjectFacetManagerImpl");
   private ProjectFacetManagerState myState = new ProjectFacetManagerState();
-  private final List<Runnable> myRunnablesToRunOnProjectSettingsClosed = new ArrayList<Runnable>();
   private Project myProject;
 
   public ProjectFacetManagerImpl(Project project) {
@@ -91,17 +90,6 @@ public class ProjectFacetManagerImpl extends ProjectFacetManagerEx implements Pe
     }
     catch (WriteExternalException e) {
       LOG.info(e);
-    }
-  }
-
-  //todo[nik] remove
-  public void registerRunnableToRunOnProjectSettingsClosed(@NotNull Runnable runnable) {
-    myRunnablesToRunOnProjectSettingsClosed.add(runnable);
-  }
-
-  public void fireRunnableOnProjectSettingsClosed() {
-    for (Runnable runnable : myRunnablesToRunOnProjectSettingsClosed) {
-      runnable.run();
     }
   }
 

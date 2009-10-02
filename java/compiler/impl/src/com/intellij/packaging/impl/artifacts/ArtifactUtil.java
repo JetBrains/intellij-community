@@ -2,6 +2,7 @@ package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerProjectExtension;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -181,19 +182,31 @@ public class ArtifactUtil {
     return VfsUtil.urlToPath(outputUrl) + "/artifacts/" + FileUtil.sanitizeFileName(artifactName);
   }
 
-  public static boolean processElements(@NotNull List<? extends PackagingElement<?>> elements,
+  public static <E extends PackagingElement<?>> boolean processElements(@NotNull List<? extends PackagingElement<?>> elements,
                                         @NotNull PackagingElementResolvingContext context,
                                         @NotNull ArtifactType artifactType,
-                                        @NotNull Processor<PackagingElement<?>> processor) {
+                                        @NotNull final Processor<E> processor) {
+    return processElements(elements, context, artifactType, new PackagingElementProcessor<E>() {
+      @Override
+      public boolean process(@NotNull List<CompositePackagingElement<?>> parents, @NotNull E e) {
+        return processor.process(e);
+      }
+    });
+  }
+
+  public static <E extends PackagingElement<?>> boolean processElements(@NotNull List<? extends PackagingElement<?>> elements,
+                                        @NotNull PackagingElementResolvingContext context,
+                                        @NotNull ArtifactType artifactType,
+                                        @NotNull PackagingElementProcessor<E> processor) {
     for (PackagingElement<?> element : elements) {
-      if (element instanceof ComplexPackagingElement<?>) {
+      if (element instanceof ComplexPackagingElement<?> && processor.shouldProcessSubstitution((ComplexPackagingElement)element)) {
         final List<? extends PackagingElement<?>> substitution =
             ((ComplexPackagingElement<?>)element).getSubstitution(context, artifactType);
         if (substitution != null && !processElements(substitution, context, artifactType, processor)) {
           return false;
         }
       }
-      else if (!processor.process(element)) {
+      else if (!processor.process(FList.<CompositePackagingElement<?>>emptyList(), (E)element)) {
         return false;
       }
     }
@@ -443,5 +456,23 @@ public class ArtifactUtil {
 
   public static boolean isArchiveName(String name) {
     return name.length() >= 4 && name.charAt(name.length() - 4) == '.' && StringUtil.endsWithIgnoreCase(name, "ar");
+  }
+
+  public static void removeChildrenRecursively(@NotNull CompositePackagingElement<?> element, @NotNull Condition<PackagingElement<?>> condition) {
+    List<PackagingElement<?>> toRemove = new ArrayList<PackagingElement<?>>();
+    for (PackagingElement<?> child : element.getChildren()) {
+      if (child instanceof CompositePackagingElement<?>) {
+        final CompositePackagingElement<?> compositeChild = (CompositePackagingElement<?>)child;
+        removeChildrenRecursively(compositeChild, condition);
+        if (compositeChild.getChildren().isEmpty()) {
+          toRemove.add(child);
+        }
+      }
+      else if (condition.value(child)) {
+        toRemove.add(child);
+      }
+    }
+
+    element.removeChildren(toRemove);
   }
 }

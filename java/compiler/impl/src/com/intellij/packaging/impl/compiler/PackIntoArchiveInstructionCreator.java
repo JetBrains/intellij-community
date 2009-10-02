@@ -12,20 +12,19 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public class PackIntoArchiveInstructionCreator extends IncrementalCompilerInstructionCreatorBase {
-  private final ArtifactsProcessingItemsBuilderContext myContext;
   private final DestinationInfo myJarDestination;
   private final JarInfo myJarInfo;
   private final String myPathInJar;
 
   public PackIntoArchiveInstructionCreator(ArtifactsProcessingItemsBuilderContext context, JarInfo jarInfo, String pathInJar,
                                            DestinationInfo jarDestination) {
-    myContext = context;
+    super(context);
     myJarInfo = jarInfo;
     myPathInJar = pathInJar;
     myJarDestination = jarDestination;
   }
 
-  public void addFileCopyInstruction(@NotNull VirtualFile file, String outputFileName) {
+  public void addFileCopyInstruction(@NotNull VirtualFile file, @NotNull String outputFileName) {
     final String pathInJar = childPathInJar(outputFileName);
     myContext.addDestination(file, new JarDestinationInfo(pathInJar, myJarInfo, myJarDestination));
     myJarInfo.addContent(pathInJar, file);
@@ -35,11 +34,11 @@ public class PackIntoArchiveInstructionCreator extends IncrementalCompilerInstru
     return myPathInJar.length() == 0 ? fileName : myPathInJar + "/" + fileName;
   }
 
-  public IncrementalCompilerInstructionCreator subFolder(String directoryName) {
+  public IncrementalCompilerInstructionCreator subFolder(@NotNull String directoryName) {
     return new PackIntoArchiveInstructionCreator(myContext, myJarInfo, childPathInJar(directoryName), myJarDestination);
   }
 
-  public IncrementalCompilerInstructionCreator archive(String archiveFileName) {
+  public IncrementalCompilerInstructionCreator archive(@NotNull String archiveFileName) {
     final JarInfo jarInfo = new JarInfo();
     if (myJarDestination instanceof ExplodedDestinationInfo) {
       myContext.registerJarFile(jarInfo, myJarDestination.getOutputPath());

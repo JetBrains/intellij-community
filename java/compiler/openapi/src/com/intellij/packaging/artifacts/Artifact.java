@@ -1,5 +1,6 @@
 package com.intellij.packaging.artifacts;
 
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -9,7 +10,7 @@ import java.util.Collection;
 /**
  * @author nik
  */
-public interface Artifact {
+public interface Artifact extends UserDataHolder {
   @NotNull
   ArtifactType getArtifactType();
 

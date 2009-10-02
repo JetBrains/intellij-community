@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 public class ExcludeFolderImpl extends ContentFolderBaseImpl implements ClonableContentFolder,
                                                                         UserDefinedExcludeFolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.SimpleExcludeFolderImpl");
-  @NonNls static final String ELEMENT_NAME = "excludeFolder";
+  @NonNls public static final String ELEMENT_NAME = "excludeFolder";
 
   ExcludeFolderImpl(@NotNull VirtualFile file, @NotNull ContentEntryImpl contentEntry) {
     super(file, contentEntry);

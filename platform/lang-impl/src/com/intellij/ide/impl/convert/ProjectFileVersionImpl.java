@@ -4,19 +4,21 @@
 
 package com.intellij.ide.impl.convert;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.conversion.ConversionService;
+import com.intellij.conversion.impl.ConversionServiceImpl;
+import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.impl.stores.IProjectStore;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
- *
- * DO NOT CONVERT THIS COMPONENT TO SERVICE. ITS CONFIGURATION IS ACCESSED VIA JDOM BEFORE PROJECT OPENING
  */
-//todo[nik] remove
 @State(
   name = ProjectFileVersionImpl.COMPONENT_NAME,
   storages = {
@@ -27,7 +29,13 @@ import org.jetbrains.annotations.NotNull;
   }
 )
 public class ProjectFileVersionImpl extends ProjectFileVersion implements ProjectComponent, PersistentStateComponent<ProjectFileVersionImpl.ProjectFileVersionState> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.impl.convert.ProjectFileVersionImpl");
   @NonNls public static final String COMPONENT_NAME = "ProjectFileVersion";
+  private Project myProject;
+
+  public ProjectFileVersionImpl(Project project) {
+    myProject = project;
+  }
 
   public void projectOpened() {
   }
@@ -45,6 +53,22 @@ public class ProjectFileVersionImpl extends ProjectFileVersion implements Projec
   }
 
   public void disposeComponent() {
+    if (myProject.isDefault()) return;
+    final IProjectStore stateStore = ((ProjectEx)myProject).getStateStore();
+    final String filePath;
+    if (stateStore.getStorageScheme() == StorageScheme.DEFAULT) {
+      filePath = stateStore.getProjectFilePath();
+    }
+    else {
+      final VirtualFile baseDir = stateStore.getProjectBaseDir();
+      filePath = baseDir != null ? baseDir.getPath() : null;
+    }
+    if (filePath != null) {
+      ((ConversionServiceImpl)ConversionService.getInstance()).saveConversionResult(FileUtil.toSystemDependentName(filePath));
+    }
+    else {
+      LOG.info("Cannot save conversion result: filePath == null");
+    }
   }
 
   public ProjectFileVersionState getState() {

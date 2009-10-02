@@ -22,7 +22,6 @@ import com.intellij.openapi.compiler.make.BuildRecipe;
 import com.intellij.openapi.compiler.make.PackagingFileFilter;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -148,11 +147,7 @@ public abstract class DeploymentUtil {
 
   public abstract LibraryLink createLibraryLink(Library library, @NotNull Module parentModule);
 
-  public abstract PackagingConfiguration createPackagingConfiguration(@NotNull Module module);
-
   public abstract BuildRecipe createBuildRecipe();
-
-  public @Nullable abstract ContainerElement findElementByOrderEntry(PackagingConfiguration packagingConfiguration, OrderEntry entry);
 
   @Nullable
   public abstract String getConfigFileErrorMessage(ConfigFile configFile);
@@ -203,10 +198,4 @@ public abstract class DeploymentUtil {
 
   public abstract void checkConfigFile(final ConfigFile descriptor, final CompileContext compileContext, final Module module);
 
-  public abstract void addModuleOutputJarToParent(@NotNull BuildRecipe instructions,
-                                         @NotNull Module module,
-                                         @NotNull String relativePath,
-                                         @NotNull CompileContext context,
-                                         String linkContainerDescription,
-                                         @Nullable PackagingFileFilter fileFilter);
 }

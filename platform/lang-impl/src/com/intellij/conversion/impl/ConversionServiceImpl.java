@@ -22,6 +22,7 @@ import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Document;
 import org.jetbrains.annotations.NotNull;
@@ -153,7 +154,43 @@ public class ConversionServiceImpl extends ConversionService {
 
   private List<ConversionRunner> getSortedConverters(final ConversionContextImpl context) throws CannotConvertException {
     final CachedConversionResult conversionResult = loadCachedConversionResult(context.getProjectFile());
-    return createConversionRunners(context, conversionResult.myAppliedConverters);
+    final Map<String, Long> oldMap = conversionResult.myProjectFilesTimestamps;
+    Map<String, Long> newMap = getProjectFilesMap(context);
+    boolean changed = false;
+    LOG.debug("Checking project files");
+    for (Map.Entry<String, Long> entry : newMap.entrySet()) {
+      final String path = entry.getKey();
+      final Long oldValue = oldMap.get(path);
+      if (oldValue == null) {
+        LOG.debug(" new file: " + path);
+        changed = true;
+      }
+      else if (!entry.getValue().equals(oldValue)) {
+        LOG.debug(" changed file: " + path);
+        changed = true;
+      }
+    }
+
+    final Set<String> performedConversionIds;
+    if (changed) {
+      performedConversionIds = Collections.emptySet();
+      LOG.debug("Project files were modified.");
+    }
+    else {
+      performedConversionIds = conversionResult.myAppliedConverters;
+      LOG.debug("Project files are up to date. Applied converters: " + performedConversionIds);
+    }
+    return createConversionRunners(context, performedConversionIds);
+  }
+
+  private static Map<String, Long> getProjectFilesMap(ConversionContextImpl context) {
+    final Map<String, Long> map = new HashMap<String, Long>();
+    for (File file : context.getAllProjectFiles()) {
+      if (file.exists()) {
+        map.put(file.getAbsolutePath(), file.lastModified());
+      }
+    }
+    return map;
   }
 
   private List<ConversionRunner> createConversionRunners(ConversionContextImpl context, final Set<String> performedConversionIds) {
@@ -179,14 +216,21 @@ public class ConversionServiceImpl extends ConversionService {
     return runners;
   }
 
+  public void saveConversionResult(String projectPath) {
+    try {
+      saveConversionResult(new ConversionContextImpl(projectPath));
+    }
+    catch (CannotConvertException e) {
+      LOG.info(e);
+    }
+  }
+
   private void saveConversionResult(ConversionContextImpl context) {
-    final CachedConversionResult conversionResult = loadCachedConversionResult(context.getProjectFile());
+    final CachedConversionResult conversionResult = new CachedConversionResult();
     for (ConverterProvider provider : ConverterProvider.EP_NAME.getExtensions()) {
       conversionResult.myAppliedConverters.add(provider.getId());
     }
-    for (File file : context.getNonExistingModuleFiles()) {
-      conversionResult.myNotConvertedModules.add(file.getAbsolutePath());
-    }
+    conversionResult.myProjectFilesTimestamps = getProjectFilesMap(context);
     final File infoFile = getConversionInfoFile(context.getProjectFile());
     infoFile.getParentFile().mkdirs();
     try {
@@ -280,13 +324,13 @@ public class ConversionServiceImpl extends ConversionService {
 
   @Tag("conversion")
   public static class CachedConversionResult {
-    @Tag("applied-converters")
-    @AbstractCollection(surroundWithTag = false, elementTag = "converter", elementValueAttribute = "id")
+    @Tag("applied-converters") @AbstractCollection(surroundWithTag = false, elementTag = "converter", elementValueAttribute = "id")
     public Set<String> myAppliedConverters = new HashSet<String>();
 
-    @Tag("not-converted-modules")
-    @AbstractCollection(surroundWithTag = false, elementTag = "module", elementValueAttribute = "path")
-    public Set<String> myNotConvertedModules = new HashSet<String>();
+    @Tag("project-files")
+    @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false, entryTagName = "file",
+                   keyAttributeName = "path", valueAttributeName = "timestamp")
+    public Map<String, Long> myProjectFilesTimestamps = new HashMap<String, Long>();
   }
 
   private class ConverterProvidersGraph implements GraphGenerator.SemiGraph<ConverterProvider> {

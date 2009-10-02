@@ -8,8 +8,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import gnu.trove.THashSet;
@@ -18,10 +20,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author nik
@@ -36,18 +35,19 @@ import java.util.Set;
 public class ArtifactManagerImpl extends ArtifactManager implements ProjectComponent, PersistentStateComponent<ArtifactManagerState> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.packaging.impl.artifacts.ArtifactManagerImpl");
   @NonNls public static final String COMPONENT_NAME = "ArtifactManager";
+  @NonNls public static final String PACKAGING_ELEMENT_NAME = "element";
+  @NonNls public static final String TYPE_ID_ATTRIBUTE = "id";
   private final ArtifactManagerModel myModel = new ArtifactManagerModel();
   private final Project myProject;
   private final DefaultPackagingElementResolvingContext myResolvingContext;
   private boolean myInsideCommit = false;
-  @NonNls public static final String PACKAGING_ELEMENT_NAME = "element";
-  @NonNls public static final String TYPE_ID_ATTRIBUTE = "id";
   private long myModificationCount;
   private final ModificationTracker myModificationTracker = new ModificationTracker() {
     public long getModificationCount() {
       return myModificationCount;
     }
   };
+  private Map<String, LocalFileSystem.WatchRequest> myWatchedOutputs = new HashMap<String, LocalFileSystem.WatchRequest>();
 
   public ArtifactManagerImpl(Project project) {
     myProject = project;
@@ -182,6 +182,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
   }
 
   public void disposeComponent() {
+    LocalFileSystem.getInstance().removeWatchedRoots(myWatchedOutputs.values());
   }
 
   @NotNull
@@ -190,12 +191,45 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
   }
 
   public void initComponent() {
+    updateWatchedRoots();
+  }
+
+  private void updateWatchedRoots() {
+    Set<String> pathsToRemove = new HashSet<String>(myWatchedOutputs.keySet());
+    Set<String> toAdd = new HashSet<String>();
+    for (Artifact artifact : getArtifacts()) {
+      final String path = artifact.getOutputPath();
+      if (path != null && path.length() > 0) {
+        pathsToRemove.remove(path);
+        if (!myWatchedOutputs.containsKey(path)) {
+          toAdd.add(path);
+        }
+      }
+    }
+
+    List<LocalFileSystem.WatchRequest> requestsToRemove = new ArrayList<LocalFileSystem.WatchRequest>();
+    for (String path : pathsToRemove) {
+      final LocalFileSystem.WatchRequest request = myWatchedOutputs.remove(path);
+      ContainerUtil.addIfNotNull(request, requestsToRemove);
+    }
+
+    final LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+    fileSystem.removeWatchedRoots(requestsToRemove);
+    final Set<LocalFileSystem.WatchRequest> newRequests = fileSystem.addRootsToWatch(toAdd, true);
+    for (LocalFileSystem.WatchRequest request : newRequests) {
+      myWatchedOutputs.put(request.getRootPath(), request);
+    }
   }
 
   public void projectOpened() {
   }
 
   public void projectClosed() {
+  }
+
+  @Override
+  public Artifact[] getSortedArtifacts() {
+    return myModel.getSortedArtifacts();
   }
 
   @Override
@@ -279,6 +313,11 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
   }
 
   @Override
+  public void addElementsToDirectory(@NotNull Artifact artifact, @NotNull String relativePath, @NotNull PackagingElement<?> element) {
+    addElementsToDirectory(artifact, relativePath, Collections.singletonList(element));
+  }
+
+  @Override
   public void addElementsToDirectory(@NotNull Artifact artifact, @NotNull String relativePath,
                                      @NotNull Collection<? extends PackagingElement<?>> elements) {
     final ModifiableArtifactModel model = createModifiableModel();
@@ -298,14 +337,29 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
 
   private static class ArtifactManagerModel extends ArtifactModelBase {
     private List<ArtifactImpl> myArtifactsList = new ArrayList<ArtifactImpl>();
+    private Artifact[] mySortedArtifacts;
 
     public void setArtifactsList(List<ArtifactImpl> artifactsList) {
       myArtifactsList = artifactsList;
       artifactsChanged();
     }
 
+    @Override
+    protected void artifactsChanged() {
+      super.artifactsChanged();
+      mySortedArtifacts = null;
+    }
+
     protected List<? extends Artifact> getArtifactsList() {
       return myArtifactsList;
+    }
+
+    public Artifact[] getSortedArtifacts() {
+      if (mySortedArtifacts == null) {
+        mySortedArtifacts = getArtifacts().clone();
+        Arrays.sort(mySortedArtifacts, ARTIFACT_COMPARATOR);
+      }
+      return mySortedArtifacts;
     }
   }
 

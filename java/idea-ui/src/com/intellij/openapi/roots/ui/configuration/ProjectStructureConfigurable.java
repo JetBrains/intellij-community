@@ -22,7 +22,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.navigation.BackAction;
 import com.intellij.ui.navigation.ForwardAction;
@@ -198,9 +197,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   }
 
   private void addArtifactsConfig() {
-    if (ArtifactManager.useArtifacts()) {
-      addConfigurable(myArtifactsStructureConfigurable);
-    }
+    addConfigurable(myArtifactsStructureConfigurable);
   }
 
   public ArtifactsStructureConfigurable getArtifactsStructureConfigurable() {

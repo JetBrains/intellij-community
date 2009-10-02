@@ -1062,7 +1062,6 @@
     <todoIndexer filetype="JAVA" implementationClass="com.intellij.psi.impl.cache.impl.idCache.JavaTodoIndexer"/>
 
     <refactoring.elementListenerProvider implementation="com.intellij.execution.impl.RunConfigurationRefactoringElementListenerProvider"/>
-    <refactoring.elementListenerProvider implementation="com.intellij.jar.BuildJarRefactoringListenerProvider"/>
 
     <bundledKeymapProvider implementation="com.intellij.openapi.keymap.JBuilderKeymapProvider"/>
 

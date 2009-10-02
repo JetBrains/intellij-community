@@ -30,7 +30,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   private final LinkedHashSet<SourceFolder> mySourceFolders = new LinkedHashSet<SourceFolder>();
   private final TreeSet<ExcludeFolder> myExcludeFolders = new TreeSet<ExcludeFolder>(ContentFolderComparator.INSTANCE);
   private final TreeSet<ExcludedOutputFolder> myExcludedOutputFolders = new TreeSet<ExcludedOutputFolder>(ContentFolderComparator.INSTANCE);
-  @NonNls private static final String URL_ATTR = "url";
+  @NonNls public static final String URL_ATTRIBUTE = "url";
 
   ContentEntryImpl(VirtualFile file, RootModelImpl m) {
     this(file.getUrl(), m);
@@ -49,7 +49,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   private static String getUrlFrom(Element e) throws InvalidDataException {
     LOG.assertTrue(ELEMENT_NAME.equals(e.getName()));
     
-    String url = e.getAttributeValue(URL_ATTR);
+    String url = e.getAttributeValue(URL_ATTRIBUTE);
     if (url == null) throw new InvalidDataException();
     return url;
   }
@@ -292,7 +292,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   public void writeExternal(Element element) throws WriteExternalException {
     assert !isDisposed();
     LOG.assertTrue(ELEMENT_NAME.equals(element.getName()));
-    element.setAttribute(URL_ATTR, myRoot.getUrl());
+    element.setAttribute(URL_ATTRIBUTE, myRoot.getUrl());
     for (final SourceFolder sourceFolder : mySourceFolders) {
       if (sourceFolder instanceof SourceFolderImpl) {
         final Element subElement = new Element(SourceFolderImpl.ELEMENT_NAME);

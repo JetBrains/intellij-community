@@ -122,7 +122,7 @@ public class ConvertProjectDialog extends DialogWrapper {
     }
   }
 
-  private String getFilesString(List<File> files) {
+  private static String getFilesString(List<File> files) {
     StringBuilder buffer = new StringBuilder();
     for (File file : files) {
       buffer.append(file.getAbsolutePath()).append("<br>");

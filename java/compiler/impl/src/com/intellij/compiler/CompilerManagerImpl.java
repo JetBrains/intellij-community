@@ -5,7 +5,6 @@ import com.intellij.compiler.impl.javaCompiler.JavaCompiler;
 import com.intellij.compiler.impl.packagingCompiler.IncrementalPackagingCompiler;
 import com.intellij.compiler.impl.resourceCompiler.ResourceCompiler;
 import com.intellij.compiler.impl.rmiCompiler.RmicCompiler;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.extensions.Extensions;
@@ -15,7 +14,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.impl.compiler.IncrementalArtifactsCompiler;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Chunk;
@@ -57,9 +55,7 @@ public class CompilerManagerImpl extends CompilerManager {
     addCompiler(new ResourceCompiler(project, compilerConfiguration));
     addCompiler(new RmicCompiler());
     addCompiler(new IncrementalPackagingCompiler());
-    if (ArtifactManager.useArtifacts() || ApplicationManager.getApplication().isUnitTestMode()) {
-      addCompiler(new IncrementalArtifactsCompiler());
-    }
+    addCompiler(new IncrementalArtifactsCompiler());
 
     for(Compiler compiler: Extensions.getExtensions(Compiler.EP_NAME, myProject)) {
       addCompiler(compiler);

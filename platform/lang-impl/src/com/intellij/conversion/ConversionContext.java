@@ -35,4 +35,7 @@ public interface ConversionContext {
 
   @Nullable
   ComponentManagerSettings getCompilerSettings();
+
+  @Nullable 
+  ComponentManagerSettings getProjectRootManagerSettings();
 }

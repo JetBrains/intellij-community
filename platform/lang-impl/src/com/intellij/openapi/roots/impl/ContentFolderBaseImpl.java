@@ -18,7 +18,7 @@ public abstract class ContentFolderBaseImpl extends RootModelComponentBase imple
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.SimpleContentFolderBaseImpl");
   private final VirtualFilePointer myFilePointer;
   protected final ContentEntryImpl myContentEntry;
-  @NonNls public static final String URL_ATTR = "url";
+  @NonNls public static final String URL_ATTRIBUTE = "url";
 
   ContentFolderBaseImpl(VirtualFile file, ContentEntryImpl contentEntry) {
     this(VirtualFilePointerManager.getInstance().create(file, contentEntry.getRootModel().getModule(), contentEntry.getRootModel().myVirtualFilePointerListener), contentEntry);
@@ -37,7 +37,7 @@ public abstract class ContentFolderBaseImpl extends RootModelComponentBase imple
   }
 
   private static String getUrlFrom(Element element) throws InvalidDataException {
-    String url = element.getAttributeValue(URL_ATTR);
+    String url = element.getAttributeValue(URL_ATTRIBUTE);
     if (url == null) throw new InvalidDataException();
     return url;
   }
@@ -65,7 +65,7 @@ public abstract class ContentFolderBaseImpl extends RootModelComponentBase imple
 
   protected void writeFolder(Element element, String elementName) {
     LOG.assertTrue(element.getName().equals(elementName));
-    element.setAttribute(URL_ATTR, myFilePointer.getUrl());
+    element.setAttribute(URL_ATTRIBUTE, myFilePointer.getUrl());
   }
 
   @NotNull

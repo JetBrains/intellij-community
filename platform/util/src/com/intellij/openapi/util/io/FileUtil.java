@@ -58,16 +58,24 @@ public class FileUtil {
 
     if (base.equals(file)) return ".";
 
-    String basePath = base.getAbsolutePath();
-    if (!basePath.endsWith(File.separator)) basePath += File.separatorChar;
     final String filePath = file.getAbsolutePath();
+    String basePath = base.getAbsolutePath();
+    return getRelativePath(basePath, filePath, File.separatorChar);
+  }
+
+  public static String getRelativePath(String basePath, String filePath, final char separator) {
+    return getRelativePath(basePath, filePath, separator, SystemInfo.isFileSystemCaseSensitive);
+  }
+
+  public static String getRelativePath(String basePath, String filePath, final char separator, final boolean caseSensitive) {
+    if (!StringUtil.endsWithChar(basePath, separator)) basePath += separator;
 
     int len = 0;
     int lastSeparatorIndex = 0; // need this for cases like this: base="/temp/abcde/base" and file="/temp/ab"
-    String basePathToCompare = SystemInfo.isFileSystemCaseSensitive ? basePath : basePath.toLowerCase();
-    String filePathToCompare = SystemInfo.isFileSystemCaseSensitive ? filePath : filePath.toLowerCase();
+    String basePathToCompare = caseSensitive ? basePath : basePath.toLowerCase();
+    String filePathToCompare = caseSensitive ? filePath : filePath.toLowerCase();
     while (len < filePath.length() && len < basePath.length() && filePathToCompare.charAt(len) == basePathToCompare.charAt(len)) {
-      if (basePath.charAt(len) == File.separatorChar) {
+      if (basePath.charAt(len) == separator) {
         lastSeparatorIndex = len;
       }
       len++;
@@ -77,9 +85,9 @@ public class FileUtil {
 
     StringBuilder relativePath = new StringBuilder();
     for (int i=len; i < basePath.length(); i++) {
-      if (basePath.charAt(i) == File.separatorChar) {
+      if (basePath.charAt(i) == separator) {
         relativePath.append("..");
-        relativePath.append(File.separatorChar);
+        relativePath.append(separator);
       }
     }
     relativePath.append(filePath.substring(lastSeparatorIndex + 1));

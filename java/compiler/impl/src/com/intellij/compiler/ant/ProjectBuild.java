@@ -54,7 +54,7 @@ public abstract class ProjectBuild extends Generator {
     myAntProject.add(initTarget, 1);
 
     ArtifactsGenerator artifactsGenerator;
-    if (ArtifactManager.useArtifacts()) {
+    if (ArtifactManager.getInstance(project).getArtifacts().length > 0) {
       artifactsGenerator = new ArtifactsGenerator(project, genOptions);
     }
     else {

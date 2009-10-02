@@ -11,25 +11,24 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public class CopyToDirectoryInstructionCreator extends IncrementalCompilerInstructionCreatorBase {
-  private final ArtifactsProcessingItemsBuilderContext myContext;
   private final String myOutputPath;
   private final @Nullable VirtualFile myOutputFile;
 
   public CopyToDirectoryInstructionCreator(ArtifactsProcessingItemsBuilderContext context, String outputPath, @Nullable VirtualFile outputFile) {
-    myContext = context;
+    super(context);
     myOutputPath = outputPath;
     myOutputFile = outputFile;
   }
 
-  public void addFileCopyInstruction(@NotNull VirtualFile file, String outputFileName) {
+  public void addFileCopyInstruction(@NotNull VirtualFile file, @NotNull String outputFileName) {
     myContext.addDestination(file, new ExplodedDestinationInfo(myOutputPath + "/" + outputFileName, outputChild(outputFileName)));
   }
 
-  public IncrementalCompilerInstructionCreator subFolder(String directoryName) {
+  public IncrementalCompilerInstructionCreator subFolder(@NotNull String directoryName) {
     return new CopyToDirectoryInstructionCreator(myContext, myOutputPath + "/" + directoryName, outputChild(directoryName));
   }
 
-  public IncrementalCompilerInstructionCreator archive(String archiveFileName) {
+  public IncrementalCompilerInstructionCreator archive(@NotNull String archiveFileName) {
     String jarOutputPath = myOutputPath + "/" + archiveFileName;
     final JarInfo jarInfo = new JarInfo();
     VirtualFile outputFile = outputChild(archiveFileName);

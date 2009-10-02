@@ -78,7 +78,7 @@ public class FileCopyPackagingElement extends PackagingElement<FileCopyPackaging
       return;
     }
     if (file.isDirectory()) {
-      creator.addDirectoryCopyInstructions(file);
+      creator.addDirectoryCopyInstructions(file, null);
     }
     else {
       creator.addFileCopyInstruction(file, getOutputFileName());

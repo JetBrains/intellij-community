@@ -57,9 +57,10 @@ public class ArtifactPointerManagerImpl extends ArtifactPointerManager {
   }
 
   public ArtifactPointer create(@NotNull Artifact artifact) {
-    ArtifactPointerImpl pointer = myPointers.get(artifact.getName());
+    final String name = artifact.getName();
+    ArtifactPointerImpl pointer = myPointers.get(name);
     if (pointer == null) {
-      pointer = new ArtifactPointerImpl(myProject, artifact);
+      pointer = new ArtifactPointerImpl(myProject, name);
       myPointers.put(artifact.getName(), pointer);
     }
     return pointer;

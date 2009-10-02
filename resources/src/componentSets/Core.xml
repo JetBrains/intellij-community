@@ -45,10 +45,6 @@
       <implementation-class>com.intellij.pom.java.impl.PomJavaAspectImpl</implementation-class>
       <skipForDummyProject/>
     </component>
-    <component>
-      <implementation-class>com.intellij.jar.BuildJarProjectSettings</implementation-class>
-      <skipForDummyProject/>
-    </component>
 
     <component>
       <implementation-class>com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater</implementation-class>
@@ -56,9 +52,4 @@
   </project-components>
 
 
-  <module-components>
-    <component>
-      <implementation-class>com.intellij.jar.BuildJarSettings</implementation-class>
-    </component>
-  </module-components>
 </components>

@@ -65,6 +65,11 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
     myUnmodifiableChildren = null;
   }
 
+  public void removeChildren(@NotNull Collection<? extends PackagingElement<?>> children) {
+    myChildren.removeAll(children);
+    myUnmodifiableChildren = null;
+  }
+
   @NotNull
   public List<PackagingElement<?>> getChildren() {
     if (myUnmodifiableChildren == null) {

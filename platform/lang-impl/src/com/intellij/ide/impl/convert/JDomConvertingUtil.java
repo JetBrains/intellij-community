@@ -42,7 +42,7 @@ public class JDomConvertingUtil {
       throw new CannotConvertException(file.getAbsolutePath() + ": " + e.getMessage(), e);
     }
     catch (IOException e) {
-      throw new CannotConvertException(e.getMessage(), e);
+      throw new CannotConvertException(file.getAbsolutePath() + ": " + e.getMessage(), e);
     }
   }
 

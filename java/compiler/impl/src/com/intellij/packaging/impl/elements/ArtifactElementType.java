@@ -3,6 +3,7 @@ package com.intellij.packaging.impl.elements;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactPointerManager;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementType;
@@ -70,7 +71,9 @@ public class ArtifactElementType extends PackagingElementType<ArtifactPackagingE
         iterator.remove();
       }
     }
-    return new ArrayList<Artifact>(result);
+    final ArrayList<Artifact> list = new ArrayList<Artifact>(result);
+    Collections.sort(list, ArtifactManager.ARTIFACT_COMPARATOR);
+    return list;
   }
 
   @NotNull

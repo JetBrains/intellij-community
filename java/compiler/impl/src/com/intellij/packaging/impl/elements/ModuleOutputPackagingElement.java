@@ -55,7 +55,7 @@ public class ModuleOutputPackagingElement extends PackagingElement<ModuleOutputP
     if (module != null) {
       final VirtualFile output = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
       if (output != null) {
-        creator.addDirectoryCopyInstructions(output);
+        creator.addDirectoryCopyInstructions(output, null);
       }
     }
   }

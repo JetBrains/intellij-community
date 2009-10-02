@@ -272,7 +272,6 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
       editor.disposeUIResources();
     }
     myProjectData = null;
-    ((ProjectFacetManagerImpl)ProjectFacetManagerImpl.getInstance(myProject)).fireRunnableOnProjectSettingsClosed();
   }
 
   @NotNull

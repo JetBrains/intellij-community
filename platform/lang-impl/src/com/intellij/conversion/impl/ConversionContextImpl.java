@@ -46,6 +46,7 @@ public class ConversionContextImpl implements ConversionContext {
   private RunManagerSettingsImpl myRunManagerSettings;
   private File mySettingsBaseDir;
   private ComponentManagerSettings myCompilerManagerSettings;
+  private ComponentManagerSettings myProjectRootManagerSettings;
 
   public ConversionContextImpl(String projectPath) throws CannotConvertException {
     myProjectFile = new File(projectPath);
@@ -66,6 +67,32 @@ public class ConversionContextImpl implements ConversionContext {
     }
 
     myModuleFiles = findModuleFiles(JDomConvertingUtil.loadDocument(modulesFile).getRootElement());
+  }
+
+  public Set<File> getAllProjectFiles() {
+    final HashSet<File> files = new HashSet<File>(Arrays.asList(myModuleFiles));
+    if (myStorageScheme == StorageScheme.DEFAULT) {
+      files.add(myProjectFile);
+      files.add(myWorkspaceFile);
+    }
+    else {
+      addFilesRecursively(mySettingsBaseDir, files);
+    }
+    return files;
+  }
+
+  private static void addFilesRecursively(File file, Set<File> files) {
+    if (file.isDirectory()) {
+      final File[] children = file.listFiles();
+      if (children != null) {
+        for (File child : children) {
+          addFilesRecursively(child, files);
+        }
+      }
+    }
+    else if (StringUtil.endsWithIgnoreCase(file.getName(), ".xml") && !file.getName().startsWith(".")) {
+      files.add(file);
+    }
   }
 
   @NotNull
@@ -97,19 +124,34 @@ public class ConversionContextImpl implements ConversionContext {
 
   @NotNull
   public String expandPath(@NotNull String path, @NotNull ModuleSettingsImpl moduleSettings) {
+    return createExpandMacroMap(moduleSettings).substitute(path, true, null);
+  }
+
+  private ExpandMacroToPathMap createExpandMacroMap(@Nullable ModuleSettingsImpl moduleSettings) {
     final ExpandMacroToPathMap map = createExpandMacroMap();
-    final String modulePath = FileUtil.toSystemIndependentName(moduleSettings.getModuleFile().getParentFile().getAbsolutePath());
-    map.addMacroExpand(PathMacrosImpl.MODULE_DIR_MACRO_NAME, modulePath);
-    return map.substitute(path, true, null);
+    if (moduleSettings != null) {
+      final String modulePath = FileUtil.toSystemIndependentName(moduleSettings.getModuleFile().getParentFile().getAbsolutePath());
+      map.addMacroExpand(PathMacrosImpl.MODULE_DIR_MACRO_NAME, modulePath);
+    }
+    return map;
   }
 
   @NotNull
   public String collapsePath(@NotNull String path) {
-    ReplacePathToMacroMap map = new ReplacePathToMacroMap();
-    final String projectDir = FileUtil.toSystemIndependentName(myProjectBaseDir.getAbsolutePath());
-    map.addMacroReplacement(projectDir, PathMacrosImpl.PROJECT_DIR_MACRO_NAME);
-    PathMacrosImpl.getInstanceEx().addMacroReplacements(map);
+    ReplacePathToMacroMap map = createCollapseMacroMap(PathMacrosImpl.PROJECT_DIR_MACRO_NAME, myProjectBaseDir);
     return map.substitute(path, SystemInfo.isFileSystemCaseSensitive, null);
+  }
+
+  public String collapsePath(@NotNull String path, @NotNull ModuleSettingsImpl moduleSettings) {
+    final ReplacePathToMacroMap map = createCollapseMacroMap(PathMacrosImpl.MODULE_DIR_MACRO_NAME, moduleSettings.getModuleFile().getParentFile());
+    return map.substitute(path, SystemInfo.isFileSystemCaseSensitive, null);
+  }
+
+  private static ReplacePathToMacroMap createCollapseMacroMap(final String macroName, final File dir) {
+    ReplacePathToMacroMap map = new ReplacePathToMacroMap();
+    map.addMacroReplacement(FileUtil.toSystemIndependentName(dir.getAbsolutePath()), macroName);
+    PathMacrosImpl.getInstanceEx().addMacroReplacements(map);
+    return map;
   }
 
   public Collection<File> getLibraryClassRoots(@NotNull String name, @NotNull String level) {
@@ -123,19 +165,7 @@ public class ConversionContextImpl implements ConversionContext {
       }
 
       if (libraryElement != null) {
-        //todo[nik] support jar directories
-        final Element classesChild = libraryElement.getChild("CLASSES");
-        if (classesChild != null) {
-          final List<Element> roots = JDomConvertingUtil.getChildren(classesChild, "root");
-          List<File> files = new ArrayList<File>();
-          final ExpandMacroToPathMap pathMap = createExpandMacroMap();
-          for (Element root : roots) {
-            final String url = root.getAttributeValue("url");
-            final String path = VfsUtil.urlToPath(url);
-            files.add(new File(PathUtil.getLocalPath(pathMap.substitute(path, true, null))));
-          }
-          return files;
-        }
+        return getClassRoots(libraryElement, null);
       }
 
       return Collections.emptyList();
@@ -145,24 +175,52 @@ public class ConversionContextImpl implements ConversionContext {
     }
   }
 
-  public ComponentManagerSettings getCompilerSettings() {
-    if (myCompilerManagerSettings == null) {
-      try {
-        File file;
-        if (myStorageScheme == StorageScheme.DEFAULT) {
-          file = myProjectFile;
-        }
-        else {
-          file = new File(mySettingsBaseDir, "compiler.xml");
-        }
-        myCompilerManagerSettings = new ComponentManagerSettingsImpl(file, this);
-      }
-      catch (CannotConvertException e) {
-        LOG.info(e);
-        return null;
+  public List<File> getClassRoots(Element libraryElement, ModuleSettingsImpl moduleSettings) {
+    List<File> files = new ArrayList<File>();
+    //todo[nik] support jar directories
+    final Element classesChild = libraryElement.getChild("CLASSES");
+    if (classesChild != null) {
+      final List<Element> roots = JDomConvertingUtil.getChildren(classesChild, "root");
+      final ExpandMacroToPathMap pathMap = createExpandMacroMap(moduleSettings);
+      for (Element root : roots) {
+        final String url = root.getAttributeValue("url");
+        final String path = VfsUtil.urlToPath(url);
+        files.add(new File(PathUtil.getLocalPath(pathMap.substitute(path, true, null))));
       }
     }
+    return files;
+  }
+
+  public ComponentManagerSettings getCompilerSettings() {
+    if (myCompilerManagerSettings == null) {
+      myCompilerManagerSettings = createProjectSettings("compiler.xml");
+    }
     return myCompilerManagerSettings;
+  }
+
+  public ComponentManagerSettings getProjectRootManagerSettings() {
+    if (myProjectRootManagerSettings == null) {
+      myProjectRootManagerSettings = createProjectSettings("misc.xml");
+    }
+    return myProjectRootManagerSettings;
+  }
+
+  @Nullable
+  private ComponentManagerSettingsImpl createProjectSettings(final String fileName) {
+    try {
+      File file;
+      if (myStorageScheme == StorageScheme.DEFAULT) {
+        file = myProjectFile;
+      }
+      else {
+        file = new File(mySettingsBaseDir, fileName);
+      }
+      return new ComponentManagerSettingsImpl(file, this);
+    }
+    catch (CannotConvertException e) {
+      LOG.info(e);
+      return null;
+    }
   }
 
   @Nullable

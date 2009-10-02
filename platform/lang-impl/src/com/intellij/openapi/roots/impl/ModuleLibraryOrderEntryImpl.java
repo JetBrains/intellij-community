@@ -18,10 +18,10 @@ import org.jetbrains.annotations.NotNull;
  * Library entry for module ("in-place") libraries
  *  @author dsl
  */
-class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements LibraryOrderEntry, ClonableOrderEntry, WritableOrderEntry {
+public class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements LibraryOrderEntry, ClonableOrderEntry, WritableOrderEntry {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.LibraryOrderEntryImpl");
   private final Library myLibrary;
-  @NonNls static final String ENTRY_TYPE = "module-library";
+  @NonNls public static final String ENTRY_TYPE = "module-library";
   private boolean myExported;
  @NonNls private static final String EXPORTED_ATTR = "exported";
 
