@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
@@ -28,7 +29,8 @@ import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * User: anna
@@ -200,7 +202,7 @@ public class ProjectJdksModel implements NotifiableSdkModel {
   public void createAddActions(DefaultActionGroup group, final JComponent parent, final Consumer<Sdk> updateTree) {
     final SdkType[] types = SdkType.getAllTypes();
     for (final SdkType type : types) {
-      final AnAction addAction = new AnAction(type.getPresentableName(),
+      final AnAction addAction = new DumbAwareAction(type.getPresentableName(),
                                               null,
                                               type.getIconForAddAction()) {
           public void actionPerformed(AnActionEvent e) {
