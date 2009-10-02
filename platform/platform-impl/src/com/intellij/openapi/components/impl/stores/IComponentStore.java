@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -35,7 +34,6 @@ public interface IComponentStore {
   SaveSession startSave() throws IOException;
 
   interface SaveSession {
-    Collection<String> getUsedMacros() throws StateStorage.StateStorageException;
     List<IFile> getAllStorageFilesToSave(final boolean includingSubStructures) throws IOException;
     SaveSession save() throws IOException;
     void finishSave();

@@ -479,17 +479,6 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       myCompoundSaveSession.save();
     }
 
-    public Set<String> getUsedMacros()  {
-      assert mySession == this;
-      return myCompoundSaveSession.getUsedMacros();
-    }
-
-    public StateStorage.SaveSession getSaveSession(final String storage) {
-      final StateStorage stateStorage = myStorages.get(storage);
-      assert stateStorage != null;
-      return myCompoundSaveSession.getSaveSession(stateStorage);
-    }
-
     public void finishSave() {
       try {
         LOG.assertTrue(mySession == this);

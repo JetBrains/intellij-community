@@ -180,11 +180,6 @@ public class ClasspathStorage implements StateStorage {
         ClasspathStorage.this.save();
       }
 
-      public Set<String> getUsedMacros() {
-        assert mySession == this;
-        return Collections.EMPTY_SET;
-      }
-
       @Nullable
       public Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile,StateStorage>> changedFiles) {
         return null;
@@ -201,7 +196,6 @@ public class ClasspathStorage implements StateStorage {
 
         for (VirtualFile virtualFile : virtualFiles) {
           final File ioFile = VfsUtil.virtualToIoFile(virtualFile);
-          if (ioFile == null) continue;
           list.add(FileSystem.FILE_SYSTEM.createFile(ioFile.getAbsolutePath()));
         }
 

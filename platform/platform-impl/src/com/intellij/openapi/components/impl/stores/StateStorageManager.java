@@ -63,9 +63,5 @@ public interface StateStorageManager {
     List<IFile> getAllStorageFilesToSave() throws StateStorage.StateStorageException;
     List<IFile> getAllStorageFiles();
     void save() throws StateStorage.StateStorageException;
-
-    Set<String> getUsedMacros();
-
-    StateStorage.SaveSession getSaveSession(final String storage);
   }
 }

@@ -42,7 +42,6 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   protected final String myFileSpec;
   private final ComponentRoamingManager myComponentRoamingManager;
   protected final boolean myIsProjectSettings;
-  protected final boolean myDoNotReportUsedMacroses;
   protected boolean myBlockSavingTheContent = false;
   protected Integer myUpToDateHash;
   protected Integer myProviderUpToDateHash;
@@ -75,7 +74,6 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     myComponentRoamingManager = componentRoamingManager;
     Disposer.register(parentDisposable, this);
     myIsProjectSettings = "$PROJECT_FILE$".equals(myFileSpec) || myFileSpec.startsWith("$PROJECT_CONFIG_DIR$");
-    myDoNotReportUsedMacroses = "$WORKSPACE_FILE$".equals(myFileSpec);
 
     myLocalVersionProvider = localComponentVersionsProvider;
 
@@ -180,14 +178,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   }
 
   protected void loadState(final StorageData result, final Element element) throws StateStorageException {
-
-    try {
-      result.checkPathMacros(element);
-    }
-    catch (IOException e) {
-      throw new StateStorageException(e);
-    }
-
+    // TODO: notification should be created here
     if (myPathMacroSubstitutor != null) {
       myPathMacroSubstitutor.expandPaths(element);
     }
@@ -243,10 +234,6 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     return new SaveSession(){
       public void save() throws StateStorageException {
 
-      }
-
-      public Set<String> getUsedMacros() {
-        return Collections.emptySet();
       }
 
       public Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
@@ -338,7 +325,6 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   protected abstract class MySaveSession implements SaveSession {
     StorageData myStorageData;
     private Document myDocumentToSave;
-    private Set<String> myUsedMacros;
 
     public MySaveSession(MyExternalizationSession externalizationSession) {
       myStorageData = externalizationSession.myStorageData;
@@ -397,7 +383,6 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       myUpToDateHash = null;
     }
 
-
     protected Integer calcHash() {
       return null;
     }
@@ -415,9 +400,6 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       finally {
         saveLocally(hash);
       }
-
-
-
     }
 
     private void saveLocally(final Integer hash) {
@@ -472,28 +454,6 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
     public boolean isHashUpToDate() {
       return isHashUpToDate(calcHash());
-    }
-
-    public Set<String> getUsedMacros() {
-      assert mySession == this;
-
-      if (myUsedMacros == null) {
-        if (!myDoNotReportUsedMacroses && myPathMacroSubstitutor != null) {
-          myPathMacroSubstitutor.reset();
-          final Map<String, Element> states = myStorageData.myComponentStates;
-
-          for (Element e : states.values()) {
-            myPathMacroSubstitutor.collapsePaths((Element)e.clone());
-          }
-
-          myUsedMacros = new HashSet<String>(myPathMacroSubstitutor.getUsedMacros());
-        }
-        else {
-          myUsedMacros = new HashSet<String>();
-        }
-      }
-
-      return myUsedMacros;
     }
 
     protected Document getDocumentToSave()  {
@@ -736,10 +696,6 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
     public boolean hasState(final String componentName) {
         return myComponentStates.containsKey(componentName);
-    }
-
-    public void checkPathMacros(final Element element) throws IOException {
-
     }
   }
 

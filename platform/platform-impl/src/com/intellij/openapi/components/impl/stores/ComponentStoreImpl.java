@@ -199,7 +199,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
   }
 
   @Nullable
-  private Element getJdomState(final Object component, final String componentName, @NotNull final StateStorage defaultsStorage)
+  private static Element getJdomState(final Object component, final String componentName, @NotNull final StateStorage defaultsStorage)
       throws StateStorage.StateStorageException {
     ComponentRoamingManager roamingManager = ComponentRoamingManager.getInstance();
     if (!roamingManager.typeSpecified(componentName)) {
@@ -251,7 +251,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
     }
   }
 
-  private RoamingType getRoamingType(final PersistentStateComponent component) {
+  private static RoamingType getRoamingType(final PersistentStateComponent component) {
     if (component instanceof RoamingTypeDisabled) {
        return RoamingType.DISABLED;
     }
@@ -364,10 +364,6 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
     public SaveSessionImpl() {
       ShutDownTracker.getInstance().registerStopperThread(Thread.currentThread());
-    }
-
-    public Collection<String> getUsedMacros() throws StateStorage.StateStorageException {
-      return myStorageManagerSaveSession.getUsedMacros();
     }
 
     public List<IFile> getAllStorageFilesToSave(final boolean includingSubStructures) throws IOException {

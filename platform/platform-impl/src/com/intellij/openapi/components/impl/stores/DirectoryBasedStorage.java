@@ -211,33 +211,10 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
   private class MySaveSession implements SaveSession {
     private final MyStorageData myStorageData;
     private final TrackingPathMacroSubstitutor myPathMacroSubstitutor;
-    private Set<String> myUsedMacros;
 
     private MySaveSession(final MyStorageData storageData, final TrackingPathMacroSubstitutor pathMacroSubstitutor) {
       myStorageData = storageData;
       myPathMacroSubstitutor = pathMacroSubstitutor;
-    }
-
-    public Set<String> getUsedMacros() {
-      if (myUsedMacros == null) {
-        if (myPathMacroSubstitutor != null) {
-          myPathMacroSubstitutor.reset();
-
-          final Map<String, Map<IFile, Element>> states = myStorageData.myStates;
-          for (Map<IFile, Element> map : states.values()) {
-            for (Element e : map.values()) {
-              myPathMacroSubstitutor.collapsePaths((Element)e.clone());
-            }
-          }
-
-          myUsedMacros = new HashSet<String>(myPathMacroSubstitutor.getUsedMacros());
-        }
-        else {
-          myUsedMacros = new HashSet<String>();
-        }
-      }
-
-      return myUsedMacros;
     }
 
     public void save() throws StateStorageException {

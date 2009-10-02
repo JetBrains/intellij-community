@@ -64,17 +64,6 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
       }
     }
 
-    public Collection<String> getUsedMacros() throws StateStorage.StateStorageException {
-      Set<String> result = new HashSet<String>(super.getUsedMacros());
-
-      for (SaveSession moduleSaveSession : myModuleSaveSessions) {
-        result.addAll(moduleSaveSession.getUsedMacros());
-      }
-
-      return result;
-    }
-
-
     public List<IFile> getAllStorageFiles(final boolean includingSubStructures) {
       final List<IFile> result = super.getAllStorageFiles(includingSubStructures);
 

@@ -50,8 +50,6 @@ public interface StateStorage {
   interface SaveSession {
     void save() throws StateStorageException;
 
-    Set<String> getUsedMacros();
-
     @Nullable
     Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile,StateStorage>> changedFiles);
 

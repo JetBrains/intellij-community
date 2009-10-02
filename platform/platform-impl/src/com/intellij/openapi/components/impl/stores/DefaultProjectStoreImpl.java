@@ -204,13 +204,5 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
     public void save() throws StateStorage.StateStorageException {
       saveSession.save();
     }
-
-    public Set<String> getUsedMacros() {
-      return Collections.emptySet();
-    }
-
-    public StateStorage.SaveSession getSaveSession(final String storage) {
-      return saveSession;
-    }
   }
 }
