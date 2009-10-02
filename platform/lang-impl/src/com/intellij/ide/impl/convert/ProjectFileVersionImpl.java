@@ -6,6 +6,7 @@ package com.intellij.ide.impl.convert;
 
 import com.intellij.conversion.ConversionService;
 import com.intellij.conversion.impl.ConversionServiceImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
@@ -53,7 +54,7 @@ public class ProjectFileVersionImpl extends ProjectFileVersion implements Projec
   }
 
   public void disposeComponent() {
-    if (myProject.isDefault()) return;
+    if (myProject.isDefault() || ApplicationManager.getApplication().isUnitTestMode()) return;
     final IProjectStore stateStore = ((ProjectEx)myProject).getStateStore();
     final String filePath;
     if (stateStore.getStorageScheme() == StorageScheme.DEFAULT) {
