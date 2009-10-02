@@ -1162,6 +1162,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
 
     if (!pce.isNull()) {
+      myChangedFilesUpdater.scheduleForUpdate(file);
       throw pce.get();
     }
 

@@ -651,7 +651,7 @@ public final class TreeUtil {
       oldRowCount = rowCount;
       for (int i = 0; i < rowCount; i++) {
         tree.expandRow(i);
-      }
+     }
     }
     while (true);
   }

@@ -354,11 +354,13 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     if (tree != null) {
       myTreeElementPointer = tree;
       tree.clearCaches();
-      tree.putUserData(STUB_TREE_IN_PARSED_TREE, null);
     }
 
     synchronized (myStubLock) {
       myStub = null;
+      if (tree != null) {
+        tree.putUserData(STUB_TREE_IN_PARSED_TREE, null);
+      }
     }
 
     clearCaches();
