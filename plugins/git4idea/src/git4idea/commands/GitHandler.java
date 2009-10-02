@@ -482,6 +482,7 @@ public abstract class GitHandler {
     try {
       // setup environment
       if (!myProject.isDefault() && !mySilent) {
+        myVcs.showCommandLine("cd " + myWorkingDirectory);
         myVcs.showCommandLine(printableCommandLine());
       }
       if (log.isDebugEnabled()) {
