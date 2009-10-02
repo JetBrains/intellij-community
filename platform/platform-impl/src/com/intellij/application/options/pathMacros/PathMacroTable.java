@@ -25,22 +25,21 @@ public class PathMacroTable extends Table {
   private final MyTableModel myTableModel = new MyTableModel();
   private static final int NAME_COLUMN = 0;
   private static final int VALUE_COLUMN = 1;
-  private final boolean myEditOnlyPaths;  // if true, disable macro name changing, and macro adding/removing
 
-  private final List<Pair<String, Pair<String, String>>> myMacros = new ArrayList<Pair<String, Pair<String, String>>>();
-  private static final Comparator<Pair<String, Pair<String, String>>> MACRO_COMPARATOR = new Comparator<Pair<String, Pair<String, String>>>() {
-    public int compare(Pair<String, Pair<String, String>> pair, Pair<String, Pair<String, String>> pair1) {
+  private final List<Pair<String, String>> myMacros = new ArrayList<Pair<String, String>>();
+  private static final Comparator<Pair<String, String>> MACRO_COMPARATOR = new Comparator<Pair<String, String>>() {
+    public int compare(Pair<String, String> pair, Pair<String, String> pair1) {
       return pair.getFirst().compareTo(pair1.getFirst());
     }
   };
+
   private final Map<String, String> myUndefinedMacroNames;
 
   public PathMacroTable() {
-    this(null, false);
+    this(null);
   }
 
-  public PathMacroTable(Map<String, String> undefinedMacroNames, boolean editOnlyPathsMode) {
-    myEditOnlyPaths = editOnlyPathsMode;
+  public PathMacroTable(Map<String, String> undefinedMacroNames) {
     myUndefinedMacroNames = undefinedMacroNames;
     setModel(myTableModel);
     TableColumn column = getColumnModel().getColumn(NAME_COLUMN);
@@ -66,46 +65,19 @@ public class PathMacroTable extends Table {
     return (String)getValueAt(row, NAME_COLUMN);
   }
 
-  public String getMacroDescriptionAt(int row) {
-    return myMacros.get(row).getSecond().getSecond(); 
-  }
-
   public void addMacro() {
     final String title = ApplicationBundle.message("title.add.variable");
-    final PathMacroEditor macroEditor = new PathMacroEditor(title, "", "", "", new AddValidator(title), myEditOnlyPaths);
+    final PathMacroEditor macroEditor = new PathMacroEditor(title, "", "", new AddValidator(title));
     macroEditor.show();
     if (macroEditor.isOK()) {
       final String name = macroEditor.getName();
-      myMacros.add(new Pair<String,Pair<String, String>>(name, new Pair<String, String>(macroEditor.getValue(), macroEditor.getDescription())));
+      myMacros.add(new Pair<String, String>(name, macroEditor.getValue()));
       Collections.sort(myMacros, MACRO_COMPARATOR);
       final int index = indexOfMacroWithName(name);
       LOG.assertTrue(index >= 0);
       myTableModel.fireTableDataChanged();
       setRowSelectionInterval(index, index);
     }
-  }
-
-  public boolean isAddEnabled() {
-    return !myEditOnlyPaths;
-  }
-
-  public boolean isEditEnabled() {
-    return getValidSelectionRowsCount() == 1;
-  }
-
-  public boolean isRemoveEnabled() {
-    return !myEditOnlyPaths && getValidSelectionRowsCount() > 0;
-  }
-
-  private int getValidSelectionRowsCount() {
-    final int[] selectedRows = getSelectedRows();
-    int count = 0;
-    for (int selectedRow : selectedRows) {
-      if (isValidRow(selectedRow)) {
-        count++;
-      }
-    }
-    return count;
   }
 
   private boolean isValidRow(int selectedRow) {
@@ -134,8 +106,8 @@ public class PathMacroTable extends Table {
 
   public void commit() {
     myPathMacros.removeAllMacros();
-    for (Pair<String, Pair<String, String>> pair : myMacros) {
-      myPathMacros.setMacro(pair.getFirst(), pair.getSecond().getFirst().replace(File.separatorChar, '/'), pair.getSecond().getSecond());
+    for (Pair<String, String> pair : myMacros) {
+      myPathMacros.setMacro(pair.getFirst(), pair.getSecond().replace(File.separatorChar, '/'));
     }
   }
 
@@ -144,7 +116,7 @@ public class PathMacroTable extends Table {
   }
 
   private boolean hasMacroWithName(String name) {
-    for (Pair<String, Pair<String, String>> macro : myMacros) {
+    for (Pair<String, String> macro : myMacros) {
       if (name.equals(macro.getFirst())) {
         return true;
       }
@@ -154,7 +126,7 @@ public class PathMacroTable extends Table {
 
   private int indexOfMacroWithName(String name) {
     for (int i = 0; i < myMacros.size(); i++) {
-      final Pair<String, Pair<String, String>> pair = myMacros.get(i);
+      final Pair<String, String> pair = myMacros.get(i);
       if (name.equals(pair.getFirst())) {
         return i;
       }
@@ -167,19 +139,16 @@ public class PathMacroTable extends Table {
     myTableModel.fireTableDataChanged();
   }
 
-  private void obtainMacroPairs(final List<Pair<String, Pair<String, String>>> macros) {
+  private void obtainMacroPairs(final List<Pair<String, String>> macros) {
     macros.clear();
     final Set<String> macroNames = myPathMacros.getUserMacroNames();
     for (String name : macroNames) {
-      macros.add(Pair.create(name, Pair.create(myPathMacros.getValue(name).replace('/', File.separatorChar), myPathMacros.getDescription(name))));
+      macros.add(Pair.create(name, myPathMacros.getValue(name).replace('/', File.separatorChar)));
     }
 
     if (myUndefinedMacroNames != null) {
       for (String undefinedMacroName : myUndefinedMacroNames.keySet()) {
-        String description = myUndefinedMacroNames.get(undefinedMacroName);
-        description = description == null ? "" : description;
-
-        macros.add(new Pair<String, Pair<String, String>>(undefinedMacroName, new Pair<String, String>("", description)));
+        macros.add(new Pair<String, String>(undefinedMacroName, ""));
       }
     }
     Collections.sort(macros, MACRO_COMPARATOR);
@@ -190,22 +159,21 @@ public class PathMacroTable extends Table {
       return;
     }
     final int selectedRow = getSelectedRow();
-    final Pair<String, Pair<String, String>> pair = myMacros.get(selectedRow);
+    final Pair<String, String> pair = myMacros.get(selectedRow);
     final String title = ApplicationBundle.message("title.edit.variable");
     final String macroName = pair.getFirst();
-    final PathMacroEditor macroEditor = new PathMacroEditor(title, macroName, pair.getSecond().getFirst(), pair.getSecond().getSecond(), new EditValidator(), myEditOnlyPaths);
-    macroEditor.setMacroNameEditable(!myEditOnlyPaths);
+    final PathMacroEditor macroEditor = new PathMacroEditor(title, macroName, pair.getSecond(), new EditValidator());
     macroEditor.show();
     if (macroEditor.isOK()) {
       myMacros.remove(selectedRow);
-      myMacros.add(Pair.create(macroEditor.getName(), Pair.create(macroEditor.getValue(), macroEditor.getDescription())));
+      myMacros.add(Pair.create(macroEditor.getName(), macroEditor.getValue()));
       Collections.sort(myMacros, MACRO_COMPARATOR);
       myTableModel.fireTableDataChanged();
     }
   }
 
   public boolean isModified() {
-    final ArrayList<Pair<String, Pair<String, String>>> macros = new ArrayList<Pair<String, Pair<String, String>>>();
+    final ArrayList<Pair<String, String>> macros = new ArrayList<Pair<String, String>>();
     obtainMacroPairs(macros);
     return !macros.equals(myMacros);
   }
@@ -224,10 +192,10 @@ public class PathMacroTable extends Table {
     }
 
     public Object getValueAt(int rowIndex, int columnIndex) {
-      final Pair<String, Pair<String, String>> pair = myMacros.get(rowIndex);
+      final Pair<String, String> pair = myMacros.get(rowIndex);
       switch (columnIndex) {
         case NAME_COLUMN: return pair.getFirst();
-        case VALUE_COLUMN: return pair.getSecond().getFirst();
+        case VALUE_COLUMN: return pair.getSecond();
       }
       LOG.error("Wrong indices");
       return null;

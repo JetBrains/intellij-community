@@ -15,7 +15,6 @@ import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.List;
@@ -28,7 +27,6 @@ import java.util.Set;
 public class PathMacrosImpl extends PathMacros implements ApplicationComponent, NamedJDOMExternalizable, RoamingTypeDisabled {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.PathMacrosImpl");
   private final Map<String,String> myMacros = new HashMap<String, String>();
-  private final Map<String,String> myMacrosDescriptions = new HashMap<String, String>();
   private final JBReentrantReadWriteLock myLock = LockFactory.createReadWriteLock();
 
   @NonNls
@@ -37,8 +35,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
   public static final String NAME_ATTR = "name";
   @NonNls
   public static final String VALUE_ATTR = "value";
-  @NonNls
-  public static final String DESCRIPTION_ATTR = "description";
+
   // predefined macros
   @NonNls
   public static final String APPLICATION_HOME_MACRO_NAME = "APPLICATION_HOME_DIR";
@@ -112,27 +109,20 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     }
   }
 
-  @Nullable
-  public String getDescription(String name) {
-    return myMacrosDescriptions.get(name);
-  }
-
   public void removeAllMacros() {
     try {
       myLock.writeLock().lock();
       myMacros.clear();
-      myMacrosDescriptions.clear();
     }
     finally {
       myLock.writeLock().unlock();
     }
   }
 
-  public void setMacro(@NotNull String name, @NotNull String value, @Nullable String description) {
+  public void setMacro(@NotNull String name, @NotNull String value) {
     try {
       myLock.writeLock().lock();
       myMacros.put(name, value);
-      myMacrosDescriptions.put(name, description);
     }
     finally {
       myLock.writeLock().unlock();
@@ -143,7 +133,6 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     try {
       myLock.writeLock().lock();
       final String value = myMacros.remove(name);
-      myMacrosDescriptions.remove(name);
       LOG.assertTrue(value != null);
     }
     finally {
@@ -153,8 +142,8 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
 
   public void readExternal(Element element) throws InvalidDataException {
     final List children = element.getChildren(MACRO_ELEMENT);
-    for (int i = 0; i < children.size(); i++) {
-      Element macro = (Element)children.get(i);
+    for (Object aChildren : children) {
+      Element macro = (Element)aChildren;
       final String name = macro.getAttributeValue(NAME_ATTR);
       final String value = macro.getAttributeValue(VALUE_ATTR);
       if (name == null || value == null) {
@@ -162,11 +151,6 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
       }
 
       myMacros.put(name, value);
-
-      final String description = macro.getAttributeValue(DESCRIPTION_ATTR);
-      if (description != null) {
-        myMacrosDescriptions.put(name, description);
-      }
     }
   }
 
@@ -176,12 +160,6 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
       final Element macro = new Element(MACRO_ELEMENT);
       macro.setAttribute(NAME_ATTR, entry.getKey());
       macro.setAttribute(VALUE_ATTR, entry.getValue());
-
-      final String description = myMacrosDescriptions.get(entry.getKey());
-      if (description != null) {
-        macro.setAttribute(DESCRIPTION_ATTR, description);
-      }
-
       element.addContent(macro);
     }
   }

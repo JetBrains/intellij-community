@@ -54,7 +54,7 @@ public class MavenEnvironmentRegistrar implements ApplicationComponent {
       if (path == null) continue;
       if (new File(path).equals(repository)) return;
     }
-    macros.setMacro(MAVEN_REPOSITORY, repository.getPath(), "Maven Local Repostiry");
+    macros.setMacro(MAVEN_REPOSITORY, repository.getPath());
   }
 
   public void disposeComponent() {

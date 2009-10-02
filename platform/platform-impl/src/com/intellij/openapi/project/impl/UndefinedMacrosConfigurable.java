@@ -45,7 +45,7 @@ public class UndefinedMacrosConfigurable implements Configurable{
   public JComponent createComponent() {
     final JPanel mainPanel = new JPanel(new BorderLayout());
     // important: do not allow to remove or change macro name for already defined macros befor project is loaded
-    myEditor = new PathMacroListEditor(myUndefinedMacroNames, true);
+    myEditor = new PathMacroListEditor(myUndefinedMacroNames);
     final JComponent editorPanel = myEditor.getPanel();
 
     mainPanel.add(editorPanel, BorderLayout.CENTER);

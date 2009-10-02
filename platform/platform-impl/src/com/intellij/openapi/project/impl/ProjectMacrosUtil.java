@@ -59,7 +59,7 @@ public class ProjectMacrosUtil {
       if (value != null) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            PathMacros.getInstance().setMacro(macro, value, usedMacros.get(macro));
+            PathMacros.getInstance().setMacro(macro, value);
           }
         });
         it.remove();
