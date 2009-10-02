@@ -288,7 +288,10 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     }
     else {
       if (myModel.isApplicable(text)) {
-        myProcessHandler.notifyTextAvailable(text + "\n", myModel.processLine(text));
+        Key key = myModel.processLine(text);
+        if (key != null) {
+          myProcessHandler.notifyTextAvailable(text + "\n", key);
+        }
       }
       myOriginalDocument = getOriginalDocument();
       if (myOriginalDocument != null) {
@@ -372,7 +375,12 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     }
     else if (isApplicable.value(line)) {
       Key key = myModel.processLine(line);
-      myConsole.print(line + "\n", ConsoleViewContentType.getConsoleViewType(key));
+      if (key != null) {
+        ConsoleViewContentType type = ConsoleViewContentType.getConsoleViewType(key);
+        if (type != null) {
+          myConsole.print(line + "\n", type);
+        }
+      }
     }
     return true;
   }
