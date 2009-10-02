@@ -41,10 +41,6 @@ public class GitUpdateLocallyModifiedDialog extends DialogWrapper {
    */
   private JPanel myRootPanel;
   /**
-   * The vcs root
-   */
-  private VirtualFile myRoot;
-  /**
    * The collection with locally modified files
    */
   private List<String> myLocallyModifiedFiles;
@@ -57,10 +53,9 @@ public class GitUpdateLocallyModifiedDialog extends DialogWrapper {
    */
   protected GitUpdateLocallyModifiedDialog(final Project project, final VirtualFile root, List<String> locallyModifiedFiles) {
     super(project, true);
-    myRoot = root;
     myLocallyModifiedFiles = locallyModifiedFiles;
     setTitle(GitBundle.getString("update.locally.modified.title"));
-    myGitRoot.setText(myRoot.getPresentableUrl());
+    myGitRoot.setText(root.getPresentableUrl());
     myFilesList.setModel(new DefaultListModel());
     setOKButtonText(GitBundle.getString("update.locally.modified.revert"));
     syncListModel();

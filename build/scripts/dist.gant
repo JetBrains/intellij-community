@@ -16,10 +16,10 @@ class Paths {
 
   def Paths(String out) {
     sandbox = out
-    distWin = "$sandbox/dist.win"
-    distAll = "$sandbox/dist.all"
-    distUnix = "$sandbox/dist.unix"
-    distMac = "$sandbox/dist.mac"
+    distWin = "$sandbox/dist.win.ce"
+    distAll = "$sandbox/dist.all.ce"
+    distUnix = "$sandbox/dist.unix.ce"
+    distMac = "$sandbox/dist.mac.ce"
 
     artifacts = "$sandbox/artifacts"
   }

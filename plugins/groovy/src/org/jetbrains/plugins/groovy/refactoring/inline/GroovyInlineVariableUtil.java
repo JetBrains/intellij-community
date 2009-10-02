@@ -18,52 +18,42 @@ package org.jetbrains.plugins.groovy.refactoring.inline;
 import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
 import com.intellij.usageView.UsageInfo;
-import gnu.trove.TIntHashSet;
-import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
-import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
-import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsDfaInstance;
-import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsSemilattice;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author ilyas
  */
 public class GroovyInlineVariableUtil {
 
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineVariableUtil");
   public static final String REFACTORING_NAME = GroovyRefactoringBundle.message("inline.variable.title");
+
+  private GroovyInlineVariableUtil() {
+  }
 
 
   /**
@@ -87,6 +77,7 @@ public class GroovyInlineVariableUtil {
 
       public void inlineUsage(final UsageInfo usage, final PsiElement referenced) {
         GrExpression exprToBeReplaced = (GrExpression) usage.getElement();
+        if (exprToBeReplaced == null) return;
         assert variable.getInitializerGroovy() != null;
         GrExpression initializerGroovy = variable.getInitializerGroovy();
         assert initializerGroovy != null;
@@ -96,8 +87,13 @@ public class GroovyInlineVariableUtil {
         }
         Project project = variable.getProject();
         GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
-        GrExpression newExpr = factory.createExpressionFromText(tempExpr.getText());
-
+        GrExpression newExpr;
+        if (exprToBeReplaced.getParent() instanceof GrString && !(tempExpr instanceof GrReferenceExpression)) {
+          newExpr = factory.createExpressionFromText("{" + tempExpr.getText() + "}");
+        }
+        else {
+          newExpr = factory.createExpressionFromText(tempExpr.getText());
+        }
         newExpr = exprToBeReplaced.replaceWithExpression(newExpr, true);
         FileEditorManager manager = FileEditorManager.getInstance(project);
         Editor editor = manager.getSelectedTextEditor();
@@ -110,6 +106,7 @@ public class GroovyInlineVariableUtil {
   /**
    * Returns Settings object for referenced definition in case of local variable
    */
+  @Nullable
   static InlineHandler.Settings inlineLocalVariableSettings(final GrVariable variable, Editor editor, boolean invokedOnReference) {
     final String localName = variable.getName();
     final Project project = variable.getProject();
@@ -118,9 +115,8 @@ public class GroovyInlineVariableUtil {
     for (PsiReference ref : refs) {
       exprs.add(ref.getElement());
     }
-//    removeRedundantReferences(variable, editor, exprs, invokedOnReference);
 
-    GroovyRefactoringUtil.highlightOccurrences(project, editor, exprs.toArray(PsiElement.EMPTY_ARRAY));
+    GroovyRefactoringUtil.highlightOccurrences(project, editor, exprs.toArray(new PsiElement[exprs.size()]));
     if (variable.getInitializerGroovy() == null) {
       String message = GroovyRefactoringBundle.message("cannot.find.a.single.definition.to.inline.local.var");
       CommonRefactoringUtil.showErrorHint(variable.getProject(), editor, message, REFACTORING_NAME, HelpID.INLINE_VARIABLE);
@@ -138,6 +134,7 @@ public class GroovyInlineVariableUtil {
   /**
    * Shows dialog with question to inline
    */
+  @Nullable
   private static InlineHandler.Settings inlineDialogResult(String localName, Project project, Collection<PsiReference> refs) {
     Application application = ApplicationManager.getApplication();
     if (!application.isUnitTestMode()) {
@@ -162,37 +159,4 @@ public class GroovyInlineVariableUtil {
       }
     };
   }
-
-
-  /*
-  Remove overriden definitions from scope
-   */
-  private static void removeRedundantReferences(GrVariable variable, Editor editor, Collection<PsiElement> exprs, boolean invokedOnReference) {
-    Document document = editor.getDocument();
-    PsiFile file = PsiDocumentManager.getInstance(variable.getProject()).getPsiFile(document);
-    if (file == null) return;
-    if (invokedOnReference) {
-      int offset = editor.getCaretModel().getOffset();
-      PsiReference reference = file.findReferenceAt(offset);
-      if (reference == null) reference = file.findReferenceAt(offset - 1);
-      if (reference == null || !(reference instanceof GrReferenceExpression)) return;
-      PsiElement definition = getReachingDefinition(variable, ((GrReferenceExpression) reference));
-    }
-
-  }
-
-  private static PsiElement getReachingDefinition(GrVariable variable, GrReferenceExpression expr) {
-    GrVariableDeclarationOwner owner = PsiTreeUtil.getParentOfType(variable, GrVariableDeclarationOwner.class);
-    if (owner == null || !(owner instanceof GrControlFlowOwner)) return null;
-    Instruction[] flow = ((GrControlFlowOwner) owner).getControlFlow();
-    ReachingDefinitionsDfaInstance dfaInstance = new ReachingDefinitionsDfaInstance(flow);
-    ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();
-    DFAEngine<TIntObjectHashMap<TIntHashSet>> engine = new DFAEngine<TIntObjectHashMap<TIntHashSet>>(flow, dfaInstance, lattice);
-    ArrayList<TIntObjectHashMap<TIntHashSet>> dfaResult = engine.performDFA();
-
-
-    // todo implement appropriate DFA
-    return expr.resolve();
-  }
-
 }
