@@ -232,6 +232,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+    conflicts.putAll(analyzeMoveConflicts(myMembersToMove, myTargetClass, myNewVisibility));
     RefactoringUtil.analyzeModuleConflicts(myProject, myMembersToMove, usages, myTargetClass, conflicts);
     return showConflicts(conflicts);
   }
@@ -268,8 +269,8 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
             if (!JavaResolveUtil.isAccessible(member, myTargetClass, modifierListCopies.get(member), element, accessObjectClass, null)) {
               newVisibility = newVisibility == null ? VisibilityUtil.getVisibilityStringToDisplay(member) : newVisibility;
               String message =
-                RefactoringBundle.message("0.with.1.visibility.is.not.accesible.from.2", RefactoringUIUtil.getDescription(member, true),
-                                          newVisibility, RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(element), true));
+                CommonRefactoringUtil.capitalize(RefactoringBundle.message("0.with.1.visibility.is.not.accesible.from.2", RefactoringUIUtil.getDescription(member, false),
+                                          newVisibility, RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(element), true)));
               conflicts.put(member, message);
             }
           }
@@ -294,9 +295,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
       CommonRefactoringUtil.showErrorMessage(MoveMembersImpl.REFACTORING_NAME, message, HelpID.MOVE_MEMBERS, myProject);
       return;
     }
-    if (canRefactor()) {
-      super.doRun();
-    }
+    super.doRun();
   }
 
   private boolean canRefactor() {
