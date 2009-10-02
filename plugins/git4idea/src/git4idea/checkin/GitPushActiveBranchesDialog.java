@@ -258,17 +258,17 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
      */
     @Override
     public String toString() {
-      if (root.commits.size() == 0) {
-        return GitBundle.message("push.active.status.no.commits");
-      }
-      if (root.remoteCommits != 0) {
-        return GitBundle.message("push.active.status.behind", root.remoteCommits);
-      }
       if (root.branch == null) {
         return GitBundle.message("push.active.status.no.branch");
       }
       if (root.remote == null) {
         return GitBundle.message("push.active.status.no.tracked");
+      }
+      if (root.commits.size() == 0) {
+        return GitBundle.message("push.active.status.no.commits");
+      }
+      if (root.remoteCommits != 0) {
+        return GitBundle.message("push.active.status.behind", root.remoteCommits);
       }
       return GitBundle.message("push.active.status.push", root.commits.size());
     }
