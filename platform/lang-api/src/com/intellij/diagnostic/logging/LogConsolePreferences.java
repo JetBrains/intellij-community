@@ -45,17 +45,21 @@ public class LogConsolePreferences extends LogFilterRegistrar {
   public boolean FILTER_ERRORS = false;
   public boolean FILTER_WARNINGS = false;
   public boolean FILTER_INFO = true;
+  public boolean FILTER_DEBUG = true;
+
   public String CUSTOM_FILTER = null;
   @NonNls public static final String ERROR = "ERROR";
   @NonNls public static final String WARNING = "WARNING";
   @NonNls private static final String WARN = "WARN";
   @NonNls public static final String INFO = "INFO";
+  @NonNls public static final String DEBUG = "DEBUG";
   @NonNls public static final String CUSTOM = "CUSTOM";
 
   public final static Pattern ERROR_PATTERN = Pattern.compile(".*" + ERROR + ".*");
   public final static Pattern WARNING_PATTERN = Pattern.compile(".*" + WARNING + ".*");
   public final static Pattern WARN_PATTERN = Pattern.compile(".*" + WARN + ".*");
   public final static Pattern INFO_PATTERN = Pattern.compile(".*" + INFO + ".*");
+  public static final Pattern DEBUG_PATTERN = Pattern.compile(".*" + DEBUG + ".*");
 
   @NonNls public final static Pattern EXCEPTION_PATTERN = Pattern.compile(".*at .*");
 
@@ -98,6 +102,9 @@ public class LogConsolePreferences extends LogFilterRegistrar {
     if (type.equals(INFO)) {
       return !FILTER_INFO;
     }
+    if (type.equals(DEBUG)) {
+      return !FILTER_DEBUG;
+    }
     return true;
   }
 
@@ -111,12 +118,13 @@ public class LogConsolePreferences extends LogFilterRegistrar {
     if (ERROR_PATTERN.matcher(text.toUpperCase()).matches()) return ERROR;
     if (WARNING_PATTERN.matcher(text.toUpperCase()).matches() || WARN_PATTERN.matcher(text.toUpperCase()).matches()) return WARNING;
     if (INFO_PATTERN.matcher(text.toUpperCase()).matches()) return INFO;
+    if (DEBUG_PATTERN.matcher(text.toUpperCase()).matches()) return DEBUG;
     return null;
   }
 
   public static Key getProcessOutputTypes(String type) {
     if (type.equals(ERROR)) return ProcessOutputTypes.STDERR;
-    if (type.equals(WARNING) || type.equals(INFO)) return ProcessOutputTypes.STDOUT;
+    if (type.equals(WARNING) || type.equals(INFO) || type.equals(DEBUG)) return ProcessOutputTypes.STDOUT;
     return null;
   }
 
