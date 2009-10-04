@@ -9,6 +9,7 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.compiled.ClsStubBuilder;
 import com.intellij.psi.stubs.PsiFileStub;
@@ -50,9 +51,19 @@ public class ClsBuilderTest extends LightIdeaTestCase {
     doTest("java/util/concurrent/TimeUnit.class", "TimeUnit.txt");
   }
 
+  public void testParameterNames() throws Exception {
+    final String clsFilePath = JavaTestUtil.getJavaTestDataPath() + "/psi/cls/stubBuilder/TestSuite.class";
+    VirtualFile clsFile = LocalFileSystem.getInstance().findFileByPath(clsFilePath);
+    doTest(clsFile, "TestSuite.txt");
+  }
+
   private void doTest(final String classname, final String goldFile) throws IOException, ClsFormatException {
     VirtualFile vFile = findFile(classname);
 
+    doTest(vFile, goldFile);
+  }
+
+  private static void doTest(VirtualFile vFile, String goldFile) throws ClsFormatException, IOException {
     final PsiFileStub stub = ClsStubBuilder.build(vFile, vFile.contentsToByteArray());
     final String butWas = ((StubBase)stub).printTree();
 
