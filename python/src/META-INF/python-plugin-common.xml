@@ -64,6 +64,18 @@
       <descriptionDirectoryName>PyDemorganIntention</descriptionDirectoryName>
     </intentionAction>
 
+    <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.ImportToImportFromIntention</className>
+      <category>Python</category>
+      <descriptionDirectoryName>ImportToImportFromIntention</descriptionDirectoryName>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.ImportFromToImportIntention</className>
+      <category>Python</category>
+      <descriptionDirectoryName>ImportFromToImportIntention</descriptionDirectoryName>
+    </intentionAction>
+
     <stubElementTypeHolder class="com.jetbrains.python.PyElementTypes"/>
     <inspectionToolProvider implementation="com.jetbrains.python.inspections.PythonInspectionToolProvider"/>
 
