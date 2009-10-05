@@ -178,6 +178,10 @@ public class IdeaTestUtil extends PlatformTestUtil {
     return currentLine;
   }
 
+  public static String print(Object[] objects) {
+    return print(Arrays.asList(objects));
+  }
+
   public static String print(Collection c) {
     StringBuilder result = new StringBuilder();
     for (Iterator iterator = c.iterator(); iterator.hasNext();) {

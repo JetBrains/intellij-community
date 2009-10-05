@@ -1310,6 +1310,22 @@ class AbstractTreeUi {
     return myNodeActions;
   }
 
+  public List<Object> getLoadedChildrenFor(Object element) {
+     List<Object> result = new ArrayList<Object>();
+
+    DefaultMutableTreeNode node = (DefaultMutableTreeNode)findNodeByElement(element);
+    if (node != null) {
+      for (int i = 0; i < node.getChildCount(); i++) {
+        TreeNode each = node.getChildAt(i);
+        if (isLoadingNode(each)) continue;
+
+        result.add(getElementFor(each));
+      }
+    }
+
+    return result;
+  }
+
   static class ElementNode extends DefaultMutableTreeNode {
 
     Set<Object> myElements = new HashSet<Object>();
@@ -1521,14 +1537,15 @@ class AbstractTreeUi {
 
     processActions(node, element, myNodeActions);
 
-    if (!isLoadedInBackground(element)) {
+    boolean childrenReady = !isLoadedInBackground(element);
+    if (childrenReady) {
       processActions(node, element, myNodeChildrenActions);
     }
 
     if (!isUpdatingParent(node) && !isWorkerBusy()) {
       final UpdaterTreeState state = myUpdaterState;
       if (myNodeActions.size() == 0 && state != null && !state.isProcessingNow()) {
-        if (!state.restore()) {
+        if (!state.restore(childrenReady ? node : null)) {
           setUpdaterState(state);
         }
       }
@@ -1536,6 +1553,7 @@ class AbstractTreeUi {
 
     maybeReady();
   }
+
 
   private void processActions(DefaultMutableTreeNode node, Object element, final Map<Object, List<NodeAction>> nodeActions) {
     final List<NodeAction> actions = nodeActions.get(element);
@@ -1768,7 +1786,7 @@ class AbstractTreeUi {
     return parentElementInTree.equals(parentElement);
   }
 
-  private Condition getExpiredElementCondition(final Object element) {
+  public Condition getExpiredElementCondition(final Object element) {
     return new Condition() {
       public boolean value(final Object o) {
         return isInStructure(element);
@@ -2423,6 +2441,12 @@ class AbstractTreeUi {
       runDone(onDone);
       return;
     }
+
+    if (getRootNode() == toSelect && !myTree.isRootVisible()) {
+      runDone(onDone);
+      return;
+    }
+
     final int row = myTree.getRowForPath(new TreePath(toSelect.getPath()));
 
     if (myUpdaterState != null) {
@@ -2646,7 +2670,7 @@ class AbstractTreeUi {
   }
 
   @Nullable
-  private Object getElementFor(DefaultMutableTreeNode node) {
+  Object getElementFor(DefaultMutableTreeNode node) {
     if (node != null) {
       final Object o = node.getUserObject();
       if (o instanceof NodeDescriptor) {
@@ -2876,7 +2900,7 @@ class AbstractTreeUi {
 
     myTree.invalidate();
 
-    state.restore();
+    state.restore(null);
   }
 
   public AbstractTreeUi setClearOnHideDelay(final long clearOnHideDelay) {
@@ -3054,5 +3078,9 @@ class AbstractTreeUi {
       NodeDescriptor desc = getDescriptor(element);
       return myChanges.get(desc);
     }
+  }
+
+  UpdaterTreeState getUpdaterState() {
+    return myUpdaterState;
   }
 }
