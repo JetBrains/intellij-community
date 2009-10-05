@@ -29,8 +29,8 @@ setProperty("paths", new Paths(out))
 
 def paths = new Paths(out)
 
-def includeFile(String filename) {
-  Script s = groovyShell.parse(new File("$home/build/scripts/$filename"))
+def includeFile(String filepath) {
+  Script s = groovyShell.parse(new File(filepath))
   s.setBinding(binding)
   s
 }
@@ -79,7 +79,7 @@ public def layoutAll(Map args, String home, String out) {
 
   wire_build_date(args.buildNumber)
 
-  def layouts = includeFile("layouts.gant")
+  def layouts = includeFile("$home/build/scripts/layouts.gant")
   layouts.layoutFull(paths.distAll)
 
   ant.echo(message: args.buildNumber, file: "$paths.distAll/build.txt")
