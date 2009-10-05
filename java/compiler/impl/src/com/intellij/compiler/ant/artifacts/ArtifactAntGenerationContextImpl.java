@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.elements.ArtifactAntGenerationContext;
+import com.intellij.packaging.elements.ArtifactRootElement;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -40,7 +41,7 @@ public class ArtifactAntGenerationContextImpl implements ArtifactAntGenerationCo
     myGenerationOptions = generationOptions;
     for (Artifact artifact : ArtifactManager.getInstance(project).getArtifacts()) {
       final String outputPath = artifact.getOutputPath();
-      if (!StringUtil.isEmpty(outputPath) && artifact.isClearOutputDirectoryOnRebuild()) {
+      if (!StringUtil.isEmpty(outputPath) && artifact.getRootElement() instanceof ArtifactRootElement<?>) {
         myArtifactsToClean.add(artifact);
       }
     }

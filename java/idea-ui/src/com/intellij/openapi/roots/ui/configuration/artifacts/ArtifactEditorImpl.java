@@ -51,7 +51,6 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   private TextFieldWithBrowseButton myOutputDirectoryField;    
   private JCheckBox myShowIncludedCheckBox;
   private JPanel myEditorPanel;
-  private JCheckBox myClearOnRebuildCheckBox;
   private JPanel myErrorPanelPlace;
   private Splitter mySplitter;
   private final Project myProject;
@@ -75,7 +74,6 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     Disposer.register(this, mySourceItemsTree);
     Disposer.register(this, myLayoutTreeComponent);
     myBuildOnMakeCheckBox.setSelected(artifact.isBuildOnMake());
-    myClearOnRebuildCheckBox.setSelected(artifact.isClearOutputDirectoryOnRebuild());
     final String outputPath = artifact.getOutputPath();
     myOutputDirectoryField.addBrowseFolderListener(CompilerBundle.message("dialog.title.output.directory.for.artifact"),
                                                    CompilerBundle.message("chooser.description.select.output.directory.for.0.artifact",
@@ -93,7 +91,6 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   public void apply() {
     final ModifiableArtifact modifiableArtifact = myContext.getModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact);
     modifiableArtifact.setBuildOnMake(myBuildOnMakeCheckBox.isSelected());
-    modifiableArtifact.setClearOutputDirectoryOnRebuild(myClearOnRebuildCheckBox.isSelected());
     modifiableArtifact.setOutputPath(getConfiguredOutputPath());
     myPropertiesEditors.applyProperties();
     myLayoutTreeComponent.saveElementProperties();
@@ -261,7 +258,6 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   public boolean isModified() {
     return myBuildOnMakeCheckBox.isSelected() != myOriginalArtifact.isBuildOnMake()
         || !Comparing.equal(getConfiguredOutputPath(), myOriginalArtifact.getOutputPath())
-        || myClearOnRebuildCheckBox.isSelected() != myOriginalArtifact.isClearOutputDirectoryOnRebuild()
         || myPropertiesEditors.isModified()
         || myLayoutTreeComponent.isPropertiesModified();
   }

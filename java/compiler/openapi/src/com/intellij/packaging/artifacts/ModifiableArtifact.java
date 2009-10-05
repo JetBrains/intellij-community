@@ -19,6 +19,4 @@ public interface ModifiableArtifact extends Artifact {
   void setProperties(ArtifactPropertiesProvider provider, ArtifactProperties<?> properties);
 
   void setArtifactType(@NotNull ArtifactType selected);
-
-  void setClearOutputDirectoryOnRebuild(boolean clearOutputDirectoryOnRebuild);
 }
