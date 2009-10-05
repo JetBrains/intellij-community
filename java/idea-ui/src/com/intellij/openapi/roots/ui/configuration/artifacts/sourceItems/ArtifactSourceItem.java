@@ -5,6 +5,8 @@ import com.intellij.packaging.artifacts.ArtifactPointerManager;
 import com.intellij.packaging.artifacts.ArtifactPointer;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementFactory;
+import com.intellij.packaging.elements.PackagingElementOutputKind;
+import com.intellij.packaging.impl.artifacts.JarArtifactType;
 import com.intellij.packaging.impl.ui.ArtifactElementPresentation;
 import com.intellij.packaging.ui.*;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +41,12 @@ public class ArtifactSourceItem extends PackagingSourceItem {
 
   public boolean equals(Object obj) {
     return obj instanceof ArtifactSourceItem && myArtifact.equals(((ArtifactSourceItem)obj).myArtifact);
+  }
+
+  @NotNull
+  @Override
+  public PackagingElementOutputKind getKindOfProducedElements() {
+    return myArtifact.getArtifactType() instanceof JarArtifactType ? PackagingElementOutputKind.JAR_FILES : PackagingElementOutputKind.OTHER;
   }
 
   public int hashCode() {

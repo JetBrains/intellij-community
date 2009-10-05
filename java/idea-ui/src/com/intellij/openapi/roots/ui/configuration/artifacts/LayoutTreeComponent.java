@@ -101,7 +101,6 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     final JPanel emptyPanel = new JPanel();
 
     myPropertiesPanelWrapper = new JPanel(new CardLayout());
-    myPropertiesPanelWrapper.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
     myPropertiesPanelWrapper.add(EMPTY_CARD, emptyPanel);
     myPropertiesPanelWrapper.add(PROPERTIES_CARD, myPropertiesPanel);
   }

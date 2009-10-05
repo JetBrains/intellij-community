@@ -157,6 +157,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     rightTopPanel.add(new JLabel("Available Elements (drag'n'drop to layout tree)"), BorderLayout.SOUTH);
     rightPanel.add(rightTopPanel, BorderLayout.NORTH);
     rightPanel.add(ScrollPaneFactory.createScrollPane(mySourceItemsTree.getTree()), BorderLayout.CENTER);
+    rightPanel.add(new JPanel(), BorderLayout.SOUTH);
     rightPanel.setBorder(border);
     mySplitter.setSecondComponent(rightPanel);
 
