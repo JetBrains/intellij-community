@@ -48,7 +48,7 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
   public CommonProblemDescriptor getDescriptor() { return myDescriptor; }
 
   public Icon getIcon(boolean expanded) {
-    if (myDescriptor != null) {
+    if (myDescriptor instanceof ProblemDescriptorImpl) {
       ProblemHighlightType problemHighlightType = ((ProblemDescriptorImpl)myDescriptor).getHighlightType();
       if (problemHighlightType == ProblemHighlightType.ERROR) return ERROR;
       if (problemHighlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING) return WARNING;
