@@ -11,7 +11,7 @@ import java.util.List;
  * @author cdr
 */
 public class Place extends SmartList<PsiLanguageInjectionHost.Shred> {
-  private PsiFile myInjectedPsi;
+  private volatile PsiFile myInjectedPsi;
 
   Place(@NotNull List<PsiLanguageInjectionHost.Shred> shreds, PsiFile injectedPsi) {
     super(shreds);

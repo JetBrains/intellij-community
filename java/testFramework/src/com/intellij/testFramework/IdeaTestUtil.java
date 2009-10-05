@@ -40,7 +40,7 @@ public class IdeaTestUtil extends PlatformTestUtil {
   };
 
   public static final boolean COVERAGE_ENABLED_BUILD = "true".equals(System.getProperty("idea.coverage.enabled.build"));
-  public static final MyVirtualFileFilter CVS_FILE_FILTER = new MyVirtualFileFilter();
+  public static final CvsVirtualFileFilter CVS_FILE_FILTER = new CvsVirtualFileFilter();
 
   private static HashMap<String, VirtualFile> buildNameToFileMap(VirtualFile[] files, VirtualFileFilter filter) {
     HashMap<String, VirtualFile> map = new HashMap<String, VirtualFile>();
@@ -263,7 +263,7 @@ public class IdeaTestUtil extends PlatformTestUtil {
     System.out.println("This machine timing: " + Timings.MACHINE_TIMING);
   }
 
-  public static class MyVirtualFileFilter implements VirtualFileFilter, FilenameFilter {
+  public static class CvsVirtualFileFilter implements VirtualFileFilter, FilenameFilter {
     public boolean accept(VirtualFile file) {
       return !file.isDirectory() || !"CVS".equals(file.getName());
     }

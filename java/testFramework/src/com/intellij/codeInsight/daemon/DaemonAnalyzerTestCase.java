@@ -21,9 +21,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -46,9 +43,9 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.testFramework.ExpectedHighlightingData;
+import com.intellij.testFramework.FileTreeAccessFilter;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +58,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   private final Map<String, LocalInspectionTool> myAvailableTools = new THashMap<String, LocalInspectionTool>();
   private final Map<String, LocalInspectionToolWrapper> myAvailableLocalTools = new THashMap<String, LocalInspectionToolWrapper>();
   private boolean toInitializeDaemon;
-  protected final Set<VirtualFile> myAddedClasses = new THashSet<VirtualFile>();
+  private final FileTreeAccessFilter myFileTreeAccessFilter = new FileTreeAccessFilter();
 
   protected void setUp() throws Exception {
     super.setUp();
@@ -169,9 +166,8 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     final ArrayList<LocalInspectionTool> result = new ArrayList<LocalInspectionTool>();
     for (InspectionToolProvider toolProvider : provider) {
       for (Class aClass : toolProvider.getInspectionClasses()) {
-        final Object tool;
         try {
-          tool = aClass.newInstance();
+          final Object tool = aClass.newInstance();
           assertTrue(tool instanceof LocalInspectionTool);
           result.add((LocalInspectionTool)tool);
         }
@@ -223,17 +219,9 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
     //to initialize caches
     myPsiManager.getCacheManager().getFilesWithWord("XXX", UsageSearchContext.IN_COMMENTS, GlobalSearchScope.allScope(myProject), true);
-    VirtualFileFilter javaFilesFilter = new VirtualFileFilter() {
-      public boolean accept(VirtualFile file) {
-        if (myAddedClasses.contains(file)) return false;
-
-        FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
-        return (fileType == StdFileTypes.JAVA || fileType == StdFileTypes.CLASS) && !file.getName().equals("package-info.java");
-      }
-    };
     final JavaPsiFacadeEx facade = getJavaFacade();
     if (facade != null) {
-      facade.setAssertOnFileLoadingFilter(javaFilesFilter); // check repository work
+      facade.setAssertOnFileLoadingFilter(myFileTreeAccessFilter); // check repository work
     }
 
     Collection<HighlightInfo> infos = doHighlighting();
@@ -249,7 +237,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   }
 
   public void allowTreeAccessForFile(final VirtualFile file) {
-    myAddedClasses.add(file);
+    myFileTreeAccessFilter.allowTreeAccessForFile(file);
   }
 
   protected Collection<HighlightInfo> highlightErrors() {
