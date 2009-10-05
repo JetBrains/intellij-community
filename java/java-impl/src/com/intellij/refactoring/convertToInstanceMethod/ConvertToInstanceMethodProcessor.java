@@ -18,7 +18,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodViewDescriptor;
-import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
 import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -122,12 +121,12 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     final Set<PsiMember> methods = Collections.singleton((PsiMember)myMethod);
     if (!myTargetClass.isInterface()) {
       final String original = VisibilityUtil.getVisibilityModifier(myMethod.getModifierList());
-      MoveMembersProcessor.analyzeAccessibilityConflicts(methods, myTargetClass, conflicts, original);
+      RefactoringConflictsUtil.analyzeAccessibilityConflicts(methods, myTargetClass, conflicts, original);
     }
     else {
       for (final UsageInfo usage : usagesIn) {
         if (usage instanceof ImplementingClassUsageInfo) {
-          MoveMembersProcessor
+          RefactoringConflictsUtil
             .analyzeAccessibilityConflicts(methods, ((ImplementingClassUsageInfo)usage).getPsiClass(), conflicts, PsiModifier.PUBLIC);
         }
       }
@@ -165,10 +164,10 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     final PsiModifierList copy = (PsiModifierList)myMethod.getModifierList().copy();
     if (myNewVisibility != null) {
       if (myNewVisibility.equals(VisibilityUtil.ESCALATE_VISIBILITY)) {
-        RefactoringUtil.setVisibility(copy, PsiModifier.PUBLIC);
+        RefactoringConflictsUtil.setVisibility(copy, PsiModifier.PUBLIC);
       }
       else {
-        RefactoringUtil.setVisibility(copy, myNewVisibility);
+        RefactoringConflictsUtil.setVisibility(copy, myNewVisibility);
       }
     }
 

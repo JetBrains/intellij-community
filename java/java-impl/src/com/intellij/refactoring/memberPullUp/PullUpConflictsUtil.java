@@ -14,10 +14,7 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.RefactoringHierarchyUtil;
-import com.intellij.refactoring.util.RefactoringUIUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classMembers.InterfaceContainmentVerifier;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
@@ -35,7 +32,7 @@ public class PullUpConflictsUtil {
                                         PsiPackage targetPackage,
                                         PsiDirectory targetDirectory,
                                         final InterfaceContainmentVerifier interfaceContainmentVerifier) {
-    final Set<PsiElement> movedMembers = new HashSet<PsiElement>();
+    final Set<PsiMember> movedMembers = new HashSet<PsiMember>();
     final Set<PsiMethod> abstractMethods = new HashSet<PsiMethod>();
     final boolean isInterfaceTarget;
     final PsiElement targetRepresentativeElement;
@@ -48,7 +45,7 @@ public class PullUpConflictsUtil {
       targetRepresentativeElement = targetDirectory;
     }
     for (MemberInfo info : infos) {
-      PsiElement member = info.getMember();
+      PsiMember member = info.getMember();
       if (member instanceof PsiMethod) {
         if (!info.isToAbstract() && !isInterfaceTarget) {
           movedMembers.add(member);
@@ -62,6 +59,7 @@ public class PullUpConflictsUtil {
       }
     }
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    RefactoringConflictsUtil.analyzeAccessibilityConflicts(movedMembers, superClass, conflicts, null);
     if (superClass != null) {
       checkSuperclassMembers(superClass, infos, conflicts);
       if (isInterfaceTarget) {
@@ -70,7 +68,7 @@ public class PullUpConflictsUtil {
     }
     // check if moved methods use other members in the classes between Subclass and Superclass
     List<PsiElement> checkModuleConflictsList = new ArrayList<PsiElement>();
-    for (PsiElement member : movedMembers) {
+    for (PsiMember member : movedMembers) {
       if (member instanceof PsiMethod || member instanceof PsiClass) {
         ConflictingUsagesOfSubClassMembers visitor =
           new ConflictingUsagesOfSubClassMembers(member, movedMembers, abstractMethods, subclass, superClass,
@@ -85,7 +83,7 @@ public class PullUpConflictsUtil {
       checkModuleConflictsList.add(method.getReturnTypeElement());
       checkModuleConflictsList.add(method.getTypeParameterList());
     }
-    RefactoringUtil.analyzeModuleConflicts(subclass.getProject(), checkModuleConflictsList,
+    RefactoringConflictsUtil.analyzeModuleConflicts(subclass.getProject(), checkModuleConflictsList,
                                            new UsageInfo[0], targetRepresentativeElement, conflicts);
     return conflicts;
   }
@@ -144,7 +142,7 @@ public class PullUpConflictsUtil {
 
   private static class ConflictingUsagesOfSubClassMembers extends ClassMemberReferencesVisitor {
     private final PsiElement myScope;
-    private final Set<PsiElement> myMovedMembers;
+    private final Set<PsiMember> myMovedMembers;
     private final Set<PsiMethod> myAbstractMethods;
     private final PsiClass mySubclass;
     private final PsiClass mySuperClass;
@@ -153,7 +151,7 @@ public class PullUpConflictsUtil {
     private final InterfaceContainmentVerifier myInterfaceContainmentVerifier;
 
     ConflictingUsagesOfSubClassMembers(PsiElement scope,
-                                       Set<PsiElement> movedMembers, Set<PsiMethod> abstractMethods,
+                                       Set<PsiMember> movedMembers, Set<PsiMethod> abstractMethods,
                                        PsiClass subclass, PsiClass superClass,
                                        PsiPackage targetPackage, MultiMap<PsiElement, String> conflictsList,
                                        InterfaceContainmentVerifier interfaceContainmentVerifier) {

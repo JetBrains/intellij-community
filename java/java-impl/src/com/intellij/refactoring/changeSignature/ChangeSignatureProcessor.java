@@ -375,7 +375,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   private void addInaccessibilityDescriptions(Set<UsageInfo> usages, MultiMap<PsiElement, String> conflictDescriptions) throws IncorrectOperationException {
     PsiMethod method = myChangeInfo.getMethod();
     PsiModifierList modifierList = (PsiModifierList)method.getModifierList().copy();
-    RefactoringUtil.setVisibility(modifierList, myNewVisibility);
+    RefactoringConflictsUtil.setVisibility(modifierList, myNewVisibility);
 
     for (Iterator<UsageInfo> iterator = usages.iterator(); iterator.hasNext();) {
       UsageInfo usageInfo = iterator.next();
@@ -1019,7 +1019,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       final String highestVisibility = isOriginal ?
                                        myNewVisibility :
                                        VisibilityUtil.getHighestVisibility(myNewVisibility, VisibilityUtil.getVisibilityModifier(modifierList));
-      RefactoringUtil.setVisibility(modifierList, highestVisibility);
+      RefactoringConflictsUtil.setVisibility(modifierList, highestVisibility);
     }
 
     if (myChangeInfo.isNameChanged) {

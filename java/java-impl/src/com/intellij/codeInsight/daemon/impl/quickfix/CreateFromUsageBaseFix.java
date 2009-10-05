@@ -20,7 +20,7 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -140,7 +140,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       list.deleteChildRange(list.getFirstChild(), list.getLastChild());
       return;
     }
-    RefactoringUtil.setVisibility(list, getVisibility(parentClass, targetClass));
+    RefactoringConflictsUtil.setVisibility(list, getVisibility(parentClass, targetClass));
   }
 
   protected String getVisibility(PsiClass parentClass, PsiClass targetClass) {
