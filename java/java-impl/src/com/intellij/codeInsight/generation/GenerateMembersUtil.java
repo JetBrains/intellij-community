@@ -199,7 +199,8 @@ public class GenerateMembersUtil {
 
       RefactoringUtil.setVisibility(newMethod.getModifierList(), VisibilityUtil.getVisibilityModifier(method.getModifierList()));
 
-      PsiDocComment docComment = ((PsiMethod)method.getNavigationElement()).getDocComment();
+      PsiElement navigationElement = method.getNavigationElement();
+      PsiDocComment docComment = ((PsiDocCommentOwner)navigationElement).getDocComment();
       if (docComment != null) {
         newMethod.addAfter(docComment, null);
       }
