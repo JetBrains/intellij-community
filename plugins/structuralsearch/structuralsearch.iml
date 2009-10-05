@@ -16,6 +16,8 @@
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="openapi" />
+    <orderEntry type="module" module-name="ultimate-verifier" />
+    <orderEntry type="module" module-name="platform-ultimate" />
   </component>
   <component name="copyright">
     <Base>

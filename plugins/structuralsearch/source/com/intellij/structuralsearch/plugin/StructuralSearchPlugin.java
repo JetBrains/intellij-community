@@ -2,9 +2,12 @@ package com.intellij.structuralsearch.plugin;
 
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.project.Project;
-import com.intellij.structuralsearch.plugin.ui.*;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.structuralsearch.plugin.ui.ConfigurationManager;
+import com.intellij.structuralsearch.plugin.ui.ExistingTemplatesComponent;
+import com.intellij.ultimate.PluginVerifier;
+import com.intellij.ultimate.UltimateVerifier;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -30,6 +33,10 @@ public final class StructuralSearchPlugin implements ProjectComponent, JDOMExter
 
   public void setReplaceInProgress(boolean replaceInProgress) {
     this.replaceInProgress = replaceInProgress;
+  }
+
+  public StructuralSearchPlugin(UltimateVerifier verifier) {
+    PluginVerifier.verifyUltimatePlugin(verifier);
   }
 
   /**
