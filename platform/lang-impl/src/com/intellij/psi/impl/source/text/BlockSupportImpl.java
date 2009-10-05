@@ -218,7 +218,7 @@ public class BlockSupportImpl extends BlockSupport {
     sendPsiAfterEvent(fileImpl, oldLength);
   }
 
-  private static void mergeTrees(@NotNull final PsiFileImpl file, @NotNull final ASTNode oldRoot, @NotNull final ASTNode newRoot) {
+  public static void mergeTrees(@NotNull final PsiFileImpl file, @NotNull final ASTNode oldRoot, @NotNull final ASTNode newRoot) {
     //System.out.println("---------------------------------------------------");
     synchronized (PsiLock.LOCK) {
       if (newRoot instanceof FileElement) {

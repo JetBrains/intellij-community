@@ -110,6 +110,9 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   }
 
 
+  public static void cachePsi(@NotNull Document document, @NotNull PsiFile file) {
+    document.putUserData(HARD_REF_TO_PSI, file);
+  }
   public PsiFile getCachedPsiFile(@NotNull Document document) {
     final PsiFile userData = document.getUserData(HARD_REF_TO_PSI);
     if(userData != null) return userData;
@@ -143,7 +146,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     if (document != null) {
       if (!file.getViewProvider().isPhysical() &&
           document.getUserData(HARD_REF_TO_PSI) == null) {
-        document.putUserData(HARD_REF_TO_PSI, file);
+        cachePsi(document, file);
       }
       return document;
     }
@@ -152,7 +155,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     document = FileDocumentManager.getInstance().getDocument(file.getViewProvider().getVirtualFile());
 
     if (!file.getViewProvider().isPhysical()) {
-      document.putUserData(HARD_REF_TO_PSI, file);
+      cachePsi(document, file);
     }
 
     fireDocumentCreated(document, file);
