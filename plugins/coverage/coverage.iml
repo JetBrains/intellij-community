@@ -39,6 +39,8 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="ultimate-verifier" />
+    <orderEntry type="module" module-name="platform-ultimate" />
   </component>
 </module>
 

@@ -29,6 +29,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.ProjectData;
+import com.intellij.ultimate.PluginVerifier;
+import com.intellij.ultimate.UltimateVerifier;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -72,8 +74,9 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   private CoverageSuiteImpl myCurrentSuite;
   private EditorFactoryListener myEditorFactoryListener;
 
-  public CoverageDataManagerImpl(final Project project) {
+  public CoverageDataManagerImpl(final Project project, UltimateVerifier verifier) {
     myProject = project;
+    PluginVerifier.verifyUltimatePlugin(verifier);
   }
 
 

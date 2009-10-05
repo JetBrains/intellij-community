@@ -2,6 +2,7 @@
   <name>Coverage</name>
   <depends optional="true">TestNG-J</depends>
   <depends optional="true">JUnit</depends>
+  <depends>com.intellij.modules.ultimate</depends>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.coverageRunner" interface="com.intellij.coverage.CoverageRunner"/>
   </extensionPoints>
