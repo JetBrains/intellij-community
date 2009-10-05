@@ -4,7 +4,7 @@ import static org.jetbrains.jps.idea.IdeaProjectLoader.*
 includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
 
 target('default' : "Developers update") {
-  layoutFull(deploy)
+  layoutFull(home, deploy)
 }
 
 def module(String name) {
@@ -43,7 +43,7 @@ private List<String> platformApiModules() {
   return ["platform-api", "lvcs-api", "lang-api", "vcs-api", "usageView", "xdebugger-api", "xml-openapi"]
 }
 
-def layoutFull(String targetDirectory) {
+def layoutFull(String home, String targetDirectory) {
   project.stage("layout to $targetDirectory")
 
   //noinspection GroovyAssignabilityCheck
@@ -331,7 +331,7 @@ private def noResources(String moduleName) {
   }
 }
 
-def reorder(String targetDirectory) {
+def reorder(String home, String targetDirectory) {
   if (isDefined("util")) {
     ant.java(classname: "com.intellij.util.io.zip.ReorderJarsMain", fork: "true") {
       arg(value: "$home/build/order.txt")
