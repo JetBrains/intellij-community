@@ -21,7 +21,7 @@ public class FileTreeAccessFilter implements VirtualFileFilter {
   protected final Set<VirtualFile> myAddedClasses = new THashSet<VirtualFile>();
 
   public boolean accept(VirtualFile file) {
-    if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
+    if (file instanceof VirtualFileWindow) return false;
 
     if (myAddedClasses.contains(file)) return false;
 
