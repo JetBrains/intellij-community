@@ -11,6 +11,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.typeMigration.ChangeTypeSignatureHandler;
+import com.intellij.ultimate.PluginVerifier;
+import com.intellij.ultimate.UltimateVerifier;
 
 public class ChangeTypeSignatureAction extends BaseRefactoringAction {
   public boolean isAvailableInEditorOnly() {
@@ -47,6 +49,7 @@ public class ChangeTypeSignatureAction extends BaseRefactoringAction {
   }
 
   public RefactoringActionHandler getHandler(DataContext dataContext) {
+    PluginVerifier.verifyUltimatePlugin(UltimateVerifier.getInstance());
     return new ChangeTypeSignatureHandler();
   }
 }
