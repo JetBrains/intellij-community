@@ -59,6 +59,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   private IComponentStore myComponentStore;
   private Boolean myHeadless;
   private ComponentsRegistry myComponentsRegistry = new ComponentsRegistry();
+  private boolean myHaveProgressManager = false;
 
   protected ComponentManagerImpl(ComponentManager parentComponentManager) {
     myParentComponentManager = parentComponentManager;
@@ -199,7 +200,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   private void initComponent(Object component) {
-    if (!(component instanceof ProgressManager)) {
+    if (myHaveProgressManager) {
       final ProgressManager progressManager = ProgressManager.getInstance();
 
       final ProgressIndicator indicator = progressManager != null ? progressManager.getProgressIndicator() : null;
@@ -210,6 +211,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
         indicator.setIndeterminate(false);
         indicator.setFraction(myComponentsRegistry.getPercentageOfComponentsLoaded());
       }
+    }
+    if (component instanceof ProgressManager) {
+      myHaveProgressManager = true;
     }
 
     try {
