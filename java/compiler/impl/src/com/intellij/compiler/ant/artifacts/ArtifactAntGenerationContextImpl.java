@@ -7,12 +7,11 @@ import com.intellij.compiler.ant.Generator;
 import com.intellij.compiler.ant.taskdefs.Mkdir;
 import com.intellij.compiler.ant.taskdefs.Property;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.elements.ArtifactAntGenerationContext;
-import com.intellij.packaging.elements.ArtifactRootElement;
+import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -40,8 +39,7 @@ public class ArtifactAntGenerationContextImpl implements ArtifactAntGenerationCo
     myProject = project;
     myGenerationOptions = generationOptions;
     for (Artifact artifact : ArtifactManager.getInstance(project).getArtifacts()) {
-      final String outputPath = artifact.getOutputPath();
-      if (!StringUtil.isEmpty(outputPath) && artifact.getRootElement() instanceof ArtifactRootElement<?>) {
+      if (ArtifactUtil.shouldClearArtifactOutputBeforeRebuild(artifact)) {
         myArtifactsToClean.add(artifact);
       }
     }

@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -62,6 +63,10 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
       }
     }
     return elements;
+  }
+
+  public Element getFacetElement(@NotNull String facetTypeId) {
+    return ContainerUtil.getFirstItem(getFacetElements(facetTypeId), null);
   }
 
   public void setModuleType(@NotNull String moduleType) {

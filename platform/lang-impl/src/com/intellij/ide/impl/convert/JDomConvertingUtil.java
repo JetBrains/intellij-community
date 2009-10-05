@@ -49,7 +49,17 @@ public class JDomConvertingUtil {
   public static String getOptionValue(Element element, String optionName) {
     return JDOMExternalizerUtil.readField(element, optionName);
   }
-                                                               
+
+  @Nullable
+  public static Element getSettingsElement(@Nullable Element element, String name) {
+    for (Element child : getChildren(element, "setting")) {
+      if (child.getAttributeValue("name").equals(name)) {
+        return child;
+      }
+    }
+    return null;
+  }
+
   public static Condition<Element> createAttributeValueFilter(@NonNls final String name, @NonNls final String value) {
     return createAttributeValueFilter(name, Collections.singleton(value));
   }

@@ -475,4 +475,9 @@ public class ArtifactUtil {
 
     element.removeChildren(toRemove);
   }
+
+  public static boolean shouldClearArtifactOutputBeforeRebuild(Artifact artifact) {
+    final String outputPath = artifact.getOutputPath();
+    return !StringUtil.isEmpty(outputPath) && artifact.getRootElement() instanceof ArtifactRootElement<?>;
+  }
 }
