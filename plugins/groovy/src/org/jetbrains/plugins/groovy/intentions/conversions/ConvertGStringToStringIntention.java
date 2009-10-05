@@ -17,6 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinary
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 import java.util.ArrayList;
 
@@ -126,44 +127,7 @@ public class ConvertGStringToStringIntention extends Intention {
     }
     if (text.length() == 0) return null;
 
-    String escaped = escape(text);
-    if (escaped.contains("\n")) {
-      return "'''" + escaped + "'''";
-    }
-    else {
-      return "'" + escaped + "'";
-    }
-  }
-
-  private static String escape(String contents) {
-    StringBuilder b = new StringBuilder(contents.length() * 2);
-    final char[] chars = contents.toCharArray();
-    final int len = chars.length - 1;
-    int i;
-    for (i = 0; i < len; i++) {
-      if (chars[i] == '\\') {
-        if (chars[i + 1] == '"' || chars[i + 1] == '$') {
-          i++;
-          b.append(chars[i]);
-        }
-        else if (chars[i + 1] == 'n') {
-          b.append('\n');
-          i++;
-        }
-        else {
-          b.append('\\');
-          i++;
-          b.append(chars[i]);
-        }
-        continue;
-      }
-      if (chars[i] == '\'') b.append('\\');
-      b.append(chars[i]);
-    }
-    if (i == len) {
-      if (chars[i] == '\'') b.append('\\');
-      b.append(chars[i]);
-    }
-    return b.toString();
+    String escaped = GrStringUtil.escapeSymbolsForString(text);
+    return GrStringUtil.addQuotes(escaped, false);
   }
 }

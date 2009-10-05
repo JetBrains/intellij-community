@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 /**
  * @author Maxim.Medvedev
@@ -52,18 +53,10 @@ public class ConvertConcatenationToGstringIntention extends Intention {
   protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
     StringBuilder builder = new StringBuilder(element.getTextLength());
     performIntention((GrBinaryExpression)element, builder);
-    final String delimiter;
-    final String content = builder.toString();
-    if (content.contains("\n")) {
-      delimiter = "\"\"\"";
-    }
-    else {
-      delimiter = "\"";
-    }
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(element.getProject());
-    final GrExpression newExpr = factory.createExpressionFromText(delimiter + content + delimiter);
+    final GrExpression newExpr = factory.createExpressionFromText(GrStringUtil.addQuotes(builder.toString(), true));
     final GrExpression expression = ((GrBinaryExpression)element).replaceWithExpression(newExpr, true);
-    RemoveUnnecessaryBracesInGStringIntention.performIntention(expression, true);
+    GrStringUtil.removeUnnecessaryBracesInGString((GrString)expression);
   }
 
   private static void performIntention(GrBinaryExpression expr, StringBuilder builder) {
@@ -75,27 +68,11 @@ public class ConvertConcatenationToGstringIntention extends Intention {
 
   private static void getOperandText(GrExpression operand, StringBuilder builder) {
     if (operand instanceof GrString) {
-      final GrString grString = (GrString)operand;
-      final String text = operand.getText();
-      final boolean isPlain = grString.isPlainString();
-      if (isPlain) {
-        builder.append(text.substring(1, text.length() - 1));
-      }
-      else {
-        builder.append(text.substring(3, text.length() - 3));
-      }
+      builder.append(GrStringUtil.removeQuotes(operand.getText()));
     }
     else if (operand instanceof GrLiteral) {
-      final String text = operand.getText();
-      if (text.startsWith("\"\"\"") || text.startsWith("'''")) {
-        escape(text.substring(3, text.length() - 3), builder);
-      }
-      else if (text.startsWith("\"") || text.startsWith("'") || text.startsWith("/")) {
-        escape(text.substring(1, text.length() - 1), builder);
-      }
-      else {
-        builder.append(text);
-      }
+      String text = GrStringUtil.escapeSymbolsForGString(GrStringUtil.removeQuotes(operand.getText()));
+      builder.append(text);
     }
     else if (MyPredicate.satisfiedBy(operand, false)) {
       performIntention((GrBinaryExpression)operand, builder);
@@ -153,36 +130,6 @@ public class ConvertConcatenationToGstringIntention extends Intention {
         element = ((GrParenthesizedExpression)element).getOperand();
       }
       return element;
-    }
-  }
-
-  private static void escape(String s, StringBuilder b) {
-    final char[] chars = s.toCharArray();
-    final int len = chars.length - 1;
-    int i;
-    for (i = 0; i < len; i++) {
-      if (chars[i] == '\\') {
-        if (chars[i + 1] == '\'') {
-          b.append('\'');
-          i++;
-        }
-        else if (chars[i + 1] == 'n') {
-          b.append('\n');
-          i++;
-        }
-        else {
-          b.append(chars[i]);
-          i++;
-          b.append(chars[i]);
-        }
-        continue;
-      }
-      if (chars[i] == '"' || chars[i] == '$') b.append('\\');
-      b.append(chars[i]);
-    }
-    if (i == len) {
-      if (chars[i] == '"') b.append('\\');
-      b.append(chars[i]);
     }
   }
 

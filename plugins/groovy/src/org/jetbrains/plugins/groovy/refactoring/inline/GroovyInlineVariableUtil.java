@@ -35,8 +35,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
@@ -76,29 +74,25 @@ public class GroovyInlineVariableUtil {
       }
 
       public void inlineUsage(final UsageInfo usage, final PsiElement referenced) {
-        GrExpression exprToBeReplaced = (GrExpression) usage.getElement();
+        GrExpression exprToBeReplaced = (GrExpression)usage.getElement();
         if (exprToBeReplaced == null) return;
         assert variable.getInitializerGroovy() != null;
         GrExpression initializerGroovy = variable.getInitializerGroovy();
         assert initializerGroovy != null;
         GrExpression tempExpr = initializerGroovy;
         while (tempExpr instanceof GrParenthesizedExpression) {
-          tempExpr = ((GrParenthesizedExpression) tempExpr).getOperand();
+          tempExpr = ((GrParenthesizedExpression)tempExpr).getOperand();
         }
         Project project = variable.getProject();
         GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
         GrExpression newExpr;
-        if (exprToBeReplaced.getParent() instanceof GrString && !(tempExpr instanceof GrReferenceExpression)) {
-          newExpr = factory.createExpressionFromText("{" + tempExpr.getText() + "}");
-        }
-        else {
-          newExpr = factory.createExpressionFromText(tempExpr.getText());
-        }
+        newExpr = factory.createExpressionFromText(tempExpr.getText());
         newExpr = exprToBeReplaced.replaceWithExpression(newExpr, true);
         FileEditorManager manager = FileEditorManager.getInstance(project);
         Editor editor = manager.getSelectedTextEditor();
         GroovyRefactoringUtil.highlightOccurrences(project, editor, new PsiElement[]{newExpr});
-        WindowManager.getInstance().getStatusBar(project).setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+        WindowManager.getInstance().getStatusBar(project)
+          .setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
       }
     };
   }
