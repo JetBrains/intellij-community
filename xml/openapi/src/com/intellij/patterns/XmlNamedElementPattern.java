@@ -75,6 +75,15 @@ public abstract class XmlNamedElementPattern<T extends XmlElement & PsiNamedElem
     protected String getNamespace(XmlAttribute xmlAttribute) {
       return xmlAttribute.getNamespace();
     }
+    
+    public XmlAttributePattern withValue(final StringPattern pattern) {
+      return with(new PatternCondition<XmlAttribute>("withValue") {
+        @Override
+        public boolean accepts(@NotNull XmlAttribute xmlAttribute, ProcessingContext context) {
+          return pattern.accepts(xmlAttribute.getValue(), context);
+        }
+      });
+    }
 
   }
 

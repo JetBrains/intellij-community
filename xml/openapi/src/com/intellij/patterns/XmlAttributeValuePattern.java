@@ -66,4 +66,13 @@ public class XmlAttributeValuePattern extends XmlElementPattern<XmlAttributeValu
     });
   }
 
+  public XmlAttributeValuePattern withValue(final StringPattern valuePattern) {
+    return with(new PatternCondition<XmlAttributeValue>("withValue") {
+      @Override
+      public boolean accepts(@NotNull XmlAttributeValue xmlAttributeValue, ProcessingContext context) {
+        return valuePattern.accepts(xmlAttributeValue.getValue(), context);
+      }
+    });
+  }
+
 }
