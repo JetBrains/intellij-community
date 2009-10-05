@@ -45,7 +45,6 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -222,17 +221,7 @@ public class LibraryTableEditor implements Disposable {
 
   public void selectLibrary(Library library, boolean expand) {
     LibraryTableTreeContentElement element = new LibraryElement(library, this, false);
-    myTreeBuilder.updateFromRoot();
-    DefaultMutableTreeNode node = myTreeBuilder.getNodeForElement(element);
-    if (node == null) {
-      return;
-    }
-    myTree.requestFocus();
-    final TreePath treePath = new TreePath(node.getPath());
-    TreeUtil.selectPath(myTree, treePath);
-    if (expand) {
-      myTree.expandPath(treePath);
-    }
+    myTreeBuilder.updateAndSelect(element);
   }
 
   public void disableAttachButtons() {
