@@ -2,8 +2,9 @@ package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
-import com.intellij.util.Function;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -122,10 +123,30 @@ public class UpdaterTreeState {
     myCanRunRestore = state.myCanRunRestore;
   }
 
-  public boolean restore() {
+  public boolean restore(@Nullable DefaultMutableTreeNode actionNode) {
     if (isProcessingNow() || !myCanRunRestore) return false;
 
     myProcessingNow = true;
+
+
+    if (actionNode != null) {
+      Object readyElement = myUi.getElementFor(actionNode);
+      if (readyElement != null) {
+        Iterator<Object> toSelect = myToSelect.keySet().iterator();
+        while (toSelect.hasNext()) {
+          Object eachToSelect = toSelect.next();
+          if (readyElement.equals(myUi.getTreeStructure().getParentElement(eachToSelect))) {
+            List<Object> children = myUi.getLoadedChildrenFor(readyElement);
+            if (!children.contains(eachToSelect)) {
+              toSelect.remove();
+              if (!myToSelect.containsKey(readyElement)) {
+                addAdjustedSelection(eachToSelect, Condition.FALSE);
+              }
+            }
+          }
+        }
+      }
+    }
 
     final Object[] toSelect = getToSelect();
     final Object[] toExpand = getToExpand();
@@ -143,7 +164,9 @@ public class UpdaterTreeState {
       public void run() {
         processUnsuccessfulSelections(toSelect, new Function<Object, Object>() {
           public Object fun(final Object o) {
-            addSelection(o);
+            if (myUi.getTree().isRootVisible() || !myUi.getTreeStructure().getRootElement().equals(o)) {
+              addSelection(o);
+            }
             return o;
           }
         }, originallySelected);
@@ -183,7 +206,7 @@ public class UpdaterTreeState {
       wasFullyRejected = successfulSelections.size() == 0;
     }
 
-    if (wasFullyRejected) return;
+    if (wasFullyRejected && selected.size() > 0) return;
 
     for (Object eachToSelect : toSelect) {
       if (!selected.contains(eachToSelect)) {
@@ -217,6 +240,13 @@ public class UpdaterTreeState {
         public void run() {
           processUnsuccessfulSelections(newSelection, new Function<Object, Object>() {
             public Object fun(final Object o) {
+              if (myUi.isInStructure(o) && !adjusted.get(o).value(o)) {
+                Object parent = myUi.getTreeStructure().getParentElement(o);
+                if (parent != null) {
+                  addSelection(parent);
+                }
+                return null;
+              }
               addAdjustedSelection(o, adjusted.get(o));
               return null;
             }
