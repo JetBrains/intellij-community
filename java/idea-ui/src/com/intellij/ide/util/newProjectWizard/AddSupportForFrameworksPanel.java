@@ -110,13 +110,7 @@ public class AddSupportForFrameworksPanel {
     
     final FrameworkSupportNode selectedNode = getSelectedNode();
     if (!Comparing.equal(selectedNode, myLastSelectedNode)) {
-      if (myLastSelectedNode != null) {
-        final LibraryCompositionOptionsPanel optionsPanel = myLastSelectedNode.getLibraryCompositionOptionsPanel(myLibrariesContainer, myMirrorsMap);
-        if (optionsPanel != null) {
-          optionsPanel.saveSelectedRepositoriesMirrors(myMirrorsMap);
-          optionsPanel.apply();
-        }
-      }
+      applyLibraryOptionsForSelected();
 
       myLastSelectedNode = selectedNode;
       if (selectedNode != null) {
@@ -124,6 +118,16 @@ public class AddSupportForFrameworksPanel {
         if (newOptionsPanel != null) {
           newOptionsPanel.updateRepositoriesMirrors(myMirrorsMap);
         }
+      }
+    }
+  }
+
+  private void applyLibraryOptionsForSelected() {
+    if (myLastSelectedNode != null) {
+      final LibraryCompositionOptionsPanel optionsPanel = myLastSelectedNode.getLibraryCompositionOptionsPanel(myLibrariesContainer, myMirrorsMap);
+      if (optionsPanel != null) {
+        optionsPanel.saveSelectedRepositoriesMirrors(myMirrorsMap);
+        optionsPanel.apply();
       }
     }
   }
@@ -223,6 +227,7 @@ public class AddSupportForFrameworksPanel {
   }
 
   public boolean downloadLibraries() {
+    applyLibraryOptionsForSelected();
     List<LibraryCompositionSettings> list = getLibrariesCompositionSettingsList();
     for (LibraryCompositionSettings compositionSettings : list) {
       if (!compositionSettings.downloadFiles(myMirrorsMap, myLibrariesContainer, myMainPanel)) return false;
