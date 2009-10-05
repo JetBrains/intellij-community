@@ -552,6 +552,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
   private void addImplementingInterfaces() throws IncorrectOperationException {
     final PsiReferenceList implementsList = myClass.getImplementsList();
+    LOG.assertTrue(implementsList != null);
     for (PsiClass delegatedInterface : myDelegatedInterfaces) {
       if (!myClassImplementedInterfaces.contains(delegatedInterface)) {
         implementsList.add(myFactory.createClassReferenceElement(delegatedInterface));
@@ -560,6 +561,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
     if (!myBaseClass.isInterface()) {
       final PsiReferenceList extendsList = myClass.getExtendsList();
+      LOG.assertTrue(extendsList != null);
       extendsList.getReferenceElements()[0].delete();
     } else {
       final PsiJavaCodeReferenceElement[] interfaceRefs = implementsList.getReferenceElements();
