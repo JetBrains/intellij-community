@@ -8,14 +8,16 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.util.containers.MultiMap;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 public class PushDownConflicts {
   private final PsiClass myClass;
   private final Set<PsiMember> myMovedMembers;
   private final Set<PsiMember> myAbstractMembers;
-  private final Map<PsiElement, String> myConflicts;
+  private final MultiMap<PsiElement, String> myConflicts;
 
 
   public PushDownConflicts(PsiClass aClass, MemberInfo[] memberInfos) {
@@ -33,14 +35,14 @@ public class PushDownConflicts {
       }
     }
 
-    myConflicts = new HashMap<PsiElement, String>();
+    myConflicts = new MultiMap<PsiElement, String>();
   }
 
   public boolean isAnyConflicts() {
     return !myConflicts.isEmpty();
   }
 
-  public Map<PsiElement, String> getConflicts() {
+  public MultiMap<PsiElement, String> getConflicts() {
     return myConflicts;
   }
 
@@ -69,7 +71,7 @@ public class PushDownConflicts {
             if (qualifierType instanceof PsiClassType) {
               final PsiClass aClass = ((PsiClassType)qualifierType).resolve();
               if (!InheritanceUtil.isInheritorOrSelf(aClass, targetClass, true)) {
-                myConflicts.put(aClass, RefactoringBundle.message("pushed.members.will.not.be.visible.from.certain.call.sites"));
+                myConflicts.putValue(aClass, RefactoringBundle.message("pushed.members.will.not.be.visible.from.certain.call.sites"));
                 break Members;
               }
             }
@@ -85,7 +87,7 @@ public class PushDownConflicts {
       final PsiField field = targetClass.findFieldByName(name, false);
       if (field != null) {
         String message = RefactoringBundle.message("0.already.contains.field.1", RefactoringUIUtil.getDescription(targetClass, false), CommonRefactoringUtil.htmlEmphasize(name));
-        myConflicts.put(field, CommonRefactoringUtil.capitalize(message));
+        myConflicts.putValue(field, CommonRefactoringUtil.capitalize(message));
       }
     }
     else if (movedMember instanceof PsiMethod) {
@@ -97,7 +99,7 @@ public class PushDownConflicts {
         if (overrider != null) {
           String message = RefactoringBundle.message("0.is.already.overridden.in.1",
                                                      RefactoringUIUtil.getDescription(method, true), RefactoringUIUtil.getDescription(targetClass, false));
-          myConflicts.put(overrider, CommonRefactoringUtil.capitalize(message));
+          myConflicts.putValue(overrider, CommonRefactoringUtil.capitalize(message));
         }
       }
     }
@@ -111,7 +113,7 @@ public class PushDownConflicts {
         if (name.equals(innerClass.getName())) {
           String message = RefactoringBundle.message("0.already.contains.inner.class.named.1", RefactoringUIUtil.getDescription(targetClass, false),
                                                 CommonRefactoringUtil.htmlEmphasize(name));
-          myConflicts.put(innerClass, message);
+          myConflicts.putValue(innerClass, message);
         }
       }
     }
@@ -130,7 +132,7 @@ public class PushDownConflicts {
         String message = RefactoringBundle.message("0.uses.1.which.is.pushed.down", RefactoringUIUtil.getDescription(mySource, false),
                                               RefactoringUIUtil.getDescription(classMember, false));
         message = CommonRefactoringUtil.capitalize(message);
-        myConflicts.put(mySource, message);
+        myConflicts.putValue(mySource, message);
       }
     }
   }

@@ -28,10 +28,10 @@ import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.LinkedHashMap;
 
 public class ExtractSuperclassHandler implements RefactoringActionHandler, ExtractSuperclassDialog.Callback, ElementsHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractSuperclass.ExtractSuperclassHandler");
@@ -117,7 +117,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
     else {
       targetPackage = null;
     }
-    LinkedHashMap<PsiElement,String> conflicts =
+    MultiMap<PsiElement,String> conflicts =
       PullUpConflictsUtil.checkConflicts(infos, mySubclass, null, targetPackage, targetDirectory, dialog.getContainmentVerifier());
     if (!conflicts.isEmpty()) {
       ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);

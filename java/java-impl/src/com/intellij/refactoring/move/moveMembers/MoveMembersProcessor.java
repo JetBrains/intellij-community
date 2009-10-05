@@ -23,7 +23,6 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.refactoring.move.MoveMemberViewDescriptor;
-import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -31,6 +30,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -224,7 +224,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   }
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
-    final Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     final UsageInfo[] usages = refUsages.get();
     try {
       addInaccessiblleConflicts(conflicts, usages);
@@ -232,12 +232,12 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
-    conflicts.putAll(analyzeMoveConflicts(myMembersToMove, myTargetClass, myNewVisibility));
+    analyzeMoveConflicts(myMembersToMove, myTargetClass, myNewVisibility, conflicts);
     RefactoringUtil.analyzeModuleConflicts(myProject, myMembersToMove, usages, myTargetClass, conflicts);
     return showConflicts(conflicts);
   }
 
-  private void addInaccessiblleConflicts(final Map<PsiElement, String> conflicts, final UsageInfo[] usages) throws IncorrectOperationException {
+  private void addInaccessiblleConflicts(final MultiMap<PsiElement, String> conflicts, final UsageInfo[] usages) throws IncorrectOperationException {
     String newVisibility = myNewVisibility;
     if (VisibilityUtil.ESCALATE_VISIBILITY.equals(newVisibility)) { //Still need to check for access object
       newVisibility = PsiModifier.PUBLIC;
@@ -271,7 +271,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
               String message =
                 CommonRefactoringUtil.capitalize(RefactoringBundle.message("0.with.1.visibility.is.not.accesible.from.2", RefactoringUIUtil.getDescription(member, false),
                                           newVisibility, RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(element), true)));
-              conflicts.put(member, message);
+              conflicts.putValue(member, message);
             }
           }
 
@@ -280,7 +280,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
             if (accessDetector != null) {
               final ReadWriteAccessDetector.Access access = accessDetector.getExpressionAccess(element);
               if (access != ReadWriteAccessDetector.Access.Read) {
-                conflicts.put(element, CommonRefactoringUtil.capitalize(RefactoringUIUtil.getDescription(member, true)) + " has write access but is moved to an interface");
+                conflicts.putValue(element, CommonRefactoringUtil.capitalize(RefactoringUIUtil.getDescription(member, true)) + " has write access but is moved to an interface");
               }
             }
           }
@@ -298,25 +298,15 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     super.doRun();
   }
 
-  private boolean canRefactor() {
-    final Map<PsiElement, String> conflicts = analyzeMoveConflicts(myMembersToMove, myTargetClass, myNewVisibility);
-    if (!conflicts.isEmpty()) {
-      ConflictsDialog dialog = new ConflictsDialog(myProject, conflicts);
-      dialog.show();
-      return dialog.isOK();
-    }
-    return true;
-  }
-
-  private static Map<PsiElement, String> analyzeMoveConflicts(@NotNull Set<PsiMember> membersToMove, final PsiClass targetClass, final String newVisibility) {
-    final LinkedHashMap<PsiElement, String> conflicts = new LinkedHashMap<PsiElement, String>();
+  private static void analyzeMoveConflicts(@NotNull Set<PsiMember> membersToMove, final PsiClass targetClass, final String newVisibility,
+                                                              MultiMap<PsiElement, String> conflicts) {
     for (final PsiMember member : membersToMove) {
       if (member instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)member;
         if (hasMethod(targetClass, method)) {
           String message = RefactoringBundle.message("0.already.exists.in.the.target.class", RefactoringUIUtil.getDescription(method, false));
           message = CommonRefactoringUtil.capitalize(message);
-          conflicts.put(method, message);
+          conflicts.putValue(method, message);
         }
       }
       else if (member instanceof PsiField) {
@@ -324,16 +314,16 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
         if (hasField(targetClass, field)) {
           String message = RefactoringBundle.message("0.already.exists.in.the.target.class", RefactoringUIUtil.getDescription(field, false));
           message = CommonRefactoringUtil.capitalize(message);
-          conflicts.put(field, message);
+          conflicts.putValue(field, message);
         }
       }
     }
-    return analyzeAccessibilityConflicts(membersToMove, targetClass, conflicts, newVisibility);
+    analyzeAccessibilityConflicts(membersToMove, targetClass, conflicts, newVisibility);
   }
 
-  public static Map<PsiElement, String> analyzeAccessibilityConflicts(@NotNull Set<PsiMember> membersToMove,
+  public static void analyzeAccessibilityConflicts(@NotNull Set<PsiMember> membersToMove,
                                                 final PsiClass targetClass,
-                                                final LinkedHashMap<PsiElement, String> conflicts, String newVisibility) {
+                                                final MultiMap<PsiElement, String> conflicts, String newVisibility) {
     if (VisibilityUtil.ESCALATE_VISIBILITY.equals(newVisibility)) { //Still need to check for access object
       newVisibility = PsiModifier.PUBLIC;
     }
@@ -363,7 +353,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
                                                        VisibilityUtil.getVisibilityStringToDisplay(targetClass),
                                                        RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(ref), true));
             message = CommonRefactoringUtil.capitalize(message);
-            conflicts.put(targetClass, message);
+            conflicts.putValue(targetClass, message);
           }
           //check for member accessibility
           else if (!manager.getResolveHelper().isAccessible(member, modifierList, ref, null, null)) {
@@ -372,15 +362,14 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
                                                        VisibilityUtil.getVisibilityStringToDisplay(member),
                                                        RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(ref), true));
             message = CommonRefactoringUtil.capitalize(message);
-            conflicts.put(member, message);
+            conflicts.putValue(member, message);
           }
         }
       }
     }
-    return conflicts;
   }
 
-  private static void checkUsedElements(PsiMember member, PsiElement scope, @NotNull Set<PsiMember> membersToMove, PsiClass newContext, LinkedHashMap<PsiElement, String> conflicts) {
+  private static void checkUsedElements(PsiMember member, PsiElement scope, @NotNull Set<PsiMember> membersToMove, PsiClass newContext, MultiMap<PsiElement, String> conflicts) {
     if(scope instanceof PsiReferenceExpression) {
       PsiReferenceExpression refExpr = (PsiReferenceExpression)scope;
       PsiElement refElement = refExpr.resolve();
@@ -430,14 +419,14 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
                                          PsiClass newContext,
                                          PsiClass accessClass,
                                          PsiMember member,
-                                         LinkedHashMap<PsiElement, String> conflicts) {
+                                         MultiMap<PsiElement, String> conflicts) {
     if (!PsiUtil.isAccessible(refMember, newContext, accessClass)) {
       String message = RefactoringBundle.message("0.is.1.and.will.not.be.accessible.from.2.in.the.target.class",
                                                  RefactoringUIUtil.getDescription(refMember, true),
                                                  VisibilityUtil.getVisibilityStringToDisplay(refMember),
                                                  RefactoringUIUtil.getDescription(member, false));
       message = CommonRefactoringUtil.capitalize(message);
-      conflicts.put(refMember, message);
+      conflicts.putValue(refMember, message);
     }
   }
 

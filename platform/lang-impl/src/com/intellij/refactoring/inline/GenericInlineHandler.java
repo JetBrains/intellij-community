@@ -18,6 +18,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.MultiMap;
 
 import java.util.*;
 
@@ -36,7 +37,7 @@ public class GenericInlineHandler {
       settings.isOnlyOneReferenceToInline() ? Collections.singleton(invocationReference) : ReferencesSearch.search(element).findAll();
     final Map<Language, InlineHandler.Inliner> inliners = new HashMap<Language, InlineHandler.Inliner>();
 
-    final Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     for (PsiReference ref : allReferences) {
       final Language language = ref.getElement().getLanguage();
       if (inliners.containsKey(language)) continue;
@@ -51,7 +52,7 @@ public class GenericInlineHandler {
         }
       }
       if (inliner == null) {
-        conflicts.put(null, "Cannot inline reference from " + language.getID());
+        conflicts.putValue(null, "Cannot inline reference from " + language.getID());
       }
     }
 
@@ -117,13 +118,15 @@ public class GenericInlineHandler {
   private static void collectConflicts(final PsiReference reference,
                                        final PsiElement element,
                                        final Map<Language, InlineHandler.Inliner> inliners,
-                                       final Map<PsiElement, String> conflicts) {
+                                       final MultiMap<PsiElement, String> conflicts) {
     final Language language = reference.getElement().getLanguage();
     final InlineHandler.Inliner inliner = inliners.get(language);
     if (inliner != null) {
       final Map<PsiElement, String> refConflicts = inliner.getConflicts(reference, element);
       if (refConflicts != null) {
-        conflicts.putAll(refConflicts);
+        for (PsiElement psiElement : refConflicts.keySet()) {
+          conflicts.putValue(psiElement, refConflicts.get(psiElement));
+        }
       }
     }
   }

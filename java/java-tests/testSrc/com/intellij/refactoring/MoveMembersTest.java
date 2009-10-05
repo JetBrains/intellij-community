@@ -1,5 +1,6 @@
 package com.intellij.refactoring;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -9,11 +10,10 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.move.moveMembers.MockMoveMembersOptions;
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
-import com.intellij.JavaTestUtil;
+import com.intellij.util.containers.MultiMap;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
-import java.util.Map;
 
 public class MoveMembersTest extends MultiFileTestCase {
   @Override
@@ -137,7 +137,7 @@ public class MoveMembersTest extends MultiFileTestCase {
     options.setMemberVisibility(null);
     new MoveMembersProcessor(myProject, null, options){
       @Override
-      protected boolean showConflicts(Map<PsiElement, String> conflicts) {
+      protected boolean showConflicts(MultiMap<PsiElement, String> conflicts) {
         if (!conflicts.isEmpty()) {
           throw new RuntimeException("Found conflicts: " + conflicts.values().iterator().next());
         }

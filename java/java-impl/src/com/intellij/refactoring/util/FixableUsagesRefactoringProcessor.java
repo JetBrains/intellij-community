@@ -7,12 +7,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public abstract class FixableUsagesRefactoringProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#" + FixableUsagesRefactoringProcessor.class.getName());
@@ -48,11 +48,11 @@ public abstract class FixableUsagesRefactoringProcessor extends BaseRefactoringP
 
   protected abstract void findUsages(@NotNull List<FixableUsageInfo> usages);
 
-  protected static void checkConflicts(final Ref<UsageInfo[]> refUsages, final Map<PsiElement, String> conflicts) {
+  protected static void checkConflicts(final Ref<UsageInfo[]> refUsages, final MultiMap<PsiElement,String> conflicts) {
     for (UsageInfo info : refUsages.get()) {
       final String conflict = ((FixableUsageInfo)info).getConflictMessage();
       if (conflict != null) {
-        conflicts.put(info.getElement(), XmlUtil.escape(conflict));
+        conflicts.putValue(info.getElement(), XmlUtil.escape(conflict));
       }
     }
   }

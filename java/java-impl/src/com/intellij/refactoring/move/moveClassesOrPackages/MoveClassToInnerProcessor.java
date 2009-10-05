@@ -18,15 +18,16 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveClassesOrPackagesCallback;
+import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -264,12 +265,12 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
     return result;
   }
 
-  public Map<PsiElement, String> getConflicts(final UsageInfo[] usages) {
-    Map<PsiElement, String> conflicts = new LinkedHashMap<PsiElement, String>();
+  public MultiMap<PsiElement, String> getConflicts(final UsageInfo[] usages) {
+    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
 
     final PsiClass innerClass = myTargetClass.findInnerClassByName(myClassToMove.getName(), false);
     if (innerClass != null) {
-      conflicts.put(innerClass, RefactoringBundle.message("move.to.inner.duplicate.inner.class",
+      conflicts.putValue(innerClass, RefactoringBundle.message("move.to.inner.duplicate.inner.class",
                                               CommonRefactoringUtil.htmlEmphasize(myTargetClass.getQualifiedName()),
                                               CommonRefactoringUtil.htmlEmphasize(myClassToMove.getName())));
     }
@@ -344,10 +345,10 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
   }
 
   private class ConflictsCollector {
-    private final Map<PsiElement, String> myConflicts;
+    private final MultiMap<PsiElement, String> myConflicts;
     private final Set<PsiElement> myReportedContainers = new HashSet<PsiElement>();
 
-    public ConflictsCollector(final Map<PsiElement, String> conflicts) {
+    public ConflictsCollector(final MultiMap<PsiElement, String> conflicts) {
       myConflicts = conflicts;
     }
 
@@ -362,7 +363,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
         final String message = RefactoringBundle.message("element.will.no.longer.be.accessible",
                                                          targetDescription,
                                                          RefactoringUIUtil.getDescription(container, true));
-        myConflicts.put(targetElement, message);
+        myConflicts.putValue(targetElement, message);
       }
     }
   }

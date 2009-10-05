@@ -47,6 +47,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1092,7 +1093,7 @@ public class RefactoringUtil {
                                             Collection<? extends PsiElement> scope,
                                             final UsageInfo[] usages,
                                             PsiElement target,
-                                            final Map<PsiElement, String> conflicts) {
+                                            final MultiMap<PsiElement,String> conflicts) {
     if (scope == null) return;
     final VirtualFile vFile = PsiUtilBase.getVirtualFile(target);
     if (vFile == null) return;
@@ -1103,7 +1104,7 @@ public class RefactoringUtil {
                                             final Collection<? extends PsiElement> scopes,
                                             final UsageInfo[] usages,
                                             final VirtualFile vFile,
-                                            final Map<PsiElement, String> conflicts) {
+                                            final MultiMap<PsiElement, String> conflicts) {
     if (scopes == null) return;
 
     for (final PsiElement scope : scopes) {
@@ -1128,7 +1129,7 @@ public class RefactoringUtil {
                                                                RefactoringUIUtil.getDescription(resolved, true)), scopeDescription,
                                                                                                                CommonRefactoringUtil.htmlEmphasize(
                                                                                                                  targetModule.getName()));
-            conflicts.put(resolved, message);
+            conflicts.putValue(resolved, message);
             reported.add(resolved);
           }
         }
@@ -1179,7 +1180,7 @@ public class RefactoringUtil {
                                                       scopeDescription,
                                                       CommonRefactoringUtil.htmlEmphasize(module.getName()));
                 }
-                conflicts.put(referencedElement, message);
+                conflicts.putValue(referencedElement, message);
               }
             }
           }

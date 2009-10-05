@@ -39,6 +39,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -301,7 +302,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     myChangeInfo.updateMethod((PsiMethod) elements[0]);
   }
 
-  private void addMethodConflicts(Map<PsiElement, String> conflicts) {
+  private void addMethodConflicts(MultiMap<PsiElement, String> conflicts) {
     String newMethodName = myChangeInfo.newName;
 
     try {
@@ -338,10 +339,10 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
-    Map<PsiElement, String> conflictDescriptions = new HashMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflictDescriptions = new MultiMap<PsiElement, String>();
     UsageInfo[] usagesIn = refUsages.get();
     addMethodConflicts(conflictDescriptions);
-    conflictDescriptions.putAll(RenameUtil.getConflictDescriptions(usagesIn));
+    RenameUtil.addConflictDescriptions(usagesIn, conflictDescriptions);
     Set<UsageInfo> usagesSet = new HashSet<UsageInfo>(Arrays.asList(usagesIn));
     RenameUtil.removeConflictUsages(usagesSet);
     if (myChangeInfo.isVisibilityChanged) {
@@ -371,7 +372,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
-  private void addInaccessibilityDescriptions(Set<UsageInfo> usages, Map<PsiElement, String> conflictDescriptions) throws IncorrectOperationException {
+  private void addInaccessibilityDescriptions(Set<UsageInfo> usages, MultiMap<PsiElement, String> conflictDescriptions) throws IncorrectOperationException {
     PsiMethod method = myChangeInfo.getMethod();
     PsiModifierList modifierList = (PsiModifierList)method.getModifierList().copy();
     RefactoringUtil.setVisibility(modifierList, myNewVisibility);
@@ -394,7 +395,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
                                         RefactoringUIUtil.getDescription(method, true),
                                         myNewVisibility,
                                         RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(element), true));
-            conflictDescriptions.put(method, message);
+            conflictDescriptions.putValue(method, message);
             if (!needToChangeCalls()) {
               iterator.remove();
             }

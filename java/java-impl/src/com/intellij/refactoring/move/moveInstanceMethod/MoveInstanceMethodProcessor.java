@@ -15,12 +15,16 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveInstanceMembersUtil;
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
-import com.intellij.refactoring.util.*;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.ConflictsUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,18 +73,18 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     final UsageInfo[] usages = refUsages.get();
-    Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     final Set<PsiMember> members = new HashSet<PsiMember>();
     members.add(myMethod);
     if (myTargetVariable instanceof PsiField) members.add((PsiMember)myTargetVariable);
     if (!myTargetClass.isInterface()) {
-      conflicts.putAll(MoveMembersProcessor.analyzeAccessibilityConflicts(members, myTargetClass, new LinkedHashMap<PsiElement, String>(), myNewVisibility));
+      MoveMembersProcessor.analyzeAccessibilityConflicts(members, myTargetClass, conflicts, myNewVisibility);
     }
     else {
       for (final UsageInfo usage : usages) {
         if (usage instanceof InheritorUsageInfo) {
-          conflicts.putAll(MoveMembersProcessor.analyzeAccessibilityConflicts(
-            members, ((InheritorUsageInfo)usage).getInheritor(), new LinkedHashMap<PsiElement, String>(), myNewVisibility));
+          MoveMembersProcessor.analyzeAccessibilityConflicts(
+            members, ((InheritorUsageInfo)usage).getInheritor(), conflicts, myNewVisibility);
         }
       }
     }
@@ -99,7 +103,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
               String message = RefactoringBundle.message("0.contains.call.with.null.argument.for.parameter.1",
                                                          RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(methodCall), true),
                                                          CommonRefactoringUtil.htmlEmphasize(parameter.getName()));
-              conflicts.put(instanceValue, message);
+              conflicts.putValue(instanceValue, message);
             }
           }
         }

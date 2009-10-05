@@ -18,6 +18,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -26,8 +27,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.HashMap;
-import java.util.Map;
 
 
 public class ExtractMethodDialog extends AbstractExtractDialog {
@@ -151,7 +150,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
   }
 
   protected void doOKAction() {
-    Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     checkMethodConflicts(conflicts);
     if (!conflicts.isEmpty()) {
       final ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
@@ -401,7 +400,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
     return buffer;
   }
 
-  protected void checkMethodConflicts(Map<PsiElement, String> conflicts) {
+  protected void checkMethodConflicts(MultiMap<PsiElement, String> conflicts) {
     PsiMethod prototype;
     try {
       PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();

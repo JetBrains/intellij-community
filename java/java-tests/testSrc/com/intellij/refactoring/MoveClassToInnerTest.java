@@ -15,9 +15,9 @@ import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassToInnerProce
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.containers.MultiMap;
 
 import java.io.File;
-import java.util.Map;
 
 /**
  * @author yole
@@ -114,7 +114,7 @@ public class MoveClassToInnerTest extends CodeInsightTestCase {
     PsiClass targetClass = myJavaFacade.findClass(targetClassName, ProjectScope.getAllScope(myProject));
     MoveClassToInnerProcessor processor = new MoveClassToInnerProcessor(myProject, classToMove, targetClass, true, true, null);
     UsageInfo[] usages = processor.findUsages();
-    Map<PsiElement,String> conflicts = processor.getConflicts(usages);
+    MultiMap<PsiElement,String> conflicts = processor.getConflicts(usages);
     assertSameElements(conflicts.values() , expectedConflicts);
   }
 

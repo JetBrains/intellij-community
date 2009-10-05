@@ -28,10 +28,10 @@ import com.intellij.refactoring.util.FixableUsagesRefactoringProcessor;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -251,7 +251,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
   }
 
   @Override
-  protected boolean showConflicts(Map<PsiElement, String> conflicts) {
+  protected boolean showConflicts(MultiMap<PsiElement, String> conflicts) {
     if (!conflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
       throw new RuntimeException(StringUtil.join(conflicts.values(), "\n"));
     }
@@ -260,21 +260,21 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
 
   @Override
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
-    final Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
     final PsiClass builderClass =
       psiFacade.findClass(StringUtil.getQualifiedName(myPackageName, myClassName), GlobalSearchScope.projectScope(myProject));
     if (builderClass == null) {
       if (!myCreateNewBuilderClass) {
-        conflicts.put(null, "Selected class was not found.");
+        conflicts.putValue(null, "Selected class was not found.");
       }
     } else if (myCreateNewBuilderClass){
-      conflicts.put(builderClass, "Class with chosen name already exist.");
+      conflicts.putValue(builderClass, "Class with chosen name already exist.");
     }
 
     final PsiMethod commonConstructor = getMostCommonConstructor();
     if (commonConstructor == null) {
-      conflicts.put(null, "Found constructors are not reducible to simple chain");
+      conflicts.putValue(null, "Found constructors are not reducible to simple chain");
     }
 
     return showConflicts(conflicts);

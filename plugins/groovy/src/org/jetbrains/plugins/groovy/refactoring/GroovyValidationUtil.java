@@ -5,7 +5,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
@@ -14,14 +14,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
-import java.util.Map;
-
 /**
  * @author ilyas
  */
 public class GroovyValidationUtil {
 
-  public static boolean validateNewParameterName(GrParameter variable, Map<PsiElement, String> conflicts, @NotNull String varName) {
+  public static boolean validateNewParameterName(GrParameter variable, MultiMap<PsiElement,String> conflicts, @NotNull String varName) {
     GrParameterList list = PsiTreeUtil.getParentOfType(variable, GrParameterList.class);
     GrParametersOwner owner = PsiTreeUtil.getParentOfType(variable, GrParametersOwner.class);
     assert owner != null;
@@ -37,7 +35,7 @@ public class GroovyValidationUtil {
 
   private static void validateVariableOccurrencesUp(PsiElement parent,
                                                     PsiElement lastParent,
-                                                    Map<PsiElement, String> conflicts,
+                                                    MultiMap<PsiElement, String> conflicts,
                                                     @NotNull String varName,
                                                     final boolean containerIsFile) {
     if (!containerIsFile && (parent instanceof PsiFile) || parent == null) return;
@@ -78,7 +76,7 @@ public class GroovyValidationUtil {
 
   private static void validateVariableOccurrencesDown(PsiElement parent,
                                                       PsiElement startChild,
-                                                      Map<PsiElement, String> conflicts,
+                                                      MultiMap<PsiElement, String> conflicts,
                                                       @NotNull String varName) {
     PsiElement child = parent.getLastChild();
     while (child != null && child != startChild && !(child instanceof GrTypeDefinition)) {
@@ -87,7 +85,7 @@ public class GroovyValidationUtil {
     }
   }
 
-  private static void validateVariableOccurrencesDownImpl(final PsiElement child, final Map<PsiElement, String> conflicts, final String varName) {
+  private static void validateVariableOccurrencesDownImpl(final PsiElement child, final MultiMap<PsiElement, String> conflicts, final String varName) {
     if (child instanceof PsiNamedElement) {
       PsiNamedElement element = (PsiNamedElement)child;
       if (varName.equals(element.getName())) {
@@ -102,13 +100,13 @@ public class GroovyValidationUtil {
     }
   }
 
-  private static void addConflict(final String varName, final PsiNamedElement element, final Map<PsiElement, String> conflicts) {
+  private static void addConflict(final String varName, final PsiNamedElement element, final MultiMap<PsiElement, String> conflicts) {
     if (element instanceof GrParameter) {
-      conflicts.put(element, GroovyRefactoringBundle.message("variable.conflicts.with.parameter.0", CommonRefactoringUtil.htmlEmphasize(varName)));
+      conflicts.putValue(element, GroovyRefactoringBundle.message("variable.conflicts.with.parameter.0", CommonRefactoringUtil.htmlEmphasize(varName)));
     } else if (element instanceof GrField) {
-      conflicts.put(element, GroovyRefactoringBundle.message("variable.conflicts.with.field.0", CommonRefactoringUtil.htmlEmphasize(varName)));
+      conflicts.putValue(element, GroovyRefactoringBundle.message("variable.conflicts.with.field.0", CommonRefactoringUtil.htmlEmphasize(varName)));
     } else {
-      conflicts.put(element, GroovyRefactoringBundle.message("variable.conflicts.with.variable.0", CommonRefactoringUtil.htmlEmphasize(varName)));
+      conflicts.putValue(element, GroovyRefactoringBundle.message("variable.conflicts.with.variable.0", CommonRefactoringUtil.htmlEmphasize(varName)));
     }
   }
 
@@ -124,11 +122,11 @@ public class GroovyValidationUtil {
     public String generateName() {
       String name = myName;
       int i = 1;
-      Map<PsiElement, String> confl = new HashMap<PsiElement, String>();
+      MultiMap<PsiElement, String> confl = new MultiMap<PsiElement, String>();
       while (!validateNewParameterName(myParameter, confl, name)) {
         name = myName + i;
         i++;
-        confl = new HashMap<PsiElement, String>();
+        confl = new MultiMap<PsiElement, String>();
       }
       return name;
     }

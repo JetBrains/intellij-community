@@ -9,6 +9,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -31,7 +32,7 @@ public class ConflictsUtil {
   public static void checkMethodConflicts(@Nullable PsiClass aClass,
                                           PsiMethod refactoredMethod,
                                           PsiMethod prototype,
-                                          final Map<PsiElement,String> conflicts) {
+                                          final MultiMap<PsiElement,String> conflicts) {
     if (prototype == null) return;
 
     PsiMethod method = aClass != null ? aClass.findMethodBySignature(prototype, true) : null;
@@ -41,7 +42,7 @@ public class ConflictsUtil {
         final String classDescr = aClass instanceof PsiAnonymousClass ?
                                   RefactoringBundle.message("current.class") :
                                   RefactoringUIUtil.getDescription(aClass, false);
-        conflicts.put(method, RefactoringBundle.message("method.0.is.already.defined.in.the.1",
+        conflicts.putValue(method, RefactoringBundle.message("method.0.is.already.defined.in.the.1",
                                                 getMethodPrototypeString(prototype),
                                                 classDescr));
       }
@@ -55,10 +56,10 @@ public class ConflictsUtil {
             final String conflict = isMethodAbstract != isMyMethodAbstract ?
                                     RefactoringBundle.message("method.0.will.implement.method.of.the.base.class", protoMethodInfo, className) :
                                     RefactoringBundle.message("method.0.will.override.a.method.of.the.base.class", protoMethodInfo, className);
-            conflicts.put(method, conflict);
+            conflicts.putValue(method, conflict);
           }
           else { // prototype is private, will be compile-error
-            conflicts.put(method, RefactoringBundle.message("method.0.will.hide.method.of.the.base.class",
+            conflicts.putValue(method, RefactoringBundle.message("method.0.will.hide.method.of.the.base.class",
                                                     protoMethodInfo, className));
           }
         }

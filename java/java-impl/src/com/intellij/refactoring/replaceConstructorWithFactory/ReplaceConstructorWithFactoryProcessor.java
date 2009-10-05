@@ -13,11 +13,12 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
-import com.intellij.util.VisibilityUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -114,14 +115,14 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usages = refUsages.get();
 
-    Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     final PsiResolveHelper helper = JavaPsiFacade.getInstance(myProject).getResolveHelper();
     final PsiClass constructorContainingClass = getConstructorContainingClass();
     if (!helper.isAccessible(constructorContainingClass, myTargetClass, null)) {
       String message = RefactoringBundle.message("class.0.is.not.accessible.from.target.1",
                                                  RefactoringUIUtil.getDescription(constructorContainingClass, true),
                                                  RefactoringUIUtil.getDescription(myTargetClass, true));
-      conflicts.put(constructorContainingClass, message);
+      conflicts.putValue(constructorContainingClass, message);
     }
 
     HashSet<PsiElement> reportedContainers = new HashSet<PsiElement>();
@@ -134,7 +135,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
           String message = RefactoringBundle.message("target.0.is.not.accessible.from.1",
                                                      targetClassDescription,
                                                      RefactoringUIUtil.getDescription(container, true));
-          conflicts.put(myTargetClass, message);
+          conflicts.putValue(myTargetClass, message);
         }
       }
     }
@@ -149,7 +150,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
             String message = RefactoringBundle.message("constructor.being.refactored.is.used.in.initializer.of.0",
                                                        RefactoringUIUtil.getDescription(field, true), RefactoringUIUtil.getDescription(
                 constructorContainingClass, false));
-            conflicts.put(field, message);
+            conflicts.putValue(field, message);
           }
         }
       }

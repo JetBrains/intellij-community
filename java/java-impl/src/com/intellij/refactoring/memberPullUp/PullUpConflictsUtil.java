@@ -22,13 +22,14 @@ import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classMembers.InterfaceContainmentVerifier;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.containers.MultiMap;
 
 import java.util.*;
 
 public class PullUpConflictsUtil {
   private PullUpConflictsUtil() {}
 
-  public static LinkedHashMap<PsiElement, String> checkConflicts(final MemberInfo[] infos,
+  public static MultiMap<PsiElement, String> checkConflicts(final MemberInfo[] infos,
                                         PsiClass subclass,
                                         PsiClass superClass,
                                         PsiPackage targetPackage,
@@ -60,7 +61,7 @@ public class PullUpConflictsUtil {
         movedMembers.add(member);
       }
     }
-    final LinkedHashMap<PsiElement, String> conflicts = new LinkedHashMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     if (superClass != null) {
       checkSuperclassMembers(superClass, infos, conflicts);
       if (isInterfaceTarget) {
@@ -89,7 +90,7 @@ public class PullUpConflictsUtil {
     return conflicts;
   }
 
-  private static void checkInterfaceTarget(MemberInfo[] infos, LinkedHashMap<PsiElement, String> conflictsList) {
+  private static void checkInterfaceTarget(MemberInfo[] infos, MultiMap<PsiElement, String> conflictsList) {
     for (MemberInfo info : infos) {
       PsiElement member = info.getMember();
 
@@ -100,21 +101,21 @@ public class PullUpConflictsUtil {
           String message =
             RefactoringBundle.message("0.is.not.static.it.cannot.be.moved.to.the.interface", RefactoringUIUtil.getDescription(member, false));
           message = CommonRefactoringUtil.capitalize(message);
-          conflictsList.put(member, message);
+          conflictsList.putValue(member, message);
         }
       }
 
       if (member instanceof PsiField && ((PsiField)member).getInitializer() == null) {
         String message = RefactoringBundle.message("0.is.not.initialized.in.declaration.such.fields.are.not.allowed.in.interfaces",
                                                    RefactoringUIUtil.getDescription(member, false));
-        conflictsList.put(member, CommonRefactoringUtil.capitalize(message));
+        conflictsList.putValue(member, CommonRefactoringUtil.capitalize(message));
       }
     }
   }
 
   private static void checkSuperclassMembers(PsiClass superClass,
                                              MemberInfo[] infos,
-                                             LinkedHashMap<PsiElement, String> conflictsList) {
+                                             MultiMap<PsiElement, String> conflictsList) {
     for (MemberInfo info : infos) {
       PsiMember member = info.getMember();
       boolean isConflict = false;
@@ -135,7 +136,7 @@ public class PullUpConflictsUtil {
                                                    RefactoringUIUtil.getDescription(superClass, false),
                                                    RefactoringUIUtil.getDescription(member, false));
         message = CommonRefactoringUtil.capitalize(message);
-        conflictsList.put(superClass, message);
+        conflictsList.putValue(superClass, message);
       }
     }
 
@@ -148,13 +149,13 @@ public class PullUpConflictsUtil {
     private final PsiClass mySubclass;
     private final PsiClass mySuperClass;
     private final PsiPackage myTargetPackage;
-    private final LinkedHashMap<PsiElement, String> myConflictsList;
+    private final MultiMap<PsiElement, String> myConflictsList;
     private final InterfaceContainmentVerifier myInterfaceContainmentVerifier;
 
     ConflictingUsagesOfSubClassMembers(PsiElement scope,
                                        Set<PsiElement> movedMembers, Set<PsiMethod> abstractMethods,
                                        PsiClass subclass, PsiClass superClass,
-                                       PsiPackage targetPackage, LinkedHashMap<PsiElement, String> conflictsList,
+                                       PsiPackage targetPackage, MultiMap<PsiElement, String> conflictsList,
                                        InterfaceContainmentVerifier interfaceContainmentVerifier) {
       super(subclass);
       myScope = scope;
@@ -188,7 +189,7 @@ public class PullUpConflictsUtil {
                                                        RefactoringUIUtil.getDescription(myScope, false),
                                                        RefactoringUIUtil.getDescription(classMember, true));
             message = CommonRefactoringUtil.capitalize(message);
-            myConflictsList.put(classMember, message);
+            myConflictsList.putValue(classMember, message);
 
           }
           return;
@@ -199,7 +200,7 @@ public class PullUpConflictsUtil {
                                                        RefactoringUIUtil.getDescription(myScope, false),
                                                        RefactoringUIUtil.getDescription(classMember, true));
             message = CommonRefactoringUtil.capitalize(message);
-            myConflictsList.put(classMember, message);
+            myConflictsList.putValue(classMember, message);
           }
         }
       }

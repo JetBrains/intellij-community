@@ -17,9 +17,9 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.containers.MultiMap;
 
 import java.util.ArrayList;
-import java.util.Map;
 
 public class IntroduceVariableHandler extends IntroduceVariableBase {
 
@@ -72,7 +72,7 @@ public class IntroduceVariableHandler extends IntroduceVariableBase {
     WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
   }
 
-  protected boolean reportConflicts(final Map<PsiElement, String> conflicts, final Project project, IntroduceVariableSettings dialog) {
+  protected boolean reportConflicts(final MultiMap<PsiElement,String> conflicts, final Project project, IntroduceVariableSettings dialog) {
     ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
     conflictsDialog.show();
     final boolean ok = conflictsDialog.isOK();

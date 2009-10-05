@@ -32,6 +32,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.refactoring.GroovyChangeContextUtil;
@@ -55,7 +56,7 @@ public class MoveGroovyScriptProcessor extends MoveClassesOrPackagesProcessor {
   @Override
   protected UsageInfo[] findUsages() {
     List<UsageInfo> allUsages = new ArrayList<UsageInfo>();
-    Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     final List<PsiElement> elements = getElements();
     for (PsiElement element : elements) {
       final GroovyFile groovyFile = (GroovyFile)element;
@@ -77,7 +78,7 @@ public class MoveGroovyScriptProcessor extends MoveClassesOrPackagesProcessor {
 
   @Override
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
-    return showConflicts(Collections.<PsiElement, String>emptyMap());
+    return showConflicts(new MultiMap<PsiElement, String>());
   }
 
   @Override

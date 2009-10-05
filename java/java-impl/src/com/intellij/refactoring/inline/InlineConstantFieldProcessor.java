@@ -17,11 +17,10 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 
 /**
  * @author ven
@@ -170,7 +169,7 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
-    Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
 
     ReferencedElementsCollector collector = new ReferencedElementsCollector();
     PsiExpression initializer = myField.getInitializer();
@@ -184,14 +183,14 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
       if (element instanceof PsiExpression && isAccessedForWriting((PsiExpression)element)) {
         String message = RefactoringBundle.message("0.is.used.for.writing.in.1", RefactoringUIUtil.getDescription(myField, true),
                                                    RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(element), true));
-        conflicts.put(element, message);
+        conflicts.putValue(element, message);
       }
 
       for (PsiMember member : referencedWithVisibility) {
         if (!resolveHelper.isAccessible(member, element, null)) {
           String message = RefactoringBundle.message("0.will.not.be.accessible.from.1.after.inlining", RefactoringUIUtil.getDescription(member, true),
                                                      RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(element), true));
-          conflicts.put(member, message);
+          conflicts.putValue(member, message);
         }
       }
     }
