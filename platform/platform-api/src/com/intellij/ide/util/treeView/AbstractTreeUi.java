@@ -66,7 +66,7 @@ class AbstractTreeUi {
   private MySelectionListener mySelectionListener;
 
   private WorkerThread myWorker = null;
-  private final ArrayList<Runnable> myActiveWorkerTasks = new ArrayList<Runnable>();
+  private final Set<Runnable> myActiveWorkerTasks = new HashSet<Runnable>();
 
   private ProgressIndicator myProgress;
   private static final int WAIT_CURSOR_DELAY = 100;
@@ -77,15 +77,15 @@ class AbstractTreeUi {
   private boolean myWasEverShown;
   private boolean myUpdateIfInactive;
 
-  private final List<Object> myLoadingParents = new ArrayList<Object>();
+  private final Set<Object> myLoadingParents = new HashSet<Object>();
   private final Map<Object, List<NodeAction>> myNodeChildrenActions = new HashMap<Object, List<NodeAction>>();
 
   private long myClearOnHideDelay = -1;
   private ScheduledExecutorService ourClearanceService;
   private final Map<AbstractTreeUi, Long> ourUi2Countdown = Collections.synchronizedMap(new WeakHashMap<AbstractTreeUi, Long>());
 
-  private final List<Runnable> myDeferredSelections = new ArrayList<Runnable>();
-  private final List<Runnable> myDeferredExpansions = new ArrayList<Runnable>();
+  private final Set<Runnable> myDeferredSelections = new HashSet<Runnable>();
+  private final Set<Runnable> myDeferredExpansions = new HashSet<Runnable>();
 
   private boolean myCanProcessDeferredSelections;
 
@@ -103,8 +103,8 @@ class AbstractTreeUi {
 
   private boolean myYeildingNow;
 
-  private final List<DefaultMutableTreeNode> myPendingNodeActions = new ArrayList<DefaultMutableTreeNode>();
-  private final List<Runnable> myYeildingDoneRunnables = new ArrayList<Runnable>();
+  private final Set<DefaultMutableTreeNode> myPendingNodeActions = new HashSet<DefaultMutableTreeNode>();
+  private final Set<Runnable> myYeildingDoneRunnables = new HashSet<Runnable>();
 
   private final Alarm myBusyAlarm = new Alarm();
   private final Runnable myWaiterForReady = new Runnable() {
@@ -605,7 +605,7 @@ class AbstractTreeUi {
     processDeferredActions(myDeferredExpansions);
   }
 
-  private void processDeferredActions(List<Runnable> actions) {
+  private void processDeferredActions(Set<Runnable> actions) {
     final Runnable[] runnables = actions.toArray(new Runnable[actions.size()]);
     actions.clear();
     for (Runnable runnable : runnables) {
