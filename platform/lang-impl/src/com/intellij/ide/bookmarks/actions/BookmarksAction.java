@@ -34,6 +34,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.Alarm;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -48,6 +49,8 @@ import java.io.File;
 
 public class BookmarksAction extends AnAction implements DumbAware {
   private static final Color BORDER_COLOR = new Color(0x87, 0x87, 0x87);
+
+  private final Alarm myPreviewUpdateAlarm = new Alarm();
 
   @Override
   public void update(AnActionEvent e) {
@@ -137,15 +140,24 @@ public class BookmarksAction extends AnAction implements DumbAware {
         });
       }
 
+      private void updatePreviewPanel(final ItemWrapper wrapper) {
+        myPreviewUpdateAlarm.cancelAllRequests();
+        myPreviewUpdateAlarm.addRequest(new Runnable() {
+          public void run() {
+            previewPanel.updateWithItem(wrapper);
+          }
+        }, 300);
+      }
+
       private void updatePathLabel() {
         final Object[] values = list.getSelectedValues();
         if (values != null && values.length == 1) {
           ItemWrapper wrapper = (ItemWrapper)values[0];
           pathLabel.setText(getTitle2Text(wrapper.footerText()));
-          previewPanel.updateWithItem(wrapper);
+          updatePreviewPanel(wrapper);
         }
         else {
-          previewPanel.updateWithItem(null);
+          updatePreviewPanel(null);
           pathLabel.setText(" ");
         }
       }
@@ -213,14 +225,15 @@ public class BookmarksAction extends AnAction implements DumbAware {
       model.insertElementAt(new BookmarkItem(bookmark), 0);
     }
 
+    model.addElement(new ManageBookmarksItem(bookmarkAtPlace));
+
     if (bookmarkAtPlace != null) {
-      model.insertElementAt(new RemoveBookmarkItem(bookmarkAtPlace), 0);
+      model.addElement(new RemoveBookmarkItem(bookmarkAtPlace));
     }
     else {
-      model.insertElementAt(new SetBookmarkItem(file, line), 0);
+      model.addElement(new SetBookmarkItem(file, line));
     }
 
-    model.addElement(new ManageBookmarksItem(bookmarkAtPlace));
     return model;
   }
 
@@ -244,6 +257,8 @@ public class BookmarksAction extends AnAction implements DumbAware {
 
     @Nullable
     String footerText();
+
+    void updatePreviewPanel(PreviewPanel panel);
   }
 
   protected static class SetBookmarkItem implements ItemWrapper {
@@ -257,7 +272,6 @@ public class BookmarksAction extends AnAction implements DumbAware {
 
     public void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected) {
       renderer.append(speedSearchText());
-      renderer.setIcon(Bookmark.TICK);
     }
 
     public String speedSearchText() {
@@ -272,6 +286,14 @@ public class BookmarksAction extends AnAction implements DumbAware {
     public String footerText() {
       return null;
     }
+
+    public void updatePreviewPanel(PreviewPanel panel) {
+      panel.cleanup();
+
+      JLabel label = new JLabel("Choose this option to bookmark current place");
+      label.setHorizontalAlignment(JLabel.CENTER);
+      panel.add(label);
+    }
   }
 
   protected static class RemoveBookmarkItem implements ItemWrapper {
@@ -283,7 +305,6 @@ public class BookmarksAction extends AnAction implements DumbAware {
 
     public void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected) {
       renderer.append(speedSearchText());
-      renderer.setIcon(Bookmark.TICK);
     }
 
     public String speedSearchText() {
@@ -297,6 +318,14 @@ public class BookmarksAction extends AnAction implements DumbAware {
     @Nullable
     public String footerText() {
       return null;
+    }
+
+    public void updatePreviewPanel(PreviewPanel panel) {
+      panel.cleanup();
+
+      JLabel label = new JLabel("Choose this option to remove bookmark at current place");
+      label.setHorizontalAlignment(JLabel.CENTER);
+      panel.add(label);
     }
   }
 
@@ -321,6 +350,14 @@ public class BookmarksAction extends AnAction implements DumbAware {
 
     public String footerText() {
       return null;
+    }
+
+    public void updatePreviewPanel(PreviewPanel panel) {
+      panel.cleanup();
+
+      JLabel label = new JLabel("Choose this option to reorder bookmarks");
+      label.setHorizontalAlignment(JLabel.CENTER);
+      panel.add(label);
     }
   }
 
@@ -368,12 +405,39 @@ public class BookmarksAction extends AnAction implements DumbAware {
     }
 
     public String footerText() {
-      VirtualFile file = myBookmark.getFile();
-      if (file.isDirectory()) {
-        return file.getPresentableUrl();
-      }
+      return myBookmark.getFile().getPresentableUrl();
+    }
 
-      return file.getParent().getPresentableUrl();
+    public void updatePreviewPanel(PreviewPanel panel) {
+      VirtualFile file = myBookmark.getFile();
+      Document document = FileDocumentManager.getInstance().getDocument(file);
+      Project project = panel.myProject;
+
+      if (document != null) {
+        if (panel.myEditor == null || panel.myEditor.getDocument() != document) {
+          panel.cleanup();
+          panel.myEditor = EditorFactory.getInstance().createViewer(document, project);
+          EditorHighlighter highlighter = EditorHighlighterFactory.getInstance()
+            .createEditorHighlighter(file, EditorColorsManager.getInstance().getGlobalScheme(), project);
+          ((EditorEx)panel.myEditor).setHighlighter(highlighter);
+          ((EditorEx)panel.myEditor).setFile(file);
+
+          panel.myEditor.getSettings().setAnimatedScrolling(false);
+          panel.myEditor.getSettings().setLineNumbersShown(true);
+          panel.myEditor.getSettings().setFoldingOutlineShown(false);
+          panel.add(panel.myEditor.getComponent(), BorderLayout.CENTER);
+        }
+
+        panel.myEditor.getCaretModel().moveToLogicalPosition(new LogicalPosition(myBookmark.getLine(), 0));
+        panel.myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+      }
+      else {
+        panel.cleanup();
+
+        JLabel label = new JLabel("Navigate to selected " + (file.isDirectory() ? "directory " : "file ") + "in Project View");
+        label.setHorizontalAlignment(JLabel.CENTER);
+        panel.add(label);
+      }
     }
   }
 
@@ -459,38 +523,14 @@ public class BookmarksAction extends AnAction implements DumbAware {
     public void updateWithItem(ItemWrapper wrapper) {
       if (myWrapper != wrapper) {
         myWrapper = wrapper;
-
-        if (wrapper instanceof BookmarkItem) {
-          final Bookmark bookmark = ((BookmarkItem)wrapper).myBookmark;
-          VirtualFile file = bookmark.getFile();
-          Document document = FileDocumentManager.getInstance().getDocument(file);
-
-          if (document != null) {
-            if (myEditor == null || myEditor.getDocument() != document) {
-              cleanup();
-              myEditor = EditorFactory.getInstance().createViewer(document, myProject);
-              EditorHighlighter highlighter = EditorHighlighterFactory.getInstance()
-                .createEditorHighlighter(file, EditorColorsManager.getInstance().getGlobalScheme(), myProject);
-              ((EditorEx)myEditor).setHighlighter(highlighter);
-              ((EditorEx)myEditor).setFile(file);
-
-              myEditor.getSettings().setAnimatedScrolling(false);
-              myEditor.getSettings().setLineNumbersShown(true);
-              myEditor.getSettings().setFoldingOutlineShown(false);
-              add(myEditor.getComponent(), BorderLayout.CENTER);
-            }
-
-            myEditor.getCaretModel().moveToLogicalPosition(new LogicalPosition(bookmark.getLine(), 0));
-            myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER_UP);
-          }
-          else {
-            cleanup();
-          }
+        if (wrapper != null) {
+          wrapper.updatePreviewPanel(this);
         }
         else {
           cleanup();
-          add(new JLabel("select file in the list"));
         }
+
+        revalidate();
       }
     }
 
