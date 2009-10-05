@@ -54,8 +54,9 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Git update environment implementation. The environment does just a simple
- * {@code git pull -v} for each content root.
+ * Git update environment implementation. The environment does
+ * {@code git pull -v} for each vcs root. Rebase variant is detected
+ * and processed as well.
  */
 public class GitUpdateEnvironment implements UpdateEnvironment {
   /**
@@ -100,121 +101,120 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
     throws ProcessCanceledException {
     List<VcsException> exceptions = new ArrayList<VcsException>();
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
-    for (final VirtualFile root : GitUtil.gitRoots(Arrays.asList(filePaths))) {
-      try {
-        // check if there is a remote for the branch
-        final GitBranch branch = GitBranch.current(myProject, root);
-        if (branch == null) {
-          continue;
-        }
-        final String value = branch.getTrackedRemoteName(myProject, root);
-        if (value == null || value.length() == 0) {
-          continue;
-        }
-        final Ref<Boolean> cancelled = new Ref<Boolean>(false);
-        final Ref<Throwable> ex = new Ref<Throwable>();
-        projectManager.blockReloadingProjectOnExternalChanges();
+    try {
+      for (final VirtualFile root : GitUtil.gitRoots(Arrays.asList(filePaths))) {
         try {
-          boolean stashCreated =
-            mySettings.UPDATE_STASH && GitStashUtils.saveStash(myProject, root, "Uncommitted changes before update operation");
+          // check if there is a remote for the branch
+          final GitBranch branch = GitBranch.current(myProject, root);
+          if (branch == null) {
+            continue;
+          }
+          final String value = branch.getTrackedRemoteName(myProject, root);
+          if (value == null || value.length() == 0) {
+            continue;
+          }
+          final Ref<Boolean> cancelled = new Ref<Boolean>(false);
+          final Ref<Throwable> ex = new Ref<Throwable>();
+          projectManager.blockReloadingProjectOnExternalChanges();
           try {
-            // remember the current position
-            GitRevisionNumber before = GitRevisionNumber.resolve(myProject, root, "HEAD");
-            // do pull
-            GitLineHandler h = new GitLineHandler(myProject, root, GitHandler.PULL);
-            // ignore merge failure for the pull
-            h.ignoreErrorCode(1);
-            switch (mySettings.UPDATE_TYPE) {
-              case REBASE:
-                h.addParameters("--rebase");
-                break;
-              case MERGE:
-                h.addParameters("--no-rebase");
-                break;
-              case BRANCH_DEFAULT:
-                // use default for the branch
-                break;
-              default:
-                assert false : "Unknown update type: " + mySettings.UPDATE_TYPE;
-            }
-            h.addParameters("--no-stat");
-            h.addParameters("-v");
+            boolean stashCreated =
+              mySettings.UPDATE_STASH && GitStashUtils.saveStash(myProject, root, "Uncommitted changes before update operation");
             try {
-              RebaseConflictDetector rebaseConflictDetector = new RebaseConflictDetector();
-              h.addLineListener(rebaseConflictDetector);
-              try {
-                GitHandlerUtil.doSynchronouslyWithExceptions(h, progressIndicator);
-              }
-              finally {
-                if (!rebaseConflictDetector.isRebaseConflict()) {
-                  exceptions.addAll(h.errors());
-                }
-              }
-              do {
-                mergeFiles(root, cancelled, ex);
-                //noinspection ThrowableResultOfMethodCallIgnored
-                if (ex.get() != null) {
-                  //noinspection ThrowableResultOfMethodCallIgnored
-                  throw GitUtil.rethrowVcsException(ex.get());
-                }
-                checkLocallyModified(root, cancelled, ex);
-                //noinspection ThrowableResultOfMethodCallIgnored
-                if (ex.get() != null) {
-                  //noinspection ThrowableResultOfMethodCallIgnored
-                  throw GitUtil.rethrowVcsException(ex.get());
-                }
-                if (cancelled.get()) {
+              // remember the current position
+              GitRevisionNumber before = GitRevisionNumber.resolve(myProject, root, "HEAD");
+              // do pull
+              GitLineHandler h = new GitLineHandler(myProject, root, GitHandler.PULL);
+              // ignore merge failure for the pull
+              h.ignoreErrorCode(1);
+              switch (mySettings.UPDATE_TYPE) {
+                case REBASE:
+                  h.addParameters("--rebase");
                   break;
+                case MERGE:
+                  h.addParameters("--no-rebase");
+                  break;
+                case BRANCH_DEFAULT:
+                  // use default for the branch
+                  break;
+                default:
+                  assert false : "Unknown update type: " + mySettings.UPDATE_TYPE;
+              }
+              h.addParameters("--no-stat");
+              h.addParameters("-v");
+              try {
+                RebaseConflictDetector rebaseConflictDetector = new RebaseConflictDetector();
+                h.addLineListener(rebaseConflictDetector);
+                try {
+                  GitHandlerUtil.doSynchronouslyWithExceptions(h, progressIndicator);
                 }
-                doRebase(progressIndicator, root, rebaseConflictDetector, "--continue");
-                final Ref<Integer> result = new Ref<Integer>();
-                noChangeLoop:
-                while (rebaseConflictDetector.isNoChange()) {
-                  UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-                    public void run() {
-                      int rc = Messages.showDialog(myProject, GitBundle.message("update.rebase.no.change", root.getPresentableUrl()),
-                                                   GitBundle.getString("update.rebase.no.change.title"),
-                                                   new String[]{GitBundle.getString("update.rebase.no.change.skip"),
-                                                     GitBundle.getString("update.rebase.no.change.retry"),
-                                                     GitBundle.getString("update.rebase.no.change.cancel")}, 0, Messages.getErrorIcon());
-                      result.set(rc);
-                    }
-                  });
-                  switch (result.get()) {
-                    case 0:
-                      doRebase(progressIndicator, root, rebaseConflictDetector, "--skip");
-                      continue noChangeLoop;
-                    case 1:
-                      continue noChangeLoop;
-                    case 2:
-                      cancelled.set(true);
-                      break noChangeLoop;
+                finally {
+                  if (!rebaseConflictDetector.isRebaseConflict()) {
+                    exceptions.addAll(h.errors());
                   }
                 }
+                while (rebaseConflictDetector.isRebaseConflict() && !cancelled.get()) {
+                  mergeFiles(root, cancelled, ex);
+                  //noinspection ThrowableResultOfMethodCallIgnored
+                  if (ex.get() != null) {
+                    //noinspection ThrowableResultOfMethodCallIgnored
+                    throw GitUtil.rethrowVcsException(ex.get());
+                  }
+                  checkLocallyModified(root, cancelled, ex);
+                  //noinspection ThrowableResultOfMethodCallIgnored
+                  if (ex.get() != null) {
+                    //noinspection ThrowableResultOfMethodCallIgnored
+                    throw GitUtil.rethrowVcsException(ex.get());
+                  }
+                  if (cancelled.get()) {
+                    break;
+                  }
+                  doRebase(progressIndicator, root, rebaseConflictDetector, "--continue");
+                  final Ref<Integer> result = new Ref<Integer>();
+                  noChangeLoop:
+                  while (rebaseConflictDetector.isNoChange()) {
+                    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+                      public void run() {
+                        int rc = Messages.showDialog(myProject, GitBundle.message("update.rebase.no.change", root.getPresentableUrl()),
+                                                     GitBundle.getString("update.rebase.no.change.title"),
+                                                     new String[]{GitBundle.getString("update.rebase.no.change.skip"),
+                                                       GitBundle.getString("update.rebase.no.change.retry"),
+                                                       GitBundle.getString("update.rebase.no.change.cancel")}, 0, Messages.getErrorIcon());
+                        result.set(rc);
+                      }
+                    });
+                    switch (result.get()) {
+                      case 0:
+                        doRebase(progressIndicator, root, rebaseConflictDetector, "--skip");
+                        continue noChangeLoop;
+                      case 1:
+                        continue noChangeLoop;
+                      case 2:
+                        cancelled.set(true);
+                        break noChangeLoop;
+                    }
+                  }
+                }
+                if (cancelled.get()) {
+                  //noinspection ThrowableInstanceNeverThrown
+                  exceptions.add(new VcsException("The update process was cancelled for " + root.getPresentableUrl()));
+                  doRebase(progressIndicator, root, rebaseConflictDetector, "--abort");
+                }
               }
-              while (rebaseConflictDetector.isRebaseConflict() && !cancelled.get());
-              if (cancelled.get()) {
-                //noinspection ThrowableInstanceNeverThrown
-                exceptions.add(new VcsException("The update process was cancelled for " + root.getPresentableUrl()));
-                doRebase(progressIndicator, root, rebaseConflictDetector, "--abort");
+              finally {
+                if (!cancelled.get()) {
+                  // find out what have changed
+                  MergeChangeCollector collector = new MergeChangeCollector(myProject, root, before, updatedFiles);
+                  collector.collect(exceptions);
+                }
               }
             }
             finally {
-              if (!cancelled.get()) {
-                // find out what have changed
-                MergeChangeCollector collector = new MergeChangeCollector(myProject, root, before, updatedFiles);
-                collector.collect(exceptions);
+              if (stashCreated) {
+                GitStashUtils.popLastStash(myProject, root);
               }
             }
           }
           finally {
-            if (stashCreated) {
-              GitStashUtils.popLastStash(myProject, root);
-            }
-          }
-        }
-        finally {
-          try {
             mergeFiles(root, cancelled, ex);
             //noinspection ThrowableResultOfMethodCallIgnored
             if (ex.get() != null) {
@@ -222,14 +222,14 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
               exceptions.add(GitUtil.rethrowVcsException(ex.get()));
             }
           }
-          finally {
-            projectManager.unblockReloadingProjectOnExternalChanges();
-          }
+        }
+        catch (VcsException ex) {
+          exceptions.add(ex);
         }
       }
-      catch (VcsException ex) {
-        exceptions.add(ex);
-      }
+    }
+    finally {
+      projectManager.unblockReloadingProjectOnExternalChanges();
     }
     return new GitUpdateSession(exceptions);
   }
