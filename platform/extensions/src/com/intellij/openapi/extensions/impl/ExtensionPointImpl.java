@@ -201,12 +201,10 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       myLoadedAdapters.clear();
       ExtensionComponentAdapter[] adapters = allAdapters.toArray(new ExtensionComponentAdapter[myExtensionAdapters.size()]);
       LoadingOrder.sort(adapters);
-      for (int i = 0; i < adapters.length; i++) {
-        ExtensionComponentAdapter adapter = adapters[i];
-
+      for (ExtensionComponentAdapter adapter : adapters) {
         //noinspection unchecked
         T extension = (T)adapter.getExtension();
-        internalRegisterExtension(extension, adapter, i, ArrayUtil.find(loadedAdapters, adapter) == -1);
+        internalRegisterExtension(extension, adapter, myExtensions.size(), ArrayUtil.find(loadedAdapters, adapter) == -1);
       }
       myExtensionAdapters.clear();
     }
