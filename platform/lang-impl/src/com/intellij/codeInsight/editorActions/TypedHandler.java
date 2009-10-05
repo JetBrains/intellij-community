@@ -94,7 +94,7 @@ public class TypedHandler implements TypedActionHandler {
     quoteHandlers.put(fileType, quoteHandler);
   }
 
-  public void execute(Editor editor, char charTyped, DataContext dataContext) {
+  public void execute(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null || editor.isColumnMode()){
       if (myOriginalHandler != null){

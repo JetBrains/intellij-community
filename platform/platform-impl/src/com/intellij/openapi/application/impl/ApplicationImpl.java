@@ -87,7 +87,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private boolean myDoNotSave = false;
   private volatile boolean myDisposeInProgress = false;
 
-  private AtomicBoolean mySaveSettingsIsInProgress = new AtomicBoolean(false);
+  private final AtomicBoolean mySaveSettingsIsInProgress = new AtomicBoolean(false);
 
   private final ExecutorService ourThreadExecutorsService = new ThreadPoolExecutor(
     3,

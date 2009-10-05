@@ -922,7 +922,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
       myOriginalHandler = originalAction;
     }
 
-    public void execute(final Editor editor, final char charTyped, final DataContext dataContext) {
+    public void execute(@NotNull final Editor editor, final char charTyped, @NotNull final DataContext dataContext) {
       final ConsoleViewImpl consoleView = editor.getUserData(CONSOLE_VIEW_IN_EDITOR_VIEW);
       if (consoleView == null || !consoleView.myState.isRunning() || consoleView.isViewer){
         myOriginalHandler.execute(editor, charTyped, dataContext);
