@@ -188,14 +188,18 @@ public class FSRecords implements Disposable, Forceable {
             throw new IOException("Cannot delete filesystem storage files");
           }
         }
-        catch (IOException e1) {
+        catch (final IOException e1) {
           final Runnable warnAndShutdown = new Runnable() {
             public void run() {
-              if (!(ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment())) {
+              boolean unitTest = ApplicationManager.getApplication().isUnitTestMode();
+              if (!(unitTest || ApplicationManager.getApplication().isHeadlessEnvironment())) {
                 JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
                                               "Files in " + basePath.getPath() + " are locked. IntelliJ IDEA will not be able to start up",
                                               "Fatal Error",
                                               JOptionPane.ERROR_MESSAGE);
+              }
+              if (unitTest) {
+                e1.printStackTrace();
               }
               Runtime.getRuntime().halt(1);
             }
