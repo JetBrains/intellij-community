@@ -124,8 +124,8 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
     myTypesList.setSelectedIndex(0);
     myTypesList.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2) {
-          //todo
+        if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
+          myWizardContext.requestNextStep();
         }
       }
     });

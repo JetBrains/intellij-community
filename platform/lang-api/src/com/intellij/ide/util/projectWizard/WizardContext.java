@@ -48,8 +48,9 @@ public class WizardContext {
     myProjectStorageFormat = format;
   }
 
-  public static interface Listener {
+  public interface Listener {
     void buttonsUpdateRequested();
+    void nextStepRequested();
   }
 
   public WizardContext(Project project) {
@@ -107,6 +108,13 @@ public class WizardContext {
     final Listener[] listeners = myListeners.toArray(new Listener[myListeners.size()]);
     for (Listener listener : listeners) {
       listener.buttonsUpdateRequested();
+    }
+  }
+
+  public void requestNextStep() {
+    final Listener[] listeners = myListeners.toArray(new Listener[myListeners.size()]);
+    for (Listener listener : listeners) {
+      listener.nextStepRequested();
     }
   }
 

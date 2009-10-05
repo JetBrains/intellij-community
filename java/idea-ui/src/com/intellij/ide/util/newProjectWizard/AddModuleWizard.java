@@ -72,6 +72,10 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
       public void buttonsUpdateRequested() {
         updateButtons();
       }
+
+      public void nextStepRequested() {
+        doNextAction();
+      }
     });
 
     myRootStep = new ProjectCreateModeStep(defaultPath, myWizardContext){
