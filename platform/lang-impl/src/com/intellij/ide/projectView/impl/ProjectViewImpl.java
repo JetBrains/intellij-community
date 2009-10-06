@@ -1541,13 +1541,17 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
       for (FileEditor fileEditor : editors) {
         if (fileEditor instanceof TextEditor) {
           Editor editor = ((TextEditor)fileEditor).getEditor();
-          selectElementAtCaretNotLosingFocus(editor);
+          selectElementAtCaret(editor);
         }
       }
     }
 
     private void selectElementAtCaretNotLosingFocus(final Editor editor) {
       if (IJSwingUtilities.hasFocus(getCurrentProjectViewPane().getComponentToFocus())) return;
+      selectElementAtCaret(editor);
+    }
+
+    private void selectElementAtCaret(Editor editor) {
       final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
       if (file == null) return;
 
