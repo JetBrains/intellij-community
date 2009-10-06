@@ -9,19 +9,27 @@
 package com.intellij.refactoring.memberPullUp;
 
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.*;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringConflictsUtil;
+import com.intellij.refactoring.util.RefactoringHierarchyUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classMembers.InterfaceContainmentVerifier;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class PullUpConflictsUtil {
   private PullUpConflictsUtil() {}
@@ -135,6 +143,23 @@ public class PullUpConflictsUtil {
                                                    RefactoringUIUtil.getDescription(member, false));
         message = CommonRefactoringUtil.capitalize(message);
         conflictsList.putValue(superClass, message);
+      }
+
+      if (member instanceof PsiMethod) {
+        final PsiMethod method = (PsiMethod)member;
+        final PsiModifierList modifierList = method.getModifierList();
+        if (!modifierList.hasModifierProperty(PsiModifier.PRIVATE)) {
+          for (PsiClass subClass : ClassInheritorsSearch.search(superClass)) {
+            if (method.getContainingClass() != subClass) {
+              MethodSignature signature = ((PsiMethod) member).getSignature(TypeConversionUtil.getSuperClassSubstitutor(superClass, subClass, PsiSubstitutor.EMPTY));
+              final PsiMethod wouldBeOverriden = MethodSignatureUtil.findMethodBySignature(subClass, signature, false);
+              if (wouldBeOverriden != null && VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(wouldBeOverriden.getModifierList()),
+                                                                     VisibilityUtil.getVisibilityModifier(modifierList)) > 0) {
+                conflictsList.putValue(wouldBeOverriden, CommonRefactoringUtil.capitalize(RefactoringUIUtil.getDescription(method, true) + " in super class would clash with local method from " + RefactoringUIUtil.getDescription(subClass, true)));
+              }
+            }
+          }
+        }
       }
     }
 
