@@ -24,6 +24,7 @@ import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Set;
@@ -37,14 +38,20 @@ public class RefactoringConflictsUtil {
   }
 
   public static void analyzeAccessibilityConflicts(@NotNull Set<PsiMember> membersToMove,
-                                                final PsiClass targetClass,
+                                                @NotNull final PsiClass targetClass,
                                                 final MultiMap<PsiElement, String> conflicts, String newVisibility) {
+    analyzeAccessibilityConflicts(membersToMove, targetClass, conflicts, newVisibility, targetClass);
+  }
+
+  public static void analyzeAccessibilityConflicts(@NotNull Set<PsiMember> membersToMove, @Nullable final PsiClass targetClass, final MultiMap<PsiElement, String> conflicts,
+                                                   String newVisibility,
+                                                   @NotNull PsiElement context) {
     if (VisibilityUtil.ESCALATE_VISIBILITY.equals(newVisibility)) { //Still need to check for access object
       newVisibility = PsiModifier.PUBLIC;
     }
 
     for (PsiMember member : membersToMove) {
-      checkUsedElements(member, member, membersToMove, targetClass, conflicts);
+      checkUsedElements(member, member, membersToMove, targetClass, context, conflicts);
 
       PsiModifierList modifierList = member.getModifierList();
       if (modifierList!=null) modifierList= (PsiModifierList)modifierList.copy();
@@ -62,7 +69,7 @@ public class RefactoringConflictsUtil {
         PsiElement ref = psiReference.getElement();
         if (!RefactoringHierarchyUtil.willBeInTargetClass(ref, membersToMove, targetClass, false)) {
           //Check for target class accessibility
-          if (!manager.getResolveHelper().isAccessible(targetClass, targetClass.getModifierList(), ref, null, null)) {
+          if (targetClass != null && !manager.getResolveHelper().isAccessible(targetClass, targetClass.getModifierList(), ref, null, null)) {
             String message = RefactoringBundle.message("0.is.1.and.will.not.be.accessible.from.2.in.the.target.class",
                                                        RefactoringUIUtil.getDescription(targetClass, true),
                                                        VisibilityUtil.getVisibilityStringToDisplay(targetClass),
@@ -84,15 +91,17 @@ public class RefactoringConflictsUtil {
     }
   }
 
-  public static void checkUsedElements(PsiMember member, PsiElement scope, @NotNull Set<PsiMember> membersToMove, PsiClass newContext, MultiMap<PsiElement, String> conflicts) {
+  public static void checkUsedElements(PsiMember member, PsiElement scope, @NotNull Set<PsiMember> membersToMove, @Nullable PsiClass targetClass,
+                                       @NotNull PsiElement context,
+                                       MultiMap<PsiElement, String> conflicts) {
     if(scope instanceof PsiReferenceExpression) {
       PsiReferenceExpression refExpr = (PsiReferenceExpression)scope;
       PsiElement refElement = refExpr.resolve();
       if (refElement instanceof PsiMember) {
-        if (!RefactoringHierarchyUtil.willBeInTargetClass(refElement, membersToMove, newContext, false)){
+        if (!RefactoringHierarchyUtil.willBeInTargetClass(refElement, membersToMove, targetClass, false)){
           PsiExpression qualifier = refExpr.getQualifierExpression();
           PsiClass accessClass = (PsiClass)(qualifier != null ? PsiUtil.getAccessObjectClass(qualifier).getElement() : null);
-          checkAccessibility((PsiMember)refElement, newContext, accessClass, member, conflicts);
+          checkAccessibility((PsiMember)refElement, context, accessClass, member, conflicts);
         }
       }
     }
@@ -100,14 +109,14 @@ public class RefactoringConflictsUtil {
       final PsiNewExpression newExpression = (PsiNewExpression)scope;
       final PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
       if (anonymousClass != null) {
-        if (!RefactoringHierarchyUtil.willBeInTargetClass(anonymousClass, membersToMove, newContext, false)){
-          checkAccessibility(anonymousClass, newContext, anonymousClass, member, conflicts);
+        if (!RefactoringHierarchyUtil.willBeInTargetClass(anonymousClass, membersToMove, targetClass, false)){
+          checkAccessibility(anonymousClass, context, anonymousClass, member, conflicts);
         }
       } else {
         final PsiMethod refElement = newExpression.resolveConstructor();
         if (refElement != null) {
-          if (!RefactoringHierarchyUtil.willBeInTargetClass(refElement, membersToMove, newContext, false)) {
-            checkAccessibility(refElement, newContext, null, member, conflicts);
+          if (!RefactoringHierarchyUtil.willBeInTargetClass(refElement, membersToMove, targetClass, false)) {
+            checkAccessibility(refElement, context, null, member, conflicts);
           }
         }
       }
@@ -116,8 +125,8 @@ public class RefactoringConflictsUtil {
       PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)scope;
       PsiElement refElement = refExpr.resolve();
       if (refElement instanceof PsiMember) {
-        if (!RefactoringHierarchyUtil.willBeInTargetClass(refElement, membersToMove, newContext, false)){
-          checkAccessibility((PsiMember)refElement, newContext, null, member, conflicts);
+        if (!RefactoringHierarchyUtil.willBeInTargetClass(refElement, membersToMove, targetClass, false)){
+          checkAccessibility((PsiMember)refElement, context, null, member, conflicts);
         }
       }
     }
@@ -125,13 +134,13 @@ public class RefactoringConflictsUtil {
     PsiElement[] children = scope.getChildren();
     for (PsiElement child : children) {
       if (!(child instanceof PsiWhiteSpace)) {
-        checkUsedElements(member, child, membersToMove, newContext, conflicts);
+        checkUsedElements(member, child, membersToMove, targetClass, context, conflicts);
       }
     }
   }
 
   public static void checkAccessibility(PsiMember refMember,
-                                         PsiClass newContext,
+                                        @NotNull PsiElement newContext,
                                          PsiClass accessClass,
                                          PsiMember member,
                                          MultiMap<PsiElement, String> conflicts) {

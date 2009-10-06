@@ -25,6 +25,7 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -36,7 +37,7 @@ public class PullUpConflictsUtil {
 
   public static MultiMap<PsiElement, String> checkConflicts(final MemberInfo[] infos,
                                         PsiClass subclass,
-                                        PsiClass superClass,
+                                        @Nullable PsiClass superClass,
                                         PsiPackage targetPackage,
                                         PsiDirectory targetDirectory,
                                         final InterfaceContainmentVerifier interfaceContainmentVerifier) {
@@ -67,7 +68,7 @@ public class PullUpConflictsUtil {
       }
     }
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
-    RefactoringConflictsUtil.analyzeAccessibilityConflicts(movedMembers, superClass, conflicts, null);
+    RefactoringConflictsUtil.analyzeAccessibilityConflicts(movedMembers, superClass, conflicts, null, targetRepresentativeElement);
     if (superClass != null) {
       checkSuperclassMembers(superClass, infos, conflicts);
       if (isInterfaceTarget) {

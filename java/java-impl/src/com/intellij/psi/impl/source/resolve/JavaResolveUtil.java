@@ -38,7 +38,7 @@ public class JavaResolveUtil {
                                      @Nullable final PsiElement fileResolveScope) {
     if (modifierList == null) return true;
     final PsiFile placeContainingFile = place.getContainingFile();
-    final PsiManager manager = placeContainingFile.getManager();
+    final PsiManager manager = member.getManager();
     if (placeContainingFile instanceof JavaCodeFragment) {
       JavaCodeFragment fragment = (JavaCodeFragment)placeContainingFile;
       JavaCodeFragment.VisibilityChecker visibilityChecker = fragment.getVisibilityChecker();

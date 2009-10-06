@@ -88,7 +88,7 @@ public final class PsiUtil extends PsiUtilBase {
            ((PsiAssignmentExpression)parent).getOperationSign().getTokenType() != JavaTokenType.EQ;
   }
 
-  public static boolean isAccessible(PsiMember member, PsiElement place, PsiClass accessObjectClass) {
+  public static boolean isAccessible(PsiMember member, @NotNull PsiElement place, PsiClass accessObjectClass) {
     return JavaPsiFacade.getInstance(place.getProject()).getResolveHelper().isAccessible(member, place, accessObjectClass);
   }
 
