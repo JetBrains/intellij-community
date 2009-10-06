@@ -151,7 +151,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
                                                            final GlobalSearchScope scope) {
     checkRebuild(project);
 
-    FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project);
+    FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, scope);
 
     final PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
     final PsiManager psiManager = PsiManager.getInstance(project);
@@ -289,7 +289,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
   public <K> Collection<K> getAllKeys(final StubIndexKey<K, ?> indexKey, @NotNull Project project) {
     checkRebuild(project);
-    FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project);
+    FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, GlobalSearchScope.allScope(project));
 
     final MyIndex<K> index = (MyIndex<K>)myIndices.get(indexKey);
     try {
