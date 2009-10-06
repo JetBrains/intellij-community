@@ -22,7 +22,8 @@ public class PythonBackspaceHandler extends BackspaceHandlerDelegate {
   public boolean charDeleted(final char c, final PsiFile file, final Editor editor) {
     if (myTargetPosition != null) {
       // Remove all the following spaces before moving to targetPosition
-      editor.getSelectionModel().setSelection(myTargetPosition.column, editor.getCaretModel().getVisualPosition().column);
+      final int offset = editor.getCaretModel().getOffset();
+      editor.getSelectionModel().setSelection(offset, offset + editor.getCaretModel().getVisualPosition().column - myTargetPosition.column);
       EditorModificationUtil.deleteSelectedText(editor);
       editor.getCaretModel().moveToLogicalPosition(myTargetPosition);
       myTargetPosition = null;
