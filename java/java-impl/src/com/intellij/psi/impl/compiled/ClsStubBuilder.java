@@ -593,7 +593,10 @@ public class ClsStubBuilder {
     @Override
     public void visitLocalVariable(String name, String desc, String signature, Label start, Label end, int index) {
       if (index >= myIgnoreCount && index < myIgnoreCount + myParamCount) {
-        myParamStubs [index - myIgnoreCount].setName(name);
+        PsiParameterStubImpl parameterStub = myParamStubs[index - myIgnoreCount];
+        if (parameterStub != null) {
+          parameterStub.setName(name);
+        }
       }
     }
   }
