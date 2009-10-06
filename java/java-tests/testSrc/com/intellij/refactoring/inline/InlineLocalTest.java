@@ -58,6 +58,14 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     doTest(true);
   }
 
+  public void testArrayInitializer() throws Exception {
+    doTest(false);
+  }
+
+  public void testNewExpression() throws Exception {
+    doTest(false);
+  }
+
   public void testAugmentedAssignment() throws Exception {
     String exception = null;
     try {

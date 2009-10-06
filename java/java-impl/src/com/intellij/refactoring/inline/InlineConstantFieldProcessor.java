@@ -136,6 +136,14 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
       break;
     }
 
+    if (initializer1 instanceof PsiArrayInitializerExpression) {
+      final PsiType type = expr.getType();
+      if (type != null) {
+        initializer1 = (PsiExpression)initializer1.replace(
+          (PsiNewExpression)JavaPsiFacade.getInstance(expr.getProject()).getElementFactory()
+            .createExpressionFromText("new " + type.getCanonicalText() + initializer1.getText(), initializer1));
+      }
+    }
     myField.normalizeDeclaration();
     ChangeContextUtil.encodeContextInfo(initializer1, true);
     PsiElement element = expr.replace(initializer1);
