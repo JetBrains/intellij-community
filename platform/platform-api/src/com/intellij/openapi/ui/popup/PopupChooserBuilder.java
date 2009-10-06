@@ -66,6 +66,7 @@ public class PopupChooserBuilder {
   private InplaceButton myCommandButton;
   private final List<Pair<ActionListener,KeyStroke>> myKeyboardActions = new ArrayList<Pair<ActionListener, KeyStroke>>();
   private Component mySettingsButtons;
+  private boolean myAutoselectOnMouseMove = true;
 
   public PopupChooserBuilder(@NotNull JList list) {
     myChooserComponent = new MyListWrapper(list);
@@ -133,7 +134,7 @@ public class PopupChooserBuilder {
     return this;
   }
 
-  public PopupChooserBuilder setCancelCalllback(Computable<Boolean> callback) {
+  public PopupChooserBuilder setCancelCallback(Computable<Boolean> callback) {
     myCancelCallback = callback;
     return this;
   }
@@ -145,6 +146,11 @@ public class PopupChooserBuilder {
 
   public PopupChooserBuilder setAlpha(final float alpha) {
     myAlpha = alpha;
+    return this;
+  }
+
+  public PopupChooserBuilder setAutoselectOnMouseMove(final boolean doAutoSelect) {
+    myAutoselectOnMouseMove = doAutoSelect;
     return this;
   }
 
@@ -268,7 +274,7 @@ public class PopupChooserBuilder {
   }
 
   @NotNull
-  public static JScrollPane createScrollPane(final JTable table) {
+  private JScrollPane createScrollPane(final JTable table) {
     if (table instanceof TreeTable) {
       TreeUtil.expandAll(((TreeTable)table).getTree());
     }
@@ -288,24 +294,26 @@ public class PopupChooserBuilder {
       scrollPane.getViewport().setPreferredSize(table.getPreferredSize());
     }
 
-    table.addMouseMotionListener(new MouseMotionAdapter() {
-      boolean myIsEngaged = false;
-      public void mouseMoved(MouseEvent e) {
-        if (myIsEngaged) {
-          int index = table.rowAtPoint(e.getPoint());
-          table.getSelectionModel().setSelectionInterval(index, index);
+    if (myAutoselectOnMouseMove) {
+      table.addMouseMotionListener(new MouseMotionAdapter() {
+        boolean myIsEngaged = false;
+        public void mouseMoved(MouseEvent e) {
+          if (myIsEngaged) {
+            int index = table.rowAtPoint(e.getPoint());
+            table.getSelectionModel().setSelectionInterval(index, index);
+          }
+          else {
+            myIsEngaged = true;
+          }
         }
-        else {
-          myIsEngaged = true;
-        }
-      }
-    });
+      });
+    }
 
     return scrollPane;
   }
 
   @NotNull
-  public static JScrollPane createScrollPane(final JTree tree) {
+  private JScrollPane createScrollPane(final JTree tree) {
     TreeUtil.expandAll(tree);
 
     JScrollPane scrollPane = new JScrollPane(tree);
@@ -323,19 +331,21 @@ public class PopupChooserBuilder {
       scrollPane.getViewport().setPreferredSize(tree.getPreferredSize());
     }
 
-    tree.addMouseMotionListener(new MouseMotionAdapter() {
-      boolean myIsEngaged = false;
-      public void mouseMoved(MouseEvent e) {
-        if (myIsEngaged) {
-          final Point p = e.getPoint();
-          int index = tree.getRowForLocation(p.x, p.y);
-          tree.setSelectionRow(index);
+    if (myAutoselectOnMouseMove) {
+      tree.addMouseMotionListener(new MouseMotionAdapter() {
+        boolean myIsEngaged = false;
+        public void mouseMoved(MouseEvent e) {
+          if (myIsEngaged) {
+            final Point p = e.getPoint();
+            int index = tree.getRowForLocation(p.x, p.y);
+            tree.setSelectionRow(index);
+          }
+          else {
+            myIsEngaged = true;
+          }
         }
-        else {
-          myIsEngaged = true;
-        }
-      }
-    });
+      });
+    }
 
     return scrollPane;
   }
@@ -370,19 +380,21 @@ public class PopupChooserBuilder {
 
     private MyListWrapper(final JList list) {
       super(list);
-      list.addMouseMotionListener(new MouseMotionAdapter() {
-        boolean myIsEngaged = false;
-        public void mouseMoved(MouseEvent e) {
-          if (myIsEngaged && !isSelectionButtonDown(e)) {
-            Point point = e.getPoint();
-            int index = list.locationToIndex(point);
-            list.setSelectedIndex(index);
+      if (myAutoselectOnMouseMove) {
+        list.addMouseMotionListener(new MouseMotionAdapter() {
+          boolean myIsEngaged = false;
+          public void mouseMoved(MouseEvent e) {
+            if (myIsEngaged && !isSelectionButtonDown(e)) {
+              Point point = e.getPoint();
+              int index = list.locationToIndex(point);
+              list.setSelectedIndex(index);
+            }
+            else {
+              myIsEngaged = true;
+            }
           }
-          else {
-            myIsEngaged = true;
-          }
-        }
-      });
+        });
+      }
 
       ListScrollingUtil.installActions(list);
 
