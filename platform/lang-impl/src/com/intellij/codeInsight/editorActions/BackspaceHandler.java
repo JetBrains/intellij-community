@@ -18,7 +18,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 
 import java.util.List;
@@ -154,10 +153,12 @@ public class BackspaceHandler extends EditorWriteActionHandler {
       }
     }
 
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(file.getProject());
-    int column = caretPos.column - settings.getIndentSize(file.getFileType());
-    if (column < 0) column = 0;
-
+    // Decrease column down to indentation * n
+    final int indent = CodeStyleSettingsManager.getSettings(file.getProject()).getIndentSize(file.getFileType());
+    int column = ((caretPos.column - 1) / indent) * indent;
+    if (column < 0) {
+      column = 0;
+    }
     return new LogicalPosition(caretPos.line, column);
   }
 }
