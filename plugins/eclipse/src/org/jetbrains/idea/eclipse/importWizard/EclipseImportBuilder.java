@@ -155,12 +155,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
       return false;
     }
 
-    final HashMap<String, String> map = new HashMap<String, String>();
-    for (String v : variables) {
-      map.put(v, null);
-    }
-
-    if (!ProjectMacrosUtil.checkMacros(dstProject, map)) {
+    if (!ProjectMacrosUtil.checkMacros(dstProject, variables)) {
       return false;
     }
 

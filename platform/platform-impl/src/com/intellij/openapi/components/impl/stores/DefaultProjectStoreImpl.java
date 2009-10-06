@@ -95,6 +95,11 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       }
 
       @Nullable
+      public TrackingPathMacroSubstitutor getMacroSubstitutor() {
+        return null;
+      }
+
+      @Nullable
       public StateStorage getStateStorage(@NotNull Storage storageSpec) throws StateStorage.StateStorageException {
         return storage;
       }
@@ -203,14 +208,6 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
     public void save() throws StateStorage.StateStorageException {
       saveSession.save();
-    }
-
-    public Set<String> getUsedMacros() {
-      return Collections.emptySet();
-    }
-
-    public StateStorage.SaveSession getSaveSession(final String storage) {
-      return saveSession;
     }
   }
 }

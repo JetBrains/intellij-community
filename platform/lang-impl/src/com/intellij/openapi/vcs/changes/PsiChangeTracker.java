@@ -39,9 +39,7 @@ public class PsiChangeTracker {
     final List<T> elements = new ArrayList<T>();
     final List<T> oldElements = new ArrayList<T>();
     final PsiFile oldFile = oldText == null
-                            ? null
-                            : PsiFileFactory.getInstance(project)
-                              .createFileFromText(file.getName(), file.getLanguage(), oldText, false, true);
+                            ? null : PsiFileFactory.getInstance(project).createFileFromText(oldText, file);
 
     file.accept(new MyVisitor<T>(filter, elements));
 

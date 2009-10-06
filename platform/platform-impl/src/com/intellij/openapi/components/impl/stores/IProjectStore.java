@@ -2,6 +2,7 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StorageScheme;
+import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
@@ -11,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Set;
 
 public interface IProjectStore extends IComponentStore {
@@ -31,6 +31,8 @@ public interface IProjectStore extends IComponentStore {
 
   @NotNull
   String getProjectName();
+
+  TrackingPathMacroSubstitutor[] getSubstitutors();
 
   @NotNull
   StorageScheme getStorageScheme();
@@ -60,6 +62,4 @@ public interface IProjectStore extends IComponentStore {
 
   @NotNull
   String getProjectFilePath();
-
-  void setUsedMacros(@NotNull final Collection<String> macros);
 }

@@ -51,10 +51,10 @@ public class ReplacePathToMacroMap extends PathMacroMap {
     }
   }
 
-  public String substitute(String text, boolean caseSensitive, final Set<String> usedMacros) {
+  public String substitute(String text, boolean caseSensitive) {
     for (final String path : getPathIndex()) {
       final String macro = get(path);
-      text = replacePathMacro(text, path, macro, caseSensitive, usedMacros);
+      text = replacePathMacro(text, path, macro, caseSensitive);
     }
     return text;
   }
@@ -62,8 +62,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
   private static String replacePathMacro(String text,
                                          String path,
                                          final String macro,
-                                         boolean caseSensitive,
-                                         final Set<String> usedMacros) {
+                                         boolean caseSensitive) {
     if (text.length() < path.length() || path.length() == 0) {
       return text;
     }
@@ -93,7 +92,6 @@ public class ReplacePathToMacroMap extends PathMacroMap {
 
       newText.append(macro);
       newText.append(text.substring(endOfOccurence));
-      logUsage(macro, usedMacros);
 
       return newText.toString();
     }
@@ -103,10 +101,10 @@ public class ReplacePathToMacroMap extends PathMacroMap {
   }
 
   @Override
-  public String substituteRecursively(String text, final boolean caseSensitive, final Set<String> usedMacros) {
+  public String substituteRecursively(String text, final boolean caseSensitive) {
     for (final String path : getPathIndex()) {
       final String macro = get(path);
-      text = replacePathMacroRecursively(text, path, macro, caseSensitive, usedMacros);
+      text = replacePathMacroRecursively(text, path, macro, caseSensitive);
     }
     return text;
   }
@@ -114,8 +112,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
   private static String replacePathMacroRecursively(String text,
                                                     String path,
                                                     final String macro,
-                                                    boolean caseSensitive,
-                                                    final Set<String> usedMacros) {
+                                                    boolean caseSensitive) {
     if (text.length() < path.length()) {
       return text;
     }
@@ -151,7 +148,6 @@ public class ReplacePathToMacroMap extends PathMacroMap {
         else {
           newText.append(text.substring(i, occurrenceOfPath));
           newText.append(macro);
-          logUsage(macro, usedMacros);
           i = occurrenceOfPath + path.length();
         }
       }
@@ -160,31 +156,6 @@ public class ReplacePathToMacroMap extends PathMacroMap {
     finally {
       StringBuilderSpinAllocator.dispose(newText);
     }
-  }
-
-
-  private static void logUsage(String macroReplacement, final Set<String> usedMacros) {
-    if (usedMacros == null) return;
-
-    int idx = 0;
-    for (String protocol : PROTOCOLS) {
-      if (StringUtil.startsWithConcatenationOf(macroReplacement, protocol, "://")) {
-        idx = protocol.length() + 3;
-      }
-      else if (StringUtil.startsWithConcatenationOf(macroReplacement, protocol, ":/")) {
-        idx = protocol.length() + 2;
-      }
-      else if (StringUtil.startsWithConcatenationOf(macroReplacement, protocol, ":")) {
-        idx = protocol.length() + 1;
-      }
-    }
-
-    macroReplacement = macroReplacement.substring(idx);
-    if (macroReplacement.length() >= 2 && macroReplacement.startsWith("$") && macroReplacement.endsWith("$")) {
-      macroReplacement = macroReplacement.substring(1, macroReplacement.length() - 1);
-    }
-
-    usedMacros.add(macroReplacement);
   }
 
   public List<String> getPathIndex() {

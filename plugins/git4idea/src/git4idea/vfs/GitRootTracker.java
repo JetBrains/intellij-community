@@ -281,8 +281,8 @@ public class GitRootTracker implements VcsListener {
           return;
         }
         if (myNotificationPosted.compareAndSet(false, true)) {
-          myNotification = new Notification(GIT_INVALID_ROOTS_ID, "Invalid Git roots",
-                                            "<p>Some configured Git VCS roots are not under Git or have Git repsoitories in subdirectories without configured VCS root. <a href=\"\">Configure.</a></p>",
+          myNotification = new Notification(GIT_INVALID_ROOTS_ID, GitBundle.getString("root.tracker.message.title"),
+                                            GitBundle.getString("root.tracker.message"),
                                             NotificationType.ERROR, new NotificationListener() {
               public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
                 if (fixRoots()) {

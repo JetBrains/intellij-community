@@ -59,6 +59,11 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
+  @SuppressWarnings({"unchecked"})
+  public TrackingPathMacroSubstitutor getMacroSubstitutor() {
+    return myPathMacroSubstitutor;
+  }
+
   public synchronized void addMacro(String macro, String expansion) {
     myMacros.put("$" + macro + "$", expansion);
   }
@@ -477,17 +482,6 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       assert mySession == this;
 
       myCompoundSaveSession.save();
-    }
-
-    public Set<String> getUsedMacros()  {
-      assert mySession == this;
-      return myCompoundSaveSession.getUsedMacros();
-    }
-
-    public StateStorage.SaveSession getSaveSession(final String storage) {
-      final StateStorage stateStorage = myStorages.get(storage);
-      assert stateStorage != null;
-      return myCompoundSaveSession.getSaveSession(stateStorage);
     }
 
     public void finishSave() {

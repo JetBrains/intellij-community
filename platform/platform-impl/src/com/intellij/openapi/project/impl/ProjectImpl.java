@@ -4,16 +4,20 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.startup.StartupManagerEx;
+import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.ProjectPathMacroManager;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
+import com.intellij.openapi.components.impl.stores.UnknownMacroNotification;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -22,6 +26,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
@@ -36,10 +41,7 @@ import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
 import java.io.IOException;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
@@ -337,6 +339,61 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   public boolean isDefault() {
     return false;
+  }
+
+  public void checkUnknownMacros() {
+    final IProjectStore stateStore = getStateStore();
+
+    final TrackingPathMacroSubstitutor[] substitutors = stateStore.getSubstitutors();
+    final Set<String> unknownMacros = new HashSet<String>();
+    for (final TrackingPathMacroSubstitutor substitutor : substitutors) {
+      unknownMacros.addAll(substitutor.getUnknownMacros(null));
+    }
+
+    if (!unknownMacros.isEmpty()) {
+      if (ProjectMacrosUtil.checkMacros(this, new HashSet<String>(unknownMacros))) {
+        final PathMacros pathMacros = PathMacros.getInstance();
+        final Set<String> macros2invalidate = new HashSet<String>(unknownMacros);
+        for (Iterator it = macros2invalidate.iterator(); it.hasNext();) {
+          final String macro = (String)it.next();
+          final String value = pathMacros.getValue(macro);
+          if (null == value || value.trim().length() == 0) {
+            it.remove();
+          }
+        }
+
+        if (!macros2invalidate.isEmpty()) {
+          final Set<String> components = new HashSet<String>();
+          for (TrackingPathMacroSubstitutor substitutor : substitutors) {
+            components.addAll(substitutor.getComponents(macros2invalidate));
+          }
+
+          if (stateStore.isReloadPossible(components)) {
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              public void run() {
+                stateStore.reinitComponents(components, true);
+              }
+            });
+
+            for (final TrackingPathMacroSubstitutor substitutor : substitutors) {
+              substitutor.invalidateUnknownMacros(macros2invalidate);
+            }
+
+            final UnknownMacroNotification[] notifications =
+              NotificationsManager.getNotificationsManager().getNotificationsOfType(UnknownMacroNotification.class, this);
+            for (final UnknownMacroNotification notification : notifications) {
+              if (macros2invalidate.containsAll(notification.getMacros())) notification.expire();
+            }
+          }
+          else {
+            if (Messages.showYesNoDialog(this, "Component could not be reloaded. Reload project?", "Configuration changed",
+                                         Messages.getQuestionIcon()) == 0) {
+              ProjectManagerEx.getInstanceEx().reloadProject(this);
+            }
+          }
+        }
+      }
+    }
   }
 
   @Override

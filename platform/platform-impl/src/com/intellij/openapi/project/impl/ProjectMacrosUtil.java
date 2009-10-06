@@ -11,7 +11,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -25,41 +24,32 @@ public class ProjectMacrosUtil {
   private ProjectMacrosUtil() {
   }
 
-  public static boolean showMacrosConfigurationDialog(Project project, final Map<String, String> undefinedMacros) {
+  public static boolean showMacrosConfigurationDialog(Project project, final Collection<String> undefinedMacros) {
     final String text = ProjectBundle.message("project.load.undefined.path.variables.message");
     final Application application = ApplicationManager.getApplication();
     if (application.isHeadlessEnvironment() || application.isUnitTestMode()) {
-      throw new RuntimeException(text + ": " + StringUtil.join(undefinedMacros.keySet(), ", "));
+      throw new RuntimeException(text + ": " + StringUtil.join(undefinedMacros, ", "));
     }
     final UndefinedMacrosConfigurable configurable =
       new UndefinedMacrosConfigurable(text, undefinedMacros);
-    final SingleConfigurableEditor editor = new SingleConfigurableEditor(project, configurable) {
-      protected void doOKAction() {
-        if (!getConfigurable().isModified()) {
-          Messages.showErrorDialog(getContentPane(), ProjectBundle.message("project.load.undefined.path.variables.all.needed"),
-                                   ProjectBundle.message("project.load.undefined.path.variables.title"));
-          return;
-        }
-        super.doOKAction();
-      }
-    };
+    final SingleConfigurableEditor editor = new SingleConfigurableEditor(project, configurable);
     editor.show();
     return editor.isOK();
   }
 
-  public static boolean checkMacros(final Project project, final Map<String, String> usedMacros) {
+  public static boolean checkMacros(final Project project, final Set<String> usedMacros) {
     final Set<String> defined = getDefinedMacros();
-    usedMacros.keySet().removeAll(defined);
+    usedMacros.removeAll(defined);
 
     // try to lookup values in System properties
     @NonNls final String pathMacroSystemPrefix = "path.macro.";
-    for (Iterator it = usedMacros.keySet().iterator(); it.hasNext();) {
+    for (Iterator it = usedMacros.iterator(); it.hasNext();) {
       final String macro = (String)it.next();
       final String value = System.getProperty(pathMacroSystemPrefix + macro, null);
       if (value != null) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            PathMacros.getInstance().setMacro(macro, value, usedMacros.get(macro));
+            PathMacros.getInstance().setMacro(macro, value);
           }
         });
         it.remove();
