@@ -15,7 +15,6 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
-import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.components.impl.stores.XmlElementStorage;
@@ -396,7 +395,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
                                                         new NotificationListener() {
                                                           public void hyperlinkUpdate(@NotNull Notification notification,
                                                                                       @NotNull HyperlinkEvent event) {
-                                                            ((ComponentManagerEx)project).checkUnknownMacros(project, notification);
+                                                            ((ProjectEx)project).checkUnknownMacros();
                                                           }
                                                         }), NotificationDisplayType.STICKY_BALLOON, project);
             }

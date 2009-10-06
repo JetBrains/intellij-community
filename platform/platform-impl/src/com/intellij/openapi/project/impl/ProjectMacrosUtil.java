@@ -11,7 +11,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -33,16 +32,7 @@ public class ProjectMacrosUtil {
     }
     final UndefinedMacrosConfigurable configurable =
       new UndefinedMacrosConfigurable(text, undefinedMacros);
-    final SingleConfigurableEditor editor = new SingleConfigurableEditor(project, configurable) {
-      protected void doOKAction() {
-        if (!getConfigurable().isModified()) {
-          Messages.showErrorDialog(getContentPane(), ProjectBundle.message("project.load.undefined.path.variables.all.needed"),
-                                   ProjectBundle.message("project.load.undefined.path.variables.title"));
-          return;
-        }
-        super.doOKAction();
-      }
-    };
+    final SingleConfigurableEditor editor = new SingleConfigurableEditor(project, configurable);
     editor.show();
     return editor.isOK();
   }

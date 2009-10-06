@@ -1,6 +1,5 @@
 package com.intellij.application.options.pathMacros;
 
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
 
@@ -45,14 +44,6 @@ public class PathMacroListEditor {
   }
 
   public void commit() throws ConfigurationException {
-    final int count = myPathMacroTable.getRowCount();
-    for (int idx = 0; idx < count; idx++) {
-      String value = myPathMacroTable.getMacroValueAt(idx);
-      if (value == null || value.length() == 0) {
-        throw new ConfigurationException(
-            ApplicationBundle.message("error.path.variable.is.undefined", myPathMacroTable.getMacroNameAt(idx)));
-      }
-    }
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         myPathMacroTable.commit();

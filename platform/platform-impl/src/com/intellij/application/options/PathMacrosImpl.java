@@ -120,6 +120,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
   }
 
   public void setMacro(@NotNull String name, @NotNull String value) {
+    if (value.trim().length() == 0) return;
     try {
       myLock.writeLock().lock();
       myMacros.put(name, value);
@@ -157,17 +158,21 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
   public void writeExternal(Element element) throws WriteExternalException {
     final Set<Map.Entry<String,String>> entries = myMacros.entrySet();
     for (Map.Entry<String, String> entry : entries) {
-      final Element macro = new Element(MACRO_ELEMENT);
-      macro.setAttribute(NAME_ATTR, entry.getKey());
-      macro.setAttribute(VALUE_ATTR, entry.getValue());
-      element.addContent(macro);
+      final String value = entry.getValue();
+      if (value != null && value.trim().length() > 0) {
+        final Element macro = new Element(MACRO_ELEMENT);
+        macro.setAttribute(NAME_ATTR, entry.getKey());
+        macro.setAttribute(VALUE_ATTR, value);
+        element.addContent(macro);
+      }
     }
   }
 
   public void addMacroReplacements(ReplacePathToMacroMap result) {
     final Set<String> macroNames = getUserMacroNames();
     for (final String name : macroNames) {
-      result.addMacroReplacement(getValue(name), name);
+      final String value = getValue(name);
+      if (value != null && value.trim().length() > 0) result.addMacroReplacement(value, name);
     }
   }
 
@@ -175,7 +180,8 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
   public void addMacroExpands(ExpandMacroToPathMap result) {
     final Set<String> macroNames = getUserMacroNames();
     for (final String name : macroNames) {
-      result.addMacroExpand(name, getValue(name));
+      final String value = getValue(name);
+      if (value != null && value.trim().length() > 0) result.addMacroExpand(name, value);
     }
   }
 

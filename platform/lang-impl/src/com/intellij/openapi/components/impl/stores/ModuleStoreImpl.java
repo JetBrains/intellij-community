@@ -65,7 +65,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
                                                       new NotificationListener() {
                                                         public void hyperlinkUpdate(@NotNull Notification notification,
                                                                                     @NotNull HyperlinkEvent event) {
-                                                          myModule.checkUnknownMacros(myModule.getProject(), notification);
+                                                          ((ProjectEx)myModule.getProject()).checkUnknownMacros();
                                                         }
                                                       }), NotificationDisplayType.STICKY_BALLOON, myModule.getProject());
           }
@@ -93,14 +93,14 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
         final Project project = myModule.getProject();
         StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
           public void run() {
-            Notifications.Bus.notify(new Notification("Load Error", String.format("Error loading module '%s':", myModule.getName()),
+            Notifications.Bus.notify(new UnknownMacroNotification("Load Error", String.format("Error loading module '%s':", myModule.getName()),
                                                       String.format(
                                                         "<p>Undefined Path Variable(s): <i>%s</i>. <a href=\"\">Fix it!</a></p>",
                                                         StringUtil.join(macros, ", ")), NotificationType.ERROR, new NotificationListener() {
                 public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-                  myModule.checkUnknownMacros(myModule.getProject(), notification);
+                  ((ProjectEx)myModule.getProject()).checkUnknownMacros();
                 }
-              }), NotificationDisplayType.STICKY_BALLOON, project);
+              }, macros), NotificationDisplayType.STICKY_BALLOON, project);
           }
         });
       }

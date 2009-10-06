@@ -16,6 +16,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.SystemNotifications;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairFunction;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +26,9 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author spleaner
@@ -58,6 +61,19 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
   @Override
   public void expire(@NotNull Notification notification) {
     remove(notification);
+  }
+
+  @Override
+  public <T extends Notification> T[] getNotificationsOfType(Class<T> klass, @Nullable final Project project) {
+    final List<Notification> notifications = getModel().getByType(null, createFilter(project, false));
+    final List<T> result = new ArrayList<T>();
+    for (final Notification notification : notifications) {
+      if (klass.isInstance(notification)) {
+        result.add((T) notification);
+      }
+    }
+    
+    return ArrayUtil.toObjectArray(result, klass);
   }
 
   private static final PairFunction<Notification, Project, Boolean> ALL = new PairFunction<Notification, Project, Boolean>() {
@@ -162,6 +178,8 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     }
 
     final Balloon balloon = builder.createBalloon();
+    notification.setBalloon(balloon);
+
     final Runnable show = new Runnable() {
       public void run() {
         Window window = null;

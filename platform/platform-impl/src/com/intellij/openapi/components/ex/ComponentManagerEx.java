@@ -28,6 +28,4 @@ public interface ComponentManagerEx extends ComponentManager {
   void registerComponent(ComponentConfig config, IdeaPluginDescriptor pluginDescriptor);
 
   IComponentStore getComponentStore();
-
-  void checkUnknownMacros(@NotNull Project project, @NotNull Notification notification);
 }

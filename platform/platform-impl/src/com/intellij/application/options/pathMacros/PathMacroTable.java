@@ -107,7 +107,10 @@ public class PathMacroTable extends Table {
   public void commit() {
     myPathMacros.removeAllMacros();
     for (Pair<String, String> pair : myMacros) {
-      myPathMacros.setMacro(pair.getFirst(), pair.getSecond().replace(File.separatorChar, '/'));
+      final String value = pair.getSecond();
+      if (value != null && value.trim().length() > 0) {
+        myPathMacros.setMacro(pair.getFirst(), value.replace(File.separatorChar, '/'));
+      }
     }
   }
 

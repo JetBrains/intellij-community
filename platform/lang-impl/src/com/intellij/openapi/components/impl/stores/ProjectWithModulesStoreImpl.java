@@ -1,6 +1,7 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleImpl;
@@ -27,6 +28,17 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
     for (Module module : getPersistentModules()) {
       ((ModuleImpl)module).getStateStore().reinitComponents(componentNames, reloadData);
     }
+  }
+
+  public TrackingPathMacroSubstitutor[] getSubstitutors() {
+    final List<TrackingPathMacroSubstitutor> result = new ArrayList<TrackingPathMacroSubstitutor>();
+    result.add(getStateStorageManager().getMacroSubstitutor());
+
+    for (Module module : getPersistentModules()) {
+      result.add(((ModuleImpl)module).getStateStore().getStateStorageManager().getMacroSubstitutor());
+    }
+
+    return result.toArray(new TrackingPathMacroSubstitutor[result.size()]);
   }
 
   public boolean isReloadPossible(final Set<String> componentNames) {

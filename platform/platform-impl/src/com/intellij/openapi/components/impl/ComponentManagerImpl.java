@@ -234,45 +234,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
   }
 
-  public void checkUnknownMacros(@NotNull final Project project, @NotNull final Notification notification) {
-    final IComponentStore stateStore = getStateStore();
-    final TrackingPathMacroSubstitutor substitutor = stateStore.getStateStorageManager().getMacroSubstitutor();
-    if (substitutor != null) {
-      final Collection<String> macros = substitutor.getUnknownMacros(null);
-      if (!macros.isEmpty()) {
-        if (ProjectMacrosUtil.checkMacros(project, new HashSet<String>(macros))) {
-          final PathMacros pathMacros = PathMacros.getInstance();
-          boolean expire = true;
-          final Set<String> macros2invalidate = new HashSet<String>(macros);
-          for (Iterator it = macros2invalidate.iterator(); it.hasNext();) {
-            final String macro = (String)it.next();
-            if (null == pathMacros.getValue(macro)) {
-              it.remove();
-              expire = false;
-            }
-          }
-
-          final Set<String> components = new HashSet<String>(substitutor.getComponents(macros2invalidate));
-          if (stateStore.isReloadPossible(components)) {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              public void run() {
-                stateStore.reinitComponents(components, true);
-              }
-            });
-
-            substitutor.invalidateUnknownMacros(macros2invalidate);
-            if (expire) notification.expire();
-          }
-          else {
-            if (Messages.showYesNoDialog(project, "Component could not be reloaded. Reload project?", "Configuration changed",
-                                         Messages.getQuestionIcon()) == 0) {
-              ProjectManagerEx.getInstanceEx().reloadProject(project);
-            }
-          }
-        }
-      }
-    }
-  }
 
   protected void handleInitComponentError(final Throwable ex, final boolean fatal, final String componentClassName) {
     LOG.error(ex);

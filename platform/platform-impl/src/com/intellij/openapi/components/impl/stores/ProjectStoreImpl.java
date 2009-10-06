@@ -7,7 +7,6 @@ import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
@@ -137,6 +136,10 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     return true;
   }
 
+  public TrackingPathMacroSubstitutor[] getSubstitutors() {
+    return new TrackingPathMacroSubstitutor[] {getStateStorageManager().getMacroSubstitutor()};
+  }
+
   @Override
   protected boolean optimizeTestLoading() {
     return myProject.isOptimiseTestLoadSpeed();
@@ -152,15 +155,15 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
         if (substitutor != null) {
           final Collection<String> macros = substitutor.getUnknownMacros(componentName);
           if (!macros.isEmpty()) {
-            Notifications.Bus.notify(new Notification("Load Error", "Error loading component",
+            Notifications.Bus.notify(new UnknownMacroNotification("Load Error", "Error loading component",
                                                       String.format("<p>Undefined Path Variables: <i>%s</i>. <a href=\"\">Fix it!</a></p>",
                                                                     StringUtil.join(macros, ", ")), NotificationType.ERROR,
                                                       new NotificationListener() {
                                                         public void hyperlinkUpdate(@NotNull Notification notification,
                                                                                     @NotNull HyperlinkEvent event) {
-                                                          ((ComponentManagerEx)myProject).checkUnknownMacros(myProject, notification);
+                                                          myProject.checkUnknownMacros();
                                                         }
-                                                      }), NotificationDisplayType.STICKY_BALLOON, myProject);
+                                                      }, macros), NotificationDisplayType.STICKY_BALLOON, myProject);
           }
         }
       }
