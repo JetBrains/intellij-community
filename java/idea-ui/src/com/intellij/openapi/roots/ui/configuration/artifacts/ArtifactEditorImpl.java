@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.artifacts.actions.*;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.LibrarySourceItem;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.SourceItemsTree;
+import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
@@ -20,7 +21,9 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifact;
+import com.intellij.packaging.elements.ComplexPackagingElementType;
 import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.elements.ArchivePackagingElement;
@@ -30,6 +33,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ui.ThreeStateCheckBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,9 +53,11 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   private JPanel myMainPanel;
   private JCheckBox myBuildOnMakeCheckBox;
   private TextFieldWithBrowseButton myOutputDirectoryField;    
-  private JCheckBox myShowIncludedCheckBox;
   private JPanel myEditorPanel;
   private JPanel myErrorPanelPlace;
+  private ThreeStateCheckBox myShowContentCheckBox;
+  private FixedSizeButton myShowSpecificContentOptionsButton;
+  private ActionGroup myShowSpecificContentOptionsGroup;
   private Splitter mySplitter;
   private final Project myProject;
   private final ComplexElementSubstitutionParameters mySubstitutionParameters = new ComplexElementSubstitutionParameters();
@@ -79,9 +85,24 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
                                                    CompilerBundle.message("chooser.description.select.output.directory.for.0.artifact",
                                                                           getArtifact().getName()), myProject,
                                                    FileChooserDescriptorFactory.createSingleFolderDescriptor());
+    myShowSpecificContentOptionsGroup = createShowSpecificContentOptionsGroup();
+    myShowSpecificContentOptionsButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, myShowSpecificContentOptionsGroup).getComponent().show(myShowSpecificContentOptionsButton, 0, 0);
+      }
+    });
     setOutputPath(outputPath);
     myValidationManager = new ArtifactValidationManagerImpl(this);
     myContext.setValidationManager(myValidationManager);
+    updateShowContentCheckbox();
+  }
+
+  private ActionGroup createShowSpecificContentOptionsGroup() {
+    final DefaultActionGroup group = new DefaultActionGroup();
+    for (ComplexPackagingElementType<?> type : PackagingElementFactory.getInstance().getComplexElementTypes()) {
+      group.add(new ToggleShowElementContentAction(type, this));
+    }
+    return group;
   }
 
   private void setOutputPath(@Nullable String outputPath) {
@@ -162,15 +183,17 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     mySplitter.setSecondComponent(rightPanel);
 
 
-    myShowIncludedCheckBox.addActionListener(new ActionListener() {
+    myShowContentCheckBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        if (myShowIncludedCheckBox.isSelected()) {
+        final ThreeStateCheckBox.State state = myShowContentCheckBox.getState();
+        if (state == ThreeStateCheckBox.State.SELECTED) {
           mySubstitutionParameters.setSubstituteAll();
         }
-        else {
+        else if (state == ThreeStateCheckBox.State.NOT_SELECTED) {
           mySubstitutionParameters.setSubstituteNone();
         }
-        rebuildTries();
+        myShowContentCheckBox.setThirdStateEnabled(false);
+        myLayoutTreeComponent.rebuildTree();
       }
     });
 
@@ -190,6 +213,21 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     return getMainComponent();
   }
 
+  public void updateShowContentCheckbox() {
+    final ThreeStateCheckBox.State state;
+    if (mySubstitutionParameters.isAllSubstituted()) {
+      state = ThreeStateCheckBox.State.SELECTED;
+    }
+    else if (mySubstitutionParameters.isNoneSubstituted()) {
+      state = ThreeStateCheckBox.State.NOT_SELECTED;
+    }
+    else {
+      state = ThreeStateCheckBox.State.DONT_CARE;
+    }
+    myShowContentCheckBox.setThirdStateEnabled(state == ThreeStateCheckBox.State.DONT_CARE);
+    myShowContentCheckBox.setState(state);
+  }
+
   private DefaultActionGroup createToolbarActionGroup() {
     final DefaultActionGroup toolbarActionGroup = new DefaultActionGroup();
 
@@ -201,6 +239,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
     toolbarActionGroup.add(createAddAction(false));
     toolbarActionGroup.add(new RemovePackagingElementAction(this));
+    toolbarActionGroup.add(Separator.getInstance());
     toolbarActionGroup.add(new SortElementsToggleAction(this.getLayoutTreeComponent()));
     toolbarActionGroup.add(new MoveElementAction(myLayoutTreeComponent, "Move Up", "", IconLoader.getIcon("/actions/moveUp.png"), -1));
     toolbarActionGroup.add(new MoveElementAction(myLayoutTreeComponent, "Move Down", "", IconLoader.getIcon("/actions/moveDown.png"), 1));

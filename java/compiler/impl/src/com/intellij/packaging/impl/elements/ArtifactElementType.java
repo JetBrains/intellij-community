@@ -5,8 +5,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactPointerManager;
+import com.intellij.packaging.elements.ComplexPackagingElementType;
 import com.intellij.packaging.elements.CompositePackagingElement;
-import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 import com.intellij.packaging.ui.ArtifactEditorContext;
@@ -19,7 +19,7 @@ import java.util.*;
 /**
 * @author nik
 */
-public class ArtifactElementType extends PackagingElementType<ArtifactPackagingElement> {
+public class ArtifactElementType extends ComplexPackagingElementType<ArtifactPackagingElement> {
   public static final ArtifactElementType ARTIFACT_ELEMENT_TYPE = new ArtifactElementType();
 
   ArtifactElementType() {
@@ -79,5 +79,10 @@ public class ArtifactElementType extends PackagingElementType<ArtifactPackagingE
   @NotNull
   public ArtifactPackagingElement createEmpty(@NotNull Project project) {
     return new ArtifactPackagingElement(project);
+  }
+
+  @Override
+  public String getShowContentActionText() {
+    return "Show Content of Included Artifacts";
   }
 }
