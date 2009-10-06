@@ -2,13 +2,15 @@ package com.intellij.ide.projectView.impl;
 
 import com.intellij.ProjectTopics;
 import com.intellij.ide.CopyPasteUtil;
+import com.intellij.ide.bookmarks.Bookmark;
+import com.intellij.ide.bookmarks.BookmarksListener;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ProjectViewPsiTreeChangeListener;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
@@ -55,6 +57,9 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
         getUpdater().addSubtreeToUpdate(getRootNode());
       }
     });
+
+    connection.subscribe(BookmarksListener.TOPIC, new MyBookmarksListener());
+
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeListener);
     myFileStatusListener = new MyFileStatusListener();
     FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener);
@@ -115,20 +120,30 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
     }
   }
 
+  private final class MyBookmarksListener implements BookmarksListener {
+    public void bookmarkAdded(Bookmark b) {
+      updateForFile(b.getFile());
+    }
+
+    public void bookmarkRemoved(Bookmark b) {
+      updateForFile(b.getFile());
+    }
+
+    private void updateForFile(VirtualFile file) {
+      PsiElement element = findPsi(file);
+      if (element != null) {
+        getUpdater().addSubtreeToUpdateByElement(element);
+      }
+    }
+  }
+
   private final class MyFileStatusListener implements FileStatusListener {
     public void fileStatusesChanged() {
       getUpdater().addSubtreeToUpdate(getRootNode());
     }
 
     public void fileStatusChanged(@NotNull VirtualFile vFile) {
-      PsiElement element;
-      PsiManager psiManager = PsiManager.getInstance(myProject);
-      if (vFile.isDirectory()) {
-        element = psiManager.findDirectory(vFile);
-      }
-      else {
-        element = psiManager.findFile(vFile);
-      }
+      PsiElement element = findPsi(vFile);
 
       final boolean fileAdded = getUpdater().addSubtreeToUpdateByElement(element);
       if (!fileAdded) {
@@ -140,6 +155,18 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
         }
       }
     }
+  }
+
+  private PsiElement findPsi(VirtualFile vFile) {
+    PsiElement element;
+    PsiManager psiManager = PsiManager.getInstance(myProject);
+    if (vFile.isDirectory()) {
+      element = psiManager.findDirectory(vFile);
+    }
+    else {
+      element = psiManager.findFile(vFile);
+    }
+    return element;
   }
 
  /* private class PropertiesFileListener implements PropertiesFilesManager.PropertiesFileListener {

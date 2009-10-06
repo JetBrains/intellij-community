@@ -1,6 +1,8 @@
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.IconProvider;
+import com.intellij.ide.bookmarks.Bookmark;
+import com.intellij.ide.bookmarks.BookmarkManager;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
@@ -20,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.RowIcon;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
 import com.intellij.util.PathUtil;
@@ -89,16 +92,15 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
     setupIcon(data, psiDirectory);
   }
 
-  private static void setupIcon(PresentationData data, PsiDirectory psiDirectory) {
+  private void setupIcon(PresentationData data, PsiDirectory psiDirectory) {
     final VirtualFile virtualFile = psiDirectory.getVirtualFile();
-    final boolean isWritable = virtualFile.isWritable();
     for (final IconProvider provider : Extensions.getExtensions(IconProvider.EXTENSION_POINT_NAME)) {
       final Icon openIcon = provider.getIcon(psiDirectory, Iconable.ICON_FLAG_OPEN);
       if (openIcon != null) {
         final Icon closedIcon = provider.getIcon(psiDirectory, Iconable.ICON_FLAG_CLOSED);
         if (closedIcon != null) {
-          data.setOpenIcon(addReadMark(openIcon, isWritable));
-          data.setClosedIcon(addReadMark(closedIcon, isWritable));
+          data.setOpenIcon(patchIcon(openIcon, virtualFile));
+          data.setClosedIcon(patchIcon(closedIcon, virtualFile));
           return;
         }
       }
@@ -185,6 +187,18 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
       return PsiDirectoryFactory.getInstance(getProject()).getQualifiedName(directory, true);
     }
     return super.getTitle();
+  }
+
+  private Icon patchIcon(Icon original, VirtualFile file) {
+    Bookmark bookmarkAtFile = BookmarkManager.getInstance(myProject).findFileBookmark(file);
+    if (bookmarkAtFile != null) {
+      RowIcon composite = new RowIcon(2);
+      composite.setIcon(original, 0);
+      composite.setIcon(Bookmark.TICK, 1);
+      return addReadMark(composite, file.isWritable());
+    }
+
+    return addReadMark(original, file.isWritable());
   }
 
   private static Icon addReadMark(Icon originalIcon, boolean isWritable) {
