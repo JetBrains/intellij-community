@@ -16,6 +16,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.application.ApplicationManager;
@@ -281,6 +282,7 @@ public abstract class DialogWrapper {
       helpButton.putClientProperty("JButton.buttonType", "help");
       helpButton.setText("");
       helpButton.setMargin(insets);
+      helpButton.setToolTipText(ActionsBundle.actionDescription("HelpTopics"));
       panel.add(helpButton, BorderLayout.WEST);
     }
 
