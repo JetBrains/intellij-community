@@ -193,7 +193,9 @@ public class CoverageConfigurable<T extends ModuleBasedConfiguration & RunJavaCo
                                                     final Object value,
                                                     final int index, final boolean isSelected, final boolean cellHasFocus) {
         final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        setText(((CoverageRunnerItem)value).getPresentableName());
+        if (value != null) {
+          setText(((CoverageRunnerItem)value).getPresentableName());
+        }
         return rendererComponent;
       }
     });
