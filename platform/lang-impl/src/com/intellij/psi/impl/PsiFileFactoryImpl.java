@@ -141,4 +141,13 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
     return createFileFromText(fileName, fileType, text);
   }
 
+  @Nullable
+  @Override
+  public PsiFile createFileFromText(@NotNull CharSequence chars, @NotNull PsiFile original) {
+    final PsiFile file = createFileFromText(original.getName(), original.getLanguage(), chars, false, true);
+    if (file != null) {
+      file.putUserData(ORIGINAL_FILE, original);
+    }
+    return file;
+  }
 }
