@@ -47,6 +47,7 @@ import git4idea.commands.GitLineHandlerAdapter;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.MergeChangeCollector;
+import git4idea.ui.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -230,7 +231,17 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
             }
             finally {
               if (stashCreated) {
-                GitStashUtils.popLastStash(myProject, root);
+                try {
+                  GitStashUtils.popLastStash(myProject, root);
+                }
+                catch (final VcsException ue) {
+                  exceptions.add(ue);
+                  UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+                    public void run() {
+                      GitUIUtil.showOperationError(myProject, ue, "Auto-unstash");
+                    }
+                  });
+                }
               }
             }
           }
