@@ -18,7 +18,6 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
@@ -29,9 +28,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.LightColors;
+import com.intellij.ui.FileColorManager;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Alarm;
@@ -227,10 +227,7 @@ public class BookmarksAction extends AnAction implements DumbAware {
 
     model.addElement(new ManageBookmarksItem(bookmarkAtPlace));
 
-    if (bookmarkAtPlace != null) {
-      model.addElement(new RemoveBookmarkItem(bookmarkAtPlace));
-    }
-    else {
+    if (bookmarkAtPlace == null) {
       model.addElement(new SetBookmarkItem(file, line));
     }
 
@@ -386,8 +383,11 @@ public class BookmarksAction extends AnAction implements DumbAware {
         renderer.append(String.valueOf(myBookmark.getLine() + 1), SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
 
-      if (!selected && FileEditorManager.getInstance(project).isFileOpen(file)) {
-        renderer.setBackground(LightColors.SLIGHTLY_GREEN);
+      if (!selected && (fileOrDir instanceof PsiFile)) {
+        Color color = FileColorManager.getInstance(project).getFileColor((PsiFile)fileOrDir);
+        if (color != null) {
+          renderer.setBackground(color);
+        }
       }
 
       String description = myBookmark.getDescription();
