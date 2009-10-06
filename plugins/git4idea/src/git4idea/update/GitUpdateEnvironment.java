@@ -26,6 +26,9 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.update.SequentialUpdatesContext;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.update.UpdateSession;
@@ -47,10 +50,7 @@ import git4idea.merge.MergeChangeCollector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -102,6 +102,26 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
     List<VcsException> exceptions = new ArrayList<VcsException>();
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     try {
+      HashSet<VirtualFile> rootsToStash = new HashSet<VirtualFile>();
+      if (mySettings.UPDATE_STASH) {
+        ChangeListManagerEx changeManager = (ChangeListManagerEx)ChangeListManagerEx.getInstance(myProject);
+        for (LocalChangeList l : changeManager.getChangeListsCopy()) {
+          for (Change c : l.getChanges()) {
+            if (c.getAfterRevision() != null) {
+              VirtualFile r = GitUtil.getGitRootOrNull(c.getAfterRevision().getFile());
+              if (r != null) {
+                rootsToStash.add(r);
+              }
+            }
+            else if (c.getBeforeRevision() != null) {
+              VirtualFile r = GitUtil.getGitRootOrNull(c.getBeforeRevision().getFile());
+              if (r != null) {
+                rootsToStash.add(r);
+              }
+            }
+          }
+        }
+      }
       for (final VirtualFile root : GitUtil.gitRoots(Arrays.asList(filePaths))) {
         try {
           // check if there is a remote for the branch
@@ -118,7 +138,7 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
           projectManager.blockReloadingProjectOnExternalChanges();
           try {
             boolean stashCreated =
-              mySettings.UPDATE_STASH && GitStashUtils.saveStash(myProject, root, "Uncommitted changes before update operation");
+              rootsToStash.contains(root) && GitStashUtils.saveStash(myProject, root, "Uncommitted changes before update operation");
             try {
               // remember the current position
               GitRevisionNumber before = GitRevisionNumber.resolve(myProject, root, "HEAD");
