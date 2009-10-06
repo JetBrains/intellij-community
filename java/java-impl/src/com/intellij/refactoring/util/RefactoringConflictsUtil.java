@@ -172,7 +172,7 @@ public class RefactoringConflictsUtil {
     final GlobalSearchScope resolveScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(targetModule);
     final HashSet<PsiElement> reported = new HashSet<PsiElement>();
     for (final PsiElement scope : scopes) {
-      scope.accept(new JavaRecursiveElementWalkingVisitor() {
+      scope.accept(new JavaRecursiveElementVisitor() {
         @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
           super.visitReferenceElement(reference);
           final PsiElement resolved = reference.resolve();

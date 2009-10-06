@@ -69,7 +69,7 @@ public class PullUpConflictsUtil {
     // check if moved methods use other members in the classes between Subclass and Superclass
     List<PsiElement> checkModuleConflictsList = new ArrayList<PsiElement>();
     for (PsiMember member : movedMembers) {
-      if (member instanceof PsiMethod || member instanceof PsiClass) {
+      if (member instanceof PsiMethod || member instanceof PsiClass && !(member instanceof PsiCompiledElement)) {
         ConflictingUsagesOfSubClassMembers visitor =
           new ConflictingUsagesOfSubClassMembers(member, movedMembers, abstractMethods, subclass, superClass,
                                                  superClass != null ? null : targetPackage, conflicts,
