@@ -389,9 +389,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           if (macroSubstitutor != null) {
             final Collection<String> macros = macroSubstitutor.getUnknownMacros(null);
             if (!macros.isEmpty()) {
-              Notifications.Bus.notify(new Notification("Load Error", "Error loading project",
-                                                        String.format("<p>Undefined Path Variables: %s. <a href=\"\">Fix it!</a></p>",
-                                                                      StringUtil.join(macros, ", ")), NotificationType.ERROR,
+              Notifications.Bus.notify(new Notification("Load Error", "Project loading error: undefined path variables!",
+                                                        String.format("<p><i>%s</i> %s undefined. <a href=\"\">Fix it!</a></p>",
+                                                                      StringUtil.join(macros, ", "), macros.size() == 1 ? "is" : "are"),
+                                                        NotificationType.ERROR,
                                                         new NotificationListener() {
                                                           public void hyperlinkUpdate(@NotNull Notification notification,
                                                                                       @NotNull HyperlinkEvent event) {

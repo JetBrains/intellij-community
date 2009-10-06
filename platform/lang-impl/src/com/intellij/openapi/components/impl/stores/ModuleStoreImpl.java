@@ -59,9 +59,10 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
         if (substitutor != null) {
           final Collection<String> macros = substitutor.getUnknownMacros(componentName);
           if (!macros.isEmpty()) {
-            Notifications.Bus.notify(new Notification("Load Error", "Error loading component",
-                                                      String.format("<p>Undefined Path Variables: <i>%s</i>. <a href=\"\">Fix it!</a></p>",
-                                                                    StringUtil.join(macros, ", ")), NotificationType.ERROR,
+            Notifications.Bus.notify(new Notification("Load Error", "Component load error: undefined path variables!",
+                                                      String.format("<p><i>%s</i> %s undefined. <a href=\"\">Fix it!</a></p>",
+                                                                    StringUtil.join(macros, ", "),
+                                                                    macros.size() == 1 ? "is" : "are"), NotificationType.ERROR,
                                                       new NotificationListener() {
                                                         public void hyperlinkUpdate(@NotNull Notification notification,
                                                                                     @NotNull HyperlinkEvent event) {
