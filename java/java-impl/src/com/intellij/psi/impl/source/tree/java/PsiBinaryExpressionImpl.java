@@ -56,9 +56,9 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
     return result;
   }
 
-  private static final Function<PsiExpression,PsiType> MY_TYPE_EVALUATOR = new Function<PsiExpression, PsiType>() {
-    public PsiType fun(PsiExpression expression) {
-      return doGetType((PsiBinaryExpressionImpl)expression);
+  private static final Function<PsiBinaryExpressionImpl,PsiType> MY_TYPE_EVALUATOR = new Function<PsiBinaryExpressionImpl, PsiType>() {
+    public PsiType fun(PsiBinaryExpressionImpl expression) {
+      return doGetType(expression);
     }
   };
   public PsiType getType() {

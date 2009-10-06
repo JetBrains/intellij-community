@@ -356,8 +356,8 @@ public class ClsStubBuilder {
         @Override
         protected TypeInfo createReturnType() {
           modlist[0] = new PsiModifierListStubImpl(this, packMethodFlags(access));
-          String returnType;
           parsedViaGenericSignature[0] = false;
+          String returnType;
           if (signature == null) {
             returnType = parseMethodViaDescription(desc, this, args);
           }
@@ -370,7 +370,7 @@ public class ClsStubBuilder {
               returnType = parseMethodViaDescription(desc, this, args);
             }
           }
-          return (TypeInfo.fromString(returnType));
+          return TypeInfo.fromString(returnType);
         }
       };
 
