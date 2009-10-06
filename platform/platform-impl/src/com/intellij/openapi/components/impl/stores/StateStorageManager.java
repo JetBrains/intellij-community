@@ -1,9 +1,6 @@
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StateStorageOperation;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -20,6 +17,8 @@ import java.util.Set;
  */
 public interface StateStorageManager {
   void addMacro(String macro, String expansion);
+  @Nullable
+  TrackingPathMacroSubstitutor getMacroSubstitutor();
 
   @Nullable
   StateStorage getStateStorage(@NotNull Storage storageSpec) throws StateStorage.StateStorageException;

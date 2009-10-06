@@ -40,7 +40,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Set;
 
 /**
@@ -87,13 +86,8 @@ public class ExistingModuleLoader extends ModuleBuilder {
         usedMacros.remove("$" + PathMacrosImpl.MODULE_DIR_MACRO_NAME + "$");
         usedMacros.removeAll(definedMacros);
 
-        final HashMap<String, String> map = new HashMap<String, String>();
-        for (String v : usedMacros) {
-          map.put(v, null);
-        }
-
         if (usedMacros.size() > 0) {
-          final boolean ok = ProjectMacrosUtil.showMacrosConfigurationDialog(current, map);
+          final boolean ok = ProjectMacrosUtil.showMacrosConfigurationDialog(current, usedMacros);
           if (!ok) {
             return false;
           }

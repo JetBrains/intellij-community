@@ -59,6 +59,11 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
+  @SuppressWarnings({"unchecked"})
+  public TrackingPathMacroSubstitutor getMacroSubstitutor() {
+    return myPathMacroSubstitutor;
+  }
+
   public synchronized void addMacro(String macro, String expansion) {
     myMacros.put("$" + macro + "$", expansion);
   }

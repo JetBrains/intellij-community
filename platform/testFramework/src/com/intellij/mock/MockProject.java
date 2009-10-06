@@ -1,6 +1,7 @@
 package com.intellij.mock;
 
 import com.intellij.application.options.ReplacePathToMacroMap;
+import com.intellij.notification.Notification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.ServiceManager;
@@ -21,6 +22,9 @@ public class MockProject extends MockComponentManager implements ProjectEx {
 
   public boolean isDefault() {
     return false;
+  }
+
+  public void checkMacros(Notification notification, @Nullable String componentName) {
   }
 
   @NotNull

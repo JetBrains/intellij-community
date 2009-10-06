@@ -106,11 +106,8 @@ public class ClasspathStorage implements StateStorage {
           model.dispose();
         }
       }
-      final HashMap<String, String> map = new HashMap<String, String>();
-      for (String v : macros) {
-        map.put(v, null);
-      }
-      final boolean macrosOk = ProjectMacrosUtil.checkMacros(module.getProject(), map);
+      
+      final boolean macrosOk = ProjectMacrosUtil.checkMacros(module.getProject(), macros);
       PathMacroManager.getInstance(module).expandPaths(element);
       ModuleRootManagerImpl.ModuleRootManagerState moduleRootManagerState = new ModuleRootManagerImpl.ModuleRootManagerState();
       moduleRootManagerState.readExternal(element);
@@ -128,7 +125,7 @@ public class ClasspathStorage implements StateStorage {
     }
   }
 
-  public boolean hasState(final Object component, final String componentName, final Class<?> aClass)
+  public boolean hasState(final Object component, final String componentName, final Class<?> aClass, final boolean reloadData)
     throws StateStorageException {
     return true;
   }

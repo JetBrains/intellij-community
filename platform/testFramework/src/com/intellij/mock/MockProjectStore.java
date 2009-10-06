@@ -33,6 +33,14 @@ public class MockProjectStore implements IProjectStore {
     throw new UnsupportedOperationException("Method setProjectFilePath is not yet implemented in " + getClass().getName());
   }
 
+  public void reinitComponents(Set<String> componentNames, boolean reloadData) {
+    throw new UnsupportedOperationException("Method reinitComponents is not yet implemented in " + getClass().getName());
+  }
+
+  public boolean isReloadPossible(Set<String> componentNames) {
+    throw new UnsupportedOperationException("Method isReloadPossible is not yet implemented in " + getClass().getName());
+  }
+
   @Nullable
   public VirtualFile getProjectBaseDir() {
     throw new UnsupportedOperationException("Method getProjectBaseDir is not yet implemented in " + getClass().getName());
@@ -95,7 +103,7 @@ public class MockProjectStore implements IProjectStore {
     throw new UnsupportedOperationException("Method initStore is not yet implemented in " + getClass().getName());
   }
 
-  public void initComponent(Object component) {
+  public String initComponent(Object component, final boolean service) {
     throw new UnsupportedOperationException("Method initComponent is not yet implemented in " + getClass().getName());
   }
 

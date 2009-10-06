@@ -116,7 +116,7 @@ public class ConversionContextImpl implements ConversionContext {
     List<File> files = new ArrayList<File>();
     for (Element module : JDomConvertingUtil.getChildren(modules, ModuleManagerImpl.ELEMENT_MODULE)) {
       String filePath = module.getAttributeValue(ModuleManagerImpl.ATTRIBUTE_FILEPATH);
-      filePath = macros.substitute(filePath, true, null);
+      filePath = macros.substitute(filePath, true);
       files.add(new File(FileUtil.toSystemDependentName(filePath)));
     }
     return files.toArray(new File[files.size()]);

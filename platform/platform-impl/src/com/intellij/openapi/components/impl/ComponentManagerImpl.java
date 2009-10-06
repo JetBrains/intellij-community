@@ -2,19 +2,22 @@ package com.intellij.openapi.components.impl;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.notification.Notification;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.components.BaseComponent;
-import com.intellij.openapi.components.ComponentConfig;
-import com.intellij.openapi.components.ComponentManager;
-import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.project.impl.ProjectMacrosUtil;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ArrayUtil;
@@ -34,9 +37,7 @@ import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author mike
@@ -217,7 +218,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
 
     try {
-      getStateStore().initComponent(component);
+      getStateStore().initComponent(component, false);
       if (component instanceof BaseComponent) {
         ((BaseComponent)component).initComponent();
       }
@@ -230,6 +231,46 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
     catch (Throwable ex) {
       handleInitComponentError(ex, false, component.getClass().getName());
+    }
+  }
+
+  public void checkUnknownMacros(@NotNull final Project project, @NotNull final Notification notification) {
+    final IComponentStore stateStore = getStateStore();
+    final TrackingPathMacroSubstitutor substitutor = stateStore.getStateStorageManager().getMacroSubstitutor();
+    if (substitutor != null) {
+      final Collection<String> macros = substitutor.getUnknownMacros(null);
+      if (!macros.isEmpty()) {
+        if (ProjectMacrosUtil.checkMacros(project, new HashSet<String>(macros))) {
+          final PathMacros pathMacros = PathMacros.getInstance();
+          boolean expire = true;
+          final Set<String> macros2invalidate = new HashSet<String>(macros);
+          for (Iterator it = macros2invalidate.iterator(); it.hasNext();) {
+            final String macro = (String)it.next();
+            if (null == pathMacros.getValue(macro)) {
+              it.remove();
+              expire = false;
+            }
+          }
+
+          final Set<String> components = new HashSet<String>(substitutor.getComponents(macros2invalidate));
+          if (stateStore.isReloadPossible(components)) {
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              public void run() {
+                stateStore.reinitComponents(components, true);
+              }
+            });
+
+            substitutor.invalidateUnknownMacros(macros2invalidate);
+            if (expire) notification.expire();
+          }
+          else {
+            if (Messages.showYesNoDialog(project, "Component could not be reloaded. Reload project?", "Configuration changed",
+                                         Messages.getQuestionIcon()) == 0) {
+              ProjectManagerEx.getInstanceEx().reloadProject(project);
+            }
+          }
+        }
+      }
     }
   }
 

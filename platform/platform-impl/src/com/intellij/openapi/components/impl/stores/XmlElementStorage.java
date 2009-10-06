@@ -1,5 +1,6 @@
 package com.intellij.openapi.components.impl.stores;
 
+import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -102,7 +103,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
   @Nullable
   public synchronized Element getState(final String componentName) throws StateStorageException {
-    final StorageData storageData = getStorageData();
+    final StorageData storageData = getStorageData(false);
     final Element state = storageData.getState(componentName);
 
 
@@ -117,8 +118,8 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     return state;
   }
 
-  public boolean hasState(final Object component, final String componentName, final Class<?> aClass) throws StateStorageException {
-    final StorageData storageData = getStorageData();
+  public boolean hasState(final Object component, final String componentName, final Class<?> aClass, final boolean reloadData) throws StateStorageException {
+    final StorageData storageData = getStorageData(reloadData);
     return storageData.hasState(componentName);
   }
 
@@ -129,8 +130,8 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   }
 
   @NotNull
-  protected StorageData getStorageData() throws StateStorageException {
-    if (myLoadedData != null) return myLoadedData;
+  protected StorageData getStorageData(final boolean reloadData) throws StateStorageException {
+    if (myLoadedData != null && !reloadData) return myLoadedData;
 
     myLoadedData = loadData(true, myListener);
 
@@ -178,7 +179,6 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   }
 
   protected void loadState(final StorageData result, final Element element) throws StateStorageException {
-    // TODO: notification should be created here
     if (myPathMacroSubstitutor != null) {
       myPathMacroSubstitutor.expandPaths(element);
     }
@@ -187,6 +187,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
     try {
       result.load(element);
+      result.checkUnknownMacros(myPathMacroSubstitutor);
     }
     catch (IOException e) {
       throw new StateStorageException(e);
@@ -211,7 +212,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   @NotNull
   public ExternalizationSession startExternalization() {
     try {
-      final ExternalizationSession session = new MyExternalizationSession(getStorageData().clone(), myListener);
+      final ExternalizationSession session = new MyExternalizationSession(getStorageData(false).clone(), myListener);
 
       mySession = session;
       return session;
@@ -305,17 +306,13 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   }
 
   protected Document getDocument(StorageData data)  {
-
     final Element element = data.save();
 
     if (myPathMacroSubstitutor != null) {
-      Set<String> usedMacros = myPathMacroSubstitutor.getUsedMacros();
       try {
-        myPathMacroSubstitutor.reset();
         myPathMacroSubstitutor.collapsePaths(element);
-      }
-      finally {
-        myPathMacroSubstitutor.reset(usedMacros);
+      } finally {
+        myPathMacroSubstitutor.reset();
       }
     }
 
@@ -463,7 +460,6 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       myDocumentToSave = new Document(element);
 
       if (myPathMacroSubstitutor != null) {
-        myPathMacroSubstitutor.reset();
         myPathMacroSubstitutor.collapsePaths(element);
       }
 
@@ -696,6 +692,15 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
     public boolean hasState(final String componentName) {
         return myComponentStates.containsKey(componentName);
+    }
+
+    public void checkUnknownMacros(TrackingPathMacroSubstitutor pathMacroSubstitutor) {
+      for (String componentName : myComponentStates.keySet()) {
+        final Set<String> unknownMacros = PathMacrosCollector.getMacroNames(myComponentStates.get(componentName));
+        if (!unknownMacros.isEmpty()) {
+          pathMacroSubstitutor.addUnknownMacros(componentName, unknownMacros);
+        }
+      }
     }
   }
 

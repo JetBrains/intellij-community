@@ -33,13 +33,13 @@ public class PathMacroTable extends Table {
     }
   };
 
-  private final Map<String, String> myUndefinedMacroNames;
+  private final Collection<String> myUndefinedMacroNames;
 
   public PathMacroTable() {
     this(null);
   }
 
-  public PathMacroTable(Map<String, String> undefinedMacroNames) {
+  public PathMacroTable(final Collection<String> undefinedMacroNames) {
     myUndefinedMacroNames = undefinedMacroNames;
     setModel(myTableModel);
     TableColumn column = getColumnModel().getColumn(NAME_COLUMN);
@@ -147,7 +147,7 @@ public class PathMacroTable extends Table {
     }
 
     if (myUndefinedMacroNames != null) {
-      for (String undefinedMacroName : myUndefinedMacroNames.keySet()) {
+      for (String undefinedMacroName : myUndefinedMacroNames) {
         macros.add(new Pair<String, String>(undefinedMacroName, ""));
       }
     }

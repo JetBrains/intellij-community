@@ -7,7 +7,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Map;
+import java.util.Collection;
 
 /**
  * @author dsl
@@ -24,7 +24,7 @@ public class PathMacroListEditor {
     this(null);
   }
 
-  public PathMacroListEditor(Map<String, String> undefinedMacroNames) {
+  public PathMacroListEditor(final Collection<String> undefinedMacroNames) {
     myPathMacroTable = undefinedMacroNames != null ? new PathMacroTable(undefinedMacroNames) : new PathMacroTable();
     myScrollPane.setViewportView(myPathMacroTable);
     myAddButton.addActionListener(new ActionListener() {

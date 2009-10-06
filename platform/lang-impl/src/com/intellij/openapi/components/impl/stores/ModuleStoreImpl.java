@@ -1,14 +1,20 @@
 package com.intellij.openapi.components.impl.stores;
 
+import com.intellij.notification.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.PathMacroSubstitutor;
 import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.module.impl.ModuleImpl;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Attribute;
@@ -17,12 +23,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleStore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.ModuleStoreImpl");
@@ -45,7 +49,32 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     return storage;
   }
 
+  @Override
+  public String  initComponent(@NotNull Object component, boolean service) {
+    final String componentName = super.initComponent(component, service);
 
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) {
+      if (service && componentName != null) {
+        final TrackingPathMacroSubstitutor substitutor = getStateStorageManager().getMacroSubstitutor();
+        if (substitutor != null) {
+          final Collection<String> macros = substitutor.getUnknownMacros(componentName);
+          if (!macros.isEmpty()) {
+            Notifications.Bus.notify(new Notification("Load Error", "Error loading component",
+                                                      String.format("<p>Undefined Path Variables: <i>%s</i>. <a href=\"\">Fix it!</a></p>",
+                                                                    StringUtil.join(macros, ", ")), NotificationType.ERROR,
+                                                      new NotificationListener() {
+                                                        public void hyperlinkUpdate(@NotNull Notification notification,
+                                                                                    @NotNull HyperlinkEvent event) {
+                                                          myModule.checkUnknownMacros(myModule.getProject(), notification);
+                                                        }
+                                                      }), NotificationDisplayType.STICKY_BALLOON, myModule.getProject());
+          }
+        }
+      }
+    }
+
+    return componentName;
+  }
 
   @Override
   public void load() throws IOException, StateStorage.StateStorageException {
@@ -54,8 +83,29 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     final ModuleFileData storageData = getMainStorageData();
     final String moduleTypeId = storageData.myOptions.get(ModuleImpl.ELEMENT_TYPE);
     myModule.setModuleType(ModuleTypeManager.getInstance().findByID(moduleTypeId));
-  }
 
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() || ApplicationManager.getApplication().isUnitTestMode()) return;
+
+    final TrackingPathMacroSubstitutor substitutor = getStateStorageManager().getMacroSubstitutor();
+    if (substitutor != null) {
+      final Collection<String> macros = substitutor.getUnknownMacros(null);
+      if (!macros.isEmpty()) {
+        final Project project = myModule.getProject();
+        StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
+          public void run() {
+            Notifications.Bus.notify(new Notification("Load Error", String.format("Error loading module '%s':", myModule.getName()),
+                                                      String.format(
+                                                        "<p>Undefined Path Variable(s): <i>%s</i>. <a href=\"\">Fix it!</a></p>",
+                                                        StringUtil.join(macros, ", ")), NotificationType.ERROR, new NotificationListener() {
+                public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+                  myModule.checkUnknownMacros(myModule.getProject(), notification);
+                }
+              }), NotificationDisplayType.STICKY_BALLOON, project);
+          }
+        });
+      }
+    }
+  }
 
   public ModuleFileData getMainStorageData() throws StateStorage.StateStorageException {
     return (ModuleFileData)super.getMainStorageData();

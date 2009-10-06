@@ -21,19 +21,19 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
     super(project);
   }
 
-  protected void reinitComponents(final Set<String> componentNames) {
-    super.reinitComponents(componentNames);
+  public void reinitComponents(final Set<String> componentNames, final boolean reloadData) {
+    super.reinitComponents(componentNames, reloadData);
 
     for (Module module : getPersistentModules()) {
-      ((ComponentStoreImpl)((ModuleImpl)module).getStateStore()).reinitComponents(componentNames);
+      ((ModuleImpl)module).getStateStore().reinitComponents(componentNames, reloadData);
     }
   }
 
-  protected boolean isReloadPossible(final Set<String> componentNames) {
+  public boolean isReloadPossible(final Set<String> componentNames) {
     if (!super.isReloadPossible(componentNames)) return false;
 
     for (Module module : getPersistentModules()) {
-      if (!((ComponentStoreImpl)((ModuleImpl)module).getStateStore()).isReloadPossible(componentNames)) return false;
+      if (!((ModuleImpl)module).getStateStore().isReloadPossible(componentNames)) return false;
     }
 
     return true;

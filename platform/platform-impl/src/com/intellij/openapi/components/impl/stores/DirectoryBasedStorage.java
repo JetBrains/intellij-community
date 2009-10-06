@@ -1,5 +1,6 @@
 package com.intellij.openapi.components.impl.stores;
 
+import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.StateSplitter;
@@ -146,6 +147,9 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
 
         if (myPathMacroSubstitutor != null) {
           myPathMacroSubstitutor.expandPaths(element);
+
+          final Set<String> unknownMacros = PathMacrosCollector.getMacroNames(element);
+          myPathMacroSubstitutor.addUnknownMacros(componentName, unknownMacros);
         }
         
         storageData.put(componentName, file, element, true);
@@ -162,7 +166,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
   }
 
 
-  public boolean hasState(final Object component, final String componentName, final Class<?> aClass) throws StateStorageException {
+  public boolean hasState(final Object component, final String componentName, final Class<?> aClass, final boolean reloadData) throws StateStorageException {
     if (!myDir.exists()) return false;
     return true;
   }
@@ -432,13 +436,10 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
   }
 
   private class MyExternalizationSession implements ExternalizationSession {
-    private final TrackingPathMacroSubstitutor myPathMacroSubstitutor;
     private final MyStorageData myStorageData;
 
     private MyExternalizationSession(final TrackingPathMacroSubstitutor pathMacroSubstitutor, final MyStorageData storageData) {
       myStorageData = storageData;
-      myPathMacroSubstitutor = pathMacroSubstitutor;
-      myPathMacroSubstitutor.reset();
     }
 
     public void setState(final Object component, final String componentName, final Object state, final Storage storageSpec)

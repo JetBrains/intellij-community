@@ -9,7 +9,6 @@ import org.jdom.Attribute;
 import org.jdom.Comment;
 import org.jdom.Element;
 import org.jdom.Text;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.LinkedHashMap;
@@ -41,34 +40,22 @@ public abstract class PathMacroMap {
     myMacroMap.put(fromText, toText);
   }
 
-  @SuppressWarnings({"WeakerAccess"})
-  public abstract String substitute(String text, boolean caseSensitive, @Nullable final Set<String> usedMacros);
+  public abstract String substitute(String text, boolean caseSensitive);
 
-  public final void substitute(Element e, boolean caseSensitive, @Nullable final Set<String> usedMacros) {
-    substitute(e, caseSensitive, usedMacros, false);
+  public final void substitute(Element e, boolean caseSensitive) {
+    substitute(e, caseSensitive, false);
   }
 
-  public final void substitute(Element e, boolean caseSensitive, @Nullable final Set<String> usedMacros, final boolean recursively) {
+  public final void substitute(Element e, boolean caseSensitive, final boolean recursively) {
     List content = e.getContent();
     for (Object child : content) {
       if (child instanceof Element) {
         Element element = (Element)child;
-
-        //mike
-        //dirty hack: do not substitute macroses in path macroses declarations.
-        //I can't find a way to disable macro saving in one component (yet).
-
-        if (element.getName().equals("macro") &&
-            element.getAttributes().size() == 2 &&
-            element.getAttributeValue("name") != null &&
-            element.getAttributeValue("value") != null &&
-            element.getChildren().isEmpty()) continue;
-
-        substitute(element, caseSensitive, usedMacros, recursively);
+        substitute(element, caseSensitive, recursively);
       }
       else if (child instanceof Text) {
         Text t = (Text)child;
-        t.setText(recursively ? substituteRecursively(t.getText(), caseSensitive, usedMacros) : substitute(t.getText(), caseSensitive, usedMacros));
+        t.setText(recursively ? substituteRecursively(t.getText(), caseSensitive) : substitute(t.getText(), caseSensitive));
       }
       else if (child instanceof Comment) {
         /*do not substitute in comments
@@ -84,12 +71,15 @@ public abstract class PathMacroMap {
     List attributes = e.getAttributes();
     for (final Object attribute1 : attributes) {
       Attribute attribute = (Attribute)attribute1;
-      attribute.setValue(recursively? substituteRecursively(attribute.getValue(), caseSensitive, usedMacros) : substitute(attribute.getValue(), caseSensitive, usedMacros));
+      final String value = recursively
+                           ? substituteRecursively(attribute.getValue(), caseSensitive)
+                           : substitute(attribute.getValue(), caseSensitive);
+      attribute.setValue(value);
     }
   }
 
-  public String substituteRecursively(String text, boolean caseSensitive, Set<String> usedMacros) {
-    return substitute(text, caseSensitive, usedMacros);
+  public String substituteRecursively(String text, boolean caseSensitive) {
+    return substitute(text, caseSensitive);
   }
 
   public int size() {

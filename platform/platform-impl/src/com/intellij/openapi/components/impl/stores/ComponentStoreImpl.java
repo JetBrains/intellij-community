@@ -47,25 +47,26 @@ abstract class ComponentStoreImpl implements IComponentStore {
     throw new UnsupportedOperationException("Method getDefaultsStorage is not supported in " + getClass());
   }
 
-  public void initComponent(@NotNull final Object component) {
+  public String initComponent(@NotNull final Object component, final boolean service) {
     boolean isSerializable = component instanceof JDOMExternalizable ||
                              component instanceof PersistentStateComponent ||
                              component instanceof SettingsSavingComponent;
 
-    if (!isSerializable) return;
+    if (!isSerializable) return null;
 
     if (component instanceof SettingsSavingComponent) {
       SettingsSavingComponent settingsSavingComponent = (SettingsSavingComponent)component;
       mySettingsSavingComponents.add(settingsSavingComponent);
     }
 
+    final String[] componentName = {null};
     final Runnable r = new Runnable() {
       public void run() {
         if (component instanceof PersistentStateComponent) {
-          initPersistentComponent((PersistentStateComponent<?>)component);
+          componentName[0] = initPersistentComponent((PersistentStateComponent<?>)component, false);
         }
         else if (component instanceof JDOMExternalizable) {
-          initJdomExternalizable((JDOMExternalizable)component);
+          componentName[0] = initJdomExternalizable((JDOMExternalizable)component);
         }
       }
     };
@@ -77,6 +78,8 @@ abstract class ComponentStoreImpl implements IComponentStore {
     else {
       applicationEx.runReadAction(r);
     }
+
+    return componentName[0];
   }
 
   public boolean isSaving() {
@@ -146,22 +149,23 @@ abstract class ComponentStoreImpl implements IComponentStore {
     session.setStateInOldStorage(component, componentName, component);
   }
 
-  void initJdomExternalizable(@NotNull JDOMExternalizable component) {
+  @Nullable
+  String initJdomExternalizable(@NotNull JDOMExternalizable component) {
     final String componentName = getComponentName(component);
 
     myComponents.put(componentName, component);
 
-    if (optimizeTestLoading()) return;
+    if (optimizeTestLoading()) return componentName;
 
     loadJdomDefaults(component, componentName);
 
     Element element = null;
     StateStorage stateStorage = getOldStorage(component, componentName, StateStorageOperation.READ);
 
-    if (stateStorage == null) return;
+    if (stateStorage == null) return null;
     element = getJdomState(component, componentName, stateStorage);
 
-    if (element == null) return;
+    if (element == null) return null;
 
     try {
       if (LOG.isDebugEnabled()) {
@@ -172,6 +176,8 @@ abstract class ComponentStoreImpl implements IComponentStore {
     catch (InvalidDataException e) {
       throw new InvalidComponentDataException(e);
     }
+
+    return componentName;
   }
 
   private static String getComponentName(@NotNull final JDOMExternalizable component) {
@@ -216,7 +222,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
     return defaultsStorage.getState(component, componentName, Element.class, null);
   }
 
-  private <T> void initPersistentComponent(@NotNull final PersistentStateComponent<T> component) {
+  private <T> String initPersistentComponent(@NotNull final PersistentStateComponent<T> component, final boolean reloadData) {
     final String name = getComponentName(component);
 
     RoamingType roamingTypeFromComponent = getRoamingType(component);
@@ -226,7 +232,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
     }
 
     myComponents.put(name, component);
-    if (optimizeTestLoading()) return;
+    if (optimizeTestLoading()) return name;
 
     Class<T> stateClass = getComponentStateClass(component);
 
@@ -242,13 +248,15 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
     for (Storage storageSpec : storageSpecs) {
       StateStorage stateStorage = getStateStorage(storageSpec);
-      if (stateStorage == null || !stateStorage.hasState(component, name, stateClass)) continue;
+      if (stateStorage == null || !stateStorage.hasState(component, name, stateClass, reloadData)) continue;
       state = stateStorage.getState(component, name, stateClass, state);
     }
 
     if (state != null) {
       component.loadState(state);
     }
+
+    return name;
   }
 
   private static RoamingType getRoamingType(final PersistentStateComponent component) {
@@ -455,7 +463,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
   }
 
-  protected boolean isReloadPossible(final Set<String> componentNames) {
+  public boolean isReloadPossible(final Set<String> componentNames) {
     for (String componentName : componentNames) {
       final Object component = myComponents.get(componentName);
 
@@ -470,11 +478,11 @@ abstract class ComponentStoreImpl implements IComponentStore {
     return true;
   }
 
-  protected void reinitComponents(final Set<String> componentNames) {
+  public void reinitComponents(final Set<String> componentNames, final boolean reloadData) {
     for (String componentName : componentNames) {
       final PersistentStateComponent component = (PersistentStateComponent)myComponents.get(componentName);
       if (component != null) {
-        initPersistentComponent(component);
+        initPersistentComponent(component, reloadData);
       }
     }
   }

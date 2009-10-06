@@ -3,9 +3,11 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.CommonBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.highlighter.WorkspaceFileType;
+import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
@@ -19,6 +21,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -32,12 +35,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -135,6 +140,33 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   @Override
   protected boolean optimizeTestLoading() {
     return myProject.isOptimiseTestLoadSpeed();
+  }
+
+  @Override
+  public String initComponent(@NotNull Object component, boolean service) {
+    final String componentName = super.initComponent(component, service);
+
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) {
+      if (service && componentName != null && myProject.isInitialized()) {
+        final TrackingPathMacroSubstitutor substitutor = getStateStorageManager().getMacroSubstitutor();
+        if (substitutor != null) {
+          final Collection<String> macros = substitutor.getUnknownMacros(componentName);
+          if (!macros.isEmpty()) {
+            Notifications.Bus.notify(new Notification("Load Error", "Error loading component",
+                                                      String.format("<p>Undefined Path Variables: <i>%s</i>. <a href=\"\">Fix it!</a></p>",
+                                                                    StringUtil.join(macros, ", ")), NotificationType.ERROR,
+                                                      new NotificationListener() {
+                                                        public void hyperlinkUpdate(@NotNull Notification notification,
+                                                                                    @NotNull HyperlinkEvent event) {
+                                                          ((ComponentManagerEx)myProject).checkUnknownMacros(myProject, notification);
+                                                        }
+                                                      }), NotificationDisplayType.STICKY_BALLOON, myProject);
+          }
+        }
+      }
+    }
+
+    return componentName;
   }
 
   public void setProjectFilePath(final String filePath) {
@@ -595,7 +627,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
       try {
         doReload(changedFiles, componentNames);
-        reinitComponents(componentNames);
+        reinitComponents(componentNames, false);
       }
       finally {
         myProject.getMessageBus().syncPublisher(BatchUpdateListener.TOPIC).onBatchUpdateFinished();

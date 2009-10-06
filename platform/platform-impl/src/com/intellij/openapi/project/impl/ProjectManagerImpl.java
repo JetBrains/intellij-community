@@ -4,6 +4,7 @@ import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
+import com.intellij.notification.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -13,6 +14,8 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
+import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.components.impl.stores.XmlElementStorage;
@@ -31,6 +34,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
@@ -51,6 +55,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -375,6 +380,30 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
 
     startupManager.runPostStartupActivities();
+
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) {
+      // should be invoked last
+      StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
+        public void run() {
+          final TrackingPathMacroSubstitutor macroSubstitutor =
+            ((ProjectEx)project).getStateStore().getStateStorageManager().getMacroSubstitutor();
+          if (macroSubstitutor != null) {
+            final Collection<String> macros = macroSubstitutor.getUnknownMacros(null);
+            if (!macros.isEmpty()) {
+              Notifications.Bus.notify(new Notification("Load Error", "Error loading project",
+                                                        String.format("<p>Undefined Path Variables: %s. <a href=\"\">Fix it!</a></p>",
+                                                                      StringUtil.join(macros, ", ")), NotificationType.ERROR,
+                                                        new NotificationListener() {
+                                                          public void hyperlinkUpdate(@NotNull Notification notification,
+                                                                                      @NotNull HyperlinkEvent event) {
+                                                            ((ComponentManagerEx)project).checkUnknownMacros(project, notification);
+                                                          }
+                                                        }), NotificationDisplayType.STICKY_BALLOON, project);
+            }
+          }
+        }
+      });
+    }
 
     return true;
   }

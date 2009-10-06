@@ -95,6 +95,11 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       }
 
       @Nullable
+      public TrackingPathMacroSubstitutor getMacroSubstitutor() {
+        return null;
+      }
+
+      @Nullable
       public StateStorage getStateStorage(@NotNull Storage storageSpec) throws StateStorage.StateStorageException {
         return storage;
       }
