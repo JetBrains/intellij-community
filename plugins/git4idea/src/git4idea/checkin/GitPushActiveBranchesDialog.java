@@ -69,7 +69,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
         setOKActionEnabled(false);
         break;
       }
-      if (r.remoteCommits != 0) {
+      if (r.remoteCommits != 0 && r.commits.size() != 0) {
         setErrorText(GitBundle.getString("push.active.error.behind"));
         setOKActionEnabled(false);
         break;
