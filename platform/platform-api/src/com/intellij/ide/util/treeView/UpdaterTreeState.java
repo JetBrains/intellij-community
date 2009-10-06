@@ -238,20 +238,19 @@ public class UpdaterTreeState {
     if (newSelection.length > 0) {
       myUi._select(newSelection, new Runnable() {
         public void run() {
+          final Set<Object> hangByParent = new HashSet<Object> ();
           processUnsuccessfulSelections(newSelection, new Function<Object, Object>() {
             public Object fun(final Object o) {
               if (myUi.isInStructure(o) && !adjusted.get(o).value(o)) {
-                Object parent = myUi.getTreeStructure().getParentElement(o);
-                if (parent != null) {
-                  addSelection(parent);
-                }
-                return null;
+                hangByParent.add(o);
+              } else {
+                addAdjustedSelection(o, adjusted.get(o));
               }
-              addAdjustedSelection(o, adjusted.get(o));
               return null;
             }
           }, originallySelected);
-          result.setDone();
+
+          processHangByParent(hangByParent).notify(result);
         }
       }, true, true, true);
     } else {
@@ -259,6 +258,39 @@ public class UpdaterTreeState {
     }
 
     return result;
+  }
+
+  private ActionCallback processHangByParent(Set<Object> elements) {
+    if (elements.size() == 0) return new ActionCallback.Done();
+
+    ActionCallback result = new ActionCallback(elements.size());
+    for (Iterator<Object> iterator = elements.iterator(); iterator.hasNext();) {
+      processHangByParent(iterator.next()).notify(result);
+    }
+    return result;
+  }
+
+  private ActionCallback processHangByParent(Object each) {
+    ActionCallback result = new ActionCallback();
+    processNextHang(each, result);
+    return result;
+  }
+
+  private void processNextHang(Object element, final ActionCallback callback) {
+    if (element == null || myUi.getSelectedElements().contains(element)) {
+      callback.setDone();
+    } else {
+      final Object nextElement = myUi.getTreeStructure().getParentElement(element);
+      if (nextElement == null) {
+        callback.setDone();
+      } else {
+       myUi.select(nextElement, new Runnable() {
+          public void run() {
+            processNextHang(nextElement, callback);
+          }
+        }, true);
+      }
+    }
   }
 
   private boolean isParentOrSame(Object parent, Object child) {
