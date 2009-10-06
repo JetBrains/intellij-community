@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.artifacts.actions.*;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.LibrarySourceItem;
@@ -33,6 +34,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.Icons;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -206,9 +208,11 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     myPropertiesEditors.addTabs(myTabbedPane);
     myEditorPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
 
-    PopupHandler.installPopupHandler(myLayoutTreeComponent.getLayoutTree(), createPopupActionGroup(), ActionPlaces.UNKNOWN, ActionManager.getInstance());
-    TreeToolTipHandler.install(myLayoutTreeComponent.getLayoutTree());
-    ToolTipManager.sharedInstance().registerComponent(myLayoutTreeComponent.getLayoutTree());
+    final LayoutTree tree = myLayoutTreeComponent.getLayoutTree();
+    new ShowAddPackagingElementPopupAction(this).registerCustomShortcutSet(CommonShortcuts.getNew(), tree);
+    PopupHandler.installPopupHandler(tree, createPopupActionGroup(), ActionPlaces.UNKNOWN, ActionManager.getInstance());
+    TreeToolTipHandler.install(tree);
+    ToolTipManager.sharedInstance().registerComponent(tree);
     rebuildTries();
     return getMainComponent();
   }
@@ -231,13 +235,11 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   private DefaultActionGroup createToolbarActionGroup() {
     final DefaultActionGroup toolbarActionGroup = new DefaultActionGroup();
 
-    final List<AnAction> createActions = new ArrayList<AnAction>();
-    AddCompositeElementActionGroup.addCompositeCreateActions(createActions, this);
+    final List<AnAction> createActions = new ArrayList<AnAction>(createNewElementActions());
     for (AnAction createAction : createActions) {
       toolbarActionGroup.add(createAction);
     }
 
-    toolbarActionGroup.add(createAddAction(false));
     toolbarActionGroup.add(new RemovePackagingElementAction(this));
     toolbarActionGroup.add(Separator.getInstance());
     toolbarActionGroup.add(new SortElementsToggleAction(this.getLayoutTreeComponent()));
@@ -246,16 +248,24 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     return toolbarActionGroup;
   }
 
+  public List<AnAction> createNewElementActions() {
+    final List<AnAction> createActions = new ArrayList<AnAction>();
+    AddCompositeElementAction.addCompositeCreateActions(createActions, this);
+    createActions.add(createAddNonCompositeElementGroup());
+    return createActions;
+  }
+
   private DefaultActionGroup createPopupActionGroup() {
+    final LayoutTree tree = myLayoutTreeComponent.getLayoutTree();
+
     DefaultActionGroup popupActionGroup = new DefaultActionGroup();
     final List<AnAction> createActions = new ArrayList<AnAction>();
-    AddCompositeElementActionGroup.addCompositeCreateActions(createActions, this);
+    AddCompositeElementAction.addCompositeCreateActions(createActions, this);
     for (AnAction createAction : createActions) {
       popupActionGroup.add(createAction);
     }
-    popupActionGroup.add(createAddAction(true));
+    popupActionGroup.add(createAddNonCompositeElementGroup());
     final RemovePackagingElementAction removeAction = new RemovePackagingElementAction(this);
-    final LayoutTree tree = myLayoutTreeComponent.getLayoutTree();
     removeAction.registerCustomShortcutSet(CommonShortcuts.DELETE, tree);
     popupActionGroup.add(removeAction);
     popupActionGroup.add(new ExtractArtifactAction(this));
@@ -278,8 +288,13 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     return mySubstitutionParameters;
   }
 
-  private AddPackagingElementActionGroup createAddAction(boolean popup) {
-    return new AddPackagingElementActionGroup(this);
+  private ActionGroup createAddNonCompositeElementGroup() {
+    DefaultActionGroup group = new DefaultActionGroup(ProjectBundle.message("artifacts.add.copy.action"), true);
+    group.getTemplatePresentation().setIcon(Icons.ADD_ICON);
+    for (PackagingElementType<?> type : PackagingElementFactory.getInstance().getNonCompositeElementTypes()) {
+      group.add(new AddNewPackagingElementAction(type, this));
+    }
+    return group;
   }
 
   public JComponent getMainComponent() {

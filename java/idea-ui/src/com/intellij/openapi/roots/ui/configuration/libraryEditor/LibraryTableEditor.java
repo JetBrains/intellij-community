@@ -520,13 +520,7 @@ public class LibraryTableEditor implements Disposable {
         for (Map.Entry<DataKey, Object> entry : myFileChooserUserData.entrySet()) {
           myDescriptor.putUserData(entry.getKey(), entry.getValue());
         }
-        VirtualFile toSelect = myLastChosen;
-        if (toSelect == null && Comparing.strEqual(myLibraryTableProvider.getTableLevel(), LibraryTablesRegistrar.PROJECT_LEVEL)) {
-          final Project project = myProject;
-          if (project != null) {
-            toSelect = project.getBaseDir();
-          }
-        }
+        VirtualFile toSelect = getFileToSelect(library);
         final VirtualFile[] attachedFiles =
           attachFiles(library, scanForActualRoots(FileChooser.chooseFiles(myPanel, myDescriptor, toSelect)), getRootType(),
                       addAsJarDirectories());
@@ -536,6 +530,38 @@ public class LibraryTableEditor implements Disposable {
       }
       fireLibrariesChanged();
       myTree.requestFocus();
+    }
+
+    @Nullable
+    private VirtualFile getFileToSelect(Library library) {
+      VirtualFile toSelect = myLastChosen;
+      if (toSelect == null) {
+        for (OrderRootType orderRootType : OrderRootType.getAllPersistentTypes()) {
+          final VirtualFile[] existingRoots = library.getFiles(orderRootType);
+          if (existingRoots.length > 0) {
+            VirtualFile existingRoot = existingRoots [0];
+            if (existingRoot.getFileSystem() instanceof JarFileSystem) {
+              existingRoot = JarFileSystem.getInstance().getVirtualFileForJar(existingRoot);
+            }
+            if (existingRoot != null) {
+              if (existingRoot.isDirectory()) {
+                toSelect = existingRoot;
+              }
+              else {
+                toSelect = existingRoot.getParent();
+              }
+            }
+            break;
+          }
+        }
+      }
+      if (toSelect == null && Comparing.strEqual(myLibraryTableProvider.getTableLevel(), LibraryTablesRegistrar.PROJECT_LEVEL)) {
+        final Project project = myProject;
+        if (project != null) {
+          toSelect = project.getBaseDir();
+        }
+      }
+      return toSelect;
     }
   }
 
