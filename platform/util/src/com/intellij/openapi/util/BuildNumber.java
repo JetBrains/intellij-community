@@ -156,7 +156,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
   // See http://www.jetbrains.net/confluence/display/IDEADEV/Build+Number+Ranges for historic build ranges
   private static int getBaseLineForHistoricBuilds(int bn) {
     if (bn >= 10000) {
-      return 90; // Maia, 9x builds
+      return 88; // Maia, 9x builds
     }
 
     if (bn >= 9500) {
