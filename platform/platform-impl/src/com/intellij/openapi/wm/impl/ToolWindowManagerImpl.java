@@ -127,6 +127,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private long myForcedCmdTimestamp;
   private final Application myApp;
 
+  private Set<String> myRestoredToolWindowIds = new java.util.HashSet<String>();
+
   /**
    * invoked by reflection
    */
@@ -295,7 +297,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         toolWindow.setIcon(icon);
       }
 
-      if (!getInfo(bean.id).isSplit() && bean.secondary) toolWindow.setSplitMode(bean.secondary, null);
+      if (!getInfo(bean.id).isSplit() && bean.secondary && !myRestoredToolWindowIds.contains(bean.id)) {
+        toolWindow.setSplitMode(bean.secondary, null);
+      }
 
       final ActionCallback activation = toolWindow.setActivation(new ActionCallback());
 
@@ -1472,6 +1476,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       }
       else if (DesktopLayout.TAG.equals(e.getName())) { // read layout of tool windows
         myLayout.readExternal(e);
+        final WindowInfoImpl[] windowInfos = myLayout.getAllInfos();
+        for (WindowInfoImpl windowInfo : windowInfos) {
+          myRestoredToolWindowIds.add(windowInfo.getId());
+        }
       }
     }
   }

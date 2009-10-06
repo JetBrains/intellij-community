@@ -7,6 +7,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -135,11 +136,12 @@ public final class DesktopLayout implements JDOMExternalizable {
     }
   }
 
+  @Nullable
   final String getActiveId() {
     final WindowInfoImpl[] infos = getInfos();
-    for (int i = 0; i < infos.length; i++) {
-      if (infos[i].isActive()) {
-        return infos[i].getId();
+    for (WindowInfoImpl info : infos) {
+      if (info.isActive()) {
+        return info.getId();
       }
     }
     return null;
@@ -168,7 +170,7 @@ public final class DesktopLayout implements JDOMExternalizable {
   /**
    * @return <code>WindowInfo</code>s of all (registered and unregistered) tool windows.
    */
-  private WindowInfoImpl[] getAllInfos() {
+  WindowInfoImpl[] getAllInfos() {
     final WindowInfoImpl[] registeredInfos = getInfos();
     final WindowInfoImpl[] unregisteredInfos = getUnregisteredInfos();
     myAllInfos = ArrayUtil.mergeArrays(registeredInfos, unregisteredInfos, WindowInfoImpl.class);
@@ -182,9 +184,9 @@ public final class DesktopLayout implements JDOMExternalizable {
   private WindowInfoImpl[] getAllInfos(final ToolWindowAnchor anchor) {
     WindowInfoImpl[] infos = getAllInfos();
     final ArrayList<WindowInfoImpl> list = new ArrayList<WindowInfoImpl>(infos.length);
-    for (int i = 0; i < infos.length; i++) {
-      if (anchor == infos[i].getAnchor()) {
-        list.add(infos[i]);
+    for (WindowInfoImpl info : infos) {
+      if (anchor == info.getAnchor()) {
+        list.add(info);
       }
     }
     infos = list.toArray(new WindowInfoImpl[list.size()]);
@@ -305,10 +307,8 @@ public final class DesktopLayout implements JDOMExternalizable {
     return ids;
   }
 
-  private static final class MyWindowInfoComparator implements Comparator {
-    public int compare(final Object obj1, final Object obj2) {
-      final WindowInfoImpl info1 = (WindowInfoImpl)obj1;
-      final WindowInfoImpl info2 = (WindowInfoImpl)obj2;
+  private static final class MyWindowInfoComparator implements Comparator<WindowInfoImpl> {
+    public int compare(final WindowInfoImpl info1, final WindowInfoImpl info2) {
       return info1.getOrder() - info2.getOrder();
     }
   }
