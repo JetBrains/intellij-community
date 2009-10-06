@@ -46,8 +46,15 @@ public class CommonRefactoringUtil {
     RefactoringMessageDialog dialog = new RefactoringMessageDialog(title, message, helpId, "OptionPane.errorIcon", false, project);
     dialog.show();
   }
+
+  public static class RefactoringErrorHintException extends RuntimeException {
+    public RefactoringErrorHintException(String message) {
+      super(message);
+    }
+  }
+
   public static void showErrorHint(Project project, @Nullable Editor editor, String message, String title, String helpId) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message);
+    if (ApplicationManager.getApplication().isUnitTestMode()) throw new RefactoringErrorHintException(message);
 
     if (editor == null) {
       showErrorMessage(title, message, helpId, project);
