@@ -18,13 +18,13 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodViewDescriptor;
-import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
 import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -117,20 +117,17 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
-    Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     final Set<PsiMember> methods = Collections.singleton((PsiMember)myMethod);
     if (!myTargetClass.isInterface()) {
       final String original = VisibilityUtil.getVisibilityModifier(myMethod.getModifierList());
-      conflicts.putAll(
-        MoveMembersProcessor.analyzeAccessibilityConflicts(methods, myTargetClass, new LinkedHashMap<PsiElement, String>(), original));
+      RefactoringConflictsUtil.analyzeAccessibilityConflicts(methods, myTargetClass, conflicts, original);
     }
     else {
       for (final UsageInfo usage : usagesIn) {
         if (usage instanceof ImplementingClassUsageInfo) {
-          conflicts.putAll(MoveMembersProcessor.analyzeAccessibilityConflicts(methods,
-                                                                                            ((ImplementingClassUsageInfo)usage).getPsiClass(),
-                                                                                            new LinkedHashMap<PsiElement, String>(),
-                                                                                            PsiModifier.PUBLIC));
+          RefactoringConflictsUtil
+            .analyzeAccessibilityConflicts(methods, ((ImplementingClassUsageInfo)usage).getPsiClass(), conflicts, PsiModifier.PUBLIC);
         }
       }
     }
@@ -147,7 +144,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
             String message = RefactoringBundle.message("0.contains.call.with.null.argument.for.parameter.1",
                                                        RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(methodCall), true),
                                                        CommonRefactoringUtil.htmlEmphasize(myTargetParameter.getName()));
-            conflicts.put(methodCall, message);
+            conflicts.putValue(methodCall, message);
           }
         }
       }
@@ -163,14 +160,14 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     return showConflicts(conflicts);
   }
 
-  private void addInaccessibilityConflicts(final UsageInfo[] usages, final Map<PsiElement, String> conflicts) throws IncorrectOperationException {
+  private void addInaccessibilityConflicts(final UsageInfo[] usages, final MultiMap<PsiElement, String> conflicts) throws IncorrectOperationException {
     final PsiModifierList copy = (PsiModifierList)myMethod.getModifierList().copy();
     if (myNewVisibility != null) {
       if (myNewVisibility.equals(VisibilityUtil.ESCALATE_VISIBILITY)) {
-        RefactoringUtil.setVisibility(copy, PsiModifier.PUBLIC);
+        RefactoringConflictsUtil.setVisibility(copy, PsiModifier.PUBLIC);
       }
       else {
-        RefactoringUtil.setVisibility(copy, myNewVisibility);
+        RefactoringConflictsUtil.setVisibility(copy, myNewVisibility);
       }
     }
 
@@ -191,7 +188,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
           String message = RefactoringBundle.message("0.with.1.visibility.is.not.accesible.from.2",
                                                      RefactoringUIUtil.getDescription(myMethod, true), newVisibility,
                                                      RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(call), true));
-          conflicts.put(myMethod, message);
+          conflicts.putValue(myMethod, message);
         }
       }
     }

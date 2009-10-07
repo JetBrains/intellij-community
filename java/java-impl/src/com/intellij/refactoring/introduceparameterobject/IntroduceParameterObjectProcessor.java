@@ -32,6 +32,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -102,23 +103,23 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
 
   @Override
   protected boolean preprocessUsages(final Ref<UsageInfo[]> refUsages) {
-    Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     if (myUseExistingClass) {
       if (existingClass == null) {
-        conflicts.put(null, RefactorJBundle.message("cannot.perform.the.refactoring") + "Could not find the selected class");
+        conflicts.putValue(null, RefactorJBundle.message("cannot.perform.the.refactoring") + "Could not find the selected class");
       }
       final String incompatibilityMessage = "Selected class is not compatible with chosen parameters";
       if (!myExistingClassCompatible) {
         conflicts
-          .put(existingClass, RefactorJBundle.message("cannot.perform.the.refactoring") + incompatibilityMessage);
+          .putValue(existingClass, RefactorJBundle.message("cannot.perform.the.refactoring") + incompatibilityMessage);
 
       }
       if (!paramsNeedingSetters.isEmpty()) {
-        conflicts.put(existingClass, RefactorJBundle.message("cannot.perform.the.refactoring") + incompatibilityMessage);
+        conflicts.putValue(existingClass, RefactorJBundle.message("cannot.perform.the.refactoring") + incompatibilityMessage);
       }
     }
     else if (existingClass != null) {
-      conflicts.put(existingClass,
+      conflicts.putValue(existingClass,
                     RefactorJBundle.message("cannot.perform.the.refactoring") +
                     RefactorJBundle.message("there.already.exists.a.class.with.the.chosen.name"));
     }
@@ -126,7 +127,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
   }
 
   @Override
-  protected boolean showConflicts(final Map<PsiElement, String> conflicts) {
+  protected boolean showConflicts(final MultiMap<PsiElement, String> conflicts) {
     if (!conflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
       throw new RuntimeException(StringUtil.join(conflicts.values(), "\n"));
     }

@@ -17,11 +17,11 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.javadoc.MethodJavaDocHelper;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author ven
@@ -295,8 +295,8 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
     }
   }
 
-  protected Map<PsiElement,String> getConflictDescriptions(final UsageInfo[] usages) {
-    final Map<PsiElement, String> conflicts = super.getConflictDescriptions(usages);
+  protected MultiMap<PsiElement,String> getConflictDescriptions(final UsageInfo[] usages) {
+    final MultiMap<PsiElement, String> conflicts = super.getConflictDescriptions(usages);
 
     //Check fields already exist
     if (mySettings.isMakeClassParameter()) {
@@ -305,7 +305,7 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
       if (existing != null) {
         String message = RefactoringBundle.message("there.is.already.a.0.in.1", RefactoringUIUtil.getDescription(existing, false),
                                               RefactoringUIUtil.getDescription(myMember, false));
-              conflicts.put(existing, message);
+              conflicts.putValue(existing, message);
       }
     }
 
@@ -318,7 +318,7 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
         if (existing != null) {
           String message = RefactoringBundle.message("there.is.already.a.0.in.1", RefactoringUIUtil.getDescription(existing, false),
                                                 RefactoringUIUtil.getDescription(myMember, false));
-          conflicts.put(existing, message);
+          conflicts.putValue(existing, message);
         }
       }
     }

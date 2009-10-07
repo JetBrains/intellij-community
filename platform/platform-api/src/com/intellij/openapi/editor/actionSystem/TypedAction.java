@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Provides services for registering actions which are activated by typing in the editor.
@@ -48,15 +49,13 @@ public class TypedAction {
   }
 
   private static class Handler implements TypedActionHandler {
-    public void execute(Editor editor, char charTyped, DataContext dataContext) {
+    public void execute(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
       if (editor.isViewer()) return;
 
       Document doc = editor.getDocument();
-      if (dataContext != null) {
-        Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-        if (project != null && !FileDocumentManager.getInstance().requestWriting(doc, project)) {
-          return;
-        }
+      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+      if (!FileDocumentManager.getInstance().requestWriting(doc, project)) {
+        return;
       }
 
       doc.startGuardedBlockChecking();

@@ -205,7 +205,9 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   }
 
   private void addFacetsConfig() {
-    addConfigurable(myFacetStructureConfigurable);
+    if (FacetStructureConfigurable.isEnabled()) {
+      addConfigurable(myFacetStructureConfigurable);
+    }
   }
 
   private void addJdkListConfig() {

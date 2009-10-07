@@ -28,5 +28,4 @@ public interface Artifact extends UserDataHolder {
 
   ArtifactProperties<?> getProperties(@NotNull ArtifactPropertiesProvider propertiesProvider);
 
-  boolean isClearOutputDirectoryOnRebuild();
 }

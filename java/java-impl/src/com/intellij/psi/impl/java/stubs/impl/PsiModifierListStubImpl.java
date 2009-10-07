@@ -23,12 +23,6 @@ public class PsiModifierListStubImpl extends StubBase<PsiModifierList> implement
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
-    StringBuilder builder = new StringBuilder();
-    builder.
-        append("PsiModifierListStub[").
-        append("mask=").append(getModifiersMask()).
-        append("]");
-    return builder.toString();
-
+    return "PsiModifierListStub[" + "mask=" + getModifiersMask() + "]";
   }
 }

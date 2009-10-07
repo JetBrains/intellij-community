@@ -592,8 +592,8 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
       if (change == null) continue;
       String prefix = myShreds.get(i).prefix;
       String suffix = myShreds.get(i).suffix;
-      assert change.startsWith(prefix) : change + " " + prefix;
-      assert change.endsWith(suffix) : change + " " + suffix;
+      assert change.startsWith(prefix) : change + "/" + prefix;
+      assert change.endsWith(suffix) : change + "/" + suffix;
       result[i] = StringUtil.trimEnd(StringUtil.trimStart(change, prefix), suffix);
     }
     return result;

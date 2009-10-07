@@ -8,16 +8,13 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarEx;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.testFramework.ExpectedHighlightingData;
+import com.intellij.testFramework.FileTreeAccessFilter;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -29,6 +26,8 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCase {
+  private final FileTreeAccessFilter myJavaFilesFilter = new FileTreeAccessFilter();
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -54,13 +53,8 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     getFile().getText(); //to load text
-    VirtualFileFilter javaFilesFilter = new VirtualFileFilter() {
-      public boolean accept(VirtualFile file) {
-        FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
-        return fileType == StdFileTypes.JAVA || fileType == StdFileTypes.CLASS;
-      }
-    };
-    getJavaFacade().setAssertOnFileLoadingFilter(javaFilesFilter); // check repository work
+    myJavaFilesFilter.allowTreeAccessForFile(getVFile());
+    getJavaFacade().setAssertOnFileLoadingFilter(myJavaFilesFilter); // check repository work
 
     Collection<HighlightInfo> infos = doHighlighting();
 

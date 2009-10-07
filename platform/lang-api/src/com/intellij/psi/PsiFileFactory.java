@@ -7,10 +7,13 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class PsiFileFactory {
+  public static Key<PsiFile> ORIGINAL_FILE = Key.create("ORIGINAL_FILE");
   public static PsiFileFactory getInstance(Project project) {
     return ServiceManager.getService(project, PsiFileFactory.class);
   }
@@ -43,4 +46,7 @@ public abstract class PsiFileFactory {
                                              boolean physical, boolean markAsCopy);
 
   public abstract PsiFile createFileFromText(FileType fileType, String fileName, CharSequence chars, int startOffset, int endOffset);
+
+  @Nullable
+  public abstract PsiFile createFileFromText(@NotNull CharSequence chars, @NotNull PsiFile original);  
 }

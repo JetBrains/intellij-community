@@ -838,13 +838,22 @@ public class PsiClassImplUtil {
       return true;
     }
 
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(aClass.getProject()).getFileIndex();
     final PsiFile file1 = aClass.getContainingFile().getOriginalFile();
     final PsiFile file2 = another.getContainingFile().getOriginalFile();
     if (file1.equals(file2)) {
       return true;
     }
 
+    //see com.intellij.openapi.vcs.changes.PsiChangeTracker
+    //see com.intellij.psi.impl.PsiFileFactoryImpl#createFileFromText(CharSequence,PsiFile)
+    final PsiFile original1 = file1.getUserData(PsiFileFactory.ORIGINAL_FILE);
+    final PsiFile original2 = file2.getUserData(PsiFileFactory.ORIGINAL_FILE);
+    if ((original1 == original2 && original1 != null)
+        || original1 == file2 || original2 == file1) {
+      return true;
+    }    
+
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(aClass.getProject()).getFileIndex();
     final VirtualFile vfile1 = file1.getViewProvider().getVirtualFile();
     final VirtualFile vfile2 = file2.getViewProvider().getVirtualFile();
     if ((fileIndex.isInSource(vfile1) || fileIndex.isInLibraryClasses(vfile1)) &&

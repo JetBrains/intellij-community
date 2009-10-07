@@ -46,12 +46,16 @@ public class ChangelistConflictAccessProvider implements WritingAccessProvider {
         changeLists.add(myManager.getChangeList(file));
         changes.add(myManager.getChange(file));
       }
-      ChangelistConflictDialog dialog = new ChangelistConflictDialog(myProject, new ArrayList<ChangeList>(changeLists), changes);
-      dialog.show();
+      
+      ChangelistConflictDialog dialog;
+      do {
+        dialog = new ChangelistConflictDialog(myProject, new ArrayList<ChangeList>(changeLists), denied);
+        dialog.show();
+      } while (dialog.isOK() && !dialog.getResolution().resolveConflict(myProject, changes));
+
       if (dialog.isOK()) {
-        ChangelistConflictResolution resolution = dialog.getResolution();
-        options.LAST_RESOLUTION = resolution;
-        resolution.resolveConflict(myProject, resolution == ChangelistConflictResolution.SWITCH ? changes : dialog.getSelectedChanges());
+        options.LAST_RESOLUTION = dialog.getResolution();
+        return Collections.emptyList();
       }
     }
     return denied;

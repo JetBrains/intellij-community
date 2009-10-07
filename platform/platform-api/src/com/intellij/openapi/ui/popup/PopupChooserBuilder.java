@@ -41,7 +41,7 @@ import java.util.List;
  * @author max
  */
 public class PopupChooserBuilder {
-  private final JComponent myChooserComponent;
+  private JComponent myChooserComponent;
   private String myTitle;
   private final ArrayList<KeyStroke> myAdditionalKeystrokes = new ArrayList<KeyStroke>();
   private Runnable myItemChoosenRunnable;
@@ -66,9 +66,10 @@ public class PopupChooserBuilder {
   private InplaceButton myCommandButton;
   private final List<Pair<ActionListener,KeyStroke>> myKeyboardActions = new ArrayList<Pair<ActionListener, KeyStroke>>();
   private Component mySettingsButtons;
+  private boolean myAutoselectOnMouseMove = true;
 
   public PopupChooserBuilder(@NotNull JList list) {
-    myChooserComponent = new MyListWrapper(list);
+    myChooserComponent = list;
   }
 
   public PopupChooserBuilder(@NotNull JTable table) {
@@ -133,7 +134,7 @@ public class PopupChooserBuilder {
     return this;
   }
 
-  public PopupChooserBuilder setCancelCalllback(Computable<Boolean> callback) {
+  public PopupChooserBuilder setCancelCallback(Computable<Boolean> callback) {
     myCancelCallback = callback;
     return this;
   }
@@ -148,8 +149,17 @@ public class PopupChooserBuilder {
     return this;
   }
 
+  public PopupChooserBuilder setAutoselectOnMouseMove(final boolean doAutoSelect) {
+    myAutoselectOnMouseMove = doAutoSelect;
+    return this;
+  }
+
   @NotNull
   public JBPopup createPopup() {
+    if (myChooserComponent instanceof JList) {
+      myChooserComponent = new MyListWrapper((JList)myChooserComponent);
+    }
+
     JPanel contentPane = new JPanel(new BorderLayout());
     if (!myForceMovable && myTitle != null) {
       JLabel label = new JLabel(myTitle);
@@ -207,24 +217,14 @@ public class PopupChooserBuilder {
       contentPane.add(myEastComponent, BorderLayout.EAST);
     }
 
-    ComponentPopupBuilder builder = JBPopupFactory.getInstance()
-      .createComponentPopupBuilder(contentPane, myChooserComponent);
+    ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(contentPane, myChooserComponent);
     for (JBPopupListener each : myListeners) {
       builder.addListener(each);
     }
 
-    builder.setDimensionServiceKey(null, myDimensionServiceKey, false)
-      .setRequestFocus(myRequestFocus)
-      .setResizable(myForceResizable)
-      .setMovable(myForceMovable)
-      .setTitle(myForceMovable ? myTitle : null)
-      .setCancelCallback(myCancelCallback)
-      .setAlpha(myAlpha)
-      .setFocusOwners(myFocusOwners)
-      .setCancelKeyEnabled(myCancelKeyEnabled)
-      .setAdText(myAd)
-      .setKeyboardActions(myKeyboardActions)
-      ;
+    builder.setDimensionServiceKey(null, myDimensionServiceKey, false).setRequestFocus(myRequestFocus).setResizable(myForceResizable)
+      .setMovable(myForceMovable).setTitle(myForceMovable ? myTitle : null).setCancelCallback(myCancelCallback).setAlpha(myAlpha)
+      .setFocusOwners(myFocusOwners).setCancelKeyEnabled(myCancelKeyEnabled).setAdText(myAd).setKeyboardActions(myKeyboardActions);
     if (myCommandButton != null) {
       builder.setCommandButton(myCommandButton);
     }
@@ -268,7 +268,7 @@ public class PopupChooserBuilder {
   }
 
   @NotNull
-  public static JScrollPane createScrollPane(final JTable table) {
+  private JScrollPane createScrollPane(final JTable table) {
     if (table instanceof TreeTable) {
       TreeUtil.expandAll(((TreeTable)table).getTree());
     }
@@ -288,24 +288,26 @@ public class PopupChooserBuilder {
       scrollPane.getViewport().setPreferredSize(table.getPreferredSize());
     }
 
-    table.addMouseMotionListener(new MouseMotionAdapter() {
-      boolean myIsEngaged = false;
-      public void mouseMoved(MouseEvent e) {
-        if (myIsEngaged) {
-          int index = table.rowAtPoint(e.getPoint());
-          table.getSelectionModel().setSelectionInterval(index, index);
+    if (myAutoselectOnMouseMove) {
+      table.addMouseMotionListener(new MouseMotionAdapter() {
+        boolean myIsEngaged = false;
+        public void mouseMoved(MouseEvent e) {
+          if (myIsEngaged) {
+            int index = table.rowAtPoint(e.getPoint());
+            table.getSelectionModel().setSelectionInterval(index, index);
+          }
+          else {
+            myIsEngaged = true;
+          }
         }
-        else {
-          myIsEngaged = true;
-        }
-      }
-    });
+      });
+    }
 
     return scrollPane;
   }
 
   @NotNull
-  public static JScrollPane createScrollPane(final JTree tree) {
+  private JScrollPane createScrollPane(final JTree tree) {
     TreeUtil.expandAll(tree);
 
     JScrollPane scrollPane = new JScrollPane(tree);
@@ -323,19 +325,21 @@ public class PopupChooserBuilder {
       scrollPane.getViewport().setPreferredSize(tree.getPreferredSize());
     }
 
-    tree.addMouseMotionListener(new MouseMotionAdapter() {
-      boolean myIsEngaged = false;
-      public void mouseMoved(MouseEvent e) {
-        if (myIsEngaged) {
-          final Point p = e.getPoint();
-          int index = tree.getRowForLocation(p.x, p.y);
-          tree.setSelectionRow(index);
+    if (myAutoselectOnMouseMove) {
+      tree.addMouseMotionListener(new MouseMotionAdapter() {
+        boolean myIsEngaged = false;
+        public void mouseMoved(MouseEvent e) {
+          if (myIsEngaged) {
+            final Point p = e.getPoint();
+            int index = tree.getRowForLocation(p.x, p.y);
+            tree.setSelectionRow(index);
+          }
+          else {
+            myIsEngaged = true;
+          }
         }
-        else {
-          myIsEngaged = true;
-        }
-      }
-    });
+      });
+    }
 
     return scrollPane;
   }
@@ -370,19 +374,21 @@ public class PopupChooserBuilder {
 
     private MyListWrapper(final JList list) {
       super(list);
-      list.addMouseMotionListener(new MouseMotionAdapter() {
-        boolean myIsEngaged = false;
-        public void mouseMoved(MouseEvent e) {
-          if (myIsEngaged && !isSelectionButtonDown(e)) {
-            Point point = e.getPoint();
-            int index = list.locationToIndex(point);
-            list.setSelectedIndex(index);
+      if (myAutoselectOnMouseMove) {
+        list.addMouseMotionListener(new MouseMotionAdapter() {
+          boolean myIsEngaged = false;
+          public void mouseMoved(MouseEvent e) {
+            if (myIsEngaged && !isSelectionButtonDown(e)) {
+              Point point = e.getPoint();
+              int index = list.locationToIndex(point);
+              list.setSelectedIndex(index);
+            }
+            else {
+              myIsEngaged = true;
+            }
           }
-          else {
-            myIsEngaged = true;
-          }
-        }
-      });
+        });
+      }
 
       ListScrollingUtil.installActions(list);
 

@@ -200,10 +200,7 @@ public class TypeConversionUtil {
     if (!fromClass.isInterface()) {
       if (toClass.isInterface()) {
         return !fromClass.hasModifierProperty(PsiModifier.FINAL) &&
-               checkSuperTypesWithDifferentTypeArguments(toResult, fromClass, manager,
-                                                         fromResult.getSubstitutor(),
-                                                         new THashSet<PsiClass>(),
-                                                         languageLevel);
+               checkSuperTypesWithDifferentTypeArguments(toResult, fromClass, manager, fromResult.getSubstitutor(), null, languageLevel);
       }
       else {
         if (manager.areElementsEquivalent(fromClass, toClass)) {
@@ -211,12 +208,10 @@ public class TypeConversionUtil {
         }
 
         if (toClass.isInheritor(fromClass, true)) {
-          return checkSuperTypesWithDifferentTypeArguments(fromResult, toClass, manager, toResult.getSubstitutor(), new THashSet<PsiClass>(),
-                                                           languageLevel);
+          return checkSuperTypesWithDifferentTypeArguments(fromResult, toClass, manager, toResult.getSubstitutor(), null, languageLevel);
         }
         else if (fromClass.isInheritor(toClass, true)) {
-          return checkSuperTypesWithDifferentTypeArguments(toResult, fromClass, manager, fromResult.getSubstitutor(), new THashSet<PsiClass>(),
-                                                           languageLevel);
+          return checkSuperTypesWithDifferentTypeArguments(toResult, fromClass, manager, fromResult.getSubstitutor(), null, languageLevel);
         }
 
         return false;
@@ -225,8 +220,7 @@ public class TypeConversionUtil {
     else {
       if (!toClass.isInterface()) {
         if (!toClass.hasModifierProperty(PsiModifier.FINAL)) {
-          return checkSuperTypesWithDifferentTypeArguments(fromResult, toClass, manager, toResult.getSubstitutor(), new THashSet<PsiClass>(),
-                                                           languageLevel);
+          return checkSuperTypesWithDifferentTypeArguments(fromResult, toClass, manager, toResult.getSubstitutor(), null, languageLevel);
         }
         else {
           if (!toClass.isInheritor(fromClass, true)) return false;
@@ -257,14 +251,20 @@ public class TypeConversionUtil {
         }
         else {
           //In jls3 check for super interface with distinct type arguments
+          PsiClassType.ClassResolveResult baseResult;
+          PsiClass derived;
+          PsiSubstitutor derivedSubstitutor;
           if (toClass.isInheritor(fromClass, true)) {
-            return checkSuperTypesWithDifferentTypeArguments(fromResult, toClass, manager, toResult.getSubstitutor(), new THashSet<PsiClass>(),
-                                                             languageLevel);
+            baseResult = fromResult;
+            derived = toClass;
+            derivedSubstitutor = toResult.getSubstitutor();
           }
           else {
-            return checkSuperTypesWithDifferentTypeArguments(toResult, fromClass, manager, fromResult.getSubstitutor(), new THashSet<PsiClass>(),
-                                                             languageLevel);
+            baseResult = toResult;
+            derived = fromClass;
+            derivedSubstitutor = fromResult.getSubstitutor();
           }
+          return checkSuperTypesWithDifferentTypeArguments(baseResult, derived, manager, derivedSubstitutor, null, languageLevel);
         }
       }
     }
@@ -285,9 +285,9 @@ public class TypeConversionUtil {
                                                                    PsiClass derived,
                                                                    PsiManager manager,
                                                                    PsiSubstitutor derivedSubstitutor,
-                                                                   final Set<PsiClass> visited,
+                                                                   Set<PsiClass> visited,
                                                                    final LanguageLevel languageLevel) {
-    if (!visited.add(derived)) return true;
+    if (visited != null && visited.contains(derived)) return true;
 
     if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) return true;
     PsiClass base = baseResult.getElement();
@@ -302,6 +302,8 @@ public class TypeConversionUtil {
       if (!areSameArgumentTypes(derived, baseSubstitutor, derivedSubstitutor)) return false;
     }
 
+    if (visited == null) visited = new THashSet<PsiClass>();
+    visited.add(derived);
     for (PsiClass aSuper : supers) {
       PsiSubstitutor s = getSuperClassSubstitutor(aSuper, derived, derivedSubstitutor);
       if (!checkSuperTypesWithDifferentTypeArguments(baseResult, aSuper, manager, s, visited, languageLevel)) return false;

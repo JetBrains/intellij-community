@@ -17,26 +17,28 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
 public abstract class ReadonlyStatusHandler {
-
-  public static boolean ensureFilesWritable(Project project, VirtualFile... files) {
+  public static boolean ensureFilesWritable(@NotNull Project project, @NotNull VirtualFile... files) {
     return !getInstance(project).ensureFilesWritable(files).hasReadonlyFiles();
   }
 
   public abstract static class OperationStatus {
+    @NotNull
     public abstract VirtualFile[] getReadonlyFiles();
 
     public abstract boolean hasReadonlyFiles();
 
+    @NotNull
     public abstract String getReadonlyFilesMessage();
   }
 
-  public abstract OperationStatus ensureFilesWritable(VirtualFile... files);
+  public abstract OperationStatus ensureFilesWritable(@NotNull VirtualFile... files);
 
-  public OperationStatus ensureFilesWritable(final Collection<VirtualFile> files) {
+  public OperationStatus ensureFilesWritable(@NotNull Collection<VirtualFile> files) {
     return ensureFilesWritable(files.toArray(new VirtualFile[files.size()]));
   }
 

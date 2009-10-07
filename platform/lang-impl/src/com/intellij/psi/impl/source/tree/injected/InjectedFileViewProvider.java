@@ -25,8 +25,12 @@ class InjectedFileViewProvider extends SingleRootFileViewProvider {
   private Project myProject;
   private final Object myLock = new Object();
   private final DocumentWindow myDocumentWindow;
+  private volatile boolean physical = true;
 
-  InjectedFileViewProvider(@NotNull PsiManager psiManager, @NotNull VirtualFileWindow virtualFile, Place shreds, DocumentWindow documentWindow) {
+  InjectedFileViewProvider(@NotNull PsiManager psiManager,
+                           @NotNull VirtualFileWindow virtualFile,
+                           @NotNull Place shreds,
+                           @NotNull DocumentWindow documentWindow) {
     super(psiManager, (VirtualFile)virtualFile);
     myDocumentWindow = documentWindow;
     synchronized (myLock) {
@@ -37,6 +41,7 @@ class InjectedFileViewProvider extends SingleRootFileViewProvider {
 
   public void rootChanged(PsiFile psiFile) {
     super.rootChanged(psiFile);
+    if (!isPhysical()) return; // injected PSI change happened
 
     List<PsiLanguageInjectionHost.Shred> shreds;
     synchronized (myLock) {
@@ -77,8 +82,7 @@ class InjectedFileViewProvider extends SingleRootFileViewProvider {
         }
       }
     }, true);
-    FileViewProvider copy = provider.get();
-    return copy;
+    return provider.get();
   }
 
   @Nullable
@@ -94,7 +98,6 @@ class InjectedFileViewProvider extends SingleRootFileViewProvider {
       myShreds = new Place(shreds, shreds.getInjectedPsi());
       myProject = shreds.get(0).host.getProject();
       ((DocumentWindowImpl)myDocumentWindow).setShreds(myShreds);
-      assert myShreds.isValid();
     }
   }
 
@@ -117,5 +120,19 @@ class InjectedFileViewProvider extends SingleRootFileViewProvider {
   @Override
   public DocumentWindow getDocument() {
     return myDocumentWindow;
+  }
+
+  @Override
+  public boolean isEventSystemEnabled() {
+    return physical;
+  }
+
+  @Override
+  public boolean isPhysical() {
+    return physical;
+  }
+
+  public void setPhysical(boolean physical) {
+    this.physical = physical;
   }
 }

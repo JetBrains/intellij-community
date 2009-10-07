@@ -19,6 +19,7 @@ import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -124,15 +125,15 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
       CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("inline.to.anonymous.refactoring"), s, null, myClass.getProject());
       return false;
     }
-    Map<PsiElement, String> conflicts = getConflicts(usages);
+    MultiMap<PsiElement, String> conflicts = getConflicts(usages);
     if (!conflicts.isEmpty()) {
       return showConflicts(conflicts);
     }
     return super.preprocessUsages(refUsages);
   }
 
-  public Map<PsiElement, String> getConflicts(final UsageInfo[] usages) {
-    Map<PsiElement, String> result = new LinkedHashMap<PsiElement, String>();
+  public MultiMap<PsiElement, String> getConflicts(final UsageInfo[] usages) {
+    MultiMap<PsiElement, String> result = new MultiMap<PsiElement, String>();
     ReferencedElementsCollector collector = new ReferencedElementsCollector() {
       protected void checkAddMember(@NotNull final PsiMember member) {
         if (PsiTreeUtil.isAncestor(myClass, member, false)) {

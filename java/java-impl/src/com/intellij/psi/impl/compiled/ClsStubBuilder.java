@@ -65,7 +65,7 @@ public class ClsStubBuilder {
     ClassReader reader = new ClassReader(bytes);
 
     final MyClassVisitor classVisitor = new MyClassVisitor(vFile, parent, access);
-    reader.accept(classVisitor, ClassReader.SKIP_CODE);
+    reader.accept(classVisitor, 0);
     return classVisitor.getResult();
   }
 
@@ -356,8 +356,8 @@ public class ClsStubBuilder {
         @Override
         protected TypeInfo createReturnType() {
           modlist[0] = new PsiModifierListStubImpl(this, packMethodFlags(access));
-          String returnType;
           parsedViaGenericSignature[0] = false;
+          String returnType;
           if (signature == null) {
             returnType = parseMethodViaDescription(desc, this, args);
           }
@@ -370,7 +370,7 @@ public class ClsStubBuilder {
               returnType = parseMethodViaDescription(desc, this, args);
             }
           }
-          return (TypeInfo.fromString(returnType));
+          return TypeInfo.fromString(returnType);
         }
       };
 
@@ -379,6 +379,7 @@ public class ClsStubBuilder {
 
       final PsiParameterListStubImpl parameterList = new PsiParameterListStubImpl(stub);
       final int paramCount = args.size();
+      final PsiParameterStubImpl[] paramStubs = new PsiParameterStubImpl[paramCount];
       for (int i = 0; i < paramCount; i++) {
         if (nonStaticInnerClassConstructor && i == 0) continue;
 
@@ -387,13 +388,15 @@ public class ClsStubBuilder {
         final TypeInfo typeInfo = TypeInfo.fromString(arg, isEllipsisParam);
 
         PsiParameterStubImpl parameterStub = new PsiParameterStubImpl(parameterList, "p" + (i + 1), typeInfo, isEllipsisParam);
+        paramStubs [i] = parameterStub;
         new PsiModifierListStubImpl(parameterStub, 0);
       }
 
       String[] thrownTypes = buildThrowsList(exceptions, throwables, parsedViaGenericSignature[0]);
       new PsiClassReferenceListStubImpl(JavaStubElementTypes.THROWS_LIST, stub, thrownTypes, PsiReferenceList.Role.THROWS_LIST);
 
-      return new AnnotationCollectingVisitor(stub, modlist[0]);
+      int ignoreCount = (access & Opcodes.ACC_STATIC) != 0 ? 0 : 1;
+      return new AnnotationParamCollectingVisitor(stub, modlist[0], ignoreCount, paramCount, paramStubs);
     }
 
     private static String[] buildThrowsList(String[] exceptions, List<String> throwables, boolean parsedViaGenericSignature) {
@@ -571,6 +574,30 @@ public class ClsStubBuilder {
           new PsiAnnotationStubImpl(((PsiMethodStub)myOwner).findParameter(parameter).getModList(), text);
         }
       });
+    }
+  }
+
+  private static class AnnotationParamCollectingVisitor extends AnnotationCollectingVisitor {
+    private final int myIgnoreCount;
+    private final int myParamCount;
+    private final PsiParameterStubImpl[] myParamStubs;
+
+    private AnnotationParamCollectingVisitor(final StubElement owner, final PsiModifierListStub modList, int ignoreCount, int paramCount,
+                                             PsiParameterStubImpl[] paramStubs) {
+      super(owner, modList);
+      myIgnoreCount = ignoreCount;
+      myParamCount = paramCount;
+      myParamStubs = paramStubs;
+    }
+
+    @Override
+    public void visitLocalVariable(String name, String desc, String signature, Label start, Label end, int index) {
+      if (index >= myIgnoreCount && index < myIgnoreCount + myParamCount) {
+        PsiParameterStubImpl parameterStub = myParamStubs[index - myIgnoreCount];
+        if (parameterStub != null) {
+          parameterStub.setName(name);
+        }
+      }
     }
   }
 

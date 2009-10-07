@@ -10,7 +10,6 @@ import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -84,14 +83,6 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
 
   @Override
   protected boolean canSelect(PsiFileSystemItem file) {
-    final Project project = file.getProject();
-    final String activeToolWindowId = ToolWindowManager.getInstance(project).getActiveToolWindowId();
-    if (ToolWindowId.PROJECT_VIEW.equals(activeToolWindowId)) {
-      final String currentView = ProjectView.getInstance(project).getCurrentViewId();
-      if (Comparing.strEqual(currentView, getMinorViewId())) {
-        return false;
-      }
-    }
     return true;
   }
 

@@ -70,7 +70,7 @@ public abstract class FileDocumentManager {
    */
   public abstract boolean requestWriting(@NotNull Document document, Project project);
 
-  public static boolean fileForDocumentCheckedOutSuccessfully(@NotNull Document document, Project project) {
+  public static boolean fileForDocumentCheckedOutSuccessfully(@NotNull Document document, @NotNull Project project) {
     return getInstance().requestWriting(document, project);
   }
 

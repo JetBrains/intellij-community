@@ -1,6 +1,7 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleImpl;
@@ -21,19 +22,30 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
     super(project);
   }
 
-  protected void reinitComponents(final Set<String> componentNames) {
-    super.reinitComponents(componentNames);
+  public void reinitComponents(final Set<String> componentNames, final boolean reloadData) {
+    super.reinitComponents(componentNames, reloadData);
 
     for (Module module : getPersistentModules()) {
-      ((ComponentStoreImpl)((ModuleImpl)module).getStateStore()).reinitComponents(componentNames);
+      ((ModuleImpl)module).getStateStore().reinitComponents(componentNames, reloadData);
     }
   }
 
-  protected boolean isReloadPossible(final Set<String> componentNames) {
+  public TrackingPathMacroSubstitutor[] getSubstitutors() {
+    final List<TrackingPathMacroSubstitutor> result = new ArrayList<TrackingPathMacroSubstitutor>();
+    result.add(getStateStorageManager().getMacroSubstitutor());
+
+    for (Module module : getPersistentModules()) {
+      result.add(((ModuleImpl)module).getStateStore().getStateStorageManager().getMacroSubstitutor());
+    }
+
+    return result.toArray(new TrackingPathMacroSubstitutor[result.size()]);
+  }
+
+  public boolean isReloadPossible(final Set<String> componentNames) {
     if (!super.isReloadPossible(componentNames)) return false;
 
     for (Module module : getPersistentModules()) {
-      if (!((ComponentStoreImpl)((ModuleImpl)module).getStateStore()).isReloadPossible(componentNames)) return false;
+      if (!((ModuleImpl)module).getStateStore().isReloadPossible(componentNames)) return false;
     }
 
     return true;
@@ -63,17 +75,6 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
         throw new StateStorage.StateStorageException(e.getMessage());
       }
     }
-
-    public Collection<String> getUsedMacros() throws StateStorage.StateStorageException {
-      Set<String> result = new HashSet<String>(super.getUsedMacros());
-
-      for (SaveSession moduleSaveSession : myModuleSaveSessions) {
-        result.addAll(moduleSaveSession.getUsedMacros());
-      }
-
-      return result;
-    }
-
 
     public List<IFile> getAllStorageFiles(final boolean includingSubStructures) {
       final List<IFile> result = super.getAllStorageFiles(includingSubStructures);

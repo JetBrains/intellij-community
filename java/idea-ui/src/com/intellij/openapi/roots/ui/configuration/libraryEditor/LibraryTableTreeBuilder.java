@@ -36,4 +36,12 @@ class LibraryTableTreeBuilder extends AbstractTreeBuilder {
   protected ProgressIndicator createProgressIndicator() {
     return new StatusBarProgress();
   }
+
+  public void updateAndSelect(final LibraryTableTreeContentElement element) {
+    updateFromRootCB().doWhenDone(new Runnable() {
+      public void run() {
+        select(element);
+      }
+    });
+  }
 }

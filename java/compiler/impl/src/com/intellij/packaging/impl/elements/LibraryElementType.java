@@ -6,8 +6,8 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.elements.ComplexPackagingElementType;
 import com.intellij.packaging.elements.CompositePackagingElement;
-import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +20,7 @@ import java.util.List;
 /**
 * @author nik
 */
-public class LibraryElementType extends PackagingElementType<LibraryPackagingElement> {
+public class LibraryElementType extends ComplexPackagingElementType<LibraryPackagingElement> {
   public static final LibraryElementType LIBRARY_ELEMENT_TYPE = new LibraryElementType();
 
   LibraryElementType() {
@@ -48,7 +48,7 @@ public class LibraryElementType extends PackagingElementType<LibraryPackagingEle
     return elements;
   }
 
-  private List<Library> getAllLibraries(ArtifactEditorContext context) {
+  private static List<Library> getAllLibraries(ArtifactEditorContext context) {
     List<Library> libraries = new ArrayList<Library>();
     libraries.addAll(Arrays.asList(LibraryTablesRegistrar.getInstance().getLibraryTable().getLibraries()));
     libraries.addAll(Arrays.asList(LibraryTablesRegistrar.getInstance().getLibraryTable(context.getProject()).getLibraries()));
@@ -58,5 +58,10 @@ public class LibraryElementType extends PackagingElementType<LibraryPackagingEle
   @NotNull
   public LibraryPackagingElement createEmpty(@NotNull Project project) {
     return new LibraryPackagingElement();
+  }
+
+  @Override
+  public String getShowContentActionText() {
+    return "Show Library Files";
   }
 }

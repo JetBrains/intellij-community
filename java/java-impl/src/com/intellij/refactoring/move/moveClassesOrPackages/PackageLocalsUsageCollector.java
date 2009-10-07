@@ -9,17 +9,17 @@ import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.MultiMap;
 
 import java.util.HashSet;
-import java.util.Map;
 
 class PackageLocalsUsageCollector extends JavaRecursiveElementWalkingVisitor {
   private final HashMap<PsiElement,HashSet<PsiElement>> myReported = new HashMap<PsiElement, HashSet<PsiElement>>();
   private final PsiElement[] myElementsToMove;
-  private final Map<PsiElement, String> myConflicts;
+  private final MultiMap<PsiElement, String> myConflicts;
   private final PackageWrapper myTargetPackage;
 
-  public PackageLocalsUsageCollector(final PsiElement[] elementsToMove, final PackageWrapper targetPackage, Map<PsiElement,String> conflicts) {
+  public PackageLocalsUsageCollector(final PsiElement[] elementsToMove, final PackageWrapper targetPackage, MultiMap<PsiElement,String> conflicts) {
     myElementsToMove = elementsToMove;
     myConflicts = conflicts;
     myTargetPackage = targetPackage;
@@ -56,7 +56,7 @@ class PackageLocalsUsageCollector extends JavaRecursiveElementWalkingVisitor {
                 final String message = RefactoringBundle.message("0.uses.a.package.local.1",
                                                                  RefactoringUIUtil.getDescription(container, true),
                                                                  RefactoringUIUtil.getDescription(resolved, true));
-                myConflicts.put(resolved, CommonRefactoringUtil.capitalize(message));
+                myConflicts.putValue(resolved, CommonRefactoringUtil.capitalize(message));
                 reportedRefs.add(container);
               }
             }

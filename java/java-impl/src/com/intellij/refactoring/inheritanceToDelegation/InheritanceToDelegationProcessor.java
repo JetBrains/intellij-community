@@ -18,7 +18,10 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.inheritanceToDelegation.usageInfo.*;
 import com.intellij.refactoring.ui.ConflictsDialog;
-import com.intellij.refactoring.util.*;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.ConflictsUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classRefs.ClassInstanceScanner;
 import com.intellij.refactoring.util.classRefs.ClassReferenceScanner;
@@ -33,6 +36,7 @@ import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -172,12 +176,12 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     addAll(oldUsages, usagesIn);
     final ObjectUpcastedUsageInfo[] objectUpcastedUsageInfos = objectUpcastedUsages(usagesIn);
     if (myPrepareSuccessfulSwingThreadCallback != null) {
-      Map<PsiElement, String> conflicts = new LinkedHashMap<PsiElement, String>();
+      MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
       if (objectUpcastedUsageInfos.length > 0) {
         final String message = RefactoringBundle.message("instances.of.0.upcasted.to.1.were.found",
                                                          RefactoringUIUtil.getDescription(myClass, true), CommonRefactoringUtil.htmlEmphasize("java.lang.Object"));
 
-        conflicts.put(myClass, message);
+        conflicts.putValue(myClass, message);
       }
 
       analyzeConflicts(usagesIn, conflicts);
@@ -202,7 +206,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
-  private void analyzeConflicts(UsageInfo[] usage, Map<PsiElement, String> conflicts) {
+  private void analyzeConflicts(UsageInfo[] usage, MultiMap<PsiElement, String> conflicts) {
     HashMap<PsiElement,HashSet<PsiElement>> reportedNonDelegatedUsages = new HashMap<PsiElement, HashSet<PsiElement>>();
     HashMap<PsiClass,HashSet<PsiElement>> reportedUpcasts = new HashMap<PsiClass, HashSet<PsiElement>>();
 //    HashSet reportedObjectUpcasts = new HashSet();
@@ -235,7 +239,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
             if (container != null && !reportedContainers.contains(container)) {
               String message = RefactoringBundle.message("0.uses.1.of.an.instance.of.a.2", RefactoringUIUtil.getDescription(container, true),
                                                          RefactoringUIUtil.getDescription(nonDelegatedMember, true), classDescription);
-              conflicts.put(container, CommonRefactoringUtil.capitalize(message));
+              conflicts.putValue(container, CommonRefactoringUtil.capitalize(message));
               reportedContainers.add(container);
             }
           }
@@ -251,7 +255,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
               String message = RefactoringBundle.message("0.upcasts.an.instance.of.1.to.2",
                                                          RefactoringUIUtil.getDescription(container, true), classDescription,
                                                          RefactoringUIUtil.getDescription(upcastedTo, false));
-              conflicts.put(container, CommonRefactoringUtil.capitalize(message));
+              conflicts.putValue(container, CommonRefactoringUtil.capitalize(message));
               reportedContainers.add(container);
             }
           }
@@ -262,7 +266,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
         String message = RefactoringBundle.message("0.will.no.longer.override.1",
                                                    RefactoringUIUtil.getDescription(info.getSubClassMethod(), true),
                                                    RefactoringUIUtil.getDescription(info.getOverridenMethod(), true));
-        conflicts.put(info.getSubClassMethod(), message);
+        conflicts.putValue(info.getSubClassMethod(), message);
       }
     }
   }
@@ -548,6 +552,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
   private void addImplementingInterfaces() throws IncorrectOperationException {
     final PsiReferenceList implementsList = myClass.getImplementsList();
+    LOG.assertTrue(implementsList != null);
     for (PsiClass delegatedInterface : myDelegatedInterfaces) {
       if (!myClassImplementedInterfaces.contains(delegatedInterface)) {
         implementsList.add(myFactory.createClassReferenceElement(delegatedInterface));
@@ -556,6 +561,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
     if (!myBaseClass.isInterface()) {
       final PsiReferenceList extendsList = myClass.getExtendsList();
+      LOG.assertTrue(extendsList != null);
       extendsList.getReferenceElements()[0].delete();
     } else {
       final PsiJavaCodeReferenceElement[] interfaceRefs = implementsList.getReferenceElements();

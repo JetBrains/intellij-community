@@ -28,6 +28,11 @@ public class SerializableHasSerialVersionUIDFieldInspection
         extends SerializableInspection {
 
     @Override
+    public boolean isEnabledByDefault() {
+        return true;
+    }
+
+  @Override
     @NotNull
     public String getID() {
         return "serial";

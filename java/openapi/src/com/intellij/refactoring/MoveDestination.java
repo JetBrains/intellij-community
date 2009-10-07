@@ -21,9 +21,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -60,5 +62,5 @@ public interface MoveDestination {
   @Nullable
   String verify(PsiPackage source);
 
-  void analyzeModuleConflicts(final Collection<PsiElement> elements, Map<PsiElement,String> conflicts, final UsageInfo[] usages);
+  void analyzeModuleConflicts(final Collection<PsiElement> elements, MultiMap<PsiElement,String> conflicts, final UsageInfo[] usages);
 }

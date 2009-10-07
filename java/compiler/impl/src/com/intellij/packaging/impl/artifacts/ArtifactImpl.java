@@ -27,14 +27,12 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
   private Map<ArtifactPropertiesProvider, ArtifactProperties<?>> myProperties;
 
   public ArtifactImpl(@NotNull String name, @NotNull ArtifactType artifactType, boolean buildOnMake, @NotNull CompositePackagingElement<?> rootElement,
-                      String outputPath,
-                      boolean clearOutputDirectoryOnRebuild) {
+                      String outputPath) {
     myName = name;
     myArtifactType = artifactType;
     myBuildOnMake = buildOnMake;
     myRootElement = rootElement;
     myOutputPath = outputPath;
-    myClearOutputDirectoryOnRebuild = clearOutputDirectoryOnRebuild;
     myProperties = new HashMap<ArtifactPropertiesProvider, ArtifactProperties<?>>();
     for (ArtifactPropertiesProvider provider : ArtifactPropertiesProvider.getProviders()) {
       if (provider.isAvailableFor(artifactType)) {
@@ -61,14 +59,6 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
     return myRootElement;
   }
 
-  public void setClearOutputDirectoryOnRebuild(boolean clearOutputDirectoryOnRebuild) {
-    myClearOutputDirectoryOnRebuild = clearOutputDirectoryOnRebuild;
-  }
-
-  public boolean isClearOutputDirectoryOnRebuild() {
-    return myClearOutputDirectoryOnRebuild;
-  }
-
   public String getOutputPath() {
     return myOutputPath;
   }
@@ -78,8 +68,7 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
   }
 
   public ArtifactImpl createCopy() {
-    final ArtifactImpl artifact = new ArtifactImpl(myName, myArtifactType, myBuildOnMake, myRootElement, myOutputPath,
-                                                   myClearOutputDirectoryOnRebuild);
+    final ArtifactImpl artifact = new ArtifactImpl(myName, myArtifactType, myBuildOnMake, myRootElement, myOutputPath);
     for (Map.Entry<ArtifactPropertiesProvider, ArtifactProperties<?>> entry : myProperties.entrySet()) {
       final ArtifactProperties newProperties = artifact.myProperties.get(entry.getKey());
       //noinspection unchecked
@@ -126,7 +115,6 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
     myOutputPath = modified.getOutputPath();
     myBuildOnMake = modified.isBuildOnMake();
     myRootElement = modified.getRootElement();
-    myClearOutputDirectoryOnRebuild = modified.isClearOutputDirectoryOnRebuild();
     myProperties = modified.myProperties;
     myArtifactType = modified.getArtifactType();
   }

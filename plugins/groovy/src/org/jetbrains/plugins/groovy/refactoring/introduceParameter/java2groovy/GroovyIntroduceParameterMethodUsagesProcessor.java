@@ -32,6 +32,7 @@ import com.intellij.refactoring.util.javadoc.MethodJavaDocHelper;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.MultiMap;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.Nullable;
@@ -66,21 +67,19 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
     return GroovyRefactoringUtil.isMethodUsage(usage.getElement()) && isGroovyUsage(usage);
   }
 
-  public Map<PsiElement, String> findConflicts(IntroduceParameterData data, UsageInfo[] usages) {
+  public void findConflicts(IntroduceParameterData data, UsageInfo[] usages, MultiMap<PsiElement, String> conflicts) {
     Set<UsageInfo> groovyUsages = new HashSet<UsageInfo>();
     for (UsageInfo usage : usages) {
       if (isMethodUsage(usage)) groovyUsages.add(usage);
     }
-    if (groovyUsages.size() == 0) return Collections.emptyMap();
-    Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
+    if (groovyUsages.size() == 0) return;
     data.getParameterInitializer().accept(new InitializerVisitor(conflicts));
-    return conflicts;
   }
 
   private static class InitializerVisitor extends JavaRecursiveElementWalkingVisitor {
-    private final Map<PsiElement, String> conflicts;
+    private final MultiMap<PsiElement, String> conflicts;
 
-    private InitializerVisitor(Map<PsiElement, String> conflicts) {
+    private InitializerVisitor(MultiMap<PsiElement, String> conflicts) {
       this.conflicts = conflicts;
     }
 
@@ -89,11 +88,11 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
       super.visitNewExpression(expression);
       final PsiExpression qualifier = expression.getQualifier();
       if (qualifier != null) {
-        conflicts.put(qualifier, GroovyRefactoringBundle.message("groovy.does.not.support.inner.classes.but.it.is.used.in.parameter.initializer"));
+        conflicts.putValue(qualifier, GroovyRefactoringBundle.message("groovy.does.not.support.inner.classes.but.it.is.used.in.parameter.initializer"));
       }
       final PsiAnonymousClass anonymousClass = expression.getAnonymousClass();
       if (anonymousClass != null) {
-        conflicts.put(anonymousClass, GroovyRefactoringBundle.message("groovy.does.not.support.anonymous.classes.but.it.is.used.in.parameter.initializer"));
+        conflicts.putValue(anonymousClass, GroovyRefactoringBundle.message("groovy.does.not.support.anonymous.classes.but.it.is.used.in.parameter.initializer"));
       }
     }
   }

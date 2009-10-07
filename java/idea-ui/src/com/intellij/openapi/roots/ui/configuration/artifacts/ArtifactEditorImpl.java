@@ -8,10 +8,12 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.artifacts.actions.*;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.LibrarySourceItem;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.SourceItemsTree;
+import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
@@ -20,7 +22,9 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifact;
+import com.intellij.packaging.elements.ComplexPackagingElementType;
 import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.elements.ArchivePackagingElement;
@@ -30,6 +34,8 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.Icons;
+import com.intellij.util.ui.ThreeStateCheckBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,10 +55,11 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   private JPanel myMainPanel;
   private JCheckBox myBuildOnMakeCheckBox;
   private TextFieldWithBrowseButton myOutputDirectoryField;    
-  private JCheckBox myShowIncludedCheckBox;
   private JPanel myEditorPanel;
-  private JCheckBox myClearOnRebuildCheckBox;
   private JPanel myErrorPanelPlace;
+  private ThreeStateCheckBox myShowContentCheckBox;
+  private FixedSizeButton myShowSpecificContentOptionsButton;
+  private ActionGroup myShowSpecificContentOptionsGroup;
   private Splitter mySplitter;
   private final Project myProject;
   private final ComplexElementSubstitutionParameters mySubstitutionParameters = new ComplexElementSubstitutionParameters();
@@ -75,15 +82,29 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     Disposer.register(this, mySourceItemsTree);
     Disposer.register(this, myLayoutTreeComponent);
     myBuildOnMakeCheckBox.setSelected(artifact.isBuildOnMake());
-    myClearOnRebuildCheckBox.setSelected(artifact.isClearOutputDirectoryOnRebuild());
     final String outputPath = artifact.getOutputPath();
     myOutputDirectoryField.addBrowseFolderListener(CompilerBundle.message("dialog.title.output.directory.for.artifact"),
                                                    CompilerBundle.message("chooser.description.select.output.directory.for.0.artifact",
                                                                           getArtifact().getName()), myProject,
                                                    FileChooserDescriptorFactory.createSingleFolderDescriptor());
+    myShowSpecificContentOptionsGroup = createShowSpecificContentOptionsGroup();
+    myShowSpecificContentOptionsButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, myShowSpecificContentOptionsGroup).getComponent().show(myShowSpecificContentOptionsButton, 0, 0);
+      }
+    });
     setOutputPath(outputPath);
     myValidationManager = new ArtifactValidationManagerImpl(this);
     myContext.setValidationManager(myValidationManager);
+    updateShowContentCheckbox();
+  }
+
+  private ActionGroup createShowSpecificContentOptionsGroup() {
+    final DefaultActionGroup group = new DefaultActionGroup();
+    for (ComplexPackagingElementType<?> type : PackagingElementFactory.getInstance().getComplexElementTypes()) {
+      group.add(new ToggleShowElementContentAction(type, this));
+    }
+    return group;
   }
 
   private void setOutputPath(@Nullable String outputPath) {
@@ -93,7 +114,6 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   public void apply() {
     final ModifiableArtifact modifiableArtifact = myContext.getModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact);
     modifiableArtifact.setBuildOnMake(myBuildOnMakeCheckBox.isSelected());
-    modifiableArtifact.setClearOutputDirectoryOnRebuild(myClearOnRebuildCheckBox.isSelected());
     modifiableArtifact.setOutputPath(getConfiguredOutputPath());
     myPropertiesEditors.applyProperties();
     myLayoutTreeComponent.saveElementProperties();
@@ -160,19 +180,22 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     rightTopPanel.add(new JLabel("Available Elements (drag'n'drop to layout tree)"), BorderLayout.SOUTH);
     rightPanel.add(rightTopPanel, BorderLayout.NORTH);
     rightPanel.add(ScrollPaneFactory.createScrollPane(mySourceItemsTree.getTree()), BorderLayout.CENTER);
+    rightPanel.add(new JPanel(), BorderLayout.SOUTH);
     rightPanel.setBorder(border);
     mySplitter.setSecondComponent(rightPanel);
 
 
-    myShowIncludedCheckBox.addActionListener(new ActionListener() {
+    myShowContentCheckBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        if (myShowIncludedCheckBox.isSelected()) {
+        final ThreeStateCheckBox.State state = myShowContentCheckBox.getState();
+        if (state == ThreeStateCheckBox.State.SELECTED) {
           mySubstitutionParameters.setSubstituteAll();
         }
-        else {
+        else if (state == ThreeStateCheckBox.State.NOT_SELECTED) {
           mySubstitutionParameters.setSubstituteNone();
         }
-        rebuildTries();
+        myShowContentCheckBox.setThirdStateEnabled(false);
+        myLayoutTreeComponent.rebuildTree();
       }
     });
 
@@ -185,40 +208,64 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     myPropertiesEditors.addTabs(myTabbedPane);
     myEditorPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
 
-    PopupHandler.installPopupHandler(myLayoutTreeComponent.getLayoutTree(), createPopupActionGroup(), ActionPlaces.UNKNOWN, ActionManager.getInstance());
-    TreeToolTipHandler.install(myLayoutTreeComponent.getLayoutTree());
-    ToolTipManager.sharedInstance().registerComponent(myLayoutTreeComponent.getLayoutTree());
+    final LayoutTree tree = myLayoutTreeComponent.getLayoutTree();
+    new ShowAddPackagingElementPopupAction(this).registerCustomShortcutSet(CommonShortcuts.getNew(), tree);
+    PopupHandler.installPopupHandler(tree, createPopupActionGroup(), ActionPlaces.UNKNOWN, ActionManager.getInstance());
+    TreeToolTipHandler.install(tree);
+    ToolTipManager.sharedInstance().registerComponent(tree);
     rebuildTries();
     return getMainComponent();
+  }
+
+  public void updateShowContentCheckbox() {
+    final ThreeStateCheckBox.State state;
+    if (mySubstitutionParameters.isAllSubstituted()) {
+      state = ThreeStateCheckBox.State.SELECTED;
+    }
+    else if (mySubstitutionParameters.isNoneSubstituted()) {
+      state = ThreeStateCheckBox.State.NOT_SELECTED;
+    }
+    else {
+      state = ThreeStateCheckBox.State.DONT_CARE;
+    }
+    myShowContentCheckBox.setThirdStateEnabled(state == ThreeStateCheckBox.State.DONT_CARE);
+    myShowContentCheckBox.setState(state);
   }
 
   private DefaultActionGroup createToolbarActionGroup() {
     final DefaultActionGroup toolbarActionGroup = new DefaultActionGroup();
 
-    final List<AnAction> createActions = new ArrayList<AnAction>();
-    AddCompositeElementActionGroup.addCompositeCreateActions(createActions, this);
+    final List<AnAction> createActions = new ArrayList<AnAction>(createNewElementActions());
     for (AnAction createAction : createActions) {
       toolbarActionGroup.add(createAction);
     }
 
-    toolbarActionGroup.add(createAddAction(false));
     toolbarActionGroup.add(new RemovePackagingElementAction(this));
+    toolbarActionGroup.add(Separator.getInstance());
     toolbarActionGroup.add(new SortElementsToggleAction(this.getLayoutTreeComponent()));
     toolbarActionGroup.add(new MoveElementAction(myLayoutTreeComponent, "Move Up", "", IconLoader.getIcon("/actions/moveUp.png"), -1));
     toolbarActionGroup.add(new MoveElementAction(myLayoutTreeComponent, "Move Down", "", IconLoader.getIcon("/actions/moveDown.png"), 1));
     return toolbarActionGroup;
   }
 
+  public List<AnAction> createNewElementActions() {
+    final List<AnAction> createActions = new ArrayList<AnAction>();
+    AddCompositeElementAction.addCompositeCreateActions(createActions, this);
+    createActions.add(createAddNonCompositeElementGroup());
+    return createActions;
+  }
+
   private DefaultActionGroup createPopupActionGroup() {
+    final LayoutTree tree = myLayoutTreeComponent.getLayoutTree();
+
     DefaultActionGroup popupActionGroup = new DefaultActionGroup();
     final List<AnAction> createActions = new ArrayList<AnAction>();
-    AddCompositeElementActionGroup.addCompositeCreateActions(createActions, this);
+    AddCompositeElementAction.addCompositeCreateActions(createActions, this);
     for (AnAction createAction : createActions) {
       popupActionGroup.add(createAction);
     }
-    popupActionGroup.add(createAddAction(true));
+    popupActionGroup.add(createAddNonCompositeElementGroup());
     final RemovePackagingElementAction removeAction = new RemovePackagingElementAction(this);
-    final LayoutTree tree = myLayoutTreeComponent.getLayoutTree();
     removeAction.registerCustomShortcutSet(CommonShortcuts.DELETE, tree);
     popupActionGroup.add(removeAction);
     popupActionGroup.add(new ExtractArtifactAction(this));
@@ -241,8 +288,13 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     return mySubstitutionParameters;
   }
 
-  private AddPackagingElementActionGroup createAddAction(boolean popup) {
-    return new AddPackagingElementActionGroup(this);
+  private ActionGroup createAddNonCompositeElementGroup() {
+    DefaultActionGroup group = new DefaultActionGroup(ProjectBundle.message("artifacts.add.copy.action"), true);
+    group.getTemplatePresentation().setIcon(Icons.ADD_ICON);
+    for (PackagingElementType<?> type : PackagingElementFactory.getInstance().getNonCompositeElementTypes()) {
+      group.add(new AddNewPackagingElementAction(type, this));
+    }
+    return group;
   }
 
   public JComponent getMainComponent() {
@@ -261,7 +313,6 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   public boolean isModified() {
     return myBuildOnMakeCheckBox.isSelected() != myOriginalArtifact.isBuildOnMake()
         || !Comparing.equal(getConfiguredOutputPath(), myOriginalArtifact.getOutputPath())
-        || myClearOnRebuildCheckBox.isSelected() != myOriginalArtifact.isClearOutputDirectoryOnRebuild()
         || myPropertiesEditors.isModified()
         || myLayoutTreeComponent.isPropertiesModified();
   }

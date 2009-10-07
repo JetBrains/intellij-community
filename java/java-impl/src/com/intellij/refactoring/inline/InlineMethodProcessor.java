@@ -33,6 +33,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,7 +106,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
-    Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
 
     if (!myInlineThisOnly) {
       final PsiMethod[] superMethods = myMethod.findSuperMethods();
@@ -113,7 +114,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         final String message = method.hasModifierProperty(PsiModifier.ABSTRACT) ? RefactoringBundle
           .message("inlined.method.implements.method.from.0", method.getContainingClass().getQualifiedName()) : RefactoringBundle
           .message("inlined.method.overrides.method.from.0", method.getContainingClass().getQualifiedName());
-        conflicts.put(method, message);
+        conflicts.putValue(method, message);
       }
     }
 
@@ -139,7 +140,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   public static void addInaccessibleMemberConflicts(final PsiElement element,
                                                     final UsageInfo[] usages,
                                                     final ReferencedElementsCollector collector,
-                                                    final Map<PsiElement, String> conflicts) {
+                                                    final MultiMap<PsiElement, String> conflicts) {
     element.accept(collector);
     final Map<PsiMember, Set<PsiMember>> containersToReferenced = getInaccessible(collector.myReferencedMembers, usages);
 
@@ -151,7 +152,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         final String containerDescription = RefactoringUIUtil.getDescription(container, true);
         String message = RefactoringBundle.message("0.that.is.used.in.inlined.method.is.not.accessible.from.call.site.s.in.1",
                                                    referencedDescription, containerDescription);
-        conflicts.put(container, CommonRefactoringUtil.capitalize(message));
+        conflicts.putValue(container, CommonRefactoringUtil.capitalize(message));
       }
     }
   }

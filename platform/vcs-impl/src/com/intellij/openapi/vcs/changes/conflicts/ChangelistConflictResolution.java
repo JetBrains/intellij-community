@@ -1,19 +1,14 @@
 package com.intellij.openapi.vcs.changes.conflicts;
 
-import com.intellij.CommonBundle;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
+import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.shelf.ShelveChangesCommitExecutor;
+import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
@@ -22,32 +17,29 @@ public enum ChangelistConflictResolution {
 
   SHELVE {
     @Override
-    public boolean resolveConflict(final Project project, Collection<Change> changes) {
+    public boolean resolveConflict(Project project, Collection<Change> changes) {
       LocalChangeList changeList = getManager(project).getChangeList(changes.iterator().next());
-      assert changeList != null;
-      try {
-        ShelveChangesManager.getInstance(project).shelveChanges(changes, changeList.getName());
-        return true;
-      }
-      catch (final Exception ex) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            Messages.showErrorDialog(project, VcsBundle.message("create.patch.error.title", ex.getMessage()), CommonBundle.getErrorTitle());
-          }
-        }, ModalityState.NON_MODAL);
-        return false;
-      }
+      return CommitChangeListDialog.commitChanges(project, changes, changeList, new ShelveChangesCommitExecutor(project), null);
     }},
 
   MOVE {
     @Override
     public boolean resolveConflict(Project project, Collection<Change> changes) {
-      final ChangeListManagerImpl manager = getManager(project);
-      manager.moveChangesTo(manager.getDefaultChangeList(), changes.toArray(new Change[changes.size()]));
-      return true;
+      ChangeListManagerImpl manager = getManager(project);
+      Set<ChangeList> changeLists = new HashSet<ChangeList>();
+      for (Change change : changes) {
+        changeLists.add(manager.getChangeList(change));
+      }
+      MoveChangesDialog dialog = new MoveChangesDialog(project, changes, changeLists, "Move Changes");
+      dialog.show();
+      if (dialog.isOK()) {
+        manager.moveChangesTo(manager.getDefaultChangeList(), changes.toArray(new Change[changes.size()]));
+        return true;
+      }
+      return false;
     }},
 
-  SWITCH {
+  SWITCH{
     @Override
     public boolean resolveConflict(Project project, Collection<Change> changes) {
       LocalChangeList changeList = getManager(project).getChangeList(changes.iterator().next());

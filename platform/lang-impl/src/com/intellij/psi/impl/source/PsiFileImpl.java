@@ -184,7 +184,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
       final FileViewProvider viewProvider = getViewProvider();
       if (viewProvider.isPhysical() && myManager.isAssertOnFileLoading(viewProvider.getVirtualFile())) {
-        LOG.error("Access to tree elements not allowed in tests." + viewProvider.getVirtualFile().getPresentableUrl());
+        LOG.error("Access to tree elements not allowed in tests. path='" + viewProvider.getVirtualFile().getPresentableUrl()+"'");
       }
 
       final Document document = viewProvider.isEventSystemEnabled() ? viewProvider.getDocument() : null;

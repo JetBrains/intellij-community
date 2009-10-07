@@ -37,6 +37,7 @@ import com.intellij.usages.*;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -446,7 +447,7 @@ public abstract class BaseRefactoringProcessor {
     performPsiSpoilingRefactoring();
   }
 
-  protected boolean showConflicts(final Map<PsiElement, String> conflicts) {
+  protected boolean showConflicts(final MultiMap<PsiElement,String> conflicts) {
     if (!conflicts.isEmpty() && myPrepareSuccessfulSwingThreadCallback != null) {
       final ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
       conflictsDialog.show();

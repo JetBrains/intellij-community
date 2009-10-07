@@ -25,6 +25,9 @@ public interface ModuleSettings extends ComponentManagerSettings {
   @NotNull
   Collection<? extends Element> getFacetElements(@NotNull String facetTypeId);
 
+  @Nullable
+  Element getFacetElement(@NotNull String facetTypeId);
+
   void setModuleType(@NotNull String moduleType);
 
   @NotNull

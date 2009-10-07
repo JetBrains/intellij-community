@@ -7,7 +7,6 @@ package com.intellij.openapi.components;
 import com.intellij.openapi.util.text.StringUtil;
 
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -19,7 +18,7 @@ public class ExpandMacroToPathMap extends PathMacroMap {
     put("$" + macroName + "$", quotePath(path));
   }
 
-  public String substitute(String text, boolean caseSensitive, final Set<String> usedMacros) {
+  public String substitute(String text, boolean caseSensitive) {
     for (Map.Entry<String, String> entry : entries()) {
       // when replacing macros with actual paths the replace utility may be used as always 'case-sensitive'
       // for case-insensitive file systems there will be no unnecesary toLowerCase() transforms. 

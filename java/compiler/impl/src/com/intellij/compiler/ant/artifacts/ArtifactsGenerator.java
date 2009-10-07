@@ -1,22 +1,25 @@
 package com.intellij.compiler.ant.artifacts;
 
 import com.intellij.compiler.ant.BuildProperties;
+import com.intellij.compiler.ant.Comment;
 import com.intellij.compiler.ant.GenerationOptions;
 import com.intellij.compiler.ant.Generator;
-import com.intellij.compiler.ant.Comment;
 import com.intellij.compiler.ant.taskdefs.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
+import com.intellij.packaging.elements.ComplexPackagingElement;
+import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.packaging.impl.artifacts.ArtifactUtil;
+import com.intellij.packaging.impl.artifacts.PackagingElementProcessor;
 import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
 import com.intellij.packaging.impl.elements.ModuleOutputPackagingElement;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -96,9 +99,14 @@ public class ArtifactsGenerator {
   private Target createArtifactTarget(Artifact artifact) {
     final StringBuilder depends = new StringBuilder(INIT_ARTIFACTS_TARGET);
 
-    //todo[nik] do not process content of included artifacts
-    ArtifactUtil.processPackagingElements(artifact, null, new Processor<PackagingElement<?>>() {
-      public boolean process(PackagingElement<?> packagingElement) {
+    ArtifactUtil.processPackagingElements(artifact, null, new PackagingElementProcessor<PackagingElement<?>>() {
+      @Override
+      public boolean shouldProcessSubstitution(ComplexPackagingElement<?> element) {
+        return !(element instanceof ArtifactPackagingElement);
+      }
+
+      @Override
+      public boolean process(@NotNull List<CompositePackagingElement<?>> parents, @NotNull PackagingElement<?> packagingElement) {
         if (packagingElement instanceof ArtifactPackagingElement) {
           final Artifact included = ((ArtifactPackagingElement)packagingElement).findArtifact(myResolvingContext);
           if (included != null) {

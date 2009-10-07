@@ -65,7 +65,7 @@ public class JavaResolveCache {
   }
 
   @Nullable
-  public PsiType getType(@NotNull PsiExpression expr, @NotNull Function<PsiExpression, PsiType> f) {
+  public <T extends PsiExpression> PsiType getType(@NotNull T expr, @NotNull Function<T, PsiType> f) {
     PsiType type = myCalculatedTypes.get(expr);
     if (type == null) {
       type = f.fun(expr);

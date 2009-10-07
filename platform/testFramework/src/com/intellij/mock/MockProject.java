@@ -1,8 +1,6 @@
 package com.intellij.mock;
 
-import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -21,6 +19,9 @@ public class MockProject extends MockComponentManager implements ProjectEx {
 
   public boolean isDefault() {
     return false;
+  }
+
+  public void checkUnknownMacros() {
   }
 
   @NotNull
@@ -58,14 +59,6 @@ public class MockProject extends MockComponentManager implements ProjectEx {
 
   public boolean isInitialized() {
     return false;
-  }
-
-  public ReplacePathToMacroMap getMacroReplacements() {
-    return null;
-  }
-
-  public ExpandMacroToPathMap getExpandMacroReplacements() {
-    return null;
   }
 
   public VirtualFile getProjectFile() {
@@ -114,10 +107,6 @@ public class MockProject extends MockComponentManager implements ProjectEx {
 
   public GlobalSearchScope getAllScope() {
     return new MockGlobalSearchScope();
-  }
-
-  public GlobalSearchScope getProjectScope() {
-    return getAllScope();
   }
 
 }

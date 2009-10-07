@@ -44,6 +44,7 @@ import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -78,7 +79,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     myState = state;
   }
 
-  public OperationStatus ensureFilesWritable(VirtualFile... files) {
+  public OperationStatus ensureFilesWritable(@NotNull VirtualFile... files) {
     if (files.length == 0) {
       return new OperationStatusImpl(VirtualFile.EMPTY_ARRAY);
     }
@@ -173,6 +174,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
       myReadonlyFiles = readonlyFiles;
     }
 
+    @NotNull
     public VirtualFile[] getReadonlyFiles() {
       return myReadonlyFiles;
     }
@@ -181,6 +183,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
       return myReadonlyFiles.length > 0;
     }
 
+    @NotNull
     public String getReadonlyFilesMessage() {
       if (hasReadonlyFiles()) {
         StringBuffer buf = new StringBuffer();

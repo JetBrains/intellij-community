@@ -5,6 +5,7 @@ package com.intellij.mock;
 
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StorageScheme;
+import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.project.impl.ProjectImpl;
@@ -31,6 +32,18 @@ public class MockProjectStore implements IProjectStore {
 
   public void setProjectFilePath(final String filePath) {
     throw new UnsupportedOperationException("Method setProjectFilePath is not yet implemented in " + getClass().getName());
+  }
+
+  public void reinitComponents(Set<String> componentNames, boolean reloadData) {
+    throw new UnsupportedOperationException("Method reinitComponents is not yet implemented in " + getClass().getName());
+  }
+
+  public boolean isReloadPossible(Set<String> componentNames) {
+    throw new UnsupportedOperationException("Method isReloadPossible is not yet implemented in " + getClass().getName());
+  }
+
+  public TrackingPathMacroSubstitutor[] getSubstitutors() {
+    return new TrackingPathMacroSubstitutor[0];
   }
 
   @Nullable
@@ -95,7 +108,7 @@ public class MockProjectStore implements IProjectStore {
     throw new UnsupportedOperationException("Method initStore is not yet implemented in " + getClass().getName());
   }
 
-  public void initComponent(Object component) {
+  public String initComponent(Object component, final boolean service) {
     throw new UnsupportedOperationException("Method initComponent is not yet implemented in " + getClass().getName());
   }
 

@@ -17,12 +17,10 @@ import com.intellij.refactoring.util.usageInfo.DefaultConstructorImplicitUsageIn
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.MultiMap;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * @author Maxim.Medvedev
@@ -123,8 +121,7 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
   }
 
 
-  public Map<PsiElement, String> findConflicts(IntroduceParameterData data, UsageInfo[] usages) {
-    return Collections.emptyMap();
+  public void findConflicts(IntroduceParameterData data, UsageInfo[] usages, MultiMap<PsiElement, String> conflicts) {
   }
 
   public boolean processChangeMethodSignature(IntroduceParameterData data, UsageInfo usage, UsageInfo[] usages) throws IncorrectOperationException {

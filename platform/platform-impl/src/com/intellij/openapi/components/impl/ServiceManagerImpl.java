@@ -116,12 +116,14 @@ public class ServiceManagerImpl implements BaseComponent {
       });
     }
 
-    private Object initializeInstance(final PicoContainer container) {
+    protected Object initializeInstance(final PicoContainer container) {
       final Object serviceInstance = getDelegate().getComponentInstance(container);
       if (serviceInstance instanceof Disposable) {
         Disposer.register(myComponentManager, (Disposable)serviceInstance);
       }
-      myComponentManager.getComponentStore().initComponent(serviceInstance);
+
+      myComponentManager.getComponentStore().initComponent(serviceInstance, true);
+
       return serviceInstance;
     }
 

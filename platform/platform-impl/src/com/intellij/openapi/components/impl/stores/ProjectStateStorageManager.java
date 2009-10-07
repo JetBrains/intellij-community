@@ -51,7 +51,7 @@ class ProjectStateStorageManager extends StateStorageManagerImpl {
 
     StateStorage storage = getFileStateStorage(name);
 
-    if (operation == StateStorageOperation.READ && storage != null && workspace && !storage.hasState(component, componentName, Element.class)) {
+    if (operation == StateStorageOperation.READ && storage != null && workspace && !storage.hasState(component, componentName, Element.class, false)) {
       name = "$" + ProjectStoreImpl.PROJECT_FILE_MACRO + "$";
     }
 

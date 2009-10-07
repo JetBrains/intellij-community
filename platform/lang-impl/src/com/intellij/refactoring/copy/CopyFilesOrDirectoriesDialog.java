@@ -68,15 +68,35 @@ class CopyFilesOrDirectoriesDialog extends DialogWrapper{
       myInformationLabel.setText(text);
     }
     else {
-      myInformationLabel.setText((elements[0] instanceof PsiFile)?
-                                 RefactoringBundle.message("copy.files.copy.specified.files.label") :
-                                 RefactoringBundle.message("copy.files.copy.specified.directories.label"));
+      setMultipleElementCopyLabel(elements);
     }
 
     if (myShowDirectoryField) {
       myTargetDirectoryField.setText(defaultTargetDirectory == null ? "" : defaultTargetDirectory.getVirtualFile().getPresentableUrl());
     }
     validateOKButton();
+  }
+
+  private void setMultipleElementCopyLabel(PsiElement[] elements) {
+    boolean allFiles = true;
+    boolean allDirectories = true;
+    for (PsiElement element : elements) {
+      if (element instanceof PsiDirectory) {
+        allFiles = false;
+      }
+      else {
+        allDirectories = false;
+      }
+    }
+    if (allFiles) {
+      myInformationLabel.setText(RefactoringBundle.message("copy.files.copy.specified.files.label"));
+    }
+    else if (allDirectories) {
+      myInformationLabel.setText(RefactoringBundle.message("copy.files.copy.specified.directories.label"));
+    }
+    else {
+      myInformationLabel.setText(RefactoringBundle.message("copy.files.copy.specified.mixed.label"));
+    }
   }
 
   protected Action[] createActions(){

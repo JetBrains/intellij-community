@@ -252,8 +252,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
 
     final ClassResolverProcessor processor = new ClassResolverProcessor(className, this);
     PsiScopesUtil.resolveAndWalk(processor, this, null);
-    JavaResolveResult[] result = processor.getResult();
-    return result;
+    return processor.getResult();
   }
 
   private JavaResolveResult[] resolveToVariable() {
@@ -293,15 +292,14 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
 
   private final TypeEvaluator ourTypeEvaluator = new TypeEvaluator();
 
-  private static class TypeEvaluator implements Function<PsiExpression, PsiType> {
-    public PsiType fun(final PsiExpression expr) {
-      final PsiReferenceExpressionImpl refExpr = (PsiReferenceExpressionImpl)expr;
-      JavaResolveResult result = refExpr.advancedResolve(false);
+  private static class TypeEvaluator implements Function<PsiReferenceExpressionImpl, PsiType> {
+    public PsiType fun(final PsiReferenceExpressionImpl expr) {
+      JavaResolveResult result = expr.advancedResolve(false);
       PsiElement resolve = result.getElement();
       if (resolve == null) {
-        ASTNode refName = refExpr.findChildByRole(ChildRole.REFERENCE_NAME);
+        ASTNode refName = expr.findChildByRole(ChildRole.REFERENCE_NAME);
         if (refName != null && refName.getText().equals(LENGTH)) {
-          ASTNode qualifier = refExpr.findChildByRole(ChildRole.QUALIFIER);
+          ASTNode qualifier = expr.findChildByRole(ChildRole.QUALIFIER);
           if (qualifier != null && ElementType.EXPRESSION_BIT_SET.contains(qualifier.getElementType())) {
             PsiType type = ((PsiExpression)SourceTreeToPsiMap.treeElementToPsi(qualifier)).getType();
             if (type instanceof PsiArrayType) {
@@ -328,7 +326,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
         return null;
       }
       if (ret == null) return null;
-      final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(refExpr);
+      final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(expr);
       if (ret instanceof PsiClassType) {
         ret = ((PsiClassType)ret).setLanguageLevel(languageLevel);
       }
@@ -336,7 +334,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       if (languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0) {
         if (owner != null && PsiUtil.isRawSubstitutor(owner, result.getSubstitutor())) return TypeConversionUtil.erasure(ret);
         PsiType substitutedType = result.getSubstitutor().substitute(ret);
-        return PsiImplUtil.normalizeWildcardTypeByPosition(substitutedType, refExpr);
+        return PsiImplUtil.normalizeWildcardTypeByPosition(substitutedType, expr);
       }
 
       return TypeConversionUtil.erasure(ret);
@@ -366,6 +364,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
   }
 
 
+  @NotNull
   public Object[] getVariants() {
     //this reference's variants are rather obtained with processVariants()
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
@@ -418,12 +417,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
 
   public int getTextOffset() {
     ASTNode refName = findChildByRole(ChildRole.REFERENCE_NAME);
-    if (refName != null) {
-      return refName.getStartOffset();
-    }
-    else {
-      return super.getTextOffset();
-    }
+    return refName == null ? super.getTextOffset() : refName.getStartOffset();
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {

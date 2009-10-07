@@ -159,7 +159,7 @@ public class RefreshSessionImpl extends RefreshSession {
     final SyncSession syncSession = synchronizer.collectFilesToUpdate();
     int filesCount = syncSession.getFilesToUpdate().size();
     if (filesCount > 0) {
-      boolean runWithProgress = !ApplicationManager.getApplication().isUnitTestMode() && filesCount > 5;
+      boolean runWithProgress = !ApplicationManager.getApplication().isUnitTestMode() && filesCount > 50;
       if (runWithProgress) {
         Runnable process = new Runnable() {
           public void run() {

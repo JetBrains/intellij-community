@@ -9,9 +9,8 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
-
-import java.util.Map;
 
 /**
  * @author yole
@@ -321,7 +320,7 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
   public void testConflictInaccessibleOuterField() throws Exception {
     InlineToAnonymousClassProcessor processor = prepareProcessor();
     UsageInfo[] usages = processor.findUsages();
-    Map<PsiElement,String> conflicts = processor.getConflicts(usages);
+    MultiMap<PsiElement,String> conflicts = processor.getConflicts(usages);
     assertEquals(1, conflicts.size());
     assertEquals("Field <b><code>C2.a</code></b> that is used in inlined method is not accessible from call site(s) in method <b><code>C2User.test()</code></b>",
                  conflicts.values().iterator().next());
@@ -374,7 +373,7 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     final InlineToAnonymousClassProcessor processor = new InlineToAnonymousClassProcessor(getProject(), classToInline, callToInline, inlineThisOnly,
                                                                                           false, searchInNonJavaFiles);
     UsageInfo[] usages = processor.findUsages();
-    Map<PsiElement, String> conflicts = processor.getConflicts(usages);
+    MultiMap<PsiElement, String> conflicts = processor.getConflicts(usages);
     assertEquals(0, conflicts.size());
     processor.run();
   }

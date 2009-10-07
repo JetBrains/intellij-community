@@ -4,6 +4,7 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.MalformedPatternException;
+import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -87,6 +88,9 @@ public class CompilerUIConfigurable implements Configurable {
     applyResourcePatterns(extensionString, (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject));
 
     configuration.DEPLOY_AFTER_MAKE = getSelectedDeploymentOption();
+
+    // this will schedule for compilation all files that might become compilable after resource patterns' changing 
+    TranslatingCompilerFilesMonitor.getInstance().scanSourcesForCompilableFiles(myProject);
   }
 
   private static void applyResourcePatterns(String extensionString, final CompilerConfigurationImpl configuration)

@@ -21,38 +21,34 @@ import java.util.HashSet;
 
 public class CopyFilesOrDirectoriesHandler implements CopyHandlerDelegate {
   public boolean canCopy(final PsiElement[] elements) {
-    return canCopyFiles(elements) || canCopyDirectories(elements);
-  }
-
-  protected boolean canCopyFiles(PsiElement[] elements) {
-    // the second 'for' statement is for effectivity - to prevent creation of the 'names' array
     HashSet<String> names = new HashSet<String>();
     for (PsiElement element : elements) {
-      if (!(element instanceof PsiFile)) {
-        return false;
-      }
-      PsiFile file = (PsiFile)element;
-      String name = file.getName();
+      if (!(element instanceof PsiFileSystemItem)) return false;
+
+      String name = ((PsiFileSystemItem) element).getName();
       if (names.contains(name)) {
         return false;
       }
-
       names.add(name);
-    }
 
-    return true;
-  }
-
-  protected boolean canCopyDirectories(PsiElement[] elements) {
-    for (PsiElement element : elements) {
-      if (!(element instanceof PsiDirectory)) {
+      if (element instanceof PsiFile && !canCopyFile((PsiFile) element)) {
+        return false;
+      }
+      else if (element instanceof PsiDirectory && !canCopyDirectory((PsiDirectory)element)) {
         return false;
       }
     }
 
     PsiElement[] filteredElements = PsiTreeUtil.filterAncestors(elements);
     return filteredElements.length == elements.length;
+  }
 
+  protected boolean canCopyFile(PsiFile element) {
+    return true;
+  }
+
+  protected boolean canCopyDirectory(PsiDirectory element) {
+    return true;
   }
 
   public void doCopy(final PsiElement[] elements, PsiDirectory defaultTargetDirectory) {

@@ -32,8 +32,9 @@ public class BringVariableIntoScopeFix implements IntentionAction {
 
   @NotNull
   public String getText() {
-    LOG.assertTrue(myOutOfScopeVariable != null);
-    String varText = PsiFormatUtil.formatVariable(myOutOfScopeVariable, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE, PsiSubstitutor.EMPTY);
+    PsiLocalVariable variable = myOutOfScopeVariable;
+
+    String varText = variable == null ? "" : PsiFormatUtil.formatVariable(variable, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE, PsiSubstitutor.EMPTY);
     return QuickFixBundle.message("bring.variable.to.scope.text", varText);
   }
 

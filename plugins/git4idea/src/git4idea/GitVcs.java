@@ -63,6 +63,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -565,7 +566,8 @@ public class GitVcs extends AbstractVcs {
    * @param cmdLine a command line text
    */
   public void showCommandLine(final String cmdLine) {
-    showMessage(cmdLine, ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
+    SimpleDateFormat f = new SimpleDateFormat("HH:mm:ss.SSS");
+    showMessage(f.format(new Date()) + ": " + cmdLine, ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
   }
 
   /**

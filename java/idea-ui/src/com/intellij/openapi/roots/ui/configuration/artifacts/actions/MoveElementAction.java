@@ -27,7 +27,9 @@ public class MoveElementAction extends DumbAwareAction {
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(isEnabled());
+    final boolean b = isEnabled();
+    e.getPresentation().setEnabled(b);
+    e.getPresentation().setText(getTemplatePresentation().getText() + " (disabled if elements are sorted)");
   }
 
   private boolean isEnabled() {

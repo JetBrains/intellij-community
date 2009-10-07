@@ -15,10 +15,12 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.util.Icons;
 import gnu.trove.Equality;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -72,7 +74,8 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     }
 
     @Nullable
-    private String askForProfileName(String title) {
+    public String askForProfileName(String titlePattern) {
+        String title = MessageFormat.format(titlePattern, subjDisplayName());
         return Messages.showInputDialog("New " + subjDisplayName() + " name:", title, Messages.getQuestionIcon(), "", new InputValidator() {
             public boolean checkInput(String s) {
                 return s.length() > 0 && findByName(s) == null;
@@ -213,7 +216,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
         }
 
         public void actionPerformed(AnActionEvent event) {
-            final String profileName = askForProfileName("Copy " + subjDisplayName());
+            final String profileName = askForProfileName("Copy {0}");
             if (profileName == null) return;
 
             final T clone = myCloner.copyOf((T) getSelectedObject());
@@ -236,17 +239,23 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
         }
 
         public void actionPerformed(AnActionEvent event) {
-            final String name = askForProfileName("Create new " + subjDisplayName());
+            final String name = askForProfileName("Create new {0}");
             if (name == null) return;
-            final T newItem = myFactory.create();
-            myNamer.setName(newItem, name);
-
-            addNewNode(newItem);
-            selectNodeInTree(newItem);
+            createItem(name);
         }
+
     }
 
     public void selectItem(T item) {
         selectNodeInTree(findByName(myNamer.getName(item)));
     }
+
+    public void createItem(@NotNull String name) {
+      final T newItem = myFactory.create();
+      myNamer.setName(newItem, name);
+
+      addNewNode(newItem);
+      selectNodeInTree(newItem);
+    }
+
 }

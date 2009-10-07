@@ -49,7 +49,7 @@ public class HideContentAction extends DumbAwareAction {
 
     final Collection<PackagingNodeSource> sources = node.getNodeSources();
     for (PackagingNodeSource source : sources) {
-      myArtifactEditor.getSubstitutionParameters().dontSubstitute(source.getSourceElement());
+      myArtifactEditor.getSubstitutionParameters().doNotSubstitute(source.getSourceElement());
       myArtifactEditor.getLayoutTreeComponent().getLayoutTree().addSubtreeToUpdate(source.getSourceParentNode());
     }
   }

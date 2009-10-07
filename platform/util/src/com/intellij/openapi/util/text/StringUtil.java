@@ -945,7 +945,7 @@ public class StringUtil {
     return result.toString();
   }
 
-  @NotNull public static String join(@NotNull Collection<String> strings, @NotNull final String separator) {
+  @NotNull public static String join(@NotNull Collection<? extends String> strings, @NotNull final String separator) {
     final StringBuilder result = new StringBuilder();
     for (String string : strings) {
       if (string != null && string.length() != 0) {

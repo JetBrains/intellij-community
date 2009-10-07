@@ -24,9 +24,9 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.find.FindManager;
-import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesOptions;
+import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -51,7 +51,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -76,10 +75,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
-import com.intellij.testFramework.ExpectedHighlightingData;
-import com.intellij.testFramework.InspectionTestUtil;
-import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
@@ -88,7 +84,6 @@ import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -120,9 +115,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   private final TempDirTestFixture myTempDirFixture;
   protected final IdeaProjectTestFixture myProjectFixture;
-  protected final Set<VirtualFile> myAddedClasses = new THashSet<VirtualFile>();
   @NonNls private static final String XXX = "XXX";
   private PsiElement myFileContext;
+  private final FileTreeAccessFilter myJavaFilesFilter = new FileTreeAccessFilter();
 
   public CodeInsightTestFixtureImpl(IdeaProjectTestFixture projectFixture, TempDirTestFixture tempDirTestFixture) {
     myProjectFixture = projectFixture;
@@ -1016,16 +1011,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     //to initialize caches
     myPsiManager.getCacheManager().getFilesWithWord(XXX, UsageSearchContext.IN_COMMENTS, GlobalSearchScope.allScope(project), true);
-    VirtualFileFilter javaFilesFilter = new VirtualFileFilter() {
-      public boolean accept(VirtualFile file) {
-        if (myAddedClasses.contains(file)) return false;
 
-        FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
-        return fileType == StdFileTypes.JAVA || fileType == StdFileTypes.CLASS;
-      }
-    };
-
-    ((PsiManagerImpl)PsiManager.getInstance(project)).setAssertOnFileLoadingFilter(javaFilesFilter);
+    ((PsiManagerImpl)PsiManager.getInstance(project)).setAssertOnFileLoadingFilter(myJavaFilesFilter);
 
     final long start = System.currentTimeMillis();
 //    ProfilingUtil.startCPUProfiling();
@@ -1144,7 +1131,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public void allowTreeAccessForFile(final VirtualFile file) {
-    myAddedClasses.add(file);
+    myJavaFilesFilter.allowTreeAccessForFile(file);
   }
 
   static class SelectionAndCaretMarkupLoader {

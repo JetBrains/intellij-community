@@ -37,16 +37,6 @@ public class CompoundSaveSession {
     }
   }
 
-  public Set<String> getUsedMacros() {
-    Set<String> usedMacros = new HashSet<String>();
-
-    for (StateStorage.SaveSession saveSession : mySaveSessions.values()) {
-      usedMacros.addAll(saveSession.getUsedMacros());
-    }
-
-    return usedMacros;
-  }
-
   public void finishSave() {
     RuntimeException re = null;
     for (StateStorage stateStorage : mySaveSessions.keySet()) {
@@ -74,9 +64,5 @@ public class CompoundSaveSession {
     }
 
     return result;
-  }
-
-  public Set<StateStorage> getStateStorages() {
-    return mySaveSessions.keySet();
   }
 }

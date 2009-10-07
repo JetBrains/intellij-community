@@ -82,4 +82,6 @@ public abstract class PackagingElementFactory {
   @NotNull
   public abstract PackagingElementType[] getAllElementTypes();
 
+  @NotNull
+  public abstract ComplexPackagingElementType<?>[] getComplexElementTypes();
 }

@@ -41,6 +41,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
   private final Project myProject;
   private final DefaultPackagingElementResolvingContext myResolvingContext;
   private boolean myInsideCommit = false;
+  private boolean myLoaded;
   private long myModificationCount;
   private final ModificationTracker myModificationTracker = new ModificationTracker() {
     public long getModificationCount() {
@@ -81,7 +82,6 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
       artifactState.setOutputPath(artifact.getOutputPath());
       artifactState.setRootElement(serializePackagingElement(artifact.getRootElement()));
       artifactState.setArtifactType(artifact.getArtifactType().getId());
-      artifactState.setClearOutputOnRebuild(artifact.isClearOutputDirectoryOnRebuild());
       for (ArtifactPropertiesProvider provider : artifact.getPropertiesProviders()) {
         final ArtifactPropertiesState propertiesState = serializeProperties(provider, artifact.getProperties(provider));
         if (propertiesState != null) {
@@ -155,8 +155,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
         rootElement = type.createRootElement(artifactName);
       }
 
-      final ArtifactImpl artifact = new ArtifactImpl(artifactName, type, state.isBuildOnMake(), rootElement, state.getOutputPath(),
-                                                     state.isClearOutputOnRebuild());
+      final ArtifactImpl artifact = new ArtifactImpl(artifactName, type, state.isBuildOnMake(), rootElement, state.getOutputPath());
       final List<ArtifactPropertiesState> propertiesList = state.getPropertiesList();
       for (ArtifactPropertiesState propertiesState : propertiesList) {
         final ArtifactPropertiesProvider provider = ArtifactPropertiesProvider.findById(propertiesState.getId());
@@ -166,7 +165,16 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
       }
       artifacts.add(artifact);
     }
-    myModel.setArtifactsList(artifacts);
+
+    if (myLoaded) {
+      final ArtifactModelImpl model = new ArtifactModelImpl(this);
+      model.addArtifacts(artifacts);
+      doCommit(model);
+    }
+    else {
+      myModel.setArtifactsList(artifacts);
+      myLoaded = true;
+    }
   }
 
   private static <S> void deserializeProperties(ArtifactProperties<S> artifactProperties, ArtifactPropertiesState propertiesState) {
@@ -251,8 +259,12 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
 
   public void commit(ArtifactModelImpl artifactModel) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    LOG.assertTrue(!myInsideCommit, "Recursive commit");
 
+    doCommit(artifactModel);
+  }
+
+  private void doCommit(ArtifactModelImpl artifactModel) {
+    LOG.assertTrue(!myInsideCommit, "Recursive commit");
     myInsideCommit = true;
     try {
 

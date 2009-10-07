@@ -10,9 +10,7 @@ import com.intellij.refactoring.rename.JavaUnresolvableLocalCollisionDetector;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
 import com.intellij.util.containers.HashSet;
-
-import java.util.LinkedHashMap;
-import java.util.Map;
+import com.intellij.util.containers.MultiMap;
 
 public class InputValidator implements IntroduceVariableBase.Validator {
   private final Project myProject;
@@ -32,7 +30,7 @@ public class InputValidator implements IntroduceVariableBase.Validator {
     }
     final PsiElement scope = anchor.getParent();
     if(scope == null) return true;
-    final Map<PsiElement, String> conflicts = new LinkedHashMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     final HashSet<PsiVariable> reportedVariables = new HashSet<PsiVariable>();
     JavaUnresolvableLocalCollisionDetector.CollidingVariableVisitor visitor = new JavaUnresolvableLocalCollisionDetector.CollidingVariableVisitor() {
       public void visitCollidingElement(PsiVariable collidingVariable) {
@@ -40,7 +38,7 @@ public class InputValidator implements IntroduceVariableBase.Validator {
         if (!reportedVariables.contains(collidingVariable)) {
           reportedVariables.add(collidingVariable);
           String message = RefactoringBundle.message("introduced.variable.will.conflict.with.0", RefactoringUIUtil.getDescription(collidingVariable, true));
-          conflicts.put(collidingVariable, message);
+          conflicts.putValue(collidingVariable, message);
         }
       }
     };

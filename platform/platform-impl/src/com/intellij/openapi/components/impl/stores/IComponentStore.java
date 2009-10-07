@@ -8,12 +8,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
 public interface IComponentStore {
-  void initComponent(Object component);
+  @Nullable
+  String initComponent(Object component, boolean service);
+  void reinitComponents(Set<String> componentNames, boolean reloadData);
+  boolean isReloadPossible(Set<String> componentNames);
+
+
   void load() throws IOException, StateStorage.StateStorageException;
   boolean isSaving();
 
@@ -35,7 +39,6 @@ public interface IComponentStore {
   SaveSession startSave() throws IOException;
 
   interface SaveSession {
-    Collection<String> getUsedMacros() throws StateStorage.StateStorageException;
     List<IFile> getAllStorageFilesToSave(final boolean includingSubStructures) throws IOException;
     SaveSession save() throws IOException;
     void finishSave();

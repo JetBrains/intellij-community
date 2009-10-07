@@ -73,12 +73,14 @@ public class GitInit extends AnAction {
     }
     catch (VcsException ex) {
       GitUIUtil.showOperationError(project, ex, "git init");
+      return;
     }
     int rc = Messages.showYesNoDialog(project, GitBundle.getString("init.add.root.message"), GitBundle.getString("init.add.root.title"),
                                       Messages.getQuestionIcon());
     if (rc != 0) {
       return;
     }
+    root.refresh(false, false);
     final String path = root.equals(baseDir) ? "" : root.getPath();
     ProjectLevelVcsManager vcs = ProjectLevelVcsManager.getInstance(project);
     final List<VcsDirectoryMapping> vcsDirectoryMappings = new ArrayList<VcsDirectoryMapping>(vcs.getDirectoryMappings());

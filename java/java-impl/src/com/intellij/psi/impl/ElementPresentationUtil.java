@@ -3,6 +3,7 @@ package com.intellij.psi.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TestUtil;
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.IconLoader;
@@ -119,16 +120,18 @@ public class ElementPresentationUtil {
       return CLASS_KIND_ANONYMOUS;
     }
 
-    final PsiManager manager = aClass.getManager();
-    final PsiClass javaLangTrowable =
-      JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Throwable", aClass.getResolveScope());
-    final boolean isException = javaLangTrowable != null && InheritanceUtil.isInheritorOrSelf(aClass, javaLangTrowable, true);
-    if (isException) {
-      return CLASS_KIND_EXCEPTION;
-    }
+    if (!DumbService.getInstance(aClass.getProject()).isDumb()) {
+      final PsiManager manager = aClass.getManager();
+      final PsiClass javaLangTrowable =
+        JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Throwable", aClass.getResolveScope());
+      final boolean isException = javaLangTrowable != null && InheritanceUtil.isInheritorOrSelf(aClass, javaLangTrowable, true);
+      if (isException) {
+        return CLASS_KIND_EXCEPTION;
+      }
 
-    if (TestUtil.isTestClass(aClass)) {
-      return CLASS_KIND_JUNIT_TEST;
+      if (TestUtil.isTestClass(aClass)) {
+        return CLASS_KIND_JUNIT_TEST;
+      }
     }
     if (PsiClassUtil.isRunnableClass(aClass, false) && PsiMethodUtil.findMainMethod(aClass) != null) {
       return CLASS_KIND_RUNNABLE;

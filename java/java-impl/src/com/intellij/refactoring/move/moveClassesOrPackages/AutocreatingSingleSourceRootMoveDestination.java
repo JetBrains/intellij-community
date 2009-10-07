@@ -6,14 +6,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.PackageWrapper;
+import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Map;
 
 /**
  *  @author dsl
@@ -60,8 +61,8 @@ public class AutocreatingSingleSourceRootMoveDestination extends AutocreatingMov
   }
 
   public void analyzeModuleConflicts(final Collection<PsiElement> elements,
-                                     Map<PsiElement,String> conflicts, final UsageInfo[] usages) {
-    RefactoringUtil.analyzeModuleConflicts(getTargetPackage().getManager().getProject(), elements, usages, mySourceRoot, conflicts);
+                                     MultiMap<PsiElement,String> conflicts, final UsageInfo[] usages) {
+    RefactoringConflictsUtil.analyzeModuleConflicts(getTargetPackage().getManager().getProject(), elements, usages, mySourceRoot, conflicts);
   }
 
   PsiDirectory myTargetDirectory = null;

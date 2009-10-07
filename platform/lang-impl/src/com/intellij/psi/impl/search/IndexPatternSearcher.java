@@ -155,7 +155,8 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
 
         int start = lexer.getTokenStart() + startDelta;
         int end = lexer.getTokenEnd() - endDelta;
-        assert start <= end : "Invalid comment range: " + new TextRange(start, end) + "; lexer token range="+new TextRange(lexer.getTokenStart(), lexer.getTokenEnd())+"; delta="+new TextRange(startDelta, endDelta)+"; lexer="+lexer+"; builder="+builderForFile;
+        assert start <= end : "Invalid comment range: " + new TextRange(start, end) + "; lexer token range="+new TextRange(lexer.getTokenStart(), lexer.getTokenEnd())+"; delta="+new TextRange(startDelta, endDelta)+"; lexer="+lexer+"; builder="+builderForFile+"; chars length:"+chars.length();
+        assert end <= chars.length(): "Invalid comment end: " + new TextRange(start, end) + "; lexer token range="+new TextRange(lexer.getTokenStart(), lexer.getTokenEnd())+"; delta="+new TextRange(startDelta, endDelta)+"; lexer="+lexer+"; builder="+builderForFile+"; chars length:"+chars.length();
         commentStarts.add(start);
         commentEnds.add(end);
       }

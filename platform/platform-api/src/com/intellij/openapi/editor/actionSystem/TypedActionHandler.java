@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.actionSystem;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Interface for actions activated by typing in the editor.
@@ -32,5 +33,5 @@ public interface TypedActionHandler {
    * @param charTyped   the typed character.
    * @param dataContext the current data context.
    */
-  void execute(Editor editor, char charTyped, DataContext dataContext);
+  void execute(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext);
 }

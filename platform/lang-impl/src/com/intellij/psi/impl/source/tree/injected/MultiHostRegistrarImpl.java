@@ -25,6 +25,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
+import com.intellij.psi.impl.source.text.BlockSupportImpl;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -178,15 +179,12 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
       ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(myLanguage);
       assert parserDefinition != null : "Parser definition for language "+myLanguage+" is null";
       PsiFile psiFile = parserDefinition.createFile(viewProvider);
-      place.setInjectedPsi(psiFile);
 
       SmartPsiElementPointer<PsiLanguageInjectionHost> pointer = createHostSmartPointer(shreds.get(0).host);
-      psiFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, pointer);
 
       synchronized (PsiLock.LOCK) {
-        keepTreeFromChameleoningBack(psiFile);
+        final ASTNode parsedNode = keepTreeFromChameleoningBack(psiFile);
 
-        final ASTNode parsedNode = psiFile.getNode();
         assert parsedNode instanceof FileElement : "Parsed to "+parsedNode+" instead of FileElement";
 
         String documentText = documentWindow.getText();
@@ -203,48 +201,71 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
         assert parsedNode.getText().equals(documentText) : exceptionContext("After patch: doc:\n" + documentText + "\n---PSI:\n" + parsedNode.getText() + "\n---chars:\n"+outChars);
 
         virtualFile.setContent(null, documentWindow.getText(), false);
-        FileDocumentManagerImpl.registerDocument(documentWindow, virtualFile);
-        documentManager.getDocument(psiFile); //cache file in document user data
-        assert documentManager.getCachedPsiFile(documentWindow) == psiFile : "Cached psi :"+documentManager.getCachedPsiFile(documentWindow)+" instead of "+psiFile;
-        viewProvider.forceCachedPsi(psiFile);
+        
+        cacheEverything(place, documentWindow, viewProvider, psiFile, pointer);
 
+        PsiFile cachedPsiFile = documentManager.getCachedPsiFile(documentWindow);
+        assert cachedPsiFile == psiFile : "Cached psi :"+ cachedPsiFile +" instead of "+psiFile;
+
+        assert place.isValid();
+        assert viewProvider.isValid();
         PsiFile newFile = registerDocument(documentWindow, psiFile, place, myHostPsiFile, documentManager);
-        if (newFile != psiFile) {
+        boolean mergeHappened = newFile != psiFile;
+        if (mergeHappened) {
           InjectedLanguageUtil.clearCaches(psiFile);
           psiFile = newFile;
           viewProvider = (InjectedFileViewProvider)psiFile.getViewProvider();
-          viewProvider.forceCachedPsi(psiFile);
           documentWindow = (DocumentWindowImpl)viewProvider.getDocument();
           virtualFile = (VirtualFileWindowImpl)viewProvider.getVirtualFile();
-
-          psiFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, pointer);
-
-          keepTreeFromChameleoningBack(psiFile);
-          place.setInjectedPsi(psiFile);
+          cacheEverything(place, documentWindow, viewProvider, psiFile, pointer);
         }
-      }
 
-      try {
-        List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> tokens = obtainHighlightTokensFromLexer(myLanguage, outChars, escapers, place, virtualFile, myProject);
-        psiFile.putUserData(InjectedLanguageUtil.HIGHLIGHT_TOKENS, tokens);
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (RuntimeException e) {
-        throw new RuntimeException(exceptionContext("Obtaining tokens error"), e);
-      }
+        assert psiFile.isValid();
+        assert place.isValid();
+        assert viewProvider.isValid();
 
-      addToResults(place);
+        try {
+          List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> tokens = obtainHighlightTokensFromLexer(myLanguage, outChars, escapers, place, virtualFile, myProject);
+          psiFile.putUserData(InjectedLanguageUtil.HIGHLIGHT_TOKENS, tokens);
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (RuntimeException e) {
+          throw new RuntimeException(exceptionContext("Obtaining tokens error"), e);
+        }
 
-      assertEverythingIsAllright(documentManager, documentWindow, psiFile);
+        addToResults(place);
+
+        assertEverythingIsAllright(documentManager, documentWindow, psiFile);
+      }
     }
     finally {
       clear();
     }
   }
 
-  private String exceptionContext(String msg) {
+  private static void cacheEverything(Place place,
+                                      DocumentWindowImpl documentWindow,
+                                      InjectedFileViewProvider viewProvider,
+                                      PsiFile psiFile,
+                                      SmartPsiElementPointer<PsiLanguageInjectionHost> pointer) {
+    FileDocumentManagerImpl.registerDocument(documentWindow, viewProvider.getVirtualFile());
+
+    viewProvider.forceCachedPsi(psiFile);
+
+    psiFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, pointer);
+    PsiDocumentManagerImpl.cachePsi(documentWindow, psiFile);
+
+    keepTreeFromChameleoningBack(psiFile);
+    place.setInjectedPsi(psiFile);
+
+    viewProvider.setShreds(place);
+  }
+
+
+  @NonNls
+  private String exceptionContext(@NonNls String msg) {
     return msg + ".\n" +
            "Language: " +myLanguage+";\n "+
            "Host file: "+myHostPsiFile+" in '" + myHostVirtualFile.getPresentableUrl() + "'\n" +
@@ -253,13 +274,14 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
   }
 
   private static final Key<ASTNode> TREE_HARD_REF = Key.create("TREE_HARD_REF");
-  private static void keepTreeFromChameleoningBack(PsiFile psiFile) {
+  private static ASTNode keepTreeFromChameleoningBack(PsiFile psiFile) {
     psiFile.getFirstChild();
     // need to keep tree reacheable to avoid being garbage-collected (via WeakReference in PsiFileImpl)
     // and then being reparsed from wrong (escaped) document content
     ASTNode node = psiFile.getNode();
     assert !TreeUtil.isCollapsedChameleon(node) : "Chameleon "+node+" is collapsed";
     psiFile.putUserData(TREE_HARD_REF, node);
+    return node;
   }
 
   private void assertEverythingIsAllright(PsiDocumentManager documentManager, DocumentWindowImpl documentWindow, PsiFile psiFile) {
@@ -353,28 +375,18 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
           continue;
         }
         oldFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, injectedPsi.getUserData(FileContextUtil.INJECTED_IN_ELEMENT));
-        if (isPSItheSame(injectedNode, oldFileNode)) {
-          oldViewProvider.setShreds(shreds);
+
+        try {
+          assert shreds.isValid();
+          oldViewProvider.setPhysical(false); //do not fire events now
+          BlockSupportImpl.mergeTrees(oldFile, oldFileNode, injectedNode);
+          oldFile.subtreeChanged();
         }
-        else {
-          // replace psi
-          FileElement newFileElement = (FileElement)injectedNode;
-          FileElement oldFileElement = oldFile.getTreeElement();
-
-          if (oldFileElement.getFirstChildNode() != null) {
-            oldFileElement.rawRemoveAllChildren();
-          }
-          final ASTNode firstChildNode = newFileElement.getFirstChildNode();
-          if (firstChildNode != null) {
-            oldFileElement.rawAddChildren((TreeElement)firstChildNode);
-          }
-          oldFileElement.setCharTable(newFileElement.getCharTable());
-
-          // reuse old editor and virtual file
-          oldViewProvider.setShreds(shreds);
+        finally {
+          oldViewProvider.setPhysical(true);
         }
+        assert shreds.isValid();
 
-        oldFile.subtreeChanged();
         return oldFile;
       }
     }
@@ -405,35 +417,6 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     }
   }
 
-  private static boolean isPSItheSame(ASTNode injectedNode, ASTNode oldFileNode) {
-    //boolean textSame = injectedNode.getText().equals(oldFileNode.getText());
-
-    boolean psiSame = comparePSI(injectedNode, oldFileNode);
-    //if (psiSame != textSame) {
-    //  throw new RuntimeException(textSame + ";" + psiSame);
-    //}
-    return psiSame;
-  }
-
-  private static boolean comparePSI(ASTNode injectedNode, ASTNode oldFileNode) {
-    if (injectedNode instanceof LeafElement) {
-      return oldFileNode instanceof LeafElement &&
-             injectedNode.getElementType().equals(oldFileNode.getElementType()) &&
-             injectedNode.getText().equals(oldFileNode.getText());
-    }
-    if (!(injectedNode instanceof CompositeElement) || !(oldFileNode instanceof CompositeElement)) return false;
-    CompositeElement element1 = (CompositeElement)injectedNode;
-    CompositeElement element2 = (CompositeElement)oldFileNode;
-    TreeElement child1 = element1.getFirstChildNode();
-    TreeElement child2 = element2.getFirstChildNode();
-    while (child1  != null && child2 != null) {
-      if (!comparePSI(child1, child2)) return false;
-      child1 = child1.getTreeNext();
-      child2 = child2.getTreeNext();
-    }
-
-    return child1 == null && child2 == null;
-  }
   // returns lexer elemet types with corresponsing ranges in encoded (injection host based) PSI
   private static List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> obtainHighlightTokensFromLexer(Language language,
                                                                                                                  StringBuilder outChars,

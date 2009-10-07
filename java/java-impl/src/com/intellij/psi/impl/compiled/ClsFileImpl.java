@@ -384,12 +384,11 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     synchronized (lock) {
       myStub = new SoftReference<StubTree>(tree);
       ((PsiFileStubImpl)tree.getRoot()).setPsi(this);
+    }
 
-      synchronized (MIRROR_LOCK) {
-        myMirrorFileElement = null;
-      }
+    synchronized (MIRROR_LOCK) {
+      myMirrorFileElement = null;
       myPackageStatement = new ClsPackageStatementImpl(this);
-
     }
   }
 

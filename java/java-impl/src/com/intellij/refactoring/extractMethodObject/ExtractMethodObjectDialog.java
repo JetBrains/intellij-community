@@ -15,6 +15,7 @@ import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.Function;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -23,8 +24,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
 
 
 public class ExtractMethodObjectDialog extends AbstractExtractDialog {
@@ -133,11 +132,11 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
   }
 
   protected void doOKAction() {
-    Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     if (myCreateInnerClassRb.isSelected()) {
       final PsiClass innerClass = myTargetClass.findInnerClassByName(myInnerClassName.getText(), false);
       if (innerClass != null) {
-        conflicts.put(innerClass, "Inner class " + myInnerClassName.getText() + " already defined in class " + myTargetClass.getName());
+        conflicts.putValue(innerClass, "Inner class " + myInnerClassName.getText() + " already defined in class " + myTargetClass.getName());
       }
     }
     if (conflicts.size() > 0) {

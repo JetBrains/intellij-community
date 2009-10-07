@@ -30,13 +30,13 @@ public class RefactoringHierarchyUtil {
 
   public static boolean willBeInTargetClass(PsiElement place,
                                             @NotNull Set<PsiMember> membersToMove,
-                                            PsiClass targetClass,
+                                            @Nullable PsiClass targetClass,
                                             boolean includeSubclasses) {
     PsiElement parent = place;
     while (parent != null) {
       if (membersToMove.contains(parent)) return true;
       if (parent instanceof PsiModifierList) return false; //see IDEADEV-12448
-      if (parent instanceof PsiClass) {
+      if (parent instanceof PsiClass && targetClass != null) {
         if (targetClass.equals(parent)) return true;
         if (includeSubclasses && ((PsiClass) parent).isInheritor(targetClass, true)) return true;
       }

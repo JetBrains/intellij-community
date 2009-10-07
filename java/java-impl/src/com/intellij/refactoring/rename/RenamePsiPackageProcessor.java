@@ -9,6 +9,7 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,13 +49,13 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
   }
 
   @Override
-  public void findExistingNameConflicts(PsiElement element, String newName, Map<PsiElement, String> conflicts) {
+  public void findExistingNameConflicts(PsiElement element, String newName, MultiMap<PsiElement,String> conflicts) {
     final PsiPackage aPackage = (PsiPackage)element;
     final Project project = element.getProject();
     final String qualifiedNameAfterRename = getPackageQualifiedNameAfterRename(aPackage, newName, true);
     final PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(qualifiedNameAfterRename, GlobalSearchScope.allScope(project));
     if (psiClass != null) {
-      conflicts.put(psiClass, "Class with qualified name \'" + qualifiedNameAfterRename + "\'  already exist");
+      conflicts.putValue(psiClass, "Class with qualified name \'" + qualifiedNameAfterRename + "\'  already exist");
     }
   }
 

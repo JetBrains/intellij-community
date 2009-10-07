@@ -1,16 +1,20 @@
 package com.intellij.codeInsight.highlighting;
 
-import com.intellij.lang.PairedBraceMatcher;
-import com.intellij.lang.Language;
 import com.intellij.lang.BracePair;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.PsiFile;
+import com.intellij.lang.Language;
+import com.intellij.lang.PairedBraceMatcher;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class PairedBraceMatcherAdapter implements BraceMatcher {
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+class PairedBraceMatcherAdapter implements NontrivialBraceMatcher {
   private final PairedBraceMatcher myMatcher;
   private final Language myLanguage;
 
@@ -81,5 +85,24 @@ class PairedBraceMatcherAdapter implements BraceMatcher {
 
   public int getCodeConstructStart(final PsiFile file, int openingBraceOffset) {
     return myMatcher.getCodeConstructStart(file, openingBraceOffset);
+  }
+
+  @NotNull
+  public List<IElementType> getOppositeBraceTokenTypes(@NotNull IElementType type) {
+    List<IElementType> result = null;
+
+    for (BracePair pair : myMatcher.getPairs()) {
+      IElementType match = null;
+
+      if (type == pair.getRightBraceType()) match = pair.getLeftBraceType();
+      if (type == pair.getLeftBraceType()) match = pair.getRightBraceType();
+
+      if (match != null) {
+        if (result == null) result = new ArrayList<IElementType>(2);
+        result.add(match);
+      }
+    }
+
+    return result != null ? result : Collections.<IElementType>emptyList();
   }
 }

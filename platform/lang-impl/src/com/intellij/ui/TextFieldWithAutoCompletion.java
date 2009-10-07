@@ -1,7 +1,10 @@
 package com.intellij.ui;
 
+import com.intellij.codeInsight.lookup.LookupArranger;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -13,11 +16,14 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.util.Function;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -37,6 +43,7 @@ import java.util.List;
  */
 public class TextFieldWithAutoCompletion extends EditorTextField {
   private List<LookupElement> myVariants;
+  private String myAdText;
 
   public TextFieldWithAutoCompletion() {
     super();
@@ -78,22 +85,53 @@ public class TextFieldWithAutoCompletion extends EditorTextField {
       assert editor != null;
 
       editor.getSelectionModel().removeSelection();
-      LookupManager.getInstance(getProject()).showLookup(editor, calcLookupItems(getPrefix()), getPrefix());
+      final String lookupPrefix = getCurrentLookupPrefix(getCurrentTextPrefix());
+      final LookupImpl lookup =
+        (LookupImpl)LookupManager.getInstance(getProject()).createLookup(editor,
+                                                                         calcLookupItems(lookupPrefix),
+                                                                         lookupPrefix != null ? lookupPrefix : "",
+                                                                         LookupArranger.DEFAULT);
+      final String advertisementText = getAdvertisementText();
+      if (!StringUtil.isEmpty(advertisementText)) {
+        lookup.setAdvertisementText(advertisementText);
+        lookup.refreshUi();
+      }
+      lookup.show();
     }
+  }
+
+  public void setAdvertisementText(@Nullable String text) {
+    myAdText = text;
+  }
+
+  public String getAdvertisementText() {
+    return myAdText;
   }
 
   public void setVariants(@Nullable final List<LookupElement> variants) {
     myVariants = (variants != null) ? variants : Collections.<LookupElement>emptyList();
   }
 
-  private LookupElement[] calcLookupItems(final String prefix) {
-    final List<LookupElement> items = new ArrayList<LookupElement>();
-    if (prefix == null || prefix.length() == 0) {
-      for (LookupElement variant : myVariants) {
-        items.add(variant);
+  public void setVariants(@Nullable final String[] variants) {
+    myVariants = (variants == null)
+       ? Collections.<LookupElement>emptyList()
+       : ContainerUtil.map(variants, new Function<String, LookupElement>() {
+      public LookupElement fun(final String s) {
+        return LookupElementBuilder.create(s);
       }
+    });
+  }
+
+  private LookupElement[] calcLookupItems(@Nullable final String lookupPrefix) {
+    if (lookupPrefix == null) {
+      return new LookupElement[0];
+    }
+
+    final List<LookupElement> items = new ArrayList<LookupElement>();
+    if (lookupPrefix.length() == 0) {
+      items.addAll(myVariants);
     } else {
-      final NameUtil.Matcher matcher = NameUtil.buildMatcher(prefix, 0, true, true);
+      final NameUtil.Matcher matcher = NameUtil.buildMatcher(lookupPrefix, 0, true, true);
 
       for (LookupElement variant : myVariants) {
         if (matcher.matches(variant.getLookupString())) {
@@ -112,7 +150,15 @@ public class TextFieldWithAutoCompletion extends EditorTextField {
     return items.toArray(new LookupElement[items.size()]);
   }
 
-  private String getPrefix() {
+  /**
+   * Returns prefix for autocompletion and lookup items matching.
+   */
+  @Nullable
+  protected String getCurrentLookupPrefix(final String currentTextPrefix) {
+    return currentTextPrefix;
+  }
+
+  private String getCurrentTextPrefix() {
     return getText().substring(0, getCaretModel().getOffset());
   }
 
