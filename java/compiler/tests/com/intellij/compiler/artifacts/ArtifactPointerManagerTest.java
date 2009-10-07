@@ -56,6 +56,20 @@ public class ArtifactPointerManagerTest extends ArtifactsTestCase {
     assertNull(pointer.getArtifact());
   }
 
+  public void testRemoveAndAdd() throws Exception {
+    final Artifact artifact = addArtifact("abc");
+    final ArtifactPointer pointer = getPointerManager().create(artifact);
+    assertSame(artifact, pointer.getArtifact());
+
+    deleteArtifact(artifact);
+
+    assertNull(pointer.getArtifact());
+
+    final Artifact artifact2 = addArtifact("abc");
+    assertSame(artifact2, pointer.getArtifact());
+    assertSame(pointer, getPointerManager().create(artifact2));
+  }
+
   private ArtifactPointerManager getPointerManager() {
     return ArtifactPointerManager.getInstance(myProject);
   }
