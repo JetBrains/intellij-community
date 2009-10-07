@@ -19,7 +19,7 @@ public class ArtifactPointerManagerImpl extends ArtifactPointerManager {
     myProject.getMessageBus().connect().subscribe(ArtifactManager.TOPIC, new ArtifactAdapter() {
       @Override
       public void artifactRemoved(@NotNull Artifact artifact) {
-        final ArtifactPointerImpl pointer = myPointers.remove(artifact.getName());
+        final ArtifactPointerImpl pointer = myPointers.get(artifact.getName());
         if (pointer != null) {
           pointer.setArtifact(null);
         }

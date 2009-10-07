@@ -1,7 +1,10 @@
 package com.intellij.packaging.impl.run;
 
 import com.intellij.execution.BeforeRunTaskProvider;
+import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.impl.ConfigurationSettingsEditorWrapper;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -25,7 +28,9 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -122,5 +127,30 @@ public class BuildArtifactsBeforeRun implements BeforeRunTaskProvider<BuildArtif
 
     finished.waitFor();
     return result.get();
+  }
+
+  public static void setBuildArtifactBeforeRunOption(@NotNull JComponent runConfigurationEditorComponent, @NotNull Artifact artifact, final boolean enable) {
+    final DataContext dataContext = DataManager.getInstance().getDataContext(runConfigurationEditorComponent);
+    final ConfigurationSettingsEditorWrapper editor = ConfigurationSettingsEditorWrapper.CONFIGURATION_EDITOR_KEY.getData(dataContext);
+    if (editor != null) {
+      final BuildArtifactsBeforeRunTask task = (BuildArtifactsBeforeRunTask)editor.getStepsBeforeLaunch().get(ID);
+      if (enable) {
+        task.addArtifact(artifact);
+      }
+      else {
+        task.removeArtifact(artifact);
+      }
+      task.setEnabled(!task.getArtifactPointers().isEmpty());
+      editor.updateBeforeRunTaskPanel(ID);
+    }
+  }
+
+  public static void setBuildArtifactBeforeRun(@NotNull Project project, @NotNull RunConfiguration configuration, @NotNull Artifact artifact) {
+    RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
+    final BuildArtifactsBeforeRunTask buildArtifactsTask = runManager.getBeforeRunTask(configuration, ID);
+    if (buildArtifactsTask != null) {
+      buildArtifactsTask.setEnabled(true);
+      buildArtifactsTask.addArtifact(artifact);
+    }
   }
 }
