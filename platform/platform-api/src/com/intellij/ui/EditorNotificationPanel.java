@@ -18,7 +18,7 @@ import java.awt.*;
 public class EditorNotificationPanel extends JPanel {
 
   protected final JLabel myLabel = new JLabel();
-  private final JPanel myLinksPanel;
+  protected final JPanel myLinksPanel;
 
   public EditorNotificationPanel() {
     super(new BorderLayout());
@@ -35,7 +35,7 @@ public class EditorNotificationPanel extends JPanel {
     myLabel.setText(text);
   }
 
-  public void createActionLabel(final String text, @NonNls final String actionId) {
+  public HyperlinkLabel createActionLabel(final String text, @NonNls final String actionId) {
     HyperlinkLabel label = new HyperlinkLabel(text, Color.BLUE, LightColors.YELLOW, Color.BLUE);
     label.addHyperlinkListener(new HyperlinkListener() {
       public void hyperlinkUpdate(final HyperlinkEvent e) {
@@ -45,6 +45,7 @@ public class EditorNotificationPanel extends JPanel {
       }
     });
     myLinksPanel.add(label);
+    return label;
   }
 
   protected void executeAction(final String actionId) {
