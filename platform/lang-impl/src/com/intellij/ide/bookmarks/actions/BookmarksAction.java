@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
@@ -356,10 +357,18 @@ public class BookmarksAction extends AnAction implements DumbAware {
         renderer.append(String.valueOf(myBookmark.getLine() + 1), SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
 
-      if (!selected && (fileOrDir instanceof PsiFile)) {
-        Color color = FileColorManager.getInstance(project).getFileColor((PsiFile)fileOrDir);
-        if (color != null) {
-          renderer.setBackground(color);
+      if (!selected) {
+        FileColorManager colorManager = FileColorManager.getInstance(project);
+        if (colorManager.isEnabled()) {
+          if (fileOrDir instanceof PsiFile) {
+            Color color = colorManager.getFileColor((PsiFile)fileOrDir);
+            if (color != null) {
+              renderer.setBackground(color);
+            }
+          }
+        }
+        else if (FileEditorManager.getInstance(project).isFileOpen(file)) {
+          renderer.setBackground(LightColors.SLIGHTLY_GREEN);
         }
       }
 
