@@ -100,12 +100,16 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private final MyUpdateButtonsRunnable myUpdateButtonsRunnable = new MyUpdateButtonsRunnable(this);
 
-  private static void commit(final Project project, final List<Change> changes, final LocalChangeList initialSelection,
+  private static boolean commit(final Project project, final List<Change> changes, final LocalChangeList initialSelection,
                              final List<CommitExecutor> executors, final boolean showVcsCommit, final String comment) {
     final ChangeListManager manager = ChangeListManager.getInstance(project);
     final LocalChangeList defaultList = manager.getDefaultChangeList();
     final ArrayList<LocalChangeList> changeLists = new ArrayList<LocalChangeList>(manager.getChangeListsCopy());
-    new CommitChangeListDialog(project, changes, initialSelection, executors, showVcsCommit, defaultList, changeLists, null, false, comment).show();
+    CommitChangeListDialog dialog =
+      new CommitChangeListDialog(project, changes, initialSelection, executors, showVcsCommit, defaultList, changeLists, null, false,
+                                 comment);
+    dialog.show();
+    return dialog.isOK();
   }
 
   public static void commitPaths(final Project project, Collection<FilePath> paths, final LocalChangeList initialSelection,
@@ -119,26 +123,26 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     commitChanges(project, changes, initialSelection, executor, comment);
   }
 
-  public static void commitChanges(final Project project, final Collection<Change> changes, final LocalChangeList initialSelection,
+  public static boolean commitChanges(final Project project, final Collection<Change> changes, final LocalChangeList initialSelection,
                                    final CommitExecutor executor, final String comment) {
     final ChangeListManager manager = ChangeListManager.getInstance(project);
     if (executor == null) {
-      commitChanges(project, changes, initialSelection, manager.getRegisteredExecutors(), true, comment);
+      return commitChanges(project, changes, initialSelection, manager.getRegisteredExecutors(), true, comment);
     }
     else {
-      commitChanges(project, changes, initialSelection, Collections.singletonList(executor), false, comment);
+      return commitChanges(project, changes, initialSelection, Collections.singletonList(executor), false, comment);
     }
   }
 
-  public static void commitChanges(final Project project, final Collection<Change> changes, final LocalChangeList initialSelection,
+  public static boolean commitChanges(final Project project, final Collection<Change> changes, final LocalChangeList initialSelection,
                                    final List<CommitExecutor> executors, final boolean showVcsCommit, final String comment) {
     if (changes.isEmpty()) {
       Messages.showWarningDialog(project, VcsBundle.message("commit.dialog.no.changes.detected.text") ,
                                  VcsBundle.message("commit.dialog.no.changes.detected.title"));
-      return;
+      return false;
     }
 
-    commit(project, new ArrayList<Change>(changes), initialSelection, executors, showVcsCommit, comment);
+    return commit(project, new ArrayList<Change>(changes), initialSelection, executors, showVcsCommit, comment);
   }
 
   public static void commitAlienChanges(final Project project, final List<Change> changes, final AbstractVcs vcs,

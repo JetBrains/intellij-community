@@ -20,12 +20,6 @@ public class ArtifactPointerImpl implements ArtifactPointer {
     myName = name;
   }
 
-  public ArtifactPointerImpl(@NotNull Project project, @NotNull Artifact artifact) {
-    myProject = project;
-    myArtifact = artifact;
-    myName = artifact.getName();
-  }
-
   @NotNull
   public String getName() {
     return myName;

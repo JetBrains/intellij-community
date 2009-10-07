@@ -212,6 +212,7 @@ public class BookmarksAction extends AnAction implements DumbAware {
     new PopupChooserBuilder(list).
       setTitle("Bookmarks").
       setMovable(true).
+      setAutoselectOnMouseMove(false).
       setSouthComponent(footerPanel).
       setEastComponent(previewPanel).
       setItemChoosenCallback(runnable).

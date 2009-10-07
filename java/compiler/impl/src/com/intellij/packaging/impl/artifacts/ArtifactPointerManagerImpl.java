@@ -4,8 +4,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author nik
@@ -22,6 +22,14 @@ public class ArtifactPointerManagerImpl extends ArtifactPointerManager {
         final ArtifactPointerImpl pointer = myPointers.remove(artifact.getName());
         if (pointer != null) {
           pointer.setArtifact(null);
+        }
+      }
+
+      @Override
+      public void artifactAdded(@NotNull Artifact artifact) {
+        final ArtifactPointerImpl artifactPointer = myPointers.get(artifact.getName());
+        if (artifactPointer != null) {
+          artifactPointer.setArtifact(artifact);
         }
       }
 
