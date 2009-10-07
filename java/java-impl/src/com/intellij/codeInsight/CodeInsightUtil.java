@@ -55,10 +55,11 @@ public class CodeInsightUtil {
   }
 
   @NotNull
-  public static PsiElement[] findStatementsInRange(PsiFile file, int startOffset, int endOffset) {
-    if (!file.getViewProvider().getLanguages().contains(StdLanguages.JAVA)) return PsiElement.EMPTY_ARRAY;
-    PsiElement element1 = file.getViewProvider().findElementAt(startOffset, StdLanguages.JAVA);
-    PsiElement element2 = file.getViewProvider().findElementAt(endOffset - 1, StdLanguages.JAVA);
+  public static PsiElement[] findStatementsInRange(@NotNull PsiFile file, int startOffset, int endOffset) {
+    FileViewProvider viewProvider = file.getViewProvider();
+    if (!viewProvider.getLanguages().contains(StdLanguages.JAVA)) return PsiElement.EMPTY_ARRAY;
+    PsiElement element1 = viewProvider.findElementAt(startOffset, StdLanguages.JAVA);
+    PsiElement element2 = viewProvider.findElementAt(endOffset - 1, StdLanguages.JAVA);
     if (element1 instanceof PsiWhiteSpace) {
       startOffset = element1.getTextRange().getEndOffset();
       element1 = file.findElementAt(startOffset);
