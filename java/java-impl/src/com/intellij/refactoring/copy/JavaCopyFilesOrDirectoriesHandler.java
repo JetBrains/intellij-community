@@ -8,30 +8,19 @@ import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
  * @author yole
  */
 public class JavaCopyFilesOrDirectoriesHandler extends CopyFilesOrDirectoriesHandler {
-  protected boolean canCopyFiles(final PsiElement[] elements) {
-    for (PsiElement element : elements) {
-      if (!(element instanceof PsiFile) ||
-          element instanceof PsiClassOwner &&
-          PsiUtilBase.getTemplateLanguageFile(element) != element &&
-          !CollectHighlightsUtil.isOutsideSourceRoot((PsiFile) element)) {
-        return false;
-      }
-    }
-
-    return super.canCopyFiles(elements);
-  }
-
-  protected boolean canCopyDirectories(final PsiElement[] elements) {
-    if (!super.canCopyDirectories(elements)) return false;
-
-    for (PsiElement element1 : elements) {
-      PsiDirectory directory = (PsiDirectory)element1;
-
-      if (hasPackages(directory)) {
-        return false;
-      }
+  @Override
+  protected boolean canCopyFile(final PsiFile element) {
+    if (element instanceof PsiClassOwner &&
+        PsiUtilBase.getTemplateLanguageFile(element) != element &&
+        !CollectHighlightsUtil.isOutsideSourceRoot(element)) {
+      return false;
     }
     return true;
+  }
+
+  @Override
+  protected boolean canCopyDirectory(PsiDirectory element) {
+    return !hasPackages(element);
   }
 
   public static boolean hasPackages(PsiDirectory directory) {
