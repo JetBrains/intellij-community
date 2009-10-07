@@ -101,6 +101,7 @@ public abstract class CopyPasteDelegator implements CopyPasteSupport {
         for(PasteProvider provider: Extensions.getExtensions(EP_NAME)) {
           if (provider.isPasteEnabled(dataContext)) {
             provider.performPaste(dataContext);
+            break;
           }
         }
       }
