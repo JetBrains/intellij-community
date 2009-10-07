@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.RefactoringBundle;
@@ -64,7 +65,8 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
         validateButtons();
       }
     };
-
+    final PsiClass containingClass = sourceMethod.getContainingClass();
+    keepMethodAsDelegate.setVisible(containingClass != null && !containingClass.isInterface());
     classNameField.getDocument().addDocumentListener(docListener);
     myInnerClassNameTextField.getDocument().addDocumentListener(docListener);
     final PsiParameterList parameterList = sourceMethod.getParameterList();
@@ -76,8 +78,7 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
       parameterInfo[i].passAsParameter = true;
     }
 
-    final PsiClass containingClass = sourceMethod.getContainingClass();
-    sourceMethodTextField.setText(containingClass.getName() + '.' + sourceMethod.getName());
+    sourceMethodTextField.setText(PsiFormatUtil.formatMethod(sourceMethod, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_NAME, 0));
     final ButtonGroup buttonGroup = new ButtonGroup();
     buttonGroup.add(useExistingClassButton);
     buttonGroup.add(createNewClassButton);
