@@ -69,7 +69,7 @@ public abstract class CopyPasteDelegator implements CopyPasteSupport {
 
     public boolean isCopyEnabled(DataContext dataContext) {
       PsiElement[] elements = getValidSelectedElements();
-      return CopyHandler.canCopy(elements);
+      return CopyHandler.canCopy(elements) || PsiCopyPasteManager.asFileList(elements) != null;
     }
 
     public boolean isCopyVisible(DataContext dataContext) {

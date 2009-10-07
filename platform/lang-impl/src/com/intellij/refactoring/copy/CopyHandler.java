@@ -23,7 +23,8 @@ public class CopyHandler {
 
   public static boolean canCopy(PsiElement[] elements) {
     if (elements.length > 0) {
-      for(CopyHandlerDelegate delegate: Extensions.getExtensions(CopyHandlerDelegate.EP_NAME)) {
+      final CopyHandlerDelegate[] copyHandlers = Extensions.getExtensions(CopyHandlerDelegate.EP_NAME);
+      for(CopyHandlerDelegate delegate: copyHandlers) {
         if (delegate.canCopy(elements)) return true;
       }
     }
