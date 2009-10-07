@@ -88,4 +88,8 @@ public class PushDownTest extends LightCodeInsightTestCase {
   public void testFieldAndStaticReferencedClass() throws Exception {
     doTest();
   }
+
+  public void testThisRefInAnonymous() throws Exception {
+    doTest();
+  }
 }
