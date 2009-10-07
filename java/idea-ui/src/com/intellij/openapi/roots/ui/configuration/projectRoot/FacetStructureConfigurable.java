@@ -57,6 +57,10 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     return ShowSettingsUtil.getInstance().findProjectConfigurable(project, FacetStructureConfigurable.class);
   }
 
+  public static boolean isEnabled() {
+    return FacetTypeRegistry.getInstance().getFacetTypes().length > 0;
+  }
+
   protected void loadTree() {
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);

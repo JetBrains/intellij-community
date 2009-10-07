@@ -4,11 +4,18 @@
 
 package com.intellij.ide.util.importProject;
 
+import com.intellij.facet.FacetType;
+import com.intellij.facet.FacetTypeRegistry;
+import com.intellij.facet.autodetecting.FacetDetector;
+import com.intellij.facet.autodetecting.UnderlyingFacetSelector;
+import com.intellij.facet.impl.autodetecting.FacetDetectorForWizardRegistry;
+import com.intellij.facet.impl.autodetecting.FacetDetectorRegistryEx;
 import com.intellij.facet.impl.autodetecting.facetsTree.DetectedFacetsTreeComponent;
 import com.intellij.facet.impl.ui.FacetDetectionProcessor;
 import com.intellij.ide.util.newProjectWizard.ProjectFromSourcesBuilder;
 import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -16,8 +23,11 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -116,6 +126,33 @@ public abstract class FacetDetectionStep extends AbstractStepWithProgress<Map<Mo
 
   public Icon getIcon() {
     return myIcon;
+  }
+
+  public static boolean isEnabled(@NotNull ModuleType moduleType) {
+    for (FacetType<?,?> facetType : FacetTypeRegistry.getInstance().getFacetTypes()) {
+      if (facetType.isSuitableModuleType(moduleType)) {
+        final Ref<Boolean> hasDetector = Ref.create(false);
+        //noinspection unchecked
+        facetType.registerDetectors(new FacetDetectorRegistryEx(new FacetDetectorForWizardRegistry() {
+          public void register(@NotNull FileType fileType,
+                               @NotNull VirtualFileFilter virtualFileFilter,
+                               @NotNull FacetDetector facetDetector) {
+            hasDetector.set(true);
+          }
+
+          public void register(FileType fileType,
+                               @NotNull VirtualFileFilter virtualFileFilter,
+                               FacetDetector facetDetector,
+                               UnderlyingFacetSelector underlyingFacetSelector) {
+            hasDetector.set(true);
+          }
+        }, null));
+        if (hasDetector.get()) {
+          return true;
+        } 
+      }
+    }
+    return false;
   }
 
   @NonNls
