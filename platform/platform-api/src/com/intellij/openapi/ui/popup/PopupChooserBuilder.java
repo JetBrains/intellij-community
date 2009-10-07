@@ -41,7 +41,7 @@ import java.util.List;
  * @author max
  */
 public class PopupChooserBuilder {
-  private final JComponent myChooserComponent;
+  private JComponent myChooserComponent;
   private String myTitle;
   private final ArrayList<KeyStroke> myAdditionalKeystrokes = new ArrayList<KeyStroke>();
   private Runnable myItemChoosenRunnable;
@@ -69,7 +69,7 @@ public class PopupChooserBuilder {
   private boolean myAutoselectOnMouseMove = true;
 
   public PopupChooserBuilder(@NotNull JList list) {
-    myChooserComponent = new MyListWrapper(list);
+    myChooserComponent = list;
   }
 
   public PopupChooserBuilder(@NotNull JTable table) {
@@ -156,6 +156,10 @@ public class PopupChooserBuilder {
 
   @NotNull
   public JBPopup createPopup() {
+    if (myChooserComponent instanceof JList) {
+      myChooserComponent = new MyListWrapper((JList)myChooserComponent);
+    }
+
     JPanel contentPane = new JPanel(new BorderLayout());
     if (!myForceMovable && myTitle != null) {
       JLabel label = new JLabel(myTitle);
@@ -213,24 +217,14 @@ public class PopupChooserBuilder {
       contentPane.add(myEastComponent, BorderLayout.EAST);
     }
 
-    ComponentPopupBuilder builder = JBPopupFactory.getInstance()
-      .createComponentPopupBuilder(contentPane, myChooserComponent);
+    ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(contentPane, myChooserComponent);
     for (JBPopupListener each : myListeners) {
       builder.addListener(each);
     }
 
-    builder.setDimensionServiceKey(null, myDimensionServiceKey, false)
-      .setRequestFocus(myRequestFocus)
-      .setResizable(myForceResizable)
-      .setMovable(myForceMovable)
-      .setTitle(myForceMovable ? myTitle : null)
-      .setCancelCallback(myCancelCallback)
-      .setAlpha(myAlpha)
-      .setFocusOwners(myFocusOwners)
-      .setCancelKeyEnabled(myCancelKeyEnabled)
-      .setAdText(myAd)
-      .setKeyboardActions(myKeyboardActions)
-      ;
+    builder.setDimensionServiceKey(null, myDimensionServiceKey, false).setRequestFocus(myRequestFocus).setResizable(myForceResizable)
+      .setMovable(myForceMovable).setTitle(myForceMovable ? myTitle : null).setCancelCallback(myCancelCallback).setAlpha(myAlpha)
+      .setFocusOwners(myFocusOwners).setCancelKeyEnabled(myCancelKeyEnabled).setAdText(myAd).setKeyboardActions(myKeyboardActions);
     if (myCommandButton != null) {
       builder.setCommandButton(myCommandButton);
     }
