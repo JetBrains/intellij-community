@@ -83,7 +83,9 @@ public class RemoveUnusedVariableFix implements IntentionAction {
       references.add(myVariable);
       // check for side effects
       for (PsiElement element : references) {
-        canCopeWithSideEffects[0] &= processUsage(element, myVariable, sideEffects, SideEffectWarningDialog.CANCEL);
+        Boolean result = processUsage(element, myVariable, sideEffects, SideEffectWarningDialog.CANCEL);
+        if (result == null) return;
+        canCopeWithSideEffects[0] &= result;
       }
     }
     catch (IncorrectOperationException e) {
@@ -141,12 +143,13 @@ public class RemoveUnusedVariableFix implements IntentionAction {
    * @param element
    * @param variable
    * @param sideEffects if null, delete usages, otherwise collect side effects
-   * @return true if there are at least one unrecoverable side effect found
+   * @return true if there are at least one unrecoverable side effect found, false if no side effects,
+   *         null if read usage found (may happen if interval between fix creation in invoke() call was long enough)
    * @throws IncorrectOperationException
    */
-  private static boolean processUsage(PsiElement element, PsiVariable variable, List<PsiElement> sideEffects, int deleteMode)
+  private static Boolean processUsage(PsiElement element, PsiVariable variable, List<PsiElement> sideEffects, int deleteMode)
     throws IncorrectOperationException {
-    if (!element.isValid()) return true;
+    if (!element.isValid()) return null;
     PsiElementFactory factory = JavaPsiFacade.getInstance(variable.getProject()).getElementFactory();
     while (element != null) {
       if (element instanceof PsiAssignmentExpression) {
@@ -154,8 +157,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
         PsiExpression lExpression = expression.getLExpression();
         // there should not be read access to the variable, otherwise it is not unused
         if (!(lExpression instanceof PsiReferenceExpression) || variable != ((PsiReferenceExpression)lExpression).resolve()) {
-          PsiElement resolved = lExpression instanceof PsiReferenceExpression ? ((PsiReferenceExpression)lExpression).resolve() : null;
-          LOG.error("'" + expression.getText() + "'; variable=" + variable+"; resolved="+resolved);
+          return null;
         }
         PsiExpression rExpression = expression.getRExpression();
         rExpression = PsiUtil.deparenthesizeExpression(rExpression);
