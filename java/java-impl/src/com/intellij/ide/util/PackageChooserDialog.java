@@ -4,7 +4,6 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -178,15 +177,15 @@ public class PackageChooserDialog extends PackageChooser {
   }
 
   public void selectPackage(final String qualifiedName) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
+    /*ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {*/
           DefaultMutableTreeNode node = findNodeForPackage(qualifiedName);
           if (node != null) {
             TreePath path = new TreePath(node.getPath());
             TreeUtil.selectPath(myTree, path);
           }
-        }
-      }, ModalityState.stateForComponent(getRootPane()));
+       /* }
+      }, ModalityState.stateForComponent(getRootPane()));*/
   }
 
   @Nullable

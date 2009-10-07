@@ -27,6 +27,7 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.refactoring.ui.MemberSelectionTable;
+import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
@@ -158,11 +159,7 @@ public class CreateTestDialog extends DialogWrapper {
     mySuperClassField.setMinimumSize(mySuperClassField.getPreferredSize());
 
     String targetPackageName = targetPackage != null ? targetPackage.getQualifiedName() : "";
-    myTargetPackageField = new ReferenceEditorComboWithBrowseButton(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        doSelectPackage();
-      }
-    }, targetPackageName, PsiManager.getInstance(myProject), false, RECENTS_KEY);
+    myTargetPackageField = new PackageNameReferenceEditorCombo(targetPackageName, myProject, RECENTS_KEY, CodeInsightBundle.message("dialog.create.class.package.chooser.title"));
 
     new AnAction() {
       public void actionPerformed(AnActionEvent e) {
@@ -215,14 +212,6 @@ public class CreateTestDialog extends DialogWrapper {
     }
 
     myMethodsTable.setMemberInfos(methods);
-  }
-
-  private void doSelectPackage() {
-    PackageChooserDialog d = new PackageChooserDialog(CodeInsightBundle.message("dialog.create.class.package.chooser.title"), myProject);
-    d.selectPackage(myTargetPackageField.getText());
-    d.show();
-    PsiPackage p = d.getSelectedPackage();
-    if (p != null) myTargetPackageField.setText(p.getQualifiedName());
   }
 
   private String getDefaultLibraryName() {
