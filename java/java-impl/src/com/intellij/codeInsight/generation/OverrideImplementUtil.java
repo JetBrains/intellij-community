@@ -44,7 +44,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,16 +79,14 @@ public class OverrideImplementUtil {
 
   @NotNull
   private static Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(PsiClass aClass, boolean toImplement) {
-    final PsiSubstitutor contextSubstitutor = getContextSubstitutor(aClass);
     Map<MethodSignature, PsiMethod> abstracts = new LinkedHashMap<MethodSignature,PsiMethod>();
-    Map<MethodSignature, PsiMethod> finals = new HashMap<MethodSignature,PsiMethod>();
+    Map<MethodSignature, PsiMethod> finals = new LinkedHashMap<MethodSignature,PsiMethod>();
     Map<MethodSignature, PsiMethod> concretes = new LinkedHashMap<MethodSignature,PsiMethod>();
-    Map<PsiClass, PsiSubstitutor> substitutors = new HashMap<PsiClass,PsiSubstitutor>();
 
     Collection<HierarchicalMethodSignature> allMethodSigs = aClass.getVisibleSignatures();
     PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(aClass.getProject()).getResolveHelper();
-    for (HierarchicalMethodSignature methodSig : allMethodSigs) {
-      PsiMethod method = methodSig.getMethod();
+    for (HierarchicalMethodSignature signature : allMethodSigs) {
+      PsiMethod method = signature.getMethod();
       if (method.hasModifierProperty(PsiModifier.STATIC) || !resolveHelper.isAccessible(method, aClass, aClass)) continue;
       PsiClass hisClass = method.getContainingClass();
       if (hisClass == null) continue;
@@ -98,21 +95,6 @@ public class OverrideImplementUtil {
         continue;
       }
 
-      PsiSubstitutor substitutor;
-      if ((substitutor = substitutors.get(hisClass)) == null) {
-        substitutor = aClass.isInheritor(hisClass, true) ?
-                      TypeConversionUtil.getSuperClassSubstitutor(hisClass, aClass, PsiSubstitutor.EMPTY) : PsiSubstitutor.EMPTY;
-        substitutor = substitutor.putAll(contextSubstitutor);
-        substitutors.put(hisClass, substitutor);
-      }
-
-      String name = method.isConstructor() ? aClass.getName() : method.getName();
-      substitutor = GenerateMembersUtil.correctSubstitutor(method, substitutor);
-
-      PsiTypeParameterList typeParameterList = PsiUtil.isRawSubstitutor(method, substitutor) ? null : method.getTypeParameterList();
-
-      MethodSignature signature = MethodSignatureUtil.createMethodSignature(name, method.getParameterList(), typeParameterList,
-                                                                            substitutor);
       if (MethodSignatureUtil.findMethodBySignature(aClass, signature, false) != null) continue;
 
       if (method.hasModifierProperty(PsiModifier.FINAL)) {
@@ -127,7 +109,14 @@ public class OverrideImplementUtil {
       }
     }
 
-    Map<MethodSignature, CandidateInfo> result = new LinkedHashMap<MethodSignature,CandidateInfo>();
+    Map<MethodSignature, CandidateInfo> result = new TreeMap<MethodSignature,CandidateInfo>(new Comparator<MethodSignature>() {
+      // signatures should appear in the order of declaration
+      public int compare(MethodSignature o1, MethodSignature o2) {
+        int offset1 = o1 instanceof MethodSignatureBackedByPsiMethod ? ((MethodSignatureBackedByPsiMethod)o1).getMethod().getTextOffset() : -1;
+        int offset2 = o2 instanceof MethodSignatureBackedByPsiMethod ? ((MethodSignatureBackedByPsiMethod)o2).getMethod().getTextOffset() : -2;
+        return offset1 - offset2;
+      }
+    });
     if (toImplement || aClass.isInterface()) {
       for (Map.Entry<MethodSignature, PsiMethod> entry : abstracts.entrySet()) {
         MethodSignature signature = entry.getKey();
@@ -137,8 +126,7 @@ public class OverrideImplementUtil {
             || PsiUtil.getAccessLevel(concrete.getModifierList()) < PsiUtil.getAccessLevel(abstractOne.getModifierList())
             || !abstractOne.getContainingClass().isInterface() && abstractOne.getContainingClass().isInheritor(concrete.getContainingClass(), true)) {
           if (finals.get(signature) == null) {
-            PsiSubstitutor subst = GenerateMembersUtil.correctSubstitutor(abstractOne,
-                                                                          substitutors.get(abstractOne.getContainingClass()));
+            PsiSubstitutor subst = GenerateMembersUtil.correctSubstitutor(abstractOne, signature.getSubstitutor());
             CandidateInfo info = new CandidateInfo(abstractOne, subst);
             result.put(signature, info);
           }
@@ -162,7 +150,7 @@ public class OverrideImplementUtil {
           PsiMethod abstractOne = abstracts.get(signature);
           if (abstractOne == null || !abstractOne.getContainingClass().isInheritor(concrete.getContainingClass(), true) ||
               CommonClassNames.JAVA_LANG_OBJECT.equals(concrete.getContainingClass().getQualifiedName())) {
-            PsiSubstitutor subst = GenerateMembersUtil.correctSubstitutor(concrete, substitutors.get(concrete.getContainingClass()));
+            PsiSubstitutor subst = GenerateMembersUtil.correctSubstitutor(concrete, signature.getSubstitutor());
             CandidateInfo info = new CandidateInfo(concrete, subst);
             result.put(signature, info);
           }
