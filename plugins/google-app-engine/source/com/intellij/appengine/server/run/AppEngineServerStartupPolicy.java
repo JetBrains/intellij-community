@@ -38,7 +38,7 @@ public class AppEngineServerStartupPolicy implements JavaCommandLineStartupPolic
     final AppEngineServerModel serverModel = (AppEngineServerModel) commonModel.getServerModel();
     final Artifact artifact = serverModel.getArtifact();
     if (artifact == null) {
-      throw new ExecutionException("Web Facet isn't specified");
+      throw new ExecutionException("Artifact isn't specified");
     }
     final Sdk jdk = ProjectRootManager.getInstance(commonModel.getProject()).getProjectJdk();
     if (jdk == null) {
@@ -60,8 +60,10 @@ public class AppEngineServerStartupPolicy implements JavaCommandLineStartupPolic
     final String explodedPathParameter = FileUtil.toSystemDependentName(outputPath);
     parameters.add(explodedPathParameter);
     javaParameters.setWorkingDirectory(explodedPathParameter);
+    final ParametersList vmParameters = javaParameters.getVMParametersList();
+    vmParameters.add("-javaagent:" + sdk.getSdkHomePath() + "/lib/agent/appengine-agent.jar");
     if (SystemInfo.isMac) {
-      javaParameters.getVMParametersList().add("-XstartOnFirstThread");
+      vmParameters.add("-XstartOnFirstThread");
     }
     return javaParameters;
   }

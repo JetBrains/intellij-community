@@ -53,7 +53,7 @@ public class AppEngineFacetType extends FacetType<AppEngineFacet,  AppEngineFace
   @Override
   public void registerDetectors(FacetDetectorRegistry<AppEngineFacetConfiguration> registry) {
     final FacetDetectorRegistryEx<AppEngineFacetConfiguration> registryEx = (FacetDetectorRegistryEx<AppEngineFacetConfiguration>)registry;
-    registryEx.registerUniversalDetectorByFileNameAndRootTag(AppEngineUtil.APPENGINE_WEB_XML_NAME, "appengine-web-app", new AppEngineFacetDetector(),
+    registryEx.registerUniversalDetectorByFileNameAndRootTag(AppEngineUtil.APP_ENGINE_WEB_XML_NAME, "appengine-web-app", new AppEngineFacetDetector(),
                                                              WebUtilImpl.BY_PARENT_WEB_ROOT_SELECTOR);
   }
 

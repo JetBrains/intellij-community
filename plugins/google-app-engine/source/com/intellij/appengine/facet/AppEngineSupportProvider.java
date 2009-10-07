@@ -39,6 +39,7 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.packaging.impl.run.BuildArtifactsBeforeRun;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,7 +72,7 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
     final VirtualFile webXml = webFacet.getWebXmlDescriptor().getVirtualFile();
     if (webXml == null) return;
 
-    createFileFromTemplate(AppEngineTemplateGroupDescriptorFactory.APP_ENGINE_WEB_XML_TEMPLATE, webXml.getParent(), AppEngineUtil.APPENGINE_WEB_XML_NAME);
+    createFileFromTemplate(AppEngineTemplateGroupDescriptorFactory.APP_ENGINE_WEB_XML_TEMPLATE, webXml.getParent(), AppEngineUtil.APP_ENGINE_WEB_XML_NAME);
   }
 
   @Nullable
@@ -112,7 +113,8 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
       configuration.setUrlToOpenInBrowser(configuration.getDefaultUrlForBrowser());
 
       ((AppEngineServerModel)configuration.getServerModel()).setArtifact(artifact);
-
+      BuildArtifactsBeforeRun.setBuildArtifactBeforeRun(module.getProject(), configuration, artifact);
+      
       runManager.addConfiguration(runSettings, false);
       runManager.setActiveConfiguration(runSettings);
     }

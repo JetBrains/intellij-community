@@ -5,11 +5,15 @@ import com.intellij.javaee.run.configuration.CommonModel;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.impl.run.BuildArtifactsBeforeRun;
 import com.intellij.ui.RawCommandLineEditor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * @author nik
@@ -20,9 +24,28 @@ public class AppEngineRunConfigurationEditor extends SettingsEditor<CommonModel>
   private JTextField myPortField;
   private RawCommandLineEditor myServerParametersEditor;
   private final Project myProject;
+  private Artifact myLastSelectedArtifact;
 
   public AppEngineRunConfigurationEditor(Project project) {
     myProject = project;
+    myArtifactComboBox.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        onArtifactChanged();
+      }
+    });
+  }
+
+  private void onArtifactChanged() {
+    final Artifact selectedArtifact = getSelectedArtifact();
+    if (!Comparing.equal(myLastSelectedArtifact, selectedArtifact)) {
+      if (myLastSelectedArtifact != null) {
+        BuildArtifactsBeforeRun.setBuildArtifactBeforeRunOption(myMainPanel, myLastSelectedArtifact, false);
+      }
+      if (selectedArtifact != null) {
+        BuildArtifactsBeforeRun.setBuildArtifactBeforeRunOption(myMainPanel, selectedArtifact, true);
+      }
+      myLastSelectedArtifact = selectedArtifact;
+    }
   }
 
   protected void resetEditorFrom(CommonModel s) {
@@ -46,8 +69,11 @@ public class AppEngineRunConfigurationEditor extends SettingsEditor<CommonModel>
       throw new ConfigurationException("'" + myPortField.getText() + "' is not valid port number");
     }
     serverModel.setServerParameters(myServerParametersEditor.getText());
-    final Artifact artifact = (Artifact)myArtifactComboBox.getSelectedItem();
-    serverModel.setArtifact(artifact);
+    serverModel.setArtifact(getSelectedArtifact());
+  }
+
+  private Artifact getSelectedArtifact() {
+    return (Artifact)myArtifactComboBox.getSelectedItem();
   }
 
   @NotNull
