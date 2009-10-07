@@ -649,6 +649,7 @@
     <xs:choice minOccurs="0" maxOccurs="unbounded">
       <xs:group ref="block"/>
       <xs:element ref="form"/>
+      <xs:element ref="embed"/>
       <xs:group ref="inline"/>
       <xs:group ref="misc"/>
     </xs:choice>
@@ -2770,4 +2771,16 @@
     </xs:complexType>
   </xs:element>
 
+  <xs:element name="embed">
+    <xs:complexType>
+      <xs:attribute name="alt" type="Text" />
+      <xs:attribute name="width" type="Length"/>
+      <xs:attribute name="height" type="Length"/>
+      <xs:attribute name="hidden" type="xs:boolean"/>
+      <xs:attribute name="pluginspage" type="URI"/>
+      <xs:attribute name="src" type="URI"/>
+      <xs:attribute name="type" type="xs:string"/>
+      <xs:attribute name="wmode" type="xs:string"/>
+    </xs:complexType>
+  </xs:element>
 </xs:schema>
