@@ -77,7 +77,7 @@ public class ArtifactConfigurable extends NamedConfigurable<Artifact> {
   }
 
   public String getHelpTopic() {
-    return null;
+    return "reference.settingsdialog.project.structure.artifacts";
   }
 
   @Override
