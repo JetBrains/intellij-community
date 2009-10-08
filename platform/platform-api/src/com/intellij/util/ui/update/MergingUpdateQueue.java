@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -227,7 +228,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     };
 
     if (myExecuteInDispatchThread && invokeLaterIfNotDispatch && !ApplicationManager.getApplication().isDispatchThread()) {
-      ApplicationManager.getApplication().invokeLater(toRun, ModalityState.NON_MODAL);
+      UIUtil.invokeLaterIfNeeded(toRun);
     }
     else {
       toRun.run();

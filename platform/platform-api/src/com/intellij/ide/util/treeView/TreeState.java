@@ -229,7 +229,7 @@ public class TreeState implements JDOMExternalizable {
   }
 
   private void applyExpanded(final TreeFacade tree, final Object root) {
-    tree.getReady().doWhenDone(new Runnable() {
+    tree.getIntialized().doWhenDone(new Runnable() {
       public void run() {
         _applyExpanded(tree, root);
       }
@@ -360,7 +360,7 @@ public class TreeState implements JDOMExternalizable {
   }
 
   interface TreeFacade {
-    ActionCallback getReady();
+    ActionCallback getIntialized();
     ActionCallback expand(DefaultMutableTreeNode node);
   }
 
@@ -382,7 +382,7 @@ public class TreeState implements JDOMExternalizable {
       return new ActionCallback.Done();
     }
 
-    public ActionCallback getReady() {
+    public ActionCallback getIntialized() {
       return new ActionCallback.Done();
     }
   }
@@ -395,8 +395,8 @@ public class TreeState implements JDOMExternalizable {
       myBuilder = builder;
     }
 
-    public ActionCallback getReady() {
-      return myBuilder.getReady();
+    public ActionCallback getIntialized() {
+      return myBuilder.getIntialized();
     }
 
     public ActionCallback expand(DefaultMutableTreeNode node) {

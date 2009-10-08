@@ -124,29 +124,11 @@ public class UpdaterTreeState {
   }
 
   public boolean restore(@Nullable DefaultMutableTreeNode actionNode) {
-    if (isProcessingNow() || !myCanRunRestore) return false;
+    if (isProcessingNow() || !myCanRunRestore || myUi.hasNodesToUpdate()) return false;
+
+    invalidateToSelectWithRefsToParent(actionNode);
 
     myProcessingNow = true;
-
-
-    if (actionNode != null) {
-      Object readyElement = myUi.getElementFor(actionNode);
-      if (readyElement != null) {
-        Iterator<Object> toSelect = myToSelect.keySet().iterator();
-        while (toSelect.hasNext()) {
-          Object eachToSelect = toSelect.next();
-          if (readyElement.equals(myUi.getTreeStructure().getParentElement(eachToSelect))) {
-            List<Object> children = myUi.getLoadedChildrenFor(readyElement);
-            if (!children.contains(eachToSelect)) {
-              toSelect.remove();
-              if (!myToSelect.containsKey(readyElement)) {
-                addAdjustedSelection(eachToSelect, Condition.FALSE);
-              }
-            }
-          }
-        }
-      }
-    }
 
     final Object[] toSelect = getToSelect();
     final Object[] toExpand = getToExpand();
@@ -190,6 +172,27 @@ public class UpdaterTreeState {
     return true;
   }
 
+  private void invalidateToSelectWithRefsToParent(DefaultMutableTreeNode actionNode) {
+    if (actionNode != null) {
+      Object readyElement = myUi.getElementFor(actionNode);
+      if (readyElement != null) {
+        Iterator<Object> toSelect = myToSelect.keySet().iterator();
+        while (toSelect.hasNext()) {
+          Object eachToSelect = toSelect.next();
+          if (readyElement.equals(myUi.getTreeStructure().getParentElement(eachToSelect))) {
+            List<Object> children = myUi.getLoadedChildrenFor(readyElement);
+            if (!children.contains(eachToSelect)) {
+              toSelect.remove();
+              if (!myToSelect.containsKey(readyElement) && !myUi.getSelectedElements().contains(eachToSelect)) {
+                addAdjustedSelection(eachToSelect, Condition.FALSE);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
   void beforeSubtreeUpdate() {
     myCanRunRestore = true;
   }
@@ -204,6 +207,8 @@ public class UpdaterTreeState {
 
       successfulSelections.retainAll(selected);
       wasFullyRejected = successfulSelections.size() == 0;
+    } else if (selected.size() == 0 && originallySelected.size() == 0) {
+      wasFullyRejected = true;
     }
 
     if (wasFullyRejected && selected.size() > 0) return;
