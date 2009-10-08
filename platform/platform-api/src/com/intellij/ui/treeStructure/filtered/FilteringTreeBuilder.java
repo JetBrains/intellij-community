@@ -102,23 +102,38 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
     }
   }
 
-  private ActionCallback refilterNow(Object preferredSelection, final boolean adjustSelection) {
+  private ActionCallback refilterNow(final Object preferredSelection, final boolean adjustSelection) {
     final ActionCallback result = new ActionCallback();
-
-    Object selectedObject = getSelected();
-
-    final Ref<Object> toSelect = new Ref<Object>(isSelectable(selectedObject) ? selectedObject : null);
-    if (preferredSelection != null) {
-      toSelect.set(preferredSelection);
-    }
-
 
     ((FilteringTreeStructure)getTreeStructure()).refilter();
     updateFromRoot();
 
-    result.setDone();
+    getReady(this).doWhenDone(new Runnable() {
+      public void run() {
+        System.out.println("ready=" + getUi().isReady() + " preferred=" + preferredSelection);
 
+        if (adjustSelection && preferredSelection != null) {
+          FilteringTreeStructure.Node node = ((FilteringTreeStructure)getTreeStructure()).getVisibleNodeFor(preferredSelection);
+          if (node != null) {
+            select(node, new Runnable() {
+              public void run() {
+                result.setDone();
+              }
+            });
+          }
+        } else {
+          result.setDone();
+        }
+      }
+    });
+    
+    return result;
+  }
+
+  private void select(boolean adjustSelection, final Ref<Object> toSelect) {
     if (adjustSelection) {
+      System.out.println("FilteringTreeBuilder.select toSelect=" + toSelect.get());
+
       boolean wasSelected = false;
       if (toSelect.get() != null && isSelectable(toSelect.get()) && isSimpleTree()) {
         wasSelected = ((SimpleTree)myTree).select(this, new SimpleNodeVisitor() {
@@ -173,8 +188,6 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
         myLastSuccessfulSelect = getSelected();
       }
     }
-
-    return result;
   }
 
   //todo kirillk

@@ -80,6 +80,11 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
     }
 
     @Override
+    public String toString() {
+      return String.valueOf(getDelegate());
+    }
+
+    @Override
     public boolean isContentHighlighted() {
       if (myDelegate instanceof SimpleNode) {
         return ((SimpleNode)myDelegate).isContentHighlighted();
@@ -152,7 +157,7 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
     }
 
     public Object[] getEqualityObjects() {
-      return NONE;
+      return new Object[] {myDelegate};
     }
   }
 
