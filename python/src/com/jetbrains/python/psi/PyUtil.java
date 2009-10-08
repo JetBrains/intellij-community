@@ -538,4 +538,22 @@ public class PyUtil {
     return IDENTIFIER_PATTERN.matcher(name).matches();
   }
 
+  /**
+   * Makes sure that 'thing' is not null; else throws an {@link IncorrectOperationException}.
+   * @param thing what we check.
+   * @return thing, if not null.
+   */
+  @NotNull
+  public static <T> T sure(T thing) {
+    if (thing == null) throw new IncorrectOperationException();
+    return thing;
+  }
+
+  /**
+   * Makes sure that the 'thing' is true; else throws an {@link IncorrectOperationException}.
+   * @param thing what we check.
+   */
+  public static void sure(boolean thing) {
+    if (!thing) throw new IncorrectOperationException();
+  }
 }
