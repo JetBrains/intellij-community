@@ -1,6 +1,7 @@
 package com.intellij.packaging.impl.ui;
 
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -14,13 +15,13 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author nik
  */
-public class FileCopyPresentation extends PackagingElementPresentation {
+public class DirectoryCopyPresentation extends PackagingElementPresentation {
   private final String mySourcePath;
-  private final String myOutputFileName;
+  private final String mySourceFileName;
   private final VirtualFile myFile;
 
-  public FileCopyPresentation(String filePath, String outputFileName) {
-    myOutputFileName = outputFileName;
+  public DirectoryCopyPresentation(String filePath) {
+    mySourceFileName = PathUtil.getFileName(filePath);
 
     String parentPath;
     myFile = LocalFileSystem.getInstance().findFileByPath(filePath);
@@ -32,36 +33,28 @@ public class FileCopyPresentation extends PackagingElementPresentation {
       parentPath = FileUtil.toSystemDependentName(PathUtil.getParentPath(filePath));
     }
 
-    String sourceFileName = PathUtil.getFileName(filePath);
-    if (!sourceFileName.equals(myOutputFileName)) {
-      mySourcePath = parentPath + "/" + sourceFileName;
-    }
-    else {
-      mySourcePath = parentPath;
-    }
+    mySourcePath = parentPath;
   }
 
   public String getPresentableName() {
-    return myOutputFileName;
+    return mySourceFileName;
   }
 
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
-    if (myFile != null && !myFile.isDirectory()) {
-      presentationData.setIcons(myFile.getIcon());
-      presentationData.addText(myOutputFileName, mainAttributes);
-      presentationData.addText(" (" + mySourcePath + ")", commentAttributes);
-    }
-    else {
-      presentationData.setIcons(PackagingElementFactoryImpl.FileCopyElementType.ICON);
-      presentationData.addText(myOutputFileName, SimpleTextAttributes.ERROR_ATTRIBUTES);
+    presentationData.setIcons(PackagingElementFactoryImpl.DirectoryCopyElementType.COPY_OF_FOLDER_ICON);
+    if (myFile == null || !myFile.isDirectory()) {
+      mainAttributes = SimpleTextAttributes.ERROR_ATTRIBUTES;
       final VirtualFile parentFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(mySourcePath));
-      presentationData.addText("(" + mySourcePath + ")",
-                      parentFile != null ? commentAttributes : SimpleTextAttributes.ERROR_ATTRIBUTES);
+      if (parentFile == null) {
+        commentAttributes = SimpleTextAttributes.ERROR_ATTRIBUTES;
+      }
     }
+    presentationData.addText(CompilerBundle.message("node.text.0.directory.content", mySourceFileName), mainAttributes);
+    presentationData.addText(" (" + mySourcePath + ")", commentAttributes);
   }
 
   @Override
   public int getWeight() {
-    return PackagingElementWeights.FILE_COPY;
+    return PackagingElementWeights.DIRECTORY_COPY;
   }
 }

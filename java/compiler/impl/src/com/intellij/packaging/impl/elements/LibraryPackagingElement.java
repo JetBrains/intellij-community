@@ -47,7 +47,8 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
       final VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
       final List<PackagingElement<?>> elements = new ArrayList<PackagingElement<?>>();
       for (VirtualFile file : files) {
-        elements.add(new FileCopyPackagingElement(FileUtil.toSystemIndependentName(PathUtil.getLocalPath(file))));
+        final String path = FileUtil.toSystemIndependentName(PathUtil.getLocalPath(file));
+        elements.add(file.isDirectory() && file.isInLocalFileSystem() ? new DirectoryCopyPackagingElement(path) : new FileCopyPackagingElement(path));
       }
       return elements;
     }

@@ -59,11 +59,14 @@ public class ManifestFileUtil {
         if (element instanceof FileCopyPackagingElement) {
           final VirtualFile file = ((FileCopyPackagingElement)element).findFile();
           if (file != null) {
-            if (file.isDirectory()) {
-              sourceDir.set(file);
-              return false;
-            }
             sourceFile.set(file);
+          }
+        }
+        else if (element instanceof DirectoryCopyPackagingElement) {
+          final VirtualFile file = ((DirectoryCopyPackagingElement)element).findFile();
+          if (file != null) {
+            sourceDir.set(file);
+            return false;
           }
         }
         return true;
@@ -181,6 +184,9 @@ public class ManifestFileUtil {
         if (element instanceof FileCopyPackagingElement) {
           final String fileName = ((FileCopyPackagingElement)element).getOutputFileName();
           classpath.add(DeploymentUtil.appendToPath(getPathFromRoot(parents, "/"), fileName));
+        }
+        else if (element instanceof DirectoryCopyPackagingElement) {
+          classpath.add(getPathFromRoot(parents, "/"));
         }
         else if (element instanceof ArchivePackagingElement) {
           final String archiveName = ((ArchivePackagingElement)element).getName();
