@@ -1,5 +1,9 @@
 <idea-plugin>
   <name>Type Migration</name>
+  <description>
+    This plugin adds the type migration refactoring.
+  </description>
+  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
   <extensions defaultExtensionNs="com.intellij">
     <codeInsight.changeVariableTypeQuickFixProvider
         implementation="com.intellij.refactoring.typeMigration.TypeMigrationVariableTypeFixProvider"/>
