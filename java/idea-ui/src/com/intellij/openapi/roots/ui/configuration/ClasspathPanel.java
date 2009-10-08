@@ -81,11 +81,6 @@ public class ClasspathPanel extends JPanel {
   private final EventDispatcher<OrderPanelListener> myListeners = EventDispatcher.create(OrderPanelListener.class);
   private PopupAction[] myPopupActions = null;
   private Icon[] myIcons = null;
-  private static final Comparator<Module> MODULES_COMPARATOR = new Comparator<Module>() {
-    public int compare(Module elem1, Module elem2) {
-      return elem1.getName().compareToIgnoreCase(elem2.getName());
-    }
-  };
   private JButton myEditButton;
 
   protected ClasspathPanel(Project project, ModifiableRootModel rootModel, final ModulesProvider modulesProvider) {
@@ -691,7 +686,6 @@ public class ClasspathPanel extends JPanel {
         elements.add(module);
       }
     }
-    Collections.sort(elements, MODULES_COMPARATOR);
     return elements;
   }
 

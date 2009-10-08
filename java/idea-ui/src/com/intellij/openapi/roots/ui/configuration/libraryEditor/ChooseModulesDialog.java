@@ -21,11 +21,11 @@ import java.util.List;
 public class ChooseModulesDialog extends ChooseElementsDialog<Module> {
 
   public ChooseModulesDialog(Component parent, final List<Module> items, final String title) {
-    super(parent, items, title);
+    super(parent, items, title, null, true);
   }
 
   public ChooseModulesDialog(final Project project, final List<? extends Module> items, final String title, final String description) {
-    super(project, items, title, description);
+    super(project, items, title, description, true);
   }
 
   protected Icon getItemIcon(final Module item) {

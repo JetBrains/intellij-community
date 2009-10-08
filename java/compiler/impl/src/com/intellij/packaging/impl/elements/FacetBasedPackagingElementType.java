@@ -81,7 +81,7 @@ public abstract class FacetBasedPackagingElementType<E extends PackagingElement<
 
   private class ChooseFacetsDialog extends ChooseElementsDialog<F> {
     private ChooseFacetsDialog(Project project, List<? extends F> items, String title, String description) {
-      super(project, items, title, description);
+      super(project, items, title, description, true);
     }
 
     @Override

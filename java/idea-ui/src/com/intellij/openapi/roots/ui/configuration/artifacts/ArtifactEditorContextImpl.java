@@ -79,7 +79,7 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
   }
 
   public List<Artifact> chooseArtifacts(final List<? extends Artifact> artifacts, final String title) {
-    ChooseArtifactsDialog dialog = new ChooseArtifactsDialog(getProject(), artifacts, title, "");
+    ChooseArtifactsDialog dialog = new ChooseArtifactsDialog(getProject(), artifacts, title, null);
     dialog.show();
     return dialog.isOK() ? dialog.getChosenElements() : Collections.<Artifact>emptyList();
   }
@@ -118,14 +118,14 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
   }
 
   public List<Module> chooseModules(final List<Module> modules, final String title) {
-    ChooseModulesDialog dialog = new ChooseModulesDialog(getProject(), modules, title, "");
+    ChooseModulesDialog dialog = new ChooseModulesDialog(getProject(), modules, title, null);
     dialog.show();
     List<Module> selected = dialog.getChosenElements();
     return dialog.isOK() ? selected : Collections.<Module>emptyList();
   }
 
   public List<Library> chooseLibraries(final List<Library> libraries, final String title) {
-    ChooseLibrariesDialog dialog = new ChooseLibrariesDialog(getProject(), libraries, title, "");
+    ChooseLibrariesDialog dialog = new ChooseLibrariesDialog(getProject(), libraries, title, null);
     dialog.show();
     return dialog.isOK() ? dialog.getChosenElements() : Collections.<Library>emptyList();
   }
