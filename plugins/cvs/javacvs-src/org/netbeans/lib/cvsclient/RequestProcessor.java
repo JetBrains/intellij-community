@@ -174,7 +174,9 @@ public final class RequestProcessor implements IRequestProcessor {
     final Future<?> future = Executors.newSingleThreadExecutor().submit(new Runnable() {
       public void run() {
         try {
+          checkCanceled();
           sendRequests(requests, connectionStreams, communicationProgressHandler);
+          checkCanceled();
 
           sendRequest(requests.getResponseExpectingRequest(), connectionStreams);
           connectionStreams.flushForReading();
@@ -193,12 +195,19 @@ public final class RequestProcessor implements IRequestProcessor {
       }
     });
 
-    semaphore.waitFor((long) (1.2 * myTimeout));
+    // todo: think more
+    final long tOut = (myTimeout < 20000) ? 20000 : myTimeout;
+    while (true) {
+      semaphore.waitFor(tOut);
+      if (future.isDone() || future.isCancelled()) break;
+      if (! commandStopper.isAlive()) break;
+      commandStopper.resetAlive();
+    }
 
     if (! ioExceptionRef.isNull()) throw new IOCommandException(ioExceptionRef.get());
     if (! commandExceptionRef.isNull()) throw commandExceptionRef.get();
 
-    if ((! future.isDone() && (! future.isCancelled()))) {
+    if ((! future.isDone() && (! future.isCancelled()) && (! commandStopper.isAlive()))) {
       future.cancel(true);
       throw new CommandException(new CommandAbortedException(), "Command execution timed out");
     }
@@ -275,6 +284,7 @@ public final class RequestProcessor implements IRequestProcessor {
     final StringBuffer responseBuffer = new StringBuffer(32);
     for (; ;) {
       final String responseString = readResponse(connectionStreams.getLoggedReader(), responseBuffer);
+      checkCanceled();
       if (responseString.length() == 0) {
         return false;
       }
