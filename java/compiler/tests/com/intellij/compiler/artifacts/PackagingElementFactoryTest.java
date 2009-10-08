@@ -47,19 +47,30 @@ public class PackagingElementFactoryTest extends PackagingElementsTestCase {
                                                       "  file:/temp/file.txt\n");
   }
 
-  private CompositePackagingElement<?> dir(final CompositePackagingElement<?> root, final String relativePath) {
+  public void testDirectoryCopy() throws Exception {
+    assertLayout(dir("/", "/temp/dir"), "dir:/temp/dir");
+    assertLayout(dir("/aaa/bbb", "/temp/dir"), "aaa/\n" +
+                                               " bbb/\n" +
+                                               "  dir:/temp/dir");
+  }
+
+  private static CompositePackagingElement<?> dir(final CompositePackagingElement<?> root, final String relativePath) {
     return getFactory().getOrCreateDirectory(root, relativePath);
   }
 
-  private CompositePackagingElement<?> archive(final CompositePackagingElement<?> root, final String relativePath) {
+  private static CompositePackagingElement<?> archive(final CompositePackagingElement<?> root, final String relativePath) {
     return getFactory().getOrCreateArchive(root, relativePath);
   }
 
-  private PackagingElement<?> file(String outputPath, String filePath) {
+  private static PackagingElement<?> file(String outputPath, String filePath) {
     return getFactory().createFileCopyWithParentDirectories(filePath, outputPath);
   }
 
-  private CompositePackagingElement<?> createRoot() {
+  private static PackagingElement<?> dir(String outputPath, String filePath) {
+    return getFactory().createDirectoryCopyWithParentDirectories(filePath, outputPath);
+  }
+
+  private static CompositePackagingElement<?> createRoot() {
     return getFactory().createDirectory("root");
   }
 
