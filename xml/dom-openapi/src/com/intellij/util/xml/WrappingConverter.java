@@ -63,9 +63,15 @@ public abstract class WrappingConverter extends Converter<Object> {
 
   public static Converter getDeepestConverter(final Converter converter, final GenericDomValue domValue) {
     Converter cur = converter;
-    for (Converter next; cur instanceof WrappingConverter; cur = next) {
+    Converter next;
+    int guard = 0;
+    while (cur instanceof WrappingConverter) {
       next = ((WrappingConverter)cur).getConverter(domValue);
       if (next == null) break;
+      cur = next;
+      if (guard++ > 10) {
+        throw new RuntimeException("Too deep wrapping for " + converter);
+      }
     }
     return cur;
   }
