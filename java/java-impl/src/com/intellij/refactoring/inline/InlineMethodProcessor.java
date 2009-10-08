@@ -978,12 +978,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       }
 
       if (canInline) {
-        final PsiExpression initializer = resultVar.getInitializer();
-        final PsiClass thisClass = ChangeContextUtil.getThisClass(initializer);
-        ChangeContextUtil.encodeContextInfo(initializer, false);
-        final PsiElement element = resultUsage.replace(resultVar.getInitializer());
-        ChangeContextUtil
-          .decodeContextInfo(element, thisClass, JavaPsiFacade.getInstance(element.getProject()).getElementFactory().createExpressionFromText("this", null));
+        InlineUtil.inlineVariable(resultVar, resultVar.getInitializer(), resultUsage);
         declaration.delete();
       }
     }

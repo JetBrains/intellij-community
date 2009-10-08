@@ -2,6 +2,8 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
@@ -123,6 +125,15 @@ public class InlineMethodTest extends LightCodeInsightTestCase {
 
   public void testTailComment() throws Exception {   //IDEADEV-33638
     doTest();
+  }
+
+  public void testInferredType() throws Exception {
+    doTest();
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return JavaSdkImpl.getMockJdk15("java 1.5");
   }
 
   private void doTest() throws Exception {
