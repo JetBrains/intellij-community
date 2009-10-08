@@ -1125,29 +1125,30 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         final String className = owner.getQualifiedName();
         if ("java.lang.System".equals(className)) {
           if ("exit".equals(methodName)) {
-            pushParameters(params, false);
+            pushParameters(params, false, false);
             addInstruction(new ReturnInstruction());
             return true;
           }
         }
         else if ("junit.framework.Assert".equals(className) || "org.junit.Assert".equals(className) || "org.testng.Assert".equals(className)) {
+          boolean testng = "org.testng.Assert".equals(className);
           if ("fail".equals(methodName)) {
-            pushParameters(params, false);
+            pushParameters(params, false, !testng);
             addInstruction(new ReturnInstruction());
             return true;
           }
           else if ("assertTrue".equals(methodName)) {
-            pushParameters(params, true);
+            pushParameters(params, true, !testng);
             conditionalExit(exitPoint, false);
             return true;
           }
           else if ("assertFalse".equals(methodName)) {
-            pushParameters(params, true);
+            pushParameters(params, true, !testng);
             conditionalExit(exitPoint, true);
             return true;
           }
           else if ("assertNull".equals(methodName)) {
-            pushParameters(params, true);
+            pushParameters(params, true, !testng);
 
             addInstruction(new PushInstruction(myFactory.getConstFactory().getNull(), null));
             addInstruction(new BinopInstruction("==", null, expression.getProject()));
@@ -1155,7 +1156,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
             return true;
           }
           else if ("assertNotNull".equals(methodName)) {
-            pushParameters(params, true);
+            pushParameters(params, true, !testng);
 
             addInstruction(new PushInstruction(myFactory.getConstFactory().getNull(), null));
             addInstruction(new BinopInstruction("==", null, expression.getProject()));
@@ -1202,13 +1203,15 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     pushUnknown();
   }
 
-  private void pushParameters(final PsiExpression[] params, final boolean leaveLastOnStack) {
+  private void pushParameters(final PsiExpression[] params, final boolean leaveOnStack, boolean lastParameterIsSignificant) {
     for (int i = 0; i < params.length; i++) {
       PsiExpression param = params[i];
       param.accept(this);
-      if (!leaveLastOnStack || i < params.length - 1) {
-        addInstruction(new PopInstruction());
+      if (leaveOnStack) {
+        if (lastParameterIsSignificant && i == params.length - 1 || !lastParameterIsSignificant && i == 0) continue;
       }
+
+      addInstruction(new PopInstruction());
     }
   }
 
