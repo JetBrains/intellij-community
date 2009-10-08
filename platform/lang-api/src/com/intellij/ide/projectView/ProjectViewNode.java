@@ -165,8 +165,29 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> {
     return 0;
   }
 
+  /**
+   * When nodes are sorted by type all objects with same weigh will be sorted using
+   * some common algorithm (e.g alpha comparator). This method allows to perform custom
+   * sorting for such objects. And default comparison will be applied only if nodes are equal
+   * from custom comparator's point of view. Also comparison will be applied only if both objects
+   * have not null comparable keys.
+   * @return Comparable object.
+   */
   @Nullable
   public Comparable getTypeSortKey() {
+    return null;
+  }
+
+  /**
+   * When nodes aren't sorted by type all objects with same weigh will be sorted using
+   * some common algorithm (e.g alpha comparator). This method allows to perform custom
+   * sorting for such objects. And default comparison will be applied only if nodes are equal
+   * from custom comparator's point of view. Also comparison will be applied only if both objects
+   * have not null comparable keys.
+   * @return Comparable object.
+   */
+  @Nullable
+  public Comparable getSortKey() {
     return null;
   }
 
