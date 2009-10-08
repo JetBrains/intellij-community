@@ -130,8 +130,6 @@ public class UpdaterTreeState {
 
     myProcessingNow = true;
 
-    System.out.println("UpdaterTreeState.restore actionNode=" + actionNode);
-
     final Object[] toSelect = getToSelect();
     final Object[] toExpand = getToExpand();
 
@@ -144,10 +142,8 @@ public class UpdaterTreeState {
 
     final Set<Object> originallySelected = myUi.getSelectedElements();
 
-    System.out.println("UpdaterTreeState.restore toSelect=" + Arrays.asList(toSelect) + " now selected=" + originallySelected);
     myUi._select(toSelect, new Runnable() {
       public void run() {
-        System.out.println("UpdaterTreeState.run finished selecting=" + Arrays.asList(toSelect) + " now selected=" + myUi.getSelectedElements() + " adjuested=" + adjusted);
         processUnsuccessfulSelections(toSelect, new Function<Object, Object>() {
           public Object fun(final Object o) {
             if (myUi.getTree().isRootVisible() || !myUi.getTreeStructure().getRootElement().equals(o)) {
@@ -186,11 +182,9 @@ public class UpdaterTreeState {
           if (readyElement.equals(myUi.getTreeStructure().getParentElement(eachToSelect))) {
             List<Object> children = myUi.getLoadedChildrenFor(readyElement);
             if (!children.contains(eachToSelect)) {
-              System.out.println(" removed from toSelect node=" + eachToSelect);
               toSelect.remove();
               if (!myToSelect.containsKey(readyElement) && !myUi.getSelectedElements().contains(eachToSelect)) {
                 addAdjustedSelection(eachToSelect, Condition.FALSE);
-                System.out.println(" addToAdjusted node=" + eachToSelect);
               }
             }
           }
@@ -328,7 +322,6 @@ public class UpdaterTreeState {
   }
 
   public void addAdjustedSelection(final Object element, Condition isExpired) {
-    System.out.println("UpdaterTreeState.addAdjustedSelection " + element);
     myAdjustedSelection.put(element, isExpired);
   }
 

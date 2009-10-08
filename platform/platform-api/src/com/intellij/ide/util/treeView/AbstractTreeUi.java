@@ -643,8 +643,6 @@ public class AbstractTreeUi {
   }
 
   final void updateSubtreeNow(TreeUpdatePass pass, boolean canSmartExpand) {
-    System.out.println("AbstractTreeUi.updateSubtreeNow pass=" + pass);
-
     maybeSetBusyAndScheduleWaiterForReady(true);
 
     initRootNodeNowIfNeeded(pass);
@@ -1813,6 +1811,8 @@ public class AbstractTreeUi {
   }
 
   private boolean isValidForSelectionAdjusting(TreeNode node) {
+    if (!myTree.isRootVisible() && getRootNode() == node) return false;
+
     if (isLoadingNode(node)) return true;
 
     final Object elementInTree = getElementFor(node);
@@ -2376,7 +2376,14 @@ public class AbstractTreeUi {
           if (!addToSelection) {
             myTree.clearSelection();
           }
-          addNext(elementsToSelect, 0, onDone, originalRows, deferred, scrollToVisible, canSmartExpand);
+          addNext(elementsToSelect, 0, new Runnable() {
+            public void run() {
+              if (getTree().isSelectionEmpty()) {
+                restoreSelection(currentElements);
+              }
+              runDone(onDone);
+            }
+          }, originalRows, deferred, scrollToVisible, canSmartExpand);
         }
         else {
           addToDeferred(elementsToSelect, onDone);
@@ -2384,6 +2391,16 @@ public class AbstractTreeUi {
       }
     });
   }
+
+  private void restoreSelection(Set<Object> selection) {
+    for (Object each : selection) {
+      DefaultMutableTreeNode node = getNodeForElement(each, false);
+      if (node != null && isValidForSelectionAdjusting(node)) {
+        addSelectionPath(getPathFor(node), false, null);
+      }
+    }
+  }
+
 
   private void addToDeferred(final Object[] elementsToSelect, final Runnable onDone) {
     myDeferredSelections.clear();
