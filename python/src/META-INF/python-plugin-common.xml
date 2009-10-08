@@ -76,6 +76,8 @@
       <descriptionDirectoryName>ImportFromToImportIntention</descriptionDirectoryName>
     </intentionAction>
 
+    <fileStructureGroupRuleProvider implementation="com.jetbrains.python.codeInsight.intentions.PyRefGroupRuleProvider"/>
+
     <stubElementTypeHolder class="com.jetbrains.python.PyElementTypes"/>
     <inspectionToolProvider implementation="com.jetbrains.python.inspections.PythonInspectionToolProvider"/>
 
