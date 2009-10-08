@@ -3,6 +3,10 @@
   <depends optional="true">TestNG-J</depends>
   <depends optional="true">JUnit</depends>
   <depends>com.intellij.modules.ultimate</depends>
+  <description>This plugin supports gathering coverage information and presenting it right in the editor as well as in the project view.
+    It is also possible to generate standalone HTML reports for external use.
+  </description>
+  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.coverageRunner" interface="com.intellij.coverage.CoverageRunner"/>
   </extensionPoints>
