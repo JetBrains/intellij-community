@@ -42,7 +42,7 @@ public abstract class PackagingElementFactory {
   public abstract PackagingElement<?> createArtifactElement(@NotNull Artifact artifact, @NotNull Project project);
 
   @NotNull
-  public abstract PackagingElement<?> createLibraryFiles(@NotNull String level, @NotNull String name);
+  public abstract PackagingElement<?> createLibraryFiles(@NotNull String libraryName, @NotNull String level, String moduleName);
 
 
   @NotNull

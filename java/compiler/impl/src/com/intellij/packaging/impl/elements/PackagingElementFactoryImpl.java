@@ -5,8 +5,11 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.packaging.impl.artifacts.ArtifactUtil;
+import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
+import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.ui.Messages;
@@ -14,15 +17,14 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactPointerManager;
 import com.intellij.packaging.elements.*;
-import com.intellij.packaging.ui.PackagingElementPropertiesPanel;
-import com.intellij.packaging.ui.ArtifactEditorContext;
+import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.ui.properties.ArchiveElementPropertiesPanel;
 import com.intellij.packaging.impl.ui.properties.DirectoryElementPropertiesPanel;
+import com.intellij.packaging.ui.ArtifactEditorContext;
+import com.intellij.packaging.ui.PackagingElementPropertiesPanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.PathUtil;
@@ -172,8 +174,15 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   @Override
   public List<? extends PackagingElement<?>> createLibraryElements(@NotNull Library library) {
     final LibraryTable table = library.getTable();
+    final String libraryName = library.getName();
     if (table != null) {
-      return Collections.singletonList(createLibraryFiles(table.getTableLevel(), library.getName()));
+      return Collections.singletonList(createLibraryFiles(libraryName, table.getTableLevel(), null));
+    }
+    if (libraryName != null) {
+      final Module module = ((LibraryImpl)library).getModule();
+      if (module != null) {
+        return Collections.singletonList(createLibraryFiles(libraryName, LibraryTableImplUtil.MODULE_LEVEL, module.getName()));
+      }
     }
     final List<PackagingElement<?>> elements = new ArrayList<PackagingElement<?>>();
     for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
@@ -185,8 +194,8 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
 
   @NotNull
   @Override
-  public PackagingElement<?> createLibraryFiles(@NotNull String level, @NotNull String name) {
-    return new LibraryPackagingElement(level, name);
+  public PackagingElement<?> createLibraryFiles(@NotNull String libraryName, @NotNull String level, String moduleName) {
+    return new LibraryPackagingElement(level, libraryName, moduleName);
   }
 
   @NotNull

@@ -28,6 +28,9 @@ public interface ConversionContext {
 
   ModuleSettings getModuleSettings(File moduleFile) throws CannotConvertException;
 
+  @Nullable
+  ModuleSettings getModuleSettings(@NotNull String moduleName);
+
   @NotNull
   String collapsePath(@NotNull String path);
 
@@ -36,6 +39,6 @@ public interface ConversionContext {
   @Nullable
   ComponentManagerSettings getCompilerSettings();
 
-  @Nullable 
+  @Nullable
   ComponentManagerSettings getProjectRootManagerSettings();
 }

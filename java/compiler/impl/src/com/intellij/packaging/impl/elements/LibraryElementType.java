@@ -43,7 +43,7 @@ public class LibraryElementType extends ComplexPackagingElementType<LibraryPacka
     final List<Library> selected = context.chooseLibraries(getAllLibraries(context), ProjectBundle.message("dialog.title.packaging.choose.library"));
     final List<LibraryPackagingElement> elements = new ArrayList<LibraryPackagingElement>();
     for (Library library : selected) {
-      elements.add(new LibraryPackagingElement(library.getTable().getTableLevel(), library.getName()));
+      elements.add(new LibraryPackagingElement(library.getTable().getTableLevel(), library.getName(), null));
     }
     return elements;
   }
