@@ -94,10 +94,8 @@ public class GroovyPropertyUtils {
   public static boolean isSimplePropertyGetter(PsiMethod method, String propertyName) {
     if (method == null || method.isConstructor()) return false;
     if (method.getParameterList().getParametersCount() != 0) return false;
-    final PsiType type = method.getReturnType();
-    if (type != null && type == PsiType.VOID) return false;
     if (!isGetterName(method.getName())) return false;
-    return propertyName == null || propertyName.equals(getPropertyNameByGetter(method));
+    return (propertyName == null || propertyName.equals(getPropertyNameByGetter(method))) && method.getReturnType() != PsiType.VOID;
   }
 
   public static boolean isSimplePropertySetter(PsiMethod method) {
