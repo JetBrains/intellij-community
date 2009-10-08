@@ -15,6 +15,7 @@
  */
 package com.intellij.compiler.impl.javaCompiler.javac;
 
+import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerIOUtil;
 import com.intellij.compiler.OutputParser;
@@ -285,10 +286,29 @@ public class JavacCompiler extends ExternalCompiler {
       isAnnotationProcessing = false; // makes no sense for these versions
     }
     if (isAnnotationProcessing) {
+      final CompilerConfiguration config = CompilerConfiguration.getInstance(javacSettings.getProject());
       additionalOptions.add("-Xprefer:source");
       additionalOptions.add("-implicit:none");
       additionalOptions.add("-proc:only");
-      // todo: temporary!
+      if (!config.isObtainProcessorsFromClasspath()) {
+        final String processorPath = config.getProcessorPath();
+        if (processorPath.length() > 0) {
+          additionalOptions.add("-processorpath");
+          additionalOptions.add(FileUtil.toSystemDependentName(processorPath));
+        }
+      }
+      for (Map.Entry<String, String> entry : config.getAnnotationProcessorsMap().entrySet()) {
+        additionalOptions.add("-processor");
+        additionalOptions.add(entry.getKey());
+        final String options = entry.getValue();
+        if (options.length() > 0) {
+          StringTokenizer optionsTokenizer = new StringTokenizer(options, " ", false);
+          while (optionsTokenizer.hasMoreTokens()) {
+            final String token = optionsTokenizer.nextToken();
+            additionalOptions.add("-A"+token);
+          }
+        }
+      }
       //additionalOptions.add("-processor");
       //additionalOptions.add("CheckNamesProcessor");
       //additionalOptions.add("org.apache.openjpa.persistence.meta.AnnotationProcessor6");
@@ -358,12 +378,15 @@ public class JavacCompiler extends ExternalCompiler {
     }
 
     if (isAnnotationProcessingMode) {
-      // todo: come up with some solution about the path for generated sources
       commandLine.add("-s");
       commandLine.add(outputPath.replace('/', File.separatorChar));
+      commandLine.add("-d");
+      commandLine.add(outputPath.replace('/', File.separatorChar));
     }
-    commandLine.add("-d");
-    commandLine.add(outputPath.replace('/', File.separatorChar));
+    else {
+      commandLine.add("-d");
+      commandLine.add(outputPath.replace('/', File.separatorChar));
+    }
   }
 
   private static void addClassPathValue(final Sdk jdk, final boolean isVersion1_0, final List<String> commandLine, final String cpString, @NonNls final String tempFileName,

@@ -9,6 +9,7 @@
 package com.intellij.compiler;
 
 import com.intellij.CommonBundle;
+import com.intellij.ProjectTopics;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.api.CompilerAPICompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler;
@@ -22,6 +23,9 @@ import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
@@ -63,6 +67,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private final List<Pair<Pattern, Pattern>> myNegatedCompiledPatterns = new ArrayList<Pair<Pattern, Pattern>>();
   private boolean myWildcardPatternsInitialized = false;
   private final Project myProject;
+  private final ModuleManager myModuleManager;
   private final ExcludedEntriesConfiguration myExcludedEntriesConfiguration;
 
   public int DEPLOY_AFTER_MAKE = Options.SHOW_DIALOG;
@@ -75,10 +80,37 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     loadDefaultWildcardPatterns();
   }
 
-  public CompilerConfigurationImpl(Project project) {
+  private boolean myEnableAnnotationProcessors = false;
+  private final Map<String, String> myProcessorsMap = new HashMap<String, String>(); // map: AnnotationProcessorName -> options
+  private boolean myObtainProcessorsFromClasspath = true;
+  private String myProcessorPath = "";
+  private final Set<Module> myExcludedModules = new HashSet<Module>();
+  private final Set<String> myExcludedModuleNames = new HashSet<String>();
+
+
+  public CompilerConfigurationImpl(Project project, ModuleManager moduleManager) {
     myProject = project;
+    myModuleManager = moduleManager;
     myExcludedEntriesConfiguration = new ExcludedEntriesConfiguration();
     Disposer.register(project, myExcludedEntriesConfiguration);
+    project.getMessageBus().connect(project).subscribe(ProjectTopics.MODULES, new ModuleListener() {
+      public void modulesRenamed(Project project, List<Module> modules) {
+      }
+
+      public void moduleRemoved(Project project, Module module) {
+      }
+
+      public void beforeModuleRemoved(Project project, Module module) {
+        myExcludedModules.remove(module);
+        myExcludedModuleNames.remove(module.getName());
+      }
+
+      public void moduleAdded(Project project, Module module) {
+        if (myExcludedModuleNames.remove(module.getName())) {
+          myExcludedModules.add(module);
+        }
+      }
+    });
   }
 
   public Element getState() {
@@ -262,6 +294,49 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     return isResourceFile(virtualFile.getName(), virtualFile.getParent());
   }
 
+  public boolean isAnnotationProcessorsEnabled() {
+    return myEnableAnnotationProcessors;
+  }
+
+  public void setAnnotationProcessorsEnabled(boolean enableAnnotationProcessors) {
+    myEnableAnnotationProcessors = enableAnnotationProcessors;
+  }
+
+  public boolean isObtainProcessorsFromClasspath() {
+    return myObtainProcessorsFromClasspath;
+  }
+
+  public void setObtainProcessorsFromClasspath(boolean obtainProcessorsFromClasspath) {
+    myObtainProcessorsFromClasspath = obtainProcessorsFromClasspath;
+  }
+
+  public String getProcessorPath() {
+    return myProcessorPath;
+  }
+
+  public void setProcessorsPath(String processorsPath) {
+    myProcessorPath = processorsPath;
+  }
+
+  public Map<String, String> getAnnotationProcessorsMap() {
+    return Collections.unmodifiableMap(myProcessorsMap);
+  }
+
+  public void setAnnotationProcessorsMap(Map<String, String> map) {
+    myProcessorsMap.clear();
+    myProcessorsMap.putAll(map);
+  }
+
+  public Set<Module> getExcludedModules() {
+    return Collections.unmodifiableSet(myExcludedModules);
+  }
+
+  public void setExcludedModules(Collection<Module> modules) {
+    myExcludedModules.clear();
+    myExcludedModuleNames.clear();
+    myExcludedModules.addAll(modules);
+  }
+
   private void addWildcardResourcePattern(@NonNls final String wildcardPattern) throws MalformedPatternException {
     final Pair<Pattern, Pattern> pattern = convertToRegexp(wildcardPattern);
     if (pattern != null) {
@@ -400,6 +475,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   // property names
   @NonNls private static final String EXCLUDE_FROM_COMPILE = "excludeFromCompile";
   @NonNls private static final String RESOURCE_EXTENSIONS = "resourceExtensions";
+  @NonNls private static final String ANNOTATION_PROCESSING = "annotationProcessing";
   @NonNls private static final String WILDCARD_RESOURCE_PATTERNS = "wildcardResourcePatterns";
   @NonNls private static final String ENTRY = "entry";
   @NonNls private static final String NAME = "name";
@@ -442,6 +518,52 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       throw new InvalidDataException(e);
     }
 
+    final Element annotationProcessingSettings = parentNode.getChild(ANNOTATION_PROCESSING);
+    if (annotationProcessingSettings != null) {
+      myEnableAnnotationProcessors = Boolean.valueOf(annotationProcessingSettings.getAttributeValue("enabled", "false"));
+      myObtainProcessorsFromClasspath = Boolean.valueOf(annotationProcessingSettings.getAttributeValue("useClasspath", "true"));
+
+      final StringBuilder pathBuilder = new StringBuilder();
+      for (Element pathElement : ((Collection<Element>)annotationProcessingSettings.getChildren("processorPath"))) {
+        final String path = pathElement.getAttributeValue("value");
+        if (path != null) {
+          if (pathBuilder.length() > 0) {
+            pathBuilder.append(File.pathSeparator);
+          }
+          pathBuilder.append(path);
+        }
+      }
+      myProcessorPath = pathBuilder.toString();
+
+      myProcessorPath = annotationProcessingSettings.getAttributeValue("processorPath", "");
+      myProcessorsMap.clear();
+      for (Element processorChild : ((Collection<Element>)annotationProcessingSettings.getChildren("processor"))) {
+        final String name = processorChild.getAttributeValue("name");
+        final String options = processorChild.getAttributeValue("options", "");
+        myProcessorsMap.put(name, options);
+      }
+      myExcludedModules.clear();
+      myExcludedModuleNames.clear();
+      final Collection<Element> excluded = (Collection<Element>)annotationProcessingSettings.getChildren("excludeModule");
+      if (excluded.size() > 0) {
+        final Map<String, Module> moduleMap = new com.intellij.util.containers.HashMap<String, Module>();
+        for (Module module : myModuleManager.getModules()) {
+          moduleMap.put(module.getName(), module);
+        }
+        for (Element moduleElement : excluded) {
+          final String name = moduleElement.getAttributeValue("name");
+          if (name != null) {
+            final Module module = moduleMap.get(name);
+            if (module != null) {
+              myExcludedModules.add(module);
+            }
+            else {
+              myExcludedModuleNames.add(name);
+            }
+          }
+        }
+      }
+    }
   }
 
   public void writeExternal(Element parentNode) throws WriteExternalException {
@@ -453,9 +575,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       parentNode.addContent(newChild);
     }
 
-    String[] patterns = getRegexpPatterns();
     final Element newChild = new Element(RESOURCE_EXTENSIONS);
-    for (final String pattern : patterns) {
+    for (final String pattern : getRegexpPatterns()) {
       final Element entry = new Element(ENTRY);
       entry.setAttribute(NAME, pattern);
       newChild.addContent(entry);
@@ -470,6 +591,37 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
         wildcardPatterns.addContent(entry);
       }
       parentNode.addContent(wildcardPatterns);
+    }
+
+    final Element annotationProcessingSettings = new Element(ANNOTATION_PROCESSING);
+    parentNode.addContent(annotationProcessingSettings);
+    annotationProcessingSettings.setAttribute("enabled", String.valueOf(myEnableAnnotationProcessors));
+    annotationProcessingSettings.setAttribute("useClasspath", String.valueOf(myObtainProcessorsFromClasspath));
+    if (myProcessorPath.length() > 0) {
+      final StringTokenizer tokenizer = new StringTokenizer(myProcessorPath, File.pathSeparator, false);
+      while (tokenizer.hasMoreTokens()) {
+        final String path = tokenizer.nextToken();
+        final Element pathElement = new Element("processorPath");
+        annotationProcessingSettings.addContent(pathElement);
+        pathElement.setAttribute("value", path);
+      }
+    }
+    for (Map.Entry<String, String> entry : myProcessorsMap.entrySet()) {
+      final Element processor = new Element("processor");
+      annotationProcessingSettings.addContent(processor);
+      processor.setAttribute("name", entry.getKey());
+      processor.setAttribute("options", entry.getValue());
+    }
+    final List<Module> modules = new ArrayList<Module>(getExcludedModules());
+    Collections.sort(modules, new Comparator<Module>() {
+      public int compare(Module o1, Module o2) {
+        return o1.getName().compareToIgnoreCase(o2.getName());
+      }
+    });
+    for (Module module : modules) {
+      final Element moduleElement = new Element("excludeModule");
+      annotationProcessingSettings.addContent(moduleElement);
+      moduleElement.setAttribute("name", module.getName());
     }
   }
 
