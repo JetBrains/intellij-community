@@ -247,7 +247,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
               myDir.mkDir();
             }
 
-            StorageUtil.save(file, element);
+            StorageUtil.save(file, element, MySaveSession.this);
             myStorageData.updateLastTimestamp(file);
           }
         }
@@ -359,6 +359,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
   private static class MyStorageData {
     private Map<String, Map<IFile, Element>> myStates = new HashMap<String, Map<IFile, Element>>();
     private long myLastTimestamp = 0;
+    private MyStorageData myOriginalData;
 
     public Set<String> getComponentNames() {
       return myStates.keySet();
@@ -379,6 +380,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
 
     public void updateLastTimestamp(final IFile file) {
       myLastTimestamp = Math.max(myLastTimestamp, file.getTimeStamp());
+      if (myOriginalData != null) myOriginalData.myLastTimestamp = myLastTimestamp;
     }
 
     public long getLastTimeStamp() {
@@ -419,11 +421,13 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
       final MyStorageData result = new MyStorageData();
       result.myStates = new HashMap<String, Map<IFile, Element>>(myStates);
       result.myLastTimestamp = myLastTimestamp;
+      result.myOriginalData = this;
       return result;
     }
 
     public void clear() {
       myStates.clear();
+      myOriginalData = null;
     }
 
     public boolean containsComponent(final String componentName) {
