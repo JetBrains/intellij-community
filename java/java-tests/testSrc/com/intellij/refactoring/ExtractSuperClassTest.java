@@ -31,6 +31,10 @@ public class ExtractSuperClassTest extends CodeInsightTestCase {
            new Pair<String, Class<? extends PsiMember>>("x", PsiField.class));
   }
 
+  public void testFieldInitializationWithCast() throws Exception {
+    doTest("Test", "TestSubclass", new Pair<String, Class<? extends PsiMember>>("x", PsiField.class));
+  }
+
   public void testParameterNameEqualsFieldName() throws Exception {    // IDEADEV-10629
     doTest("Test", "TestSubclass", new Pair<String, Class<? extends PsiMember>>("a", PsiField.class));
   }
