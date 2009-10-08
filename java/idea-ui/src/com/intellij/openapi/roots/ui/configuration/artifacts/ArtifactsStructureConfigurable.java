@@ -137,6 +137,12 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   }
 
   @Override
+  public String getHelpTopic() {
+    final String topic = super.getHelpTopic();
+    return topic != null ? topic : "reference.settingsdialog.project.structure.artifacts";
+  }
+
+  @Override
   protected void removeArtifact(Artifact artifact) {
     myPackagingEditorContext.getModifiableArtifactModel().removeArtifact(artifact);
   }

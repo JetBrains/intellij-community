@@ -31,7 +31,7 @@ public class EnterHandler extends BaseEnterHandler {
 
     TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(project);
 
-    if (!templateManager.startTemplate(templateManager, editor, TemplateSettings.ENTER_CHAR)) {
+    if (!templateManager.startTemplate(editor, TemplateSettings.ENTER_CHAR)) {
       myOriginalHandler.execute(editor, dataContext);
     }
   }

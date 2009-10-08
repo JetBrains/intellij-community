@@ -222,4 +222,40 @@ public class AnnotationUtil {
   public static boolean isJetbrainsAnnotation(@NonNls final String simpleName) {
     return ArrayUtil.find(SIMPLE_NAMES, simpleName) != -1;
   }
+
+  /**
+   * Works similar to #isAnnotated(PsiModifierListOwner, Collection<String>) but supports FQN patters
+   * like "javax.ws.rs.*". Supports ending "*" only.
+   *
+   * @param owner modifier list
+   * @param annotations annotations qualified names or patterns. Patterns can have '*' at the end
+   * @return <code>true</code> if annotated of at least one annotation from the annotations list
+   */
+  public static boolean checkAnnotatedUsingPatterns(PsiModifierListOwner owner, Collection<String> annotations) {
+    List<String> fqns = null;
+    final PsiModifierList modList;
+    if (owner == null || (modList = owner.getModifierList()) == null) return false;
+
+    for (String fqn : annotations) {
+      if (! fqn.endsWith("*") && isAnnotated(owner, fqn, false)) {
+        return true;
+      } else {
+        if (fqns == null) {
+          fqns = new ArrayList<String>();
+          final PsiAnnotation[] annos = modList.getAnnotations();
+          for (PsiAnnotation anno : annos) {
+            fqns.add(anno.getQualifiedName());
+          }
+          if (fqns.isEmpty()) return false;
+        }
+        fqn = fqn.substring(0, fqn.length() - 2);
+        for (String annoFQN : fqns) {
+          if (annoFQN.startsWith(fqn)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
 }

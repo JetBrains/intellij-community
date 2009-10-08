@@ -16,11 +16,7 @@ import java.util.List;
 public class ChooseLibrariesDialog extends ChooseElementsDialog<Library> {
 
   public ChooseLibrariesDialog(Project project, List<? extends Library> items, String title, String description) {
-    super(project, items, title, description);
-  }
-
-  public ChooseLibrariesDialog(JComponent component, String title, List<Library> items) {
-    super(component, items, title, true);
+    super(project, items, title, description, true);
   }
 
   protected String getItemText(final Library item) {

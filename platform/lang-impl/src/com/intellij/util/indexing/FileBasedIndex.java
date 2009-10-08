@@ -549,7 +549,7 @@ public class FileBasedIndex implements ApplicationComponent {
         try {
           checkRebuild(indexId, false);
           myChangedFilesUpdater.forceUpdate(filter);
-          indexUnsavedDocuments(indexId, project);
+          indexUnsavedDocuments(indexId, project, filter);
         }
         catch (StorageException e) {
           scheduleRebuild(indexId, e);
@@ -917,7 +917,7 @@ public class FileBasedIndex implements ApplicationComponent {
     return docs;
   }
 
-  private void indexUnsavedDocuments(ID<?, ?> indexId, Project project) throws StorageException {
+  private void indexUnsavedDocuments(ID<?, ?> indexId, Project project, GlobalSearchScope filter) throws StorageException {
 
     if (myUpToDateIndices.contains(indexId)) {
       return; // no need to index unsaved docs
@@ -928,11 +928,12 @@ public class FileBasedIndex implements ApplicationComponent {
       // now index unsaved data
       final StorageGuard.Holder guard = setDataBufferingEnabled(true);
       try {
+        boolean allDocsProcessed = true;
         final Semaphore semaphore = myUnsavedDataIndexingSemaphores.get(indexId);
         semaphore.down();
         try {
           for (Document document : documents) {
-            indexUnsavedDocument(document, indexId, project);
+            allDocsProcessed &= indexUnsavedDocument(document, indexId, project, filter);
           }
         }
         finally {
@@ -943,7 +944,9 @@ public class FileBasedIndex implements ApplicationComponent {
               break; // hack. Most probably that other indexing threads is waiting for PsiLock, which we're are holding.
             }
           }
-          myUpToDateIndices.add(indexId); // safe to set the flag here, becase it will be cleared under the WriteAction
+          if (allDocsProcessed) {
+            myUpToDateIndices.add(indexId); // safe to set the flag here, becase it will be cleared under the WriteAction
+          }
         }
       }
       finally {
@@ -996,12 +999,15 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
-  private void indexUnsavedDocument(final Document document, final ID<?, ?> requestedIndexId, Project project) throws StorageException {
+  // returns false if doc was not indexed because the file does not fit in scope
+  private boolean indexUnsavedDocument(final Document document, final ID<?, ?> requestedIndexId, Project project, GlobalSearchScope filter) throws StorageException {
     final VirtualFile vFile = myFileDocumentManager.getFile(document);
     if (!(vFile instanceof VirtualFileWithId) || !vFile.isValid()) {
-      return;
+      return true;
     }
-
+    if (filter != null && !filter.accept(vFile)) {
+      return false;
+    }
     final PsiFile dominantContentFile = findDominantPsiForDocument(document, project);
 
     DocumentContent content;
@@ -1036,6 +1042,7 @@ public class FileBasedIndex implements ApplicationComponent {
         dominantContentFile.putUserData(PsiFileImpl.BUILDING_STUB, null);
       }
     }
+    return true;
   }
 
   public static final Key<PsiFile> PSI_FILE = new Key<PsiFile>("PSI for stubs");

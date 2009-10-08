@@ -9,9 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -22,28 +20,26 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
   private String myDescription;
 
   public ChooseElementsDialog(Project project, List<? extends T> items, String title, final String description) {
+    this(project, items, title, description, false);
+  }
+
+  public ChooseElementsDialog(Project project, List<? extends T> items, String title, final String description, boolean sort) {
     super(project, true);
     myDescription = description;
-    initializeDialog(items, title);
+    initializeDialog(items, title, sort);
   }
 
   public ChooseElementsDialog(Component parent, List<T> items, String title) {
-    this(parent, items, title, false);
+    this(parent, items, title, null, false);
   }
 
-  public ChooseElementsDialog(Component parent, List<T> items, String title, final boolean sort) {
+  public ChooseElementsDialog(Component parent, List<T> items, String title, @Nullable String description, final boolean sort) {
     super(parent, true);
-    if (sort) {
-      Collections.sort(items, new Comparator<T>() {
-        public int compare(final T o1, final T o2) {
-          return getItemText(o1).compareToIgnoreCase(getItemText(o2));
-        }
-      });
-    }
-    initializeDialog(items, title);
+    myDescription = description;
+    initializeDialog(items, title, sort);
   }
 
-  private void initializeDialog(final List<? extends T> items, final String title) {
+  private void initializeDialog(final List<? extends T> items, final String title, boolean sort) {
     setTitle(title);
     myChooser = new ElementsChooser<T>(false) {
       protected String getItemText(@NotNull final T item) {
@@ -52,7 +48,15 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
     };
     myChooser.setColorUnmarkedElements(false);
 
-    setElements(items, items.size() > 0 ? items.subList(0, 1) : Collections.<T>emptyList());
+    List<? extends T> elements = new ArrayList<T>(items);
+    if (sort) {
+      Collections.sort(elements, new Comparator<T>() {
+        public int compare(final T o1, final T o2) {
+          return getItemText(o1).compareToIgnoreCase(getItemText(o2));
+        }
+      });
+    }
+    setElements(elements, elements.size() > 0 ? elements.subList(0, 1) : Collections.<T>emptyList());
     myChooser.getComponent().registerKeyboardAction(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         doOKAction();

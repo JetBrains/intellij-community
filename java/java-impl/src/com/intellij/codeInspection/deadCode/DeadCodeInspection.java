@@ -67,6 +67,9 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   public boolean ADD_NONJAVA_TO_ENTRIES = true;
 
   public JDOMExternalizableStringList ADDITIONAL_ANNOTATIONS = new JDOMExternalizableStringList();
+  private static final String[] ADDITIONAL_ANNOS = {
+    "javax.ws.rs.*"
+  };
 
   private HashSet<RefElement> myProcessedSuspicious = null;
   private int myPhase;
@@ -86,6 +89,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   public final UnusedCodeExtension[] myExtensions;
 
   public DeadCodeInspection() {
+    ADDITIONAL_ANNOTATIONS.addAll(Arrays.asList(ADDITIONAL_ANNOS));
     myQuickFixActions = new QuickFixAction[]{new PermanentDeleteAction(), new CommentOutBin(), new MoveToEntries()};
     ExtensionPoint<UnusedCodeExtension> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
     final UnusedCodeExtension[] deadCodeAddins = point.getExtensions();
@@ -430,7 +434,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       if (isAddMainsEnabled() && PsiMethodUtil.hasMainMethod(aClass)) return true;
     }
     if (element instanceof PsiModifierListOwner
-        && AnnotationUtil.isAnnotated((PsiModifierListOwner)element, ADDITIONAL_ANNOTATIONS)) {
+        && AnnotationUtil.checkAnnotatedUsingPatterns((PsiModifierListOwner)element, ADDITIONAL_ANNOTATIONS)) {
       return true;
     }
     for (UnusedCodeExtension extension : myExtensions) {
