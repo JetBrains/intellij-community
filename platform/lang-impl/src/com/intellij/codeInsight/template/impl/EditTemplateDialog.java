@@ -533,19 +533,19 @@ public class EditTemplateDialog extends DialogWrapper {
   protected void doOKAction() {
     String key = myKeyField.getText().trim();
 
+    final String newGroup = (String)myGroupCombo.getSelectedItem();
+
     for (TemplateGroup templateGroup : myTemplateGroups) {
-      for (TemplateImpl template : templateGroup.getElements()) {
-        if (template.getKey().equals(key) && myTemplate != template) {
-          Messages.showMessageDialog(
-            getContentPane(),
-            CodeInsightBundle.message("dialog.edit.template.error.already.exists", key, template.getGroupName()),
-            CodeInsightBundle.message("dialog.edit.template.error.title"),
-            Messages.getErrorIcon()
-          );
-          return;
+      if (templateGroup.getName().equals(newGroup)) {
+        for (TemplateImpl template : templateGroup.getElements()) {
+          if (template.getKey().equals(key) && myTemplate != template) {
+            Messages.showMessageDialog(getContentPane(),
+                                       CodeInsightBundle.message("dialog.edit.template.error.already.exists", key, template.getGroupName()),
+                                       CodeInsightBundle.message("dialog.edit.template.error.title"), Messages.getErrorIcon());
+            return;
+          }
         }
       }
-
     }
 
     if (!TemplateImplUtil.validateTemplateText(myTemplateEditor.getDocument().getText())) {
@@ -559,7 +559,7 @@ public class EditTemplateDialog extends DialogWrapper {
     }
 
     SchemesManager<TemplateGroup, TemplateGroup> schemesManager = TemplateSettings.getInstance().getSchemesManager();
-    TemplateGroup group = schemesManager.findSchemeByName((String)myGroupCombo.getSelectedItem());
+    TemplateGroup group = schemesManager.findSchemeByName(newGroup);
     if (group != null && schemesManager.isShared(group)) {
       Messages.showMessageDialog (
           getContentPane(),

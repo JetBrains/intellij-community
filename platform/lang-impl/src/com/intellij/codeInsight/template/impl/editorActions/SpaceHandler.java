@@ -29,7 +29,7 @@ public class SpaceHandler implements TypedActionHandler {
     }
 
     TemplateManagerImpl templateManager = (TemplateManagerImpl) TemplateManagerImpl.getInstance(project);
-    if (!templateManager.startTemplate(templateManager, editor, TemplateSettings.SPACE_CHAR)) {
+    if (!templateManager.startTemplate(editor, TemplateSettings.SPACE_CHAR)) {
       myOriginalHandler.execute(editor, charTyped, dataContext);
     }
   }

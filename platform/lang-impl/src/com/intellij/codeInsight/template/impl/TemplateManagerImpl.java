@@ -23,9 +23,7 @@ import com.intellij.util.PairProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class TemplateManagerImpl extends TemplateManager implements ProjectComponent {
   protected Project myProject;
@@ -108,7 +106,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   }
 
   public boolean startTemplate(@NotNull Editor editor, char shortcutChar) {
-    return startTemplate(this, editor, shortcutChar, null);
+    return startTemplate(editor, shortcutChar, null);
   }
 
   public void startTemplate(@NotNull final Editor editor, @NotNull Template template) {
@@ -164,11 +162,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     startTemplate(editor, null, template, listener, null);
   }
 
-  public boolean startTemplate(TemplateManagerImpl templateManager, final Editor editor, char shortcutChar) {
-    return startTemplate(templateManager, editor, shortcutChar, null);
-  }
-
-  public boolean startTemplate(TemplateManagerImpl templateManager, final Editor editor, char shortcutChar, final PairProcessor<String, String> processor) {
+  public boolean startTemplate(final Editor editor, char shortcutChar, final PairProcessor<String, String> processor) {
     final Document document = editor.getDocument();
     PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, myProject);
     if (file == null) return false;
@@ -176,36 +170,25 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     TemplateSettings templateSettings = TemplateSettings.getInstance();
     CharSequence text = document.getCharsSequence();
     final int caretOffset = editor.getCaretModel().getOffset();
-    TemplateImpl template = null;
-    int wordStart = 0;
+    String key = null;
+    List<TemplateImpl> candidates = Collections.emptyList();
     for (int i = templateSettings.getMaxKeyLength(); i >= 1 ; i--) {
-      wordStart = caretOffset - i;
+      int wordStart = caretOffset - i;
       if (wordStart < 0) {
         continue;
       }
-      String key = text.subSequence(wordStart, caretOffset).toString();
-      template = templateSettings.getTemplate(key);
-      if (template != null && template.isDeactivated()) {
-        template = null;
-      }
-      if (template != null) {
-        if (Character.isJavaIdentifierStart(key.charAt(0))) {
-          if (wordStart > 0 && Character.isJavaIdentifierPart(text.charAt(wordStart - 1))) {
-            template = null;
-            continue;
-          }
+      key = text.subSequence(wordStart, caretOffset).toString();
+      if (Character.isJavaIdentifierStart(key.charAt(0))) {
+        if (wordStart > 0 && Character.isJavaIdentifierPart(text.charAt(wordStart - 1))) {
+          continue;
         }
-        break;
       }
+
+      candidates = templateSettings.collectMatchingCandidates(key, shortcutChar);
+      if (!candidates.isEmpty()) break;
     }
 
-    if (template == null) return false;
-
-    if (shortcutChar != 0 && getShortcutChar(template) != shortcutChar) {
-      return false;
-    }
-
-    if (template.isSelectionTemplate()) return false;
+    if (candidates.isEmpty()) return false;
 
     CommandProcessor.getInstance().executeCommand(
       myProject, new Runnable() {
@@ -215,39 +198,53 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
       },
       "", null
     );
-    if (!isApplicable(file, caretOffset - template.getKey().length(), template)) {
+
+    candidates = filterApplicableCandidates(file, caretOffset - key.length(), candidates);
+    if (candidates.isEmpty()) {
       return false;
     }
     if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), myProject)) {
-        return false;
+      return false;
     }
-    final int wordStart0 = wordStart;
-    final TemplateImpl template0 = template;
-    final TemplateState templateState0 = templateManager.initTemplateState(editor);
+
+    if (candidates.size() == 1) {
+      TemplateImpl template = candidates.get(0);
+      startTemplateWithPrefix(editor, template, processor);
+    }
+    else {
+      ListTemplatesHandler.showTemplatesLookup(myProject, editor, key, candidates);
+    }
+    
+    return true;
+  }
+
+  public void startTemplateWithPrefix(final Editor editor, final TemplateImpl template, @Nullable final PairProcessor<String, String> processor) {
+    final int caretOffset = editor.getCaretModel().getOffset();
+    final int wordStart = caretOffset - template.getKey().length();
+    final TemplateState templateState = initTemplateState(editor);
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(
       myProject, new Runnable() {
         public void run() {
-          editor.getDocument().deleteString(wordStart0, caretOffset);
-          editor.getCaretModel().moveToOffset(wordStart0);
+          editor.getDocument().deleteString(wordStart, caretOffset);
+          editor.getCaretModel().moveToOffset(wordStart);
           editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
           editor.getSelectionModel().removeSelection();
-          templateState0.start(template0, processor);
+          templateState.start(template, processor);
         }
       },
       CodeInsightBundle.message("insert.code.template.command"), null
     );
-    return true;
   }
 
-  private static char getShortcutChar(TemplateImpl template) {
-    char c = template.getShortcutChar();
-    if (c == TemplateSettings.DEFAULT_CHAR) {
-      return TemplateSettings.getInstance().getDefaultShortcutChar();
+  private static List<TemplateImpl> filterApplicableCandidates(PsiFile file, int offset, List<TemplateImpl> candidates) {
+    List<TemplateImpl> result = new ArrayList<TemplateImpl>();
+    for (TemplateImpl candidate : candidates) {
+      if (isApplicable(file, offset, candidate)) {
+        result.add(candidate);
+      }
     }
-    else {
-      return c;
-    }
+    return result;
   }
 
   public TemplateContextType getContextType(@NotNull PsiFile file, int offset) {
