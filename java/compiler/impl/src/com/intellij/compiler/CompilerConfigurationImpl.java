@@ -197,6 +197,9 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   public JavacCompiler getJavacCompiler() {
+    if (JAVAC_EXTERNAL_BACKEND == null) {
+      createCompilers();
+    }
     return JAVAC_EXTERNAL_BACKEND;
   }
 
