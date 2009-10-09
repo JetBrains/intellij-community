@@ -140,7 +140,7 @@ public class AddSupportForFrameworksPanel {
         showCard(node.getProvider().getId());
       }
       else {
-        myTickCheckboxLabel.setText("Tick checkbox to add support for '" + node.getTitle() + "'");
+        myTickCheckboxLabel.setText("Select check box to add '" + node.getTitle() + "' support");
         showCard(UNCHECKED_CARD);
       }
     }
