@@ -37,8 +37,7 @@ public class GitRebaseUtils {
    * @return true if the rebase directory presents in the root
    */
   public static boolean isRebaseInTheProgress(VirtualFile root) {
-    @SuppressWarnings({"HardCodedStringLiteral"}) File file =
-      new File(VfsUtil.virtualToIoFile(root), ".git" + File.separator + "rebase-merge");
-    return file.exists();
+    File gitDir = new File(VfsUtil.virtualToIoFile(root), ".git");
+    return new File(gitDir, "rebase-apply").exists() || new File(gitDir, "rebase-merge").exists();
   }
 }
