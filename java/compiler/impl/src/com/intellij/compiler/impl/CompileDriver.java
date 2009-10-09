@@ -669,18 +669,25 @@ public class CompileDriver {
         didSomething |= invokeFileProcessingCompilers(compilerManager, context, SourceInstrumentingCompiler.class,
                                                       FILE_PROCESSING_COMPILER_ADAPTER_FACTORY, forceCompile, true, onlyCheckStatus);
 
-        didSomething |= invokeFileProcessingCompilers(compilerManager, context, SourceProcessingCompiler.class,
-                                                      FILE_PROCESSING_COMPILER_ADAPTER_FACTORY, forceCompile, true, onlyCheckStatus);
-
-        final CompileScope intermediateSources = attachIntermediateOutputDirectories(new CompositeScope(CompileScope.EMPTY_ARRAY) {
-          @NotNull
-          public Module[] getAffectedModules() {
-            return context.getCompileScope().getAffectedModules();
-          }
-        }, SOURCE_PROCESSING_ONLY);
-        context.addScope(intermediateSources);
-
         didSomething |= translate(context, compilerManager, forceCompile, isRebuild, trackDependencies, onlyCheckStatus);
+
+        final boolean sourceProcessed =
+          invokeFileProcessingCompilers(compilerManager, context, SourceProcessingCompiler.class, FILE_PROCESSING_COMPILER_ADAPTER_FACTORY,
+                                        forceCompile, true, onlyCheckStatus);
+        didSomething |= sourceProcessed;
+
+        if (sourceProcessed) {
+          final CompileScope intermediateSources = attachIntermediateOutputDirectories(new CompositeScope(CompileScope.EMPTY_ARRAY) {
+            @NotNull
+            public Module[] getAffectedModules() {
+              return context.getCompileScope().getAffectedModules();
+            }
+          }, SOURCE_PROCESSING_ONLY);
+          context.addScope(intermediateSources);
+          
+          // important: override rebuild, forceCompile, and trackDependencies options in order to compile only newly generated stuff
+          didSomething |= translate(context, compilerManager, false, false, false, onlyCheckStatus);
+        }
 
         didSomething |= invokeFileProcessingCompilers(compilerManager, context, ClassInstrumentingCompiler.class,
                                                       FILE_PROCESSING_COMPILER_ADAPTER_FACTORY, isRebuild, false, onlyCheckStatus);
