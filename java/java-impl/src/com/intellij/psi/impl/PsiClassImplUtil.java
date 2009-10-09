@@ -24,7 +24,9 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.*;
+import com.intellij.ui.IconDeferrer;
 import com.intellij.ui.RowIcon;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.SmartList;
@@ -267,11 +269,52 @@ public class PsiClassImplUtil {
     return (Map<String, List<Pair<T, PsiSubstitutor>>>)value.getValue().get(memberClazz);
   }
 
+  private static class ClassIconRequest {
+    public PsiClass psiClass;
+    public int flags;
+
+    private ClassIconRequest(PsiClass psiClass, int flags) {
+      this.psiClass = psiClass;
+      this.flags = flags;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof ClassIconRequest)) return false;
+
+      ClassIconRequest that = (ClassIconRequest)o;
+
+      if (flags != that.flags) return false;
+      if (psiClass != null ? !psiClass.equals(that.psiClass) : that.psiClass != null) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = psiClass != null ? psiClass.hashCode() : 0;
+      result = 31 * result + flags;
+      return result;
+    }
+  }
+
+  private static final Function<ClassIconRequest, Icon> FULL_ICON_EVALUATOR = new Function<ClassIconRequest, Icon>() {
+    public Icon fun(ClassIconRequest r) {
+      final boolean isLocked = (r.flags & Iconable.ICON_FLAG_READ_STATUS) != 0 && !r.psiClass.isWritable();
+      Icon symbolIcon = ElementPresentationUtil.getClassIconOfKind(r.psiClass, ElementPresentationUtil.getClassKind(r.psiClass));
+      RowIcon baseIcon = ElementBase.createLayeredIcon(symbolIcon, ElementPresentationUtil.getFlags(r.psiClass, isLocked));
+      return ElementPresentationUtil.addVisibilityIcon(r.psiClass, r.flags, baseIcon);
+    }
+  };
+
   public static Icon getClassIcon(final int flags, final PsiClass aClass) {
-    final boolean isLocked = (flags & Iconable.ICON_FLAG_READ_STATUS) != 0 && !aClass.isWritable();
-    Icon symbolIcon = ElementPresentationUtil.getClassBaseIcon(aClass);
-    RowIcon baseIcon = ElementBase.createLayeredIcon(symbolIcon, ElementPresentationUtil.getFlags(aClass, isLocked));
-    return ElementPresentationUtil.addVisibilityIcon(aClass, flags, baseIcon);
+    Icon symbolIcon = ElementPresentationUtil.getClassIconOfKind(aClass, ElementPresentationUtil.getBasicClassKind(aClass));
+    RowIcon baseIcon = ElementBase.createLayeredIcon(symbolIcon, 0);
+
+    return IconDeferrer.getInstance().defer(ElementPresentationUtil.addVisibilityIcon(aClass, flags, baseIcon),
+                                            new ClassIconRequest(aClass, flags),
+                                            FULL_ICON_EVALUATOR);
   }
 
   public static SearchScope getClassUseScope(final PsiClass aClass) {

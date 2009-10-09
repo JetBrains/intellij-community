@@ -27,6 +27,7 @@ public class ElementPresentationUtil {
   public static final Icon JUNIT_TEST_MARK = IconLoader.getIcon("/nodes/junitTestMark.png");
   private static final Icon RUNNABLE_MARK = IconLoader.getIcon("/nodes/runnableMark.png");
 
+
   private ElementPresentationUtil() {
   }
 
@@ -81,6 +82,18 @@ public class ElementPresentationUtil {
     return vFile != null
            && ProjectRootManager.getInstance(project).getFileIndex().isInSource(vFile)
            && CompilerConfiguration.getInstance(project).isExcludedFromCompilation(vFile);
+  }
+
+  public static int getBasicClassKind(PsiClass aClass) {
+    if (!aClass.isValid()) return CLASS_KIND_CLASS;
+
+    if (aClass.isAnnotationType()) return CLASS_KIND_ANNOTATION;
+    if (aClass.isEnum()) return CLASS_KIND_ENUM;
+    if (aClass.isInterface()) return CLASS_KIND_INTERFACE;
+    if (aClass instanceof JspClass) return CLASS_KIND_JSP;
+    if (aClass instanceof PsiAnonymousClass) return CLASS_KIND_ANONYMOUS;
+
+    return CLASS_KIND_CLASS;
   }
 
   public static int getClassKind(final PsiClass aClass) {
@@ -162,8 +175,7 @@ public class ElementPresentationUtil {
     BASE_ICON.put(CLASS_KIND_RUNNABLE, Icons.CLASS_ICON);
   }
 
-  public static Icon getClassBaseIcon(final PsiClass aClass) {
-    final int classKind = getClassKind(aClass);
+  public static Icon getClassIconOfKind(PsiClass aClass, int classKind) {
     final boolean isAbstract = aClass.hasModifierProperty(PsiModifier.ABSTRACT);
     return BASE_ICON.get(classKind | (isAbstract ? FLAGS_ABSTRACT : 0));
   }
