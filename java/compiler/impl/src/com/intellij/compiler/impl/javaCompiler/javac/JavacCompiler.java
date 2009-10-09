@@ -26,6 +26,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.Configurable;
@@ -380,8 +381,11 @@ public class JavacCompiler extends ExternalCompiler {
     if (isAnnotationProcessingMode) {
       commandLine.add("-s");
       commandLine.add(outputPath.replace('/', File.separatorChar));
-      commandLine.add("-d");
-      commandLine.add(outputPath.replace('/', File.separatorChar));
+      final String moduleOutputPath = CompilerPaths.getModuleOutputPath(chunk.getModules()[0], false);
+      if (moduleOutputPath != null) {
+        commandLine.add("-d");
+        commandLine.add(moduleOutputPath.replace('/', File.separatorChar));
+      }
     }
     else {
       commandLine.add("-d");
