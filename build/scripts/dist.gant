@@ -68,7 +68,7 @@ target('default': 'The default target') {
   depends(compile)
   layoutAll(
           buildNumber: "IC-90.SNAPSHOT",
-          version: "MaiaCE",
+          version: "Maia",
           system_selector: "IntelliJIdeaCE90",
           vmoptions: "-Xms32m -Xmx256m -XX:MaxPermSize=150m -ea",
           home, out)
