@@ -970,6 +970,17 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
         PsiElement[] elements = currentProjectViewPane.getSelectedPSIElements();
         return elements.length == 0 ? null : elements;
       }
+      if (DataConstants.VIRTUAL_FILE_ARRAY.equals(dataId)) {
+        PsiElement[] psiElements = (PsiElement[])getData(DataConstants.PSI_ELEMENT_ARRAY);
+        if (psiElements == null) return null;
+        Set<VirtualFile> files = new LinkedHashSet<VirtualFile>();
+        for (PsiElement element : psiElements) {
+          if (element instanceof PsiFileSystemItem) {
+            files.add(((PsiFileSystemItem)element).getVirtualFile());
+          }
+        }
+        return files.size() > 0 ? files.toArray(new VirtualFile[files.size()]) : null;
+      }
       if (DataConstantsEx.TARGET_PSI_ELEMENT.equals(dataId)) {
         return null;
       }
@@ -1537,20 +1548,37 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
     }
 
     public void scrollFromSource() {
-      final FileEditor[] editors = FileEditorManager.getInstance(myProject).getSelectedEditors();
+      final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
+      final FileEditor[] editors = fileEditorManager.getSelectedEditors();
       for (FileEditor fileEditor : editors) {
         if (fileEditor instanceof TextEditor) {
           Editor editor = ((TextEditor)fileEditor).getEditor();
-          selectElementAtCaretNotLosingFocus(editor);
+          selectElementAtCaret(editor);
+          return;
+        }
+      }
+      final VirtualFile[] selectedFiles = fileEditorManager.getSelectedFiles();
+      if (selectedFiles.length > 0) {
+        final PsiFile file = PsiManager.getInstance(myProject).findFile(selectedFiles[0]);
+        if (file != null) {
+          scrollFromFile(file, null);
         }
       }
     }
 
     private void selectElementAtCaretNotLosingFocus(final Editor editor) {
       if (IJSwingUtilities.hasFocus(getCurrentProjectViewPane().getComponentToFocus())) return;
+      selectElementAtCaret(editor);
+    }
+
+    private void selectElementAtCaret(Editor editor) {
       final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
       if (file == null) return;
 
+      scrollFromFile(file, editor);
+    }
+
+    private void scrollFromFile(PsiFile file, @Nullable Editor editor) {
       final MySelectInContext selectInContext = new MySelectInContext(file, editor);
 
       final SelectInTarget target = mySelectInTargets.get(getCurrentViewId());
@@ -1578,9 +1606,9 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
 
     private class MySelectInContext implements SelectInContext {
       private final PsiFile myPsiFile;
-      private final Editor myEditor;
+      @Nullable private final Editor myEditor;
 
-      private MySelectInContext(final PsiFile psiFile, Editor editor) {
+      private MySelectInContext(final PsiFile psiFile, @Nullable Editor editor) {
         myPsiFile = psiFile;
         myEditor = editor;
       }
@@ -1604,9 +1632,12 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
       }
 
       private PsiElement getPsiElement() {
-        final int offset = myEditor.getCaretModel().getOffset();
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-        PsiElement e = getPsiFile().findElementAt(offset);
+        PsiElement e = null;
+        if (myEditor != null) {
+          final int offset = myEditor.getCaretModel().getOffset();
+          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+          e = getPsiFile().findElementAt(offset);
+        }
         if (e == null) {
           e = getPsiFile();
         }

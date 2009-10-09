@@ -9,32 +9,39 @@
 package com.intellij.refactoring.memberPullUp;
 
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classMembers.InterfaceContainmentVerifier;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class PullUpConflictsUtil {
   private PullUpConflictsUtil() {}
 
-  public static LinkedHashMap<PsiElement, String> checkConflicts(final MemberInfo[] infos,
+  public static MultiMap<PsiElement, String> checkConflicts(final MemberInfo[] infos,
                                         PsiClass subclass,
-                                        PsiClass superClass,
+                                        @Nullable PsiClass superClass,
                                         PsiPackage targetPackage,
                                         PsiDirectory targetDirectory,
                                         final InterfaceContainmentVerifier interfaceContainmentVerifier) {
-    final Set<PsiElement> movedMembers = new HashSet<PsiElement>();
+    final Set<PsiMember> movedMembers = new HashSet<PsiMember>();
     final Set<PsiMethod> abstractMethods = new HashSet<PsiMethod>();
     final boolean isInterfaceTarget;
     final PsiElement targetRepresentativeElement;
@@ -47,7 +54,7 @@ public class PullUpConflictsUtil {
       targetRepresentativeElement = targetDirectory;
     }
     for (MemberInfo info : infos) {
-      PsiElement member = info.getMember();
+      PsiMember member = info.getMember();
       if (member instanceof PsiMethod) {
         if (!info.isToAbstract() && !isInterfaceTarget) {
           movedMembers.add(member);
@@ -60,7 +67,8 @@ public class PullUpConflictsUtil {
         movedMembers.add(member);
       }
     }
-    final LinkedHashMap<PsiElement, String> conflicts = new LinkedHashMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    RefactoringConflictsUtil.analyzeAccessibilityConflicts(movedMembers, superClass, conflicts, null, targetRepresentativeElement);
     if (superClass != null) {
       checkSuperclassMembers(superClass, infos, conflicts);
       if (isInterfaceTarget) {
@@ -69,8 +77,8 @@ public class PullUpConflictsUtil {
     }
     // check if moved methods use other members in the classes between Subclass and Superclass
     List<PsiElement> checkModuleConflictsList = new ArrayList<PsiElement>();
-    for (PsiElement member : movedMembers) {
-      if (member instanceof PsiMethod || member instanceof PsiClass) {
+    for (PsiMember member : movedMembers) {
+      if (member instanceof PsiMethod || member instanceof PsiClass && !(member instanceof PsiCompiledElement)) {
         ConflictingUsagesOfSubClassMembers visitor =
           new ConflictingUsagesOfSubClassMembers(member, movedMembers, abstractMethods, subclass, superClass,
                                                  superClass != null ? null : targetPackage, conflicts,
@@ -84,12 +92,12 @@ public class PullUpConflictsUtil {
       checkModuleConflictsList.add(method.getReturnTypeElement());
       checkModuleConflictsList.add(method.getTypeParameterList());
     }
-    RefactoringUtil.analyzeModuleConflicts(subclass.getProject(), checkModuleConflictsList,
+    RefactoringConflictsUtil.analyzeModuleConflicts(subclass.getProject(), checkModuleConflictsList,
                                            new UsageInfo[0], targetRepresentativeElement, conflicts);
     return conflicts;
   }
 
-  private static void checkInterfaceTarget(MemberInfo[] infos, LinkedHashMap<PsiElement, String> conflictsList) {
+  private static void checkInterfaceTarget(MemberInfo[] infos, MultiMap<PsiElement, String> conflictsList) {
     for (MemberInfo info : infos) {
       PsiElement member = info.getMember();
 
@@ -100,21 +108,21 @@ public class PullUpConflictsUtil {
           String message =
             RefactoringBundle.message("0.is.not.static.it.cannot.be.moved.to.the.interface", RefactoringUIUtil.getDescription(member, false));
           message = CommonRefactoringUtil.capitalize(message);
-          conflictsList.put(member, message);
+          conflictsList.putValue(member, message);
         }
       }
 
       if (member instanceof PsiField && ((PsiField)member).getInitializer() == null) {
         String message = RefactoringBundle.message("0.is.not.initialized.in.declaration.such.fields.are.not.allowed.in.interfaces",
                                                    RefactoringUIUtil.getDescription(member, false));
-        conflictsList.put(member, CommonRefactoringUtil.capitalize(message));
+        conflictsList.putValue(member, CommonRefactoringUtil.capitalize(message));
       }
     }
   }
 
   private static void checkSuperclassMembers(PsiClass superClass,
                                              MemberInfo[] infos,
-                                             LinkedHashMap<PsiElement, String> conflictsList) {
+                                             MultiMap<PsiElement, String> conflictsList) {
     for (MemberInfo info : infos) {
       PsiMember member = info.getMember();
       boolean isConflict = false;
@@ -135,7 +143,24 @@ public class PullUpConflictsUtil {
                                                    RefactoringUIUtil.getDescription(superClass, false),
                                                    RefactoringUIUtil.getDescription(member, false));
         message = CommonRefactoringUtil.capitalize(message);
-        conflictsList.put(superClass, message);
+        conflictsList.putValue(superClass, message);
+      }
+
+      if (member instanceof PsiMethod) {
+        final PsiMethod method = (PsiMethod)member;
+        final PsiModifierList modifierList = method.getModifierList();
+        if (!modifierList.hasModifierProperty(PsiModifier.PRIVATE)) {
+          for (PsiClass subClass : ClassInheritorsSearch.search(superClass)) {
+            if (method.getContainingClass() != subClass) {
+              MethodSignature signature = ((PsiMethod) member).getSignature(TypeConversionUtil.getSuperClassSubstitutor(superClass, subClass, PsiSubstitutor.EMPTY));
+              final PsiMethod wouldBeOverriden = MethodSignatureUtil.findMethodBySignature(subClass, signature, false);
+              if (wouldBeOverriden != null && VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(wouldBeOverriden.getModifierList()),
+                                                                     VisibilityUtil.getVisibilityModifier(modifierList)) > 0) {
+                conflictsList.putValue(wouldBeOverriden, CommonRefactoringUtil.capitalize(RefactoringUIUtil.getDescription(method, true) + " in super class would clash with local method from " + RefactoringUIUtil.getDescription(subClass, true)));
+              }
+            }
+          }
+        }
       }
     }
 
@@ -143,18 +168,18 @@ public class PullUpConflictsUtil {
 
   private static class ConflictingUsagesOfSubClassMembers extends ClassMemberReferencesVisitor {
     private final PsiElement myScope;
-    private final Set<PsiElement> myMovedMembers;
+    private final Set<PsiMember> myMovedMembers;
     private final Set<PsiMethod> myAbstractMethods;
     private final PsiClass mySubclass;
     private final PsiClass mySuperClass;
     private final PsiPackage myTargetPackage;
-    private final LinkedHashMap<PsiElement, String> myConflictsList;
+    private final MultiMap<PsiElement, String> myConflictsList;
     private final InterfaceContainmentVerifier myInterfaceContainmentVerifier;
 
     ConflictingUsagesOfSubClassMembers(PsiElement scope,
-                                       Set<PsiElement> movedMembers, Set<PsiMethod> abstractMethods,
+                                       Set<PsiMember> movedMembers, Set<PsiMethod> abstractMethods,
                                        PsiClass subclass, PsiClass superClass,
-                                       PsiPackage targetPackage, LinkedHashMap<PsiElement, String> conflictsList,
+                                       PsiPackage targetPackage, MultiMap<PsiElement, String> conflictsList,
                                        InterfaceContainmentVerifier interfaceContainmentVerifier) {
       super(subclass);
       myScope = scope;
@@ -188,7 +213,7 @@ public class PullUpConflictsUtil {
                                                        RefactoringUIUtil.getDescription(myScope, false),
                                                        RefactoringUIUtil.getDescription(classMember, true));
             message = CommonRefactoringUtil.capitalize(message);
-            myConflictsList.put(classMember, message);
+            myConflictsList.putValue(classMember, message);
 
           }
           return;
@@ -199,7 +224,7 @@ public class PullUpConflictsUtil {
                                                        RefactoringUIUtil.getDescription(myScope, false),
                                                        RefactoringUIUtil.getDescription(classMember, true));
             message = CommonRefactoringUtil.capitalize(message);
-            myConflictsList.put(classMember, message);
+            myConflictsList.putValue(classMember, message);
           }
         }
       }

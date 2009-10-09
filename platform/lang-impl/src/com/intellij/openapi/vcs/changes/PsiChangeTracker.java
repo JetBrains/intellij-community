@@ -31,20 +31,23 @@ public class PsiChangeTracker {
 
   public static <T extends PsiElement> Map<T, FileStatus> getElementsChanged(PsiFile file, final PsiElementFilter<T> filter) {
     final Project project = file.getProject();
-    FileStatus status = FileStatusManager.getInstance(project).getStatus(file.getVirtualFile());
     final String oldText = getUnmodifiedDocument(file.getVirtualFile(), project);
     //TODO: make loop for different languages
     //TODO: for ( PsiFile f : file.getViewProvider().getAllFiles() )
     //TODO: for some languages (eg XML) isEquivalentTo works ugly. Think about pluggable matchers for different languages/elements
+    final PsiFile oldFile = oldText == null
+                            ? null : PsiFileFactory.getInstance(project).createFileFromText(oldText, file);
+    return getElementsChanged(file, oldFile, filter);
+  }
+
+  public static <T extends PsiElement> Map<T, FileStatus> getElementsChanged(PsiFile file, PsiFile oldFile, final PsiElementFilter<T> filter) {
+    final Project project = file.getProject();
     final List<T> elements = new ArrayList<T>();
     final List<T> oldElements = new ArrayList<T>();
-    final PsiFile oldFile = oldText == null
-                            ? null
-                            : PsiFileFactory.getInstance(project)
-                              .createFileFromText(file.getName(), file.getLanguage(), oldText, false, true);
 
     file.accept(new MyVisitor<T>(filter, elements));
-
+    final VirtualFile vf = file.getVirtualFile();
+    final FileStatus status = vf == null ? null : FileStatusManager.getInstance(project).getStatus(vf);
     final HashMap<T, FileStatus> result = new HashMap<T, FileStatus>();
     if (status == FileStatus.ADDED ||
         status == FileStatus.DELETED ||

@@ -25,12 +25,14 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,21 +40,27 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Map;
+import java.util.List;
 import java.util.regex.Pattern;
 
 public class ConflictsDialog extends DialogWrapper{
   private static final int SHOW_CONFLICTS_EXIT_CODE = 4;
 
   private String[] myConflictDescriptions;
-  private Map<PsiElement, String> myElementConflictDescription;
+  private MultiMap<PsiElement, String> myElementConflictDescription;
   private final Project myProject;
 
-  public ConflictsDialog(Project project, Map<PsiElement, String> conflictDescriptions) {
+  public ConflictsDialog(Project project, MultiMap<PsiElement, String> conflictDescriptions) {
     super(project, true);
     myProject = project;
-    myConflictDescriptions = ArrayUtil.toStringArray(conflictDescriptions.values());
+    List<String> conflicts = new ArrayList<String>();
+
+    for (String conflict : conflictDescriptions.values()) {
+      conflicts.add(conflict);
+    }
+    myConflictDescriptions = conflicts.toArray(new String[conflicts.size()]);
     myElementConflictDescription = conflictDescriptions;
     setTitle(RefactoringBundle.message("problems.detected.title"));
     setOKButtonText(RefactoringBundle.message("continue.button"));
@@ -174,7 +182,7 @@ public class ConflictsDialog extends DialogWrapper{
     }
 
     private UsagePresentation getPresentation(final UsagePresentation usagePresentation, PsiElement element) {
-      final String conflictDescription = " (" + Pattern.compile("<[^<>]*>").matcher(myElementConflictDescription.get(element)).replaceAll("") + ")";
+      final String conflictDescription = " (" + Pattern.compile("<[^<>]*>").matcher(StringUtil.join(myElementConflictDescription.get(element), "\n")).replaceAll("") + ")";
       return new UsagePresentation() {
         @NotNull
         public TextChunk[] getText() {
@@ -199,7 +207,7 @@ public class ConflictsDialog extends DialogWrapper{
     }
 
     private class DescriptionOnlyUsage implements Usage {
-      private final String myConflictDescription = Pattern.compile("<[^<>]*>").matcher(myElementConflictDescription.get(null)).replaceAll("");
+      private final String myConflictDescription = Pattern.compile("<[^<>]*>").matcher(StringUtil.join(myElementConflictDescription.get(null), "\n")).replaceAll("");
 
       @NotNull
       public UsagePresentation getPresentation() {

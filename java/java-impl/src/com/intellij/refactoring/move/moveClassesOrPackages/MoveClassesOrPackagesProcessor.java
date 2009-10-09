@@ -33,6 +33,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -120,7 +121,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   @NotNull
   protected UsageInfo[] findUsages() {
     List<UsageInfo> allUsages = new ArrayList<UsageInfo>();
-    Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     for (PsiElement element : myElementsToMove) {
       String newName = getNewQName(element);
       final UsageInfo[] usages = MoveClassesOrPackagesUtil.findUsages(element, mySearchInComments,
@@ -148,14 +149,14 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   }
 
   protected static class ConflictsUsageInfo extends UsageInfo {
-    private final Map<PsiElement, String> myConflicts;
+    private final MultiMap<PsiElement, String> myConflicts;
 
-    public ConflictsUsageInfo(PsiElement pseudoElement, Map<PsiElement, String> conflicts) {
+    public ConflictsUsageInfo(PsiElement pseudoElement, MultiMap<PsiElement, String> conflicts) {
       super(pseudoElement);
       myConflicts = conflicts;
     }
 
-    public Map<PsiElement, String> getConflicts() {
+    public MultiMap<PsiElement, String> getConflicts() {
       return myConflicts;
     }
   }
@@ -164,11 +165,15 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     final UsageInfo[] usages = refUsages.get();
-    final Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     ArrayList<UsageInfo> filteredUsages = new ArrayList<UsageInfo>();
     for (UsageInfo usage : usages) {
       if (usage instanceof ConflictsUsageInfo) {
-        conflicts.putAll(((ConflictsUsageInfo)usage).getConflicts());
+        final ConflictsUsageInfo info = (ConflictsUsageInfo)usage;
+        final PsiElement element = info.getElement();
+        for (String conflict : info.getConflicts().values()) {
+          conflicts.putValue(element, conflict);
+        }
       }
       else {
         filteredUsages.add(usage);
@@ -188,7 +193,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     return false;
   }
 
-  private void detectPackageLocalsUsed(final Map<PsiElement, String> conflicts) {
+  private void detectPackageLocalsUsed(final MultiMap<PsiElement, String> conflicts) {
     PackageLocalsUsageCollector visitor = new PackageLocalsUsageCollector(myElementsToMove, myTargetPackage, conflicts);
 
     for (PsiElement element : myElementsToMove) {
@@ -199,7 +204,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private void detectPackageLocalsMoved(final UsageInfo[] usages, final Map<PsiElement, String> conflicts) {
+  private void detectPackageLocalsMoved(final UsageInfo[] usages, final MultiMap<PsiElement, String> conflicts) {
 //    final HashSet reportedPackageLocalUsed = new HashSet();
     final HashSet<PsiClass> movedClasses = new HashSet<PsiClass>();
     final HashMap<PsiClass,HashSet<PsiElement>> reportedClassToContainers = new HashMap<PsiClass, HashSet<PsiElement>>();
@@ -237,7 +242,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
                                                                    CommonRefactoringUtil.htmlEmphasize(aClass.getName()),
                                                                    RefactoringUIUtil.getDescription(
                                                                    container, true));
-                  conflicts.put(aClass, message);
+                  conflicts.putValue(aClass, message);
                 }
               }
             }
@@ -470,11 +475,11 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   }
 
   private class MyClassInstanceReferenceVisitor implements ClassInstanceScanner.ClassInstanceReferenceVisitor {
-    private final Map<PsiElement, String> myConflicts;
+    private final MultiMap<PsiElement, String> myConflicts;
     private final HashMap<PsiModifierListOwner,HashSet<PsiElement>> myReportedElementToContainer = new HashMap<PsiModifierListOwner, HashSet<PsiElement>>();
     private final HashMap<PsiClass, RefactoringUtil.IsDescendantOf> myIsDescendantOfCache = new HashMap<PsiClass,RefactoringUtil.IsDescendantOf>();
 
-    public MyClassInstanceReferenceVisitor(Map<PsiElement, String> conflicts) {
+    public MyClassInstanceReferenceVisitor(MultiMap<PsiElement, String> conflicts) {
       myConflicts = conflicts;
     }
 
@@ -538,7 +543,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
               if (!myTargetPackage.equalToPackage(aPackage)) {
                 String message = RefactoringBundle.message("0.will.be.inaccessible.from.1", RefactoringUIUtil.getDescription(member, true),
                                                       RefactoringUIUtil.getDescription(container, true));
-                myConflicts.put(member, CommonRefactoringUtil.capitalize(message));
+                myConflicts.putValue(member, CommonRefactoringUtil.capitalize(message));
               }
             }
           }

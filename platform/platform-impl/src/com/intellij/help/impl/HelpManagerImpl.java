@@ -1,15 +1,18 @@
 package com.intellij.help.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.HelpSetPath;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.help.BadIDException;
 import javax.help.HelpSet;
@@ -18,6 +21,8 @@ import java.awt.*;
 import java.net.URL;
 
 public class HelpManagerImpl extends HelpManager {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.help.impl.HelpManagerImpl");
+
   private HelpSet myHelpSet = null;
   private IdeaHelpBroker myBroker = null;
   @NonNls private static final String HELP_HS = "Help.hs";
@@ -26,24 +31,24 @@ public class HelpManagerImpl extends HelpManager {
     if (myHelpSet == null) {
       try {
         myHelpSet = createHelpSet();
-      } catch (Exception ex) {
+      }
+      catch (Exception ex) {
+        // Ignore, will fallback to use web help
       }
     }
+
     if (myHelpSet == null) {
-      Messages.showMessageDialog(IdeBundle.message("help.not.found.error", id),
-                                 IdeBundle.message("help.not.found.title"), Messages.getErrorIcon());
+      BrowserUtil.launchBrowser("http://www.jetbrains.com/idea/webhelp/?" + id);
       return;
     }
+    
     if (myBroker == null) {
       myBroker = new IdeaHelpBroker(myHelpSet);
     }
 
     Window activeWindow=KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
     myBroker.setActivationWindow(activeWindow);
-    /*
-    URL currentURL = myBroker.getCurrentURL();
-    System.out.println("currentURL = " + currentURL);
-    */
+
     if (id != null) {
       try {
         myBroker.setCurrentID(id);
@@ -57,6 +62,7 @@ public class HelpManagerImpl extends HelpManager {
     myBroker.setDisplayed(true);
   }
 
+  @Nullable
   private static HelpSet createHelpSet() {
     String urlToHelp = ApplicationInfo.getInstance().getHelpURL() + "/" + HELP_HS;
 
@@ -66,21 +72,17 @@ public class HelpManagerImpl extends HelpManager {
       // merge plugins help sets
       final Application app = ApplicationManager.getApplication();
       IdeaPluginDescriptor[] pluginDescriptors = app.getPlugins();
-      for (int i = 0; i < pluginDescriptors.length; i++) {
-        IdeaPluginDescriptor pluginDescriptor = pluginDescriptors[i];
-        if (pluginDescriptor.getHelpSets() != null && pluginDescriptor.getHelpSets().length > 0) {
-          for (int j = 0; j < pluginDescriptor.getHelpSets().length; j++) {
-            HelpSetPath hsPath = pluginDescriptor.getHelpSets()[j];
-
-            URL hsURL = new URL("jar:file:///" + pluginDescriptor.getPath().getAbsolutePath() + "/help/" + hsPath.getFile() + "!" + hsPath.getPath());
-            try {
-              HelpSet pluginHelpSet = new HelpSet (null, hsURL);
-              helpSet.add(pluginHelpSet);
-            }
-            catch (HelpSetException e) {
-              e.printStackTrace();
-              // damn
-            }
+      for (IdeaPluginDescriptor pluginDescriptor : pluginDescriptors) {
+        HelpSetPath[] sets = pluginDescriptor.getHelpSets();
+        for (HelpSetPath hsPath : sets) {
+          URL hsURL =
+            new URL("jar:file:///" + pluginDescriptor.getPath().getAbsolutePath() + "/help/" + hsPath.getFile() + "!" + hsPath.getPath());
+          try {
+            HelpSet pluginHelpSet = new HelpSet(null, hsURL);
+            helpSet.add(pluginHelpSet);
+          }
+          catch (HelpSetException e) {
+            LOG.error(e);
           }
         }
       }
@@ -88,7 +90,6 @@ public class HelpManagerImpl extends HelpManager {
       return helpSet;
     }
     catch (Exception ee) {
-      System.err.println("HelpSet " + urlToHelp + " not found");
       return null;
     }
   }

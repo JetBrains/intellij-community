@@ -4,6 +4,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.MultiMap;
 
 import java.util.Map;
 
@@ -17,7 +18,7 @@ public interface IntroduceParameterMethodUsagesProcessor {
 
   boolean isMethodUsage(UsageInfo usage);
 
-  Map<PsiElement, String> findConflicts(IntroduceParameterData data, UsageInfo[] usages);
+  void findConflicts(IntroduceParameterData data, UsageInfo[] usages, MultiMap<PsiElement, String> conflicts);
 
   boolean processChangeMethodUsage(IntroduceParameterData data, UsageInfo usage, UsageInfo[] usages) throws IncorrectOperationException;
 

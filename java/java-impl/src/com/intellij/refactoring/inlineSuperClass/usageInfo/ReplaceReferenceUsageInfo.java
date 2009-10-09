@@ -13,13 +13,11 @@ import com.intellij.util.IncorrectOperationException;
 
 public class ReplaceReferenceUsageInfo extends FixableUsageInfo {
   public static final Logger LOG = Logger.getInstance("#" + ReplaceReferenceUsageInfo.class.getName());
-  private final PsiElement myReferenceExpression;
   private final PsiClass myTargetClass;
   private final String myConflict;
 
   public ReplaceReferenceUsageInfo(PsiElement referenceExpression, PsiClass[] targetClasses) {
     super(referenceExpression);
-    myReferenceExpression = referenceExpression;
     myTargetClass = targetClasses[0];
     myConflict = targetClasses.length > 1 ? referenceExpression.getText() + "can be replaced with any of " + StringUtil.join(targetClasses, new Function<PsiClass, String>() {
       public String fun(final PsiClass psiClass) {
@@ -29,9 +27,10 @@ public class ReplaceReferenceUsageInfo extends FixableUsageInfo {
   }
 
   public void fixUsage() throws IncorrectOperationException {
-    if (myReferenceExpression.isValid()) {
-      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myReferenceExpression.getProject()).getElementFactory();
-      myReferenceExpression.replace(myReferenceExpression instanceof PsiReferenceExpression ? elementFactory.createReferenceExpression(myTargetClass) : elementFactory.createClassReferenceElement(myTargetClass));
+    final PsiElement referenceExpression = getElement();
+    if (referenceExpression != null) {
+      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+      referenceExpression.replace(referenceExpression instanceof PsiReferenceExpression ? elementFactory.createReferenceExpression(myTargetClass) : elementFactory.createClassReferenceElement(myTargetClass));
     }
   }
 

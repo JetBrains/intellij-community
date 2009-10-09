@@ -23,10 +23,11 @@
 package com.intellij.openapi.actionSystem;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @param <T>
@@ -37,11 +38,11 @@ public class DataKey<T> {
 
   private final String myName;
 
-  private DataKey(final String name) {
+  private DataKey(@NotNull String name) {
     myName = name;
   }
 
-  public static <T> DataKey<T> create(@NonNls String name) {
+  public static <T> DataKey<T> create(@NotNull @NonNls String name) {
     if (ourDataKeyIndex.containsKey(name)) {
       //noinspection unchecked
       return ourDataKeyIndex.get(name);
@@ -56,7 +57,7 @@ public class DataKey<T> {
   }
 
   @Nullable
-  public T getData(DataContext dataContext) {
+  public T getData(@NotNull DataContext dataContext) {
     //noinspection unchecked
     return (T) dataContext.getData(myName);
   }

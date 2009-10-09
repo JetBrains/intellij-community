@@ -8,10 +8,9 @@ import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.impl.convert.JDomConvertingUtil;
 import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.roots.impl.*;
-import com.intellij.openapi.roots.impl.ModuleLibraryOrderEntryImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
@@ -21,10 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author nik
@@ -139,17 +135,57 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
     }
   }
 
-  public List<File> getModuleLibraryRootUrls(String libraryName) {
-    final Element component = getComponentElement(MODULE_ROOT_MANAGER_COMPONENT);
-    for (Element element : JDomConvertingUtil.getChildren(component, OrderEntryFactory.ORDER_ENTRY_ELEMENT_NAME)) {
+  @NotNull
+  public List<File> getModuleLibraryRoots(String libraryName) {
+    final Element library = findModuleLibraryElement(libraryName);
+    return library != null ? myContext.getClassRoots(library, this) : Collections.<File>emptyList();
+  }
+
+  public boolean hasModuleLibrary(String libraryName) {
+    return findModuleLibraryElement(libraryName) != null;
+  }
+
+  @Nullable
+  private Element findModuleLibraryElement(String libraryName) {
+    for (Element element : getOrderEntries()) {
       if (ModuleLibraryOrderEntryImpl.ENTRY_TYPE.equals(element.getAttributeValue(OrderEntryFactory.ORDER_ENTRY_TYPE_ATTR))) {
         final Element library = element.getChild(LibraryImpl.ELEMENT);
         if (library != null && libraryName.equals(library.getAttributeValue(LibraryImpl.LIBRARY_NAME_ATTR))) {
-          return myContext.getClassRoots(library, this);
+          return library;
         }
       }
     }
-    return Collections.emptyList();
+    return null;
+  }
+
+  private List<Element> getOrderEntries() {
+    final Element component = getComponentElement(MODULE_ROOT_MANAGER_COMPONENT);
+    return JDomConvertingUtil.getChildren(component, OrderEntryFactory.ORDER_ENTRY_ELEMENT_NAME);
+  }
+
+  @NotNull
+  public Collection<ModuleSettings> getAllModuleDependencies() {
+    Set<ModuleSettings> dependencies = new HashSet<ModuleSettings>();
+    collectDependencies(dependencies);
+    return dependencies;
+  }
+
+  private void collectDependencies(Set<ModuleSettings> dependencies) {
+    if (!dependencies.add(this)) {
+      return;
+    }
+
+    for (Element element : getOrderEntries()) {
+      if (ModuleOrderEntryImpl.ENTRY_TYPE.equals(element.getAttributeValue(OrderEntryFactory.ORDER_ENTRY_TYPE_ATTR))) {
+        final String moduleName = element.getAttributeValue(ModuleOrderEntryImpl.MODULE_NAME_ATTR);
+        if (moduleName != null) {
+          final ModuleSettings moduleSettings = myContext.getModuleSettings(moduleName);
+          if (moduleSettings != null) {
+            ((ModuleSettingsImpl)moduleSettings).collectDependencies(dependencies);
+          }
+        }
+      }
+    }
   }
 
   private void addExcludedFolder(File directory, Element contentRoot) throws IOException {

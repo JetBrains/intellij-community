@@ -121,10 +121,10 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
 
   private static final TypeEvaluator ourTypeEvaluator = new TypeEvaluator();
 
-  private static class TypeEvaluator implements Function<PsiExpression, PsiType> {
+  private static class TypeEvaluator implements Function<PsiMethodCallExpression, PsiType> {
     @Nullable
-    public PsiType fun(final PsiExpression call) {
-      PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)call).getMethodExpression();
+    public PsiType fun(final PsiMethodCallExpression call) {
+      PsiReferenceExpression methodExpression = call.getMethodExpression();
       PsiType theOnly = null;
       final JavaResolveResult[] results = methodExpression.multiResolve(false);
       for (int i = 0; i < results.length; i++) {
@@ -135,7 +135,8 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
 
         if (i == 0) {
           theOnly = type;
-        } else if (!theOnly.equals(type)) {
+        }
+        else if (!theOnly.equals(type)) {
           return null;
         }
       }

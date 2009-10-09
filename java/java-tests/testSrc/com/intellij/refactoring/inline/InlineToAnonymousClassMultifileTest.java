@@ -12,9 +12,9 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.containers.MultiMap;
 
 import java.io.File;
-import java.util.Map;
 
 /**
  * @author yole
@@ -46,7 +46,7 @@ public class InlineToAnonymousClassMultifileTest extends CodeInsightTestCase {
                                                                                     classToInline,
                                                                                     null, false, false, false);
     UsageInfo[] usages = processor.findUsages();
-    Map<PsiElement,String> conflicts = processor.getConflicts(usages);
+    MultiMap<PsiElement,String> conflicts = processor.getConflicts(usages);
     assertEquals(0, conflicts.size());
     processor.run();
 

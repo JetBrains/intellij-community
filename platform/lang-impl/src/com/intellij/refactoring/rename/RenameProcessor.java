@@ -24,6 +24,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,9 +100,9 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
   public boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
-    Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
 
-    conflicts.putAll(RenameUtil.getConflictDescriptions(usagesIn));
+    RenameUtil.addConflictDescriptions(usagesIn, conflicts);
     RenamePsiElementProcessor.forElement(myPrimaryElement).findExistingNameConflicts(myPrimaryElement, myNewName, conflicts);
     if (!conflicts.isEmpty()) {
       ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);

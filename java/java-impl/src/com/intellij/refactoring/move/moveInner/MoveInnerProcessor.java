@@ -37,11 +37,15 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 
 public class MoveInnerProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveInner.MoveInnerProcessor");
@@ -326,7 +330,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
   }
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
-    final Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
 
     class Visitor extends JavaRecursiveElementWalkingVisitor {
       private final HashMap<PsiElement,HashSet<PsiElement>> reported = new HashMap<PsiElement, HashSet<PsiElement>>();
@@ -347,7 +351,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
             String message = RefactoringBundle.message("0.will.become.inaccessible.from.1",
                                                        RefactoringUIUtil.getDescription(resolved, true),
                                                        RefactoringUIUtil.getDescription(container, true));
-            conflicts.put(resolved, message);
+            conflicts.putValue(resolved, message);
           }
         }
       }

@@ -4,6 +4,7 @@ import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
+import com.intellij.codeInsight.highlighting.NontrivialBraceMatcher;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
@@ -94,7 +95,7 @@ public class TypedHandler implements TypedActionHandler {
     quoteHandlers.put(fileType, quoteHandler);
   }
 
-  public void execute(Editor editor, char charTyped, DataContext dataContext) {
+  public void execute(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null || editor.isColumnMode()){
       if (myOriginalHandler != null){
@@ -323,7 +324,8 @@ public class TypedHandler implements TypedActionHandler {
     }
 
     BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType, iterator);
-    if (!braceMatcher.isRBraceToken(iterator, editor.getDocument().getCharsSequence(), fileType)) {
+    CharSequence text = editor.getDocument().getCharsSequence();
+    if (!braceMatcher.isRBraceToken(iterator, text, fileType)) {
       return false;
     }
 
@@ -331,11 +333,31 @@ public class TypedHandler implements TypedActionHandler {
     
     iterator.retreat();
 
-    int lparenthOffset = BraceMatchingUtil.findLeftmostLParen(iterator, braceMatcher.getOppositeBraceTokenType(tokenType),  editor.getDocument().getCharsSequence(),fileType);
-    if (lparenthOffset < 0) return false;
+    IElementType lparenTokenType = braceMatcher.getOppositeBraceTokenType(tokenType);
+    int lparenthOffset = BraceMatchingUtil.findLeftmostLParen(
+      iterator,
+      lparenTokenType,
+      text,
+      fileType
+    );
+
+    if (lparenthOffset < 0) {
+      if (braceMatcher instanceof NontrivialBraceMatcher) {
+        for(IElementType t:((NontrivialBraceMatcher)braceMatcher).getOppositeBraceTokenTypes(tokenType)) {
+          if (t == lparenTokenType) continue;
+          lparenthOffset = BraceMatchingUtil.findLeftmostLParen(
+            iterator,
+            t, text,
+            fileType
+          );
+          if (lparenthOffset >= 0) break;
+        }
+      }
+      if (lparenthOffset < 0) return false;
+    }
 
     iterator = ((EditorEx) editor).getHighlighter().createIterator(lparenthOffset);
-    boolean matched = BraceMatchingUtil.matchBrace(editor.getDocument().getCharsSequence(), fileType, iterator, true);
+    boolean matched = BraceMatchingUtil.matchBrace(text, fileType, iterator, true);
 
     if (!matched) return false;
 

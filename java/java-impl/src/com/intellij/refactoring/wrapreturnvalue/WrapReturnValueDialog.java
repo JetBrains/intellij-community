@@ -1,11 +1,10 @@
 package com.intellij.refactoring.wrapreturnvalue;
 
-import com.intellij.ide.util.PackageChooserDialog;
-import com.intellij.ide.util.TreeClassChooserDialog;
+import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -13,8 +12,11 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactorJBundle;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,10 +35,10 @@ class WrapReturnValueDialog extends RefactoringDialog {
 
   private JRadioButton createNewClassButton;
   private JTextField classNameField;
-  private TextFieldWithBrowseButton packageTextField;
+  private PackageNameReferenceEditorCombo packageTextField;
   private JPanel myNewClassPanel;
 
-  private TextFieldWithBrowseButton existingClassField;
+  private ReferenceEditorComboWithBrowseButton existingClassField;
   private JRadioButton useExistingClassButton;
   private JComboBox myFieldsCombo;
   private JPanel myExistingClassPanel;
@@ -46,6 +48,7 @@ class WrapReturnValueDialog extends RefactoringDialog {
   private JRadioButton myCreateInnerClassButton;
   private JTextField myInnerClassNameTextField;
   private JPanel myCreateInnerPanel;
+  private static final String RECENT_KEYS = "WrapReturnValue.RECENT_KEYS";
 
   WrapReturnValueDialog(PsiMethod sourceMethod) {
     super(sourceMethod.getProject(), true);
@@ -133,8 +136,7 @@ class WrapReturnValueDialog extends RefactoringDialog {
         validateButtons();
       }
     };
-    existingClassField.getTextField().getDocument().addDocumentListener(docListener);
-    packageTextField.getTextField().getDocument().addDocumentListener(docListener);
+
     classNameField.getDocument().addDocumentListener(docListener);
     myFieldsCombo.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
@@ -186,51 +188,19 @@ class WrapReturnValueDialog extends RefactoringDialog {
         return rendererComponent;
       }
     });
-    existingClassField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+    existingClassField.getChildComponent().getDocument().addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
       @Override
-      protected void textChanged(final DocumentEvent e) {
+      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
         final PsiClass currentClass = JavaPsiFacade.getInstance(myProject).findClass(existingClassField.getText(), GlobalSearchScope.allScope(myProject));
         if (currentClass != null) {
           model.removeAllElements();
           for (PsiField field : currentClass.getFields()) {
-            if (TypeConversionUtil.isAssignable(field.getType(), sourceMethod.getReturnType())) {
+            final PsiType returnType = sourceMethod.getReturnType();
+            assert returnType != null;
+            if (TypeConversionUtil.isAssignable(field.getType(), returnType)) {
               model.addElement(field);
             }
           }
-        }
-      }
-    });
-    existingClassField.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        final Project project = sourceMethod.getProject();
-        final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-        final TreeClassChooserDialog chooser =
-          new TreeClassChooserDialog(RefactorJBundle.message("select.wrapper.class"), project, scope, null, null);
-        final String classText = existingClassField.getText();
-        final PsiClass currentClass =
-          JavaPsiFacade.getInstance(myProject).findClass(classText, GlobalSearchScope.allScope(myProject));
-        if (currentClass != null) {
-          chooser.selectClass(currentClass);
-        }
-        chooser.show();
-        final PsiClass selectedClass = chooser.getSelectedClass();
-        if (selectedClass != null) {
-          existingClassField.setText(selectedClass.getQualifiedName());
-        }
-      }
-    });
-
-    packageTextField.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        final Project project = sourceMethod.getProject();
-        final PackageChooserDialog chooser = new PackageChooserDialog(RefactorJBundle.message("choose.destination.package.label"), project);
-        final String packageText = packageTextField.getText();
-        chooser.selectPackage(packageText);
-        chooser.show();
-        final PsiPackage aPackage = chooser.getSelectedPackage();
-        if (aPackage != null) {
-          final String packageName = aPackage.getQualifiedName();
-          packageTextField.setText(packageName);
         }
       }
     });
@@ -251,5 +221,35 @@ class WrapReturnValueDialog extends RefactoringDialog {
 
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.WrapReturnValue);
+  }
+
+  private void createUIComponents() {
+    final com.intellij.openapi.editor.event.DocumentAdapter adapter = new com.intellij.openapi.editor.event.DocumentAdapter() {
+      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
+        validateButtons();
+      }
+    };
+
+    packageTextField =
+      new PackageNameReferenceEditorCombo("", myProject, RECENT_KEYS, RefactoringBundle.message("choose.destination.package"));
+    packageTextField.getChildComponent().getDocument().addDocumentListener(adapter);
+
+    existingClassField = new ReferenceEditorComboWithBrowseButton(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        final TreeClassChooser chooser = TreeClassChooserFactory.getInstance(getProject())
+          .createWithInnerClassesScopeChooser(RefactorJBundle.message("select.wrapper.class"), GlobalSearchScope.allScope(myProject), null, null);
+        final String classText = existingClassField.getText();
+        final PsiClass currentClass = JavaPsiFacade.getInstance(myProject).findClass(classText, GlobalSearchScope.allScope(myProject));
+        if (currentClass != null) {
+          chooser.selectClass(currentClass);
+        }
+        chooser.showDialog();
+        final PsiClass selectedClass = chooser.getSelectedClass();
+        if (selectedClass != null) {
+          existingClassField.setText(selectedClass.getQualifiedName());
+        }
+      }
+    }, "", PsiManager.getInstance(myProject), true, RECENT_KEYS);
+    existingClassField.getChildComponent().getDocument().addDocumentListener(adapter);
   }
 }

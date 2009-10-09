@@ -17,9 +17,9 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.inlineSuperClass.usageInfo.*;
 import com.intellij.refactoring.memberPushDown.PushDownConflicts;
 import com.intellij.refactoring.memberPushDown.PushDownProcessor;
+import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.refactoring.util.FixableUsagesRefactoringProcessor;
-import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.usageView.UsageInfo;
@@ -27,6 +27,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -130,7 +131,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
 
   @Override
   protected boolean preprocessUsages(final Ref<UsageInfo[]> refUsages) {
-    final Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     final PushDownConflicts pushDownConflicts = new PushDownConflicts(mySuperClass, myMemberInfos);
     for (PsiClass targetClass : myTargetClasses) {
       for (MemberInfo info : myMemberInfos) {
@@ -138,13 +139,15 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
         pushDownConflicts.checkMemberPlacementInTargetClassConflict(targetClass, member);
       }
     }
+    for (PsiElement element : pushDownConflicts.getConflicts().keySet()) {
+      conflicts.put(element, pushDownConflicts.getConflicts().get(element));
+    }
     checkConflicts(refUsages, conflicts);
-    conflicts.putAll(pushDownConflicts.getConflicts());
     return showConflicts(conflicts);
   }
 
   @Override
-  protected boolean showConflicts(final Map<PsiElement, String> conflicts) {
+  protected boolean showConflicts(final MultiMap<PsiElement, String> conflicts) {
     if (!conflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
       throw new RuntimeException(StringUtil.join(conflicts.values(), "\n"));
     }

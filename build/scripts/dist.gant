@@ -80,7 +80,7 @@ public def layoutAll(Map args, String home, String out) {
   wire_build_date(args.buildNumber)
 
   def layouts = includeFile("$home/build/scripts/layouts.gant")
-  layouts.layoutFull(paths.distAll)
+  layouts.layoutFull(home, paths.distAll)
 
   ant.echo(message: args.buildNumber, file: "$paths.distAll/build.txt")
   ant.copy(todir: "$paths.distAll/license", preservelastmodified: "true") {

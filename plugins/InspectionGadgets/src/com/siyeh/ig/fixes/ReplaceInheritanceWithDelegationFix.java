@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
@@ -38,6 +39,7 @@ public class ReplaceInheritanceWithDelegationFix extends InspectionGadgetsFix {
     public void doFix(@NotNull Project project, ProblemDescriptor descriptor) {
         final PsiElement nameElement = descriptor.getPsiElement();
         final PsiClass aClass = (PsiClass) nameElement.getParent();
+        assert !(aClass instanceof PsiAnonymousClass);
         final JavaRefactoringActionHandlerFactory factory =
                 JavaRefactoringActionHandlerFactory.getInstance();
         final RefactoringActionHandler anonymousToInner =

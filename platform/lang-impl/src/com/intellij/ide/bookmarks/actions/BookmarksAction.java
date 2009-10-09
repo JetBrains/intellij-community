@@ -5,11 +5,7 @@ package com.intellij.ide.bookmarks.actions;
 
 import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.ide.bookmarks.BookmarkManager;
-import com.intellij.ide.bookmarks.EditorBookmarksDialog;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -21,19 +17,23 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.InputValidator;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.LightColors;
-import com.intellij.ui.ListSpeedSearch;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
+import com.intellij.util.Alarm;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -43,11 +43,16 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 // TODO: remove duplication with BaseShowRecentFilesAction, there's quite a bit of it
 
 public class BookmarksAction extends AnAction implements DumbAware {
   private static final Color BORDER_COLOR = new Color(0x87, 0x87, 0x87);
+
+  private final Alarm myPreviewUpdateAlarm = new Alarm();
 
   @Override
   public void update(AnActionEvent e) {
@@ -137,15 +142,24 @@ public class BookmarksAction extends AnAction implements DumbAware {
         });
       }
 
+      private void updatePreviewPanel(final ItemWrapper wrapper) {
+        myPreviewUpdateAlarm.cancelAllRequests();
+        myPreviewUpdateAlarm.addRequest(new Runnable() {
+          public void run() {
+            previewPanel.updateWithItem(wrapper);
+          }
+        }, 300);
+      }
+
       private void updatePathLabel() {
         final Object[] values = list.getSelectedValues();
         if (values != null && values.length == 1) {
           ItemWrapper wrapper = (ItemWrapper)values[0];
           pathLabel.setText(getTitle2Text(wrapper.footerText()));
-          previewPanel.updateWithItem(wrapper);
+          updatePreviewPanel(wrapper);
         }
         else {
-          previewPanel.updateWithItem(null);
+          updatePreviewPanel(null);
           pathLabel.setText(" ");
         }
       }
@@ -197,13 +211,30 @@ public class BookmarksAction extends AnAction implements DumbAware {
     footerPanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
     footerPanel.add(pathLabel);
 
-    new PopupChooserBuilder(list).
+    DefaultActionGroup actions = new DefaultActionGroup();
+    EditBookmarkDescriptionAction editDescriptionAction = new EditBookmarkDescriptionAction(project, list);
+    actions.add(editDescriptionAction);
+    actions.add(new DeleteBookmarkAction(project, list));
+    actions.add(new MoveBookmarkUpAction(project, list));
+    actions.add(new MoveBookmarkDownAction(project, list));
+
+    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("", actions, true);
+    actionToolbar.setReservePlaceAutoPopupIcon(false);
+    actionToolbar.setMinimumButtonSize(new Dimension(16, 16));
+    final JComponent toolBar = actionToolbar.getComponent();
+    toolBar.setOpaque(false);
+
+    JBPopup popup = new PopupChooserBuilder(list).
       setTitle("Bookmarks").
       setMovable(true).
+      setAutoselectOnMouseMove(false).
+      setSettingButton(toolBar).
       setSouthComponent(footerPanel).
       setEastComponent(previewPanel).
       setItemChoosenCallback(runnable).
-      createPopup().showCenteredInCurrentWindow(project);
+      createPopup();
+    editDescriptionAction.setPopup(popup);
+    popup.showCenteredInCurrentWindow(project);
   }
 
   private static DefaultListModel buildModel(Project project, Bookmark bookmarkAtPlace, VirtualFile file, int line) {
@@ -213,26 +244,11 @@ public class BookmarksAction extends AnAction implements DumbAware {
       model.insertElementAt(new BookmarkItem(bookmark), 0);
     }
 
-    if (bookmarkAtPlace != null) {
-      model.insertElementAt(new RemoveBookmarkItem(bookmarkAtPlace), 0);
-    }
-    else {
-      model.insertElementAt(new SetBookmarkItem(file, line), 0);
+    if (bookmarkAtPlace == null) {
+      model.addElement(new SetBookmarkItem(file, line));
     }
 
-    model.addElement(new ManageBookmarksItem(bookmarkAtPlace));
     return model;
-  }
-
-  private static void selectBookmark(Bookmark bookmark, JList list) {
-    ListModel model = list.getModel();
-    for (int i = 0; i < model.getSize(); i++) {
-      Object elt = model.getElementAt(i);
-      if (elt instanceof BookmarkItem && ((BookmarkItem)elt).myBookmark == bookmark) {
-        list.getSelectionModel().setSelectionInterval(i, i);
-        break;
-      }
-    }
   }
 
   private interface ItemWrapper {
@@ -244,6 +260,8 @@ public class BookmarksAction extends AnAction implements DumbAware {
 
     @Nullable
     String footerText();
+
+    void updatePreviewPanel(PreviewPanel panel);
   }
 
   protected static class SetBookmarkItem implements ItemWrapper {
@@ -257,7 +275,6 @@ public class BookmarksAction extends AnAction implements DumbAware {
 
     public void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected) {
       renderer.append(speedSearchText());
-      renderer.setIcon(Bookmark.TICK);
     }
 
     public String speedSearchText() {
@@ -272,6 +289,14 @@ public class BookmarksAction extends AnAction implements DumbAware {
     public String footerText() {
       return null;
     }
+
+    public void updatePreviewPanel(PreviewPanel panel) {
+      panel.cleanup();
+
+      JLabel label = new JLabel("Choose this option to bookmark current place");
+      label.setHorizontalAlignment(JLabel.CENTER);
+      panel.add(label);
+    }
   }
 
   protected static class RemoveBookmarkItem implements ItemWrapper {
@@ -283,7 +308,6 @@ public class BookmarksAction extends AnAction implements DumbAware {
 
     public void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected) {
       renderer.append(speedSearchText());
-      renderer.setIcon(Bookmark.TICK);
     }
 
     public String speedSearchText() {
@@ -298,29 +322,13 @@ public class BookmarksAction extends AnAction implements DumbAware {
     public String footerText() {
       return null;
     }
-  }
 
-  private static class ManageBookmarksItem implements ItemWrapper {
-    private final Bookmark myCurrentBookmark;
+    public void updatePreviewPanel(PreviewPanel panel) {
+      panel.cleanup();
 
-    private ManageBookmarksItem(Bookmark currentBookmark) {
-      myCurrentBookmark = currentBookmark;
-    }
-
-    public void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected) {
-      renderer.append(speedSearchText());
-    }
-
-    public String speedSearchText() {
-      return "Manage Bookmarks";
-    }
-
-    public void execute(Project project) {
-      EditorBookmarksDialog.execute(BookmarkManager.getInstance(project), myCurrentBookmark);
-    }
-
-    public String footerText() {
-      return null;
+      JLabel label = new JLabel("Choose this option to remove bookmark at current place");
+      label.setHorizontalAlignment(JLabel.CENTER);
+      panel.add(label);
     }
   }
 
@@ -349,8 +357,19 @@ public class BookmarksAction extends AnAction implements DumbAware {
         renderer.append(String.valueOf(myBookmark.getLine() + 1), SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
 
-      if (!selected && FileEditorManager.getInstance(project).isFileOpen(file)) {
-        renderer.setBackground(LightColors.SLIGHTLY_GREEN);
+      if (!selected) {
+        FileColorManager colorManager = FileColorManager.getInstance(project);
+        if (colorManager.isEnabled()) {
+          if (fileOrDir instanceof PsiFile) {
+            Color color = colorManager.getFileColor((PsiFile)fileOrDir);
+            if (color != null) {
+              renderer.setBackground(color);
+            }
+          }
+        }
+        else if (FileEditorManager.getInstance(project).isFileOpen(file)) {
+          renderer.setBackground(LightColors.SLIGHTLY_GREEN);
+        }
       }
 
       String description = myBookmark.getDescription();
@@ -368,12 +387,42 @@ public class BookmarksAction extends AnAction implements DumbAware {
     }
 
     public String footerText() {
-      VirtualFile file = myBookmark.getFile();
-      if (file.isDirectory()) {
-        return file.getPresentableUrl();
-      }
+      return myBookmark.getFile().getPresentableUrl();
+    }
 
-      return file.getParent().getPresentableUrl();
+    public void updatePreviewPanel(final PreviewPanel panel) {
+      VirtualFile file = myBookmark.getFile();
+      Document document = FileDocumentManager.getInstance().getDocument(file);
+      Project project = panel.myProject;
+
+      if (document != null) {
+        if (panel.myEditor == null || panel.myEditor.getDocument() != document) {
+          panel.cleanup();
+          panel.myEditor = EditorFactory.getInstance().createViewer(document, project);
+          EditorHighlighter highlighter = EditorHighlighterFactory.getInstance()
+            .createEditorHighlighter(file, EditorColorsManager.getInstance().getGlobalScheme(), project);
+          ((EditorEx)panel.myEditor).setHighlighter(highlighter);
+          ((EditorEx)panel.myEditor).setFile(file);
+
+          panel.myEditor.getSettings().setAnimatedScrolling(false);
+          panel.myEditor.getSettings().setRefrainFromScrolling(false);
+          panel.myEditor.getSettings().setLineNumbersShown(true);
+          panel.myEditor.getSettings().setFoldingOutlineShown(false);
+
+          panel.add(panel.myEditor.getComponent(), BorderLayout.CENTER);
+        }
+
+        panel.myEditor.getCaretModel().moveToLogicalPosition(new LogicalPosition(myBookmark.getLine(), 0));
+        panel.validate();
+        panel.myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+      }
+      else {
+        panel.cleanup();
+
+        JLabel label = new JLabel("Navigate to selected " + (file.isDirectory() ? "directory " : "file ") + "in Project View");
+        label.setHorizontalAlignment(JLabel.CENTER);
+        panel.add(label);
+      }
     }
   }
 
@@ -459,38 +508,14 @@ public class BookmarksAction extends AnAction implements DumbAware {
     public void updateWithItem(ItemWrapper wrapper) {
       if (myWrapper != wrapper) {
         myWrapper = wrapper;
-
-        if (wrapper instanceof BookmarkItem) {
-          final Bookmark bookmark = ((BookmarkItem)wrapper).myBookmark;
-          VirtualFile file = bookmark.getFile();
-          Document document = FileDocumentManager.getInstance().getDocument(file);
-
-          if (document != null) {
-            if (myEditor == null || myEditor.getDocument() != document) {
-              cleanup();
-              myEditor = EditorFactory.getInstance().createViewer(document, myProject);
-              EditorHighlighter highlighter = EditorHighlighterFactory.getInstance()
-                .createEditorHighlighter(file, EditorColorsManager.getInstance().getGlobalScheme(), myProject);
-              ((EditorEx)myEditor).setHighlighter(highlighter);
-              ((EditorEx)myEditor).setFile(file);
-
-              myEditor.getSettings().setAnimatedScrolling(false);
-              myEditor.getSettings().setLineNumbersShown(true);
-              myEditor.getSettings().setFoldingOutlineShown(false);
-              add(myEditor.getComponent(), BorderLayout.CENTER);
-            }
-
-            myEditor.getCaretModel().moveToLogicalPosition(new LogicalPosition(bookmark.getLine(), 0));
-            myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER_UP);
-          }
-          else {
-            cleanup();
-          }
+        if (wrapper != null) {
+          wrapper.updatePreviewPanel(this);
         }
         else {
           cleanup();
-          add(new JLabel("select file in the list"));
         }
+
+        revalidate();
       }
     }
 
@@ -509,4 +534,144 @@ public class BookmarksAction extends AnAction implements DumbAware {
     }
   }
 
+  private static List<Bookmark> getSelectedBookmarks(JList list) {
+    List<Bookmark> answer = new ArrayList<Bookmark>();
+
+    for (Object value : list.getSelectedValues()) {
+      if (value instanceof BookmarkItem) {
+        answer.add(((BookmarkItem)value).myBookmark);
+      }
+      else {
+        return Collections.emptyList();
+      }
+    }
+
+    return answer;
+  }
+
+  private static class EditBookmarkDescriptionAction extends AnAction {
+    private final JList myList;
+    private final Project myProject;
+    private JBPopup myPopup;
+
+    private EditBookmarkDescriptionAction(Project project, JList list) {
+      super("Edit Description", "Assign short description for the bookmark to be shown along the file name", IconLoader.getIcon("/actions/properties.png"));
+      myProject = project;
+      myList = list;
+      registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(SystemInfo.isMac ? "meta ENTER" : "control ENTER")), list);
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(getSelectedBookmarks(myList).size() == 1);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      Bookmark b = getSelectedBookmarks(myList).get(0);
+      myPopup.setUiVisible(false);
+
+      String description = Messages
+        .showInputDialog(myProject, "Enter short bookmark description", "Bookmark Description", Messages.getQuestionIcon(), b.getDescription(),
+                         new InputValidator() {
+                           public boolean checkInput(String inputString) {
+                             return true;
+                           }
+
+                           public boolean canClose(String inputString) {
+                             return true;
+                           }
+                         });
+      
+      b.setDescription(description);
+
+      DefaultListModel model = (DefaultListModel)myList.getModel();
+      String fake = "Fake Element to make list re-count its size";
+      model.addElement(fake);
+      model.removeElement(fake);
+
+      myPopup.setUiVisible(true);
+      myPopup.setSize(myPopup.getContent().getPreferredSize());
+    }
+
+    public void setPopup(JBPopup popup) {
+      myPopup = popup;
+    }
+  }
+
+  private static class DeleteBookmarkAction extends AnAction {
+    private final Project myProject;
+    private final JList myList;
+
+    private DeleteBookmarkAction(Project project, JList list) {
+      super("Delete", "Delete current bookmark", IconLoader.getIcon("/actions/delete.png"));
+      myProject = project;
+      myList = list;
+      registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("DELETE")), list);
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(getSelectedBookmarks(myList).size() > 0);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      List<Bookmark> bookmarks = getSelectedBookmarks(myList);
+      ListUtil.removeSelectedItems(myList);
+
+      for (Bookmark bookmark : bookmarks) {
+        BookmarkManager.getInstance(myProject).removeBookmark(bookmark);
+      }
+    }
+  }
+
+  private static class MoveBookmarkUpAction extends AnAction {
+    private final Project myProject;
+    private final JList myList;
+
+    private MoveBookmarkUpAction(Project project, JList list) {
+      super("Up", "Move current bookmark up", IconLoader.getIcon("/actions/previousOccurence.png"));
+      myProject = project;
+      myList = list;
+      registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(SystemInfo.isMac ? "meta UP" : "control UP")), list);
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(getSelectedBookmarks(myList).size() == 1  && myList.getSelectedIndex() > 0);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      ListUtil.moveSelectedItemsUp(myList);
+      BookmarkManager.getInstance(myProject).moveBookmarkUp(getSelectedBookmarks(myList).get(0));
+    }
+  }
+
+  private static class MoveBookmarkDownAction extends AnAction {
+    private final Project myProject;
+    private final JList myList;
+
+    private MoveBookmarkDownAction(Project project, JList list) {
+      super("Down", "Move current bookmark down", IconLoader.getIcon("/actions/nextOccurence.png"));
+      myProject = project;
+      myList = list;
+      registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(SystemInfo.isMac ? "meta DOWN" : "control DOWN")), list);
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      int modelSize = myList.getModel().getSize();
+      int lastIndex = modelSize - 1;
+      if (!(myList.getModel().getElementAt(lastIndex) instanceof BookmarkItem)) lastIndex--;
+      e.getPresentation().setEnabled(getSelectedBookmarks(myList).size() == 1 && myList.getSelectedIndex() < lastIndex);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      ListUtil.moveSelectedItemsDown(myList);
+      BookmarkManager.getInstance(myProject).moveBookmarkDown(getSelectedBookmarks(myList).get(0));
+    }
+  }
 }

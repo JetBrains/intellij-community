@@ -19,6 +19,7 @@ import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -187,7 +188,7 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
     return WHITE_SPACE_PATTERN.matcher(s).replaceAll("");
   }
 
-  public void findExistingNameConflicts(final PsiElement element, final String newName, final Map<PsiElement, String> conflicts) {
+  public void findExistingNameConflicts(final PsiElement element, final String newName, final MultiMap<PsiElement,String> conflicts) {
     if (element instanceof PsiCompiledElement) return;
     final PsiClass aClass = (PsiClass)element;
     if (newName.equals(aClass.getName())) return;
@@ -196,7 +197,7 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
       PsiClass[] innerClasses = containingClass.getInnerClasses();
       for (PsiClass innerClass : innerClasses) {
         if (newName.equals(innerClass.getName())) {
-          conflicts.put(innerClass, RefactoringBundle.message("inner.class.0.is.already.defined.in.class.1", newName, containingClass.getQualifiedName()));
+          conflicts.putValue(innerClass, RefactoringBundle.message("inner.class.0.is.already.defined.in.class.1", newName, containingClass.getQualifiedName()));
           break;
         }
       }
@@ -207,7 +208,7 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
       final PsiClass conflictingClass =
         JavaPsiFacade.getInstance(project).findClass(qualifiedNameAfterRename, GlobalSearchScope.allScope(project));
       if (conflictingClass != null) {
-        conflicts.put(conflictingClass, RefactoringBundle.message("class.0.already.exists", qualifiedNameAfterRename));
+        conflicts.putValue(conflictingClass, RefactoringBundle.message("class.0.already.exists", qualifiedNameAfterRename));
       }
     }
   }

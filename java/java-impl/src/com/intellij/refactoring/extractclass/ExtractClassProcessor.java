@@ -32,6 +32,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -97,18 +98,18 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
 
   @Override
   protected boolean preprocessUsages(final Ref<UsageInfo[]> refUsages) {
-    final Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     final Project project = sourceClass.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
     final PsiClass existingClass =
       JavaPsiFacade.getInstance(project).findClass(StringUtil.getQualifiedName(newPackageName, newClassName), scope);
     if (existingClass != null) {
-      conflicts.put(existingClass, RefactorJBundle.message("cannot.perform.the.refactoring") +
+      conflicts.putValue(existingClass, RefactorJBundle.message("cannot.perform.the.refactoring") +
                     RefactorJBundle.message("there.already.exists.a.class.with.the.chosen.name"));
     }
 
     if (!myGenerateAccessors) {
-      conflicts.putAll(calculateInitializersConflicts());
+      calculateInitializersConflicts(conflicts);
       final NecessaryAccessorsVisitor visitor = new NecessaryAccessorsVisitor();
       for (PsiField field : fields) {
         field.accept(visitor);
@@ -122,38 +123,36 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
 
       final Set<PsiField> fieldsNeedingGetter = visitor.getFieldsNeedingGetter();
       for (PsiField field : fieldsNeedingGetter) {
-        conflicts.put(field, "Field \'" + field.getName() + "\' needs getter");
+        conflicts.putValue(field, "Field \'" + field.getName() + "\' needs getter");
       }
       final Set<PsiField> fieldsNeedingSetter = visitor.getFieldsNeedingSetter();
       for (PsiField field : fieldsNeedingSetter) {
-        conflicts.put(field, "Field \'" + field.getName() + "\' needs getter");
+        conflicts.putValue(field, "Field \'" + field.getName() + "\' needs getter");
       }
     }
     return showConflicts(conflicts);
   }
 
   @Override
-  protected boolean showConflicts(final Map<PsiElement, String> conflicts) {
+  protected boolean showConflicts(final MultiMap<PsiElement, String> conflicts) {
     if (!conflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
       throw new RuntimeException(StringUtil.join(conflicts.values(), "\n"));
     }
     return super.showConflicts(conflicts);
   }
 
-  private Map<PsiElement, String> calculateInitializersConflicts() {
-    final Map<PsiElement, String> out = new HashMap<PsiElement, String>();
+  private void calculateInitializersConflicts(MultiMap<PsiElement, String> conflicts) {
     final PsiClassInitializer[] initializers = sourceClass.getInitializers();
     for (PsiClassInitializer initializer : initializers) {
       if (initializerDependsOnMoved(initializer)) {
-        out.put(initializer, "Class initializer requires moved members");
+        conflicts.putValue(initializer, "Class initializer requires moved members");
       }
     }
     for (PsiMethod constructor : sourceClass.getConstructors()) {
       if (initializerDependsOnMoved(constructor.getBody())) {
-        out.put(constructor, "Constructor requires moved members");
+        conflicts.putValue(constructor, "Constructor requires moved members");
       }
     }
-    return out;
   }
 
   private boolean initializerDependsOnMoved(PsiElement initializer) {

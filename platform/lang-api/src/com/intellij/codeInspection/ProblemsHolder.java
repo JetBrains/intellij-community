@@ -60,13 +60,13 @@ public class ProblemsHolder {
       myProblems = new ArrayList<ProblemDescriptor>(1);
     }
     PsiElement element = problemDescriptor.getPsiElement();
-    if (!isInPsiFile(element)) {
+    if (element != null && !isInPsiFile(element)) {
       LOG.error("Reported element " + element + " is not from the file '" + myFile + "' the inspection was invoked for. Message:" + problemDescriptor.getDescriptionTemplate());
     }
     myProblems.add(problemDescriptor);
   }
 
-  private boolean isInPsiFile(PsiElement element) {
+  private boolean isInPsiFile(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     return ArrayUtil.indexOf(myFile.getPsiRoots(), file) != -1;
   }

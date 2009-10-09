@@ -1,32 +1,25 @@
 package com.intellij.packaging.impl.ui;
 
 import com.intellij.ide.projectView.PresentationData;
-import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packaging.impl.elements.PackagingElementFactoryImpl;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.packaging.ui.PackagingElementWeights;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
 /**
  * @author nik
  */
 public class FileCopyPresentation extends PackagingElementPresentation {
-  private static final Icon COPY_OF_FOLDER_ICON = IconLoader.getIcon("/nodes/copyOfFolder.png");
   private final String mySourcePath;
   private final String myOutputFileName;
-  private final String mySourceFileName;
   private final VirtualFile myFile;
-  private final boolean myIsDirectory;
 
   public FileCopyPresentation(String filePath, String outputFileName) {
-    mySourceFileName = PathUtil.getFileName(filePath);
     myOutputFileName = outputFileName;
 
     String parentPath;
@@ -34,15 +27,14 @@ public class FileCopyPresentation extends PackagingElementPresentation {
     if (myFile != null) {
       final VirtualFile parent = myFile.getParent();
       parentPath = parent != null ? FileUtil.toSystemDependentName(parent.getPath()) : "";
-      myIsDirectory = myFile.isDirectory();
     }
     else {
       parentPath = FileUtil.toSystemDependentName(PathUtil.getParentPath(filePath));
-      myIsDirectory = false;
     }
 
-    if (!myIsDirectory && !mySourceFileName.equals(myOutputFileName)) {
-      mySourcePath = parentPath + "/" + mySourceFileName;
+    String sourceFileName = PathUtil.getFileName(filePath);
+    if (!sourceFileName.equals(myOutputFileName)) {
+      mySourcePath = parentPath + "/" + sourceFileName;
     }
     else {
       mySourcePath = parentPath;
@@ -54,18 +46,13 @@ public class FileCopyPresentation extends PackagingElementPresentation {
   }
 
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
-    if (myFile != null) {
-      presentationData.setIcons(myIsDirectory ? COPY_OF_FOLDER_ICON : myFile.getIcon());
-      if (myIsDirectory) {
-        presentationData.addText(CompilerBundle.message("node.text.0.directory.content", mySourceFileName), mainAttributes);
-      }
-      else {
-        presentationData.addText(myOutputFileName, mainAttributes);
-      }
+    if (myFile != null && !myFile.isDirectory()) {
+      presentationData.setIcons(myFile.getIcon());
+      presentationData.addText(myOutputFileName, mainAttributes);
       presentationData.addText(" (" + mySourcePath + ")", commentAttributes);
     }
     else {
-      presentationData.setIcons(COPY_OF_FOLDER_ICON);
+      presentationData.setIcons(PackagingElementFactoryImpl.FileCopyElementType.ICON);
       presentationData.addText(myOutputFileName, SimpleTextAttributes.ERROR_ATTRIBUTES);
       final VirtualFile parentFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(mySourcePath));
       presentationData.addText("(" + mySourcePath + ")",
@@ -75,6 +62,6 @@ public class FileCopyPresentation extends PackagingElementPresentation {
 
   @Override
   public int getWeight() {
-    return myIsDirectory ? PackagingElementWeights.DIRECTORY_COPY : PackagingElementWeights.FILE_COPY;
+    return PackagingElementWeights.FILE_COPY;
   }
 }

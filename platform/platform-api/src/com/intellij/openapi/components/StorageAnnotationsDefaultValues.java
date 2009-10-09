@@ -32,7 +32,7 @@ public interface StorageAnnotationsDefaultValues {
       throw new UnsupportedOperationException("Method getState is not supported in " + getClass());
     }
 
-    public boolean hasState(final Object component, final String componentName, final Class<?> aClass) throws StateStorageException {
+    public boolean hasState(final Object component, final String componentName, final Class<?> aClass, final boolean reloadData) throws StateStorageException {
       throw new UnsupportedOperationException("Method hasState not implemented in " + getClass());
     }
 

@@ -7,6 +7,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.util.EnumConstantsUtil;
+import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -109,7 +110,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
         assert list != null;
         list.setModifierProperty(PsiModifier.STATIC, member.hasModifierProperty(PsiModifier.STATIC));
         list.setModifierProperty(PsiModifier.FINAL, member.hasModifierProperty(PsiModifier.FINAL));
-        RefactoringUtil.setVisibility(list, VisibilityUtil.getVisibilityModifier(member.getModifierList()));
+        RefactoringConflictsUtil.setVisibility(list, VisibilityUtil.getVisibilityModifier(member.getModifierList()));
       }
     }
     member.delete();

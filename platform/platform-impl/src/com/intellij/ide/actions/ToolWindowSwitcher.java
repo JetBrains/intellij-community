@@ -556,8 +556,8 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
 
     private static Icon to16x16(Icon icon) {
       if (icon.getIconHeight() == 16 && icon.getIconWidth() == 16) return icon;
-      final int w = icon.getIconWidth();
-      final int h = icon.getIconHeight();
+      final int w = Math.min (icon.getIconWidth(), 16);
+      final int h = Math.min(icon.getIconHeight(), 16);
 
       final BufferedImage image = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration()
         .createCompatibleImage(16, 16, Color.TRANSLUCENT);

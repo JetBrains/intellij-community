@@ -14,7 +14,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
@@ -197,7 +197,7 @@ public class GenerateMembersUtil {
         newMethod = factory.createMethod(method.getName(), substituteType(substitutor, returnType));
       }
 
-      RefactoringUtil.setVisibility(newMethod.getModifierList(), VisibilityUtil.getVisibilityModifier(method.getModifierList()));
+      RefactoringConflictsUtil.setVisibility(newMethod.getModifierList(), VisibilityUtil.getVisibilityModifier(method.getModifierList()));
 
       PsiElement navigationElement = method.getNavigationElement();
       PsiDocComment docComment = ((PsiDocCommentOwner)navigationElement).getDocComment();

@@ -7,10 +7,10 @@ import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Map;
 
 /**
  *  @author dsl
@@ -77,7 +77,7 @@ public class MultipleRootsMoveDestination extends AutocreatingMoveDestination {
   }
 
   public void analyzeModuleConflicts(final Collection<PsiElement> elements,
-                                     Map<PsiElement,String> conflicts, final UsageInfo[] usages) {
+                                     MultiMap<PsiElement,String> conflicts, final UsageInfo[] usages) {
   }
 
   public PsiDirectory getTargetIfExists(PsiDirectory source) {

@@ -400,14 +400,14 @@ public class PluginManager {
   public static boolean isIncompatible(final IdeaPluginDescriptor descriptor) {
     BuildNumber buildNumber = getBuildNumber();
 
-    if (descriptor.getSinceBuild() != null) {
+    if (!StringUtil.isEmpty(descriptor.getSinceBuild())) {
       BuildNumber sinceBuild = BuildNumber.fromString(descriptor.getSinceBuild());
       if (sinceBuild.compareTo(buildNumber) > 0) {
         return true;
       }
     }
 
-    if (descriptor.getUntilBuild() != null && !buildNumber.isSnapshot()) {
+    if (!StringUtil.isEmpty(descriptor.getUntilBuild()) && !buildNumber.isSnapshot()) {
       BuildNumber untilBuild = BuildNumber.fromString(descriptor.getUntilBuild());
       if (untilBuild.compareTo(buildNumber) < 0) return true;
     }

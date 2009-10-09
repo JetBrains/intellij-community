@@ -24,6 +24,7 @@ import com.intellij.util.FilteredQuery;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -31,17 +32,20 @@ import java.util.*;
  *
  */
 public class CodeInsightUtil {
+  @Nullable
   public static PsiExpression findExpressionInRange(PsiFile file, int startOffset, int endOffset) {
     if (!file.getViewProvider().getLanguages().contains(StdLanguages.JAVA)) return null;
-    PsiElement element2 = file.getViewProvider().findElementAt(endOffset - 1, StdLanguages.JAVA);
-    if (element2 instanceof PsiJavaToken) {
-      final PsiJavaToken token = (PsiJavaToken)element2;
-      final IElementType tokenType = token.getTokenType();
-      if (tokenType.equals(JavaTokenType.SEMICOLON)) {
-        endOffset = element2.getTextRange().getStartOffset();
+    PsiExpression expression = findElementInRange(file, startOffset, endOffset, PsiExpression.class);
+    if (expression == null && findStatementsInRange(file, startOffset, endOffset).length == 0) {
+      PsiElement element2 = file.getViewProvider().findElementAt(endOffset - 1, StdLanguages.JAVA);
+      if (element2 instanceof PsiJavaToken) {
+        final PsiJavaToken token = (PsiJavaToken)element2;
+        final IElementType tokenType = token.getTokenType();
+        if (tokenType.equals(JavaTokenType.SEMICOLON)) {
+          expression = findElementInRange(file, startOffset, element2.getTextRange().getStartOffset(), PsiExpression.class);
+        }
       }
     }
-    final PsiExpression expression = findElementInRange(file, startOffset, endOffset, PsiExpression.class);
     if (expression instanceof PsiReferenceExpression && expression.getParent() instanceof PsiMethodCallExpression) return null;
     return expression;
   }
@@ -51,10 +55,11 @@ public class CodeInsightUtil {
   }
 
   @NotNull
-  public static PsiElement[] findStatementsInRange(PsiFile file, int startOffset, int endOffset) {
-    if (!file.getViewProvider().getLanguages().contains(StdLanguages.JAVA)) return PsiElement.EMPTY_ARRAY;
-    PsiElement element1 = file.getViewProvider().findElementAt(startOffset, StdLanguages.JAVA);
-    PsiElement element2 = file.getViewProvider().findElementAt(endOffset - 1, StdLanguages.JAVA);
+  public static PsiElement[] findStatementsInRange(@NotNull PsiFile file, int startOffset, int endOffset) {
+    FileViewProvider viewProvider = file.getViewProvider();
+    if (!viewProvider.getLanguages().contains(StdLanguages.JAVA)) return PsiElement.EMPTY_ARRAY;
+    PsiElement element1 = viewProvider.findElementAt(startOffset, StdLanguages.JAVA);
+    PsiElement element2 = viewProvider.findElementAt(endOffset - 1, StdLanguages.JAVA);
     if (element1 instanceof PsiWhiteSpace) {
       startOffset = element1.getTextRange().getEndOffset();
       element1 = file.findElementAt(startOffset);

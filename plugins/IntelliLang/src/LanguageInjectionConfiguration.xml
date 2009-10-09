@@ -336,4 +336,11 @@
     <place><![CDATA[xmlTag().withLocalName(string().matches("style")).withNamespace(string().matches("http://www.w3.org/1999/xhtml"))]]></place>
     <xpath-condition>lower-case(@type)='text/css'</xpath-condition>
   </injection>
+  <injection language="TEL" injector-id="xml">
+    <display-name>Bare Tapestry EL in attribute value</display-name>
+    <prefix>${</prefix>
+    <suffix>}</suffix>
+    <place><![CDATA[xmlAttribute().withLocalName(not(string().matches("id|type"))).withText(string().matches("[^${}/\\]+")).inside(xmlTag().withNamespace(string().matches("http://tapestry.apache.org/schema/tapestry_5_1_0.xsd|http://tapestry.apache.org/schema/tapestry_5_0_0.xsd")))]]></place>
+    <place><![CDATA[xmlAttribute().withLocalName(not(string().matches("id|type"))).withText(string().matches("[^${}/\\]+")).withNamespace(string().matches("http://tapestry.apache.org/schema/tapestry_5_1_0.xsd|http://tapestry.apache.org/schema/tapestry_5_0_0.xsd"))]]></place>
+  </injection>
 </component>

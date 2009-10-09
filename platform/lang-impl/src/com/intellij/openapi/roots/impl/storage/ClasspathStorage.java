@@ -106,11 +106,8 @@ public class ClasspathStorage implements StateStorage {
           model.dispose();
         }
       }
-      final HashMap<String, String> map = new HashMap<String, String>();
-      for (String v : macros) {
-        map.put(v, null);
-      }
-      final boolean macrosOk = ProjectMacrosUtil.checkMacros(module.getProject(), map);
+      
+      final boolean macrosOk = ProjectMacrosUtil.checkMacros(module.getProject(), macros);
       PathMacroManager.getInstance(module).expandPaths(element);
       ModuleRootManagerImpl.ModuleRootManagerState moduleRootManagerState = new ModuleRootManagerImpl.ModuleRootManagerState();
       moduleRootManagerState.readExternal(element);
@@ -128,7 +125,7 @@ public class ClasspathStorage implements StateStorage {
     }
   }
 
-  public boolean hasState(final Object component, final String componentName, final Class<?> aClass)
+  public boolean hasState(final Object component, final String componentName, final Class<?> aClass, final boolean reloadData)
     throws StateStorageException {
     return true;
   }
@@ -180,11 +177,6 @@ public class ClasspathStorage implements StateStorage {
         ClasspathStorage.this.save();
       }
 
-      public Set<String> getUsedMacros() {
-        assert mySession == this;
-        return Collections.EMPTY_SET;
-      }
-
       @Nullable
       public Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile,StateStorage>> changedFiles) {
         return null;
@@ -201,7 +193,6 @@ public class ClasspathStorage implements StateStorage {
 
         for (VirtualFile virtualFile : virtualFiles) {
           final File ioFile = VfsUtil.virtualToIoFile(virtualFile);
-          if (ioFile == null) continue;
           list.add(FileSystem.FILE_SYSTEM.createFile(ioFile.getAbsolutePath()));
         }
 

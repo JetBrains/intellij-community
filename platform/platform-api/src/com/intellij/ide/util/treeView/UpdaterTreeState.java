@@ -2,8 +2,9 @@ package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
-import com.intellij.util.Function;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -122,8 +123,10 @@ public class UpdaterTreeState {
     myCanRunRestore = state.myCanRunRestore;
   }
 
-  public boolean restore() {
-    if (isProcessingNow() || !myCanRunRestore) return false;
+  public boolean restore(@Nullable DefaultMutableTreeNode actionNode) {
+    if (isProcessingNow() || !myCanRunRestore || myUi.hasNodesToUpdate()) return false;
+
+    invalidateToSelectWithRefsToParent(actionNode);
 
     myProcessingNow = true;
 
@@ -143,7 +146,9 @@ public class UpdaterTreeState {
       public void run() {
         processUnsuccessfulSelections(toSelect, new Function<Object, Object>() {
           public Object fun(final Object o) {
-            addSelection(o);
+            if (myUi.getTree().isRootVisible() || !myUi.getTreeStructure().getRootElement().equals(o)) {
+              addSelection(o);
+            }
             return o;
           }
         }, originallySelected);
@@ -167,6 +172,27 @@ public class UpdaterTreeState {
     return true;
   }
 
+  private void invalidateToSelectWithRefsToParent(DefaultMutableTreeNode actionNode) {
+    if (actionNode != null) {
+      Object readyElement = myUi.getElementFor(actionNode);
+      if (readyElement != null) {
+        Iterator<Object> toSelect = myToSelect.keySet().iterator();
+        while (toSelect.hasNext()) {
+          Object eachToSelect = toSelect.next();
+          if (readyElement.equals(myUi.getTreeStructure().getParentElement(eachToSelect))) {
+            List<Object> children = myUi.getLoadedChildrenFor(readyElement);
+            if (!children.contains(eachToSelect)) {
+              toSelect.remove();
+              if (!myToSelect.containsKey(readyElement) && !myUi.getSelectedElements().contains(eachToSelect)) {
+                addAdjustedSelection(eachToSelect, Condition.FALSE);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
   void beforeSubtreeUpdate() {
     myCanRunRestore = true;
   }
@@ -181,9 +207,11 @@ public class UpdaterTreeState {
 
       successfulSelections.retainAll(selected);
       wasFullyRejected = successfulSelections.size() == 0;
+    } else if (selected.size() == 0 && originallySelected.size() == 0) {
+      wasFullyRejected = true;
     }
 
-    if (wasFullyRejected) return;
+    if (wasFullyRejected && selected.size() > 0) return;
 
     for (Object eachToSelect : toSelect) {
       if (!selected.contains(eachToSelect)) {
@@ -215,13 +243,19 @@ public class UpdaterTreeState {
     if (newSelection.length > 0) {
       myUi._select(newSelection, new Runnable() {
         public void run() {
+          final Set<Object> hangByParent = new HashSet<Object> ();
           processUnsuccessfulSelections(newSelection, new Function<Object, Object>() {
             public Object fun(final Object o) {
-              addAdjustedSelection(o, adjusted.get(o));
+              if (myUi.isInStructure(o) && !adjusted.get(o).value(o)) {
+                hangByParent.add(o);
+              } else {
+                addAdjustedSelection(o, adjusted.get(o));
+              }
               return null;
             }
           }, originallySelected);
-          result.setDone();
+
+          processHangByParent(hangByParent).notify(result);
         }
       }, true, true, true);
     } else {
@@ -229,6 +263,39 @@ public class UpdaterTreeState {
     }
 
     return result;
+  }
+
+  private ActionCallback processHangByParent(Set<Object> elements) {
+    if (elements.size() == 0) return new ActionCallback.Done();
+
+    ActionCallback result = new ActionCallback(elements.size());
+    for (Iterator<Object> iterator = elements.iterator(); iterator.hasNext();) {
+      processHangByParent(iterator.next()).notify(result);
+    }
+    return result;
+  }
+
+  private ActionCallback processHangByParent(Object each) {
+    ActionCallback result = new ActionCallback();
+    processNextHang(each, result);
+    return result;
+  }
+
+  private void processNextHang(Object element, final ActionCallback callback) {
+    if (element == null || myUi.getSelectedElements().contains(element)) {
+      callback.setDone();
+    } else {
+      final Object nextElement = myUi.getTreeStructure().getParentElement(element);
+      if (nextElement == null) {
+        callback.setDone();
+      } else {
+       myUi.select(nextElement, new Runnable() {
+          public void run() {
+            processNextHang(nextElement, callback);
+          }
+        }, true);
+      }
+    }
   }
 
   private boolean isParentOrSame(Object parent, Object child) {

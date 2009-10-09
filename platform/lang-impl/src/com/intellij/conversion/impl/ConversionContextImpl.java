@@ -42,7 +42,8 @@ public class ConversionContextImpl implements ConversionContext {
   private ProjectSettingsImpl myProjectSettings;
   private WorkspaceSettingsImpl myWorkspaceSettings;
   private List<File> myNonExistingModuleFiles = new ArrayList<File>();
-  private Map<File, ModuleSettingsImpl> myModuleSettingsMap = new HashMap<File, ModuleSettingsImpl>();
+  private Map<File, ModuleSettingsImpl> myFile2ModuleSettings = new HashMap<File, ModuleSettingsImpl>();
+  private Map<String, ModuleSettingsImpl> myName2ModuleSettings = new HashMap<String, ModuleSettingsImpl>();
   private RunManagerSettingsImpl myRunManagerSettings;
   private File mySettingsBaseDir;
   private ComponentManagerSettings myCompilerManagerSettings;
@@ -116,7 +117,7 @@ public class ConversionContextImpl implements ConversionContext {
     List<File> files = new ArrayList<File>();
     for (Element module : JDomConvertingUtil.getChildren(modules, ModuleManagerImpl.ELEMENT_MODULE)) {
       String filePath = module.getAttributeValue(ModuleManagerImpl.ATTRIBUTE_FILEPATH);
-      filePath = macros.substitute(filePath, true, null);
+      filePath = macros.substitute(filePath, true);
       files.add(new File(FileUtil.toSystemDependentName(filePath)));
     }
     return files.toArray(new File[files.size()]);
@@ -124,7 +125,7 @@ public class ConversionContextImpl implements ConversionContext {
 
   @NotNull
   public String expandPath(@NotNull String path, @NotNull ModuleSettingsImpl moduleSettings) {
-    return createExpandMacroMap(moduleSettings).substitute(path, true, null);
+    return createExpandMacroMap(moduleSettings).substitute(path, true);
   }
 
   private ExpandMacroToPathMap createExpandMacroMap(@Nullable ModuleSettingsImpl moduleSettings) {
@@ -139,12 +140,12 @@ public class ConversionContextImpl implements ConversionContext {
   @NotNull
   public String collapsePath(@NotNull String path) {
     ReplacePathToMacroMap map = createCollapseMacroMap(PathMacrosImpl.PROJECT_DIR_MACRO_NAME, myProjectBaseDir);
-    return map.substitute(path, SystemInfo.isFileSystemCaseSensitive, null);
+    return map.substitute(path, SystemInfo.isFileSystemCaseSensitive);
   }
 
   public String collapsePath(@NotNull String path, @NotNull ModuleSettingsImpl moduleSettings) {
     final ReplacePathToMacroMap map = createCollapseMacroMap(PathMacrosImpl.MODULE_DIR_MACRO_NAME, moduleSettings.getModuleFile().getParentFile());
-    return map.substitute(path, SystemInfo.isFileSystemCaseSensitive, null);
+    return map.substitute(path, SystemInfo.isFileSystemCaseSensitive);
   }
 
   private static ReplacePathToMacroMap createCollapseMacroMap(final String macroName, final File dir) {
@@ -175,6 +176,7 @@ public class ConversionContextImpl implements ConversionContext {
     }
   }
 
+  @NotNull
   public List<File> getClassRoots(Element libraryElement, ModuleSettingsImpl moduleSettings) {
     List<File> files = new ArrayList<File>();
     //todo[nik] support jar directories
@@ -185,7 +187,7 @@ public class ConversionContextImpl implements ConversionContext {
       for (Element root : roots) {
         final String url = root.getAttributeValue("url");
         final String path = VfsUtil.urlToPath(url);
-        files.add(new File(PathUtil.getLocalPath(pathMap.substitute(path, true, null))));
+        files.add(new File(PathUtil.getLocalPath(pathMap.substitute(path, true))));
       }
     }
     return files;
@@ -309,12 +311,26 @@ public class ConversionContextImpl implements ConversionContext {
 
 
   public ModuleSettings getModuleSettings(File moduleFile) throws CannotConvertException {
-    ModuleSettingsImpl settings = myModuleSettingsMap.get(moduleFile);
+    ModuleSettingsImpl settings = myFile2ModuleSettings.get(moduleFile);
     if (settings == null) {
       settings = new ModuleSettingsImpl(moduleFile, this);
-      myModuleSettingsMap.put(moduleFile, settings);
+      myFile2ModuleSettings.put(moduleFile, settings);
+      myName2ModuleSettings.put(settings.getModuleName(), settings);
     }
     return settings;
+  }
+
+  public ModuleSettings getModuleSettings(@NotNull String moduleName) {
+    if (!myName2ModuleSettings.containsKey(moduleName)) {
+      for (File moduleFile : myModuleFiles) {
+        try {
+          getModuleSettings(moduleFile);
+        }
+        catch (CannotConvertException ignored) {
+        }
+      }
+    }
+    return myName2ModuleSettings.get(moduleName);
   }
 
   public List<File> getNonExistingModuleFiles() {

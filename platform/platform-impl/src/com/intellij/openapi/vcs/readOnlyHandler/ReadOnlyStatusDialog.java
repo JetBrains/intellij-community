@@ -6,12 +6,8 @@ package com.intellij.openapi.vcs.readOnlyHandler;
 
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 
@@ -39,20 +35,7 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
     else {
       myUsingFileSystemRadioButton.setSelected(true);
     }
-    myFileList.setCellRenderer(new ColoredListCellRenderer() {
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        // paint selection only as a focus rectangle
-        mySelected = false;
-        setBackground(null);
-        VirtualFile vf = (VirtualFile) value;
-        setIcon(vf.getIcon());
-        append(vf.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        VirtualFile parent = vf.getParent();
-        if (parent != null) {
-          append(" (" + FileUtil.toSystemDependentName(parent.getPath()) + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
-        }
-      }
-    });
+    myFileList.setCellRenderer(new FileListRenderer());
     setTitle(VcsBundle.message("dialog.title.clear.read.only.file.status"));
 
     init();
@@ -137,4 +120,5 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
     final JRootPane pane = getRootPane();
     return pane != null ? pane.getDefaultButton() : null;
   }
+
 }

@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.extensions.Extensions;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
@@ -23,7 +24,7 @@ public class TypedHandler implements TypedActionHandler {
     myOriginalHandler = originalHandler;
   }
 
-  public void execute(final Editor editor, final char charTyped, DataContext dataContext){
+  public void execute(@NotNull final Editor editor, final char charTyped, @NotNull DataContext dataContext){
     final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
     if (lookup == null){
       myOriginalHandler.execute(editor, charTyped, dataContext);

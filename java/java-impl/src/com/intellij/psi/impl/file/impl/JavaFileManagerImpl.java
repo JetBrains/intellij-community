@@ -300,8 +300,10 @@ public class JavaFileManagerImpl implements JavaFileManager {
 
       PsiClass aClass = (PsiClass)found;
       final boolean valid = aClass.isValid();
-      LOG.assertTrue(valid);
-      if (!valid) continue;
+      if (!valid) {
+        LOG.error("Invalid class "+aClass+"; "+aClass.getContainingFile());
+        continue;
+      }
 
       final String qualifiedName = aClass.getQualifiedName();
       if (qualifiedName == null || !qualifiedName.equals(qName)) continue;

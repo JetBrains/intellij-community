@@ -7,6 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.memberPullUp.PullUpHelper;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -75,9 +76,12 @@ public class ExtractSuperClassUtil {
       PsiParameter[] baseParams = baseConstructor.getParameterList().getParameters();
       @NonNls StringBuilder superCallText = new StringBuilder();
       superCallText.append("super(");
+      final PsiClass baseClass = baseConstructor.getContainingClass();
+      LOG.assertTrue(baseClass != null);
+      final PsiSubstitutor classSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, superclass, PsiSubstitutor.EMPTY);
       for (int i = 0; i < baseParams.length; i++) {
-        PsiParameter baseParam = baseParams[i];
-        final PsiParameter newParam = (PsiParameter)paramList.add(baseParam);
+        final PsiParameter baseParam = baseParams[i];
+        final PsiParameter newParam = (PsiParameter)paramList.add(factory.createParameter(baseParam.getName(), classSubstitutor.substitute(baseParam.getType())));
         if (i > 0) {
           superCallText.append(",");
         }

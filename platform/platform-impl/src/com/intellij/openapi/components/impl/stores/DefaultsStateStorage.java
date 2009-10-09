@@ -54,7 +54,7 @@ class DefaultsStateStorage implements StateStorage {
     return DefaultStateSerializer.deserializeState(getState(component, componentName), stateClass, mergeInto);
   }
 
-  public boolean hasState(final Object component, final String componentName, final Class<?> aClass) throws StateStorageException {
+  public boolean hasState(final Object component, final String componentName, final Class<?> aClass, final boolean reloadData) throws StateStorageException {
     final URL url = DecodeDefaultsUtil.getDefaults(component, componentName);
     return url != null;
   }

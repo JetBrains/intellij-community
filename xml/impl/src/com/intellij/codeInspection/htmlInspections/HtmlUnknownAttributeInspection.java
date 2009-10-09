@@ -31,7 +31,7 @@ public class HtmlUnknownAttributeInspection extends HtmlUnknownTagInspection {
   @NonNls public static final String ATTRIBUTE_SHORT_NAME = "HtmlUnknownAttribute";
 
   public HtmlUnknownAttributeInspection() {
-    super("type,wmode,src,width,height");
+    super("");
   }
 
   @Nls

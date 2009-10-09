@@ -55,7 +55,7 @@ public class XmlHighlightVisitorBasedInspection extends GlobalInspectionTool {
                 globalContext
               );
             }
-            return super.add(info);
+            return true;
           }
         };
         myHolder.setWritable(true);

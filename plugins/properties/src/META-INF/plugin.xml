@@ -2,7 +2,10 @@
   <id>com.intellij.properties</id>
   <name>Properties Support</name>
   <depends>com.intellij.modules.xml</depends>
-
+  <description>
+    This plugin enables smart editing of properties files.
+  </description>
+  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <applicationService serviceInterface="com.intellij.lang.properties.LastSelectedPropertiesFileStore"

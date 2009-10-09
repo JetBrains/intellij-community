@@ -69,7 +69,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
         setOKActionEnabled(false);
         break;
       }
-      if (r.remoteCommits != 0) {
+      if (r.remoteCommits != 0 && r.commits.size() != 0) {
         setErrorText(GitBundle.getString("push.active.error.behind"));
         setOKActionEnabled(false);
         break;
@@ -263,6 +263,9 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
       }
       if (root.remote == null) {
         return GitBundle.message("push.active.status.no.tracked");
+      }
+      if (root.remoteCommits != 0 && root.commits.size() == 0) {
+        return GitBundle.message("push.active.status.no.commits.behind", root.remoteCommits);
       }
       if (root.commits.size() == 0) {
         return GitBundle.message("push.active.status.no.commits");

@@ -45,7 +45,6 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -222,17 +221,7 @@ public class LibraryTableEditor implements Disposable {
 
   public void selectLibrary(Library library, boolean expand) {
     LibraryTableTreeContentElement element = new LibraryElement(library, this, false);
-    myTreeBuilder.updateFromRoot();
-    DefaultMutableTreeNode node = myTreeBuilder.getNodeForElement(element);
-    if (node == null) {
-      return;
-    }
-    myTree.requestFocus();
-    final TreePath treePath = new TreePath(node.getPath());
-    TreeUtil.selectPath(myTree, treePath);
-    if (expand) {
-      myTree.expandPath(treePath);
-    }
+    myTreeBuilder.updateAndSelect(element);
   }
 
   public void disableAttachButtons() {
@@ -481,11 +470,6 @@ public class LibraryTableEditor implements Disposable {
     private void appendLibraryToModules(final ModuleStructureConfigurable rootConfigurable, final Library libraryToSelect) {
       final List<Module> modules = new ArrayList<Module>();
       modules.addAll(Arrays.asList(rootConfigurable.getModules()));
-      Collections.sort(modules, new Comparator<Module>() {
-        public int compare(final Module m1, final Module m2) {
-          return m1.getName().compareToIgnoreCase(m2.getName());
-        }
-      });
       final ChooseModulesDialog dlg = new ChooseModulesDialog(myProject,
                                                               modules, ProjectBundle.message("choose.modules.dialog.title"),
                                                               ProjectBundle.message("choose.modules.dialog.description", libraryToSelect.getName())); 
@@ -531,13 +515,7 @@ public class LibraryTableEditor implements Disposable {
         for (Map.Entry<DataKey, Object> entry : myFileChooserUserData.entrySet()) {
           myDescriptor.putUserData(entry.getKey(), entry.getValue());
         }
-        VirtualFile toSelect = myLastChosen;
-        if (toSelect == null && Comparing.strEqual(myLibraryTableProvider.getTableLevel(), LibraryTablesRegistrar.PROJECT_LEVEL)) {
-          final Project project = myProject;
-          if (project != null) {
-            toSelect = project.getBaseDir();
-          }
-        }
+        VirtualFile toSelect = getFileToSelect(library);
         final VirtualFile[] attachedFiles =
           attachFiles(library, scanForActualRoots(FileChooser.chooseFiles(myPanel, myDescriptor, toSelect)), getRootType(),
                       addAsJarDirectories());
@@ -547,6 +525,38 @@ public class LibraryTableEditor implements Disposable {
       }
       fireLibrariesChanged();
       myTree.requestFocus();
+    }
+
+    @Nullable
+    private VirtualFile getFileToSelect(Library library) {
+      VirtualFile toSelect = myLastChosen;
+      if (toSelect == null) {
+        for (OrderRootType orderRootType : OrderRootType.getAllPersistentTypes()) {
+          final VirtualFile[] existingRoots = library.getFiles(orderRootType);
+          if (existingRoots.length > 0) {
+            VirtualFile existingRoot = existingRoots [0];
+            if (existingRoot.getFileSystem() instanceof JarFileSystem) {
+              existingRoot = JarFileSystem.getInstance().getVirtualFileForJar(existingRoot);
+            }
+            if (existingRoot != null) {
+              if (existingRoot.isDirectory()) {
+                toSelect = existingRoot;
+              }
+              else {
+                toSelect = existingRoot.getParent();
+              }
+            }
+            break;
+          }
+        }
+      }
+      if (toSelect == null && Comparing.strEqual(myLibraryTableProvider.getTableLevel(), LibraryTablesRegistrar.PROJECT_LEVEL)) {
+        final Project project = myProject;
+        if (project != null) {
+          toSelect = project.getBaseDir();
+        }
+      }
+      return toSelect;
     }
   }
 

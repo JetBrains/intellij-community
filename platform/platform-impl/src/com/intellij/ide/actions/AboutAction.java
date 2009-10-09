@@ -15,7 +15,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.AnimatingSurface;
 import com.intellij.ui.LicenseeInfoProvider;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.UIUtil;
@@ -60,11 +59,7 @@ public class AboutAction extends AnAction implements DumbAware {
       final InfoSurface infoSurface = new InfoSurface(image);
       infoSurface.setPreferredSize(new Dimension(image.getWidth(null), image.getHeight(null)));
       mainPanel.add(infoSurface, BorderLayout.NORTH);
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          infoSurface.start();
-        }
-      });
+
       closeListenerOwner = infoSurface;
     }
     else {
@@ -149,14 +144,10 @@ public class AboutAction extends AnAction implements DumbAware {
     }
   }
 
-  private static class InfoSurface extends AnimatingSurface {
+  private static class InfoSurface extends JPanel {
     final Color col;
     final Color linkCol;
-    static final int UP = 0;
-    static final int DOWN = 1;
     private final Image myImage;
-    private float myAlpha;
-    private int myAlphaDirection = UP;
     private Font myFont;
     private Font myBoldFont;
     private final List<AboutBoxLine> myLines = new ArrayList<AboutBoxLine>();
@@ -169,8 +160,7 @@ public class AboutAction extends AnAction implements DumbAware {
       myImage = image;
 
 
-      myAlpha = 0f;
-      setOpaque(true);
+      setOpaque(false);
       //col = new Color(0xfa, 0xfa, 0xfa, 200);
       col = Color.white;
       linkCol = Color.blue;
@@ -178,7 +168,7 @@ public class AboutAction extends AnAction implements DumbAware {
       ApplicationInfoEx ideInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
       Calendar cal = ideInfo.getBuildDate();
       myLines.add(new AboutBoxLine(ideInfo.getFullApplicationName(), true, false));
-      myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.build.number", ideInfo.getBuildNumber())));
+      myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.build.number", ideInfo.getBuild().asString())));
       myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.build.date", DateFormat.getDateInstance(DateFormat.LONG).format(cal.getTime()))));
       myLines.add(new AboutBoxLine(""));
       LicenseeInfoProvider provider = LicenseeInfoProvider.getInstance();
@@ -190,15 +180,11 @@ public class AboutAction extends AnAction implements DumbAware {
 
       {
         final Properties properties = System.getProperties();
-        //noinspection HardCodedStringLiteral
         myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.jdk", properties.getProperty("java.version", "unknown")), true, false));
-        //noinspection HardCodedStringLiteral
         myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.vm", properties.getProperty("java.vm.name", "unknown"))));
-        //noinspection HardCodedStringLiteral
         myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.vendor", properties.getProperty("java.vendor", "unknown"))));
       }
       myLines.add(new AboutBoxLine(""));
-      //noinspection HardCodedStringLiteral
       myLines.add(new AboutBoxLine("JetBrains s.r.o.", true, false));
       myLines.add(new AboutBoxLine(COMPANY_URL, true, true));
       addMouseListener(new MouseAdapter() {
@@ -230,18 +216,18 @@ public class AboutAction extends AnAction implements DumbAware {
       });
     }
 
-    public void render(int w, int h, Graphics2D g2) {
-      AlphaComposite ac = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, myAlpha);
-      g2.setComposite(ac);
+    @Override
+    protected void paintChildren(Graphics g) {
+      super.paintChildren(g);
+      Graphics2D g2 = (Graphics2D)g;
 
-      //noinspection HardCodedStringLiteral
       Font labelFont = UIUtil.getLabelFont();
       for (int labelSize = 10; labelSize != 6; labelSize -= 1) {
         g2.setPaint(col);
         g2.drawImage(myImage, 0, 0, this);
+
         g2.setColor(col);
-        int startX = (int)(-300 * (1.0f - myAlpha) + 1);
-        TextRenderer renderer = new TextRenderer(startX, 145, 398, 120, g2);
+        TextRenderer renderer = new TextRenderer(0, 145, 398, 120, g2);
         g2.setComposite(AlphaComposite.Src);
         myFont = labelFont.deriveFont(Font.PLAIN, labelSize);
         myBoldFont = labelFont.deriveFont(Font.BOLD, labelSize+1);
@@ -252,20 +238,6 @@ public class AboutAction extends AnAction implements DumbAware {
         catch (TextRenderer.OverflowException _) {
           // ignore
         }
-      }
-    }
-
-    public void reset(int w, int h) { }
-
-    public void step(int w, int h) {
-      if (myAlphaDirection == UP) {
-        if ((myAlpha += 0.2) > .99) {
-          myAlphaDirection = DOWN;
-          myAlpha = 1.0f;
-        }
-      }
-      else if (myAlphaDirection == DOWN) {
-        stop();
       }
     }
 
@@ -291,7 +263,7 @@ public class AboutAction extends AnAction implements DumbAware {
         this.w = w;
         this.h = h;
         this.g2 = g2;
-        g2.fillRect(xBase, yBase, w, h);
+
         if (SystemInfo.isWindows) {
           g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF); 
         }

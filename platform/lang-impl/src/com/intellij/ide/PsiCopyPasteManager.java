@@ -7,9 +7,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
@@ -224,7 +222,17 @@ public class PsiCopyPasteManager {
   public static List<File> asFileList(final PsiElement[] elements) {
     List<File> result = new ArrayList<File>();
     for (PsiElement element : elements) {
-      final PsiFile psiFile = element.getContainingFile();
+      final PsiFileSystemItem psiFile;
+      if (element instanceof PsiFileSystemItem) {
+        psiFile = (PsiFileSystemItem)element;
+      }
+      else if (element instanceof PsiDirectoryContainer) {
+        final PsiDirectory[] directories = ((PsiDirectoryContainer)element).getDirectories();
+        psiFile = directories[0];
+      }
+      else {
+        psiFile = element.getContainingFile();
+      }
       if (psiFile != null) {
         VirtualFile vFile = psiFile.getVirtualFile();
         if (vFile != null && vFile.getFileSystem() instanceof LocalFileSystem) {

@@ -5,8 +5,11 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.packaging.impl.artifacts.ArtifactUtil;
+import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
+import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.ui.Messages;
@@ -14,15 +17,14 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactPointerManager;
 import com.intellij.packaging.elements.*;
-import com.intellij.packaging.ui.PackagingElementPropertiesPanel;
-import com.intellij.packaging.ui.ArtifactEditorContext;
+import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.ui.properties.ArchiveElementPropertiesPanel;
 import com.intellij.packaging.impl.ui.properties.DirectoryElementPropertiesPanel;
+import com.intellij.packaging.ui.ArtifactEditorContext;
+import com.intellij.packaging.ui.PackagingElementPropertiesPanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.PathUtil;
@@ -42,12 +44,13 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   public static final PackagingElementType<DirectoryPackagingElement> DIRECTORY_ELEMENT_TYPE = new DirectoryElementType();
   public static final PackagingElementType<ArchivePackagingElement> ARCHIVE_ELEMENT_TYPE = new ArchiveElementType();
   public static final PackagingElementType<FileCopyPackagingElement> FILE_COPY_ELEMENT_TYPE = new FileCopyElementType();
+  public static final PackagingElementType<DirectoryCopyPackagingElement> DIRECTORY_COPY_ELEMENT_TYPE = new DirectoryCopyElementType();
   public static final PackagingElementType<ArtifactRootElement<?>> ARTIFACT_ROOT_ELEMENT_TYPE = new ArtifactRootElementType();
   private static final PackagingElementType[] STANDARD_TYPES = {
       DIRECTORY_ELEMENT_TYPE, ARCHIVE_ELEMENT_TYPE,
       LibraryElementType.LIBRARY_ELEMENT_TYPE, ModuleOutputElementType.MODULE_OUTPUT_ELEMENT_TYPE,
       //ModuleWithDependenciesElementType.MODULE_WITH_DEPENDENCIES_TYPE, 
-      ArtifactElementType.ARTIFACT_ELEMENT_TYPE, FILE_COPY_ELEMENT_TYPE,
+      ArtifactElementType.ARTIFACT_ELEMENT_TYPE, FILE_COPY_ELEMENT_TYPE, DIRECTORY_COPY_ELEMENT_TYPE
   };
 
   @NotNull
@@ -60,6 +63,18 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
       }
     }
     return elementTypes.toArray(new PackagingElementType[elementTypes.size()]);
+  }
+
+  @Override
+  @NotNull
+  public ComplexPackagingElementType<?>[] getComplexElementTypes() {
+    List<ComplexPackagingElementType<?>> types = new ArrayList<ComplexPackagingElementType<?>>();
+    for (PackagingElementType type : getAllElementTypes()) {
+      if (type instanceof ComplexPackagingElementType) {
+        types.add((ComplexPackagingElementType)type);
+      }
+    }
+    return types.toArray(new ComplexPackagingElementType[types.size()]);
   }
 
   @NotNull
@@ -159,20 +174,28 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   @Override
   public List<? extends PackagingElement<?>> createLibraryElements(@NotNull Library library) {
     final LibraryTable table = library.getTable();
+    final String libraryName = library.getName();
     if (table != null) {
-      return Collections.singletonList(createLibraryFiles(table.getTableLevel(), library.getName()));
+      return Collections.singletonList(createLibraryFiles(libraryName, table.getTableLevel(), null));
+    }
+    if (libraryName != null) {
+      final Module module = ((LibraryImpl)library).getModule();
+      if (module != null) {
+        return Collections.singletonList(createLibraryFiles(libraryName, LibraryTableImplUtil.MODULE_LEVEL, module.getName()));
+      }
     }
     final List<PackagingElement<?>> elements = new ArrayList<PackagingElement<?>>();
     for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
-      elements.add(new FileCopyPackagingElement(FileUtil.toSystemIndependentName(PathUtil.getLocalPath(file))));
+      final String path = FileUtil.toSystemIndependentName(PathUtil.getLocalPath(file));
+      elements.add(file.isDirectory() && file.isInLocalFileSystem() ? new DirectoryCopyPackagingElement(path) : new FileCopyPackagingElement(path));
     }
     return elements;
   }
 
   @NotNull
   @Override
-  public PackagingElement<?> createLibraryFiles(@NotNull String level, @NotNull String name) {
-    return new LibraryPackagingElement(level, name);
+  public PackagingElement<?> createLibraryFiles(@NotNull String libraryName, @NotNull String level, String moduleName) {
+    return new LibraryPackagingElement(level, libraryName, moduleName);
   }
 
   @NotNull
@@ -201,10 +224,10 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     return name;
   }
 
-  @Override
   @NotNull
-  public FileCopyPackagingElement createFileCopy(@NotNull String filePath) {
-    return new FileCopyPackagingElement(filePath);
+  @Override
+  public PackagingElement<?> createDirectoryCopyWithParentDirectories(@NotNull String filePath, @NotNull String relativeOutputPath) {
+    return createParentDirectories(relativeOutputPath, new DirectoryCopyPackagingElement(filePath));
   }
 
   @NotNull
@@ -313,14 +336,16 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     }
   }
 
-  private static class FileCopyElementType extends PackagingElementType<FileCopyPackagingElement> {
+  public static class FileCopyElementType extends PackagingElementType<FileCopyPackagingElement> {
+    public static final Icon ICON = IconLoader.getIcon("/fileTypes/text.png");
+
     private FileCopyElementType() {
       super("file-copy", "File");
     }
 
     @Override
     public Icon getCreateElementIcon() {
-      return null;
+      return ICON;
     }
 
     @Override
@@ -331,7 +356,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     @NotNull
     public List<? extends FileCopyPackagingElement> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
                                                                      @NotNull CompositePackagingElement<?> parent) {
-      final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, true, true, false, true);
+      final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, true, true, false, true);
       final FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, context.getProject());
       final VirtualFile[] files = chooser.choose(null, context.getProject());
       final List<FileCopyPackagingElement> list = new ArrayList<FileCopyPackagingElement>();
@@ -344,6 +369,42 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     @NotNull
     public FileCopyPackagingElement createEmpty(@NotNull Project project) {
       return new FileCopyPackagingElement();
+    }
+  }
+
+  public static class DirectoryCopyElementType extends PackagingElementType<DirectoryCopyPackagingElement> {
+    public static final Icon COPY_OF_FOLDER_ICON = IconLoader.getIcon("/nodes/copyOfFolder.png");
+
+    private DirectoryCopyElementType() {
+      super("dir-copy", "Directory Content");
+    }
+
+    @Override
+    public Icon getCreateElementIcon() {
+      return COPY_OF_FOLDER_ICON;
+    }
+
+    @Override
+    public boolean canCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact) {
+      return true;
+    }
+
+    @NotNull
+    public List<? extends DirectoryCopyPackagingElement> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
+                                                                     @NotNull CompositePackagingElement<?> parent) {
+      final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, true);
+      final FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, context.getProject());
+      final VirtualFile[] files = chooser.choose(null, context.getProject());
+      final List<DirectoryCopyPackagingElement> list = new ArrayList<DirectoryCopyPackagingElement>();
+      for (VirtualFile file : files) {
+        list.add(new DirectoryCopyPackagingElement(file.getPath()));
+      }
+      return list;
+    }
+
+    @NotNull
+    public DirectoryCopyPackagingElement createEmpty(@NotNull Project project) {
+      return new DirectoryCopyPackagingElement();
     }
   }
 

@@ -18,6 +18,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class ListTemplatesHandler implements CodeInsightActionHandler{
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
@@ -27,17 +28,15 @@ public class ListTemplatesHandler implements CodeInsightActionHandler{
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
     int offset = editor.getCaretModel().getOffset();
     String prefix = getPrefix(editor.getDocument(), offset);
-    
-    ArrayList<LookupItem> array = new ArrayList<LookupItem>();
+
+    List<TemplateImpl> matchingTemplates = new ArrayList<TemplateImpl>();
     for (TemplateImpl template : SurroundWithTemplateHandler.getApplicableTemplates(editor, file, false)) {
-      String key = template.getKey();
-      if (key.startsWith(prefix)) {
-        array.add(new LookupItem(template, key));
+      if (template.getKey().startsWith(prefix)) {
+        matchingTemplates.add(template);
       }
     }
-    LookupElement[] items = array.toArray(new LookupElement[array.size()]);
-
-    if (items.length == 0){
+    
+    if (matchingTemplates.size() == 0) {
       String text = prefix.length() == 0
         ? CodeInsightBundle.message("templates.no.defined")
         : CodeInsightBundle.message("templates.no.defined.with.prefix", prefix);
@@ -45,13 +44,24 @@ public class ListTemplatesHandler implements CodeInsightActionHandler{
       return;
     }
 
+    showTemplatesLookup(project, editor, prefix, matchingTemplates);
+  }
+
+  public static void showTemplatesLookup(final Project project, final Editor editor, String prefix, List<TemplateImpl> matchingTemplates) {
+    ArrayList<LookupItem> array = new ArrayList<LookupItem>();
+    for (TemplateImpl template: matchingTemplates) {
+      array.add(new LookupItem(template, template.getKey()));
+    }
+    LookupElement[] items = array.toArray(new LookupElement[array.size()]);
+
     final LookupImpl lookup = (LookupImpl) LookupManager.getInstance(project).createLookup(editor, items, prefix, LookupArranger.DEFAULT);
     lookup.addLookupListener(
       new LookupAdapter() {
         public void itemSelected(LookupEvent event) {
+          final TemplateImpl template = (TemplateImpl)event.getItem().getObject();
           new WriteCommandAction(project) {
             protected void run(Result result) throws Throwable {
-              TemplateManager.getInstance(project).startTemplate(editor, '\0');
+              ((TemplateManagerImpl) TemplateManager.getInstance(project)).startTemplateWithPrefix(editor, template, null);
             }
           }.execute();
         }

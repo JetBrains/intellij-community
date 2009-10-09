@@ -14,6 +14,7 @@ import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.containers.MultiMap;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -45,7 +46,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   private @NonNls static final String TEMPLATE = "template";
 
   private @NonNls static final String DELETED_TEMPLATES = "deleted_templates";
-  private final List<String> myDeletedTemplates = new ArrayList<String>();
+  private final List<TemplateKey> myDeletedTemplates = new ArrayList<TemplateKey>();
 
   public static final char SPACE_CHAR = ' ';
   public static final char TAB_CHAR = '\t';
@@ -79,7 +80,8 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
   private static final @NonNls String TEMPLATES_CONFIG_FOLDER = "templates";
 
-  private final Map<String,Template> myTemplates = new LinkedHashMap<String,Template>();
+  private final List<TemplateImpl> myAllTemplates = new ArrayList<TemplateImpl>();
+  private final MultiMap<String,TemplateImpl> myTemplates = new MultiMap<String,TemplateImpl>();
   private final Map<String,Template> myTemplatesById = new LinkedHashMap<String,Template>();
   private final Map<String,TemplateImpl> myDefaultTemplates = new LinkedHashMap<String, TemplateImpl>();
 
@@ -91,6 +93,20 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   private final SchemesManager<TemplateGroup, TemplateGroup> mySchemesManager;
   private final SchemeProcessor<TemplateGroup> myProcessor;
   private static final String FILE_SPEC = "$ROOT_CONFIG$/templates";
+
+  private static class TemplateKey {
+    final String groupName;
+    final String key;
+
+    private TemplateKey(String groupName, String key) {
+      this.groupName = groupName;
+      this.key = key;
+    }
+
+    public static TemplateKey keyOf(TemplateImpl template) {
+      return new TemplateKey(template.getGroupName(), template.getKey());
+    }
+  }
 
   public TemplateSettings(SchemesManagerFactory schemesManagerFactory) {
 
@@ -192,14 +208,22 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       List children = deleted.getChildren();
       for (final Object aChildren : children) {
         Element child = (Element)aChildren;
-        myDeletedTemplates.add(child.getAttributeValue(NAME));
+        myDeletedTemplates.add(new TemplateKey(child.getAttributeValue(NAME), child.getAttributeValue(GROUP)));
       }
     }
 
-    for (String name : myDeletedTemplates) {
-      Template toDelete = myTemplates.get(name);
-      if (toDelete != null) {
-        removeTemplate(toDelete);
+    for (TemplateKey templateKey : myDeletedTemplates) {
+      if (templateKey.groupName == null) {
+        final Collection<TemplateImpl> templates = myTemplates.get(templateKey.key);
+        for (TemplateImpl template : templates) {
+          removeTemplate(template);
+        }
+      }
+      else {
+        final TemplateImpl toDelete = getTemplate(templateKey.key, templateKey.groupName);
+        if (toDelete != null) {
+          removeTemplate(toDelete);
+        }
       }
     }
 
@@ -220,9 +244,10 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
     if (myDeletedTemplates.size() > 0) {
       Element deleted = new Element(DELETED_TEMPLATES);
-      for (final String myDeletedTemplate : myDeletedTemplates) {
+      for (final TemplateKey deletedTemplate : myDeletedTemplates) {
         Element template = new Element(TEMPLATE);
-        template.setAttribute(NAME, myDeletedTemplate);
+        template.setAttribute(NAME, deletedTemplate.key);
+        template.setAttribute(GROUP, deletedTemplate.groupName);
         deleted.addContent(template);
 
       }
@@ -240,7 +265,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   }
 
   public TemplateImpl[] getTemplates() {
-    return myTemplates.values().toArray(new TemplateImpl[myTemplates.size()]);
+    return myAllTemplates.toArray(new TemplateImpl[myAllTemplates.size()]);
   }
 
   public char getDefaultShortcutChar() {
@@ -251,8 +276,18 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     myDefaultShortcutChar = defaultShortcutChar;
   }
 
-  public TemplateImpl getTemplate(@NonNls String key) {
-    return (TemplateImpl) myTemplates.get(key);
+  public Collection<TemplateImpl> getTemplates(@NonNls String key) {
+    return myTemplates.get(key);
+  }
+
+  public TemplateImpl getTemplate(@NonNls String key, String group) {
+    final Collection<TemplateImpl> templates = myTemplates.get(key);
+    for (TemplateImpl template : templates) {
+      if (template.getGroupName().equals(group)) {
+        return template;
+      }
+    }
+    return null;
   }
 
   public Template getTemplateById(@NonNls String id) {
@@ -278,7 +313,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   }
 
   private void clearPreviouslyRegistered(final Template template) {
-    TemplateImpl existing = getTemplate(template.getKey());
+    TemplateImpl existing = getTemplate(template.getKey(), ((TemplateImpl) template).getGroupName());
     if (existing != null) {
       LOG.info("Template with key " + template.getKey() + " and id " + template.getId() + " already registered");
       TemplateGroup group = mySchemesManager.findSchemeByName(existing.getGroupName());
@@ -288,17 +323,19 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
           mySchemesManager.removeScheme(group);
         }
       }
-      myTemplates.remove(template.getKey());
+      myTemplates.removeValue(template.getKey(), existing);
     }
   }
 
   private void addTemplateImpl(Template template) {
-    if (!myTemplates.containsKey(template.getKey())) {
-      myTemplates.put(template.getKey(), template);
-
-      myMaxKeyLength = Math.max(myMaxKeyLength, template.getKey().length());
+    final TemplateImpl templateImpl = (TemplateImpl)template;
+    if (getTemplate(templateImpl.getKey(), templateImpl.getGroupName()) == null) {
+      myTemplates.putValue(template.getKey(), templateImpl);
+      myAllTemplates.add(templateImpl);
     }
-    myDeletedTemplates.remove(template.getKey());
+
+    myMaxKeyLength = Math.max(myMaxKeyLength, template.getKey().length());
+    myDeletedTemplates.remove(TemplateKey.keyOf((TemplateImpl)template));
 
   }
 
@@ -312,10 +349,11 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   }
 
   public void removeTemplate(Template template) {
-    myTemplates.remove(template.getKey());
+    myTemplates.removeValue(template.getKey(), (TemplateImpl )template);
 
-    TemplateImpl templImpl = (TemplateImpl)template;
-    String groupName = templImpl.getGroupName();
+    TemplateImpl templateImpl = (TemplateImpl)template;
+    myAllTemplates.remove(templateImpl);
+    String groupName = templateImpl.getGroupName();
     TemplateGroup group = mySchemesManager.findSchemeByName(groupName);
 
     if (group != null) {
@@ -422,14 +460,11 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       Element element = (Element)o1;
 
       TemplateImpl template = readTemplateFromElement(isDefault, groupName, element);
-      boolean doNotRegister = isDefault && (myDeletedTemplates.contains(template.getKey()) || myTemplates.containsKey(template.getKey()));
+      boolean doNotRegister = isDefault && (myDeletedTemplates.contains(TemplateKey.keyOf(template)) || myTemplates.containsKey(template.getKey()));
 
       if(!doNotRegister) {
         created.put(template.getKey(), template);
       }
-
-
-
     }
 
     if (registerTemplate) {
@@ -562,7 +597,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     myTemplates.clear();
     myDeletedTemplates.clear();
     for (TemplateImpl template : myDefaultTemplates.values()) {
-      myDeletedTemplates.add(template.getKey());
+      myDeletedTemplates.add(TemplateKey.keyOf(template));
     }
     mySchemesManager.clearAllSchemes();
     myMaxKeyLength = 0;
@@ -583,5 +618,33 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
   public List<TemplateGroup> getTemplateGroups() {
     return mySchemesManager.getAllSchemes();
+  }
+
+  public List<TemplateImpl> collectMatchingCandidates(String key, char shortcutChar) {
+    final Collection<TemplateImpl> templates = getTemplates(key);
+    List<TemplateImpl> candidates = new ArrayList<TemplateImpl>();
+    for (TemplateImpl template : templates) {
+      if (template.isDeactivated()) {
+        continue;
+      }
+      if (getShortcutChar(template) != shortcutChar) {
+        continue;
+      }
+      if (template.isSelectionTemplate()) {
+        continue;
+      }
+      candidates.add(template);
+    }
+    return candidates;
+  }
+
+  private char getShortcutChar(TemplateImpl template) {
+    char c = template.getShortcutChar();
+    if (c == DEFAULT_CHAR) {
+      return getDefaultShortcutChar();
+    }
+    else {
+      return c;
+    }
   }
 }

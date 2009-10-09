@@ -41,7 +41,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -158,33 +157,8 @@ public class ChangelistConflictTracker {
         for (FileEditor editor : editors) {
           EditorNotificationPanel panel = editor.getUserData(KEY);
           if (add && panel == null) {
-            panel = new EditorNotificationPanel() {
-              {
-                myLabel.setText("File from non-active changelist is modified");
-              }
-              @Override
-              protected void executeAction(String actionId) {
-                if (actionId.equals("move")) {
-                  Change change = myChangeListManager.getChange(file);
-                  ChangeList changeList = myChangeListManager.getChangeList(change);
-                  MoveChangesDialog dialog =
-                    new MoveChangesDialog(myProject, Collections.singletonList(change), Collections.singletonList(changeList),
-                                          "Move changes");
-                  dialog.show();
-                  if (dialog.isOK()) {
-                    ChangelistConflictResolution.MOVE.resolveConflict(myProject, dialog.getSelectedChanges());
-                  }
-                } else if (actionId.equals("switch")) {
-                  List<Change> changes = Collections.singletonList(myChangeListManager.getChange(file));
-                  ChangelistConflictResolution.SWITCH.resolveConflict(myProject, changes);
-                } else if (actionId.equals("ignore")) {
-                  ignoreConflict(file, true);
-                }
-              }
-            };
-            panel.createActionLabel("Move changes", "move");
-            panel.createActionLabel("Switch changelist", "switch");
-            panel.createActionLabel("Ignore", "ignore");
+            panel = new ChangelistConflictNotificationPanel(ChangelistConflictTracker.this, file);
+
             myFileEditorManager.addTopComponent(editor, panel);
             editor.putUserData(KEY, panel);
           } else if (panel != null) {
@@ -315,15 +289,24 @@ public class ChangelistConflictTracker {
     myFileStatusManager.fileStatusChanged(file);
   }
 
+  public Project getProject() {
+    return myProject;
+  }
+
+  public ChangeListManager getChangeListManager() {
+    return myChangeListManager;
+  }
+
   public Options getOptions() {
     return myOptions;
   }
 
   public static class Options {
     public boolean TRACKING_ENABLED = true;
-    public boolean SHOW_DIALOG = true;
+    public boolean SHOW_DIALOG = false;
     public boolean HIGHLIGHT_CONFLICTS = true;
     public boolean HIGHLIGHT_NON_ACTIVE_CHANGELIST = false;
-    public ChangelistConflictResolution LAST_RESOLUTION = ChangelistConflictResolution.SHELVE;
+    public ChangelistConflictResolution LAST_RESOLUTION = ChangelistConflictResolution.IGNORE;
   }
+
 }

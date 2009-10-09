@@ -23,6 +23,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -132,7 +133,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     findMemberHidesOuterMemberCollisions((PsiMethod) element, newName, result);
   }
 
-  public void findExistingNameConflicts(final PsiElement element, final String newName, final Map<PsiElement, String> conflicts) {
+  public void findExistingNameConflicts(final PsiElement element, final String newName, final MultiMap<PsiElement, String> conflicts) {
     if (element instanceof PsiCompiledElement) return;
     PsiMethod refactoredMethod = (PsiMethod)element;
     if (newName.equals(refactoredMethod.getName())) return;

@@ -8,19 +8,18 @@
  */
 package com.intellij.refactoring.memberPullUp;
 
-import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -30,10 +29,10 @@ import com.intellij.refactoring.listeners.impl.JavaRefactoringListenerManagerImp
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.VisibilityUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Nullable;
 
@@ -212,12 +211,12 @@ public class PullUpHelper {
   }
 
   private static class Initializer {
-    public final PsiExpression initializer;
+    public final PsiStatement initializer;
     public final Set<PsiField> movedFieldsUsed;
     public final Set<PsiParameter> usedParameters;
     public final List<PsiElement> statementsToRemove;
 
-    private Initializer(PsiExpression initializer, Set<PsiField> movedFieldsUsed, Set<PsiParameter> usedParameters, List<PsiElement> statementsToRemove) {
+    private Initializer(PsiStatement initializer, Set<PsiField> movedFieldsUsed, Set<PsiParameter> usedParameters, List<PsiElement> statementsToRemove) {
       this.initializer = initializer;
       this.movedFieldsUsed = movedFieldsUsed;
       this.statementsToRemove = statementsToRemove;
@@ -230,7 +229,7 @@ public class PullUpHelper {
     boolean anyFound = false;
 
     for (PsiField field : movedFields) {
-      PsiExpression commonInitializer = null;
+      PsiStatement commonInitializer = null;
       final ArrayList<PsiElement> fieldInitializersToRemove = new ArrayList<PsiElement>();
       for (PsiMethod subConstructor : subConstructors) {
         commonInitializer = hasCommonInitializer(commonInitializer, subConstructor, field, fieldInitializersToRemove);
@@ -307,24 +306,9 @@ public class PullUpHelper {
         modifySuperCall(subConstructor, initializer.usedParameters);
       }
 
-      // create assignment statement
-      PsiExpressionStatement assignmentStatement =
-        (PsiExpressionStatement)factory.createStatementFromText(initializedField.getName() + "=0;", constructor.getBody());
-      assignmentStatement = (PsiExpressionStatement)constructor.getBody().add(assignmentStatement);
-      PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)assignmentStatement.getExpression();
+      PsiStatement assignmentStatement = (PsiStatement)constructor.getBody().add(initializer.initializer);
 
-      // check whether we really assign a new field
-      PsiReferenceExpression fieldRef = (PsiReferenceExpression)assignmentExpression.getLExpression();
-      PsiElement resolved = fieldRef.resolve();
-      if (resolved != initializedField) {
-        PsiElement qualifiedRef = factory.createExpressionFromText("this." + initializedField.getName(), fieldRef);
-        qualifiedRef = CodeStyleManager.getInstance(myManager.getProject()).reformat(qualifiedRef);
-        fieldRef.replace(qualifiedRef);
-      }
-
-      // add initializer
-      final PsiElement newInitializer = assignmentExpression.getRExpression().replace(initializer.initializer);
-      ChangeContextUtil.decodeContextInfo(newInitializer,
+      ChangeContextUtil.decodeContextInfo(assignmentStatement,
                                           myTargetSuperClass, RefactoringUtil.createThisExpression(myManager, null));
       for (PsiElement psiElement : initializer.statementsToRemove) {
         psiElement.delete();
@@ -370,7 +354,7 @@ public class PullUpHelper {
   }
 
   @Nullable
-  private PsiExpression hasCommonInitializer(PsiExpression commonInitializer, PsiMethod subConstructor, PsiField field, ArrayList<PsiElement> statementsToRemove) {
+  private PsiStatement hasCommonInitializer(PsiStatement commonInitializer, PsiMethod subConstructor, PsiField field, ArrayList<PsiElement> statementsToRemove) {
     final PsiCodeBlock body = subConstructor.getBody();
     if (body == null) return null;
     final PsiStatement[] statements = body.getStatements();
@@ -381,56 +365,59 @@ public class PullUpHelper {
     //
     // There should be no usages before that initializer, and there should be
     // no write usages afterwards.
-    PsiExpression commonInitializerCandidate = null;
+    PsiStatement commonInitializerCandidate = null;
     for (PsiStatement statement : statements) {
+      final HashSet<PsiStatement> collectedStatements = new HashSet<PsiStatement>();
+      collectPsiStatements(statement, collectedStatements);
       boolean doLookup = true;
-      if (statement instanceof PsiExpressionStatement) {
-        final PsiExpression expression = ((PsiExpressionStatement)statement).getExpression();
-        if (expression instanceof PsiAssignmentExpression) {
-          final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
-          final PsiExpression lExpression = assignmentExpression.getLExpression();
-          if (lExpression instanceof PsiReferenceExpression) {
-            final PsiReferenceExpression lRef = (PsiReferenceExpression)lExpression;
-            if (lRef.getQualifierExpression() == null || lRef.getQualifierExpression() instanceof PsiThisExpression) {
-              final PsiElement resolved = lRef.resolve();
-              if (resolved == field) {
-                doLookup = false;
-                if (commonInitializerCandidate == null) {
-                  final PsiExpression initializer = assignmentExpression.getRExpression();
-                  if (initializer == null) return null;
-                  if (commonInitializer == null) {
-                    final IsMovableInitializerVisitor visitor = new IsMovableInitializerVisitor();
-                    initializer.accept(visitor);
-                    if (visitor.isMovable()) {
-                      ChangeContextUtil.encodeContextInfo(initializer, true);
-                      PsiExpression initializerCopy = (PsiExpression)initializer.copy();
-                      ChangeContextUtil.clearContextInfo(initializer);
-                      statementsToRemove.add(statement);
-                      commonInitializerCandidate = initializerCopy;
+      for (PsiStatement collectedStatement : collectedStatements) {
+        if (collectedStatement instanceof PsiExpressionStatement) {
+          final PsiExpression expression = ((PsiExpressionStatement)collectedStatement).getExpression();
+          if (expression instanceof PsiAssignmentExpression) {
+            final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
+            final PsiExpression lExpression = assignmentExpression.getLExpression();
+            if (lExpression instanceof PsiReferenceExpression) {
+              final PsiReferenceExpression lRef = (PsiReferenceExpression)lExpression;
+              if (lRef.getQualifierExpression() == null || lRef.getQualifierExpression() instanceof PsiThisExpression) {
+                final PsiElement resolved = lRef.resolve();
+                if (resolved == field) {
+                  doLookup = false;
+                  if (commonInitializerCandidate == null) {
+                    final PsiExpression initializer = assignmentExpression.getRExpression();
+                    if (initializer == null) return null;
+                    if (commonInitializer == null) {
+                      final IsMovableInitializerVisitor visitor = new IsMovableInitializerVisitor();
+                      statement.accept(visitor);
+                      if (visitor.isMovable()) {
+                        ChangeContextUtil.encodeContextInfo(statement, true);
+                        PsiStatement statementCopy = (PsiStatement)statement.copy();
+                        ChangeContextUtil.clearContextInfo(statement);
+                        statementsToRemove.add(statement);
+                        commonInitializerCandidate = statementCopy;
+                      }
+                      else {
+                        return null;
+                      }
                     }
                     else {
-                      return null;
+                      if (PsiEquivalenceUtil.areElementsEquivalent(commonInitializer, statement)) {
+                        statementsToRemove.add(statement);
+                        commonInitializerCandidate = commonInitializer;
+                      }
+                      else {
+                        return null;
+                      }
                     }
                   }
-                  else {
-                    if (CodeInsightUtil.areExpressionsEquivalent(commonInitializer, initializer)) {
-                      statementsToRemove.add(statement);
-                      commonInitializerCandidate = commonInitializer;
-                    }
-                    else {
-                      return null;
-                    }
+                  else if (!PsiEquivalenceUtil.areElementsEquivalent(commonInitializerCandidate, statement)){
+                    return null;
                   }
-                }
-                else {
-                  return null;
                 }
               }
             }
           }
         }
       }
-
       if (doLookup) {
         final PsiReference[] references =
           ReferencesSearch.search(field, new LocalSearchScope(statement), false).toArray(new PsiReference[0]);
@@ -444,6 +431,16 @@ public class PullUpHelper {
       }
     }
     return commonInitializerCandidate;
+  }
+
+  private static void collectPsiStatements(PsiElement root, Set<PsiStatement> collected) {
+    if (root instanceof PsiStatement){
+      collected.add((PsiStatement)root);
+    }
+
+    for (PsiElement element : root.getChildren()) {
+      collectPsiStatements(element, collected);
+    }
   }
 
   private static class ParametersAndMovedFieldsUsedCollector extends JavaRecursiveElementWalkingVisitor {
@@ -502,7 +499,7 @@ public class PullUpHelper {
       if (qualifier == null || qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) {
         final PsiElement resolved = referenceElement.resolve();
         if (!(resolved instanceof PsiParameter)) {
-          if (resolved instanceof PsiClass && ((PsiClass) resolved).hasModifierProperty(PsiModifier.STATIC)) {
+          if (resolved instanceof PsiClass && (((PsiClass) resolved).hasModifierProperty(PsiModifier.STATIC) || ((PsiClass)resolved).getContainingClass() == null)) {
             return;
           }
           PsiClass containingClass = null;

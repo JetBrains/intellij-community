@@ -4,17 +4,16 @@
  */
 package com.intellij.refactoring.replaceConstructorWithBuilder;
 
-import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.refactoring.RefactorJBundle;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.*;
@@ -36,19 +35,19 @@ import java.util.LinkedHashMap;
 public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
   private final PsiMethod[] myConstructors;
 
-  private TextFieldWithBrowseButton myExistentClassTF;
-
   private JRadioButton myCreateBuilderClassRadioButton;
   private JRadioButton myExistingBuilderClassRadioButton;
 
   private JPanel myWholePanel;
   private JTextField myNewClassName;
-  private TextFieldWithBrowseButton myPackageTextField;
+  private ReferenceEditorComboWithBrowseButton  myPackageTextField;
+  private ReferenceEditorComboWithBrowseButton myExistentClassTF;
 
   private static final Logger LOG = Logger.getInstance("#" + ReplaceConstructorWithBuilderDialog.class.getName());
   private final LinkedHashMap<String, ParameterData> myParametersMap;
   private MyTableModel myTableModel;
   private Table myTable;
+  private static final String RECENT_KEYS = "ReplaceConstructorWithBuilder.RECENT_KEYS";
 
 
   protected ReplaceConstructorWithBuilderDialog(@NotNull Project project, PsiMethod[] constructors) {
@@ -90,33 +89,6 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
 
   protected JComponent createCenterPanel() {
 
-    myPackageTextField.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        final Project project = getProject();
-        final PackageChooserDialog chooser = new PackageChooserDialog(RefactorJBundle.message("choose.destination.package.label"), project);
-        final String packageText = myPackageTextField.getText();
-        chooser.selectPackage(packageText);
-        chooser.show();
-        final PsiPackage aPackage = chooser.getSelectedPackage();
-        if (aPackage != null) {
-          final String packageName = aPackage.getQualifiedName();
-          myPackageTextField.setText(packageName);
-        }
-      }
-    });
-
-    myExistentClassTF.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        final TreeClassChooser dialog = TreeClassChooserFactory.getInstance(getProject())
-          .createWithInnerClassesScopeChooser("", GlobalSearchScope.projectScope(myProject), null, null);
-        dialog.showDialog();
-        final PsiClass psiClass = dialog.getSelectedClass();
-        if (psiClass != null) {
-          myExistentClassTF.setText(psiClass.getQualifiedName());
-        }
-      }
-    });
-
     final ActionListener enableDisableListener = new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         setEnabled(myCreateBuilderClassRadioButton.isSelected());
@@ -135,8 +107,6 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
       }
     };
     myNewClassName.getDocument().addDocumentListener(validateButtonsListener);
-    myPackageTextField.getTextField().getDocument().addDocumentListener(validateButtonsListener);
-    myExistentClassTF.getTextField().getDocument().addDocumentListener(validateButtonsListener);
 
 
     return myWholePanel;
@@ -214,6 +184,37 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
   private static final int SETTER = 2;
   private static final int DEFAULT_VALUE = 3;
   private static final int SKIP_SETTER = 4;
+
+  private void createUIComponents() {
+    final com.intellij.openapi.editor.event.DocumentAdapter adapter = new com.intellij.openapi.editor.event.DocumentAdapter() {
+      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
+        validateButtons();
+      }
+    };
+
+    myPackageTextField =
+      new PackageNameReferenceEditorCombo("", myProject, RECENT_KEYS, RefactoringBundle.message("choose.destination.package"));
+    myPackageTextField.getChildComponent().getDocument().addDocumentListener(adapter);
+
+
+    myExistentClassTF = new ReferenceEditorComboWithBrowseButton(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        final TreeClassChooser chooser = TreeClassChooserFactory.getInstance(getProject())
+          .createWithInnerClassesScopeChooser("Select Builder Class", GlobalSearchScope.projectScope(myProject), null, null);
+        final String classText = myExistentClassTF.getText();
+        final PsiClass currentClass = JavaPsiFacade.getInstance(myProject).findClass(classText, GlobalSearchScope.allScope(myProject));
+        if (currentClass != null) {
+          chooser.selectClass(currentClass);
+        }
+        chooser.showDialog();
+        final PsiClass selectedClass = chooser.getSelectedClass();
+        if (selectedClass != null) {
+          myExistentClassTF.setText(selectedClass.getQualifiedName());
+        }
+      }
+    }, "", PsiManager.getInstance(myProject), true, RECENT_KEYS);
+    myExistentClassTF.getChildComponent().getDocument().addDocumentListener(adapter);
+  }
 
   private class MyTableModel extends AbstractTableModel {
 

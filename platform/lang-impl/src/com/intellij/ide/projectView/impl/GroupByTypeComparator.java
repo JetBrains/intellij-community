@@ -58,10 +58,17 @@ public class GroupByTypeComparator implements Comparator<NodeDescriptor> {
       }
 
       if (isSortByType()) {
-        Comparable typeSortKey1 = node1.getTypeSortKey();
-        Comparable typeSortKey2 = node2.getTypeSortKey();
+        final Comparable typeSortKey1 = node1.getTypeSortKey();
+        final Comparable typeSortKey2 = node2.getTypeSortKey();
         if (typeSortKey1 != null && typeSortKey2 != null) {
-          int result = typeSortKey1.compareTo(typeSortKey2);
+          final int result = typeSortKey1.compareTo(typeSortKey2);
+          if (result != 0) return result;
+        }
+      } else {
+        final Comparable typeSortKey1 = node1.getSortKey();
+        final Comparable typeSortKey2 = node2.getSortKey();
+        if (typeSortKey1 != null && typeSortKey2 != null) {
+          final int result = typeSortKey1.compareTo(typeSortKey2);
           if (result != 0) return result;
         }
       }

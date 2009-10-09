@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
+import org.jetbrains.annotations.NotNull;
 
 public class SpaceHandler implements TypedActionHandler {
   private final TypedActionHandler myOriginalHandler;
@@ -15,7 +16,7 @@ public class SpaceHandler implements TypedActionHandler {
     myOriginalHandler = originalHandler;
   }
 
-  public void execute(Editor editor, char charTyped, DataContext dataContext) {
+  public void execute(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
     if (charTyped != ' ') {
       myOriginalHandler.execute(editor, charTyped, dataContext);
       return;
@@ -28,7 +29,7 @@ public class SpaceHandler implements TypedActionHandler {
     }
 
     TemplateManagerImpl templateManager = (TemplateManagerImpl) TemplateManagerImpl.getInstance(project);
-    if (!templateManager.startTemplate(templateManager, editor, TemplateSettings.SPACE_CHAR)) {
+    if (!templateManager.startTemplate(editor, TemplateSettings.SPACE_CHAR)) {
       myOriginalHandler.execute(editor, charTyped, dataContext);
     }
   }

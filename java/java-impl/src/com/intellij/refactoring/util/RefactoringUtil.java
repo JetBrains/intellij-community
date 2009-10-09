@@ -11,10 +11,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
@@ -29,18 +26,14 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.PackageWrapper;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.usageView.UsageInfo;
@@ -575,13 +568,6 @@ public class RefactoringUtil {
     return anchor;
   }
 
-  public static void setVisibility(PsiModifierList modifierList, @Modifier String newVisibility) throws IncorrectOperationException {
-    modifierList.setModifierProperty(PsiModifier.PRIVATE, false);
-    modifierList.setModifierProperty(PsiModifier.PUBLIC, false);
-    modifierList.setModifierProperty(PsiModifier.PROTECTED, false);
-    modifierList.setModifierProperty(newVisibility, true);
-  }
-
   public static boolean isMethodUsage(PsiElement element) {
     if (element instanceof PsiEnumConstant) return true;
     if (!(element instanceof PsiJavaCodeReferenceElement)) return false;
@@ -1085,106 +1071,6 @@ public class RefactoringUtil {
 
     public boolean value(PsiClass aClass) {
       return myConditionCache.value(aClass);
-    }
-  }
-
-  public static void analyzeModuleConflicts(Project project,
-                                            Collection<? extends PsiElement> scope,
-                                            final UsageInfo[] usages,
-                                            PsiElement target,
-                                            final Map<PsiElement, String> conflicts) {
-    if (scope == null) return;
-    final VirtualFile vFile = PsiUtilBase.getVirtualFile(target);
-    if (vFile == null) return;
-    analyzeModuleConflicts(project, scope, usages, vFile, conflicts);
-  }
-
-  public static void analyzeModuleConflicts(Project project,
-                                            final Collection<? extends PsiElement> scopes,
-                                            final UsageInfo[] usages,
-                                            final VirtualFile vFile,
-                                            final Map<PsiElement, String> conflicts) {
-    if (scopes == null) return;
-
-    for (final PsiElement scope : scopes) {
-      if (scope instanceof PsiPackage || scope instanceof PsiDirectory) return;
-    }
-
-    final Module targetModule = ModuleUtil.findModuleForFile(vFile, project);
-    if (targetModule == null) return;
-    final GlobalSearchScope resolveScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(targetModule);
-    final HashSet<PsiElement> reported = new HashSet<PsiElement>();
-    for (final PsiElement scope : scopes) {
-      scope.accept(new JavaRecursiveElementWalkingVisitor() {
-        @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-          super.visitReferenceElement(reference);
-          final PsiElement resolved = reference.resolve();
-          if (resolved != null && !reported.contains(resolved) && !CommonRefactoringUtil.isAncestor(resolved, scopes) &&
-              !PsiSearchScopeUtil.isInScope(resolveScope, resolved)) {
-            final String scopeDescription =
-              RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(reference), true);
-            final String message = RefactoringBundle.message("0.referenced.in.1.will.not.be.accessible.in.module.2",
-                                                             CommonRefactoringUtil.capitalize(
-                                                               RefactoringUIUtil.getDescription(resolved, true)), scopeDescription,
-                                                                                                               CommonRefactoringUtil.htmlEmphasize(
-                                                                                                                 targetModule.getName()));
-            conflicts.put(resolved, message);
-            reported.add(resolved);
-          }
-        }
-      });
-    }
-
-    boolean isInTestSources = ModuleRootManager.getInstance(targetModule).getFileIndex().isInTestSourceContent(vFile);
-    NextUsage:
-    for (UsageInfo usage : usages) {
-      if (usage instanceof MoveRenameUsageInfo) {
-        final MoveRenameUsageInfo moveRenameUsageInfo = (MoveRenameUsageInfo)usage;
-        final PsiElement element = usage.getElement();
-        if (element != null && PsiTreeUtil.getParentOfType(element, PsiImportStatement.class, false) == null) {
-
-          for (PsiElement scope : scopes) {
-            if (PsiTreeUtil.isAncestor(scope, element, false)) continue NextUsage;
-          }
-
-          final GlobalSearchScope resolveScope1 = element.getResolveScope();
-          if (!resolveScope1.isSearchInModuleContent(targetModule, isInTestSources)) {
-            final PsiFile usageFile = element.getContainingFile();
-            PsiElement container;
-            if (usageFile instanceof PsiJavaFile) {
-              container = ConflictsUtil.getContainer(element);
-              if (container == null) container = usageFile;
-            }
-            else {
-              container = usageFile;
-            }
-            final String scopeDescription = RefactoringUIUtil.getDescription(container, true);
-            final VirtualFile usageVFile = usageFile.getVirtualFile();
-            if (usageVFile != null) {
-              Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(usageVFile);
-              if (module != null) {
-                final String message;
-                final PsiElement referencedElement = moveRenameUsageInfo.getReferencedElement();
-                if (module == targetModule && isInTestSources) {
-                  message = RefactoringBundle.message("0.referenced.in.1.will.not.be.accessible.from.production.of.module.2",
-                                                      CommonRefactoringUtil.capitalize(
-                                                        RefactoringUIUtil.getDescription(referencedElement, true)),
-                                                      scopeDescription,
-                                                      CommonRefactoringUtil.htmlEmphasize(module.getName()));
-                }
-                else {
-                  message = RefactoringBundle.message("0.referenced.in.1.will.not.be.accessible.from.module.2", 
-                                                      CommonRefactoringUtil.capitalize(
-                                                        RefactoringUIUtil.getDescription(referencedElement, true)),
-                                                      scopeDescription,
-                                                      CommonRefactoringUtil.htmlEmphasize(module.getName()));
-                }
-                conflicts.put(referencedElement, message);
-              }
-            }
-          }
-        }
-      }
     }
   }
 

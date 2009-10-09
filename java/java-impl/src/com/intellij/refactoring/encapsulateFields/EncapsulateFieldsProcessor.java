@@ -18,12 +18,13 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.VisibilityUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,7 +71,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   }
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
-    Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
 
     if (myDialog != null) {
       checkExistingMethods(myDialog.getGetterPrototypes(), conflicts, true);
@@ -90,7 +91,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
-  private void checkExistingMethods(PsiMethod[] prototypes, Map<PsiElement, String> conflicts, boolean isGetter) {
+  private void checkExistingMethods(PsiMethod[] prototypes, MultiMap<PsiElement, String> conflicts, boolean isGetter) {
     if(prototypes == null) return;
     for (PsiMethod prototype : prototypes) {
       final PsiType prototypeReturnType = prototype.getReturnType();
@@ -108,7 +109,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
                                                 CommonRefactoringUtil.htmlEmphasize(prototype.getName())) :
                            RefactoringBundle.message("encapsulate.fields.setter.exists", CommonRefactoringUtil.htmlEmphasize(descr),
                                                 CommonRefactoringUtil.htmlEmphasize(prototype.getName()));
-          conflicts.put(existing, message);
+          conflicts.putValue(existing, message);
         }
       }
     }

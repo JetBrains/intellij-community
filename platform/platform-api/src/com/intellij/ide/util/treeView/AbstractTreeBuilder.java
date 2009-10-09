@@ -315,8 +315,12 @@ public class AbstractTreeBuilder implements Disposable {
     UIUtil.invokeLaterIfNeeded(runnable);
   }
 
-  public final ActionCallback getReady() {
+  public final ActionCallback getIntialized() {
     return myUi.getInitialized();
+  }
+
+  public final ActionCallback getReady(Object requestor) {
+    return myUi.getReady(requestor);
   }
 
   protected void sortChildren(Comparator<TreeNode> nodeComparator, DefaultMutableTreeNode node, ArrayList<TreeNode> children) {

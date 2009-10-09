@@ -17,7 +17,9 @@
 package com.intellij.notification;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author spleaner
@@ -29,5 +31,7 @@ public abstract class NotificationsManager {
   }
 
   public abstract void expire(@NotNull final Notification notification);
+
+  public abstract <T extends Notification> T[] getNotificationsOfType(Class<T> klass, @Nullable Project project); 
 
 }

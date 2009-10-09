@@ -281,7 +281,6 @@
   <customScopesProvider implementation="com.intellij.packageDependencies.DefaultScopesProvider"/>
 
   <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightVisitor"/>
-  <keymapExtension implementation="com.intellij.ide.bookmarks.BookmarkKeymapExtension"/>
 
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CurrentDateMacro"/>
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CurrentTimeMacro"/>
@@ -445,7 +444,7 @@
   <editorTypedHandler implementationClass="com.intellij.codeInsight.template.impl.editorActions.SpaceHandler"/>
 
   <!-- HighlightManagerActions -->
-  <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.highlighting.EscapeHandler"/>
+  <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.highlighting.EscapeHandler" order="before hide-hints"/>
 
   <templateCompletionProcessor implementation="com.intellij.codeInsight.template.macro.DirectoryTemplateCompletionProcessor"/>
 
@@ -520,4 +519,6 @@
 
   <projectService serviceInterface="com.intellij.openapi.vcs.changes.ui.ChangesFileNameDecorator"
                   serviceImplementation="com.intellij.openapi.vcs.changes.ui.WolfChangesFileNameDecorator"/>
+
+  <filePasteProvider implementation="com.intellij.ide.FileListPasteProvider"/>
 </extensions>

@@ -3,15 +3,15 @@ package com.intellij.openapi.fileChooser.ex;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileTextField;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
@@ -20,9 +20,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
-import com.intellij.util.ui.update.*;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.ui.update.LazyUiDisposable;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.UiNotifyConnector;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -355,7 +358,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     });
 
     myCurrentPopup =
-      builder.setRequestFocus(false).setAdText(getAdText(myCurrentCompletion)).setAutoSelectIfEmpty(false).setResizable(false).setCancelCalllback(new Computable<Boolean>() {
+      builder.setRequestFocus(false).setAdText(getAdText(myCurrentCompletion)).setAutoSelectIfEmpty(false).setResizable(false).setCancelCallback(new Computable<Boolean>() {
         public Boolean compute() {
           final int caret = myPathTextField.getCaretPosition();
           myPathTextField.setSelectionStart(caret);

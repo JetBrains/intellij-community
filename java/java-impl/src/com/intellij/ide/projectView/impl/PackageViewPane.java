@@ -24,10 +24,8 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaDirectoryService;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,6 +97,19 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
       }
     }
     return result;
+  }
+
+  @Override
+  public PsiDirectory[] getSelectedDirectories() {
+    final PackageElement packageElement = getSelectedPackageElement();
+    if (packageElement != null) {
+      final Module module = packageElement.getModule();
+      final PsiPackage aPackage = packageElement.getPackage();
+      if (module != null && aPackage != null) {
+        return aPackage.getDirectories(GlobalSearchScope.moduleScope(module));
+      }
+    }
+    return super.getSelectedDirectories();
   }
 
   private final class ShowModulesAction extends ToggleAction {

@@ -15,7 +15,7 @@
       </hspacer>
       <vspacer id="57b6e">
         <constraints>
-          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+          <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
           <gridbag weightx="0.0" weighty="0.0"/>
         </constraints>
       </vspacer>
@@ -30,7 +30,7 @@
       </component>
       <component id="97fc9" class="javax.swing.JRadioButton" binding="myExistingBuilderClassRadioButton">
         <constraints>
-          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
           <gridbag top="5" left="0" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties>
@@ -54,13 +54,6 @@
             </constraints>
             <properties/>
           </component>
-          <component id="34c17" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myPackageTextField">
-            <constraints>
-              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-              <gridbag weightx="0.0" weighty="0.0"/>
-            </constraints>
-            <properties/>
-          </component>
           <component id="981d1" class="javax.swing.JLabel">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
@@ -71,13 +64,19 @@
               <text value="Builder class &amp;name"/>
             </properties>
           </component>
+          <component id="f2123" class="com.intellij.ui.ReferenceEditorComboWithBrowseButton" binding="myPackageTextField" custom-create="true">
+            <constraints>
+              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+              <gridbag weightx="0.0" weighty="0.0"/>
+            </constraints>
+            <properties/>
+          </component>
           <component id="26570" class="javax.swing.JLabel">
             <constraints>
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
               <gridbag top="5" left="0" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
             </constraints>
             <properties>
-              <labelFor value="34c17"/>
               <text value="&amp;Package for new builder"/>
             </properties>
           </component>
@@ -85,29 +84,34 @@
       </grid>
       <grid id="414f6" layout-manager="GridBagLayout">
         <constraints>
-          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
           <gridbag top="5" left="20" bottom="0" right="0" weightx="1.0" weighty="0.0"/>
         </constraints>
         <properties/>
         <border type="none"/>
         <children>
-          <component id="ec425" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myExistentClassTF">
-            <constraints>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-              <gridbag weightx="1.0" weighty="0.0"/>
-            </constraints>
-            <properties/>
-          </component>
           <component id="352eb" class="javax.swing.JLabel">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
               <gridbag weightx="0.0" weighty="0.0"/>
             </constraints>
             <properties>
-              <labelFor value="ec425"/>
               <text value="&amp;Builder class name (fully qualified)"/>
             </properties>
           </component>
+          <component id="5c6d8" class="com.intellij.ui.ReferenceEditorComboWithBrowseButton" binding="myExistentClassTF" custom-create="true">
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+              <gridbag weightx="0.0" weighty="0.0"/>
+            </constraints>
+            <properties/>
+          </component>
+          <hspacer id="ee0f5">
+            <constraints>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+              <gridbag weightx="1.0" weighty="0.0"/>
+            </constraints>
+          </hspacer>
         </children>
       </grid>
     </children>

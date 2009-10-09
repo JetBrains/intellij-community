@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.inheritance;
 
+import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -46,7 +47,11 @@ public class ExtendsConcreteCollectionInspection extends BaseInspection {
     }
 
     protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new ReplaceInheritanceWithDelegationFix();
+      final PsiClass superClass = (PsiClass)infos[0];
+      //skip inheritance with delegation for anonymous classes
+      // or better suggest to replace anonymous with inner and then replace with delegation
+      if (superClass instanceof PsiAnonymousClass) return null;
+      return new ReplaceInheritanceWithDelegationFix();
     }
 
     public BaseInspectionVisitor buildVisitor() {

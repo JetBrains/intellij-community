@@ -24,6 +24,7 @@ import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -226,15 +227,12 @@ public class RenameUtil {
     }
   }
 
-  public static Map<PsiElement, String> getConflictDescriptions(UsageInfo[] usages) {
-    Map<PsiElement, String> descriptions = new HashMap<PsiElement, String>();
-
+  public static void addConflictDescriptions(UsageInfo[] usages, MultiMap<PsiElement, String> conflicts) {
     for (UsageInfo usage : usages) {
       if (usage instanceof UnresolvableCollisionUsageInfo) {
-        descriptions.put(usage.getElement(), ((UnresolvableCollisionUsageInfo)usage).getDescription());
+        conflicts.putValue(usage.getElement(), ((UnresolvableCollisionUsageInfo)usage).getDescription());
       }
     }
-    return descriptions;
   }
 
   public static void renameNonCodeUsages(@NotNull Project project, @NotNull NonCodeUsageInfo[] usages) {

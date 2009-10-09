@@ -56,10 +56,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.NameValidator;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.*;
 
 /**
  * @author ilyas

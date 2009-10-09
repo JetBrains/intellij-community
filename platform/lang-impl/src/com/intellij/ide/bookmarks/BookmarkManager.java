@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,13 +36,15 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
   private final List<Bookmark> myBookmarks = new ArrayList<Bookmark>();
   private final MyEditorMouseListener myEditorMouseListener = new MyEditorMouseListener();
   private final Project myProject;
+  private final MessageBus myBus;
 
   public static BookmarkManager getInstance(Project project) {
     return ServiceManager.getService(project, BookmarkManager.class);
   }
 
-  public BookmarkManager(Project project) {
+  public BookmarkManager(Project project, MessageBus bus) {
     myProject = project;
+    myBus = bus;
   }
 
   public void projectOpened() {
@@ -66,7 +69,9 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
   }
 
   public void addTextBookmark(VirtualFile file, int lineIndex, String description) {
-    myBookmarks.add(new Bookmark(myProject, file, lineIndex, description));
+    Bookmark b = new Bookmark(myProject, file, lineIndex, description);
+    myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkAdded(b);
+    myBookmarks.add(b);
   }
 
   public static String getAutoDescription(final Editor editor, final int lineIndex) {
@@ -86,7 +91,9 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
     if (file == null) return;
     if (findFileBookmark(file) != null) return;
 
-    myBookmarks.add(new Bookmark(myProject, file, description));
+    Bookmark b = new Bookmark(myProject, file, description);
+    myBookmarks.add(b);
+    myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkAdded(b);
   }
 
 
@@ -122,6 +129,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
   public void removeBookmark(Bookmark bookmark) {
     myBookmarks.remove(bookmark);
     bookmark.release();
+    myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkRemoved(bookmark);
   }
 
   public Element getState() {
@@ -131,8 +139,10 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
   }
 
   public void loadState(Element state) {
+    BookmarksListener publisher = myBus.syncPublisher(BookmarksListener.TOPIC);
     for (Bookmark bookmark : myBookmarks) {
       bookmark.release();
+      publisher.bookmarkRemoved(bookmark);
     }
     myBookmarks.clear();
 

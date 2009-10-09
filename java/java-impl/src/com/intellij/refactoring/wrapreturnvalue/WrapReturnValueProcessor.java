@@ -29,6 +29,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -137,11 +138,11 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
 
   @Override
   protected boolean preprocessUsages(final Ref<UsageInfo[]> refUsages) {
-    Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     final PsiClass existingClass = JavaPsiFacade.getInstance(myProject).findClass(myQualifiedName);
     if (myUseExistingClass) {
       if (existingClass == null) {
-        conflicts.put(existingClass, RefactorJBundle.message("could.not.find.selected.wrapping.class"));
+        conflicts.putValue(existingClass, RefactorJBundle.message("could.not.find.selected.wrapping.class"));
       }
       else {
         boolean foundConstructor = false;
@@ -195,24 +196,24 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
           }
         }
         if (!foundConstructor) {
-          conflicts.put(existingClass, "Existing class does not have appropriate constructor");
+          conflicts.putValue(existingClass, "Existing class does not have appropriate constructor");
         }
       }
       if (unwrapMethodName.length() == 0) {
-        conflicts.put(existingClass,
+        conflicts.putValue(existingClass,
                       "Existing class does not have getter for selected field");
       }
     }
     else {
       if (existingClass != null) {
-        conflicts.put(existingClass, RefactorJBundle.message("there.already.exists.a.class.with.the.selected.name"));
+        conflicts.putValue(existingClass, RefactorJBundle.message("there.already.exists.a.class.with.the.selected.name"));
       }
     }
     return showConflicts(conflicts);
   }
 
   @Override
-  protected boolean showConflicts(final Map<PsiElement,String> conflicts) {
+  protected boolean showConflicts(final MultiMap<PsiElement, String> conflicts) {
     if (!conflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
       throw new RuntimeException(StringUtil.join(conflicts.values(), "\n"));
     }

@@ -151,21 +151,27 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
   private void encodeRef(final PsiJavaCodeReferenceElement expression, final Set<PsiMember> movedMembers, final PsiElement toPut) {
     final PsiElement resolved = expression.resolve();
     if (resolved == null) return;
+    final PsiElement qualifier = expression.getQualifier();
     for (PsiMember movedMember : movedMembers) {
       if (movedMember.equals(resolved)) {
-        if (expression.getQualifier() == null) {
+        if (qualifier == null) {
           toPut.putCopyableUserData(REMOVE_QUALIFIER_KEY, Boolean.TRUE);
         } else {
-          final PsiElement qualifier = expression.getQualifier();
           if (qualifier instanceof PsiJavaCodeReferenceElement &&
               ((PsiJavaCodeReferenceElement)qualifier).isReferenceTo(myClass)) {
             toPut.putCopyableUserData(REPLACE_QUALIFIER_KEY, myClass);
           }
         }
       } else if (movedMember instanceof PsiClass && PsiTreeUtil.getParentOfType(resolved, PsiClass.class, false) == movedMember) {
-        final PsiElement qualifier = expression.getQualifier();
         if (qualifier instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifier).isReferenceTo(movedMember)) {
           toPut.putCopyableUserData(REPLACE_QUALIFIER_KEY, (PsiClass)movedMember);
+        }
+      } else {
+        if (qualifier instanceof PsiThisExpression) {
+          final PsiJavaCodeReferenceElement qElement = ((PsiThisExpression)qualifier).getQualifier();
+          if (qElement != null && qElement.isReferenceTo(myClass)) {
+            toPut.putCopyableUserData(REPLACE_QUALIFIER_KEY, myClass);
+          }
         }
       }
     }
@@ -215,7 +221,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
         PsiClass psiClass = toGet.getCopyableUserData(REPLACE_QUALIFIER_KEY);
         if (psiClass != null) {
           toGet.putCopyableUserData(REPLACE_QUALIFIER_KEY, null);
-          final PsiElement qualifier = ref.getQualifier();
+          PsiElement qualifier = ref.getQualifier();
           if (qualifier != null) {
 
             if (psiClass == myClass) {
@@ -225,10 +231,13 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
               LOG.assertTrue(psiClass != null);
             }
 
-            if (ref instanceof PsiReferenceExpression) {
+            if (!(qualifier instanceof PsiThisExpression) && ref instanceof PsiReferenceExpression) {
               ((PsiReferenceExpression)ref).setQualifierExpression(factory.createReferenceExpression(psiClass));
             }
             else {
+              if (qualifier instanceof PsiThisExpression) {
+                qualifier = ((PsiThisExpression)qualifier).getQualifier();
+              }
               qualifier.replace(factory.createReferenceElementByType(factory.createType(psiClass)));
             }
           }

@@ -20,7 +20,7 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +48,6 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyValidationUtil;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author ilyas
@@ -106,7 +105,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
             @Override
             protected void doOKAction() {
               String name = getEnteredName();
-              Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
+              MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
               GroovyValidationUtil.validateNewParameterName(firstParam, conflicts, name);
               if (reportConflicts(conflicts, project)) {
                 performRefactoring(element, owner, occurrences, createNewFirst(), name, specifyTypeExplicitly());
@@ -410,7 +409,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
     CodeStyleManager.getInstance(owner.getProject()).reformat(owner);
   }
 
-  private static boolean reportConflicts(final Map<PsiElement, String> conflicts, final Project project) {
+  private static boolean reportConflicts(final MultiMap<PsiElement,String> conflicts, final Project project) {
     if (conflicts.size() == 0) return true;
     ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
     conflictsDialog.show();

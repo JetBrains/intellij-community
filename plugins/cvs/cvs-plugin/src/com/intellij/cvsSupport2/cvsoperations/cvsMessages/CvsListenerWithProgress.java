@@ -10,10 +10,20 @@ public class CvsListenerWithProgress extends CvsMessagesAdapter implements ICvsC
   private ProgressIndicator myProgressIndicator;
   private String myLastError;
   private boolean myIndirectCancel;
+  private boolean myPing;
 
   public CvsListenerWithProgress(ProgressIndicator progressIndicator) {
     myProgressIndicator = progressIndicator;
     myIndirectCancel = false;
+    myPing = false;
+  }
+
+  public boolean isAlive() {
+    return myPing;
+  }
+
+  public void resetAlive() {
+    myPing = false;
   }
 
   public static CvsListenerWithProgress createOnProgress() {
@@ -38,6 +48,7 @@ public class CvsListenerWithProgress extends CvsMessagesAdapter implements ICvsC
   }
 
   public boolean isAborted() {
+    myPing = true;
     if (myLastError != null) throw new CvsProcessException(myLastError);
     if (myIndirectCancel) return true;
     final ProgressIndicator progressIndicator = getProgressIndicator();

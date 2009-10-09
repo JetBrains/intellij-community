@@ -32,7 +32,9 @@ import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
@@ -40,7 +42,7 @@ import java.util.List;
 public class MoveChangesDialog extends DialogWrapper {
   private ChangesTreeList<Change> myTreeList;
 
-  public MoveChangesDialog(final Project project, List<Change> selected, final List<ChangeList> changeLists, String title) {
+  public MoveChangesDialog(final Project project, Collection<Change> selected, final Set<ChangeList> changeLists, String title) {
     super(project, true);
     setTitle(title);
     myTreeList = new ChangesTreeList<Change>(project, selected, true, false, null, null) {
@@ -48,7 +50,7 @@ public class MoveChangesDialog extends DialogWrapper {
       @Override
       protected DefaultTreeModel buildTreeModel(List<Change> changes, ChangeNodeDecorator changeNodeDecorator) {
         TreeModelBuilder builder = new TreeModelBuilder(project, false);
-        return builder.buildModel(changeLists);
+        return builder.buildModel(new ArrayList<ChangeList>(changeLists));
       }
 
       @Override

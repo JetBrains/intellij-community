@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.threading;
 
+import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -41,8 +42,13 @@ public class ExtendsThreadInspection extends BaseInspection {
                 "extends.thread.problem.descriptor");
     }
 
+  /**
+   * @see com.siyeh.ig.inheritance.ExtendsConcreteCollectionInspection#buildFix(java.lang.Object...)
+   */
     protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new ReplaceInheritanceWithDelegationFix();
+      final PsiClass superClass = (PsiClass)infos[0];
+      if (superClass instanceof PsiAnonymousClass) return null;
+      return new ReplaceInheritanceWithDelegationFix();
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -64,7 +70,7 @@ public class ExtendsThreadInspection extends BaseInspection {
             if (!"java.lang.Thread".equals(superclassName)) {
                 return;
             }
-            registerClassError(aClass);
+            registerClassError(aClass, aClass);
         }
     }
 }

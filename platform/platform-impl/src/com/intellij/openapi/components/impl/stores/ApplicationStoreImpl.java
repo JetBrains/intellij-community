@@ -120,7 +120,7 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
 
       try {
         doReload(changedFiles, componentNames);
-        reinitComponents(componentNames);
+        reinitComponents(componentNames, false);
       }
       finally {
         myApplication.getMessageBus().syncPublisher(BatchUpdateListener.TOPIC).onBatchUpdateFinished();

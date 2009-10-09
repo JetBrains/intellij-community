@@ -1,6 +1,5 @@
 package com.intellij.refactoring.copy;
 
-import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -11,6 +10,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
@@ -22,8 +22,6 @@ import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 class CopyClassDialog extends DialogWrapper{
   @NonNls private static final String RECENTS_KEY = "CopyClassDialog.RECENTS_KEY";
@@ -103,17 +101,7 @@ class CopyClassDialog extends DialogWrapper{
 
     gbConstraints.gridx = 1;
     gbConstraints.weightx = 1;
-    myTfPackage = new ReferenceEditorComboWithBrowseButton(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        PackageChooserDialog chooser=new PackageChooserDialog(RefactoringBundle.message("choose.destination.package"),myProject);
-        chooser.selectPackage(myTfPackage.getText());
-        chooser.show();
-        PsiPackage aPackage = chooser.getSelectedPackage();
-        if (aPackage != null) {
-          myTfPackage.setText(aPackage.getQualifiedName());
-        }
-      }
-    }, "", PsiManager.getInstance(myProject), false, RECENTS_KEY);
+    myTfPackage = new PackageNameReferenceEditorCombo("", myProject, RECENTS_KEY, RefactoringBundle.message("choose.destination.package"));
 
     myPackageLabel.setText(RefactoringBundle.message("destination.package"));
 

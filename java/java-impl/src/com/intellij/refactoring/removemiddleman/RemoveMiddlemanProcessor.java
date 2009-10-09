@@ -16,11 +16,10 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#" + RemoveMiddlemanProcessor.class.getName());
@@ -61,12 +60,12 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
 
   @Override
   protected boolean preprocessUsages(final Ref<UsageInfo[]> refUsages) {
-    final Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     for (MemberInfo memberInfo : myDelegateMethodInfos) {
       if (memberInfo.isChecked() && memberInfo.isToAbstract()) {
         final PsiMember psiMember = memberInfo.getMember();
         if (psiMember instanceof PsiMethod && ((PsiMethod)psiMember).findDeepestSuperMethods().length > 0) {
-          conflicts.put(psiMember, SymbolPresentationUtil.getSymbolPresentableText(psiMember) + " will be deleted. Hierarchy will be broken");
+          conflicts.putValue(psiMember, SymbolPresentationUtil.getSymbolPresentableText(psiMember) + " will be deleted. Hierarchy will be broken");
         }
       }
     }

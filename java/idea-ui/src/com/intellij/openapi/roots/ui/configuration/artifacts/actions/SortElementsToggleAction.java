@@ -13,7 +13,7 @@ public class SortElementsToggleAction extends ToggleAction implements DumbAware 
   private LayoutTreeComponent myLayoutTreeComponent;
 
   public SortElementsToggleAction(final LayoutTreeComponent layoutTreeComponent) {
-    super("Sort", "Sort Elements by Names and Types", IconLoader.getIcon("/objectBrowser/sorted.png"));
+    super("Sort Elements by Names and Types", "Sort Elements by Names and Types", IconLoader.getIcon("/objectBrowser/sorted.png"));
     myLayoutTreeComponent = layoutTreeComponent;
   }
 

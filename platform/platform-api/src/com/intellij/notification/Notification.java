@@ -1,9 +1,11 @@
 package com.intellij.notification;
 
+import com.intellij.openapi.ui.popup.Balloon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.lang.ref.WeakReference;
 
 /**
  * @author spleaner
@@ -15,6 +17,7 @@ public class Notification {
   private NotificationListener myListener;
   private String myTitle;
   private boolean myExpired;
+  private WeakReference<Balloon> myBalloonRef;
 
   public Notification(@NotNull final String groupId, @NotNull final String title, @NotNull final String content, @NotNull final NotificationType type) {
     myGroupId = groupId;
@@ -63,6 +66,19 @@ public class Notification {
 
   public void expire() {
     NotificationsManager.getNotificationsManager().expire(this);
+    if (myBalloonRef != null) {
+      final Balloon balloon = myBalloonRef.get();
+      if (balloon != null) {
+        balloon.hide();
+      }
+      myBalloonRef = null;
+    }
     myExpired = true;
+  }
+
+  public void setBalloon(@Nullable final Balloon balloon) {
+    if (balloon != null) {
+      myBalloonRef = new WeakReference<Balloon>(balloon);
+    }
   }
 }
