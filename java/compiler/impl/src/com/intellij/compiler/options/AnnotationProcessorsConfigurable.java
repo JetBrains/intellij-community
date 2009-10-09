@@ -23,6 +23,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -44,6 +45,9 @@ public class AnnotationProcessorsConfigurable implements Configurable{
   private TextFieldWithBrowseButton myProcessorPathField;
   private ProcessorTableModel myProcessorsModel;
   private JCheckBox myCbEnableProcessing;
+  private JButton myRemoveButton;
+  private Table myProcessorTable;
+  private JButton myAddButton;
 
   public AnnotationProcessorsConfigurable(final Project project) {
     myProject = project;
@@ -92,14 +96,14 @@ public class AnnotationProcessorsConfigurable implements Configurable{
 
     final JPanel processorTablePanel = new JPanel(new BorderLayout());
     myProcessorsModel = new ProcessorTableModel();
-    final Table processorsTable = new Table(myProcessorsModel);
     processorTablePanel.setBorder(new TitledBorder("Annotation Processors"));
-    processorTablePanel.add(new JScrollPane(processorsTable), BorderLayout.CENTER);
+    myProcessorTable = new Table(myProcessorsModel);
+    processorTablePanel.add(new JScrollPane(myProcessorTable), BorderLayout.CENTER);
     final JPanel buttons = new JPanel(new GridBagLayout());
-    final JButton addButton = new JButton("Add");
-    final JButton removeButton = new JButton("Remove");
-    buttons.add(addButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 5, 0, 0), 0, 0));
-    buttons.add(removeButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(5, 5, 0, 0), 0, 0));
+    myAddButton = new JButton("Add");
+    buttons.add(myAddButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 5, 0, 0), 0, 0));
+    myRemoveButton = new JButton("Remove");
+    buttons.add(myRemoveButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(5, 5, 0, 0), 0, 0));
     processorTablePanel.add(buttons, BorderLayout.EAST);
     processorTablePanel.setPreferredSize(new Dimension(processorTablePanel.getPreferredSize().width, 50));
 
@@ -124,38 +128,60 @@ public class AnnotationProcessorsConfigurable implements Configurable{
 
     myRbClasspath.addItemListener(new ItemListener() {
       public void itemStateChanged(ItemEvent e) {
-        final boolean useProcessorpath = !myRbClasspath.isSelected();
-        myProcessorPathField.setEnabled(useProcessorpath);
+        updateEnabledState();
       }
     });
 
-    removeButton.setEnabled(false);
-    processorsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+    myProcessorTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
         if (!e.getValueIsAdjusting()) {
-          removeButton.setEnabled(processorsTable.getSelectedRow() >= 0);
+          updateEnabledState();
         }
       }
     });
-    addButton.addActionListener(new ActionListener() {
+    myAddButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final TableCellEditor cellEditor = processorsTable.getCellEditor();
+        final TableCellEditor cellEditor = myProcessorTable.getCellEditor();
         if (cellEditor != null) {
           cellEditor.stopCellEditing();
         }
-        final ProcessorTableModel model = (ProcessorTableModel)processorsTable.getModel();
+        final ProcessorTableModel model = (ProcessorTableModel)myProcessorTable.getModel();
         final int inserdedIndex = model.addRow();
-        TableUtil.editCellAt(processorsTable, inserdedIndex, ProcessorTableRow.NAME_COLUMN);
+        TableUtil.editCellAt(myProcessorTable, inserdedIndex, ProcessorTableRow.NAME_COLUMN);
       }
     });
 
-    removeButton.addActionListener(new ActionListener() {
+    myRemoveButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        TableUtil.removeSelectedItems(processorsTable);
+        TableUtil.removeSelectedItems(myProcessorTable);
       }
     });
 
+    myCbEnableProcessing.addItemListener(new ItemListener() {
+      public void itemStateChanged(ItemEvent e) {
+        updateEnabledState();
+      }
+    });
+
+    updateEnabledState();
+    
     return mainPanel;
+  }
+
+  private void updateEnabledState() {
+    final boolean enabled = myCbEnableProcessing.isSelected();
+    final boolean useProcessorpath = !myRbClasspath.isSelected();
+    myRbClasspath.setEnabled(enabled);
+    myRbProcessorsPath.setEnabled(enabled);
+    myProcessorPathField.setEnabled(enabled && useProcessorpath);
+    myRemoveButton.setEnabled(enabled && myProcessorTable.getSelectedRow() >= 0);
+    myAddButton.setEnabled(enabled);
+    myProcessorTable.setEnabled(enabled);
+    final JTableHeader header = myProcessorTable.getTableHeader();
+    if (header != null) {
+      header.repaint();
+    }
+    myModulesChooser.setEnabled(enabled);
   }
 
   public boolean isModified() {
@@ -319,7 +345,12 @@ public class AnnotationProcessorsConfigurable implements Configurable{
     public Map<String, String> exportToMap() {
       final Map<String, String> map = new HashMap<String, String>();
       for (ProcessorTableRow row : myRows) {
-        map.put(row.name, row.options);
+        if (row.name != null) {
+          final String name = row.name.trim();
+          if (name.length() > 0 && !map.containsKey(name)) {
+            map.put(name, row.options);
+          }
+        }
       }
       return map;
     }
