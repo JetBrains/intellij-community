@@ -1,12 +1,8 @@
 package com.intellij.javaee;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.NullableFunction;
-import com.intellij.xml.XmlNSDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * author: lesya
@@ -36,12 +32,4 @@ public abstract class ExternalResourceManagerEx extends ExternalResourceManager 
   public abstract void addExternalResourceListener(ExternalResourceListener listener);
 
   public abstract void removeExternalResourceListener(ExternalResourceListener listener);
-
-  public abstract void registerImplicitNamespace(@NotNull String ns, @NotNull XmlNSDescriptor descriptor, Disposable parentDisposable);
-
-  public abstract void registerImplicitNamespace(@NotNull NullableFunction<String, XmlNSDescriptor> ns, Disposable parentDisposable);
-
-  @Nullable
-  public abstract XmlNSDescriptor getImplicitNamespaceDescriptor(@NotNull String ns);
-
 }
