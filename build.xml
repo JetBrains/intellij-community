@@ -1,0 +1,42 @@
+<project name="IntelliJ IDEA Community Edition" default="all">
+  <property name="project.home" value="${basedir}"/>
+  <property name="out.dir" value="${project.home}/out"/>
+  <property name="gant.home" value="${project.home}/build/lib/gant"/>
+
+  <target name="cleanup">
+    <delete dir="${out.dir}" failonerror="false"/>
+  </target>
+
+  <target name="init">
+    <mkdir dir="${out.dir}"/>
+  </target>
+
+  <macrodef name="call_gant">
+    <attribute name="script" />
+    <sequential>
+      <java failonerror="true" classname="org.apache.tools.ant.Main" fork="true">
+        <jvmarg line="-Xms64m -Xmx512m"/>
+        <jvmarg line="&quot;-Dgant.script=@{script}&quot;"/>
+
+        <classpath>
+          <fileset dir="${project.home}/lib/ant/lib">
+            <include name="*.jar"/>
+          </fileset>
+          <pathelement location="${project.home}/build/lib/gant_patches.jar"/>
+          <fileset dir="${gant.home}/lib">
+            <include name="*.jar"/>
+          </fileset>
+        </classpath>
+
+        <arg value="-f"/>
+        <arg value="${project.home}/build/gant.xml"/>
+      </java>
+    </sequential>
+  </macrodef>
+
+  <target name="build" depends="init">
+    <call_gant script="${project.home}/build/scripts/dist.gant"/>
+  </target>
+
+  <target name="all" depends="cleanup,build"/>
+</project>
