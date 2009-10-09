@@ -755,6 +755,18 @@
   face        CDATA          #IMPLIED
   >
 
+<!ELEMENT embed EMPTY> 
+<!ATTLIST embed
+  alt           CDATA          #IMPLIED
+  width         %Length;       #IMPLIED
+  height        %Length;       #IMPLIED
+  hidden        CDATA          #IMPLIED
+  pluginspage   %URI;          #IMPLIED
+  src           %URI;          #IMPLIED
+  type          CDATA          #IMPLIED
+  wmode         CDATA          #IMPLIED
+  >
+
 <!--==================== Object ======================================-->
 <!--
   object is used to embed objects as part of HTML pages.
