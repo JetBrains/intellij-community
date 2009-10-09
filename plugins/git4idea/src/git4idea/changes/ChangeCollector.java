@@ -157,6 +157,7 @@ class ChangeCollector {
               if (c.getBeforeRevision() != null) {
                 addToPaths(rootPath, paths, c.getBeforeRevision().getFile());
               }
+            case MODIFICATION:  
             default:
               // do nothing
           }
@@ -256,13 +257,24 @@ class ChangeCollector {
     }
     // prepare handler
     GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, GitHandler.LS_FILES);
-    handler.addParameters("-v", "--others", "--unmerged", "--exclude-standard");
+    handler.addParameters("-v", "--unmerged");
+    handler.setSilent(true);
+    handler.setNoSSH(true);
+    handler.setStdoutSuppressed(true);
+    // run handler and collect changes
+    parseFiles(handler.run());
+    // prepare handler
+    handler = new GitSimpleHandler(myProject, myVcsRoot, GitHandler.LS_FILES);
+    handler.addParameters("-v", "--others", "--exclude-standard");
     handler.setSilent(true);
     handler.setNoSSH(true);
     handler.setStdoutSuppressed(true);
     handler.addRelativePaths(dirtyPaths);
     // run handler and collect changes
-    String list = handler.run();
+    parseFiles(handler.run());
+  }
+
+  private void parseFiles(String list) throws VcsException {
     for (StringScanner sc = new StringScanner(list); sc.hasMoreData();) {
       if (sc.isEol()) {
         sc.nextLine();
