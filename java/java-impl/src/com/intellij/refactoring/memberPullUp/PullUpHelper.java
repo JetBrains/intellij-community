@@ -189,7 +189,7 @@ public class PullUpHelper {
   public void moveFieldInitializations() throws IncorrectOperationException {
     LOG.assertTrue(myMembersAfterMove != null);
 
-    final HashSet<PsiField> movedFields = new HashSet<PsiField>();
+    final LinkedHashSet<PsiField> movedFields = new LinkedHashSet<PsiField>();
     for (PsiMember member : myMembersAfterMove) {
       if (member instanceof PsiField) {
         movedFields.add((PsiField)member);
@@ -224,8 +224,8 @@ public class PullUpHelper {
     }
   }
 
-  private void tryToMoveInitializers(PsiMethod constructor, HashSet<PsiMethod> subConstructors, HashSet<PsiField> movedFields) throws IncorrectOperationException {
-    final HashMap<PsiField, Initializer> fieldsToInitializers = new HashMap<PsiField, Initializer>();
+  private void tryToMoveInitializers(PsiMethod constructor, HashSet<PsiMethod> subConstructors, LinkedHashSet<PsiField> movedFields) throws IncorrectOperationException {
+    final LinkedHashMap<PsiField, Initializer> fieldsToInitializers = new LinkedHashMap<PsiField, Initializer>();
     boolean anyFound = false;
 
     for (PsiField field : movedFields) {
