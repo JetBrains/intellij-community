@@ -13,15 +13,6 @@
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="openapi" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../lib/jaxen-1.1.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="dom-openapi" />
     <orderEntry type="module" module-name="debugger-impl" />
@@ -34,6 +25,7 @@
     <orderEntry type="module" module-name="jam-support-impl" />
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="annotations" />
+    <orderEntry type="library" name="Jaxen" level="project" />
   </component>
 </module>
 

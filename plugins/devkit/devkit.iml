@@ -17,20 +17,12 @@
     <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="module" module-name="compiler-openapi" />
     <orderEntry type="module" module-name="execution-openapi" />
-    <orderEntry type="module-library">
-      <library name="testng">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../testng/lib/testng-jdk15.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="module" module-name="dom-openapi" />
     <orderEntry type="module" module-name="execution-impl" />
     <orderEntry type="module" module-name="lvcs-impl" />
     <orderEntry type="module" module-name="testFramework-java" />
     <orderEntry type="module" module-name="java-impl" />
+    <orderEntry type="library" name="TestNG" level="project" />
   </component>
 </module>
 
