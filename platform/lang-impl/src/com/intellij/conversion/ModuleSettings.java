@@ -41,5 +41,11 @@ public interface ModuleSettings extends ComponentManagerSettings {
 
   void addExcludedFolder(@NotNull File directory);
 
-  List<File> getModuleLibraryRootUrls(String libraryName);
+  @NotNull
+  List<File> getModuleLibraryRoots(String libraryName);
+
+  @NotNull
+  Collection<ModuleSettings> getAllModuleDependencies();
+
+  boolean hasModuleLibrary(String libraryName);
 }

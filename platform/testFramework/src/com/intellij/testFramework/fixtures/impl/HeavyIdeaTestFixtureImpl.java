@@ -98,7 +98,11 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
 
     Runnable runnable = new Runnable() {
       public void run() {
-        Disposer.dispose(myProject);
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            Disposer.dispose(myProject);
+          }
+        });
       }
     };
     if (ApplicationManager.getApplication().isDispatchThread()) {

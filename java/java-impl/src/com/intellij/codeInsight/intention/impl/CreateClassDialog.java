@@ -3,7 +3,6 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
-import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -16,8 +15,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiPackage;
+import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
@@ -30,8 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
@@ -59,18 +55,7 @@ public class CreateClassDialog extends DialogWrapper {
     myModule = defaultModule;
     myClassName = targetClassName;
     myProject = project;
-    myPackageComponent = new ReferenceEditorComboWithBrowseButton(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        PackageChooserDialog chooser = new PackageChooserDialog(CodeInsightBundle.message("dialog.create.class.package.chooser.title"), myProject);
-        chooser.selectPackage(myPackageComponent.getText());
-        chooser.show();
-        PsiPackage aPackage = chooser.getSelectedPackage();
-        if (aPackage != null) {
-          myPackageComponent.setText(aPackage.getQualifiedName());
-        }
-      }
-    }, targetPackageName != null ? targetPackageName : "", PsiManager.getInstance(myProject), false, RECENTS_KEY);
-
+    myPackageComponent = new PackageNameReferenceEditorCombo( targetPackageName != null ? targetPackageName : "", myProject, RECENTS_KEY, CodeInsightBundle.message("dialog.create.class.package.chooser.title"));
 
     init();
 

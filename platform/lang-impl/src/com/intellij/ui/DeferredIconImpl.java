@@ -7,6 +7,7 @@ import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.ui.EmptyIcon;
 
@@ -15,8 +16,11 @@ import javax.swing.plaf.TreeUI;
 import javax.swing.plaf.basic.BasicTreeUI;
 import java.awt.*;
 import java.lang.ref.WeakReference;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class DeferredIconImpl<T> implements DeferredIcon {
+  private static final RepaintScheduler ourRepaintScheduler = new RepaintScheduler();
   private volatile Icon myDelegateIcon;
   private final Function<T, Icon> myEvaluator;
   private volatile boolean myIsScheduled = false;
@@ -96,7 +100,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
                 c.repaint(x, y, getIconWidth(), getIconHeight());
               }
               else {
-                target.repaint();
+                ourRepaintScheduler.pushDirtyComponent(target);
               }
             }
           });
@@ -169,6 +173,25 @@ public class DeferredIconImpl<T> implements DeferredIcon {
     Component lastTarget = myLastTarget != null ? myLastTarget.get() : null;
     if (lastTarget != null) {
       lastTarget.repaint();
+    }
+  }
+
+  private static class RepaintScheduler {
+    private final Alarm myAlarm = new Alarm();
+    private final Set<Component> myQueue = new LinkedHashSet<Component>();
+
+    public void pushDirtyComponent(Component c) {
+      myAlarm.cancelAllRequests();
+      myAlarm.addRequest(new Runnable() {
+        public void run() {
+          for (Component component : myQueue) {
+            component.repaint();
+          }
+          myQueue.clear();
+        }
+      }, 50);
+
+      myQueue.add(c);
     }
   }
 }

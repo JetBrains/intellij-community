@@ -13,23 +13,28 @@ import com.intellij.packaging.ui.PackagingElementWeights;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
  */
 public class LibraryElementPresentation extends PackagingElementPresentation {
+  private final String myLevel;
+  private final String myModuleName;
   private final Library myLibrary;
-  private final String myName;
+  private final String myLibraryName;
   private final ArtifactEditorContext myContext;
 
-  public LibraryElementPresentation(String level, String name, Library library, ArtifactEditorContext context) {
+  public LibraryElementPresentation(String libraryName, String level, @Nullable String moduleName, Library library, ArtifactEditorContext context) {
+    myLevel = level;
+    myModuleName = moduleName;
     myLibrary = library;
-    myName = name;
+    myLibraryName = libraryName;
     myContext = context;
   }
 
   public String getPresentableName() {
-    return myName;
+    return myLibraryName;
   }
 
   @Override
@@ -50,11 +55,12 @@ public class LibraryElementPresentation extends PackagingElementPresentation {
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
     if (myLibrary != null) {
       presentationData.setIcons(Icons.LIBRARY_ICON);
-      presentationData.addText(myName, mainAttributes);
+      presentationData.addText(myLibraryName, mainAttributes);
       presentationData.addText(getLibraryTableComment(myLibrary), commentAttributes);
     }
     else {
-      presentationData.addText(myName, SimpleTextAttributes.ERROR_ATTRIBUTES);
+      presentationData.addText(myLibraryName + " (" + (myModuleName != null ? "module '" + myModuleName + "'" : myLevel) + ")", 
+                               SimpleTextAttributes.ERROR_ATTRIBUTES);
     }
   }
 

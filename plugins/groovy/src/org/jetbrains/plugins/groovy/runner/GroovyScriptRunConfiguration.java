@@ -6,6 +6,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
@@ -109,6 +110,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
   }
 
   public void readExternal(Element element) throws InvalidDataException {
+    PathMacroManager.getInstance(getProject()).expandPaths(element);
     super.readExternal(element);
     readModule(element);
     scriptPath = JDOMExternalizer.readString(element, "path");
@@ -129,6 +131,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     JDOMExternalizer.write(element, "params", scriptParams);
     JDOMExternalizer.write(element, "workDir", workDir);
     JDOMExternalizer.write(element, "debug", isDebugEnabled);
+    PathMacroManager.getInstance(getProject()).collapsePathsRecursively(element);
   }
 
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException {

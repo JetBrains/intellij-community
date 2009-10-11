@@ -3,18 +3,18 @@
  */
 package com.intellij.refactoring;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.listeners.JavaRefactoringListenerManager;
 import com.intellij.refactoring.listeners.MoveMemberListener;
 import com.intellij.refactoring.memberPullUp.PullUpHelper;
-import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.DocCommentPolicy;
+import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.testFramework.LightCodeInsightTestCase;
-import com.intellij.JavaTestUtil;
 
 /**
  * @author ven
@@ -37,6 +37,27 @@ public class PullUpTest extends LightCodeInsightTestCase {
            new Pair<String, Class<? extends PsiMember>> ("setX", PsiMethod.class));
 
   }
+
+  public void testTryCatchFieldInitializer() throws Exception {
+    doTest(new Pair<String, Class<? extends PsiMember>>("field", PsiField.class));
+  }
+
+  public void testIfFieldInitializationWithNonMovedField() throws Exception {
+    doTest(new Pair<String, Class<? extends PsiMember>>("f", PsiField.class));
+  }
+
+  public void testIfFieldMovedInitialization() throws Exception {
+    doTest(new Pair<String, Class<? extends PsiMember>>("f", PsiField.class));
+  }
+
+  public void testMultipleConstructorsFieldInitialization() throws Exception {
+    doTest(new Pair<String, Class<? extends PsiMember>>("f", PsiField.class));
+  }
+
+  public void testMultipleConstructorsFieldInitializationNoGood() throws Exception {
+    doTest(new Pair<String, Class<? extends PsiMember>>("f", PsiField.class));
+  }
+
 
   public void testRemoveOverride() throws Exception {
     doTest(new Pair<String, Class<? extends PsiMember>> ("get", PsiMethod.class));
@@ -65,7 +86,9 @@ public class PullUpTest extends LightCodeInsightTestCase {
       }
     };
     JavaRefactoringListenerManager.getInstance(getProject()).addMoveMembersListener(listener);
-    new PullUpHelper(sourceClass, targetClass, infos, new DocCommentPolicy(DocCommentPolicy.ASIS)).moveMembersToBase();
+    final PullUpHelper helper = new PullUpHelper(sourceClass, targetClass, infos, new DocCommentPolicy(DocCommentPolicy.ASIS));
+    helper.moveMembersToBase();
+    helper.moveFieldInitializations();
     JavaRefactoringListenerManager.getInstance(getProject()).removeMoveMembersListener(listener);
     assertEquals(countMoved[0], membersToFind.length);
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");

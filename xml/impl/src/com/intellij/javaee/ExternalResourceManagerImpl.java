@@ -2,7 +2,6 @@ package com.intellij.javaee;
 
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -278,7 +277,15 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   }
 
   public boolean isIgnoredResource(String url) {
-    return myIgnoredResources.contains(url) || getImplicitNamespaceDescriptor(url) != null;
+    return myIgnoredResources.contains(url) || isImplicitNamespaceDescriptor(url);
+  }
+
+  private static boolean isImplicitNamespaceDescriptor(String url) {
+    for (ImplicitNamespaceDescriptorProvider namespaceDescriptorProvider : Extensions
+      .getExtensions(ImplicitNamespaceDescriptorProvider.EP_NAME)) {
+      if (namespaceDescriptorProvider.getNamespaceDescriptor(null, url) != null) return true;
+    }
+    return false;
   }
 
   public String[] getIgnoredResources() {
@@ -344,33 +351,6 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     for (ExternalResourceListener listener : myListeners.toArray(new ExternalResourceListener[myListeners.size()])) {
       listener.externalResourceChanged();
     }
-  }
-
-  public void registerImplicitNamespace(@NotNull final String ns, @NotNull final XmlNSDescriptor descriptor, Disposable parentDisposable) {
-    registerImplicitNamespace(new NullableFunction<String, XmlNSDescriptor>() {
-      public XmlNSDescriptor fun(String s) {
-        return ns.equals(s) ? descriptor : null;
-      }
-    }, parentDisposable);
-  }
-
-  public void registerImplicitNamespace(@NotNull final NullableFunction<String, XmlNSDescriptor> ns, Disposable parentDisposable) {
-    myImplicitNamespaces.add(ns);
-
-    Disposer.register(parentDisposable, new Disposable() {
-      public void dispose() {
-        myImplicitNamespaces.remove(ns);
-      }
-    });
-  }
-
-  @Nullable
-  public XmlNSDescriptor getImplicitNamespaceDescriptor(@NotNull final String ns) {
-    for (NullableFunction<String, XmlNSDescriptor> function : myImplicitNamespaces) {
-      XmlNSDescriptor descriptor = function.fun(ns);
-      if (descriptor != null) return descriptor;
-    }
-    return null;
   }
 
   private static ExternalResourceManagerImpl getProjectResources(Project project) {

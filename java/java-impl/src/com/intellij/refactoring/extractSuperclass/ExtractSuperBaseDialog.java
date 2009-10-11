@@ -11,12 +11,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.DocCommentPanel;
+import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.ui.JavaReferenceEditorUtil;
-import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
@@ -38,7 +37,7 @@ public abstract class ExtractSuperBaseDialog extends RefactoringDialog {
 
   protected JTextField mySourceClassField;
   protected JTextField myExtractedSuperNameField;
-  protected ReferenceEditorWithBrowseButton myPackageNameField;
+  protected PackageNameReferenceEditorCombo myPackageNameField;
   protected DocCommentPanel myJavaDocPanel;
 
 
@@ -72,7 +71,7 @@ public abstract class ExtractSuperBaseDialog extends RefactoringDialog {
     if (file instanceof PsiJavaFile) {
       name = ((PsiJavaFile)file).getPackageName();
     }
-    myPackageNameField = JavaReferenceEditorUtil.createReferenceEditorWithBrowseButton(null, name, PsiManager.getInstance(myProject), false);
+    myPackageNameField = new PackageNameReferenceEditorCombo(name, myProject, "ExtractSuperBase.RECENT_KEYS", RefactoringBundle.message("choose.destination.package"));
   }
 
   private void initSourceClassField() {

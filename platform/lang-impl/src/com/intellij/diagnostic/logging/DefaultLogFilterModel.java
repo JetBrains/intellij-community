@@ -71,11 +71,26 @@ public class DefaultLogFilterModel extends LogFilterModel {
         prefs.FILTER_ERRORS = false;
         prefs.FILTER_INFO = false;
         prefs.FILTER_WARNINGS = false;
+        prefs.FILTER_DEBUG = false;
       }
 
       @Override
       public boolean isSelected() {
-        return !prefs.FILTER_ERRORS && !prefs.FILTER_INFO && !prefs.FILTER_WARNINGS;
+        return !prefs.FILTER_ERRORS && !prefs.FILTER_INFO && !prefs.FILTER_WARNINGS && !prefs.FILTER_DEBUG;
+      }
+    });
+    filters.add(new MyFilter(DiagnosticBundle.message("log.console.filter.show.errors.warnings.and.infos"), prefs) {
+      @Override
+      public void selectFilter() {
+        prefs.FILTER_ERRORS = false;
+        prefs.FILTER_INFO = false;
+        prefs.FILTER_WARNINGS = false;
+        prefs.FILTER_DEBUG = true;
+      }
+
+      @Override
+      public boolean isSelected() {
+        return !prefs.FILTER_ERRORS && !prefs.FILTER_INFO && !prefs.FILTER_WARNINGS && prefs.FILTER_DEBUG;
       }
     });
     filters.add(new MyFilter(DiagnosticBundle.message("log.console.filter.show.errors.and.warnings"), prefs) {
@@ -84,11 +99,12 @@ public class DefaultLogFilterModel extends LogFilterModel {
         prefs.FILTER_ERRORS = false;
         prefs.FILTER_INFO = true;
         prefs.FILTER_WARNINGS = false;
+        prefs.FILTER_DEBUG = true;
       }
 
       @Override
       public boolean isSelected() {
-        return !prefs.FILTER_ERRORS && prefs.FILTER_INFO && !prefs.FILTER_WARNINGS;
+        return !prefs.FILTER_ERRORS && prefs.FILTER_INFO && !prefs.FILTER_WARNINGS && prefs.FILTER_DEBUG;
       }
     });
     filters.add(new MyFilter(DiagnosticBundle.message("log.console.filter.show.errors"), prefs) {
@@ -97,11 +113,12 @@ public class DefaultLogFilterModel extends LogFilterModel {
         prefs.FILTER_ERRORS = false;
         prefs.FILTER_INFO = true;
         prefs.FILTER_WARNINGS = true;
+        prefs.FILTER_DEBUG = true;
       }
 
       @Override
       public boolean isSelected() {
-        return !prefs.FILTER_ERRORS && prefs.FILTER_INFO && prefs.FILTER_WARNINGS;
+        return !prefs.FILTER_ERRORS && prefs.FILTER_INFO && prefs.FILTER_WARNINGS && prefs.FILTER_DEBUG;
       }
     });
   }

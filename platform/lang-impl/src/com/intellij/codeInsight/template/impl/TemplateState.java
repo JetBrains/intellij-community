@@ -73,7 +73,7 @@ public class TemplateState implements Disposable {
   private boolean myTemplateIndented = false;
   private Document myDocument;
   private boolean myFinished;
-  private PairProcessor<String, String> myProcessor;
+  @Nullable private PairProcessor<String, String> myProcessor;
 
   public TemplateState(@NotNull Project project, final Editor editor) {
     myProject = project;
@@ -214,7 +214,7 @@ public class TemplateState implements Disposable {
     }
   }
 
-  public void start(TemplateImpl template, final PairProcessor<String, String> processor) {
+  public void start(TemplateImpl template, @Nullable final PairProcessor<String, String> processor) {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     myProcessor = processor;

@@ -1,6 +1,5 @@
 package com.intellij.refactoring.extractInterface;
 
-import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
@@ -16,8 +15,6 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 
 class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
@@ -98,17 +95,6 @@ class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
     box.add(_panel);
     box.add(Box.createVerticalStrut(5));
 
-    myPackageNameField.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        PackageChooserDialog chooser = new PackageChooserDialog(RefactoringBundle.message("choose.destination.package"), myProject);
-        chooser.selectPackage(myPackageNameField.getText());
-        chooser.show();
-        PsiPackage aPackage = chooser.getSelectedPackage();
-        if (aPackage != null) {
-          myPackageNameField.setText(aPackage.getQualifiedName());
-        }
-      }
-    });
     _panel = new JPanel(new BorderLayout());
     myPackageLabel = new JLabel();
     myPackageLabel.setText(RefactoringBundle.message("package.for.new.interface"));

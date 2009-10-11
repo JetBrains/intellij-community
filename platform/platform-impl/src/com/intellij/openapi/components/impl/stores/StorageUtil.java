@@ -27,10 +27,7 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Set;
@@ -45,7 +42,7 @@ public class StorageUtil {
   private StorageUtil() {
   }
 
-  static void save(final IFile file, final byte[] text) throws StateStorage.StateStorageException {
+  static void save(final IFile file, final byte[] text, final Object requestor) throws StateStorage.StateStorageException {
     final String filePath = file.getCanonicalPath();
     try {
       final Ref<IOException> refIOException = Ref.create(null);
@@ -63,7 +60,17 @@ public class StorageUtil {
           }
 
           try {
-            getOrCreateVirtualFile(file, file).setBinaryContent(text);
+            final VirtualFile virtualFile = getOrCreateVirtualFile(requestor, file);
+
+            OutputStream outputStream = null;
+            try {
+              outputStream = virtualFile.getOutputStream(requestor);
+              outputStream.write(text);
+              outputStream.flush();
+            }
+            finally {
+              if (outputStream != null) outputStream.close();
+            }
           }
           catch (IOException e) {
             refIOException.set(e);
@@ -92,7 +99,7 @@ public class StorageUtil {
     return backupFile;
   }
 
-  static VirtualFile getOrCreateVirtualFile(Object requestor, IFile ioFile) throws IOException {
+  static VirtualFile getOrCreateVirtualFile(final Object requestor, final IFile ioFile) throws IOException {
     VirtualFile vFile = getVirtualFile(ioFile);
 
     if (vFile == null) {
@@ -154,9 +161,9 @@ public class StorageUtil {
     return JDOMUtil.writeElement(element, SystemProperties.getLineSeparator());
   }
 
-  static void save(IFile file, Element element) throws StateStorage.StateStorageException {
+  static void save(IFile file, Element element, final Object requestor) throws StateStorage.StateStorageException {
     try {
-      save(file, JDOMUtil.writeElement(element, SystemProperties.getLineSeparator()).getBytes(CharsetToolkit.UTF8));
+      save(file, JDOMUtil.writeElement(element, SystemProperties.getLineSeparator()).getBytes(CharsetToolkit.UTF8), requestor);
     }
     catch (IOException e) {
       throw new StateStorage.StateStorageException(e);

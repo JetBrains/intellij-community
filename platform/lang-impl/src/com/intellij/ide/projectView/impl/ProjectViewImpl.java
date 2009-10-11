@@ -970,6 +970,17 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
         PsiElement[] elements = currentProjectViewPane.getSelectedPSIElements();
         return elements.length == 0 ? null : elements;
       }
+      if (DataConstants.VIRTUAL_FILE_ARRAY.equals(dataId)) {
+        PsiElement[] psiElements = (PsiElement[])getData(DataConstants.PSI_ELEMENT_ARRAY);
+        if (psiElements == null) return null;
+        Set<VirtualFile> files = new LinkedHashSet<VirtualFile>();
+        for (PsiElement element : psiElements) {
+          if (element instanceof PsiFileSystemItem) {
+            files.add(((PsiFileSystemItem)element).getVirtualFile());
+          }
+        }
+        return files.size() > 0 ? files.toArray(new VirtualFile[files.size()]) : null;
+      }
       if (DataConstantsEx.TARGET_PSI_ELEMENT.equals(dataId)) {
         return null;
       }

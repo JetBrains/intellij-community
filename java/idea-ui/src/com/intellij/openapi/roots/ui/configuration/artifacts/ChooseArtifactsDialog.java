@@ -13,11 +13,7 @@ import java.util.List;
 public class ChooseArtifactsDialog extends ChooseElementsDialog<Artifact> {
 
   public ChooseArtifactsDialog(Project project, List<? extends Artifact> items, String title, String description) {
-    super(project, items, title, description);
-  }
-
-  public ChooseArtifactsDialog(JComponent component, String title, List<Artifact> items) {
-    super(component, items, title, true);
+    super(project, items, title, description, true);
   }
 
   protected String getItemText(Artifact item) {

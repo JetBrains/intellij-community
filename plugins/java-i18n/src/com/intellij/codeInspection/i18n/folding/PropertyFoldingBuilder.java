@@ -24,7 +24,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
 
   @NotNull
   public FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement element, @NotNull Document document, boolean quick) {
-    if (!(element instanceof PsiJavaFile) || quick) {
+    if (!(element instanceof PsiJavaFile) || quick || !isFoldingsOn()) {
       return FoldingDescriptor.EMPTY;
     }
     final PsiJavaFile file = (PsiJavaFile) element;
@@ -44,6 +44,10 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
     });
 
     return result.toArray(new FoldingDescriptor[result.size()]);
+  }
+
+  private static boolean isFoldingsOn() {
+    return JavaCodeFoldingSettings.getInstance().isCollapseI18nMessages();
   }
 
   private static void checkLiteral(PsiLiteralExpression expression, List<FoldingDescriptor> result) {
@@ -147,7 +151,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
   }
 
   public boolean isCollapsedByDefault(@NotNull ASTNode node) {
-    return JavaCodeFoldingSettings.getInstance().isCollapseI18nMessages();
+    return isFoldingsOn();
   }
 
 

@@ -151,6 +151,13 @@ public class RefactoringConflictsUtil {
                                                  RefactoringUIUtil.getDescription(member, false));
       message = CommonRefactoringUtil.capitalize(message);
       conflicts.putValue(refMember, message);
+    } else if (newContext instanceof PsiClass && refMember instanceof PsiField && refMember.getContainingClass() == member.getContainingClass()) {
+      final PsiField fieldInSubClass = ((PsiClass)newContext).findFieldByName(refMember.getName(), false);
+      if (fieldInSubClass != null) {
+        conflicts.putValue(refMember, CommonRefactoringUtil.capitalize(RefactoringUIUtil.getDescription(fieldInSubClass, true) +
+                                                                       " would hide " + RefactoringUIUtil.getDescription(refMember, true) +
+                                                                       " which is used by moved " + RefactoringUIUtil.getDescription(member, false)));
+      }
     }
   }
 

@@ -663,9 +663,14 @@ public class BookmarksAction extends AnAction implements DumbAware {
     @Override
     public void update(AnActionEvent e) {
       int modelSize = myList.getModel().getSize();
-      int lastIndex = modelSize - 1;
-      if (!(myList.getModel().getElementAt(lastIndex) instanceof BookmarkItem)) lastIndex--;
-      e.getPresentation().setEnabled(getSelectedBookmarks(myList).size() == 1 && myList.getSelectedIndex() < lastIndex);
+      if (modelSize == 0) {
+        e.getPresentation().setEnabled(false);
+      }
+      else {
+        int lastIndex = modelSize - 1;
+        if (!(myList.getModel().getElementAt(lastIndex) instanceof BookmarkItem)) lastIndex--;
+        e.getPresentation().setEnabled(getSelectedBookmarks(myList).size() == 1 && myList.getSelectedIndex() < lastIndex);
+      }
     }
 
     @Override

@@ -18,4 +18,6 @@ package org.netbeans.lib.cvsclient;
 public interface ICvsCommandStopper {
 
 	boolean isAborted();
+        boolean isAlive();
+        void resetAlive();
 }

@@ -3,6 +3,10 @@
   <name>I18n for Java</name>
   <depends>com.intellij.properties</depends>
   <depends optional="true" config-file="spellchecker-support.xml">com.intellij.spellchecker</depends>
+  <description>
+    This plugin provides code inspections and corresponding quick fixes for code internationalization.
+  </description>
+  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
   <resource-bundle>messages.PropertiesBundle</resource-bundle>
   <extensionPoints>
     <extensionPoint name="resourceBundleManager"

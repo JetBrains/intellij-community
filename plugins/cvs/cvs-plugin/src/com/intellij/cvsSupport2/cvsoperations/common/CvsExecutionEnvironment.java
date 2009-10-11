@@ -19,6 +19,13 @@ public class CvsExecutionEnvironment {
     public boolean isAborted() {
       return false;
     }
+
+    public boolean isAlive() {
+      return true;
+    }
+
+    public void resetAlive() {
+    }
   };
 
   private final CvsMessagesListener myListener;

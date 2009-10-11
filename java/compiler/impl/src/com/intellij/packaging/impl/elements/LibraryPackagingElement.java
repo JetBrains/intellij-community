@@ -1,23 +1,28 @@
 package com.intellij.packaging.impl.elements;
 
+import com.intellij.openapi.deployment.LibraryLink;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.deployment.LibraryLink;
+import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.ComplexPackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.elements.PackagingElementOutputKind;
+import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.ui.LibraryElementPresentation;
-import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
-import com.intellij.packaging.artifacts.ArtifactType;
+import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.util.PathUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,19 +31,22 @@ import java.util.List;
  * @author nik
  */
 public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPackagingElement> {
-  private String myLevel;
-  private String myName;
   @NonNls public static final String LIBRARY_NAME_ATTRIBUTE = "name";
+  @NonNls public static final String MODULE_NAME_ATTRIBUTE = "module-name";
   @NonNls public static final String LIBRARY_LEVEL_ATTRIBUTE = "level";
+  private String myLevel;
+  private String myLibraryName;
+  private String myModuleName;
 
   public LibraryPackagingElement() {
     super(LibraryElementType.LIBRARY_ELEMENT_TYPE);
   }
 
-  public LibraryPackagingElement(String level, String name) {
+  public LibraryPackagingElement(String level, String libraryName, String moduleName) {
     super(LibraryElementType.LIBRARY_ELEMENT_TYPE);
     myLevel = level;
-    myName = name;
+    myLibraryName = libraryName;
+    myModuleName = moduleName;
   }
 
   public List<? extends PackagingElement<?>> getSubstitution(@NotNull PackagingElementResolvingContext context, @NotNull ArtifactType artifactType) {
@@ -47,7 +55,8 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
       final VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
       final List<PackagingElement<?>> elements = new ArrayList<PackagingElement<?>>();
       for (VirtualFile file : files) {
-        elements.add(new FileCopyPackagingElement(FileUtil.toSystemIndependentName(PathUtil.getLocalPath(file))));
+        final String path = FileUtil.toSystemIndependentName(PathUtil.getLocalPath(file));
+        elements.add(file.isDirectory() && file.isInLocalFileSystem() ? new DirectoryCopyPackagingElement(path) : new FileCopyPackagingElement(path));
       }
       return elements;
     }
@@ -62,7 +71,7 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
   }
 
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
-    return new LibraryElementPresentation(myLevel, myName, findLibrary(context), context);
+    return new LibraryElementPresentation(myLibraryName, myLevel, myModuleName, findLibrary(context), context);
   }
 
   @Override
@@ -72,8 +81,9 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
     }
 
     LibraryPackagingElement packagingElement = (LibraryPackagingElement)element;
-    return myLevel != null && myName != null && myLevel.equals(packagingElement.getLevel())
-           && myName.equals(packagingElement.getName());
+    return myLevel != null && myLibraryName != null && myLevel.equals(packagingElement.getLevel())
+           && myLibraryName.equals(packagingElement.getLibraryName())
+           && Comparing.equal(myModuleName, packagingElement.getModuleName());
   }
 
   public LibraryPackagingElement getState() {
@@ -82,7 +92,8 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
 
   public void loadState(LibraryPackagingElement state) {
     myLevel = state.getLevel();
-    myName = state.getName();
+    myLibraryName = state.getLibraryName();
+    myModuleName = state.getModuleName();
   }
 
   @Attribute(LIBRARY_LEVEL_ATTRIBUTE)
@@ -95,22 +106,49 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
   }
 
   @Attribute(LIBRARY_NAME_ATTRIBUTE)
-  public String getName() {
-    return myName;
+  public String getLibraryName() {
+    return myLibraryName;
+  }
+
+  public void setLibraryName(String libraryName) {
+    myLibraryName = libraryName;
+  }
+
+  @Attribute(MODULE_NAME_ATTRIBUTE)
+  public String getModuleName() {
+    return myModuleName;
+  }
+
+  public void setModuleName(String moduleName) {
+    myModuleName = moduleName;
   }
 
   @Override
   public String toString() {
-    return "lib:" + myName + "(" + myLevel + ")";
-  }
-
-  public void setName(String name) {
-    myName = name;
+    return "lib:" + myLibraryName + "(" + (myModuleName != null ? "module " + myModuleName: myLevel ) + ")";
   }
 
   @Nullable
   public Library findLibrary(@NotNull PackagingElementResolvingContext context) {
-    return LibraryLink.findLibrary(myName, myLevel, context.getProject());
+    if (myModuleName == null) {
+      return LibraryLink.findLibrary(myLibraryName, myLevel, context.getProject());
+    }
+    final ModulesProvider modulesProvider = context.getModulesProvider();
+    final Module module = modulesProvider.getModule(myModuleName);
+    if (module != null) {
+      for (OrderEntry entry : modulesProvider.getRootModel(module).getOrderEntries()) {
+        if (entry instanceof LibraryOrderEntry) {
+          final LibraryOrderEntry libraryEntry = (LibraryOrderEntry)entry;
+          if (libraryEntry.isModuleLevel()) {
+            final String libraryName = libraryEntry.getLibraryName();
+            if (libraryName != null && libraryName.equals(myLibraryName)) {
+              return libraryEntry.getLibrary();
+            }
+          }
+        }
+      }
+    }
+    return null;
   }
 
   public static PackagingElementOutputKind getKindForLibrary(final Library library) {

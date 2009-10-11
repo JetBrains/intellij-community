@@ -77,5 +77,6 @@ public abstract class LogFilterModel {
 
   public abstract void selectFilter(LogFilter filter);
 
+  @Nullable
   public abstract Key processLine(String line);
 }

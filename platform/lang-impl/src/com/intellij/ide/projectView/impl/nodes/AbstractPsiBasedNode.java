@@ -123,11 +123,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
     catch (IndexNotReadyException ignored) {
     }
     data.setPresentableText(myName);
-    try {
-      data.setTooltip(calcTooltip());
-    }
-    catch (IndexNotReadyException ignored) {
-    }
+
     try {
       if (isDeprecated()) {
         data.setAttributesKey(CodeInsightColors.DEPRECATED_ATTRIBUTES);

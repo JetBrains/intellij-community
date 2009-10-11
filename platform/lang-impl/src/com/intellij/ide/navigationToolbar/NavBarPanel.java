@@ -74,7 +74,9 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * User: anna
@@ -237,7 +239,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   public void select() {
     updateModel();
     updateList();
-    
+
     if (!myList.isEmpty()) {
       myModel.setSelectedIndex(myList.size() - 1);
       IdeFocusManager.getInstance(myProject).requestFocus(this, true);
@@ -563,7 +565,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   private void navigateInsideBar(final Object object) {
     myModel.updateModel(object);
     updateList();
-    
+
     myModel.setSelectedIndex(myList.size() - 1);
 
     if (myHint != null) {
@@ -644,6 +646,18 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     if (dataId.equals(DataConstants.PSI_ELEMENT_ARRAY)) {
       final PsiElement element = getSelectedElement(PsiElement.class);
       return element != null && element.isValid() ? new PsiElement[]{element} : null;
+    }
+
+    if (dataId.equals(DataConstants.VIRTUAL_FILE_ARRAY)) {
+      PsiElement[] psiElements = (PsiElement[])getData(DataConstants.PSI_ELEMENT_ARRAY);
+      if (psiElements == null) return null;
+      Set<VirtualFile> files = new LinkedHashSet<VirtualFile>();
+      for (PsiElement element : psiElements) {
+        if (element instanceof PsiFileSystemItem) {
+          files.add(((PsiFileSystemItem)element).getVirtualFile());
+        }
+      }
+      return files.size() > 0 ? files.toArray(new VirtualFile[files.size()]) : null;
     }
 
     if (dataId.equals(DataConstants.CONTEXT_COMPONENT)) {

@@ -28,6 +28,7 @@ import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.ide.DataManager;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -169,7 +170,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     assert getTestDataPath() != null: "test data path not specified";
     final File fromFile = new File(getTestDataPath() + "/" + sourceFilePath);
     if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
-      return myTempDirFixture.copyAll(fromFile.getPath(), targetPath);            
+      return myTempDirFixture.copyAll(fromFile.getPath(), targetPath);
     }
     else {
       final File destFile = new File(getTempDirPath() + "/" + targetPath);
@@ -1016,7 +1017,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     final long start = System.currentTimeMillis();
 //    ProfilingUtil.startCPUProfiling();
-    Collection<HighlightInfo> infos = doHighlighting();
+    List<HighlightInfo> infos = doHighlighting();
+    removeDuplicatedRangesForInjected(infos);
     final long elapsed = System.currentTimeMillis() - start;
     duration.set(duration.isNull()? elapsed : duration.get().longValue() + elapsed);
 //    ProfilingUtil.captureCPUSnapshot("testing");
@@ -1026,14 +1028,35 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     data.checkResult(infos, myEditor.getDocument().getText());
   }
 
+  private void removeDuplicatedRangesForInjected(List<HighlightInfo> infos) {
+    Collections.sort(infos, new Comparator<HighlightInfo>() {
+      public int compare(HighlightInfo o1, HighlightInfo o2) {
+        final int i = o2.startOffset - o1.startOffset;
+        return i != 0 ? i : o1.getSeverity().myVal - o2.getSeverity().myVal;
+      }
+    });
+    HighlightInfo prevInfo = null;
+    for (Iterator<HighlightInfo> it = infos.iterator(); it.hasNext();) {
+      final HighlightInfo info = it.next();
+      if (prevInfo != null &&
+          info.getSeverity() == HighlightSeverity.INFORMATION &&
+          info.description == null &&
+          info.startOffset == prevInfo.startOffset &&
+          info.endOffset == prevInfo.endOffset) {
+        it.remove();
+      }
+      prevInfo = info.getSeverity() == HighlightInfoType.INJECTED_FRAGMENT_SEVERITY ? info : null;
+    }
+  }
+
   @NotNull
-  private Collection<HighlightInfo> doHighlighting() {
+  private List<HighlightInfo> doHighlighting() {
     final Project project = myProjectFixture.getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     return
-    ApplicationManager.getApplication().runReadAction(new Computable<Collection<HighlightInfo>>() {
-      public Collection<HighlightInfo> compute() {
+    ApplicationManager.getApplication().runReadAction(new Computable<List<HighlightInfo>>() {
+      public List<HighlightInfo> compute() {
         List<TextEditorHighlightingPass > passes =
           TextEditorHighlightingPassRegistrarEx.getInstanceEx(getProject()).instantiatePasses(getFile(), getEditor(), ArrayUtil.EMPTY_INT_ARRAY);
         ProgressIndicator progress = new DaemonProgressIndicator();

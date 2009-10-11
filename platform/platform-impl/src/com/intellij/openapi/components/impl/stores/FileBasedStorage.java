@@ -29,7 +29,6 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -150,23 +149,7 @@ public class FileBasedStorage extends XmlElementStorage {
     protected void doSave() throws StateStorageException {
       if (!myBlockSavingTheContent) {
         final byte[] text = StorageUtil.printDocument(getDocumentToSave());
-
-        //StorageUtil.save(myFile, text);
-        VirtualFile virtualFile = ensureVirtualFile();
-        if (virtualFile != null) {
-          try {
-            OutputStream out = virtualFile.getOutputStream(this);
-            try {
-              out.write(text);
-            }
-            finally {
-              out.close();
-            }
-          }
-          catch (IOException e) {
-            LOG.error(e);
-          }
-        }
+        StorageUtil.save(myFile, text, this);
       }
     }
 

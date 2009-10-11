@@ -26,7 +26,7 @@ public class TabHandler extends EditorWriteActionHandler {
 
     TemplateManagerImpl templateManager = (TemplateManagerImpl) TemplateManagerImpl.getInstance(project);
 
-    if (!templateManager.startTemplate(templateManager, editor, TemplateSettings.TAB_CHAR)) {
+    if (!templateManager.startTemplate(editor, TemplateSettings.TAB_CHAR)) {
       myOriginalHandler.execute(editor, dataContext);
     }
   }

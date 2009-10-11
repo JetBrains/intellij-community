@@ -139,20 +139,6 @@ public class CommanderPanel extends JPanel {
       });
     }
 
-    myList.addKeyListener(new KeyAdapter() {
-      public void keyPressed(final KeyEvent e) {
-        if (KeyEvent.VK_ESCAPE == e.getKeyCode()) {
-          if (e.isConsumed()) return;
-          final PsiCopyPasteManager copyPasteManager = PsiCopyPasteManager.getInstance();
-          final boolean[] isCopied = new boolean[1];
-          if (copyPasteManager.getElements(isCopied) != null && !isCopied[0]) {
-            copyPasteManager.clear();
-            e.consume();
-          }
-        }
-      }
-    });
-
     myList.addFocusListener(new FocusAdapter() {
       public void focusGained(final FocusEvent e) {
         setActive(true);

@@ -3,7 +3,6 @@ package com.intellij.packaging.impl.elements;
 import com.intellij.compiler.ant.Generator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -25,10 +24,8 @@ import java.util.List;
 /**
  * @author nik
  */
-public class FileCopyPackagingElement extends PackagingElement<FileCopyPackagingElement> implements RenameablePackagingElement {
-  @NonNls public static final String PATH_ATTRIBUTE = "path";
+public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElement<FileCopyPackagingElement> implements RenameablePackagingElement {
   @NonNls public static final String OUTPUT_FILE_NAME_ATTRIBUTE = "output-file-name";
-  private String myFilePath;
   private String myRenamedOutputFileName;
 
   public FileCopyPackagingElement() {
@@ -53,16 +50,11 @@ public class FileCopyPackagingElement extends PackagingElement<FileCopyPackaging
   public List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext, @NotNull AntCopyInstructionCreator creator,
                                                           @NotNull ArtifactAntGenerationContext generationContext,
                                                           @NotNull ArtifactType artifactType) {
-    File file = new File(FileUtil.toSystemDependentName(myFilePath));
+    if (isDirectory()) {
+      return Collections.emptyList();
+    }
     final String path = generationContext.getSubstitutedPath(myFilePath);
-    Generator generator;
-    if (file.isDirectory()) {
-      generator = creator.createDirectoryContentCopyInstruction(path);
-    }
-    else {
-      generator = creator.createFileCopyInstruction(path, getOutputFileName());
-    }
-    return Collections.singletonList(generator);
+    return Collections.singletonList((Generator)creator.createFileCopyInstruction(path, getOutputFileName()));
   }
 
   public String getOutputFileName() {
@@ -74,20 +66,9 @@ public class FileCopyPackagingElement extends PackagingElement<FileCopyPackaging
                                                      @NotNull PackagingElementResolvingContext resolvingContext,
                                                      @NotNull ArtifactIncrementalCompilerContext compilerContext, @NotNull ArtifactType artifactType) {
     final VirtualFile file = findFile();
-    if (file == null || !file.isValid()) {
-      return;
-    }
-    if (file.isDirectory()) {
-      creator.addDirectoryCopyInstructions(file, null);
-    }
-    else {
+    if (file != null && file.isValid() && !file.isDirectory()) {
       creator.addFileCopyInstruction(file, getOutputFileName());
     }
-  }
-
-  @Nullable
-  public VirtualFile findFile() {
-    return LocalFileSystem.getInstance().findFileByPath(myFilePath);
   }
 
   @NonNls @Override
@@ -96,15 +77,13 @@ public class FileCopyPackagingElement extends PackagingElement<FileCopyPackaging
   }
 
   public boolean isDirectory() {
-    final VirtualFile file = findFile();
-    return file != null && file.isDirectory();
+    return new File(FileUtil.toSystemDependentName(myFilePath)).isDirectory();
   }
 
 
   @Override
   public boolean isEqualTo(@NotNull PackagingElement<?> element) {
-    return element instanceof FileCopyPackagingElement && myFilePath != null
-           && myFilePath.equals(((FileCopyPackagingElement)element).getFilePath())
+    return element instanceof FileCopyPackagingElement && super.isEqualTo(element)
            && Comparing.equal(myRenamedOutputFileName, ((FileCopyPackagingElement)element).getRenamedOutputFileName());
   }
 
@@ -115,15 +94,6 @@ public class FileCopyPackagingElement extends PackagingElement<FileCopyPackaging
   public void loadState(FileCopyPackagingElement state) {
     setFilePath(state.getFilePath());
     setRenamedOutputFileName(state.getRenamedOutputFileName());
-  }
-
-  @Attribute(PATH_ATTRIBUTE)
-  public String getFilePath() {
-    return myFilePath;
-  }
-
-  public void setFilePath(String filePath) {
-    myFilePath = filePath;
   }
 
   @Nullable

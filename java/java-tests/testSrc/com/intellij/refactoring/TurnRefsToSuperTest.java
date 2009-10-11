@@ -117,6 +117,14 @@ public class TurnRefsToSuperTest extends MultiFileTestCase {
     doTest("B", "A", false);
   }
 
+  public void testTypeArgumentsRH() throws Exception {
+    doTest("IImpl", "I", false);
+  }
+
+  public void testTypeArgumentsRH1() throws Exception {
+    doTest("IImpl", "I", false);
+  }
+
   private void doTest(@NonNls final String className, @NonNls final String superClassName, final boolean replaceInstanceOf) throws Exception {
     doTest(new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
