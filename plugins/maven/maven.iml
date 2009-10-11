@@ -119,9 +119,7 @@
           <root url="jar://$MODULE_DIR$/lib/nexus-indexer-1.2.3.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES>
-          <root url="file://$MODULE_DIR$/../../../maven/nexus-indexer-1.2.3/src/main/java" />
-        </SOURCES>
+        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">
