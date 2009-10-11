@@ -1,22 +1,5 @@
-/**
- * @copyright
- * ====================================================================
- * Copyright (c) 2003-2004 QintSoft.  All rights reserved.
- *
- * This software is licensed as described in the file COPYING, which
- * you should have received as part of this distribution.  The terms
- * are also available at http://subversion.tigris.org/license-1.html.
- * If newer versions of this license are posted there, you may use a
- * newer version instead, at your option.
- *
- * This software consists of voluntary contributions made by many
- * individuals.  For exact contribution history, see the revision
- * history and logs, available at http://svnup.tigris.org/.
- * ====================================================================
- * @endcopyright
- */
 /*
- * Copyright 2000-2005 JetBrains s.r.o.
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ApplicationManager;
