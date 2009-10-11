@@ -44,6 +44,7 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
   private JEditorPane myCopyrightPane;
   private JButton myValidateButton;
   private JTextField myKeywordTf;
+  private JTextField myAllowReplaceTextField;
 
   public CopyrightConfigurable(Project project, CopyrightProfile copyrightProfile, Runnable updater) {
     super(true, updater);
@@ -99,12 +100,14 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
     return myModified ||
            !Comparing.strEqual(EntityUtil.encode(myCopyrightPane.getText().trim()), myCopyrightProfile.getNotice()) ||
            !Comparing.strEqual(myKeywordTf.getText().trim(), myCopyrightProfile.getKeyword()) ||
+           !Comparing.strEqual(myAllowReplaceTextField.getText().trim(), myCopyrightProfile.getAllowReplaceKeyword()) ||
            !Comparing.strEqual(myDisplayName, myCopyrightProfile.getName());
   }
 
   public void apply() throws ConfigurationException {
     myCopyrightProfile.setNotice(EntityUtil.encode(myCopyrightPane.getText().trim()));
     myCopyrightProfile.setKeyword(myKeywordTf.getText());
+    myCopyrightProfile.setAllowReplaceKeyword(myAllowReplaceTextField.getText());
     CopyrightManager.getInstance(myProject).addCopyright(myCopyrightProfile);
     myDisplayName = myCopyrightProfile.getName();
     myModified = false;
@@ -114,6 +117,7 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
     myDisplayName = myCopyrightProfile.getName();
     myCopyrightPane.setText(EntityUtil.decode(myCopyrightProfile.getNotice()));
     myKeywordTf.setText(myCopyrightProfile.getKeyword());
+    myAllowReplaceTextField.setText(myCopyrightProfile.getAllowReplaceKeyword());
   }
 
   public void disposeUIResources() {

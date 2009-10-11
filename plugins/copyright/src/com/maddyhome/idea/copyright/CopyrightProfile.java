@@ -29,6 +29,7 @@ public class CopyrightProfile extends ProfileEx {
 
   public String notice = DEFAULT_COPYRIGHT_NOTICE;
   public String keyword = EntityUtil.encode("Copyright");
+  public String allowReplaceKeyword = "";
 
   //read external
   public CopyrightProfile() {
@@ -53,5 +54,13 @@ public class CopyrightProfile extends ProfileEx {
 
   public void setKeyword(String keyword) {
     this.keyword = keyword;
+  }
+
+  public String getAllowReplaceKeyword() {
+    return allowReplaceKeyword;
+  }
+
+  public void setAllowReplaceKeyword(String allowReplaceKeyword) {
+    this.allowReplaceKeyword = allowReplaceKeyword;
   }
 }

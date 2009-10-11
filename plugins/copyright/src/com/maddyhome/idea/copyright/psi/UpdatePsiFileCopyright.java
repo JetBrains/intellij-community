@@ -27,6 +27,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilBase;
@@ -133,6 +134,10 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
           resetCommentText();
           String oldComment = doc.getCharsSequence()
             .subSequence(range.getFirst().getTextRange().getStartOffset(), range.getLast().getTextRange().getEndOffset()).toString().trim();
+          if (!StringUtil.isEmptyOrSpaces(myOptions.getAllowReplaceKeyword()) &&
+              !oldComment.contains(myOptions.allowReplaceKeyword)) {
+            return;
+          }
           if (newComment.trim().equals(oldComment)) {
             if (!getLanguageOptions().isAddBlankAfter()) {
               // TODO - do we need option to remove blank line after?
