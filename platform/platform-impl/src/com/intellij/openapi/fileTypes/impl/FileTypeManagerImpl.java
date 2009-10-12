@@ -143,6 +143,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   // -------------------------------------------------------------------------
 
   public FileTypeManagerImpl(MessageBus bus, SchemesManagerFactory schemesManagerFactory) {
+    myMessageBus = bus;
     mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, new SchemeProcessor<AbstractFileType>() {
       public AbstractFileType readScheme(final Document document) throws InvalidDataException {
         if (document == null) {
@@ -225,7 +226,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     if (loadAllFileTypes()) {
       restoreStandardFileExtensions();
     }
-    myMessageBus = bus;
   }
 
   private static void writeImportedExtensionsMap(final Element map, final ImportedFileType type) {
