@@ -230,11 +230,12 @@ public class AnnotationProcessorsConfigurable implements Configurable{
     final CompilerConfiguration config = CompilerConfiguration.getInstance(myProject);
     myCbEnableProcessing.setSelected(config.isAnnotationProcessorsEnabled());
 
-    if (config.isObtainProcessorsFromClasspath()) {
-      myRbClasspath.doClick();
+    final boolean obtainFromClasspath = config.isObtainProcessorsFromClasspath();
+    if (obtainFromClasspath) {
+      myRbClasspath.setSelected(true);
     }
     else {
-      myRbProcessorsPath.doClick();
+      myRbProcessorsPath.setSelected(true);
     }
 
     myProcessorPathField.setText(FileUtil.toSystemDependentName(config.getProcessorPath()));
