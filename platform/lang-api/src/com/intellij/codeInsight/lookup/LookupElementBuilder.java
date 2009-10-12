@@ -96,7 +96,7 @@ public class LookupElementBuilder extends LookupElement {
 
   @NotNull
   private LookupElementPresentation copyPresentation() {
-    final LookupElementPresentation presentation = new LookupElementPresentation(false);
+    final LookupElementPresentation presentation = new LookupElementPresentation();
     if (myHardcodedPresentation != null) {
       presentation.copyFrom(myHardcodedPresentation);
     } else {
