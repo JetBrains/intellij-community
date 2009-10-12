@@ -15,11 +15,5 @@
  */
 package com.intellij.openapi.compiler;
 
-/**
- * A tag interface indicating that the compiler will instrument java sources.
- * This affects the order of compiler calls:
- * The sequence in which compilers are called:
- * SourceGeneratingCompiler -> SourceInstrumentingCompiler -> TranslatingCompiler ->  ClassInstrumentingCompiler -> ClassPostProcessingCompiler -> Validator
- */
 public interface SourceProcessingCompiler extends FileProcessingCompiler, IntermediateOutputCompiler {
 }

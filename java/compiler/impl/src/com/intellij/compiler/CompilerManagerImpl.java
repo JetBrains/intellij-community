@@ -16,6 +16,7 @@
 package com.intellij.compiler;
 
 import com.intellij.compiler.impl.*;
+import com.intellij.compiler.impl.javaCompiler.AnnotationProcessingCompiler;
 import com.intellij.compiler.impl.javaCompiler.JavaCompiler;
 import com.intellij.compiler.impl.packagingCompiler.IncrementalPackagingCompiler;
 import com.intellij.compiler.impl.resourceCompiler.ResourceCompiler;
@@ -65,8 +66,7 @@ public class CompilerManagerImpl extends CompilerManager {
 
     // predefined compilers
     addTranslatingCompiler(new JavaCompiler(myProject), new HashSet<FileType>(Arrays.asList(StdFileTypes.JAVA)), new HashSet<FileType>(Arrays.asList(StdFileTypes.CLASS)));
-    // todo: enable compiler later
-    //addCompiler(new AnnotationProcessingCompiler(project));
+    addCompiler(new AnnotationProcessingCompiler(project));
     addCompiler(new ResourceCompiler(project, compilerConfiguration));
     addCompiler(new RmicCompiler());
     addCompiler(new IncrementalPackagingCompiler());

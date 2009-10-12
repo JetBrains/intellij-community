@@ -136,6 +136,7 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent {
       }
 
       additional.add(0, new RmicConfigurable(RmicSettings.getInstance(myProject)));
+      additional.add(0, new AnnotationProcessorsConfigurable(myProject));
       additional.add(0, new JavaCompilersTab(myProject, compilerConfiguration.getRegisteredJavaCompilers(), compilerConfiguration.getDefaultCompiler()));
 
       kids.addAll(additional);

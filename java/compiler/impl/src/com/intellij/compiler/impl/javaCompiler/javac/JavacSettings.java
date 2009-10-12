@@ -53,6 +53,10 @@ public class JavacSettings implements PersistentStateComponent<Element> {
     myProject = project;
   }
 
+  public Project getProject() {
+    return myProject;
+  }
+
   public Element getState() {
     try {
       final Element e = new Element("state");
