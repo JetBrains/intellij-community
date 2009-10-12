@@ -316,6 +316,8 @@ public class PsiClassImplUtil {
 
   private static final Function<ClassIconRequest, Icon> FULL_ICON_EVALUATOR = new Function<ClassIconRequest, Icon>() {
     public Icon fun(ClassIconRequest r) {
+      if (!r.psiClass.isValid() && r.psiClass.getProject().isDisposed()) return null;
+
       final boolean isLocked = (r.flags & Iconable.ICON_FLAG_READ_STATUS) != 0 && !r.psiClass.isWritable();
       Icon symbolIcon = ElementPresentationUtil.getClassIconOfKind(r.psiClass, ElementPresentationUtil.getClassKind(r.psiClass));
       RowIcon baseIcon = ElementBase.createLayeredIcon(symbolIcon, ElementPresentationUtil.getFlags(r.psiClass, isLocked));
