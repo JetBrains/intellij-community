@@ -74,14 +74,14 @@ public final class SpellCheckerConfigurable implements Configurable {
   private boolean wordsListIsModified() {
     assert options != null;
     List<String> newWords = options.getWords();
-    Set<String> words = manager.getUserDictionary().getWords();
+    Set<String> words = manager.getUserDictionary().getEditableWords();
     if (words == null && newWords == null) {
       return false;
     }
     if (words == null || newWords == null || newWords.size() != words.size()) {
       return true;
     }
-    return words.containsAll(newWords) && newWords.containsAll(words);
+    return !(words.containsAll(newWords) && newWords.containsAll(words));
   }
 
 
