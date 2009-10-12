@@ -132,7 +132,7 @@ public class CopyClassesHandler implements CopyHandlerDelegate {
     if (createdFile instanceof PsiClassOwner) {
       for (final PsiClass psiClass : ((PsiClassOwner)createdFile).getClasses()) {
         if (!(psiClass instanceof SyntheticElement)) {
-          createdFile.deleteChildRange(psiClass, psiClass);
+          psiClass.getParent().deleteChildRange(psiClass, psiClass);
         }
       }
 
