@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2007 JetBrains s.r.o.
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,8 +124,8 @@ public class NameUtil {
         // buffer.append(Integer.toHexString(c + 0x20000).substring(1));
 
         // for OROMATCHER RegExp engine
-        buffer.append("\\x");
-        buffer.append(Integer.toHexString(c + 0x20000).substring(3));
+        buffer.append("\\").append(c);
+        //buffer.append(Integer.toHexString(c + 0x20000).substring(2));
       }
     }
 
@@ -208,8 +208,8 @@ public class NameUtil {
         // buffer.append(Integer.toHexString(c + 0x20000).substring(1));
 
         // for OROMATCHER RegExp engine
-        buffer.append("\\x");
-        buffer.append(Integer.toHexString(c + 0x20000).substring(3));
+        buffer.append("\\").append(c);
+        //buffer.append(Integer.toHexString(c + 0x20000).substring(3));
       }
     }
 
@@ -351,7 +351,7 @@ public class NameUtil {
       return builder.toString();
     }
 
-    /**
+    /*
      * Don't try regexp matcher on names, which do not contain all the alphanumerics from the pattern in pattern's original order.
      */
     private boolean prefilter(String name, char[] pattern) {

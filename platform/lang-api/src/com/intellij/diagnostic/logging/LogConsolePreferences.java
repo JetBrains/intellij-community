@@ -1,5 +1,17 @@
 /*
- * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
+ * Copyright 2000-2009 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.intellij.diagnostic.logging;
@@ -45,17 +57,21 @@ public class LogConsolePreferences extends LogFilterRegistrar {
   public boolean FILTER_ERRORS = false;
   public boolean FILTER_WARNINGS = false;
   public boolean FILTER_INFO = true;
+  public boolean FILTER_DEBUG = true;
+
   public String CUSTOM_FILTER = null;
   @NonNls public static final String ERROR = "ERROR";
   @NonNls public static final String WARNING = "WARNING";
   @NonNls private static final String WARN = "WARN";
   @NonNls public static final String INFO = "INFO";
+  @NonNls public static final String DEBUG = "DEBUG";
   @NonNls public static final String CUSTOM = "CUSTOM";
 
   public final static Pattern ERROR_PATTERN = Pattern.compile(".*" + ERROR + ".*");
   public final static Pattern WARNING_PATTERN = Pattern.compile(".*" + WARNING + ".*");
   public final static Pattern WARN_PATTERN = Pattern.compile(".*" + WARN + ".*");
   public final static Pattern INFO_PATTERN = Pattern.compile(".*" + INFO + ".*");
+  public static final Pattern DEBUG_PATTERN = Pattern.compile(".*" + DEBUG + ".*");
 
   @NonNls public final static Pattern EXCEPTION_PATTERN = Pattern.compile(".*at .*");
 
@@ -98,6 +114,9 @@ public class LogConsolePreferences extends LogFilterRegistrar {
     if (type.equals(INFO)) {
       return !FILTER_INFO;
     }
+    if (type.equals(DEBUG)) {
+      return !FILTER_DEBUG;
+    }
     return true;
   }
 
@@ -111,12 +130,13 @@ public class LogConsolePreferences extends LogFilterRegistrar {
     if (ERROR_PATTERN.matcher(text.toUpperCase()).matches()) return ERROR;
     if (WARNING_PATTERN.matcher(text.toUpperCase()).matches() || WARN_PATTERN.matcher(text.toUpperCase()).matches()) return WARNING;
     if (INFO_PATTERN.matcher(text.toUpperCase()).matches()) return INFO;
+    if (DEBUG_PATTERN.matcher(text.toUpperCase()).matches()) return DEBUG;
     return null;
   }
 
   public static Key getProcessOutputTypes(String type) {
     if (type.equals(ERROR)) return ProcessOutputTypes.STDERR;
-    if (type.equals(WARNING) || type.equals(INFO)) return ProcessOutputTypes.STDOUT;
+    if (type.equals(WARNING) || type.equals(INFO) || type.equals(DEBUG)) return ProcessOutputTypes.STDOUT;
     return null;
   }
 

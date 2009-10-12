@@ -1,4 +1,20 @@
 /*
+ * Copyright 2000-2009 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
  * Created by IntelliJ IDEA.
  * User: dsl
  * Date: 14.06.2002
@@ -189,7 +205,7 @@ public class PullUpHelper {
   public void moveFieldInitializations() throws IncorrectOperationException {
     LOG.assertTrue(myMembersAfterMove != null);
 
-    final HashSet<PsiField> movedFields = new HashSet<PsiField>();
+    final LinkedHashSet<PsiField> movedFields = new LinkedHashSet<PsiField>();
     for (PsiMember member : myMembersAfterMove) {
       if (member instanceof PsiField) {
         movedFields.add((PsiField)member);
@@ -224,8 +240,8 @@ public class PullUpHelper {
     }
   }
 
-  private void tryToMoveInitializers(PsiMethod constructor, HashSet<PsiMethod> subConstructors, HashSet<PsiField> movedFields) throws IncorrectOperationException {
-    final HashMap<PsiField, Initializer> fieldsToInitializers = new HashMap<PsiField, Initializer>();
+  private void tryToMoveInitializers(PsiMethod constructor, HashSet<PsiMethod> subConstructors, LinkedHashSet<PsiField> movedFields) throws IncorrectOperationException {
+    final LinkedHashMap<PsiField, Initializer> fieldsToInitializers = new LinkedHashMap<PsiField, Initializer>();
     boolean anyFound = false;
 
     for (PsiField field : movedFields) {
@@ -447,7 +463,7 @@ public class PullUpHelper {
     private final Set<PsiField> myMovedFields;
     private final Set<PsiField> myUsedFields;
 
-    private final Set<PsiParameter> myUsedParameters = new HashSet<PsiParameter>();
+    private final Set<PsiParameter> myUsedParameters = new LinkedHashSet<PsiParameter>();
 
     private ParametersAndMovedFieldsUsedCollector(HashSet<PsiField> movedFields) {
       myMovedFields = movedFields;

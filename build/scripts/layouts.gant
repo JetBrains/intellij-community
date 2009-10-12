@@ -49,8 +49,7 @@ def layoutFull(String home, String targetDirectory) {
   //noinspection GroovyAssignabilityCheck
   List<String> openapiModules = [platformApiModules(),
           "openapi", "testFramework-java", "debugger-openapi", "compiler-openapi", "dom-openapi", "execution-openapi",
-          "jsp-openapi"/*, "jam-support-openapi",
-          "jam-support-openspi"*/].flatten()
+          "jsp-openapi", "jsp-base-openapi"].flatten()
 
   //noinspection GroovyAssignabilityCheck
   List<String> implementationModules = [platformImplementationModules(),
@@ -88,7 +87,6 @@ def layoutFull(String home, String targetDirectory) {
   layout(targetDirectory) {
     dir("lib") {
       jar("util.jar") { module("util") }
-      jar("idea-jsp-openapi.jar") { module("jsp-base-openapi") }
 
       jar("openapi.jar") {
         openapiModules.each { module it}

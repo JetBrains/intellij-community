@@ -1,8 +1,22 @@
+/*
+ * Copyright 2000-2009 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.javaee;
 
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -278,7 +292,15 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   }
 
   public boolean isIgnoredResource(String url) {
-    return myIgnoredResources.contains(url) || getImplicitNamespaceDescriptor(url) != null;
+    return myIgnoredResources.contains(url) || isImplicitNamespaceDescriptor(url);
+  }
+
+  private static boolean isImplicitNamespaceDescriptor(String url) {
+    for (ImplicitNamespaceDescriptorProvider namespaceDescriptorProvider : Extensions
+      .getExtensions(ImplicitNamespaceDescriptorProvider.EP_NAME)) {
+      if (namespaceDescriptorProvider.getNamespaceDescriptor(null, url) != null) return true;
+    }
+    return false;
   }
 
   public String[] getIgnoredResources() {
@@ -344,33 +366,6 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     for (ExternalResourceListener listener : myListeners.toArray(new ExternalResourceListener[myListeners.size()])) {
       listener.externalResourceChanged();
     }
-  }
-
-  public void registerImplicitNamespace(@NotNull final String ns, @NotNull final XmlNSDescriptor descriptor, Disposable parentDisposable) {
-    registerImplicitNamespace(new NullableFunction<String, XmlNSDescriptor>() {
-      public XmlNSDescriptor fun(String s) {
-        return ns.equals(s) ? descriptor : null;
-      }
-    }, parentDisposable);
-  }
-
-  public void registerImplicitNamespace(@NotNull final NullableFunction<String, XmlNSDescriptor> ns, Disposable parentDisposable) {
-    myImplicitNamespaces.add(ns);
-
-    Disposer.register(parentDisposable, new Disposable() {
-      public void dispose() {
-        myImplicitNamespaces.remove(ns);
-      }
-    });
-  }
-
-  @Nullable
-  public XmlNSDescriptor getImplicitNamespaceDescriptor(@NotNull final String ns) {
-    for (NullableFunction<String, XmlNSDescriptor> function : myImplicitNamespaces) {
-      XmlNSDescriptor descriptor = function.fun(ns);
-      if (descriptor != null) return descriptor;
-    }
-    return null;
   }
 
   private static ExternalResourceManagerImpl getProjectResources(Project project) {

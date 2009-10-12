@@ -1,3 +1,19 @@
+/*
+ * Copyright 2000-2009 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.intellij.diagnostic.logging;
 
 import com.intellij.diagnostic.DiagnosticBundle;
@@ -71,11 +87,26 @@ public class DefaultLogFilterModel extends LogFilterModel {
         prefs.FILTER_ERRORS = false;
         prefs.FILTER_INFO = false;
         prefs.FILTER_WARNINGS = false;
+        prefs.FILTER_DEBUG = false;
       }
 
       @Override
       public boolean isSelected() {
-        return !prefs.FILTER_ERRORS && !prefs.FILTER_INFO && !prefs.FILTER_WARNINGS;
+        return !prefs.FILTER_ERRORS && !prefs.FILTER_INFO && !prefs.FILTER_WARNINGS && !prefs.FILTER_DEBUG;
+      }
+    });
+    filters.add(new MyFilter(DiagnosticBundle.message("log.console.filter.show.errors.warnings.and.infos"), prefs) {
+      @Override
+      public void selectFilter() {
+        prefs.FILTER_ERRORS = false;
+        prefs.FILTER_INFO = false;
+        prefs.FILTER_WARNINGS = false;
+        prefs.FILTER_DEBUG = true;
+      }
+
+      @Override
+      public boolean isSelected() {
+        return !prefs.FILTER_ERRORS && !prefs.FILTER_INFO && !prefs.FILTER_WARNINGS && prefs.FILTER_DEBUG;
       }
     });
     filters.add(new MyFilter(DiagnosticBundle.message("log.console.filter.show.errors.and.warnings"), prefs) {
@@ -84,11 +115,12 @@ public class DefaultLogFilterModel extends LogFilterModel {
         prefs.FILTER_ERRORS = false;
         prefs.FILTER_INFO = true;
         prefs.FILTER_WARNINGS = false;
+        prefs.FILTER_DEBUG = true;
       }
 
       @Override
       public boolean isSelected() {
-        return !prefs.FILTER_ERRORS && prefs.FILTER_INFO && !prefs.FILTER_WARNINGS;
+        return !prefs.FILTER_ERRORS && prefs.FILTER_INFO && !prefs.FILTER_WARNINGS && prefs.FILTER_DEBUG;
       }
     });
     filters.add(new MyFilter(DiagnosticBundle.message("log.console.filter.show.errors"), prefs) {
@@ -97,11 +129,12 @@ public class DefaultLogFilterModel extends LogFilterModel {
         prefs.FILTER_ERRORS = false;
         prefs.FILTER_INFO = true;
         prefs.FILTER_WARNINGS = true;
+        prefs.FILTER_DEBUG = true;
       }
 
       @Override
       public boolean isSelected() {
-        return !prefs.FILTER_ERRORS && prefs.FILTER_INFO && prefs.FILTER_WARNINGS;
+        return !prefs.FILTER_ERRORS && prefs.FILTER_INFO && prefs.FILTER_WARNINGS && prefs.FILTER_DEBUG;
       }
     });
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2007 JetBrains s.r.o.
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,6 @@
  * limitations under the License.
  */
 package com.intellij.debugger;
-
-/**
- * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
- * Use is subject to license terms.
- *
- * Thrown by PositionManager implementation to indicate that it lacks data to perform operation,
- * debugger should try other implementation for this operation. Default implementation never throws
- * this exception.
- */
 
 public class NoDataException extends Exception{
 }

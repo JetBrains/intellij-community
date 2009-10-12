@@ -47,7 +47,6 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="lvcs-openapi" />
   </component>
 </module>
 
