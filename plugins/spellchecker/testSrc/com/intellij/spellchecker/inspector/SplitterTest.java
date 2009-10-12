@@ -15,8 +15,8 @@
  */
 package com.intellij.spellchecker.inspector;
 
-import com.intellij.spellchecker.CheckArea;
-import com.intellij.spellchecker.TextSplitter;
+import com.intellij.spellchecker.inspections.CheckArea;
+import com.intellij.spellchecker.inspections.TextSplitter;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
@@ -80,7 +80,20 @@ public class SplitterTest extends TestCase {
     correctIgnored(checkAreas, text, new String[]{});
   }
 
-  
+
+ public void testWordWithApostrophe4() {
+    String text = "we'll";
+    List<CheckArea> checkAreas = TextSplitter.splitText(text);
+    correctListToCheck(checkAreas, text, new String[]{"we'll"});
+    correctIgnored(checkAreas, text, new String[]{});
+  }
+
+  public void testWordWithApostrophe5() {
+    String text = "I'm you're we'll";
+    List<CheckArea> checkAreas = TextSplitter.splitText(text);
+    correctListToCheck(checkAreas, text, new String[]{"you're","we'll"});
+    correctIgnored(checkAreas, text, new String[]{"I'm"});
+  }
 
   public void testConstantName() {
     String text = "TEST_CONSTANT";

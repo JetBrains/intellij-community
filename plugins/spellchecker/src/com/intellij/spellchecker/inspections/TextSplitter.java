@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.spellchecker;
+package com.intellij.spellchecker.inspections;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -41,7 +41,7 @@ public class TextSplitter {
 
   @NonNls
   /*private static final Pattern WORD = Pattern.compile("\\b\\p{L}+'?\\p{L}*\\b");*/
-  private static final Pattern WORD = Pattern.compile("\\b\\p{Alpha}*'?\\p{Alpha}");
+  private static final Pattern WORD = Pattern.compile("\\b\\p{Alpha}*'?\\p{Alpha}*");
 
   private static final Pattern EXTENDED_WORD = Pattern.compile("\\b\\p{Alpha}*'?\\p{Alpha}(_*\\p{Alpha})*");
 

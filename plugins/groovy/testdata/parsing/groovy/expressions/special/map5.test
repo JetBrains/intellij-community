@@ -6,18 +6,24 @@ Groovy script
     Named argument
       Argument label
         Compound Gstring
-          PsiElement(Gstring begin)('"$')
-          Reference expression
-            PsiElement(identifier)('st')
-          PsiElement(Gstring end)(' aga"')
+          PsiElement(Gstring begin)('"')
+          GString injection
+            PsiElement($)('$')
+            Reference expression
+              PsiElement(identifier)('st')
+          PsiElement(Gstring content)(' aga')
+          PsiElement(Gstring end)('"')
       PsiElement(:)(':')
       Literal
         PsiElement(Integer)('1')
     PsiElement(,)(',')
     PsiWhiteSpace(' ')
     Compound Gstring
-      PsiElement(Gstring begin)('"$')
-      Reference expression
-        PsiElement(identifier)('st')
-      PsiElement(Gstring end)(' nee"')
+      PsiElement(Gstring begin)('"')
+      GString injection
+        PsiElement($)('$')
+        Reference expression
+          PsiElement(identifier)('st')
+      PsiElement(Gstring content)(' nee')
+      PsiElement(Gstring end)('"')
     PsiElement(])(']')

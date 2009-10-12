@@ -14,10 +14,14 @@ Groovy script
       PsiElement(identifier)('c')
     PsiElement(*.)('*.')
     Compound Gstring
-      PsiElement(Gstring begin)('"My $')
-      Reference expression
+      PsiElement(Gstring begin)('"')
+      PsiElement(Gstring content)('My ')
+      GString injection
+        PsiElement($)('$')
         Reference expression
-          PsiElement(identifier)('import')
-        PsiElement(.)('.')
-        PsiElement(identifier)('bugaga')
-      PsiElement(Gstring end)(' aga"')
+          Reference expression
+            PsiElement(identifier)('import')
+          PsiElement(.)('.')
+          PsiElement(identifier)('bugaga')
+      PsiElement(Gstring content)(' aga')
+      PsiElement(Gstring end)('"')

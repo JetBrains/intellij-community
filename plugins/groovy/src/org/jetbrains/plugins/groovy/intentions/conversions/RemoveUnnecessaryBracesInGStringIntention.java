@@ -51,7 +51,7 @@ public class RemoveUnnecessaryBracesInGStringIntention extends Intention {
       if (ErrorUtil.containsError(element)) return false;
 
       for (PsiElement child : element.getChildren()) {
-        if (GrStringUtil.checkClosableBlockInGStringForUnnecessaryBraces(child)) return true;
+        if (GrStringUtil.checkGStringInjectionForUnnecessaryBraces(child)) return true;
       }
       return false;
     }

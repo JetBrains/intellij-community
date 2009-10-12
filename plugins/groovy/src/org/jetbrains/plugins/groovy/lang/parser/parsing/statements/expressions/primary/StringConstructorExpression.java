@@ -34,21 +34,28 @@ public class StringConstructorExpression implements GroovyElementTypes {
   public static GroovyElementType parse(PsiBuilder builder, GroovyParser parser) {
 
     Marker sMarker = builder.mark();
-    if (ParserUtils.getToken(builder, mGSTRING_SINGLE_BEGIN)) {
-      GroovyElementType result = stringConstructorValuePart(builder, parser);
-      if (result.equals(WRONGWAY)) {
-        builder.error(GroovyBundle.message("identifier.or.block.expected"));
-        sMarker.done(GSTRING);
-        return GSTRING;
-      } else {
-        while (ParserUtils.getToken(builder, mGSTRING_SINGLE_CONTENT) && !result.equals(WRONGWAY)) {
-          result = stringConstructorValuePart(builder, parser);
-        }
-        ParserUtils.getToken(builder, mGSTRING_SINGLE_END, GroovyBundle.message("string.end.expected"));
-        sMarker.done(GSTRING);
-        return GSTRING;
+    if (ParserUtils.getToken(builder, mGSTRING_BEGIN)) {
+      ParserUtils.getToken(builder, mGSTRING_CONTENT);
+      if (mGSTRING_END.equals(builder.getTokenType())) {
+        sMarker.rollbackTo();
+        sMarker = builder.mark();
+        ParserUtils.advance(builder);
+        ParserUtils.advance(builder);
+        ParserUtils.advance(builder);
+        sMarker.done(LITERAL);
+        return LITERAL;
       }
-    } else {
+
+      while (ParserUtils.getToken(builder, mGSTRING_CONTENT) || mDOLLAR.equals(builder.getTokenType())) {
+        if (mDOLLAR.equals(builder.getTokenType())) {
+          stringConstructorValuePart(builder, parser);
+        }
+      }
+      ParserUtils.getToken(builder, mGSTRING_END, GroovyBundle.message("string.end.expected"));
+      sMarker.done(GSTRING);
+      return GSTRING;
+    }
+    else {
       sMarker.drop();
       return WRONGWAY;
     }
@@ -61,15 +68,23 @@ public class StringConstructorExpression implements GroovyElementTypes {
    * @return nothing
    */
   private static GroovyElementType stringConstructorValuePart(PsiBuilder builder, GroovyParser parser) {
+    final Marker injection = builder.mark();
+    ParserUtils.getToken(builder, mDOLLAR);
     ParserUtils.getToken(builder, mSTAR);
     if (mIDENT.equals(builder.getTokenType())) {
       PathExpression.parse(builder, parser);
+      injection.done(GSTRING_INJECTION);
       return PATH_EXPRESSION;
-    } else if (mLCURLY.equals(builder.getTokenType())) {
+    }
+    else if (mLCURLY.equals(builder.getTokenType())) {
       OpenOrClosableBlock.parseClosableBlock(builder, parser);
+      injection.done(GSTRING_INJECTION);
       return CLOSABLE_BLOCK;
     }
+    else {
+      builder.error(GroovyBundle.message("identifier.or.block.expected"));
+    }
+    injection.drop();
     return WRONGWAY;
   }
-
 }

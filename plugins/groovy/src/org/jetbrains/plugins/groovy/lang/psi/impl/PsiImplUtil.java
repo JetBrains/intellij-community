@@ -40,7 +40,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.*;
@@ -87,10 +86,10 @@ public class PsiImplUtil {
     // check priorities
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(oldExpr.getProject());
     if (GrStringUtil.isReplacedExpressionInGStringInjection(oldExpr)) {
-      if (newExpr instanceof GrLiteral) {
-        return GrStringUtil.replaceExpressionInjectionByLiteral(oldExpr, ((GrLiteral)newExpr));
+      /*if (newExpr instanceof GrLiteral) {            todo Max Medvedev
+        return GrStringUtil.replaceStringInjectionByLiteral(oldExpr, ((GrLiteral)newExpr));
       }
-      else if (!(newExpr instanceof GrReferenceExpression)){
+      else */if (!(newExpr instanceof GrReferenceExpression)){
         newExpr = factory.createExpressionFromText("{" + newExpr.getText() + "}");
       }
     }

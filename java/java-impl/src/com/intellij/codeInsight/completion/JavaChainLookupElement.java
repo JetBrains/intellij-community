@@ -69,7 +69,7 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
   @Override
   public void renderElement(LookupElementPresentation presentation) {
     super.renderElement(presentation);
-    final LookupElementPresentation qualifierPresentation = new LookupElementPresentation(presentation.isReal());
+    final LookupElementPresentation qualifierPresentation = new LookupElementPresentation();
     myQualifier.renderElement(qualifierPresentation);
     String name = maybeAddParentheses(qualifierPresentation.getItemText());
     final String qualifierText = myQualifier.as(CastingLookupElementDecorator.class) != null ? "(" + name + ")" : name;

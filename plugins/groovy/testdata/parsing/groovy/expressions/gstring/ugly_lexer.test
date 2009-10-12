@@ -2,15 +2,17 @@ foo = "abcdef ${42}\dfsd
 42
 -----
 Groovy script
-  Call expression
-    Assignment expression
-      Reference expression
-        PsiElement(identifier)('foo')
-      PsiWhiteSpace(' ')
-      PsiElement(=)('=')
-      PsiWhiteSpace(' ')
-      Compound Gstring
-        PsiElement(Gstring begin)('"abcdef $')
+  Assignment expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    Compound Gstring
+      PsiElement(Gstring begin)('"')
+      PsiElement(Gstring content)('abcdef ')
+      GString injection
+        PsiElement($)('$')
         Closable block
           PsiElement({)('{')
           Parameter list
@@ -18,13 +20,9 @@ Groovy script
           Literal
             PsiElement(Integer)('42')
           PsiElement(})('}')
-        PsiErrorElement:GString ending expected
-          <empty list>
-    Command arguments
-      Literal
-        PsiElement(wrong gstring)('\dfsd')
-        PsiErrorElement:Wrong string literal
-          <empty list>
+      PsiElement(Gstring content)('\dfsd')
+      PsiErrorElement:String end expected
+        <empty list>
   PsiElement(new line)('\n')
   Literal
     PsiElement(Integer)('42')

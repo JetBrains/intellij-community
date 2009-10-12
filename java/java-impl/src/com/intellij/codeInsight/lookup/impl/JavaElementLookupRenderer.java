@@ -21,9 +21,12 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.beanProperties.BeanPropertyElement;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.util.Function;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -56,8 +59,12 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
           (psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT))) {
         tailText = "{...}" + tailText;
       }
-      if (substitutor != null && psiClass.getTypeParameters().length > 0) {
-        tailText = "<...>" + tailText;
+      if (substitutor == null && psiClass.getTypeParameters().length > 0) {
+        tailText = "<" + StringUtil.join(psiClass.getTypeParameters(), new Function<PsiTypeParameter, String>() {
+          public String fun(PsiTypeParameter psiTypeParameter) {
+            return psiTypeParameter.getName();
+          }
+        }, "," + (showSpaceAfterComma(psiClass) ? " " : "")) + ">" + tailText;
       }
       grayed = true;
     }
@@ -95,6 +102,16 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
       if (o instanceof PsiMember && ((PsiMember)o).getContainingClass() != null) {
         name = ((PsiMember)o).getContainingClass().getName() + "." + name;
       }
+    }
+
+    PsiSubstitutor substitutor = (PsiSubstitutor)item.getAttribute(LookupItem.SUBSTITUTOR);
+    if (o instanceof PsiClass && substitutor != null) {
+      final PsiClass psiClass = (PsiClass)o;
+      final PsiTypeParameter[] params = psiClass.getTypeParameters();
+      if (params.length > 0) {
+        return name + formatTypeParameters(substitutor, params);
+      }
+
     }
 
     return StringUtil.notNullize(name);
@@ -167,6 +184,38 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
       return substitutor.substitute(returnType).getPresentableText();
     }
     return returnType.getPresentableText();
+  }
+
+  @Nullable
+  private static String formatTypeParameters(@NotNull final PsiSubstitutor substitutor, final PsiTypeParameter[] params) {
+    final boolean space = showSpaceAfterComma(params[0]);
+    StringBuilder buffer = new StringBuilder();
+    buffer.append("<");
+    for(int i = 0; i < params.length; i++){
+      final PsiTypeParameter param = params[i];
+      final PsiType type = substitutor.substitute(param);
+      if(type == null){
+        return "";
+      }
+      if (type instanceof PsiClassType && ((PsiClassType)type).getParameters().length > 0) {
+        buffer.append(((PsiClassType)type).rawType().getPresentableText()).append("<...>");
+      } else {
+        buffer.append(type.getPresentableText());
+      }
+
+      if(i < params.length - 1) {
+        buffer.append(",");
+        if (space) {
+          buffer.append(" ");
+        }
+      }
+    }
+    buffer.append(">");
+    return buffer.toString();
+  }
+
+  private static boolean showSpaceAfterComma(PsiClass element) {
+    return CodeStyleSettingsManager.getSettings(element.getProject()).SPACE_AFTER_COMMA;
   }
 
   private static boolean isToStrikeout(LookupItem<?> item) {

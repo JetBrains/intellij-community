@@ -62,6 +62,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueSta
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrFlowInterruptingStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
@@ -156,6 +157,9 @@ public class GroovyAnnotator implements Annotator {
     else if (element instanceof GrThisReferenceExpression || element instanceof GrSuperReferenceExpression) {
       checkThisOrSuperReferenceExpression(((GrExpression)element), holder);
     }
+    else if (element instanceof GrLiteral) {
+      checkLiteral(((GrLiteral)element), holder);
+    }
     else if (element instanceof GroovyFile) {
       final GroovyFile file = (GroovyFile)element;
       if (file.isScript()) {
@@ -173,6 +177,20 @@ public class GroovyAnnotator implements Annotator {
           element.getContainingFile() instanceof GroovyFile &&
           !isDocCommentElement(element)) {
         GroovyImportsTracker.getInstance(element.getProject()).markFileAnnotated((GroovyFile)element.getContainingFile());
+      }
+    }
+  }
+
+  private static void checkLiteral(GrLiteral literal, AnnotationHolder holder) {
+    String text = literal.getText();
+    if (text.startsWith("'''")) {
+      if (text.length() < 6 || !text.endsWith("'''")) {
+        holder.createErrorAnnotation(literal, GroovyBundle.message("string.end.expected"));
+      }
+    }
+    else if (text.startsWith("'")) {
+      if (text.length() < 2 || !text.endsWith("'")) {
+        holder.createErrorAnnotation(literal, GroovyBundle.message("string.end.expected"));        
       }
     }
   }

@@ -23,14 +23,15 @@ import java.util.ResourceBundle;
 
 
 public final class SpellCheckerBundle {
-  @NonNls
-  private static final String BUNDLE_NAME = "com.intellij.spellchecker.util.SpellCheckerBundle";
-  private static final ResourceBundle BUNDLE = ResourceBundle.getBundle(BUNDLE_NAME);
+    @NonNls
+    private static final String BUNDLE_NAME = "com.intellij.spellchecker.util.SpellCheckerBundle";
+    private static final ResourceBundle BUNDLE = ResourceBundle.getBundle(BUNDLE_NAME);
 
-  private SpellCheckerBundle() {
-  }
+    private SpellCheckerBundle() {
+    }
 
-  public static String message(@PropertyKey(resourceBundle = BUNDLE_NAME) String key, Object... params) {
-    return CommonBundle.message(BUNDLE, key, params);
-  }
+    public static String message(@PropertyKey(resourceBundle = BUNDLE_NAME) String key, Object... params) {
+        return CommonBundle.message(BUNDLE, key, params);
+        
+    }
 }

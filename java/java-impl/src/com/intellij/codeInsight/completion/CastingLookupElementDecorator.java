@@ -31,7 +31,7 @@ public class CastingLookupElementDecorator extends LookupElementDecorator<Lookup
 
   @Nullable
   private static String getItemText(LookupElementPresentation base, LookupElement castItem) {
-    final LookupElementPresentation castPresentation = new LookupElementPresentation(base.isReal());
+    final LookupElementPresentation castPresentation = new LookupElementPresentation();
     castItem.renderElement(castPresentation);
     return castPresentation.getItemText();
   }

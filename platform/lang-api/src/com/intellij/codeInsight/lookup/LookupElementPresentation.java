@@ -35,12 +35,6 @@ public class LookupElementPresentation {
   private Color myTailForeground;
   private boolean myItemTextBold;
 
-  private final boolean myReal;
-
-  public LookupElementPresentation(boolean real) {
-    myReal = real;
-  }
-
   public void setIcon(@Nullable Icon icon) {
     myIcon = icon;
   }
@@ -81,11 +75,13 @@ public class LookupElementPresentation {
   }
 
   /**
+   * Is equivalent to instanceof {@link com.intellij.codeInsight.lookup.RealLookupElementPresentation} check.
+   *
    * @return whether the presentation is requested to actually render lookup element on screen, or just to estimate its width.
    * In the second, 'non-real' case, some heavy operations (e.g. getIcon()) can be omitted (only icon width is important)
    */
   public boolean isReal() {
-    return myReal;
+    return false;
   }
 
   @Nullable
