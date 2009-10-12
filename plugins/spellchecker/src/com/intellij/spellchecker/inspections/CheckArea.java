@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.spellchecker;
+package com.intellij.spellchecker.inspections;
 
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.Nullable;
@@ -39,17 +39,11 @@ public class CheckArea {
     return textRange;
   }
 
-  public void setTextRange(TextRange textRange) {
-    this.textRange = textRange;
-  }
 
   public boolean isIgnored() {
     return ignored;
   }
 
-  public void setIgnored(boolean ignored) {
-    this.ignored = ignored;
-  }
 
   @Nullable
   public String getWord() {
@@ -59,6 +53,6 @@ public class CheckArea {
 
   @Override
   public String toString() {
-    return "CheckArea{range = " + textRange + ", ignored=" + ignored + ", word=" + (getWord()!=null?getWord():"") +'}';
+    return "CheckArea{range = " + textRange + ", ignored=" + ignored + ", word=" + (getWord() != null ? getWord() : "") + '}';
   }
 }

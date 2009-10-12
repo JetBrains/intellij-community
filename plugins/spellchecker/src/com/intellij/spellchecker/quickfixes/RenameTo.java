@@ -20,10 +20,10 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.refactoring.actions.RenameElementAction;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
-import com.intellij.spellchecker.DictionarySuggestionProvider;
-import com.intellij.spellchecker.quickfixes.SpellCheckerQuickFix;
+import com.intellij.spellchecker.quickfixes.DictionarySuggestionProvider;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +31,11 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 
-public class RenameTo implements SpellCheckerQuickFix {
+public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
+
+  public RenameTo(@NotNull TextRange textRange, @NotNull String word, @NotNull Project project) {
+    super(textRange, word, project);
+  }
 
   @NotNull
   public String getName() {

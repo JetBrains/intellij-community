@@ -13,42 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.spellchecker.dictionary;
+package com.intellij.spellchecker.engine;
 
-import com.intellij.spellchecker.trie.Action;
+import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Set;
 
-public interface Dictionary {
-
-  String getName();
-
-  boolean contains(String word);
-
-  boolean isEmpty();
-
-  void addToDictionary(String word);
-
-  void removeFromDictionary(String word);
-
-  void addToDictionary(@Nullable Collection<String> words);
-
-  void replaceAll(@Nullable Collection<String> words);
-
-  void clear();
-
-  void traverse(final Action action);
+public class Transformation {
+  
+  @Nullable
+  public String transform(@Nullable String word) {
+    if (word == null || word.trim().length() < 3) {
+      return null;
+    }
+    return word.trim().toLowerCase();
+  }
 
   @Nullable
-  Set<String> getWords();
-
-  @Nullable
-  Set<String> getEditableWords();
-
-  @Nullable
-  Set<String> getNotEditableWords();
-
-
+  public Set<String> transform(@Nullable Collection<String> words) {
+    if (words == null || words.isEmpty()) {
+      return null;
+    }
+    Set<String> result = new HashSet<String>();
+    for (String word : words) {
+      String transformed = transform(word);
+      if (transformed != null) {
+        result.add(transformed);
+      }
+    }
+    return result;
+  }
 }

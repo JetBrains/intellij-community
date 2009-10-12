@@ -15,32 +15,114 @@
  */
 package com.intellij.spellchecker.dictionary;
 
-import com.intellij.util.containers.HashSet;
+import com.intellij.spellchecker.trie.Action;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-/**
- * Created by IntelliJ IDEA.
- *
- * @author shkate@jetbrains.com
- */
-public class ProjectDictionary extends UserDictionary {
+public class ProjectDictionary implements Dictionary {
 
-  @NotNull
-  public List<Dictionary> dictionaries = new ArrayList<Dictionary>();
+  private static final String DEFAULT_CURRENT_USER_NAME = "default.user";
+  private static final String DEFAULT_PROJECT_DICTIONARY_NAME = "project";
+  private String activeName;
+  private Set<Dictionary> dictionaries;
+
 
   public ProjectDictionary() {
   }
 
-  public ProjectDictionary(String name) {
-    super(name);
+  public ProjectDictionary(Set<Dictionary> dictionaries) {
+    this.dictionaries = dictionaries;
   }
 
-  @Override
+  public boolean isEmpty() {
+    return false;
+  }
+
+  public String getName() {
+    return DEFAULT_PROJECT_DICTIONARY_NAME;
+  }
+
+  public String getActiveName() {
+    return activeName;
+  }
+
+  public void setActiveName(String name) {
+    this.activeName = name;
+  }
+
+  public boolean contains(String word) {
+    if (word == null || dictionaries == null) {
+      return false;
+    }
+    for (Dictionary dictionary : dictionaries) {
+      if (dictionary.contains(word)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public void addToDictionary(String word) {
+    getActiveDictionary().addToDictionary(word);
+  }
+
+  public void removeFromDictionary(String word) {
+    getActiveDictionary().removeFromDictionary(word);
+  }
+
+  @NotNull
+  private Dictionary getActiveDictionary() {
+    return ensureCurrentUserDictionary();
+  }
+
+  @NotNull
+  private Dictionary ensureCurrentUserDictionary() {
+    if (activeName == null) {
+      activeName = DEFAULT_CURRENT_USER_NAME;
+    }
+    Dictionary result = getDictionaryByName(activeName);
+    if (result == null) {
+      result = new UserDictionary(this.activeName);
+      if (dictionaries == null) {
+        dictionaries = new HashSet<Dictionary>();
+      }
+      dictionaries.add(result);
+    }
+    return result;
+  }
+
+  @Nullable
+  private Dictionary getDictionaryByName(@NotNull String name) {
+    if (dictionaries == null) {
+      return null;
+    }
+    Dictionary result = null;
+    for (Dictionary dictionary : dictionaries) {
+      if (dictionary.getName().equals(name)) {
+        result = dictionary;
+        break;
+      }
+    }
+    return result;
+  }
+
+
+  public void replaceAll(@Nullable Collection<String> words) {
+    getActiveDictionary().replaceAll(words);
+  }
+
+  public void clear() {
+    getActiveDictionary().clear();
+  }
+
+
+  @Nullable
   public Set<String> getWords() {
+    if (dictionaries == null) {
+      return null;
+    }
     Set<String> words = new HashSet<String>();
     for (Dictionary dictionary : dictionaries) {
       words.addAll(dictionary.getWords());
@@ -48,42 +130,63 @@ public class ProjectDictionary extends UserDictionary {
     return words;
   }
 
-  @Override
-  public void acceptWord(@NotNull String word) {
-    getUserDictionary().acceptWord(word);
+  public void traverse(Action action) {
+    if (dictionaries == null) {
+      return;
+    }
+
+    for (Dictionary dictionary : dictionaries) {
+      dictionary.traverse(action);
+    }
+
   }
 
-  @Override
-  public void replaceAllWords(Set<String> newWords) {
-    getUserDictionary().replaceAllWords(newWords);
+  @Nullable
+  public Set<String> getEditableWords() {
+    return getActiveDictionary().getWords();
   }
 
-  public void setDictionaries(@NotNull List<Dictionary> dictionaries) {
-    this.dictionaries = dictionaries;
+  @Nullable
+  public Set<String> getNotEditableWords() {
+    Set<String> words = getWords();
+    Set<String> editable = getEditableWords();
+    if (words != null && editable != null) {
+      words.removeAll(editable);
+    }
+    return words;
   }
 
-  @NotNull
-  public List<Dictionary> getDictionaries(){
+  public void addToDictionary(@Nullable Collection<String> words) {
+    getActiveDictionary().addToDictionary(words);
+  }
+
+  public Set<Dictionary> getDictionaries() {
     return dictionaries;
   }
 
-  public Dictionary getUserDictionary() {
-    final String name = getCurrentUserName();
-    Dictionary userDictionary = null;
-    for (Dictionary dictionary : dictionaries) {
-      if (dictionary.getName().equals(name)){
-        userDictionary = dictionary;
-        break;
-      }
-    }
-    if (userDictionary==null){
-      userDictionary = new UserDictionary(name);
-      dictionaries.add((UserDictionary)userDictionary);
-    }
-    return userDictionary;
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    ProjectDictionary that = (ProjectDictionary)o;
+
+    if (activeName != null ? !activeName.equals(that.activeName) : that.activeName != null) return false;
+    if (dictionaries != null ? !dictionaries.equals(that.dictionaries) : that.dictionaries != null) return false;
+
+    return true;
   }
 
-  public static String getCurrentUserName() {
-    return System.getProperty("user.name");
+  @Override
+  public int hashCode() {
+    int result = activeName != null ? activeName.hashCode() : 0;
+    result = 31 * result + (dictionaries != null ? dictionaries.hashCode() : 0);
+    return result;
+  }
+
+  @Override
+  public String toString() {
+    return "ProjectDictionary{" + "activeName='" + activeName + '\'' + ", dictionaries=" + dictionaries + '}';
   }
 }

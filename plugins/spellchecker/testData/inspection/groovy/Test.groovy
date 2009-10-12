@@ -1,2 +1,2 @@
-def abc(String <TYPO descr="Word 'dddd' is misspelled">dddd</TYPO>) {
+def abc(String <TYPO descr="Typo: In word 'dddd'">dddd</TYPO>) {
 }

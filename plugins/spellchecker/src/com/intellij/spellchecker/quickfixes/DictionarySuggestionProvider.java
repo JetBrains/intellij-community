@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.spellchecker;
+package com.intellij.spellchecker.quickfixes;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiElement;
@@ -21,6 +21,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
+import com.intellij.spellchecker.SpellCheckerManager;
 
 import java.util.*;
 

@@ -13,18 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package testData.inspection.docCommentWithMistakes.data.java.src;
+package com.intellij.spellchecker.trie;
 
-/**
- * doc <TYPO descr="Typo: In word 'commment'">commment</TYPO>
- *
- * @author Test Test
- */
-class SPITest6 {
-  /**
-   * @param parameter - first parameter
-   */
-  private void method(String parameter) {
+import java.util.Map;
 
-  }
+public interface Action {
+
+  void run(Map.Entry<? extends String,? extends String> entry);
 }

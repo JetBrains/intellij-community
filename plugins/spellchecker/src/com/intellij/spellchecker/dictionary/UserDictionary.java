@@ -15,59 +15,112 @@
  */
 package com.intellij.spellchecker.dictionary;
 
-import com.intellij.util.xmlb.annotations.AbstractCollection;
-import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.Tag;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.spellchecker.trie.Action;
+import com.intellij.spellchecker.trie.CharSequenceKeyAnalyzer;
+import com.intellij.spellchecker.trie.PatriciaTrie;
+import com.intellij.spellchecker.trie.Trie;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- *
- * @author shkate@jetbrains.com
- */
-@Tag("dictionary")
 public class UserDictionary implements Dictionary {
 
-  @Tag("words")
-  @AbstractCollection(surroundWithTag = false,elementTag = "w",elementValueAttribute = "")
-  public Set<String> words = new HashSet<String>();
-
-  @Attribute(NAME_ATTRIBUTE)
-  public String name = "new";
-  private static final String NAME_ATTRIBUTE = "name";
-
-  public UserDictionary() {
-  }
+  private String name;
+  private Trie<String, String> trie = new PatriciaTrie<String, String>(new CharSequenceKeyAnalyzer());
 
   public UserDictionary(String name) {
     this.name = name;
   }
 
-  @NotNull
   public String getName() {
     return name;
   }
 
+  public boolean contains(String word) {
+    return word != null && trie.containsKey(word);
+  }
 
+  @Nullable
   public Set<String> getWords() {
-    return Collections.unmodifiableSet(words);
+    return trie.keySet();
   }
 
-  public void acceptWord(@NotNull String word) {
-    words.add(word);
+  @Nullable
+  public Set<String> getEditableWords() {
+    return trie.keySet();
   }
 
-  public void replaceAllWords(Set<String> newWords) {
-    replaceAll(words, newWords);
+  @Nullable
+  public Set<String> getNotEditableWords() {
+    return null;
   }
 
-  private static void replaceAll(Set<String> words, Set<String> newWords) {
-    words.clear();
-    words.addAll(newWords);
+  public void clear() {
+    trie.clear();
   }
 
+
+  public void addToDictionary(String word) {
+    if (word == null) {
+      return;
+    }
+    trie.put(word, word);
+  }
+
+  public void removeFromDictionary(String word) {
+    if (word == null) {
+      return;
+    }
+    trie.remove(word);
+  }
+
+  public void replaceAll(@Nullable Collection<String> words) {
+    clear();
+    addToDictionary(words);
+  }
+
+  public void addToDictionary(@Nullable Collection<String> words) {
+    if (words == null || words.isEmpty()) {
+      return;
+    }
+    for (String word : words) {
+      addToDictionary(word);
+    }
+  }
+
+  public boolean isEmpty() {
+    return (trie == null || trie.size() == 0);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    UserDictionary that = (UserDictionary)o;
+
+    return !(name != null ? !name.equals(that.name) : that.name != null);
+
+  }
+
+  public void traverse(final Action action){
+    trie.traverse(new PatriciaTrie.Cursor<String, String>() {
+          public SelectStatus select(Map.Entry<? extends String, ? extends String> entry) {
+            action.run(entry);
+            return SelectStatus.CONTINUE;
+          }
+        });
+  }
+
+  @Override
+  public int hashCode() {
+    return name != null ? name.hashCode() : 0;
+  }
+
+  @Override
+  public String toString() {
+    return "UserDictionary{" + "name='" + name + '\'' + ", words.count=" + trie.size() + '}';
+  }
 }

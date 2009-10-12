@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.spellchecker.options;
+package com.intellij.spellchecker.state;
 
 import com.intellij.openapi.components.StateSplitter;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.spellchecker.state.DictionaryState;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jdom.Element;
 
@@ -36,8 +37,9 @@ public class ProjectDictionarySplitter implements StateSplitter {
     final UniqueNameGenerator generator = new UniqueNameGenerator();
 
     List<Pair<Element, String>> result = new ArrayList<Pair<Element, String>>();
-     for (Element element : JDOMUtil.getElements(e)) {
-      final String name = generator.generateUniqueName(FileUtil.sanitizeFileName(element.getAttributeValue("name"))) + ".xml";
+    for (Element element : JDOMUtil.getElements(e)) {
+      final String name = generator.generateUniqueName(FileUtil.sanitizeFileName(element.getAttributeValue(DictionaryState.NAME_ATTRIBUTE))) + ".xml";
+
       result.add(new Pair<Element, String>(element, name));
     }
     return result;

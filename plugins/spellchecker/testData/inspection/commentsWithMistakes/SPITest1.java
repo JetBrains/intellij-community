@@ -21,13 +21,13 @@ package testData.inspection.commentsWithMistakes.data.java.src;
 */
 class SPITest1 {
   /* boolean is Java keyword
-   <TYPO descr="Word 'commment' is misspelled">commment</TYPO>
+   <TYPO descr="Typo: In word 'commment'">commment</TYPO>
   */
-  // single line <TYPO descr="Word 'upgade' is misspelled">upgade</TYPO>
+  // single line <TYPO descr="Typo: In word 'upgade'">upgade</TYPO>
   void method() {
     /*
-    <TYPO descr="Word 'werty' is misspelled">werty</TYPO> within method
+    <TYPO descr="Typo: In word 'werty'">werty</TYPO> within method
    */
-    // single line <TYPO descr="Word 'newss' is misspelled">newss</TYPO> within method
+    // single line <TYPO descr="Typo: In word 'newss'">newss</TYPO> within method
   }
 }

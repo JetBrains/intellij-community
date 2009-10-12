@@ -15,11 +15,32 @@
  */
 package com.intellij.spellchecker.engine;
 
-public final class SpellCheckerFactory {
-    private SpellCheckerFactory() {
-    }
+import com.intellij.spellchecker.dictionary.Loader;
+import org.jetbrains.annotations.NotNull;
 
-    public static SpellCheckerEngine create() {
-        return new BaseSpellChecker();
-    }
+import java.util.List;
+
+
+public interface SpellCheckerEngine {
+
+
+  void loadDictionary(@NotNull Loader loader);
+
+  Transformation getTransformation();
+
+  boolean isCorrect(@NotNull String word);
+
+  void addToDictionary(String word);
+
+  @NotNull
+  List<String> getSuggestions(@NotNull String word, int threshold, int quality);
+
+  @NotNull
+  List<String> getVariants(@NotNull String prefix);
+
+  /**
+   * This method must clean up user dictionary words and ignored words.
+   */
+  void reset();
+
 }

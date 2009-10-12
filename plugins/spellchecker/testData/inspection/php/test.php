@@ -1,5 +1,5 @@
 <?php
-class /*Test<TYPO descr="Word 'Classs' is misspelled">Classs</TYPO>*/ Test<TYPO descr="Word 'Classs' is misspelled">Classs</TYPO> {
+class /*Test<TYPO descr="Typo: In word 'Classs'">Classs</TYPO>*/ Test<TYPO descr="Typo: In word 'Classs'">Classs</TYPO> {
 
 }
 ?>
