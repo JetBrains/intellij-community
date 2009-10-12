@@ -253,7 +253,7 @@
       <mouse-shortcut keystroke="alt button2"/>
     </action>
     <action id="ShowBookmarks">
-      <keyboard-shortcut first-keystroke="F11"/>
+      <keyboard-shortcut first-keystroke="shift F11"/>
     </action>
     <action id="HighlightUsagesInFile">
       <keyboard-shortcut first-keystroke="control shift F7"/>
@@ -560,7 +560,7 @@
       <keyboard-shortcut first-keystroke="shift F4"/>
     </action>
     <action id="ToggleBookmark">
-      <keyboard-shortcut first-keystroke="shift F11"/>
+      <keyboard-shortcut first-keystroke="F11"/>
     </action>
     <action id="MoveStatementDown">
       <keyboard-shortcut first-keystroke="control shift DOWN"/>
