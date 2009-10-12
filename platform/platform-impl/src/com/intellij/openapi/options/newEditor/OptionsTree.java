@@ -39,10 +39,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.TreeExpansionEvent;
+import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.plaf.TreeUI;
+import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
@@ -87,22 +89,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     myTree.setCellRenderer(myRendrer);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(false);
-    myBuilder = new FilteringTreeBuilder(myProject, myTree, myContext.getFilter(), structure, new WeightBasedComparator(false)) {
-      @Override
-      protected boolean isSelectable(final Object nodeObject) {
-        return nodeObject instanceof EditorNode;
-      }
-
-      @Override
-      public boolean isAutoExpandNode(final NodeDescriptor nodeDescriptor) {
-        if (nodeDescriptor instanceof SimpleNode) {
-          final SimpleNode node = (SimpleNode)getOriginalNode(((SimpleNode)nodeDescriptor));
-          if (myContext.isHoldingFilter()) return true;
-          if (node.getParent() == myRoot) return false;
-        }
-        return super.isAutoExpandNode(nodeDescriptor);
-      }
-    };
+    myBuilder = new MyBuilder(structure);
     myBuilder.setFilteringMerge(300, null);
     Disposer.register(this, myBuilder);
 
@@ -198,15 +185,20 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
         }
         else {
           final EditorNode editorNode = myConfigurable2Node.get(configurable);
-          myBuilder.select(myBuilder.getVisibleNodeFor(editorNode), new Runnable() {
-            public void run() {
-              myContext.fireSelected(configurable, OptionsTree.this).doWhenProcessed(new Runnable() {
-                public void run() {
-                  callback.setDone();
-                }
-              });
-            }
-          });
+          FilteringTreeStructure.Node editorUiNode = myBuilder.getVisibleNodeFor(editorNode);
+          if (!myBuilder.getSelectedElements().contains(editorUiNode)) {
+            myBuilder.select(editorUiNode, new Runnable() {
+              public void run() {
+                fireSelected(configurable, callback);
+              }
+            });
+          } else {
+            myBuilder.scrollSelectionToVisible(new Runnable() {
+              public void run() {
+                fireSelected(configurable, callback);
+              }
+            }, false);
+          }
         }
       }
 
@@ -218,6 +210,14 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     };
     mySelection.queue(update);
     return callback;
+  }
+
+  private void fireSelected(Configurable configurable, final ActionCallback callback) {
+    myContext.fireSelected(configurable, this).doWhenProcessed(new Runnable() {
+      public void run() {
+        callback.setDone();
+      }
+    });
   }
 
   void revalidateTree() {
@@ -532,7 +532,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
         return Integer.MAX_VALUE - myGroups.indexOf(myGroup);
       }
       else {
-        return 0;
+        return WeightBasedComparator.UNDEFINED_WEIGHT;
       }
     }
 
@@ -699,6 +699,97 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       @Override
       protected void paintVerticalPartOfLeg(final Graphics g, final Rectangle clipBounds, final Insets insets, final TreePath path) {
       }
+    }
+  }
+
+  private class MyBuilder extends FilteringTreeBuilder {
+
+    List<Object> myToExpandOnResetFilter;
+    boolean myRefilteringNow;
+    boolean myWasHoldingFilter;
+
+    public MyBuilder(SimpleTreeStructure structure) {
+      super(OptionsTree.this.myProject, OptionsTree.this.myTree, OptionsTree.this.myContext.getFilter(), structure, new WeightBasedComparator(false));
+      myTree.addTreeExpansionListener(new TreeExpansionListener() {
+        public void treeExpanded(TreeExpansionEvent event) {
+          invalidateExpansions();
+        }
+
+        public void treeCollapsed(TreeExpansionEvent event) {
+          invalidateExpansions();
+        }
+      });
+    }
+
+    private void invalidateExpansions() {
+      if (!myRefilteringNow) {
+        myToExpandOnResetFilter = null;
+      }
+    }
+
+    @Override
+    protected boolean isSelectable(final Object nodeObject) {
+      return nodeObject instanceof EditorNode;
+    }
+
+    @Override
+    public boolean isAutoExpandNode(final NodeDescriptor nodeDescriptor) {
+      return myContext.isHoldingFilter();
+    }
+
+    @Override
+    protected ActionCallback refilterNow(Object preferredSelection, boolean adjustSelection) {
+      final List<Object> toRestore = new ArrayList<Object>();
+      if (myContext.isHoldingFilter() && !myWasHoldingFilter && myToExpandOnResetFilter == null) {
+        myToExpandOnResetFilter = myBuilder.getUi().getExpandedElements();
+      } else if (!myContext.isHoldingFilter() && myWasHoldingFilter && myToExpandOnResetFilter != null) {
+        toRestore.addAll(myToExpandOnResetFilter);
+        myToExpandOnResetFilter = null;
+      }
+
+      myWasHoldingFilter = myContext.isHoldingFilter();
+
+      ActionCallback result = super.refilterNow(preferredSelection, adjustSelection);
+      myRefilteringNow = true;
+      return result.doWhenDone(new Runnable() {
+        public void run() {
+          myRefilteringNow = false;
+          if (!myContext.isHoldingFilter()) {
+            restoreExpandedState(toRestore);
+          }
+        }
+      });
+    }
+
+    private void restoreExpandedState(List<Object> toRestore) {
+      TreePath[] selected = myTree.getSelectionPaths();
+      if (selected == null) {
+        selected = new TreePath[0];
+      }
+
+      List<TreePath> toCollapse = new ArrayList<TreePath>();
+
+      for (int eachRow = 0; eachRow < myTree.getRowCount(); eachRow++) {
+        if (!myTree.isExpanded(eachRow)) continue;
+
+        TreePath eachVisiblePath = myTree.getPathForRow(eachRow);
+        if (eachVisiblePath == null) continue;
+
+        Object eachElement = myBuilder.getElementFor(eachVisiblePath.getLastPathComponent());
+        if (toRestore.contains(eachElement)) continue;
+
+
+        for (TreePath eachSelected : selected) {
+          if (!eachVisiblePath.isDescendant(eachSelected)) {
+            toCollapse.add(eachVisiblePath);
+          }
+        }
+      }
+
+      for (TreePath each : toCollapse) {
+        myTree.collapsePath(each);
+      }
+
     }
   }
 }

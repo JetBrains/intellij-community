@@ -560,16 +560,19 @@ public class AbstractTreeUi {
     }
   }
 
-  private boolean isAutoExpand(NodeDescriptor rootDescriptor) {
-    if (rootDescriptor == null) return false;
-    if (getBuilder().isAutoExpandNode(rootDescriptor)) return true;
+  private boolean isAutoExpand(NodeDescriptor descriptor) {
+    boolean autoExpand = false;
 
-    if (!myTree.isRootVisible()) {
-      Object element = getElementFromDescriptor(rootDescriptor);
+    if (descriptor != null) {
+      autoExpand = getBuilder().isAutoExpandNode(descriptor);
+    }
+
+    if (!autoExpand && !myTree.isRootVisible()) {
+      Object element = getElementFromDescriptor(descriptor);
       if (element != null && element.equals(getTreeStructure().getRootElement())) return true;
     }
 
-    return false;
+    return autoExpand;
   }
 
   private boolean isAutoExpand(DefaultMutableTreeNode node) {
@@ -1122,6 +1125,14 @@ public class AbstractTreeUi {
   }
 
   public boolean isReady() {
+    return isIdle() && !hasPendingWork();
+  }
+
+  public boolean hasPendingWork() {
+    return hasNodesToUpdate() || (myUpdaterState != null && myUpdaterState.isProcessingNow());
+  }
+
+  public boolean isIdle() {
     return !isYeildingNow() && !isWorkerBusy() && (!hasSheduledUpdates() || getUpdater().isInPostponeMode());
   }
 
@@ -1151,10 +1162,8 @@ public class AbstractTreeUi {
       }
 
       if (myTree.isShowing()) {
-        if (isReady()) {
-          if (getBuilder().isToEnsureSelectionOnFocusGained() && Registry.is("ide.tree.ensureSelectionOnFocusGained")) {
-            TreeUtil.ensureSelection(myTree);
-          }
+        if (getBuilder().isToEnsureSelectionOnFocusGained() && Registry.is("ide.tree.ensureSelectionOnFocusGained")) {
+          TreeUtil.ensureSelection(myTree);
         }
       }
 
@@ -1366,6 +1375,20 @@ public class AbstractTreeUi {
 
   public boolean hasNodesToUpdate() {
     return getUpdater().hasNodesToUpdate() || hasUpdatingNow() || isLoadingInBackgroundNow();
+  }
+
+  public List<Object> getExpandedElements() {
+    List<Object> result = new ArrayList<Object>();
+    Enumeration<TreePath> enumeration = myTree.getExpandedDescendants(getPathFor(getRootNode()));
+    while (enumeration.hasMoreElements()) {
+      TreePath each = enumeration.nextElement();
+      Object eachElement = getElementFor(each.getLastPathComponent());
+      if (eachElement != null) {
+        result.add(eachElement);
+      }
+    }
+
+    return result;
   }
 
   static class ElementNode extends DefaultMutableTreeNode {
@@ -2508,6 +2531,26 @@ public class AbstractTreeUi {
     _expand(element, _onDone, true, false, canSmartExpand);
   }
 
+  public void scrollSelectionToVisible(@Nullable Runnable onDone, boolean shouldBeCentered) {
+    int[] rows = myTree.getSelectionRows();
+    if (rows == null || rows.length == 0) {
+      runDone(onDone);
+      return;
+    }
+
+
+    Object toSelect = null;
+    for (int eachRow : rows) {
+      TreePath path = myTree.getPathForRow(eachRow);
+      toSelect = getElementFor(path.getLastPathComponent());
+      if (toSelect != null) break;
+    }
+
+    if (toSelect != null) {
+      selectVisible(toSelect, onDone, true, shouldBeCentered, true);
+    }
+  }
+
   private void selectVisible(Object element, final Runnable onDone, boolean addToSelection, boolean canBeCentered, final boolean scroll) {
     final DefaultMutableTreeNode toSelect = getNodeForElement(element, false);
 
@@ -2548,6 +2591,10 @@ public class AbstractTreeUi {
   }
 
   public void expand(final Object element, @Nullable final Runnable onDone) {
+    expand(new Object[] {element}, onDone);
+  }
+
+  public void expand(final Object[] element, @Nullable final Runnable onDone) {
     expand(element, onDone, false);
   }
 
@@ -2754,7 +2801,7 @@ public class AbstractTreeUi {
   }
 
   @Nullable
-  private Object getElementFor(Object node) {
+  public Object getElementFor(Object node) {
     if (!(node instanceof DefaultMutableTreeNode)) return null;
     return getElementFor((DefaultMutableTreeNode)node);
   }
@@ -2827,7 +2874,7 @@ public class AbstractTreeUi {
     }
   }
 
-  private void clearUpdaterState() {
+  void clearUpdaterState() {
     myUpdaterState = null;
   }
 
@@ -3047,6 +3094,8 @@ public class AbstractTreeUi {
     }
 
     public void treeCollapsed(TreeExpansionEvent e) {
+      dropUpdaterStateIfExternalChange();
+
       final TreePath path = e.getPath();
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       if (!(node.getUserObject() instanceof NodeDescriptor)) return;
