@@ -86,14 +86,14 @@ public class UpdaterTreeState {
   }
 
   public boolean process(Runnable runnable) {
-    boolean oldValue = myProcessingNow;
+    boolean oldValue = isProcessingNow();
     try {
-      myProcessingNow = true;
+      setProcessingNow(true);
       runnable.run();
     }
     finally {
       if (!oldValue) {
-        myProcessingNow = false;
+        setProcessingNow(false);
       }
     }
 
@@ -128,7 +128,7 @@ public class UpdaterTreeState {
 
     invalidateToSelectWithRefsToParent(actionNode);
 
-    myProcessingNow = true;
+    setProcessingNow(true);
 
     final Object[] toSelect = getToSelect();
     final Object[] toExpand = getToExpand();
@@ -161,7 +161,11 @@ public class UpdaterTreeState {
                   myCanRunRestore = false;
                   myUi.setUpdaterState(UpdaterTreeState.this);
                 }
-                myProcessingNow = false;
+                setProcessingNow(false);
+
+                if (myUi.isReady()) {
+                  myUi.clearUpdaterState();
+                }
               }
             }, true);
           }
@@ -328,5 +332,12 @@ public class UpdaterTreeState {
   @Override
   public String toString() {
     return "UpdaterState toSelect" + Arrays.asList(myToSelect) + " toExpand=" + Arrays.asList(myToExpand) + " processingNow=" + isProcessingNow() + " canRun=" + myCanRunRestore;
+  }
+
+  public void setProcessingNow(boolean processingNow) {
+    myProcessingNow = processingNow;
+    if (processingNow) {
+      myUi.maybeReady();
+    }
   }
 }

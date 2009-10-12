@@ -92,6 +92,10 @@ public class AbstractTreeBuilder implements Disposable {
     getUi().expand(element, onDone);
   }
 
+  public final void expand(Object[] element, @Nullable Runnable onDone) {
+    getUi().expand(element, onDone);
+  }
+
   public final void collapseChildren(Object element, @Nullable Runnable onDone) {
     getUi().collapseChildren(element, onDone);
   }
@@ -422,6 +426,10 @@ public class AbstractTreeBuilder implements Disposable {
     }
 
     return false;
+  }
+
+  public void scrollSelectionToVisible(@Nullable Runnable onDone, boolean shouldBeCentered) {
+    myUi.scrollSelectionToVisible(onDone, shouldBeCentered);
   }
 
 }

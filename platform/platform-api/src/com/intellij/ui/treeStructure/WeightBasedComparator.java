@@ -21,6 +21,8 @@ import java.util.Comparator;
 
 public class WeightBasedComparator implements Comparator<NodeDescriptor> {
 
+  public static final int UNDEFINED_WEIGHT = Integer.MIN_VALUE;
+
   private final boolean myCompareToString;
 
   public static final WeightBasedComparator INSTANCE = new WeightBasedComparator();
@@ -45,7 +47,13 @@ public class WeightBasedComparator implements Comparator<NodeDescriptor> {
     if (myCompareToString && w1 == w2) {
       return compareToString(o1, o2);
     }
-    return compareWeights(w1, w2);
+
+    if (w1 == UNDEFINED_WEIGHT && w2 == UNDEFINED_WEIGHT) {
+      return o1.getIndex() - o2.getIndex();
+    } else {
+      return compareWeights(w1, w2);
+    }
+
   }
 
   protected int compareWeights(final int w1, final int w2) {
