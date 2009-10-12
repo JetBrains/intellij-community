@@ -35,6 +35,8 @@
     <extensionPoint name="xml.idContributor"
                     interface="com.intellij.xml.util.XmlIdContributor"/>
 
+    <extensionPoint name="xml.implicitNamespaceDescriptorProvider"
+                    interface="com.intellij.javaee.ImplicitNamespaceDescriptorProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

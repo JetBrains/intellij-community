@@ -16,8 +16,13 @@
 
 package com.intellij.compiler;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 public abstract class CompilerConfiguration {
   // need this flag for profiling purposes. In production code is always set to 'true'
@@ -35,4 +40,23 @@ public abstract class CompilerConfiguration {
 
   public abstract void addResourceFilePattern(String namePattern) throws MalformedPatternException;
 
+  public abstract boolean isAnnotationProcessorsEnabled();
+
+  public abstract void setAnnotationProcessorsEnabled(boolean enableAnnotationProcessors);
+
+  public abstract boolean isObtainProcessorsFromClasspath();
+
+  public abstract void setObtainProcessorsFromClasspath(boolean obtainProcessorsFromClasspath);
+
+  public abstract String getProcessorPath();
+
+  public abstract void setProcessorsPath(String processorsPath);
+
+  public abstract Map<String, String> getAnnotationProcessorsMap();
+
+  public abstract void setAnnotationProcessorsMap(Map<String, String> map);
+
+  public abstract Set<Module> getExcludedModules();
+
+  public abstract void setExcludedModules(Collection<Module> modules);
 }

@@ -73,12 +73,6 @@ public abstract class TokenSets implements GroovyTokenTypes {
       mREGEX_LITERAL
   );
 
-  public static final TokenSet WRONG_CONSTANTS = TokenSet.create(
-      mWRONG_GSTRING_LITERAL,
-      mWRONG_STRING_LITERAL,
-      mWRONG_REGEX_LITERAL
-  );
-
   public static final TokenSet BUILT_IN_TYPE = TokenSet.create(
       kVOID,
       kBOOLEAN,
@@ -137,7 +131,6 @@ public abstract class TokenSets implements GroovyTokenTypes {
 
   public static TokenSet STRING_LITERALS = TokenSet.create(
       mSTRING_LITERAL,
-      mWRONG_GSTRING_LITERAL,
       mREGEX_LITERAL,
       mGSTRING_LITERAL
   );

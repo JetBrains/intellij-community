@@ -16,7 +16,7 @@
 package testData.inspection.docCommentWithMistakes.data.java.src;
 
 /**
- * doc <TYPO descr="Word 'commment' is misspelled">commment</TYPO>
+ * doc <TYPO descr="Typo: In word 'commment'">commment</TYPO>
  *
  * @author Test Test
  */

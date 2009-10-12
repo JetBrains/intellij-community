@@ -26,9 +26,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.spellchecker.CheckArea;
 import com.intellij.spellchecker.SpellCheckerManager;
-import com.intellij.spellchecker.TextSplitter;
 import com.intellij.spellchecker.quickfixes.AcceptWordAsCorrect;
 import com.intellij.spellchecker.quickfixes.ChangeTo;
 import com.intellij.spellchecker.quickfixes.RenameTo;
@@ -180,7 +178,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
           fixes.add(new ChangeTo(textRange, word, token.getElement().getProject()));
         }
         else {
-          fixes.add(new RenameTo());
+          fixes.add(new RenameTo(textRange, word, token.getElement().getProject()));
         }
       }
 
@@ -201,6 +199,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
     final String description = tokenDescription == null ? defaultDescription : tokenDescription;
     final TextRange highlightRange = TextRange.from(token.getOffset() + textRange.getStartOffset(), textRange.getLength());
     final LocalQuickFix[] quickFixes = fixes.size() > 0 ? fixes.toArray(new LocalQuickFix[fixes.size()]) : null;
+
     return holder.getManager()
       .createProblemDescriptor(token.getElement(), highlightRange, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, quickFixes);
   }

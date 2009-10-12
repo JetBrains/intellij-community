@@ -17,9 +17,9 @@ package org.jetbrains.plugins.groovy.refactoring.rename;
 
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
@@ -34,8 +34,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
-import java.util.Arrays;
-
 /**
  * @author ven
  */
@@ -44,7 +42,8 @@ public class PropertyRenameHandler implements RenameHandler {
     return getProperty(dataContext) != null;
   }
 
-  private GrField getProperty(DataContext dataContext) {
+  @Nullable
+  private static GrField getProperty(DataContext dataContext) {
     final PsiElement element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
     if (element instanceof GrField && ((GrField)element).isProperty()) return (GrField)element;
     if (element instanceof GrAccessorMethod) return ((GrAccessorMethod)element).getProperty();
@@ -74,14 +73,14 @@ public class PropertyRenameHandler implements RenameHandler {
       final String newName = getNewName();
       final boolean searchInComments = isSearchInComments();
       doRename(newName, searchInComments);
-      close(DialogWrapper.OK_EXIT_CODE);
+      close(OK_EXIT_CODE);
     }
 
     private void doRename(String newName, boolean searchInComments) {
       final RenameRefactoring rename = new JavaRenameRefactoringImpl(myProperty.getProject(), myProperty, newName, searchInComments, false);
 
       final PsiMethod setter = myProperty.getSetter();
-      if (setter != null) {
+      if (setter != null && !(setter instanceof GrAccessorMethod)) {
         final String setterName = PropertyUtil.suggestSetterName(newName);
         rename.addElement(setter, setterName);
       }
@@ -97,6 +96,9 @@ public class PropertyRenameHandler implements RenameHandler {
   }
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, @Nullable DataContext dataContext) {
-    throw new RuntimeException("Should not call: " + Arrays.toString(elements));
+    final GrField property = getProperty(dataContext);
+    if (dataContext == null || property == null) return;
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    new PropertyRenameDialog(property, editor).show();
   }
 }

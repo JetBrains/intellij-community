@@ -38,10 +38,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class AnnotationProcessingCompiler implements SourceProcessingCompiler{
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.JavaCompiler");
@@ -58,16 +55,23 @@ public class AnnotationProcessingCompiler implements SourceProcessingCompiler{
 
   @NotNull
   public ProcessingItem[] getProcessingItems(CompileContext context) {
-    final VirtualFile[] files = context.getCompileScope().getFiles(StdFileTypes.JAVA, true);
-    ProcessingItem[] items = new ProcessingItem[files.length];
-    for (int idx = 0; idx < files.length; idx++) {
-      items[idx] = new MyProcessingItem(files[idx]);
+    final CompilerConfiguration config = CompilerConfiguration.getInstance(myProject);
+    if (!config.isAnnotationProcessorsEnabled()) {
+      return ProcessingItem.EMPTY_ARRAY;
     }
-    return items;
+    final VirtualFile[] files = context.getCompileScope().getFiles(StdFileTypes.JAVA, true);
+    final List<ProcessingItem> items = new ArrayList<ProcessingItem>(files.length);
+    final Set<Module> excludedModules = config.getExcludedModules();
+    for (final VirtualFile file : files) {
+      if (excludedModules.size() == 0 || !excludedModules.contains(context.getModuleByFile(file))) {
+        items.add(new MyProcessingItem(file));
+      }
+    }
+    return items.toArray(new ProcessingItem[items.size()]);
   }
 
   public ProcessingItem[] process(CompileContext context, ProcessingItem[] items) {
-    VirtualFile[] files = new VirtualFile[items.length];
+    final VirtualFile[] files = new VirtualFile[items.length];
     for (int idx = 0; idx < items.length; idx++) {
       files[idx] = items[idx].getFile();
     }

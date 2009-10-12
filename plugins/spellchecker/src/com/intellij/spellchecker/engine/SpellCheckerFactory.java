@@ -15,14 +15,11 @@
  */
 package com.intellij.spellchecker.engine;
 
-/**
- * Spell checker factory.
- */
 public final class SpellCheckerFactory {
-  private SpellCheckerFactory() {
-  }
+    private SpellCheckerFactory() {
+    }
 
-  public static SpellChecker create() {
-    return new JazzySpellChecker();
-  }
+    public static SpellCheckerEngine create() {
+        return new BaseSpellChecker();
+    }
 }

@@ -77,8 +77,8 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     }
 
     //For multiline strings
-    if ((block.getNode().getElementType() == GroovyTokenTypes.mSTRING_LITERAL ||
-        block.getNode().getElementType() == GroovyTokenTypes.mGSTRING_LITERAL) &&
+    if ((block.getNode().getElementType() == mSTRING_LITERAL ||
+        block.getNode().getElementType() == mGSTRING_LITERAL) &&
         block.getTextRange().equals(block.getNode().getTextRange())) {
       String text = block.getNode().getText();
       if (text.length() > 6) {
@@ -89,7 +89,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       }
     }
 
-    if (block.getNode().getElementType() == GroovyTokenTypes.mGSTRING_SINGLE_BEGIN &&
+    if (block.getNode().getElementType() == mGSTRING_BEGIN &&
         block.getTextRange().equals(block.getNode().getTextRange())) {
       String text = block.getNode().getText();
       if (text.length() > 3) {

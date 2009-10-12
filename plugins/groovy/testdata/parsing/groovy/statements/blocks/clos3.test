@@ -5,32 +5,46 @@ println "bugaga
 -----
 Groovy script
   Compound Gstring
-    PsiElement(Gstring begin)('"""Pre $')
-    Closable block
-      PsiElement({)('{')
-      PsiWhiteSpace(' ')
-      Parameter list
-        <empty list>
-      Assignment expression
-        Reference expression
-          PsiElement(identifier)('a')
+    PsiElement(Gstring begin)('"""')
+    PsiElement(Gstring content)('Pre ')
+    GString injection
+      PsiElement($)('$')
+      Closable block
+        PsiElement({)('{')
         PsiWhiteSpace(' ')
-        PsiElement(=)('=')
-        PsiWhiteSpace(' ')
-        Reference expression
-          PsiElement(identifier)('b')
-      PsiElement(new line)('\n')
-      Call expression
-        Reference expression
-          PsiElement(identifier)('println')
-        PsiWhiteSpace(' ')
-        Command arguments
-          Literal
-            PsiElement(wrong gstring)('"bugaga')
-            PsiErrorElement:Wrong string literal
-              <empty list>
-      PsiElement(new line)('\n ')
-      Literal
-        PsiElement(Integer)('3')
-      PsiElement(})('}')
-    PsiElement(Gstring end)('\n ved"""')
+        Parameter list
+          <empty list>
+        Assignment expression
+          Reference expression
+            PsiElement(identifier)('a')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiWhiteSpace(' ')
+          Reference expression
+            PsiElement(identifier)('b')
+        PsiElement(new line)('\n')
+        Call expression
+          Reference expression
+            PsiElement(identifier)('println')
+          PsiWhiteSpace(' ')
+          Command arguments
+            Compound Gstring
+              PsiElement(Gstring begin)('"')
+              PsiElement(Gstring content)('bugaga')
+              PsiErrorElement:String end expected
+                <empty list>
+        PsiElement(new line)('\n ')
+        Literal
+          PsiElement(Integer)('3')
+        PsiElement(})('}')
+    PsiErrorElement:String end expected
+      <empty list>
+  PsiElement(new line)('\n ')
+  Call expression
+    Reference expression
+      PsiElement(identifier)('ved')
+    Command arguments
+      Compound Gstring
+        PsiElement(Gstring begin)('"""')
+        PsiErrorElement:String end expected
+          <empty list>

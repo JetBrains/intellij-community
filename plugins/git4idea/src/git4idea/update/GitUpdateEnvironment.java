@@ -47,6 +47,7 @@ import git4idea.commands.GitLineHandlerAdapter;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.MergeChangeCollector;
+import git4idea.rebase.GitRebaseUtils;
 import git4idea.ui.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -123,7 +124,29 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
           }
         }
       }
-      for (final VirtualFile root : GitUtil.gitRoots(Arrays.asList(filePaths))) {
+      Set<VirtualFile> roots = GitUtil.gitRoots(Arrays.asList(filePaths));
+      Set<VirtualFile> rebasingRoots = new TreeSet<VirtualFile>(GitUtil.VIRTUAL_FILE_COMPARATOR);
+      for (final VirtualFile root : roots) {
+        if (GitRebaseUtils.isRebaseInTheProgress(root)) {
+          rebasingRoots.add(root);
+        }
+      }
+      if (!rebasingRoots.isEmpty()) {
+        final StringBuilder files = new StringBuilder();
+        for (VirtualFile r : rebasingRoots) {
+          files.append(GitBundle.message("update.root.rebasing.item", r.getPresentableUrl()));
+          //noinspection ThrowableInstanceNeverThrown
+          exceptions.add(new VcsException(GitBundle.message("update.root.rebasing", r.getPresentableUrl())));
+        }
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+          public void run() {
+            Messages.showErrorDialog(myProject, GitBundle.message("update.root.rebasing.message", files.toString()),
+                                     GitBundle.message("update.root.rebasing.title"));
+          }
+        });
+        return new GitUpdateSession(exceptions);
+      }
+      for (final VirtualFile root : roots) {
         try {
           // check if there is a remote for the branch
           final GitBranch branch = GitBranch.current(myProject, root);

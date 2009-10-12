@@ -1,58 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.spellchecker.options.SpellCheckerOptions">
-  <grid id="27dc6" binding="root" default-binding="true" layout-manager="GridLayoutManager" row-count="5" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="27dc6" binding="root" default-binding="true" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="344" height="458"/>
+      <xy x="20" y="20" width="387" height="285"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
-      <component id="76b15" class="javax.swing.JRadioButton" binding="projectRB">
+      <hspacer id="f0925">
         <constraints>
-          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
-        <properties>
-          <text value="shared in project "/>
-        </properties>
-      </component>
-      <component id="4ba70" class="javax.swing.JRadioButton" binding="localRB">
+      </hspacer>
+      <grid id="37249" binding="wordPanelHolder" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties>
-          <text value="locally cached"/>
-        </properties>
-      </component>
-      <component id="db28" class="javax.swing.JLabel" binding="globalDictionaries">
-        <constraints>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties>
-          <text value="Global dictionaries: &lt;not found&gt;"/>
-        </properties>
-      </component>
-      <component id="c933e" class="javax.swing.JLabel">
-        <constraints>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties>
-          <text value="User's word lists:"/>
-        </properties>
-      </component>
-      <grid id="abbb6" layout-manager="BorderLayout" hgap="0" vgap="0">
-        <constraints>
-          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="3" anchor="9" fill="0" indent="0" use-parent-layout="false">
-            <minimum-size width="250" height="350"/>
-          </grid>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
         <border type="none"/>
         <children>
-          <component id="85252" class="com.intellij.spellchecker.options.SpellCheckerOptions$WordsPanel" binding="userDictionaryWords" custom-create="true">
-            <constraints border-constraint="Center"/>
+          <grid id="dda13" class="com.intellij.spellchecker.options.SpellCheckerOptions$WordsPanel" binding="wordsPanel" custom-create="true" layout-manager="BorderLayout" hgap="0" vgap="0">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+            </constraints>
             <properties/>
-          </component>
+            <border type="none"/>
+            <children/>
+          </grid>
         </children>
       </grid>
     </children>

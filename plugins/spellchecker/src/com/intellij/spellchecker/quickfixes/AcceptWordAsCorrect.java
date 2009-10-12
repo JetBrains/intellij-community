@@ -19,7 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.actionSystem.Anchor;
 import com.intellij.openapi.project.Project;
 import com.intellij.spellchecker.SpellCheckerManager;
-import com.intellij.spellchecker.quickfixes.SpellCheckerQuickFix;
+
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,4 +50,5 @@ public class AcceptWordAsCorrect implements SpellCheckerQuickFix {
     SpellCheckerManager spellCheckerManager = SpellCheckerManager.getInstance(project);
     spellCheckerManager.acceptWordAsCorrect(word);
   }
+
 }

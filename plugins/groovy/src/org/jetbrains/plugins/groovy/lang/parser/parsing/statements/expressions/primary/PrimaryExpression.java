@@ -41,41 +41,41 @@ public class PrimaryExpression implements GroovyElementTypes {
       ParserUtils.eatElement(builder, BUILT_IN_TYPE_EXPRESSION);
       return BUILT_IN_TYPE_EXPRESSION;
     }
-    if (kTHIS.equals(builder.getTokenType())) {
+    if (kTHIS == builder.getTokenType()) {
       ParserUtils.eatElement(builder, THIS_REFERENCE_EXPRESSION);
       return THIS_REFERENCE_EXPRESSION;
     }
-    if (kSUPER.equals(builder.getTokenType())) {
+    if (kSUPER == builder.getTokenType()) {
       ParserUtils.eatElement(builder, SUPER_REFERENCE_EXPRESSION);
       return SUPER_REFERENCE_EXPRESSION;
     }
-    if (kNEW.equals(builder.getTokenType())) {
+    if (kNEW == builder.getTokenType()) {
       return newExprParse(builder, parser);
     }
-    if (mIDENT.equals(builder.getTokenType())) {
+    if (mIDENT == builder.getTokenType()) {
       ParserUtils.eatElement(builder, REFERENCE_EXPRESSION);
       return REFERENCE_EXPRESSION;
     }
-    if (mGSTRING_SINGLE_BEGIN.equals(builder.getTokenType())) {
+    if (mGSTRING_BEGIN == builder.getTokenType()) {
       return StringConstructorExpression.parse(builder, parser);
     }
-    if (mREGEX_BEGIN.equals(builder.getTokenType())) {
+    if (mREGEX_BEGIN == builder.getTokenType()) {
       return RegexConstructorExpression.parse(builder, parser);
     }
-    if (mLBRACK.equals(builder.getTokenType())) {
+    if (mLBRACK == builder.getTokenType()) {
       return ListOrMapConstructorExpression.parse(builder, parser);
     }
-    if (mLPAREN.equals(builder.getTokenType())) {
+    if (mLPAREN == builder.getTokenType()) {
       return parenthesizedExprParse(builder, parser);
     }
-    if (mLCURLY.equals(builder.getTokenType())) {
+    if (mLCURLY == builder.getTokenType()) {
       return OpenOrClosableBlock.parseClosableBlock(builder, parser);
     }
     if (TokenSets.CONSTANTS.contains(builder.getTokenType())) {
       ParserUtils.eatElement(builder, LITERAL);
       return LITERAL;
     }
-    if (TokenSets.WRONG_CONSTANTS.contains(builder.getTokenType())) {
+    if (mWRONG_REGEX_LITERAL == builder.getTokenType()) {
       PsiBuilder.Marker marker = builder.mark();
       builder.advanceLexer();
       builder.error(GroovyBundle.message("wrong.string"));
@@ -98,10 +98,7 @@ public class PrimaryExpression implements GroovyElementTypes {
     ParserUtils.getToken(builder, mNLS);
     if (!ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"))) {
       builder.error(GroovyBundle.message("rparen.expected"));
-      while (!builder.eof() &&
-             !mNLS.equals(builder.getTokenType()) &&
-             !mSEMI.equals(builder.getTokenType()) &&
-             !mRPAREN.equals(builder.getTokenType())) {
+      while (!builder.eof() && mNLS != builder.getTokenType() && mSEMI != builder.getTokenType() && mRPAREN != builder.getTokenType()) {
         builder.error(GroovyBundle.message("rparen.expected"));
         builder.advanceLexer();
       }
@@ -129,7 +126,7 @@ public class PrimaryExpression implements GroovyElementTypes {
     ParserUtils.getToken(builder, mNLS);
     PsiBuilder.Marker rb = builder.mark();
     TypeArguments.parse(builder);
-    if (!TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType()) && !mIDENT.equals(builder.getTokenType())) {
+    if (!TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType()) && mIDENT != builder.getTokenType()) {
       rb.rollbackTo();
     }
     else {
@@ -141,7 +138,7 @@ public class PrimaryExpression implements GroovyElementTypes {
     if (TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())) {
       ParserUtils.eatElement(builder, BUILT_IN_TYPE);
     }
-    else if (mIDENT.equals(builder.getTokenType())) {
+    else if (mIDENT == builder.getTokenType()) {
       name = builder.getTokenText();
       ReferenceElement.parseReferenceElement(builder);
     }

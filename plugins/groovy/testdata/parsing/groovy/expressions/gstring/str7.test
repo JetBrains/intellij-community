@@ -2,7 +2,10 @@
 -----
 Groovy script
   Compound Gstring
-    PsiElement(Gstring begin)('"$')
-    Reference expression
-      PsiElement(identifier)('Preved')
-    PsiElement(Gstring end)(', medved!"')
+    PsiElement(Gstring begin)('"')
+    GString injection
+      PsiElement($)('$')
+      Reference expression
+        PsiElement(identifier)('Preved')
+    PsiElement(Gstring content)(', medved!')
+    PsiElement(Gstring end)('"')

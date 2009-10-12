@@ -3,24 +3,34 @@
 -----
 Groovy script
   Compound Gstring
-    PsiElement(Gstring begin)('"My $')
-    Reference expression
-      PsiElement(identifier)('str')
-    PsiElement(Gstring content)('$')
-    Reference expression
-      PsiElement(identifier)('ing')
-    PsiElement(Gstring end)(' nax"')
-  PsiElement(new line)('\n')
-  Compound Gstring
-    PsiElement(Gstring begin)('"My $')
-    Closable block
-      PsiElement({)('{')
-      Parameter list
-        <empty list>
+    PsiElement(Gstring begin)('"')
+    PsiElement(Gstring content)('My ')
+    GString injection
+      PsiElement($)('$')
       Reference expression
         PsiElement(identifier)('str')
-      PsiElement(})('}')
-    PsiElement(Gstring content)('$')
-    Reference expression
-      PsiElement(identifier)('ing')
-    PsiElement(Gstring end)(' nax"')
+    GString injection
+      PsiElement($)('$')
+      Reference expression
+        PsiElement(identifier)('ing')
+    PsiElement(Gstring content)(' nax')
+    PsiElement(Gstring end)('"')
+  PsiElement(new line)('\n')
+  Compound Gstring
+    PsiElement(Gstring begin)('"')
+    PsiElement(Gstring content)('My ')
+    GString injection
+      PsiElement($)('$')
+      Closable block
+        PsiElement({)('{')
+        Parameter list
+          <empty list>
+        Reference expression
+          PsiElement(identifier)('str')
+        PsiElement(})('}')
+    GString injection
+      PsiElement($)('$')
+      Reference expression
+        PsiElement(identifier)('ing')
+    PsiElement(Gstring content)(' nax')
+    PsiElement(Gstring end)('"')

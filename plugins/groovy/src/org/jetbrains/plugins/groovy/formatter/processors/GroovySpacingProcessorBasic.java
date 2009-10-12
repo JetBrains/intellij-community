@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
@@ -160,7 +161,15 @@ public abstract class GroovySpacingProcessorBasic extends SpacingTokens implemen
     if (leftNode.getPsi().getParent() != null &&
         leftNode.getPsi().getParent().equals(rightNode.getPsi().getParent()) &&
         leftNode.getPsi().getParent() instanceof GrString) {
-      return null;
+      return NO_SPACING;
+    }
+    if (isDollarInGStringInjection(leftNode) || isDollarInGStringInjection(rightNode)) {
+      return NO_SPACING;
+    }
+    if (leftNode.getPsi().getParent() instanceof GrStringInjection &&
+        rightNode.getPsi().getParent() instanceof GrString &&
+        rightNode.getPsi().getParent().equals(leftNode.getPsi().getParent().getParent())) {
+      return NO_SPACING;
     }
 
     if (mGDOC_ASTERISKS == leftType && mGDOC_COMMENT_DATA == rightNode.getElementType()) {
@@ -194,5 +203,7 @@ public abstract class GroovySpacingProcessorBasic extends SpacingTokens implemen
     return COMMON_SPACING;
   }
 
-
+  private static boolean isDollarInGStringInjection(ASTNode node) {
+    return node.getElementType() == mDOLLAR && node.getTreeParent().getElementType() == GSTRING_INJECTION;
+  }
 }

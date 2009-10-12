@@ -6,7 +6,8 @@ Groovy script
       PsiElement(identifier)('println')
     PsiWhiteSpace(' ')
     Command arguments
-      Literal
-        PsiElement(wrong gstring)('""" preved " " 42')
-        PsiErrorElement:Wrong string literal
+      Compound Gstring
+        PsiElement(Gstring begin)('"""')
+        PsiElement(Gstring content)(' preved " " 42')
+        PsiErrorElement:String end expected
           <empty list>

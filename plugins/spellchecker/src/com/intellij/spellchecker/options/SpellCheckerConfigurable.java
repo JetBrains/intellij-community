@@ -25,19 +25,18 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 import java.util.Set;
 
 
 public final class SpellCheckerConfigurable implements Configurable {
+  private SpellCheckerOptions options;
   private SpellCheckerManager manager;
   private final Project myProject;
-  private final SpellCheckerConfiguration configuration;
 
-  private SpellCheckerOptions options;
 
-  public SpellCheckerConfigurable(Project project, SpellCheckerConfiguration configuration) {
+  public SpellCheckerConfigurable(Project project) {
     myProject = project;
-    this.configuration = configuration;
   }
 
   @Nls
@@ -59,52 +58,35 @@ public final class SpellCheckerConfigurable implements Configurable {
   public JComponent createComponent() {
     manager = SpellCheckerManager.getInstance(myProject);
     if (options == null) {
-      options = new SpellCheckerOptions(configuration, manager);
+      options = new SpellCheckerOptions(manager);
     }
-
     return options.getRoot();
   }
 
   public boolean isModified() {
     if (options != null) {
-      if (dictionaryListWasChanged()) {
-        return true;
-      }
-
+      return wordsListIsModified();
     }
     return false;
   }
 
 
-  private boolean dictionaryListWasChanged() {
-    return !same(options.getUserDictionaryWordsSet(), options.getShownDictionary().getWords());
-  }
-
-
-  private static boolean same(Set<String> modified, Set<String> original) {
-    if (original.size() != modified.size()) {
+  private boolean wordsListIsModified() {
+    assert options != null;
+    List<String> newWords = options.getWords();
+    Set<String> words = manager.getUserDictionary().getWords();
+    if (words == null && newWords == null) {
       return false;
     }
-    modified.removeAll(original);
-    return modified.size() == 0;
+    if (words == null || newWords == null || newWords.size() != words.size()) {
+      return true;
+    }
+    return words.containsAll(newWords) && newWords.containsAll(words);
   }
 
+
   public void apply() throws ConfigurationException {
-    if (options != null) {
-      boolean reload = false;
-      if (dictionaryListWasChanged()) {
-        options.getShownDictionary().replaceAllWords(options.getUserDictionaryWordsSet());
-        reload = true;
-      }
-      
-      /***replaceAll(configuration.activeDictionary.dictionaryWords, options.getUserDictionaryWords());
-       replaceAll(configuration.activeDictionary.ignoredWords, options.getIgnoredWords());*//**//*
-      manager.restartInspections();*/
-      if (reload) {
-        manager.applyConfiguration();
-        manager.restartInspections();
-      }
-    }
+     manager.updateUserWords(options.getWords());
   }
 
 

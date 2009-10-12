@@ -41,11 +41,14 @@ import org.jetbrains.plugins.groovy.lang.completion.smartEnter.processors.Groovy
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
@@ -213,8 +216,8 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
     }
 
     PsiElement parent = atCaret.getParent();
-    if (atCaret instanceof GrClosableBlock && parent instanceof GrString) {
-      res.add(parent);
+    if (atCaret instanceof GrClosableBlock && parent instanceof GrStringInjection && parent.getParent() instanceof GrString) {
+      res.add(parent.getParent());
     }
 
     if (parent instanceof GrArgumentList) {

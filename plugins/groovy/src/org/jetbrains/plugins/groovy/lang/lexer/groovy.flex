@@ -134,7 +134,8 @@ mIDENT_NOBUCKS = {mLETTER} ({mLETTER} | {mDIGIT})*
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 mSTRING_NL = {mONE_NL}
-mSTRING_ESC = \\ n | \\ r | \\ t | \\ b | \\ f | "\\" "\\" | \\ "$" | \\ \" | \\ \'
+mSTRING_ESC = \\ [^\n\r]
+mREGEX_ESC = \\ n | \\ r | \\ t | \\ b | \\ f | "\\" "\\" | \\ "$" | \\ \" | \\ \'
 | "\\""u"{mHEX_DIGIT}{4}
 | "\\" [0..3] ([0..7] ([0..7])?)?
 | "\\" [4..7] ([0..7])?
@@ -144,12 +145,12 @@ mSTRING_ESC = \\ n | \\ r | \\ t | \\ b | \\ f | "\\" "\\" | \\ "$" | \\ \" | \\
 
 ESCAPPED_REGEX_SEP = \\ "/"
 mREGEX_BEGIN = "/""$"
-   |  "/" ([^"/""$"] | {mSTRING_ESC} | {ESCAPPED_REGEX_SEP})? {mREGEX_CONTENT}"$"
-mREGEX_CONTENT = ({mSTRING_ESC}
+   |  "/" ([^"/""$"] | {mREGEX_ESC} | {ESCAPPED_REGEX_SEP})? {mREGEX_CONTENT}"$"
+mREGEX_CONTENT = ({mREGEX_ESC}
    | {ESCAPPED_REGEX_SEP}
    | [^"/"\r\n"$"])*
 
-mREGEX_LITERAL = "/" ([^"/"\n\r"$"] | {mSTRING_ESC} | {ESCAPPED_REGEX_SEP})? {mREGEX_CONTENT} ("$""/" | "/")
+mREGEX_LITERAL = "/" ([^"/"\n\r"$"] | {mREGEX_ESC} | {ESCAPPED_REGEX_SEP})? {mREGEX_CONTENT} ("$""/" | "/")
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -170,22 +171,16 @@ mSTRING_LITERAL = {mTRIPLE_QUOTED_STRING}
 
 
 // Single-double-quoted GStrings
-mGSTRING_SINGLE_BEGIN = \""$"
-    |  \" ([^\\\""$"] | {mSTRING_ESC})? {mGSTRING_SINGLE_CONTENT}"$"
-
 mGSTRING_SINGLE_CONTENT = ({mSTRING_ESC}
     | [^\\\"\r\n"$"]
-    | "\'" )*
+    | "\'" )+
 
 // Triple-double-quoted GStrings
-mGSTRING_TRIPLE_BEGIN = \"\"\""$"
-    |  \"\"\" ([^\"] | {mSTRING_ESC})? {mGSTRING_TRIPLE_CONTENT} (\" (\")?)? "$"
-
 mGSTRING_TRIPLE_CONTENT = ({mSTRING_ESC}
     | \'
     | \" (\")? [^\""$"]
     | [^\\\""$"]
-    | {mSTRING_NL} )*
+    | {mSTRING_NL})+
 
 
 mGSTRING_TRIPLE_CTOR_END = {mGSTRING_TRIPLE_CONTENT} \"\"\"
@@ -195,11 +190,6 @@ mGSTRING_LITERAL = \"\"
     | \" ([^\\\"\n\r"$"] | {mSTRING_ESC})? {mGSTRING_SINGLE_CONTENT} \"
     | \"\"\" {mGSTRING_TRIPLE_CTOR_END}
 
-mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
-    | \'
-    | \" (\")? [^\""$"]
-    | [^\\\""$"]
-    | {mSTRING_NL} )*
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -215,12 +205,10 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 %xstate IN_TRIPLE_IDENT
 %xstate IN_TRIPLE_DOT
 %xstate IN_TRIPLE_NLS
-%xstate WRONG_STRING
 %xstate KING_STATE
 %xstate KING_STATE_INNER
 %xstate KING_STATE_CONTENT
 %xstate KING_STATE_INNER_CONTENT
-%xstate IN_WRONG_SINGLE_GSTRING
 
 %state IN_INNER_BLOCK
 
@@ -247,21 +235,21 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 
   ({mNLS}|{mWS})+                           {  return mWS; }
 
-  [^]                                       { yypushback(yytext().length());
+  [^]                                       { yypushback(1);
                                               yybegin(afterComment);  }
 }
 <NLS_AFTER_LBRACE>{
 
   ({mNLS}|{mWS})+                           { return mWS; }
 
-  [^]                                       { yypushback(yytext().length());
+  [^]                                       { yypushback(1);
                                               yybegin(WAIT_FOR_REGEX);  }
 }
 <NLS_AFTER_NLS>{
 
   ({mNLS}|{mWS})+                           { return mWS; }
 
-  [^]                                       { yypushback(yytext().length());
+  [^]                                       { yypushback(1);
                                               yybegin(NLS_AFTER_COMMENT);  }
 }
 
@@ -270,14 +258,13 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 <IN_SINGLE_IDENT>{
   {mIDENT_NOBUCKS}                        {  yybegin(IN_SINGLE_DOT);
                                              return mIDENT;  }
-  [^]                                     {  yypushback(yytext().length());
+  [^]                                     {  yypushback(1);
                                              yybegin(IN_SINGLE_GSTRING);  }
 }
 <IN_SINGLE_DOT>{
-  "." {mIDENT_NOBUCKS}                    {  yypushback(yytext().length() - 1);
-                                             yybegin(IN_SINGLE_IDENT);
+  "." /{mIDENT_NOBUCKS}                   {  yybegin(IN_SINGLE_IDENT);
                                              return mDOT;  }
-  [^]                                     {  yypushback(yytext().length());
+  [^]                                     {  yypushback(1);
                                              yybegin(IN_SINGLE_GSTRING);  }
 }
 
@@ -289,19 +276,14 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
                                              braceCount.push(mLCURLY);
                                              yybegin(NLS_AFTER_LBRACE);
                                              return mLCURLY; }
-  ([^{[:jletter:]\n\r] | "$") [^\n\r]*    {  gStringStack.clear();
-                                             yybegin(YYINITIAL);
-                                             return mWRONG_GSTRING_LITERAL;  }
-  {mNLS}                                  {  yybegin(NLS_AFTER_NLS);
-                                             afterComment = YYINITIAL;
-                                             clearStacks();
-                                             return mNLS;}
+  [^]                                     {  yypushback(1);
+                                             yybegin(IN_SINGLE_GSTRING); }
 }
 
 <IN_SINGLE_GSTRING> {
-  {mGSTRING_SINGLE_CONTENT}"$"            {  yybegin(IN_SINGLE_GSTRING_DOLLAR);
-                                             return mGSTRING_SINGLE_CONTENT; }
-  {mGSTRING_SINGLE_CONTENT}"\""           {  if (!gStringStack.isEmpty()) {
+  {mGSTRING_SINGLE_CONTENT} (\\)?         {  return mGSTRING_CONTENT; }
+
+  \"                                      {  if (!gStringStack.isEmpty()) {
                                                gStringStack.pop();
                                              }
                                              if (blockStack.isEmpty()){
@@ -309,30 +291,14 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
                                              } else {
                                                yybegin(IN_INNER_BLOCK);
                                              }
-                                             return mGSTRING_SINGLE_END; }
-  {mGSTRING_SINGLE_CONTENT}               {  gStringStack.clear();
-                                             yybegin(YYINITIAL);
-                                             return mWRONG_GSTRING_LITERAL; }
+                                             return mGSTRING_END; }
+  "$"                                     {  yybegin(IN_SINGLE_GSTRING_DOLLAR);
+                                             return mDOLLAR;
+                                          }
   {mNLS}                                  {  clearStacks();
                                              yybegin(NLS_AFTER_NLS);
                                              afterComment = YYINITIAL;
                                              return mNLS; }
-  [^]                                     {  gStringStack.clear();
-                                             yybegin(IN_WRONG_SINGLE_GSTRING);
-                                             return mWRONG_GSTRING_LITERAL; }
-}
-
-<IN_WRONG_SINGLE_GSTRING>{
-  {mNLS}                                  {  yypushback(yytext().length());
-                                             yybegin(YYINITIAL); }
-  \"                                      {  yybegin(YYINITIAL);
-                                             return mWRONG_GSTRING_LITERAL; }
-  [^]                                     {  return mWRONG_GSTRING_LITERAL; }
-}
-
-<WRONG_STRING>{
-  [^]*                                    {  yybegin(YYINITIAL);
-                                             return mWRONG_GSTRING_LITERAL;  }
 }
 
 <IN_INNER_BLOCK>{
@@ -357,21 +323,20 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 <IN_TRIPLE_IDENT>{
   {mIDENT_NOBUCKS}                        {  yybegin(IN_TRIPLE_DOT);
                                              return mIDENT;  }
-  [^]                                     {  yypushback(yytext().length());
+  [^]                                     {  yypushback(1);
                                              yybegin(IN_TRIPLE_GSTRING);  }
 }
 <IN_TRIPLE_DOT>{
-  "."{mIDENT_NOBUCKS}                     {  yypushback(yytext().length() - 1);
-                                             yybegin(IN_TRIPLE_NLS);
+  "." /{mIDENT_NOBUCKS}                   {  yybegin(IN_TRIPLE_NLS);
                                              return mDOT;  }
-  [^]                                     {  yypushback(yytext().length());
+  [^]                                     {  yypushback(1);
                                              yybegin(IN_TRIPLE_GSTRING);  }
 }
 <IN_TRIPLE_NLS>{
   {mNLS}                                  {  yybegin(NLS_AFTER_NLS);
                                              afterComment = IN_TRIPLE_IDENT;
                                              return mNLS;  }
-  [^]                                     {  yypushback(yytext().length());
+  [^]                                     {  yypushback(1);
                                              yybegin(IN_TRIPLE_IDENT);  }
 
 }
@@ -383,14 +348,18 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
                                              braceCount.push(mLCURLY);
                                              yybegin(NLS_AFTER_LBRACE);
                                              return mLCURLY; }
-  ([^{[:jletter:]] | "$")(. | mONE_NL)*   {  clearStacks();
-                                             return mWRONG_GSTRING_LITERAL; }
+  [^]                                     {  yypushback(1);
+                                             yybegin(IN_TRIPLE_GSTRING); }
 }
 
 <IN_TRIPLE_GSTRING> {
-  {mGSTRING_TRIPLE_CONTENT}(\" (\")?)?"$" {  yybegin(IN_TRIPLE_GSTRING_DOLLAR);
-                                             return mGSTRING_SINGLE_CONTENT; }
-  {mGSTRING_TRIPLE_CONTENT}\"\"\"         {  if (!gStringStack.isEmpty()){
+  {mGSTRING_TRIPLE_CONTENT} /(\"\"\")?    { return mGSTRING_CONTENT; }
+  {mGSTRING_TRIPLE_CONTENT}?
+                     (\" (\")? | \\)      { return mGSTRING_CONTENT; }
+
+  "$"                                     {  yybegin(IN_TRIPLE_GSTRING_DOLLAR);
+                                             return mDOLLAR;}
+  \"\"\"                                  {  if (!gStringStack.isEmpty()){
                                                gStringStack.pop();
                                              }
                                              if (blockStack.isEmpty()){
@@ -398,10 +367,7 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
                                              } else {
                                                yybegin(IN_INNER_BLOCK);
                                              }
-                                             return mGSTRING_SINGLE_END; }
-  (.|{mNLS})                              {  clearStacks();
-                                             yybegin(WRONG_STRING);
-                                             return mWRONG_GSTRING_LITERAL; }
+                                             return mGSTRING_END; }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -412,7 +378,7 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
                                              gStringStack.push(mDIV);       // For regexes
                                              yybegin(IN_REGEX_DOLLAR); }
 
-  . | {mNLS}                              {  yypushback(1);
+  . | {mNLS}                              {  yypushback(yytext().length());
                                              yybegin(KING_STATE_INNER);
                                           }
 }
@@ -422,7 +388,7 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
                                              gStringStack.push(mDIV);       // For regexes
                                              yybegin(IN_REGEX_DOLLAR); }
 
-  . | {mNLS}                              {  yypushback(1);
+  . | {mNLS}                              {  yypushback(yytext().length());
                                              yybegin(KING_STATE_INNER_CONTENT);
                                           }
 }
@@ -492,9 +458,9 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 {mREGEX_BEGIN}                            {  yybegin(KING_STATE);
                                              return mREGEX_BEGIN; }
 
-"/" ([^\""$"\n\r"/"] | {mSTRING_ESC} | {ESCAPPED_REGEX_SEP})? {mREGEX_CONTENT} { return mWRONG_REGEX_LITERAL; }
+"/" ([^\""$"\n\r"/"] | {mREGEX_ESC} | {ESCAPPED_REGEX_SEP})? {mREGEX_CONTENT} { return mWRONG_REGEX_LITERAL; }
 
-[^]                                       {  yypushback(yytext().length());
+[^]                                       {  yypushback(1);
                                              if (blockStack.isEmpty()){
                                                yybegin(YYINITIAL);
                                              } else {
@@ -506,14 +472,13 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 <IN_REGEX_IDENT>{
   {mIDENT_NOBUCKS}                        {  yybegin(IN_REGEX_DOT);
                                              return mIDENT;  }
-  [^]                                     {  yypushback(yytext().length());
+  [^]                                     {  yypushback(1);
                                              yybegin(IN_REGEX);  }
 }
 <IN_REGEX_DOT>{
-  "."{mIDENT_NOBUCKS}                     {  yypushback(yytext().length() - 1);
-                                             yybegin(IN_REGEX_IDENT);
+  "." /{mIDENT_NOBUCKS}                   {  yybegin(IN_REGEX_IDENT);
                                              return mDOT;  }
-  [^]                                     {  yypushback(yytext().length());
+  [^]                                     {  yypushback(1);
                                              yybegin(IN_REGEX);  }
 }
 
@@ -525,7 +490,8 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
                                              braceCount.push(mLCURLY);
                                              yybegin(NLS_AFTER_LBRACE);
                                              return mLCURLY; }
-  ([^{[:jletter:]\n\r] | "$") [^\n\r]*    {  gStringStack.clear();
+  ([^{[:jletter:]\n\r] | "$")
+                {mSTRING_ESC}*            {  gStringStack.clear();
                                              yybegin(YYINITIAL);
                                              return mWRONG_REGEX_LITERAL;  }
   {mNLS}                                  {  yybegin(NLS_AFTER_NLS);
@@ -600,23 +566,18 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 
 // Java strings
 {mSTRING_LITERAL}                                          {  return mSTRING_LITERAL; }
-{mSINGLE_QUOTED_STRING_BEGIN}                              {  return mWRONG_STRING_LITERAL; }
+{mSINGLE_QUOTED_STRING_BEGIN}                              {  return mSTRING_LITERAL; }
 
 // GStrings
-{mGSTRING_SINGLE_BEGIN}                                    {  yybegin(IN_SINGLE_GSTRING_DOLLAR);
-                                                              gStringStack.push(mLPAREN);
-                                                              return mGSTRING_SINGLE_BEGIN; }
-
-{mGSTRING_TRIPLE_BEGIN}                                    {  yybegin(IN_TRIPLE_GSTRING_DOLLAR);
+\"\"\"                                                     {  yybegin(IN_TRIPLE_GSTRING);
                                                               gStringStack.push(mLBRACK);
-                                                              return mGSTRING_SINGLE_BEGIN; }
+                                                              return mGSTRING_BEGIN; }
+
+\"                                                         {  yybegin(IN_SINGLE_GSTRING);
+                                                              gStringStack.push(mLPAREN);
+                                                              return mGSTRING_BEGIN; }
 
 {mGSTRING_LITERAL}                                         {  return mGSTRING_LITERAL; }
-
-\" ([^\\\""$"\n\r] | {mSTRING_ESC})? {mGSTRING_SINGLE_CONTENT}
-| \"\"\"[^"$"]
-| {mWRONG_TRIPLE_GSTRING}                                  {  return mWRONG_GSTRING_LITERAL; }
-
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

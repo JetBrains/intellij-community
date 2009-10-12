@@ -31,7 +31,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 /**
  * @author ilyas
  */
-public abstract class GroovyEditorActionUtil {
+public class GroovyEditorActionUtil {
+  private GroovyEditorActionUtil() {
+  }
 
   public static void insertSpacesByGroovyContinuationIndent(Editor editor, Project project) {
     int indentSize = CodeStyleSettingsManager.getSettings(project).getContinuationIndentSize(GroovyFileType.GROOVY_FILE_TYPE);
@@ -40,22 +42,6 @@ public abstract class GroovyEditorActionUtil {
       buffer.append(" ");
     }
     EditorModificationUtil.insertStringAtCaret(editor, buffer.toString());
-  }
-
-  public static void insertSpacesByGroovyIndent(Editor editor, Project project) {
-    int indentSize = CodeStyleSettingsManager.getSettings(project).getIndentSize(GroovyFileType.GROOVY_FILE_TYPE);
-    StringBuffer buffer = new StringBuffer();
-    for (int i = 0; i < indentSize; i++) {
-      buffer.append(" ");
-    }
-    EditorModificationUtil.insertStringAtCaret(editor, buffer.toString());
-  }
-
-  public static boolean isWhiteSpace(String text, int i) {
-    return text.charAt(i) == ' ' ||
-        text.charAt(i) == '\t' ||
-        text.charAt(i) == '\r' ||
-        text.charAt(i) == '\n';
   }
 
   public static boolean isPlainStringLiteral(ASTNode node) {
@@ -89,8 +75,7 @@ public abstract class GroovyEditorActionUtil {
     if (child != null && child.getNode() != null) {
       ASTNode node = child.getNode();
       assert node != null;
-      return node.getElementType() == GroovyTokenTypes.mSTRING_LITERAL ||
-          node.getElementType() == GroovyTokenTypes.mWRONG_STRING_LITERAL;
+      return node.getElementType() == GroovyTokenTypes.mSTRING_LITERAL;
     }
     return false;
   }
@@ -106,15 +91,17 @@ public abstract class GroovyEditorActionUtil {
   }
 
   public static TokenSet GSTRING_TOKENS = TokenSet.create(
-      GroovyTokenTypes.mGSTRING_SINGLE_BEGIN,
-      GroovyTokenTypes.mGSTRING_SINGLE_CONTENT,
-      GroovyTokenTypes.mGSTRING_SINGLE_END,
-      GroovyTokenTypes.mGSTRING_LITERAL
+      GroovyTokenTypes.mGSTRING_BEGIN,
+      GroovyTokenTypes.mGSTRING_CONTENT,
+      GroovyTokenTypes.mGSTRING_END,
+      GroovyTokenTypes.mGSTRING_LITERAL,
+      GroovyTokenTypes.mDOLLAR
   );
 
   public static TokenSet GSTRING_TOKENS_INNER = TokenSet.create(
-      GroovyTokenTypes.mGSTRING_SINGLE_BEGIN,
-      GroovyTokenTypes.mGSTRING_SINGLE_CONTENT,
-      GroovyTokenTypes.mGSTRING_SINGLE_END
+      GroovyTokenTypes.mGSTRING_BEGIN,
+      GroovyTokenTypes.mGSTRING_CONTENT,
+      GroovyTokenTypes.mGSTRING_END,
+      GroovyTokenTypes.mDOLLAR
   );
 }

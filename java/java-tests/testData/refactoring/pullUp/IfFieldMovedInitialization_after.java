@@ -1,7 +1,7 @@
 public class A {
     final String f;
 
-    public A(String foo, String fi) {
+    public A(String fi, String foo) {
         if (fi == foo) {
             f = foo;
         } else {
@@ -14,7 +14,7 @@ class B extends A {
     final String foo;
 
     B(String fi, String foo) {
-        super(foo, fi);
+        super(fi, foo);
         this.foo = foo;
     }
 

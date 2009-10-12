@@ -463,7 +463,7 @@ public class PullUpHelper {
     private final Set<PsiField> myMovedFields;
     private final Set<PsiField> myUsedFields;
 
-    private final Set<PsiParameter> myUsedParameters = new HashSet<PsiParameter>();
+    private final Set<PsiParameter> myUsedParameters = new LinkedHashSet<PsiParameter>();
 
     private ParametersAndMovedFieldsUsedCollector(HashSet<PsiField> movedFields) {
       myMovedFields = movedFields;

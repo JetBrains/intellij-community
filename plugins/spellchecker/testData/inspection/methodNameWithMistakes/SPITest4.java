@@ -16,8 +16,8 @@
 package testData.inspection.methodNameWithMistakes.data.java.src;
 
 class SPITest4 {
-  public void method<TYPO descr="Word 'Ttest' is misspelled">Ttest</TYPO>WithMistake() {
+  public void method<TYPO descr="Typo: In word 'Ttest'">Ttest</TYPO>WithMistake() {
   }
-  public void <TYPO descr="Word 'methad' is misspelled">methad</TYPO>() {
+  public void <TYPO descr="Typo: In word 'methad'">methad</TYPO>() {
   }
 }

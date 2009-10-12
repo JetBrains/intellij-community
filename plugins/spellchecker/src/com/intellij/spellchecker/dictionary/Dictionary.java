@@ -15,18 +15,40 @@
  */
 package com.intellij.spellchecker.dictionary;
 
-import org.jetbrains.annotations.NotNull;
+import com.intellij.spellchecker.trie.Action;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Set;
 
-
 public interface Dictionary {
-  
-  Set<String> getWords();
-
-  void acceptWord(@NotNull String word);
-
-  void replaceAllWords(Set<String> newWords);
 
   String getName();
+
+  boolean contains(String word);
+
+  boolean isEmpty();
+
+  void addToDictionary(String word);
+
+  void removeFromDictionary(String word);
+
+  void addToDictionary(@Nullable Collection<String> words);
+
+  void replaceAll(@Nullable Collection<String> words);
+
+  void clear();
+
+  void traverse(final Action action);
+
+  @Nullable
+  Set<String> getWords();
+
+  @Nullable
+  Set<String> getEditableWords();
+
+  @Nullable
+  Set<String> getNotEditableWords();
+
+
 }

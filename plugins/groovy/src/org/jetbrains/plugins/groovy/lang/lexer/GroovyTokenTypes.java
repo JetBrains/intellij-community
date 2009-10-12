@@ -75,12 +75,12 @@ public interface GroovyTokenTypes extends GroovyDocElementTypes{
   IElementType mGSTRING_LITERAL = new GroovyElementType("Gstring");
   TokenSet STRING_LITERAL_SET = TokenSet.create(mSTRING_LITERAL, mGSTRING_LITERAL);
 
-  IElementType mGSTRING_SINGLE_BEGIN = new GroovyElementType("Gstring begin");
-  IElementType mGSTRING_SINGLE_CONTENT = new GroovyElementType("Gstring content");
-  IElementType mGSTRING_SINGLE_END = new GroovyElementType("Gstring end");
+  IElementType mGSTRING_BEGIN = new GroovyElementType("Gstring begin");
+  IElementType mGSTRING_CONTENT = new GroovyElementType("Gstring content");
+  IElementType mGSTRING_END = new GroovyElementType("Gstring end");
 
-  IElementType mWRONG_STRING_LITERAL = new GroovyElementType("wrong string");
-  IElementType mWRONG_GSTRING_LITERAL = new GroovyElementType("wrong gstring");
+//  IElementType mWRONG_STRING_LITERAL = new GroovyElementType("wrong string");
+//  IElementType mWRONG_GSTRING_LITERAL = new GroovyElementType("wrong gstring");
 
   IElementType mREGEX_LITERAL = new GroovyElementType("regexp");
 

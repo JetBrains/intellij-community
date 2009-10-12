@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-/*some <TYPO descr="Word 'commments' is misspelled">commments</TYPO> */
-function  test<TYPO descr="Word 'Fuunction' is misspelled">Fuunction</TYPO>(){
-  var <TYPO descr="Word 'upddate' is misspelled">upddate</TYPO> = "test variable";
+/*some <TYPO descr="Typo: In word 'commments'">commments</TYPO> */
+function  test<TYPO descr="Typo: In word 'Fuunction'">Fuunction</TYPO>(){
+  var <TYPO descr="Typo: In word 'upddate'">upddate</TYPO> = "test variable";
 }
 
 var obj = {
 
 };
-obj.<TYPO descr="Word 'ttest' is misspelled">ttest</TYPO> = function(){
+obj.<TYPO descr="Typo: In word 'ttest'">ttest</TYPO> = function(){
 
 };

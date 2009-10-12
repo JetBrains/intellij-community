@@ -293,9 +293,12 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
   }
 
   private static class MyIndex extends MapReduceIndex<Integer, SerializedStubTree, FileContent> {
+    private final StubIndexImpl myStubIndex;
+
     public MyIndex(final ID<Integer, SerializedStubTree> indexId, final FileBasedIndex owner, final IndexStorage<Integer, SerializedStubTree> storage,
                    final DataIndexer<Integer, SerializedStubTree, FileContent> indexer) {
       super(indexId, indexer, storage);
+      myStubIndex = (StubIndexImpl)StubIndex.getInstance();
       try {
         checkNameStorage();
       }
@@ -311,7 +314,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       checkNameStorage();
       final Map<StubIndexKey, Map<Object, TIntArrayList>> newStubTree = getStubTree(newData);
 
-      final StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
+      final StubIndexImpl stubIndex = myStubIndex;
       final Collection<StubIndexKey> allStubIndices = stubIndex.getAllStubIndexKeys();
       try {
         // first write-lock affected stub indices to avoid deadlocks
@@ -377,7 +380,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     }
 
     public void clear() throws StorageException {
-      final StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
+      final StubIndexImpl stubIndex = myStubIndex;
       try {
         for (StubIndexKey key : stubIndex.getAllStubIndexKeys()) {
           stubIndex.getWriteLock(key).lock();
@@ -400,7 +403,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       }
       finally {
         try {
-          ((StubIndexImpl)StubIndex.getInstance()).dispose();
+          myStubIndex.dispose();
         }
         finally {
           ((SerializationManagerImpl)SerializationManager.getInstance()).disposeComponent();

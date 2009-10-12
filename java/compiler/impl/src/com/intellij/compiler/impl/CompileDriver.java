@@ -669,18 +669,25 @@ public class CompileDriver {
         didSomething |= invokeFileProcessingCompilers(compilerManager, context, SourceInstrumentingCompiler.class,
                                                       FILE_PROCESSING_COMPILER_ADAPTER_FACTORY, forceCompile, true, onlyCheckStatus);
 
-        didSomething |= invokeFileProcessingCompilers(compilerManager, context, SourceProcessingCompiler.class,
-                                                      FILE_PROCESSING_COMPILER_ADAPTER_FACTORY, forceCompile, true, onlyCheckStatus);
-
-        final CompileScope intermediateSources = attachIntermediateOutputDirectories(new CompositeScope(CompileScope.EMPTY_ARRAY) {
-          @NotNull
-          public Module[] getAffectedModules() {
-            return context.getCompileScope().getAffectedModules();
-          }
-        }, SOURCE_PROCESSING_ONLY);
-        context.addScope(intermediateSources);
-
         didSomething |= translate(context, compilerManager, forceCompile, isRebuild, trackDependencies, onlyCheckStatus);
+
+        final boolean sourceProcessed =
+          invokeFileProcessingCompilers(compilerManager, context, SourceProcessingCompiler.class, FILE_PROCESSING_COMPILER_ADAPTER_FACTORY,
+                                        forceCompile, true, onlyCheckStatus);
+        didSomething |= sourceProcessed;
+
+        if (sourceProcessed) {
+          final CompileScope intermediateSources = attachIntermediateOutputDirectories(new CompositeScope(CompileScope.EMPTY_ARRAY) {
+            @NotNull
+            public Module[] getAffectedModules() {
+              return context.getCompileScope().getAffectedModules();
+            }
+          }, SOURCE_PROCESSING_ONLY);
+          context.addScope(intermediateSources);
+          
+          // important: override rebuild, forceCompile, and trackDependencies options in order to compile only newly generated stuff
+          didSomething |= translate(context, compilerManager, false, false, false, onlyCheckStatus);
+        }
 
         didSomething |= invokeFileProcessingCompilers(compilerManager, context, ClassInstrumentingCompiler.class,
                                                       FILE_PROCESSING_COMPILER_ADAPTER_FACTORY, isRebuild, false, onlyCheckStatus);
@@ -1822,10 +1829,20 @@ public class CompileDriver {
       }
     }
     final List<Chunk<Module>> chunks = ModuleCompilerUtil.getSortedModuleChunks(myProject, Arrays.asList(scopeModules));
+    final CompilerConfiguration config = CompilerConfiguration.getInstance(myProject);
     for (final Chunk<Module> chunk : chunks) {
       final Set<Module> chunkModules = chunk.getNodes();
       if (chunkModules.size() <= 1) {
         continue; // no need to check one-module chunks
+      }
+      if (config.isAnnotationProcessorsEnabled()) {
+        final Set<Module> excluded = config.getExcludedModules();
+        for (Module chunkModule : chunkModules) {
+          if (!excluded.contains(chunkModule)) {
+            showCyclesNotSupportedForAnnotationProcessors(chunkModules.toArray(new Module[chunkModules.size()]));
+            return false;
+          }
+        }
       }
       Sdk jdk = null;
       LanguageLevel languageLevel = null;
@@ -1876,6 +1893,15 @@ public class CompileDriver {
     String moduleNameToSelect = modulesInChunk[0].getName();
     final String moduleNames = getModulesString(modulesInChunk);
     Messages.showMessageDialog(myProject, CompilerBundle.message("error.chunk.modules.must.have.same.jdk", moduleNames),
+                               CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+    showConfigurationDialog(moduleNameToSelect, null);
+  }
+
+  private void showCyclesNotSupportedForAnnotationProcessors(Module[] modulesInChunk) {
+    LOG.assertTrue(modulesInChunk.length > 0);
+    String moduleNameToSelect = modulesInChunk[0].getName();
+    final String moduleNames = getModulesString(modulesInChunk);
+    Messages.showMessageDialog(myProject, CompilerBundle.message("error.annotation.processing.not.supported.for.module.cycles", moduleNames),
                                CommonBundle.getErrorTitle(), Messages.getErrorIcon());
     showConfigurationDialog(moduleNameToSelect, null);
   }

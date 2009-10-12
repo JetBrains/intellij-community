@@ -30,8 +30,11 @@ import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 import java.util.Comparator;
 
 public class FilteringTreeBuilder extends AbstractTreeBuilder {
@@ -57,6 +60,18 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
         }
       }, this);
     }
+
+    myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+      public void valueChanged(TreeSelectionEvent e) {
+        TreePath newPath = e.getNewLeadSelectionPath();
+        if (newPath != null) {
+          Object element = getElementFor(newPath.getLastPathComponent());
+          if (element != null) {
+            myLastSuccessfulSelect = element;
+          }
+        }
+      }
+    });
   }
 
   public boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
@@ -118,8 +133,8 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
     }
   }
 
-  private ActionCallback refilterNow(final Object preferredSelection, final boolean adjustSelection) {
-    final ActionCallback result = new ActionCallback();
+  protected ActionCallback refilterNow(final Object preferredSelection, final boolean adjustSelection) {
+    final ActionCallback selectionDone = new ActionCallback();
 
     getFilteredStructure().refilter();
     updateFromRoot();
@@ -137,16 +152,30 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
                 if (getSelectedElements().contains(nodeToSelect)) {
                   myLastSuccessfulSelect = getOriginalNode(nodeToSelect);
                 }
-                result.setDone();
+                selectionDone.setDone();
               }
             });
+          } else {
+            selectionDone.setDone();
           }
         } else {
-          result.setDone();
+          selectionDone.setDone();
         }
       }
     });
-    
+
+    final ActionCallback result = new ActionCallback();
+
+    selectionDone.doWhenDone(new Runnable() {
+      public void run() {
+        scrollSelectionToVisible(new Runnable() {
+          public void run() {
+            getReady(this).notify(result);
+          }
+        }, false);
+      }
+    });
+
     return result;
   }
 
@@ -181,5 +210,10 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
   @Override
   protected Object transformElement(Object object) {
     return getOriginalNode(object);
+  }
+
+  @Nullable
+  public Object getElementFor(Object node) {
+    return getUi().getElementFor(node);
   }
 }

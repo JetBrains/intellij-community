@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface ImplicitNamespaceDescriptorProvider {
-  @NonNls ExtensionPointName<ImplicitNamespaceDescriptorProvider> EP_NAME = ExtensionPointName.create("com.intellij.javaee.implicitNamespaceDescriptorProvider");
+  @NonNls ExtensionPointName<ImplicitNamespaceDescriptorProvider> EP_NAME = ExtensionPointName.create("com.intellij.xml.implicitNamespaceDescriptorProvider");
 
   @Nullable
   XmlNSDescriptor getNamespaceDescriptor(@Nullable Module module, @NotNull final String ns);

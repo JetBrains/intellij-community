@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.parser;
 
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
@@ -140,6 +141,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
 
   // GStrings
   GroovyElementType GSTRING = new GroovyElementType("GString");
+  IElementType GSTRING_INJECTION =new GroovyElementType("Gstring injection");
 
   GroovyElementType REGEX = new GroovyElementType("Regular expression");
   //types
@@ -220,4 +222,5 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
           OPEN_BLOCK,
           ENUM_BODY,
           CLASS_BODY);
+
 }

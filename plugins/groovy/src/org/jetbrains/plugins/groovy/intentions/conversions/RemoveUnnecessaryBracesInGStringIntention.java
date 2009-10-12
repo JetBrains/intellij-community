@@ -16,20 +16,14 @@
 
 package org.jetbrains.plugins.groovy.intentions.conversions;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.ErrorUtil;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 /**
  * @author Maxim.Medvedev
@@ -43,21 +37,10 @@ public class RemoveUnnecessaryBracesInGStringIntention extends Intention {
 
   @Override
   protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
-    performIntention(element, false);
+    GrStringUtil.removeUnnecessaryBracesInGString((GrString)element);
   }
 
-  public static void performIntention(PsiElement element, boolean checkAvailable) {
-    if (checkAvailable && !MyPredicate.isIntentionAvailable(element)) return;
-    for (PsiElement child : element.getChildren()) {
-      if (MyPredicate.checkClosableBlock(child)) {
-        final GrReferenceExpression refExpr = (GrReferenceExpression)((GrClosableBlock)child).getStatements()[0];
-        final GrReferenceExpression copy = (GrReferenceExpression)refExpr.copy();
-        ((GrClosableBlock)child).replaceWithExpression(copy, false);
-      }
-    }
-  }
-
-  static class MyPredicate implements PsiElementPredicate {
+  public static class MyPredicate implements PsiElementPredicate {
     public boolean satisfiedBy(PsiElement element) {
       return isIntentionAvailable(element);
     }
@@ -68,34 +51,9 @@ public class RemoveUnnecessaryBracesInGStringIntention extends Intention {
       if (ErrorUtil.containsError(element)) return false;
 
       for (PsiElement child : element.getChildren()) {
-        if (checkClosableBlock(child)) return true;
+        if (GrStringUtil.checkGStringInjectionForUnnecessaryBraces(child)) return true;
       }
       return false;
-    }
-
-    public static boolean checkClosableBlock(PsiElement element) {
-      if (!(element instanceof GrClosableBlock)) return false;
-      GrClosableBlock block = (GrClosableBlock)element;
-
-      final GrStatement[] statements = block.getStatements();
-      if (statements.length != 1) return false;
-
-      if (!(statements[0] instanceof GrReferenceExpression)) return false;
-
-      final PsiElement next = block.getNextSibling();
-      if (!(next instanceof LeafPsiElement)) return false;
-
-      char nextChar = next.getText().charAt(0);
-      if (nextChar == '"' || nextChar == '$') {
-        return true;
-      }
-      final GroovyPsiElementFactory elementFactory = GroovyPsiElementFactory.getInstance(element.getProject());
-      final GrExpression gString = elementFactory.createExpressionFromText("\"$" + statements[0].getText() + nextChar + '"');
-      final GrReferenceExpression refExpr = (GrReferenceExpression)statements[0];
-      final PsiElement refExprCopy = gString.getChildren()[0];
-      if (!(refExprCopy instanceof GrReferenceExpression)) return false;
-
-      return Comparing.equal(refExpr.getName(), ((GrReferenceExpression)refExprCopy).getName());
     }
   }
 }
