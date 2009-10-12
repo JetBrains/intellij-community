@@ -45,4 +45,8 @@ public class EmptyMethodTest extends InspectionTestCase {
   public void testSuperFromAnotherPackageCall() throws Exception {
     doTest();
   }
+
+  public void testSuperWithoutSync() throws Exception {
+    doTest();
+  }
 }
