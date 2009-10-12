@@ -142,6 +142,26 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
           }
         }
       }
+      for (PsiMethod constructor : targetClass.getConstructors()) {
+        final PsiCodeBlock constrBody = constructor.getBody();
+        LOG.assertTrue(constrBody != null);
+        final PsiStatement[] statements = constrBody.getStatements();
+        if (statements.length > 0) {
+          final PsiStatement firstConstrStatement = statements[0];
+          if (firstConstrStatement instanceof PsiExpressionStatement) {
+            final PsiExpression expression = ((PsiExpressionStatement)firstConstrStatement).getExpression();
+            if (expression instanceof PsiMethodCallExpression) {
+              final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expression).getMethodExpression();
+              if (methodExpression.getText().equals(PsiKeyword.SUPER)) {
+                final PsiMethod superConstructor = ((PsiMethodCallExpression)expression).resolveMethod();
+                if (superConstructor != null && superConstructor.getBody() != null) {
+                  usages.add(new InlineSuperCallUsageInfo((PsiMethodCallExpression)expression));
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 
@@ -154,6 +174,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
         final PsiMember member = info.getMember();
         pushDownConflicts.checkMemberPlacementInTargetClassConflict(targetClass, member);
       }
+        //todo check accessibility conflicts
     }
     for (PsiElement element : pushDownConflicts.getConflicts().keySet()) {
       conflicts.put(element, pushDownConflicts.getConflicts().get(element));
