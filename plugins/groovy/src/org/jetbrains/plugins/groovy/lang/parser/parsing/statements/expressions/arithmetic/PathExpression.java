@@ -183,7 +183,7 @@ public class PathExpression implements GroovyElementTypes {
       ParserUtils.eatElement(builder, PATH_PROPERTY);
       return PATH_PROPERTY_REFERENCE;
     }
-    if (mGSTRING_SINGLE_BEGIN.equals(tokenType)) {
+    if (mGSTRING_BEGIN.equals(tokenType)) {
       StringConstructorExpression.parse(builder, parser);
       return PATH_PROPERTY_REFERENCE;
     }

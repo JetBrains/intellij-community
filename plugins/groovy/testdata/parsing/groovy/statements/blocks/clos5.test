@@ -10,46 +10,50 @@ Groovy script
     PsiWhiteSpace(' ')
     Command arguments
       Compound Gstring
-        PsiElement(Gstring begin)('"""Pre$')
-        Closable block
-          PsiElement({)('{')
-          PsiWhiteSpace(' ')
-          Parameter list
-            <empty list>
-          Reference expression
-            Reference expression
-              PsiElement(identifier)('list')
-            PsiElement(.)('.')
-            PsiElement(identifier)('each')
-          PsiElement(;)(';')
-          PsiElement(new line)('\n')
-          Call expression
-            Reference expression
-              PsiElement(identifier)('println')
+        PsiElement(Gstring begin)('"""')
+        PsiElement(Gstring content)('Pre')
+        GString injection
+          PsiElement($)('$')
+          Closable block
+            PsiElement({)('{')
             PsiWhiteSpace(' ')
-            Command arguments
-              Literal
-                PsiElement(Gstring)('"bugaga"')
-          PsiWhiteSpace(' ')
-          PsiElement(;)(';')
-          PsiWhiteSpace('  ')
-          PsiElement(new line)('\n')
-          PsiErrorElement:Imports are not allowed inside blocks
-            Import statement
-              Modifiers
-                <empty list>
-              PsiElement(import)('import')
-              PsiWhiteSpace(' ')
-              Reference element
-                Reference element
-                  PsiElement(identifier)('java')
-                PsiElement(.)('.')
-                PsiElement(identifier)('lang')
+            Parameter list
+              <empty list>
+            Reference expression
+              Reference expression
+                PsiElement(identifier)('list')
               PsiElement(.)('.')
-              PsiElement(*)('*')
-          PsiElement(;)(';')
-          PsiElement(new line)('\n')
-          Literal
-            PsiElement(string)(''ved'')
-          PsiElement(})('}')
-        PsiElement(Gstring end)('!"""')
+              PsiElement(identifier)('each')
+            PsiElement(;)(';')
+            PsiElement(new line)('\n')
+            Call expression
+              Reference expression
+                PsiElement(identifier)('println')
+              PsiWhiteSpace(' ')
+              Command arguments
+                Literal
+                  PsiElement(Gstring)('"bugaga"')
+            PsiWhiteSpace(' ')
+            PsiElement(;)(';')
+            PsiWhiteSpace('  ')
+            PsiElement(new line)('\n')
+            PsiErrorElement:Imports are not allowed inside blocks
+              Import statement
+                Modifiers
+                  <empty list>
+                PsiElement(import)('import')
+                PsiWhiteSpace(' ')
+                Reference element
+                  Reference element
+                    PsiElement(identifier)('java')
+                  PsiElement(.)('.')
+                  PsiElement(identifier)('lang')
+                PsiElement(.)('.')
+                PsiElement(*)('*')
+            PsiElement(;)(';')
+            PsiElement(new line)('\n')
+            Literal
+              PsiElement(string)(''ved'')
+            PsiElement(})('}')
+        PsiElement(Gstring content)('!')
+        PsiElement(Gstring end)('"""')

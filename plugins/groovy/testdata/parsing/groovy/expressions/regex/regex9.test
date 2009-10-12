@@ -20,18 +20,21 @@ Groovy script
           PsiWhiteSpace(' ')
           Command arguments
             Compound Gstring
-              PsiElement(Gstring begin)('"def $')
-              Closable block
-                PsiElement({)('{')
-                Parameter list
-                  <empty list>
-                Additive expression
-                  Reference expression
-                    PsiElement(identifier)('a')
-                  PsiElement(+)('+')
-                  Reference expression
-                    PsiElement(identifier)('b')
-                PsiElement(})('}')
+              PsiElement(Gstring begin)('"')
+              PsiElement(Gstring content)('def ')
+              GString injection
+                PsiElement($)('$')
+                Closable block
+                  PsiElement({)('{')
+                  Parameter list
+                    <empty list>
+                  Additive expression
+                    Reference expression
+                      PsiElement(identifier)('a')
+                    PsiElement(+)('+')
+                    Reference expression
+                      PsiElement(identifier)('b')
+                  PsiElement(})('}')
               PsiElement(Gstring end)('"')
         PsiElement(})('}')
       PsiElement(regex content)(' fgh$')

@@ -20,8 +20,28 @@ Groovy script
       PsiElement(=)('=')
       PsiWhiteSpace(' ')
       Compound Gstring
-        PsiElement(Gstring begin)('"""DELIMITER $')
+        PsiElement(Gstring begin)('"""')
+        PsiElement(Gstring content)('DELIMITER ')
+        PsiElement($)('$')
         PsiErrorElement:Identifier or code block expected
           <empty list>
-  PsiErrorElement:';' or new line expected
-    PsiElement(wrong gstring)('$\n\nDROP PROCEDURE IF EXISTS `gearloop`.`sp_CustomProductProfile_ins_upd`$$\n\nCREATE PROCEDURE `gearloop`.`sp_CustomProductProfile_ins_upd`()\n    BEGIN\n\n    END$$\n\nDELIMITER ;""";')
+        PsiElement($)('$')
+        PsiErrorElement:Identifier or code block expected
+          <empty list>
+        PsiElement(Gstring content)('\n\nDROP PROCEDURE IF EXISTS `gearloop`.`sp_CustomProductProfile_ins_upd`')
+        PsiElement($)('$')
+        PsiErrorElement:Identifier or code block expected
+          <empty list>
+        PsiElement($)('$')
+        PsiErrorElement:Identifier or code block expected
+          <empty list>
+        PsiElement(Gstring content)('\n\nCREATE PROCEDURE `gearloop`.`sp_CustomProductProfile_ins_upd`()\n    BEGIN\n\n    END')
+        PsiElement($)('$')
+        PsiErrorElement:Identifier or code block expected
+          <empty list>
+        PsiElement($)('$')
+        PsiErrorElement:Identifier or code block expected
+          <empty list>
+        PsiElement(Gstring content)('\n\nDELIMITER ;')
+        PsiElement(Gstring end)('"""')
+  PsiElement(;)(';')

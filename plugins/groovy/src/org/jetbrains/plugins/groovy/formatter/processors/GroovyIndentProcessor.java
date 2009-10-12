@@ -23,23 +23,24 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
 import org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEditorActionUtil;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSynchronizedStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 
 /**
  * @author ilyas
@@ -66,7 +67,7 @@ public abstract class GroovyIndentProcessor implements GroovyElementTypes {
     }
 
     if (GroovyEditorActionUtil.GSTRING_TOKENS_INNER.contains(child.getElementType()) &&
-        GroovyTokenTypes.mGSTRING_SINGLE_BEGIN != child.getElementType()) {
+        mGSTRING_BEGIN != child.getElementType()) {
       return Indent.getAbsoluteNoneIndent();
     }
 
@@ -118,10 +119,9 @@ public abstract class GroovyIndentProcessor implements GroovyElementTypes {
     }
 
     // For arguments
-    if (psiParent instanceof GrArgumentList ||
-        psiParent instanceof GrCommandArgumentList) {
-      if (child.getElementType() != GroovyTokenTypes.mLPAREN &&
-          child.getElementType() != GroovyTokenTypes.mRPAREN) {
+    if (psiParent instanceof GrArgumentList) {
+      if (child.getElementType() != mLPAREN &&
+          child.getElementType() != mRPAREN) {
         return Indent.getContinuationIndent();
       }
     }

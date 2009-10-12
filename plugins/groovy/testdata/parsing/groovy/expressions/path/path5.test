@@ -2,29 +2,27 @@ a.b.
 c*."My $import.bugaga aga 
 -----
 Groovy script
-  Call expression
-    Property selection
+  Property selection
+    Reference expression
       Reference expression
         Reference expression
-          Reference expression
-            PsiElement(identifier)('a')
-          PsiElement(.)('.')
-          PsiElement(identifier)('b')
+          PsiElement(identifier)('a')
         PsiElement(.)('.')
-        PsiElement(new line)('\n')
-        PsiElement(identifier)('c')
-      PsiElement(*.)('*.')
-      Compound Gstring
-        PsiElement(Gstring begin)('"My $')
+        PsiElement(identifier)('b')
+      PsiElement(.)('.')
+      PsiElement(new line)('\n')
+      PsiElement(identifier)('c')
+    PsiElement(*.)('*.')
+    Compound Gstring
+      PsiElement(Gstring begin)('"')
+      PsiElement(Gstring content)('My ')
+      GString injection
+        PsiElement($)('$')
         Reference expression
           Reference expression
             PsiElement(identifier)('import')
           PsiElement(.)('.')
           PsiElement(identifier)('bugaga')
-        PsiErrorElement:GString ending expected
-          <empty list>
-    Command arguments
-      Literal
-        PsiElement(wrong gstring)(' aga ')
-        PsiErrorElement:Wrong string literal
-          <empty list>
+      PsiElement(Gstring content)(' aga ')
+      PsiErrorElement:String end expected
+        <empty list>

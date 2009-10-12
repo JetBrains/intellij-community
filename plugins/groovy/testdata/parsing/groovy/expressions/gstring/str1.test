@@ -2,22 +2,28 @@
 -----
 Groovy script
   Compound Gstring
-    PsiElement(Gstring begin)('"aaa $')
-    Reference expression
+    PsiElement(Gstring begin)('"')
+    PsiElement(Gstring content)('aaa ')
+    GString injection
+      PsiElement($)('$')
       Reference expression
         Reference expression
-          PsiElement(identifier)('a')
+          Reference expression
+            PsiElement(identifier)('a')
+          PsiElement(.)('.')
+          PsiElement(identifier)('b')
         PsiElement(.)('.')
-        PsiElement(identifier)('b')
-      PsiElement(.)('.')
-      PsiElement(identifier)('c')
-    PsiElement(Gstring content)(' bbb $')
-    Reference expression
+        PsiElement(identifier)('c')
+    PsiElement(Gstring content)(' bbb ')
+    GString injection
+      PsiElement($)('$')
       Reference expression
         Reference expression
-          PsiElement(identifier)('c')
+          Reference expression
+            PsiElement(identifier)('c')
+          PsiElement(.)('.')
+          PsiElement(identifier)('d')
         PsiElement(.)('.')
-        PsiElement(identifier)('d')
-      PsiElement(.)('.')
-      PsiElement(identifier)('e')
-    PsiElement(Gstring end)(' fff"')
+        PsiElement(identifier)('e')
+    PsiElement(Gstring content)(' fff')
+    PsiElement(Gstring end)('"')

@@ -1,8 +1,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -13,6 +12,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 
 /**
  * @author Maxim.Medvedev
@@ -133,7 +133,7 @@ public class GrStringUtil {
     if (parent instanceof GrClosableBlock) {
       parent = parent.getParent();
     }
-    return parent instanceof GrString;
+    return parent instanceof GrStringInjection;
   }
 
   /**
@@ -141,11 +141,12 @@ public class GrStringUtil {
    * @param literal
    * @return
    */
-  public static GrExpression replaceExpressionInjectionByLiteral(PsiElement injection, GrLiteral literal) {
+  public static GrString replaceStringInjectionByLiteral(PsiElement injection, GrLiteral literal) {
     if (injection.getParent() instanceof GrClosableBlock) {
       injection = injection.getParent();
     }
-    GrString grString= (GrString)injection.getParent();
+    injection = injection.getParent();
+    GrString grString = (GrString)injection.getParent();
 
     int injectionNumber = -1;
     for (PsiElement child : grString.getChildren()) {
@@ -157,35 +158,41 @@ public class GrStringUtil {
     if (injectionNumber == -1) return grString;
 
     GrString grStringWithBraces = addAllBracesInGString(grString);
-    injection = grStringWithBraces.getChildren()[injectionNumber];
-
-    final int offset = injection.getStartOffsetInParent();
-    final TextRange range = new TextRange(offset - 1, offset + injection.getTextLength());
+//    injection = grStringWithBraces.getChildren()[injectionNumber];
 
     if (literal instanceof GrString) {
       literal = addAllBracesInGString((GrString)literal);
     }
 
-    String literalText = literal.getText();
-    if (isPlainString(literal)) {
-      literalText = escapeSymbolsForGString(literalText);
-    }
+    String literalText = escapeSymbolsForGString(removeQuotes(literal.getText()));
 
-    String text = StringUtil.replaceSubstring(grStringWithBraces.getText(), range, removeQuotes(literalText));
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(grString.getProject());
+    final GrExpression expression = factory.createExpressionFromText("\"${}" + literalText + "\"");
 
-    GrExpression newGrString = GroovyPsiElementFactory.getInstance(grString.getProject()).createExpressionFromText(text);
-    if (newGrString instanceof GrString) {
-      removeUnnecessaryBracesInGString((GrString)newGrString);
+    expression.getFirstChild().delete();
+    expression.getFirstChild().delete();
+    expression.getLastChild().delete();
+
+    final ASTNode node = grString.getNode();
+    if (expression.getFirstChild() != null) {
+      if (expression.getFirstChild() == expression.getLastChild()) {
+        node.replaceChild(injection.getNode(), expression.getFirstChild().getNode());
+      }
+      else {
+        node.addChildren(expression.getFirstChild().getNode(), expression.getLastChild().getNode(), injection.getNode());
+        injection.delete();
+      }
     }
-    return grString.replaceWithExpression(newGrString, true);
+    return grString;
   }
 
   public static GrString addAllBracesInGString(GrString grString) {
     StringBuilder newString = new StringBuilder();
 
     for (PsiElement child = grString.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (child instanceof GrReferenceExpression) {
-        newString.append('{').append(child.getText()).append('}');
+      if (child instanceof GrStringInjection && ((GrStringInjection)child).getReferenceExpression() != null) {
+        final GrReferenceExpression refExpr = ((GrStringInjection)child).getReferenceExpression();
+        newString.append("${").append(refExpr != null ? refExpr.getText() : "").append('}');
       }
       else {
         newString.append(child.getText());
@@ -194,16 +201,18 @@ public class GrStringUtil {
     return (GrString)GroovyPsiElementFactory.getInstance(grString.getProject()).createExpressionFromText(newString.toString());
   }
 
-  public static boolean checkClosableBlockInGStringForUnnecessaryBraces(PsiElement element) {
-    if (!(element instanceof GrClosableBlock)) return false;
-    GrClosableBlock block = (GrClosableBlock)element;
+  public static boolean checkGStringInjectionForUnnecessaryBraces(PsiElement element) {
+    if (!(element instanceof GrStringInjection)) return false;
+    GrStringInjection injection = (GrStringInjection)element;
+    final GrClosableBlock block = injection.getClosableBlock();
+    if (block == null) return false;
 
     final GrStatement[] statements = block.getStatements();
     if (statements.length != 1) return false;
 
     if (!(statements[0] instanceof GrReferenceExpression)) return false;
 
-    final PsiElement next = block.getNextSibling();
+    final PsiElement next = injection.getNextSibling();
     if (!(next instanceof LeafPsiElement)) return false;
 
     char nextChar = next.getText().charAt(0);
@@ -213,7 +222,7 @@ public class GrStringUtil {
     final GroovyPsiElementFactory elementFactory = GroovyPsiElementFactory.getInstance(element.getProject());
     final GrExpression gString = elementFactory.createExpressionFromText("\"$" + statements[0].getText() + nextChar + '"');
     final GrReferenceExpression refExpr = (GrReferenceExpression)statements[0];
-    final PsiElement refExprCopy = gString.getChildren()[0];
+    final PsiElement refExprCopy = ((GrStringInjection)gString.getChildren()[0]).getReferenceExpression();
     if (!(refExprCopy instanceof GrReferenceExpression)) return false;
 
     return Comparing.equal(refExpr.getName(), ((GrReferenceExpression)refExprCopy).getName());
@@ -221,10 +230,11 @@ public class GrStringUtil {
 
   public static void removeUnnecessaryBracesInGString(GrString grString) {
     for (PsiElement child : grString.getChildren()) {
-      if (checkClosableBlockInGStringForUnnecessaryBraces(child)) {
-        final GrReferenceExpression refExpr = (GrReferenceExpression)((GrClosableBlock)child).getStatements()[0];
+      if (checkGStringInjectionForUnnecessaryBraces(child)) {
+        final GrClosableBlock closableBlock = ((GrStringInjection)child).getClosableBlock();
+        final GrReferenceExpression refExpr = (GrReferenceExpression)closableBlock.getStatements()[0];
         final GrReferenceExpression copy = (GrReferenceExpression)refExpr.copy();
-        ((GrClosableBlock)child).replaceWithExpression(copy, false);
+        closableBlock.replace(copy);
       }
     }
   }

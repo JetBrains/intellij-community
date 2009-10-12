@@ -8,9 +8,9 @@ Groovy script
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
-    Literal
-      PsiElement(wrong gstring)('"')
-      PsiErrorElement:Wrong string literal
+    Compound Gstring
+      PsiElement(Gstring begin)('"')
+      PsiErrorElement:String end expected
         <empty list>
   PsiElement(new line)('\n')
   Literal

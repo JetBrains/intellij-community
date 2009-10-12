@@ -52,7 +52,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueSta
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -85,7 +85,7 @@ public abstract class GroovyRefactoringUtil {
       if (parent == null) {
         return null;
       }
-      if (parent instanceof GrDeclarationHolder && !(parent instanceof GrClosableBlock && parent.getParent() instanceof GrString)) {
+      if (parent instanceof GrDeclarationHolder && !(parent instanceof GrClosableBlock && parent.getParent() instanceof GrStringInjection)) {
         return parent;
       }
       if (parent instanceof GrLoopStatement) {

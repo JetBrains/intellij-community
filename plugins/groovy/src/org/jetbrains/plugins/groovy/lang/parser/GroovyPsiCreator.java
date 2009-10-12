@@ -47,6 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrRegexImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrStringImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrStringInjectionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.GrLogicalAndExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.GrLogicalOrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrIndexPropertyImpl;
@@ -234,6 +235,7 @@ public class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(BUILT_IN_TYPE)) return new GrBuiltInTypeElementImpl(node);
     if (elem.equals(GSTRING)) return new GrStringImpl(node);
     if (elem.equals(REGEX)) return new GrRegexImpl(node);
+    if (elem.equals(GSTRING_INJECTION)) return new GrStringInjectionImpl(node);
     if (elem.equals(REFERENCE_EXPRESSION)) return new GrReferenceExpressionImpl(node);
     if (elem.equals(THIS_REFERENCE_EXPRESSION)) return new GrThisReferenceExpressionImpl(node);
     if (elem.equals(SUPER_REFERENCE_EXPRESSION)) return new GrSuperReferenceExpressionImpl(node);

@@ -33,8 +33,7 @@ public class GroovyLexer extends LookAheadLexer {
       mREGEX_BEGIN,
       mREGEX_CONTENT,
       mREGEX_END,
-      mWS,
-      mWRONG_GSTRING_LITERAL
+      mWS
   );
 
   public GroovyLexer() {

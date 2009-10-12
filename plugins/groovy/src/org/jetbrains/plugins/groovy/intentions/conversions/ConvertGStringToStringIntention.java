@@ -32,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinary
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 import java.util.ArrayList;
@@ -60,11 +61,16 @@ public class ConvertGStringToStringIntention extends Intention {
     do {
       text = child.getText();
       nextSibling = child.getNextSibling();
-      if (child instanceof GrClosableBlock) {
-        text = prepareClosableBlock((GrClosableBlock)child);
-      }
-      else if (child instanceof GrReferenceExpression) {
-        text = prepareExpression((GrExpression)child);
+      if (child instanceof GrStringInjection) {
+        if (((GrStringInjection)child).getClosableBlock() != null) {
+          text = prepareClosableBlock(((GrStringInjection)child).getClosableBlock());
+        }
+        else if (((GrStringInjection)child).getReferenceExpression() != null) {
+          text = prepareExpression(((GrStringInjection)child).getReferenceExpression());
+        }
+        else {
+          text = child.getText();
+        }
       }
       else {
         text = prepareText(text, prevSibling == null, nextSibling == null,

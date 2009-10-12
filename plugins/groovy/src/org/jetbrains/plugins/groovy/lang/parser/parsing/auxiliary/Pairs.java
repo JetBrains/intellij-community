@@ -39,7 +39,7 @@ public abstract class Pairs {
     pairElementsMap.put(mLCURLY, mRCURLY);
     pairElementsMap.put(mRCURLY, mLCURLY);
 
-    pairElementsMap.put(mGSTRING_SINGLE_BEGIN, mGSTRING_SINGLE_END);
-    pairElementsMap.put(mGSTRING_SINGLE_END, mGSTRING_SINGLE_BEGIN);
+    pairElementsMap.put(mGSTRING_BEGIN, mGSTRING_END);
+    pairElementsMap.put(mGSTRING_END, mGSTRING_BEGIN);
   }
 }
