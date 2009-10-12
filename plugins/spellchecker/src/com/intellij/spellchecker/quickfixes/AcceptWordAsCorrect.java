@@ -23,6 +23,8 @@ import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+
 
 public class AcceptWordAsCorrect implements SpellCheckerQuickFix {
   private String word;
@@ -51,4 +53,7 @@ public class AcceptWordAsCorrect implements SpellCheckerQuickFix {
     spellCheckerManager.acceptWordAsCorrect(word);
   }
 
+  public Icon getIcon(int flags) {
+    return new ImageIcon(ShowSuggestions.class.getResource("spellcheck.png"));
+  }
 }
