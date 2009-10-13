@@ -243,7 +243,6 @@ public class LookupCellRenderer implements ListCellRenderer {
       myTypeLabel.append(labelText);
     }
 
-    myTypeLabel.setBackground(Color.YELLOW);
     myTypeLabel.setBackground(sampleBackground);
     myTypeLabel.setForeground(item instanceof EmptyLookupItem ? EMPTY_ITEM_FOREGROUND_COLOR : foreground);
     return used;
