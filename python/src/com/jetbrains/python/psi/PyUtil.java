@@ -37,7 +37,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
-import java.util.regex.Pattern;
 
 public class PyUtil {
   private PyUtil() {
@@ -525,17 +524,6 @@ public class PyUtil {
       }
     }
     return superClasses.toArray(new PyClass[superClasses.size()]);
-  }
-
-  private static Pattern IDENTIFIER_PATTERN = Pattern.compile("\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*");
-
-  /**
-   * @param name to be tested
-   * @return true iff the name is a valid Python identifier.
-   *         <b>Note: it allows unicode names which only Py3k supports.</b>
-   */
-  public static boolean isIdentifier(String name) {
-    return IDENTIFIER_PATTERN.matcher(name).matches();
   }
 
   /**

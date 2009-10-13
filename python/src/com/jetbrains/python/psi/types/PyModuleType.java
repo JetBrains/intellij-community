@@ -9,7 +9,6 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
 import org.jetbrains.annotations.NotNull;
@@ -92,7 +91,7 @@ public class PyModuleType implements PyType { // Maybe make it a PyClassType ref
       String s = pfsi.getName();
       int pos = s.lastIndexOf('.'); // it may not contain a dot, except in extension; cut it off.
       if (pos > 0) s = s.substring(0, pos);
-      if (!PyUtil.isIdentifier(s)) continue; // file is e.g. a script with a strange name, not a module
+      if (!PyNames.isIdentifier(s)) continue; // file is e.g. a script with a strange name, not a module
       if (names_already != null) {
         if (names_already.contains(s)) continue;
         else names_already.add(s);

@@ -94,7 +94,7 @@ public class ImportToggleAliasIntention implements IntentionAction {
       else {
         // ask for and add alias
         AskNameDialog dialog = new AskNameDialog(project);
-        dialog.setTitle("Alias for '" + imported_name + "'?");
+        dialog.setTitle(PyBundle.message("INTN.alias.for.$0.dialog.title", imported_name));
         dialog.show();
         if (!dialog.isOK()) return; // 'Cancel' button cancels everything
         target_name = dialog.getAlias();

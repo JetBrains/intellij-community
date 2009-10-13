@@ -8,6 +8,7 @@ import com.intellij.usages.Usage;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.UsageViewPresentation;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.NameDefiner;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveProcessor;
@@ -75,10 +76,10 @@ public class DeclarationConflictChecker {
         i += 1;
       }
       UsageViewPresentation prsnt = new UsageViewPresentation();
-      prsnt.setTabText("Name '" + obscured + "' obscured by local redefinitions. ");
-      prsnt.setCodeUsagesString("Name '" + obscured + "' obscured. Cannot convert import.");
-      prsnt.setUsagesWord("occurrence");
-      prsnt.setUsagesString("occurrences");
+      prsnt.setTabText(PyBundle.message("CONFLICT.name.$0.obscured", obscured));
+      prsnt.setCodeUsagesString(PyBundle.message("CONFLICT.name.$0.obscured.cannot.convert", obscured));
+      prsnt.setUsagesWord(PyBundle.message("CONFLICT.occurrence.sing"));
+      prsnt.setUsagesString(PyBundle.message("CONFLICT.occurrence.pl"));
       UsageViewManager.getInstance(project).showUsages(UsageTarget.EMPTY_ARRAY, usages, prsnt);
       return true;
     }
