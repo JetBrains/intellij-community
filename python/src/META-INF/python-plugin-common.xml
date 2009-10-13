@@ -76,6 +76,12 @@
       <descriptionDirectoryName>ImportFromToImportIntention</descriptionDirectoryName>
     </intentionAction>
 
+    <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.ImportToggleAliasIntention</className>
+      <category>Python</category>
+      <descriptionDirectoryName>ImportToggleAliasIntention</descriptionDirectoryName>
+    </intentionAction>
+
     <fileStructureGroupRuleProvider implementation="com.jetbrains.python.codeInsight.intentions.PyRefGroupRuleProvider"/>
 
     <stubElementTypeHolder class="com.jetbrains.python.PyElementTypes"/>

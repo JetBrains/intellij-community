@@ -53,7 +53,7 @@ public class ImportToImportFromIntention implements IntentionAction {
 
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("INTN.Family.convert.import");
+    return PyBundle.message("INTN.Family.convert.import.unqualify");
   }
 
   @Nullable
@@ -94,7 +94,7 @@ public class ImportToImportFromIntention implements IntentionAction {
               if (myQualifierName.equals(PyResolveUtil.toPath(ref, "."))) {  // filter out other names that might resolve to our target
                 PsiElement elt = ref.getElement();
                 PsiElement parent_elt = elt.getParent();
-                if (parent_elt != null && parent_elt instanceof PyQualifiedExpression) { // really qualified by us, not just referencing?
+                if (parent_elt instanceof PyQualifiedExpression) { // really qualified by us, not just referencing?
                   PsiElement resolved = ref.resolve();
                   if (resolved == myReferee) references.add(ref);
                 }

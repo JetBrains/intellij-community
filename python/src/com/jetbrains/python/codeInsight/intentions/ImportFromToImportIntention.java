@@ -1,39 +1,29 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Pair;
-import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.usages.*;
-import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonLanguage;
+import static com.jetbrains.python.codeInsight.intentions.DeclarationConflictChecker.findDefinitions;
+import static com.jetbrains.python.codeInsight.intentions.DeclarationConflictChecker.showConflicts;
 import com.jetbrains.python.psi.*;
 import static com.jetbrains.python.psi.PyUtil.sure;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
-import com.jetbrains.python.psi.resolve.ResolveProcessor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -50,11 +40,6 @@ public class ImportFromToImportIntention implements IntentionAction {
   private PyReferenceExpression myModuleReference = null;
   private String myModuleName = null;
 
-  @Nullable
-  private static PyFromImportStatement findStatement(Editor editor, PsiFile file) {
-    return PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyFromImportStatement.class);
-  }
-
   @NotNull
   public String getText() {
     String name = myModuleName != null? myModuleName : "...";
@@ -63,11 +48,11 @@ public class ImportFromToImportIntention implements IntentionAction {
 
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("INTN.Family.convert.import");
+    return PyBundle.message("INTN.Family.convert.import.qualify");
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    myFromImportStatement = findStatement(editor, file);
+    myFromImportStatement = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyFromImportStatement.class);
     if (myFromImportStatement != null) {
       myModuleReference = myFromImportStatement.getImportSource();
       if (myModuleReference != null) myModuleName = PyResolveUtil.toPath(myModuleReference, ".");
@@ -111,33 +96,14 @@ public class ImportFromToImportIntention implements IntentionAction {
         feeler = top_qualifier.getQualifier();
       } while (feeler != null);
       String top_name = top_qualifier.getName();
-      List<Pair<PsiElement, PsiElement>> conflicts = new ArrayList<Pair<PsiElement, PsiElement>>();
-      for (PsiReference ref : references.keySet()) {
-        ResolveProcessor processor = new ResolveProcessor(top_name);
-        PyResolveUtil.treeCrawlUp(processor, ref.getElement());
-        PsiElement result = processor.getResult();
-        if (result != null) {
-          List<NameDefiner> definers = processor.getDefiners();
-          if (definers != null && definers.size() > 0) {
-            result = definers.get(0); // in this case, processor's result is one hop of resolution too far from what we want.
-          }
-          conflicts.add(new Pair<PsiElement, PsiElement>(ref.getElement(), result));
-        }
-      }
-      if (conflicts.size() > 0) {
-        Usage[] usages = new Usage[conflicts.size()];
-        int i = 0;
-        for (Pair<PsiElement, PsiElement> pair : conflicts) {
-          usages[i] = new UUsage(pair.getFirst(), pair.getSecond(), myModuleName);
-          i += 1;
-        }
-        UsageViewPresentation prsnt = new UsageViewPresentation();
-        prsnt.setTabText("Name '" + top_name + "' obscured by local redefinitions. ");
-        prsnt.setCodeUsagesString("Name '" + top_name + "' obscured. Cannot convert import.");
-        prsnt.setUsagesWord("occurrence");
-        prsnt.setUsagesString("occurrences");
-        UsageViewManager.getInstance(project).showUsages(UsageTarget.EMPTY_ARRAY, usages, prsnt);
-        return;
+      if (
+        showConflicts(
+          project,
+          findDefinitions(top_name, references.keySet(), Arrays.asList(myFromImportStatement.getImportElements())), 
+          top_name, myModuleName
+        )
+      ) {
+        return; // got conflicts
       }
 
       // add qualifiers
@@ -183,90 +149,3 @@ public class ImportFromToImportIntention implements IntentionAction {
   }
 }
 
-class UUsage implements PsiElementUsage {
-
-  private final PsiElement myElement;
-  private final PsiElement myCulprit;
-
-  static final TextAttributes SLANTED;
-  private final String myPrefix;
-
-  static {
-    SLANTED = TextAttributes.ERASE_MARKER.clone();
-    SLANTED.setFontType(Font.ITALIC);
-  }
-
-
-  public UUsage(PsiElement element, PsiElement culprit, String prefix) {
-    myElement = element;
-    myCulprit = culprit;
-    myPrefix = prefix;
-  }
-
-  public FileEditorLocation getLocation() {
-    return null;
-  }
-
-  @NotNull
-  public UsagePresentation getPresentation() {
-    return new UsagePresentation() {
-      @Nullable
-      public Icon getIcon() {
-        return myElement.getIcon(0);
-      }
-
-      @NotNull
-      public TextChunk[] getText() {
-        TextChunk[] chunks = new TextChunk[3];
-        PsiFile file = myElement.getContainingFile();
-        int lineno = file.getViewProvider().getDocument().getLineNumber(myElement.getTextOffset());
-        chunks[0] = new TextChunk(SLANTED, "(" + lineno + ") ");
-        chunks[1] = new TextChunk(TextAttributes.ERASE_MARKER, myElement.getText());
-        chunks[2] = new TextChunk(SLANTED, " would become " + myPrefix + "." + myElement.getText());
-        return chunks;
-      }
-
-      @NotNull
-      public String getPlainText() {
-        return myElement.getText();
-      }
-
-      public String getTooltipText() {
-        return myElement.getText();
-      }
-    };
-  }
-
-  public boolean isValid() {
-    return true;
-  }
-
-  public boolean isReadOnly() {
-    return false;
-  }
-
-  public void selectInEditor() { }
-
-  public void highlightInEditor() { }
-
-  public void navigate(boolean requestFocus) {
-    Navigatable descr = EditSourceUtil.getDescriptor(myElement);
-    if (descr != null) descr.navigate(requestFocus);
-  }
-
-  public boolean canNavigate() {
-    return EditSourceUtil.canNavigate(myElement);
-  }
-
-  public boolean canNavigateToSource() {
-    return false; 
-  }
-
-  public PsiElement getElement() {
-    return myCulprit;
-  }
-
-  public boolean isNonCodeUsage() {
-    return false;
-  }
-}
