@@ -16,7 +16,14 @@
 package com.intellij.codeInspection;
 
 /**
+ * QuickFix based on {@link com.intellij.codeInspection.ProblemDescriptor ProblemDescriptor}
+ *
+ * Implement {@link com.intellij.openapi.util.Iconable Iconable} interface to
+ * change icon in quick fix popup menu
+ *
  * @author max
+ * @see com.intellij.codeInspection.ProblemDescriptor
+ * @see com.intellij.openapi.util.Iconable
  */
 public interface LocalQuickFix extends QuickFix<ProblemDescriptor> {
   LocalQuickFix[] EMPTY_ARRAY = new LocalQuickFix[0];
