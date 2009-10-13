@@ -65,7 +65,7 @@ public class CastingLookupElementDecorator extends LookupElementDecorator<Lookup
     String spaceAfter = settings.SPACE_AFTER_TYPE_CAST ? " " : "";
     final Editor editor = context.getEditor();
     editor.getDocument().replaceString(context.getStartOffset(), context.getTailOffset(), "(" + spaceWithin + spaceWithin + ")" + spaceAfter);
-    CompletionUtil.emulateInsertion(context, context.getStartOffset() + 1 + spaceWithin.length(), myCastItem, (char) 0);
+    CompletionUtil.emulateInsertion(context, context.getStartOffset() + 1 + spaceWithin.length(), myCastItem);
 
     CompletionUtil.emulateInsertion(getDelegate(), context.getTailOffset(), context);
   }

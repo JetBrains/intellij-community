@@ -19,12 +19,13 @@ import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.patterns.PsiJavaPatterns;
-import com.intellij.patterns.PsiElementPattern;
 import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
 import static com.intellij.patterns.StandardPatterns.*;
 import com.intellij.psi.*;
@@ -46,7 +47,10 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -91,12 +95,9 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         psiElement().inside(PsiThisExpression.class),
         psiElement().inside(PsiSuperExpression.class)
         );
-  public static final Key<Boolean> TYPE_CAST = Key.create("TYPE_CAST");
   static final ElementPattern<PsiElement> INSIDE_TYPECAST_EXPRESSION = psiElement().withParent(
     psiElement(PsiReferenceExpression.class).afterLeaf(
       psiElement().withText(")").withParent(PsiTypeCastExpression.class)));
-  private static final PsiElementPattern.Capture<PsiElement> INSIDE_TYPECAST_TYPE = psiElement().afterLeaf(psiElement().withText("(").withParent(
-    PsiTypeCastExpression.class));
 
   @Nullable
   private static ElementFilter getReferenceFilter(PsiElement element) {
@@ -125,34 +126,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
 
   public JavaSmartCompletionContributor() {
-    extend(CompletionType.SMART, INSIDE_TYPECAST_TYPE, new CompletionProvider<CompletionParameters>() {
-      protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
-        for (final ExpectedTypeInfo type : getExpectedTypes(parameters)) {
-          if (type.getType() == PsiType.VOID) {
-            continue;
-          }
-
-          final boolean overwrite = INSIDE_TYPECAST_TYPE.accepts(parameters.getOriginalPosition());
-
-          final LookupElement item = AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE.applyPolicy(new LookupElementDecorator<LookupItem>(PsiTypeLookupItem.createLookupItem(type.getDefaultType())) {
-
-            @Override
-            public void handleInsert(InsertionContext context) {
-              final Editor editor = context.getEditor();
-              if (overwrite) {
-                editor.getDocument().deleteString(context.getSelectionEndOffset(),
-                                                  context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
-              }
-
-              TailTypes.CAST_RPARENTH.processTail(editor, context.getTailOffset());
-              DefaultInsertHandler.addImportForItem(context.getFile(), context.getStartOffset(), getDelegate());
-            }
-          });
-          item.putUserData(TYPE_CAST, Boolean.TRUE);
-          result.addElement(item);
-        }
-      }
-    });
+    extend(CompletionType.SMART, SmartCastProvider.INSIDE_TYPECAST_TYPE, new SmartCastProvider());
 
     extend(CompletionType.SMART,
            psiElement().beforeLeaf(psiElement(JavaTokenType.RPARENTH)).afterLeaf("(").withParent(

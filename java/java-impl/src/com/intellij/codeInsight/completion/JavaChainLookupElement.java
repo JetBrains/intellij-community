@@ -82,7 +82,7 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
 
     final Document document = context.getEditor().getDocument();
     document.replaceString(context.getStartOffset(), context.getTailOffset(), ";");
-    final InsertionContext qualifierContext = CompletionUtil.emulateInsertion(context, context.getStartOffset(), myQualifier, (char)0);
+    final InsertionContext qualifierContext = CompletionUtil.emulateInsertion(context, context.getStartOffset(), myQualifier);
 
     if (shouldParenthesizeQualifier(qualifierContext.getFile(), context.getStartOffset(), qualifierContext.getTailOffset())) {
       final String space = CodeStyleSettingsManager.getSettings(qualifierContext.getProject()).SPACE_WITHIN_PARENTHESES ? " " : "";

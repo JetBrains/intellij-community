@@ -219,7 +219,7 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
        && item.getUserData(LookupItem.BRACKETS_COUNT_ATTR) == null
        && enclosing instanceof PsiNewExpression
        && !(position instanceof PsiParenthesizedExpression)
-       && item.getUserData(JavaSmartCompletionContributor.TYPE_CAST) == null
+       && item.getUserData(SmartCastProvider.TYPE_CAST) == null
        && PsiTreeUtil.getContextOfType(position, PsiReferenceParameterList.class, false) == null
       )
     {
