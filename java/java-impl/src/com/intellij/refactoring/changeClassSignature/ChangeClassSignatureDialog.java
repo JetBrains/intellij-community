@@ -145,6 +145,9 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
       PsiType type;
       try {
         type = codeFragment.getType();
+        if (type instanceof PsiPrimitiveType) {
+          return "Type parameter can't be primitive";
+        }
       }
       catch (PsiTypeCodeFragment.TypeSyntaxException e) {
         return RefactoringBundle.message("changeClassSignature.bad.default.value", codeFragment.getText(), info.getNewName());
