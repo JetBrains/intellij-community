@@ -32,7 +32,6 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -118,7 +117,7 @@ public class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBa
           final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
           tool.initialize(context);
           ((RefManagerImpl)context.getRefManager()).inspectionReadActionStarted();
-          pass.doInspectInBatch(managerEx, new InspectionProfileEntry[]{tool}, ProgressManager.getInstance().getProgressIndicator(), false);
+          pass.doInspectInBatch(managerEx, new InspectionProfileEntry[]{tool}, false);
           for (HighlightInfo info : pass.getInfos()) {
             final PsiElement element = CollectHighlightsUtil.findCommonParent(myFile, info.startOffset, info.endOffset);
             if (element != null) {
