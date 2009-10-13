@@ -35,6 +35,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -81,9 +82,7 @@ public final class UpdateChecker {
 
   private static long checkInterval = 0;
   private static boolean myVeryFirstOpening = true;
-  @NonNls private static final String BUILD_NUMBER_STUB = "__BUILD_NUMBER__";
-  @NonNls private static final String ELEMENT_BUILD = "build";
-  @NonNls private static final String ELEMENT_VERSION = "version";
+
 
   @NonNls
   private static final String DISABLED_UPDATE = "disabled_update.txt";
@@ -202,51 +201,45 @@ public final class UpdateChecker {
   }
 
   @Nullable
-  public static NewVersion checkForUpdates() throws ConnectionException {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: checkForUpdates()");
-    }
-
-    final Document document;
-    try {
-      document = loadVersionInfo(getUpdateUrl());
-      if (document == null) return null;
-    }
-    catch (Throwable t) {
-      LOG.debug(t);
-      throw new ConnectionException(t);
-    }
-
-    Element root = document.getRootElement();
-    if (root == null) {
-      LOG.info("cannot read " + getUpdateUrl());
-      return null;
-    }
-    final String availBuild = root.getChild(ELEMENT_BUILD).getTextTrim();
-    final String availVersion = root.getChild(ELEMENT_VERSION).getTextTrim();
-    String ourBuild = ApplicationInfo.getInstance().getBuildNumber().trim();
-    if (BUILD_NUMBER_STUB.equals(ourBuild)) ourBuild = Integer.toString(Integer.MAX_VALUE);
-
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("build available:'" + availBuild + "' ourBuild='" + ourBuild + "' ");
-    }
-
-    Element patchElements = root.getChild("patches");
-    List<PatchInfo> patches = new ArrayList<PatchInfo>();
-    if (patchElements != null) {
-      for (Element each : (List<Element>)patchElements.getChildren()) {
-        String fromBuild = each.getAttributeValue("from").trim();
-        String size = each.getAttributeValue("size").trim();
-        patches.add(new PatchInfo(fromBuild, size));
+  private static Product findProduct(Element products, String code) {
+    for (Object productNode : products.getChildren("product")) {
+      Product product = new Product((Element)productNode);
+      if (product.hasCode(code)) {
+        return product;
       }
     }
+    return null;
+  }
 
+  @Nullable
+  public static UpdateChannel checkForUpdates() throws ConnectionException {
     try {
-      final int iAvailBuild = Integer.parseInt(availBuild);
-      final int iOurBuild = Integer.parseInt(ourBuild);
-      if (iAvailBuild > iOurBuild) {
-        return new NewVersion(iAvailBuild, availVersion, patches);
+      BuildNumber ourBuild = ApplicationInfo.getInstance().getBuild();
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("enter: checkForUpdates()");
       }
+
+      final Document document;
+      try {
+        document = loadVersionInfo(getUpdateUrl());
+        if (document == null) return null;
+      }
+      catch (Throwable t) {
+        LOG.debug(t);
+        throw new ConnectionException(t);
+      }
+
+      Element root = document.getRootElement();
+      UpdateChannel channel = findUpdateChannel(root, ourBuild.getProductCode());
+      if (channel == null) return null;
+
+      BuildInfo latestBuild = channel.getLatestBuild();
+      if (latestBuild == null) return null;
+
+      if (ourBuild.compareTo(latestBuild.getNumber()) < 0) {
+        return channel;
+      }
+
       return null;
     }
     catch (Throwable t) {
@@ -256,6 +249,39 @@ public final class UpdateChecker {
     finally {
       UpdateSettings.getInstance().LAST_TIME_CHECKED = System.currentTimeMillis();
     }
+  }
+
+  @Nullable
+  private static UpdateChannel findUpdateChannel(Element root, String productCode) {
+    if (root == null) {
+      LOG.info("cannot read " + getUpdateUrl());
+      return null;
+    }
+
+    Product product = findProduct(root, productCode);
+    if (product == null) return null;
+
+    UpdateChannel channel = product.findUpdateChannelById(UpdateSettings.getInstance().CURRENT_UPDATE_CHANNEL);
+    if (channel != null) return channel;
+
+    for (UpdateChannel c : product.getChannels()) {
+      BuildInfo cBuild = c.getLatestBuild();
+      if (cBuild == null) continue;
+
+      if (channel == null) {
+        channel = c;
+      }
+      else {
+        BuildInfo build = channel.getLatestBuild();
+        assert build != null;
+
+        if (build.compareTo(cBuild) < 0) {
+          channel = c;
+        }
+      }
+    }
+
+    return channel;
   }
 
   private static Document loadVersionInfo(final String url) throws Exception {
@@ -268,7 +294,7 @@ public final class UpdateChecker {
       public void run() {
         try {
           HttpConfigurable.getInstance().prepareURL(url);
-          final URL requestUrl = new URL(url + "?build=" + ApplicationInfo.getInstance().getBuildNumber() + ADDITIONAL_REQUEST_OPTIONS);
+          final URL requestUrl = new URL(url + "?build=" + ApplicationInfo.getInstance().getBuild().asString() + ADDITIONAL_REQUEST_OPTIONS);
           final InputStream inputStream = requestUrl.openStream();
           try {
             document[0] = JDOMUtil.loadDocument(inputStream);
@@ -290,6 +316,7 @@ public final class UpdateChecker {
       downloadThreadFuture.get(5, TimeUnit.SECONDS);
     }
     catch (TimeoutException e) {
+      // ignore
     }
 
     if (!downloadThreadFuture.isDone()) {
@@ -306,9 +333,8 @@ public final class UpdateChecker {
     dialog.show();
   }
 
-  public static void showUpdateInfoDialog(boolean enableLink, final NewVersion version, final List<PluginDownloader> updatePlugins) {
-    UpdateInfoDialog dialog = new UpdateInfoDialog(true, version, updatePlugins, enableLink);
-    dialog.show();
+  public static void showUpdateInfoDialog(boolean enableLink, final UpdateChannel channel, final List<PluginDownloader> updatePlugins) {
+    new UpdateInfoDialog(true, channel, updatePlugins, enableLink).show();
   }
 
   public static boolean install(List<PluginDownloader> downloaders) {
@@ -327,8 +353,8 @@ public final class UpdateChecker {
   }
 
 
-  public static DownloadPatchResult downloadAndInstallPatch(final NewVersion newVersion) {
-    final DownloadPatchResult[] result = new DownloadPatchResult[] { DownloadPatchResult.CANCELED };
+  public static DownloadPatchResult downloadAndInstallPatch(final BuildInfo newVersion) {
+    final DownloadPatchResult[] result = new DownloadPatchResult[]{DownloadPatchResult.CANCELED};
 
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
@@ -349,29 +375,33 @@ public final class UpdateChecker {
     }, IdeBundle.message("update.downloading.patch.progress.title"), true, null)) {
       return DownloadPatchResult.CANCELED;
     }
-    
+
     return result[0];
   }
 
-  private static void doDownloadAndInstallPatch(NewVersion newVersion, ProgressIndicator i) throws IOException {
+  private static void doDownloadAndInstallPatch(BuildInfo newVersion, ProgressIndicator i) throws IOException {
     PatchInfo patch = newVersion.findPatchForCurrentBuild();
     if (patch == null) throw new IOException("No patch is available for current version");
 
     String platform = System.getProperty("idea.platform.prefix", "idea");
 
     String osSuffix = "";
-    if (SystemInfo.isWindows) osSuffix = "-win";
-    else if (SystemInfo.isMac) osSuffix = "-mac";
+    if (SystemInfo.isWindows) {
+      osSuffix = "-win";
+    }
+    else if (SystemInfo.isMac) {
+      osSuffix = "-mac";
+    }
     else if (SystemInfo.isUnix) osSuffix = "-unix";
 
-    String fileName = platform + "-" + patch.getFromBuild() + "-" + newVersion.getLatestBuild() + "-patch" + osSuffix + ".jar";
+    String fileName = platform + "-" + patch.getFromBuild().asString() + "-" + newVersion.getNumber().asString() + "-patch" + osSuffix + ".jar";
     URLConnection connection = null;
     InputStream in = null;
     OutputStream out = null;
 
     String patchFileName = "jetbrains.patch.jar." + platform;
     File patchFile = new File(FileUtil.getTempDirectory(), patchFileName);
-    
+
     try {
       connection = new URL(new URL(getPatchesUrl()), fileName).openConnection();
       in = UrlConnectionUtil.getConnectionInputStreamWithException(connection, i);
@@ -396,7 +426,7 @@ public final class UpdateChecker {
       patchFile.delete();
       throw e;
     }
-    catch(ProcessCanceledException e) {
+    catch (ProcessCanceledException e) {
       patchFile.delete();
       throw e;
     }
@@ -408,52 +438,6 @@ public final class UpdateChecker {
       if (out != null) out.close();
       if (in != null) in.close();
       if (connection instanceof HttpURLConnection) ((HttpURLConnection)connection).disconnect();
-    }
-  }
-
-  public static class NewVersion {
-    private final int myLatestBuild;
-    private final String myLatestVersion;
-    private final List<PatchInfo> myPatches;
-
-    public NewVersion(int build, String version, List<PatchInfo> patches) {
-      myLatestBuild = build;
-      myLatestVersion = version;
-      myPatches = patches;
-    }
-
-    public int getLatestBuild() {
-      return myLatestBuild;
-    }
-
-    public String getLatestVersion() {
-      return myLatestVersion;
-    }
-
-    public PatchInfo findPatchForCurrentBuild() {
-      String currentBuild = ApplicationInfo.getInstance().getBuildNumber().trim();
-      for (PatchInfo each : myPatches) {
-        if (each.myFromBuild.equals(currentBuild)) return each;
-      }
-      return null;
-    }
-  }
-
-  public static class PatchInfo {
-    private final String myFromBuild;
-    private final String mySize;
-
-    public PatchInfo(String fromBuild, String size) {
-      myFromBuild = fromBuild;
-      mySize = size;
-    }
-
-    public String getFromBuild() {
-      return myFromBuild;
-    }
-
-    public String getSize() {
-      return mySize;
     }
   }
 

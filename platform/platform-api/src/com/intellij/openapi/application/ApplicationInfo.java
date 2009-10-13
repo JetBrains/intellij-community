@@ -36,8 +36,10 @@ public abstract class ApplicationInfo {
   public abstract String getMinorVersion();
   public abstract String getVersionName();
   public abstract String getHelpURL();
+  public abstract String getDefaultUpdateChannel();
 
   public static ApplicationInfo getInstance() {
     return ApplicationManager.getApplication().getComponent(ApplicationInfo.class);
   }
+
 }

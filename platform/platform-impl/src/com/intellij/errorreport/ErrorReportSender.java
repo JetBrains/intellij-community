@@ -27,6 +27,8 @@ import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.updateSettings.impl.BuildInfo;
+import com.intellij.openapi.updateSettings.impl.UpdateChannel;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.net.HttpConfigurable;
@@ -81,15 +83,16 @@ public class ErrorReportSender {
     }
 
     public void checkNewBuild() throws NewBuildException {
-      UpdateChecker.NewVersion newVersion = null;
+      BuildInfo newVersion = null;
       try {
-        newVersion = UpdateChecker.checkForUpdates();
+        UpdateChannel channel = UpdateChecker.checkForUpdates();
+        newVersion = channel != null ? channel.getLatestBuild() : null;
       }
       catch (ConnectionException e) {
         // ignore
       }
       if (newVersion != null) {
-        throw new NewBuildException(Integer.toString(newVersion.getLatestBuild()));
+        throw new NewBuildException(newVersion.getNumber().asString());
       }
       exceptionBean = new ExceptionBean(throwable);
     }

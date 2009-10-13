@@ -56,7 +56,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String myWelcomeScreenCaptionUrl;
   private String myWelcomeScreenDeveloperSloganUrl;
   private UpdateUrls myUpdateUrls;
-  private UpdateUrls myEapUpdateUrls;
   private String myDocumentationUrl;
   private String mySupportUrl;
   private String myEAPFeedbackUrl;
@@ -64,6 +63,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String myPluginManagerUrl;
   private String myPluginsListUrl;
   private String myPluginsDownloadUrl;
+  private String myDefaultUpdateChannel;
   private boolean myEAP;
   @NonNls private String myHelpFileName = "ideahelp.jar";
   @NonNls private String myHelpRootName = "idea";
@@ -94,7 +94,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String CAPTION_URL_ATTR = "caption-url";
   @NonNls private static final String SLOGAN_URL_ATTR = "slogan-url";
   @NonNls private static final String UPDATE_URLS_ELEMENT_NAME = "update-urls";
-  @NonNls private static final String EAP_UPDATE_URLS_ELEMENT_NAME = "eap-update-urls";
   @NonNls private static final String XML_EXTENSION = ".xml";
   @NonNls private static final String ATTRIBUTE_EAP = "eap";
   @NonNls private static final String HELP_ELEMENT_NAME = "help";
@@ -190,20 +189,16 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     return myWelcomeScreenDeveloperSloganUrl;
   }
 
-  public String getHelpFileName() {
-    return myHelpFileName;
-  }
-
-  public String getHelpRootName() {
-    return myHelpRootName;
-  }
-
   public boolean isEAP() {
     return myEAP;
   }
 
+  public String getDefaultUpdateChannel() {
+    return myDefaultUpdateChannel;
+  }
+
   public UpdateUrls getUpdateUrls() {
-    return isEAP() ? myEapUpdateUrls :  myUpdateUrls;
+    return myUpdateUrls;
   }
 
   public String getDocumentationUrl() {
@@ -233,10 +228,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   public String getPluginsDownloadUrl() {
     return myPluginsDownloadUrl;
-  }
-
-  public UpdateUrls getEapUpdateUrls() {
-    return myEapUpdateUrls;
   }
 
   public String getFullApplicationName() {
@@ -293,6 +284,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       myMinorVersion = versionElement.getAttributeValue(ATTRIBUTE_MINOR);
       myCodeName = versionElement.getAttributeValue(ATTRIBUTE_CODENAME);
       myEAP = Boolean.parseBoolean(versionElement.getAttributeValue(ATTRIBUTE_EAP));
+      myDefaultUpdateChannel = versionElement.getAttributeValue("update-channel");
     }
 
     Element buildElement = parentNode.getChild(ELEMENT_BUILD);
@@ -372,9 +364,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     Element updateUrls = parentNode.getChild(UPDATE_URLS_ELEMENT_NAME);
     myUpdateUrls = new UpdateUrlsImpl(updateUrls);
 
-    Element eapUpdateUrls = parentNode.getChild(EAP_UPDATE_URLS_ELEMENT_NAME);
-    myEapUpdateUrls = new UpdateUrlsImpl(eapUpdateUrls);
-
     Element documentationElement = parentNode.getChild(ELEMENT_DOCUMENTATION);
     if (documentationElement != null) {
       myDocumentationUrl = documentationElement.getAttributeValue(ATTRIBUTE_URL);
@@ -434,16 +423,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private static class UpdateUrlsImpl implements UpdateUrls {
     private String myCheckingUrl;
     private String myPatchesUrl;
-    private String myDownloadUrl;
-    @NonNls private static final String CHECK_ATTR = "check";
-    @NonNls private static final String PATCHES_ATTR = "patches";
-    @NonNls private static final String DOWNLOAD_ATTR = "download";
 
     private UpdateUrlsImpl(Element element) {
       if (element != null) {
-        myCheckingUrl = element.getAttributeValue(CHECK_ATTR);
-        myPatchesUrl = element.getAttributeValue(PATCHES_ATTR);
-        myDownloadUrl = element.getAttributeValue(DOWNLOAD_ATTR);
+        myCheckingUrl = element.getAttributeValue("check");
+        myPatchesUrl = element.getAttributeValue("patches");
       }
     }
 
@@ -453,10 +437,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
     public String getPatchesUrl() {
       return myPatchesUrl;
-    }
-
-    public String getDownloadUrl() {
-      return myDownloadUrl;
     }
   }
 

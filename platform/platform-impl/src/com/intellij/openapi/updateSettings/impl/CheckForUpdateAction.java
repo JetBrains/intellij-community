@@ -19,9 +19,9 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.project.DumbAware;
 
 import java.util.List;
 
@@ -37,7 +37,7 @@ public class CheckForUpdateAction extends AnAction implements DumbAware {
 
   public static void actionPerformed(final boolean enableLink) {
     try {
-      final UpdateChecker.NewVersion newVersion = UpdateChecker.checkForUpdates();
+      final UpdateChannel newVersion = UpdateChecker.checkForUpdates();
       final List<PluginDownloader> updatedPlugins = UpdateChecker.updatePlugins(true);
       if (newVersion != null) {
         UpdateSettings.getInstance().LAST_TIME_CHECKED = System.currentTimeMillis();

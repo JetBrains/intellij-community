@@ -15,15 +15,16 @@
  */
 package com.intellij.openapi.updateSettings.impl;
 
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.util.JDOMExternalizableStringList;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizableStringList;
+import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 
 /**
@@ -43,9 +44,14 @@ public class UpdateSettings implements PersistentStateComponent<Element> {
   @SuppressWarnings({"WeakerAccess", "CanBeFinal"})
   public JDOMExternalizableStringList myPluginHosts = new JDOMExternalizableStringList();
 
+  @SuppressWarnings({"WeakerAccess", "CanBeFinal"})
+  public JDOMExternalizableStringList myKnownUpdateChannels = new JDOMExternalizableStringList();
+
   public boolean CHECK_NEEDED = true;
   public String CHECK_PERIOD = UpdateSettingsConfigurable.WEEKLY;
   public long LAST_TIME_CHECKED = 0;
+
+  public String CURRENT_UPDATE_CHANNEL = ApplicationInfo.getInstance().getDefaultUpdateChannel();
 
   public static UpdateSettings getInstance() {
     return ServiceManager.getService(UpdateSettings.class);

@@ -19,7 +19,6 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -29,14 +28,16 @@ import java.util.List;
  * @author pti
  */
 class UpdateInfoDialog extends AbstractUpdateDialog {
-  private final UpdateChecker.NewVersion myNewVersion;
+  private final UpdateChannel myUpdatedChannel;
+  private final BuildInfo myLatestBuild;
 
   protected UpdateInfoDialog(final boolean canBeParent,
-                             UpdateChecker.NewVersion newVersion,
+                             UpdateChannel channel,
                              final List<PluginDownloader> uploadedPlugins,
                              final boolean enableLink) {
     super(canBeParent, enableLink, uploadedPlugins);
-    myNewVersion = newVersion;
+    myUpdatedChannel = channel;
+    myLatestBuild = channel.getLatestBuild();
     setTitle(IdeBundle.message("updates.info.dialog.title"));
     init();
   }
@@ -55,8 +56,8 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     return super.createActions();
   }
 
-  private static void openDownloadPage() {
-    BrowserUtil.launchBrowser(ApplicationInfoEx.getInstanceEx().getUpdateUrls().getDownloadUrl());
+  private void openDownloadPage() {
+    BrowserUtil.launchBrowser(myUpdatedChannel.getHomePageUrl());
   }
 
   protected String getOkButtonText() {
@@ -89,7 +90,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   @Override
   protected boolean doDownloadAndPrepare() {
     if (hasPatch()) {
-      switch (UpdateChecker.downloadAndInstallPatch(myNewVersion)) {
+      switch (UpdateChecker.downloadAndInstallPatch(myLatestBuild)) {
         case CANCELED:
           return false;
         case FAILED:
@@ -104,7 +105,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   }
 
   private boolean hasPatch() {
-    return myNewVersion.findPatchForCurrentBuild() != null;
+    return myLatestBuild.findPatchForCurrentBuild() != null;
   }
 
   private class UpdateInfoPanel {
@@ -115,14 +116,16 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     private JLabel myNewBuildNumber;
     private JLabel myPatchAvailableLabel;
     private JLabel myPatchSizeLabel;
+    private JLabel myUpdateMessageLabel;
+    private JLabel myMessageLabel;
 
     public UpdateInfoPanel() {
-      final String build = ApplicationInfo.getInstance().getBuildNumber().trim();
-      myBuildNumber.setText(build + ")");
-      final String majorVersion = ApplicationInfo.getInstance().getMajorVersion();
+      ApplicationInfo appInfo = ApplicationInfo.getInstance();
+      myBuildNumber.setText(appInfo.getBuild().asString() + ")");
+      final String majorVersion = appInfo.getMajorVersion();
       final String version;
       if (majorVersion != null && majorVersion.trim().length() > 0) {
-        final String minorVersion = ApplicationInfo.getInstance().getMinorVersion();
+        final String minorVersion = appInfo.getMinorVersion();
         if (minorVersion != null && minorVersion.trim().length() > 0) {
           version = majorVersion + "." + minorVersion;
         }
@@ -131,14 +134,20 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
         }
       }
       else {
-        version = ApplicationInfo.getInstance().getVersionName();
+        version = appInfo.getVersionName();
       }
 
       myVersionNumber.setText(version);
-      myNewBuildNumber.setText(Integer.toString(myNewVersion.getLatestBuild()) + ")");
-      myNewVersionNumber.setText(myNewVersion.getLatestVersion());
+      myNewBuildNumber.setText(myLatestBuild.getNumber().asString() + ")");
+      myNewVersionNumber.setText(myLatestBuild.getName());
+      if (myLatestBuild.getMessage() != null) {
+        myUpdateMessageLabel.setText("<html><body><br>" + myLatestBuild.getMessage() + "</body></html>");
+      }
+      else {
+        myUpdateMessageLabel.setVisible(false);
+      }
 
-      UpdateChecker.PatchInfo patch = myNewVersion.findPatchForCurrentBuild();
+      PatchInfo patch = myLatestBuild.findPatchForCurrentBuild();
       if (patch == null) {
         myPatchAvailableLabel.setVisible(false);
         myPatchSizeLabel.setVisible(false);
