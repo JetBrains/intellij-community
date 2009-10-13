@@ -40,7 +40,8 @@ public class RecentProjectsManager extends RecentProjectsManagerBase {
   }
 
   protected String getProjectPath(Project project) {
-    return project.getLocation().replace('/', File.separatorChar);
+    final String location = project.getLocation();
+    return location == null ? null : location.replace('/', File.separatorChar);
   }
 
   protected void doOpenProject(final String projectPath, Project projectToClose) {

@@ -42,6 +42,7 @@ public interface IProjectStore extends IComponentStore {
 
   void setStorageFormat(StorageFormat storageFormat);
 
+  @Nullable
   String getLocation();
 
   @NotNull

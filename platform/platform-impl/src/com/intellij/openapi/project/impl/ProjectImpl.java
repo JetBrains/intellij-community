@@ -221,7 +221,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     return getName() + Integer.toHexString(str.hashCode());
   }
 
-  @NotNull
+  @Nullable
   @NonNls
   public String getLocation() {
     return getStateStore().getLocation();
