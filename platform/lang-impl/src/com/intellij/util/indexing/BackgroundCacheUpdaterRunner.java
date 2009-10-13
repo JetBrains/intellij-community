@@ -77,7 +77,7 @@ public class BackgroundCacheUpdaterRunner {
           final MyFileContentQueue queue = new MyFileContentQueue();
 
           try {
-            final double count = files.size();
+            final double total = files.size();
             queue.queue(files, indicator);
 
             final Consumer<VirtualFile> uiUpdater = new Consumer<VirtualFile>() {
@@ -87,7 +87,7 @@ public class BackgroundCacheUpdaterRunner {
 
               public void consume(VirtualFile virtualFile) {
                 indicator.checkCanceled();
-                indicator.setFraction(processed.size() / count);
+                indicator.setFraction(processed.size() / total);
                 processed.add(virtualFile);
                 indicator.setText2(virtualFile.getPresentableUrl());
               }
@@ -110,7 +110,7 @@ public class BackgroundCacheUpdaterRunner {
         }
       };
       if (project != null) {
-        DumbServiceImpl.getInstance(project).queueIndexUpdate(action);
+        DumbServiceImpl.getInstance(project).queueIndexUpdate(action, files.size());
       }
       else {
         final ProgressIndicator currentIndicator = ProgressManager.getInstance().getProgressIndicator();

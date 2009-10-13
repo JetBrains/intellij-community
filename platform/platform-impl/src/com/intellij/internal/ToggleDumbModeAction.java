@@ -15,7 +15,10 @@
  */
 package com.intellij.internal;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbServiceImpl;
@@ -46,7 +49,7 @@ public class ToggleDumbModeAction extends AnAction implements DumbAware {
             }
           }
         }
-      });
+      }, 0);
     }
   }
 

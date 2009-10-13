@@ -15,9 +15,13 @@
  */
 package com.intellij.openapi.project;
 
-import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.ide.startup.StartupManagerEx;
-import com.intellij.openapi.application.*;
+import com.intellij.ide.startup.impl.StartupManagerImpl;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -35,15 +39,23 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author peter
  */
 public class DumbServiceImpl extends DumbService {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.DumbServiceImpl");
   private final AtomicBoolean myDumb = new AtomicBoolean();
   private final DumbModeListener myPublisher;
-  private final Queue<Runnable> myUpdateQueue = new Queue<Runnable>(5);
+  private final Queue<IndexUpdateRunnable> myUpdateQueue = new Queue<IndexUpdateRunnable>(5);
+  /* to be accessed from EDT only! */
+  private IndexUpdateRunnable myCurrentUpdateRunnable = null;
   private final Queue<Runnable> myAfterUpdateQueue = new Queue<Runnable>(5);
   @NonNls public static final String FILE_INDEX_BACKGROUND = "fileIndex.background";
   private final StartupManagerImpl myStartupManager;
@@ -73,40 +85,16 @@ public class DumbServiceImpl extends DumbService {
   public void runWhenSmart(Runnable runnable) {
     if (!isDumb()) {
       runnable.run();
-    } else {
+    }
+    else {
       synchronized (myAfterUpdateQueue) {
         myAfterUpdateQueue.addLast(runnable);
       }
     }
   }
 
-  public void queueIndexUpdate(@NotNull final Consumer<ProgressIndicator> action) {
-    final Runnable update = new Runnable() {
-      public void run() {
-        if (myProject.isDisposed()) {
-          updateFinished();
-          return;
-        }
-
-        ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Updating indices", false) {
-          @Override
-          public void run(@NotNull final ProgressIndicator indicator) {
-            indicator.setIndeterminate(false);
-            indicator.setText("Indexing...");
-            try {
-              action.consume(indicator);
-            }
-            finally {
-              ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
-                public void run() {
-                  updateFinished();
-                }
-              });
-            }
-          }
-        });
-      }
-    };
+  public void queueIndexUpdate(@NotNull final Consumer<ProgressIndicator> action, final int itemsCount) {
+    final IndexUpdateRunnable update = new IndexUpdateRunnable(action, itemsCount);
 
     //todo always go dumb immediately after those who request indices in startup activity are gone (e.g. JS indices)
     final boolean goDumbImmediately = ((StartupManagerEx)StartupManager.getInstance(myProject)).startupActivityPassed();
@@ -114,7 +102,9 @@ public class DumbServiceImpl extends DumbService {
 
     invokeOnEDT(new DumbAwareRunnable() {
       public void run() {
-        if (myProject.isDisposed()) return;
+        if (myProject.isDisposed()) {
+          return;
+        }
 
         boolean wasDumbEx = wasDumb;
         if (!goDumbImmediately) {
@@ -124,7 +114,12 @@ public class DumbServiceImpl extends DumbService {
         if (!wasDumbEx) {
           myPublisher.enteredDumbMode();
           update.run();
-        } else {
+        }
+        else {
+          final IndexUpdateRunnable currentUpdateRunnable = myCurrentUpdateRunnable;
+          if (currentUpdateRunnable != null) {
+            currentUpdateRunnable.myTotalItems += itemsCount;
+          }
           myUpdateQueue.addLast(update);
         }
       }
@@ -148,14 +143,7 @@ public class DumbServiceImpl extends DumbService {
   }
 
   private void updateFinished() {
-    if (myProject.isDisposed()) return;
-
-    if (!myUpdateQueue.isEmpty()) {
-      //run next dumb action
-      myUpdateQueue.pullFirst().run();
-      return;
-    }
-
+    myCurrentUpdateRunnable = null;
     myDumb.set(false);
     myPublisher.exitDumbMode();
 
@@ -193,4 +181,102 @@ public class DumbServiceImpl extends DumbService {
     return statusBar.notifyProgressByBalloon(MessageType.WARNING, message, null, listener);
   }
 
+  private static final Consumer<ProgressIndicator> NULL_ACTION = new Consumer<ProgressIndicator>() {
+    public void consume(ProgressIndicator progressIndicator) {
+    }
+  };
+
+  private class IndexUpdateRunnable implements Runnable {
+    private final Consumer<ProgressIndicator> myAction;
+    private double myProcessedItems;
+    private volatile int myTotalItems;
+    private double myCurrentBaseTotal;
+
+    public IndexUpdateRunnable(Consumer<ProgressIndicator> action, int itemsCount) {
+      myAction = action;
+      myTotalItems = itemsCount;
+      myCurrentBaseTotal = itemsCount;
+    }
+
+    public void run() {
+      if (myProject.isDisposed()) {
+        return;
+      }
+      myCurrentUpdateRunnable = this;
+      
+      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Updating indices", false) {
+
+        private final ArrayBlockingQueue<Consumer<ProgressIndicator>> myActionQueue = new ArrayBlockingQueue<Consumer<ProgressIndicator>>(1);
+
+        @Override
+        public void run(@NotNull final ProgressIndicator indicator) {
+          final ProgressIndicator proxy =
+            (ProgressIndicator)Proxy.newProxyInstance(indicator.getClass().getClassLoader(), new Class[]{ProgressIndicator.class}, new InvocationHandler() {
+              public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                if ("setFraction".equals(method.getName())) {
+                  final double fraction = (Double)args[0];
+                  args[0] = new Double((myProcessedItems + fraction * myCurrentBaseTotal) / myTotalItems);
+                }
+                return method.invoke(indicator, args);
+              }
+            });
+          runAction(proxy, myAction);
+        }
+
+        private void runAction(ProgressIndicator indicator, Consumer<ProgressIndicator> action) {
+          indicator.setIndeterminate(false);
+          do {
+            indicator.setText("Indexing...");
+            try {
+              action.consume(indicator);
+            }
+            finally {
+              myProcessedItems += myCurrentBaseTotal;
+              ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
+                public void run() {
+                  if (myProject.isDisposed()) {
+                    return;
+                  }
+                  if (myUpdateQueue.isEmpty()) {
+                    // really terminate the tesk
+                    myActionQueue.offer(NULL_ACTION);
+                    updateFinished();
+                  }
+                  else {
+                    //run next dumb action
+                    final IndexUpdateRunnable nextUpdateRunnable = myUpdateQueue.pullFirst();
+                    myCurrentBaseTotal = nextUpdateRunnable.myTotalItems;
+                    // run next action under already existing progress indicator
+                    if (!myActionQueue.offer(nextUpdateRunnable.myAction)) {
+                      nextUpdateRunnable.run();
+                    }
+                  }
+                }
+              });
+
+              // try to obtain the next action or terminate if no actions left
+              try {
+                do {
+                  action = myActionQueue.poll(500, TimeUnit.MILLISECONDS);
+                  if (myProject.isDisposed()) {
+                    // just terminate the progress task
+                    action = NULL_ACTION;
+                  }
+                }
+                while (action == null);
+              }
+              catch (InterruptedException ignored) {
+                LOG.info(ignored);
+                break;
+              }
+            }
+          }
+          while (action != NULL_ACTION);
+          // make it impossible to add actions to the queue anymore
+          myActionQueue.offer(NULL_ACTION);
+        }
+
+      });
+    }
+  }
 }
