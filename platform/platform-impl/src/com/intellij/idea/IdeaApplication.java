@@ -30,6 +30,7 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
+import com.intellij.openapi.updateSettings.impl.UpdateChannel;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
@@ -200,7 +201,7 @@ public class IdeaApplication {
           if (UpdateChecker.isMyVeryFirstOpening() && UpdateChecker.checkNeeded()) {
             try {
               UpdateChecker.setMyVeryFirstOpening(false);
-              final UpdateChecker.NewVersion newVersion = UpdateChecker.checkForUpdates();
+              final UpdateChannel newVersion = UpdateChecker.checkForUpdates();
               final List<PluginDownloader> updatedPlugins = UpdateChecker.updatePlugins(false);
               if (newVersion != null) {
                 UpdateChecker.showUpdateInfoDialog(true, newVersion, updatedPlugins);

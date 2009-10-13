@@ -52,20 +52,22 @@ public abstract class RParenthTailType extends TailType {
   protected abstract boolean isSpaceWithinParentheses(CodeStyleSettings styleSettings, Editor editor, final int tailOffset);
 
   public int processTail(final Editor editor, int tailOffset) {
-    CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(editor.getProject());
-    int existingRParenthOffset = getExistingRParenthOffset(editor, tailOffset);
+    return addRParenth(editor, tailOffset, isSpaceWithinParentheses(CodeStyleSettingsManager.getSettings(editor.getProject()), editor, tailOffset));
+  }
 
-    boolean spaceWithinParens = isSpaceWithinParentheses(styleSettings, editor, tailOffset);
+  public static int addRParenth(Editor editor, int offset, boolean spaceWithinParens) {
+    int existingRParenthOffset = getExistingRParenthOffset(editor, offset);
+
     if (existingRParenthOffset < 0){
       if (spaceWithinParens){
-        tailOffset = insertChar(editor, tailOffset, ' ');
+        offset = insertChar(editor, offset, ' ');
       }
-      editor.getDocument().insertString(tailOffset, ")");
-      return moveCaret(editor, tailOffset, 1);
+      editor.getDocument().insertString(offset, ")");
+      return moveCaret(editor, offset, 1);
     }
-    if (spaceWithinParens && tailOffset == existingRParenthOffset) {
-      existingRParenthOffset = insertChar(editor, tailOffset, ' ');
-    }                        
+    if (spaceWithinParens && offset == existingRParenthOffset) {
+      existingRParenthOffset = insertChar(editor, offset, ' ');
+    }
     return moveCaret(editor, existingRParenthOffset, 1);
   }
 

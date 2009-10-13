@@ -60,10 +60,6 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getWelcomeScreenDeveloperSloganUrl();
 
-  public abstract String getHelpFileName();
-
-  public abstract String getHelpRootName();
-
   public abstract boolean isEAP();
 
 
@@ -83,13 +79,12 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getPluginsDownloadUrl();
 
-  public static interface UpdateUrls {
+  public interface UpdateUrls {
     String getCheckingUrl();
     String getPatchesUrl();
-    String getDownloadUrl();
   }
 
-  public static interface PluginChooserPage {
+  public interface PluginChooserPage {
     String getTitle();
     String getCategory();
     String getDependentPlugin();

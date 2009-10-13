@@ -19,6 +19,7 @@ package com.intellij.util.indexing;
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileContent;
 import com.intellij.ide.startup.FileContentQueue;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -76,15 +77,17 @@ public class BackgroundCacheUpdaterRunner {
           final MyFileContentQueue queue = new MyFileContentQueue();
 
           try {
-            final double count = files.size();
+            final double total = files.size();
             queue.queue(files, indicator);
 
             final Consumer<VirtualFile> uiUpdater = new Consumer<VirtualFile>() {
+              // need set here to handle queue.pushbacks after checkCancelled() in order
+              // not to count the same file several times
               final Set<VirtualFile> processed = new THashSet<VirtualFile>();
 
               public void consume(VirtualFile virtualFile) {
                 indicator.checkCanceled();
-                indicator.setFraction(processed.size() / count);
+                indicator.setFraction(processed.size() / total);
                 processed.add(virtualFile);
                 indicator.setText2(virtualFile.getPresentableUrl());
               }
@@ -107,7 +110,7 @@ public class BackgroundCacheUpdaterRunner {
         }
       };
       if (project != null) {
-        DumbServiceImpl.getInstance(project).queueIndexUpdate(action);
+        DumbServiceImpl.getInstance(project).queueIndexUpdate(action, files.size());
       }
       else {
         final ProgressIndicator currentIndicator = ProgressManager.getInstance().getProgressIndicator();
@@ -116,7 +119,7 @@ public class BackgroundCacheUpdaterRunner {
     }
   }
 
-  private boolean runWhileUserInactive(final Project project, final MyFileContentQueue queue, final Consumer<VirtualFile> updateUi, final CacheUpdater updater) {
+  private static boolean runWhileUserInactive(final Project project, final MyFileContentQueue queue, final Consumer<VirtualFile> uiUpdater, final CacheUpdater updater) {
     final ProgressIndicatorBase innerIndicator = new ProgressIndicatorBase();
     final ApplicationAdapter canceller = new ApplicationAdapter() {
       @Override
@@ -128,10 +131,13 @@ public class BackgroundCacheUpdaterRunner {
     final Ref<Boolean> finished = Ref.create(Boolean.FALSE);
     ProgressManager.getInstance().runProcess(new Runnable() {
       public void run() {
-        ApplicationManager.getApplication().addApplicationListener(canceller);
+        final Application application = ApplicationManager.getApplication();
+        application.addApplicationListener(canceller);
         try {
           while (true) {
-            if (project != null && project.isDisposed()) return;
+            if (project != null && project.isDisposed()) {
+              return;
+            }
 
             final com.intellij.ide.startup.FileContent fileContent = queue.take();
             if (fileContent == null) {
@@ -146,7 +152,7 @@ public class BackgroundCacheUpdaterRunner {
             }
 
             try {
-              ApplicationManager.getApplication().runReadAction(new Runnable() {
+              application.runReadAction(new Runnable() {
                 public void run() {
                   innerIndicator.checkCanceled();
 
@@ -158,7 +164,7 @@ public class BackgroundCacheUpdaterRunner {
                     return;
                   }
 
-                  updateUi.consume(file);
+                  uiUpdater.consume(file);
 
                   if (project != null) {
                     fileContent.putUserData(FileBasedIndex.PROJECT, project);
@@ -180,7 +186,7 @@ public class BackgroundCacheUpdaterRunner {
           }
         }
         finally {
-          ApplicationManager.getApplication().removeApplicationListener(canceller);
+          application.removeApplicationListener(canceller);
         }
       }
     }, innerIndicator);

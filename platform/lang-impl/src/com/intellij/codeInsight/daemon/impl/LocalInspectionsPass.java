@@ -38,9 +38,9 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.IconLoader;
@@ -101,24 +101,23 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     myLevels = new ArrayList<HighlightInfoType>();
     myTools = new ArrayList<LocalInspectionTool>();
     long startTime = System.nanoTime();
-    inspectRoot(progress);
+    inspectRoot();
     long endTime = System.nanoTime();
     if (LOG.isDebugEnabled()) {
       LOG.debug("Inspections for " + myFile.getName() + " completed in " + (endTime - startTime) / 1000000 + " ms");
     }
   }
 
-  private void inspectRoot(final ProgressIndicator progress) {
+  private void inspectRoot() {
     if (!HighlightLevelUtil.shouldInspect(myFile)) return;
     final InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
     final InspectionProfileWrapper profile = InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper();
     final List<LocalInspectionTool> tools = DumbService.getInstance(myProject).filterByDumbAwareness(getInspectionTools(profile));
 
-    inspect(tools, progress, iManager, true, true);
+    inspect(tools, iManager, true, true);
   }
 
-  public void doInspectInBatch(final InspectionManagerEx iManager, InspectionProfileEntry[] toolWrappers, final ProgressIndicator progress,
-                               boolean ignoreSuppressed) {
+  public void doInspectInBatch(final InspectionManagerEx iManager, InspectionProfileEntry[] toolWrappers, boolean ignoreSuppressed) {
     myDescriptors = new ArrayList<ProblemDescriptor>();
     myLevels = new ArrayList<HighlightInfoType>();
     myTools = new ArrayList<LocalInspectionTool>();
@@ -128,7 +127,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       tool2Wrapper.put(((LocalInspectionToolWrapper)toolWrapper).getTool(), (LocalInspectionToolWrapper)toolWrapper);
     }
     List<LocalInspectionTool> tools = new ArrayList<LocalInspectionTool>(tool2Wrapper.keySet());
-    inspect(tools, progress, iManager, false, ignoreSuppressed);
+    inspect(tools, iManager, false, ignoreSuppressed);
     addDescriptorsFromInjectedResults(tool2Wrapper, iManager);
     for (int i = 0; i < myTools.size(); i++) {
       final LocalInspectionTool tool = myTools.get(i);
@@ -184,8 +183,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
   }
 
-  private void inspect(final List<LocalInspectionTool> tools, final ProgressIndicator progress, final InspectionManagerEx iManager, final boolean isOnTheFly,
-                       final boolean ignoreSuppressed) {
+  private void inspect(final List<LocalInspectionTool> tools, final InspectionManagerEx iManager, final boolean isOnTheFly, final boolean ignoreSuppressed) {
     if (tools.isEmpty()) return;
     final PsiElement[] elements = getElementsIntersectingRange(myFile, myStartOffset, myEndOffset);
 
@@ -194,35 +192,34 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     JobUtil.invokeConcurrentlyUnderMyProgress(tools, new Processor<LocalInspectionTool>() {
       public boolean process(final LocalInspectionTool tool) {
-        if (progress != null && progress.isCanceled()) {
+        final ProgressManager progressManager = ProgressManager.getInstance();
+        try {
+          progressManager.checkCanceled();
+        }
+        catch (ProcessCanceledException e) {
           return false;
         }
 
-        final ProgressManager progressManager = ProgressManager.getInstance();
-        ((ProgressManagerImpl)progressManager).executeProcessUnderProgress(new Runnable(){
-          public void run() {
-            ApplicationManager.getApplication().assertReadAccessAllowed();
+        ApplicationManager.getApplication().assertReadAccessAllowed();
 
-            ProblemsHolder holder = new ProblemsHolder(iManager, myFile);
-            progressManager.checkCanceled();
-            PsiElementVisitor elementVisitor = tool.buildVisitor(holder, isOnTheFly);
-            //noinspection ConstantConditions
-            if(elementVisitor == null) {
-              LOG.error("Tool " + tool + " must not return null from the buildVisitor() method");
-            }
-            tool.inspectionStarted(session);
-            for (PsiElement element : elements) {
-              progressManager.checkCanceled();
-              element.accept(elementVisitor);
-            }
-            tool.inspectionFinished(session);
-            advanceProgress(elements.length);
+        ProblemsHolder holder = new ProblemsHolder(iManager, myFile);
+        progressManager.checkCanceled();
+        PsiElementVisitor elementVisitor = tool.buildVisitor(holder, isOnTheFly);
+        //noinspection ConstantConditions
+        if(elementVisitor == null) {
+          LOG.error("Tool " + tool + " must not return null from the buildVisitor() method");
+        }
+        tool.inspectionStarted(session);
+        for (PsiElement element : elements) {
+          progressManager.checkCanceled();
+          element.accept(elementVisitor);
+        }
+        tool.inspectionFinished(session);
+        advanceProgress(elements.length);
 
-            if (holder.hasResults()) {
-              appendDescriptors(holder.getResults(), tool, ignoreSuppressed);
-            }
-          }
-        }, progress);
+        if (holder.hasResults()) {
+          appendDescriptors(holder.getResults(), tool, ignoreSuppressed);
+        }
         return true;
       }
     }, "Inspection tools");

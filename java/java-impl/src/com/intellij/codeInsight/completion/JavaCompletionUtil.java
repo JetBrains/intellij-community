@@ -937,7 +937,7 @@ public class JavaCompletionUtil {
             final int exprStart = qualifier.getTextRange().getStartOffset();
             document.insertString(exprStart, prefix + spaceWithin + ")" + spaceAfter);
 
-            CompletionUtil.emulateInsertion(context, exprStart + prefix.length(), to, (char)0);
+            CompletionUtil.emulateInsertion(context, exprStart + prefix.length(), to);
           }
         }
 

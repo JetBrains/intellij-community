@@ -142,19 +142,25 @@ public class CompletionUtil {
     return text.substring(start + 1, offsetInElement).trim();
   }
 
-  static InsertionContext emulateInsertion(InsertionContext oldContext, int newStart, final LookupElement item, char completionChar) {
-    final Editor editor = oldContext.getEditor();
-    final Document document = editor.getDocument();
-    final InsertionContext newContext = new InsertionContext(new OffsetMap(document), completionChar, LookupElement.EMPTY_ARRAY, oldContext.getFile(), editor);
+  static InsertionContext emulateInsertion(InsertionContext oldContext, int newStart, final LookupElement item) {
+    final InsertionContext newContext = newContext(oldContext, item);
     emulateInsertion(item, newStart, newContext);
     return newContext;
   }
 
+  private static InsertionContext newContext(InsertionContext oldContext, LookupElement forElement) {
+    final Editor editor = oldContext.getEditor();
+    return new InsertionContext(new OffsetMap(editor.getDocument()), Lookup.AUTO_INSERT_SELECT_CHAR, new LookupElement[]{forElement}, oldContext.getFile(), editor);
+  }
+
+  public static InsertionContext newContext(InsertionContext oldContext, LookupElement forElement, int startOffset, int tailOffset) {
+    final InsertionContext context = newContext(oldContext, forElement);
+    setOffsets(context, startOffset, tailOffset);
+    return context;
+  }
+
   public static void emulateInsertion(LookupElement item, int offset, InsertionContext context) {
-    context.getOffsetMap().addOffset(CompletionInitializationContext.START_OFFSET, offset);
-    context.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, offset);
-    context.getOffsetMap().addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, offset);
-    context.setTailOffset(offset);
+    setOffsets(context, offset, offset);
 
     final Editor editor = context.getEditor();
     final Document document = editor.getDocument();
@@ -164,5 +170,13 @@ public class CompletionUtil {
     editor.getCaretModel().moveToOffset(context.getTailOffset());
     PsiDocumentManager.getInstance(context.getProject()).commitDocument(document);
     item.handleInsert(context);
+  }
+
+  private static void setOffsets(InsertionContext context, int offset, final int tailOffset) {
+    final OffsetMap offsetMap = context.getOffsetMap();
+    offsetMap.addOffset(CompletionInitializationContext.START_OFFSET, offset);
+    offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, tailOffset);
+    offsetMap.addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, tailOffset);
+    context.setTailOffset(tailOffset);
   }
 }

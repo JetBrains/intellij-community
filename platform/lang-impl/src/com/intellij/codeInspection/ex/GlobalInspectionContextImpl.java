@@ -528,7 +528,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
               lTools.add(enabledTool);
             }
           }
-          pass.doInspectInBatch((InspectionManagerEx)manager, lTools.toArray(new InspectionProfileEntry[lTools.size()]), myProgressIndicator,true);
+          pass.doInspectInBatch((InspectionManagerEx)manager, lTools.toArray(new InspectionProfileEntry[lTools.size()]), true);
         }
         catch (ProcessCanceledException e) {
           throw e;
