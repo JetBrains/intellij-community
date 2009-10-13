@@ -279,12 +279,14 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   public void setStorageFormat(final StorageFormat storageFormat) {
   }
 
+  @Nullable
   public String getLocation() {
     if (myScheme == StorageScheme.DEFAULT) {
       return getProjectFilePath();
     }
     else {
-      return getProjectBaseDir().getPath();
+      final VirtualFile baseDir = getProjectBaseDir();
+      return baseDir == null ? null : baseDir.getPath();
     }
   }
 

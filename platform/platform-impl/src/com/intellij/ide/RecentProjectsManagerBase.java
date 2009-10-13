@@ -134,7 +134,8 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
     outer: for (String recentPath : myState.recentPaths) {
 
       for (Project openProject : openProjects) {
-        if (recentPath.equals(getProjectPath(openProject))) {
+        final String path = getProjectPath(openProject);
+        if (path == null || recentPath.equals(path)) {
           continue outer;
         }
       }

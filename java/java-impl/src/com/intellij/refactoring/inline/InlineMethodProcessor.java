@@ -342,7 +342,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   }
 
   private void inlineMethodCall(PsiReferenceExpression ref) throws IncorrectOperationException {
-    InlineMethodHandler.TailCallType tailCall = InlineMethodHandler.getTailCallType(ref);
+    InlineUtil.TailCallType tailCall = InlineUtil.getTailCallType(ref);
     ChangeContextUtil.encodeContextInfo(myMethod, false);
     myMethodCopy = (PsiMethod)myMethod.copy();
     ChangeContextUtil.clearContextInfo(myMethod);
@@ -379,7 +379,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       PsiElement last = statements[statements.length - 1];*/
 
       if (statements.length > 0 && statements[statements.length - 1] instanceof PsiReturnStatement &&
-          tailCall != InlineMethodHandler.TailCallType.Return) {
+          tailCall != InlineUtil.TailCallType.Return) {
         last--;
       }
 
@@ -411,7 +411,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       }
       if (statements.length > 0) {
         final PsiStatement lastStatement = statements[statements.length - 1];
-        if (lastStatement instanceof PsiReturnStatement && tailCall != InlineMethodHandler.TailCallType.Return) {
+        if (lastStatement instanceof PsiReturnStatement && tailCall != InlineUtil.TailCallType.Return) {
           final PsiExpression returnValue = ((PsiReturnStatement)lastStatement).getReturnValue();
           if (returnValue != null && PsiUtil.isStatement(returnValue)) {
             PsiExpressionStatement exprStatement = (PsiExpressionStatement)myFactory.createStatementFromText("a;", null);
@@ -422,7 +422,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    if (methodCall.getParent() instanceof PsiExpressionStatement || tailCall == InlineMethodHandler.TailCallType.Return) {
+    if (methodCall.getParent() instanceof PsiExpressionStatement || tailCall == InlineUtil.TailCallType.Return) {
       methodCall.getParent().delete();
     }
     else {
@@ -533,7 +533,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private BlockData prepareBlock(PsiReferenceExpression ref,
                                  final PsiSubstitutor callSubstitutor,
                                  final PsiExpressionList argumentList,
-                                 final InlineMethodHandler.TailCallType tailCallType)
+                                 final InlineUtil.TailCallType tailCallType)
     throws IncorrectOperationException {
     final PsiCodeBlock block = myMethodCopy.getBody();
     final PsiStatement[] originalStatements = block.getStatements();
@@ -542,7 +542,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     PsiType returnType = callSubstitutor.substitute(myMethod.getReturnType());
     String resultName = null;
     final int applicabilityLevel = PsiUtil.getApplicabilityLevel(myMethod, callSubstitutor, argumentList);
-    if (returnType != null && returnType != PsiType.VOID && tailCallType == InlineMethodHandler.TailCallType.None) {
+    if (returnType != null && returnType != PsiType.VOID && tailCallType == InlineUtil.TailCallType.None) {
       resultName = myJavaCodeStyle.propertyNameToVariableName("result", VariableKind.LOCAL_VARIABLE);
       resultName = myJavaCodeStyle.suggestUniqueVariableName(resultName, block.getFirstChild(), true);
       PsiDeclarationStatement declaration = myFactory.createVariableDeclarationStatement(resultName, returnType, null);
@@ -615,13 +615,13 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    if (resultName != null || tailCallType == InlineMethodHandler.TailCallType.Simple) {
+    if (resultName != null || tailCallType == InlineUtil.TailCallType.Simple) {
       PsiReturnStatement[] returnStatements = RefactoringUtil.findReturnStatements(myMethodCopy);
       for (PsiReturnStatement returnStatement : returnStatements) {
         final PsiExpression returnValue = returnStatement.getReturnValue();
         if (returnValue == null) continue;
         PsiStatement statement;
-        if (tailCallType == InlineMethodHandler.TailCallType.Simple) {
+        if (tailCallType == InlineUtil.TailCallType.Simple) {
           if (returnValue instanceof PsiCallExpression) {
             PsiExpressionStatement exprStatement = (PsiExpressionStatement) myFactory.createStatementFromText("a;", null);
             exprStatement.getExpression().replace(returnValue);

@@ -446,7 +446,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     int start = myEditor.logicalPositionToOffset(lineStart);
     int end = myEditor.logicalPositionToOffset(nextLineStart);
 
-    myEditor.getCaretModel().moveToOffset(start);
+    //myEditor.getCaretModel().moveToOffset(start);
     myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     myEditor.getSelectionModel().removeSelection();
     myEditor.getSelectionModel().setSelection(start, end);

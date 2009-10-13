@@ -18,22 +18,16 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.Processor;
 import com.intellij.lang.StdLanguages;
-
-import java.util.ArrayList;
-import java.util.List;
 
 class InlineMethodHandler extends JavaInlineActionHandler {
   private static final String REFACTORING_NAME = RefactoringBundle.message("inline.method.title");
@@ -61,8 +55,8 @@ class InlineMethodHandler extends JavaInlineActionHandler {
 
     PsiReference reference = editor != null ? TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset()) : null;
     boolean allowInlineThisOnly = false;
-    if (InlineMethodProcessor.checkBadReturns(method) && !allUsagesAreTailCalls(method)) {
-      if (reference != null && getTailCallType(reference) != TailCallType.None) {
+    if (InlineMethodProcessor.checkBadReturns(method) && !InlineUtil.allUsagesAreTailCalls(method)) {
+      if (reference != null && InlineUtil.getTailCallType(reference) != InlineUtil.TailCallType.None) {
         allowInlineThisOnly = true;
       }
       else {
@@ -109,45 +103,6 @@ class InlineMethodHandler extends JavaInlineActionHandler {
     PsiJavaCodeReferenceElement refElement = reference != null ? (PsiJavaCodeReferenceElement)reference.getElement() : null;
     InlineMethodDialog dialog = new InlineMethodDialog(project, method, refElement, editor, allowInlineThisOnly);
     dialog.show();
-  }
-
-  public static boolean allUsagesAreTailCalls(final PsiMethod method) {
-    final List<PsiReference> nonTailCallUsages = new ArrayList<PsiReference>();
-    boolean result = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      public void run() {
-        ReferencesSearch.search(method).forEach(new Processor<PsiReference>() {
-          public boolean process(final PsiReference psiReference) {
-            ProgressManager.getInstance().checkCanceled();
-            if (getTailCallType(psiReference) == TailCallType.None) {
-              nonTailCallUsages.add(psiReference);
-              return false;
-            }
-            return true;
-          }
-        });
-      }
-    }, RefactoringBundle.message("inline.method.checking.tail.calls.progress"), true, method.getProject());
-    return result && nonTailCallUsages.isEmpty();
-  }
-
-  public enum TailCallType {
-    None, Simple, Return
-  }
-
-  public static TailCallType getTailCallType(final PsiReference psiReference) {
-    PsiElement element = psiReference.getElement();
-    PsiExpression methodCall = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
-    if (methodCall == null) return TailCallType.None;
-    if (methodCall.getParent() instanceof PsiReturnStatement) return TailCallType.Return;
-    if (methodCall.getParent() instanceof PsiExpressionStatement) {
-      PsiStatement callStatement = (PsiStatement) methodCall.getParent();
-      PsiMethod callerMethod = PsiTreeUtil.getParentOfType(callStatement, PsiMethod.class);
-      if (callerMethod != null) {
-        final PsiStatement[] psiStatements = callerMethod.getBody().getStatements();
-        return psiStatements.length > 0 && callStatement == psiStatements [psiStatements.length-1] ? TailCallType.Simple : TailCallType.None;
-      }
-    }
-    return TailCallType.None;
   }
 
   public static boolean isChainingConstructor(PsiMethod constructor) {

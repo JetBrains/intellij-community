@@ -202,13 +202,13 @@ public class InjectionsSettingsUI implements Configurable {
       }
     });
     group.addSeparator();
-    group.add(new AnAction("Enabled Selected Injections", "Enabled Selected Injections", Icons.SELECT_ALL_ICON) {
+    group.add(new AnAction("Enable Selected Injections", "Enable Selected Injections", Icons.SELECT_ALL_ICON) {
       @Override
       public void actionPerformed(final AnActionEvent e) {
         performSelectedInjectionsEnabled(true);
       }
     });
-    group.add(new AnAction("Disabled Selected Injections", "Disabled Selected Injections", Icons.UNSELECT_ALL_ICON) {
+    group.add(new AnAction("Disable Selected Injections", "Disable Selected Injections", Icons.UNSELECT_ALL_ICON) {
       @Override
       public void actionPerformed(final AnActionEvent e) {
         performSelectedInjectionsEnabled(false);

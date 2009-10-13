@@ -105,4 +105,9 @@ public class PsiTypesUtil {
     final String s = ourBoxedTypes.get(type);
     return s == null ? type : s;
   }
+
+  @Nullable
+  public static PsiClass getPsiClass(final PsiType psiType) {
+    return psiType instanceof PsiClassType? ((PsiClassType)psiType).resolve() : null;
+  }
 }

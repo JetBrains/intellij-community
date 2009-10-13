@@ -135,6 +135,17 @@ public class InlineSuperClassTest extends MultiFileTestCase {
     doTest();
   }
 
+  public void testSuperConstructorWithReturnInside() throws Exception {
+    doTest(true);
+  }
+
+  public void testSuperConstructorWithFieldInitialization() throws Exception {
+     doTest();
+  }
+
+  public void testSuperConstructorWithParam() throws Exception {
+     doTest();
+  }
 
   public void testMultipleSubclasses() throws Exception {
     doTest(new PerformAction() {

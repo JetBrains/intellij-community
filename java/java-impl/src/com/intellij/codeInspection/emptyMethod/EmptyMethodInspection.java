@@ -33,10 +33,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
 import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
@@ -93,6 +90,20 @@ public class EmptyMethodInspection extends GlobalJavaInspectionTool {
       if (refSuper != null && Comparing.strEqual(refMethod.getAccessModifier(), refSuper.getAccessModifier())){
         if (Comparing.strEqual(refSuper.getAccessModifier(), PsiModifier.PROTECTED) //protected modificator gives access to method in another package
             && !Comparing.strEqual(refUtil.getPackageName(refSuper), refUtil.getPackageName(refMethod))) return null;
+        final PsiModifierListOwner modifierListOwner = refMethod.getElement();
+        if (modifierListOwner != null) {
+          final PsiModifierList list = modifierListOwner.getModifierList();
+          if (list != null) {
+            final PsiModifierListOwner supMethod = refSuper.getElement();
+            if (supMethod != null) {
+              final PsiModifierList superModifiedList = supMethod.getModifierList();
+              LOG.assertTrue(superModifiedList != null);
+              if (list.hasModifierProperty(PsiModifier.SYNCHRONIZED) && !superModifiedList.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
+                return null;
+              }
+            }
+          }
+        }
       }
       if (refSuper == null || refUtil.compareAccess(refMethod.getAccessModifier(), refSuper.getAccessModifier()) <= 0) {
         message = InspectionsBundle.message("inspection.empty.method.problem.descriptor");

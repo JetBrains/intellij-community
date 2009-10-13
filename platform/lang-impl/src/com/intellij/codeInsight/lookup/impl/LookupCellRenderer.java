@@ -19,6 +19,7 @@ package com.intellij.codeInsight.lookup.impl;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupValueWithUIHint;
+import com.intellij.codeInsight.lookup.RealLookupElementPresentation;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -30,7 +31,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.PopupIcons;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -60,11 +60,12 @@ public class LookupCellRenderer implements ListCellRenderer {
 
   private final SimpleColoredComponent myNameComponent;
   private final SimpleColoredComponent myTailComponent;
-  private final JLabel myTypeLabel;
+  private final SimpleColoredComponent myTypeLabel;
   private final JLabel myArrowLabel; // actions' substep
   private final JPanel myPanel;
 
   public static final Color PREFERRED_BACKGROUND_COLOR = new Color(220, 245, 220);
+  private static final String ELLIPSIS = "\u2026";
 
   public LookupCellRenderer(LookupImpl lookup) {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
@@ -79,9 +80,8 @@ public class LookupCellRenderer implements ListCellRenderer {
     myTailComponent.setIpad(new Insets(0, 0, 0, 0));
     myTailComponent.setFont(NORMAL_FONT);
 
-    myTypeLabel = new JLabel("", SwingConstants.LEFT);
-    myTypeLabel.setOpaque(true);
-    myTypeLabel.setHorizontalTextPosition(SwingConstants.RIGHT);
+    myTypeLabel = new MySimpleColoredComponent();
+    myTypeLabel.setIpad(new Insets(0, 0, 0, 0));
     myTypeLabel.setFont(NORMAL_FONT);
 
     myArrowLabel = new JLabel("");
@@ -113,20 +113,25 @@ public class LookupCellRenderer implements ListCellRenderer {
     final Color foreground = isSelected ? SELECTED_FOREGROUND_COLOR : FOREGROUND_COLOR;
     final Color background = getItemBackground(list, index, isSelected);
 
-    final LookupElementPresentation presentation = new LookupElementPresentation(true);
+    int allowedWidth = list.getFixedCellWidth() - getCommonIconWidth();
+    final LookupElementPresentation presentation = new RealLookupElementPresentation(allowedWidth, myFontWidth);
     item.renderElement(presentation);
 
     myNameComponent.clear();
     myNameComponent.setIcon(getIcon(presentation.getIcon()));
     myNameComponent.setBackground(background);
-    setItemTextLabel(item, foreground, isSelected, presentation.getItemText(), presentation.isStrikeout(), presentation.isItemTextBold());
+    allowedWidth -= setItemTextLabel(item, foreground, isSelected, presentation, allowedWidth);
 
-    myTypeLabel.setText(null);
-    myTypeLabel.setBackground(background);
-    setTypeTextLabel(item, background, foreground, presentation.getTypeText(), presentation.getTypeIcon());
+    myTypeLabel.clear();
+    if (allowedWidth > 0) {
+      allowedWidth -= setTypeTextLabel(item, background, foreground, presentation, allowedWidth);
+    }
 
+    myTailComponent.clear();
     myTailComponent.setBackground(background);
-    setTailTextLabel(isSelected, presentation, foreground);
+    if (allowedWidth >= 0) {
+      setTailTextLabel(isSelected, presentation, foreground, allowedWidth);
+    }
 
     myArrowLabel.setIcon(myLookup.getActionsFor(item).isEmpty() ? PopupIcons.EMPTY_ICON : PopupIcons.HAS_NEXT_ICON_GRAYED);
     myArrowLabel.setBackground(background);
@@ -143,17 +148,27 @@ public class LookupCellRenderer implements ListCellRenderer {
     return isSelected ? SELECTED_BACKGROUND_COLOR : BACKGROUND_COLOR;
   }
 
-  private void setTailTextLabel(boolean isSelected, LookupElementPresentation presentation, Color foreground) {
+  private void setTailTextLabel(boolean isSelected, LookupElementPresentation presentation, Color foreground, int allowedWidth) {
     final Color fg = getTailTextColor(isSelected, presentation, foreground);
 
-    myTailComponent.clear();
+    final String tailText = StringUtil.notNullize(presentation.getTailText());
 
     int style = SimpleTextAttributes.STYLE_PLAIN;
     if (presentation.isStrikeout()) {
       style |= SimpleTextAttributes.STYLE_STRIKEOUT;
     }
 
-    myTailComponent.append(StringUtil.notNullize(presentation.getTailText()), new SimpleTextAttributes(style, fg));
+    SimpleTextAttributes attributes = new SimpleTextAttributes(style, fg);
+    if (allowedWidth < 0) {
+      return;
+    }
+
+    myTailComponent.append(trimLabelText(tailText, allowedWidth), attributes);
+  }
+
+  private String trimLabelText(String tailText, int maxWidth) {
+    final int maxLen = maxWidth / myFontWidth;
+    return tailText.length() <= maxLen ? tailText : tailText.substring(0, maxLen) + ELLIPSIS;
   }
 
   private static Color getTailTextColor(boolean isSelected, LookupElementPresentation presentation, Color defaultForeground) {
@@ -169,53 +184,68 @@ public class LookupCellRenderer implements ListCellRenderer {
     return defaultForeground;
   }
 
-  private void setItemTextLabel(LookupElement item, final Color foreground, final boolean selected, final String name, final boolean toStrikeout,
-                                boolean bold) {
+  private int setItemTextLabel(LookupElement item, final Color foreground, final boolean selected, LookupElementPresentation presentation, int allowedWidth) {
+    boolean bold = presentation.isItemTextBold();
+
     myNameComponent.setFont(bold ? BOLD_FONT : NORMAL_FONT);
 
     int style = bold ? SimpleTextAttributes.STYLE_BOLD : SimpleTextAttributes.STYLE_PLAIN;
-    if (toStrikeout) {
+    if (presentation.isStrikeout()) {
       style |= SimpleTextAttributes.STYLE_STRIKEOUT;
     }
 
+    final String name = trimLabelText(presentation.getItemText(), allowedWidth);
+    int used = getStringWidth(name);
+
+    final SimpleTextAttributes baseAttrs = new SimpleTextAttributes(style, foreground);
+
     final String prefix = item.getPrefixMatcher().getPrefix();
-    if (prefix.length() > 0 && StringUtil.startsWithIgnoreCase(name, prefix)){
-      myNameComponent.append(name.substring(0, prefix.length()), new SimpleTextAttributes(style, selected ? SELECTED_PREFIX_FOREGROUND_COLOR : PREFIX_FOREGROUND_COLOR));
-      myNameComponent.append(name.substring(prefix.length()), new SimpleTextAttributes(style, foreground));
+    if (prefix.length() > 0){
+      final int i = StringUtil.indexOfIgnoreCase(name, prefix, 0);
+      if (i > 0) {
+        myNameComponent.append(name.substring(0, i), baseAttrs);
+        myNameComponent.append(name.substring(i, i + prefix.length()), new SimpleTextAttributes(style, selected ? SELECTED_PREFIX_FOREGROUND_COLOR : PREFIX_FOREGROUND_COLOR));
+        myNameComponent.append(name.substring(i + prefix.length()), baseAttrs);
+        return used;
+      }
     }
-    else{
-      myNameComponent.append(name, new SimpleTextAttributes(style, foreground));
-    }
+    myNameComponent.append(name, baseAttrs);
+    return used;
   }
 
-  private void setTypeTextLabel(LookupElement item, final Color background, Color foreground, final String typeText, final Icon icon){
-    myTypeLabel.setIcon(icon);
+  private int getStringWidth(String name) {
+    return RealLookupElementPresentation.getStringWidth(name, myFontWidth);
+  }
 
-    JLabel label = myTypeLabel;
+  private int setTypeTextLabel(LookupElement item, final Color background, Color foreground, final LookupElementPresentation presentation, int allowedWidth) {
+    final String givenText = presentation.getTypeText();
+    final String labelText = trimLabelText(givenText == null ? "" : "   " + givenText, allowedWidth);
 
-    label.setText(StringUtil.notNullize(typeText));
+    int used = getStringWidth(labelText);
+
+    final Icon icon = presentation.getTypeIcon();
+    if (icon != null) {
+      myTypeLabel.setIcon(icon);
+      used += icon.getIconWidth();
+    }
 
     Color sampleBackground = background;
 
     Object o = item.getObject();
-    if (o instanceof LookupValueWithUIHint && label.getText().length() == 0) {
+    if (o instanceof LookupValueWithUIHint && StringUtil.isEmpty(labelText)) {
       Color proposedBackground = ((LookupValueWithUIHint)o).getColorHint();
-
-      if (proposedBackground == null) {
-        proposedBackground = background;
+      if (proposedBackground != null) {
+        sampleBackground = proposedBackground;
       }
-
-      sampleBackground = proposedBackground;
-      label.setText("  ");
+      myTypeLabel.append("  ");
+      used += myFontWidth * 2;
     } else {
-      label.setText("   " + label.getText());
+      myTypeLabel.append(labelText);
     }
 
-    if (item instanceof EmptyLookupItem) {
-      foreground = EMPTY_ITEM_FOREGROUND_COLOR;
-    }
-    label.setBackground(sampleBackground);
-    label.setForeground(foreground);
+    myTypeLabel.setBackground(sampleBackground);
+    myTypeLabel.setForeground(item instanceof EmptyLookupItem ? EMPTY_ITEM_FOREGROUND_COLOR : foreground);
+    return used;
   }
 
   private Icon getIcon(Icon icon){
@@ -234,40 +264,25 @@ public class LookupCellRenderer implements ListCellRenderer {
   }
 
   public int updateMaximumWidth(final LookupElement item){
-    final LookupElementPresentation p = new LookupElementPresentation(false);
+    final LookupElementPresentation p = new LookupElementPresentation();
     item.renderElement(p);
     final Icon icon = p.getIcon();
     if (icon != null && icon.getIconWidth() > myEmptyIcon.getIconWidth()) {
       myEmptyIcon = new EmptyIcon(icon.getIconWidth(), 2);
     }
 
-    int maxWidth = Math.min(calculateWidth(p), MAX_LENGTH * myFontWidth);
-    return maxWidth + myEmptyIcon.getIconWidth() + myNameComponent.getIconTextGap() + myFontWidth;
+    int maxWidth = Math.min(RealLookupElementPresentation.calculateWidth(p, myFontWidth), MAX_LENGTH * myFontWidth);
+    return maxWidth + getCommonIconWidth();
+  }
+
+  private int getCommonIconWidth() {
+    return myEmptyIcon.getIconWidth() + myNameComponent.getIconTextGap()
+           + PopupIcons.HAS_NEXT_ICON_GRAYED.getIconWidth() //actions
+           + myFontWidth; //tail-type separation
   }
 
   public int getIconIndent() {
     return myNameComponent.getIconTextGap() + myEmptyIcon.getIconWidth();
-  }
-
-  private int calculateWidth(LookupElementPresentation presentation) {
-    int result = 2;
-    result += getStringWidth(presentation.getItemText());
-    result += getStringWidth(presentation.getTailText());
-    result += getStringWidth("XXXX"); //3 spaces for nice tail-type separation, one for unforeseen Swing size adjustments 
-    result += getStringWidth(presentation.getTypeText());
-    final Icon typeIcon = presentation.getTypeIcon();
-    if (typeIcon != null) {
-      result += 2;
-      result += typeIcon.getIconWidth();
-    }
-    return result;
-  }
-
-  private int getStringWidth(@Nullable final String text) {
-    if (text != null) {
-      return text.length() * myFontWidth;
-    }
-    return 0;
   }
 
 

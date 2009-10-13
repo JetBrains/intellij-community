@@ -68,7 +68,7 @@ public interface Project extends ComponentManager, AreaInstance {
   String getLocationHash();
 
 
-  @NotNull
+  @Nullable
   @NonNls
   String getLocation();
 

@@ -17,9 +17,10 @@ package com.intellij.spellchecker.quickfixes;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.actionSystem.Anchor;
+import com.intellij.openapi.util.Iconable;
 import org.jetbrains.annotations.NotNull;
 
-public interface SpellCheckerQuickFix extends LocalQuickFix {
+public interface SpellCheckerQuickFix extends LocalQuickFix, Iconable {
 
   @NotNull
   Anchor getPopupActionAnchor();

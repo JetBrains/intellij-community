@@ -101,23 +101,31 @@ public class SimpleColoredComponent extends JComponent {
    * Appends string fragments to existing ones. Appended string
    * will have specified <code>attributes</code>.
    */
-  public synchronized void append(@NotNull final String fragment, @NotNull final SimpleTextAttributes attributes, boolean isMainText) {
-    myFragments.add(fragment);
-    myAttributes.add(attributes);
-    if (isMainText) {
-      myMainTextLastIndex = myFragments.size() - 1;
+  public void append(@NotNull final String fragment, @NotNull final SimpleTextAttributes attributes, boolean isMainText) {
+    synchronized (this) {
+      myFragments.add(fragment);
+      myAttributes.add(attributes);
+      if (isMainText) {
+        myMainTextLastIndex = myFragments.size() - 1;
+      }
     }
+    revalidate();
+    repaint();
   }
 
-  public synchronized void append(@NotNull final String fragment, @NotNull final SimpleTextAttributes attributes, Object tag) {
-    append(fragment, attributes);
-    if (myFragmentTags == null) {
-      myFragmentTags = new ArrayList<Object>();
+  public void append(@NotNull final String fragment, @NotNull final SimpleTextAttributes attributes, Object tag) {
+    synchronized (this) {
+      append(fragment, attributes);
+      if (myFragmentTags == null) {
+        myFragmentTags = new ArrayList<Object>();
+      }
+      while(myFragmentTags.size() < myFragments.size()-1) {
+        myFragmentTags.add(null);
+      }
+      myFragmentTags.add(tag);
     }
-    while(myFragmentTags.size() < myFragments.size()-1) {
-      myFragmentTags.add(null);
-    }
-    myFragmentTags.add(tag);
+    revalidate();
+    repaint();
   }
 
   public synchronized void appendAlign(int alignWidth) {
@@ -129,15 +137,19 @@ public class SimpleColoredComponent extends JComponent {
    * Clear all special attributes of <code>SimpleColoredComponent</code>.
    * They are icon, text fragments and their attributes, "paint focus border".
    */
-  public synchronized void clear() {
-    myIcon = null;
-    myPaintFocusBorder = false;
-    myFragments.clear();
-    myAttributes.clear();
-    myFragmentTags = null;
-    myMainTextLastIndex = -1;
-    myAlignIndex = -1;
-    myAlignWidth = -1;
+  public void clear() {
+    synchronized (this) {
+      myIcon = null;
+      myPaintFocusBorder = false;
+      myFragments.clear();
+      myAttributes.clear();
+      myFragmentTags = null;
+      myMainTextLastIndex = -1;
+      myAlignIndex = -1;
+      myAlignWidth = -1;
+    }
+    revalidate();
+    repaint();
   }
 
   /**
@@ -153,6 +165,8 @@ public class SimpleColoredComponent extends JComponent {
    */
   public final void setIcon(final Icon icon) {
     myIcon = icon;
+    revalidate();
+    repaint();
   }
 
   /**
@@ -167,6 +181,9 @@ public class SimpleColoredComponent extends JComponent {
    */
   public void setIpad(final Insets ipad) {
     myIpad = ipad;
+
+    revalidate();
+    repaint();
   }
 
   /**
@@ -188,6 +205,9 @@ public class SimpleColoredComponent extends JComponent {
       throw new IllegalArgumentException("wrong iconTextGap: " + iconTextGap);
     }
     myIconTextGap = iconTextGap;
+
+    revalidate();
+    repaint();
   }
 
   /**
@@ -195,6 +215,8 @@ public class SimpleColoredComponent extends JComponent {
    */
   protected final void setPaintFocusBorder(final boolean paintFocusBorder) {
     myPaintFocusBorder = paintFocusBorder;
+
+    repaint();
   }
 
   /**
@@ -203,6 +225,8 @@ public class SimpleColoredComponent extends JComponent {
    */
   protected final void setFocusBorderAroundIcon(final boolean focusBorderAroundIcon) {
     myFocusBorderAroundIcon = focusBorderAroundIcon;
+
+    repaint();
   }
 
   public boolean isIconOpaque() {
@@ -211,6 +235,8 @@ public class SimpleColoredComponent extends JComponent {
 
   public void setIconOpaque(final boolean iconOpaque) {
     myIconOpaque = iconOpaque;
+
+    repaint();
   }
 
   public Dimension getPreferredSize() {
@@ -457,6 +483,9 @@ public class SimpleColoredComponent extends JComponent {
 
   protected void setBorderInsets(Insets insets) {
     myBorder.setInsets(insets);
+
+    revalidate();
+    repaint();
   }
 
   private static final class MyBorder implements Border {

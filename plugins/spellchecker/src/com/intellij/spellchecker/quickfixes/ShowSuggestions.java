@@ -17,14 +17,16 @@ package com.intellij.spellchecker.quickfixes;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.spellchecker.SpellCheckerManager;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.List;
 
 
-public abstract class ShowSuggestions implements LocalQuickFix {
+public abstract class ShowSuggestions implements LocalQuickFix, Iconable {
 
   protected TextRange textRange;
   protected String word;
@@ -53,6 +55,10 @@ public abstract class ShowSuggestions implements LocalQuickFix {
   private void calculateSuggestions(){
     SpellCheckerManager manager = SpellCheckerManager.getInstance(project);
     suggestions = manager.getSuggestions(word);
+  }
+
+  public Icon getIcon(int flags) {
+    return new ImageIcon(ShowSuggestions.class.getResource("spellcheck.png"));
   }
 
 }

@@ -9,6 +9,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.refactoring.MockInlineMethodOptions;
+import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 
@@ -151,7 +152,7 @@ public class InlineMethodTest extends LightCodeInsightTestCase {
     PsiReferenceExpression refExpr = ref instanceof PsiReferenceExpression ? (PsiReferenceExpression)ref : null;
     assertTrue(element instanceof PsiMethod);
     PsiMethod method = (PsiMethod)element;
-    final boolean condition = InlineMethodProcessor.checkBadReturns(method) && !InlineMethodHandler.allUsagesAreTailCalls(method);
+    final boolean condition = InlineMethodProcessor.checkBadReturns(method) && !InlineUtil.allUsagesAreTailCalls(method);
     assertFalse("Bad returns found", condition);
     InlineOptions options = new MockInlineMethodOptions();
     final InlineMethodProcessor processor = new InlineMethodProcessor(getProject(), method, refExpr, myEditor, options.isInlineThisOnly());
