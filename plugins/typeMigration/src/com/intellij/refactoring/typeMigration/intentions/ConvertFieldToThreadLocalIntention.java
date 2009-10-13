@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -99,25 +98,24 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
 
       final PsiExpression initializer = psiField.getInitializer();
       if (initializer != null) {
-        psiField.setInitializer(elementFactory.createExpressionFromText("new " + toType.getCanonicalText() + "()", psiField));
-        String initializerText = psiField.getName() + ".set(";
-        if (PsiUtil.isLanguageLevel5OrHigher(psiField)) {
-          initializerText += initializer.getText();
-        }
-        else {
-          initializerText += fromType instanceof PsiPrimitiveType ? "new " + ((PsiPrimitiveType)fromType).getBoxedTypeName() + "(" + initializer.getText() + ")"
-                                                                  : initializer.getText();
-        }
-        initializerText += ");";
-
-        final PsiClassInitializer classInitializer = elementFactory.createClassInitializer();
-        classInitializer.getModifierList().setModifierProperty(PsiModifier.STATIC, psiField.hasModifierProperty(PsiModifier.STATIC));
-        final PsiClass containingClass = psiField.getContainingClass();
-        final PsiClassInitializer addedInitializerBlock = (PsiClassInitializer)containingClass.addAfter(classInitializer, psiField);
-        containingClass.addAfter(CodeEditUtil.createLineFeed(psiField.getManager()), psiField);
-        final PsiStatement initializerStatement = elementFactory.createStatementFromText(initializerText, addedInitializerBlock);
-        addedInitializerBlock.getBody().add(initializerStatement);
-        CodeStyleManager.getInstance(project).reformat(addedInitializerBlock);
+        final String boxedTypeName = fromType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)fromType).getBoxedTypeName() : fromType.getCanonicalText();
+        psiField.setInitializer(elementFactory.createExpressionFromText("new " +
+                                                                        toType.getCanonicalText() +
+                                                                        "() {\n" +
+                                                                        "@Override \n" +
+                                                                        "protected " +
+                                                                        boxedTypeName +
+                                                                        " initialValue() {\n" +
+                                                                        "  return " +
+                                                                        (PsiUtil.isLanguageLevel5OrHigher(psiField)
+                                                                         ? initializer.getText()
+                                                                         : (fromType instanceof PsiPrimitiveType
+                                                                            ? "new " + ((PsiPrimitiveType)fromType).getBoxedTypeName() + "(" + initializer.getText() + ")"
+                                                                            : initializer.getText())) +
+                                                                        ";\n" +
+                                                                        "}\n" +
+                                                                        "}", psiField));
+        CodeStyleManager.getInstance(project).reformat(psiField);
       }
     }
     catch (IncorrectOperationException e) {
