@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -40,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -217,7 +219,16 @@ public class DumbServiceImpl extends DumbService {
                   final double fraction = (Double)args[0];
                   args[0] = new Double((myProcessedItems + fraction * myCurrentBaseTotal) / myTotalItems);
                 }
-                return method.invoke(indicator, args);
+                try {
+                  return method.invoke(indicator, args);
+                }
+                catch (InvocationTargetException e) {
+                  final Throwable cause = e.getCause();
+                  if (cause instanceof ProcessCanceledException) {
+                    throw cause;
+                  }
+                  throw e;
+                }
               }
             });
           runAction(proxy, myAction);
