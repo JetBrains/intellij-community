@@ -44,9 +44,10 @@
   <extensionPoints>
     <extensionPoint name="support" interface="com.intellij.spellchecker.tokenizer.SpellcheckingStrategy"/>
   </extensionPoints>
-  
+
   <extensions defaultExtensionNs="com.intellij">
-    
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+
     <projectService serviceInterface="com.intellij.spellchecker.options.SpellCheckerConfiguration"
                     serviceImplementation="com.intellij.spellchecker.options.SpellCheckerConfiguration"/>
     <projectService serviceInterface="com.intellij.spellchecker.SpellCheckerManager"
@@ -63,4 +64,3 @@
     <spellchecker.support implementation="com.intellij.spellchecker.tokenizer.HtmlSpellcheckingStrategy"/>
   </extensions>
 </idea-plugin>
-        
