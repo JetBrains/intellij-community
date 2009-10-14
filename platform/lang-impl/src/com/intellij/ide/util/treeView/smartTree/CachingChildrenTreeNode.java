@@ -63,7 +63,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     }
   }
 
-  private static class CompositeComparator implements Comparator<CachingChildrenTreeNode> {
+  private static class CompositeComparator implements java.util.Comparator<CachingChildrenTreeNode> {
     private final Sorter[] mySorters;
 
     public CompositeComparator(final Sorter[] sorters) {

@@ -195,32 +195,32 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         final ProgressManager progressManager = ProgressManager.getInstance();
         try {
           progressManager.checkCanceled();
+
+          ApplicationManager.getApplication().assertReadAccessAllowed();
+
+          ProblemsHolder holder = new ProblemsHolder(iManager, myFile);
+          progressManager.checkCanceled();
+          PsiElementVisitor elementVisitor = tool.buildVisitor(holder, isOnTheFly);
+          //noinspection ConstantConditions
+          if(elementVisitor == null) {
+            LOG.error("Tool " + tool + " must not return null from the buildVisitor() method");
+          }
+          tool.inspectionStarted(session);
+          for (PsiElement element : elements) {
+            progressManager.checkCanceled();
+            element.accept(elementVisitor);
+          }
+          tool.inspectionFinished(session);
+          advanceProgress(elements.length);
+
+          if (holder.hasResults()) {
+            appendDescriptors(holder.getResults(), tool, ignoreSuppressed);
+          }
+          return true;
         }
         catch (ProcessCanceledException e) {
           return false;
         }
-
-        ApplicationManager.getApplication().assertReadAccessAllowed();
-
-        ProblemsHolder holder = new ProblemsHolder(iManager, myFile);
-        progressManager.checkCanceled();
-        PsiElementVisitor elementVisitor = tool.buildVisitor(holder, isOnTheFly);
-        //noinspection ConstantConditions
-        if(elementVisitor == null) {
-          LOG.error("Tool " + tool + " must not return null from the buildVisitor() method");
-        }
-        tool.inspectionStarted(session);
-        for (PsiElement element : elements) {
-          progressManager.checkCanceled();
-          element.accept(elementVisitor);
-        }
-        tool.inspectionFinished(session);
-        advanceProgress(elements.length);
-
-        if (holder.hasResults()) {
-          appendDescriptors(holder.getResults(), tool, ignoreSuppressed);
-        }
-        return true;
       }
     }, "Inspection tools");
 
