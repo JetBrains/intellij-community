@@ -66,6 +66,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -1069,15 +1070,19 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return
     ApplicationManager.getApplication().runReadAction(new Computable<List<HighlightInfo>>() {
       public List<HighlightInfo> compute() {
-        List<TextEditorHighlightingPass > passes =
+        final List<TextEditorHighlightingPass > passes =
           TextEditorHighlightingPassRegistrarEx.getInstanceEx(getProject()).instantiatePasses(getFile(), getEditor(), ArrayUtil.EMPTY_INT_ARRAY);
-        ProgressIndicator progress = new DaemonProgressIndicator();
-        for (TextEditorHighlightingPass pass : passes) {
-          pass.collectInformation(progress);
-        }
-        for (TextEditorHighlightingPass pass : passes) {
-          pass.applyInformationToEditor();
-        }
+        final ProgressIndicator progress = new DaemonProgressIndicator();
+        ProgressManager.getInstance().runProcess(new Runnable() {
+          public void run() {
+            for (TextEditorHighlightingPass pass : passes) {
+              pass.collectInformation(progress);
+            }
+            for (TextEditorHighlightingPass pass : passes) {
+              pass.applyInformationToEditor();
+            }
+          }
+        }, progress);
         List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), getProject());
         return infos == null ? Collections.<HighlightInfo>emptyList() : new ArrayList<HighlightInfo>(infos);
       }
