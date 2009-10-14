@@ -25,6 +25,7 @@ import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.treeStructure.PatchedDefaultMutableTreeNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.Nullable;
@@ -156,6 +157,7 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
               }
             });
           } else {
+            TreeUtil.ensureSelection(myTree);
             selectionDone.setDone();
           }
         } else {
