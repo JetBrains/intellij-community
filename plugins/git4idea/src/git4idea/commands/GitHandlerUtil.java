@@ -289,7 +289,7 @@ public class GitHandlerUtil {
      * Error indicators for the line
      */
     @NonNls private static final String[] ERROR_INDICATORS =
-      {"ERROR:", "error", "FATAL:", "fatal", "Cannot apply", "Could not", "Interactive rebase already started"};
+      {"ERROR:", "error", "FATAL:", "fatal", "Cannot apply", "Could not", "Interactive rebase already started", "refusing to pull"};
 
     /**
      * Check if the line is an error line
