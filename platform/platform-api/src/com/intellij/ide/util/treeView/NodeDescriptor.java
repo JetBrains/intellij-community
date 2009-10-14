@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Comparator;
 
 public abstract class NodeDescriptor<E> {
   protected final Project myProject;
@@ -95,7 +96,7 @@ public abstract class NodeDescriptor<E> {
     myChildrenSortingStamp = stamp;
   }
 
-  public abstract static class Comparator<T extends NodeDescriptor> implements java.util.Comparator<T> {
+  public abstract static class NodeComparator<T extends NodeDescriptor> implements Comparator<T> {
 
     private long myStamp;
 
@@ -111,15 +112,15 @@ public abstract class NodeDescriptor<E> {
       setStamp(getStamp() + 1);
     }
 
-    public static class Delegate<T extends NodeDescriptor> extends Comparator<T> {
+    public static class Delegate<T extends NodeDescriptor> extends NodeComparator<T> {
 
-      private Comparator<T> myDelegate;
+      private NodeComparator<T> myDelegate;
 
-      protected Delegate(Comparator<T> delegate) {
+      protected Delegate(NodeComparator<T> delegate) {
         myDelegate = delegate;
       }
 
-      public void setDelegate(Comparator<T> delegate) {
+      public void setDelegate(NodeComparator<T> delegate) {
         myDelegate = delegate;
       }
 
