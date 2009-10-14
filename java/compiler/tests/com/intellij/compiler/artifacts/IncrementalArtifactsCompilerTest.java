@@ -47,4 +47,16 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
     deleteFile(file);
     compileProject().assertDeleted("out/artifacts/a/index.html");
   }
+
+  public void testIDEADEV40714OverwriteFileInArchive() throws Exception {
+    final VirtualFile file1 = createFile("a/a.txt", "a");
+    final VirtualFile file2 = createFile("b/a.txt", "b");
+    addArtifact(root()
+                 .archive("x.jar")
+                  .file(file1.getPath())
+                  .file(file2.getPath()));
+    compileProject();
+    changeFile(file1);
+    compileProject().assertRecompiled("a/a.txt");
+  }
 }
