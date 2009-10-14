@@ -36,7 +36,6 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
   private CompositePackagingElement<?> myRootElement;
   private String myName;
   private boolean myBuildOnMake;
-  private boolean myClearOutputDirectoryOnRebuild;
   private String myOutputPath;
   private ArtifactType myArtifactType;
   private Map<ArtifactPropertiesProvider, ArtifactProperties<?>> myProperties;
@@ -49,8 +48,13 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
     myRootElement = rootElement;
     myOutputPath = outputPath;
     myProperties = new HashMap<ArtifactPropertiesProvider, ArtifactProperties<?>>();
+    resetProperties();
+  }
+
+  private void resetProperties() {
+    myProperties.clear();
     for (ArtifactPropertiesProvider provider : ArtifactPropertiesProvider.getProviders()) {
-      if (provider.isAvailableFor(artifactType)) {
+      if (provider.isAvailableFor(myArtifactType)) {
         myProperties.put(provider, provider.createProperties(myArtifactType));
       }
     }
@@ -106,11 +110,17 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
   }
 
   public void setProperties(ArtifactPropertiesProvider provider, ArtifactProperties<?> properties) {
-    myProperties.put(provider, properties);
+    if (properties != null) {
+      myProperties.put(provider, properties);
+    }
+    else {
+      myProperties.remove(provider);
+    }
   }
 
   public void setArtifactType(@NotNull ArtifactType selected) {
     myArtifactType = selected;
+    resetProperties();
   }
 
   public void setBuildOnMake(boolean buildOnMake) {
