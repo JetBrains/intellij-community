@@ -39,4 +39,7 @@ public interface ArtifactsStructureConfigurableContext extends PackagingElementR
   void editLayout(@NotNull Artifact artifact, Runnable action);
 
   ArtifactEditor getOrCreateEditor(Artifact artifact);
+
+  @NotNull
+  Artifact getOriginalArtifact(@NotNull Artifact artifact);
 }
