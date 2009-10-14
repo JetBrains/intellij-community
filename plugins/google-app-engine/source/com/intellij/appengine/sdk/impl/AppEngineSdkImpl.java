@@ -243,4 +243,8 @@ public class AppEngineSdkImpl implements AppEngineSdk {
     return new ValidationResult("'" + path + "' is not valid App Engine SDK installation: " + "'" + file + "' file not found",
                                 DOWNLOAD_SDK_QUICK_FIX);
   }
+
+  public String getAgentPath() {
+    return myHomePath + "/lib/agent/appengine-agent.jar";
+  }
 }

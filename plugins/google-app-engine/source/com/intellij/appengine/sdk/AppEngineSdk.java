@@ -33,4 +33,6 @@ public interface AppEngineSdk {
   String getLibUserDirectoryPath();
 
   VirtualFile[] getOrmLibSources();
+
+  String getAgentPath();
 }
