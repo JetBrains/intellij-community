@@ -31,6 +31,8 @@ public abstract class NodeDescriptor<E> {
 
   private int myIndex = -1;
 
+  private long myChildrenSortingStamp = -1;
+
   public NodeDescriptor(Project project, NodeDescriptor parentDescriptor) {
     myProject = project;
     myParentDescriptor = parentDescriptor;
@@ -82,5 +84,58 @@ public abstract class NodeDescriptor<E> {
       return ((WeighedItem) element).getWeight();
     }
     return 30;
+  }
+
+
+  public final long getChildrenSortingStamp() {
+    return myChildrenSortingStamp;
+  }
+
+  public final void setChildrenSortingStamp(long stamp) {
+    myChildrenSortingStamp = stamp;
+  }
+
+  public abstract static class Comparator<T extends NodeDescriptor> implements java.util.Comparator<T> {
+
+    private long myStamp;
+
+    public final void setStamp(long stamp) {
+      myStamp = stamp;
+    }
+
+    public long getStamp() {
+      return myStamp;
+    }
+
+    public void incStamp() {
+      setStamp(getStamp() + 1);
+    }
+
+    public static class Delegate<T extends NodeDescriptor> extends Comparator<T> {
+
+      private Comparator<T> myDelegate;
+
+      protected Delegate(Comparator<T> delegate) {
+        myDelegate = delegate;
+      }
+
+      public void setDelegate(Comparator<T> delegate) {
+        myDelegate = delegate;
+      }
+
+      @Override
+      public long getStamp() {
+        return myDelegate.getStamp();
+      }
+
+      @Override
+      public void incStamp() {
+        myDelegate.incStamp();
+      }
+
+      public int compare(T o1, T o2) {
+        return myDelegate.compare(o1, o2);
+      }
+    }
   }
 }

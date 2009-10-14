@@ -79,6 +79,8 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getPluginsDownloadUrl();
 
+  public abstract String getWebHelpUrl();
+
   public interface UpdateUrls {
     String getCheckingUrl();
     String getPatchesUrl();

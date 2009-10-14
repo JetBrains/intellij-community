@@ -24,6 +24,7 @@ import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.artifacts.PackagingElementProcessor;
+import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
 import com.intellij.packaging.impl.elements.LibraryPackagingElement;
 import com.intellij.packaging.impl.elements.ModuleOutputPackagingElement;
 import org.jetbrains.annotations.NotNull;
@@ -39,10 +40,10 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
   private final Artifact myOriginalArtifact;
 
   public ArtifactProjectStructureElement(StructureConfigurableContext context,
-                                         ArtifactsStructureConfigurableContext artifactsStructureContext, Artifact originalArtifact) {
+                                         ArtifactsStructureConfigurableContext artifactsStructureContext, Artifact artifact) {
     super(context);
     myArtifactsStructureContext = artifactsStructureContext;
-    myOriginalArtifact = originalArtifact;
+    myOriginalArtifact = artifactsStructureContext.getOriginalArtifact(artifact);
   }
 
   @Override
@@ -67,6 +68,15 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
           final Library library = ((LibraryPackagingElement)packagingElement).findLibrary(myArtifactsStructureContext);
           if (library != null) {
             usages.add(new UsageInArtifact(myOriginalArtifact, myArtifactsStructureContext, new LibraryProjectStructureElement(myContext, library),
+                                           ArtifactProjectStructureElement.this, getPathFromRoot(parents, "/"), packagingElement));
+          }
+        }
+        else if (packagingElement instanceof ArtifactPackagingElement) {
+          final Artifact usedArtifact = ((ArtifactPackagingElement)packagingElement).findArtifact(myArtifactsStructureContext);
+          if (usedArtifact != null) {
+            final ArtifactProjectStructureElement artifactElement =
+              new ArtifactProjectStructureElement(myContext, myArtifactsStructureContext, usedArtifact);
+            usages.add(new UsageInArtifact(myOriginalArtifact, myArtifactsStructureContext, artifactElement,
                                            ArtifactProjectStructureElement.this, getPathFromRoot(parents, "/"), packagingElement));
           }
         }

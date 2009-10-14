@@ -63,7 +63,7 @@ class ArtifactsStructureConfigurableContextImpl implements ArtifactsStructureCon
   }
 
   @NotNull
-  private Artifact getOriginalArtifact(@NotNull Artifact artifact) {
+  public Artifact getOriginalArtifact(@NotNull Artifact artifact) {
     if (myModifiableModel != null) {
       return ((ArtifactModelImpl)myModifiableModel).getOriginalArtifact(artifact);
     }

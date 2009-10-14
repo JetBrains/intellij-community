@@ -172,15 +172,8 @@ public class UpdaterTreeState {
           public void run() {
             myUi.expand(toExpand, new Runnable() {
               public void run() {
-                if (!isEmpty()) {
-                  myCanRunRestore = false;
-                  myUi.setUpdaterState(UpdaterTreeState.this);
-                }
                 setProcessingNow(false);
-
-                if (myUi.isReady()) {
-                  myUi.clearUpdaterState();
-                }
+                myUi.clearUpdaterState();
               }
             }, true);
           }

@@ -43,9 +43,12 @@ public class UsageInArtifact extends ProjectStructureElementUsage {
   @Override
   public void navigate() {
     final Artifact artifact = myContext.getArtifactModel().getArtifactByOriginal(myOriginalArtifact);
-    final ArtifactEditorEx artifactEditor = (ArtifactEditorEx)myContext.getOrCreateEditor(artifact);
-    artifactEditor.getLayoutTreeComponent().selectNode(myParentPath, myPackagingElement);
-    ProjectStructureConfigurable.getInstance(myContext.getProject()).select(myOriginalArtifact, true);
+    ProjectStructureConfigurable.getInstance(myContext.getProject()).select(myOriginalArtifact, true).doWhenDone(new Runnable() {
+      public void run() {
+        final ArtifactEditorEx artifactEditor = (ArtifactEditorEx)myContext.getOrCreateEditor(artifact);
+        artifactEditor.getLayoutTreeComponent().selectNode(myParentPath, myPackagingElement);
+      }
+    });
   }
 
   @Override
