@@ -48,12 +48,8 @@ public class WeightBasedComparator implements Comparator<NodeDescriptor> {
       return compareToString(o1, o2);
     }
 
-    if (w1 == UNDEFINED_WEIGHT && w2 == UNDEFINED_WEIGHT) {
-      return o1.getIndex() - o2.getIndex();
-    } else {
-      return compareWeights(w1, w2);
-    }
-
+    int weights = compareWeights(w1, w2);
+    return weights != 0 ? weights : o1.getIndex() - o2.getIndex();
   }
 
   protected int compareWeights(final int w1, final int w2) {

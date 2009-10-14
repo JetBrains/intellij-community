@@ -182,16 +182,34 @@ public class AbstractTreeBuilder implements Disposable {
     getUi().setTreeStructure(structure);
   }
 
+  /**
+   * @deprecated @see queueUpdateFrom
+   */
   public void updateFromRoot() {
-    getUi().doUpdateFromRoot();
+    queueUpdate();
   }
 
+  /**
+   * @deprecated @see queueUpdateFrom
+   */
   protected ActionCallback updateFromRootCB() {
-   return getUi().doUpdateFromRootCB();
+   return queueUpdate();
   }
 
   public void initRootNode() {
     getUi().initRootNode();
+  }
+
+  public final ActionCallback queueUpdate() {
+    return queueUpdateFrom(getTreeStructure().getRootElement(), true);
+  }
+
+  public final ActionCallback queueUpdateFrom(final Object element, final boolean forceResort) {
+    if (forceResort) {
+      getUi().incComparatorStamp();
+    }
+
+    return getUi().queueUpdate(element);
   }
 
   /**
