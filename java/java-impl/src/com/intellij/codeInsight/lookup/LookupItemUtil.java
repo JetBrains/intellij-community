@@ -16,10 +16,9 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.codeInsight.completion.JavaPsiClassReferenceElement;
 import com.intellij.codeInsight.completion.PrefixMatcher;
-import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.diagnostic.Logger;
@@ -97,28 +96,28 @@ public class LookupItemUtil{
     if (object instanceof PsiMethod) {
       return new JavaMethodCallElement((PsiMethod)object);
     }
+    if (object instanceof PsiVariable) {
+      return new VariableLookupItem((PsiVariable)object);
+    }
+    if (object instanceof PsiKeyword) {
+      return new KeywordLookupItem((PsiKeyword)object, (PsiKeyword)object);
+    }
+    if (object instanceof PsiExpression) {
+      return new ExpressionLookupItem((PsiExpression) object);
+    }
+    if (object instanceof PsiType) {
+      return PsiTypeLookupItem.createLookupItem((PsiType)object);
+    }
 
     String s = null;
     LookupItem item = new LookupItem(object, "");
     if (object instanceof PsiElement){
       s = PsiUtilBase.getName((PsiElement) object);
     }
-    if (object instanceof PsiEnumConstant) {
-      item.addLookupStrings(((PsiEnumConstant)object).getName());
-    }
     TailType tailType = TailType.NONE;
     if (object instanceof PsiPackage) {
       tailType = TailType.DOT;
       s = StringUtil.notNullize(s);
-    }
-    else if (object instanceof PsiKeyword) {
-      return new KeywordLookupItem((PsiKeyword)object).setTailType(tailType);
-    }
-    else if (object instanceof PsiExpression) {
-      return new ExpressionLookupItem((PsiExpression) object).setTailType(tailType);
-    }
-    else if (object instanceof PsiType) {
-      return PsiTypeLookupItem.createLookupItem((PsiType)object);
     }
     else if (object instanceof PsiMetaData) {
       s = ((PsiMetaData)object).getName();
@@ -133,7 +132,7 @@ public class LookupItemUtil{
       s = ((PresentableLookupValue)object).getPresentation();
     }
 
-    if (object instanceof LookupValueWithUIHint && ((LookupValueWithUIHint) object).isBold() || object instanceof PsiKeyword) {
+    if (object instanceof LookupValueWithUIHint && ((LookupValueWithUIHint) object).isBold()) {
       item.setBold();
     }
 
@@ -145,7 +144,7 @@ public class LookupItemUtil{
     }
     item.setLookupString(s);
 
-    item.setAttribute(CompletionUtil.TAIL_TYPE_ATTR, tailType);
+    item.setTailType(tailType);
     return item;
   }
 

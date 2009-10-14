@@ -17,7 +17,6 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
@@ -198,7 +197,6 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
     extend(CompletionType.SMART, INSIDE_EXPRESSION, new ExpectedTypeBasedCompletionProvider() {
       protected void addCompletions(final CompletionParameters params, final CompletionResultSet result, final Collection<ExpectedTypeInfo> _infos) {
-        final PsiElement position = params.getPosition();
         final Set<ExpectedTypeInfo> infos = ApplicationManager.getApplication().runReadAction(new Computable<Set<ExpectedTypeInfo>>() {
           public Set<ExpectedTypeInfo> compute() {
             return new THashSet<ExpectedTypeInfo>(_infos, EXPECTED_TYPE_INFO_STRATEGY);
@@ -207,25 +205,9 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         for (final ExpectedTypeInfo info : infos) {
           final JavaSmartCompletionParameters parameters = new JavaSmartCompletionParameters(params, info);
           final PsiType type = info.getType();
-          final boolean isVoid = PsiType.VOID.equals(type);
-          final AssignableFromFilter assignableFromFilter = new AssignableFromFilter(type);
-          final ElementFilter filter = new ElementFilter() {
-            public boolean isAcceptable(Object element, PsiElement context) {
-              if (isVoid) {
-                return element instanceof PsiMethod;
-              }
-              return assignableFromFilter.isAcceptable(element, context);
-            }
 
-            public boolean isClassAcceptable(Class hintClass) {
-              if (isVoid && !ReflectionCache.isAssignable(PsiMethod.class, hintClass)) {
-                return false;
-              }
-              return true;
-            }
-          };
-
-          final Consumer<LookupElement> consumer = new Consumer<LookupElement>() {
+          final CompletionService service = CompletionService.getCompletionService();
+          new BasicExpressionCompletionContributor().fillCompletionVariants(parameters, service.createResultSet(parameters, new Consumer<LookupElement>() {
             public void consume(final LookupElement lookupElement) {
               final TypedLookupItem typed = lookupElement.as(TypedLookupItem.class);
               if (typed != null) {
@@ -233,28 +215,14 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
                 if (psiType != null && type.isAssignableFrom(psiType)) {
                   result.addElement(decorate(lookupElement, _infos));
                 }
-                return;
-              }
-
-              final Object object = lookupElement.getObject();
-              
-              final PsiSubstitutor substitutor;
-              final LookupItem item = lookupElement.as(LookupItem.class);
-              if (item != null) {
-                substitutor = (PsiSubstitutor)item.getAttribute(LookupItem.SUBSTITUTOR);
-              }
-              else {
-                substitutor = null;
-              }
-              if (filter.isAcceptable(object, position) ||
-                  substitutor != null && object instanceof PsiElement && filter.isAcceptable(new CandidateInfo((PsiElement)object, substitutor), position)) {
-                result.addElement(decorate(lookupElement, _infos));
               }
             }
-          };
-          for (ExpressionSmartCompletionContributor contributor : ExpressionSmartCompletionContributor.CONTRIBUTORS) {
-            contributor.fillCompletionVariants(parameters, CompletionService.getCompletionService().createResultSet(parameters, consumer, JavaSmartCompletionContributor.this));
-          }
+          }, JavaSmartCompletionContributor.this));
+          ReferenceExpressionCompletionContributor.fillCompletionVariants(parameters, service.createResultSet(parameters, new Consumer<LookupElement>() {
+            public void consume(final LookupElement lookupElement) {
+              result.addElement(decorate(lookupElement, _infos));
+            }
+          }, JavaSmartCompletionContributor.this));
 
         }
       }
@@ -629,10 +597,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
           return ReflectionCache.isAssignable(PsiVariable.class, hintClass) ||
                  ReflectionCache.isAssignable(PsiMethod.class, hintClass) ||
-                 ReflectionCache.isAssignable(PsiExpression.class, hintClass) ||
-                 ReflectionCache.isAssignable(Template.class, hintClass) ||
-                 ReflectionCache.isAssignable(CandidateInfo.class, hintClass) ||
-                 ReflectionCache.isAssignable(PsiKeyword.class, hintClass);
+                 ReflectionCache.isAssignable(CandidateInfo.class, hintClass);
         }
       }, true, null, parameters);
     }

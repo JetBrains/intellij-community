@@ -35,7 +35,9 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.element.ModifierFilter;
+import com.intellij.psi.filters.types.AssignableFromFilter;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -47,10 +49,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
+
 /**
  * @author peter
  */
-public class ReferenceExpressionCompletionContributor extends ExpressionSmartCompletionContributor{
+public class ReferenceExpressionCompletionContributor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor");
   private static final PsiMethodPattern OBJECT_METHOD_PATTERN = psiMethod().withName(
       PsiJavaPatterns.string().oneOf("hashCode", "equals", "finalize", "wait", "notify", "notifyAll", "getClass", "clone", "toString")).
@@ -67,6 +71,9 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
       return this;
     }
   };
+
+  private ReferenceExpressionCompletionContributor() {
+  }
 
   @NotNull 
   private static ElementFilter getReferenceFilter(PsiElement element, boolean allowRecursion) {
@@ -96,7 +103,7 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
     return TrueFilter.INSTANCE;
   }
 
-  public void fillCompletionVariants(final JavaSmartCompletionParameters parameters, final CompletionResultSet result) {
+  public static void fillCompletionVariants(final JavaSmartCompletionParameters parameters, final CompletionResultSet result) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         final PsiElement element = parameters.getPosition();
@@ -106,17 +113,21 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
         final PsiReference reference = element.getContainingFile().findReferenceAt(offset);
         if (reference != null) {
           final ElementFilter filter = getReferenceFilter(element, false);
-          for (final LookupElement item : JavaSmartCompletionContributor.completeReference(element, reference, filter, false, parameters)) {
+          for (final LookupElement item : completeFinalReference(element, reference, filter, parameters)) {
             result.addElement(item);
-
-            addSingleArrayElementAccess(element, item, parameters, result);
           }
 
-          if (parameters.getInvocationCount() >= 2) {
-            for (final LookupElement item : JavaSmartCompletionContributor.completeReference(element, reference, filter, false, parameters)) {
+          final boolean secondTime = parameters.getInvocationCount() >= 2;
+
+          for (final LookupElement item : JavaSmartCompletionContributor.completeReference(element, reference, filter, false, parameters)) {
+            addSingleArrayElementAccess(element, item, parameters, result);
+            
+            if (secondTime) {
               addSecondCompletionVariants(element, reference, item, parameters, result);
             }
+          }
 
+          if (secondTime) {
             if (!psiElement().afterLeaf(".").accepts(element)) {
               BasicExpressionCompletionContributor.processDataflowExpressionTypes(element, null, TRUE_MATCHER, new Consumer<LookupElement>() {
                 public void consume(LookupElement baseItem) {
@@ -128,6 +139,43 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
         }
       }
     });
+  }
+
+  private static Set<LookupElement> completeFinalReference(final PsiElement element, PsiReference reference, ElementFilter filter,
+                                                           final JavaSmartCompletionParameters parameters) {
+    final Set<LookupElement> elements =
+      JavaSmartCompletionContributor.completeReference(element, reference, new AndFilter(filter, new ElementFilter() {
+        public boolean isAcceptable(Object o, PsiElement context) {
+          if (o instanceof CandidateInfo) {
+            final CandidateInfo info = (CandidateInfo)o;
+            final PsiElement member = info.getElement();
+
+            final PsiType expectedType = parameters.getExpectedType();
+            if (expectedType.equals(PsiType.VOID)) {
+              return member instanceof PsiMethod;
+            }
+
+            return AssignableFromFilter.isAcceptable(member, element, expectedType, info.getSubstitutor());
+          }
+          return false;
+        }
+
+        public boolean isClassAcceptable(Class hintClass) {
+          return true;
+        }
+      }), false, parameters);
+    for (LookupElement lookupElement : elements) {
+      if (lookupElement.getObject() instanceof PsiMethod) {
+        final JavaMethodCallElement item = lookupElement.as(JavaMethodCallElement.class);
+        assert item != null;
+        final PsiMethod method = (PsiMethod)lookupElement.getObject();
+        if (SmartCompletionDecorator.hasUnboundTypeParams(method)) {
+          item.setInferenceSubstitutor(SmartCompletionDecorator.calculateMethodReturnTypeSubstitutor(method, parameters.getExpectedType()));
+        }
+      }
+    }
+
+    return elements;
   }
 
   private static void addSingleArrayElementAccess(PsiElement element, LookupElement item, JavaSmartCompletionParameters parameters,
@@ -333,7 +381,7 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
   private static void addChainedCallVariants(final PsiElement place, final LookupElement qualifierItem,
                                              final CompletionResultSet result,
                                              PsiType qualifierType,
-                                             final PsiType expectedType, CompletionParameters parameters) throws IncorrectOperationException {
+                                             final PsiType expectedType, JavaSmartCompletionParameters parameters) throws IncorrectOperationException {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(place.getProject()).getElementFactory();
     final String typeText = qualifierType instanceof PsiEllipsisType ? ((PsiEllipsisType)qualifierType).getComponentType().getCanonicalText() + "[]" : qualifierType.getCanonicalText();
     final JavaCodeFragment block = elementFactory.createCodeBlockCodeFragment(typeText + " xxx;xxx.xxx;", place, false);
@@ -345,7 +393,7 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
     final PsiReferenceExpression mockRef = (PsiReferenceExpression) expressionStatement.getExpression();
 
     final ElementFilter filter = getReferenceFilter(place, true);
-    for (final LookupElement item : JavaSmartCompletionContributor.completeReference(place, mockRef, filter, false, parameters)) {
+    for (final LookupElement item : completeFinalReference(place, mockRef, filter, parameters)) {
       if (shoudChain(place, qualifierType, expectedType, item)) {
         result.addElement(JavaChainLookupElement.chainElements(qualifierItem, item));
       }

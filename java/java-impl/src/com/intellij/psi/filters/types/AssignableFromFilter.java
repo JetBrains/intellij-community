@@ -71,11 +71,15 @@ public class AssignableFromFilter implements ElementFilter{
       element = info.getElement();
     }
 
-    if (element instanceof PsiMethod && isReturnTypeInferrable((PsiMethod)element, context, type, substitutor)) {
+    return isAcceptable((PsiElement)element, context, type, substitutor);
+  }
+
+  public static boolean isAcceptable(PsiElement element, PsiElement context, PsiType expectedType, PsiSubstitutor substitutor) {
+    if (element instanceof PsiMethod && isReturnTypeInferrable((PsiMethod)element, context, expectedType, substitutor)) {
       return true;
     }
 
-    PsiType typeByElement = FilterUtil.getTypeByElement((PsiElement)element, context);
+    PsiType typeByElement = FilterUtil.getTypeByElement(element, context);
     if (typeByElement == null) {
       return false;
     }
@@ -84,11 +88,11 @@ public class AssignableFromFilter implements ElementFilter{
       typeByElement = substitutor.substitute(typeByElement);
     }
 
-    if (!allowBoxing(context) && (type instanceof PsiPrimitiveType != typeByElement instanceof PsiPrimitiveType)) {
+    if (!allowBoxing(context) && (expectedType instanceof PsiPrimitiveType != typeByElement instanceof PsiPrimitiveType)) {
       return false;
     }
 
-    return type.isAssignableFrom(typeByElement);
+    return expectedType.isAssignableFrom(typeByElement);
   }
 
   private static boolean allowBoxing(PsiElement place) {
@@ -102,7 +106,7 @@ public class AssignableFromFilter implements ElementFilter{
     return true;
   }
 
-  public static boolean isReturnTypeInferrable(PsiMethod method, PsiElement place, PsiType expectedType, @Nullable PsiSubstitutor substitutor) {
+  private static boolean isReturnTypeInferrable(PsiMethod method, PsiElement place, PsiType expectedType, @Nullable PsiSubstitutor substitutor) {
     final PsiResolveHelper helper = JavaPsiFacade.getInstance(method.getProject()).getResolveHelper();
     for (final PsiTypeParameter parameter : method.getTypeParameters()) {
       PsiType returnType = method.getReturnType();

@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.KeywordLookupItem;
+import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.codeInsight.template.SmartCompletionContextType;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
@@ -60,7 +61,7 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
       public LookupItem compute() {
         try {
           final PsiKeyword keyword = JavaPsiFacade.getInstance(element.getProject()).getElementFactory().createKeyword(s);
-          return new KeywordLookupItem(keyword).setAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE);
+          return new KeywordLookupItem(keyword, element).setAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE);
         }
         catch (IncorrectOperationException e) {
           throw new RuntimeException(e);
@@ -127,13 +128,6 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
       }
     });
 
-    final ReferenceExpressionCompletionContributor referenceContributor = new ReferenceExpressionCompletionContributor();
-    extend(psiElement(), new CompletionProvider<JavaSmartCompletionParameters>() {
-      protected void addCompletions(@NotNull final JavaSmartCompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
-        referenceContributor.fillCompletionVariants(parameters, result);
-      }
-    });
-
   }
 
   public static void processDataflowExpressionTypes(PsiElement position, @Nullable PsiType expectedType, final PrefixMatcher matcher, Consumer<LookupElement> consumer) {
@@ -184,8 +178,8 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
       if (!refExpr.isQualified()) {
         final PsiElement target = refExpr.resolve();
         if (target instanceof PsiVariable) {
-          final LookupItem item = (LookupItem)LookupItemUtil.objectToLookupItem(target);
-          item.setAttribute(LookupItem.SUBSTITUTOR, PsiSubstitutor.EMPTY);
+          final VariableLookupItem item = new VariableLookupItem((PsiVariable)target);
+          item.setSubstitutor(PsiSubstitutor.EMPTY);
           return item;
         }
       }
