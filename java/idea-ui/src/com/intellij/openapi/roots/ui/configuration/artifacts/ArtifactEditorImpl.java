@@ -288,8 +288,8 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     popupActionGroup.add(new RenamePackagingElementAction(this));
     popupActionGroup.add(Separator.getInstance());
     popupActionGroup.add(new HideContentAction(this));
-    popupActionGroup.add(new ArtifactEditorNavigateAction(myLayoutTreeComponent));
-    popupActionGroup.add(new ArtifactEditorFindUsagesAction(myLayoutTreeComponent, myProject));
+    popupActionGroup.add(new LayoutTreeNavigateAction(myLayoutTreeComponent));
+    popupActionGroup.add(new LayoutTreeFindUsagesAction(myLayoutTreeComponent, myProject));
 
     popupActionGroup.add(Separator.getInstance());
     CommonActionsManager actionsManager = CommonActionsManager.getInstance();
@@ -354,7 +354,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
               ((ArchivePackagingElement)getRootElement()).setArchiveFileName(newArtifactName + "." + extension);
             }
           });
-          myLayoutTreeComponent.updateTreeNodesPresentation();
+          myLayoutTreeComponent.updateRootNode();
         }
       }
     }
