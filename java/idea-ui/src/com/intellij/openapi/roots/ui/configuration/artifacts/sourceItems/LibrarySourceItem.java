@@ -43,7 +43,7 @@ public class LibrarySourceItem extends PackagingSourceItem {
 
   @Override
   public SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
-    return new LibrarySourceItemPresentation(myLibrary);
+    return new LibrarySourceItemPresentation(myLibrary, context);
   }
 
   public boolean equals(Object obj) {
@@ -72,9 +72,26 @@ public class LibrarySourceItem extends PackagingSourceItem {
 
   private static class LibrarySourceItemPresentation extends SourceItemPresentation {
     private final Library myLibrary;
+    private final ArtifactEditorContext myContext;
 
-    public LibrarySourceItemPresentation(Library library) {
+    public LibrarySourceItemPresentation(Library library, ArtifactEditorContext context) {
       myLibrary = library;
+      myContext = context;
+    }
+
+    @Override
+    public boolean canNavigateToSource() {
+      return myLibrary != null;
+    }
+
+    @Override
+    public void navigateToSource() {
+      myContext.selectLibrary(myLibrary);
+    }
+
+    @Override
+    public Object getSourceObject() {
+      return myLibrary;
     }
 
     @Override

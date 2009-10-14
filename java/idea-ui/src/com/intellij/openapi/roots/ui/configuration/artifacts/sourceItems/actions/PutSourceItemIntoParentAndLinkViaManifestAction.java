@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
+package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorImpl;
+import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.SourceItemsTree;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.packaging.artifacts.Artifact;

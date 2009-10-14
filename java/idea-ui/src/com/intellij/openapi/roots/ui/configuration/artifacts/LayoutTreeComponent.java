@@ -403,6 +403,10 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     myBuilder.updateFromRoot(false);
   }
 
+  public void updateRootNode() {
+    myBuilder.updateNode(myTree.getRootNode());
+  }
+
   public void initTree() {
     myBuilder.initRootNode();
     mySelectedElementInfo.showPropertiesPanel();

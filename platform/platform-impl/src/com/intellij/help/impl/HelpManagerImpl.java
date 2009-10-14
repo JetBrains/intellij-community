@@ -23,6 +23,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.Messages;
@@ -53,7 +54,7 @@ public class HelpManagerImpl extends HelpManager {
     }
 
     if (myHelpSet == null) {
-      BrowserUtil.launchBrowser("http://www.jetbrains.com/idea/webhelp/?" + id);
+      BrowserUtil.launchBrowser(ApplicationInfoImpl.getInstanceEx().getWebHelpUrl() + "?" + id);
       return;
     }
     
