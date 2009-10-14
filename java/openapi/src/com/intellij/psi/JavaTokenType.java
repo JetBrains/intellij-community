@@ -178,6 +178,6 @@ public interface JavaTokenType extends TokenType{
   );
 
   TokenSet COMMENT_BIT_SET = TokenSet.create(
-    END_OF_LINE_COMMENT, C_STYLE_COMMENT, DOC_COMMENT
+    END_OF_LINE_COMMENT, C_STYLE_COMMENT, DOC_COMMENT, JavaDocTokenType.DOC_COMMENT_DATA
   );
 }
