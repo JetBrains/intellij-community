@@ -81,7 +81,7 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
       userHome = null;
     }
 
-    Collections.sort(roots, new Comparator<VirtualFile>() {
+    Collections.sort(roots, new java.util.Comparator<VirtualFile>() {
       public int compare(VirtualFile o1, VirtualFile o2) {
         return o1.getPath().compareTo(o2.getPath());
       }
