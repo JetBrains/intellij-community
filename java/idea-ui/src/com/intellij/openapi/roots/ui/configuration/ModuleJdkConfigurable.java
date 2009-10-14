@@ -25,6 +25,8 @@ import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
@@ -155,7 +157,8 @@ public class ModuleJdkConfigurable implements Disposable {
   private void clearCaches(final Sdk oldJdk, final Sdk selectedModuleJdk) {
     final Module module = myRootModel.getModule();
     final Project project = module.getProject();
-    ModuleStructureConfigurable.getInstance(project).getContext().clearCaches(module, oldJdk, selectedModuleJdk);
+    final StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(project).getContext();
+    context.getDaemonAnalyzer().queueUpdate(new ModuleProjectStructureElement(context, module));
   }
 
   public void reset() {

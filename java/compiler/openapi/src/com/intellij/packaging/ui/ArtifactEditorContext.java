@@ -45,7 +45,7 @@ public interface ArtifactEditorContext extends PackagingElementResolvingContext 
 
   CompositePackagingElement<?> getRootElement(@NotNull Artifact artifact);
 
-  void ensureRootIsWritable(@NotNull Artifact artifact);
+  void editLayout(@NotNull Artifact artifact, Runnable runnable);
 
   ArtifactEditor getOrCreateEditor(Artifact originalArtifact);
 

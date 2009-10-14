@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.BaseStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.packaging.artifacts.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -34,6 +35,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author nik
@@ -58,6 +62,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
       public void artifactAdded(@NotNull Artifact artifact) {
         final MyNode node = addArtifactNode(artifact);
         selectNodeInTree(node);
+        myContext.getDaemonAnalyzer().queueUpdate(new ArtifactProjectStructureElement(myContext, myPackagingEditorContext, artifact));
       }
     });
   }
@@ -75,8 +80,18 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     }
   }
 
+  @NotNull
+  @Override
+  protected Collection<? extends ProjectStructureElement> getProjectStructureElements() {
+    final List<ProjectStructureElement> elements = new ArrayList<ProjectStructureElement>();
+    for (Artifact artifact : myPackagingEditorContext.getArtifactModel().getArtifacts()) {
+      elements.add(new ArtifactProjectStructureElement(myContext, myPackagingEditorContext, artifact));
+    }
+    return elements;
+  }
+
   private MyNode addArtifactNode(final Artifact artifact) {
-    final MyNode node = new MyNode(new ArtifactConfigurable(artifact, myPackagingEditorContext, TREE_UPDATER));
+    final MyNode node = new MyNode(new ArtifactConfigurable(artifact, myPackagingEditorContext, TREE_UPDATER, myContext));
     addNode(node, myRoot);
     return node;
   }
@@ -160,6 +175,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   @Override
   protected void removeArtifact(Artifact artifact) {
     myPackagingEditorContext.getModifiableArtifactModel().removeArtifact(artifact);
+    myContext.getDaemonAnalyzer().removeElement(new ArtifactProjectStructureElement(myContext, myPackagingEditorContext, artifact));
   }
 
   protected void processRemovedItems() {

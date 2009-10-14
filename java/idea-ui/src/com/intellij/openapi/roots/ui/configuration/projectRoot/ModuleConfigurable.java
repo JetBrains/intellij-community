@@ -23,12 +23,13 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
-import com.intellij.openapi.ui.NamedConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.navigation.Place;
 import com.intellij.ui.navigation.History;
+import com.intellij.ui.navigation.Place;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,10 +40,11 @@ import javax.swing.*;
  * User: anna
  * Date: 04-Jun-2006
  */
-public class ModuleConfigurable extends NamedConfigurable<Module> implements Place.Navigator {
+public class ModuleConfigurable extends ProjectStructureElementConfigurable<Module> implements Place.Navigator {
   private final Module myModule;
   private final ModulesConfigurator myConfigurator;
   private String myModuleName;
+  private final ModuleProjectStructureElement myProjectStructureElement;
 
   public ModuleConfigurable(ModulesConfigurator modulesConfigurator,
                             Module module,
@@ -51,6 +53,8 @@ public class ModuleConfigurable extends NamedConfigurable<Module> implements Pla
     myModule = module;
     myModuleName = myModule.getName();
     myConfigurator = modulesConfigurator;
+    final StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(myModule.getProject()).getContext();
+    myProjectStructureElement = new ModuleProjectStructureElement(context, myModule);
   }
 
   public void setDisplayName(String name) {
@@ -67,6 +71,11 @@ public class ModuleConfigurable extends NamedConfigurable<Module> implements Pla
     myConfigurator.moduleRenamed(myModule, myModuleName, name);
     myModuleName = name;
     myConfigurator.setModified(!Comparing.strEqual(myModuleName, myModule.getName()));
+  }
+
+  @Override
+  public ProjectStructureElement getProjectStructureElement() {
+    return myProjectStructureElement;
   }
 
   public Module getEditableObject() {

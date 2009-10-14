@@ -38,6 +38,10 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEdi
 import com.intellij.openapi.roots.ui.configuration.projectRoot.FindUsagesInProjectStructureActionBase;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.SdkProjectStructureElement;
 import com.intellij.openapi.roots.ui.util.CellAppearance;
 import com.intellij.openapi.roots.ui.util.OrderEntryCellAppearanceUtils;
 import com.intellij.openapi.ui.Messages;
@@ -330,12 +334,13 @@ public class ClasspathPanel extends JPanel {
           if (orderEntry == null) {
             continue;
           }
-          ModuleStructureConfigurable.getInstance(myProject).getContext().clearCaches(orderEntry);
           myRootModel.removeOrderEntry(orderEntry);
         }        
         final int[] selectedRows = myEntryTable.getSelectedRows();
         myModel.fireTableDataChanged();
         TableUtil.selectRows(myEntryTable, selectedRows);
+        final StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(myProject).getContext();
+        context.getDaemonAnalyzer().queueUpdate(new ModuleProjectStructureElement(context, myRootModel.getModule()));
       }
     });
     
@@ -480,7 +485,6 @@ public class ClasspathPanel extends JPanel {
           final TableItem tableItem = createTableItem(item);
           if ( tableItem != null ) {
             myModel.addItem(tableItem);
-            rootConfigurable.getContext().clearCaches(tableItem.getEntry());
           }
         }
         myModel.fireTableDataChanged();
@@ -489,6 +493,8 @@ public class ClasspathPanel extends JPanel {
         selectionModel.setSelectionInterval(myModel.getRowCount() - chosen.size(), myModel.getRowCount() - 1);
         TableUtil.scrollSelectionToVisible(myEntryTable);
 
+        final StructureConfigurableContext context = rootConfigurable.getContext();
+        context.getDaemonAnalyzer().queueUpdate(new ModuleProjectStructureElement(context, myRootModel.getModule()));
       }
       finally {
         if (dialog instanceof ChooseNamedLibraryAction.MyChooserDialog) {
@@ -1151,7 +1157,6 @@ public class ClasspathPanel extends JPanel {
         chosen.removeAll(getAlreadyAddedLibraries());
         final Module module = myRootModel.getModule();
         final Project project = module.getProject();
-        ModuleStructureConfigurable.getInstance(project).getContext().clearCaches(module, chosen);
         return chosen;
       }
 
@@ -1175,29 +1180,38 @@ public class ClasspathPanel extends JPanel {
     }
 
     protected boolean isEnabled() {
-      return getSelectedObject() != null;
+      return getSelectedElement() != null;
     }
 
-    protected Object getSelectedObject() {
+    protected ProjectStructureElement getSelectedElement() {
       int row = myEntryTable.getSelectedRow();
       if (0 <= row && row < myModel.getRowCount()) {
         TableItem item = myModel.getItemAt(row);
         if (item instanceof LibItem) {
           LibraryOrderEntry orderEntry = ((LibItem)item).getEntry();
           if (orderEntry != null) {
-            return orderEntry.getLibrary();
+            final Library library = orderEntry.getLibrary();
+            if (library != null) {
+              return new LibraryProjectStructureElement(getContext(), library);
+            }
           }
         }
         else if (item instanceof ModuleItem) {
           ModuleOrderEntry orderEntry = ((ModuleItem)item).getEntry();
           if (orderEntry != null) {
-            return orderEntry.getModule();
+            final Module module = orderEntry.getModule();
+            if (module != null) {
+              return new ModuleProjectStructureElement(getContext(), module);
+            }
           }
         }
         else if (item instanceof JdkItem) {
           JdkOrderEntry orderEntry = ((JdkItem)item).getEntry();
           if (orderEntry != null) {
-            return orderEntry.getJdk();
+            final Sdk jdk = orderEntry.getJdk();
+            if (jdk != null) {
+              return new SdkProjectStructureElement(getContext(), jdk);
+            }
           }
         }
       }

@@ -36,7 +36,7 @@ public interface ArtifactsStructureConfigurableContext extends PackagingElementR
 
   CompositePackagingElement<?> getRootElement(@NotNull Artifact artifact);
 
-  void ensureRootIsWritable(@NotNull Artifact artifact);
+  void editLayout(@NotNull Artifact artifact, Runnable action);
 
   ArtifactEditor getOrCreateEditor(Artifact artifact);
 }

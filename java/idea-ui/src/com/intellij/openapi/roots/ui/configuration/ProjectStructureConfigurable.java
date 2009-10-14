@@ -111,12 +111,13 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     myArtifactsStructureConfigurable = artifactsStructureConfigurable;
 
     myModuleConfigurator = new ModulesConfigurator(myProject, myProjectJdksModel);
-    myContext = new StructureConfigurableContext(myProject, myModuleManager, myModuleConfigurator);
+    myContext = new StructureConfigurableContext(myProject, myModuleConfigurator);
     myModuleConfigurator.setContext(myContext);
 
     myProjectLibrariesConfig = projectLibrariesConfigurable;
     myGlobalLibrariesConfig = globalLibrariesConfigurable;
     myModulesConfig = moduleStructureConfigurable;
+    
     myProjectLibrariesConfig.init(myContext);
     myGlobalLibrariesConfig.init(myContext);
     myModulesConfig.init(myContext);
@@ -226,8 +227,10 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   }
 
   private void addJdkListConfig() {
-    myJdkListConfig = JdkListConfigurable.getInstance(myProject);
-    myJdkListConfig.init(myContext);
+    if (myJdkListConfig == null) {
+      myJdkListConfig = JdkListConfigurable.getInstance(myProject);
+      myJdkListConfig.init(myContext);
+    }
     addConfigurable(myJdkListConfig);
   }
 
@@ -265,18 +268,13 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     }
 
     //cleanup
-    myContext.myUpdateDependenciesAlarm.cancelAllRequests();
-    myContext.myUpdateDependenciesAlarm.addRequest(new Runnable(){
+    myContext.getDaemonAnalyzer().clearCaches();
+    SwingUtilities.invokeLater(new Runnable(){
       public void run() {
-        SwingUtilities.invokeLater(new Runnable(){
-          public void run() {
-            if (myWasUiDisposed) return;
-            reset();
-          }
-        });
+        if (myWasUiDisposed) return;
+        reset();
       }
-    }, 0);
-
+    });
   }
 
   public void reset() {
@@ -323,7 +321,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
 
     myUiState.proportion = mySplitter.getProportion();
     saveSideProportion();
-
+    myContext.getDaemonAnalyzer().stop();
     for (Configurable each : myName2Config) {
       each.disposeUIResources();
     }

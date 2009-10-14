@@ -24,7 +24,8 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEditor;
-import com.intellij.openapi.ui.NamedConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
@@ -36,13 +37,14 @@ import javax.swing.*;
  * User: anna
  * Date: 02-Jun-2006
  */
-public class LibraryConfigurable extends NamedConfigurable<Library> {
+public class LibraryConfigurable extends ProjectStructureElementConfigurable<Library> {
   private static final Icon ICON = IconLoader.getIcon("/modules/library.png");
 
   private LibraryTableEditor myLibraryEditor;
   private final Library myLibrary;
   private final LibraryTableModifiableModelProvider myModel;
   private final Project myProject;
+  private final LibraryProjectStructureElement myProjectStructureElement;
 
   protected LibraryConfigurable(final LibraryTableModifiableModelProvider libraryTable,
                                 final Library library,
@@ -52,15 +54,27 @@ public class LibraryConfigurable extends NamedConfigurable<Library> {
     myModel = libraryTable;
     myProject = project;
     myLibrary = library;
+    final StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(myProject).getContext();
+    myProjectStructureElement = new LibraryProjectStructureElement(context, myLibrary);
   }
 
   public JComponent createOptionsPanel() {
     myLibraryEditor = LibraryTableEditor.editLibrary(myModel, myLibrary, myProject);
+    myLibraryEditor.addListener(new Runnable() {
+      public void run() {
+        ModuleStructureConfigurable.getInstance(myProject).getContext().getDaemonAnalyzer().queueUpdate(myProjectStructureElement);
+      }
+    });
     return myLibraryEditor.getComponent();
   }
 
   public boolean isModified() {
     return myLibraryEditor != null && myLibraryEditor.hasChanges();
+  }
+
+  @Override
+  public ProjectStructureElement getProjectStructureElement() {
+    return myProjectStructureElement;
   }
 
   public void apply() throws ConfigurationException {

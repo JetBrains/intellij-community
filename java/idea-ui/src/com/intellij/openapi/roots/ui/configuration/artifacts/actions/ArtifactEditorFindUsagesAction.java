@@ -15,10 +15,11 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts.actions;
 
-import com.intellij.openapi.roots.ui.configuration.projectRoot.FindUsagesInProjectStructureActionBase;
-import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
-import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeComponent;
+import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.FindUsagesInProjectStructureActionBase;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.ui.awt.RelativePoint;
 
 import java.awt.*;
@@ -39,9 +40,9 @@ public class ArtifactEditorFindUsagesAction extends FindUsagesInProjectStructure
     return node != null && node.getElementPresentation().getSourceObject() != null;
   }
 
-  protected Object getSelectedObject() {
+  protected ProjectStructureElement getSelectedElement() {
     PackagingElementNode<?> node = myLayoutTreeComponent.getSelection().getNodeIfSingle();
-    return node != null ? node.getElementPresentation().getSourceObject() : null;
+    return node != null ? (ProjectStructureElement)node.getElementPresentation().getSourceObject() : null;
   }
 
   protected RelativePoint getPointToShowResults() {

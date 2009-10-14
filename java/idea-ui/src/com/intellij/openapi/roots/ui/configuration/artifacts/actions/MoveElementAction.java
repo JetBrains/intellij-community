@@ -24,6 +24,7 @@ import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -80,11 +81,18 @@ public class MoveElementAction extends DumbAwareAction {
 
     if (myLayoutTreeComponent.checkCanRemove(Collections.singletonList(node))
         && myLayoutTreeComponent.checkCanAdd(null, parentElement, parent)) {
-      myLayoutTreeComponent.ensureRootIsWritable();
-      final int index = parentElement.getChildren().indexOf(element);
-      final PackagingElement<?> moved = parentElement.moveChild(index, myDirection);
-      if (moved != null) {
-        myLayoutTreeComponent.updateAndSelect(parent, Collections.singletonList(moved));
+      final List<PackagingElement<?>> toSelect = new ArrayList<PackagingElement<?>>();
+      myLayoutTreeComponent.editLayout(new Runnable() {
+        public void run() {
+          final int index = parentElement.getChildren().indexOf(element);
+          final PackagingElement<?> moved = parentElement.moveChild(index, myDirection);
+          if (moved != null) {
+            toSelect.add(moved);
+          }
+        }
+      });
+      if (!toSelect.isEmpty()) {
+        myLayoutTreeComponent.updateAndSelect(parent, toSelect);
       }
     }
   }

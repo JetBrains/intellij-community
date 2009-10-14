@@ -339,7 +339,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     return myLayoutTreeComponent;
   }
 
-  public void updateOutputPath(@NotNull String oldArtifactName, @NotNull String newArtifactName) {
+  public void updateOutputPath(@NotNull String oldArtifactName, @NotNull final String newArtifactName) {
     final String oldDefaultPath = ArtifactUtil.getDefaultArtifactOutputPath(oldArtifactName, myProject);
     if (Comparing.equal(oldDefaultPath, getConfiguredOutputPath())) {
       setOutputPath(ArtifactUtil.getDefaultArtifactOutputPath(newArtifactName, myProject));
@@ -349,8 +349,11 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
         final String fileName = FileUtil.getNameWithoutExtension(name);
         final String extension = FileUtil.getExtension(name);
         if (fileName.equals(oldArtifactName) && extension.length() > 0) {
-          myLayoutTreeComponent.ensureRootIsWritable();
-          ((ArchivePackagingElement)getRootElement()).setArchiveFileName(newArtifactName + "." + extension);
+          myLayoutTreeComponent.editLayout(new Runnable() {
+            public void run() {
+              ((ArchivePackagingElement)getRootElement()).setArchiveFileName(newArtifactName + "." + extension);
+            }
+          });
           myLayoutTreeComponent.updateTreeNodesPresentation();
         }
       }

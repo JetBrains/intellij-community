@@ -100,22 +100,37 @@ public class PutSourceItemIntoParentAndLinkViaManifestAction extends AnAction {
 
     final Artifact artifact = parentsInfo.getGrandparentArtifact();
     final ArtifactEditorContext context = myArtifactEditor.getContext();
-    context.ensureRootIsWritable(artifact);
-    context.ensureRootIsWritable(parentsInfo.getParentArtifact());
+    //todo[nik] improve
+    final Runnable emptyRunnable = new Runnable() {
+      public void run() {
+      }
+    };
+    context.editLayout(artifact, emptyRunnable);
+    context.editLayout(parentsInfo.getParentArtifact(), emptyRunnable);
     parentsInfo = findParentAndGrandParent(myArtifactEditor.getArtifact());//find elements under modifiable root
     if (parentsInfo == null) {
       return;
     }
 
     final CompositePackagingElement<?> grandParent = parentsInfo.getGrandparentElement();
-    List<String> classpath = new ArrayList<String>();
-    for (PackagingSourceItem item : items) {
-      final List<? extends PackagingElement<?>> elements = item.createElements(context);
-      grandParent.addOrFindChildren(elements);
-      classpath.addAll(ManifestFileUtil.getClasspathForElements(elements, context, artifact.getArtifactType()));
-    }
+    final List<String> classpath = new ArrayList<String>();
+    context.editLayout(artifact, new Runnable() {
+      public void run() {
+        for (PackagingSourceItem item : items) {
+          final List<? extends PackagingElement<?>> elements = item.createElements(context);
+          grandParent.addOrFindChildren(elements);
+          classpath.addAll(ManifestFileUtil.getClasspathForElements(elements, context, artifact.getArtifactType()));
+        }
+      }
+    });
+
     final ArtifactEditor parentArtifactEditor = context.getOrCreateEditor(parentsInfo.getParentArtifact());
-    parentArtifactEditor.addToClasspath(parentsInfo.getParentElement(), classpath);
+    final ParentElementsInfo finalParentsInfo = parentsInfo;
+    context.editLayout(parentsInfo.getParentArtifact(), new Runnable() {
+      public void run() {
+        parentArtifactEditor.addToClasspath(finalParentsInfo.getParentElement(), classpath);
+      }
+    });
     ((ArtifactEditorImpl)context.getOrCreateEditor(parentsInfo.getGrandparentArtifact())).rebuildTries();
   }
 

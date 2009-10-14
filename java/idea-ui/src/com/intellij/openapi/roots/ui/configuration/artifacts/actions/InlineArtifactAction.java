@@ -56,28 +56,31 @@ public class InlineArtifactAction extends DumbAwareAction {
     final PackagingElementNode<?> node = selection.getNodeIfSingle();
     if (node == null || !(element instanceof ArtifactPackagingElement)) return;
 
-    CompositePackagingElement<?> parent = node.getParentElement(element);
+    final CompositePackagingElement<?> parent = node.getParentElement(element);
     if (parent == null) {
       return;
     }
     if (!treeComponent.checkCanRemove(selection.getNodes())) return;
     if (!treeComponent.checkCanAdd(null, parent, node)) return;
 
-    treeComponent.ensureRootIsWritable();
-    parent.removeChild(element);
-    final ArtifactEditorContext context = myEditor.getContext();
-    final Artifact artifact = ((ArtifactPackagingElement)element).findArtifact(context);
-    if (artifact != null) {
-      final CompositePackagingElement<?> rootElement = artifact.getRootElement();
-      if (rootElement instanceof ArtifactRootElement<?>) {
-        for (PackagingElement<?> child : rootElement.getChildren()) {
-          parent.addOrFindChild(ArtifactUtil.copyWithChildren(child, context.getProject()));
+    treeComponent.editLayout(new Runnable() {
+      public void run() {
+        parent.removeChild(element);
+        final ArtifactEditorContext context = myEditor.getContext();
+        final Artifact artifact = ((ArtifactPackagingElement)element).findArtifact(context);
+        if (artifact != null) {
+          final CompositePackagingElement<?> rootElement = artifact.getRootElement();
+          if (rootElement instanceof ArtifactRootElement<?>) {
+            for (PackagingElement<?> child : rootElement.getChildren()) {
+              parent.addOrFindChild(ArtifactUtil.copyWithChildren(child, context.getProject()));
+            }
+          }
+          else {
+            parent.addOrFindChild(ArtifactUtil.copyWithChildren(rootElement, context.getProject()));
+          }
         }
       }
-      else {
-        parent.addOrFindChild(ArtifactUtil.copyWithChildren(rootElement, context.getProject()));
-      }
-    }
+    });
     treeComponent.rebuildTree();
   }
 }

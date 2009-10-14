@@ -86,13 +86,14 @@ class ArtifactsStructureConfigurableContextImpl implements ArtifactsStructureCon
     return root;
   }
 
-  public void ensureRootIsWritable(@NotNull Artifact artifact) {
+  public void editLayout(@NotNull Artifact artifact, Runnable action) {
     artifact = getOriginalArtifact(artifact);
     final ModifiableArtifact modifiableArtifact = getModifiableArtifactModel().getOrCreateModifiableArtifact(artifact);
     if (modifiableArtifact.getRootElement() == artifact.getRootElement()) {
       modifiableArtifact.setRootElement(getRootElement(artifact));
     }
-
+    action.run();
+    myContext.getDaemonAnalyzer().queueUpdate(new ArtifactProjectStructureElement(myContext, this, artifact));
   }
 
   public ArtifactEditorImpl getOrCreateEditor(Artifact artifact) {

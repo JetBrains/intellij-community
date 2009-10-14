@@ -26,6 +26,8 @@ import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.Nullable;
@@ -91,7 +93,7 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
         myCbProjectJdk.setSelectedJdk(jdk);
       } else {
         myCbProjectJdk.setInvalidJdk(sdkName);
-        clearCaches(null);
+        clearCaches();
       }
     } else {
       myCbProjectJdk.setSelectedJdk(null);
@@ -108,7 +110,7 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
         if (myFreeze) return;
         final Sdk oldJdk = myJdksModel.getProjectJdk();
         myJdksModel.setProjectJdk(myCbProjectJdk.getSelectedJdk());
-        clearCaches(oldJdk);
+        clearCaches();
       }
     });
     myJdkPanel.add(new JLabel(ProjectBundle.message("module.libraries.target.jdk.project.radio")), new GridBagConstraints(0, 0, 3, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 4, 0), 0, 0));
@@ -123,11 +125,12 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
     });
   }
 
-  private void clearCaches(final Sdk oldJdk) {
+  private void clearCaches() {
     final ModuleStructureConfigurable rootConfigurable = ModuleStructureConfigurable.getInstance(myProject);
     Module[] modules = rootConfigurable.getModules();
     for (Module module : modules) {
-      rootConfigurable.getContext().clearCaches(module, oldJdk, getSelectedProjectJdk());
+      final StructureConfigurableContext context = rootConfigurable.getContext();
+      context.getDaemonAnalyzer().queueUpdate(new ModuleProjectStructureElement(context, module));
     }
   }
 

@@ -20,36 +20,29 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleRootModel;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.impl.OrderEntryUtil;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElementUsage;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Set;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
 
 /**
  * @author nik
  */
 public abstract class FindUsagesInProjectStructureActionBase extends AnAction implements DumbAware {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.projectRoot.FindUsagesInProjectStructureActionBase");
   private static final Icon FIND_ICON = IconLoader.getIcon("/actions/find.png");
   private final JComponent myParentComponent;
   private final Project myProject;
@@ -68,60 +61,46 @@ public abstract class FindUsagesInProjectStructureActionBase extends AnAction im
   protected abstract boolean isEnabled();
 
   public void actionPerformed(AnActionEvent e) {
-    final Object selectedObject = getSelectedObject();
-    if (selectedObject == null) return;
+    final ProjectStructureElement selected = getSelectedElement();
+    if (selected == null) return;
 
-    final Set<String> dependencies = getContext().getCachedDependencies(selectedObject, true);
-    if (dependencies == null || dependencies.isEmpty()) {
-      Messages.showInfoMessage(myParentComponent, FindBundle.message("find.usage.view.no.usages.text"),
-                               FindBundle.message("find.pointcut.applications.not.found.title"));
+    final Collection<ProjectStructureElementUsage> usages = getContext().getDaemonAnalyzer().getUsages(selected);
+    if (usages.isEmpty()) {
+      Messages.showInfoMessage(myParentComponent, FindBundle.message("find.usage.view.no.usages.text"), FindBundle.message("find.pointcut.applications.not.found.title"));
       return;
     }
-    RelativePoint point = getPointToShowResults();
-    JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>(ProjectBundle.message("dependencies.used.in.popup.title"),
-                                                                               ArrayUtil.toStringArray(dependencies)) {
 
-      public PopupStep onChosen(final String nameToSelect, final boolean finalChoice) {
-        navigateToObject(nameToSelect, selectedObject);
+    RelativePoint point = getPointToShowResults();
+    final ProjectStructureElementUsage[] usagesArray = usages.toArray(new ProjectStructureElementUsage[usages.size()]);
+    Arrays.sort(usagesArray, new Comparator<ProjectStructureElementUsage>() {
+      public int compare(ProjectStructureElementUsage o1, ProjectStructureElementUsage o2) {
+        return o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName());
+      }
+    });
+    
+    JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<ProjectStructureElementUsage>(ProjectBundle.message("dependencies.used.in.popup.title"), usagesArray) {
+      @Override
+      public PopupStep onChosen(final ProjectStructureElementUsage selected, final boolean finalChoice) {
+        selected.navigate();
         return FINAL_CHOICE;
       }
 
-      public Icon getIconFor(String selection) {
-        final Module module = getContext().myModulesConfigurator.getModule(selection);
-        LOG.assertTrue(module != null, selection + " was not found");
-        return module.getModuleType().getNodeIcon(false);
+      @NotNull
+      @Override
+      public String getTextFor(ProjectStructureElementUsage value) {
+        return value.getPresentableName();
+      }
+
+      @Override
+      public Icon getIconFor(ProjectStructureElementUsage selection) {
+        return selection.getIcon();
       }
 
     }).show(point);
   }
 
-  private void navigateToObject(final String moduleName, final @NotNull Object selectedObject) {
-    ModulesConfigurator modulesConfigurator = getContext().myModulesConfigurator;
-    Module module = modulesConfigurator.getModule(moduleName);
-    if (module == null) {
-      ProjectStructureConfigurable.getInstance(myProject).select(moduleName, null, true);
-      return;
-    }
-
-    ModuleRootModel rootModel = modulesConfigurator.getRootModel(module);
-    OrderEntry entry;
-    if (selectedObject instanceof Library) {
-      entry = OrderEntryUtil.findLibraryOrderEntry(rootModel, (Library)selectedObject);
-    }
-    else if (selectedObject instanceof Module) {
-      entry = OrderEntryUtil.findModuleOrderEntry(rootModel, (Module)selectedObject);
-    }
-    else if (selectedObject instanceof Sdk) {
-      entry = OrderEntryUtil.findJdkOrderEntry(rootModel, (Sdk)selectedObject);
-    }
-    else {
-      entry = null;
-    }
-    ModuleStructureConfigurable.getInstance(myProject).selectOrderEntry(module, entry);
-  }
-
   @Nullable
-  protected abstract Object getSelectedObject();
+  protected abstract ProjectStructureElement getSelectedElement();
 
   protected StructureConfigurableContext getContext() {
     return ModuleStructureConfigurable.getInstance(myProject).getContext();

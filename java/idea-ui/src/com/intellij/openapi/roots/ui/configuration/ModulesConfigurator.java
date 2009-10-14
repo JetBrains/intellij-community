@@ -40,6 +40,7 @@ import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
@@ -487,7 +488,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       if (module == moduleEditor.getModule() && Comparing.strEqual(moduleEditor.getName(), oldName)) {
         moduleEditor.setModuleName(name);
         moduleEditor.updateCompilerOutputPathChanged(ProjectStructureConfigurable.getInstance(myProject).getProjectConfig().getCompilerOutputUrl(), name);
-        myContext.invalidateModuleName(moduleEditor.getModule());
+        myContext.getDaemonAnalyzer().queueUpdate(new ModuleProjectStructureElement(myContext, module), true, false);
         return;
       }
     }
