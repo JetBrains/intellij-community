@@ -40,7 +40,6 @@ import com.intellij.psi.filters.getters.ThrowsListGetter;
 import com.intellij.psi.filters.types.AssignableFromFilter;
 import com.intellij.psi.filters.types.AssignableGroupFilter;
 import com.intellij.psi.filters.types.AssignableToFilter;
-import com.intellij.psi.filters.types.ReturnTypeFilter;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -188,8 +187,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
             }
           }
           else if (INSIDE_TYPECAST_EXPRESSION.accepts(element)) {
-            final ReturnTypeFilter rfilter = new ReturnTypeFilter(new GeneratorFilter(AssignableToFilter.class, new CastTypeGetter()));
-            for (final LookupElement item : completeReference(element, reference, rfilter, false, parameters)) {
+            for (final LookupElement item : completeReference(element, reference, new GeneratorFilter(AssignableToFilter.class, new CastTypeGetter()), false, parameters)) {
               result.addElement(item);
             }
           }
@@ -211,7 +209,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
           final PsiType type = info.getType();
           final boolean isVoid = PsiType.VOID.equals(type);
           final AssignableFromFilter assignableFromFilter = new AssignableFromFilter(type);
-          final ElementFilter filter = new ReturnTypeFilter(new ElementFilter() {
+          final ElementFilter filter = new ElementFilter() {
             public boolean isAcceptable(Object element, PsiElement context) {
               if (isVoid) {
                 return element instanceof PsiMethod;
@@ -225,7 +223,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
               }
               return true;
             }
-          });
+          };
 
           final Consumer<LookupElement> consumer = new Consumer<LookupElement>() {
             public void consume(final LookupElement lookupElement) {

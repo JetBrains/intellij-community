@@ -17,6 +17,9 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.template.SmartCompletionContextType;
+import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.patterns.PsiJavaPatterns;
@@ -26,7 +29,10 @@ import static com.intellij.patterns.StandardPatterns.not;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
-import com.intellij.psi.filters.getters.*;
+import com.intellij.psi.filters.getters.ClassLiteralGetter;
+import com.intellij.psi.filters.getters.FilterGetter;
+import com.intellij.psi.filters.getters.MembersGetter;
+import com.intellij.psi.filters.getters.ThisGetter;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.scope.util.PsiScopesUtil;
@@ -91,8 +97,10 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
           result.addElement(element);
         }
 
-        for (final Object o : new TemplatesGetter().get(position, null)) {
-          result.addElement(LookupItemUtil.objectToLookupItem(o));
+        for (final TemplateImpl template : TemplateSettings.getInstance().getTemplates()) {
+          if (!template.isDeactivated() && template.getTemplateContext().isEnabled(new SmartCompletionContextType())) {
+            result.addElement(new SmartCompletionTemplateItem(template, position));
+          }
         }
 
         addKeyword(result, position, PsiKeyword.TRUE);
@@ -106,7 +114,7 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
           }
 
           for (final PsiExpression expression : ThisGetter.getThisExpressionVariants(position)) {
-            result.addElement(LookupItemUtil.objectToLookupItem(expression));
+            result.addElement(new ExpressionLookupItem(expression));
           }
         }
 
