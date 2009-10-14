@@ -3269,8 +3269,8 @@ public class AbstractTreeUi {
   }
 
   private long getComparatorStamp() {
-    if (myNodeDescriptorComparator instanceof NodeDescriptor.Comparator) {
-      long currentComparatorStamp = ((NodeDescriptor.Comparator)myNodeDescriptorComparator).getStamp();
+    if (myNodeDescriptorComparator instanceof NodeDescriptor.NodeComparator) {
+      long currentComparatorStamp = ((NodeDescriptor.NodeComparator)myNodeDescriptorComparator).getStamp();
       if (currentComparatorStamp > myLastComparatorStamp) {
         myOwnComparatorStamp = Math.max(myOwnComparatorStamp, currentComparatorStamp) + 1;
       }
