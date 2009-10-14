@@ -139,7 +139,7 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
     public void selectLibrary(@NotNull Library library) {
     }
 
-    public void ensureRootIsWritable(@NotNull Artifact artifact) {
+    public void editLayout(@NotNull Artifact artifact, Runnable runnable) {
     }
 
     @NotNull
