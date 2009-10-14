@@ -37,12 +37,12 @@ public class ArtifactPropertiesEditors {
   private final Artifact myOriginalArtifact;
   private List<PropertiesEditorInfo> myEditors;
 
-  public ArtifactPropertiesEditors(ArtifactEditorContext context, Artifact originalArtifact) {
+  public ArtifactPropertiesEditors(ArtifactEditorContext context, Artifact originalArtifact, Artifact artifact) {
     myContext = context;
     myOriginalArtifact = originalArtifact;
     myMainPanels = new HashMap<String, JPanel>();
     myEditors = new ArrayList<PropertiesEditorInfo>();
-    for (ArtifactPropertiesProvider provider : originalArtifact.getPropertiesProviders()) {
+    for (ArtifactPropertiesProvider provider : artifact.getPropertiesProviders()) {
       final PropertiesEditorInfo editorInfo = new PropertiesEditorInfo(provider);
       myEditors.add(editorInfo);
       final String tabName = editorInfo.myEditor.getTabName();
@@ -80,6 +80,17 @@ public class ArtifactPropertiesEditors {
     return false;
   }
 
+  public void removeTabs(TabbedPaneWrapper tabbedPane) {
+    for (String tabName : myMainPanels.keySet()) {
+      for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+        if (tabName.equals(tabbedPane.getTitleAt(i))) {
+          tabbedPane.removeTabAt(i);
+          break;
+        }
+      }
+    }
+  }
+
   private class PropertiesEditorInfo {
     private ArtifactPropertiesEditor myEditor;
     private ArtifactProperties<?> myProperties;
@@ -88,7 +99,10 @@ public class ArtifactPropertiesEditors {
     private PropertiesEditorInfo(ArtifactPropertiesProvider provider) {
       myProvider = provider;
       myProperties = provider.createProperties(myOriginalArtifact.getArtifactType());
-      ArtifactUtil.copyProperties(myOriginalArtifact.getProperties(provider), myProperties);
+      final ArtifactProperties<?> originalProperties = myOriginalArtifact.getProperties(provider);
+      if (originalProperties != null) {
+        ArtifactUtil.copyProperties(originalProperties, myProperties);
+      }
       myEditor = myProperties.createEditor(myContext);
       myEditor.reset();
     }

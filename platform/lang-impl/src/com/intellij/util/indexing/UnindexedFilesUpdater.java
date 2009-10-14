@@ -40,7 +40,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -65,12 +64,12 @@ public class UnindexedFilesUpdater implements BackgroundableCacheUpdater {
     CollectingContentIterator finder = myIndex.createContentIterator();
     iterateIndexableFiles(finder);
     final List<VirtualFile> files = finder.getFiles();
-    for (Iterator<VirtualFile> virtualFileIterator = files.iterator(); virtualFileIterator.hasNext();) {
-      VirtualFile file = virtualFileIterator.next();
-      if (file.getUserData(DONT_INDEX_AGAIN_KEY) != null) {
-        virtualFileIterator.remove();
-      }
-    }
+    //for (Iterator<VirtualFile> virtualFileIterator = files.iterator(); virtualFileIterator.hasNext();) {
+    //  VirtualFile file = virtualFileIterator.next();
+    //  if (file.getUserData(DONT_INDEX_AGAIN_KEY) != null) {
+    //    virtualFileIterator.remove();
+    //  }
+    //}
     return files.toArray(new VirtualFile[files.size()]);
   }
 

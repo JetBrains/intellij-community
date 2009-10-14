@@ -64,9 +64,9 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   private SelectedElementInfo<?> mySelectedElementInfo = new SelectedElementInfo<PackagingElement<?>>(null);
   private JPanel myPropertiesPanelWrapper;
   private JPanel myPropertiesPanel;
-  private SimpleTreeBuilder myBuilder;
+  private LayoutTreeBuilder myBuilder;
   private boolean mySortElements = true;
-  private SimpleTreeStructure myTreeStructure;
+  private LayoutTreeStructure myTreeStructure;
 
   public LayoutTreeComponent(ArtifactEditorImpl artifactsEditor, ComplexElementSubstitutionParameters substitutionParameters,
                                ArtifactEditorContext context, Artifact originalArtifact) {
@@ -76,7 +76,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     myOriginalArtifact = originalArtifact;
     myTree = new LayoutTree(myArtifactsEditor);
     myTreeStructure = new LayoutTreeStructure();
-    myBuilder = new SimpleTreeBuilder(myTree, myTree.getBuilderModel(), myTreeStructure, getComparator());
+    myBuilder = new LayoutTreeBuilder();
     Disposer.register(this, myTree);
     Disposer.register(this, myBuilder);
 
@@ -387,6 +387,10 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
 
   public void setRootElement(CompositePackagingElement<?> rootElement) {
     myContext.getModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact).setRootElement(rootElement);
+    myTreeStructure.updateRootElement();
+    final DefaultMutableTreeNode node = myTree.getRootNode();
+    node.setUserObject(myTreeStructure.getRootElement());
+    myBuilder.updateNode(node);
     rebuildTree();
     myArtifactsEditor.getSourceItemsTree().rebuildTree();
   }
@@ -488,6 +492,22 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
         myRootNode = PackagingTreeNodeFactory.createRootNode(myArtifactsEditor, myContext, mySubstitutionParameters, getArtifact().getArtifactType());
       }
       return myRootNode;
+    }
+
+    public void updateRootElement() {
+      myRootNode = null;
+    }
+  }
+
+  private class LayoutTreeBuilder extends SimpleTreeBuilder {
+    public LayoutTreeBuilder() {
+      super(LayoutTreeComponent.this.myTree, LayoutTreeComponent.this.myTree.getBuilderModel(), LayoutTreeComponent.this.myTreeStructure,
+            LayoutTreeComponent.this.getComparator());
+    }
+
+    @Override
+    public void updateNode(DefaultMutableTreeNode node) {
+      super.updateNode(node);
     }
   }
 }

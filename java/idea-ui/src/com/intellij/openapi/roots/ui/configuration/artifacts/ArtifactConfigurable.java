@@ -24,8 +24,6 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactType;
-import com.intellij.packaging.elements.CompositePackagingElement;
-import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
@@ -128,13 +126,7 @@ public class ArtifactConfigurable extends ProjectStructureElementConfigurable<Ar
       public void actionPerformed(ActionEvent e) {
         final ArtifactType selected = (ArtifactType)artifactTypeBox.getSelectedItem();
         if (!Comparing.equal(selected, getArtifact().getArtifactType())) {
-          final CompositePackagingElement<?> element = myEditor.getRootElement();
-          final CompositePackagingElement<?> newRootElement = selected.createRootElement(getArtifact().getName());
-          myArtifactsStructureContext.getModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact).setArtifactType(selected);
-          if (!newRootElement.getType().equals(element.getType())) {
-            ArtifactUtil.copyChildren(element, newRootElement, myArtifactsStructureContext.getProject());
-            myEditor.getLayoutTreeComponent().setRootElement(newRootElement);
-          }
+          myEditor.setArtifactType(selected);
         }
       }
     });
