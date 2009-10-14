@@ -237,8 +237,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
               }
 
               final Object object = lookupElement.getObject();
-              if (!filter.isClassAcceptable(object.getClass())) return;
-
+              
               final PsiSubstitutor substitutor;
               final LookupItem item = lookupElement.as(LookupItem.class);
               if (item != null) {

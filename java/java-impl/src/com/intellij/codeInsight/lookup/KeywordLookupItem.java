@@ -20,7 +20,7 @@ import com.intellij.psi.PsiKeyword;
 /**
  * @author peter
 */
-class KeywordLookupItem extends LookupItem<PsiKeyword> {
+public class KeywordLookupItem extends LookupItem<PsiKeyword> {
   public KeywordLookupItem(final PsiKeyword keyword) {
     super(keyword, keyword.getText());
     setBold();

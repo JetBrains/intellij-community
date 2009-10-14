@@ -17,6 +17,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.KeywordLookupItem;
 import com.intellij.codeInsight.template.SmartCompletionContextType;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
@@ -59,7 +60,7 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
       public LookupItem compute() {
         try {
           final PsiKeyword keyword = JavaPsiFacade.getInstance(element.getProject()).getElementFactory().createKeyword(s);
-          return ((LookupItem)LookupItemUtil.objectToLookupItem(keyword)).setAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE);
+          return new KeywordLookupItem(keyword).setAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE);
         }
         catch (IncorrectOperationException e) {
           throw new RuntimeException(e);

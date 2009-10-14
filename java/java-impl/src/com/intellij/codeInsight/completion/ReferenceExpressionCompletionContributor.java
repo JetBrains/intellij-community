@@ -47,8 +47,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Set;
-
 /**
  * @author peter
  */
@@ -107,21 +105,18 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
         final int offset = parameters.getOffset();
         final PsiReference reference = element.getContainingFile().findReferenceAt(offset);
         if (reference != null) {
-          final boolean isSecond = parameters.getInvocationCount() >= 2;
-
           final ElementFilter filter = getReferenceFilter(element, false);
-          final Set<LookupElement> set = JavaSmartCompletionContributor.completeReference(element, reference, filter, false, parameters);
-          for (final LookupElement item : set) {
+          for (final LookupElement item : JavaSmartCompletionContributor.completeReference(element, reference, filter, false, parameters)) {
             result.addElement(item);
 
             addSingleArrayElementAccess(element, item, parameters, result);
-
-            if (isSecond) {
-              addSecondCompletionVariants(element, reference, item, parameters, result);
-            }
           }
 
-          if (isSecond) {
+          if (parameters.getInvocationCount() >= 2) {
+            for (final LookupElement item : JavaSmartCompletionContributor.completeReference(element, reference, filter, false, parameters)) {
+              addSecondCompletionVariants(element, reference, item, parameters, result);
+            }
+
             if (!psiElement().afterLeaf(".").accepts(element)) {
               BasicExpressionCompletionContributor.processDataflowExpressionTypes(element, null, TRUE_MATCHER, new Consumer<LookupElement>() {
                 public void consume(LookupElement baseItem) {
