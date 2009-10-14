@@ -66,7 +66,7 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.packagingCompiler.PackagingCompilerBase");
   @Nullable private PackagingCompilerCache myOutputItemsCache;
 
-  protected ArtifactPackagingProcessingItem[] collectItems(ArtifactsProcessingItemsBuilderContext builderContext, final Project project) {
+  protected static ArtifactPackagingProcessingItem[] collectItems(ArtifactsProcessingItemsBuilderContext builderContext, final Project project) {
     final CompileContext context = builderContext.getCompileContext();
 
     final Set<Artifact> artifactsToBuild = ArtifactCompileScope.getArtifactsToBuild(project, context.getCompileScope());
@@ -84,7 +84,7 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
     return builderContext.getProcessingItems();
   }
 
-  protected void onBuildFinished(ArtifactsProcessingItemsBuilderContext context, JarsBuilder builder, final Project project)
+  protected static void onBuildFinished(ArtifactsProcessingItemsBuilderContext context)
       throws Exception {
     final CompileContext compileContext = context.getCompileContext();
     final Set<Artifact> artifacts = getAffectedArtifacts(compileContext);
@@ -112,10 +112,6 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
     rootElement.computeIncrementalCompilerInstructions(instructionCreator, resolvingContext, builderContext, artifact.getArtifactType());
   }
 
-  protected String getOutputCacheId() {
-    return "incremental_artifacts";
-  }
-
   @NotNull
   public String getDescription() {
     return "Artifacts Packaging Compiler";
@@ -125,7 +121,7 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
   private PackagingCompilerCache getOutputItemsCache(final Project project) {
     if (myOutputItemsCache == null) {
       myOutputItemsCache = new PackagingCompilerCache(
-          CompilerPaths.getCompilerSystemDirectory(project).getPath() + File.separator + getOutputCacheId() + "_timestamp.dat");
+          CompilerPaths.getCompilerSystemDirectory(project).getPath() + File.separator + "incremental_artifacts_timestamp.dat");
     }
     return myOutputItemsCache;
   }
@@ -228,7 +224,7 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
     }
   }
 
-  private boolean doBuild(final CompileContext context,
+  private static boolean doBuild(final CompileContext context,
                           final ProcessingItem[] items,
                           final List<ArtifactPackagingProcessingItem> processedItems,
                           final Set<String> writtenPaths,
@@ -321,7 +317,7 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
         }
       }
 
-      onBuildFinished(builderContext, builder, context.getProject());
+      onBuildFinished(builderContext);
     }
     catch (ProcessCanceledException e) {
       throw e;
