@@ -117,12 +117,12 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
     return new TestFileSystemBuilder(new TestFileSystemItem("root", false, true), null);
   }
 
-  public void assertOutput(Artifact artifact, TestFileSystemItem item) throws IOException {
+  public static void assertOutput(Artifact artifact, TestFileSystemBuilder item) throws IOException {
     final String output = artifact.getOutputPath();
     assertNotNull("output path not specified for " + artifact.getName(), output);
     final VirtualFile outputFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(output);
     assertNotNull("output file not found " + output);
-    item.assertDirectoryEqual(outputFile);
+    item.build().assertDirectoryEqual(outputFile);
   }
 
   protected class CompilationLog {

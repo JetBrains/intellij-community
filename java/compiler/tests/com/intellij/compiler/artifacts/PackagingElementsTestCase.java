@@ -62,7 +62,11 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
           StringTokenizer parents = new StringTokenizer(PathUtil.getParentPath(path), "/");
           while (parents.hasMoreTokens()) {
             final String name = parents.nextToken();
-            parent = parent.createChildDirectory(this, name);
+            VirtualFile child = parent.findChild(name);
+            if (child == null) {
+              child = parent.createChildDirectory(this, name);
+            }
+            parent = child;
           }
           final VirtualFile file = parent.createChildData(this, PathUtil.getFileName(path));
           VfsUtil.saveText(file, text);
@@ -138,6 +142,11 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
 
     public PackagingElementBuilder file(String path) {
       myElement.addOrFindChild(getFactory().createFileCopyWithParentDirectories(path, "/"));
+      return this;
+    }
+
+    public PackagingElementBuilder dirCopy(String path) {
+      myElement.addOrFindChild(getFactory().createDirectoryCopyWithParentDirectories(path, "/"));
       return this;
     }
 

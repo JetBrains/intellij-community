@@ -1,6 +1,11 @@
 package com.intellij.compiler.artifacts;
 
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 
@@ -14,7 +19,7 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
       root().file(createFile("file.txt", "foo").getPath())
     );
     compileProject();
-    assertOutput(a, fs().file("file.txt", "foo").build());
+    assertOutput(a, fs().file("file.txt", "foo"));
   }
 
   public void testDir() throws Exception {
@@ -28,7 +33,7 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
     assertOutput(a, fs()
       .file("abc.txt")
       .dir("dir")
-        .file("xxx.txt", "bar").build()
+        .file("xxx.txt", "bar")
     );
   }
 
@@ -49,7 +54,6 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
           .end()
         .dir("META-INF")
           .file("MANIFEST.MF")
-      .build()
     );
   }
 
@@ -68,7 +72,7 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
           .dir("META-INF").file("MANIFEST.MF").end()
           .end()
         .dir("META-INF").file("MANIFEST.MF")
-      .build());
+      );
   }
 
   public void testIncludedArtifact() throws Exception {
@@ -85,13 +89,13 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
     );
     compileProject();
 
-    assertOutput(included, fs().file("aaa.txt").build());
+    assertOutput(included, fs().file("aaa.txt"));
     assertOutput(a, fs()
       .dir("dir")
         .file("aaa.txt")
         .end()
       .file("bbb.txt")
-      .build());
+      );
   }
 
   public void testMergeDirectories() throws Exception {
@@ -107,7 +111,7 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
       .dir("dir")
         .file("aaa.class")
         .file("bbb.class")
-      .build());
+      );
   }
 
   //todo[nik] fix
@@ -124,14 +128,14 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
       .archive("x.jar")
         .file("aaa.class")
         .dir("META-INF").file("MANIFEST.MF")
-      .build());
+      );
   }
 
   public void testCopyLibrary() throws Exception {
     final Library library = addProjectLibrary(null, "lib", getJDomJar());
     final Artifact a = addArtifact(root().lib(library));
     compileProject();
-    assertOutput(a, fs().file("jdom.jar").build());
+    assertOutput(a, fs().file("jdom.jar"));
   }
 
   public void testFileOrder() throws Exception {
@@ -150,6 +154,33 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
     compileProject();
     assertOutput(a, fs()
       .dir("ddd").file("xxx.txt", "first")
-      .build());
+      );
+  }
+
+  public void testIgnoredFile() throws Exception {
+    final VirtualFile file = createFile("a/.svn/a.txt");
+    createFile("a/svn/b.txt");
+    final Artifact a = addArtifact(root().dirCopy(file.getParent().getParent().getPath()));
+    compileProject();
+    assertOutput(a, fs().dir("svn").file("b.txt"));
+  }
+
+  public void testExcludedFile() throws Exception {
+    final VirtualFile file = createFile("xxx/excluded/a.txt");
+    createFile("xxx/b.txt");
+    final VirtualFile dir = file.getParent().getParent();
+
+    new WriteAction() {
+      protected void run(final Result result) {
+        myModule = createModule("myModule");
+        final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
+        model.addContentEntry(dir).addExcludeFolder(file.getParent());
+        model.commit();
+      }
+    }.execute();
+
+    final Artifact a = addArtifact(root().dirCopy(dir.getPath()));
+    compileProject();
+    assertOutput(a, fs().file("b.txt"));
   }
 }
