@@ -95,14 +95,12 @@ public class CamelHumpMatcher extends PrefixMatcher {
       return NameUtil.buildMatcher(myPrefix, 0, true, true);
     }
 
-    final CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    int variant = settings.COMPLETION_CASE_SENSITIVE;
-
-    switch (variant) {
+    switch (CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE) {
       case CodeInsightSettings.NONE:
         return NameUtil.buildMatcher(myPrefix, 0, true, true);
       case CodeInsightSettings.FIRST_LETTER:
-        return NameUtil.buildMatcher(myPrefix, 1, true, true);
+        int exactPrefixLen = myPrefix.startsWith("*") ? 0 : 1;
+        return NameUtil.buildMatcher(myPrefix, exactPrefixLen, true, true);
       case CodeInsightSettings.ALL:
         return NameUtil.buildMatcher(myPrefix, 0, false, false);
       default:
