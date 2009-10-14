@@ -27,7 +27,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.getters.*;
+import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassFilter;
+import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
@@ -108,7 +110,7 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
           }
         }
 
-        processDataflowExpressionTypes(position, expectedType, new Consumer<LookupElement>() {
+        processDataflowExpressionTypes(position, expectedType, result.getPrefixMatcher(), new Consumer<LookupElement>() {
           public void consume(LookupElement decorator) {
             result.addElement(decorator);
           }
@@ -125,11 +127,38 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
 
   }
 
-  public static void processDataflowExpressionTypes(PsiElement position, @Nullable PsiType expectedType, Consumer<LookupElement> consumer) {
+  public static void processDataflowExpressionTypes(PsiElement position, @Nullable PsiType expectedType, final PrefixMatcher matcher, Consumer<LookupElement> consumer) {
     final PsiExpression context = PsiTreeUtil.getParentOfType(position, PsiExpression.class);
     if (context == null) return;
 
     final Map<PsiExpression,PsiType> map = GuessManager.getInstance(position.getProject()).getControlFlowExpressionTypes(context);
+    if (map.isEmpty()) {
+      return;
+    }
+
+    PsiScopesUtil.treeWalkUp(new BaseScopeProcessor() {
+      public boolean execute(PsiElement element, ResolveState state) {
+        if (element instanceof PsiLocalVariable) {
+          if (!matcher.prefixMatches(((PsiLocalVariable)element).getName())) {
+            return true;
+          }
+
+          final PsiExpression expression = ((PsiLocalVariable)element).getInitializer();
+          if (expression instanceof PsiTypeCastExpression) {
+            PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)expression;
+            final PsiExpression operand = typeCastExpression.getOperand();
+            if (operand != null) {
+              final PsiType dfaCasted = map.get(operand);
+              if (dfaCasted != null && dfaCasted.equals(typeCastExpression.getType())) {
+                map.remove(operand);
+              }
+            }
+          }
+        }
+        return true;
+      }
+    }, context, context.getContainingFile());
+
     for (final PsiExpression expression : map.keySet()) {
       final PsiType castType = map.get(expression);
       final PsiType baseType = expression.getType();

@@ -57,6 +57,18 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
   private static final PsiMethodPattern OBJECT_METHOD_PATTERN = psiMethod().withName(
       PsiJavaPatterns.string().oneOf("hashCode", "equals", "finalize", "wait", "notify", "notifyAll", "getClass", "clone", "toString")).
       definedInClass(CommonClassNames.JAVA_LANG_OBJECT);
+  private static final PrefixMatcher TRUE_MATCHER = new PrefixMatcher("") {
+    @Override
+    public boolean prefixMatches(@NotNull String name) {
+      return true;
+    }
+
+    @NotNull
+    @Override
+    public PrefixMatcher cloneWithPrefix(@NotNull String prefix) {
+      return this;
+    }
+  };
 
   @NotNull 
   private static ElementFilter getReferenceFilter(PsiElement element, boolean allowRecursion) {
@@ -111,7 +123,7 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
 
           if (isSecond) {
             if (!psiElement().afterLeaf(".").accepts(element)) {
-              BasicExpressionCompletionContributor.processDataflowExpressionTypes(element, null, new Consumer<LookupElement>() {
+              BasicExpressionCompletionContributor.processDataflowExpressionTypes(element, null, TRUE_MATCHER, new Consumer<LookupElement>() {
                 public void consume(LookupElement baseItem) {
                   addSecondCompletionVariants(element, reference, baseItem, parameters, result);
                 }
