@@ -33,10 +33,12 @@ public class ArtifactsProcessingItemsBuilderContext extends ProcessingItemsBuild
     super(compileContext);
   }
 
-  public void addDestination(VirtualFile sourceFile, DestinationInfo destinationInfo) {
+  public boolean addDestination(VirtualFile sourceFile, DestinationInfo destinationInfo) {
     if (checkOutputPath(destinationInfo.getOutputPath(), sourceFile)) {
       getOrCreateProcessingItem(sourceFile).addDestination(destinationInfo, myCollectingEnabledItems);
+      return true;
     }
+    return false;
   }
 
   protected ArtifactPackagingProcessingItem createProcessingItem(VirtualFile sourceFile) {

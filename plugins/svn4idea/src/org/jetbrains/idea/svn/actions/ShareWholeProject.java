@@ -88,10 +88,10 @@ public class ShareWholeProject extends AnAction {
     private static enum MyCheckResult {
       disable,
       notMapped,
-      rootToSvn;
+      rootToSvn
     }
 
-    private MyCheckResult checkMappings(final VirtualFile baseDir, final ProjectLevelVcsManager vcsManager) {
+    private static MyCheckResult checkMappings(final VirtualFile baseDir, final ProjectLevelVcsManager vcsManager) {
       final List<VcsDirectoryMapping> mappings = vcsManager.getDirectoryMappings();
 
       boolean notMapped = true;
@@ -101,7 +101,7 @@ public class ShareWholeProject extends AnAction {
         if (vcs != null && vcs.length() > 0) {
           notMapped = false;
           if (SvnVcs.VCS_NAME.equals(vcs)) {
-            if (mapping.isDefaultMapping() || baseDir.equals(mapping.getDirectory())) {
+            if (mapping.isDefaultMapping() || baseDir.getPath().equals(mapping.getDirectory())) {
               svnMappedToBase = true;
               break;
             }

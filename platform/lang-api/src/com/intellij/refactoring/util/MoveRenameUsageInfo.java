@@ -58,7 +58,7 @@ public class MoveRenameUsageInfo extends UsageInfo{
     if (reference != null) {
       Document document = PsiDocumentManager.getInstance(project).getDocument(containingFile);
       assert document != null : containingFile;
-      int elementStart = element.getTextRange().getStartOffset();
+      int elementStart = reference.getElement().getTextRange().getStartOffset();
       myReferenceRangeMarker = document.createRangeMarker(elementStart + reference.getRangeInElement().getStartOffset(),
                                                           elementStart + reference.getRangeInElement().getEndOffset());
     }

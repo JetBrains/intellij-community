@@ -31,11 +31,11 @@ import java.util.List;
 /**
  * @author nik
  */
-public class MoveElementAction extends DumbAwareAction {
+public class MovePackagingElementAction extends DumbAwareAction {
   private final LayoutTreeComponent myLayoutTreeComponent;
   private final int myDirection;
 
-  public MoveElementAction(LayoutTreeComponent layoutTreeComponent, String text, String description, Icon icon, int direction) {
+  public MovePackagingElementAction(LayoutTreeComponent layoutTreeComponent, String text, String description, Icon icon, int direction) {
     super(text, description, icon);
     myLayoutTreeComponent = layoutTreeComponent;
     myDirection = direction;
