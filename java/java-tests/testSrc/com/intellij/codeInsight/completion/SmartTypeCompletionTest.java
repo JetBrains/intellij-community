@@ -395,11 +395,6 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
 
   public void testIntConstInSwitch() throws Exception { doTest(); }
 
-  public void testMethodCallInScriplet() throws Exception {
-    configureByFile(BASE_PATH + "/"+getTestName(false)+".jsp");
-    checkResultByFile(BASE_PATH + "/"+getTestName(false) + "-out.jsp");
-  }
-
   public void testDoubleEmptyArray() throws Exception {
     configureByFile(BASE_PATH + "/"+getTestName(false)+".java");
     checkResultByFile(BASE_PATH + "/"+getTestName(false) + ".java");
