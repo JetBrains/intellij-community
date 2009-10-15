@@ -416,7 +416,8 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
         }
       }
       if (myFlushAlarm.getActiveRequestCount() == 0 && myEditor != null) {
-        myFlushAlarm.addRequest(myFlushDeferredRunnable, FLUSH_DELAY, getStateForUpdate());
+        final boolean shouldFlushNow = USE_CYCLIC_BUFFER && myDeferredOutput.length() > CYCLIC_BUFFER_SIZE;
+        myFlushAlarm.addRequest(myFlushDeferredRunnable, shouldFlushNow? 0 : FLUSH_DELAY, getStateForUpdate());
       }
     }
   }
@@ -476,12 +477,15 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
     myPsiDisposedCheck.performCheck();
     final int newLineCount = document.getLineCount();
     if (cycleUsed) {
-      final int length = LineTokenizer.tokenize(text, false).length;
+      final int lineCount = LineTokenizer.calcLineCount(text, true);
       for (Iterator<RangeHighlighter> it = myHyperlinks.getRanges().keySet().iterator(); it.hasNext();) {
-        if (!it.next().isValid()) it.remove();
+        if (!it.next().isValid()) {
+          it.remove();
+        }
       }
-      highlightHyperlinks(newLineCount >= length + 1 ? newLineCount - length - 1 : 0, newLineCount - 1);
-    } else if (oldLineCount < newLineCount) {
+      highlightHyperlinks(newLineCount >= lineCount + 1 ? newLineCount - lineCount - 1 : 0, newLineCount - 1);
+    } 
+    else if (oldLineCount < newLineCount) {
       highlightHyperlinks(oldLineCount - 1, newLineCount - 2);
     }
 
