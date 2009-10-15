@@ -19,12 +19,15 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.ArtifactsTreeNode;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.FindUsagesInProjectStructureActionBase;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
+import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.Nullable;
@@ -36,10 +39,12 @@ import java.awt.*;
  */
 public abstract class ArtifactEditorFindUsagesActionBase extends FindUsagesInProjectStructureActionBase {
   private Tree myTree;
+  private ArtifactsStructureConfigurableContext myArtifactContext;
 
-  public ArtifactEditorFindUsagesActionBase(Tree tree, Project project) {
+  public ArtifactEditorFindUsagesActionBase(Tree tree, Project project, ArtifactsStructureConfigurableContext artifactContext) {
     super(tree, project);
     myTree = tree;
+    myArtifactContext = artifactContext;
   }
 
   protected boolean isEnabled() {
@@ -60,6 +65,9 @@ public abstract class ArtifactEditorFindUsagesActionBase extends FindUsagesInPro
     }
     else if (sourceObject instanceof Library) {
       return new LibraryProjectStructureElement(context, (Library)sourceObject);
+    }
+    else if (sourceObject instanceof Artifact) {
+      return new ArtifactProjectStructureElement(context, myArtifactContext, (Artifact)sourceObject);
     }
     return null;
   }

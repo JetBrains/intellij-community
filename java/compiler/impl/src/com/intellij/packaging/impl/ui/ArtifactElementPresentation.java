@@ -49,6 +49,11 @@ public class ArtifactElementPresentation extends TreeNodePresentation {
   }
 
   @Override
+  public Object getSourceObject() {
+    return myArtifact;
+  }
+
+  @Override
   public void navigateToSource() {
     myContext.selectArtifact(myArtifact);
   }

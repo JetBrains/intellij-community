@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.actions;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.artifacts.actions.ArtifactEditorFindUsagesActionBase;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.ArtifactsTreeNode;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.SourceItemNode;
@@ -29,8 +30,8 @@ import java.util.List;
 public class SourceItemFindUsagesAction extends ArtifactEditorFindUsagesActionBase {
   private final SourceItemsTree myTree;
 
-  public SourceItemFindUsagesAction(SourceItemsTree tree, Project project) {
-    super(tree.getTree(), project);
+  public SourceItemFindUsagesAction(SourceItemsTree tree, Project project, ArtifactsStructureConfigurableContext artifactContext) {
+    super(tree.getTree(), project, artifactContext);
     myTree = tree;
   }
 

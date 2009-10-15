@@ -74,7 +74,7 @@ public class SourceItemsTree implements DnDSource, Disposable{
 
     group.add(Separator.getInstance());
     group.add(new SourceItemNavigateAction(this));
-    group.add(new SourceItemFindUsagesAction(this, myArtifactsEditor.getContext().getProject()));
+    group.add(new SourceItemFindUsagesAction(this, myArtifactsEditor.getContext().getProject(), myArtifactsEditor.getContext().getParent()));
 
     DefaultTreeExpander expander = new DefaultTreeExpander(myTree);
     final CommonActionsManager commonActionsManager = CommonActionsManager.getInstance();

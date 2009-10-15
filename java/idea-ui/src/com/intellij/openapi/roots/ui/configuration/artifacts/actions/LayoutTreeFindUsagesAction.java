@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts.actions;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeComponent;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.ArtifactsTreeNode;
 import org.jetbrains.annotations.Nullable;
@@ -26,8 +27,8 @@ import org.jetbrains.annotations.Nullable;
 public class LayoutTreeFindUsagesAction extends ArtifactEditorFindUsagesActionBase {
   private LayoutTreeComponent myLayoutTreeComponent;
 
-  public LayoutTreeFindUsagesAction(LayoutTreeComponent layoutTreeComponent, Project project) {
-    super(layoutTreeComponent.getLayoutTree(), project);
+  public LayoutTreeFindUsagesAction(LayoutTreeComponent layoutTreeComponent, Project project, ArtifactsStructureConfigurableContext artifactContext) {
+    super(layoutTreeComponent.getLayoutTree(), project, artifactContext);
     myLayoutTreeComponent = layoutTreeComponent;
   }
 

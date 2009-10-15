@@ -170,4 +170,7 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
     return dialog.isOK() ? dialog.getChosenElements() : Collections.<Library>emptyList();
   }
 
+  public ArtifactsStructureConfigurableContext getParent() {
+    return myParent;
+  }
 }
