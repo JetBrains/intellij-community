@@ -64,6 +64,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String myPluginsListUrl;
   private String myPluginsDownloadUrl;
   private String myDefaultUpdateChannel;
+  private String myWhatsNewUrl;
   private boolean myEAP;
   @NonNls private String myHelpFileName = "ideahelp.jar";
   @NonNls private String myHelpRootName = "idea";
@@ -110,6 +111,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String ATTRIBUTE_LIST_URL = "list-url";
   @NonNls private static final String ATTRIBUTE_DOWNLOAD_URL = "download-url";
   @NonNls private static final String ATTRIBUTE_WEBHELP_URL = "webhelp-url";
+  @NonNls private static final String ELEMENT_WHATSNEW = "whatsnew";
 
   public void initComponent() { }
 
@@ -232,9 +234,12 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     return myPluginsDownloadUrl;
   }
 
-  @Override
   public String getWebHelpUrl() {
     return myWebHelpUrl;
+  }
+
+  public String getWhatsNewUrl() {
+    return myWhatsNewUrl;
   }
 
   public String getFullApplicationName() {
@@ -389,6 +394,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     if (feedbackElement != null) {
       myEAPFeedbackUrl = feedbackElement.getAttributeValue(ATTRIBUTE_EAP_URL);
       myReleaseFeedbackUrl = feedbackElement.getAttributeValue(ATTRIBUTE_RELEASE_URL);
+    }
+
+    Element whatsnewElement = parentNode.getChild(ELEMENT_WHATSNEW);
+    if (whatsnewElement != null) {
+      myWhatsNewUrl = whatsnewElement.getAttributeValue(ATTRIBUTE_URL);
     }
 
     myPluginsListUrl = "http://plugins.intellij.net/plugins/list/";
