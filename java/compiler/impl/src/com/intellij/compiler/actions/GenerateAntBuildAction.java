@@ -26,8 +26,8 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
@@ -53,8 +53,9 @@ public class GenerateAntBuildAction extends CompileActionBase {
       final GenerationOptionsImpl[] genOptions = {null};
       Runnable runnable = new Runnable() {
         public void run() {
-          genOptions[0] = new GenerationOptionsImpl(project, dialog.isGenerateSingleFileBuild(), dialog.isFormsCompilationEnabled(), dialog.isBackupFiles(),
-                                    dialog.isForceTargetJdk(), dialog.isRuntimeClasspathInlined(), dialog.isIdeaHomeGenerated(), names);
+          genOptions[0] = new GenerationOptionsImpl(project, dialog.isGenerateSingleFileBuild(), dialog.isFormsCompilationEnabled(),
+                                                    dialog.isBackupFiles(), dialog.isForceTargetJdk(), dialog.isRuntimeClasspathInlined(),
+                                                    dialog.isIdeaHomeGenerated(), names);
         }
       };
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, "Analyzing project structure...", true, project)) {
@@ -105,6 +106,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
     Presentation presentation = event.getPresentation();
     Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
     presentation.setEnabled(project != null);
+    presentation.setVisible(ChunkBuildExtension.hasBuildExtensions());
   }
 
   private void generate(final Project project, final GenerationOptions genOptions) {
