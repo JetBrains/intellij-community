@@ -162,14 +162,14 @@ public class FirefoxUtil {
 
   private static File[] getProfilesDirs() {
     final String userHome = SystemProperties.getUserHome();
-    if (SystemInfo.isUnix) {
-      return new File[] {new File(userHome, ".mozilla" + File.separator + "firefox")};
-    }
     if (SystemInfo.isMac) {
       return new File[] {
-          new File(userHome, "Library" + File.separator + "Mozilla" + File.separator + "Firefox"),
-          new File(userHome, "Library" + File.separator + "Application Support" + File.separator + "Firefox"),
+        new File(userHome, "Library" + File.separator + "Mozilla" + File.separator + "Firefox"),
+        new File(userHome, "Library" + File.separator + "Application Support" + File.separator + "Firefox"),
       };
+    }
+    if (SystemInfo.isUnix) {
+      return new File[] {new File(userHome, ".mozilla" + File.separator + "firefox")};
     }
     return new File[] {
       new File(userHome, "Application Data" + File.separator + "Mozilla" + File.separator + "Firefox")
