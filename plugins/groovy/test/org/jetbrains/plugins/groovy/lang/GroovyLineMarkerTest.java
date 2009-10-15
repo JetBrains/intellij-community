@@ -18,13 +18,10 @@ package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
-import com.intellij.codeInsight.daemon.impl.LineMarkersPass;
-import com.intellij.codeInsight.daemon.impl.SlowLineMarkersPass;
-import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.impl.JavaCodeInsightTestFixtureImpl;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.List;
@@ -73,17 +70,10 @@ public class GroovyLineMarkerTest extends LightCodeInsightFixtureTestCase {
   }
 
   private void doTest(int count) {
-    final PsiFile file = myFixture.getFile();
     final Editor editor = myFixture.getEditor();
     final Project project = myFixture.getProject();
 
-    LineMarkersPass pass = new LineMarkersPass(project, file, editor.getDocument(), 0, file.getTextLength(), false);
-    pass.collectInformation(new MockProgressIndicator());
-    pass.applyInformationToEditor();
-
-    final SlowLineMarkersPass slowLineMarkersPass = new SlowLineMarkersPass(project, file, editor.getDocument(), 0, file.getTextLength());
-    slowLineMarkersPass.collectInformation(new MockProgressIndicator());
-    slowLineMarkersPass.applyInformationToEditor();
+    ((JavaCodeInsightTestFixtureImpl)myFixture).doHighlighting();
 
     final List<LineMarkerInfo> infoList = DaemonCodeAnalyzerImpl.getLineMarkers(editor.getDocument(), project);
     assertNotNull(infoList);
