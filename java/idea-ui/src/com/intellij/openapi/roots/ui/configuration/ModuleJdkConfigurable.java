@@ -106,17 +106,11 @@ public abstract class ModuleJdkConfigurable implements Disposable {
     myCbModuleJdk.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         if (myFreeze) return;
-        final Sdk oldJdk = getRootModel().getSdk();
-        mySelectedModuleJdk = myCbModuleJdk.getSelectedJdk();
-        final Sdk selectedModuleJdk = getSelectedModuleJdk();
-        if (selectedModuleJdk != null) {
-          getRootModel().setSdk(selectedModuleJdk);
-        }
-        else {
-          getRootModel().inheritSdk();
-        }
-        clearCaches(oldJdk, selectedModuleJdk);
-        myModuleEditor.flushChangesToModel();
+
+        final Sdk newJdk = myCbModuleJdk.getSelectedJdk();
+        myModuleEditor.setSdk(newJdk);
+
+        clearCaches();
       }
     });
     myJdkPanel.add(new JLabel(ProjectBundle.message("module.libraries.target.jdk.module.radio")),
@@ -154,7 +148,7 @@ public abstract class ModuleJdkConfigurable implements Disposable {
     });
   }
 
-  private void clearCaches(final Sdk oldJdk, final Sdk selectedModuleJdk) {
+  private void clearCaches() {
     final Module module = getRootModel().getModule();
     final Project project = module.getProject();
     final StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(project).getContext();
@@ -170,7 +164,7 @@ public abstract class ModuleJdkConfigurable implements Disposable {
         myCbModuleJdk.setSelectedJdk(mySelectedModuleJdk);
       } else {
         myCbModuleJdk.setInvalidJdk(jdkName);
-        clearCaches(null, null);
+        clearCaches();
       }
     }
     else {

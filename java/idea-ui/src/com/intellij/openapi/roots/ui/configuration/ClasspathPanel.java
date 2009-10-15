@@ -331,14 +331,14 @@ public class ClasspathPanel extends JPanel {
           if (orderEntry == null) {
             continue;
           }
-          ModuleStructureConfigurable.getInstance(myState.getProject()).getContext().clearCaches(orderEntry);
+
           getRootModel().removeOrderEntry(orderEntry);
         }        
         final int[] selectedRows = myEntryTable.getSelectedRows();
         myModel.fireTableDataChanged();
         TableUtil.selectRows(myEntryTable, selectedRows);
-        final StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(myProject).getContext();
-        context.getDaemonAnalyzer().queueUpdate(new ModuleProjectStructureElement(context, myRootModel.getModule()));
+        final StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(myState.getProject()).getContext();
+        context.getDaemonAnalyzer().queueUpdate(new ModuleProjectStructureElement(context, getRootModel().getModule()));
       }
     });
     
@@ -500,7 +500,7 @@ public class ClasspathPanel extends JPanel {
         TableUtil.scrollSelectionToVisible(myEntryTable);
 
         final StructureConfigurableContext context = rootConfigurable.getContext();
-        context.getDaemonAnalyzer().queueUpdate(new ModuleProjectStructureElement(context, myRootModel.getModule()));
+        context.getDaemonAnalyzer().queueUpdate(new ModuleProjectStructureElement(context, getRootModel().getModule()));
       }
       finally {
         if (dialog instanceof ChooseNamedLibraryAction.MyChooserDialog) {

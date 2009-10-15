@@ -152,13 +152,6 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
     final ModifiableRootModel model = getModel();
     final Sdk oldSdk = model.getSdk();
 
-    //final List<OrderEntry> entries = myPanel.getEntries();
-    //for (OrderEntry entry : entries) {
-    //  if (entry instanceof JdkOrderEntry) {
-    //
-    //  }
-    //}
-
     if (newJDK != null) {
       model.setSdk(newJDK);
     }

@@ -267,7 +267,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
       }
     }
 
-    myContext.clearCaches(false);
+    myContext.getDaemonAnalyzer().clearCaches();
     myContext.resetLibraries();
   }
 
