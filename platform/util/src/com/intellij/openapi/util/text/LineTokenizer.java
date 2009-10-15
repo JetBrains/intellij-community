@@ -60,6 +60,21 @@ public class LineTokenizer {
     return lines.toArray(new String[lines.size()]);
   }
 
+  public static int calcLineCount(final CharSequence chars, final boolean skipLastEmptyLine) {
+    int lineCount = 0;
+    if (chars != null && chars.length() != 0) {
+      final LineTokenizer tokenizer = new LineTokenizer(chars);
+      while (!tokenizer.atEnd()) {
+        lineCount += 1;
+        tokenizer.advance();
+      }
+      if (!skipLastEmptyLine && stringEdnsWithSeparator(tokenizer)) {
+        lineCount += 1;
+      }
+    }
+    return lineCount;
+  }
+
   public static String[] tokenize(char[] chars, boolean includeSeparators) {
     return tokenize(chars, includeSeparators, true);
   }
