@@ -162,10 +162,10 @@ public class GuessManagerImpl extends GuessManager {
     getTopmostBlock(forPlace).accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitTypeCastExpression(PsiTypeCastExpression expression) {
-        final PsiTypeElement castType = expression.getCastType();
+        final PsiType castType = expression.getType();
         final PsiExpression operand = expression.getOperand();
         if (operand != null && castType != null) {
-          allCasts.put(operand, castType.getType());
+          allCasts.put(operand, castType);
         }
         super.visitTypeCastExpression(expression);
       }
@@ -346,8 +346,7 @@ public class GuessManagerImpl extends GuessManager {
           if (pattern.parameterIndex < 0){ // return value
             if (methodCall.getParent() instanceof PsiTypeCastExpression &&
                 (rangeToIgnore == null || !rangeToIgnore.contains(methodCall.getTextRange()))) {
-              final PsiTypeElement castType = ((PsiTypeCastExpression)methodCall.getParent()).getCastType();
-              return castType == null ? null : castType.getType();
+              return ((PsiTypeCastExpression)methodCall.getParent()).getType();
             }
           }
           else{

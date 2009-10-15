@@ -30,7 +30,12 @@ public class PreferNonGenericWeigher extends CompletionWeigher {
   public Comparable weigh(@NotNull final LookupElement item, final CompletionLocation location) {
     final Object object = item.getObject();
     if (object instanceof PsiMethod) {
-      final PsiType type = JavaCompletionUtil.getLookupElementType(item);
+      PsiType type = ((PsiMethod)object).getReturnType();
+      final JavaMethodCallElement callItem = item.as(JavaMethodCallElement.class);
+      if (callItem != null) {
+        type = callItem.getSubstitutor().substitute(type);
+      }
+
       if (type instanceof PsiClassType && ((PsiClassType) type).resolve() instanceof PsiTypeParameter) return -1;
     }
 

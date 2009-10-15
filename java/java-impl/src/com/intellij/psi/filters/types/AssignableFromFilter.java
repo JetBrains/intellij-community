@@ -20,6 +20,7 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.FilterUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.Nullable;
 
 
 /**
@@ -70,40 +71,58 @@ public class AssignableFromFilter implements ElementFilter{
       element = info.getElement();
     }
 
-    if(element instanceof PsiMethod){
-      final PsiMethod method = (PsiMethod)element;
-      final PsiTypeParameter[] parameters = method.getTypeParameters();
-      for (final PsiTypeParameter parameter : parameters) {
-        PsiType returnType = method.getReturnType();
-        if (substitutor != null) returnType = substitutor.substitute(returnType);
-        final PsiType substitutionForParameter = JavaPsiFacade.getInstance(method.getProject()).getResolveHelper().getSubstitutionForTypeParameter(parameter,
-                                                                                                                        returnType, type,
-                                                                                                                        false,
-                                                                                                                        PsiUtil.getLanguageLevel(context));
-        if (substitutionForParameter != PsiType.NULL && !(substitutionForParameter instanceof PsiIntersectionType)) {
-          return true;
-        }
-      }
+    return isAcceptable((PsiElement)element, context, type, substitutor);
+  }
+
+  public static boolean isAcceptable(PsiElement element, PsiElement context, PsiType expectedType, PsiSubstitutor substitutor) {
+    if (element instanceof PsiMethod && isReturnTypeInferrable((PsiMethod)element, context, expectedType, substitutor)) {
+      return true;
     }
-    PsiType typeByElement = FilterUtil.getTypeByElement((PsiElement)element, context);
+
+    PsiType typeByElement = FilterUtil.getTypeByElement(element, context);
     if (typeByElement == null) {
       return false;
     }
 
-    boolean allowBoxing = true;
-    if (context.getParent().getParent() instanceof PsiSynchronizedStatement) {
-      final PsiSynchronizedStatement statement = (PsiSynchronizedStatement)context.getParent().getParent();
-      if (context.getParent().equals(statement.getLockExpression())) {
-        allowBoxing = false;
-      }
-    }
     if(substitutor != null) {
       typeByElement = substitutor.substitute(typeByElement);
     }
 
-    if (!allowBoxing && (type instanceof PsiPrimitiveType != typeByElement instanceof PsiPrimitiveType)) return false;
+    if (!allowBoxing(context) && (expectedType instanceof PsiPrimitiveType != typeByElement instanceof PsiPrimitiveType)) {
+      return false;
+    }
 
-    return type.isAssignableFrom(typeByElement);
+    return expectedType.isAssignableFrom(typeByElement);
+  }
+
+  private static boolean allowBoxing(PsiElement place) {
+    final PsiElement parent = place.getParent();
+    if (parent.getParent() instanceof PsiSynchronizedStatement) {
+      final PsiSynchronizedStatement statement = (PsiSynchronizedStatement)parent.getParent();
+      if (parent.equals(statement.getLockExpression())) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static boolean isReturnTypeInferrable(PsiMethod method, PsiElement place, PsiType expectedType, @Nullable PsiSubstitutor substitutor) {
+    final PsiResolveHelper helper = JavaPsiFacade.getInstance(method.getProject()).getResolveHelper();
+    for (final PsiTypeParameter parameter : method.getTypeParameters()) {
+      PsiType returnType = method.getReturnType();
+      if (substitutor != null) {
+        returnType = substitutor.substitute(returnType);
+      }
+      final PsiType substitutionForParameter = helper.getSubstitutionForTypeParameter(parameter,
+                                                                                      returnType,
+                                                                                      expectedType,
+                                                                                      false,
+                                                                                      PsiUtil.getLanguageLevel(place));
+      if (substitutionForParameter != PsiType.NULL && !(substitutionForParameter instanceof PsiIntersectionType)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public String toString(){

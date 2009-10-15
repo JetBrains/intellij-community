@@ -21,13 +21,11 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
-import com.intellij.codeInsight.lookup.TypedLookupItem;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.FilterUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -107,42 +105,7 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
 
   @Nullable
   private PsiType getItemType(LookupElement element) {
-    final TypedLookupItem typed = element.as(TypedLookupItem.class);
-    if (typed != null) {
-      return typed.getType();
-    }
-
-    final LookupItem item = element.as(LookupItem.class);
-    if (item == null) {
-      return null;
-    }
-
-    final PsiType attrType = (PsiType)item.getAttribute(LookupItem.TYPE);
-    if (attrType != null) {
-      return attrType;
-    }
-
-    PsiSubstitutor substitutor = (PsiSubstitutor)item.getAttribute(LookupItem.SUBSTITUTOR);
-    if (element.getObject() instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)element.getObject();
-      for (final ExpectedTypeInfo _type : myExpectedTypeInfos) {
-        if (hasUnboundTypeParams(method)) {
-          PsiSubstitutor retSubstitutor = calculateMethodReturnTypeSubstitutor(method, _type.getType());
-          if (substitutor == null) {
-            substitutor = retSubstitutor;
-          } else {
-            substitutor = substitutor.putAll(retSubstitutor);
-          }
-          break;
-        }
-      }
-    }
-
-    final PsiType byElement = FilterUtil.getTypeByElement((PsiElement)element.getObject(), myPosition);
-    if (substitutor != null) {
-      return substitutor.substitute(byElement);
-    }
-    return byElement;
+    return JavaCompletionUtil.getLookupElementType(element);
   }
 
   @Override

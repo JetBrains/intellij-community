@@ -15,16 +15,21 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.simple.PsiMethodInsertHandler;
+import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.TypedLookupItem;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
-public class JavaMethodCallElement extends LookupItem<PsiMethod> {
+public class JavaMethodCallElement extends LookupItem<PsiMethod> implements TypedLookupItem {
+  private static final Key<PsiSubstitutor> INFERENCE_SUBSTITUTOR = Key.create("INFERENCE_SUBSTITUTOR");
 
   public JavaMethodCallElement(PsiMethod method) {
     super(method, method.getName());
@@ -33,4 +38,28 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> {
     setInsertHandler(new PsiMethodInsertHandler(method));
   }
 
+  public PsiType getType() {
+    return getSubstitutor().substitute(getInferenceSubstitutor().substitute(getObject().getReturnType()));
+
+  }
+
+  public void setInferenceSubstitutor(@NotNull final PsiSubstitutor substitutor) {
+    setAttribute(INFERENCE_SUBSTITUTOR, substitutor);
+  }
+
+  @NotNull
+  public PsiSubstitutor getSubstitutor() {
+    final PsiSubstitutor substitutor = (PsiSubstitutor)getAttribute(LookupItem.SUBSTITUTOR);
+    return substitutor == null ? PsiSubstitutor.EMPTY : substitutor;
+  }
+
+  public void setSubstitutor(@NotNull PsiSubstitutor substitutor) {
+    setAttribute(SUBSTITUTOR, substitutor);
+  }
+
+  @NotNull
+  public PsiSubstitutor getInferenceSubstitutor() {
+    final PsiSubstitutor substitutor = getAttribute(INFERENCE_SUBSTITUTOR);
+    return substitutor == null ? PsiSubstitutor.EMPTY : substitutor;
+  }
 }
