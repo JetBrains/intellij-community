@@ -452,7 +452,11 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
 
   public void testArrayIndexTailType() throws Throwable { doTest(); }
 
-  public void testHonorSelection() throws Throwable { doTest(); }
+  public void testHonorSelection() throws Throwable {
+    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    select();
+    checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
+  }
 
   public void testTypeParametersInheritors() throws Throwable {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
