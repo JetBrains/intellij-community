@@ -1,0 +1,5 @@
+class Bar {
+    {
+        GregCale<caret>
+    }
+}
