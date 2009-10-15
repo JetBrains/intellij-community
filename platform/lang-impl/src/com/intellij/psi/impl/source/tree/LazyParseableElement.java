@@ -30,12 +30,13 @@ public class LazyParseableElement extends CompositeElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.LazyParseableElement");
 
   private final Object lock = new String("chameleon parsing lock");
-  //private final Object lock = PsiLock.LOCK;
   private CharSequence myText;
 
   public LazyParseableElement(@NotNull IElementType type, CharSequence text) {
     super(type);
-    myText = text != null ? text.toString() : null;
+    synchronized (lock) {
+      myText = text == null ? null : text.toString();
+    }
   }
 
   @NotNull

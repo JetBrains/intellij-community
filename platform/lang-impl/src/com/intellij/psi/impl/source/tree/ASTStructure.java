@@ -19,6 +19,7 @@ package com.intellij.psi.impl.source.tree;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -26,14 +27,16 @@ import com.intellij.util.diff.FlyweightCapableTreeStructure;
 public class ASTStructure implements FlyweightCapableTreeStructure<ASTNode> {
   private final ASTNode myRoot;
 
-  public ASTStructure(final ASTNode root) {
+  public ASTStructure(@NotNull ASTNode root) {
     myRoot = root;
   }
 
-  public ASTNode prepareForGetChildren(final ASTNode astNode) {
+  @NotNull
+  public ASTNode prepareForGetChildren(@NotNull final ASTNode astNode) {
     return astNode;
   }
 
+  @NotNull
   public ASTNode getRoot() {
     return myRoot;
   }
@@ -41,7 +44,7 @@ public class ASTStructure implements FlyweightCapableTreeStructure<ASTNode> {
   public void disposeChildren(final ASTNode[] nodes, final int count) {
   }
 
-  public int getChildren(final ASTNode astNode, final Ref<ASTNode[]> into) {
+  public int getChildren(@NotNull final ASTNode astNode, @NotNull final Ref<ASTNode[]> into) {
     ASTNode child = astNode.getFirstChildNode();
     if (child == null) return 0;
 

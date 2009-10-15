@@ -620,8 +620,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           addGutterIconRenderer(info.getGutterIconRenderer(), info.startOffset);
         }
 
-        doHighlighting();
-
         for (final RangeHighlighter highlighter : myEditor.getDocument().getMarkupModel(project).getAllHighlighters()) {
           addGutterIconRenderer(highlighter.getGutterIconRenderer(), highlighter.getStartOffset());
         }
@@ -1063,7 +1061,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @NotNull
-  private List<HighlightInfo> doHighlighting() {
+  public List<HighlightInfo> doHighlighting() {
     final Project project = myProjectFixture.getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 

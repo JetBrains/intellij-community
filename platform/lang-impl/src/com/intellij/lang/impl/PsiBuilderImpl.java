@@ -30,7 +30,6 @@ import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.tree.TreeAspect;
 import com.intellij.pom.tree.TreeAspectEvent;
 import com.intellij.pom.tree.events.TreeChangeEvent;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -58,11 +57,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 
 /**
- * Created by IntelliJ IDEA.
  * User: max
- * Date: Jan 21, 2005
- * Time: 3:30:29 PM
- * To change this template use File | Settings | File Templates.
  */
 public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.impl.PsiBuilderImpl");
@@ -110,7 +105,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   @NonNls private static final String UNBALANCED_MESSAGE =
     "Unbalanced tree. Most probably caused by unbalanced markers. Try calling setDebugMode(true) against PsiBuilder passed to identify exact location of the problem";
-  private PsiElement myInjectionHost;
   private ITokenTypeRemapper myRemapper;
 
   public static void registerWhitespaceToken(IElementType type) {
@@ -128,7 +122,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myCharTable = SharedImplUtil.findCharTableByTree(chameleon);
 
     myOriginalTree = chameleon.getUserData(BlockSupport.TREE_TO_BE_REPARSED);
-    myInjectionHost = chameleon.getPsi().getContext();
 
     myFileLevelParsing = myCharTable == null || myOriginalTree != null;
     cacheLexems();
@@ -158,9 +151,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myLexStarts = new int[approxLexCount];
     myLexTypes = new IElementType[approxLexCount];
 
-    int i = 0;
-
     myLexer.start(myText);
+    int i = 0;
     while (true) {
       IElementType type = myLexer.getTokenType();
       if (type == null) break;
@@ -183,12 +175,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myComments = tokens;
   }
 
-  @Nullable
-  public PsiElement getInjectionHost() {
-    return myInjectionHost;
-  }
-
-  private static abstract class Node implements LighterASTNode {
+  private abstract static class Node implements LighterASTNode {
     public abstract int hc();
   }
 
@@ -524,8 +511,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   private StartMarker createMarker(final int lexemIndex) {
-    StartMarker marker;
-    marker = START_MARKERS.alloc();
+    StartMarker marker = START_MARKERS.alloc();
     marker.myLexemIndex = lexemIndex;
     marker.myBuilder = this;
 
@@ -701,15 +687,15 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       myConvertor = new ASTConvertor((Node)rootNode);
     }
 
-    public void nodeDeleted(final ASTNode oldParent, final ASTNode oldNode) {
+    public void nodeDeleted(@NotNull final ASTNode oldParent, @NotNull final ASTNode oldNode) {
       myDelegate.nodeDeleted(oldParent, oldNode);
     }
 
-    public void nodeInserted(final ASTNode oldParent, final LighterASTNode newNode, final int pos) {
+    public void nodeInserted(@NotNull final ASTNode oldParent, @NotNull final LighterASTNode newNode, final int pos) {
       myDelegate.nodeInserted(oldParent, myConvertor.convert((Node)newNode), pos);
     }
 
-    public void nodeReplaced(final ASTNode oldChild, final LighterASTNode newChild) {
+    public void nodeReplaced(@NotNull final ASTNode oldChild, @NotNull final LighterASTNode newChild) {
       myDelegate.nodeReplaced(oldChild, myConvertor.convert((Node)newChild));
     }
 
@@ -776,11 +762,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     StartMarker curNode = rootMarker;
 
-    int lastErrorIndex = -1;
-
     Stack<StartMarker> nodes = new Stack<StartMarker>();
     nodes.push(rootMarker);
 
+    int lastErrorIndex = -1;
     for (int i = 1; i < fProduction.size(); i++) {
       ProductionMarker item = fProduction.get(i);
 
@@ -899,13 +884,20 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   private class MyComparator implements ShallowNodeComparator<ASTNode, LighterASTNode> {
     public ThreeState deepEqual(final ASTNode oldNode, final LighterASTNode newNode) {
+      boolean oldIsErrorElement = oldNode instanceof PsiErrorElement;
+      boolean newIsErrorElement = newNode.getTokenType() == TokenType.ERROR_ELEMENT;
+      if (oldIsErrorElement != newIsErrorElement) return ThreeState.NO;
+      if (oldIsErrorElement && newIsErrorElement) {
+        final PsiErrorElement e1 = (PsiErrorElement)oldNode;
+        return Comparing.equal(e1.getErrorDescription(), getErrorMessage(newNode)) ? ThreeState.UNSURE : ThreeState.NO;
+      }
+      
       if (newNode instanceof Token) {
         if (oldNode instanceof ForeignLeafPsiElement) {
           final IElementType type = newNode.getTokenType();
-          if (type instanceof ForeignLeafType) {
-            return ((ForeignLeafType)type).getValue().equals(oldNode.getText()) ? ThreeState.YES : ThreeState.NO;
-          }
-          return ThreeState.NO;
+          return type instanceof ForeignLeafType && ((ForeignLeafType)type).getValue().equals(oldNode.getText())
+                                                   ? ThreeState.YES
+                                                   : ThreeState.NO;
         }
 
         if (oldNode instanceof LeafElement) {
@@ -950,7 +942,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       }
 
       if (n1 instanceof PsiErrorElement && n2.getTokenType() == TokenType.ERROR_ELEMENT) {
-        final PsiErrorElement e1 = ((PsiErrorElement)n1);
+        final PsiErrorElement e1 = (PsiErrorElement)n1;
         if (!Comparing.equal(e1.getErrorDescription(), getErrorMessage(n2))) return false;
       }
 
@@ -975,10 +967,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       myRoot = root;
     }
 
-    public LighterASTNode prepareForGetChildren(final LighterASTNode o) {
+    @NotNull
+    public LighterASTNode prepareForGetChildren(@NotNull final LighterASTNode o) {
       return o;
     }
 
+    @NotNull
     public LighterASTNode getRoot() {
       return myRoot;
     }
@@ -993,7 +987,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
 
     private int count;
-    public int getChildren(final LighterASTNode item, final Ref<LighterASTNode[]> into) {
+    public int getChildren(@NotNull final LighterASTNode item, @NotNull final Ref<LighterASTNode[]> into) {
       if (item instanceof Token || item instanceof ErrorItem) return 0;
       StartMarker marker = (StartMarker)item;
 
@@ -1022,7 +1016,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         into.set(old);
       }
       else if (count >= old.length) {
-        LighterASTNode[] newStore = new LighterASTNode[(count * 3) / 2];
+        LighterASTNode[] newStore = new LighterASTNode[count * 3 / 2];
         System.arraycopy(old, 0, newStore, 0, count);
         into.set(newStore);
       }
@@ -1145,7 +1139,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     private void initCachedField() {
       try {
         cachedElementData = (Object[])ourElementDataField.get(this);
-      } catch(Exception e) {
+      }
+      catch (Exception e) {
         LOG.error(e);
       }
     }

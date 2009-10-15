@@ -57,7 +57,7 @@ class InjectedFileViewProvider extends SingleRootFileViewProvider {
 
   public void rootChanged(PsiFile psiFile) {
     super.rootChanged(psiFile);
-    if (!isPhysical()) return; // injected PSI change happened
+    if (!isPhysical()) return; // injected PSI change happened inside reparse; ignore
 
     List<PsiLanguageInjectionHost.Shred> shreds;
     synchronized (myLock) {
