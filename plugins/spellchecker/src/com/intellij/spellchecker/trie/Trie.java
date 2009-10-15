@@ -13,19 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.intellij.spellchecker.trie;
 
 
 import java.util.Map;
 import java.util.SortedMap;
 
-/**
- * Defines the interface for a prefix tree, an ordered tree data structure. For
- * more information, see <a href= "http://en.wikipedia.org/wiki/Trie">Tries</a>.
- *
- * @author Roger Kapsi
- * @author Sam Berlin
- */
 public interface Trie<K, V> extends SortedMap<K, V> {
 
     /**
