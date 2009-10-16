@@ -70,7 +70,7 @@ target('default': 'The default target') {
           buildNumber: "IC-90.SNAPSHOT",
           version: "Maia",
           system_selector: "IntelliJIdeaCE90",
-          jdk_req: "1.5*",
+          jdk_req: "1.6*",
           vmoptions: "-Xms32m -Xmx256m -XX:MaxPermSize=150m -ea",
           home, out)
 }
