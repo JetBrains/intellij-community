@@ -884,6 +884,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       fireProjectClosing(project);
 
       myOpenProjects.remove(project);
+      myChangedProjectFiles.remove(project);
       fireProjectClosed(project);
 
       if (save) {

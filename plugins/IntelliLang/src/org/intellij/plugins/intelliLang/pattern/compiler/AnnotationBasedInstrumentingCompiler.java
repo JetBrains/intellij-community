@@ -23,6 +23,7 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerModuleExtension;
@@ -65,6 +66,9 @@ public abstract class AnnotationBasedInstrumentingCompiler implements ClassInstr
     final Project project = context.getProject();
     final Set<InstrumentationItem> result = new HashSet<InstrumentationItem>();
     final PsiSearchHelper searchHelper = PsiManager.getInstance(context.getProject()).getSearchHelper();
+
+    DumbService.getInstance(project).waitForSmartMode();
+
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         final String[] names = getAnnotationNames(project);
