@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
@@ -83,52 +84,56 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
 
   private boolean wrapActionsTo(final List<HighlightInfo.IntentionActionDescriptor> descriptors, final Set<IntentionActionWithTextCaching> cachedActions) {
     boolean result = true;
-    for (HighlightInfo.IntentionActionDescriptor descriptor : descriptors) {
-      IntentionAction action = descriptor.getAction();
-      IntentionActionWithTextCaching cachedAction = new IntentionActionWithTextCaching(action, descriptor.getDisplayName(), descriptor.getIcon());
-      result &= !cachedActions.add(cachedAction);
-      final int caretOffset = myEditor.getCaretModel().getOffset();
-      final int fileOffset = caretOffset > 0 && caretOffset == myFile.getTextLength() ? caretOffset - 1 : caretOffset;
-      PsiElement element;
-      if (myFile instanceof PsiCompiledElement) {
-        element = myFile;
-      }
-      else if (PsiDocumentManager.getInstance(myProject).isUncommited(myEditor.getDocument())) {
-        //???
-        FileViewProvider viewProvider = myFile.getViewProvider();
-        element = viewProvider.findElementAt(fileOffset, viewProvider.getBaseLanguage());
-      }
-      else {
-        element = InjectedLanguageUtil.findElementAtNoCommit(myFile, fileOffset);
-      }
-      final List<IntentionAction> options;
-      if (element != null && (options = descriptor.getOptions(element)) != null) {
-        for (IntentionAction option : options) {
-          boolean isErrorFix = myCachedErrorFixes.contains(new IntentionActionWithTextCaching(option, option.getText()));
-          if (isErrorFix) {
-            cachedAction.addErrorFix(option);
-          }
-          boolean isInspectionFix = myCachedInspectionFixes.contains(new IntentionActionWithTextCaching(option, option.getText()));
-          if (isInspectionFix) {
-            cachedAction.addInspectionFix(option);
-          }
-          else {
-            cachedAction.addIntention(option);
+    final int caretOffset = myEditor.getCaretModel().getOffset();
+    final int fileOffset = caretOffset > 0 && caretOffset == myFile.getTextLength() ? caretOffset - 1 : caretOffset;
+    PsiElement element;
+    if (myFile instanceof PsiCompiledElement) {
+      element = myFile;
+    }
+    else if (PsiDocumentManager.getInstance(myProject).isUncommited(myEditor.getDocument())) {
+      //???
+      FileViewProvider viewProvider = myFile.getViewProvider();
+      element = viewProvider.findElementAt(fileOffset, viewProvider.getBaseLanguage());
+    }
+    else {
+      element = InjectedLanguageUtil.findElementAtNoCommit(myFile, fileOffset);
+    }
+    if (!descriptors.isEmpty()) {
+
+      for (HighlightInfo.IntentionActionDescriptor descriptor : descriptors) {
+        IntentionAction action = descriptor.getAction();
+        IntentionActionWithTextCaching cachedAction = new IntentionActionWithTextCaching(action, descriptor.getDisplayName(), descriptor.getIcon());
+        result &= !cachedActions.add(cachedAction);
+        final List<IntentionAction> options;
+        if (element != null && (options = descriptor.getOptions(element)) != null) {
+          for (IntentionAction option : options) {
+            boolean isErrorFix = myCachedErrorFixes.contains(new IntentionActionWithTextCaching(option, option.getText()));
+            if (isErrorFix) {
+              cachedAction.addErrorFix(option);
+            }
+            boolean isInspectionFix = myCachedInspectionFixes.contains(new IntentionActionWithTextCaching(option, option.getText()));
+            if (isInspectionFix) {
+              cachedAction.addInspectionFix(option);
+            }
+            else {
+              cachedAction.addIntention(option);
+            }
           }
         }
       }
     }
-    result &= removeInvalidActions(cachedActions);
+    result &= removeInvalidActions(cachedActions, element);
     return result;
   }
 
-  private boolean removeInvalidActions(final Collection<IntentionActionWithTextCaching> cachedActions) {
+  private boolean removeInvalidActions(final Collection<IntentionActionWithTextCaching> cachedActions, final PsiElement element) {
     boolean result = true;
     Iterator<IntentionActionWithTextCaching> iterator = cachedActions.iterator();
     while (iterator.hasNext()) {
       IntentionActionWithTextCaching cachedAction = iterator.next();
       IntentionAction action = cachedAction.getAction();
-      if (!myFile.isValid() || !action.isAvailable(myProject, myEditor, myFile)) {
+      Pair<PsiFile,Editor> place = ShowIntentionActionsHandler.availableFor(myFile, myEditor, action, element);
+      if (place == null) {
         iterator.remove();
         result = false;
       }
