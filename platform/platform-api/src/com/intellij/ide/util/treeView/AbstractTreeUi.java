@@ -799,7 +799,12 @@ public class AbstractTreeUi {
       }
 
       boolean bgBuild = isToBuildInBackground(descriptor);
-      boolean notRequiredToUpdateChildren = !forcedNow && !wasExpanded && !forceUpdate;
+      boolean notRequiredToUpdateChildren = !forcedNow && !wasExpanded;
+
+      if (notRequiredToUpdateChildren && forceUpdate && !wasExpanded) {
+        notRequiredToUpdateChildren = getBuilder().isAlwaysShowPlus(descriptor);
+      }
+
       LoadedChildren preloaded = loadedChildren;
       boolean descriptorWasUpdated = descriptorIsUpToDate;
 
