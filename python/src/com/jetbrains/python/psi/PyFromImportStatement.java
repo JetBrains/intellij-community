@@ -30,4 +30,5 @@ public interface PyFromImportStatement extends PyStatement {
   @Nullable
   PyReferenceExpression getImportSource();
   PyImportElement[] getImportElements();
+  @Nullable PyStarImportElement getStarImportElement();
 }

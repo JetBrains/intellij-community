@@ -49,7 +49,7 @@ public class PyFromImportStatementImpl extends PyElementImpl implements PyFromIm
   }
 
   public boolean isStarImport() {
-    return findChildByClass(PyStarImportElement.class) != null;//getNode().findChildByType(PyTokenTypes.MULT) != null;
+    return getStarImportElement() != null;
   }
 
   @Nullable
@@ -68,6 +68,10 @@ public class PyFromImportStatementImpl extends PyElementImpl implements PyFromIm
       }
     }
     return result.toArray(new PyImportElement[result.size()]);
+  }
+
+  public PyStarImportElement getStarImportElement() {
+    return findChildByClass(PyStarImportElement.class);
   }
 
   public boolean processDeclarations(@NotNull final PsiScopeProcessor processor, @NotNull final ResolveState state, final PsiElement lastParent,

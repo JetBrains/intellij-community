@@ -23,8 +23,7 @@ import static com.jetbrains.python.psi.PyUtil.sure;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Transforms {@code from module_name import ...} into {@code import module_name}
@@ -61,13 +60,26 @@ public class ImportFromToImportIntention implements IntentionAction {
     return false;
   }
 
+  /**
+   * Adds myModuleName as a qualifier to target.
+   * @param target_node what to qualify
+   * @param generator 
+   * @param project
+   */
+  private void qualifyTarget(ASTNode target_node, PyElementGenerator generator, Project project) {
+    target_node.addChild(generator.createDot(project), target_node.getFirstChildNode());
+    target_node.addChild(sure(generator.createFromText(project, PyReferenceExpression.class, myModuleName, new int[]{0,0}).getNode()), target_node.getFirstChildNode());
+  }
+
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     assert myFromImportStatement != null : "isAvailable() must have returned true, but myFromImportStatement is null";
     try {
       sure(myModuleReference); sure(myModuleName);
       // find all unqualified references that lead to one of our import elements
       final PyImportElement[] ielts = myFromImportStatement.getImportElements();
+      final PyStarImportElement star_ielt = myFromImportStatement.getStarImportElement();
       final Map<PsiReference, PyImportElement> references = new HashMap<PsiReference, PyImportElement>();
+      final List<PsiReference> star_references = new ArrayList<PsiReference>();
       PsiTreeUtil.processElements(file, new PsiElementProcessor() {
         public boolean execute(PsiElement element) {
           if (element instanceof PyReferenceExpression && PsiTreeUtil.getParentOfType(element, PyImportElement.class) == null && element.isValid()) {
@@ -76,6 +88,7 @@ public class ImportFromToImportIntention implements IntentionAction {
               ResolveResult[] resolved = ref.multiResolve(false);
               for (ResolveResult rr : resolved) {
                 if (rr.isValidResult()) {
+                  if (rr.getElement() == star_ielt) star_references.add(ref);
                   for (PyImportElement ielt : ielts) {
                     if (rr.getElement() == ielt) references.put(ref, ielt);
                   }
@@ -96,10 +109,16 @@ public class ImportFromToImportIntention implements IntentionAction {
         feeler = top_qualifier.getQualifier();
       } while (feeler != null);
       String top_name = top_qualifier.getName();
+      Collection<PsiReference> possible_targets = references.keySet();
+      if (star_references.size() > 0) {
+        possible_targets = new ArrayList<PsiReference>(references.keySet().size() + star_references.size());
+        possible_targets.addAll(references.keySet());
+        possible_targets.addAll(star_references);
+      }
       if (
         showConflicts(
           project,
-          findDefinitions(top_name, references.keySet(), Arrays.asList(myFromImportStatement.getImportElements())), 
+          findDefinitions(top_name, possible_targets, Arrays.asList(myFromImportStatement.getImportElements())), 
           top_name, myModuleName
         )
       ) {
@@ -129,8 +148,14 @@ public class ImportFromToImportIntention implements IntentionAction {
           target_node.getTreeParent().replaceChild(target_node, new_qualifier);
           target_node = new_qualifier;
         }
-        target_node.addChild(generator.createDot(project), target_node.getFirstChildNode());
-        target_node.addChild(sure(generator.createFromText(project, PyReferenceExpression.class, myModuleName, new int[]{0,0}).getNode()), target_node.getFirstChildNode());
+        qualifyTarget(target_node, generator, project);
+      }
+      for (PsiReference reference : star_references) {
+        PsiElement referring_elt = reference.getElement();
+        assert referring_elt.isValid(); // else we won't add it
+        ASTNode target_node = referring_elt.getNode();
+        assert target_node != null; // else it won't be valid
+        qualifyTarget(target_node, generator, project);
       }
       // transform the import statement
       PyImportStatement new_import = sure(generator.createFromText(project, PyImportStatement.class, "import "+myModuleName));
