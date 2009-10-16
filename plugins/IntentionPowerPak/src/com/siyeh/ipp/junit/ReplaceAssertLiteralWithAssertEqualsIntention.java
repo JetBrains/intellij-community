@@ -15,14 +15,17 @@
  */
 package com.siyeh.ipp.junit;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.IntentionPowerPackBundle;
-import org.jetbrains.annotations.NotNull;
+import com.siyeh.ipp.psiutils.ImportUtils;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class ReplaceAssertLiteralWithAssertEqualsIntention
         extends MutablyNamedIntention {
@@ -73,17 +76,24 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention
     @Override
     public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
-        final PsiMethodCallExpression call =
-                (PsiMethodCallExpression)element;
-        final PsiReferenceExpression methodExpression =
-                call.getMethodExpression();
-        final PsiElement qualifier = methodExpression.getQualifier();
+        final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
+        final PsiReferenceExpression methodExpression = call.getMethodExpression();
         @NonNls final String methodName = methodExpression.getReferenceName();
-        assert methodName != null;
+        if (methodName == null) {
+            return;
+        }
         final StringBuilder newExpression = new StringBuilder();
+        final PsiElement qualifier = methodExpression.getQualifier();
         if (qualifier != null) {
             newExpression.append(qualifier.getText());
             newExpression.append('.');
+        } else {
+            final PsiMethod containingMethod =
+                    PsiTreeUtil.getParentOfType(call, PsiMethod.class);
+            if (containingMethod != null &&
+                AnnotationUtil.isAnnotated(containingMethod, "org.junit.Test", true)) {
+                ImportUtils.addStaticImport(element, "org.junit.Assert", "assertEquals");
+            }
         }
         newExpression.append("assertEquals(");
         final String postfix = methodName.substring("assert".length());
