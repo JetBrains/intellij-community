@@ -82,10 +82,12 @@ public class AWTUtilitiesWrapper {
   }
 
   public static boolean isTranslucencySupported(Object kind) {
-    if (translucencyClass == null) {
-      return false;
-    }
+    if (!isTranslucencyAPISupported()) return false;
     return isSupported(mIsTranslucencySupported, kind);
+  }
+
+  public static boolean isTranslucencyAPISupported() {
+    return translucencyClass != null;
   }
 
   public static boolean isTranslucencyCapable(GraphicsConfiguration gc) {
