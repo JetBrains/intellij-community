@@ -55,13 +55,11 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     private final TextEditorHighlightingPassFactory passFactory;
     private final int[] startingPredecessorIds;
     private final int[] completionPredecessorIds;
-    private final boolean runIntentionsPassAfter;
 
     private PassConfig(@NotNull TextEditorHighlightingPassFactory passFactory,
                       boolean runIntentionsPassAfter,
                       @NotNull int[] completionPredecessorIds,
                       @NotNull int[] startingPredecessorIds) {
-      this.runIntentionsPassAfter = runIntentionsPassAfter;
       this.completionPredecessorIds = completionPredecessorIds;
       this.startingPredecessorIds = startingPredecessorIds;
       this.passFactory = passFactory;
@@ -104,9 +102,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
 
   @NotNull
   public List<TextEditorHighlightingPass> instantiatePasses(@NotNull final PsiFile psiFile, @NotNull final Editor editor, @NotNull final int[] passesToIgnore) {
-    final int[] nextId = new int[1];
     synchronized (this) {
-      nextId[0] = nextAvailableId;
       if (!checkedForCycles) {
         checkedForCycles = true;
         checkForCycles();

@@ -29,7 +29,10 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -44,6 +47,8 @@ import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -52,6 +57,8 @@ import javax.swing.*;
  * @author mike
  */
 public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler");
+
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -133,5 +140,61 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
 
   public boolean startInWriteAction() {
     return false;
+  }
+
+  public static void chooseActionAndInvoke(PsiFile file, final Editor editor, final IntentionAction action, final String text) {
+    final Project project = file.getProject();
+
+    final Editor editorToApply;
+    final PsiFile fileToApply;
+
+    int offset = editor.getCaretModel().getOffset();
+    PsiElement injected = InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, offset);
+    if (injected != null) {
+      PsiFile injectedFile = injected.getContainingFile();
+      Editor injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile);
+
+      if (action.isAvailable(project, injectedEditor, injectedFile)) {
+        editorToApply = injectedEditor;
+        fileToApply = injectedFile;
+      }
+      else if (!action.isAvailable(project, editor, file)) {
+        return;
+      }
+      else {
+        editorToApply = editor;
+        fileToApply = file;
+      }
+    }
+    else if (!action.isAvailable(project, editor, file)) {
+      return;
+    }
+    else {
+      editorToApply = editor;
+      fileToApply = file;
+    }
+
+    Runnable runnable = new Runnable() {
+      public void run() {
+        try {
+          action.invoke(project, editorToApply, fileToApply);
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+        DaemonCodeAnalyzer.getInstance(project).updateVisibleHighlighters(editor);
+      }
+    };
+
+    if (action.startInWriteAction()) {
+      final Runnable _runnable = runnable;
+      runnable = new Runnable() {
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(_runnable);
+        }
+      };
+    }
+
+    CommandProcessor.getInstance().executeCommand(project, runnable, text, null);
   }
 }

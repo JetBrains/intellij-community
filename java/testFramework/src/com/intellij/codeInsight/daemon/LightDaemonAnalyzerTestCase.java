@@ -17,10 +17,12 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.FileTreeAccessFilter;
 import com.intellij.testFramework.LightCodeInsightTestCase;
@@ -74,14 +76,13 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
   protected List<HighlightInfo> doHighlighting() {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
-
     int[] toIgnore = doFolding() ? ArrayUtil.EMPTY_INT_ARRAY : new int[]{Pass.UPDATE_FOLDING};
     Editor editor = getEditor();
     PsiFile file = getFile();
-    //if (editor instanceof EditorWindow) {
-    //  editor = ((EditorWindow)editor).getDelegate();
-    //  file = InjectedLanguageUtil.getTopLevelFile(file);
-    //}
+    if (editor instanceof EditorWindow) {
+      editor = ((EditorWindow)editor).getDelegate();
+      file = InjectedLanguageUtil.getTopLevelFile(file);
+    }
     
     return CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, toIgnore);
   }

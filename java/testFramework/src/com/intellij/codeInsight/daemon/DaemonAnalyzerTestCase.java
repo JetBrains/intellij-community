@@ -17,14 +17,12 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
-import com.intellij.codeInsight.daemon.impl.ExternalToolPass;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarEx;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -271,13 +269,19 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       toIgnore.add(Pass.VISIBLE_LINE_MARKERS);
       toIgnore.add(Pass.LINE_MARKERS);
     }
-    final List<TextEditorHighlightingPass> passes = TextEditorHighlightingPassRegistrarEx.getInstanceEx(getProject()).instantiatePasses(getFile(), getEditor(), toIgnore.toNativeArray());
 
-    for (final TextEditorHighlightingPass pass : passes) {
-      if ((!(pass instanceof ExternalToolPass) && forceExternalValidation()) ||
-          (pass instanceof ExternalToolPass && !forceExternalValidation() && !doExternalValidation())) {
-        toIgnore.add(pass.getId());
-      }
+    if (!doExternalValidation()) {
+      toIgnore.add(Pass.EXTERNAL_TOOLS);
+    }
+    if (forceExternalValidation()) {
+      toIgnore.add(Pass.LINE_MARKERS);
+      toIgnore.add(Pass.LOCAL_INSPECTIONS);
+      toIgnore.add(Pass.POPUP_HINTS);
+      toIgnore.add(Pass.POST_UPDATE_ALL);
+      toIgnore.add(Pass.UPDATE_ALL);
+      toIgnore.add(Pass.UPDATE_VISIBLE);
+      toIgnore.add(Pass.UPDATE_OVERRIDEN_MARKERS);
+      toIgnore.add(Pass.VISIBLE_LINE_MARKERS);
     }
 
     CodeInsightTestFixtureImpl.instantiateAndRun(getFile(), getEditor(), toIgnore.toNativeArray());
@@ -316,7 +320,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     IntentionAction intentionAction = findIntentionAction(infos, intentionActionName, editor, file);
 
     assertNotNull(intentionActionName, intentionAction);
-    intentionAction.invoke(file.getProject(), editor, file);
+    ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, intentionAction, intentionActionName);
   }
 
   protected static IntentionAction findIntentionAction(final Collection<HighlightInfo> infos, final String intentionActionName, final Editor editor,
