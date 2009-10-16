@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.application.ApplicationManager;
@@ -158,8 +159,8 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     doAction(text, actionShouldBeAvailable, testFullPath, testName, myWrapper);
   }
 
-  protected void invoke(IntentionAction action) throws IncorrectOperationException {
-    action.invoke(getProject(), getEditor(), getFile());
+  protected static void invoke(IntentionAction action) throws IncorrectOperationException {
+    ShowIntentionActionsHandler.chooseActionAndInvoke(getFile(), getEditor(), action, action.getText());
   }
 
   protected IntentionAction findActionWithText(final String text) {

@@ -236,6 +236,7 @@ public class InjectedLanguageUtil {
     return null;
   }
 
+  @Nullable
   public static PsiElement findInjectedElementNoCommitWithOffset(@NotNull PsiFile file, final int offset) {
     Project project = file.getProject();
     if (InjectedLanguageManager.getInstance(project).isInjectedFragment(file)) return null;

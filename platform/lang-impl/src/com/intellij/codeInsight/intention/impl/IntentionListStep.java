@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.hint.HintManager;
@@ -25,8 +24,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
@@ -35,7 +32,6 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +43,6 @@ import java.util.*;
 * @author cdr
 */
 class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>, SpeedSearchFilter<IntentionActionWithTextCaching> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.IntentionListStep");
   private final Set<IntentionActionWithTextCaching> myCachedIntentions = new THashSet<IntentionActionWithTextCaching>(ACTION_TEXT_AND_CLASS_EQUALS);
   private final Set<IntentionActionWithTextCaching> myCachedErrorFixes = new THashSet<IntentionActionWithTextCaching>(ACTION_TEXT_AND_CLASS_EQUALS);
   private final Set<IntentionActionWithTextCaching> myCachedInspectionFixes = new THashSet<IntentionActionWithTextCaching>(ACTION_TEXT_AND_CLASS_EQUALS);
@@ -168,34 +163,14 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
         HintManager.getInstance().hideAllHints();
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
+            if (myProject.isDisposed()) return;
             PsiDocumentManager.getInstance(myProject).commitAllDocuments();
             final PsiFile file = PsiUtilBase.getPsiFileInEditor(myEditor, myProject);
-            final IntentionAction action = cachedAction.getAction();
-            if (file == null || !action.isAvailable(myProject, myEditor, file)) {
+            if (file == null) {
               return;
             }
-            Runnable runnable = new Runnable() {
-              public void run() {
-                try {
-                  action.invoke(myProject, myEditor, file);
-                }
-                catch (IncorrectOperationException e) {
-                  LOG.error(e);
-                }
-                DaemonCodeAnalyzer.getInstance(myProject).updateVisibleHighlighters(myEditor);
-              }
-            };
 
-            if (action.startInWriteAction()) {
-              final Runnable _runnable = runnable;
-              runnable = new Runnable() {
-                public void run() {
-                  ApplicationManager.getApplication().runWriteAction(_runnable);
-                }
-              };
-            }
-
-            CommandProcessor.getInstance().executeCommand(myProject, runnable, cachedAction.getText(), null);
+            ShowIntentionActionsHandler.chooseActionAndInvoke(file, myEditor, cachedAction.getAction(), cachedAction.getText());
           }
         });
       }

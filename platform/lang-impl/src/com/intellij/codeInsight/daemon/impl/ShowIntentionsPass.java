@@ -31,6 +31,7 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -50,16 +51,17 @@ import com.intellij.psi.IntentionFilterOwner;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.awt.*;
 
 public class ShowIntentionsPass extends TextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.ShowIntentionsPass");
@@ -112,7 +114,9 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     if (!myEditor.getContentComponent().hasFocus()) return;
     TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
     if (state == null || state.isFinished()) {
+      DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
       getIntentionActionsToShow();
+      updateActions(codeAnalyzer);
     }
   }
 
@@ -138,7 +142,6 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   }
 
   private void getIntentionActionsToShow() {
-    DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
     if (LookupManager.getInstance(myProject).getActiveLookup() != null) return;
 
     getActionsToShow(myEditor, myFile, myIntentionsInfo, myPassIdToShowIntentionsFor);
@@ -155,23 +158,17 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     }
     myShowBulb = !myIntentionsInfo.guttersToShow.isEmpty();
     if (!myShowBulb) {
-      for (HighlightInfo.IntentionActionDescriptor action : ContainerUtil.concat(myIntentionsInfo.errorFixesToShow, myIntentionsInfo.inspectionFixesToShow)) {
-        if (IntentionManagerSettings.getInstance().isShowLightBulb(action.getAction())) {
-          myShowBulb = true;
-          break;
-        }
-      }
-    }
-    if (!myShowBulb) {
-      for (HighlightInfo.IntentionActionDescriptor descriptor : myIntentionsInfo.intentionsToShow) {
+      for (HighlightInfo.IntentionActionDescriptor descriptor : ContainerUtil.concat(myIntentionsInfo.errorFixesToShow, myIntentionsInfo.inspectionFixesToShow,myIntentionsInfo.intentionsToShow)) {
         final IntentionAction action = descriptor.getAction();
-        if (IntentionManagerSettings.getInstance().isShowLightBulb(action) && action.isAvailable(myProject, myEditor, myFile)) {
+        if (IntentionManagerSettings.getInstance().isShowLightBulb(action)) {
           myShowBulb = true;
           break;
         }
       }
     }
+  }
 
+  private void updateActions(DaemonCodeAnalyzerImpl codeAnalyzer) {
     IntentionHintComponent hintComponent = codeAnalyzer.getLastIntentionHint();
     if (!myShowBulb || hintComponent == null) {
       return;
@@ -195,21 +192,27 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     int offset = editor.getCaretModel().getOffset();
     Project project = psiFile.getProject();
+    
+    PsiElement injected = InjectedLanguageManager.getInstance(project).findInjectedElementAt(psiFile, offset);
+    PsiFile injectedFile;
+    Editor injectedEditor;
+    if (injected != null) {
+      injectedFile = injected.getContainingFile();
+      injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile);
+    }
+    else {
+      injectedFile = null;
+      injectedEditor = null;
+    }
+    
     for (IntentionAction action : IntentionManager.getInstance().getIntentionActions()) {
-      try {
-        if (action instanceof PsiElementBaseIntentionAction) {
-          if (!isInProject || !((PsiElementBaseIntentionAction)action).isAvailable(project, editor, psiElement)) continue;
-        }
-        else if (!action.isAvailable(project, editor, psiFile)) {
-          continue;
-        }
+      if (injectedFile != null && isAvailableHere(injectedEditor, injectedFile, injected, isInProject, project, action) ||
+          isAvailableHere(editor, psiFile, psiElement, isInProject, project, action)
+        ) {
+        List<IntentionAction> enableDisableIntentionAction = new ArrayList<IntentionAction>();
+        enableDisableIntentionAction.add(new IntentionHintComponent.EnableDisableIntentionAction(action));
+        intentions.intentionsToShow.add(new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null));
       }
-      catch (IndexNotReadyException e) {
-        continue;
-      }
-      List<IntentionAction> enableDisableIntentionAction = new ArrayList<IntentionAction>();
-      enableDisableIntentionAction.add(new IntentionHintComponent.EnableDisableIntentionAction(action));
-      intentions.intentionsToShow.add(new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null));
     }
 
     List<HighlightInfo.IntentionActionDescriptor> actions = QuickFixAction.getAvailableActions(editor, psiFile, passIdToShowIntentionsFor);
@@ -251,5 +254,21 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
         }
       }
     }
+  }
+
+  private static boolean isAvailableHere(Editor editor, PsiFile psiFile, PsiElement psiElement, boolean inProject, Project project,
+                                         IntentionAction action) {
+    try {
+      if (action instanceof PsiElementBaseIntentionAction) {
+        if (!inProject || !((PsiElementBaseIntentionAction)action).isAvailable(project, editor, psiElement)) return false;
+      }
+      else if (!action.isAvailable(project, editor, psiFile)) {
+        return false;
+      }
+    }
+    catch (IndexNotReadyException e) {
+      return false;
+    }
+    return true;
   }
 }

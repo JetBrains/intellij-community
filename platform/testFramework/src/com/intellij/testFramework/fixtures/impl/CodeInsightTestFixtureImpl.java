@@ -28,6 +28,7 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
@@ -428,7 +429,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void launchAction(@NotNull final IntentionAction action) throws Exception {
     new WriteCommandAction(myProjectFixture.getProject()) {
       protected void run(final Result result) throws Exception {
-        action.invoke(getProject(), getEditor(), getFile());
+        ShowIntentionActionsHandler.chooseActionAndInvoke(getFile(), getEditor(), action, action.getText());
       }
     }.execute().throwException();
 
