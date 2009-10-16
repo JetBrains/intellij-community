@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,9 @@ class AssertEqualsWithLiteralPredicate implements PsiElementPredicate{
         final PsiMethodCallExpression expression =
                 (PsiMethodCallExpression) element;
         final PsiExpressionList argumentList = expression.getArgumentList();
-        final PsiExpression[] args = argumentList.getExpressions();
-        final int numArgs = args.length;
-        if(numArgs < 2 || numArgs > 3){
+        final PsiExpression[] arguments = argumentList.getExpressions();
+        final int argumentCount = arguments.length;
+        if(argumentCount < 2 || argumentCount > 3){
             return false;
         }
         final PsiReferenceExpression methodExpression =
@@ -43,10 +43,23 @@ class AssertEqualsWithLiteralPredicate implements PsiElementPredicate{
         if(ErrorUtil.containsError(element)){
             return false;
         }
-        if(numArgs == 2){
-            return isSpecialLiteral(args[0]) || isSpecialLiteral(args[1]);
+        final PsiMethod method = expression.resolveMethod();
+        if (method == null) {
+            return false;
+        }
+        final PsiClass targetClass = method.getContainingClass();
+        if (targetClass == null) {
+            return false;
+        }
+        final String qualifiedName = targetClass.getQualifiedName();
+        if (!"junit.framework.Assert".equals(qualifiedName) &&
+            !"org.junit.Assert".equals(qualifiedName)) {
+            return false;
+        }
+        if(argumentCount == 2){
+            return isSpecialLiteral(arguments[0]) || isSpecialLiteral(arguments[1]);
         } else{
-            return isSpecialLiteral(args[1]) || isSpecialLiteral(args[2]);
+            return isSpecialLiteral(arguments[1]) || isSpecialLiteral(arguments[2]);
         }
     }
 
