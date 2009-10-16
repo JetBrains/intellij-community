@@ -115,7 +115,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     connection.subscribe(StateStorage.STORAGE_TOPIC, new StateStorage.Listener() {
       public void storageFileChanged(final VirtualFileEvent event, @NotNull final StateStorage storage) {
         VirtualFile file = event.getFile();
+        LOG.info("[STORAGE] Check if application reload is required for: " + file.getPath());
         if (!file.isDirectory() && !(event.getRequestor() instanceof StateStorage.SaveSession)) {
+          LOG.info("[STORAGE] Scheduling application reload triggered by change in: " + file.getPath());
           saveChangedProjectFile(file, null, storage);
         }
       }
@@ -130,7 +132,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           connection.subscribe(StateStorage.STORAGE_TOPIC, new StateStorage.Listener() {
             public void storageFileChanged(final VirtualFileEvent event, @NotNull final StateStorage storage) {
               VirtualFile file = event.getFile();
+              LOG.info("[STORAGE] Check if project reload is required for: " + file.getPath());
               if (!file.isDirectory() && !(event.getRequestor() instanceof StateStorage.SaveSession)) {
+                LOG.info("[STORAGE] Scheduling project reload triggered by change in: " + file.getPath());
                 saveChangedProjectFile(file, project, storage);
               }
             }
@@ -654,6 +658,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         try {
+          LOG.info("[STORAGE] Checking if we could reinit components w/o project reload...");
           reloadOk[0] = ((ProjectEx)project).getStateStore().reload(causes);
         }
         catch (StateStorage.StateStorageException e) {
@@ -667,6 +672,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       }
     });
     if (reloadOk[0]) return false;
+
+    LOG.info("[STORAGE] Unable to reinit components, scheduling full project reload...");
 
     String message;
     if (causes.size() == 1) {
