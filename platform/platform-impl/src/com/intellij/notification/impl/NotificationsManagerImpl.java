@@ -268,6 +268,11 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     return myModel.getByType(type, createFilter(project, false));
   }
 
+  @Nullable
+  public NotificationType getMaximumType(@Nullable final Project project) {
+    return myModel.getMaximumType(createFilter(project, false));
+  }
+
   public boolean hasUnread(@Nullable final Project project) {
     return myModel.hasUnread(createFilter(project, false));
   }
