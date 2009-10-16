@@ -11,9 +11,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.actions.AddImportAction;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.patterns.SyntaxMatchers;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -29,7 +30,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
 
     List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(file, startOffset, endOffset);
     for (PsiElement element : elements) {
-      if (element instanceof PyReferenceExpression) {
+      if (element instanceof PyReferenceExpression &&  SyntaxMatchers.IN_IMPORT.search(element) == null) {
         if (((PyReferenceExpression)element).resolve() == null) {
           new AddImportAction((PsiReference)element).execute();
           return true;

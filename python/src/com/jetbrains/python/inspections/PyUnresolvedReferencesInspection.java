@@ -12,11 +12,12 @@ import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.actions.AddFieldQuickFix;
+import com.jetbrains.python.actions.AddImportAction;
 import com.jetbrains.python.actions.AddMethodQuickFix;
 import com.jetbrains.python.actions.ImportFromExistingFix;
-import com.jetbrains.python.actions.AddImportAction;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.patterns.SyntaxMatchers;
 import com.jetbrains.python.psi.resolve.CollectProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
@@ -241,9 +242,11 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
           unresolved = (reference.resolve() == null);
         }
         if (unresolved) {
-          StringBuilder description_buf = new StringBuilder(""); // TODO: clear description_buf logic. maybe a flag is needed instead.
-          String text = reference.getElement().getText();
-          String ref_text = reference.getRangeInElement().substring(text); // text of the part we're working with
+          final StringBuilder description_buf = new StringBuilder(""); // TODO: clear description_buf logic. maybe a flag is needed instead.
+          final String text = reference.getElement().getText();
+          final String ref_text = reference.getRangeInElement().substring(text); // text of the part we're working with
+          final PsiElement ref_element = reference.getElement();
+          final boolean ref_in_import = SyntaxMatchers.IN_IMPORT.search(ref_element) != null;
           List<LocalQuickFix> actions = new ArrayList<LocalQuickFix>(2);
           HintAction hint_action = null;
           if (ref_text.length() <= 0) return; // empty text, nothing to highlight
@@ -269,12 +272,14 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
               // TODO: mark the node so that future references pointing to it won't result in a error, but in a warning
             }
             // look in other imported modules for this whole name
-            List<LocalQuickFix> import_fixes = proposeImportFixes(node, ref_text);
-            if (import_fixes.size() > 0) {
-              actions.addAll(import_fixes);
-              Object first_action = import_fixes.get(0);
-              if (first_action instanceof HintAction) {
-                hint_action = ((HintAction)first_action);
+            if (! ref_in_import) {
+              List<LocalQuickFix> import_fixes = proposeImportFixes(node, ref_text);
+              if (import_fixes.size() > 0) {
+                actions.addAll(import_fixes);
+                Object first_action = import_fixes.get(0);
+                if (first_action instanceof HintAction) {
+                  hint_action = ((HintAction)first_action);
+                }
               }
             }
           }
@@ -313,7 +318,8 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
             }
             if (! marked_qualified) {
               description_buf.append(PyBundle.message("INSP.unresolved.ref.$0", ref_text));
-              hint_action = new AddImportAction(reference); // unconditionally; action will fend for itself. 
+              // add import hint unless we're an import ourselves; the rest of action will fend for itself.
+              if (ref_element != null && ! ref_in_import) hint_action = new AddImportAction(reference);
             }
           }
           String description = description_buf.toString();
