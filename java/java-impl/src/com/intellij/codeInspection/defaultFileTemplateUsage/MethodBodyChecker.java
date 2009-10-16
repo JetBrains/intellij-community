@@ -60,7 +60,7 @@ public class MethodBodyChecker {
       final String fileTemplateName = template.getName();
       String methodName = superSignatures.isEmpty() ? "" : superSignatures.get(0).getName();
       String key = returnType.getCanonicalText() + "+" + methodName + "+"+fileTemplateName;
-      final Map<String, PsiMethod> cache = getTemplatesCache(project);
+      final Map<String, PsiMethod> cache = getTemplatesCache(aClass);
       PsiMethod method = cache.get(key);
       if (method == null) {
         method = JavaPsiFacade.getInstance(project).getElementFactory().createMethod("x", returnType);
@@ -74,12 +74,12 @@ public class MethodBodyChecker {
     }
   }
 
-  private static final Key<Map<String, PsiMethod>> CACHE_IN_PROJECT_KEY = new Key<Map<String, PsiMethod>>("MethodBodyChecker templates cache");
+  private static final Key<Map<String, PsiMethod>> CACHE_KEY = new Key<Map<String, PsiMethod>>("MethodBodyChecker templates cache");
 
-  private static Map<String, PsiMethod> getTemplatesCache(Project project) {
-    Map<String, PsiMethod> cache = project.getUserData(CACHE_IN_PROJECT_KEY);
+  private static Map<String, PsiMethod> getTemplatesCache(PsiClass aClass) {
+    Map<String, PsiMethod> cache = aClass.getUserData(CACHE_KEY);
     if (cache == null) {
-      cache = ((UserDataHolderEx)project).putUserDataIfAbsent(CACHE_IN_PROJECT_KEY, new ConcurrentHashMap<String, PsiMethod>());
+      cache = ((UserDataHolderEx)aClass).putUserDataIfAbsent(CACHE_KEY, new ConcurrentHashMap<String, PsiMethod>());
     }
     return cache;
   }
