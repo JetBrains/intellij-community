@@ -19,7 +19,10 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.CodeInsightTestCase;
-import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.impl.ExternalToolPass;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarEx;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -37,8 +40,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
@@ -60,6 +61,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.FileTreeAccessFilter;
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
@@ -269,29 +271,16 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       toIgnore.add(Pass.VISIBLE_LINE_MARKERS);
       toIgnore.add(Pass.LINE_MARKERS);
     }
-    final ProgressIndicator progress = new DaemonProgressIndicator();
     final List<TextEditorHighlightingPass> passes = TextEditorHighlightingPassRegistrarEx.getInstanceEx(getProject()).instantiatePasses(getFile(), getEditor(), toIgnore.toNativeArray());
 
-    for(Iterator<TextEditorHighlightingPass> i = passes.iterator();i.hasNext();) {
-      final TextEditorHighlightingPass pass = i.next();
-
+    for (final TextEditorHighlightingPass pass : passes) {
       if ((!(pass instanceof ExternalToolPass) && forceExternalValidation()) ||
-          (pass instanceof ExternalToolPass && !forceExternalValidation() && !doExternalValidation())
-         ) {
-        i.remove();
+          (pass instanceof ExternalToolPass && !forceExternalValidation() && !doExternalValidation())) {
+        toIgnore.add(pass.getId());
       }
     }
 
-    ProgressManager.getInstance().runProcess(new Runnable() {
-      public void run() {
-        for (TextEditorHighlightingPass pass : passes) {
-          pass.collectInformation(progress);
-        }
-        for (TextEditorHighlightingPass pass : passes) {
-          pass.applyInformationToEditor();
-        }
-      }
-    }, progress);
+    CodeInsightTestFixtureImpl.instantiateAndRun(getFile(), getEditor(), toIgnore.toNativeArray());
 
     if (doTestLineMarkers()) {
       Document document = getDocument(getFile());

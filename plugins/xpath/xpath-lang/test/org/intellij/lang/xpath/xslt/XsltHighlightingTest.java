@@ -15,19 +15,14 @@
  */
 package org.intellij.lang.xpath.xslt;
 
-import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
-import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarEx;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtil;
 import org.intellij.lang.xpath.TestBase;
 import org.intellij.lang.xpath.xslt.impl.XsltStuffProvider;
-
-import java.util.List;
 
 /*
 * Created by IntelliJ IDEA.
@@ -107,18 +102,13 @@ public class XsltHighlightingTest extends TestBase {
         final Project project = myFixture.getProject();
         PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-        return ApplicationManager.getApplication().runReadAction(new Computable<Long>() {
-                    public Long compute() {
-                        final long l = System.currentTimeMillis();
-                        List<TextEditorHighlightingPass> passes =
-                                TextEditorHighlightingPassRegistrarEx.getInstanceEx(myFixture.getProject()).instantiatePasses(myFixture.getFile(), myFixture.getEditor(), ArrayUtil.EMPTY_INT_ARRAY);
-                        ProgressIndicator progress = new DaemonProgressIndicator();
-                        for (TextEditorHighlightingPass pass : passes) {
-                            pass.collectInformation(progress);
-                        }
-                        return System.currentTimeMillis() - l;
-                    }
-                });
+      return ApplicationManager.getApplication().runReadAction(new Computable<Long>() {
+        public Long compute() {
+          final long l = System.currentTimeMillis();
+          CodeInsightTestFixtureImpl.instantiateAndRun(myFixture.getFile(), myFixture.getEditor(), ArrayUtil.EMPTY_INT_ARRAY);
+          return System.currentTimeMillis() - l;
+        }
+      });
     }
 
     private void doXsltHighlighting(String... moreFiles) throws Throwable {
