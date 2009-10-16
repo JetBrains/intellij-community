@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package com.siyeh.ipp.junit;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpressionList;
-import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.*;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.NonNls;
@@ -41,6 +38,19 @@ class AssertTrueOrFalsePredicate implements PsiElementPredicate{
         @NonNls final String methodName = methodExpression.getReferenceName();
         if (!"assertTrue".equals(methodName) &&
                 !"assertFalse".equals(methodName)) {
+            return false;
+        }
+        final PsiMethod method = expression.resolveMethod();
+        if (method == null) {
+            return false;
+        }
+        final PsiClass targetClass = method.getContainingClass();
+        if (targetClass == null) {
+            return false;
+        }
+        final String qualifiedName = targetClass.getQualifiedName();
+        if (!"junit.framework.Assert".equals(qualifiedName) &&
+            !"org.junit.Assert".equals(qualifiedName)) {
             return false;
         }
         return !ErrorUtil.containsError(element);
