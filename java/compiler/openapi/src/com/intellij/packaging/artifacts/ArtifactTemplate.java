@@ -21,21 +21,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author nik
  */
-public interface ModifiableArtifactModel extends ArtifactModel {
+public abstract class ArtifactTemplate {
+  public abstract String getPresentableName();
 
-  @NotNull
-  ModifiableArtifact addArtifact(final @NotNull String name, @NotNull ArtifactType artifactType);
-
-  @NotNull
-  ModifiableArtifact addArtifact(final @NotNull String name, @NotNull ArtifactType artifactType, CompositePackagingElement<?> rootElement);
-
-  void removeArtifact(@NotNull Artifact artifact);
-
-  @NotNull
-  ModifiableArtifact getOrCreateModifiableArtifact(@NotNull Artifact artifact);
-
-  boolean isModified();
-
-  void commit();
-
+  public abstract CompositePackagingElement<?> createRootElement(@NotNull String artifactName);
 }
