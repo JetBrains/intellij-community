@@ -1618,7 +1618,7 @@ public class AbstractTreeUi {
         LoadedChildren loaded = new LoadedChildren(loadedElements);
         for (Object each : loadedElements) {
           NodeDescriptor eachChildDescriptor = getTreeStructure().createDescriptor(each, updateInfo.getDescriptor());
-          loaded.putDescriptor(each, eachChildDescriptor, eachChildDescriptor.update());
+          loaded.putDescriptor(each, eachChildDescriptor, getBuilder().updateNodeDescriptor(eachChildDescriptor));
         }
 
         children.set(loaded);
