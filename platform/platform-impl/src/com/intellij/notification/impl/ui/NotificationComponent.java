@@ -17,6 +17,7 @@ package com.intellij.notification.impl.ui;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -39,7 +40,9 @@ import java.util.concurrent.TimeUnit;
 public class NotificationComponent extends JLabel implements NotificationModelListener {
   private static final Icon EMPTY_ICON = IconLoader.getIcon("/ide/notifications.png");
   private static final Icon READ_ICON = IconLoader.getIcon("/ide/read_notifications.png");
-  private static final Icon UNREAD_ICON = IconLoader.getIcon("/ide/unread_notifications.png");
+  private static final Icon ERROR_ICON = IconLoader.getIcon("/ide/error_notifications.png");
+  private static final Icon WARNING_ICON = IconLoader.getIcon("/ide/warning_notifications.png");
+  private static final Icon INFO_ICON = IconLoader.getIcon("/ide/info_notifications.png");
 
   private WeakReference<JBPopup> myPopupRef;
 
@@ -112,11 +115,20 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
     final NotificationsManagerImpl manager = getManager();
 
     Icon icon = EMPTY_ICON;
-    if (manager.hasUnread(getProject())) {
-      icon = UNREAD_ICON;
-    }
-    else if (manager.hasRead(getProject())) {
-      icon = READ_ICON;
+    final NotificationType maximumType = manager.getMaximumType(getProject());
+    if (maximumType != null) {
+      switch (maximumType) {
+        case WARNING:
+          icon = WARNING_ICON;
+          break;
+        case ERROR:
+          icon = ERROR_ICON;
+          break;
+        case INFORMATION:
+        default:
+          icon = INFO_ICON;
+          break;
+      }
     }
 
     myCurrentIcon = new BlinkIconWrapper(icon, false);

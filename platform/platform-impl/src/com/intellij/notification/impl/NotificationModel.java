@@ -104,7 +104,8 @@ public class NotificationModel {
 
   private LinkedList<Notification> filterNotifications(@NotNull PairFunction<Notification, Project, Boolean> filter) {
     final LinkedList<Notification> result = new LinkedList<Notification>();
-    final HashSet<Map.Entry<Notification, Pair<Project, Boolean>>> entries = new HashSet<Map.Entry<Notification, Pair<Project, Boolean>>>(myNotifications.entrySet());
+    final HashSet<Map.Entry<Notification, Pair<Project, Boolean>>> entries =
+      new HashSet<Map.Entry<Notification, Pair<Project, Boolean>>>(myNotifications.entrySet());
     for (final Map.Entry<Notification, Pair<Project, Boolean>> entry : entries) {
       if (filter.fun(entry.getKey(), entry.getValue().first)) {
         result.addFirst(entry.getKey());
@@ -182,5 +183,25 @@ public class NotificationModel {
 
   public boolean hasRead(PairFunction<Notification, Project, Boolean> filter) {
     return getUnreadCount(filter) < myNotifications.size();
+  }
+
+  @Nullable
+  public NotificationType getMaximumType(PairFunction<Notification, Project, Boolean> filter) {
+    final LinkedList<Notification> notifications = filterNotifications(filter);
+    NotificationType result = null;
+    for (Notification notification : notifications) {
+      if (NotificationType.ERROR == notification.getType()) {
+        return NotificationType.ERROR;
+      }
+
+      if (NotificationType.WARNING == notification.getType()) {
+        result = NotificationType.WARNING;
+      }
+      else if (result == null && NotificationType.INFORMATION == notification.getType()) {
+        result = NotificationType.INFORMATION;
+      }
+    }
+
+    return result;
   }
 }

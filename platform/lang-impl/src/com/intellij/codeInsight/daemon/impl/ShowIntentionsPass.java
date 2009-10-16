@@ -23,15 +23,14 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.AbstractIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
+import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -44,14 +43,13 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.IntentionFilterOwner;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -188,27 +186,13 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   public static void getActionsToShow(@NotNull final Editor editor, @NotNull final PsiFile psiFile, @NotNull IntentionsInfo intentions, int passIdToShowIntentionsFor) {
     final PsiElement psiElement = psiFile.findElementAt(editor.getCaretModel().getOffset());
     LOG.assertTrue(psiElement == null || psiElement.isValid(), psiElement);
-    final boolean isInProject = psiFile.getManager().isInProject(psiFile);
 
     int offset = editor.getCaretModel().getOffset();
     Project project = psiFile.getProject();
     
-    PsiElement injected = InjectedLanguageManager.getInstance(project).findInjectedElementAt(psiFile, offset);
-    PsiFile injectedFile;
-    Editor injectedEditor;
-    if (injected != null) {
-      injectedFile = injected.getContainingFile();
-      injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile);
-    }
-    else {
-      injectedFile = null;
-      injectedEditor = null;
-    }
-    
     for (IntentionAction action : IntentionManager.getInstance().getIntentionActions()) {
-      if (injectedFile != null && isAvailableHere(injectedEditor, injectedFile, injected, isInProject, project, action) ||
-          isAvailableHere(editor, psiFile, psiElement, isInProject, project, action)
-        ) {
+      Pair<PsiFile,Editor> place = ShowIntentionActionsHandler.availableFor(psiFile, editor, action, psiElement);
+      if (place != null) {
         List<IntentionAction> enableDisableIntentionAction = new ArrayList<IntentionAction>();
         enableDisableIntentionAction.add(new IntentionHintComponent.EnableDisableIntentionAction(action));
         intentions.intentionsToShow.add(new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null));
@@ -256,19 +240,4 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     }
   }
 
-  private static boolean isAvailableHere(Editor editor, PsiFile psiFile, PsiElement psiElement, boolean inProject, Project project,
-                                         IntentionAction action) {
-    try {
-      if (action instanceof PsiElementBaseIntentionAction) {
-        if (!inProject || !((PsiElementBaseIntentionAction)action).isAvailable(project, editor, psiElement)) return false;
-      }
-      else if (!action.isAvailable(project, editor, psiFile)) {
-        return false;
-      }
-    }
-    catch (IndexNotReadyException e) {
-      return false;
-    }
-    return true;
-  }
 }
