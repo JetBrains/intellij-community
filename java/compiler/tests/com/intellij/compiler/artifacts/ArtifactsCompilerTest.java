@@ -165,7 +165,8 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
     assertOutput(a, fs().dir("svn").file("b.txt"));
   }
 
-  public void testExcludedFile() throws Exception {
+  public void testCopyExcludedFile() throws Exception {
+    //excluded files should be copied (e.g. compile output)
     final VirtualFile file = createFile("xxx/excluded/a.txt");
     createFile("xxx/b.txt");
     final VirtualFile dir = file.getParent().getParent();
@@ -181,6 +182,10 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
 
     final Artifact a = addArtifact(root().dirCopy(dir.getPath()));
     compileProject();
-    assertOutput(a, fs().file("b.txt"));
+    assertOutput(a, fs()
+                     .dir("excluded")
+                       .file("a.txt")
+                       .end()
+                     .file("b.txt"));
   }
 }
