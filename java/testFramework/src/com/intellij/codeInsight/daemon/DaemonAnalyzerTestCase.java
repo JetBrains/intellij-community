@@ -38,6 +38,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
@@ -268,8 +269,8 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       toIgnore.add(Pass.VISIBLE_LINE_MARKERS);
       toIgnore.add(Pass.LINE_MARKERS);
     }
-    ProgressIndicator progress = new DaemonProgressIndicator();
-    List<TextEditorHighlightingPass> passes = TextEditorHighlightingPassRegistrarEx.getInstanceEx(getProject()).instantiatePasses(getFile(), getEditor(), toIgnore.toNativeArray());
+    final ProgressIndicator progress = new DaemonProgressIndicator();
+    final List<TextEditorHighlightingPass> passes = TextEditorHighlightingPassRegistrarEx.getInstanceEx(getProject()).instantiatePasses(getFile(), getEditor(), toIgnore.toNativeArray());
 
     for(Iterator<TextEditorHighlightingPass> i = passes.iterator();i.hasNext();) {
       final TextEditorHighlightingPass pass = i.next();
@@ -281,12 +282,16 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       }
     }
 
-    for (TextEditorHighlightingPass pass : passes) {
-      pass.collectInformation(progress);
-    }
-    for (TextEditorHighlightingPass pass : passes) {
-      pass.applyInformationToEditor();
-    }
+    ProgressManager.getInstance().runProcess(new Runnable() {
+      public void run() {
+        for (TextEditorHighlightingPass pass : passes) {
+          pass.collectInformation(progress);
+        }
+        for (TextEditorHighlightingPass pass : passes) {
+          pass.applyInformationToEditor();
+        }
+      }
+    }, progress);
 
     if (doTestLineMarkers()) {
       Document document = getDocument(getFile());
