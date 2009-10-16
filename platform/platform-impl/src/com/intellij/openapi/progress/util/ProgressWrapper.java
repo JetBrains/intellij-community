@@ -37,6 +37,10 @@ public class ProgressWrapper extends ProgressIndicatorBase {
     return myOriginal.isCanceled();
   }
 
+  public ProgressIndicator getOriginalProgressIndicator() {
+    return myOriginal;
+  }
+
   @Nullable
   public static ProgressWrapper wrap(@Nullable ProgressIndicator indicator) {
     return indicator == null ? null : new ProgressWrapper(indicator);

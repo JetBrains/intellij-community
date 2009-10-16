@@ -66,9 +66,11 @@ public class JobUtil {
       job.scheduleAndWaitForResults();
     }
     catch (RuntimeException e) {
+      job.cancel();
       throw e;
     }
     catch (Throwable throwable) {
+      job.cancel();
       LOG.error(throwable);
     }
     return !job.isCanceled();
