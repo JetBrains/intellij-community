@@ -809,7 +809,7 @@ public class CompileDriver {
   private static void dropDependencyCache(final CompileContextEx context) {
     CompilerUtil.runInContext(context, CompilerBundle.message("progress.saving.caches"), new ThrowableRunnable<RuntimeException>(){
       public void run() {
-        context.getDependencyCache().dispose();
+        context.getDependencyCache().resetState();
       }
     });
   }
@@ -892,8 +892,6 @@ public class CompileDriver {
           generatedTypes.addAll(compilerManager.getRegisteredOutputTypes(translator));
         }
 
-        dropDependencyCache(_context);
-
         if (_context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
           throw new ExitException(ExitStatus.ERRORS);
         }
@@ -906,6 +904,7 @@ public class CompileDriver {
         // perform update only if there were no errors, so it is guaranteed that the file was processd by all neccesary compilers
         sink.flushPostponedItems();
       }
+      dropDependencyCache(context);
     }
     return didSomething;
   }

@@ -51,7 +51,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Chunk;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -163,12 +162,18 @@ public class BackendCompilerWrapper {
 
     // do not update caches if cancelled because there is a chance that they will be incomplete
     if (CompilerConfiguration.MAKE_ENABLED) {
-      CompilerUtil.runInContext(myCompileContext, CompilerBundle.message("progress.updating.caches"), new ThrowableRunnable<CacheCorruptedException>(){
-        public void run() throws CacheCorruptedException {
-          ProgressIndicator indicator = myCompileContext.getProgressIndicator();
-          myCompileContext.getDependencyCache().update(indicator);
-        }
-      });
+      ProgressIndicator indicator = myCompileContext.getProgressIndicator();
+      final DependencyCache cache = myCompileContext.getDependencyCache();
+
+      indicator.setText(CompilerBundle.message("progress.updating.caches"));
+      indicator.setText2("");
+
+      cache.update(indicator);
+
+      indicator.setText(CompilerBundle.message("progress.saving.caches"));
+      cache.resetState();
+
+      indicator.setText("");
     }
 
     myFilesToRecompile.removeAll(mySuccesfullyCompiledJavaFiles);
