@@ -24,6 +24,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -96,6 +97,7 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
         validateOKButton();
       }
     });
+    Disposer.register(getDisposable(), myTargetDirectoryField);
 
     return panel;
   }
