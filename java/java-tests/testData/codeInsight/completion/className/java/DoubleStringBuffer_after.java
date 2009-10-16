@@ -1,0 +1,5 @@
+class FooFooFooFooFoo {
+  {
+    StringBuffer<caret>
+  }
+}

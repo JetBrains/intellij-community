@@ -21,23 +21,22 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.indexing.AdditionalIndexedRootsScope;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.ID;
-import com.intellij.util.indexing.AdditionalIndexedRootsScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
  * @author Dmitry Avdeev
  */
-public class IndexedRelevantResource<K, V> implements Comparable<IndexedRelevantResource> {
+public class IndexedRelevantResource<K, V extends Comparable> implements Comparable<IndexedRelevantResource<K, V>> {
 
-  public static <K, V> List<IndexedRelevantResource<K, V>> getSortedResources(ID<K, V> indexId, final K key, @NotNull final Module module) {
+  public static <K, V extends Comparable> List<IndexedRelevantResource<K, V>> getResources(ID<K, V> indexId, final K key, @NotNull final Module module) {
 
     final ArrayList<IndexedRelevantResource<K, V>> resources = new ArrayList<IndexedRelevantResource<K, V>>();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(module.getProject()).getFileIndex();
@@ -50,17 +49,16 @@ public class IndexedRelevantResource<K, V> implements Comparable<IndexedRelevant
         return true;
       }
     }, new AdditionalIndexedRootsScope(GlobalSearchScope.allScope(module.getProject())));
-    Collections.sort(resources);
     return resources;
   }
 
-  public static <K, V> List<IndexedRelevantResource<K, V>> getAllResources(ID<K, V> indexId,
+  public static <K, V extends Comparable> List<IndexedRelevantResource<K, V>> getAllResources(ID<K, V> indexId,
                                                                            @NotNull final Module module,
                                                                            @Nullable NullableFunction<List<IndexedRelevantResource<K, V>>, IndexedRelevantResource<K, V>> chooser) {
     ArrayList<IndexedRelevantResource<K, V>> all = new ArrayList<IndexedRelevantResource<K, V>>();
     Collection<K> allKeys = FileBasedIndex.getInstance().getAllKeys(indexId, module.getProject());
     for (K key : allKeys) {
-      List<IndexedRelevantResource<K, V>> resources = getSortedResources(indexId, key, module);
+      List<IndexedRelevantResource<K, V>> resources = getResources(indexId, key, module);
       if (!resources.isEmpty()) {
         if (chooser == null) {
           all.add(resources.get(0));
@@ -100,8 +98,9 @@ public class IndexedRelevantResource<K, V> implements Comparable<IndexedRelevant
     return myRelevance;
   }
 
-  public int compareTo(IndexedRelevantResource o) {
-    return myRelevance.compareTo(o.getRelevance());
+  public int compareTo(IndexedRelevantResource<K, V> o) {
+    int i = myRelevance.compareTo(o.getRelevance());
+    return i == 0 ? myValue.compareTo(o.getValue()) : i;
   }
 
   public K getKey() {

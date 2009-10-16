@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Condition;
@@ -79,6 +80,7 @@ public class CollectHighlightsUtil {
 
         PsiElement child = element.getFirstChild();
         if (child != null) {
+          ProgressManager.getInstance().checkCanceled();
           // composite element
           while (child != null) {
             if (offset > endOffset) break;

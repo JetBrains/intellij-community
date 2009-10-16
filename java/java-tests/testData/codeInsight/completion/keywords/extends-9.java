@@ -1,0 +1,1 @@
+interface AAAA e<caret>

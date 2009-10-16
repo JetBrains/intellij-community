@@ -15,6 +15,8 @@
  */
 package com.intellij.psi;
 
+import com.intellij.openapi.progress.ProgressManager;
+
 import java.util.List;
 
 /**
@@ -38,6 +40,8 @@ public abstract class PsiRecursiveElementWalkingVisitor extends PsiElementVisito
   }
 
   public void visitElement(final PsiElement element) {
+    ProgressManager.getInstance().checkCanceled();
+
     myWalkingState.elementStarted(element);
   }
 

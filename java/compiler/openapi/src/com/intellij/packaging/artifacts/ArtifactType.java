@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -79,6 +80,11 @@ public abstract class ArtifactType {
 
   @NotNull
   public abstract CompositePackagingElement<?> createRootElement(@NotNull String artifactName);
+
+  @NotNull
+  public List<? extends ArtifactTemplate> getNewArtifactTemplates(@NotNull PackagingElementResolvingContext context) {
+    return Collections.emptyList();
+  }
 
   public void checkRootElement(@NotNull CompositePackagingElement<?> rootElement, @NotNull Artifact artifact, @NotNull ArtifactValidationManager manager) {
   }

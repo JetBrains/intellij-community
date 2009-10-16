@@ -68,11 +68,11 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
   }
 
   public void addElementaryChange(ASTNode element, ChangeInfo change) {
-    int depth = 0;
     final ASTNode parent = element.getTreeParent();
     if(parent == null) return;
     ASTNode currentParent = parent;
     ASTNode prevParent = element;
+    int depth = 0;
     while(currentParent != null){
       if(myChangedElements.containsKey(currentParent)){
         final TreeChange changesByElement = getChangesByElement(currentParent);
