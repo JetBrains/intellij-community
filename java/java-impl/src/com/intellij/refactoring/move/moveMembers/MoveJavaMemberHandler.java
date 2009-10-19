@@ -140,7 +140,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
     if (RefactoringUtil.hasOnDemandStaticImport(refExpr, aClass)) {
       refExpr.setQualifierExpression(null);
     }
-    else if (!RefactoringUtil.hasStaticImportOn(refExpr, member.getContainingClass(), member)){
+    else if (!RefactoringUtil.hasStaticImportOn(refExpr, member)){
       PsiElementFactory factory = JavaPsiFacade.getInstance(refExpr.getProject()).getElementFactory();
       refExpr.setQualifierExpression(factory.createReferenceExpression(aClass));
     }

@@ -224,13 +224,13 @@ public class RefactoringUtil {
     return false;
   }
 
-   public static boolean hasStaticImportOn(final PsiReferenceExpression expr, final PsiClass aClass, final PsiMember member) {
+   public static boolean hasStaticImportOn(final PsiElement expr, final PsiMember member) {
     if (expr.getContainingFile() instanceof PsiJavaFile) {
       final PsiImportList importList = ((PsiJavaFile)expr.getContainingFile()).getImportList();
       if (importList != null) {
         final PsiImportStaticStatement[] importStaticStatements = importList.getImportStaticStatements();
         for(PsiImportStaticStatement stmt: importStaticStatements) {
-          if (!stmt.isOnDemand() && stmt.resolveTargetClass() == aClass && Comparing.strEqual(stmt.getReferenceName(), member.getName())) {
+          if (!stmt.isOnDemand() && stmt.resolveTargetClass() == member.getContainingClass() && Comparing.strEqual(stmt.getReferenceName(), member.getName())) {
             return true;
           }
         }
