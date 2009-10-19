@@ -18,6 +18,7 @@ package com.intellij.openapi.wm.impl.content;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.ToolWindowContentUiType;
 import com.intellij.openapi.wm.impl.TitlePanel;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.ui.PopupHandler;
@@ -197,6 +198,10 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     if (myTabs.size() == 0 && myWindow.isToHideOnEmptyContent()) {
       myWindow.hide(null);
     }
+  }
+
+  public void setType(ToolWindowContentUiType type) {
+    
   }
 
   private class LayoutData {

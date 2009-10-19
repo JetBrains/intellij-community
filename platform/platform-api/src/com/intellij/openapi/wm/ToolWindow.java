@@ -135,6 +135,10 @@ public interface ToolWindow {
    */
   void setAvailable(boolean available, @Nullable Runnable runnable);
 
+  void setContentUiType(ToolWindowContentUiType type, @Nullable Runnable runnable);
+
+  ToolWindowContentUiType getContentUiType();
+
   void installWatcher(ContentManager contentManager);
 
   /**

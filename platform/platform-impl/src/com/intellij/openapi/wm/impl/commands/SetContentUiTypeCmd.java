@@ -13,26 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.actions;
+package com.intellij.openapi.wm.impl.commands;
 
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowContentUiType;
+import com.intellij.openapi.wm.impl.ToolWindowImpl;
 
-public class ToggleSideModeAction extends BaseToolWindowToggleAction {
+public class SetContentUiTypeCmd extends FinalizableCommand {
 
-  @Override
-  protected boolean isSelected(ToolWindow window) {
-    return window.isSplitMode();
+  private ToolWindow myWindow;
+  private ToolWindowContentUiType myType;
+
+  public SetContentUiTypeCmd(ToolWindow wnd, ToolWindowContentUiType type, Runnable finishCallBack) {
+    super(finishCallBack);
+
+    myWindow = wnd;
+    myType = type;
   }
 
-  @Override
-  protected void setSelected(ToolWindow window, boolean state) {
-    window.setSplitMode(state, null);
+  public void run() {
+    ((ToolWindowImpl)myWindow).getContentUI().setType(myType);
   }
-
-  @Override
-  protected void update(ToolWindow window, Presentation presentation) {
-    presentation.setEnabled(window.isAvailable());
-  }
-
 }

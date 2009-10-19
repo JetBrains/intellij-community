@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindowContentUiType;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
@@ -155,6 +156,19 @@ public final class ToolWindowImpl implements ToolWindowEx {
   public boolean isSplitMode() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return myToolWindowManager.isSplitMode(myId);
+  }
+
+  public void setContentUiType(ToolWindowContentUiType type, Runnable runnable) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    myToolWindowManager.setContentUiType(myId, type);
+    if (runnable != null) {
+      myToolWindowManager.invokeLater(runnable);
+    }
+  }
+
+  public ToolWindowContentUiType getContentUiType() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    return myToolWindowManager.getContentUiType(myId);
   }
 
   public void setSplitMode(final boolean isSideTool, @Nullable final Runnable runnable) {
@@ -349,4 +363,6 @@ public final class ToolWindowImpl implements ToolWindowEx {
       myContentFactory = null;
     }
   }
+
+  
 }

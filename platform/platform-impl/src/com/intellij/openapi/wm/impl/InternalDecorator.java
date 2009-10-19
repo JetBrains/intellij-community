@@ -30,14 +30,15 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindowContentUiType;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.UIBundle;
-import com.intellij.ui.content.Content;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.content.Content;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -115,6 +116,8 @@ public final class InternalDecorator extends JPanel implements TestableUi, TypeS
   private final ToggleDockModeAction myToggleDockModeAction;
   private final ToggleFloatingModeAction myToggleFloatingModeAction;
   private final ToggleSideModeAction myToggleSideModeAction;
+  private final ToggleContentUiTypeAction myToggleContentUiTypeAction;
+
   /**
    * Catches all event from tool window and modifies decorator's appearance.
    */
@@ -127,6 +130,7 @@ public final class InternalDecorator extends JPanel implements TestableUi, TypeS
   @NonNls protected static final String TOGGLE_SIDE_MODE_ACTION_ID = "ToggleSideMode";
   @NonNls protected static final String HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow";
   @NonNls protected static final String HIDE_ACTIVE_SIDE_WINDOW_ACTION_ID = "HideSideWindows";
+  @NonNls protected static final String TOGGLE_CONTENT_UI_TYPE_ACTION_ID = "ToggleContentUiTypeMode";
   private final MyTitleButton myHideSideButton;
   private final JComponent myTitleTabs;
 
@@ -149,6 +153,7 @@ public final class InternalDecorator extends JPanel implements TestableUi, TypeS
     myAutoHideHideSeparator = new Separator();
     myHideAction = new HideAction();
     myHideSideAction = new HideSideAction();
+    myToggleContentUiTypeAction = new ToggleContentUiTypeAction();
 
     myToggleFloatingModeButton = new MyTitleButton(myToggleFloatingModeAction);
     myToggleDockModeButton = new MyTitleButton(myToggleDockModeAction);
@@ -281,6 +286,8 @@ public final class InternalDecorator extends JPanel implements TestableUi, TypeS
         floatingDecorator.apply(myInfo);
       }
     }
+
+    myToolWindow.getContentUI().setType(myInfo.getContentUiType());
   }
 
   public void calcData(DataKey key, DataSink sink) {
@@ -378,6 +385,13 @@ public final class InternalDecorator extends JPanel implements TestableUi, TypeS
     }
   }
 
+  private void fireContentUiTypeChanges(ToolWindowContentUiType type) {
+    final InternalDecoratorListener[] listeners = (InternalDecoratorListener[])myListenerList.getListeners(InternalDecoratorListener.class);
+    for (int i = 0; i < listeners.length; i++) {
+      listeners[i].contentUiTypeChanges(this, type);
+    }
+  }
+
   private void init() {
     enableEvents(ComponentEvent.COMPONENT_EVENT_MASK);
     // Compose title bar
@@ -458,6 +472,8 @@ public final class InternalDecorator extends JPanel implements TestableUi, TypeS
       group.add(myToggleDockModeAction);
       group.add(myToggleFloatingModeAction);
     }
+
+    group.add(myToggleContentUiTypeAction);
 
     final DefaultActionGroup moveGroup = new DefaultActionGroup(UIBundle.message("tool.window.move.to.action.group.name"), true);
     final ToolWindowAnchor anchor = myInfo.getAnchor();
@@ -665,6 +681,22 @@ public final class InternalDecorator extends JPanel implements TestableUi, TypeS
     @Override
     public void update(final AnActionEvent e) {
       super.update(e);
+    }
+  }
+
+  private final class ToggleContentUiTypeAction extends ToggleAction {
+    private ToggleContentUiTypeAction() {
+      copyFrom(ActionManager.getInstance().getAction(TOGGLE_CONTENT_UI_TYPE_ACTION_ID));
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return myInfo.getContentUiType() == ToolWindowContentUiType.TABBED;
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      fireContentUiTypeChanges(state ? ToolWindowContentUiType.TABBED : ToolWindowContentUiType.COMBO);
     }
   }
 

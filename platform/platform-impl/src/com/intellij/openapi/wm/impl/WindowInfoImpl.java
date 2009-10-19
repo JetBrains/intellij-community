@@ -18,6 +18,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindowContentUiType;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.WindowInfo;
 import org.jdom.Element;
@@ -56,6 +57,8 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
   private float myWeight;
   private float mySideWeight;
   private boolean mySplitMode;
+
+  private ToolWindowContentUiType myContentUiType = ToolWindowContentUiType.TABBED;
   /**
    * Defines order of tool window button inside the stripe.
    * The default value is <code>-1</code>.
@@ -76,6 +79,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
   @NonNls static final String WIDTH_ATTR = "width";
   @NonNls static final String HEIGHT_ATTR = "height";
   @NonNls static final String SIDE_TOOL_ATTR = "side_tool";
+  @NonNls static final String CONTENT_UI_ATTR = "content_ui";
 
 
   private boolean myWasRead;
@@ -135,6 +139,14 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
    */
   public ToolWindowAnchor getAnchor(){
     return myAnchor;
+  }
+
+  public ToolWindowContentUiType getContentUiType() {
+    return myContentUiType;
+  }
+
+  void setContentUiType(ToolWindowContentUiType type) {
+    myContentUiType = type;
   }
 
   /**
@@ -303,6 +315,8 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     catch (NumberFormatException ignored) {
     }
     mySplitMode = Boolean.parseBoolean(element.getAttributeValue(SIDE_TOOL_ATTR));
+
+    myContentUiType = ToolWindowContentUiType.getInstance(element.getAttributeValue(CONTENT_UI_ATTR));
   }
 
   /**
@@ -369,6 +383,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     element.setAttribute(SIDE_WEIGHT_ATTR, Float.toString(mySideWeight));
     element.setAttribute(ORDER_ATTR,Integer.toString(myOrder));
     element.setAttribute(SIDE_TOOL_ATTR, Boolean.toString(mySplitMode));
+    element.setAttribute(CONTENT_UI_ATTR, myContentUiType.getName());
     if(myFloatingBounds!=null){
       element.setAttribute(X_ATTR,Integer.toString(myFloatingBounds.x));
       element.setAttribute(Y_ATTR,Integer.toString(myFloatingBounds.y));
@@ -393,7 +408,8 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
            myWeight == info.myWeight &&
            mySideWeight == info.mySideWeight &&
            myOrder == info.myOrder &&
-           mySplitMode == info.mySplitMode;
+           mySplitMode == info.mySplitMode &&
+          myContentUiType == info.myContentUiType;
   }
 
   public int hashCode(){
