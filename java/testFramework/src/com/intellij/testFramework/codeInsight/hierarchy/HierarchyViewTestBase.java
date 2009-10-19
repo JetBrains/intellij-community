@@ -31,13 +31,14 @@ public abstract class HierarchyViewTestBase extends CodeInsightTestCase {
   }
 
   private static void checkHierarchyTreeStructure(final HierarchyTreeStructure treeStructure, final Document document) {
-    checkNodeDescriptorRecursively(treeStructure, (HierarchyNodeDescriptor)treeStructure.getRootElement(), document.getRootElement());
+    final HierarchyNodeDescriptor rootNodeDescriptor = (HierarchyNodeDescriptor)treeStructure.getRootElement();
+    rootNodeDescriptor.update();
+    checkNodeDescriptorRecursively(treeStructure, rootNodeDescriptor, document.getRootElement());
   }
 
   private static void checkNodeDescriptorRecursively(final HierarchyTreeStructure treeStructure,
                                                      final HierarchyNodeDescriptor descriptor,
                                                      final Element expectedElement) {
-    descriptor.update();
     checkBaseNode(treeStructure, descriptor, expectedElement);
     checkContent(descriptor, expectedElement);
     checkChildren(treeStructure, descriptor, expectedElement);
@@ -63,6 +64,10 @@ public abstract class HierarchyViewTestBase extends CodeInsightTestCase {
     //noinspection unchecked
     final List<Element> expectedChildren = new ArrayList<Element>(element.getChildren());
     assertEquals("Children of " + descriptor.getHighlightedText().getText(), expectedChildren.size(), children.length);
+
+    for (Object child : children) {
+      ((HierarchyNodeDescriptor)child).update();
+    }
 
     Arrays.sort(children, new Comparator<Object>() {
       public int compare(final Object first, final Object second) {
