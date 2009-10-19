@@ -37,6 +37,9 @@ public class ImportUtils{
     public static boolean nameCanBeStaticallyImported(
             @NotNull String fqName, @NotNull String memberName, @NotNull PsiElement context) {
         final PsiClass containingClass = PsiTreeUtil.getParentOfType(context, PsiClass.class);
+        if (containingClass == null) {
+            return false;
+        }
         if (ClassUtils.isSubclass(containingClass, fqName)) {
             return true;
         }
@@ -147,6 +150,9 @@ public class ImportUtils{
         }
         final PsiJavaFile javaFile = (PsiJavaFile) file;
         final PsiImportList importList = javaFile.getImportList();
+        if (importList == null) {
+            return false;
+        }
         final PsiImportStaticStatement[] importStaticStatements =
                 importList.getImportStaticStatements();
         for (PsiImportStaticStatement importStaticStatement : importStaticStatements) {
@@ -159,7 +165,13 @@ public class ImportUtils{
             }
             final PsiJavaCodeReferenceElement importReference =
                     importStaticStatement.getImportReference();
+            if (importReference == null) {
+                continue;
+            }
             final PsiElement qualifier = importReference.getQualifier();
+            if (qualifier == null) {
+                continue;
+            }
             final String qualifierText = qualifier.getText();
             if (!qualifierClass.equals(qualifierText)) {
                 return true;
@@ -240,6 +252,9 @@ public class ImportUtils{
         }
         final PsiJavaFile javaFile = (PsiJavaFile) file;
         final PsiImportList importList = javaFile.getImportList();
+        if (importList == null) {
+            return false;
+        }
         final PsiImportStaticStatement[] importStaticStatements =
                 importList.getImportStaticStatements();
         for (PsiImportStaticStatement importStaticStatement : importStaticStatements) {
@@ -247,6 +262,9 @@ public class ImportUtils{
                 continue;
             }
             final PsiClass targetClass = importStaticStatement.resolveTargetClass();
+            if (targetClass == null) {
+                continue;
+            }
             final String name = targetClass.getQualifiedName();
             if (fqName.equals(name)) {
                 continue;
@@ -420,6 +438,9 @@ public class ImportUtils{
             }
             final PsiJavaCodeReferenceElement importReference =
                     importStaticStatement.getImportReference();
+            if (importReference ==  null) {
+                continue;
+            }
             final String text = importReference.getText();
             if (qualifierClass.equals(text)) {
                 return importStaticStatement;
@@ -462,11 +483,11 @@ public class ImportUtils{
         private boolean referenceFound = false;
 
         public MemberReferenceVisitor(PsiField field) {
-            this.members = new PsiMember[]{field};
+            members = new PsiMember[]{field};
         }
 
         public MemberReferenceVisitor(PsiMethod[] methods) {
-            this.members = methods;
+            members = methods;
         }
 
         @Override
@@ -495,24 +516,23 @@ public class ImportUtils{
     private static class ClassReferenceVisitor
             extends JavaRecursiveElementVisitor{
 
-        private final String m_name;
+        private final String name;
         private final String fullyQualifiedName;
-        private boolean m_referenceFound = false;
+        private boolean referenceFound = false;
 
         private ClassReferenceVisitor(String fullyQualifiedName) {
-            super();
-            m_name = ClassUtil.extractClassName(fullyQualifiedName);
+            name = ClassUtil.extractClassName(fullyQualifiedName);
             this.fullyQualifiedName = fullyQualifiedName;
         }
 
         @Override public void visitReferenceElement(
                 PsiJavaCodeReferenceElement reference) {
             super.visitReferenceElement(reference);
-            if (m_referenceFound) {
+            if (referenceFound) {
                 return;
             }
             final String text = reference.getText();
-            if (text.indexOf((int)'.') >= 0 || !m_name.equals(text)) {
+            if (text.indexOf((int)'.') >= 0 || !name.equals(text)) {
                 return;
             }
             final PsiElement element = reference.resolve();
@@ -525,14 +545,14 @@ public class ImportUtils{
             final String testClassQualifiedName = aClass.getQualifiedName();
             if (testClassQualifiedName == null || testClassName == null
                     || testClassQualifiedName.equals(fullyQualifiedName) ||
-                    !testClassName.equals(m_name)) {
+                    !testClassName.equals(name)) {
                 return;
             }
-            m_referenceFound = true;
+            referenceFound = true;
         }
 
         public boolean isReferenceFound(){
-            return m_referenceFound;
+            return referenceFound;
         }
     }
 }
