@@ -264,7 +264,7 @@ public class ControlFlowUtil {
       }
 
       @Override public void visitBranchingInstruction(BranchingInstruction instruction, int offset, int nextOffset) {
-        processGoto(flow, start, end, exitPoints, exitStatements, instruction.offset, classesFilter, findStatement(flow, offset));
+        processGoto(flow, start, end, exitPoints, exitStatements, instruction, classesFilter, findStatement(flow, offset));
       }
 
       // call/return do not incur exit points
@@ -297,8 +297,9 @@ public class ControlFlowUtil {
 
   private static void processGoto(ControlFlow flow, int start, int end,
                                   IntArrayList exitPoints,
-                                  Collection<PsiStatement> exitStatements, int gotoOffset, Class[] classesFilter, final PsiStatement statement) {
+                                  Collection<PsiStatement> exitStatements, BranchingInstruction instruction, Class[] classesFilter, final PsiStatement statement) {
     if (statement == null) return;
+    int gotoOffset = instruction.offset;
     if (start > gotoOffset || gotoOffset >= end || isElementOfClass(statement, classesFilter)) {
       // process chain of goto's
       gotoOffset = promoteThroughGotoChain(flow, gotoOffset);
@@ -306,7 +307,16 @@ public class ControlFlowUtil {
       if (!exitPoints.contains(gotoOffset) && (gotoOffset >= end || gotoOffset < start)) {
         exitPoints.add(gotoOffset);
       }
-      processGotoStatement(classesFilter, exitStatements, statement);
+      if (gotoOffset >= end || gotoOffset < start) {
+        processGotoStatement(classesFilter, exitStatements, statement);
+      } else {
+        boolean isReturn = instruction instanceof GoToInstruction && ((GoToInstruction)instruction).isReturn;
+        final Instruction gotoInstruction = flow.getInstructions().get(gotoOffset);
+        isReturn |= gotoInstruction instanceof GoToInstruction && ((GoToInstruction)gotoInstruction).isReturn;
+        if (isReturn) {
+          processGotoStatement(classesFilter, exitStatements, statement);
+        }
+      }
     }
   }
 

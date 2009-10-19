@@ -38,6 +38,7 @@ import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -208,11 +209,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
     myAutoScrollHandler.cancelAllRequests();
 
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        dispose();
-      }
-    });
+    Disposer.dispose(this);
   }
 
   protected void addCollapseExpandActions(final List<AnAction> result) {

@@ -129,7 +129,6 @@ public class StructureConfigurableContext implements Disposable {
   @Nullable
   public Library getLibrary(final String libraryName, final String libraryLevel) {
 /* the null check is added only to prevent NPE when called from getLibrary */
-    if (myLevel2Providers.isEmpty()) resetLibraries();
     final LibrariesModifiableModel model = myLevel2Providers.get(libraryLevel);
     return model == null ? null : findLibraryModel(libraryName, model);
   }
@@ -149,8 +148,12 @@ public class StructureConfigurableContext implements Disposable {
 
 
   public void reset() {
-    myDaemonAnalyzer.reset();
     resetLibraries();
     myModulesConfigurator.resetModuleEditors();
+    myDaemonAnalyzer.reset(); // should be called after resetLibraries!
+  }
+
+  public void clear() {
+    myLevel2Providers.clear();
   }
 }
