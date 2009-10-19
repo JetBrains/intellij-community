@@ -268,7 +268,6 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     }
 
     myContext.getDaemonAnalyzer().clearCaches();
-    myContext.resetLibraries();
   }
 
   public void reset() {
@@ -319,7 +318,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     for (Configurable each : myName2Config) {
       each.disposeUIResources();
     }
-
+    myContext.clear();
     myName2Config.clear();
 
     myModuleConfigurator.getFacetsConfigurator().clearMaps();

@@ -27,12 +27,14 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.NamedConfigurable;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -96,8 +98,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   }
 
   protected void loadTree() {
-    final LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(myLevel, myProject);
-    createLibrariesNode(myContext.createModifiableModelProvider(myLevel, false), new LibrariesModifiableModel(libraryTable, myProject));
+    createLibrariesNode(myContext.createModifiableModelProvider(myLevel, false));
   }
 
   @NotNull
@@ -117,8 +118,8 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     return result;
   }
 
-  private void createLibrariesNode(final LibraryTableModifiableModelProvider modelProvider, final LibrariesModifiableModel provider) {
-    final Library[] libraries = provider.getLibraries();
+  private void createLibrariesNode(final LibraryTableModifiableModelProvider modelProvider) {
+    final Library[] libraries = modelProvider.getModifiableModel().getLibraries();
     for (Library library : libraries) {
       myRoot.add(new MyNode(new LibraryConfigurable(modelProvider, library, myProject, TREE_UPDATER)));
     }
@@ -159,7 +160,6 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   }
 
   public void dispose() {
-    myContext.myLevel2Providers.clear();
   }
 
   protected AnAction createCopyAction() {
