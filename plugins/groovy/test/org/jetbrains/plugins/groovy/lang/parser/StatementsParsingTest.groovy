@@ -42,6 +42,7 @@ public class StatementsParsingTest extends GroovyParsingTestCase {
   public void testDeclaration$decl7() throws Throwable { doTest(); }
   public void testDeclaration$decl8() throws Throwable { doTest(); }
   public void testDeclaration$decl9() throws Throwable { doTest(); }
+  public void testDeclaration$dollar() throws Throwable {doTest();}
   public void testDeclaration$groovyMain() throws Throwable { doTest(); }
   public void testDeclaration$GRVY1451() throws Throwable { doTest("declaration/GRVY-1451.test"); }
   public void testDeclaration$methodCallAsMultiDecl() throws Throwable { doTest(); }
