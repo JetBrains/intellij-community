@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.util.SmoothProgressAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -43,8 +44,13 @@ public class JavaContentEntriesEditor extends CommonContentEntriesEditor {
     super(moduleName, state);
   }
 
-  protected ContentEntryEditor createContentEntryEditor(ContentEntry contentEntry) {
-    return new JavaContentEntryEditor(contentEntry, getModel());
+  protected ContentEntryEditor createContentEntryEditor(final String contentEntryUrl) {
+    return new JavaContentEntryEditor(contentEntryUrl) {
+      @Override
+      protected ModifiableRootModel getModel() {
+        return JavaContentEntriesEditor.this.getModel();
+      }
+    };
   }
 
   protected ContentEntryTreeEditor createContentEntryTreeEditor(Project project) {

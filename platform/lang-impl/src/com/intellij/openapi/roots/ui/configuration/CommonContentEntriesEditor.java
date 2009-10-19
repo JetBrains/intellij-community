@@ -69,8 +69,8 @@ public abstract class CommonContentEntriesEditor extends ModuleElementsEditor {
   private ContentEntryTreeEditor myRootTreeEditor;
   private MyContentEntryEditorListener myContentEntryEditorListener;
   protected JPanel myEditorsPanel;
-  private final Map<ContentEntry, ContentEntryEditor> myEntryToEditorMap = new HashMap<ContentEntry, ContentEntryEditor>();
-  private ContentEntry mySelectedEntry;
+  private final Map<String, ContentEntryEditor> myEntryToEditorMap = new HashMap<String, ContentEntryEditor>();
+  private String mySelectedEntryUrl;
 
   private VirtualFile myLastSelectedDir = null;
   private final String myModuleName;
@@ -86,7 +86,7 @@ public abstract class CommonContentEntriesEditor extends ModuleElementsEditor {
       public void afterRefreshFinish(boolean asynchronous) {
         final Module module = getModule();
         if (module == null || module.isDisposed() || module.getProject().isDisposed()) return;
-        for (final ContentEntry contentEntry : myEntryToEditorMap.keySet()) {
+        for (final String contentEntry : myEntryToEditorMap.keySet()) {
           final ContentEntryEditor editor = myEntryToEditorMap.get(contentEntry);
           if (editor != null) {
             editor.update();
@@ -173,9 +173,9 @@ public abstract class CommonContentEntriesEditor extends ModuleElementsEditor {
     final ContentEntry[] contentEntries = getModel().getContentEntries();
     if (contentEntries.length > 0) {
       for (final ContentEntry contentEntry : contentEntries) {
-        addContentEntryPanel(contentEntry);
+        addContentEntryPanel(contentEntry.getUrl());
       }
-      selectContentEntry(contentEntries[0]);
+      selectContentEntry(contentEntries[0].getUrl());
     }
 
     return mainPanel;
@@ -195,7 +195,7 @@ public abstract class CommonContentEntriesEditor extends ModuleElementsEditor {
     return myModulesProvider.getModule(myModuleName);
   }
 
-  protected void addContentEntryPanel(final ContentEntry contentEntry) {
+  protected void addContentEntryPanel(final String contentEntry) {
     final ContentEntryEditor contentEntryEditor = createContentEntryEditor(contentEntry);
     contentEntryEditor.initUI();
     contentEntryEditor.addContentEntryEditorListener(myContentEntryEditorListener);
@@ -215,22 +215,22 @@ public abstract class CommonContentEntriesEditor extends ModuleElementsEditor {
     myEditorsPanel.add(component);
   }
 
-  protected abstract ContentEntryEditor createContentEntryEditor(ContentEntry contentEntry);
+  protected abstract ContentEntryEditor createContentEntryEditor(String contentEntryUrl);
 
-  void selectContentEntry(ContentEntry contentEntry) {
-    if (mySelectedEntry != null && mySelectedEntry.equals(contentEntry)) {
+  void selectContentEntry(final String contentEntryUrl) {
+    if (mySelectedEntryUrl != null && mySelectedEntryUrl.equals(contentEntryUrl)) {
       return;
     }
     try {
-      if (mySelectedEntry != null) {
-        ContentEntryEditor editor = myEntryToEditorMap.get(mySelectedEntry);
+      if (mySelectedEntryUrl != null) {
+        ContentEntryEditor editor = myEntryToEditorMap.get(mySelectedEntryUrl);
         if (editor != null) {
           editor.setSelected(false);
         }
       }
 
-      if (contentEntry != null) {
-        ContentEntryEditor editor = myEntryToEditorMap.get(contentEntry);
+      if (contentEntryUrl != null) {
+        ContentEntryEditor editor = myEntryToEditorMap.get(contentEntryUrl);
         if (editor != null) {
           editor.setSelected(true);
           final JComponent component = editor.getComponent();
@@ -246,7 +246,7 @@ public abstract class CommonContentEntriesEditor extends ModuleElementsEditor {
       }
     }
     finally {
-      mySelectedEntry = contentEntry;
+      mySelectedEntryUrl = contentEntryUrl;
     }
   }
 
@@ -257,21 +257,21 @@ public abstract class CommonContentEntriesEditor extends ModuleElementsEditor {
   }
 
   @Nullable
-  private ContentEntry getNextContentEntry(ContentEntry contentEntry) {
-    return getAdjacentContentEntry(contentEntry, 1);
+  private String getNextContentEntry(final String contentEntryUrl) {
+    return getAdjacentContentEntry(contentEntryUrl, 1);
   }
 
   @Nullable
-  private ContentEntry getAdjacentContentEntry(ContentEntry contentEntry, int delta) {
+  private String getAdjacentContentEntry(final String contentEntryUrl, int delta) {
     final ContentEntry[] contentEntries = getModel().getContentEntries();
     for (int idx = 0; idx < contentEntries.length; idx++) {
       ContentEntry entry = contentEntries[idx];
-      if (contentEntry.equals(entry)) {
+      if (contentEntryUrl.equals(entry.getUrl())) {
         int nextEntryIndex = (idx + delta) % contentEntries.length;
         if (nextEntryIndex < 0) {
           nextEntryIndex += contentEntries.length;
         }
-        return nextEntryIndex == idx ? null : contentEntries[nextEntryIndex];
+        return nextEntryIndex == idx ? null : contentEntries[nextEntryIndex].getUrl();
       }
     }
     return null;
@@ -304,46 +304,46 @@ public abstract class CommonContentEntriesEditor extends ModuleElementsEditor {
 
   protected void addContentEntryPanels(ContentEntry[] contentEntriesArray) {
     for (ContentEntry contentEntry : contentEntriesArray) {
-      addContentEntryPanel(contentEntry);
+      addContentEntryPanel(contentEntry.getUrl());
     }
     myEditorsPanel.revalidate();
     myEditorsPanel.repaint();
-    selectContentEntry(contentEntriesArray[contentEntriesArray.length - 1]);
+    selectContentEntry(contentEntriesArray[contentEntriesArray.length - 1].getUrl());
   }
 
   private final class MyContentEntryEditorListener extends ContentEntryEditorListenerAdapter {
     public void editingStarted(ContentEntryEditor editor) {
-      selectContentEntry(editor.getContentEntry());
+      selectContentEntry(editor.getContentEntryUrl());
     }
 
     public void beforeEntryDeleted(ContentEntryEditor editor) {
-      final ContentEntry entry = editor.getContentEntry();
-      if (mySelectedEntry != null && mySelectedEntry.equals(entry)) {
+      final String entryUrl = editor.getContentEntryUrl();
+      if (mySelectedEntryUrl != null && mySelectedEntryUrl.equals(entryUrl)) {
         myRootTreeEditor.setContentEntryEditor(null);
       }
-      final ContentEntry nextContentEntry = getNextContentEntry(entry);
-      removeContentEntryPanel(entry);
-      selectContentEntry(nextContentEntry);
+      final String nextContentEntryUrl = getNextContentEntry(entryUrl);
+      removeContentEntryPanel(entryUrl);
+      selectContentEntry(nextContentEntryUrl);
       editor.removeContentEntryEditorListener(this);
     }
 
     public void navigationRequested(ContentEntryEditor editor, VirtualFile file) {
-      if (mySelectedEntry != null && mySelectedEntry.equals(editor.getContentEntry())) {
+      if (mySelectedEntryUrl != null && mySelectedEntryUrl.equals(editor.getContentEntryUrl())) {
         myRootTreeEditor.requestFocus();
         myRootTreeEditor.select(file);
       }
       else {
-        selectContentEntry(editor.getContentEntry());
+        selectContentEntry(editor.getContentEntryUrl());
         myRootTreeEditor.requestFocus();
         myRootTreeEditor.select(file);
       }
     }
 
-    private void removeContentEntryPanel(final ContentEntry contentEntry) {
-      ContentEntryEditor editor = myEntryToEditorMap.get(contentEntry);
+    private void removeContentEntryPanel(final String contentEntryUrl) {
+      ContentEntryEditor editor = myEntryToEditorMap.get(contentEntryUrl);
       if (editor != null) {
         myEditorsPanel.remove(editor.getComponent());
-        myEntryToEditorMap.remove(contentEntry);
+        myEntryToEditorMap.remove(contentEntryUrl);
         myEditorsPanel.revalidate();
         myEditorsPanel.repaint();
       }
@@ -374,10 +374,22 @@ public abstract class CommonContentEntriesEditor extends ModuleElementsEditor {
       }
     }
 
+    @Nullable
+    private ContentEntry getContentEntry(final String url) {
+      final ContentEntry[] entries = getModel().getContentEntries();
+      for (final ContentEntry entry : entries) {
+        if (entry.getUrl().equals(url)) return entry;
+      }
+
+      return null;
+    }
+
     private void validateContentEntriesCandidates(VirtualFile[] files) throws Exception {
       for (final VirtualFile file : files) {
         // check for collisions with already existing entries
-        for (final ContentEntry contentEntry : myEntryToEditorMap.keySet()) {
+        for (final String contentEntryUrl : myEntryToEditorMap.keySet()) {
+          final ContentEntry contentEntry = getContentEntry(contentEntryUrl);
+          if (contentEntry == null) continue;
           final VirtualFile contentEntryFile = contentEntry.getFile();
           if (contentEntryFile == null) {
             continue;  // skip invalid entry
