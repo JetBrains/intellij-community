@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,26 @@
  */
 package com.siyeh.ipp.junit;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.BoolUtils;
+import com.siyeh.ipp.psiutils.ImportUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class FlipAssertLiteralIntention extends MutablyNamedIntention {
 
+    @Override
     protected String getTextForElement(PsiElement element) {
         final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
         final PsiReferenceExpression methodExpression =
                 call.getMethodExpression();
-      @NonNls final String fromMethodName = StringUtil.notNullize(methodExpression.getReferenceName());
+        @NonNls final String fromMethodName = methodExpression.getReferenceName();
         @NonNls final String toMethodName;
         if ("assertTrue".equals(fromMethodName)) {
             toMethodName = "assertFalse";
@@ -43,11 +46,12 @@ public class FlipAssertLiteralIntention extends MutablyNamedIntention {
                 fromMethodName, toMethodName);
     }
 
-    @NotNull
+    @Override @NotNull
     public PsiElementPredicate getElementPredicate() {
         return new AssertTrueOrFalsePredicate();
     }
 
+    @Override
     public void processIntention(PsiElement element)
             throws IncorrectOperationException {
         final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
@@ -61,27 +65,34 @@ public class FlipAssertLiteralIntention extends MutablyNamedIntention {
         } else {
             toMethodName = "assertTrue";
         }
-        final PsiElement qualifier =
-                methodExpression.getQualifier();
-        final String qualifierText;
+        final StringBuilder newCall = new StringBuilder();
+        final PsiElement qualifier = methodExpression.getQualifier();
         if (qualifier == null) {
-            qualifierText = "";
+            final PsiMethod containingMethod =
+                    PsiTreeUtil.getParentOfType(call, PsiMethod.class);
+            if (containingMethod != null &&
+                AnnotationUtil.isAnnotated(containingMethod, "org.junit.Test", true)) {
+                if (ImportUtils.nameCanBeStaticallyImported(
+                        "org.junit.Assert", toMethodName, element)) {
+                    ImportUtils.addStaticImport("org.junit.Assert", toMethodName, element);
+                } else {
+                    newCall.append("org.junit.Assert.");
+                }
+            }
         } else {
-            qualifierText = qualifier.getText() + '.';
+            newCall.append(qualifier.getText());
+            newCall.append('.');
         }
+        newCall.append(toMethodName);
+        newCall.append('(');
         final PsiExpressionList argumentList = call.getArgumentList();
         final PsiExpression[] args = argumentList.getExpressions();
-        final String callString;
         if (args.length == 1) {
-            final PsiExpression arg = args[0];
-            callString = qualifierText + toMethodName + '(' +
-                    BoolUtils.getNegatedExpressionText(arg) + ')';
+            newCall.append(BoolUtils.getNegatedExpressionText(args[0]));
         } else {
-            final PsiExpression arg = args[1];
-            callString = qualifierText + toMethodName + '(' +
-                    args[0].getText() + ',' +
-                    BoolUtils.getNegatedExpressionText(arg) + ')';
+            newCall.append(BoolUtils.getNegatedExpressionText(args[1]));
         }
-        replaceExpression(callString, call);
+        newCall.append(')');
+        replaceExpression(newCall.toString(), call);
     }
 }

@@ -76,29 +76,31 @@ public class BaseSpellChecker implements SpellCheckerEngine {
 
   @NotNull
   public List<String> getSuggestions(final @NotNull String word, int threshold, int quality) {
+    final String transformed = transform.transform(word);
+    if (transformed == null) {
+      return Collections.emptyList();
+    }
     final List<Suggestion> suggestions = new ArrayList<Suggestion>();
-
-    suggestions.clear();
     engineDictionary.traverse(new Action() {
       public void run(Map.Entry<? extends String, ? extends String> entry) {
-        if (word.charAt(0) == entry.getKey().charAt(0)/* && Math.abs(mpw.length() - entry.getKey().length()) <= 1*/) {
-          final int distance = metrics.calculateMetrics(word, entry.getKey());
+        if (transformed.charAt(0) == entry.getKey().charAt(0)/* && Math.abs(mpw.length() - entry.getKey().length()) <= 1*/) {
+          final int distance = metrics.calculateMetrics(transformed, entry.getKey());
           suggestions.add(new Suggestion(entry.getKey(), distance));
         }
       }
     });
     List<String> result = new ArrayList<String>();
-    if (suggestions.isEmpty()){
+    if (suggestions.isEmpty()) {
       return result;
     }
     Collections.sort(suggestions);
     int bestMetrics = suggestions.get(0).getMetrics();
     for (int i = 0; i < threshold; i++) {
 
-      if (suggestions.size()<i || bestMetrics-suggestions.get(i).getMetrics()>quality){
+      if (suggestions.size() < i || bestMetrics - suggestions.get(i).getMetrics() > quality) {
         break;
       }
-      result.add(i,suggestions.get(i).getWord());
+      result.add(i, suggestions.get(i).getWord());
     }
     return result;
   }

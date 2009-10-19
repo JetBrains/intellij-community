@@ -23,8 +23,8 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.AbstractIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
+import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
@@ -43,9 +43,9 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.IntentionFilterOwner;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -55,11 +55,11 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.awt.*;
 
 public class ShowIntentionsPass extends TextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.ShowIntentionsPass");
@@ -112,7 +112,9 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     if (!myEditor.getContentComponent().hasFocus()) return;
     TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
     if (state == null || state.isFinished()) {
+      DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
       getIntentionActionsToShow();
+      updateActions(codeAnalyzer);
     }
   }
 
@@ -138,7 +140,6 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   }
 
   private void getIntentionActionsToShow() {
-    DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
     if (LookupManager.getInstance(myProject).getActiveLookup() != null) return;
 
     getActionsToShow(myEditor, myFile, myIntentionsInfo, myPassIdToShowIntentionsFor);
@@ -155,23 +156,17 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     }
     myShowBulb = !myIntentionsInfo.guttersToShow.isEmpty();
     if (!myShowBulb) {
-      for (HighlightInfo.IntentionActionDescriptor action : ContainerUtil.concat(myIntentionsInfo.errorFixesToShow, myIntentionsInfo.inspectionFixesToShow)) {
-        if (IntentionManagerSettings.getInstance().isShowLightBulb(action.getAction())) {
-          myShowBulb = true;
-          break;
-        }
-      }
-    }
-    if (!myShowBulb) {
-      for (HighlightInfo.IntentionActionDescriptor descriptor : myIntentionsInfo.intentionsToShow) {
+      for (HighlightInfo.IntentionActionDescriptor descriptor : ContainerUtil.concat(myIntentionsInfo.errorFixesToShow, myIntentionsInfo.inspectionFixesToShow,myIntentionsInfo.intentionsToShow)) {
         final IntentionAction action = descriptor.getAction();
-        if (IntentionManagerSettings.getInstance().isShowLightBulb(action) && action.isAvailable(myProject, myEditor, myFile)) {
+        if (IntentionManagerSettings.getInstance().isShowLightBulb(action)) {
           myShowBulb = true;
           break;
         }
       }
     }
+  }
 
+  private void updateActions(DaemonCodeAnalyzerImpl codeAnalyzer) {
     IntentionHintComponent hintComponent = codeAnalyzer.getLastIntentionHint();
     if (!myShowBulb || hintComponent == null) {
       return;
@@ -191,25 +186,17 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   public static void getActionsToShow(@NotNull final Editor editor, @NotNull final PsiFile psiFile, @NotNull IntentionsInfo intentions, int passIdToShowIntentionsFor) {
     final PsiElement psiElement = psiFile.findElementAt(editor.getCaretModel().getOffset());
     LOG.assertTrue(psiElement == null || psiElement.isValid(), psiElement);
-    final boolean isInProject = psiFile.getManager().isInProject(psiFile);
 
     int offset = editor.getCaretModel().getOffset();
     Project project = psiFile.getProject();
+    
     for (IntentionAction action : IntentionManager.getInstance().getIntentionActions()) {
-      try {
-        if (action instanceof PsiElementBaseIntentionAction) {
-          if (!isInProject || !((PsiElementBaseIntentionAction)action).isAvailable(project, editor, psiElement)) continue;
-        }
-        else if (!action.isAvailable(project, editor, psiFile)) {
-          continue;
-        }
+      Pair<PsiFile,Editor> place = ShowIntentionActionsHandler.availableFor(psiFile, editor, action, psiElement);
+      if (place != null) {
+        List<IntentionAction> enableDisableIntentionAction = new ArrayList<IntentionAction>();
+        enableDisableIntentionAction.add(new IntentionHintComponent.EnableDisableIntentionAction(action));
+        intentions.intentionsToShow.add(new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null));
       }
-      catch (IndexNotReadyException e) {
-        continue;
-      }
-      List<IntentionAction> enableDisableIntentionAction = new ArrayList<IntentionAction>();
-      enableDisableIntentionAction.add(new IntentionHintComponent.EnableDisableIntentionAction(action));
-      intentions.intentionsToShow.add(new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null));
     }
 
     List<HighlightInfo.IntentionActionDescriptor> actions = QuickFixAction.getAvailableActions(editor, psiFile, passIdToShowIntentionsFor);
@@ -252,4 +239,5 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       }
     }
   }
+
 }

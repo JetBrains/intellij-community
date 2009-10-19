@@ -40,13 +40,12 @@ public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTN
     }
 
     if (oldNode instanceof LeafElement) {
-      if (newNode instanceof LeafElement) return ((LeafElement)oldNode).textMatches(newNode.getChars()) ? ThreeState.YES : ThreeState.NO;
       return ((LeafElement)oldNode).textMatches(newNode.getText()) ? ThreeState.YES : ThreeState.NO;
     }
 
     if (oldNode instanceof PsiErrorElement && newNode instanceof PsiErrorElement) {
-      final PsiErrorElement e1 = ((PsiErrorElement)oldNode);
-      final PsiErrorElement e2 = ((PsiErrorElement)newNode);
+      final PsiErrorElement e1 = (PsiErrorElement)oldNode;
+      final PsiErrorElement e2 = (PsiErrorElement)newNode;
       if (!Comparing.equal(e1.getErrorDescription(), e2.getErrorDescription())) return ThreeState.NO;
     }
 
@@ -63,11 +62,12 @@ public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTN
     }
 
     if (n1 instanceof PsiErrorElement && n2 instanceof PsiErrorElement) {
-      final PsiErrorElement e1 = ((PsiErrorElement)n1);
-      final PsiErrorElement e2 = ((PsiErrorElement)n2);
+      final PsiErrorElement e1 = (PsiErrorElement)n1;
+      final PsiErrorElement e2 = (PsiErrorElement)n2;
       if (!Comparing.equal(e1.getErrorDescription(), e2.getErrorDescription())) return false;
     }
 
     return ((TreeElement)n1).hc() == ((TreeElement)n2).hc();
   }
+
 }

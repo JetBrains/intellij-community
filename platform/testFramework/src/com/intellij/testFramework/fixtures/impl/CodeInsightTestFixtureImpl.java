@@ -28,6 +28,7 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
@@ -428,7 +429,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void launchAction(@NotNull final IntentionAction action) throws Exception {
     new WriteCommandAction(myProjectFixture.getProject()) {
       protected void run(final Result result) throws Exception {
-        action.invoke(getProject(), getEditor(), getFile());
+        ShowIntentionActionsHandler.chooseActionAndInvoke(getFile(), getEditor(), action, action.getText());
       }
     }.execute().throwException();
 
@@ -619,8 +620,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         for (HighlightInfo info : doHighlighting()) {
           addGutterIconRenderer(info.getGutterIconRenderer(), info.startOffset);
         }
-
-        doHighlighting();
 
         for (final RangeHighlighter highlighter : myEditor.getDocument().getMarkupModel(project).getAllHighlighters()) {
           addGutterIconRenderer(highlighter.getGutterIconRenderer(), highlighter.getStartOffset());
@@ -1063,30 +1062,35 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @NotNull
-  private List<HighlightInfo> doHighlighting() {
+  public List<HighlightInfo> doHighlighting() {
     final Project project = myProjectFixture.getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     return
     ApplicationManager.getApplication().runReadAction(new Computable<List<HighlightInfo>>() {
       public List<HighlightInfo> compute() {
-        final List<TextEditorHighlightingPass > passes =
-          TextEditorHighlightingPassRegistrarEx.getInstanceEx(getProject()).instantiatePasses(getFile(), getEditor(), ArrayUtil.EMPTY_INT_ARRAY);
-        final ProgressIndicator progress = new DaemonProgressIndicator();
-        ProgressManager.getInstance().runProcess(new Runnable() {
-          public void run() {
-            for (TextEditorHighlightingPass pass : passes) {
-              pass.collectInformation(progress);
-            }
-            for (TextEditorHighlightingPass pass : passes) {
-              pass.applyInformationToEditor();
-            }
-          }
-        }, progress);
-        List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), getProject());
-        return infos == null ? Collections.<HighlightInfo>emptyList() : new ArrayList<HighlightInfo>(infos);
+        return instantiateAndRun(CodeInsightTestFixtureImpl.this.getFile(), CodeInsightTestFixtureImpl.this.getEditor(), ArrayUtil.EMPTY_INT_ARRAY);
       }
     });
+  }
+
+  @NotNull
+  public static List<HighlightInfo> instantiateAndRun(PsiFile file, Editor editor, int[] toIgnore) {
+    TextEditorHighlightingPassRegistrarEx registrar = TextEditorHighlightingPassRegistrarEx.getInstanceEx(file.getProject());
+    final List<TextEditorHighlightingPass> passes = registrar.instantiatePasses(file, editor, toIgnore);
+    final ProgressIndicator progress = new DaemonProgressIndicator();
+    ProgressManager.getInstance().runProcess(new Runnable() {
+      public void run() {
+        for (TextEditorHighlightingPass pass : passes) {
+          pass.collectInformation(progress);
+        }
+        for (TextEditorHighlightingPass pass : passes) {
+          pass.applyInformationToEditor();
+        }
+      }
+    }, progress);
+    List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), file.getProject());
+    return infos == null ? Collections.<HighlightInfo>emptyList() : new ArrayList<HighlightInfo>(infos);
   }
 
   public String getTestDataPath() {
@@ -1126,23 +1130,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     descriptors.addAll(intentions.inspectionFixesToShow);
     descriptors.addAll(intentions.guttersToShow);
 
-    /*
-    final List<IntentionAction> availableActions = new ArrayList<IntentionAction>();
-    for (HighlightInfo info :infos) {
-      if (info.quickFixActionRanges != null) {
-        for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
-          IntentionAction action = pair.first.getAction();
-          if (action.isAvailable(file.getProject(), editor, file)) availableActions.add(action);
-        }
-      }
-    }
-
-    intentionAction = LightQuickFixTestCase.findActionWithText(
-      availableActions,
-      intentionActionName
-    );
-    */
-
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     List<IntentionAction> result = new ArrayList<IntentionAction>();
 
@@ -1156,6 +1143,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       }
     }
 
+    // add all intention options for simplicity
     for (HighlightInfo.IntentionActionDescriptor descriptor : descriptors) {
       result.add(descriptor.getAction());
       List<IntentionAction> options = descriptor.getOptions(element);

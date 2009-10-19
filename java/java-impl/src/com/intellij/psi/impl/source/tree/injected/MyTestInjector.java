@@ -73,7 +73,7 @@ public class MyTestInjector {
 
   private static ConcatenationAwareInjector registerForStringVarInitializer(@NotNull Project project,
                                                                             @NotNull final Language language,
-                                                                            @NonNls final String varName,
+                                                                            @NotNull @NonNls final String varName,
                                                                             @NonNls final String prefix,
                                                                             @NonNls final String suffix) {
     ConcatenationAwareInjector injector = new ConcatenationAwareInjector() {

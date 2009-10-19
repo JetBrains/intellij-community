@@ -152,15 +152,6 @@ public abstract class LeafElement extends TreeElement {
     final int len = text.length();
     int hc = 0;
 
-    if (len > TEXT_MATCHES_THRESHOLD && text instanceof String) {
-      final String str = (String)text;
-
-      for (int i = 0; i < len; i++) {
-        hc += str.charAt(i);
-      }
-
-      return hc;
-    }
     for (int i = 0; i < len; i++) {
       hc += text.charAt(i);
     }

@@ -28,7 +28,6 @@ import git4idea.GitVcs;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
-import git4idea.config.GitConfigUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -117,7 +116,7 @@ public class MergeChangeCollector {
         File mergeHeadsFile = new File(root, ".git/MERGE_HEAD");
         try {
           if (mergeHeadsFile.exists()) {
-            String mergeHeads = new String(FileUtil.loadFileText(mergeHeadsFile, GitConfigUtil.UTF8_ENCODING));
+            String mergeHeads = new String(FileUtil.loadFileText(mergeHeadsFile, GitUtil.UTF8_ENCODING));
             for (StringScanner s = new StringScanner(mergeHeads); s.hasMoreData();) {
               String head = s.line();
               if (head.length() == 0) {

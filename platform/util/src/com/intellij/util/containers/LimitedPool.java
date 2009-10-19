@@ -19,6 +19,8 @@
  */
 package com.intellij.util.containers;
 
+import org.jetbrains.annotations.NotNull;
+
 public class LimitedPool<T> {
   private final int capacity;
   private final ObjectFactory<T> factory;
@@ -38,11 +40,14 @@ public class LimitedPool<T> {
 
   public T alloc() {
     if (index == 0) return factory.create();
+    int i = --index;
     //noinspection unchecked
-    return (T)storage[--index];
+    T result = (T)storage[i];
+    storage[i] = null;
+    return result;
   }
 
-  public void recycle(T t) {
+  public void recycle(@NotNull T t) {
     factory.cleanup(t);
 
     if (index >= capacity) return;

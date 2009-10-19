@@ -1,0 +1,5 @@
+class FooFooFooFooFoo {
+  {
+    StringBuf<caret>
+  }
+}

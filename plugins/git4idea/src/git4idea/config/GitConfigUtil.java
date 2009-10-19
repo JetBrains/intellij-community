@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitUtil;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
 import org.jetbrains.annotations.NonNls;
@@ -33,11 +34,6 @@ import java.util.Map;
  * Git utilities for working with configuration
  */
 public class GitConfigUtil {
-  /**
-   * The UTF-8 enconding name
-   */
-  public static final String UTF8_ENCODING = "UTF-8";
-
   /**
    * A private constructor for utility class
    */
@@ -175,7 +171,7 @@ public class GitConfigUtil {
       // ignore exception
     }
     if (encoding == null || encoding.length() == 0) {
-      encoding = UTF8_ENCODING;
+      encoding = GitUtil.UTF8_ENCODING;
     }
     return encoding;
   }

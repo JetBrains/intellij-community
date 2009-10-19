@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,9 +50,9 @@ class CreateAssertPredicate implements PsiElementPredicate{
         if(method == null){
             return false;
         }
-	    if (AnnotationUtil.isAnnotated(method, "org.junit.Test", true)) {
-		    return true;
-	    }
+        if (AnnotationUtil.isAnnotated(method, "org.junit.Test", true)) {
+            return true;
+        }
         if(method.hasModifierProperty(PsiModifier.ABSTRACT) ||
            !method.hasModifierProperty(PsiModifier.PUBLIC)){
             return false;
@@ -66,18 +66,15 @@ class CreateAssertPredicate implements PsiElementPredicate{
         }
         final PsiParameterList parameterList = method.getParameterList();
         final PsiParameter[] parameters = parameterList.getParameters();
-        if(parameters == null){
-            return false;
-        }
         if(parameters.length != 0){
             return false;
         }
         @NonNls final String methodName = method.getName();
-	    if (!methodName.startsWith("test")) {
-		    return false;
-	    }
-	    final PsiClass containingClass = method.getContainingClass();
-	    return isTestClass(containingClass);
+        if (!methodName.startsWith("test")) {
+            return false;
+        }
+        final PsiClass containingClass = method.getContainingClass();
+        return isTestClass(containingClass);
     }
 
     private static boolean isTestClass(PsiClass aClass) {
@@ -86,7 +83,8 @@ class CreateAssertPredicate implements PsiElementPredicate{
         }
         final Project project = aClass.getProject();
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-        final PsiClass ancestorClass = JavaPsiFacade.getInstance(project).findClass("junit.framework.TestCase", scope);
+        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+        final PsiClass ancestorClass = psiFacade.findClass("junit.framework.TestCase", scope);
         return InheritanceUtil.isInheritorOrSelf(aClass, ancestorClass, true);
     }
 }

@@ -60,6 +60,11 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
     if (type1.equals(type2)) return type1;
     final int typeRank1 = TypeConversionUtil.getTypeRank(type1);
     final int typeRank2 = TypeConversionUtil.getTypeRank(type2);
+
+    // bug in JLS3, see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6888770
+    if (type1 instanceof PsiClassType && type2.equals(PsiPrimitiveType.getUnboxedType(type1))) return type2;
+    if (type2 instanceof PsiClassType && type1.equals(PsiPrimitiveType.getUnboxedType(type2))) return type1;
+
     if (TypeConversionUtil.isNumericType(typeRank1) && TypeConversionUtil.isNumericType(typeRank2)){
       if (typeRank1 == TypeConversionUtil.BYTE_RANK && typeRank2 == TypeConversionUtil.SHORT_RANK) return type2;
       if (typeRank1 == TypeConversionUtil.SHORT_RANK && typeRank2 == TypeConversionUtil.BYTE_RANK) return type1;
@@ -79,10 +84,14 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
     if (!PsiUtil.isLanguageLevel5OrHigher(this)) {
       return null;
     }
-    if (TypeConversionUtil.isPrimitiveAndNotNull(type1)) type1 = ((PsiPrimitiveType)type1).getBoxedType(this);
-    if (type1 == null) return null;
-    if (TypeConversionUtil.isPrimitiveAndNotNull(type2)) type2 = ((PsiPrimitiveType)type2).getBoxedType(this);
-    if (type2 == null) return null;
+    if (TypeConversionUtil.isPrimitiveAndNotNull(type1)) {
+      type1 = ((PsiPrimitiveType)type1).getBoxedType(this);
+      if (type1 == null) return null;
+    }
+    if (TypeConversionUtil.isPrimitiveAndNotNull(type2)) {
+      type2 = ((PsiPrimitiveType)type2).getBoxedType(this);
+      if (type2 == null) return null;
+    }
 
     return GenericsUtil.getLeastUpperBound(type1, type2, getManager());
   }

@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 
 /**
@@ -24,6 +25,7 @@ import com.intellij.psi.templateLanguages.OuterLanguageElement;
  */
 public abstract class PsiElementVisitor {
   public void visitElement(PsiElement element) {
+    ProgressManager.getInstance().checkCanceled();
   }
 
   public void visitFile(PsiFile file) {

@@ -34,7 +34,7 @@ public class JobSchedulerImpl extends JobScheduler implements Disposable {
   private static final ThreadFactory WORKERS_FACTORY = new ThreadFactory() {
     int i;
     public Thread newThread(final Runnable r) {
-      return new Thread(r, "JobScheduler pool "+i++);
+      return new Thread(r, "JobScheduler pool "+i+++"/"+CORES_COUNT);
     }
   };
 

@@ -234,7 +234,8 @@ public class GrStringUtil {
         final GrClosableBlock closableBlock = ((GrStringInjection)child).getClosableBlock();
         final GrReferenceExpression refExpr = (GrReferenceExpression)closableBlock.getStatements()[0];
         final GrReferenceExpression copy = (GrReferenceExpression)refExpr.copy();
-        closableBlock.replace(copy);
+        final ASTNode oldNode = closableBlock.getNode();
+        oldNode.getTreeParent().replaceChild(oldNode, copy.getNode());
       }
     }
   }

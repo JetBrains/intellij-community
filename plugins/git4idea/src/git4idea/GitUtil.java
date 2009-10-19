@@ -39,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.util.*;
 
 /**
@@ -66,6 +67,14 @@ public class GitUtil {
       return o1.getPresentableUrl().compareTo(o2.getPresentableUrl());
     }
   };
+  /**
+   * The UTF-8 encoding name
+   */
+  public static final String UTF8_ENCODING = "UTF-8";
+  /**
+   * The UTF8 charset
+   */
+  public static final Charset UTF8_CHARSET = Charset.forName(UTF8_ENCODING);
 
   /**
    * A private constructor to suppress instance creation
