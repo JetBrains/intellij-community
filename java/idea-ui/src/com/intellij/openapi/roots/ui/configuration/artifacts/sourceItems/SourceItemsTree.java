@@ -28,10 +28,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorImpl;
 import com.intellij.openapi.roots.ui.configuration.artifacts.SimpleDnDAwareTree;
 import com.intellij.openapi.roots.ui.configuration.artifacts.SourceItemsDraggingObject;
-import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.actions.PutSourceItemIntoDefaultLocationAction;
-import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.actions.PutSourceItemIntoParentAndLinkViaManifestAction;
-import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.actions.SourceItemFindUsagesAction;
-import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.actions.SourceItemNavigateAction;
+import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.actions.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.packaging.ui.ArtifactEditorContext;
@@ -70,6 +67,7 @@ public class SourceItemsTree implements DnDSource, Disposable{
   private ActionGroup createPopupGroup() {
     final DefaultActionGroup group = new DefaultActionGroup();
     group.add(new PutSourceItemIntoDefaultLocationAction(this, myArtifactsEditor));
+    group.add(new PackAndPutIntoDefaultLocationAction(this, myArtifactsEditor));
     group.add(new PutSourceItemIntoParentAndLinkViaManifestAction(this, myArtifactsEditor));
 
     group.add(Separator.getInstance());

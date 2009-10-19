@@ -433,6 +433,24 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     updateAndSelect(myTree.getRootPackagingNode(), toSelect);
   }
 
+  public void packInto(@NotNull final List<? extends PackagingSourceItem> items, final String pathToJar) {
+    final List<PackagingElement<?>> toSelect = new ArrayList<PackagingElement<?>>();
+    final CompositePackagingElement<?> rootElement = getArtifact().getRootElement();
+    editLayout(new Runnable() {
+      public void run() {
+        final CompositePackagingElement<?> archive = PackagingElementFactory.getInstance().getOrCreateArchive(rootElement, pathToJar);
+        for (PackagingSourceItem item : items) {
+          final List<? extends PackagingElement<?>> elements = item.createElements(myContext);
+          archive.addOrFindChildren(elements);
+        }
+        toSelect.add(archive);
+      }
+    });
+
+    myArtifactsEditor.getSourceItemsTree().rebuildTree();
+    updateAndSelect(myTree.getRootPackagingNode(), toSelect);
+  }
+
   public boolean isPropertiesModified() {
     final PackagingElementPropertiesPanel panel = mySelectedElementInfo.myCurrentPanel;
     return panel != null && panel.isModified();

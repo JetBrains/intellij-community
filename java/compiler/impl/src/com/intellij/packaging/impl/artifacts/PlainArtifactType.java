@@ -18,11 +18,9 @@ package com.intellij.packaging.impl.artifacts;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.packaging.artifacts.ArtifactType;
-import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.packaging.elements.PackagingElementOutputKind;
 import com.intellij.packaging.impl.elements.ArtifactRootElementImpl;
-import com.intellij.packaging.ui.PackagingSourceItem;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,12 +48,8 @@ public class PlainArtifactType extends ArtifactType {
     return ARTIFACT_ICON;
   }
 
-  public String getDefaultPathFor(@NotNull PackagingSourceItem sourceItem) {
-    return "/";
-  }
-
   @Override
-  public String getDefaultPathFor(@NotNull PackagingElement<?> element, @NotNull PackagingElementResolvingContext context) {
+  public String getDefaultPathFor(@NotNull PackagingElementOutputKind kind) {
     return "/";
   }
 
