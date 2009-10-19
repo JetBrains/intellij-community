@@ -532,8 +532,8 @@ class TemplateListPanel extends JPanel {
     TemplateImpl orTemplate = getTemplate(selected);
     LOG.assertTrue(orTemplate != null);
     TemplateImpl template = orTemplate.copy();
-    myTemplateOptions.put(getKey(template), template.createOptions());
-    myTemplateContext.put(getKey(template), template.createContext());
+    myTemplateOptions.put(getKey(template), getOptions(orTemplate));
+    myTemplateContext.put(getKey(template), getContext(orTemplate));
     EditTemplateDialog dialog = new EditTemplateDialog(this, CodeInsightBundle.message("dialog.copy.live.template.title"), template, getTemplateGroups(),
                                                        (String)myExpandByCombo.getSelectedItem(), getOptions(template), getContext(template));
     dialog.show();

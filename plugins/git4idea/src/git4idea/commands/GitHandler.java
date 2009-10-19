@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.Processor;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitVcsSettings;
@@ -37,6 +38,7 @@ import org.jetbrains.git4idea.ssh.GitSSHGUIHandler;
 import org.jetbrains.git4idea.ssh.GitSSHService;
 
 import java.io.File;
+import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.*;
 
@@ -93,6 +95,10 @@ public abstract class GitHandler {
    * the handler number
    */
   private int myHandlerNo;
+  /**
+   * The processor for stdin
+   */
+  private Processor<OutputStream> myInputProcessor;
   /**
    * if true process might be cancelled
    */
@@ -222,6 +228,10 @@ public abstract class GitHandler {
    * The constant for git command {@value}
    */
   @NonNls public static final String RESET = "reset";
+  /**
+   * Check attributes command
+   */
+  @NonNls public static final String CHECK_ATTR = "check-attr";
   /**
    * Name of environment variable that specifies editor for the git
    */
@@ -606,7 +616,13 @@ public abstract class GitHandler {
    */
   public void waitFor() {
     checkStarted();
-    myHandler.waitFor();
+    try {
+      if(myInputProcessor != null) {
+        myInputProcessor.process(myHandler.getProcessInput());
+      }
+    } finally {
+      myHandler.waitFor();
+    }
   }
 
   /**
@@ -684,5 +700,14 @@ public abstract class GitHandler {
    */
   public void setEnvironment(String name, String value) {
     myEnv.put(name, value);
+  }
+
+  /**
+   * Set processor for standard input. This is a place where input to the git application could be generated.
+   *
+   * @param inputProcessor the processor
+   */
+  public void setInputProcessor(Processor<OutputStream> inputProcessor) {
+    myInputProcessor = inputProcessor;
   }
 }

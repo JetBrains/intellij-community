@@ -226,7 +226,9 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
   }
 
   private static boolean calcAlphaModelSupported() {
-    if (AWTUtilitiesWrapper.isTranslucencySupported(AWTUtilitiesWrapper.TRANSLUCENT)) return true;
+    if (AWTUtilitiesWrapper.isTranslucencyAPISupported()) {
+      return AWTUtilitiesWrapper.isTranslucencySupported(AWTUtilitiesWrapper.TRANSLUCENT);
+    }
     try {
       return WindowUtils.isWindowAlphaSupported();
     }

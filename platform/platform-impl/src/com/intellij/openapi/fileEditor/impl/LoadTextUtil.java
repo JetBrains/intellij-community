@@ -278,6 +278,64 @@ public final class LoadTextUtil {
     return result.getFirst();
   }
 
+  /**
+   * Get detected line separator, if the file never been loaded, is loaded if checkFile parameter is specified.
+   *
+   * @param file      the file to check
+   * @param checkFile if the line separator was not detected before, try to detect it
+   * @return the detected line separator or null
+   */
+  @Nullable
+  public static String detectLineSeparator(@NotNull VirtualFile file, boolean checkFile) {
+    String lineSeparator = file.getUserData(DETECTED_LINE_SEPARATOR_KEY);
+    if (lineSeparator == null && checkFile) {
+      try {
+        getTextByBinaryPresentation(file.contentsToByteArray(), file);
+        lineSeparator = file.getUserData(DETECTED_LINE_SEPARATOR_KEY);
+      }
+      catch (IOException e) {
+        // null will be returned
+      }
+    }
+    return lineSeparator;
+  }
+
+  /**
+   * Change line separator for the file to the specified value (assumes that the documents were saved)
+   *
+   * @param project          the project instance
+   * @param requestor        the requestor for the operation
+   * @param file             the file to convert
+   * @param newLineSeparator the new line separator for the file
+   * @throws IOException in the case of IO problem
+   */
+  public static void changeLineSeparator(@Nullable Project project,
+                                         @Nullable Object requestor,
+                                         @NotNull VirtualFile file,
+                                         @NotNull String newLineSeparator) throws IOException {
+    String lineSeparator = file.getUserData(DETECTED_LINE_SEPARATOR_KEY);
+    if (lineSeparator != null && lineSeparator.equals(newLineSeparator)) {
+      return;
+    }
+    CharSequence cs = getTextByBinaryPresentation(file.contentsToByteArray(), file);
+    lineSeparator = file.getUserData(DETECTED_LINE_SEPARATOR_KEY);
+    if (lineSeparator.equals(newLineSeparator)) {
+      return;
+    }
+    if (!newLineSeparator.equals("\n")) {
+      cs = StringUtil.convertLineSeparators(cs.toString(), newLineSeparator);
+    }
+    String text = cs.toString();
+    file.putUserData(DETECTED_LINE_SEPARATOR_KEY, newLineSeparator);
+    Writer w = getWriter(project, file, requestor, text, System.currentTimeMillis());
+    try {
+      w.write(text);
+    }
+    finally {
+      w.close();
+    }
+  }
+
   @NotNull
   public static CharSequence getTextByBinaryPresentation(@NotNull byte[] bytes, Charset charset) {
     final int offset = getBOM(bytes, charset).length;

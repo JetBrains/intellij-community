@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,22 @@
  */
 package com.siyeh.ipp.junit;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ipp.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
 public class ReplaceAssertEqualsWithAssertLiteralIntention
         extends MutablyNamedIntention {
 
+    @Override
     protected String getTextForElement(PsiElement element) {
-
         final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
         final PsiExpressionList argumentList = call.getArgumentList();
         final PsiExpression[] args = argumentList.getExpressions();
@@ -44,11 +47,12 @@ public class ReplaceAssertEqualsWithAssertLiteralIntention
                 assertString);
     }
 
-    @NotNull
+    @Override @NotNull
     public PsiElementPredicate getElementPredicate() {
         return new AssertEqualsWithLiteralPredicate();
     }
 
+    @Override
     public void processIntention(PsiElement element)
             throws IncorrectOperationException {
         final PsiMethodCallExpression call =
@@ -64,6 +68,7 @@ public class ReplaceAssertEqualsWithAssertLiteralIntention
         final PsiExpressionList argumentList = call.getArgumentList();
         final PsiExpression[] args = argumentList.getExpressions();
         final String callString;
+        final String assertString;
         if (args.length == 2) {
             @NonNls final String argText = args[0].getText();
             final PsiExpression otherArg;
@@ -74,7 +79,8 @@ public class ReplaceAssertEqualsWithAssertLiteralIntention
             } else {
                 otherArg = args[0];
             }
-            callString = qualifierText + getAssertString(argText) + '(' +
+            assertString = getAssertString(argText);
+            callString = qualifierText + assertString + '(' +
                     otherArg.getText() + ')';
         } else {
             @NonNls final String argText = args[1].getText();
@@ -86,18 +92,27 @@ public class ReplaceAssertEqualsWithAssertLiteralIntention
             } else {
                 otherArg = args[1];
             }
-            callString = qualifierText + getAssertString(argText) + '(' +
+            assertString = getAssertString(argText);
+            callString = qualifierText + assertString + '(' +
                     args[0].getText() + ", " + otherArg.getText() + ')';
+        }
+        if (qualifier == null) {
+            final PsiMethod containingMethod =
+                    PsiTreeUtil.getParentOfType(call, PsiMethod.class);
+            if (containingMethod != null &&
+                AnnotationUtil.isAnnotated(containingMethod, "org.junit.Test", true)) {
+                ImportUtils.addStaticImport(element, "org.junit.Assert", assertString);
+            }
         }
         replaceExpression(callString, call);
     }
 
     @NonNls
-    private static String getAssertString(@NonNls String argText) {
-        if ("true".equals(argText)) {
+    private static String getAssertString(@NonNls String text) {
+        if ("true".equals(text)) {
             return "assertTrue";
         }
-        if ("false".equals(argText)) {
+        if ("false".equals(text)) {
             return "assertFalse";
         }
         return "assertNull";
