@@ -15,34 +15,27 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.SourceItemsTree;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.ui.PackagingSourceItem;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.HashSet;
 
 /**
  * @author nik
  */
-public class PutSourceItemIntoDefaultLocationAction extends AnAction {
-  private final SourceItemsTree mySourceItemsTree;
-  private final ArtifactEditorEx myArtifactEditor;
-
+public class PutSourceItemIntoDefaultLocationAction extends PutIntoDefaultLocationActionBase {
   public PutSourceItemIntoDefaultLocationAction(SourceItemsTree sourceItemsTree, ArtifactEditorEx artifactEditor) {
-    mySourceItemsTree = sourceItemsTree;
-    myArtifactEditor = artifactEditor;
+    super(sourceItemsTree, artifactEditor);
   }
 
   @Override
   public void update(AnActionEvent e) {
-    final ArtifactType type = myArtifactEditor.getArtifact().getArtifactType();
     final List<PackagingSourceItem> items = mySourceItemsTree.getSelectedItems();
     boolean enabled = false;
     final Presentation presentation = e.getPresentation();
@@ -50,7 +43,7 @@ public class PutSourceItemIntoDefaultLocationAction extends AnAction {
       enabled = true;
       Set<String> paths = new HashSet<String>();
       for (PackagingSourceItem item : items) {
-        final String path = type.getDefaultPathFor(item);
+        final String path = getDefaultPath(item);
         if (path == null) {
           enabled = false;
           break;

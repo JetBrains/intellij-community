@@ -20,16 +20,19 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -66,6 +69,10 @@ public abstract class XmlSchemaProvider {
     return findSchema(url, module, baseFile);
   }
 
+  /**
+   * @see #getAvailableProviders(com.intellij.psi.xml.XmlFile)
+   */
+  @Deprecated
   @Nullable
   public static XmlSchemaProvider getAvailableProvider(final @NotNull XmlFile file) {
     for (XmlSchemaProvider provider: Extensions.getExtensions(EP_NAME)) {
@@ -74,6 +81,14 @@ public abstract class XmlSchemaProvider {
       }
     }
     return null;    
+  }
+
+  public static List<XmlSchemaProvider> getAvailableProviders(final @NotNull XmlFile file) {
+    return ContainerUtil.findAll(Extensions.getExtensions(EP_NAME), new Condition<XmlSchemaProvider>() {
+      public boolean value(XmlSchemaProvider xmlSchemaProvider) {
+        return xmlSchemaProvider.isAvailable(file);
+      }
+    });
   }
 
   @Nullable

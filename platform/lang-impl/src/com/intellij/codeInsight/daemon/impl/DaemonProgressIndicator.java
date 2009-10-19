@@ -22,6 +22,9 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
  * @author cdr
  */
 public class DaemonProgressIndicator extends ProgressIndicatorBase {
+  public DaemonProgressIndicator() {
+  }
+
   public synchronized void stop() {
     super.stop();
     cancel();

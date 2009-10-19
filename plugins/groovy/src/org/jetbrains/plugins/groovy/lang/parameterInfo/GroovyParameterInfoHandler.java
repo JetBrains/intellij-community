@@ -20,9 +20,11 @@ import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.lang.parameterInfo.*;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyPresentationUtil;
@@ -135,7 +137,12 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
     } else if (place instanceof GrReferenceExpression) {
       variants = ((GrReferenceExpression) place).getSameNameVariants();
     }
-    context.setItemsToShow(variants);
+    final List<GroovyResolveResult> namedElements = ContainerUtil.findAll(variants, new Condition<GroovyResolveResult>() {
+      public boolean value(GroovyResolveResult groovyResolveResult) {
+        return groovyResolveResult.getElement() instanceof PsiNamedElement;
+      }
+    });
+    context.setItemsToShow(namedElements.toArray(new Object[namedElements.size()]));
     context.showHint(place, place.getTextRange().getStartOffset(), this);
   }
 

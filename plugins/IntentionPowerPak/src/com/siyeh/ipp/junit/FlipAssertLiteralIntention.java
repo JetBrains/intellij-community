@@ -65,35 +65,34 @@ public class FlipAssertLiteralIntention extends MutablyNamedIntention {
         } else {
             toMethodName = "assertTrue";
         }
-        final PsiElement qualifier =
-                methodExpression.getQualifier();
-        final String qualifierText;
-        if (qualifier == null) {
-            qualifierText = "";
-        } else {
-            qualifierText = qualifier.getText() + '.';
-        }
-        final PsiExpressionList argumentList = call.getArgumentList();
-        final PsiExpression[] args = argumentList.getExpressions();
-        final String callString;
-        if (args.length == 1) {
-            final PsiExpression arg = args[0];
-            callString = qualifierText + toMethodName + '(' +
-                    BoolUtils.getNegatedExpressionText(arg) + ')';
-        } else {
-            final PsiExpression arg = args[1];
-            callString = qualifierText + toMethodName + '(' +
-                    args[0].getText() + ',' +
-                    BoolUtils.getNegatedExpressionText(arg) + ')';
-        }
+        final StringBuilder newCall = new StringBuilder();
+        final PsiElement qualifier = methodExpression.getQualifier();
         if (qualifier == null) {
             final PsiMethod containingMethod =
                     PsiTreeUtil.getParentOfType(call, PsiMethod.class);
             if (containingMethod != null &&
                 AnnotationUtil.isAnnotated(containingMethod, "org.junit.Test", true)) {
-                ImportUtils.addStaticImport(element, "org.junit.Assert", toMethodName);
+                if (ImportUtils.nameCanBeStaticallyImported(
+                        "org.junit.Assert", toMethodName, element)) {
+                    ImportUtils.addStaticImport("org.junit.Assert", toMethodName, element);
+                } else {
+                    newCall.append("org.junit.Assert.");
+                }
             }
+        } else {
+            newCall.append(qualifier.getText());
+            newCall.append('.');
         }
-        replaceExpression(callString, call);
+        newCall.append(toMethodName);
+        newCall.append('(');
+        final PsiExpressionList argumentList = call.getArgumentList();
+        final PsiExpression[] args = argumentList.getExpressions();
+        if (args.length == 1) {
+            newCall.append(BoolUtils.getNegatedExpressionText(args[0]));
+        } else {
+            newCall.append(BoolUtils.getNegatedExpressionText(args[1]));
+        }
+        newCall.append(')');
+        replaceExpression(newCall.toString(), call);
     }
 }

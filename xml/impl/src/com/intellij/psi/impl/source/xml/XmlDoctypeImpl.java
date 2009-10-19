@@ -195,9 +195,10 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype, XmlEle
     if (dtdUrlElement != null) {
       uriRefs = new PsiReference[1];
       uriRefs[0] = new URLReference(XmlDoctypeImpl.this) {
+        @NotNull
         public Object[] getVariants() {
           return (docTypePublic != null)?
-                 super.getVariants(): PsiReference.EMPTY_ARRAY;
+                 super.getVariants(): EMPTY_ARRAY;
         }
         public String getCanonicalText() {
           return extractValue(dtdUrlElement);
