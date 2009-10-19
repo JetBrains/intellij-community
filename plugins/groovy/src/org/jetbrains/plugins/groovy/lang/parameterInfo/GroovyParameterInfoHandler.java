@@ -142,7 +142,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
         return groovyResolveResult.getElement() instanceof PsiNamedElement;
       }
     });
-    context.setItemsToShow(variants);
+    context.setItemsToShow(namedElements);
     context.showHint(place, place.getTextRange().getStartOffset(), this);
   }
 
