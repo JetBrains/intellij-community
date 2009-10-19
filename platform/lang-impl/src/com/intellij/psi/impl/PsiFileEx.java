@@ -16,7 +16,7 @@
 
 package com.intellij.psi.impl;
 
-import com.intellij.ide.startup.FileContent;
+import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
 

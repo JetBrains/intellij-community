@@ -16,30 +16,20 @@
 
 package com.intellij.util.indexing;
 
-import com.intellij.ide.startup.BackgroundableCacheUpdater;
-import com.intellij.ide.startup.FileContent;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.ide.caches.CacheUpdater;
+import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -47,9 +37,7 @@ import java.util.Set;
  * @author Eugene Zhuravlev
  *         Date: Jan 29, 2008
  */
-public class UnindexedFilesUpdater implements BackgroundableCacheUpdater {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.UnindexedFilesUpdater");
-  private static final Key<Boolean> DONT_INDEX_AGAIN_KEY = Key.create("DONT_INDEX_AGAIN_KEY");
+public class UnindexedFilesUpdater implements CacheUpdater {
   private final FileBasedIndex myIndex;
   private final Project myProject;
   private final ProjectRootManager myRootManager;
@@ -63,51 +51,12 @@ public class UnindexedFilesUpdater implements BackgroundableCacheUpdater {
   public VirtualFile[] queryNeededFiles() {
     CollectingContentIterator finder = myIndex.createContentIterator();
     iterateIndexableFiles(finder);
-    final List<VirtualFile> files = finder.getFiles();
-    //for (Iterator<VirtualFile> virtualFileIterator = files.iterator(); virtualFileIterator.hasNext();) {
-    //  VirtualFile file = virtualFileIterator.next();
-    //  if (file.getUserData(DONT_INDEX_AGAIN_KEY) != null) {
-    //    virtualFileIterator.remove();
-    //  }
-    //}
+    List<VirtualFile> files = finder.getFiles();
     return files.toArray(new VirtualFile[files.size()]);
   }
 
-  public boolean initiallyBackgrounded() {
-    if (ApplicationManager.getApplication().isCommandLine() || ApplicationManager.getApplication().isUnitTestMode()) return false;
-    return Registry.get(DumbServiceImpl.FILE_INDEX_BACKGROUND).asBoolean();
-  }
-
-  public boolean canBeSentToBackground(Collection<VirtualFile> remaining) {
-    if (remaining.size() < 42) {
-      return false;
-    }
-
-    final RegistryValue value = Registry.get(DumbServiceImpl.FILE_INDEX_BACKGROUND);
-    if (!value.asBoolean()) {
-      if (Messages.showDialog(myProject, "<html>" +
-                                         "Sending indices update to background allows you to immediately use the most<br>" +
-                                         "basic editing capabilities of " + ApplicationNamesInfo.getInstance().getFullProductName() + ", plus version control operations.<p>" +
-                                         "However, many advanced functions such as 'Go to Class', advanced error highlighting,<br>" +
-                                         "refactorings and some others <b>will not be available</b> until indexing is complete.<p>" +
-                                         "Do you still want to send indexing to background?</html>", "Background Indexing",
-                              new String[]{"Yes", "No"}, 1, UIUtil.getInformationIcon()) != 0) {
-        return false;
-      }
-    }
-
-    value.setValue("true");
-
-    return true;
-  }
-
-  public void backgrounded(final Collection<VirtualFile> remaining) {
-    new BackgroundCacheUpdaterRunner(myProject, remaining).processFiles(this);
-  }
-
   public void processFile(final FileContent fileContent) {
-    fileContent.putUserData(FileBasedIndex.PROJECT, myProject);
-    myIndex.indexFileContent(fileContent);
+    myIndex.indexFileContent(myProject, fileContent);
     IndexingStamp.flushCache();
   }
 
@@ -153,7 +102,6 @@ public class UnindexedFilesUpdater implements BackgroundableCacheUpdater {
   private static void iterateRecursively(@Nullable final VirtualFile root, final ContentIterator processor, ProgressIndicator indicator) {
     if (root != null) {
       if (indicator != null) {
-        indicator.setText("Scanning files to index");
         indicator.setText2(root.getPresentableUrl());
       }
 

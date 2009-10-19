@@ -17,7 +17,7 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
-import com.intellij.ide.startup.FileContent;
+import com.intellij.ide.caches.FileContent;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;

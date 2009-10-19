@@ -13,21 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.startup;
+
+package com.intellij.ide.caches;
 
 import com.intellij.openapi.vfs.VirtualFile;
 
-import java.util.Collection;
-
-/**
- * @author peter
- */
-public interface BackgroundableCacheUpdater extends CacheUpdater {
-
-  boolean initiallyBackgrounded();
-
-  boolean canBeSentToBackground(Collection<VirtualFile> remaining);
-
-  void backgrounded(Collection<VirtualFile> remaining);
-
+public interface CacheUpdater {
+  VirtualFile[] queryNeededFiles();
+  void processFile(FileContent fileContent);
+  void updatingDone();
+  void canceled();
 }

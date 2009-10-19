@@ -16,8 +16,8 @@
 
 package com.intellij.util.fileIndex;
 
-import com.intellij.ide.startup.CacheUpdater;
-import com.intellij.ide.startup.FileContent;
+import com.intellij.ide.caches.CacheUpdater;
+import com.intellij.ide.caches.FileContent;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -34,7 +34,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiManager;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -242,25 +241,25 @@ public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> imple
   }
 
   public void initialize() {
-    final Runnable loadCacheRunnable = new Runnable() {
+    final StartupManager sm = StartupManager.getInstance(myProject);
+    final Runnable startupRunnable = new Runnable() {
       public void run() {
-        myRootsChangeCacheUpdater = new FileIndexCacheUpdater();
-        final ProjectRootManagerEx rootManager = ProjectRootManagerEx.getInstanceEx(myProject);
-        rootManager.registerChangeUpdater(myRootsChangeCacheUpdater);
         loadCache();
-        buildIndex();
+        sm.registerCacheUpdater(new FileIndexCacheUpdater(true, getFileTypesToRefresh()));
+        myRootsChangeCacheUpdater = new FileIndexCacheUpdater(false, null);
+        ProjectRootManagerEx.getInstanceEx(myProject).registerRootsChangeUpdater(myRootsChangeCacheUpdater);
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          myRefreshCacheUpdater = new FileIndexRefreshCacheUpdater(AbstractFileIndex.this);
+          myRefreshCacheUpdater = new FileIndexRefreshCacheUpdater(myProject, AbstractFileIndex.this);
         }
       }
     };
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      myRefreshCacheUpdater = new FileIndexRefreshCacheUpdater(this);
-      loadCacheRunnable.run();
+      myRefreshCacheUpdater = new FileIndexRefreshCacheUpdater(myProject, this);
+      startupRunnable.run();
     }
     else {
-      StartupManager.getInstance(myProject).registerStartupActivity(loadCacheRunnable);
+      sm.registerStartupActivity(startupRunnable);
     }
   }
 
@@ -274,7 +273,7 @@ public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> imple
       Disposer.dispose(myRefreshCacheUpdater);
     }
     if (myRootsChangeCacheUpdater != null) {
-      ProjectRootManagerEx.getInstanceEx(myProject).unregisterChangeUpdater(myRootsChangeCacheUpdater);
+      ProjectRootManagerEx.getInstanceEx(myProject).unregisterRootsChangeUpdater(myRootsChangeCacheUpdater);
     }
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       getCacheLocation(getCachesDirName()).delete();
@@ -283,35 +282,6 @@ public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> imple
       saveCache();
     }
     clearMaps();
-  }
-
-  private void buildIndex() {
-    final ProgressIndicator indicator = getProgressIndicator();
-    if (indicator != null) {
-      indicator.pushState();
-      indicator.setIndeterminate(false);
-      indicator.setText(getBuildingIndicesMessage(myFormatChanged));
-      myFormatChanged = false;
-    }
-
-    PsiManager.getInstance(myProject).startBatchFilesProcessingMode();
-
-    try {
-      final VirtualFile[] files = queryNeededFiles(true, getFileTypesToRefresh());
-      for (int i = 0; i < files.length; i++) {
-        if (indicator != null) {
-          indicator.setFraction(((double)i)/ files.length);
-        }
-        doUpdateIndexEntry(files[i]);
-      }
-    }
-    finally {
-      PsiManager.getInstance(myProject).finishBatchFilesProcessingMode();
-    }
-
-    if (indicator != null) {
-      indicator.popState();
-    }
   }
 
   @Nullable
@@ -361,8 +331,16 @@ public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> imple
   }
 
   private class FileIndexCacheUpdater implements CacheUpdater {
+    private final boolean myIncludeChangedFiles;
+    private final Set<FileType> myFileTypesToRefresh;
+
+    public FileIndexCacheUpdater(boolean includeChangedFiles, Set<FileType> fileTypesToRefresh) {
+      myIncludeChangedFiles = includeChangedFiles;
+      myFileTypesToRefresh = fileTypesToRefresh;
+    }
+
     public VirtualFile[] queryNeededFiles() {
-      return AbstractFileIndex.this.queryNeededFiles(false, null);
+      return AbstractFileIndex.this.queryNeededFiles(myIncludeChangedFiles, myFileTypesToRefresh);
     }
 
     public void processFile(FileContent fileContent) {
@@ -374,5 +352,6 @@ public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> imple
 
     public void canceled() {
     }
+
   }
 }

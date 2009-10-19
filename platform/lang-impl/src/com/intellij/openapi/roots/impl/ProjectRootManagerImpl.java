@@ -18,8 +18,7 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.AppTopics;
 import com.intellij.ProjectTopics;
-import com.intellij.ide.startup.CacheUpdater;
-import com.intellij.ide.startup.impl.FileSystemSynchronizerImpl;
+import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
@@ -36,9 +35,8 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.module.impl.scopes.JdkScope;
 import com.intellij.openapi.module.impl.scopes.LibraryRuntimeClasspathScope;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -50,10 +48,8 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -89,9 +85,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private String myProjectJdkName;
   private String myProjectJdkType;
 
-  private final ArrayList<CacheUpdater> myChangeUpdaters = new ArrayList<CacheUpdater>();
-
-  private boolean myProjectOpened = false;
+  private final ArrayList<CacheUpdater> myRootsChangeUpdaters = new ArrayList<CacheUpdater>();
+  private final ArrayList<CacheUpdater> myRefreshCacheUpdaters = new ArrayList<CacheUpdater>();
 
   private long myModificationCount = 0;
   private Set<LocalFileSystem.WatchRequest> myRootsToWatch = new HashSet<LocalFileSystem.WatchRequest>();
@@ -103,7 +98,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private boolean myStartupActivityPerformed = false;
 
   private final MessageBusConnection myConnection;
-
+  private final VirtualFileManagerAdapter myVFSListener;
   private final BatchUpdateListener myHandler;
 
   class BatchSession {
@@ -189,6 +184,14 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       }
     });
 
+    myVFSListener = new VirtualFileManagerAdapter() {
+      @Override
+      public void afterRefreshFinish(boolean asynchonous) {
+        doUpdateOnRefresh();
+      }
+    };
+    VirtualFileManager.getInstance().addVirtualFileManagerListener(myVFSListener);
+
     myProjectFileIndex = new ProjectFileIndexImpl(myProject, directoryIndex, fileTypeManager);
     startupManager.registerStartupActivity(new Runnable() {
       public void run() {
@@ -209,13 +212,24 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     };
   }
 
-  public void registerChangeUpdater(CacheUpdater updater) {
-    myChangeUpdaters.add(updater);
+  public void registerRootsChangeUpdater(CacheUpdater updater) {
+    myRootsChangeUpdaters.add(updater);
   }
 
-  public void unregisterChangeUpdater(CacheUpdater updater) {
-    boolean success = myChangeUpdaters.remove(updater);
-    LOG.assertTrue(success);
+  public void unregisterRootsChangeUpdater(CacheUpdater updater) {
+    boolean removed = myRootsChangeUpdaters.remove(updater);
+    LOG.assertTrue(removed);
+  }
+
+  @Override
+  public void registerRefreshUpdater(CacheUpdater updater) {
+    myRefreshCacheUpdaters.add(updater);
+  }
+
+  @Override
+  public void unregisterRefreshUpdater(CacheUpdater updater) {
+    boolean removed = myRefreshCacheUpdaters.remove(updater);
+    LOG.assertTrue(removed);
   }
 
   public void multiCommit(ModifiableRootModel[] rootModels) {
@@ -350,13 +364,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     addRootsToWatch();
     myApplicationListener = new ApplicationListener();
     ApplicationManager.getApplication().addApplicationListener(myApplicationListener);
-    myProjectOpened = true;
   }
 
   public void projectClosed() {
     LocalFileSystem.getInstance().removeWatchedRoots(myRootsToWatch);
     ApplicationManager.getApplication().removeApplicationListener(myApplicationListener);
-    myProjectOpened = false;
   }
 
   @NotNull
@@ -369,6 +381,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   }
 
   public void disposeComponent() {
+    VirtualFileManager.getInstance().removeVirtualFileManagerListener(myVFSListener);
     if (myJdkTableMultilistener != null) {
       myJdkTableMultilistener.uninstallListner(false);
       myJdkTableMultilistener = null;
@@ -510,7 +523,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       isFiringEvent = false;
     }
 
-    doSynchronize();
+    doSynchronizeRoots();
 
     addRootsToWatch();
 
@@ -571,26 +584,14 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     return scope;
   }
 
-  private void doSynchronize() {
+  private void doSynchronizeRoots() {
     if (!myStartupActivityPerformed) return;
+    DumbServiceImpl.getInstance(myProject).queueCacheUpdate(myRootsChangeUpdaters);
+  }
 
-    final FileSystemSynchronizerImpl synchronizer = new FileSystemSynchronizerImpl();
-    for (CacheUpdater updater : myChangeUpdaters) {
-      synchronizer.registerCacheUpdater(updater);
-    }
-
-    if (!ApplicationManager.getApplication().isUnitTestMode() && myProjectOpened) {
-      Runnable process = new Runnable() {
-        public void run() {
-          synchronizer.executeFileUpdate();
-        }
-      };
-      ProgressManager.getInstance()
-        .runProcessWithProgressSynchronously(process, ProjectBundle.message("project.root.change.loading.progress"), false, myProject);
-    }
-    else {
-      synchronizer.executeFileUpdate();
-    }
+  private void doUpdateOnRefresh() {
+    if (!myStartupActivityPerformed) return;
+    DumbServiceImpl.getInstance(myProject).queueCacheUpdate(myRefreshCacheUpdaters);
   }
 
   private void addRootsToWatch() {
@@ -743,7 +744,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
           myPointerChangesDetected = false;
           myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).rootsChanged(new ModuleRootEventImpl(myProject, false));
   
-          doSynchronize();
+          doSynchronizeRoots();
 
           addRootsToWatch();
         }

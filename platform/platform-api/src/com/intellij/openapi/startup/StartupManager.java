@@ -15,9 +15,10 @@
  */
 package com.intellij.openapi.startup;
 
-import com.intellij.ide.startup.FileSystemSynchronizer;
+import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Allows to register activities which are run during project loading. Methods of StartupManager are typically
@@ -33,6 +34,14 @@ public abstract class StartupManager {
   public static StartupManager getInstance(Project project) {
     return ServiceManager.getService(project, StartupManager.class);
   }
+
+  public abstract void registerPreStartupActivity(@NotNull Runnable runnable);
+
+  /**
+   * Registers a CacheUpdater instance that will be used to build initial caches and indices.
+   * Must be called in registerPreStartupActivity or registerStartupActivity
+   */
+  public abstract void registerCacheUpdater(CacheUpdater updater);
 
   /**
    * Registers an activity which is performed during project load while the "Loading Project"
@@ -57,13 +66,4 @@ public abstract class StartupManager {
    * @param runnable the activity to execute.
    */
   public abstract void runWhenProjectIsInitialized(Runnable runnable);
-
-  /**
-   * Returns the file system synchronizer instance, which can be used to manage updating
-   * data cached by the plugin when the contents of the file system is changed.
-   *
-   * @return the file system synchronizer instance.
-   * @since 6.0
-   */
-  public abstract FileSystemSynchronizer getFileSystemSynchronizer();
 }

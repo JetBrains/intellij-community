@@ -15,15 +15,18 @@
  */
 package com.intellij.internal;
 
+import com.intellij.ide.caches.CacheUpdater;
+import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.Consumer;
+import com.intellij.openapi.vfs.VirtualFile;
+
+import java.util.Arrays;
 
 /**
  * @author peter
@@ -34,13 +37,14 @@ public class ToggleDumbModeAction extends AnAction implements DumbAware {
   public void actionPerformed(final AnActionEvent e) {
     if (myDumb) {
       myDumb = false;
-    } else {
+    }
+    else {
       myDumb = true;
       final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
       if (project == null) return;
 
-      DumbServiceImpl.getInstance(project).queueIndexUpdate(new Consumer<ProgressIndicator>() {
-        public void consume(ProgressIndicator progressIndicator) {
+      CacheUpdater updater = new CacheUpdater() {
+        public VirtualFile[] queryNeededFiles() {
           while (myDumb) {
             try {
               Thread.sleep(100);
@@ -48,8 +52,19 @@ public class ToggleDumbModeAction extends AnAction implements DumbAware {
             catch (InterruptedException e1) {
             }
           }
+          return VirtualFile.EMPTY_ARRAY;
         }
-      }, 0);
+
+        public void processFile(FileContent fileContent) {
+        }
+
+        public void updatingDone() {
+        }
+
+        public void canceled() {
+        }
+      };
+      DumbServiceImpl.getInstance(project).queueCacheUpdate(Arrays.asList(updater));
     }
   }
 
@@ -60,7 +75,8 @@ public class ToggleDumbModeAction extends AnAction implements DumbAware {
     presentation.setEnabled(project != null && myDumb == DumbServiceImpl.getInstance(project).isDumb());
     if (myDumb) {
       presentation.setText("Exit dumb mode");
-    } else {
+    }
+    else {
       presentation.setText("Enter dumb mode");
     }
   }

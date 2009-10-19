@@ -17,7 +17,7 @@
 package com.intellij.psi.impl.cache.impl;
 
 import com.intellij.ExtensionPoints;
-import com.intellij.ide.startup.FileContent;
+import com.intellij.ide.caches.FileContent;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;

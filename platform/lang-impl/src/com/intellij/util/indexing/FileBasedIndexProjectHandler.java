@@ -19,6 +19,8 @@
  */
 package com.intellij.util.indexing;
 
+import com.intellij.ide.caches.CacheUpdater;
+import com.intellij.ide.caches.FileContent;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -31,28 +33,34 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
 
+import java.util.Collection;
+
 public class FileBasedIndexProjectHandler extends AbstractProjectComponent implements IndexableFileSet {
   private final FileBasedIndex myIndex;
   private final ProjectRootManagerEx myRootManager;
   private final FileTypeManager myFileTypeManager;
 
-  public FileBasedIndexProjectHandler(FileBasedIndex index, final Project project, final ProjectRootManagerEx rootManager, FileTypeManager ftManager, final ProjectManager projectManager) {
+  public FileBasedIndexProjectHandler(final FileBasedIndex index, final Project project, final ProjectRootManagerEx rootManager, FileTypeManager ftManager, final ProjectManager projectManager) {
     super(project);
     myIndex = index;
     myRootManager = rootManager;
     myFileTypeManager = ftManager;
-    
-    final UnindexedFilesUpdater updater = new UnindexedFilesUpdater(project, rootManager, index);
+
     final StartupManagerEx startupManager = (StartupManagerEx)StartupManager.getInstance(project);
     if (startupManager != null) {
       startupManager.registerPreStartupActivity(new Runnable() {
         public void run() {
-          startupManager.getFileSystemSynchronizer().registerCacheUpdater(updater);
-          rootManager.registerChangeUpdater(updater);
+          final RefreshCacheUpdater refreshUpdater = new RefreshCacheUpdater();
+          final UnindexedFilesUpdater rootsChangeUpdater = new UnindexedFilesUpdater(project, rootManager, index);
+
+          startupManager.registerCacheUpdater(rootsChangeUpdater);
+          rootManager.registerRootsChangeUpdater(rootsChangeUpdater);
+          rootManager.registerRefreshUpdater(refreshUpdater);
           myIndex.registerIndexableSet(FileBasedIndexProjectHandler.this);
           projectManager.addProjectManagerListener(project, new ProjectManagerAdapter() {
             public void projectClosing(Project project) {
-              rootManager.unregisterChangeUpdater(updater);
+              rootManager.unregisterRefreshUpdater(refreshUpdater);
+              rootManager.unregisterRootsChangeUpdater(rootsChangeUpdater);
               myIndex.removeIndexableSet(FileBasedIndexProjectHandler.this);
             }
           });
@@ -85,5 +93,22 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
   public void disposeComponent() {
     // done mostly for tests. In real life this is noop, becase the set was removed on project closing
     myIndex.removeIndexableSet(this);
+  }
+
+  private class RefreshCacheUpdater implements CacheUpdater {
+    public VirtualFile[] queryNeededFiles() {
+      Collection<VirtualFile> files = myIndex.getFilesToUpdate(myProject);
+      return files.isEmpty() ? VirtualFile.EMPTY_ARRAY : files.toArray(new VirtualFile[files.size()]);
+    }
+
+    public void processFile(FileContent fileContent) {
+      myIndex.processRefreshedFile(myProject, fileContent);
+    }
+
+    public void updatingDone() {
+    }
+
+    public void canceled() {
+    }
   }
 }

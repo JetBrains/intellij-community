@@ -15,10 +15,8 @@
  */
 package com.intellij.openapi.vfs.impl;
 
-import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -121,32 +119,23 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
   }
 
   public void refresh(boolean asynchronous, final Runnable postAction) {
-    final ModalityState modalityState = calcModalityStateForRefreshEventsPosting(asynchronous);
-
-    beforeRefreshStart(asynchronous, modalityState, postAction);
-
-    try {
-      if (!asynchronous) {
-        ApplicationManager.getApplication().assertIsDispatchThread();
-      }
-
-      RefreshQueue.getInstance().refresh(asynchronous, true, postAction, myPersistence.getLocalRoots()); // TODO: Get an idea how to deliver chnages from local FS to jar fs before they go refresh
-
-      //final VirtualFile[] managedRoots = ManagingFS.getInstance().getRoots();
-      //for (int i = 0; i < managedRoots.length; i++) {
-      //  VirtualFile root = managedRoots[i];
-      //  boolean last = i + 1 == managedRoots.length;
-      //  RefreshQueue.getInstance().refresh(asynchronous, true, last ? postAction : null, root);
-      //}
-
-      for (VirtualFileSystem fileSystem : myFileSystems) {
-        if (!(fileSystem instanceof NewVirtualFileSystem)) {
-          fileSystem.refresh(asynchronous);
-        }
-      }
+    if (!asynchronous) {
+      ApplicationManager.getApplication().assertIsDispatchThread();
     }
-    finally {
-      afterRefreshFinish(asynchronous, modalityState);
+
+    RefreshQueue.getInstance().refresh(asynchronous, true, postAction, myPersistence.getLocalRoots()); // TODO: Get an idea how to deliver chnages from local FS to jar fs before they go refresh
+
+    //final VirtualFile[] managedRoots = ManagingFS.getInstance().getRoots();
+    //for (int i = 0; i < managedRoots.length; i++) {
+    //  VirtualFile root = managedRoots[i];
+    //  boolean last = i + 1 == managedRoots.length;
+    //  RefreshQueue.getInstance().refresh(asynchronous, true, last ? postAction : null, root);
+    //}
+
+    for (VirtualFileSystem fileSystem : myFileSystems) {
+      if (!(fileSystem instanceof NewVirtualFileSystem)) {
+        fileSystem.refresh(asynchronous);
+      }
     }
   }
 
@@ -216,27 +205,6 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
         listener.afterRefreshFinish(asynchronous);
       }
     }
-  }
-
-  public void beforeRefreshStart(final boolean asynchronous, ModalityState modalityState, final Runnable postAction) {
-  }
-
-  public void afterRefreshFinish(final boolean asynchronous, final ModalityState modalityState) {
-  }
-
-  public void addEventToFireByRefresh(final Runnable action, boolean asynchronous, ModalityState modalityState) {
-  }
-
-  public void registerRefreshUpdater(CacheUpdater updater) {
-    RefreshQueue.getInstance().registerRefreshUpdater(updater);
-  }
-
-  public void unregisterRefreshUpdater(CacheUpdater updater) {
-    RefreshQueue.getInstance().unregisterRefreshUpdater(updater);
-  }
-
-  public static ModalityState calcModalityStateForRefreshEventsPosting(final boolean asynchronous) {
-    return asynchronous ? ModalityState.NON_MODAL : ModalityState.current();
   }
 
   private static String convertLocalPathToUrl(@NonNls @NotNull String path) {

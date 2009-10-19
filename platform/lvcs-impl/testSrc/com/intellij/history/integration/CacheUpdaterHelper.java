@@ -16,8 +16,8 @@
 
 package com.intellij.history.integration;
 
-import com.intellij.ide.startup.CacheUpdater;
-import com.intellij.ide.startup.FileContent;
+import com.intellij.ide.caches.CacheUpdater;
+import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class CacheUpdaterHelper {
