@@ -13,22 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jetbrains.plugins.groovy.editor.selection;
 
-import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
- * @author ilyas
+ * @author Maxim.Medvedev
  */
-public abstract class GroovyBasicSelectioner extends ExtendWordSelectionHandlerBase {
+public class GroovyParameterListSelectioner extends GroovyBasicSelectioner {
+  @Override
+  public boolean canSelect(PsiElement e) {
+    return e instanceof GrParameterList || e.getParent() instanceof GrParameterList;
+  }
+
+  @Override
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
-    List<TextRange> ranges = super.select(e, editorText, cursorOffset, editor);
-    return ranges;
+    if (e.getParent() instanceof GrParameterList) e = e.getParent();
+    if (!(e instanceof GrParameterList)) return Collections.emptyList();
+    return Collections.singletonList(e.getTextRange());
   }
 }

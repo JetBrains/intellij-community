@@ -125,7 +125,7 @@ mNUM_BIG_DECIMAL = {mNUM_INT_PART} ( ("." {mDIGIT}+ {mEXPONENT}? {mBIG_SUFFIX}?)
 
 mLETTER = [:letter:] | "_"
 
-mIDENT = {mLETTER} ({mLETTER} | {mDIGIT} | \$)*
+mIDENT = ({mLETTER}|\$) ({mLETTER} | {mDIGIT} | \$)*
 mIDENT_NOBUCKS = {mLETTER} ({mLETTER} | {mDIGIT})*
 
 
