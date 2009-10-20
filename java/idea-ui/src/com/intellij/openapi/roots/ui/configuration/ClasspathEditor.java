@@ -15,11 +15,12 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.ProjectTopics;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider;
 import com.intellij.openapi.util.IconLoader;
@@ -37,18 +38,23 @@ import java.util.Map;
  *         Date: Oct 4, 2003
  *         Time: 6:54:57 PM
  */
-public class ClasspathEditor extends ModuleElementsEditor {
+public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootListener {
   public static final String NAME = ProjectBundle.message("modules.classpath.title");
   public static final Icon ICON = IconLoader.getIcon("/modules/classpath.png");
 
   private ClasspathPanel myPanel;
-  private final ModulesProvider myModulesProvider;
 
   private ClasspathFormatPanel myClasspathFormatPanel;
 
-  public ClasspathEditor(Project project, ModifiableRootModel model, final ModulesProvider modulesProvider) {
-    super(project, model);
-    myModulesProvider = modulesProvider;
+  public ClasspathEditor(final ModuleConfigurationState state) {
+    super(state);
+
+    final Disposable disposable = new Disposable() {
+      public void dispose() {}
+    };
+    
+    state.getProject().getMessageBus().connect(disposable).subscribe(ProjectTopics.PROJECT_ROOTS, this);
+    registerDisposable(disposable);
   }
 
   public boolean isModified() {
@@ -83,12 +89,12 @@ public class ClasspathEditor extends ModuleElementsEditor {
     super.canApply();
     if (myClasspathFormatPanel != null) {
       final String storageID = myClasspathFormatPanel.getSelectedClasspathFormat();
-      ClasspathStorage.getProvider(storageID).assertCompatible(myModel);
+      ClasspathStorage.getProvider(storageID).assertCompatible(getModel());
     }
   }
 
   public JComponent createComponentImpl() {
-    myPanel = new ClasspathPanel(myProject, myModel, myModulesProvider);
+    myPanel = new ClasspathPanel(getState());
 
     myPanel.addListener(new OrderPanelListener() {
       public void entryMoved() {
@@ -101,7 +107,12 @@ public class ClasspathEditor extends ModuleElementsEditor {
     panel.add(myPanel, BorderLayout.CENTER);
 
     final ModuleJdkConfigurable jdkConfigurable =
-      new ModuleJdkConfigurable(this, myModel, ProjectStructureConfigurable.getInstance(myProject).getProjectJdksModel());
+      new ModuleJdkConfigurable(this, ProjectStructureConfigurable.getInstance(myProject).getProjectJdksModel()) {
+        @Override
+        protected ModifiableRootModel getRootModel() {
+          return getState().getRootModel();
+        }
+      };
     panel.add(jdkConfigurable.createComponent(), BorderLayout.NORTH);
     jdkConfigurable.reset();
     registerDisposable(jdkConfigurable);
@@ -117,7 +128,7 @@ public class ClasspathEditor extends ModuleElementsEditor {
 
   public void flushChangesToModel() {
     List<OrderEntry> entries = myPanel.getEntries();
-    myModel.rearrangeOrderEntries(entries.toArray(new OrderEntry[entries.size()]));
+    getModel().rearrangeOrderEntries(entries.toArray(new OrderEntry[entries.size()]));
   }
 
   public void selectOrderEntry(@NotNull final OrderEntry entry) {
@@ -128,6 +139,30 @@ public class ClasspathEditor extends ModuleElementsEditor {
     if (myPanel != null) {
       myPanel.initFromModel();
     }
+  }
+
+  public void beforeRootsChange(ModuleRootEvent event) {
+  }
+
+  public void rootsChanged(ModuleRootEvent event) {
+    myPanel.rootsChanged();
+  }
+
+  public Sdk setSdk(final Sdk newJDK) {
+    final ModifiableRootModel model = getModel();
+    final Sdk oldSdk = model.getSdk();
+
+    if (newJDK != null) {
+      model.setSdk(newJDK);
+    }
+    else {
+      model.inheritSdk();
+    }
+
+    myPanel.forceInitFromModel();
+    flushChangesToModel();
+
+    return oldSdk;
   }
 
   private class ClasspathFormatPanel extends JPanel {
@@ -168,7 +203,7 @@ public class ClasspathEditor extends ModuleElementsEditor {
 
     @NotNull
     private String getModuleClasspathFormat() {
-      return ClasspathStorage.getStorageType(myModel.getModule());
+      return ClasspathStorage.getStorageType(getModel().getModule());
     }
 
     boolean isModified () {
@@ -177,8 +212,8 @@ public class ClasspathEditor extends ModuleElementsEditor {
 
     void apply () throws ConfigurationException {
       final String storageID = getSelectedClasspathFormat();
-      ClasspathStorage.getProvider(storageID).assertCompatible(myModel);
-      ClasspathStorage.setStorageType(myModel, storageID);
+      ClasspathStorage.getProvider(storageID).assertCompatible(getModel());
+      ClasspathStorage.setStorageType(getModel(), storageID);
     }
   }
 }

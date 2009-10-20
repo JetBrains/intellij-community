@@ -108,7 +108,8 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
         for (OrderEntry entry : rootModel.getOrderEntries()) {
           if (entry instanceof ModuleLibraryOrderEntryImpl) {
             final ModuleLibraryOrderEntryImpl libraryEntry = (ModuleLibraryOrderEntryImpl)entry;
-            if (libraryName.equals(libraryEntry.getLibraryName())) {
+            if (libraryName != null && libraryName.equals(libraryEntry.getLibraryName())
+               || libraryName == null && library.equals(libraryEntry.getLibrary())) {
               ModuleStructureConfigurable.getInstance(getProject()).selectOrderEntry(module, libraryEntry);
               return;
             }

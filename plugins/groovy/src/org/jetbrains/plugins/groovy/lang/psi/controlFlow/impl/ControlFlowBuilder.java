@@ -230,7 +230,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       assertion.accept(this);
       final InstructionImpl assertInstruction = startNode(assertStatement);
       final PsiType type = JavaPsiFacade.getInstance(assertStatement.getProject()).getElementFactory()
-          .createTypeByFQClassName("java.lang.AssertionError", assertStatement.getResolveScope());
+        .createTypeByFQClassName("java.lang.AssertionError", assertStatement.getResolveScope());
       ExceptionInfo info = findCatch(type);
       if (info != null) {
         info.myThrowers.add(assertInstruction);
@@ -294,7 +294,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (expression.getOperationToken() != GroovyElementTypes.mASSIGN) {
       if (lValue instanceof GrReferenceExpression) {
         ReadWriteVariableInstructionImpl instruction =
-            new ReadWriteVariableInstructionImpl((GrReferenceExpression)lValue, myInstructionNumber++, false);
+          new ReadWriteVariableInstructionImpl((GrReferenceExpression)lValue, myInstructionNumber++, false);
         addNode(instruction);
         checkPending(instruction);
       }
@@ -339,7 +339,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       }
       else {
         final ReadWriteVariableInstructionImpl i =
-            new ReadWriteVariableInstructionImpl(referenceExpression, myInstructionNumber++, PsiUtil.isLValue(referenceExpression));
+          new ReadWriteVariableInstructionImpl(referenceExpression, myInstructionNumber++, PsiUtil.isLValue(referenceExpression));
         addNode(i);
         checkPending(i);
       }
@@ -397,6 +397,11 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       final GrExpression expression = ((GrForInClause)clause).getIteratedExpression();
       if (expression != null) {
         expression.accept(this);
+      }
+      for (GrVariable variable : clause.getDeclaredVariables()) {
+        ReadWriteVariableInstructionImpl writeInsn = new ReadWriteVariableInstructionImpl(variable, myInstructionNumber++);
+        checkPending(writeInsn);
+        addNode(writeInsn);
       }
     }
 
