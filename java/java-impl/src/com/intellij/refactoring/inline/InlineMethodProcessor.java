@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -46,6 +47,7 @@ import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
@@ -120,8 +122,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   }
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
-    UsageInfo[] usagesIn = refUsages.get();
-    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    final UsageInfo[] usagesIn = refUsages.get();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
 
     if (!myInlineThisOnly) {
       final PsiMethod[] superMethods = myMethod.findSuperMethods();
@@ -134,6 +136,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
 
     addInaccessibleMemberConflicts(myMethod, usagesIn, new ReferencedElementsCollector(), conflicts);
+
+    addInaccessibleSuperCallsConflicts(usagesIn, conflicts);
 
     if (!conflicts.isEmpty()) {
       ConflictsDialog dialog = new ConflictsDialog(myProject, conflicts);
@@ -150,6 +154,39 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
     prepareSuccessful();
     return true;
+  }
+
+  private void addInaccessibleSuperCallsConflicts(final UsageInfo[] usagesIn, final MultiMap<PsiElement, String> conflicts) {
+    myMethod.accept(new JavaRecursiveElementWalkingVisitor(){
+      @Override
+      public void visitSuperExpression(PsiSuperExpression expression) {
+        super.visitSuperExpression(expression);
+        final PsiType type = expression.getType();
+        final PsiClass superClass = PsiUtil.resolveClassInType(type);
+        if (superClass != null) {
+          final Set<PsiClass> targetContainingClasses = new HashSet<PsiClass>();
+          for (UsageInfo info : usagesIn) {
+            final PsiElement element = info.getElement();
+            if (element != null) {
+              final PsiClass targetContainingClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+              if (targetContainingClass != null && !InheritanceUtil.isInheritorOrSelf(targetContainingClass, superClass, true)) {
+                targetContainingClasses.add(targetContainingClass);
+              }
+            }
+          }
+          if (!targetContainingClasses.isEmpty()) {
+            final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class);
+            LOG.assertTrue(methodCallExpression != null);
+            conflicts.putValue(expression, "Inlined method calls " + methodCallExpression.getText() + " which won't be accessed in " +
+                                           StringUtil.join(targetContainingClasses, new Function<PsiClass, String>() {
+                                             public String fun(PsiClass psiClass) {
+                                               return RefactoringUIUtil.getDescription(psiClass, false);
+                                             }
+                                           }, ","));
+          }
+        }
+      }
+    });
   }
 
   public static void addInaccessibleMemberConflicts(final PsiElement element,
@@ -448,7 +485,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     else {
       thisAccessExpr = null;
     }
-    ChangeContextUtil.decodeContextInfo(anchorParent, thisClass, thisAccessExpr);//todo super should be encoded decoded as well
+    ChangeContextUtil.decodeContextInfo(anchorParent, thisClass, thisAccessExpr);
 
     if (thisVar != null) {
       inlineParmOrThisVariable(thisVar, false);
