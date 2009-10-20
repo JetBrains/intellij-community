@@ -19,6 +19,7 @@ import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -37,7 +38,6 @@ import git4idea.i18n.GitBundle;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -48,6 +48,10 @@ import java.util.*;
  */
 public class GitConvertFilesDialog extends DialogWrapper {
   /**
+   * Do not convert exit code
+   */
+  public static final int DO_NOT_CONVERT = NEXT_USER_EXIT_CODE;
+  /**
    * The checkbox used to indicate that dialog should not be shown
    */
   private JCheckBox myDoNotShowCheckBox;
@@ -55,10 +59,6 @@ public class GitConvertFilesDialog extends DialogWrapper {
    * The root panel of the dialog
    */
   private JPanel myRootPanel;
-  /**
-   * The checkbox that disables conversion of files
-   */
-  private JCheckBox myDoNotConvertFilesCheckBox;
   /**
    * The tree of files to convert
    */
@@ -73,7 +73,7 @@ public class GitConvertFilesDialog extends DialogWrapper {
    *
    * @param project the project to which this dialog is related
    */
-  GitConvertFilesDialog(Project project, GitVcsSettings settings, Map<VirtualFile, Set<VirtualFile>> filesToShow) {
+  GitConvertFilesDialog(Project project, Map<VirtualFile, Set<VirtualFile>> filesToShow) {
     super(project, true);
     ArrayList<VirtualFile> roots = new ArrayList<VirtualFile>(filesToShow.keySet());
     Collections.sort(roots, GitUtil.VIRTUAL_FILE_COMPARATOR);
@@ -86,33 +86,18 @@ public class GitConvertFilesDialog extends DialogWrapper {
         vcsRoot.add(new CheckedTreeNode(file));
       }
     }
-    myDoNotConvertFilesCheckBox.setSelected(settings.LINE_SEPARATORS_CONVERSION == GitVcsSettings.ConversionPolicy.NONE);
-    updateFields();
     TreeUtil.expandAll(myFilesToConvert);
-    myDoNotConvertFilesCheckBox.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        updateFields();
-      }
-    });
     setTitle(GitBundle.getString("crlf.convert.title"));
+    setOKButtonText(GitBundle.getString("crlf.convert.convert"));
     init();
   }
 
-
   /**
-   * Update fields basing on selection state
+   * {@inheritDoc}
    */
-  private void updateFields() {
-    if (myDoNotConvertFilesCheckBox.isSelected()) {
-      myRootNode.setChecked(false);
-      myFilesToConvert.setEnabled(false);
-      setOKButtonText(GitBundle.getString("crlf.convert.leave"));
-    }
-    else {
-      myFilesToConvert.setEnabled(true);
-      myRootNode.setChecked(true);
-      setOKButtonText(GitBundle.getString("crlf.convert.convert"));
-    }
+  @Override
+  protected Action[] createActions() {
+    return new Action[]{getOKAction(), new DoNotConvertAction(), getCancelAction()};
   }
 
 
@@ -199,27 +184,19 @@ public class GitConvertFilesDialog extends DialogWrapper {
         if (files.isEmpty()) {
           return true;
         }
+        final Ref<VirtualFile[]> selectedFiles = new Ref<VirtualFile[]>();
         UIUtil.invokeAndWaitIfNeeded(new Runnable() {
           public void run() {
-            GitConvertFilesDialog d = new GitConvertFilesDialog(project, settings, files);
+            GitConvertFilesDialog d = new GitConvertFilesDialog(project, files);
             d.show();
             if (d.isOK()) {
               settings.LINE_SEPARATORS_CONVERSION_ASK = d.myDoNotShowCheckBox.isSelected();
-              if (d.myDoNotConvertFilesCheckBox.isSelected()) {
-                settings.LINE_SEPARATORS_CONVERSION = GitVcsSettings.ConversionPolicy.NONE;
-              }
-              else {
-                settings.LINE_SEPARATORS_CONVERSION = GitVcsSettings.ConversionPolicy.PROJECT_LINE_SEPARATORS;
-                for (VirtualFile f : d.myFilesToConvert.getCheckedNodes(VirtualFile.class, null)) {
-                  try {
-                    LoadTextUtil.changeLineSeparator(project, d, f, nl);
-                  }
-                  catch (IOException e) {
-                    //noinspection ThrowableInstanceNeverThrown
-                    exceptions.add(new VcsException("Failed to change line separators for the file: " + f.getPresentableUrl(), e));
-                  }
-                }
-              }
+              settings.LINE_SEPARATORS_CONVERSION = GitVcsSettings.ConversionPolicy.PROJECT_LINE_SEPARATORS;
+              selectedFiles.set(d.myFilesToConvert.getCheckedNodes(VirtualFile.class, null));
+            }
+            else if (d.getExitCode() == DO_NOT_CONVERT) {
+              settings.LINE_SEPARATORS_CONVERSION_ASK = d.myDoNotShowCheckBox.isSelected();
+              settings.LINE_SEPARATORS_CONVERSION = GitVcsSettings.ConversionPolicy.NONE;
             }
             else {
               //noinspection ThrowableInstanceNeverThrown
@@ -227,6 +204,17 @@ public class GitConvertFilesDialog extends DialogWrapper {
             }
           }
         });
+        if(selectedFiles.get() != null) {
+          for (VirtualFile f : selectedFiles.get()) {
+            try {
+              LoadTextUtil.changeLineSeparator(project, GitConvertFilesDialog.class.getName(), f, nl);
+            }
+            catch (IOException e) {
+              //noinspection ThrowableInstanceNeverThrown
+              exceptions.add(new VcsException("Failed to change line separators for the file: " + f.getPresentableUrl(), e));
+            }
+          }
+        }
       }
     }
     catch (VcsException e) {
@@ -280,12 +268,41 @@ public class GitConvertFilesDialog extends DialogWrapper {
         }
       });
       StringScanner output = new StringScanner(h.run());
-      String unsetIndicator = ": crlf unset";
+      String unsetIndicator = ": crlf: unset";
       while (output.hasMoreData()) {
         String l = output.line();
         if (l.endsWith(unsetIndicator)) {
           fileSet.remove(filesToCheck.get(GitUtil.unescapePath(l.substring(0, l.length() - unsetIndicator.length()))));
         }
+      }
+    }
+  }
+
+  /**
+   * Action used to indicate that no conversion should be performed
+   */
+  class DoNotConvertAction extends AbstractAction {
+    private static final long serialVersionUID = 1931383640152023206L;
+
+    /**
+     * The constructor
+     */
+    DoNotConvertAction() {
+      putValue(NAME, GitBundle.getString("crlf.convert.leave"));
+      putValue(DEFAULT_ACTION, Boolean.FALSE);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void actionPerformed(ActionEvent e) {
+      if (myPerformAction) return;
+      try {
+        myPerformAction = true;
+        close(DO_NOT_CONVERT);
+      }
+      finally {
+        myPerformAction = false;
       }
     }
   }
@@ -330,11 +347,12 @@ public class GitConvertFilesDialog extends DialogWrapper {
 
     /**
      * Render unknown node
-     * @param r a renderer to use
+     *
+     * @param r     a renderer to use
      * @param value the unknown value
      */
     private static void renderUnknown(ColoredTreeCellRenderer r, Object value) {
-      r.append("UNSUPPORTED NODE TYPE: "+(value == null?"null":value.getClass().getName()), SimpleTextAttributes.ERROR_ATTRIBUTES);
+      r.append("UNSUPPORTED NODE TYPE: " + (value == null ? "null" : value.getClass().getName()), SimpleTextAttributes.ERROR_ATTRIBUTES);
     }
   }
 }
