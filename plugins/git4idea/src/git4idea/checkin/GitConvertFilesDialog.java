@@ -30,10 +30,12 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import git4idea.GitUtil;
+import git4idea.GitVcs;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
 import git4idea.config.GitVcsSettings;
+import git4idea.config.GitVersion;
 import git4idea.i18n.GitBundle;
 
 import javax.swing.*;
@@ -47,6 +49,10 @@ import java.util.*;
  * This dialog allows converting the specified files before committing them.
  */
 public class GitConvertFilesDialog extends DialogWrapper {
+  /**
+   * The version when option --stdin was added
+   */
+  private static final GitVersion CHECK_ATTR_STDIN_SUPPORTED = new GitVersion(1, 6, 1, 0);
   /**
    * Do not convert exit code
    */
@@ -204,7 +210,7 @@ public class GitConvertFilesDialog extends DialogWrapper {
             }
           }
         });
-        if(selectedFiles.get() != null) {
+        if (selectedFiles.get() != null) {
           for (VirtualFile f : selectedFiles.get()) {
             try {
               LoadTextUtil.changeLineSeparator(project, GitConvertFilesDialog.class.getName(), f, nl);
@@ -231,10 +237,14 @@ public class GitConvertFilesDialog extends DialogWrapper {
    * @throws VcsException if there is problem with running git
    */
   private static void ignoreFilesWithCrlfUnset(Project project, Map<VirtualFile, Set<VirtualFile>> files) throws VcsException {
+    boolean stdin = GitVcs.getInstance(project).version().isLessOrEqual(CHECK_ATTR_STDIN_SUPPORTED);
     for (final Map.Entry<VirtualFile, Set<VirtualFile>> e : files.entrySet()) {
       final VirtualFile r = e.getKey();
       GitSimpleHandler h = new GitSimpleHandler(project, r, GitHandler.CHECK_ATTR);
-      h.addParameters("--stdin", "-z", "crlf");
+      if (stdin) {
+        h.addParameters("--stdin", "-z");
+      }
+      h.addParameters("crlf");
       h.setSilent(true);
       h.setNoSSH(true);
       final HashMap<String, VirtualFile> filesToCheck = new HashMap<String, VirtualFile>();
@@ -242,31 +252,37 @@ public class GitConvertFilesDialog extends DialogWrapper {
       for (VirtualFile file : fileSet) {
         filesToCheck.put(GitUtil.relativePath(r, file), file);
       }
-      h.setInputProcessor(new Processor<OutputStream>() {
-        public boolean process(OutputStream outputStream) {
-          try {
-            OutputStreamWriter out = new OutputStreamWriter(outputStream, GitUtil.UTF8_CHARSET);
+      if (stdin) {
+        h.setInputProcessor(new Processor<OutputStream>() {
+          public boolean process(OutputStream outputStream) {
             try {
-              for (String file : filesToCheck.keySet()) {
-                out.write(file);
-                out.write("\u0000");
+              OutputStreamWriter out = new OutputStreamWriter(outputStream, GitUtil.UTF8_CHARSET);
+              try {
+                for (String file : filesToCheck.keySet()) {
+                  out.write(file);
+                  out.write("\u0000");
+                }
+              }
+              finally {
+                out.close();
               }
             }
-            finally {
-              out.close();
+            catch (IOException ex) {
+              try {
+                outputStream.close();
+              }
+              catch (IOException ioe) {
+                // ignore exception
+              }
             }
+            return true;
           }
-          catch (IOException ex) {
-            try {
-              outputStream.close();
-            }
-            catch (IOException ioe) {
-              // ignore exception
-            }
-          }
-          return true;
-        }
-      });
+        });
+      }
+      else {
+        h.endOptions();
+        h.addRelativeFiles(filesToCheck.values());
+      }
       StringScanner output = new StringScanner(h.run());
       String unsetIndicator = ": crlf: unset";
       while (output.hasMoreData()) {
