@@ -16,6 +16,11 @@ import java.util.*;
  */
 public abstract class HierarchyViewTestBase extends CodeInsightTestCase {
 
+  private static final String NODE_ELEMENT_NAME = "node";
+  private static final String ANY_NODES_ELEMENT_NAME = "any";
+  private static final String TEXT_ATTR_NAME = "text";
+  private static final String BASE_ATTR_NAME = "base";
+
   protected abstract String getBasePath();
 
   protected void doHierarchyTest(final Computable<HierarchyTreeStructure> treeStructureComputable, final String... fileNames)
@@ -33,7 +38,11 @@ public abstract class HierarchyViewTestBase extends CodeInsightTestCase {
   private static void checkHierarchyTreeStructure(final HierarchyTreeStructure treeStructure, final Document document) {
     final HierarchyNodeDescriptor rootNodeDescriptor = (HierarchyNodeDescriptor)treeStructure.getRootElement();
     rootNodeDescriptor.update();
-    checkNodeDescriptorRecursively(treeStructure, rootNodeDescriptor, document.getRootElement());
+    final Element rootElement = document.getRootElement();
+    if (rootElement == null || !NODE_ELEMENT_NAME.equals(rootElement.getName())) {
+      throw new IllegalArgumentException("Incorrect root element in verification resource");
+    }
+    checkNodeDescriptorRecursively(treeStructure, rootNodeDescriptor, rootElement);
   }
 
   private static void checkNodeDescriptorRecursively(final HierarchyTreeStructure treeStructure,
@@ -47,22 +56,26 @@ public abstract class HierarchyViewTestBase extends CodeInsightTestCase {
   private static void checkBaseNode(final HierarchyTreeStructure treeStructure,
                                     final HierarchyNodeDescriptor descriptor,
                                     final Element expectedElement) {
-    final String baseAttrValue = expectedElement.getAttributeValue("base");
+    final String baseAttrValue = expectedElement.getAttributeValue(BASE_ATTR_NAME);
     final HierarchyNodeDescriptor baseDescriptor = treeStructure.getBaseDescriptor();
     final boolean mustBeBase = "true".equalsIgnoreCase(baseAttrValue);
     assertTrue("Incorrect base node", mustBeBase ? baseDescriptor == descriptor : baseDescriptor != descriptor);
   }
 
   private static void checkContent(final HierarchyNodeDescriptor descriptor, final Element expectedElement) {
-    assertEquals(expectedElement.getAttributeValue("text"), descriptor.getHighlightedText().getText());
+    assertEquals(expectedElement.getAttributeValue(TEXT_ATTR_NAME), descriptor.getHighlightedText().getText());
   }
 
   private static void checkChildren(final HierarchyTreeStructure treeStructure,
                                     final HierarchyNodeDescriptor descriptor,
                                     final Element element) {
+    if (element.getChild(ANY_NODES_ELEMENT_NAME) != null) {
+      return;
+    }
+
     final Object[] children = treeStructure.getChildElements(descriptor);
     //noinspection unchecked
-    final List<Element> expectedChildren = new ArrayList<Element>(element.getChildren());
+    final List<Element> expectedChildren = new ArrayList<Element>(element.getChildren(NODE_ELEMENT_NAME));
     assertEquals("Children of " + descriptor.getHighlightedText().getText(), expectedChildren.size(), children.length);
 
     for (Object child : children) {
@@ -78,7 +91,7 @@ public abstract class HierarchyViewTestBase extends CodeInsightTestCase {
 
     Collections.sort(expectedChildren, new Comparator<Element>() {
       public int compare(final Element first, final Element second) {
-        return first.getAttributeValue("text").compareTo(second.getAttributeValue("text"));
+        return first.getAttributeValue(TEXT_ATTR_NAME).compareTo(second.getAttributeValue(TEXT_ATTR_NAME));
       }
     });
 
@@ -90,5 +103,3 @@ public abstract class HierarchyViewTestBase extends CodeInsightTestCase {
   }
 
 }
-
-
