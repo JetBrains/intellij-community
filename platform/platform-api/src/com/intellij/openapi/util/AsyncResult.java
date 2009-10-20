@@ -19,9 +19,10 @@ public class AsyncResult<T> extends ActionCallback {
 
   private T myResult;
 
-  public void setDone(T result) {
+  public AsyncResult<T> setDone(T result) {
     myResult = result;
     super.setDone();
+    return this;
   }
 
   public AsyncResult<T> doWhenDone(final Handler<T> handler) {
@@ -31,6 +32,10 @@ public class AsyncResult<T> extends ActionCallback {
       }
     });
     return this;
+  }
+
+  public T getResult() {
+    return myResult;
   }
 
   public static interface Handler<T> {
