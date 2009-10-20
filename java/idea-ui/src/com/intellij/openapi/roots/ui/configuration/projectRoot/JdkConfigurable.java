@@ -17,11 +17,13 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.ui.SdkEditor;
-import com.intellij.openapi.ui.NamedConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.SdkProjectStructureElement;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
@@ -35,16 +37,24 @@ import javax.swing.*;
  * User: anna
  * Date: 05-Jun-2006
  */
-public class JdkConfigurable extends NamedConfigurable<Sdk> implements Place.Navigator {
+public class JdkConfigurable extends ProjectStructureElementConfigurable<Sdk> implements Place.Navigator {
   private final ProjectJdkImpl myProjectJdk;
   private final SdkEditor mySdkEditor;
+  private SdkProjectStructureElement myProjectStructureElement;
 
   public JdkConfigurable(final ProjectJdkImpl projectJdk,
                          final ProjectJdksModel configurable,
-                         final Runnable updateTree, @NotNull History history) {
+                         final Runnable updateTree, @NotNull History history, Project project) {
     super(true, updateTree);
     myProjectJdk = projectJdk;
     mySdkEditor = new SdkEditor(configurable, history, myProjectJdk);
+    final StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(project).getContext();
+    myProjectStructureElement = new SdkProjectStructureElement(context, myProjectJdk);
+  }
+
+  @Override
+  public ProjectStructureElement getProjectStructureElement() {
+    return myProjectStructureElement;
   }
 
   public void setDisplayName(final String name) {

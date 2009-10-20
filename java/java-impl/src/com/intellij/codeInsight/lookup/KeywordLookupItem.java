@@ -15,14 +15,21 @@
  */
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.filters.FilterUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
 */
-class KeywordLookupItem extends LookupItem<PsiKeyword> {
-  public KeywordLookupItem(final PsiKeyword keyword) {
+public class KeywordLookupItem extends LookupItem<PsiKeyword> implements TypedLookupItem {
+  private final PsiElement myPosition;
+
+  public KeywordLookupItem(final PsiKeyword keyword, @NotNull PsiElement position) {
     super(keyword, keyword.getText());
+    myPosition = position;
     setBold();
   }
 
@@ -34,5 +41,9 @@ class KeywordLookupItem extends LookupItem<PsiKeyword> {
   @Override
   public int hashCode() {
     return getLookupString().hashCode();
+  }
+
+  public PsiType getType() {
+    return FilterUtil.getKeywordItemType(myPosition, getLookupString());
   }
 }

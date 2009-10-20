@@ -579,7 +579,7 @@ public class DependencyCache {
     return myMarkedInfos.add(qName);
   }
 
-  public void dispose() {
+  public void resetState() {
     final long start = System.currentTimeMillis();
 
     try {

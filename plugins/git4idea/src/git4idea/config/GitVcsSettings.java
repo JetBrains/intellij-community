@@ -90,6 +90,14 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings> 
    * The type of update operation to perform
    */
   public UpdateType UPDATE_TYPE = UpdateType.BRANCH_DEFAULT;
+  /**
+   * The crlf conversion policy
+   */
+  public ConversionPolicy LINE_SEPARATORS_CONVERSION = ConversionPolicy.PROJECT_LINE_SEPARATORS;
+  /**
+   * If true, the dialog is shown with conversion options
+   */
+  public boolean LINE_SEPARATORS_CONVERSION_ASK = true;
 
   /**
    * Save an author of the commit and make it the first one. If amount of authors exceeds the limit, remove least recently selected author.
@@ -214,5 +222,19 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings> 
     MERGE,
     /** Rebase local commits upon the fetched branch*/
     REBASE
+  }
+
+  /**
+   * The CRLF conversion policy
+   */
+  public enum ConversionPolicy {
+    /**
+     * No conversion is performed
+     */
+    NONE,
+    /**
+     * The files are converted to project line separators
+     */
+    PROJECT_LINE_SEPARATORS
   }
 }

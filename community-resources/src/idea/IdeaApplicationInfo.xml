@@ -11,13 +11,14 @@
 
   <welcome-screen caption-url="/welcomeCaption_community.png" slogan-url="/developSlogan_community.png"/>
 
-  <update-urls check="http://www.jetbrains.com/updates/update.xml" patches="http://download.jetbrains.com/idea/" download="http://www.jetbrains.com/idea/download/"/>
-  <eap-update-urls check="http://www.jetbrains.com/updates/eap-update.xml" patches="http://download.jetbrains.com/idea/" download="http://www.jetbrains.net/confluence/display/IDEADEV/Maia+EAP"/>
+  <update-urls check="http://www.jetbrains.com/updates/updates.xml"
+               patches="http://download.jetbrains.com/idea/"/>
   <help file="ideahelp.jar" root="idea"/>
   <documentation url="http://www.jetbrains.com/idea/documentation"/>
   <support url="http://www.jetbrains.com/support/idea/index.html"/>
-  <feedback eap-url="http://jetbrains.net/jira" release-url="http://www.jetbrains.com/feedback/feedback.jsp?product=IDEA&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"/>
+  <feedback eap-url="http://jetbrains.net/tracker" release-url="http://www.jetbrains.com/feedback/feedback.jsp?product=IDEA&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"/>
   <plugins url="http://plugins.intellij.net"/>
+  <whatsnew url="http://www.jetbrains.com/idea/nextversion/index.html"/>
 
   <plugins-page category="VCS Integration" title="Select VCS Integration Plugins"/>
   <plugins-page title="Select Other Plugins"/>

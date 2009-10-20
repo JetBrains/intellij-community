@@ -17,13 +17,13 @@ package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectStructureElementConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactType;
-import com.intellij.packaging.elements.CompositePackagingElement;
-import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
@@ -34,17 +34,20 @@ import java.awt.event.ActionListener;
 /**
  * @author nik
  */
-public class ArtifactConfigurable extends NamedConfigurable<Artifact> {
+public class ArtifactConfigurable extends ProjectStructureElementConfigurable<Artifact> {
   private final Artifact myOriginalArtifact;
   private final ArtifactsStructureConfigurableContext myArtifactsStructureContext;
   private final ArtifactEditorImpl myEditor;
   private boolean myIsInUpdateName;
+  private ProjectStructureElement myProjectStructureElement;
 
-  public ArtifactConfigurable(Artifact originalArtifact, ArtifactsStructureConfigurableContextImpl artifactsStructureContext, final Runnable updateTree) {
+  public ArtifactConfigurable(Artifact originalArtifact, ArtifactsStructureConfigurableContextImpl artifactsStructureContext, final Runnable updateTree,
+                              StructureConfigurableContext context) {
     super(true, updateTree);
     myOriginalArtifact = originalArtifact;
     myArtifactsStructureContext = artifactsStructureContext;
     myEditor = artifactsStructureContext.getOrCreateEditor(originalArtifact);
+    myProjectStructureElement = new ArtifactProjectStructureElement(context, myArtifactsStructureContext, myOriginalArtifact);
   }
 
   public void setDisplayName(String name) {
@@ -53,6 +56,11 @@ public class ArtifactConfigurable extends NamedConfigurable<Artifact> {
       myArtifactsStructureContext.getModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact).setName(name);
       myEditor.updateOutputPath(oldName, name);
     }
+  }
+
+  @Override
+  public ProjectStructureElement getProjectStructureElement() {
+    return myProjectStructureElement;
   }
 
   @Override
@@ -118,13 +126,7 @@ public class ArtifactConfigurable extends NamedConfigurable<Artifact> {
       public void actionPerformed(ActionEvent e) {
         final ArtifactType selected = (ArtifactType)artifactTypeBox.getSelectedItem();
         if (!Comparing.equal(selected, getArtifact().getArtifactType())) {
-          final CompositePackagingElement<?> element = myEditor.getRootElement();
-          final CompositePackagingElement<?> newRootElement = selected.createRootElement(getArtifact().getName());
-          myArtifactsStructureContext.getModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact).setArtifactType(selected);
-          if (!newRootElement.getType().equals(element.getType())) {
-            ArtifactUtil.copyChildren(element, newRootElement, myArtifactsStructureContext.getProject());
-            myEditor.getLayoutTreeComponent().setRootElement(newRootElement);
-          }
+          myEditor.setArtifactType(selected);
         }
       }
     });

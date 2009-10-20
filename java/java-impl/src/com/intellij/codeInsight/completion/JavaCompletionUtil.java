@@ -792,6 +792,11 @@ public class JavaCompletionUtil {
     final PsiType qualifierType = getPsiType(element.getObject());
     final LookupItem lookupItem = element.as(LookupItem.class);
     if (lookupItem != null) {
+      final Object o = lookupItem.getAttribute(LookupItem.TYPE);
+      if (o instanceof PsiType) {
+        return (PsiType)o;
+      }
+
       final PsiSubstitutor substitutor = (PsiSubstitutor)lookupItem.getAttribute(LookupItem.SUBSTITUTOR);
       if (substitutor != null) {
         return substitutor.substitute(qualifierType);

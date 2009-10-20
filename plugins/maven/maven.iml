@@ -25,47 +25,7 @@
           <root url="jar://$MODULE_DIR$/lib/maven-2.2.0-uber.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES>
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/components/maven-toolchain/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/wagon/wagon-providers/wagon-file/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/components/maven-plugin-api/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/components/maven-reporting/maven-reporting-api/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/components/maven-plugin-registry/target/generated-sources/modello" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/components/maven-script/maven-script-beanshell/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/wagon/wagon-providers/wagon-http-shared/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/components/maven-settings/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/wagon/wagon-providers/wagon-ftp/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/wagon/wagon-providers/wagon-ssh/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/plexus/interpolation-1.11/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/wagon/wagon-providers/wagon-ssh-external/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/plexus/plexus-utils-1.5.15/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/components/maven-repository-metadata/target/generated-sources/modello" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/components/maven-profile/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/components/maven-plugin-registry/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/wagon/wagon-provider-test/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/components/maven-artifact/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/components/maven-artifact-manager/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/components/maven-compat/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/components/maven-profile/target/generated-sources/modello" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/components/maven-settings/target/generated-sources/modello" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/wagon/wagon-providers/wagon-http/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/components/maven-plugin-descriptor/target/generated-sources/modello" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/components/maven-project/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/wagon/wagon-providers/wagon-webdav-jackrabbit/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/components/maven-script/maven-script-ant/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/components/maven-plugin-descriptor/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/components/maven-plugin-parameter-documenter/target/generated-sources/modello" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/components/maven-toolchain/target/generated-sources/modello" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/components/maven-core/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/wagon/wagon-providers/wagon-ssh-common/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/plexus/plexus-container-default-1.0-alpha-9-stable-1/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/components/maven-model/target/generated-sources/modello" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/components/maven-error-diagnostics/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/wagon/wagon-provider-api/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/components/maven-monitor/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/wagon/wagon-providers/wagon-http-lightweight/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../maven/maven-2.2/wagon/wagon-providers/wagon-scm/src/main/java" />
-        </SOURCES>
+        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">

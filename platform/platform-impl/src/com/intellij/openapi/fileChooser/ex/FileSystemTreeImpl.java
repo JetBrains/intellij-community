@@ -439,20 +439,16 @@ public class FileSystemTreeImpl implements FileSystemTree {
     public void treeExpanded(final TreeExpansionEvent event) {
       if (myTreeBuilder == null || !myTreeBuilder.isNodeBeingBuilt(event.getPath())) return;
 
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          TreePath path = event.getPath();
-          DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-          if (node.getUserObject() instanceof FileNodeDescriptor) {
-            FileNodeDescriptor nodeDescriptor = (FileNodeDescriptor)node.getUserObject();
-            FileElement fileDescriptor = nodeDescriptor.getElement();
-            VirtualFile virtualFile = fileDescriptor.getFile();
-            if (virtualFile != null) {
-              virtualFile.refresh(false, false);
-            }
-          }
+      TreePath path = event.getPath();
+      DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+      if (node.getUserObject() instanceof FileNodeDescriptor) {
+        FileNodeDescriptor nodeDescriptor = (FileNodeDescriptor)node.getUserObject();
+        FileElement fileDescriptor = nodeDescriptor.getElement();
+        VirtualFile virtualFile = fileDescriptor.getFile();
+        if (virtualFile != null) {
+          virtualFile.refresh(false, false);
         }
-      });
+      }
     }
 
     public void treeCollapsed(TreeExpansionEvent event) {

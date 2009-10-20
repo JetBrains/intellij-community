@@ -26,6 +26,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -191,10 +192,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     SortedIntSet aClass = myEqClasses.get(aClassIndex);
     if (aClass != null) {
       buf.append("(");
-      int[] values = aClass.toNativeArray();
-      for (int i = 0; i < values.length; i++) {
+
+      for (int i = 0; i < aClass.size(); i++) {
         if (i > 0) buf.append(", ");
-        int value = values[i];
+        int value = aClass.get(i);
         DfaValue dfaValue = myFactory.getValue(value);
         buf.append(dfaValue);
       }
@@ -413,15 +414,18 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
     }
 
-    c1.add(c2.toNativeArray());
-    long[] c2Array = c2Pairs.toNativeArray();
-    myDistinctClasses.removeAll(c2Array);
+    for (int i = 0; i < c2.size(); i++) {
+      int c = c2.get(i);
+      c1.add(c);
+    }
+
+    for (int i = 0; i < c2Pairs.size(); i++) {
+      long c = c2Pairs.get(i);
+      myDistinctClasses.remove(c);
+      myDistinctClasses.add(createPair(c1Index, low(c) == c2Index ? high(c) : low(c)));
+    }
     myEqClasses.set(c2Index, null);
     myStateSize--;
-
-    for (long l : c2Array) {
-      myDistinctClasses.add(createPair(c1Index, low(l) == c2Index ? high(l) : low(l)));
-    }
 
     return true;
   }
@@ -577,9 +581,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       ){
         dfaLeft = myFactory.getBoxedFactory().createUnboxed(dfaLeft);
         dfaRight = myFactory.getBoxedFactory().createUnboxed(dfaRight);
-        if (dfaLeft != null && dfaRight != null) {
-          result &= applyRelation(dfaLeft, dfaRight, isNegated);
-        }
+        result &= applyRelation(dfaLeft, dfaRight, isNegated);
       }
       else if (TypeConversionUtil.isPrimitiveAndNotNull(psiVariable.getType())){
         dfaLeft = myFactory.getBoxedFactory().createBoxed(dfaLeft);
@@ -675,21 +677,27 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   public void flushVariable(@NotNull DfaVariableValue variable) {
-    int id = variable.getID();
-    for (int varClassIndex = 0; varClassIndex < myEqClasses.size(); varClassIndex++) {
-      SortedIntSet varClass = myEqClasses.get(varClassIndex);
+    final int id = variable.getID();
+    int size = myEqClasses.size();
+    int interruptCount = 0;
+    for (int varClassIndex = 0; varClassIndex < size; varClassIndex++) {
+      final SortedIntSet varClass = myEqClasses.get(varClassIndex);
       if (varClass == null) continue;
-      int[] cls = varClass.toNativeArray();
-      for (int i = 0; i < cls.length; i++) {
-        int cl = cls[i];
+
+      for (int i = 0; i < varClass.size(); i++) {
+        if ((++interruptCount & 0xf) == 0) {
+          ProgressManager.getInstance().checkCanceled();
+        }
+        int cl = varClass.get(i);
         DfaValue value = myFactory.getValue(cl);
-        if (value != null && id == value.getID()
-            || value instanceof DfaBoxedValue && ((DfaBoxedValue)value).getWrappedValue().getID() == id
-            || value instanceof DfaUnboxedValue && ((DfaUnboxedValue)value).getVariable().getID() == id) {
+        if (value != null && id == value.getID() ||
+            value instanceof DfaBoxedValue && ((DfaBoxedValue)value).getWrappedValue().getID() == id ||
+            value instanceof DfaUnboxedValue && ((DfaUnboxedValue)value).getVariable().getID() == id) {
           varClass.remove(i);
           break;
         }
       }
+
       if (varClass.isEmpty()) {
         myEqClasses.set(varClassIndex, null);
         myStateSize--;

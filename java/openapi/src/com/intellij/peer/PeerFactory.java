@@ -29,8 +29,7 @@ import com.intellij.openapi.module.ModuleConfigurationEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
 import com.intellij.openapi.ui.DialogWrapperPeerFactory;
 import com.intellij.openapi.vcs.FileStatusFactory;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
@@ -89,6 +88,5 @@ public abstract class PeerFactory {
 
   public abstract Sdk createProjectJdk(String name, final String version, final String homePath, SdkType sdkType);
 
-  public abstract ModuleConfigurationEditor createModuleConfigurationEditor(Project project, String moduleName, ModifiableRootModel model,
-                                                                            ModulesProvider modulesProvider);
+  public abstract ModuleConfigurationEditor createModuleConfigurationEditor(String moduleName, ModuleConfigurationState state);
 }

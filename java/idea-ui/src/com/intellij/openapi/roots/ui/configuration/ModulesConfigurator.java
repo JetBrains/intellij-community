@@ -23,6 +23,7 @@ import com.intellij.facet.impl.ui.FacetEditorImpl;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -40,9 +41,11 @@ import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
@@ -105,10 +108,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         for (final ModuleEditor moduleEditor : myModuleEditors) {
-          final ModifiableRootModel model = moduleEditor.dispose();
-          if (model != null) {
-            model.dispose();
-          }
+          Disposer.dispose(moduleEditor);
         }
         myModuleEditors.clear();
 
@@ -170,10 +170,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        for (final ModuleEditor moduleEditor : myModuleEditors) {
-          moduleEditor.removeChangeListener(ModulesConfigurator.this);
-        }
-        myModuleEditors.clear();
+        assert myModuleEditors.isEmpty();
         final Module[] modules = myModuleModel.getModules();
         if (modules.length > 0) {
           for (Module module : modules) {
@@ -188,9 +185,24 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   public void createModuleEditor(final Module module) {
-    final ModuleEditor moduleEditor = new ModuleEditor(myProject, this, myFacetsConfigurator, module);
+    final ModuleEditor moduleEditor = new ModuleEditor(myProject, this, module) {
+      @Override
+      public ProjectFacetsConfigurator getFacetsConfigurator() {
+        return myFacetsConfigurator;
+      }
+    };
+
+    final ProjectFacetsConfigurator configurator = myFacetsConfigurator;
+    moduleEditor.addChangeListener(configurator);
     myModuleEditors.add(moduleEditor);
+
     moduleEditor.addChangeListener(this);
+    Disposer.register(moduleEditor, new Disposable() {
+      public void dispose() {
+        moduleEditor.removeChangeListener(ModulesConfigurator.this);
+        moduleEditor.removeChangeListener(configurator);
+      }
+    });
   }
 
   public void moduleStateChanged(final ModifiableRootModel moduleRootModel) {
@@ -216,7 +228,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
           myFacetsConfigurator.applyEditors();
           final List<ModifiableRootModel> models = new ArrayList<ModifiableRootModel>(myModuleEditors.size());
           for (final ModuleEditor moduleEditor : myModuleEditors) {
-            final ModifiableRootModel model = moduleEditor.applyAndDispose();
+            final ModifiableRootModel model = moduleEditor.apply();
             if (model != null) {
               models.add(model);
             }
@@ -233,10 +245,25 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         finally {
           myFacetsConfigurator.disposeEditors();
           ModuleStructureConfigurable.getInstance(myProject).getFacetEditorFacade().clearMaps();
+
+          for (final ModuleEditor moduleEditor : myModuleEditors) {
+            moduleEditor.removeChangeListener(myFacetsConfigurator);
+          }
+
           myFacetsConfigurator = createFacetsConfigurator();
           myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
+
+          final ProjectFacetsConfigurator configurator = myFacetsConfigurator;
+
+          for (final ModuleEditor moduleEditor : myModuleEditors) {
+            moduleEditor.addChangeListener(configurator);
+            Disposer.register(moduleEditor, new Disposable() {
+              public void dispose() {
+                moduleEditor.removeChangeListener(configurator);
+              }
+            });
+          }
         }
-        ApplicationManager.getApplication().saveAll();
       }
     });
 
@@ -244,13 +271,11 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       throw ex[0];
     }
 
-    ApplicationManager.getApplication().saveAll();
-
     myModified = false;
   }
 
   private ProjectFacetsConfigurator createFacetsConfigurator() {
-    return new ProjectFacetsConfigurator(myContext, myProject);
+    return new ProjectFacetsConfigurator(myContext, myProject, myFacetsConfigurator);
   }
 
   public void setModified(final boolean modified) {
@@ -382,10 +407,12 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       final ModifiableRootModel modifiableRootModel = moduleEditor.getModifiableRootModelProxy();
       modifiableRootModels.add(modifiableRootModel);
     }
+
     // destroyProcess editor
-    final ModifiableRootModel model = selectedEditor.dispose();
-    ModuleDeleteProvider.removeModule(moduleToRemove, model, modifiableRootModels, myModuleModel);
+    ModuleDeleteProvider.removeModule(moduleToRemove, null, modifiableRootModels, myModuleModel);
     processModuleCountChanged();
+    Disposer.dispose(selectedEditor);
+    
     return true;
   }
 
@@ -487,7 +514,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       if (module == moduleEditor.getModule() && Comparing.strEqual(moduleEditor.getName(), oldName)) {
         moduleEditor.setModuleName(name);
         moduleEditor.updateCompilerOutputPathChanged(ProjectStructureConfigurable.getInstance(myProject).getProjectConfig().getCompilerOutputUrl(), name);
-        myContext.invalidateModuleName(moduleEditor.getModule());
+        myContext.getDaemonAnalyzer().queueUpdate(new ModuleProjectStructureElement(myContext, module), true, false);
         return;
       }
     }

@@ -47,6 +47,7 @@ import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.*;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
@@ -134,6 +135,16 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     ((DefaultTreeModel)myTree.getModel()).reload();
 
     myUiDisposed = false;
+  }
+
+  @NotNull
+  @Override
+  protected Collection<? extends ProjectStructureElement> getProjectStructureElements() {
+    final List<ProjectStructureElement> result = new ArrayList<ProjectStructureElement>();
+    for (Module module : myModuleManager.getModules()) {
+      result.add(new ModuleProjectStructureElement(myContext, module));
+    }
+    return result;
   }
 
   protected void updateSelection(@Nullable final NamedConfigurable configurable) {
@@ -299,7 +310,8 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
             node.removeFromParent();
             ((DefaultTreeModel)myTree.getModel()).reload(parent);
           }
-          myContext.invalidateModules(myContext.myLibraryDependencyCache.get(library));
+          myContext.getDaemonAnalyzer().removeElement(new LibraryProjectStructureElement(myContext, library));
+          // TODO: myContext.invalidateModules(myContext.myLibraryDependencyCache.get(library.getName()));
         }
       }
 
@@ -310,8 +322,6 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   public void reset() {
-    myContext.reset();
-
     super.reset();
   }
 
@@ -331,7 +341,6 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   public void disposeUIResources() {
     super.disposeUIResources();
     myFacetEditorFacade.clearMaps();
-    myContext.clearCaches();
     myContext.myModulesConfigurator.disposeUIResources();
     ModuleStructureConfigurable.super.disposeUIResources();
   }
@@ -445,12 +454,15 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       }
     }
     modelProxy.addLibraryEntry(library);
-    Set<String> modules = myContext.myLibraryDependencyCache.get(library);
+    myContext.getDaemonAnalyzer().queueUpdate(new ModuleProjectStructureElement(myContext, module));
+    /* TODO
+    Set<String> modules = myContext.myLibraryDependencyCache.get(library.getName());
     if (modules == null) {
       modules = new HashSet<String>();
-      myContext.myLibraryDependencyCache.put(library, modules);
+      myContext.myLibraryDependencyCache.put(library.getName(), modules);
     }
     modules.add(module.getName());
+    */
     myTree.repaint();
   }
 
@@ -500,7 +512,9 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     myFacetEditorFacade.addFacetsNodes(module, node);
     ((DefaultTreeModel)myTree.getModel()).reload(parent);
     selectNodeInTree(node);
-    myContext.myValidityCache.clear(); //missing modules added
+    final ProjectStructureDaemonAnalyzer daemonAnalyzer = myContext.getDaemonAnalyzer();
+    daemonAnalyzer.queueUpdate(new ModuleProjectStructureElement(myContext, module));
+    daemonAnalyzer.clearAllProblems(); //missing modules added
   }
 
   @Nullable
@@ -670,9 +684,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
     List<Facet> removed = modulesConfigurator.getFacetsConfigurator().removeAllFacets(module);
     FacetStructureConfigurable.getInstance(myProject).removeFacetNodes(removed);
-    myContext.myValidityCache.remove(module);
-    myContext.invalidateModules(myContext.myModulesDependencyCache.get(module));
-    myContext.myModulesDependencyCache.remove(module);
+    myContext.getDaemonAnalyzer().removeElement(new ModuleProjectStructureElement(myContext, module));
     return true;
   }
 

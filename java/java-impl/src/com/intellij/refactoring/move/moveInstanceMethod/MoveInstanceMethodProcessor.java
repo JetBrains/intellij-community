@@ -18,6 +18,7 @@ package com.intellij.refactoring.move.moveInstanceMethod;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocTagValue;
@@ -458,7 +459,9 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
 
   private PsiMethod getPatternMethod() throws IncorrectOperationException {
     final PsiMethod methodCopy = (PsiMethod)myMethod.copy();
-    String name = myTargetClass.isInterface() ? PsiModifier.PUBLIC : myNewVisibility;
+    String name = myTargetClass.isInterface()
+                  ? PsiModifier.PUBLIC :
+                  !Comparing.strEqual(myNewVisibility, VisibilityUtil.ESCALATE_VISIBILITY) ? myNewVisibility : null;
     if (name != null) {
       PsiUtil.setModifierProperty(methodCopy, name, true);
     }

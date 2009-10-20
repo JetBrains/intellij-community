@@ -38,6 +38,10 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEdi
 import com.intellij.openapi.roots.ui.configuration.projectRoot.FindUsagesInProjectStructureActionBase;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.SdkProjectStructureElement;
 import com.intellij.openapi.roots.ui.util.CellAppearance;
 import com.intellij.openapi.roots.ui.util.OrderEntryCellAppearanceUtils;
 import com.intellij.openapi.ui.Messages;
@@ -73,22 +77,19 @@ import java.util.List;
 public class ClasspathPanel extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.ClasspathPanel");
 
-  private final Project myProject;
-  private final ModifiableRootModel myRootModel;
-  private final ModulesProvider myModulesProvider;
   private final Table myEntryTable;
   private final MyTableModel myModel;
   private final EventDispatcher<OrderPanelListener> myListeners = EventDispatcher.create(OrderPanelListener.class);
   private PopupAction[] myPopupActions = null;
   private Icon[] myIcons = null;
   private JButton myEditButton;
+  private ModuleConfigurationState myState;
 
-  protected ClasspathPanel(Project project, ModifiableRootModel rootModel, final ModulesProvider modulesProvider) {
+  protected ClasspathPanel(ModuleConfigurationState state) {
     super(new BorderLayout());
-    myProject = project;
-    myRootModel = rootModel;
-    myModulesProvider = modulesProvider;
-    myModel = new MyTableModel(rootModel);
+
+    myState = state;
+    myModel = new MyTableModel(state);
     myEntryTable = new Table(myModel);
     myEntryTable.setShowGrid(false);
     myEntryTable.setDragEnabled(false);
@@ -212,7 +213,7 @@ public class ClasspathPanel extends JPanel {
   private void navigate(boolean openLibraryEditor) {
     final int selectedRow = myEntryTable.getSelectedRow();
     final OrderEntry entry = myModel.getItemAt(selectedRow).getEntry();
-    final ProjectStructureConfigurable rootConfigurable = ProjectStructureConfigurable.getInstance(myProject);
+    final ProjectStructureConfigurable rootConfigurable = ProjectStructureConfigurable.getInstance(myState.getProject());
     if (entry instanceof ModuleOrderEntry){
       Module module = ((ModuleOrderEntry)entry).getModule();
       if (module != null) {
@@ -330,12 +331,14 @@ public class ClasspathPanel extends JPanel {
           if (orderEntry == null) {
             continue;
           }
-          ModuleStructureConfigurable.getInstance(myProject).getContext().clearCaches(orderEntry);
-          myRootModel.removeOrderEntry(orderEntry);
+
+          getRootModel().removeOrderEntry(orderEntry);
         }        
         final int[] selectedRows = myEntryTable.getSelectedRows();
         myModel.fireTableDataChanged();
         TableUtil.selectRows(myEntryTable, selectedRows);
+        final StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(myState.getProject()).getContext();
+        context.getDaemonAnalyzer().queueUpdate(new ModuleProjectStructureElement(context, getRootModel().getModule()));
       }
     });
     
@@ -357,7 +360,7 @@ public class ClasspathPanel extends JPanel {
         final LibraryTableModifiableModelProvider provider;
         final LibraryTable table = library.getTable();
         if (table == null) {
-          final LibraryTable moduleLibraryTable = myRootModel.getModuleLibraryTable();
+          final LibraryTable moduleLibraryTable = getRootModel().getModuleLibraryTable();
           provider = new LibraryTableModifiableModelProvider() {
             public LibraryTable.ModifiableModel getModifiableModel() {
               return moduleLibraryTable.getModifiableModel();
@@ -377,13 +380,13 @@ public class ClasspathPanel extends JPanel {
           };
         }
         else {
-          provider = ProjectStructureConfigurable.getInstance(myProject).getContext().createModifiableModelProvider(table.getTableLevel(), false);
+          provider = ProjectStructureConfigurable.getInstance(myState.getProject()).getContext().createModifiableModelProvider(table.getTableLevel(), false);
         }
         final LibraryTableEditor editor = LibraryTableEditor.editLibrary(provider, library);
-        editor.addFileChooserContext(LangDataKeys.MODULE_CONTEXT, myRootModel.getModule());
+        editor.addFileChooserContext(LangDataKeys.MODULE_CONTEXT, getRootModel().getModule());
         editor.openDialog(ClasspathPanel.this, Collections.singletonList(library), true);
         myEntryTable.repaint();
-        ModuleStructureConfigurable.getInstance(myProject).getTree().repaint();
+        ModuleStructureConfigurable.getInstance(myState.getProject()).getTree().repaint();
       }
     });
     return panel;
@@ -401,6 +404,14 @@ public class ClasspathPanel extends JPanel {
       KeyStroke.getKeyStroke(keyEvent, modifiers),
       WHEN_FOCUSED
     );
+  }
+
+  private ModifiableRootModel getRootModel() {
+    return myState.getRootModel();
+  }
+
+  public void rootsChanged() {
+    forceInitFromModel();
   }
 
   private abstract class ButtonAction implements ActionListener {
@@ -473,14 +484,13 @@ public class ClasspathPanel extends JPanel {
         if (chosen.size() == 0) {
           return;
         }
-        final ModuleStructureConfigurable rootConfigurable = ModuleStructureConfigurable.getInstance(myProject);
+        final ModuleStructureConfigurable rootConfigurable = ModuleStructureConfigurable.getInstance(myState.getProject());
         //int insertionIndex = myEntryTable.getSelectedRow();
         for (ItemType item : chosen) {
           //myModel.addItemAt(createTableItem(item), insertionIndex++);
           final TableItem tableItem = createTableItem(item);
           if ( tableItem != null ) {
             myModel.addItem(tableItem);
-            rootConfigurable.getContext().clearCaches(tableItem.getEntry());
           }
         }
         myModel.fireTableDataChanged();
@@ -489,6 +499,8 @@ public class ClasspathPanel extends JPanel {
         selectionModel.setSelectionInterval(myModel.getRowCount() - chosen.size(), myModel.getRowCount() - 1);
         TableUtil.scrollSelectionToVisible(myEntryTable);
 
+        final StructureConfigurableContext context = rootConfigurable.getContext();
+        context.getDaemonAnalyzer().queueUpdate(new ModuleProjectStructureElement(context, getRootModel().getModule()));
       }
       finally {
         if (dialog instanceof ChooseNamedLibraryAction.MyChooserDialog) {
@@ -505,12 +517,12 @@ public class ClasspathPanel extends JPanel {
 
   private void initPopupActions() {
     if (myPopupActions == null) {
-      final StructureConfigurableContext context = ProjectStructureConfigurable.getInstance(myProject).getContext();
+      final StructureConfigurableContext context = ProjectStructureConfigurable.getInstance(myState.getProject()).getContext();
       int actionIndex = 1;
       final List<PopupAction> actions = new ArrayList<PopupAction>(Arrays.<PopupAction>asList(
         new ChooseAndAddAction<Library>(actionIndex++, ProjectBundle.message("classpath.add.simple.module.library.action"), Icons.JAR_ICON) {
           protected TableItem createTableItem(final Library item) {
-            final OrderEntry[] entries = myRootModel.getOrderEntries();
+            final OrderEntry[] entries = getRootModel().getOrderEntries();
             for (OrderEntry entry : entries) {
               if (entry instanceof LibraryOrderEntry) {
                 final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
@@ -524,12 +536,12 @@ public class ClasspathPanel extends JPanel {
           }
 
           protected ChooserDialog<Library> createChooserDialog() {
-            return new ChooseModuleLibrariesDialog(ClasspathPanel.this, myRootModel.getModuleLibraryTable(), null);
+            return new ChooseModuleLibrariesDialog(ClasspathPanel.this, getRootModel().getModuleLibraryTable(), null);
           }
         },
         new ChooseAndAddAction<Library>(actionIndex++, ProjectBundle.message("classpath.add.module.library.action"), Icons.JAR_ICON) {
           protected TableItem createTableItem(final Library item) {
-            final OrderEntry[] entries = myRootModel.getOrderEntries();
+            final OrderEntry[] entries = getRootModel().getOrderEntries();
             for (OrderEntry entry : entries) {
               if (entry instanceof LibraryOrderEntry) {
                 final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
@@ -543,7 +555,7 @@ public class ClasspathPanel extends JPanel {
           }
 
           protected ChooserDialog<Library> createChooserDialog() {
-            return new CreateModuleLibraryDialog(ClasspathPanel.this, myRootModel.getModuleLibraryTable());
+            return new CreateModuleLibraryDialog(ClasspathPanel.this, getRootModel().getModuleLibraryTable());
           }
         },
         new ChooseNamedLibraryAction(actionIndex++, ProjectBundle.message("classpath.add.project.library.action"), context.getProjectLibrariesProvider(true)),
@@ -556,7 +568,7 @@ public class ClasspathPanel extends JPanel {
       actions.add(new ChooseAndAddAction<Module>(actionIndex, ProjectBundle.message("classpath.add.module.dependency.action"),
                                                  StdModuleTypes.JAVA.getNodeIcon(false)) {
           protected TableItem createTableItem(final Module item) {
-            return new ModuleItem(myRootModel.addModuleOrderEntry(item));
+            return new ModuleItem(getRootModel().addModuleOrderEntry(item));
           }
           protected ChooserDialog<Module> createChooserDialog() {
             final List<Module> chooseItems = getDependencyModules();
@@ -626,7 +638,7 @@ public class ClasspathPanel extends JPanel {
         TableUtil.scrollSelectionToVisible(myEntryTable);
       }
     }
-    IdeFocusManager.getInstance(myProject).requestFocus(myEntryTable, true);
+    IdeFocusManager.getInstance(myState.getProject()).requestFocus(myEntryTable, true);
   }
 
   private int moveRow(final int row, final int increment) {
@@ -659,7 +671,7 @@ public class ClasspathPanel extends JPanel {
     }
   }
 
-  private void forceInitFromModel() {
+  void forceInitFromModel() {
     final int[] selection = myEntryTable.getSelectedRows();
     myModel.clear();
     myModel.init();
@@ -676,10 +688,11 @@ public class ClasspathPanel extends JPanel {
         filtered.add(((ModuleOrderEntry)entry).getModuleName());
       }
     }
-    final Module self = myModulesProvider.getModule(myRootModel.getModule().getName());
+    final ModulesProvider modulesProvider = myState.getModulesProvider();
+    final Module self = modulesProvider.getModule(getRootModel().getModule().getName());
     filtered.add(self.getName());
 
-    final Module[] modules = myModulesProvider.getModules();
+    final Module[] modules = modulesProvider.getModules();
     final List<Module> elements = new ArrayList<Module>(modules.length);
     for (final Module module : modules) {
       if (!filtered.contains(module.getName())) {
@@ -794,15 +807,19 @@ public class ClasspathPanel extends JPanel {
     public static final int ITEM_COLUMN = 1;
     public static final int SCOPE_COLUMN = 2;
     private final List<TableItem> myItems = new ArrayList<TableItem>();
-    private final ModifiableRootModel myRootModel;
+    private ModuleConfigurationState myState;
 
-    public MyTableModel(final ModifiableRootModel rootModel) {
-      myRootModel = rootModel;
+    public MyTableModel(final ModuleConfigurationState state) {
+      myState = state;
       init();
     }
 
+    private ModifiableRootModel getModel() {
+      return myState.getRootModel();
+    }
+
     public void init() {
-      final OrderEntry[] orderEntries = myRootModel.getOrderEntries();
+      final OrderEntry[] orderEntries = getModel().getOrderEntries();
       boolean hasJdkOrderEntry = false;
       for (final OrderEntry orderEntry : orderEntries) {
         if (orderEntry instanceof JdkOrderEntry) {
@@ -1102,7 +1119,7 @@ public class ClasspathPanel extends JPanel {
     @Nullable
     protected TableItem createTableItem(final Library item) {
       // clear invalid order entry corresponding to added library if any
-      final OrderEntry[] orderEntries = myRootModel.getOrderEntries();
+      final OrderEntry[] orderEntries = getRootModel().getOrderEntries();
       for (OrderEntry orderEntry : orderEntries) {
         if (orderEntry instanceof LibraryOrderEntry ) {
           if (item.getName().equals(((LibraryOrderEntry)orderEntry).getLibraryName())) {
@@ -1111,12 +1128,12 @@ public class ClasspathPanel extends JPanel {
                                        ProjectBundle.message("classpath.title.adding.dependency"));
               return null;
             } else {
-              myRootModel.removeOrderEntry(orderEntry);
+              getRootModel().removeOrderEntry(orderEntry);
             }
           }
         }
       }
-      return new LibItem(myRootModel.addLibraryEntry(item));
+      return new LibItem(getRootModel().addLibraryEntry(item));
     }
 
     protected ChooserDialog<Library> createChooserDialog() {
@@ -1124,7 +1141,7 @@ public class ClasspathPanel extends JPanel {
     }
 
     private Collection<Library> getAlreadyAddedLibraries() {
-      final OrderEntry[] orderEntries = myRootModel.getOrderEntries();
+      final OrderEntry[] orderEntries = getRootModel().getOrderEntries();
       final Set<Library> result = new HashSet<Library>(orderEntries.length);
       for (OrderEntry orderEntry : orderEntries) {
         if (orderEntry instanceof LibraryOrderEntry && orderEntry.isValid()) {
@@ -1142,16 +1159,15 @@ public class ClasspathPanel extends JPanel {
       private boolean myIsOk;
 
       MyChooserDialog(){
-        myEditor = LibraryTableEditor.editLibraryTable(myLibraryTableModelProvider, myProject);
+        myEditor = LibraryTableEditor.editLibraryTable(myLibraryTableModelProvider, myState.getProject());
         Disposer.register(this, myEditor);
       }
 
       public List<Library> getChosenElements() {
         final List<Library> chosen = new ArrayList<Library>(Arrays.asList(myEditor.getSelectedLibraries()));
         chosen.removeAll(getAlreadyAddedLibraries());
-        final Module module = myRootModel.getModule();
+        final Module module = getRootModel().getModule();
         final Project project = module.getProject();
-        ModuleStructureConfigurable.getInstance(project).getContext().clearCaches(module, chosen);
         return chosen;
       }
 
@@ -1171,33 +1187,42 @@ public class ClasspathPanel extends JPanel {
 
   private class MyFindUsagesAction extends FindUsagesInProjectStructureActionBase {
     private MyFindUsagesAction() {
-      super(myEntryTable, myProject);
+      super(myEntryTable, myState.getProject());
     }
 
     protected boolean isEnabled() {
-      return getSelectedObject() != null;
+      return getSelectedElement() != null;
     }
 
-    protected Object getSelectedObject() {
+    protected ProjectStructureElement getSelectedElement() {
       int row = myEntryTable.getSelectedRow();
       if (0 <= row && row < myModel.getRowCount()) {
         TableItem item = myModel.getItemAt(row);
         if (item instanceof LibItem) {
           LibraryOrderEntry orderEntry = ((LibItem)item).getEntry();
           if (orderEntry != null) {
-            return orderEntry.getLibrary();
+            final Library library = orderEntry.getLibrary();
+            if (library != null) {
+              return new LibraryProjectStructureElement(getContext(), library);
+            }
           }
         }
         else if (item instanceof ModuleItem) {
           ModuleOrderEntry orderEntry = ((ModuleItem)item).getEntry();
           if (orderEntry != null) {
-            return orderEntry.getModule();
+            final Module module = orderEntry.getModule();
+            if (module != null) {
+              return new ModuleProjectStructureElement(getContext(), module);
+            }
           }
         }
         else if (item instanceof JdkItem) {
           JdkOrderEntry orderEntry = ((JdkItem)item).getEntry();
           if (orderEntry != null) {
-            return orderEntry.getJdk();
+            final Sdk jdk = orderEntry.getJdk();
+            if (jdk != null) {
+              return new SdkProjectStructureElement(getContext(), jdk);
+            }
           }
         }
       }

@@ -22,9 +22,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,11 +34,11 @@ public class OutputEditor extends ModuleElementsEditor {
   private final JavadocEditor myJavadocEditor;
   private final AnnotationsEditor myAnnotationsEditor;
 
-  protected OutputEditor(final Project project, final ModifiableRootModel model) {
-    super(project, model);
-    myCompilerOutputEditor = new BuildElementsEditor(project, model);
-    myJavadocEditor = new JavadocEditor(project, model);
-    myAnnotationsEditor = new AnnotationsEditor(project, model);
+  protected OutputEditor(final ModuleConfigurationState state) {
+    super(state);
+    myCompilerOutputEditor = new BuildElementsEditor(state);
+    myJavadocEditor = new JavadocEditor(state);
+    myAnnotationsEditor = new AnnotationsEditor(state);
   }
 
   protected JComponent createComponentImpl() {

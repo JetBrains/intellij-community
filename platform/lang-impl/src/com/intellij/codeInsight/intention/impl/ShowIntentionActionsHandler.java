@@ -29,13 +29,17 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -44,7 +48,10 @@ import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -52,6 +59,8 @@ import javax.swing.*;
  * @author mike
  */
 public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler");
+
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -133,5 +142,93 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
 
   public boolean startInWriteAction() {
     return false;
+  }
+
+  // returns editor,file where the action is available or null if there are none
+  @Nullable
+  public static Pair<PsiFile, Editor> availableFor(PsiFile file, final Editor editor, final IntentionAction action, final PsiElement element) {
+    if (!file.isValid()) return null;
+    final Project project = file.getProject();
+
+    final Editor editorToApply;
+    final PsiFile fileToApply;
+
+    int offset = editor.getCaretModel().getOffset();
+    PsiElement injected = InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, offset);
+    boolean inProject = file.getManager().isInProject(file);
+    if (injected != null) {
+      PsiFile injectedFile = injected.getContainingFile();
+      Editor injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile);
+
+      if (isAvailableHere(injectedEditor, injectedFile, injected, inProject, action)) {
+        editorToApply = injectedEditor;
+        fileToApply = injectedFile;
+      }
+      else if (!isAvailableHere(editor, file, element, inProject, action)) {
+        return null;
+      }
+      else {
+        editorToApply = editor;
+        fileToApply = file;
+      }
+    }
+    else if (!isAvailableHere(editor, file, element, inProject, action)) {
+      return null;
+    }
+    else {
+      editorToApply = editor;
+      fileToApply = file;
+    }
+    return Pair.create(fileToApply, editorToApply);
+  }
+  
+  private static boolean isAvailableHere(Editor editor, PsiFile psiFile, PsiElement psiElement, boolean inProject, IntentionAction action) {
+    try {
+      Project project = psiFile.getProject();
+      if (action instanceof PsiElementBaseIntentionAction) {
+        if (!inProject || !((PsiElementBaseIntentionAction)action).isAvailable(project, editor, psiElement)) return false;
+      }
+      else if (!action.isAvailable(project, editor, psiFile)) {
+        return false;
+      }
+    }
+    catch (IndexNotReadyException e) {
+      return false;
+    }
+    return true;
+  }
+  
+  public static void chooseActionAndInvoke(PsiFile file, final Editor editor, final IntentionAction action, final String text) {
+    final Project project = file.getProject();
+
+    int offset = editor.getCaretModel().getOffset();
+    PsiElement element = file.findElementAt(offset);
+    Pair<PsiFile, Editor> pair = availableFor(file, editor, action, element);
+    if (pair == null) return;
+    final Editor editorToApply = pair.second;
+    final PsiFile fileToApply = pair.first;
+
+    Runnable runnable = new Runnable() {
+      public void run() {
+        try {
+          action.invoke(project, editorToApply, fileToApply);
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+        DaemonCodeAnalyzer.getInstance(project).updateVisibleHighlighters(editor);
+      }
+    };
+
+    if (action.startInWriteAction()) {
+      final Runnable _runnable = runnable;
+      runnable = new Runnable() {
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(_runnable);
+        }
+      };
+    }
+
+    CommandProcessor.getInstance().executeCommand(project, runnable, text, null);
   }
 }

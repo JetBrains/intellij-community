@@ -146,7 +146,7 @@ def layoutFull(String home, String targetDirectory) {
     }
 
     dir("plugins") {
-      def simplePlugins = ["commander", "copyright", "properties", "java-i18n", "images"]
+      def simplePlugins = ["commander", "copyright", "properties", "java-i18n", "images", "devkit", "eclipse"]
 
       simplePlugins.each {
         layoutPlugin it

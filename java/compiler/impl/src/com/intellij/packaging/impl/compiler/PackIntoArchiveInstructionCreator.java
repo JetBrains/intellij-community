@@ -41,8 +41,9 @@ public class PackIntoArchiveInstructionCreator extends IncrementalCompilerInstru
 
   public void addFileCopyInstruction(@NotNull VirtualFile file, @NotNull String outputFileName) {
     final String pathInJar = childPathInJar(outputFileName);
-    myContext.addDestination(file, new JarDestinationInfo(pathInJar, myJarInfo, myJarDestination));
-    myJarInfo.addContent(pathInJar, file);
+    if (myContext.addDestination(file, new JarDestinationInfo(pathInJar, myJarInfo, myJarDestination))) {
+      myJarInfo.addContent(pathInJar, file);
+    }
   }
 
   private String childPathInJar(String fileName) {

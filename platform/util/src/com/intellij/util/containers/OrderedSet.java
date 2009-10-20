@@ -21,8 +21,8 @@ import gnu.trove.TObjectHashingStrategy;
 import java.util.*;
 
 public class OrderedSet<T> extends AbstractSet<T> implements List<T> {
-  private THashSet<T> myHashSet;
-  private ArrayList<T> myElements;
+  private final THashSet<T> myHashSet;
+  private final ArrayList<T> myElements;
 
   public OrderedSet(TObjectHashingStrategy<T> hashingStrategy) {
     myHashSet = new THashSet<T>(hashingStrategy);
@@ -77,9 +77,10 @@ public class OrderedSet<T> extends AbstractSet<T> implements List<T> {
 
   public Object clone() {
     try{
-      OrderedSet newSet = (OrderedSet)super.clone();
-      newSet.myHashSet = (THashSet)myHashSet.clone();
-      newSet.myElements = (ArrayList)myElements.clone();
+      OrderedSet<T> newSet = (OrderedSet<T>)super.clone();
+      newSet.myHashSet.addAll(myHashSet);
+      newSet.myElements.clear();
+      newSet.myElements.addAll(myElements);
       return newSet;
     }
     catch(CloneNotSupportedException e){

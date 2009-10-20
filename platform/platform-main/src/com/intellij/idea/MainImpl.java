@@ -41,7 +41,7 @@ public class MainImpl {
     boolean isNewConfigFolder = PathManager.ensureConfigFolderExists(true);
     if (!StartupUtil.isHeadless && isNewConfigFolder) {
       try {
-        if (SystemInfo.isWindowsVista || SystemInfo.isMac) {
+        if (SystemInfo.isWindowsVista || SystemInfo.isWindows7 || SystemInfo.isMac) {
           UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         }
       }

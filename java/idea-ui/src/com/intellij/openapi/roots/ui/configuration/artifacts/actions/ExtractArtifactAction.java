@@ -64,17 +64,20 @@ public class ExtractArtifactAction extends DumbAwareAction {
     final String name = Messages.showInputDialog(myEditor.getMainComponent(), ProjectBundle.message("label.text.specify.artifact.name"),
                                                  ProjectBundle.message("dialog.title.extract.artifact"), null);
     if (name != null) {
-      treeComponent.ensureRootIsWritable();
       final Project project = myEditor.getContext().getProject();
       //todo[nik] select type?
       final ModifiableArtifact artifact = myEditor.getContext().getModifiableArtifactModel().addArtifact(name, PlainArtifactType.getInstance());
-      for (PackagingElement<?> element : selectedElements) {
-        artifact.getRootElement().addOrFindChild(ArtifactUtil.copyWithChildren(element, project));
-      }
-      for (PackagingElement element : selectedElements) {
-        parent.removeChild(element);
-      }
-      parent.addOrFindChild(new ArtifactPackagingElement(project, ArtifactPointerManager.getInstance(project).create(artifact)));
+      treeComponent.editLayout(new Runnable() {
+        public void run() {
+          for (PackagingElement<?> element : selectedElements) {
+            artifact.getRootElement().addOrFindChild(ArtifactUtil.copyWithChildren(element, project));
+          }
+          for (PackagingElement element : selectedElements) {
+            parent.removeChild(element);
+          }
+          parent.addOrFindChild(new ArtifactPackagingElement(project, ArtifactPointerManager.getInstance(project).create(artifact)));
+        }
+      });
       treeComponent.rebuildTree();
     }
   }

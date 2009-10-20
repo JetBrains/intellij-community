@@ -256,7 +256,10 @@ public class UnscrambleDialog extends DialogWrapper{
 
   static String normalizeText(@NonNls String text) {
     StringBuilder builder = new StringBuilder(text.length());
+
+    text = text.replaceAll("(\\S[ \\t\\x0B\\f\\r]+)(at\\s+)", "$1\n$2");
     String[] lines = text.split("\n");
+
     boolean first = true;
     boolean inAuxInfo = false;
     for (String line : lines) {

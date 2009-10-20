@@ -15,6 +15,8 @@
  */
 package com.intellij.psi;
 
+import com.intellij.openapi.progress.ProgressManager;
+
 import java.util.List;
 
 /**
@@ -37,6 +39,8 @@ public abstract class PsiRecursiveElementVisitor extends PsiElementVisitor {
   public void visitElement(final PsiElement element) {
     level++;
     if (level < MAX_LEVEL_DEPTH) {
+      ProgressManager.getInstance().checkCanceled();
+
       element.acceptChildren(this);
     }
     level--;

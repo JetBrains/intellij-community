@@ -70,6 +70,7 @@ target('default': 'The default target') {
           buildNumber: "IC-90.SNAPSHOT",
           version: "Maia",
           system_selector: "IntelliJIdeaCE90",
+          jdk_req: "1.6*",
           vmoptions: "-Xms32m -Xmx256m -XX:MaxPermSize=150m -ea",
           home, out)
 }
@@ -86,6 +87,8 @@ public def layoutAll(Map args, String home, String out) {
   ant.copy(todir: "$paths.distAll/license", preservelastmodified: "true") {
     fileset(dir: "$home/license")
   }
+
+  ant.copy(file: "$home/LICENSE.txt", todir: "$paths.distAll", preservelastmodified: "true")
 
   layoutMac(args, home, paths)
   layoutLinux(args, home, paths)
@@ -142,8 +145,9 @@ private def layoutMac(Map args, String home, Paths paths) {
 
 
     replacefilter(token: "@@version@@", value: args.version)
-    replacefilter(token: "@@vmoptions@@", value: args.vmoptions)
+    replacefilter(token: "@@vmoptions@@", value: args.vmoptions + " -Xverify:none -XX:+UseCompressedOOPS -XX:+DoEscapeAnalysis")
     replacefilter(token: "@@system_selector@@", value: args.system_selector)
+    replacefilter(token: "@@jdk_req@@", value: args.jdk_req)
   }
 
   def root = "$args.version-${args.buildNumber}.app"

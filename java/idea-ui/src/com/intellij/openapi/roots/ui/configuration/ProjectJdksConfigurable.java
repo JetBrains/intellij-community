@@ -89,7 +89,7 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent implements C
     myRoot.removeAllChildren();
     final HashMap<Sdk, Sdk> sdks = myProjectJdksModel.getProjectJdks();
     for (Sdk sdk : sdks.keySet()) {
-      final JdkConfigurable configurable = new JdkConfigurable((ProjectJdkImpl)sdks.get(sdk), myProjectJdksModel, TREE_UPDATER, myHistory);
+      final JdkConfigurable configurable = new JdkConfigurable((ProjectJdkImpl)sdks.get(sdk), myProjectJdksModel, TREE_UPDATER, myHistory, myProject);
       addNode(new MyNode(configurable), myRoot);
     }
     selectJdk(myProjectJdksModel.getProjectJdk()); //restore selection
@@ -153,7 +153,7 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent implements C
     group.getTemplatePresentation().setIcon(Icons.ADD_ICON);
     myProjectJdksModel.createAddActions(group, myTree, new Consumer<Sdk>() {
       public void consume(final Sdk projectJdk) {
-        addNode(new MyNode(new JdkConfigurable(((ProjectJdkImpl)projectJdk), myProjectJdksModel, TREE_UPDATER, myHistory), false), myRoot);
+        addNode(new MyNode(new JdkConfigurable(((ProjectJdkImpl)projectJdk), myProjectJdksModel, TREE_UPDATER, myHistory, myProject), false), myRoot);
         selectNodeInTree(findNodeByObject(myRoot, projectJdk));
       }
     });

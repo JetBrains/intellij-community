@@ -18,6 +18,7 @@ package com.intellij.util.diff;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.ThreeState;
 import junit.framework.TestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,17 +29,9 @@ import java.util.List;
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class DiffTreeTest extends TestCase {
-  private static final Node[] EMPTY = new Node[0];
-
   private static class Node {
     private final Node[] myChildren;
     int myId;
-
-
-    public Node(final int id) {
-      myChildren = EMPTY;
-      myId = id;
-    }
 
     public Node(final int id, Node... children) {
       myChildren = children;
@@ -69,10 +62,12 @@ public class DiffTreeTest extends TestCase {
       myRoot = root;
     }
 
-    public Node prepareForGetChildren(final Node node) {
+    @NotNull
+    public Node prepareForGetChildren(@NotNull final Node node) {
       return node;
     }
 
+    @NotNull
     public Node getRoot() {
       return myRoot;
     }
@@ -80,7 +75,7 @@ public class DiffTreeTest extends TestCase {
     public void disposeChildren(final Node[] nodes, final int count) {
     }
 
-    public int getChildren(final Node node, final Ref<Node[]> into) {
+    public int getChildren(@NotNull final Node node, @NotNull final Ref<Node[]> into) {
       into.set(node.getChildren());
       return into.get().length;
     }
@@ -103,15 +98,15 @@ public class DiffTreeTest extends TestCase {
   public static class DiffBuilder implements DiffTreeChangeBuilder<Node, Node> {
     private final List<String> myResults = new ArrayList<String>();
 
-    public void nodeReplaced(final Node oldNode, final Node newNode) {
+    public void nodeReplaced(@NotNull final Node oldNode, @NotNull final Node newNode) {
       myResults.add("REPLACED: " + oldNode + " to " + newNode);
     }
 
-    public void nodeDeleted(final Node parent, final Node child) {
+    public void nodeDeleted(@NotNull final Node parent, @NotNull final Node child) {
       myResults.add("DELETED from " + parent + ": " + child);
     }
 
-    public void nodeInserted(final Node oldParent, final Node node, final int pos) {
+    public void nodeInserted(@NotNull final Node oldParent, @NotNull final Node node, final int pos) {
       myResults.add("INSERTED to " + oldParent + ": " + node + " at " + pos);
     }
 
@@ -212,9 +207,8 @@ public class DiffTreeTest extends TestCase {
 
     final List<String> expectedList = Arrays.asList(expected);
     final List<String> actual = result.getEvents();
-    if (expectedList.size() > 0 && actual.size() > 0) {
+    if (!expectedList.isEmpty() && !actual.isEmpty()) {
       assertEquals(expectedList, actual);
     }
   }
-
 }

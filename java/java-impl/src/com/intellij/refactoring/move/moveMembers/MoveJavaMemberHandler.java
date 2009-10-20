@@ -71,7 +71,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
     return null;
   }
 
-  private boolean isInMovedElement(PsiElement element, Set<PsiMember> membersToMove) {
+  private static boolean isInMovedElement(PsiElement element, Set<PsiMember> membersToMove) {
     for (PsiMember member : membersToMove) {
       if (PsiTreeUtil.isAncestor(member, element, false)) return true;
     }
@@ -86,7 +86,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
       PsiExpression qualifier = refExpr.getQualifierExpression();
       if (qualifier != null) {
         if (usage.qualifierClass != null) {
-          changeQualifier(refExpr, usage.qualifierClass);
+          changeQualifier(refExpr, usage.qualifierClass, usage.member);
         }
         else {
           refExpr.setQualifierExpression(null);
@@ -94,7 +94,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
       }
       else { // no qualifier
         if (usage.qualifierClass != null) {
-          changeQualifier(refExpr, usage.qualifierClass);
+          changeQualifier(refExpr, usage.qualifierClass, usage.member);
         }
       }
       return true;
@@ -136,11 +136,11 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
     ChangeContextUtil.decodeContextInfo(scope, null, null);
   }
 
-  private void changeQualifier(PsiReferenceExpression refExpr, PsiClass aClass) throws IncorrectOperationException {
+  private static void changeQualifier(PsiReferenceExpression refExpr, PsiClass aClass, PsiMember member) throws IncorrectOperationException {
     if (RefactoringUtil.hasOnDemandStaticImport(refExpr, aClass)) {
       refExpr.setQualifierExpression(null);
     }
-    else {
+    else if (!RefactoringUtil.hasStaticImportOn(refExpr, member)){
       PsiElementFactory factory = JavaPsiFacade.getInstance(refExpr.getProject()).getElementFactory();
       refExpr.setQualifierExpression(factory.createReferenceExpression(aClass));
     }

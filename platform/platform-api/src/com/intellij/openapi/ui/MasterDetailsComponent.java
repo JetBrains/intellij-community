@@ -461,14 +461,14 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
   }
 
   public void fireItemsChangeListener(final Object editableObject) {
-    for (ItemsChangeListener listner : myListners) {
-      listner.itemChanged(editableObject);
+    for (ItemsChangeListener listener : myListners) {
+      listener.itemChanged(editableObject);
     }
   }
 
   private void fireItemsChangedExternally() {
-    for (ItemsChangeListener listner : myListners) {
-      listner.itemsExternallyChanged();
+    for (ItemsChangeListener listener : myListners) {
+      listener.itemsExternallyChanged();
     }
   }
 

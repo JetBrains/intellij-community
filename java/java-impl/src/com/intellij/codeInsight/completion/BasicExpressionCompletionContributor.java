@@ -17,6 +17,11 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.KeywordLookupItem;
+import com.intellij.codeInsight.lookup.VariableLookupItem;
+import com.intellij.codeInsight.template.SmartCompletionContextType;
+import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.patterns.PsiJavaPatterns;
@@ -26,8 +31,13 @@ import static com.intellij.patterns.StandardPatterns.not;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
-import com.intellij.psi.filters.getters.*;
+import com.intellij.psi.filters.getters.ClassLiteralGetter;
+import com.intellij.psi.filters.getters.FilterGetter;
+import com.intellij.psi.filters.getters.MembersGetter;
+import com.intellij.psi.filters.getters.ThisGetter;
+import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassFilter;
+import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
@@ -51,7 +61,7 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
       public LookupItem compute() {
         try {
           final PsiKeyword keyword = JavaPsiFacade.getInstance(element.getProject()).getElementFactory().createKeyword(s);
-          return ((LookupItem)LookupItemUtil.objectToLookupItem(keyword)).setAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE);
+          return new KeywordLookupItem(keyword, element).setAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE);
         }
         catch (IncorrectOperationException e) {
           throw new RuntimeException(e);
@@ -89,8 +99,10 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
           result.addElement(element);
         }
 
-        for (final Object o : new TemplatesGetter().get(position, null)) {
-          result.addElement(LookupItemUtil.objectToLookupItem(o));
+        for (final TemplateImpl template : TemplateSettings.getInstance().getTemplates()) {
+          if (!template.isDeactivated() && template.getTemplateContext().isEnabled(new SmartCompletionContextType())) {
+            result.addElement(new SmartCompletionTemplateItem(template, position));
+          }
         }
 
         addKeyword(result, position, PsiKeyword.TRUE);
@@ -104,11 +116,11 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
           }
 
           for (final PsiExpression expression : ThisGetter.getThisExpressionVariants(position)) {
-            result.addElement(LookupItemUtil.objectToLookupItem(expression));
+            result.addElement(new ExpressionLookupItem(expression));
           }
         }
 
-        processDataflowExpressionTypes(position, expectedType, new Consumer<LookupElement>() {
+        processDataflowExpressionTypes(position, expectedType, result.getPrefixMatcher(), new Consumer<LookupElement>() {
           public void consume(LookupElement decorator) {
             result.addElement(decorator);
           }
@@ -116,20 +128,40 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
       }
     });
 
-    final ReferenceExpressionCompletionContributor referenceContributor = new ReferenceExpressionCompletionContributor();
-    extend(psiElement(), new CompletionProvider<JavaSmartCompletionParameters>() {
-      protected void addCompletions(@NotNull final JavaSmartCompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
-        referenceContributor.fillCompletionVariants(parameters, result);
-      }
-    });
-
   }
 
-  public static void processDataflowExpressionTypes(PsiElement position, @Nullable PsiType expectedType, Consumer<LookupElement> consumer) {
+  public static void processDataflowExpressionTypes(PsiElement position, @Nullable PsiType expectedType, final PrefixMatcher matcher, Consumer<LookupElement> consumer) {
     final PsiExpression context = PsiTreeUtil.getParentOfType(position, PsiExpression.class);
     if (context == null) return;
 
     final Map<PsiExpression,PsiType> map = GuessManager.getInstance(position.getProject()).getControlFlowExpressionTypes(context);
+    if (map.isEmpty()) {
+      return;
+    }
+
+    PsiScopesUtil.treeWalkUp(new BaseScopeProcessor() {
+      public boolean execute(PsiElement element, ResolveState state) {
+        if (element instanceof PsiLocalVariable) {
+          if (!matcher.prefixMatches(((PsiLocalVariable)element).getName())) {
+            return true;
+          }
+
+          final PsiExpression expression = ((PsiLocalVariable)element).getInitializer();
+          if (expression instanceof PsiTypeCastExpression) {
+            PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)expression;
+            final PsiExpression operand = typeCastExpression.getOperand();
+            if (operand != null) {
+              final PsiType dfaCasted = map.get(operand);
+              if (dfaCasted != null && dfaCasted.equals(typeCastExpression.getType())) {
+                map.remove(operand);
+              }
+            }
+          }
+        }
+        return true;
+      }
+    }, context, context.getContainingFile());
+
     for (final PsiExpression expression : map.keySet()) {
       final PsiType castType = map.get(expression);
       final PsiType baseType = expression.getType();
@@ -146,8 +178,8 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
       if (!refExpr.isQualified()) {
         final PsiElement target = refExpr.resolve();
         if (target instanceof PsiVariable) {
-          final LookupItem item = (LookupItem)LookupItemUtil.objectToLookupItem(target);
-          item.setAttribute(LookupItem.SUBSTITUTOR, PsiSubstitutor.EMPTY);
+          final VariableLookupItem item = new VariableLookupItem((PsiVariable)target);
+          item.setSubstitutor(PsiSubstitutor.EMPTY);
           return item;
         }
       }

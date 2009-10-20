@@ -38,9 +38,9 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.IconLoader;
@@ -189,21 +189,21 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     setProgressLimit(1L * tools.size() * elements.length);
     final LocalInspectionToolSession session = new LocalInspectionToolSession(myFile, myStartOffset, myEndOffset);
+    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    LOG.assertTrue(indicator != null);
 
     JobUtil.invokeConcurrentlyUnderMyProgress(tools, new Processor<LocalInspectionTool>() {
       public boolean process(final LocalInspectionTool tool) {
         final ProgressManager progressManager = ProgressManager.getInstance();
-        try {
-          progressManager.checkCanceled();
-        }
-        catch (ProcessCanceledException e) {
-          return false;
-        }
+        progressManager.checkCanceled();
+        ProgressIndicator localIndicator = progressManager.getProgressIndicator();
+
+        ProgressIndicator original = ((ProgressWrapper)localIndicator).getOriginalProgressIndicator();
+        LOG.assertTrue(original == indicator, original);
 
         ApplicationManager.getApplication().assertReadAccessAllowed();
 
         ProblemsHolder holder = new ProblemsHolder(iManager, myFile);
-        progressManager.checkCanceled();
         PsiElementVisitor elementVisitor = tool.buildVisitor(holder, isOnTheFly);
         //noinspection ConstantConditions
         if(elementVisitor == null) {

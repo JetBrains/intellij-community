@@ -15,14 +15,21 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
+import com.intellij.facet.Facet;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.impl.ModuleLibraryOrderEntryImpl;
+import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.packaging.ChooseLibrariesDialog;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ChooseModulesDialog;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ui.configuration.packaging.ChooseLibrariesDialog;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactModel;
 import com.intellij.packaging.artifacts.ArtifactType;
@@ -31,11 +38,10 @@ import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.ui.ArtifactEditor;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ManifestFileConfiguration;
-import com.intellij.facet.Facet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author nik
@@ -69,8 +75,8 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
     return myParent.getRootElement(artifact);
   }
 
-  public void ensureRootIsWritable(@NotNull Artifact artifact) {
-    myParent.ensureRootIsWritable(artifact);
+  public void editLayout(@NotNull Artifact artifact, Runnable runnable) {
+    myParent.editLayout(artifact, runnable);
   }
 
   public ArtifactEditor getOrCreateEditor(Artifact artifact) {
@@ -90,7 +96,27 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
   }
 
   public void selectLibrary(@NotNull Library library) {
-    ProjectStructureConfigurable.getInstance(getProject()).selectProjectOrGlobalLibrary(library, true);
+    final LibraryTable table = library.getTable();
+    if (table != null) {
+      ProjectStructureConfigurable.getInstance(getProject()).selectProjectOrGlobalLibrary(library, true);
+    }
+    else {
+      final Module module = ((LibraryImpl)library).getModule();
+      if (module != null) {
+        final ModuleRootModel rootModel = myParent.getModulesProvider().getRootModel(module);
+        final String libraryName = library.getName();
+        for (OrderEntry entry : rootModel.getOrderEntries()) {
+          if (entry instanceof ModuleLibraryOrderEntryImpl) {
+            final ModuleLibraryOrderEntryImpl libraryEntry = (ModuleLibraryOrderEntryImpl)entry;
+            if (libraryName != null && libraryName.equals(libraryEntry.getLibraryName())
+               || libraryName == null && library.equals(libraryEntry.getLibrary())) {
+              ModuleStructureConfigurable.getInstance(getProject()).selectOrderEntry(module, libraryEntry);
+              return;
+            }
+          }
+        }
+      }
+    }
   }
 
   public List<Artifact> chooseArtifacts(final List<? extends Artifact> artifacts, final String title) {
@@ -145,4 +171,7 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
     return dialog.isOK() ? dialog.getChosenElements() : Collections.<Library>emptyList();
   }
 
+  public ArtifactsStructureConfigurableContext getParent() {
+    return myParent;
+  }
 }

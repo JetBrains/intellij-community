@@ -239,6 +239,7 @@ public class ProgressManagerImpl extends ProgressManager {
   }
 
   private static boolean runProcessWithProgressSynchronously(final Task task, final JComponent parentComponent) {
+    final long start = System.currentTimeMillis();
     final boolean result = ((ApplicationEx)ApplicationManager.getApplication())
         .runProcessWithProgressSynchronously(new TaskContainer(task) {
           public void run() {
@@ -246,8 +247,9 @@ public class ProgressManagerImpl extends ProgressManager {
           }
         }, task.getTitle(), task.isCancellable(), task.getProject(), parentComponent, task.getCancelText());
     if (result) {
+      final long end = System.currentTimeMillis();
       final Task.NotificationInfo notificationInfo = task.getNotificationInfo();
-      if (notificationInfo != null) {
+      if (notificationInfo != null && end - start > 5000) { // show notification only if process took more than 5 secs
         final JFrame frame = WindowManager.getInstance().getFrame(task.getProject());
         if (!frame.hasFocus()) {
           systemNotify(notificationInfo);
@@ -320,12 +322,14 @@ public class ProgressManagerImpl extends ProgressManager {
     TaskContainer action = new TaskContainer(task) {
       public void run() {
         boolean canceled = false;
+        final long start = System.currentTimeMillis();
         try {
           ProgressManager.getInstance().runProcess(process, progressIndicator);
         }
         catch (ProcessCanceledException e) {
           canceled = true;
         }
+        final long end = System.currentTimeMillis();
 
         if (canceled || progressIndicator.isCanceled()) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -336,7 +340,7 @@ public class ProgressManagerImpl extends ProgressManager {
         }
         else if (!canceled) {
           final Task.NotificationInfo notificationInfo = task.getNotificationInfo();
-          if (notificationInfo != null) {
+          if (notificationInfo != null && end - start > 5000) { // snow notification if process took more than 5 secs
             final Component window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
             if (window == null || notificationInfo.isShowWhenFocused()) {
               systemNotify(notificationInfo);

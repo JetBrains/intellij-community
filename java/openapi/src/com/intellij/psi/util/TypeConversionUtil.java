@@ -53,7 +53,6 @@ public class TypeConversionUtil {
 
   private static final TObjectIntHashMap<PsiType> TYPE_TO_RANK_MAP = new TObjectIntHashMap<PsiType>();
 
-  private static final int BOOL_RANK = 10;
   public static final int BYTE_RANK = 1;
   public static final int SHORT_RANK = 2;
   public static final int CHAR_RANK = 3;
@@ -61,6 +60,7 @@ public class TypeConversionUtil {
   private static final int LONG_RANK = 5;
   private static final int FLOAT_RANK = 6;
   private static final int DOUBLE_RANK = 7;
+  private static final int BOOL_RANK = 10;
   private static final int STRING_RANK = 100;
   private static final int MAX_NUMERIC_RANK = DOUBLE_RANK;
 

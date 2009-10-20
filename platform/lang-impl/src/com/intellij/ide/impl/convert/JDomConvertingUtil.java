@@ -63,6 +63,11 @@ public class JDomConvertingUtil {
   }
 
   @Nullable
+  public static String getSettingsValue(@Nullable Element element) {
+    return element != null ? element.getAttributeValue("value") : null;
+  }
+
+  @Nullable
   public static Element getSettingsElement(@Nullable Element element, String name) {
     for (Element child : getChildren(element, "setting")) {
       if (child.getAttributeValue("name").equals(name)) {

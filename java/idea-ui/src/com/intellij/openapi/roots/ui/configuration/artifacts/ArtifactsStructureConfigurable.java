@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.State;
@@ -27,13 +28,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.BaseStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.packaging.artifacts.*;
+import com.intellij.packaging.elements.CompositePackagingElement;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author nik
@@ -58,6 +64,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
       public void artifactAdded(@NotNull Artifact artifact) {
         final MyNode node = addArtifactNode(artifact);
         selectNodeInTree(node);
+        myContext.getDaemonAnalyzer().queueUpdate(new ArtifactProjectStructureElement(myContext, myPackagingEditorContext, artifact));
       }
     });
   }
@@ -75,8 +82,18 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     }
   }
 
+  @NotNull
+  @Override
+  protected Collection<? extends ProjectStructureElement> getProjectStructureElements() {
+    final List<ProjectStructureElement> elements = new ArrayList<ProjectStructureElement>();
+    for (Artifact artifact : myPackagingEditorContext.getArtifactModel().getArtifacts()) {
+      elements.add(new ArtifactProjectStructureElement(myContext, myPackagingEditorContext, artifact));
+    }
+    return elements;
+  }
+
   private MyNode addArtifactNode(final Artifact artifact) {
-    final MyNode node = new MyNode(new ArtifactConfigurable(artifact, myPackagingEditorContext, TREE_UPDATER));
+    final MyNode node = new MyNode(new ArtifactConfigurable(artifact, myPackagingEditorContext, TREE_UPDATER, myContext));
     addNode(node, myRoot);
     return node;
   }
@@ -112,21 +129,49 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
         final ArtifactType[] types = ArtifactType.getAllTypes();
         final AnAction[] actions = new AnAction[types.length];
         for (int i = 0; i < types.length; i++) {
-          actions[i] = new AddArtifactAction(types[i]);
+          actions[i] = createAddArtifactAction(types[i]);
         }
         return actions;
       }
     };
   }
 
-  private void addArtifact(@NotNull ArtifactType type) {
+  private AnAction createAddArtifactAction(@NotNull final ArtifactType type) {
+    final List<? extends ArtifactTemplate> templates = type.getNewArtifactTemplates(myPackagingEditorContext);
+    final ArtifactTemplate emptyTemplate = new ArtifactTemplate() {
+      @Override
+      public String getPresentableName() {
+        return "Empty";
+      }
+
+      @Override
+      public CompositePackagingElement<?> createRootElement(@NotNull String artifactName) {
+        return type.createRootElement(artifactName);
+      }
+
+    };
+
+    if (templates.isEmpty()) {
+      return new AddArtifactAction(type, emptyTemplate, type.getPresentableName(), type.getIcon());
+    }
+    final DefaultActionGroup group = new DefaultActionGroup(type.getPresentableName(), true);
+    group.getTemplatePresentation().setIcon(type.getIcon());
+    group.add(new AddArtifactAction(type, emptyTemplate, emptyTemplate.getPresentableName(), null));
+    group.addSeparator();
+    for (ArtifactTemplate template : templates) {
+      group.add(new AddArtifactAction(type, template, template.getPresentableName(), null));
+    }
+    return group;
+  }
+
+  private void addArtifact(@NotNull ArtifactType type, @NotNull ArtifactTemplate artifactTemplate) {
     String name = DEFAULT_ARTIFACT_NAME;
     int i = 2;
     while (myPackagingEditorContext.getArtifactModel().findArtifact(name) != null) {
       name = DEFAULT_ARTIFACT_NAME + i;
       i++;
     }
-    final ModifiableArtifact artifact = myPackagingEditorContext.getModifiableArtifactModel().addArtifact(name, type);
+    final ModifiableArtifact artifact = myPackagingEditorContext.getModifiableArtifactModel().addArtifact(name, type, artifactTemplate.createRootElement(name));
     selectNodeInTree(findNodeByObject(myRoot, artifact));
   }
 
@@ -143,6 +188,8 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
       }.execute();
       myPackagingEditorContext.resetModifiableModel();
     }
+
+    reset(); // TODO: fix to not reset on apply!
   }
 
   @Override
@@ -160,6 +207,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   @Override
   protected void removeArtifact(Artifact artifact) {
     myPackagingEditorContext.getModifiableArtifactModel().removeArtifact(artifact);
+    myContext.getDaemonAnalyzer().removeElement(new ArtifactProjectStructureElement(myContext, myPackagingEditorContext, artifact));
   }
 
   protected void processRemovedItems() {
@@ -187,15 +235,18 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
 
   private class AddArtifactAction extends DumbAwareAction {
     private final ArtifactType myType;
+    private final ArtifactTemplate myArtifactTemplate;
 
-    public AddArtifactAction(ArtifactType type) {
-      super(ProjectBundle.message("action.text.add.artifact", type.getPresentableName()), null, type.getIcon());
+    public AddArtifactAction(@NotNull ArtifactType type, @NotNull ArtifactTemplate artifactTemplate, final @NotNull String actionText,
+                             final Icon icon) {
+      super(actionText, null, icon);
       myType = type;
+      myArtifactTemplate = artifactTemplate;
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      addArtifact(myType);
+      addArtifact(myType, myArtifactTemplate);
     }
   }
 }

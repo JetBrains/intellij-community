@@ -29,16 +29,22 @@ import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.SdkProjectStructureElement;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 
 @State(
   name = "JdkListConfigurable.UI",
@@ -120,14 +126,26 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   protected void loadTree() {
     final HashMap<Sdk,Sdk> sdks = myJdksTreeModel.getProjectJdks();
     for (Sdk sdk : sdks.keySet()) {
-      final JdkConfigurable configurable = new JdkConfigurable((ProjectJdkImpl)sdks.get(sdk), myJdksTreeModel, TREE_UPDATER, myHistory);
+      final JdkConfigurable configurable = new JdkConfigurable((ProjectJdkImpl)sdks.get(sdk), myJdksTreeModel, TREE_UPDATER, myHistory,
+                                                               myProject);
       addNode(new MyNode(configurable), myRoot);
     }
   }
 
+  @NotNull
+  @Override
+  protected Collection<? extends ProjectStructureElement> getProjectStructureElements() {
+    final List<ProjectStructureElement> result = new ArrayList<ProjectStructureElement>();
+    for (Sdk sdk : myJdksTreeModel.getProjectJdks().values()) {
+      result.add(new SdkProjectStructureElement(myContext, sdk));
+    }
+    return result;
+  }
+
   public boolean addJdkNode(final Sdk jdk, final boolean selectInTree) {
     if (!myUiDisposed) {
-      addNode(new MyNode(new JdkConfigurable((ProjectJdkImpl)jdk, myJdksTreeModel, TREE_UPDATER, myHistory)), myRoot);
+      myContext.getDaemonAnalyzer().queueUpdate(new SdkProjectStructureElement(myContext, jdk));
+      addNode(new MyNode(new JdkConfigurable((ProjectJdkImpl)jdk, myJdksTreeModel, TREE_UPDATER, myHistory, myProject)), myRoot);
       if (selectInTree) {
         selectNodeInTree(MasterDetailsComponent.findNodeByObject(myRoot, jdk));
       }
@@ -188,8 +206,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
 
   protected void removeJdk(final Sdk jdk) {
     myJdksTreeModel.removeJdk(jdk);
-    myContext.myJdkDependencyCache.remove(jdk);
-    myContext.myValidityCache.clear();
+    myContext.getDaemonAnalyzer().removeElement(new SdkProjectStructureElement(myContext, jdk));
   }
 
   protected

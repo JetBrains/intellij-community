@@ -56,6 +56,10 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
           PsiJavaPatterns.psiAnnotation().qName(annotationQualifiedName))));
   }
 
+  public Self insideAnnotationParam(final ElementPattern<String> annotationQualifiedName) {
+    return insideAnnotationParam(annotationQualifiedName, VALUE);
+  }
+
   public Self nameIdentifierOf(final Class<? extends PsiMember> aClass) {
     return nameIdentifierOf(PsiJavaPatterns.instanceOf(aClass));
   }

@@ -1,11 +1,11 @@
 package p1;
 
-import p2.Statics;
+import static p2.Statics.PUB_CONST;
 
 public class Usage {
     public void test() {
         Object i = new Object() {
-            public int myInt = Statics.PUB_CONST;
+            public int myInt = PUB_CONST;
         };
     }
 }

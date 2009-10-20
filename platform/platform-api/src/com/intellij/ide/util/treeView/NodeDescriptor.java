@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Comparator;
 
 public abstract class NodeDescriptor<E> {
   protected final Project myProject;
@@ -30,6 +31,9 @@ public abstract class NodeDescriptor<E> {
   protected Color myColor;
 
   private int myIndex = -1;
+
+  private long myChildrenSortingStamp = -1;
+  private long myUpdateCount;
 
   public NodeDescriptor(Project project, NodeDescriptor parentDescriptor) {
     myProject = project;
@@ -82,5 +86,66 @@ public abstract class NodeDescriptor<E> {
       return ((WeighedItem) element).getWeight();
     }
     return 30;
+  }
+
+
+  public final long getChildrenSortingStamp() {
+    return myChildrenSortingStamp;
+  }
+
+  public final void setChildrenSortingStamp(long stamp) {
+    myChildrenSortingStamp = stamp;
+  }
+
+  public final long getUpdateCount() {
+    return myUpdateCount;
+  }
+
+  public final void setUpdateCount(long updateCount) {
+    myUpdateCount = updateCount;
+  }
+
+  public abstract static class NodeComparator<T extends NodeDescriptor> implements Comparator<T> {
+
+    private long myStamp;
+
+    public final void setStamp(long stamp) {
+      myStamp = stamp;
+    }
+
+    public long getStamp() {
+      return myStamp;
+    }
+
+    public void incStamp() {
+      setStamp(getStamp() + 1);
+    }
+
+    public static class Delegate<T extends NodeDescriptor> extends NodeComparator<T> {
+
+      private NodeComparator<T> myDelegate;
+
+      protected Delegate(NodeComparator<T> delegate) {
+        myDelegate = delegate;
+      }
+
+      public void setDelegate(NodeComparator<T> delegate) {
+        myDelegate = delegate;
+      }
+
+      @Override
+      public long getStamp() {
+        return myDelegate.getStamp();
+      }
+
+      @Override
+      public void incStamp() {
+        myDelegate.incStamp();
+      }
+
+      public int compare(T o1, T o2) {
+        return myDelegate.compare(o1, o2);
+      }
+    }
   }
 }

@@ -16,8 +16,9 @@
 package com.intellij.packaging.impl.compiler;
 
 import com.intellij.openapi.compiler.make.PackagingFileFilter;
-import com.intellij.packaging.elements.IncrementalCompilerInstructionCreator;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packaging.elements.IncrementalCompilerInstructionCreator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,8 +39,10 @@ public abstract class IncrementalCompilerInstructionCreatorBase implements Incre
   public void addDirectoryCopyInstructions(@NotNull VirtualFile directory, @Nullable PackagingFileFilter filter) {
     final VirtualFile[] children = directory.getChildren();
     if (children != null) {
+      final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
       for (VirtualFile child : children) {
-        if (filter == null || filter.accept(child, myContext.getCompileContext())) {
+        if (!fileTypeManager.isFileIgnored(child.getName())
+            && (filter == null || filter.accept(child, myContext.getCompileContext()))) {
           if (!child.isDirectory()) {
             addFileCopyInstruction(child, child.getName());
           }

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.lookup.LookupItem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 import com.intellij.util.ProcessingContext;
@@ -65,13 +66,24 @@ class CollectionsUtilityMethodsProvider extends CompletionProvider<JavaSmartComp
   private static void addCollectionMethod(final CompletionResultSet result, final PsiType expectedType,
                                    final PsiType defaultType, final String baseClassName,
                                    @NonNls final String method, @NotNull final PsiClass collectionsClass) {
-    if (isClassType(expectedType, baseClassName) || isClassType(expectedType, JAVA_UTIL_COLLECTION) ||
-        isClassType(defaultType, baseClassName) || isClassType(defaultType, JAVA_UTIL_COLLECTION)) {
-      final PsiMethod[] methods = collectionsClass.findMethodsByName(method, false);
-      if (methods.length != 0) {
-        result.addElement(JavaCompletionUtil.qualify(new JavaMethodCallElement(methods[0]).setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE)));
-      }
+    if (isClassType(expectedType, baseClassName) || isClassType(expectedType, JAVA_UTIL_COLLECTION)) {
+      addMethodItem(result, expectedType, method, collectionsClass);
+    } else if (isClassType(defaultType, baseClassName) || isClassType(defaultType, JAVA_UTIL_COLLECTION)) {
+      addMethodItem(result, defaultType, method, collectionsClass);
     }
+  }
+
+  private static void addMethodItem(CompletionResultSet result, PsiType expectedType, String methodName, PsiClass containingClass) {
+    final PsiMethod[] methods = containingClass.findMethodsByName(methodName, false);
+    if (methods.length == 0) {
+      return;
+    }
+    
+    final PsiMethod method = methods[0];
+    final JavaMethodCallElement item = new JavaMethodCallElement(method);
+    JavaCompletionUtil.qualify(item).setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
+    item.setInferenceSubstitutor(SmartCompletionDecorator.calculateMethodReturnTypeSubstitutor(method, expectedType));
+    result.addElement(item);
   }
 
   private static boolean isClassType(final PsiType type, final String className) {

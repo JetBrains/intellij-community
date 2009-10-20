@@ -39,45 +39,50 @@ public class FilterUtil{
     if(element instanceof PsiClass){
       return JavaPsiFacade.getInstance(element.getProject()).getElementFactory().createType((PsiClass)element);
     }
-    else if(element instanceof PsiMethod){
+    if(element instanceof PsiMethod){
       return ((PsiMethod)element).getReturnType();
     }
-    else if(element instanceof PsiVariable){
+    if(element instanceof PsiVariable){
       return ((PsiVariable)element).getType();
     }
-    else if(element instanceof PsiKeyword){
-      if(PsiKeyword.CLASS.equals(element.getText())){
-        return PsiType.getJavaLangClass(element.getManager(), element.getResolveScope());
-      }
-      else if(PsiKeyword.TRUE.equals(element.getText()) || PsiKeyword.FALSE.equals(element.getText())){
-        return PsiType.BOOLEAN;
-      }
-      else if(PsiKeyword.THIS.equals(element.getText())){
-        PsiElement previousElement = getPreviousElement(context, false);
-        if(previousElement != null && ".".equals(previousElement.getText())){
-          previousElement = getPreviousElement(previousElement, false);
-          assert previousElement != null;
-
-          final String className = previousElement.getText();
-          PsiElement walker = context;
-          while(walker != null){
-            if(walker instanceof PsiClass && !(walker instanceof PsiAnonymousClass)){
-              if(className.equals(((PsiClass)walker).getName()))
-                return getTypeByElement(walker, context);
-            }
-            walker = walker.getContext();
-          }
-        }
-        else{
-          final PsiClass owner = PsiTreeUtil.getContextOfType(context, PsiClass.class, true);
-          return getTypeByElement(owner, context);
-        }
-      }
+    if(element instanceof PsiKeyword){
+      return getKeywordItemType(context, element.getText());
     }
-    else if(element instanceof PsiExpression){
+    if(element instanceof PsiExpression){
       return ((PsiExpression)element).getType();
     }
 
+    return null;
+  }
+
+  public static PsiType getKeywordItemType(PsiElement context, final String keyword) {
+    if(PsiKeyword.CLASS.equals(keyword)){
+      return PsiType.getJavaLangClass(context.getManager(), context.getResolveScope());
+    }
+    else if(PsiKeyword.TRUE.equals(keyword) || PsiKeyword.FALSE.equals(keyword)){
+      return PsiType.BOOLEAN;
+    }
+    else if(PsiKeyword.THIS.equals(keyword)){
+      PsiElement previousElement = getPreviousElement(context, false);
+      if(previousElement != null && ".".equals(previousElement.getText())){
+        previousElement = getPreviousElement(previousElement, false);
+        assert previousElement != null;
+
+        final String className = previousElement.getText();
+        PsiElement walker = context;
+        while(walker != null){
+          if(walker instanceof PsiClass && !(walker instanceof PsiAnonymousClass)){
+            if(className.equals(((PsiClass)walker).getName()))
+              return getTypeByElement(walker, context);
+          }
+          walker = walker.getContext();
+        }
+      }
+      else{
+        final PsiClass owner = PsiTreeUtil.getContextOfType(context, PsiClass.class, true);
+        return getTypeByElement(owner, context);
+      }
+    }
     return null;
   }
 

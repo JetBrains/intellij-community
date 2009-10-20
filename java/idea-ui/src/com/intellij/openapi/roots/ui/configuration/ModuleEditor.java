@@ -32,7 +32,6 @@ import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
@@ -56,7 +55,7 @@ import java.util.List;
  *         Time: 6:29:56 PM
  */
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
-public class ModuleEditor implements Place.Navigator {
+public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
   private final Project myProject;
   private JPanel myGenericSettingsPanel;
@@ -77,18 +76,10 @@ public class ModuleEditor implements Place.Navigator {
 
   private History myHistory;
 
-  private final ProjectFacetsConfigurator myFacetsConfigurator;
-  private final Disposable myDisposable = new Disposable() {
-    public void dispose() {
-    }
-  };
-
-  public ModuleEditor(Project project, ModulesProvider modulesProvider, ProjectFacetsConfigurator facetsConfigurator,
+  public ModuleEditor(Project project, ModulesProvider modulesProvider,
                       @NotNull Module module) {
     myProject = project;
     myModulesProvider = modulesProvider;
-    myFacetsConfigurator = facetsConfigurator;
-    addChangeListener(facetsConfigurator);
     myModule = module;
     myName = module.getName();
   }
@@ -105,6 +96,7 @@ public class ModuleEditor implements Place.Navigator {
     setSelectedTabName(selectedTab);
   }
 
+  public abstract ProjectFacetsConfigurator getFacetsConfigurator();
 
   public interface ChangeListener extends EventListener {
     void moduleStateChanged(ModifiableRootModel moduleRootModel);
@@ -185,8 +177,17 @@ public class ModuleEditor implements Place.Navigator {
   }
 
   public ModuleConfigurationState createModuleConfigurationState() {
-    return new ModuleConfigurationStateImpl(myProject, myModulesProvider, getModifiableRootModelProxy(), 
-                                            myFacetsConfigurator);
+    return new ModuleConfigurationStateImpl(myProject, myModulesProvider) {
+      @Override
+      public ModifiableRootModel getRootModel() {
+        return getModifiableRootModel();
+      }
+
+      @Override
+      public FacetsProvider getFacetsProvider() {
+        return getFacetsConfigurator();
+      }
+    };
   }
 
   private void processEditorsProvider(final ModuleConfigurationEditorProvider provider, final ModuleConfigurationState state) {
@@ -206,7 +207,7 @@ public class ModuleEditor implements Place.Navigator {
 
     myGenericSettingsPanel.add(northPanel, BorderLayout.NORTH);
 
-    myTabbedPane = new TabbedPaneWrapper(myDisposable);
+    myTabbedPane = new TabbedPaneWrapper(this);
 
     for (ModuleConfigurationEditor editor : myEditors) {
       myTabbedPane.addTab(editor.getDisplayName(), editor.getIcon(), editor.createComponent(), null);
@@ -283,9 +284,8 @@ public class ModuleEditor implements Place.Navigator {
     }
   }
 
-  public ModifiableRootModel dispose() {
+  public void dispose() {
     try {
-      Disposer.dispose(myDisposable);
       for (final ModuleConfigurationEditor myEditor : myEditors) {
         myEditor.disposeUIResources();
       }
@@ -297,10 +297,11 @@ public class ModuleEditor implements Place.Navigator {
         myTabbedPane = null;
       }
 
+      if (myModifiableRootModel != null) {
+        myModifiableRootModel.dispose();
+      }
 
       myGenericSettingsPanel = null;
-
-      return myModifiableRootModel;
     }
     finally {
       myModifiableRootModel = null;
@@ -308,19 +309,25 @@ public class ModuleEditor implements Place.Navigator {
     }
   }
 
-  public ModifiableRootModel applyAndDispose() throws ConfigurationException {
-    for (ModuleConfigurationEditor editor : myEditors) {
-      if (editor instanceof ModuleElementsEditor) {
-        ((ModuleElementsEditor)editor).canApply();
+  public ModifiableRootModel apply() throws ConfigurationException {
+    try {
+      for (ModuleConfigurationEditor editor : myEditors) {
+        if (editor instanceof ModuleElementsEditor) {
+          ((ModuleElementsEditor)editor).canApply();
+        }
       }
-    }
 
-    for (ModuleConfigurationEditor editor : myEditors) {
-      editor.saveData();
-      editor.apply();
-    }
+      for (ModuleConfigurationEditor editor : myEditors) {
+        editor.saveData();
+        editor.apply();
+      }
 
-    return dispose();
+      return myModifiableRootModel;
+    }
+    finally {
+      myModifiableRootModel = null;
+      myModifiableRootModelProxy = null;
+    }
   }
 
   public String getName() {

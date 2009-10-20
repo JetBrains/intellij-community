@@ -40,12 +40,17 @@ import java.util.List;
 import java.util.Map;
 
 public class JavaContentEntriesEditor extends CommonContentEntriesEditor {
-  public JavaContentEntriesEditor(Project project, String moduleName, ModifiableRootModel model, ModulesProvider modulesProvider) {
-    super(project, moduleName, model, modulesProvider);
+  public JavaContentEntriesEditor(String moduleName, ModuleConfigurationState state) {
+    super(moduleName, state);
   }
 
-  protected ContentEntryEditor createContentEntryEditor(ContentEntry contentEntry) {
-    return new JavaContentEntryEditor(contentEntry, myModel);
+  protected ContentEntryEditor createContentEntryEditor(final String contentEntryUrl) {
+    return new JavaContentEntryEditor(contentEntryUrl) {
+      @Override
+      protected ModifiableRootModel getModel() {
+        return JavaContentEntriesEditor.this.getModel();
+      }
+    };
   }
 
   protected ContentEntryTreeEditor createContentEntryTreeEditor(Project project) {

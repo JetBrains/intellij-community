@@ -150,6 +150,10 @@ public class BackgroundCacheUpdaterRunner {
               finished.set(Boolean.TRUE);
               return;
             }
+            
+            if (Boolean.TRUE.equals(file.getUserData(DONT_INDEX_AGAIN_KEY))) {
+              continue;
+            }
 
             try {
               application.runReadAction(new Runnable() {

@@ -17,18 +17,23 @@
 package com.intellij.compiler.ant;
 
 import com.intellij.ExtensionPoints;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public abstract class ChunkBuildExtension {
+  /**
+   * true, if there are build extensions for the modules, the variable is accessed only from AWT thread
+   */
+  private static Boolean myHasExtensions = null;
+
   public static final ExtensionPointName<ChunkBuildExtension> EP_NAME = ExtensionPointName.create(ExtensionPoints.ANT_BUILD_GEN);
 
   public abstract boolean haveSelfOutputs(Module[] modules);
@@ -51,6 +56,17 @@ public abstract class ChunkBuildExtension {
     return false;
   }
 
+  /**
+   * @return true if there are build extensions registered
+   */
+  public static boolean hasBuildExtensions() {
+    if (myHasExtensions == null) {
+      ChunkBuildExtension[] extensions = Extensions.getRootArea().getExtensionPoint(EP_NAME).getExtensions();
+      myHasExtensions = extensions.length != 0;
+    }
+    return myHasExtensions;
+  }
+
   public static String[] getAllTargets(ModuleChunk chunk) {
     List<String> allTargets = new ArrayList<String>();
     final ChunkBuildExtension[] extensions = Extensions.getRootArea().getExtensionPoint(EP_NAME).getExtensions();
@@ -71,8 +87,9 @@ public abstract class ChunkBuildExtension {
     }
   }
 
-  public static void generateAllProperties(final PropertyFileGenerator propertyFileGenerator, final Project project,
-                                        final GenerationOptions genOptions) {
+  public static void generateAllProperties(final PropertyFileGenerator propertyFileGenerator,
+                                           final Project project,
+                                           final GenerationOptions genOptions) {
     ChunkBuildExtension[] extensions = Extensions.getRootArea().getExtensionPoint(EP_NAME).getExtensions();
     for (ChunkBuildExtension extension : extensions) {
       extension.generateProperties(propertyFileGenerator, project, genOptions);

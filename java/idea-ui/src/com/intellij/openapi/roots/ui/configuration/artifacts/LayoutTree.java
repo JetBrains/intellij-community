@@ -23,8 +23,10 @@ import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.CompositePackagingElementNode;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.RenameablePackagingElement;
 import com.intellij.ui.TreeSpeedSearch;
@@ -156,6 +158,19 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
     }
   }
 
+  @Nullable
+  public PackagingElementNode<?> findCompositeNodeByPath(String parentPath) {
+    PackagingElementNode<?> node = getRootPackagingNode();
+    for (String name : StringUtil.split(parentPath, "/")) {
+      final CompositePackagingElementNode child = node.findCompositeChild(name);
+      if (child == null) {
+        return null;
+      }
+      node = child;
+    }
+    return node;
+  }
+
   private class LayoutTreeCellEditor extends DefaultCellEditor {
     public LayoutTreeCellEditor() {
       super(new JTextField());
@@ -189,7 +204,12 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
       }
       final boolean stopped = super.stopCellEditing();
       if (stopped && currentElement != null) {
-        currentElement.rename(newValue);
+        final RenameablePackagingElement finalCurrentElement = currentElement;
+        myArtifactsEditor.getLayoutTreeComponent().editLayout(new Runnable() {
+          public void run() {
+            finalCurrentElement.rename(newValue);
+          }
+        });
         myArtifactsEditor.queueValidation();
         myArtifactsEditor.getLayoutTreeComponent().updatePropertiesPanel(true);
         addSubtreeToUpdate((DefaultMutableTreeNode)path.getLastPathComponent());

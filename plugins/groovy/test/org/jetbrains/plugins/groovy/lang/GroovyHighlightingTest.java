@@ -183,4 +183,8 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testRawOverridedMethod() throws Exception {doTest();}
+
+  public void testFQNJavaClassesUsages() throws Exception {
+    doTest();
+  }
 }

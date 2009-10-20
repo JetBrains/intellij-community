@@ -47,10 +47,16 @@ public class ActionCallback implements Disposable {
   public ActionCallback(String name, int countToDone) {
     myName = name;
 
-    assert countToDone >= 1;
+    assert countToDone >= 0 : "count=" + countToDone;
 
-    myDone = new ExecutionCallback(countToDone);
+    int count = countToDone >= 1 ? countToDone : 1;
+
+    myDone = new ExecutionCallback(count);
     myRejected = new ExecutionCallback();
+
+    if (countToDone < 1) {
+      setDone();
+    }
   }
 
   public void setDone() {

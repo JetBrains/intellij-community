@@ -15,6 +15,7 @@
  */
 package com.intellij.packaging.artifacts;
 
+import com.intellij.packaging.elements.CompositePackagingElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -24,6 +25,9 @@ public interface ModifiableArtifactModel extends ArtifactModel {
 
   @NotNull
   ModifiableArtifact addArtifact(final @NotNull String name, @NotNull ArtifactType artifactType);
+
+  @NotNull
+  ModifiableArtifact addArtifact(final @NotNull String name, @NotNull ArtifactType artifactType, CompositePackagingElement<?> rootElement);
 
   void removeArtifact(@NotNull Artifact artifact);
 

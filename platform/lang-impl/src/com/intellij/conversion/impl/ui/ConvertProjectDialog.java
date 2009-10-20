@@ -27,6 +27,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.HashSet;
 import com.intellij.CommonBundle;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -65,7 +66,7 @@ public class ConvertProjectDialog extends DialogWrapper {
 
     myBackupDir = ProjectConversionUtil.getBackupDir(context.getProjectBaseDir());
     JLabel templateLabel = new JLabel();
-    myTextPane.setFont(templateLabel.getFont());
+    myTextPane.setFont(UIUtil.getLabelFont());
     myTextPane.setContentType("text/html");
     myTextPane.setEditorKit(new HTMLEditorKit());
     myTextPane.setEditable(false);

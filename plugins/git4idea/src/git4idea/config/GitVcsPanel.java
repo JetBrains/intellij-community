@@ -49,6 +49,14 @@ public class GitVcsPanel {
    */
   private JComboBox mySSHExecutableComboBox;
   /**
+   * The conversion policy
+   */
+  private JComboBox myConvertTextFilesComboBox;
+  /**
+   * The confirmation checkbox
+   */
+  private JCheckBox myAskBeforeConversionsCheckBox;
+  /**
    * The project
    */
   private final Project myProject;
@@ -64,6 +72,14 @@ public class GitVcsPanel {
    * Native SSH value
    */
   private static final String NATIVE_SSH = GitBundle.getString("git.vcs.config.ssh.mode.native");
+  /**
+   * IDEA ssh value
+   */
+  private static final String CRLF_CONVERT_TO_PROJECT = GitBundle.getString("git.vcs.config.convert.project");
+  /**
+   * Native SSH value
+   */
+  private static final String CRLF_DO_NOT_CONVERT = GitBundle.getString("git.vcs.config.convert.do.not.convert");
 
   /**
    * The constructor
@@ -76,12 +92,15 @@ public class GitVcsPanel {
     mySSHExecutableComboBox.addItem(IDEA_SSH);
     mySSHExecutableComboBox.addItem(NATIVE_SSH);
     mySSHExecutableComboBox.setSelectedItem(GitVcsSettings.isDefaultIdeaSsh() ? IDEA_SSH : NATIVE_SSH);
+    myAskBeforeConversionsCheckBox.setSelected(mySettings.LINE_SEPARATORS_CONVERSION_ASK);
     myTestButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         testConnection();
       }
     });
-
+    myConvertTextFilesComboBox.addItem(CRLF_DO_NOT_CONVERT);
+    myConvertTextFilesComboBox.addItem(CRLF_CONVERT_TO_PROJECT);
+    myConvertTextFilesComboBox.setSelectedItem(CRLF_CONVERT_TO_PROJECT);
     myGitField.addBrowseFolderListener(GitBundle.getString("find.git.title"), GitBundle.getString("find.git.description"), project,
                                        new FileChooserDescriptor(true, false, false, false, false, false));
   }
@@ -123,6 +142,30 @@ public class GitVcsPanel {
   public void load(@NotNull GitVcsSettings settings) {
     myGitField.setText(settings.GIT_EXECUTABLE);
     mySSHExecutableComboBox.setSelectedItem(settings.isIdeaSsh() ? IDEA_SSH : NATIVE_SSH);
+    myAskBeforeConversionsCheckBox.setSelected(settings.LINE_SEPARATORS_CONVERSION_ASK);
+    myConvertTextFilesComboBox.setSelectedItem(crlfPolicyItem(settings));
+  }
+
+  /**
+   * Get crlf policy item from settings
+   *
+   * @param settings the settings object
+   * @return the item in crlf combobox
+   */
+  static private String crlfPolicyItem(GitVcsSettings settings) {
+    String crlf;
+    switch (settings.LINE_SEPARATORS_CONVERSION) {
+      case NONE:
+        crlf = CRLF_DO_NOT_CONVERT;
+        break;
+      case PROJECT_LINE_SEPARATORS:
+        crlf = CRLF_CONVERT_TO_PROJECT;
+        break;
+      default:
+        assert false : "Unknown crlf policy: " + settings.LINE_SEPARATORS_CONVERSION;
+        crlf = null;
+    }
+    return crlf;
   }
 
   /**
@@ -132,7 +175,9 @@ public class GitVcsPanel {
    */
   public boolean isModified(@NotNull GitVcsSettings settings) {
     return !settings.GIT_EXECUTABLE.equals(myGitField.getText()) ||
-           (settings.isIdeaSsh() != IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem()));
+           (settings.isIdeaSsh() != IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem())) ||
+           !crlfPolicyItem(settings).equals(myConvertTextFilesComboBox.getSelectedItem()) ||
+           settings.LINE_SEPARATORS_CONVERSION_ASK != myAskBeforeConversionsCheckBox.isSelected();
   }
 
   /**
@@ -143,5 +188,18 @@ public class GitVcsPanel {
   public void save(@NotNull GitVcsSettings settings) {
     settings.GIT_EXECUTABLE = myGitField.getText();
     settings.setIdeaSsh(IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem()));
+    Object policyItem = myConvertTextFilesComboBox.getSelectedItem();
+    GitVcsSettings.ConversionPolicy conversionPolicy;
+    if (CRLF_DO_NOT_CONVERT.equals(policyItem)) {
+      conversionPolicy = GitVcsSettings.ConversionPolicy.NONE;
+    }
+    else if (CRLF_CONVERT_TO_PROJECT.equals(policyItem)) {
+      conversionPolicy = GitVcsSettings.ConversionPolicy.PROJECT_LINE_SEPARATORS;
+    }
+    else {
+      throw new IllegalStateException("Unknown selected CRLF policy: " + policyItem);
+    }
+    settings.LINE_SEPARATORS_CONVERSION = conversionPolicy;
+    settings.LINE_SEPARATORS_CONVERSION_ASK = myAskBeforeConversionsCheckBox.isSelected();
   }
 }

@@ -18,6 +18,7 @@ package com.intellij.ui.popup;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
@@ -38,6 +39,7 @@ import java.awt.event.*;
 import java.util.Collections;
 
 public abstract class WizardPopup extends AbstractPopup implements ActionListener, ElementFilter {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.WizardPopup");
 
   private static final int AUTO_POPUP_DELAY = 750;
   private static final Dimension MAX_SIZE = new Dimension(Integer.MAX_VALUE, 600);
@@ -49,10 +51,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   protected final PopupStep<Object> myStep;
   protected WizardPopup myChild;
 
-  private JScrollPane myScrollPane;
-
   private final Timer myAutoSelectionTimer = new Timer(AUTO_POPUP_DELAY, this);
-
 
   private MnemonicsSearch myMnemonicsSearch;
   private Object myParentValue;
@@ -61,14 +60,14 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   private Window myOwnerWindow;
   private MyComponentAdapter myOwnerListener;
 
-  private ActionMap myActionMap = new ActionMap();
-  private InputMap myInputMap = new InputMap();
+  private final ActionMap myActionMap = new ActionMap();
+  private final InputMap myInputMap = new InputMap();
 
-  public WizardPopup(PopupStep aStep) {
+  public WizardPopup(PopupStep<Object> aStep) {
     this(null, aStep);
   }
 
-  public WizardPopup(JBPopup aParent, PopupStep aStep) {
+  public WizardPopup(JBPopup aParent, PopupStep<Object> aStep) {
     myParent = (WizardPopup) aParent;
     myStep = aStep;
 
@@ -76,18 +75,18 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
     final JComponent content = createContent();
 
-    myScrollPane = new JScrollPane(content);
-    myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-    myScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    myScrollPane.getHorizontalScrollBar().setBorder(null);
+    JScrollPane scrollPane = new JScrollPane(content);
+    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    scrollPane.getHorizontalScrollBar().setBorder(null);
 
-    myScrollPane.getActionMap().get("unitScrollLeft").setEnabled(false);
-    myScrollPane.getActionMap().get("unitScrollRight").setEnabled(false);
+    scrollPane.getActionMap().get("unitScrollLeft").setEnabled(false);
+    scrollPane.getActionMap().get("unitScrollRight").setEnabled(false);
 
-    myScrollPane.setBorder(null);
+    scrollPane.setBorder(null);
 
     final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-    init(project, myScrollPane, getPreferredFocusableComponent(), true, true, true, true, null,
+    init(project, scrollPane, getPreferredFocusableComponent(), true, true, true, true, null,
          false, aStep.getTitle(), null, true, null, false, null, null, null, false, null, true, false, true, null, 0f,
          null, true, false, new Component[0], null, true, Collections.<Pair<ActionListener, KeyStroke>>emptyList(), null);
 
@@ -166,6 +165,8 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   public void show(final Component owner, final int aScreenX, final int aScreenY, final boolean considerForcedXY) {
+    LOG.assertTrue (!isDisposed());
+
     Rectangle targetBounds = new Rectangle(new Point(aScreenX, aScreenY), getContent().getPreferredSize());
     ScreenUtil.moveRectangleToFitTheScreen(targetBounds);
 
@@ -182,6 +183,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
       PopupDispatcher.setShowing(this);
     }
 
+    LOG.assertTrue (!isDisposed(), "Disposed popup, parent="+getParent());
     super.show(owner, targetBounds.x, targetBounds.y, true);
   }
 

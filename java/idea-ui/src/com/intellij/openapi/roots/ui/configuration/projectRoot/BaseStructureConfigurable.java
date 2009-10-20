@@ -18,7 +18,6 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 import com.intellij.facet.Facet;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
-import com.intellij.ide.impl.convert.ProjectFileVersion;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.Keymap;
@@ -31,10 +30,16 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureDaemonAnalyzer;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemDescription;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemsHolder;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
@@ -42,11 +47,9 @@ import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.Icons;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.packaging.artifacts.Artifact;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,7 +77,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
   public void init(StructureConfigurableContext context) {
     myContext = context;
-    myContext.addCacheUpdateListener(new Runnable() {
+    myContext.getDaemonAnalyzer().addListener(new Runnable() {
       public void run() {
         if (!myTree.isShowing()) return;
 
@@ -149,79 +152,52 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
         if (value instanceof MyNode) {
           final MyNode node = (MyNode)value;
 
-          if (node.getConfigurable() == null) {
+          final NamedConfigurable namedConfigurable = node.getConfigurable();
+          if (namedConfigurable == null) {
             return;
           }
 
           final String displayName = node.getDisplayName();
-          final Icon icon = node.getConfigurable().getIcon(expanded);
+          final Icon icon = namedConfigurable.getIcon(expanded);
           setIcon(icon);
           setToolTipText(null);
           setFont(UIUtil.getTreeFont());
-          if (node.isDisplayInBold()){
-            append(displayName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-          } else {
-            final Object object = node.getConfigurable().getEditableObject();
-            final boolean unused = myContext.isUnused(object);
-            final StructureConfigurableContext.ValidityLevel level = myContext.isInvalid(object);
-            final boolean invalid = level != StructureConfigurableContext.ValidityLevel.VALID;
-            if (unused || invalid){
-              Color fg = unused
-                         ? UIUtil.getTextInactiveTextColor()
-                         : selected && hasFocus ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeForeground();
-              append(displayName, new SimpleTextAttributes(invalid ? SimpleTextAttributes.STYLE_WAVED : SimpleTextAttributes.STYLE_PLAIN,
-                                                           fg,
-                                                           level == StructureConfigurableContext.ValidityLevel.ERROR ? Color.RED : Color.GRAY));
-              setToolTipText(composeTooltipMessage(invalid, object, displayName, unused));
-            }
-            else {
-              append(displayName, selected && hasFocus ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+
+          SimpleTextAttributes textAttributes =
+            selected && hasFocus ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
+          if (node.isDisplayInBold()) {
+            textAttributes = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
+          } else if (namedConfigurable instanceof ProjectStructureElementConfigurable) {
+            final ProjectStructureElement projectStructureElement =
+              ((ProjectStructureElementConfigurable)namedConfigurable).getProjectStructureElement();
+            if (projectStructureElement != null) {
+              final ProjectStructureDaemonAnalyzer daemonAnalyzer = myContext.getDaemonAnalyzer();
+              final boolean unused = daemonAnalyzer.isUnused(projectStructureElement);
+              final ProjectStructureProblemsHolder problemsHolder = daemonAnalyzer.getProblemsHolder(projectStructureElement);
+              if (problemsHolder == null) {
+                daemonAnalyzer.queueUpdate(projectStructureElement, true, false);
+              }
+              final ProjectStructureProblemDescription.Severity level = problemsHolder != null ? problemsHolder.getSeverity() : null;
+              final boolean invalid = level != null;
+              if (unused || invalid) {
+                Color fg = unused
+                           ? UIUtil.getTextInactiveTextColor()
+                           : selected && hasFocus ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeForeground();
+                textAttributes = new SimpleTextAttributes(invalid ? SimpleTextAttributes.STYLE_WAVED : SimpleTextAttributes.STYLE_PLAIN, fg,
+                                                          level == ProjectStructureProblemDescription.Severity.ERROR ? Color.RED : Color.GRAY);
+                String text = problemsHolder != null ? problemsHolder.composeTooltipMessage() : "";
+                if (unused) {
+                  text += ProjectBundle.message("project.roots.tooltip.unused", displayName);
+                }
+                setToolTipText(text);
+              }
             }
           }
+          append(displayName, textAttributes);
         }
       }
     });
 
-  }
-
-
-  private String composeTooltipMessage(final boolean invalid, final Object object, final String displayName, final boolean unused) {
-    final StringBuilder buf = StringBuilderSpinAllocator.alloc();
-    try {
-      if (invalid) {
-        if (object instanceof Module) {
-          final Module module = (Module)object;
-          final Map<String, Set<String>> problems = myContext.myValidityCache.get(module);
-
-          if (problems.containsKey(StructureConfigurableContext.DUPLICATE_MODULE_NAME)) {
-            buf.append(StructureConfigurableContext.DUPLICATE_MODULE_NAME).append("\n");
-          }
-
-          if (problems.containsKey(StructureConfigurableContext.NO_JDK)){
-            buf.append(StructureConfigurableContext.NO_JDK).append("\n");
-          }
-          final Set<String> deletedLibraries = problems.get(StructureConfigurableContext.DELETED_LIBRARIES);
-          if (deletedLibraries != null) {
-            buf.append(ProjectBundle.message("project.roots.library.problem.message", deletedLibraries.size()));
-            for (String problem : deletedLibraries) {
-              if (deletedLibraries.size() > 1) {
-                buf.append(" - ");
-              }
-              buf.append("\'").append(problem).append("\'").append("\n");
-            }
-          }
-        } else {
-          buf.append(ProjectBundle.message("project.roots.tooltip.library.misconfigured", displayName)).append("\n");
-        }
-      }
-      if (unused) {
-        buf.append(ProjectBundle.message("project.roots.tooltip.unused", displayName));
-      }
-      return buf.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(buf);
-    }
   }
 
   public void disposeUIResources() {
@@ -232,16 +208,8 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     myUiDisposed = true;
 
     myAutoScrollHandler.cancelAllRequests();
-    myContext.myUpdateDependenciesAlarm.cancelAllRequests();
-    myContext.myUpdateDependenciesAlarm.addRequest(new Runnable(){
-      public void run() {
-        SwingUtilities.invokeLater(new Runnable(){
-          public void run() {
-            dispose();
-          }
-        });
-      }
-    }, 0);
+
+    Disposer.dispose(this);
   }
 
   protected void addCollapseExpandActions(final List<AnAction> result) {
@@ -267,6 +235,19 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     result.add(actionsManager.createCollapseAllAction(expander, myTree));
   }
 
+  @Nullable
+  public ProjectStructureElement getSelectedElement() {
+    final TreePath selectionPath = myTree.getSelectionPath();
+    if (selectionPath != null && selectionPath.getLastPathComponent() instanceof MyNode) {
+      MyNode node = (MyNode)selectionPath.getLastPathComponent();
+      final NamedConfigurable configurable = node.getConfigurable();
+      if (configurable instanceof ProjectStructureElementConfigurable) {
+        return ((ProjectStructureElementConfigurable)configurable).getProjectStructureElement();
+      }
+    }
+    return null;
+  }
+
   private class MyFindUsagesAction extends FindUsagesInProjectStructureActionBase {
 
     public MyFindUsagesAction(JComponent parentComponent) {
@@ -287,8 +268,8 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
       return myContext;
     }
 
-    protected Object getSelectedObject() {
-      return BaseStructureConfigurable.this.getSelectedObject();
+    protected ProjectStructureElement getSelectedElement() {
+      return BaseStructureConfigurable.this.getSelectedElement();
     }
 
     protected RelativePoint getPointToShowResults() {
@@ -313,8 +294,16 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
       myTree.setShowsRootHandles(false);
       loadTree();
     }
+    for (ProjectStructureElement element : getProjectStructureElements()) {
+      myContext.getDaemonAnalyzer().queueUpdate(element, false, true);
+    }
 
     super.reset();
+  }
+
+  @NotNull
+  protected Collection<? extends ProjectStructureElement> getProjectStructureElements() {
+    return Collections.emptyList();
   }
 
   protected abstract void loadTree();
