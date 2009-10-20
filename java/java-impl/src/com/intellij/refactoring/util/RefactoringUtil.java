@@ -224,6 +224,21 @@ public class RefactoringUtil {
     return false;
   }
 
+   public static boolean hasStaticImportOn(final PsiElement expr, final PsiMember member) {
+    if (expr.getContainingFile() instanceof PsiJavaFile) {
+      final PsiImportList importList = ((PsiJavaFile)expr.getContainingFile()).getImportList();
+      if (importList != null) {
+        final PsiImportStaticStatement[] importStaticStatements = importList.getImportStaticStatements();
+        for(PsiImportStaticStatement stmt: importStaticStatements) {
+          if (!stmt.isOnDemand() && stmt.resolveTargetClass() == member.getContainingClass() && Comparing.strEqual(stmt.getReferenceName(), member.getName())) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
   public static PsiElement replaceElementsWithMap(PsiElement replaceIn, final Map<PsiElement, PsiElement> elementsToReplace) throws IncorrectOperationException {
     for(Map.Entry<PsiElement, PsiElement> e: elementsToReplace.entrySet()) {
       if (e.getKey() == replaceIn) {

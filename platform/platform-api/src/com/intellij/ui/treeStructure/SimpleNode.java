@@ -53,19 +53,6 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
     return getChildAt(index);
   }
 
-  @Override
-  public int getIndex() {
-    int index = super.getIndex();
-    if (index == -1) {
-      final SimpleNode parent = getParent();
-      if (parent != null) {
-        index = parent.getIndex(this);
-      }
-    }
-
-    return index;
-  }
-
   protected SimpleNode() {
     super(null, null);
   }

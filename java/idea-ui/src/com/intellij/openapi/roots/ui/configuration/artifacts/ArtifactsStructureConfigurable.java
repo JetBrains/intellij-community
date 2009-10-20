@@ -188,6 +188,8 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
       }.execute();
       myPackagingEditorContext.resetModifiableModel();
     }
+
+    reset(); // TODO: fix to not reset on apply!
   }
 
   @Override

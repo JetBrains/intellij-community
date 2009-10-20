@@ -19,6 +19,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.elements.PackagingElementOutputKind;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.ui.ArtifactValidationManager;
 import com.intellij.packaging.ui.PackagingSourceItem;
@@ -55,10 +56,17 @@ public abstract class ArtifactType {
   public abstract Icon getIcon();
 
   @Nullable
-  public abstract String getDefaultPathFor(@NotNull PackagingSourceItem sourceItem);
+  public String getDefaultPathFor(@NotNull PackagingSourceItem sourceItem) {
+    return getDefaultPathFor(sourceItem.getKindOfProducedElements());
+  }
 
   @Nullable
-  public abstract String getDefaultPathFor(@NotNull PackagingElement<?> element, @NotNull PackagingElementResolvingContext context);
+  public String getDefaultPathFor(@NotNull PackagingElement<?> element, @NotNull PackagingElementResolvingContext context) {
+    return getDefaultPathFor(element.getFilesKind(context));
+  }
+
+  @Nullable
+  public abstract String getDefaultPathFor(@NotNull PackagingElementOutputKind kind);
 
   public boolean isSuitableItem(@NotNull PackagingSourceItem sourceItem) {
     return true;

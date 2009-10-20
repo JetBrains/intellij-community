@@ -23,14 +23,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.CommandButtonGroup;
+import com.intellij.ui.components.panels.OpaquePanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -46,7 +49,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   private JButton myCancelButton;
   private JButton myHelpButton;
   private JPanel myContentPanel;
-  private JLabel myIconLabel;
+  private TallImageComponent myIcon;
   private Component myCurrentStepComponent;
   private final Map<Component, String> myComponentToIdMap = new HashMap<Component, String>();
   private final StepListener myStepListener = new StepListener() {
@@ -77,7 +80,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     myHelpButton = new JButton(CommonBundle.getHelpButtonText());
     myContentPanel = new JPanel(new CardLayout());
 
-    myIconLabel = new JLabel();
+    myIcon = new TallImageComponent(null);
 
     getRootPane().registerKeyboardAction(
       new ActionListener() {
@@ -158,11 +161,55 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     return panel;
   }
 
+  private static class TallImageComponent extends OpaquePanel {
+    private Icon myIcon;
+
+    private TallImageComponent(Icon icon) {
+      myIcon = icon;
+    }
+
+    @Override
+    protected void paintChildren(Graphics g) {
+      if (myIcon == null) return;
+
+      final BufferedImage image = new BufferedImage(myIcon.getIconWidth(), myIcon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+      final Graphics2D gg = image.createGraphics();
+      myIcon.paintIcon(this, gg, 0, 0);
+
+      final Rectangle bounds = g.getClipBounds();
+      int y = bounds.y;
+      while (y < bounds.y + bounds.height) {
+        g.drawImage(image,
+                    bounds.x, y, bounds.x + bounds.width, y + 5,
+                    0, myIcon.getIconHeight() - 10, bounds.width, myIcon.getIconHeight() - 5, this);
+
+        y += 5;
+      }
+
+
+      g.drawImage(image, 0, 0, this);
+    }
+
+    public void setIcon(Icon icon) {
+      myIcon = icon;
+      revalidate();
+      repaint();
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      return new Dimension(myIcon != null ? myIcon.getIconWidth() : 0, 0);
+    }
+  }
+
   protected JComponent createCenterPanel() {
-    final JPanel panel = new JPanel();
-    panel.setLayout(new GridBagLayout());
-    panel.add(myIconLabel, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-    panel.add(myContentPanel, new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 5, 0, 0), 0, 0));
+    JPanel iconPanel = new JPanel(new BorderLayout());
+    iconPanel.setBorder(new EmptyBorder(0, 5, 0, 5));
+    iconPanel.add(myIcon, BorderLayout.CENTER);
+
+    final JPanel panel = new JPanel(new BorderLayout());
+    panel.add(iconPanel, BorderLayout.WEST);
+    panel.add(myContentPanel, BorderLayout.CENTER);
     return panel;
   }
 
@@ -308,14 +355,8 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     LOG.assertTrue(myCurrentStepComponent != null);
     showStepComponent(myCurrentStepComponent);
 
-    final Icon icon = step.getIcon();
-    myIconLabel.setIcon(icon);
-    if (icon != null) {
-      myIconLabel.setSize(icon.getIconWidth(), icon.getIconHeight());
-    }
-    else {
-      myIconLabel.setSize(0, 0);
-    }
+    myIcon.setIcon(step.getIcon());
+
     myNextButton.setEnabled(mySteps.size() == 1 || myCurrentStep < mySteps.size() - 1);
     myPreviousButton.setEnabled(myCurrentStep > 0);
   }

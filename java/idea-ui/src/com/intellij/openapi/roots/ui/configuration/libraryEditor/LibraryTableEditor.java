@@ -314,7 +314,7 @@ public class LibraryTableEditor implements Disposable {
   }
 
   private Object[] getSelectedElements() {
-    if (myTreeBuilder.isDisposed()) return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    if (myTreeBuilder == null || myTreeBuilder.isDisposed()) return ArrayUtil.EMPTY_OBJECT_ARRAY;
     final TreePath[] selectionPaths = myTreeBuilder.getTree().getSelectionPaths();
     if (selectionPaths == null) {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
@@ -351,7 +351,7 @@ public class LibraryTableEditor implements Disposable {
 
   @Nullable
   private Library getSelectedLibrary() {
-    if (myTreeBuilder.getTreeStructure() instanceof LibraryTreeStructure) {
+    if (myTreeBuilder != null && myTreeBuilder.getTreeStructure() instanceof LibraryTreeStructure) {
       return ((LibraryTreeStructure)myTreeBuilder.getTreeStructure()).getLibrary();
     } else {
       return convertElementToLibrary(getSelectedElement());
@@ -423,7 +423,7 @@ public class LibraryTableEditor implements Disposable {
   }
 
   public void dispose() {
-
+    myTreeBuilder = null;
   }
 
   private class AddLibraryAction implements ActionListener {
