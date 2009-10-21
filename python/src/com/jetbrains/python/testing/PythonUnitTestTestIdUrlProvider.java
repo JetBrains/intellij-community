@@ -54,7 +54,7 @@ public class PythonUnitTestTestIdUrlProvider implements TestLocationProvider {
 
     final List<Location> locations = new ArrayList<Location>();
     for (PyClass cls : getClassesByName(project, className)) {
-      ProgressManager.getInstance().checkCanceled();
+      ProgressManager.checkCanceled();
 
       final PyFunction method = locateMethodInHierarchy(cls, methodName);
       if (method == null) {
