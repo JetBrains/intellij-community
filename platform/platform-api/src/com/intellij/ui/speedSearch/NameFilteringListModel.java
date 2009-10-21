@@ -47,16 +47,18 @@ public class NameFilteringListModel<T> extends FilteringListModel<T> {
   protected void addToFiltered(T elt) {
     super.addToFiltered(elt);
 
-    String filterString = mySpeedSearch.getFilter().toUpperCase();
-    String candidateString = myNamer.fun(elt).toUpperCase();
-    int index = size() - 1;
+    if (myNamer != null) {
+      String filterString = mySpeedSearch.getFilter().toUpperCase();
+      String candidateString = myNamer.fun(elt).toUpperCase();
+      int index = size() - 1;
 
-    if (myFullMatchIndex == -1 && filterString.equals(candidateString)) {
-      myFullMatchIndex = index;
-    }
+      if (myFullMatchIndex == -1 && filterString.equals(candidateString)) {
+        myFullMatchIndex = index;
+      }
 
-    if (myStartsWithIndex == -1 && candidateString.startsWith(filterString)) {
-      myStartsWithIndex = index;
+      if (myStartsWithIndex == -1 && candidateString.startsWith(filterString)) {
+        myStartsWithIndex = index;
+      }
     }
   }
 
