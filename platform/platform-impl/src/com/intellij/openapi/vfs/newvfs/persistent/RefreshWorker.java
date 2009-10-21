@@ -47,12 +47,18 @@ public class RefreshWorker {
 
   public void scan() {
     final NewVirtualFile root = (NewVirtualFile)myRefreshRoot;
-    final NewVirtualFileSystem delegate = root.getFileSystem();
+    NewVirtualFileSystem delegate = root.getFileSystem();
     if (root.isDirty() && !delegate.exists(root)) {
       scheduleDeletion(root);
       root.markClean();
     }
     else {
+      //ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
+      //if (delegate.getProtocol().equals(LocalFileSystem.PROTOCOL) && SystemInfo.isWindows && root.isDirectory() &&
+      //    (applicationEx.isUnitTestMode() || applicationEx.isInternal())) {
+      //  delegate = new Win32LocalFileSystem();
+      //}
+
       final PersistentFS persistence = (PersistentFS)ManagingFS.getInstance();
 
       while (!myRefreshQueue.isEmpty()) {

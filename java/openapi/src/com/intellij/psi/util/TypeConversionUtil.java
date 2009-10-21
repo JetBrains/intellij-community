@@ -923,6 +923,12 @@ public class TypeConversionUtil {
     return substitutor;
   }
 
+  @NotNull
+  public static PsiSubstitutor getSuperClassSubstitutor(@NotNull PsiClass superClass, @NotNull PsiClassType classType) {
+      final PsiClassType.ClassResolveResult classResolveResult = classType.resolveGenerics();
+      return getSuperClassSubstitutor(superClass, classResolveResult.getElement(), classResolveResult.getSubstitutor());
+  }
+
   private static PsiSubstitutor getSuperClassSubstitutorInner(PsiClass base,
                                                               PsiClass candidate,
                                                               PsiSubstitutor candidateSubstitutor,

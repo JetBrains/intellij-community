@@ -65,7 +65,8 @@ public class JavaCompilersTab implements Configurable{
     myCompiler.setRenderer(new DefaultListCellRenderer(){
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         JLabel component = (JLabel)super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        component.setText(((BackendCompiler)value).getPresentableName());
+        final String presentableName = value != null? ((BackendCompiler)value).getPresentableName() : "";
+        component.setText(presentableName);
         return component;
       }
     });

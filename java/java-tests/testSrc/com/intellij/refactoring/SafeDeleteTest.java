@@ -56,6 +56,11 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doTest("B");
   }
 
+  public void testEnumConstructorParameter() throws Exception {
+    myDoCompare = false;
+    doTest("UserFlags");
+  }
+
   private void doTest(@NonNls final String qClassName) throws Exception {
     doTest(new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {

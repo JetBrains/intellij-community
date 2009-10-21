@@ -21,10 +21,7 @@ import com.intellij.packaging.elements.ComplexPackagingElementType;
 import com.intellij.packaging.elements.PackagingElementFactory;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author nik
@@ -63,6 +60,10 @@ public class ComplexElementSubstitutionParameters {
     }
   }
 
+  public Set<ComplexPackagingElementType<?>> getTypesToSubstitute() {
+    return Collections.unmodifiableSet(myTypesToSubstitute);
+  }
+
   public void setShowContent(ComplexPackagingElementNode complexNode) {
     mySubstituted.addAll(complexNode.getPackagingElements());
   }
@@ -81,5 +82,10 @@ public class ComplexElementSubstitutionParameters {
 
   public boolean isNoneSubstituted() {
     return myTypesToSubstitute.isEmpty() && mySubstituted.isEmpty();
+  }
+
+  public void setTypesToShowContent(Collection<ComplexPackagingElementType<?>> types) {
+    myTypesToSubstitute.clear();
+    myTypesToSubstitute.addAll(types);
   }
 }

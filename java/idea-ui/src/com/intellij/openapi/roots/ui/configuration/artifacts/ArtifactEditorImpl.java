@@ -87,12 +87,13 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   private ArtifactPropertiesEditors myPropertiesEditors;
   private ArtifactValidationManagerImpl myValidationManager;
 
-  public ArtifactEditorImpl(final ArtifactsStructureConfigurableContext context, Artifact artifact) {
+  public ArtifactEditorImpl(final @NotNull ArtifactsStructureConfigurableContext context, @NotNull Artifact artifact, @NotNull ArtifactEditorSettings settings) {
     myContext = new ArtifactEditorContextImpl(context, this);
     myOriginalArtifact = artifact;
     myProject = context.getProject();
+    mySubstitutionParameters.setTypesToShowContent(settings.getTypesToShowContent());
     mySourceItemsTree = new SourceItemsTree(myContext, this);
-    myLayoutTreeComponent = new LayoutTreeComponent(this, mySubstitutionParameters, myContext, myOriginalArtifact);
+    myLayoutTreeComponent = new LayoutTreeComponent(this, mySubstitutionParameters, myContext, myOriginalArtifact, settings.isSortElements());
     myPropertiesEditors = new ArtifactPropertiesEditors(myContext, myOriginalArtifact, myOriginalArtifact);
     Disposer.register(this, mySourceItemsTree);
     Disposer.register(this, myLayoutTreeComponent);
@@ -245,6 +246,10 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     }
     myShowContentCheckBox.setThirdStateEnabled(state == ThreeStateCheckBox.State.DONT_CARE);
     myShowContentCheckBox.setState(state);
+  }
+
+  public ArtifactEditorSettings createSettings() {
+    return new ArtifactEditorSettings(myLayoutTreeComponent.isSortElements(), mySubstitutionParameters.getTypesToSubstitute());
   }
 
   private DefaultActionGroup createToolbarActionGroup() {
