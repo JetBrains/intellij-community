@@ -245,7 +245,7 @@ public class GitConvertFilesDialog extends DialogWrapper {
    * @throws VcsException if there is problem with running git
    */
   private static void ignoreFilesWithCrlfUnset(Project project, Map<VirtualFile, Set<VirtualFile>> files) throws VcsException {
-    boolean stdin = GitVcs.getInstance(project).version().isLessOrEqual(CHECK_ATTR_STDIN_SUPPORTED);
+    boolean stdin = CHECK_ATTR_STDIN_SUPPORTED.isLessOrEqual(GitVcs.getInstance(project).version());
     for (final Map.Entry<VirtualFile, Set<VirtualFile>> e : files.entrySet()) {
       final VirtualFile r = e.getKey();
       GitSimpleHandler h = new GitSimpleHandler(project, r, GitHandler.CHECK_ATTR);
