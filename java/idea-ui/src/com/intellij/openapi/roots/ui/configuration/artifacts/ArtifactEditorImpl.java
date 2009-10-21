@@ -212,6 +212,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
         }
         myShowContentCheckBox.setThirdStateEnabled(false);
         myLayoutTreeComponent.rebuildTree();
+        onShowContentSettingsChanged();
       }
     });
 
@@ -233,6 +234,10 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     return getMainComponent();
   }
 
+  private void onShowContentSettingsChanged() {
+    ((ArtifactsStructureConfigurableContextImpl)myContext.getParent()).getDefaultSettings().setTypesToShowContent(mySubstitutionParameters.getTypesToSubstitute());
+  }
+
   public void updateShowContentCheckbox() {
     final ThreeStateCheckBox.State state;
     if (mySubstitutionParameters.isAllSubstituted()) {
@@ -246,6 +251,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     }
     myShowContentCheckBox.setThirdStateEnabled(state == ThreeStateCheckBox.State.DONT_CARE);
     myShowContentCheckBox.setState(state);
+    onShowContentSettingsChanged();
   }
 
   public ArtifactEditorSettings createSettings() {

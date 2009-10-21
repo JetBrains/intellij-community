@@ -44,7 +44,7 @@ public class ProjectPathMacroManager extends BasePathMacroManager {
   public ReplacePathToMacroMap getReplacePathMap() {
     ReplacePathToMacroMap result = new ReplacePathToMacroMap();
     result.putAll(super.getReplacePathMap());
-    getProjectHomeReplacements(result, false);
+    getProjectHomeReplacements(result, true);
     return result;
   }
 

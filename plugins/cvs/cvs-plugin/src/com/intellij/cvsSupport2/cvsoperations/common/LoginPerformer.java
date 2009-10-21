@@ -55,26 +55,38 @@ public abstract class LoginPerformer<T extends CvsEnvironment> {
       final Project project = getProject(root);
 
       final CvsLoginWorker worker = root.getLoginWorker(executor, project);
-      final Ref<Boolean> promptResult = new Ref<Boolean>();
-      final Runnable prompt = new Runnable() {
-        public void run() {
-          promptResult.set(worker.promptForPassword());
-        }
-      };
-      while (true) {
-        final ThreeState state = worker.silentLogin(myForceCheck);
-        if (ThreeState.YES.equals(state)) break;  // check others
-        if (ThreeState.NO.equals(state)) return false;
-        executor.runInDispatchThread(prompt, project);
-        if (! Boolean.TRUE.equals(promptResult.get())) {
+
+      final ThreeState checkResult = checkLoginWorker(worker, executor, project, myForceCheck);
+      if (! ThreeState.YES.equals(checkResult)) {
+        if (ThreeState.UNSURE.equals(checkResult)) {
           worker.goOffline();
           myExceptionConsumer.consume(new CvsException("Authentication canceled", root.getCvsRootAsString()));
-          return false;
         }
-        myForceCheck = true;
+        return false;
       }
     }
     return true;
+  }
+
+  public static ThreeState checkLoginWorker(final CvsLoginWorker worker, final ModalityContext executor, final Project project,
+                                      final boolean forceCheckParam) {
+    boolean forceCheck = forceCheckParam;
+    final Ref<Boolean> promptResult = new Ref<Boolean>();
+    final Runnable prompt = new Runnable() {
+      public void run() {
+        promptResult.set(worker.promptForPassword());
+      }
+    };
+    while (true) {
+      final ThreeState state = worker.silentLogin(forceCheck);
+      if (ThreeState.YES.equals(state)) return ThreeState.YES;
+      if (ThreeState.NO.equals(state)) return state;
+      executor.runInDispatchThread(prompt, project);
+      if (! Boolean.TRUE.equals(promptResult.get())) {
+        return ThreeState.UNSURE; // canceled
+      }
+      forceCheck = true;
+    }
   }
 
   public static class MyProjectKnown extends LoginPerformer<CvsEnvironment> {

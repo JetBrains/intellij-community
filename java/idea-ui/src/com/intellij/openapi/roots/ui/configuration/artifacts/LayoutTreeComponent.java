@@ -101,6 +101,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   public void setSortElements(boolean sortElements) {
     mySortElements = sortElements;
     myBuilder.setNodeDescriptorComparator(getComparator());
+    ((ArtifactsStructureConfigurableContextImpl)myArtifactsEditor.getContext().getParent()).getDefaultSettings().setSortElements(sortElements);
   }
 
   @Nullable

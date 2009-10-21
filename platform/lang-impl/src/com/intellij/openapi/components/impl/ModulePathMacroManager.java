@@ -50,9 +50,8 @@ public class ModulePathMacroManager extends BasePathMacroManager /*ProjectPathMa
 
   public ReplacePathToMacroMap getReplacePathMap() {
     ReplacePathToMacroMap result = new ReplacePathToMacroMap();
-    getModuleHomeReplacements(result, false);
     result.putAll(super.getReplacePathMap());
-    getModuleHomeReplacements(result, true); // TODO: change to false and remove previous call to this method to save ABSOLUTE paths 
+    getModuleHomeReplacements(result, true);
     return result;
   }
 
@@ -85,18 +84,11 @@ public class ModulePathMacroManager extends BasePathMacroManager /*ProjectPathMa
     // [dsl]: Q?
     //if(!f.exists()) return;
 
-    final VirtualFile baseDir = myModule.getProject().getBaseDir();
-    final String projectParent = baseDir != null && baseDir.getParent() != null ? PathMacroMap.quotePath(baseDir.getParent().getPath()): null;
-
     String macro = "$" + PathMacrosImpl.MODULE_DIR_MACRO_NAME + "$";
     boolean check = false;
     while (f != null) {
       @NonNls String path = PathMacroMap.quotePath(f.getAbsolutePath());
       String s = macro;
-
-      if (projectParent != null && path.equals(projectParent)) {
-        break; // never step out of the project dir
-      }
 
       if (StringUtil.endsWithChar(path, '/')) s += "/";
       if (path.equals("/")) break;

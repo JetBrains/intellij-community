@@ -43,9 +43,11 @@ class ArtifactsStructureConfigurableContextImpl implements ArtifactsStructureCon
   private Map<Artifact, CompositePackagingElement<?>> myModifiableRoots = new HashMap<Artifact, CompositePackagingElement<?>>();
   private Map<Artifact, ArtifactEditorImpl> myArtifactEditors = new HashMap<Artifact, ArtifactEditorImpl>();
   private Map<ArtifactPointer, ArtifactEditorSettings> myEditorSettings = new HashMap<ArtifactPointer, ArtifactEditorSettings>();
-  private ArtifactEditorSettings myDefaultSettings = new ArtifactEditorSettings();
+  private final ArtifactEditorSettings myDefaultSettings;
 
-  public ArtifactsStructureConfigurableContextImpl(StructureConfigurableContext context, Project project, final ArtifactAdapter modifiableModelListener) {
+  public ArtifactsStructureConfigurableContextImpl(StructureConfigurableContext context, Project project,
+                                                   ArtifactEditorSettings defaultSettings, final ArtifactAdapter modifiableModelListener) {
+    myDefaultSettings = defaultSettings;
     myModifiableModelListener = modifiableModelListener;
     myContext = context;
     myProject = project;
@@ -121,6 +123,10 @@ class ArtifactsStructureConfigurableContextImpl implements ArtifactsStructureCon
       ((ArtifactModelImpl)myModifiableModel).addListener(myModifiableModelListener);
     }
     return myModifiableModel;
+  }
+
+  public ArtifactEditorSettings getDefaultSettings() {
+    return myDefaultSettings;
   }
 
   @NotNull

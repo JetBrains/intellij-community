@@ -76,7 +76,15 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     boolean searchInNonJavaFiles,
     MoveCallback moveCallback) {
     super(project);
-    myElementsToMove = elements;
+    final List<PsiElement> toMove = new ArrayList<PsiElement>();
+    for (PsiElement element : elements) {
+      if (element instanceof PsiJavaFile) {
+        Collections.addAll(toMove, ((PsiJavaFile)element).getClasses());
+      } else {
+        toMove.add(element);
+      }
+    }
+    myElementsToMove = toMove.toArray(new PsiElement[toMove.size()]);
     myMoveDestination = moveDestination;
     myTargetPackage = myMoveDestination.getTargetPackage();
     mySearchInComments = searchInComments;

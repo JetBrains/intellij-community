@@ -19,7 +19,6 @@ import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -190,37 +189,46 @@ public class GitConvertFilesDialog extends DialogWrapper {
         if (files.isEmpty()) {
           return true;
         }
-        final Ref<VirtualFile[]> selectedFiles = new Ref<VirtualFile[]>();
         UIUtil.invokeAndWaitIfNeeded(new Runnable() {
           public void run() {
-            GitConvertFilesDialog d = new GitConvertFilesDialog(project, files);
-            d.show();
-            if (d.isOK()) {
-              settings.LINE_SEPARATORS_CONVERSION_ASK = d.myDoNotShowCheckBox.isSelected();
-              settings.LINE_SEPARATORS_CONVERSION = GitVcsSettings.ConversionPolicy.PROJECT_LINE_SEPARATORS;
-              selectedFiles.set(d.myFilesToConvert.getCheckedNodes(VirtualFile.class, null));
-            }
-            else if (d.getExitCode() == DO_NOT_CONVERT) {
-              settings.LINE_SEPARATORS_CONVERSION_ASK = d.myDoNotShowCheckBox.isSelected();
-              settings.LINE_SEPARATORS_CONVERSION = GitVcsSettings.ConversionPolicy.NONE;
+            VirtualFile[] selectedFiles = null;
+            if (settings.LINE_SEPARATORS_CONVERSION_ASK) {
+              GitConvertFilesDialog d = new GitConvertFilesDialog(project, files);
+              d.show();
+              if (d.isOK()) {
+                settings.LINE_SEPARATORS_CONVERSION_ASK = d.myDoNotShowCheckBox.isSelected();
+                settings.LINE_SEPARATORS_CONVERSION = GitVcsSettings.ConversionPolicy.PROJECT_LINE_SEPARATORS;
+                selectedFiles = d.myFilesToConvert.getCheckedNodes(VirtualFile.class, null);
+              }
+              else if (d.getExitCode() == DO_NOT_CONVERT) {
+                settings.LINE_SEPARATORS_CONVERSION_ASK = d.myDoNotShowCheckBox.isSelected();
+                settings.LINE_SEPARATORS_CONVERSION = GitVcsSettings.ConversionPolicy.NONE;
+              }
+              else {
+                //noinspection ThrowableInstanceNeverThrown
+                exceptions.add(new VcsException("Commit was cancelled in file conversion dialog"));
+              }
             }
             else {
-              //noinspection ThrowableInstanceNeverThrown
-              exceptions.add(new VcsException("Commit was cancelled in file conversion dialog"));
+              ArrayList<VirtualFile> fileList = new ArrayList<VirtualFile>();
+              for (Set<VirtualFile> fileSet : files.values()) {
+                fileList.addAll(fileSet);
+              }
+              selectedFiles = fileList.toArray(new VirtualFile[fileList.size()]);
+            }
+            if (selectedFiles != null) {
+              for (VirtualFile f : selectedFiles) {
+                try {
+                  LoadTextUtil.changeLineSeparator(project, GitConvertFilesDialog.class.getName(), f, nl);
+                }
+                catch (IOException e) {
+                  //noinspection ThrowableInstanceNeverThrown
+                  exceptions.add(new VcsException("Failed to change line separators for the file: " + f.getPresentableUrl(), e));
+                }
+              }
             }
           }
         });
-        if (selectedFiles.get() != null) {
-          for (VirtualFile f : selectedFiles.get()) {
-            try {
-              LoadTextUtil.changeLineSeparator(project, GitConvertFilesDialog.class.getName(), f, nl);
-            }
-            catch (IOException e) {
-              //noinspection ThrowableInstanceNeverThrown
-              exceptions.add(new VcsException("Failed to change line separators for the file: " + f.getPresentableUrl(), e));
-            }
-          }
-        }
       }
     }
     catch (VcsException e) {
@@ -237,7 +245,7 @@ public class GitConvertFilesDialog extends DialogWrapper {
    * @throws VcsException if there is problem with running git
    */
   private static void ignoreFilesWithCrlfUnset(Project project, Map<VirtualFile, Set<VirtualFile>> files) throws VcsException {
-    boolean stdin = GitVcs.getInstance(project).version().isLessOrEqual(CHECK_ATTR_STDIN_SUPPORTED);
+    boolean stdin = CHECK_ATTR_STDIN_SUPPORTED.isLessOrEqual(GitVcs.getInstance(project).version());
     for (final Map.Entry<VirtualFile, Set<VirtualFile>> e : files.entrySet()) {
       final VirtualFile r = e.getKey();
       GitSimpleHandler h = new GitSimpleHandler(project, r, GitHandler.CHECK_ATTR);

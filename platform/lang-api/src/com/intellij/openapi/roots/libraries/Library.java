@@ -32,6 +32,9 @@ public interface Library extends JDOMExternalizable, Disposable {
 
   @NotNull VirtualFile[] getFiles(@NotNull OrderRootType rootType);
 
+  /**
+   * As soon as you obtaining modifiable model you will have to commit it or call Disposer.dispose(model)! 
+   */
   @NotNull ModifiableModel getModifiableModel();
 
   LibraryTable getTable();
@@ -42,7 +45,7 @@ public interface Library extends JDOMExternalizable, Disposable {
   
   boolean isValid(@NotNull String url, @NotNull OrderRootType rootType);
   
-  interface ModifiableModel {
+  interface ModifiableModel extends Disposable {
     @NotNull String[] getUrls(@NotNull OrderRootType rootType);
 
     void setName(@NotNull String name);

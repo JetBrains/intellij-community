@@ -20,10 +20,8 @@ import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIFunctionMapper;
 import com.sun.jna.win32.W32APITypeMapper;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.FileNotFoundException;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
@@ -46,6 +44,7 @@ public class Win32Kernel {
     }};
 
   public static class HANDLE extends PointerType {
+
     public Object fromNative(Object nativeValue, FromNativeContext context) {
       Object o = super.fromNative(nativeValue, context);
       if (INVALID_HANDLE_VALUE.equals(o)) return INVALID_HANDLE_VALUE;
@@ -53,59 +52,72 @@ public class Win32Kernel {
     }
   }
 
-  private static int DATA_SIZE = new WIN32_FIND_DATA().size();
-
-  private Map<String, WIN32_FIND_DATA> myCache = new HashMap<String, WIN32_FIND_DATA>();
-  private List<WIN32_FIND_DATA> myDatas = new ArrayList<WIN32_FIND_DATA>();
-
-  private WIN32_FIND_DATA getData() {
-    if (myDatas.isEmpty()) {
-      myDatas.add(new WIN32_FIND_DATA());
+  private static class FileInfo {
+    private FileInfo(WIN32_FIND_DATA data) {
+      this.dwFileAttributes = data.dwFileAttributes;
+      this.ftLastWriteTime = data.ftLastWriteTime.toLong();
     }
-    return myDatas.remove(0);
+
+    int dwFileAttributes;
+    long ftLastWriteTime;
   }
+
+  private final static WIN32_FIND_DATA DATA = new WIN32_FIND_DATA();
+
+  private Map<String, FileInfo> myCache = new HashMap<String, FileInfo>();
 
   public String[] list(String absolutePath) {
 
-    myDatas.addAll(myCache.values());
     myCache.clear();
 
     ArrayList<String> list = new ArrayList<String>();
-    WIN32_FIND_DATA data = getData();
-    HANDLE hFind = myKernel.FindFirstFile(absolutePath.replace('/', '\\') + "\\*", data);
+    HANDLE hFind = myKernel.FindFirstFile(absolutePath.replace('/', '\\') + "\\*", DATA);
     if (hFind == INVALID_HANDLE_VALUE) return new String[0];
     do {
-      String name = toString(data.cFileName);
+      String name = toString(DATA.cFileName);
       if (name.equals(".") || name.equals("..")) {
         continue;
       }
-      myCache.put(absolutePath + "/" + name, data);
+      myCache.put(absolutePath + "/" + name, new FileInfo(DATA));
       list.add(name);
-      data = getData();
     }
-    while (myKernel.FindNextFile(hFind, data));
+    while (myKernel.FindNextFile(hFind, DATA));
     myKernel.FindClose(hFind);
     return list.toArray(new String[list.size()]);
   }
 
-  public boolean isDirectory(String path) throws NotAvailableException {
-    WIN32_FIND_DATA data = getData(path);
+  public boolean exists(String path) {
+    try {
+      getData(path);
+      return true;
+    }
+    catch (FileNotFoundException e) {
+      return false;
+    }
+  }
+
+  public boolean isDirectory(String path) throws FileNotFoundException {
+    FileInfo data = getData(path);
     return (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
   }
 
-  public boolean isWritable(String path) throws NotAvailableException {
+  public boolean isWritable(String path) throws FileNotFoundException {
     return (getData(path).dwFileAttributes & FILE_ATTRIBUTE_READONLY) == 0;
   }
 
-
-  public long getTimeStamp(String path) throws NotAvailableException {
-    return getData(path).ftLastWriteTime.toLong();
+  public long getTimeStamp(String path) throws FileNotFoundException {
+    return getData(path).ftLastWriteTime;
   }
 
-  private WIN32_FIND_DATA getData(String path) throws NotAvailableException {
-    WIN32_FIND_DATA data = myCache.get(path);
+  private FileInfo getData(String path) throws FileNotFoundException {
+    FileInfo data = myCache.get(path);
     if (data == null) {
-      throw new NotAvailableException(path);
+      myCache.clear();
+      HANDLE hFind = myKernel.FindFirstFile(path.replace('/', '\\'), DATA);
+      if (hFind == INVALID_HANDLE_VALUE) throw new FileNotFoundException(path);
+      data = new FileInfo(DATA);
+      myKernel.FindClose(hFind);
+      myCache.put(path, data);
     }
     return data;
   }
@@ -124,8 +136,6 @@ public class Win32Kernel {
     boolean FindNextFile(HANDLE hFindFile, WIN32_FIND_DATA lpFindFileData);
 
     boolean FindClose(HANDLE hFindFile);
-
-    int GetLastError();
   }
 
   public static class FILETIME extends Structure implements Structure.ByValue {
@@ -142,15 +152,11 @@ public class Win32Kernel {
     }
 
     public long toLong() {
-      long result = dwHighDateTime;
-      result = result << 32;
-      result = result + l(dwLowDateTime);
-      result = result / 10000;
-      result = result - 11644473600000l;
-      return result;
+      return (((long)dwHighDateTime << 32) + l(dwLowDateTime)) / 10000 - 11644473600000l;
     }
   }
 
+  @SuppressWarnings({"UnusedDeclaration"})
   public static class WIN32_FIND_DATA extends Structure {
 
     public int dwFileAttributes;
@@ -172,12 +178,5 @@ public class Win32Kernel {
     public char[] cFileName = new char[MAX_PATH];
 
     public char[] cAlternateFileName = new char[14];
-
-  }
-  
-  public static class NotAvailableException extends Exception {
-    public NotAvailableException(String message) {
-      super(message);
-    }
   }
 }
