@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes.conflicts;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesCommitExecutor;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
@@ -43,7 +44,14 @@ public enum ChangelistConflictResolution {
       ChangeListManagerImpl manager = getManager(project);
       Set<ChangeList> changeLists = new HashSet<ChangeList>();
       for (Change change : changes) {
-        changeLists.add(manager.getChangeList(change));
+        LocalChangeList list = manager.getChangeList(change);
+        if (list != null) {
+          changeLists.add(list);
+        }
+      }
+      if (changeLists.isEmpty()) {
+        Messages.showInfoMessage(project, "The conflict seems to be resolved", "No Conflict Found");
+        return true;
       }
       MoveChangesDialog dialog = new MoveChangesDialog(project, changes, changeLists, "Move Changes");
       dialog.show();
