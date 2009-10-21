@@ -221,7 +221,7 @@ public class ChangeDiffRequest implements ChangeRequestChain {
 
   @NotNull
   private DiffContent createContent(final ContentRevision revision) {
-    ProgressManager.getInstance().checkCanceled();
+    ProgressManager.checkCanceled();
     if (revision == null) return new SimpleContent("");
     if (revision instanceof CurrentContentRevision) {
       final CurrentContentRevision current = (CurrentContentRevision)revision;

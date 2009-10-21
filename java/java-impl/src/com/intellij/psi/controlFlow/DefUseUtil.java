@@ -153,7 +153,7 @@ public class DefUseUtil {
     Set<PsiVariable> readVariables = new THashSet<PsiVariable>();
     for (int i = 0; i < instructions.size(); i++) {
       Instruction instruction = instructions.get(i);
-      ProgressManager.getInstance().checkCanceled();
+      ProgressManager.checkCanceled();
       if (instruction instanceof WriteVariableInstruction) {
         WriteVariableInstruction writeInstruction = (WriteVariableInstruction)instruction;
         PsiElement context = flow.getElement(i);
@@ -189,7 +189,7 @@ public class DefUseUtil {
       queue.add(outerState);
 
       while (!queue.isEmpty()) {
-        ProgressManager.getInstance().checkCanceled();
+        ProgressManager.checkCanceled();
         InstructionState state = queue.remove(0);
         state.markVisited();
 

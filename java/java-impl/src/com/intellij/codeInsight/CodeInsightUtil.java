@@ -255,7 +255,7 @@ public class CodeInsightUtil {
 
     return new Processor<PsiClass>() {
       public boolean process(final PsiClass inheritor) {
-        ProgressManager.getInstance().checkCanceled();
+        ProgressManager.checkCanceled();
 
         return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
           public Boolean compute() {

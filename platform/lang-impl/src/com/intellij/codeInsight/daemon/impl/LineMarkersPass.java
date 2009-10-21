@@ -35,8 +35,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -101,7 +101,7 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
   public void addLineMarkers(List<PsiElement> elements, final List<LineMarkerProvider> providers, final List<LineMarkerInfo> result) throws ProcessCanceledException {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     for (PsiElement element : elements) {
-      ProgressManager.getInstance().checkCanceled();
+      ProgressManager.checkCanceled();
 
       for (LineMarkerProvider provider: providers) {
         LineMarkerInfo info = provider.getLineMarkerInfo(element);

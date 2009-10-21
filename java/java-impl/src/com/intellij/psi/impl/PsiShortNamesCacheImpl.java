@@ -173,7 +173,7 @@ class PsiShortNamesCacheImpl extends PsiShortNamesCache {
     });
 
     for (T member : members) {
-      ProgressManager.getInstance().checkCanceled();
+      ProgressManager.checkCanceled();
 
       if (!scope.contains(member.getContainingFile().getVirtualFile())) continue;
       if (!set.add(member)) continue;

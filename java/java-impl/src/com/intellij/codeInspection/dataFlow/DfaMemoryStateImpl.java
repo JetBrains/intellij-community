@@ -686,7 +686,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
       for (int i = 0; i < varClass.size(); i++) {
         if ((++interruptCount & 0xf) == 0) {
-          ProgressManager.getInstance().checkCanceled();
+          ProgressManager.checkCanceled();
         }
         int cl = varClass.get(i);
         DfaValue value = myFactory.getValue(cl);
