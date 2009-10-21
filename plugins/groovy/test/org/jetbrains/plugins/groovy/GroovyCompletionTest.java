@@ -263,4 +263,8 @@ public class GroovyCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "substring", "substring", "subSequence");
   }
 
+  public void testPropertyWithSecondUpperLetter() throws Exception {
+    myFixture.testCompletionVariants(getTestName(false)+".groovy", "geteMail", "getePost");
+  }
+
 }
