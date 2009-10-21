@@ -50,6 +50,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.*;
 import com.intellij.util.Alarm;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -206,14 +207,8 @@ public class BookmarksAction extends AnAction implements DumbAware {
       list.clearSelection();
     }
 
-    new ListSpeedSearch(list) {
-      @Override
-      protected String getElementText(Object element) {
-        return ((ItemWrapper)element).speedSearchText();
-      }
-    };
-
     list.setCellRenderer(new ItemRenderer(project));
+
 
     JPanel footerPanel = new JPanel(new BorderLayout()) {
       @Override
@@ -248,7 +243,12 @@ public class BookmarksAction extends AnAction implements DumbAware {
       setSouthComponent(footerPanel).
       setEastComponent(previewPanel).
       setItemChoosenCallback(runnable).
-      createPopup();
+      setItemsNamer(new Function<Object, String>() {
+        public String fun(Object o) {
+          return ((ItemWrapper)o).speedSearchText();
+        }
+      }).createPopup();
+
     editDescriptionAction.setPopup(popup);
     popup.showCenteredInCurrentWindow(project);
   }

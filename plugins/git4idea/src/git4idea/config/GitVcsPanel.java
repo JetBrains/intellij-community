@@ -92,6 +92,7 @@ public class GitVcsPanel {
     mySSHExecutableComboBox.addItem(IDEA_SSH);
     mySSHExecutableComboBox.addItem(NATIVE_SSH);
     mySSHExecutableComboBox.setSelectedItem(GitVcsSettings.isDefaultIdeaSsh() ? IDEA_SSH : NATIVE_SSH);
+    myAskBeforeConversionsCheckBox.setSelected(mySettings.LINE_SEPARATORS_CONVERSION_ASK);
     myTestButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         testConnection();
@@ -175,7 +176,8 @@ public class GitVcsPanel {
   public boolean isModified(@NotNull GitVcsSettings settings) {
     return !settings.GIT_EXECUTABLE.equals(myGitField.getText()) ||
            (settings.isIdeaSsh() != IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem())) ||
-           !crlfPolicyItem(settings).equals(myConvertTextFilesComboBox.getSelectedItem());
+           !crlfPolicyItem(settings).equals(myConvertTextFilesComboBox.getSelectedItem()) ||
+           settings.LINE_SEPARATORS_CONVERSION_ASK != myAskBeforeConversionsCheckBox.isSelected();
   }
 
   /**
@@ -188,13 +190,16 @@ public class GitVcsPanel {
     settings.setIdeaSsh(IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem()));
     Object policyItem = myConvertTextFilesComboBox.getSelectedItem();
     GitVcsSettings.ConversionPolicy conversionPolicy;
-    if(CRLF_DO_NOT_CONVERT.equals(policyItem)) {
+    if (CRLF_DO_NOT_CONVERT.equals(policyItem)) {
       conversionPolicy = GitVcsSettings.ConversionPolicy.NONE;
-    } else if (CRLF_CONVERT_TO_PROJECT.equals(policyItem)) {
+    }
+    else if (CRLF_CONVERT_TO_PROJECT.equals(policyItem)) {
       conversionPolicy = GitVcsSettings.ConversionPolicy.PROJECT_LINE_SEPARATORS;
-    } else {
-      throw new IllegalStateException("Unknown selected CRLF policy: "+policyItem);
+    }
+    else {
+      throw new IllegalStateException("Unknown selected CRLF policy: " + policyItem);
     }
     settings.LINE_SEPARATORS_CONVERSION = conversionPolicy;
+    settings.LINE_SEPARATORS_CONVERSION_ASK = myAskBeforeConversionsCheckBox.isSelected();
   }
 }
