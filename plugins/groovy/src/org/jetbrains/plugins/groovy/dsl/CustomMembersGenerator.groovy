@@ -48,7 +48,7 @@ public class CustomMembersGenerator implements GdslMembersHolderConsumer {
       final def variants = d.metaClass.respondsTo(d, name, newArgs)
       if (variants.size() == 1) {
 
-        /*def cachedMethod = { Object[] args1 ->
+/*        def cachedMethod = { Object[] args1 ->
           final def newArgs1 = constructNewArgs(args1)
           return d.invokeMethod(name, newArgs1)
         }
