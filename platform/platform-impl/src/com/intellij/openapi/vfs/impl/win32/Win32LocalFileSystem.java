@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.FileNotFoundException;
 import java.util.Collection;
 import java.util.Set;
 
@@ -44,7 +45,7 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
     try {
       return myKernel.isDirectory(file.getPath());
     }
-    catch (Win32Kernel.NotAvailableException e) {
+    catch (FileNotFoundException e) {
       return super.isDirectory(file);
     }
   }
@@ -54,7 +55,7 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
     try {
       return myKernel.isWritable(file.getPath());
     }
-    catch (Win32Kernel.NotAvailableException e) {
+    catch (FileNotFoundException e) {
       return super.isWritable(file);
     }
   }
@@ -64,9 +65,14 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
     try {
       return myKernel.getTimeStamp(file.getPath());
     }
-    catch (Win32Kernel.NotAvailableException e) {
+    catch (FileNotFoundException e) {
       return super.getTimeStamp(file);
     }
+  }
+
+  @Override
+  public boolean exists(VirtualFile fileOrDirectory) {
+    return myKernel.exists(fileOrDirectory.getPath());
   }
 
   @Override

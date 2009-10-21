@@ -63,6 +63,7 @@ public class RefreshWorker {
           (applicationEx.isUnitTestMode() || applicationEx.isInternal())) {
         delegate = new Win32LocalFileSystem();
       }
+
       final PersistentFS persistence = (PersistentFS)ManagingFS.getInstance();
 
       while (!myRefreshQueue.isEmpty()) {
