@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 /**
  * @author ilyas
@@ -42,12 +44,20 @@ public class GrAdditiveExpressionImpl extends GrBinaryExpressionImpl {
 
     IElementType tokenType = getOperationTokenType();
     if (tokenType == GroovyTokenTypes.mPLUS) {
-      if (lType != null && lType.equalsToText("java.lang.String")) {
-        return getTypeByFQName("java.lang.String");
+      if (isStringType(lType)) {
+        return getTypeByFQName(CommonClassNames.JAVA_LANG_STRING);
+      }
+      final GrExpression rop = getRightOperand();
+      if (rop != null && isStringType(rop.getType())) {
+        return getTypeByFQName(CommonClassNames.JAVA_LANG_STRING);
       }
     }
 
     return null;
+  }
+
+  private static boolean isStringType(PsiType type) {
+    return type != null && (type.equalsToText(CommonClassNames.JAVA_LANG_STRING) || type.equalsToText(GrStringUtil.GROOVY_LANG_GSTRING));
   }
 
   public String toString() {

@@ -137,7 +137,7 @@ public class GroovyCompletionTest extends LightCodeInsightFixtureTestCase {
     doVariantableTest("abx", "aby");
   }
 
-  public void testNamedParametersForNotMap() throws Throwable {    
+  public void testNamedParametersForNotMap() throws Throwable {
     doBasicTest();
   }
 
@@ -202,7 +202,7 @@ public class GroovyCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "xx", "xy");
   }
 
-  public void testInnerClassExtendsImplementsCompletion()throws Throwable{
+  public void testInnerClassExtendsImplementsCompletion() throws Throwable {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "extends", "implements");
   }
 
@@ -226,7 +226,7 @@ public class GroovyCompletionTest extends LightCodeInsightFixtureTestCase {
   public void testThisKeywordCompletionAfterClassName1() throws Throwable {
     doBasicTest();
   }
-  
+
   public void testThisKeywordCompletionAfterClassName2() throws Throwable {
     doBasicTest();
   }
@@ -254,9 +254,13 @@ public class GroovyCompletionTest extends LightCodeInsightFixtureTestCase {
   public void testTypeCompletionInVariableDeclaration2() throws Throwable {
     doBasicTest();
   }
+
   public void testTypeCompletionInParameter() throws Throwable {
     doBasicTest();
   }
 
+  public void testGStringConcatenationCompletion() throws Throwable {
+    myFixture.testCompletionVariants(getTestName(false) + ".groovy", "substring", "substring", "subSequence");
+  }
 
 }
