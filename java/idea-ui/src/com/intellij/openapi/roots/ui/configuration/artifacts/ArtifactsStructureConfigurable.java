@@ -37,9 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author nik
@@ -49,8 +47,8 @@ import java.util.List;
     storages = {@Storage(id = "other", file = "$WORKSPACE_FILE$")}
 )
 public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
-  private ArtifactsStructureConfigurableContextImpl myPackagingEditorContext;
   @NonNls private static final String DEFAULT_ARTIFACT_NAME = "unnamed";
+  private ArtifactsStructureConfigurableContextImpl myPackagingEditorContext;
 
   public ArtifactsStructureConfigurable(@NotNull Project project) {
     super(project);
@@ -177,7 +175,9 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
 
   @Override
   public void apply() throws ConfigurationException {
+    myPackagingEditorContext.saveEditorSettings();
     super.apply();
+
     myPackagingEditorContext.getManifestFilesInfo().saveManifestFiles();
     final ModifiableArtifactModel modifiableModel = myPackagingEditorContext.getActualModifiableModel();
     if (modifiableModel != null) {
@@ -194,6 +194,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
 
   @Override
   public void disposeUIResources() {
+    myPackagingEditorContext.saveEditorSettings();
     super.disposeUIResources();
     myPackagingEditorContext.disposeUIResources();
   }
