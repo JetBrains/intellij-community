@@ -158,7 +158,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
       return;
     }
 
-    if (!file.isValid()) return;
+    if ((file == null) || (! file.isValid())) return;
     FileStatus cachedStatus = getCachedStatus(file);
     if (cachedStatus == null) return;
     FileStatus newStatus = calcStatus(file);

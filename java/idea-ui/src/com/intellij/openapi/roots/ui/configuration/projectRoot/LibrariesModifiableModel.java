@@ -35,16 +35,17 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
   private final Map<Library, LibraryEditor> myLibrary2EditorMap = new HashMap<Library, LibraryEditor>();
   private final Set<Library> myRemovedLibraries = new HashSet<Library>();
 
-  private final LibraryTable.ModifiableModel myLibrariesModifiableModel;
+  private LibraryTable.ModifiableModel myLibrariesModifiableModel;
   private final Project myProject;
+  private LibraryTable myTable;
 
   public LibrariesModifiableModel(final LibraryTable table, final Project project) {
     myProject = project;
-    myLibrariesModifiableModel = table.getModifiableModel();
+    myTable = table;
   }
 
   public Library createLibrary(String name) {
-    final Library library = myLibrariesModifiableModel.createLibrary(name);
+    final Library library = getLibrariesModifiableModel().createLibrary(name);
     //createLibraryEditor(library);
     final BaseLibrariesConfigurable configurable = ProjectStructureConfigurable.getInstance(myProject).getConfigurableFor(library);
     configurable.createLibraryNode(library);
@@ -52,11 +53,11 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
   }
 
   public void removeLibrary(@NotNull Library library) {
-    if (myLibrariesModifiableModel.getLibraryByName(library.getName()) == null) return;
+    if (getLibrariesModifiableModel().getLibraryByName(library.getName()) == null) return;
 
     myRemovedLibraries.add(library);
     removeLibraryEditor(library);
-    myLibrariesModifiableModel.removeLibrary(library);
+    getLibrariesModifiableModel().removeLibrary(library);
   }
 
   public void commit() {
@@ -65,31 +66,32 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
 
   @NotNull
   public Iterator<Library> getLibraryIterator() {
-    return myLibrariesModifiableModel.getLibraryIterator();
+    return getLibrariesModifiableModel().getLibraryIterator();
   }
 
   public Library getLibraryByName(@NotNull String name) {
-    return myLibrariesModifiableModel.getLibraryByName(name);
+    return getLibrariesModifiableModel().getLibraryByName(name);
   }
 
   @NotNull
   public Library[] getLibraries() {
-    return myLibrariesModifiableModel.getLibraries();
+    return getLibrariesModifiableModel().getLibraries();
   }
 
   public boolean isChanged() {
     for (LibraryEditor libraryEditor : myLibrary2EditorMap.values()) {
       if (libraryEditor.hasChanges()) return true;
     }
-    return myLibrariesModifiableModel.isChanged();
+    return getLibrariesModifiableModel().isChanged();
   }
 
   public void deferredCommit(){
     for (LibraryEditor libraryEditor : new ArrayList<LibraryEditor>(myLibrary2EditorMap.values())) {
-      libraryEditor.commit();
+      libraryEditor.commit(); // TODO: is seems like commit will recreate the editor, but it should not
     }
     if (!(myLibrary2EditorMap.isEmpty() && myRemovedLibraries.isEmpty())) {
-      myLibrariesModifiableModel.commit();
+      getLibrariesModifiableModel().commit();
+      myLibrariesModifiableModel = null;
     }
     myLibrary2EditorMap.clear();
     myRemovedLibraries.clear();
@@ -135,5 +137,13 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
 
   public Library.ModifiableModel getLibraryModifiableModel(final Library library) {
     return getLibraryEditor(library).getModel();
+  }
+
+  private LibraryTable.ModifiableModel getLibrariesModifiableModel() {
+    if (myLibrariesModifiableModel == null) {
+      myLibrariesModifiableModel = myTable.getModifiableModel();
+    }
+
+    return myLibrariesModifiableModel;
   }
 }

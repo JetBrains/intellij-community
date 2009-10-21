@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -146,6 +147,7 @@ public class ProjectFacetInfoSet extends FacetInfoSet<Module> {
 
     Element element = XmlSerializer.serialize(facetsBean, new SkipDefaultValuesSerializationFilters());
     try {
+      FileUtil.delete(file);
       JDOMUtil.writeDocument(new Document(element), file, SystemProperties.getLineSeparator());
     }
     catch (IOException e) {

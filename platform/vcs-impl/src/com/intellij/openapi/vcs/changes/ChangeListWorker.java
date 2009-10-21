@@ -648,6 +648,10 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       myWorker = worker;
     }
 
+    public List<LocalChangeList> getListsCopy() {
+      return myWorker.getListsCopy();
+    }
+
     @Nullable
     public LocalChangeList findChangeList(final String name) {
       return myWorker.getCopyByName(name);
@@ -667,6 +671,22 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
     public void editComment(final String name, final String comment) {
       myWorker.editComment(name, comment);
+    }
+
+    public void editName(String oldName, String newName) {
+      myWorker.editName(oldName, newName);
+    }
+
+    // todo usage allowed only when..
+    public void moveChanges(String toList, Collection<Change> changes) {
+      myWorker.moveChangesTo(toList, changes.toArray(new Change[changes.size()]));
+    }
+
+    public void deleteIfEmpty(String name) {
+      final LocalChangeList list = myWorker.getCopyByName(name);
+      if ((list != null) && (list.getChanges().isEmpty()) && (! list.isDefault())) {
+        myWorker.removeChangeList(name);
+      }
     }
   }
 }

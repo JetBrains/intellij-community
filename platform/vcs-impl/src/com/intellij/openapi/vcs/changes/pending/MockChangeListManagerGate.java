@@ -18,12 +18,20 @@ package com.intellij.openapi.vcs.changes.pending;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerGate;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.Change;
+
+import java.util.Collection;
+import java.util.List;
 
 public class MockChangeListManagerGate implements ChangeListManagerGate {
   private final ChangeListManager myManager;
 
   public MockChangeListManagerGate(final ChangeListManager manager) {
     myManager = manager;
+  }
+
+  public List<LocalChangeList> getListsCopy() {
+    return myManager.getChangeListsCopy();
   }
 
   public LocalChangeList findChangeList(final String name) {
@@ -44,5 +52,23 @@ public class MockChangeListManagerGate implements ChangeListManagerGate {
 
   public void editComment(final String name, final String comment) {
     myManager.editComment(name, comment);
+  }
+
+  public void editName(String oldName, String newName) {
+    myManager.editName(oldName, newName);
+  }
+
+  public void moveChanges(String toList, Collection<Change> changes) {
+    final LocalChangeList changeList = myManager.findChangeList(toList);
+    if (changeList != null) {
+      myManager.moveChangesTo(changeList, changes.toArray(new Change[changes.size()]));
+    }
+  }
+
+  public void deleteIfEmpty(String name) {
+    final LocalChangeList changeList = myManager.findChangeList(name);
+    if ((changeList != null) && (changeList.getChanges().isEmpty())) {
+      myManager.removeChangeList(name);
+    }
   }
 }

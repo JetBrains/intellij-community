@@ -60,9 +60,19 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
   private final Project myProject;
   private UserDataHolderBase myProjectData = new UserDataHolderBase();
 
-  public ProjectFacetsConfigurator(final StructureConfigurableContext context, Project project) {
+  public ProjectFacetsConfigurator(final StructureConfigurableContext context, Project project, ProjectFacetsConfigurator facetsConfigurator) {
     myContext = context;
     myProject = project;
+
+    if (facetsConfigurator != null) {
+      initFrom(facetsConfigurator);
+    }
+  }
+
+  private void initFrom(ProjectFacetsConfigurator facetsConfigurator) {
+    myFacet2Info.putAll(facetsConfigurator.myFacet2Info);
+    myInfo2Facet.putAll(facetsConfigurator.myInfo2Facet);
+    myTreeModels.putAll(facetsConfigurator.myTreeModels);
   }
 
   public List<Facet> removeFacet(Facet facet) {

@@ -15,17 +15,21 @@
  */
 package git4idea.changes;
 
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitContentRevision;
+import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Git repository change provider
@@ -53,13 +57,61 @@ public class GitChangeProvider implements ChangeProvider {
                          final ProgressIndicator progress,
                          final ChangeListManagerGate addGate) throws VcsException {
     Collection<VirtualFile> roots = GitUtil.gitRootsForPaths(dirtyScope.getAffectedContentRoots());
+
+    final MyNonChangedHolder holder = new MyNonChangedHolder(myProject, dirtyScope.getDirtyFilesNoExpand());
+
     for (VirtualFile root : roots) {
       ChangeCollector c = new ChangeCollector(myProject, dirtyScope, root);
-      for (Change file : c.changes()) {
+      final Collection<Change> changes = c.changes();
+      holder.changed(changes);
+      for (Change file : changes) {
         builder.processChange(file, GitVcs.getKey());
       }
       for (VirtualFile f : c.unversioned()) {
         builder.processUnversionedFile(f);
+      }
+      holder.feedBuilder(builder);
+    }
+  }
+
+  private static class MyNonChangedHolder {
+    private final Project myProject;
+    private final Set<FilePath> myDirty;
+
+    private MyNonChangedHolder(final Project project, final Set<FilePath> dirty) {
+      myProject = project;
+      myDirty = dirty;
+    }
+
+    public void changed(final Collection<Change> changes) {
+      for (Change change : changes) {
+        final FilePath beforePath = ChangesUtil.getBeforePath(change);
+        if (beforePath != null) {
+          myDirty.remove(beforePath);
+        }
+        final FilePath afterPath = ChangesUtil.getBeforePath(change);
+        if (afterPath != null) {
+          myDirty.remove(afterPath);
+        }
+      }
+    }
+
+    public void feedBuilder(final ChangelistBuilder builder) throws VcsException {
+      final VcsKey gitKey = GitVcs.getKey();
+      final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+      final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+      for (FilePath filePath : myDirty) {
+        final VirtualFile vf = filePath.getVirtualFile();
+        if (vf != null) {
+          if (fileDocumentManager.isFileModifiedAndDocumentUnsaved(vf)) {
+            final VirtualFile root = vcsManager.getVcsRootFor(vf);
+            if (root != null) {
+              final GitRevisionNumber beforeRevisionNumber = GitChangeUtils.loadRevision(myProject, root, "HEAD");
+              builder.processChange(new Change(GitContentRevision.createRevision(vf, beforeRevisionNumber, myProject),
+                                               GitContentRevision.createRevision(vf, null, myProject), FileStatus.MODIFIED), gitKey);
+            }
+          }
+        }
       }
     }
   }
@@ -68,7 +120,7 @@ public class GitChangeProvider implements ChangeProvider {
    * {@inheritDoc}
    */
   public boolean isModifiedDocumentTrackingRequired() {
-    return false;
+    return true;
   }
 
   /**

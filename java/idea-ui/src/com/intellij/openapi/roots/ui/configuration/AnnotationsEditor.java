@@ -17,9 +17,7 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.ui.util.CellAppearance;
 import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
@@ -31,9 +29,9 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.Table;
-import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -58,8 +56,8 @@ public class AnnotationsEditor extends ModuleElementsEditor {
   public static final String NAME = ProjectBundle.message("project.roots.external.annotations.tab.title");
   public static final Icon ICON = IconLoader.getIcon("/modules/annotation.png");
 
-  public AnnotationsEditor(Project project, ModifiableRootModel model) {
-    super(project, model);
+  public AnnotationsEditor(final ModuleConfigurationState state) {
+    super(state);
   }
 
   public String getHelpTopic() {
@@ -82,7 +80,7 @@ public class AnnotationsEditor extends ModuleElementsEditor {
       final TableItem item = ((MyTableModel)myTable.getModel()).getTableItemAt(row);
       urls[row] = item.getUrl();
     }
-    myModel.setRootUrls(AnnotationOrderRootType.getInstance(), urls);
+    getModel().setRootUrls(AnnotationOrderRootType.getInstance(), urls);
   }
 
   public JComponent createComponentImpl() {
@@ -143,7 +141,7 @@ public class AnnotationsEditor extends ModuleElementsEditor {
 
   protected DefaultTableModel createModel() {
     final MyTableModel tableModel = new MyTableModel();
-    final String[] urls = myModel.getRootUrls(AnnotationOrderRootType.getInstance());
+    final String[] urls = getModel().getRootUrls(AnnotationOrderRootType.getInstance());
     for (String javadocUrl : urls) {
       tableModel.addTableItem(new TableItem(javadocUrl));
     }

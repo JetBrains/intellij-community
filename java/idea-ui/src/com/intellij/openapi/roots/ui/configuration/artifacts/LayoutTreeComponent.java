@@ -65,15 +65,16 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   private JPanel myPropertiesPanelWrapper;
   private JPanel myPropertiesPanel;
   private LayoutTreeBuilder myBuilder;
-  private boolean mySortElements = true;
+  private boolean mySortElements;
   private LayoutTreeStructure myTreeStructure;
 
   public LayoutTreeComponent(ArtifactEditorImpl artifactsEditor, ComplexElementSubstitutionParameters substitutionParameters,
-                               ArtifactEditorContext context, Artifact originalArtifact) {
+                             ArtifactEditorContext context, Artifact originalArtifact, boolean sortElements) {
     myArtifactsEditor = artifactsEditor;
     mySubstitutionParameters = substitutionParameters;
     myContext = context;
     myOriginalArtifact = originalArtifact;
+    mySortElements = sortElements;
     myTree = new LayoutTree(myArtifactsEditor);
     myTreeStructure = new LayoutTreeStructure();
     myBuilder = new LayoutTreeBuilder();

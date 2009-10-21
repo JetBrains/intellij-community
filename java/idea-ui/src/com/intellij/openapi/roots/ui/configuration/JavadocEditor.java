@@ -17,11 +17,9 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ui.Util;
 import com.intellij.openapi.roots.JavadocOrderRootType;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.util.CellAppearance;
 import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
 import com.intellij.openapi.roots.ui.util.SimpleTextCellAppearance;
@@ -32,9 +30,9 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.Table;
-import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -60,8 +58,8 @@ public class JavadocEditor extends ModuleElementsEditor {
   public static final String NAME = ProjectBundle.message("module.javadoc.title");
   public static final Icon ICON = IconLoader.getIcon("/modules/javadoc.png");
 
-  public JavadocEditor(Project project, ModifiableRootModel model) {
-    super(project, model);
+  public JavadocEditor(ModuleConfigurationState state) {
+    super(state);
   }
 
   public String getHelpTopic() {
@@ -84,7 +82,7 @@ public class JavadocEditor extends ModuleElementsEditor {
       final TableItem item = ((MyTableModel)myTable.getModel()).getTableItemAt(row);
       urls[row] = item.getUrl();
     }
-    myModel.setRootUrls(JavadocOrderRootType.getInstance(), urls);
+    getModel().setRootUrls(JavadocOrderRootType.getInstance(), urls);
   }
 
   public JComponent createComponentImpl() {
@@ -148,7 +146,7 @@ public class JavadocEditor extends ModuleElementsEditor {
 
   protected DefaultTableModel createModel() {
     final MyTableModel tableModel = new MyTableModel();
-    final String[] javadocUrls = myModel.getRootUrls(JavadocOrderRootType.getInstance());
+    final String[] javadocUrls = getModel().getRootUrls(JavadocOrderRootType.getInstance());
     for (String javadocUrl : javadocUrls) {
       tableModel.addTableItem(new TableItem(javadocUrl));
     }
