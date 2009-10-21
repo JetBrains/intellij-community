@@ -51,7 +51,6 @@ public class FilteringListModel<T> extends DefaultListModel {
     myList = list;
     myOriginalModel = list.getModel();
     myOriginalModel.addListDataListener(myListDataListener);
-    refilter();
 
     list.setModel(this);
   }

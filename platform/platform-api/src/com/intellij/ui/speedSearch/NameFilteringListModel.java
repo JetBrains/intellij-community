@@ -35,12 +35,12 @@ public class NameFilteringListModel<T> extends FilteringListModel<T> {
                                 SpeedSearch speedSearch) {
     super(list);
     mySpeedSearch = speedSearch;
+    myNamer = namer;
     setFilter(namer != null ? new Condition<T>() {
       public boolean value(T t) {
         return filter.value(namer.fun(t));
       }
     } : null);
-    myNamer = namer;
   }
 
   @Override
