@@ -31,17 +31,32 @@ public class CustomMembersGenerator implements GdslMembersHolderConsumer {
     myQualifiedName = qualifiedName;
   }
 
-  def methodMissing(String name, args) {
+  private Object[] constructNewArgs(Object args) {
     final def newArgs = new Object[args.length + 1]
     for (int i = 0; i < args.length; i++) {
       newArgs[i] = args[i]
     }
     newArgs[args.length] = this
+    return newArgs
+  }
+
+  def methodMissing(String name, args) {
+    final def newArgs = constructNewArgs(args)
 
     // Get other DSL methods from extensions
     for (d in GdslMembersProvider.EP_NAME.getExtensions()) {
       final def variants = d.metaClass.respondsTo(d, name, newArgs)
       if (variants.size() == 1) {
+
+        /*def cachedMethod = { Object[] args1 ->
+          final def newArgs1 = constructNewArgs(args1)
+          return d.invokeMethod(name, newArgs1)
+        }
+
+        // Cache method
+        this.class.metaClass."$name" = cachedMethod
+
+        return cachedMethod(args)*/
         return d.invokeMethod(name, newArgs)
       }
     }
