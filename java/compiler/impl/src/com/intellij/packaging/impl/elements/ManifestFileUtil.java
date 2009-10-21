@@ -134,7 +134,7 @@ public class ManifestFileUtil {
     }
   }
 
-  public static void updateManifest(VirtualFile file, ManifestFileConfiguration configuration) {
+  public static void updateManifest(VirtualFile file, ManifestFileConfiguration configuration, final boolean replaceValues) {
     final Manifest manifest = readManifest(file);
     final Attributes mainAttributes = manifest.getMainAttributes();
 
@@ -142,17 +142,34 @@ public class ManifestFileUtil {
     if (mainClass != null) {
       mainAttributes.put(Attributes.Name.MAIN_CLASS, mainClass);
     }
-    else {
+    else if (replaceValues) {
       mainAttributes.remove(Attributes.Name.MAIN_CLASS);
     }
 
     final List<String> classpath = configuration.getClasspath();
     if (classpath != null && !classpath.isEmpty()) {
-      mainAttributes.put(Attributes.Name.CLASS_PATH, StringUtil.join(classpath, " "));
+      List<String> updatedClasspath;
+      if (replaceValues) {
+        updatedClasspath = classpath;
+      }
+      else {
+        updatedClasspath = new ArrayList<String>();
+        final String oldClasspath = (String)mainAttributes.get(Attributes.Name.CLASS_PATH);
+        if (!StringUtil.isEmpty(oldClasspath)) {
+          updatedClasspath.addAll(StringUtil.split(oldClasspath, " "));
+        }
+        for (String path : classpath) {
+          if (!updatedClasspath.contains(path)) {
+            updatedClasspath.add(path);
+          }
+        }
+      }
+      mainAttributes.put(Attributes.Name.CLASS_PATH, StringUtil.join(updatedClasspath, " "));
     }
-    else {
+    else if (replaceValues) {
       mainAttributes.remove(Attributes.Name.CLASS_PATH);
     }
+
     ManifestBuilder.setVersionAttribute(mainAttributes);
 
     try {

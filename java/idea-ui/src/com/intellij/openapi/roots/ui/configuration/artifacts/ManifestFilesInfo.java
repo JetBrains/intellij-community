@@ -67,7 +67,7 @@ public class ManifestFilesInfo {
         }
       }
 
-      ManifestFileUtil.updateManifest(file, configuration);
+      ManifestFileUtil.updateManifest(file, configuration, true);
     }
   }
 
