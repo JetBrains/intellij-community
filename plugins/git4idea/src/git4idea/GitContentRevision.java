@@ -17,6 +17,7 @@ package git4idea;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
@@ -122,6 +123,16 @@ public class GitContentRevision implements ContentRevision {
     }
     else {
       return CurrentContentRevision.create(file);
+    }
+  }
+
+  public static ContentRevision createRevision(final VirtualFile file, final VcsRevisionNumber revisionNumber, final Project project) throws VcsException {
+    final FilePathImpl filePath = new FilePathImpl(file);
+    if (revisionNumber != null) {
+      return new GitContentRevision(filePath, (GitRevisionNumber)revisionNumber, project);
+    }
+    else {
+      return CurrentContentRevision.create(filePath);
     }
   }
 }
