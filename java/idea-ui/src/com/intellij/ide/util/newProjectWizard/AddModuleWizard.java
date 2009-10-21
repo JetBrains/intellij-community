@@ -358,4 +358,9 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
   public String getProjectName() {
     return myWizardContext.getProjectName();
   }
+
+  @Override
+  protected String getDimensionServiceKey() {
+    return "NewModule_or_Project.wizard";
+  }
 }
