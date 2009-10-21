@@ -81,7 +81,8 @@ public class ArtifactEditorSettings implements PersistentStateComponent<Artifact
   public static class ArtifactEditorSettingsState {
     @Tag("show-sorted")
     public boolean mySortElements = true;
-    @AbstractCollection(elementTag = "show-content", elementValueAttribute = "type-id")
+    @Tag("show-content")
+    @AbstractCollection(surroundWithTag = false, elementTag = "type", elementValueAttribute = "id")
     public List<String> myTypesToShowContentIds = new ArrayList<String>();
   }
 }

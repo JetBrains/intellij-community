@@ -25,7 +25,6 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -66,7 +65,7 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent implements C
     super();
     myProject = project;
     myProjectJdksModel = ProjectJdksModel.getInstance(project);
-    ServiceManager.getService(project, MasterDetailsStateService.class).register("ProjectJDKs.UI", this);
+    MasterDetailsStateService.getInstance(project).register("ProjectJDKs.UI", this);
     initTree();
   }
 
