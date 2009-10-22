@@ -283,7 +283,7 @@ public class LazyParseablePsiElement extends LazyParseableElement implements Psi
   }
 
   public PsiElement getPsi() {
-    ProgressManager.getInstance().checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
+    ProgressManager.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
     return this;
   }
 

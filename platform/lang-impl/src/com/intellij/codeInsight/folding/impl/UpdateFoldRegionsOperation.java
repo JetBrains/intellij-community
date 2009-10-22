@@ -86,7 +86,7 @@ class UpdateFoldRegionsOperation implements Runnable {
     List<FoldRegion> newRegions = arrayList();
 
     for (final Map.Entry<PsiElement, FoldingDescriptor> entry : myElementsToFoldMap.entrySet()) {
-      ProgressManager.getInstance().checkCanceled();
+      ProgressManager.checkCanceled();
       PsiElement element = entry.getKey();
       final FoldingDescriptor descriptor = entry.getValue();
       FoldingGroup group = descriptor.getGroup();

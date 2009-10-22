@@ -44,7 +44,6 @@ public abstract class SuspendContextCommandImpl extends DebuggerCommandImpl {
 
     final SuspendContextImpl suspendContext = getSuspendContext();
 
-    final int prio = getPriority().ordinal();
     if (suspendContext == null) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("skip processing - context is null " + this);

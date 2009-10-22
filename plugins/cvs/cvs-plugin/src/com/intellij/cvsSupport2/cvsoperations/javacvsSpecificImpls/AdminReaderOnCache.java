@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.cvsstatuses.CvsStatusProvider;
@@ -24,7 +25,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.CvsBundle;
 import org.netbeans.lib.cvsclient.admin.AdminReader;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.admin.IAdminReader;
@@ -47,7 +47,7 @@ public class AdminReaderOnCache implements IAdminReader {
   private final CvsEntriesManager myCvsEntriesManager = CvsEntriesManager.getInstance();
 
   public Entry getEntry(final AbstractFileObject fileObject, final ICvsFileSystem cvsFileSystem) throws IOException {
-    ProgressManager.getInstance().checkCanceled();
+    ProgressManager.checkCanceled();
     setProgressText(CvsBundle.message("progress.text.scanning.directory", cvsFileSystem.getLocalFileSystem().getFile(fileObject.getParent()).getAbsolutePath()));
     File file = cvsFileSystem.getAdminFileSystem().getFile(fileObject);
     Entry result = myCvsEntriesManager.getEntryFor(CvsVfsUtil.findFileByIoFile(file.getParentFile()), file.getName());
@@ -67,7 +67,7 @@ public class AdminReaderOnCache implements IAdminReader {
 
   public Collection<Entry> getEntries(final DirectoryObject directoryObject, final ICvsFileSystem cvsFileSystem) throws IOException {
     setProgressText(CvsBundle.message("progress.text.scanning.directory", cvsFileSystem.getLocalFileSystem().getFile(directoryObject).getAbsolutePath()));
-    ProgressManager.getInstance().checkCanceled();
+    ProgressManager.checkCanceled();
     File parent = cvsFileSystem.getAdminFileSystem().getFile(directoryObject);
     Collection<Entry> entries = myCvsEntriesManager.getEntriesIn(CvsVfsUtil.findFileByIoFile(parent));
     ArrayList<Entry> copy = new ArrayList<Entry>();

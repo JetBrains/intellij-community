@@ -103,6 +103,7 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
     throws ProcessCanceledException {
     List<VcsException> exceptions = new ArrayList<VcsException>();
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
+    projectManager.blockReloadingProjectOnExternalChanges();
     try {
       HashSet<VirtualFile> rootsToStash = new HashSet<VirtualFile>();
       if (mySettings.UPDATE_STASH) {
@@ -159,7 +160,6 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
           }
           final Ref<Boolean> cancelled = new Ref<Boolean>(false);
           final Ref<Throwable> ex = new Ref<Throwable>();
-          projectManager.blockReloadingProjectOnExternalChanges();
           try {
             boolean stashCreated =
               rootsToStash.contains(root) && GitStashUtils.saveStash(myProject, root, "Uncommitted changes before update operation");

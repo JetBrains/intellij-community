@@ -20,13 +20,13 @@ import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.util.MethodCellRenderer;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -94,7 +94,7 @@ public class StaticImportMethodFix implements IntentionAction {
     PsiMethod[] methods = cache.getMethodsByNameIfNotMoreThan(name, scope, 20);
     List<PsiMethod> applicableList = new ArrayList<PsiMethod>();
     for (PsiMethod method : methods) {
-      ProgressManager.getInstance().checkCanceled();
+      ProgressManager.checkCanceled();
       PsiClass aClass = method.getContainingClass();
       if (aClass != null && JavaCompletionUtil.isInExcludedPackage(aClass)) continue;
       if (!method.hasModifierProperty(PsiModifier.STATIC)) continue;

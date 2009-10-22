@@ -94,7 +94,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   private boolean myRecursionStopper = false;
 
   private void addInstruction(Instruction instruction) {
-    ProgressManager.getInstance().checkCanceled();
+    ProgressManager.checkCanceled();
 
     if (!myRecursionStopper) {
       myRecursionStopper = true;

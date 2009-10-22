@@ -520,6 +520,11 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
         myChildren.clear();
         myChildren.add(myNodeManager.createMessageNode(new MessageDescriptor(e.getMessage())));
       }
+      catch (InvalidStackFrameException e) {
+        LOG.info(e);
+        myChildren.clear();
+        notifyCancelled();
+      }
       catch (InternalException e) {
         if (e.errorCode() == 35) {
           myChildren.add(
