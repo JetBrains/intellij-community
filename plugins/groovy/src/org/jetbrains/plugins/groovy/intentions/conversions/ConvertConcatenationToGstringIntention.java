@@ -56,7 +56,9 @@ public class ConvertConcatenationToGstringIntention extends Intention {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(element.getProject());
     final GrExpression newExpr = factory.createExpressionFromText(GrStringUtil.addQuotes(builder.toString(), true));
     final GrExpression expression = ((GrBinaryExpression)element).replaceWithExpression(newExpr, true);
-    GrStringUtil.removeUnnecessaryBracesInGString((GrString)expression);
+    if (expression instanceof GrString) {
+      GrStringUtil.removeUnnecessaryBracesInGString((GrString)expression);
+    }
   }
 
   private static void performIntention(GrBinaryExpression expr, StringBuilder builder) {
