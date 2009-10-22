@@ -24,14 +24,18 @@ import com.intellij.openapi.util.Condition;
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author max
  */
-public class FilteringListModel<T> extends DefaultListModel {
+public class FilteringListModel<T> extends AbstractListModel {
   private final JList myList;
   private final ListModel myOriginalModel;
+  private final List<T> myData = new ArrayList<T>();
   private Condition<T> myCondition = null;
+
 
   private final ListDataListener myListDataListener = new ListDataListener() {
     public void contentsChanged(ListDataEvent e) {
@@ -64,21 +68,47 @@ public class FilteringListModel<T> extends DefaultListModel {
     refilter();
   }
 
+  private void removeAllElements() {
+    int index1 = myData.size() - 1;
+    if (index1 >= 0) {
+      myData.clear();
+      fireIntervalRemoved(this, 0, index1);
+    }
+  }
+
   public void refilter() {
     removeAllElements();
+    int count = 0;
     for (int i = 0; i < myOriginalModel.getSize(); i++) {
       final T elt = (T)myOriginalModel.getElementAt(i);
       if (passElement(elt)) {
         addToFiltered(elt);
+        count++;
       }
+    }
+
+    if (count > 0) {
+      fireIntervalAdded(this, 0, count - 1);
     }
   }
 
   protected void addToFiltered(T elt) {
-    addElement(elt);
+    myData.add(elt);
+  }
+
+  public int getSize() {
+    return myData.size();
+  }
+
+  public Object getElementAt(int index) {
+    return myData.get(index);
   }
 
   private boolean passElement(T element) {
     return myCondition == null || myCondition.value(element);
+  }
+
+  public boolean contains(T value) {
+    return myData.contains(value);
   }
 }

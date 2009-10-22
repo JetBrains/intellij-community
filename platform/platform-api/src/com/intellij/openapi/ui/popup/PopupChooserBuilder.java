@@ -158,7 +158,7 @@ public class PopupChooserBuilder {
     return this;
   }
   
-  public PopupChooserBuilder setItemsNamer(Function<Object, String> namer) {
+  public PopupChooserBuilder setFilteringEnabled(Function<Object, String> namer) {
     myItemsNamer = namer;
     return this;
   }
