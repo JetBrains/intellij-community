@@ -76,7 +76,7 @@ public class ListWithFilter<T> extends JPanel {
     }, mySpeedSearch);
 
     setBackground(list.getBackground());
-    setFocusable(true);
+    //setFocusable(true);
   }
 
   public boolean resetFilter() {
