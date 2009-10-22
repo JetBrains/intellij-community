@@ -470,7 +470,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
           int nextLimit = chunkSize;
           for (int i = 0; i < elements.size(); i++) {
             PsiElement element = elements.get(i);
-            progressManager.checkCanceled();
+            ProgressManager.checkCanceled();
 
             if (element != myFile && !skipParentsSet.isEmpty() && element.getFirstChild() != null && skipParentsSet.contains(element)) {
               skipParentsSet.add(element.getParent());

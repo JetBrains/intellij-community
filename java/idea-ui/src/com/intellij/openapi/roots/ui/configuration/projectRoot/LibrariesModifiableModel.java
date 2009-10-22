@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -55,9 +56,15 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
   public void removeLibrary(@NotNull Library library) {
     if (getLibrariesModifiableModel().getLibraryByName(library.getName()) == null) return;
 
-    myRemovedLibraries.add(library);
     removeLibraryEditor(library);
+    final Library existingLibrary = myTable.getLibraryByName(library.getName());
     getLibrariesModifiableModel().removeLibrary(library);
+    if (existingLibrary == library) {
+      myRemovedLibraries.add(library);
+    } else {
+      // dispose uncommitted library
+      Disposer.dispose(library);
+    }
   }
 
   public void commit() {
@@ -88,6 +95,7 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
   public void deferredCommit(){
     for (LibraryEditor libraryEditor : new ArrayList<LibraryEditor>(myLibrary2EditorMap.values())) {
       libraryEditor.commit(); // TODO: is seems like commit will recreate the editor, but it should not
+      Disposer.dispose(libraryEditor);
     }
     if (!(myLibrary2EditorMap.isEmpty() && myRemovedLibraries.isEmpty())) {
       getLibrariesModifiableModel().commit();
@@ -126,12 +134,7 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
   private void removeLibraryEditor(final Library library) {
     final LibraryEditor libraryEditor = myLibrary2EditorMap.remove(library);
     if (libraryEditor != null) {
-      for (Iterator it = myLibrary2EditorMap.keySet().iterator(); it.hasNext();) {
-        final Library lib = (Library)it.next();
-        if (libraryEditor == myLibrary2EditorMap.get(lib)) {
-          it.remove();
-        }
-      }
+      Disposer.dispose(libraryEditor);
     }
   }
 
@@ -145,5 +148,21 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
     }
 
     return myLibrariesModifiableModel;
+  }
+
+  public void disposeUncommittedLibraries() {
+    for (final Library library : new ArrayList<Library>(myLibrary2EditorMap.keySet())) {
+      final Library existingLibrary = myTable.getLibraryByName(library.getName());
+      if (existingLibrary != library) {
+        Disposer.dispose(library);
+      }
+
+      final LibraryEditor libraryEditor = myLibrary2EditorMap.get(library);
+      if (libraryEditor != null) {
+        Disposer.dispose(libraryEditor);
+      }
+    }
+
+    myLibrary2EditorMap.clear();
   }
 }

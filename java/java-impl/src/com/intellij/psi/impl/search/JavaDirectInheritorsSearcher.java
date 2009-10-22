@@ -73,7 +73,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     });
 
     for (PsiReferenceList referenceList : candidates) {
-      ProgressManager.getInstance().checkCanceled();
+      ProgressManager.checkCanceled();
       PsiClass candidate = (PsiClass)referenceList.getParent();
       if (!consumer.process(candidate)) return false;
     }
@@ -86,7 +86,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       });
 
       for (PsiAnonymousClass candidate : anonymousCandidates) {
-        ProgressManager.getInstance().checkCanceled();
+        ProgressManager.checkCanceled();
         if (!consumer.process(candidate)) return false;
       }
 

@@ -160,6 +160,9 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   }
 
   public void dispose() {
+    for (final LibrariesModifiableModel provider : myContext.myLevel2Providers.values()) {
+      provider.disposeUncommittedLibraries();
+    }
   }
 
   protected AnAction createCopyAction() {

@@ -346,6 +346,11 @@ public abstract class AbstractVcs extends StartedActivated {
   }
 
   @Nullable
+  public VcsRootSettings createEmptyVcsRootSettings() {
+    return null;
+  }
+
+  @Nullable
   public RootsConvertor getCustomConvertor() {
     return null;
   }

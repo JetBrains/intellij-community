@@ -56,12 +56,15 @@ public class PutSourceItemIntoParentAndLinkViaManifestAction extends PutIntoDefa
     }
 
     boolean enable = parentInfo != null;
+    boolean isProvideElements = false;
     for (PackagingSourceItem item : mySourceItemsTree.getSelectedItems()) {
+      isProvideElements |= item.isProvideElements();
       if (!item.getKindOfProducedElements().containsJarFiles()) {
         enable = false;
         break;
       }
     }
+    enable &= isProvideElements;
     presentation.setVisible(enable);
     presentation.setEnabled(enable);
   }

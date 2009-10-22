@@ -166,9 +166,6 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
   public void clearCaches() {
     LOG.debug("clear caches");
     myProblemHolders.clear();
-    mySourceElement2Usages.clear();
-    myContainingElement2Usages.clear();
-    myElementWithNotCalculatedUsages.clear();
   }
 
   public void clearAllProblems() {
@@ -208,6 +205,12 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
         myDisposed = false;
       }
     });
+  }
+
+  public void clear() {
+    mySourceElement2Usages.clear();
+    myContainingElement2Usages.clear();
+    myElementWithNotCalculatedUsages.clear();
   }
 
   private class AnalyzeElementUpdate extends Update {

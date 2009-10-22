@@ -42,8 +42,12 @@ class ArtifactsStructureConfigurableContextImpl implements ArtifactsStructureCon
   private Project myProject;
   private Map<Artifact, CompositePackagingElement<?>> myModifiableRoots = new HashMap<Artifact, CompositePackagingElement<?>>();
   private Map<Artifact, ArtifactEditorImpl> myArtifactEditors = new HashMap<Artifact, ArtifactEditorImpl>();
+  private Map<ArtifactPointer, ArtifactEditorSettings> myEditorSettings = new HashMap<ArtifactPointer, ArtifactEditorSettings>();
+  private final ArtifactEditorSettings myDefaultSettings;
 
-  public ArtifactsStructureConfigurableContextImpl(StructureConfigurableContext context, Project project, final ArtifactAdapter modifiableModelListener) {
+  public ArtifactsStructureConfigurableContextImpl(StructureConfigurableContext context, Project project,
+                                                   ArtifactEditorSettings defaultSettings, final ArtifactAdapter modifiableModelListener) {
+    myDefaultSettings = defaultSettings;
     myModifiableModelListener = modifiableModelListener;
     myContext = context;
     myProject = project;
@@ -100,7 +104,8 @@ class ArtifactsStructureConfigurableContextImpl implements ArtifactsStructureCon
     artifact = getOriginalArtifact(artifact);
     ArtifactEditorImpl artifactEditor = myArtifactEditors.get(artifact);
     if (artifactEditor == null) {
-      artifactEditor = new ArtifactEditorImpl(this, artifact);
+      final ArtifactEditorSettings settings = myEditorSettings.get(ArtifactPointerManager.getInstance(myProject).create(artifact));
+      artifactEditor = new ArtifactEditorImpl(this, artifact, settings != null ? settings : myDefaultSettings);
       myArtifactEditors.put(artifact, artifactEditor);
     }
     return artifactEditor;
@@ -118,6 +123,10 @@ class ArtifactsStructureConfigurableContextImpl implements ArtifactsStructureCon
       ((ArtifactModelImpl)myModifiableModel).addListener(myModifiableModelListener);
     }
     return myModifiableModel;
+  }
+
+  public ArtifactEditorSettings getDefaultSettings() {
+    return myDefaultSettings;
   }
 
   @NotNull
@@ -151,5 +160,13 @@ class ArtifactsStructureConfigurableContextImpl implements ArtifactsStructureCon
       Disposer.dispose(editor);
     }
     myArtifactEditors.clear();
+  }
+
+  public void saveEditorSettings() {
+    myEditorSettings.clear();
+    for (ArtifactEditorImpl artifactEditor : myArtifactEditors.values()) {
+      final ArtifactPointer pointer = ArtifactPointerManager.getInstance(myProject).create(artifactEditor.getArtifact());
+      myEditorSettings.put(pointer, artifactEditor.createSettings());
+    }
   }
 }

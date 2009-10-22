@@ -100,10 +100,7 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
     buttonGroup.add(myCreateInnerClassRadioButton);
     createNewClassButton.setSelected(true);
     init();
-    final PsiFile file = sourceMethod.getContainingFile();
-    if (file instanceof PsiJavaFile) {
-      packageTextField.setText(((PsiJavaFile)file).getPackageName());
-    }
+
     final ActionListener listener = new ActionListener() {
 
       public void actionPerformed(ActionEvent actionEvent) {
@@ -267,8 +264,9 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
   }
 
   private void createUIComponents() {
+    final PsiFile file = sourceMethod.getContainingFile();
     packageTextField =
-          new PackageNameReferenceEditorCombo("", myProject, RECENTS_KEY, RefactoringBundle.message("choose.destination.package"));
+          new PackageNameReferenceEditorCombo(file instanceof PsiJavaFile ? ((PsiJavaFile)file).getPackageName() : "", myProject, RECENTS_KEY, RefactoringBundle.message("choose.destination.package"));
         final Document document = packageTextField.getChildComponent().getDocument();
     final com.intellij.openapi.editor.event.DocumentAdapter adapter = new com.intellij.openapi.editor.event.DocumentAdapter() {
       public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {

@@ -541,14 +541,14 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
         String className = rootSettingsElement.getAttributeValue(ATTRIBUTE_CLASS);
         AbstractVcs vcsInstance = findVcsByName(mapping.getVcs());
         if (vcsInstance != null && className != null) {
-          try {
-            final Class<?> aClass = vcsInstance.getClass().getClassLoader().loadClass(className);
-            final VcsRootSettings instance = (VcsRootSettings) aClass.newInstance();
-            instance.readExternal(rootSettingsElement);
-            mapping.setRootSettings(instance);
-          }
-          catch (Exception e) {
-            LOG.error("Failed to load VCS root settings class "+ className + " for VCS " + vcsInstance.getClass().getName(), e);
+          final VcsRootSettings rootSettings = vcsInstance.createEmptyVcsRootSettings();
+          if (rootSettings != null) {
+            try {
+              rootSettings.readExternal(rootSettingsElement);
+              mapping.setRootSettings(rootSettings);
+            } catch (InvalidDataException e) {
+              LOG.error("Failed to load VCS root settings class "+ className + " for VCS " + vcsInstance.getClass().getName(), e);
+            }
           }
         }
       }

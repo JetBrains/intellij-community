@@ -1,8 +1,11 @@
 package org.jetbrains.plugins.groovy.dsl.toplevel
 
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.containers.HashSet
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClassScope
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClosureScope
@@ -23,6 +26,9 @@ class Context {
 
   private List<Closure> myFilters = []
 
+  private final Set<Pair<String, String>> ASSIGNABLE_TYPES = new HashSet<Pair<String, String>>();
+  private final Set<Pair<String, String>> NON_ASSIGNABLE_TYPES = new HashSet<Pair<String, String>>();
+
   public Context(Map args) {
     // Basic filter, all contexts are applicable for reference expressions only
     myFilters << {PsiElement elem, fqn -> elem instanceof GrReferenceExpression}
@@ -32,12 +38,32 @@ class Context {
 
   Closure getClassTypeFilter(ctype) {
     return {GrReferenceExpression ref, String fqn ->
+      if (!(ctype instanceof String)) return false
+      final def pair = new Pair(((String) ctype), fqn)
+
+      if (NON_ASSIGNABLE_TYPES.contains(pair)) return false
+      if (ASSIGNABLE_TYPES.contains(pair)) return true
+
+      if (ctype.equals(fqn)) {
+        ASSIGNABLE_TYPES.add(pair)
+        return true
+      }
+
       PsiManager manager = PsiManager.getInstance(ref.getProject())
       def scope = GlobalSearchScope.allScope(ref.getProject())
-      PsiType superType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName(ctype, scope)
+      PsiType superType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().
+              createTypeByFQClassName(((String) ctype), scope)
       if (!superType) return false
       def type = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName(fqn, scope)
-      return type && superType?.isAssignableFrom(type) && type.isAssignableFrom(superType)
+
+      if (!type) return false
+      if (!type.isAssignableFrom(superType) || !superType?.isAssignableFrom(type)) {
+        NON_ASSIGNABLE_TYPES.add(pair)
+        return false
+      } else {
+        ASSIGNABLE_TYPES.add(pair)
+        return true
+      }
     }
   }
 
@@ -154,7 +180,12 @@ class Context {
    */
   boolean isApplicable(PsiElement place, String fqn) {
     for (f in myFilters) {
-      if (!f(place, fqn)) return false
+      try {
+        if (!f(place, fqn)) return false
+      }
+      catch (ProcessCanceledException e) {
+        return false
+      }
     }
     return true
   }

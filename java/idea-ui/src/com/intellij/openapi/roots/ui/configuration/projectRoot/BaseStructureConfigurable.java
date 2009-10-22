@@ -209,6 +209,8 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
     myAutoScrollHandler.cancelAllRequests();
 
+    myContext.getDaemonAnalyzer().clear();
+
     Disposer.dispose(this);
   }
 

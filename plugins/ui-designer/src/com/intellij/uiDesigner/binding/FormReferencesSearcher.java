@@ -128,7 +128,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
       List<PsiFile> files = FormClassIndex.findFormsBoundToClass(manager.getProject(), name, scope);
 
       for (PsiFile file : files) {
-        ProgressManager.getInstance().checkCanceled();
+        ProgressManager.checkCanceled();
 
         if (file.getFileType() != StdFileTypes.GUI_DESIGNER_FORM) continue;
         if (!processReferences(processor, file, name, element, filterScope)) return false;
@@ -156,7 +156,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
       final List<PsiFile> files = FormClassIndex.findFormsBoundToClass(containingClass, scope);
 
       for (PsiFile file : files) {
-        ProgressManager.getInstance().checkCanceled();
+        ProgressManager.checkCanceled();
 
         if (file.getFileType() != StdFileTypes.GUI_DESIGNER_FORM) continue;
         if (!processReferences(processor, file, fieldName, field, filterScope)) return false;
@@ -237,7 +237,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
       PsiFile[] files = fileSet.toArray(new PsiFile[fileSet.size()]);
 
       for (PsiFile file : files) {
-        ProgressManager.getInstance().checkCanceled();
+        ProgressManager.checkCanceled();
 
         if (file.getFileType() != StdFileTypes.GUI_DESIGNER_FORM) continue;
         if (!processReferences(processor, file, name, property, filterScope)) return false;
@@ -261,7 +261,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
       PsiFile[] files = manager.getCacheManager().getFilesWithWord(baseName, UsageSearchContext.IN_PLAIN_TEXT, scope, true);
 
       for (PsiFile file : files) {
-        ProgressManager.getInstance().checkCanceled();
+        ProgressManager.checkCanceled();
 
         if (file.getFileType() != StdFileTypes.GUI_DESIGNER_FORM) continue;
         if (!processReferences(processor, file, baseName, propFile, filterScope)) return false;

@@ -364,7 +364,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     if (classname == null || name == null || name.length() == 0) {
       return null;
     }
-    ProgressManager.getInstance().checkCanceled();
+    ProgressManager.checkCanceled();
     final List<URL> urls = getClassPathUrls();
     Class clazz = null;
     final ClassLoader loader = getClassLoader(urls);

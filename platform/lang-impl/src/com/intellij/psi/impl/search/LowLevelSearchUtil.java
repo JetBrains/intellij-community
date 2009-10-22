@@ -124,7 +124,7 @@ public class LowLevelSearchUtil {
                                                                final PsiElement scope,
                                                                final StringSearcher searcher,
                                                                final boolean ignoreInjectedPsi) {
-    ProgressManager.getInstance().checkCanceled();
+    ProgressManager.checkCanceled();
 
     PsiFile file = scope.getContainingFile();
     final CharSequence buffer = file.getViewProvider().getContents();

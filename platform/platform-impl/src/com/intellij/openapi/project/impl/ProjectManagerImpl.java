@@ -73,6 +73,7 @@ import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExternalizable, ExportableApplicationComponent {
   private static final boolean LOG_PROJECT_LEAKAGE_IN_TESTS = false;
@@ -98,7 +99,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   private final Map<Project, List<Pair<VirtualFile, StateStorage>>> myChangedProjectFiles = new HashMap<Project, List<Pair<VirtualFile, StateStorage>>>();
   private final Alarm myChangedFilesAlarm = new Alarm();
   private final List<Pair<VirtualFile, StateStorage>> myChangedApplicationFiles = new ArrayList<Pair<VirtualFile, StateStorage>>();
-  private volatile int myReloadBlockCount = 0;
+  private final AtomicInteger myReloadBlockCount = new AtomicInteger(0);
   private final Map<Project, String> myProjects = new WeakHashMap<Project, String>();
   private static final int MAX_LEAKY_PROJECTS = 42;
 
@@ -575,7 +576,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   private void askToReloadProjectIfConfigFilesChangedExternally() {
     LOG.info("[STORAGE] trying to reload project while myReloadBlockCount = " + myReloadBlockCount);
-    if (myReloadBlockCount == 0) {
+    if (myReloadBlockCount.get() == 0) {
       Set<Project> projects;
 
       synchronized (myChangedProjectFiles) {
@@ -721,11 +722,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   public void blockReloadingProjectOnExternalChanges() {
-    myReloadBlockCount++;
+    myReloadBlockCount.incrementAndGet();
   }
 
   public void unblockReloadingProjectOnExternalChanges() {
-    if (--myReloadBlockCount == 0) scheduleReloadApplicationAndProject();
+    if (myReloadBlockCount.decrementAndGet() == 0) scheduleReloadApplicationAndProject();
   }
 
   private void scheduleReloadApplicationAndProject() {
@@ -787,7 +788,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     myChangedFilesAlarm.cancelAllRequests();
     myChangedFilesAlarm.addRequest(new Runnable() {
       public void run() {
-        if (myReloadBlockCount == 0) {
+        if (myReloadBlockCount.get() == 0) {
           scheduleReloadApplicationAndProject();
         }
       }

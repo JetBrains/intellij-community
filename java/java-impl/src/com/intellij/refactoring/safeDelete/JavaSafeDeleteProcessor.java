@@ -558,8 +558,14 @@ public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
     ReferencesSearch.search(method).forEach(new Processor<PsiReference>() {
       public boolean process(final PsiReference reference) {
         final PsiElement element = reference.getElement();
-        if (element.getParent() instanceof PsiCall) {
-          final PsiExpressionList argList = ((PsiCall)element.getParent()).getArgumentList();
+        PsiCall call = null;
+        if (element instanceof PsiCall) {
+          call = (PsiCall)element;
+        } else if (element.getParent() instanceof PsiCall) {
+          call = (PsiCall)element.getParent();
+        }
+        if (call != null) {
+          final PsiExpressionList argList = call.getArgumentList();
           if (argList != null) {
             final PsiExpression[] args = argList.getExpressions();
             if (index < args.length) {

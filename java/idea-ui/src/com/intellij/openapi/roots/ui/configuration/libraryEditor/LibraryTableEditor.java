@@ -263,7 +263,8 @@ public class LibraryTableEditor implements Disposable {
   }
 
   private void removeLibrary(Library library) {
-    myLibraryToEditorMap.remove(library);
+    final LibraryEditor libraryEditor = myLibraryToEditorMap.remove(library);
+    if (libraryEditor != null) Disposer.dispose(libraryEditor);
     myTableModifiableModel.removeLibrary(library);
     if (myProject != null){
       ModuleStructureConfigurable.getInstance(myProject).fireItemsChangeListener(library);
@@ -278,6 +279,7 @@ public class LibraryTableEditor implements Disposable {
       public void run() {
         for (LibraryEditor libraryEditor : myLibraryToEditorMap.values()) {
           libraryEditor.commit();
+          Disposer.dispose(libraryEditor);
         }
         myTableModifiableModel.commit();
       }
@@ -287,6 +289,10 @@ public class LibraryTableEditor implements Disposable {
   }
 
   public void cancelChanges() {
+    for (LibraryEditor libraryEditor : new ArrayList<LibraryEditor>(myLibraryToEditorMap.values())) {
+      Disposer.dispose(libraryEditor);
+    }
+
     myLibraryToEditorMap.clear();
   }
 

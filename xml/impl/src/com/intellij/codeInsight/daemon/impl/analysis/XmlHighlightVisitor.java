@@ -419,13 +419,12 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     }
 
     final XmlAttribute[] attributes = tag.getAttributes();
-    ProgressManager progressManager = ProgressManager.getInstance();
     final PsiFile containingFile = tag.getContainingFile();
     final XmlExtension extension = containingFile instanceof XmlFile ?
                                    XmlExtension.getExtension(containingFile) :
                                    XmlExtension.DEFAULT_EXTENSION;
     for (XmlAttribute tagAttribute : attributes) {
-      progressManager.checkCanceled();
+      ProgressManager.checkCanceled();
       if (attribute != tagAttribute && Comparing.strEqual(attribute.getName(), tagAttribute.getName())) {
         final String localName = attribute.getLocalName();
 
@@ -500,7 +499,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     ProgressManager progressManager = ProgressManager.getInstance();
     for (int i = start; i < references.length; ++i) {
       PsiReference reference = references[i];
-      progressManager.checkCanceled();
+      ProgressManager.checkCanceled();
       if (reference == null) {
         continue;
       }

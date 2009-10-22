@@ -96,7 +96,6 @@ public class ImplementAbstractMethodHandler {
     myList = new JList(result[0]);
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myList.setCellRenderer(renderer);
-    renderer.installSpeedSearch(myList);
 
     final Runnable runnable = new Runnable(){
       public void run() {
@@ -107,7 +106,10 @@ public class ImplementAbstractMethodHandler {
       }
     };
 
-    new PopupChooserBuilder(myList).
+    final PopupChooserBuilder builder = new PopupChooserBuilder(myList);
+    renderer.installSpeedSearch(builder);
+
+    builder.
       setTitle(CodeInsightBundle.message("intention.implement.abstract.method.class.chooser.title")).
       setItemChoosenCallback(runnable).
       createPopup().

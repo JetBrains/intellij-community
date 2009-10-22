@@ -27,10 +27,17 @@ import org.jetbrains.annotations.Nullable;
 public class MoveClassesHandler extends MoveClassesOrPackagesHandlerBase {
   public boolean canMove(final PsiElement[] elements, @Nullable final PsiElement targetContainer) {
     for(PsiElement element: elements) {
-      if (element instanceof JspClass) return false;
-      if (!(element instanceof PsiClass)) return false;
-      if (!(element.getParent() instanceof PsiFile)) return false;
-      if (CollectHighlightsUtil.isOutsideSourceRootJavaFile((PsiFile)element.getParent())) return false;
+      PsiFile parentFile;
+      if (element instanceof PsiJavaFile) {
+        if (((PsiJavaFile)element).getClasses().length == 0) return false;
+        parentFile = (PsiFile)element;
+      } else {
+        if (element instanceof JspClass) return false;
+        if (!(element instanceof PsiClass)) return false;
+        if (!(element.getParent() instanceof PsiFile)) return false;
+        parentFile = (PsiFile)element.getParent();
+      }
+      if (CollectHighlightsUtil.isOutsideSourceRootJavaFile(parentFile)) return false;
     }
     return super.canMove(elements, targetContainer);
   }
