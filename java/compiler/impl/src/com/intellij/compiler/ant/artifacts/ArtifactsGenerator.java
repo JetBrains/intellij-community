@@ -22,6 +22,7 @@ import com.intellij.compiler.ant.Generator;
 import com.intellij.compiler.ant.taskdefs.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
@@ -145,7 +146,7 @@ public class ArtifactsGenerator {
 
     if (myContext.shouldBuildIntoTempDirectory(artifact)) {
       final String outputDirectory = BuildProperties.propertyRelativePath(ArtifactAntGenerationContextImpl.ARTIFACTS_TEMP_DIR_PROPERTY,
-                                                                          BuildProperties.convertName(artifact.getName()));
+                                                                          FileUtil.sanitizeFileName(artifact.getName()));
       artifactTarget.add(new Property(myContext.getArtifactOutputProperty(artifact), outputDirectory));
     }
 
