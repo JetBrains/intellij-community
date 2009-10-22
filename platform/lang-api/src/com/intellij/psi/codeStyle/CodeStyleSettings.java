@@ -45,7 +45,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
   public CodeStyleSettings(boolean loadExtensions) {
     initTypeToName();
-    initImports();
+    initImportsByDefault();
 
     if (loadExtensions) {
       final CodeStyleSettingsProvider[] codeStyleSettingsProviders = Extensions.getExtensions(CodeStyleSettingsProvider.EXTENSION_POINT_NAME);
@@ -55,13 +55,15 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
     }
   }
 
-  private void initImports() {
+  private void initImportsByDefault() {
     PACKAGES_TO_USE_IMPORT_ON_DEMAND.addEntry(new PackageEntry(false, "java.awt", false));
     PACKAGES_TO_USE_IMPORT_ON_DEMAND.addEntry(new PackageEntry(false,"javax.swing", false));
     IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
     IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
     IMPORT_LAYOUT_TABLE.addEntry(new PackageEntry(false, "javax", true));
     IMPORT_LAYOUT_TABLE.addEntry(new PackageEntry(false, "java", true));
+    IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
+    IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
   }
 
   private void initTypeToName() {
@@ -1127,6 +1129,10 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
         }
       }
       if (!found) {
+        PackageEntry last = IMPORT_LAYOUT_TABLE.getEntryCount() == 0 ? null : IMPORT_LAYOUT_TABLE.getEntryAt(IMPORT_LAYOUT_TABLE.getEntryCount() - 1);
+        if (last != PackageEntry.BLANK_LINE_ENTRY) {
+          IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
+        }
         IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
       }
     }
@@ -1411,10 +1417,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   @TestOnly
   public void clearCodeStyleSettings() throws Exception {
     CodeStyleSettings cleanSettings = new CodeStyleSettings();
-    Element element = new Element("temp");
-    cleanSettings.writeExternal(element);
-
-    readExternal(element);
+    copyFrom(cleanSettings);
     myAdditionalIndentOptions.clear(); //hack
     myLoadedAdditionalIndentOptions = false;
   }
