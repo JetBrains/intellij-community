@@ -167,7 +167,7 @@ public class InspectionToolRegistrar {
     ensureInitialized();
     InspectionTool[] tools = new InspectionTool[myInspectionToolFactories.size()];
     for(int i=0; i<tools.length; i++) {
-      ProgressManager.getInstance().checkCanceled();
+      ProgressManager.checkCanceled();
       tools [i] = myInspectionToolFactories.get(i).create();
     }
     buildInspectionIndex(tools);

@@ -607,13 +607,16 @@ public class AbstractTreeUi {
             result.setDone(changes.get());
           }
         }, null);
-      } else {
+      }
+      else {
         result.setDone(_update(nodeDescriptor));
       }
-    } else {
+    }
+    else {
       if (edt || !myWasEverShown) {
         result.setDone(_update(nodeDescriptor));
-      } else {
+      }
+      else {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           public void run() {
             if (!isReleased()) {
@@ -857,8 +860,8 @@ public class AbstractTreeUi {
       final boolean childForceUpdate = isChildNodeForceUpdate(node, forceUpdate, wasExpanded);
 
       if (!forcedNow && isToBuildInBackground(descriptor)) {
-        queueBackgroundUpdate(new UpdateInfo(descriptor, pass, canSmartExpand(node, toSmartExpand), wasExpanded, childForceUpdate,
-                                              descriptorWasUpdated), node);
+        queueBackgroundUpdate(
+          new UpdateInfo(descriptor, pass, canSmartExpand(node, toSmartExpand), wasExpanded, childForceUpdate, descriptorWasUpdated), node);
         return;
       }
       else {
@@ -868,7 +871,8 @@ public class AbstractTreeUi {
               updateNodeChildrenNow(node, pass, preloaded.get(), toSmartExpand, wasExpanded, wasLeaf, childForceUpdate);
             }
           });
-        } else {
+        }
+        else {
           updateNodeChildrenNow(node, pass, preloaded.get(), toSmartExpand, wasExpanded, wasLeaf, childForceUpdate);
         }
       }
@@ -1673,15 +1677,17 @@ public class AbstractTreeUi {
         removeFromLoadedInBackground(elementFromDescriptor.get());
 
         if (myUnbuiltNodes.contains(node)) {
-          Pair<Boolean, LoadedChildren> unbuilt = processUnbuilt(node, updateInfo.getDescriptor(), updateInfo.getPass(), isExpanded(node,
-                                                                                                                                      updateInfo.isWasExpanded()), children.get());
+          Pair<Boolean, LoadedChildren> unbuilt =
+            processUnbuilt(node, updateInfo.getDescriptor(), updateInfo.getPass(), isExpanded(node, updateInfo.isWasExpanded()),
+                           children.get());
           if (unbuilt.getFirst()) {
             nodeToProcessActions[0] = node;
             return;
           }
         }
 
-        updateNodeChildren(node, updateInfo.getPass(), children.get(), true, updateInfo.isCanSmartExpand(), updateInfo.isForceUpdate(), true);
+        updateNodeChildren(node, updateInfo.getPass(), children.get(), true, updateInfo.isCanSmartExpand(), updateInfo.isForceUpdate(),
+                           true);
 
 
         if (isRerunNeeded(updateInfo.getPass())) {
@@ -1896,77 +1902,99 @@ public class AbstractTreeUi {
 
     update.doWhenDone(new AsyncResult.Handler<Boolean>() {
       public void run(Boolean isChanged) {
-        boolean changes = isChanged;
+        final Ref<Boolean> changes = new Ref<Boolean>(isChanged);
 
-        boolean forceRemapping = false;
-        Object newElement = getElementFromDescriptor(childDesc.get());
+        final Ref<Boolean> forceRemapping = new Ref<Boolean>(false);
+        final Ref<Object> newElement = new Ref<Object>(getElementFromDescriptor(childDesc.get()));
 
-        Integer index = newElement != null ? elementToIndexMap.getValue(getBuilder().getTreeStructureElement(childDesc.get())) : null;
+        final Integer index = newElement.get() != null ? elementToIndexMap.getValue(getBuilder().getTreeStructureElement(childDesc.get())) : null;
+        final AsyncResult<Boolean> updateIndexDone = new AsyncResult<Boolean>();
+        final ActionCallback indexReady = new ActionCallback();
         if (index != null) {
           final Object elementFromMap = elementToIndexMap.getKey(index);
-          if (elementFromMap != newElement && elementFromMap.equals(newElement)) {
-            if (isInStructure(elementFromMap) && isInStructure(newElement)) {
+          if (elementFromMap != newElement.get() && elementFromMap.equals(newElement.get())) {
+            if (isInStructure(elementFromMap) && isInStructure(newElement.get())) {
               if (parentNode.getUserObject() instanceof NodeDescriptor) {
                 final NodeDescriptor parentDescriptor = getDescriptorFrom(parentNode);
                 childDesc.set(getTreeStructure().createDescriptor(elementFromMap, parentDescriptor));
                 childNode.setUserObject(childDesc.get());
-                newElement = elementFromMap;
-                forceRemapping = true;
-//todo hook on update done
-                update(childDesc.get(), false);
-                changes = true;
+                newElement.set(elementFromMap);
+                forceRemapping.set(true);
+                update(childDesc.get(), false).doWhenDone(new AsyncResult.Handler<Boolean>() {
+                  public void run(Boolean isChanged) {
+                    changes.set(isChanged);
+                    updateIndexDone.setDone(isChanged);
+                  }
+                });
               }
             }
-          }
-
-          if (childDesc.get().getIndex() != index.intValue()) {
-            changes = true;
-          }
-          childDesc.get().setIndex(index.intValue());
-        }
-
-        if (index != null && changes) {
-          updateNodeImageAndPosition(childNode, false);
-        }
-        if (!oldElement.equals(newElement) | forceRemapping) {
-          removeMapping(oldElement, childNode, newElement);
-          if (newElement != null) {
-            createMapping(newElement, childNode);
-          }
-        }
-
-        if (index == null) {
-          int selectedIndex = -1;
-          if (TreeBuilderUtil.isNodeOrChildSelected(myTree, childNode)) {
-            selectedIndex = parentNode.getIndex(childNode);
-          }
-
-          if (childNode.getParent() instanceof DefaultMutableTreeNode) {
-            final DefaultMutableTreeNode parent = (DefaultMutableTreeNode)childNode.getParent();
-            if (myTree.isExpanded(new TreePath(parent.getPath()))) {
-              if (parent.getChildCount() == 1 && parent.getChildAt(0) == childNode) {
-                insertLoadingNode(parent, false);
-              }
+            else {
+              updateIndexDone.setDone(changes.get());
             }
+          } else {
+            updateIndexDone.setDone(changes.get());
           }
 
-          Object disposedElement = getElementFor(childNode);
-
-          removeNodeFromParent(childNode, selectedIndex >= 0);
-          disposeNode(childNode);
-
-          adjustSelectionOnChildRemove(parentNode, selectedIndex, disposedElement);
+          updateIndexDone.doWhenDone(new Runnable() {
+            public void run() {
+              if (childDesc.get().getIndex() != index.intValue()) {
+                changes.set(true);
+              }
+              childDesc.get().setIndex(index.intValue());
+              indexReady.setDone();
+            }
+          });
         }
         else {
-          elementToIndexMap.remove(getBuilder().getTreeStructureElement(childDesc.get()));
-          updateNodeChildren(childNode, pass, null, false, canSmartExpand, forceUpdate, true);
+          updateIndexDone.setDone();
         }
 
-        if (parentNode.equals(getRootNode())) {
-          myTreeModel.nodeChanged(getRootNode());
-        }
+        updateIndexDone.doWhenDone(new Runnable() {
+          public void run() {
+            if (index != null && changes.get()) {
+              updateNodeImageAndPosition(childNode, false);
+            }
+            if (!oldElement.equals(newElement.get()) | forceRemapping.get()) {
+              removeMapping(oldElement, childNode, newElement.get());
+              if (newElement.get() != null) {
+                createMapping(newElement.get(), childNode);
+              }
+            }
 
-        result.setDone();
+            if (index == null) {
+              int selectedIndex = -1;
+              if (TreeBuilderUtil.isNodeOrChildSelected(myTree, childNode)) {
+                selectedIndex = parentNode.getIndex(childNode);
+              }
+
+              if (childNode.getParent() instanceof DefaultMutableTreeNode) {
+                final DefaultMutableTreeNode parent = (DefaultMutableTreeNode)childNode.getParent();
+                if (myTree.isExpanded(new TreePath(parent.getPath()))) {
+                  if (parent.getChildCount() == 1 && parent.getChildAt(0) == childNode) {
+                    insertLoadingNode(parent, false);
+                  }
+                }
+              }
+
+              Object disposedElement = getElementFor(childNode);
+
+              removeNodeFromParent(childNode, selectedIndex >= 0);
+              disposeNode(childNode);
+
+              adjustSelectionOnChildRemove(parentNode, selectedIndex, disposedElement);
+            }
+            else {
+              elementToIndexMap.remove(getBuilder().getTreeStructureElement(childDesc.get()));
+              updateNodeChildren(childNode, pass, null, false, canSmartExpand, forceUpdate, true);
+            }
+
+            if (parentNode.equals(getRootNode())) {
+              myTreeModel.nodeChanged(getRootNode());
+            }
+
+            result.setDone();
+          }
+        });
       }
     });
 
@@ -2039,7 +2067,8 @@ public class AbstractTreeUi {
           if (parentPath != null) {
             if (isValidForSelectionAdjusting((TreeNode)parentPath.getLastPathComponent())) {
               toSelect = parentPath;
-            } else {
+            }
+            else {
               toSelect = null;
             }
           }
@@ -3413,11 +3442,11 @@ public class AbstractTreeUi {
     boolean myDescriptorIsUpToDate;
 
     public UpdateInfo(NodeDescriptor descriptor,
-                       TreeUpdatePass pass,
-                       boolean canSmartExpand,
-                       boolean wasExpanded,
-                       boolean forceUpdate,
-                       boolean descriptorIsUpToDate) {
+                      TreeUpdatePass pass,
+                      boolean canSmartExpand,
+                      boolean wasExpanded,
+                      boolean forceUpdate,
+                      boolean descriptorIsUpToDate) {
       myDescriptor = descriptor;
       myPass = pass;
       myCanSmartExpand = canSmartExpand;

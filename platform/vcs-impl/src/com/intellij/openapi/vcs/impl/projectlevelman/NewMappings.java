@@ -516,7 +516,7 @@ public class NewMappings {
               // actually is not thrown (AbstractVcs#actualActivate())
             }
           } else {
-            LOG.info("Error: activating non existing vcs");
+            LOG.info("Error: activating non existing vcs: " + s);
           }
         }
       }
@@ -531,7 +531,7 @@ public class NewMappings {
               // actually is not thrown (AbstractVcs#actualDeactivate())
             }
           } else {
-            LOG.info("Error: removing non existing vcs");
+            LOG.info("Error: removing non existing vcs: " + s);
           }
         }
       }

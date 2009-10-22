@@ -46,7 +46,6 @@ public class ProgressManagerImpl extends ProgressManager {
   private final AtomicInteger myCurrentProgressCount = new AtomicInteger(0);
   private final AtomicInteger myCurrentModalProgressCount = new AtomicInteger(0);
 
-  private static volatile boolean ourNeedToCheckCancel = false;
   private static volatile int ourLockedCheckCounter = 0;
   private final List<ProgressFunComponentProvider> myFunComponentProviders = new ArrayList<ProgressFunComponentProvider>();
   @NonNls private static final String NAME = "Progress Cancel Checker";
@@ -68,27 +67,24 @@ public class ProgressManagerImpl extends ProgressManager {
     }
   }
 
-  public void checkCanceled() {
-    // Q: how about 2 cancelable progresses in time??
-    if (ourNeedToCheckCancel) { // smart optimization!
-      ourNeedToCheckCancel = false;
-      final ProgressIndicator progress = getProgressIndicator();
-      if (progress != null) {
-        try {
-          progress.checkCanceled();
-        }
-        catch (ProcessCanceledException e) {
-          if (Thread.holdsLock(PsiLock.LOCK)) {
-            ourLockedCheckCounter++;
-            if (ourLockedCheckCounter > 10) {
-              ourLockedCheckCounter = 0;
-              ourNeedToCheckCancel = true;
-            }
-          }
-          else {
+  @Override
+  protected void doCheckCanceled() throws ProcessCanceledException {
+    final ProgressIndicator progress = getProgressIndicator();
+    if (progress != null) {
+      try {
+        progress.checkCanceled();
+      }
+      catch (ProcessCanceledException e) {
+        if (Thread.holdsLock(PsiLock.LOCK)) {
+          ourLockedCheckCounter++;
+          if (ourLockedCheckCounter > 10) {
             ourLockedCheckCounter = 0;
-            progress.checkCanceled();
+            ourNeedToCheckCancel = true;
           }
+        }
+        else {
+          ourLockedCheckCounter = 0;
+          progress.checkCanceled();
         }
       }
     }

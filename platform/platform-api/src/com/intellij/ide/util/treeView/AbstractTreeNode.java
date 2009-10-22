@@ -90,7 +90,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor impl
 
 
   public boolean isAlwaysShowPlus() {
-    return false;
+    return true;
   }
 
   public boolean isAlwaysExpand() {

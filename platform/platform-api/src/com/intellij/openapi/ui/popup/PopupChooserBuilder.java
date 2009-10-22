@@ -22,7 +22,9 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
+import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nls;
@@ -67,6 +69,8 @@ public class PopupChooserBuilder {
   private final List<Pair<ActionListener,KeyStroke>> myKeyboardActions = new ArrayList<Pair<ActionListener, KeyStroke>>();
   private Component mySettingsButtons;
   private boolean myAutoselectOnMouseMove = true;
+
+  private Function<Object,String> myItemsNamer = null;
 
   public PopupChooserBuilder(@NotNull JList list) {
     myChooserComponent = list;
@@ -153,11 +157,18 @@ public class PopupChooserBuilder {
     myAutoselectOnMouseMove = doAutoSelect;
     return this;
   }
+  
+  public PopupChooserBuilder setItemsNamer(Function<Object, String> namer) {
+    myItemsNamer = namer;
+    return this;
+  }
 
   @NotNull
   public JBPopup createPopup() {
+    JList list = null;
     if (myChooserComponent instanceof JList) {
-      myChooserComponent = new MyListWrapper((JList)myChooserComponent);
+      list = (JList)myChooserComponent;
+      myChooserComponent = ListWithFilter.wrap(list, new MyListWrapper(list), myItemsNamer);
     }
 
     JPanel contentPane = new JPanel(new BorderLayout());
@@ -168,8 +179,7 @@ public class PopupChooserBuilder {
       contentPane.add(label, BorderLayout.NORTH);
     }
 
-    if (myChooserComponent instanceof MyListWrapper) {
-      JList list = ((MyListWrapper)myChooserComponent).myList;
+    if (list != null) {
       if (list.getSelectedIndex() == -1 && myAutoselect) {
         list.setSelectedIndex(0);
       }
@@ -177,7 +187,7 @@ public class PopupChooserBuilder {
 
     myChooserComponent.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-    myChooserComponent.addMouseListener(new MouseAdapter() {
+    (list != null ? list : myChooserComponent).addMouseListener(new MouseAdapter() {
       @Override
       public void mousePressed(MouseEvent e) {
         if (UIUtil.isActionClick(e) && !isSelectionButtonDown(e) && !e.isConsumed()) {
@@ -193,8 +203,8 @@ public class PopupChooserBuilder {
     }
 
     final JScrollPane scrollPane;
-    if (myChooserComponent instanceof MyListWrapper) {
-      scrollPane = (MyListWrapper)myChooserComponent;
+    if (myChooserComponent instanceof ListWithFilter) {
+      scrollPane = ((ListWithFilter)myChooserComponent).getScrollPane();
     }
     else if (myChooserComponent instanceof JTable) {
       scrollPane = createScrollPane((JTable)myChooserComponent);
@@ -207,7 +217,13 @@ public class PopupChooserBuilder {
     }
 
     scrollPane.getViewport().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    contentPane.add(scrollPane, BorderLayout.CENTER);
+
+    if (myChooserComponent instanceof ListWithFilter) {
+      contentPane.add(myChooserComponent, BorderLayout.CENTER);
+    }
+    else {
+      contentPane.add(scrollPane, BorderLayout.CENTER);
+    }
 
     if (mySouthComponent != null) {
       contentPane.add(mySouthComponent, BorderLayout.SOUTH);
@@ -224,7 +240,9 @@ public class PopupChooserBuilder {
 
     builder.setDimensionServiceKey(null, myDimensionServiceKey, false).setRequestFocus(myRequestFocus).setResizable(myForceResizable)
       .setMovable(myForceMovable).setTitle(myForceMovable ? myTitle : null).setCancelCallback(myCancelCallback).setAlpha(myAlpha)
-      .setFocusOwners(myFocusOwners).setCancelKeyEnabled(myCancelKeyEnabled).setAdText(myAd).setKeyboardActions(myKeyboardActions);
+      .setFocusOwners(myFocusOwners).setCancelKeyEnabled(myCancelKeyEnabled && !(myChooserComponent instanceof ListWithFilter)).
+      setAdText(myAd).setKeyboardActions(myKeyboardActions);
+
     if (myCommandButton != null) {
       builder.setCommandButton(myCommandButton);
     }
@@ -252,6 +270,9 @@ public class PopupChooserBuilder {
   private void registerClosePopupKeyboardAction(final KeyStroke keyStroke, final boolean shouldPerformAction) {
     myChooserComponent.registerKeyboardAction(new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
+        if (!shouldPerformAction && myChooserComponent instanceof ListWithFilter) {
+          if (((ListWithFilter)myChooserComponent).resetFilter()) return;
+        }
         closePopup(shouldPerformAction, null);
       }
     }, keyStroke, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);

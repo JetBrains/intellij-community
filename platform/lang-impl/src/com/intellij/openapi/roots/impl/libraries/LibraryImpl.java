@@ -187,12 +187,11 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     myName = name;
   }
 
+  /* you have to commit modifiable model or dispose it by yourself! */
   @NotNull
   public ModifiableModel getModifiableModel() {
     assert !isDisposed();
-    LibraryImpl model = new LibraryImpl(this, this, myRootModel);
-    Disposer.register(this, model);
-    return model;
+    return new LibraryImpl(this, this, myRootModel);
   }
 
   public Library cloneLibrary(RootModelImpl rootModel) {

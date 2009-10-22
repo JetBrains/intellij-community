@@ -183,7 +183,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   }
 
   public T getStub() {
-    ProgressManager.getInstance().checkCanceled(); // Hope, this is called often
+    ProgressManager.checkCanceled(); // Hope, this is called often
     return myStub;
   }
 

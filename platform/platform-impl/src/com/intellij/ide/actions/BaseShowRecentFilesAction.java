@@ -32,9 +32,9 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.LightColors;
-import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 
 import javax.swing.*;
@@ -163,7 +163,7 @@ public abstract class BaseShowRecentFilesAction extends AnAction implements Dumb
     if (list.getModel().getSize() == 0) {
       list.clearSelection();
     }
-    new MyListSpeedSearch(list);
+
     list.setCellRenderer(new RecentFilesRenderer(project));
 
     /*
@@ -189,12 +189,17 @@ public abstract class BaseShowRecentFilesAction extends AnAction implements Dumb
     footerPanel.add(pathLabel);
 
     new PopupChooserBuilder(list).
-        setTitle(getTitle()).
-        setMovable(true).
-        setSouthComponent(footerPanel).
-        setItemChoosenCallback(runnable).
-        addAdditionalChooseKeystroke(getAdditionalSelectKeystroke()).
-        createPopup().showCenteredInCurrentWindow(project);
+      setTitle(getTitle()).
+      setMovable(true).
+      setSouthComponent(footerPanel).
+      setItemChoosenCallback(runnable).
+      addAdditionalChooseKeystroke(getAdditionalSelectKeystroke()).
+      setItemsNamer(new Function<Object, String>() {
+        public String fun(Object o) {
+          return o instanceof VirtualFile ? ((VirtualFile)o).getName() : "";
+        }
+      }).
+      createPopup().showCenteredInCurrentWindow(project);
   }
 
   protected abstract String getTitle();
@@ -232,16 +237,6 @@ public abstract class BaseShowRecentFilesAction extends AnAction implements Dumb
           setBackground(LightColors.SLIGHTLY_GREEN);
         }
       }
-    }
-  }
-
-  private static class MyListSpeedSearch extends ListSpeedSearch {
-    public MyListSpeedSearch(JList list) {
-      super(list);
-    }
-
-    protected String getElementText(Object element) {
-      return element instanceof VirtualFile ? ((VirtualFile)element).getName() : null;
     }
   }
 }

@@ -24,13 +24,13 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataCache;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.PatternFilter;
 import com.intellij.psi.meta.MetaDataContributor;
 import com.intellij.psi.meta.MetaDataRegistrar;
 import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,7 +110,7 @@ public class MetaRegistry extends MetaDataRegistrar {
   
   @Nullable
   public static PsiMetaData getMetaBase(final PsiElement element) {
-    ProgressManager.getInstance().checkCanceled();
+    ProgressManager.checkCanceled();
     return ourCachedMetaCache.get(META_DATA_KEY, element, null).getValue();
   }
 
