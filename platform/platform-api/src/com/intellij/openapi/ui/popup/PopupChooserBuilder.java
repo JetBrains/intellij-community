@@ -165,8 +165,10 @@ public class PopupChooserBuilder {
 
   @NotNull
   public JBPopup createPopup() {
+    JList list = null;
     if (myChooserComponent instanceof JList) {
-      myChooserComponent = ListWithFilter.wrap((JList)myChooserComponent, new MyListWrapper((JList)myChooserComponent), myItemsNamer);
+      list = (JList)myChooserComponent;
+      myChooserComponent = ListWithFilter.wrap(list, new MyListWrapper(list), myItemsNamer);
     }
 
     JPanel contentPane = new JPanel(new BorderLayout());
@@ -177,8 +179,7 @@ public class PopupChooserBuilder {
       contentPane.add(label, BorderLayout.NORTH);
     }
 
-    if (myChooserComponent instanceof ListWithFilter) {
-      JList list = ((ListWithFilter)myChooserComponent).getList();
+    if (list != null) {
       if (list.getSelectedIndex() == -1 && myAutoselect) {
         list.setSelectedIndex(0);
       }
@@ -186,7 +187,7 @@ public class PopupChooserBuilder {
 
     myChooserComponent.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-    myChooserComponent.addMouseListener(new MouseAdapter() {
+    (list != null ? list : myChooserComponent).addMouseListener(new MouseAdapter() {
       @Override
       public void mousePressed(MouseEvent e) {
         if (UIUtil.isActionClick(e) && !isSelectionButtonDown(e) && !e.isConsumed()) {
