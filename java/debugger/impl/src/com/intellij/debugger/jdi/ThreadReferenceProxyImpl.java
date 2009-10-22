@@ -255,6 +255,8 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     try {
       getThreadReference().popFrames(stackFrame.getStackFrame());
     }
+    catch (InvalidStackFrameException ignored) {
+    }
     catch (ObjectCollectedException ignored) {
     }
     catch (InternalException e) {
