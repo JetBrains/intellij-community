@@ -57,12 +57,11 @@ public class ProjectPathMacroManager extends BasePathMacroManager {
 
     String macro = "$" + PathMacrosImpl.PROJECT_DIR_MACRO_NAME + "$";
     boolean check = false;
-    while (f != null) {
+    while (f != null && f.getParentFile() != null) {
       String path = PathMacroMap.quotePath(f.getAbsolutePath());
       String s = macro;
 
       if (StringUtil.endsWithChar(path, '/')) s += "/";
-      if (path.equals("/")) break;
 
       putIfAbsent(result, "file://" + path, "file://" + s, check);
       putIfAbsent(result, "file:/" + path, "file:/" + s, check);
