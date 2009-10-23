@@ -58,7 +58,6 @@ public class Win32Kernel {
   private static WIN32_FIND_DATA DATA = new WIN32_FIND_DATA();
 
   public static void release() {
-    DATA.clear();
     DATA = null;
   }
 
