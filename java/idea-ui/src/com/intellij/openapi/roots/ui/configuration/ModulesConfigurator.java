@@ -242,8 +242,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         catch (ConfigurationException e) {
           ex[0] = e;
         }
-        finally {
-          myFacetsConfigurator.disposeEditors();
+        finally {          
           ModuleStructureConfigurable.getInstance(myProject).getFacetEditorFacade().clearMaps();
 
           for (final ModuleEditor moduleEditor : myModuleEditors) {
