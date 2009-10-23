@@ -124,7 +124,9 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   }
 
   public void disposeComponent() {
-    Win32Kernel.release();
+    if (SystemInfo.isWindows) {
+      Win32Kernel.release();
+    }
   }
 
   @TestOnly
