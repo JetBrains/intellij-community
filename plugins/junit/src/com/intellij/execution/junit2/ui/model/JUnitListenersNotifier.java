@@ -23,12 +23,12 @@ import com.intellij.execution.junit2.segments.DispatchListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Alarm;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class JUnitListenersNotifier implements JUnitListener, TestEventsConsumer, DispatchListener, Runnable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.ui.model.JUnitListenersNotifier");
@@ -142,7 +142,7 @@ public class JUnitListenersNotifier implements JUnitListener, TestEventsConsumer
 
   private void dispatchAllEvents() {
     //long start = System.currentTimeMillis();
-    final List<TestEvent> filteredEvents = removeDuplicatesFromEnd(myEventsQueue);
+    final List<TestEvent> filteredEvents = removeDuplicates(myEventsQueue);
     myEventsQueue.clear();
 //    MEASURER.start(DISPATCH_SINGLES);
     for (final TestEvent event : filteredEvents) {
@@ -153,11 +153,14 @@ public class JUnitListenersNotifier implements JUnitListener, TestEventsConsumer
     //System.out.println("duration = " + (System.currentTimeMillis() - start));
   }
 
-  public static <T> List<T> removeDuplicatesFromEnd(final List<T> list) {
-    ArrayList<T> result = new ArrayList<T>(list);
-    Collections.reverse(result);
-    ContainerUtil.removeDuplicates(result);
-    Collections.reverse(result);
+  private static <T> List<T> removeDuplicates(final List<T> list) {
+    final ArrayList<T> result = new ArrayList<T>(list.size());
+    final Set<T> collected = new HashSet<T>();
+    for (T t : list) {
+      if (collected.contains(t)) continue;
+      collected.add(t);
+      result.add(t);
+    }
     return result;
   }
 }

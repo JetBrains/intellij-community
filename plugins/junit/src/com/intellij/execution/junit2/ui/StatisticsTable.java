@@ -47,8 +47,7 @@ public class StatisticsTable extends ListTableModel {
 
   private void setTest(final TestProxy test) {
     if (myTest == test) return;
-    myTest = test;
-    changeTableData();
+    updateStatistics(test);
   }
 
   private void changeTableData() {
@@ -101,5 +100,10 @@ public class StatisticsTable extends ListTableModel {
       if (child == test) return i + 1;
     }
     return -1;
+  }
+
+  public void updateStatistics(TestProxy currentTest) {
+    myTest = currentTest;
+    changeTableData();
   }
 }
