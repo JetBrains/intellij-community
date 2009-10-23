@@ -36,5 +36,5 @@ public interface ChangeListManagerGate {
   void editName(final String oldName, final String newName);
   // must be allowed only for perforce change synchronizer, not during normal update
   void moveChanges(final String toList, final Collection<Change> changes);
-  void deleteIfEmpty(final String name);
+  void setListsToDisappear(final Collection<String> names);
 }

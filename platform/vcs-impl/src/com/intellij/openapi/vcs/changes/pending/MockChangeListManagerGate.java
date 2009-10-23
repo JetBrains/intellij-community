@@ -65,10 +65,6 @@ public class MockChangeListManagerGate implements ChangeListManagerGate {
     }
   }
 
-  public void deleteIfEmpty(String name) {
-    final LocalChangeList changeList = myManager.findChangeList(name);
-    if ((changeList != null) && (changeList.getChanges().isEmpty())) {
-      myManager.removeChangeList(name);
-    }
+  public void setListsToDisappear(Collection<String> names) {
   }
 }
