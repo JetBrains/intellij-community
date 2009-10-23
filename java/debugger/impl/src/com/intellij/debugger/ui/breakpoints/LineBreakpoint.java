@@ -192,9 +192,8 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
       }
       ClassFilter [] filters = getClassFilters();
       boolean matches = false;
-      for (int i = 0; i < filters.length; i++) {
-        ClassFilter classFilter = filters[i];
-        if(classFilter.isEnabled() && classFilter.matches(name)) {
+      for (ClassFilter classFilter : filters) {
+        if (classFilter.isEnabled() && classFilter.matches(name)) {
           matches = true;
           break;
         }
@@ -204,9 +203,8 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
       }
 
       ClassFilter [] ifilters = getClassExclusionFilters();
-      for (int i = 0; i < ifilters.length; i++) {
-        ClassFilter classFilter = ifilters[i];
-        if(classFilter.isEnabled() && classFilter.matches(name)) {
+      for (ClassFilter classFilter : ifilters) {
+        if (classFilter.isEnabled() && classFilter.matches(name)) {
           return false;
         }
       }
