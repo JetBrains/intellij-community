@@ -62,7 +62,12 @@ public class Win32Kernel {
     long ftLastWriteTime;
   }
 
-  private final static WIN32_FIND_DATA DATA = new WIN32_FIND_DATA();
+  private static WIN32_FIND_DATA DATA = new WIN32_FIND_DATA();
+
+  public static void release() {
+    DATA.clear();
+    DATA = null;
+  }
 
   private Map<String, FileInfo> myCache = new HashMap<String, FileInfo>();
 
