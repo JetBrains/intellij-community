@@ -267,7 +267,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   public synchronized void addItem(final LookupElement item) {
     if (!isRunning()) return;
-    ProgressManager.getInstance().checkCanceled();
+    ProgressManager.checkCanceled();
 
     final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     if (!unitTestMode) {

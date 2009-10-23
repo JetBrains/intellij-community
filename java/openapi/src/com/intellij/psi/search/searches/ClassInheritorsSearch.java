@@ -46,9 +46,9 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
 
   static {
     INSTANCE.registerExecutor(new QueryExecutor<PsiClass, SearchParameters>() {
-      public boolean execute(final SearchParameters p, final Processor<PsiClass> consumer) {
-        final PsiClass baseClass = p.getClassToProcess();
-        final SearchScope searchScope = p.getScope();
+      public boolean execute(final SearchParameters parameters, final Processor<PsiClass> consumer) {
+        final PsiClass baseClass = parameters.getClassToProcess();
+        final SearchScope searchScope = parameters.getScope();
 
         LOG.assertTrue(searchScope != null);
 
@@ -61,10 +61,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
                            PsiBundle.message("psi.search.inheritors.progress"));
         }
 
-        boolean result = processInheritors(consumer,
-                                           baseClass,
-                                           searchScope,
-                                           p);
+        boolean result = processInheritors(consumer, baseClass, searchScope, parameters);
 
         if (progress != null) {
           progress.popState();
@@ -83,11 +80,11 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     private final boolean myIncludeAnonymous;
     private final Condition<String> myNameCondition;
 
-    public SearchParameters(@NotNull final PsiClass aClass, SearchScope scope, final boolean checkDeep, final boolean checkInheritance, boolean includeAnonymous) {
+    public SearchParameters(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance, boolean includeAnonymous) {
       this(aClass, scope, checkDeep, checkInheritance, includeAnonymous, Condition.TRUE);
     }
 
-    public SearchParameters(@NotNull final PsiClass aClass, SearchScope scope, final boolean checkDeep, final boolean checkInheritance,
+    public SearchParameters(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance,
                             boolean includeAnonymous, final Condition<String> nameCondition) {
       myClass = aClass;
       myScope = scope;
@@ -125,19 +122,19 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
 
   private ClassInheritorsSearch() {}
 
-  public static Query<PsiClass> search(@NotNull final PsiClass aClass, SearchScope scope, final boolean checkDeep, final boolean checkInheritance, boolean includeAnonymous) {
+  public static Query<PsiClass> search(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance, boolean includeAnonymous) {
     return search(new SearchParameters(aClass, scope, checkDeep, checkInheritance, includeAnonymous));
   }
 
-  public static Query<PsiClass> search(final SearchParameters parameters) {
+  public static Query<PsiClass> search(@NotNull SearchParameters parameters) {
     return INSTANCE.createUniqueResultsQuery(parameters);
   }
 
-  public static Query<PsiClass> search(@NotNull final PsiClass aClass, SearchScope scope, final boolean checkDeep, final boolean checkInheritance) {
+  public static Query<PsiClass> search(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance) {
     return search(aClass, scope, checkDeep, checkInheritance, true);
   }
 
-  public static Query<PsiClass> search(@NotNull final PsiClass aClass, SearchScope scope, final boolean checkDeep) {
+  public static Query<PsiClass> search(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep) {
     return search(aClass, scope, checkDeep, true);
   }
 
@@ -145,14 +142,14 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     return search(aClass, aClass.getUseScope(), checkDeep);
   }
 
-  public static Query<PsiClass> search(final PsiClass aClass) {
+  public static Query<PsiClass> search(@NotNull PsiClass aClass) {
     return search(aClass, true);
   }
 
-  private static boolean processInheritors(final Processor<PsiClass> consumer,
-                                           final PsiClass baseClass,
+  private static boolean processInheritors(@NotNull final Processor<PsiClass> consumer,
+                                           @NotNull final PsiClass baseClass,
                                            @NotNull final SearchScope searchScope,
-                                           final SearchParameters parameters) {
+                                           @NotNull final SearchParameters parameters) {
     if (baseClass instanceof PsiAnonymousClass) return true;
 
     if (isFinal(baseClass)) return true;
@@ -163,7 +160,12 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
       }
     });
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(qname)) {
-      return AllClassesSearch.search(searchScope, baseClass.getProject(), parameters.getNameCondition()).forEach(consumer);
+      return AllClassesSearch.search(searchScope, baseClass.getProject(), parameters.getNameCondition()).forEach(new Processor<PsiClass>() {
+        public boolean process(PsiClass aClass) {
+          ProgressManager.getInstance().checkCanceled();
+          return consumer.process(aClass);
+        }
+      });
     }
 
     final Ref<PsiClass> currentBase = Ref.create(null);
@@ -171,6 +173,8 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     final Set<PsiClass> processed = new HashSet<PsiClass>();
     final Processor<PsiClass> processor = new Processor<PsiClass>() {
       public boolean process(final PsiClass candidate) {
+        ProgressManager.getInstance().checkCanceled();
+
         final Ref<Boolean> result = new Ref<Boolean>();
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
@@ -204,7 +208,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     stack.push(baseClass);
     final GlobalSearchScope scope = GlobalSearchScope.allScope(baseClass.getProject());
     while (!stack.isEmpty()) {
-      ProgressManager.getInstance().checkCanceled();
+      ProgressManager.checkCanceled();
 
       final PsiClass psiClass = stack.pop();
       if (!processed.add(psiClass)) continue;

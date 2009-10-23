@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.options.ConfigurationException;
@@ -29,6 +30,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.BaseStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
+import com.intellij.openapi.ui.MasterDetailsStateService;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import org.jetbrains.annotations.Nls;
@@ -49,15 +51,17 @@ import java.util.*;
 public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   @NonNls private static final String DEFAULT_ARTIFACT_NAME = "unnamed";
   private ArtifactsStructureConfigurableContextImpl myPackagingEditorContext;
+  private ArtifactEditorSettings myDefaultSettings = new ArtifactEditorSettings();
 
   public ArtifactsStructureConfigurable(@NotNull Project project) {
     super(project);
+    MasterDetailsStateService.getInstance(project).register("ArtifactsStructureConfigurable.UI", this);
   }
 
   @Override
   public void init(StructureConfigurableContext context) {
     super.init(context);
-    myPackagingEditorContext = new ArtifactsStructureConfigurableContextImpl(myContext, myProject, new ArtifactAdapter() {
+    myPackagingEditorContext = new ArtifactsStructureConfigurableContextImpl(myContext, myProject, myDefaultSettings, new ArtifactAdapter() {
       @Override
       public void artifactAdded(@NotNull Artifact artifact) {
         final MyNode node = addArtifactNode(artifact);
@@ -94,6 +98,11 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     final MyNode node = new MyNode(new ArtifactConfigurable(artifact, myPackagingEditorContext, TREE_UPDATER, myContext));
     addNode(node, myRoot);
     return node;
+  }
+
+  @Override
+  protected PersistentStateComponent<?> getAdditionalSettings() {
+    return myDefaultSettings;
   }
 
   @Override

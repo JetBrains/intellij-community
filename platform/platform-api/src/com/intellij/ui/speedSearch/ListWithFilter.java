@@ -76,7 +76,7 @@ public class ListWithFilter<T> extends JPanel {
     }, mySpeedSearch);
 
     setBackground(list.getBackground());
-    setFocusable(true);
+    //setFocusable(true);
   }
 
   public boolean resetFilter() {
@@ -113,7 +113,7 @@ public class ListWithFilter<T> extends JPanel {
         myList.setSelectedIndex(fullMatchIndex);
       }
 
-      if (myModel.getSize() <= myList.getSelectedIndex() || !myModel.contains(myList.getSelectedValue())) {
+      if (myModel.getSize() <= myList.getSelectedIndex() || !myModel.contains((T)myList.getSelectedValue())) {
         myList.setSelectedIndex(0);
       }
     }

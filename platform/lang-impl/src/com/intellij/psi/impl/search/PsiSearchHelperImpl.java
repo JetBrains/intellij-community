@@ -262,7 +262,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                 PsiElement[] psiRoots = file.getPsiRoots();
                 Set<PsiElement> processed = new HashSet<PsiElement>(psiRoots.length * 2, (float)0.5);
                 for (PsiElement psiRoot : psiRoots) {
-                  ProgressManager.getInstance().checkCanceled();
+                  ProgressManager.checkCanceled();
                   if (!processed.add(psiRoot)) continue;
                   if (!LowLevelSearchUtil.processElementsContainingWordInElement(processor, psiRoot, searcher, false)) {
                     canceled.set(true);

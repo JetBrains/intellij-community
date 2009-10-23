@@ -468,7 +468,7 @@ public class TextPainter implements Printable {
 
   private boolean drawString(Graphics2D g, int end, int colNumber, Point2D position, Rectangle2D clip, Color backColor,
                              Color underscoredColor) {
-    ProgressManager.getInstance().checkCanceled();
+    ProgressManager.checkCanceled();
     if (myOffset >= end)
       return true;
     char[] text = myDocument.getCharsSequence().toString().toCharArray(); //TODO: Make drawTabbedString work with CharSequence instead.

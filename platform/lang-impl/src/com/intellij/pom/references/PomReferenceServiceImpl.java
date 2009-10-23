@@ -105,7 +105,7 @@ public class PomReferenceServiceImpl extends PomReferenceService {
   }
 
   private List<PomReference> getReferencesFromProviders(PsiElement context, final Integer offset) {
-    ProgressManager.getInstance().checkCanceled();
+    ProgressManager.checkCanceled();
     assert context.isValid() : "Invalid context: " + context;
 
     final List<Trinity<PomReferenceProvider, ProcessingContext, Double>> providers = getPairsByElement(context, offset);

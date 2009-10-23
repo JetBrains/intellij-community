@@ -206,7 +206,7 @@ public class DomUtil {
 
     }
 
-    ProgressManager.getInstance().checkCanceled();
+    ProgressManager.checkCanceled();
 
     if (parent instanceof GenericAttributeValue) return Collections.emptyList();
 

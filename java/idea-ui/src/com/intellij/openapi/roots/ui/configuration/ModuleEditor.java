@@ -180,7 +180,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     return new ModuleConfigurationStateImpl(myProject, myModulesProvider) {
       @Override
       public ModifiableRootModel getRootModel() {
-        return getModifiableRootModel();
+        return getModifiableRootModelProxy();
       }
 
       @Override

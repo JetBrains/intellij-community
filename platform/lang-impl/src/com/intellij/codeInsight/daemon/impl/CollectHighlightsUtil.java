@@ -80,7 +80,7 @@ public class CollectHighlightsUtil {
 
         PsiElement child = element.getFirstChild();
         if (child != null) {
-          ProgressManager.getInstance().checkCanceled();
+          ProgressManager.checkCanceled();
           // composite element
           while (child != null) {
             if (offset > endOffset) break;

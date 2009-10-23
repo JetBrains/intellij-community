@@ -18,6 +18,7 @@ package com.intellij.javaee;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * author: lesya
@@ -47,4 +48,7 @@ public abstract class ExternalResourceManagerEx extends ExternalResourceManager 
   public abstract void addExternalResourceListener(ExternalResourceListener listener);
 
   public abstract void removeExternalResourceListener(ExternalResourceListener listener);
+
+  @Nullable
+  public abstract String getUserResourse(Project project, String url, String version);
 }

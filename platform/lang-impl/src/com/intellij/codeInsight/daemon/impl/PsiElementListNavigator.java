@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.NavigatablePsiElement;
@@ -39,7 +40,13 @@ public class PsiElementListNavigator {
     else{
       final JList list = new JList(targets);
       list.setCellRenderer(listRenderer);
-      new PopupChooserBuilder(list).
+
+      final PopupChooserBuilder builder = new PopupChooserBuilder(list);
+      if (listRenderer instanceof PsiElementListCellRenderer) {
+        ((PsiElementListCellRenderer)listRenderer).installSpeedSearch(builder);
+      }
+
+      builder.
         setTitle(title).
         setMovable(true).
         setItemChoosenCallback(new Runnable() {

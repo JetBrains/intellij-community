@@ -24,8 +24,8 @@ import com.intellij.lang.folding.LanguageFolding;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.TokenSet;
@@ -34,8 +34,8 @@ import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -96,7 +96,7 @@ public class XmlFoldingBuilder implements FoldingBuilder, DumbAware {
     final PsiElement[] children = tag.getChildren();
 
     for (PsiElement child : children) {
-      ProgressManager.getInstance().checkCanceled();
+      ProgressManager.checkCanceled();
 
       if (child instanceof XmlTag || child instanceof XmlConditionalSection) {
         addElementsToFold(foldings, (XmlElement)child, document);
@@ -108,7 +108,7 @@ public class XmlFoldingBuilder implements FoldingBuilder, DumbAware {
         final PsiElement[] grandChildren = child.getChildren();
 
         for (PsiElement grandChild : grandChildren) {
-          ProgressManager.getInstance().checkCanceled();
+          ProgressManager.checkCanceled();
 
           if (grandChild instanceof XmlComment) {
             addToFold(foldings, grandChild, document);

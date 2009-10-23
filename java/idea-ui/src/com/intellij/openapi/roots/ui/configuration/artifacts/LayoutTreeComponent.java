@@ -101,6 +101,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   public void setSortElements(boolean sortElements) {
     mySortElements = sortElements;
     myBuilder.setNodeDescriptorComparator(getComparator());
+    ((ArtifactsStructureConfigurableContextImpl)myArtifactsEditor.getContext().getParent()).getDefaultSettings().setSortElements(sortElements);
   }
 
   @Nullable
@@ -129,7 +130,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
 
   public void updatePropertiesPanel(final boolean force) {
     final PackagingElement<?> selected = getSelection().getElementIfSingle();
-    if (force || Comparing.equal(selected, mySelectedElementInfo.myElement)) {
+    if (!force && Comparing.equal(selected, mySelectedElementInfo.myElement)) {
       return;
     }
     mySelectedElementInfo.save();
@@ -503,6 +504,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
       else {
         cardLayout.show(myPropertiesPanelWrapper, EMPTY_CARD);
       }
+      myPropertiesPanelWrapper.repaint();
     }
   }
 

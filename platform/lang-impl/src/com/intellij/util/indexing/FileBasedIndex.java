@@ -1104,8 +1104,12 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   public void requestRebuild(ID<?, ?> indexId) {
+    requestRebuild(indexId, new Throwable());
+  }
+
+  public void requestRebuild(ID<?, ?> indexId, Throwable throwable) {
     cleanupProcessedFlag();
-    LOG.info("Rebuild requested for index " + indexId, new Throwable());
+    LOG.info("Rebuild requested for index " + indexId, throwable);
     myRebuildStatus.get(indexId).set(REQUIRES_REBUILD);
   }
 

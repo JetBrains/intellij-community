@@ -21,13 +21,17 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.project.Project;
+import com.intellij.util.xmlb.annotations.MapAnnotation;
+import com.intellij.util.xmlb.annotations.Tag;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import org.jetbrains.annotations.NonNls;
 
 @State(
   name="masterDetails",
@@ -38,25 +42,43 @@ import org.jetbrains.annotations.NonNls;
     )}
 )
 public class MasterDetailsStateService implements PersistentStateComponent<MasterDetailsStateService.State>{
-  public State myStates = new State();
+  private Map<String, MasterDetailsComponent> myComponents = new HashMap<String, MasterDetailsComponent>();
+  private State myStates = new State();
+
+  public static MasterDetailsStateService getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, MasterDetailsStateService.class);
+  }
 
   public void register(@NonNls String key, MasterDetailsComponent masterDetailsComponent) {
+    myComponents.put(key, masterDetailsComponent);
     final MasterDetailsComponent.UIState loadedState = myStates.getStates().get(key);
-    if (loadedState != null) masterDetailsComponent.loadState(loadedState);
-    myStates.getStates().put(key, masterDetailsComponent.getState());
+    if (loadedState != null) {
+      masterDetailsComponent.loadState(loadedState);
+    }
   }
 
   public State getState() {
+    for (Map.Entry<String, MasterDetailsComponent> entry : myComponents.entrySet()) {
+      myStates.getStates().put(entry.getKey(), entry.getValue().getState());
+    }
     return myStates;
   }
 
   public void loadState(State state) {
     myStates.setStates(state.getStates());
+    for (Map.Entry<String, MasterDetailsComponent.UIState> entry : myStates.getStates().entrySet()) {
+      final MasterDetailsComponent component = myComponents.get(entry.getKey());
+      if (component != null) {
+        component.loadState(entry.getValue());
+      }
+    }
   }
 
   public static class State {
-    public Map<String, MasterDetailsComponent.UIState> myStates = new HashMap<String, MasterDetailsComponent.UIState>();
+    private Map<String, MasterDetailsComponent.UIState> myStates = new HashMap<String, MasterDetailsComponent.UIState>();
 
+    @Tag("states")
+    @MapAnnotation(surroundWithTag = false, entryTagName = "state", surroundKeyWithTag = false, surroundValueWithTag = false)
     public Map<String, MasterDetailsComponent.UIState> getStates() {
       return myStates;
     }

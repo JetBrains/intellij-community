@@ -188,7 +188,7 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
                                                Processor<IndexPatternOccurrence> consumer) {
     Pattern pattern = indexPattern.getPattern();
     if (pattern != null) {
-      ProgressManager.getInstance().checkCanceled();
+      ProgressManager.checkCanceled();
 
       CharSequence input = new CharSequenceSubSequence(chars, commentStart, commentEnd);
       Matcher matcher = pattern.matcher(input);
@@ -209,7 +209,7 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
           }
         }
 
-        ProgressManager.getInstance().checkCanceled();
+        ProgressManager.checkCanceled();
       }
     }
     return true;

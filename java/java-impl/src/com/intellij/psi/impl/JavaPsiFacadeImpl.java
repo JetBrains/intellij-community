@@ -162,7 +162,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
   }
 
   public PsiClass findClass(@NotNull final String qualifiedName, @NotNull GlobalSearchScope scope) {
-    myProgressManager.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
+    ProgressManager.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
 
     if (DumbService.getInstance(getProject()).isDumb()) {
       final List<PsiClass> classes = findClassesInDumbMode(qualifiedName, scope);

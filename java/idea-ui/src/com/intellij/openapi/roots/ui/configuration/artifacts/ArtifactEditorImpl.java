@@ -212,6 +212,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
         }
         myShowContentCheckBox.setThirdStateEnabled(false);
         myLayoutTreeComponent.rebuildTree();
+        onShowContentSettingsChanged();
       }
     });
 
@@ -233,6 +234,10 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     return getMainComponent();
   }
 
+  private void onShowContentSettingsChanged() {
+    ((ArtifactsStructureConfigurableContextImpl)myContext.getParent()).getDefaultSettings().setTypesToShowContent(mySubstitutionParameters.getTypesToSubstitute());
+  }
+
   public void updateShowContentCheckbox() {
     final ThreeStateCheckBox.State state;
     if (mySubstitutionParameters.isAllSubstituted()) {
@@ -246,6 +251,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     }
     myShowContentCheckBox.setThirdStateEnabled(state == ThreeStateCheckBox.State.DONT_CARE);
     myShowContentCheckBox.setState(state);
+    onShowContentSettingsChanged();
   }
 
   public ArtifactEditorSettings createSettings() {
@@ -350,19 +356,24 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
       setOutputPath(ArtifactUtil.getDefaultArtifactOutputPath(newArtifactName, myProject));
       final CompositePackagingElement<?> root = getRootElement();
       if (root instanceof ArchivePackagingElement) {
+        String oldFileName = FileUtil.sanitizeFileName(oldArtifactName);
         final String name = ((ArchivePackagingElement)root).getArchiveFileName();
         final String fileName = FileUtil.getNameWithoutExtension(name);
         final String extension = FileUtil.getExtension(name);
-        if (fileName.equals(oldArtifactName) && extension.length() > 0) {
+        if (fileName.equals(oldFileName) && extension.length() > 0) {
           myLayoutTreeComponent.editLayout(new Runnable() {
             public void run() {
-              ((ArchivePackagingElement)getRootElement()).setArchiveFileName(newArtifactName + "." + extension);
+              ((ArchivePackagingElement)getRootElement()).setArchiveFileName(FileUtil.sanitizeFileName(newArtifactName) + "." + extension);
             }
           });
           myLayoutTreeComponent.updateRootNode();
         }
       }
     }
+  }
+
+  public void updateLayoutTree() {
+    myLayoutTreeComponent.rebuildTree();
   }
 
   public void putLibraryIntoDefaultLocation(@NotNull Library library) {
@@ -386,10 +397,8 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
     final CompositePackagingElement<?> oldRootElement = getRootElement();
     final CompositePackagingElement<?> newRootElement = artifactType.createRootElement(getArtifact().getName());
-    if (!newRootElement.getType().equals(oldRootElement.getType())) {
-      ArtifactUtil.copyChildren(oldRootElement, newRootElement, myProject);
-      myLayoutTreeComponent.setRootElement(newRootElement);
-    }
+    ArtifactUtil.copyChildren(oldRootElement, newRootElement, myProject);
+    myLayoutTreeComponent.setRootElement(newRootElement);
   }
 
   private class MyDataProvider implements TypeSafeDataProvider {

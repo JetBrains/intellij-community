@@ -73,7 +73,7 @@ public class ResolveAction extends BasicAction {
             if (file.isDirectory()) {
               ProjectLevelVcsManager.getInstance(project).iterateVcsRoot(file, new Processor<FilePath>() {
                 public boolean process(final FilePath filePath) {
-                  ProgressManager.getInstance().checkCanceled();
+                  ProgressManager.checkCanceled();
                   VirtualFile fileOrDir = filePath.getVirtualFile();
                   if (fileOrDir != null && !fileOrDir.isDirectory() && isEnabled(project, activeVcs, fileOrDir) && !fileList.contains(fileOrDir)) {
                     fileList.add(fileOrDir);

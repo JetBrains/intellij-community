@@ -23,9 +23,9 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.Navigatable;
@@ -96,7 +96,6 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       final JList list = new JList(elements);
       list.setCellRenderer(renderer);
 
-      renderer.installSpeedSearch(list);
 
       final Runnable runnable = new Runnable() {
         public void run() {
@@ -112,9 +111,12 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
         }
       };
 
-      new PopupChooserBuilder(list).
+      final PopupChooserBuilder builder = new PopupChooserBuilder(list);
+      renderer.installSpeedSearch(builder);
+      builder.
           setTitle(title).
           setItemChoosenCallback(runnable).
+          setMovable(true).
           createPopup().showInBestPositionFor(editor);
     }
   }
