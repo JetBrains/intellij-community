@@ -119,12 +119,20 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
       return configuration;
     }
 
+    public boolean isManifestFile(String path) {
+      return false;
+    }
+
     public CompositePackagingElement<?> getRootElement(@NotNull Artifact artifact) {
       throw new UnsupportedOperationException("'getRootElement' not implemented in " + getClass().getName());
     }
 
     public ArtifactEditor getOrCreateEditor(Artifact artifact) {
       throw new UnsupportedOperationException("'getOrCreateEditor' not implemented in " + getClass().getName());
+    }
+
+    public ArtifactEditor getThisArtifactEditor() {
+      throw new UnsupportedOperationException("'getThisArtifactEditor' not implemented in " + getClass().getName());
     }
 
     public void selectArtifact(@NotNull Artifact artifact) {
