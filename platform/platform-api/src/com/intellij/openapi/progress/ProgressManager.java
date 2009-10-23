@@ -33,6 +33,7 @@ public abstract class ProgressManager {
 
   public abstract boolean hasProgressIndicator();
   public abstract boolean hasModalProgressIndicator();
+  public abstract boolean hasUnsafeProgressIndicator();
 
   public abstract void runProcess(Runnable process, ProgressIndicator progress) throws ProcessCanceledException;
 

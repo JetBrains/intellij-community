@@ -44,6 +44,7 @@ public class ProgressManagerImpl extends ProgressManager {
 
   private static final ThreadLocal<ProgressIndicator> myThreadIndicator = new ThreadLocal<ProgressIndicator>();
   private final AtomicInteger myCurrentProgressCount = new AtomicInteger(0);
+  private final AtomicInteger myCurrentUnsafeProgressCount = new AtomicInteger(0);
   private final AtomicInteger myCurrentModalProgressCount = new AtomicInteger(0);
 
   private static volatile int ourLockedCheckCounter = 0;
@@ -169,11 +170,15 @@ public class ProgressManagerImpl extends ProgressManager {
     return myCurrentProgressCount.get() > 0;
   }
 
+  public boolean hasUnsafeProgressIndicator() {
+    return myCurrentUnsafeProgressCount.get() > 0;
+  }
+
   public boolean hasModalProgressIndicator() {
     return myCurrentModalProgressCount.get() > 0;
   }
 
-  public void runProcess(@NotNull final Runnable process, final ProgressIndicator progress) throws ProcessCanceledException {
+  public void runProcess(@NotNull final Runnable process, final ProgressIndicator progress) {
     executeProcessUnderProgress(new Runnable(){
       public void run() {
         synchronized (process) {
@@ -205,6 +210,7 @@ public class ProgressManagerImpl extends ProgressManager {
 
     final boolean modal = progress != null && progress.isModal();
     if (modal) myCurrentModalProgressCount.incrementAndGet();
+    if (progress == null || progress instanceof ProgressWindow) myCurrentUnsafeProgressCount.incrementAndGet();
 
     try {
       process.run();
@@ -214,6 +220,7 @@ public class ProgressManagerImpl extends ProgressManager {
 
       myCurrentProgressCount.decrementAndGet();
       if (modal) myCurrentModalProgressCount.decrementAndGet();
+      if (progress == null || progress instanceof ProgressWindow) myCurrentUnsafeProgressCount.decrementAndGet();
     }
   }
 
