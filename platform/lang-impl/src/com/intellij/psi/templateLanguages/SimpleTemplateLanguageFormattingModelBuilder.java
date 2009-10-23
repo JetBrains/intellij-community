@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public class TemplateLanguageFormattingModelBuilder implements FormattingModelBuilder{
+public class SimpleTemplateLanguageFormattingModelBuilder implements FormattingModelBuilder{
   @NotNull
   public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
     if (element instanceof PsiFile) {
