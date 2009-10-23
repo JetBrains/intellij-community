@@ -194,7 +194,7 @@ public abstract class BaseShowRecentFilesAction extends AnAction implements Dumb
       setSouthComponent(footerPanel).
       setItemChoosenCallback(runnable).
       addAdditionalChooseKeystroke(getAdditionalSelectKeystroke()).
-      setItemsNamer(new Function<Object, String>() {
+      setFilteringEnabled(new Function<Object, String>() {
         public String fun(Object o) {
           return o instanceof VirtualFile ? ((VirtualFile)o).getName() : "";
         }

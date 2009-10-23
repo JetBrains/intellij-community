@@ -243,7 +243,7 @@ public class BookmarksAction extends AnAction implements DumbAware {
       setSouthComponent(footerPanel).
       setEastComponent(previewPanel).
       setItemChoosenCallback(runnable).
-      setItemsNamer(new Function<Object, String>() {
+      setFilteringEnabled(new Function<Object, String>() {
         public String fun(Object o) {
           return ((ItemWrapper)o).speedSearchText();
         }

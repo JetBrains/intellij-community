@@ -275,7 +275,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   private ProjectFacetsConfigurator createFacetsConfigurator() {
-    return new ProjectFacetsConfigurator(myContext, myProject, myFacetsConfigurator);
+    return new ProjectFacetsConfigurator(myContext, myFacetsConfigurator);
   }
 
   public void setModified(final boolean modified) {

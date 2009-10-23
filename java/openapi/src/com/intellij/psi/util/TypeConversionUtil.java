@@ -672,6 +672,7 @@ public class TypeConversionUtil {
 
     if (left instanceof PsiArrayType) return false;
     if (right instanceof PsiPrimitiveType) {
+      if (isVoidType(right)) return false;
       if (!(left instanceof PsiPrimitiveType)) {
         return left instanceof PsiClassType && isBoxable((PsiClassType)left, (PsiPrimitiveType)right);
       }

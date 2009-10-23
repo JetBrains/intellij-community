@@ -66,6 +66,10 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
     return myParent.getManifestFile(element, artifactType);
   }
 
+  public boolean isManifestFile(String path) {
+    return myParent.isManifestFile(path);
+  }
+
   @NotNull
   public Project getProject() {
     return myParent.getProject();
@@ -81,6 +85,10 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
 
   public ArtifactEditor getOrCreateEditor(Artifact artifact) {
     return myParent.getOrCreateEditor(artifact);
+  }
+
+  public ArtifactEditor getThisArtifactEditor() {
+    return myEditor;
   }
 
   public void selectArtifact(@NotNull Artifact artifact) {

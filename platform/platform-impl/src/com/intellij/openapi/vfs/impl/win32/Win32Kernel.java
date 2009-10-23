@@ -15,13 +15,19 @@
  */
 package com.intellij.openapi.vfs.impl.win32;
 
-import com.sun.jna.*;
+import com.sun.jna.Library;
+import com.sun.jna.Native;
+import com.sun.jna.Pointer;
+import com.sun.jna.Structure;
+import com.sun.jna.examples.win32.W32API;
 import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIFunctionMapper;
 import com.sun.jna.win32.W32APITypeMapper;
 
 import java.io.FileNotFoundException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
@@ -38,20 +44,6 @@ public class Win32Kernel {
   public static final int FILE_ATTRIBUTE_DIRECTORY = 0x00000010;
   public static final int FILE_ATTRIBUTE_READONLY = 0x0001;
 
-  private static HANDLE INVALID_HANDLE_VALUE = new HANDLE() {
-    {
-      super.setPointer(Pointer.createConstant(-1));
-    }};
-
-  public static class HANDLE extends PointerType {
-
-    public Object fromNative(Object nativeValue, FromNativeContext context) {
-      Object o = super.fromNative(nativeValue, context);
-      if (INVALID_HANDLE_VALUE.equals(o)) return INVALID_HANDLE_VALUE;
-      return o;
-    }
-  }
-
   private static class FileInfo {
     private FileInfo(WIN32_FIND_DATA data) {
       this.dwFileAttributes = data.dwFileAttributes;
@@ -62,7 +54,12 @@ public class Win32Kernel {
     long ftLastWriteTime;
   }
 
-  private final static WIN32_FIND_DATA DATA = new WIN32_FIND_DATA();
+  private static W32API.HANDLE INVALID_HANDLE_VALUE = new W32API.HANDLE(Pointer.createConstant(0xFFFFFFFFl));
+  private static WIN32_FIND_DATA DATA = new WIN32_FIND_DATA();
+
+  public static void release() {
+    DATA = null;
+  }
 
   private Map<String, FileInfo> myCache = new HashMap<String, FileInfo>();
 
@@ -71,8 +68,8 @@ public class Win32Kernel {
     myCache.clear();
 
     ArrayList<String> list = new ArrayList<String>();
-    HANDLE hFind = myKernel.FindFirstFile(absolutePath.replace('/', '\\') + "\\*", DATA);
-    if (hFind == INVALID_HANDLE_VALUE) return new String[0];
+    W32API.HANDLE hFind = myKernel.FindFirstFile(absolutePath.replace('/', '\\') + "\\*", DATA);
+    if (hFind.equals(INVALID_HANDLE_VALUE)) return new String[0];
     do {
       String name = toString(DATA.cFileName);
       if (name.equals(".") || name.equals("..")) {
@@ -113,8 +110,8 @@ public class Win32Kernel {
     FileInfo data = myCache.get(path);
     if (data == null) {
       myCache.clear();
-      HANDLE hFind = myKernel.FindFirstFile(path.replace('/', '\\'), DATA);
-      if (hFind == INVALID_HANDLE_VALUE) throw new FileNotFoundException(path);
+      W32API.HANDLE hFind = myKernel.FindFirstFile(path.replace('/', '\\'), DATA);
+      if (hFind.equals(INVALID_HANDLE_VALUE)) throw new FileNotFoundException(path);
       data = new FileInfo(DATA);
       myKernel.FindClose(hFind);
       myCache.put(path, data);
@@ -131,11 +128,11 @@ public class Win32Kernel {
 
   public interface Kernel32 extends StdCallLibrary {
 
-    HANDLE FindFirstFile(String lpFileName, WIN32_FIND_DATA lpFindFileData);
+    W32API.HANDLE FindFirstFile(String lpFileName, WIN32_FIND_DATA lpFindFileData);
 
-    boolean FindNextFile(HANDLE hFindFile, WIN32_FIND_DATA lpFindFileData);
+    boolean FindNextFile(W32API.HANDLE hFindFile, WIN32_FIND_DATA lpFindFileData);
 
-    boolean FindClose(HANDLE hFindFile);
+    boolean FindClose(W32API.HANDLE hFindFile);
   }
 
   public static class FILETIME extends Structure implements Structure.ByValue {

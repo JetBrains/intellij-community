@@ -98,6 +98,7 @@ class StatisticsPanel extends JPanel implements DataProvider{
 
   private class MyJUnitListener extends JUnitAdapter {
     public void onTestChanged(final TestEvent event) {
+      if (!StatisticsPanel.this.isShowing()) return;
       if (event instanceof StatisticsChanged) {
         if (myCurrentTest == event.getSource())
           updateStatistics();
@@ -108,6 +109,7 @@ class StatisticsPanel extends JPanel implements DataProvider{
     }
 
     public void onTestSelected(final TestProxy test) {
+      if (!StatisticsPanel.this.isShowing()) return;
       if (myCurrentTest == test)
         return;
       if (test == null) {

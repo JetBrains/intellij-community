@@ -50,7 +50,7 @@ public class NameFilteringListModel<T> extends FilteringListModel<T> {
     if (myNamer != null) {
       String filterString = mySpeedSearch.getFilter().toUpperCase();
       String candidateString = myNamer.fun(elt).toUpperCase();
-      int index = size() - 1;
+      int index = getSize() - 1;
 
       if (myFullMatchIndex == -1 && filterString.equals(candidateString)) {
         myFullMatchIndex = index;

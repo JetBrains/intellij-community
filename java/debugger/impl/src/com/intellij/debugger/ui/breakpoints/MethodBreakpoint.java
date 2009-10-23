@@ -303,12 +303,19 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
       public MethodDescriptor compute() {
         //PsiMethod method = DebuggerUtilsEx.findPsiMethod(psiJavaFile, endOffset);
         PsiMethod method = PositionUtil.getPsiElementAt(project, PsiMethod.class, sourcePosition);
-        if (method == null || document.getLineNumber(method.getTextOffset()) < sourcePosition.getLine()) {
+        if (method == null) {
+          return null;
+        }
+        final int methodOffset = method.getTextOffset();
+        if (methodOffset < 0) {
+          return null;
+        }
+        if (document.getLineNumber(methodOffset) < sourcePosition.getLine()) {
           return null;
         }
 
         final PsiIdentifier identifier = method.getNameIdentifier();
-        int methodNameOffset = identifier != null? identifier.getTextOffset() : method.getTextOffset();
+        int methodNameOffset = identifier != null? identifier.getTextOffset() : methodOffset;
         final MethodDescriptor descriptor =
           new MethodDescriptor();
         //noinspection HardCodedStringLiteral

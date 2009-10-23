@@ -19,8 +19,12 @@
  */
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
@@ -53,11 +57,10 @@ public class RefreshWorker {
       root.markClean();
     }
     else {
-      //ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
-      //if (delegate.getProtocol().equals(LocalFileSystem.PROTOCOL) && SystemInfo.isWindows && root.isDirectory() &&
-      //    (applicationEx.isUnitTestMode() || applicationEx.isInternal())) {
-      //  delegate = new Win32LocalFileSystem();
-      //}
+      if (delegate.getProtocol().equals(LocalFileSystem.PROTOCOL) && SystemInfo.isWindows && root.isDirectory() &&
+          (Registry.is("filesystem.useNative"))) {
+        delegate = new Win32LocalFileSystem();
+      }
 
       final PersistentFS persistence = (PersistentFS)ManagingFS.getInstance();
 

@@ -191,9 +191,6 @@ public class TestProxy extends CompositePrintable implements PrintableTestProxy,
     return myInfo;
   }
 
-  public void onChildAdded(final AbstractTestProxy parent, final AbstractTestProxy newChild) {
-    fireStatisticsChanged();
-  }
 
   public void onChanged(final AbstractTestProxy test) {
     myChildren.resetCache();
@@ -205,7 +202,7 @@ public class TestProxy extends CompositePrintable implements PrintableTestProxy,
     }
   }
 
-  public void onStatisticsChanged(final AbstractTestProxy testProxy) {
+  public void onStatisticsChanged() {
     myChildren.resetCache();
     fireStatisticsChanged();
   }
@@ -213,7 +210,7 @@ public class TestProxy extends CompositePrintable implements PrintableTestProxy,
   private void fireStatisticsChanged() {
     myChildren.resetCache();
     if (myParent != null)
-      myParent.onStatisticsChanged(this);
+      myParent.onStatisticsChanged();
     pullEvent(new StatisticsChanged(this));
     myNotifier.onStatisticsChanged(this);
   }
@@ -301,13 +298,4 @@ public class TestProxy extends CompositePrintable implements PrintableTestProxy,
     return getParent() == null;
   }
 
-
-
-  public TestState.StateInterval calculateInterval(final SuiteState state) {
-    final SuiteState.SuiteStateInterval result = new SuiteState.SuiteStateInterval(state, getChildAt(0).getState().getInterval());
-    for (TestProxy proxy : getChildren()) {
-      result.updateFrom(proxy.getState().getInterval());
-    }
-    return result;
-  }
 }

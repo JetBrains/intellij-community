@@ -15,18 +15,18 @@
  */
 package com.intellij.codeInsight.highlighting;
 
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.ide.util.PsiClassListCellRenderer;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.ide.util.PsiClassListCellRenderer;
-import com.intellij.codeInsight.CodeInsightBundle;
 
 import javax.swing.*;
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Vector;
 
 public abstract class ChooseClassAndDoHighlightRunnable implements Runnable {
@@ -79,7 +79,8 @@ public abstract class ChooseClassAndDoHighlightRunnable implements Runnable {
       myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       myList.setCellRenderer(renderer);
 
-      renderer.installSpeedSearch(myList);
+      final PopupChooserBuilder builder = new PopupChooserBuilder(myList);
+      renderer.installSpeedSearch(builder);
 
       final Runnable callback = new Runnable() {
         public void run() {
@@ -96,7 +97,7 @@ public abstract class ChooseClassAndDoHighlightRunnable implements Runnable {
 
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          new PopupChooserBuilder(myList).
+          builder.
             setTitle(myTitle).
             setItemChoosenCallback(callback).
             createPopup().

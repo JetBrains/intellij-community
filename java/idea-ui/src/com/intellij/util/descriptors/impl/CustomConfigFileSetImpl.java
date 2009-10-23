@@ -16,17 +16,16 @@
 
 package com.intellij.util.descriptors.impl;
 
-import com.intellij.util.descriptors.CustomConfigFileSet;
-import com.intellij.util.descriptors.CustomConfigFile;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.descriptors.CustomConfigFile;
+import com.intellij.util.descriptors.CustomConfigFileSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author nik
@@ -58,7 +57,11 @@ public class CustomConfigFileSetImpl implements CustomConfigFileSet {
     myDescriptors.addAll(descriptors);
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
+  public void readExternal(Element element) {
+    doReadExternal(element, new ArrayList<Element>());
+  }
+
+  public void doReadExternal(Element element, List<Element> descriptorElements) {
     myDescriptors.clear();
     List<Element> descriptors = element.getChildren(ELEMENT_NAME);
     for (Element descriptor : descriptors) {
@@ -66,6 +69,7 @@ public class CustomConfigFileSetImpl implements CustomConfigFileSet {
       String directory = getDefaultDirOption(descriptor);
       if (directory != null) {
         myDescriptors.add(new CustomConfigFile(url, directory));
+        descriptorElements.add(descriptor);
       }
     }
   }

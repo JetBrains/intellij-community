@@ -115,7 +115,8 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     PsiElementListCellRenderer renderer = new PsiClassListCellRenderer();
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setCellRenderer(renderer);
-    renderer.installSpeedSearch(list);
+    final PopupChooserBuilder builder = new PopupChooserBuilder(list);
+    renderer.installSpeedSearch(builder);
 
     Runnable runnable = new Runnable() {
       public void run() {
@@ -135,7 +136,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       }
     };
 
-    new PopupChooserBuilder(list).
+    builder.
       setTitle(QuickFixBundle.message("target.class.chooser.title")).
       setItemChoosenCallback(runnable).
       createPopup().
