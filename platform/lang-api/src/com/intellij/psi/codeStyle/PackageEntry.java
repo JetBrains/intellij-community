@@ -103,10 +103,12 @@ public class PackageEntry {
     if (entry.isWithSubpackages() != isWithSubpackages()) {
       return !isWithSubpackages();
     }
-
+    if (entry == ALL_OTHER_IMPORTS_ENTRY || entry == ALL_OTHER_STATIC_IMPORTS_ENTRY) return true;
+    if (this == ALL_OTHER_IMPORTS_ENTRY || this == ALL_OTHER_STATIC_IMPORTS_ENTRY) return false;
     return StringUtil.countChars(entry.getPackageName(), '.') < StringUtil.countChars(getPackageName(), '.');
   }
 
+  @NonNls
   @Override
   public String toString() {
     return (isStatic() ? "static " : "") + getPackageName();

@@ -76,15 +76,12 @@ public class ImportHelper{
 
     List<Pair<String, Boolean>> resultList = new ArrayList<Pair<String, Boolean>>(names.size());
     for(int i = 0; i < entries.length; i++){
-      PackageEntry entry = entries[i];
-      //if (!entry.isSpecial()) {
-        for(int j = 0; j < names.size(); j++){
-          if (entryForName[j] == i){
-            resultList.add(names.get(j));
-            names.set(j, null);
-          }
+      for(int j = 0; j < names.size(); j++){
+        if (entryForName[j] == i){
+          resultList.add(names.get(j));
+          names.set(j, null);
         }
-      //}
+      }
     }
     for (Pair<String, Boolean> name : names) {
       if (name != null) resultList.add(name);
