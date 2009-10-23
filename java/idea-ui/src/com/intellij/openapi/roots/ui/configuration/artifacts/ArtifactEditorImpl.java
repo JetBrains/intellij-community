@@ -372,6 +372,10 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     }
   }
 
+  public void updateLayoutTree() {
+    myLayoutTreeComponent.rebuildTree();
+  }
+
   public void putLibraryIntoDefaultLocation(@NotNull Library library) {
     myLayoutTreeComponent.putIntoDefaultLocations(Collections.singletonList(new LibrarySourceItem(library)));
   }
@@ -393,10 +397,8 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
     final CompositePackagingElement<?> oldRootElement = getRootElement();
     final CompositePackagingElement<?> newRootElement = artifactType.createRootElement(getArtifact().getName());
-    if (!newRootElement.getType().equals(oldRootElement.getType())) {
-      ArtifactUtil.copyChildren(oldRootElement, newRootElement, myProject);
-      myLayoutTreeComponent.setRootElement(newRootElement);
-    }
+    ArtifactUtil.copyChildren(oldRootElement, newRootElement, myProject);
+    myLayoutTreeComponent.setRootElement(newRootElement);
   }
 
   private class MyDataProvider implements TypeSafeDataProvider {

@@ -15,6 +15,9 @@
  */
 package com.intellij.packaging.ui;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.List;
 import java.util.ArrayList;
 
@@ -26,16 +29,23 @@ public class ManifestFileConfiguration {
   private String myMainClass;
   private String myManifestFilePath;
 
-  public ManifestFileConfiguration(ManifestFileConfiguration configuration) {
-    myClasspath = new ArrayList<String>(configuration.getClasspath());
-    myMainClass = configuration.getMainClass();
-    myManifestFilePath = configuration.getManifestFilePath();
+  public ManifestFileConfiguration(@NotNull ManifestFileConfiguration configuration) {
+    copyFrom(configuration);
   }
 
-  public ManifestFileConfiguration(List<String> classpath, String mainClass, String manifestFilePath) {
-    myClasspath = classpath;
+  public ManifestFileConfiguration(@Nullable List<String> classpath, @Nullable String mainClass, @Nullable String manifestFilePath) {
+    if (classpath != null) {
+      myClasspath.addAll(classpath);
+    }
     myMainClass = mainClass;
     myManifestFilePath = manifestFilePath;
+  }
+
+  public void copyFrom(@NotNull ManifestFileConfiguration configuration) {
+    myClasspath.clear();
+    myClasspath.addAll(configuration.getClasspath());
+    myMainClass = configuration.getMainClass();
+    myManifestFilePath = configuration.getManifestFilePath();
   }
 
   public List<String> getClasspath() {
