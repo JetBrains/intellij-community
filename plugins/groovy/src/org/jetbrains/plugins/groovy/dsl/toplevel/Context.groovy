@@ -3,8 +3,10 @@ package org.jetbrains.plugins.groovy.dsl.toplevel
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.containers.*
 import com.intellij.util.containers.HashSet
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClassScope
@@ -17,7 +19,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
-import com.intellij.psi.*
 
 /**
  * @author ilyas
@@ -26,8 +27,8 @@ class Context {
 
   private List<Closure> myFilters = []
 
-  private final Set<Pair<String, String>> ASSIGNABLE_TYPES = new HashSet<Pair<String, String>>();
-  private final Set<Pair<String, String>> NON_ASSIGNABLE_TYPES = new HashSet<Pair<String, String>>();
+  private final Set<Pair<String, String>> ASSIGNABLE_TYPES = new ConcurrentHashSet<Pair<String, String>>();
+  private final Set<Pair<String, String>> NON_ASSIGNABLE_TYPES = new ConcurrentHashSet<Pair<String, String>>();
 
   public Context(Map args) {
     // Basic filter, all contexts are applicable for reference expressions only

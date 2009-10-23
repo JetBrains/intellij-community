@@ -51,7 +51,9 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
+import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.ObjectCollectedException;
+import com.sun.jdi.Value;
 
 import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreeModel;
@@ -116,34 +118,54 @@ public class FrameDebuggerTree extends DebuggerTree {
       super(stackNode);
     }
     
-    protected void buildVariables(final StackFrameDescriptorImpl stackDescriptor, final EvaluationContextImpl evaluationContext)
-      throws EvaluateException {
+    protected void buildVariables(final StackFrameDescriptorImpl stackDescriptor, final EvaluationContextImpl evaluationContext) throws EvaluateException {
       final SourcePosition sourcePosition = getDebuggerContext().getSourcePosition();
       if (sourcePosition == null) {
         return;
       }
-      final Map<String, LocalVariableProxyImpl> visibleVariables = getVisibleVariables(stackDescriptor);
-      final Pair<Set<String>, Set<TextWithImports>> usedVars =
-        ApplicationManager.getApplication().runReadAction(new Computable<Pair<Set<String>, Set<TextWithImports>>>() {
-          public Pair<Set<String>, Set<TextWithImports>> compute() {
-            return findReferencedVars(visibleVariables.keySet(), sourcePosition);
+      try {
+        final Map<String, LocalVariableProxyImpl> visibleVariables = getVisibleVariables(stackDescriptor);
+        final Pair<Set<String>, Set<TextWithImports>> usedVars =
+          ApplicationManager.getApplication().runReadAction(new Computable<Pair<Set<String>, Set<TextWithImports>>>() {
+            public Pair<Set<String>, Set<TextWithImports>> compute() {
+              return findReferencedVars(visibleVariables.keySet(), sourcePosition);
+            }
+          });
+        // add locals
+        if (myAutoWatchMode) {
+          for (String var : usedVars.first) {
+            final LocalVariableDescriptorImpl descriptor = myNodeManager.getLocalVariableDescriptor(stackDescriptor, visibleVariables.get(var));
+            myChildren.add(myNodeManager.createNode(descriptor, evaluationContext));
           }
-        });
-      // add locals
-      if (myAutoWatchMode) {
-        for (String var : usedVars.first) {
-          final LocalVariableDescriptorImpl descriptor = myNodeManager.getLocalVariableDescriptor(stackDescriptor, visibleVariables.get(var));
-          myChildren.add(myNodeManager.createNode(descriptor, evaluationContext));
+        }
+        else {
+          super.buildVariables(stackDescriptor, evaluationContext);
+        }
+        // add expressions
+        final EvaluationContextImpl evalContextCopy = evaluationContext.createEvaluationContext(evaluationContext.getThisObject());
+        evalContextCopy.setAutoLoadClasses(false);
+        for (TextWithImports text : usedVars.second) {
+          myChildren.add(myNodeManager.createNode(myNodeManager.getWatchItemDescriptor(stackDescriptor, text, null), evalContextCopy));
         }
       }
-      else {
-        super.buildVariables(stackDescriptor, evaluationContext);
-      }
-      // add expressions
-      final EvaluationContextImpl evalContextCopy = evaluationContext.createEvaluationContext(evaluationContext.getThisObject());
-      evalContextCopy.setAutoLoadClasses(false);
-      for (TextWithImports text : usedVars.second) {
-        myChildren.add(myNodeManager.createNode(myNodeManager.getWatchItemDescriptor(stackDescriptor, text, null), evalContextCopy));
+      catch (EvaluateException e) {
+        if (e.getCause() instanceof AbsentInformationException) {
+          final StackFrameProxyImpl frame = stackDescriptor.getFrameProxy();
+          if (frame == null) {
+            throw e;
+          }
+          final Collection<Value> argValues = frame.getArgumentValues();
+          int index = 0;
+          for (Value argValue : argValues) {
+            final ArgumentValueDescriptorImpl descriptor = myNodeManager.getArgumentValueDescriptor(stackDescriptor, index++, argValue);
+            final DebuggerTreeNodeImpl variableNode = myNodeManager.createNode(descriptor, evaluationContext);
+            myChildren.add(variableNode);
+          }
+          myChildren.add(myNodeManager.createMessageNode(MessageDescriptor.LOCAL_VARIABLES_INFO_UNAVAILABLE));
+        }
+        else {
+          throw e;
+        }
       }
     }
   }
