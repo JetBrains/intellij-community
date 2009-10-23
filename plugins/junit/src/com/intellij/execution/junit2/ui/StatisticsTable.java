@@ -16,13 +16,10 @@
 
 package com.intellij.execution.junit2.ui;
 
-import com.intellij.execution.testframework.Filter;
-import com.intellij.execution.junit2.StateChangedEvent;
-import com.intellij.execution.junit2.TestEvent;
-import com.intellij.execution.junit2.TestProxy;
-import com.intellij.execution.junit2.ui.model.JUnitAdapter;
-import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.junit2.TestProxy;
+import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
+import com.intellij.execution.testframework.Filter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
@@ -42,18 +39,6 @@ public class StatisticsTable extends ListTableModel {
   public void setModel(final JUnitRunningModel model) {
     myModel = model;
     setTest(myModel.getRoot());
-    myModel.addListener(new JUnitAdapter() {
-      public void doDispose() {
-        myTest = null;
-        resetTests();
-        myModel = null;
-      }
-
-      public void onTestChanged(final TestEvent event) {
-        if (event instanceof StateChangedEvent) return;
-        if (event.getSource() == myTest) changeTableData();
-      }
-    });
   }
 
   public void onSelectionChanged(final TestProxy test) {
