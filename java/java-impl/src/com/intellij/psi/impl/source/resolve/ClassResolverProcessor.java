@@ -91,39 +91,38 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
   }
 
   public boolean execute(PsiElement element, ResolveState state) {
-    if (element instanceof PsiClass) {
-      final PsiClass aClass = (PsiClass)element;
-      final String name = aClass.getName();
-      if (myClassName.equals(name)) {
-        if (myCandidates == null) {
-          myCandidates = new SmartList<ClassCandidateInfo>();
-        }
-        else {
-          String fqName = aClass.getQualifiedName();
-          if (fqName != null) {
-            for (ClassCandidateInfo info : myCandidates) {
-              final PsiClass otherClass = info.getElement();
-              assert otherClass != null;
-              if (fqName.equals(otherClass.getQualifiedName())) {
-                return true;
-              }
-              final PsiClass containingclass1 = aClass.getContainingClass();
-              final PsiClass containingclass2 = otherClass.getContainingClass();
-              if (containingclass1 != null && containingclass2 != null && containingclass2.isInheritor(containingclass1, true)) {
-                //shadowing
-                return true;
-              }
+    if (!(element instanceof PsiClass)) return true;
+    final PsiClass aClass = (PsiClass)element;
+    final String name = aClass.getName();
+    if (myClassName.equals(name)) {
+      if (myCandidates == null) {
+        myCandidates = new SmartList<ClassCandidateInfo>();
+      }
+      else {
+        String fqName = aClass.getQualifiedName();
+        if (fqName != null) {
+          for (ClassCandidateInfo info : myCandidates) {
+            final PsiClass otherClass = info.getElement();
+            assert otherClass != null;
+            if (fqName.equals(otherClass.getQualifiedName())) {
+              return true;
+            }
+            final PsiClass containingclass1 = aClass.getContainingClass();
+            final PsiClass containingclass2 = otherClass.getContainingClass();
+            if (containingclass1 != null && containingclass2 != null && containingclass2.isInheritor(containingclass1, true)) {
+              //shadowing
+              return true;
             }
           }
         }
-
-        boolean accessible = myPlace == null || checkAccessibility(aClass);
-        myHasAccessibleCandidate |= accessible;
-        myHasInaccessibleCandidate |= !accessible;
-        myCandidates.add(new ClassCandidateInfo(aClass, state.get(PsiSubstitutor.KEY), !accessible, myCurrentFileContext));
-        myResult = null;
-        return !accessible;
       }
+
+      boolean accessible = myPlace == null || checkAccessibility(aClass);
+      myHasAccessibleCandidate |= accessible;
+      myHasInaccessibleCandidate |= !accessible;
+      myCandidates.add(new ClassCandidateInfo(aClass, state.get(PsiSubstitutor.KEY), !accessible, myCurrentFileContext));
+      myResult = null;
+      //return !accessible;
     }
     return true;
   }

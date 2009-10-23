@@ -28,15 +28,14 @@ public interface JavaResolveResult extends ResolveResult {
   /**
    * Substitutor providing values of type parameters occuring
    * in {@link #getElement()}.
-   * @return
    */
   PsiSubstitutor getSubstitutor();
 
   boolean isPackagePrefixPackageReference();
 
   /**
-   * Checks whether {@link #getElement()} is accessible from reference.
-   * @return
+   * @return true if {@link #getElement()} is accessible from reference.
+   *
    */
   boolean isAccessible();
 
