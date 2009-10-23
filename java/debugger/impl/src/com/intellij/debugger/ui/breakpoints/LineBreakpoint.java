@@ -40,6 +40,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.Processor;
@@ -104,7 +105,16 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     myMethodName = LineBreakpoint.findMethodName(file, getHighlighter().getStartOffset());
   }
 
+  protected void createOrWaitPrepare(DebugProcessImpl debugProcess, String classToBeLoaded) {
+    if (isInScopeOf(debugProcess)) {
+      super.createOrWaitPrepare(debugProcess, classToBeLoaded);
+    }
+  }
+
   protected void createRequestForPreparedClass(final DebugProcessImpl debugProcess, final ReferenceType classType) {
+    if (!isInScopeOf(debugProcess)) {
+      return;
+    }
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         try {
@@ -158,6 +168,15 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
         updateUI();
       }
     });
+  }
+
+  private boolean isInScopeOf(DebugProcessImpl debugProcess) {
+    final SourcePosition position = getSourcePosition();
+    if (position != null) {
+      final GlobalSearchScope scope = debugProcess.getSearchScope();
+      return scope.accept(position.getFile().getVirtualFile());
+    }
+    return true;
   }
 
   public boolean evaluateCondition(EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
