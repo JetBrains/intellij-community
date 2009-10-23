@@ -305,14 +305,15 @@ public class GitRootTracker implements VcsListener {
         }
         if (myNotificationPosted.compareAndSet(false, true)) {
           myNotification = new Notification(GIT_INVALID_ROOTS_ID, GitBundle.getString("root.tracker.message.title"),
-                                            GitBundle.getString("root.tracker.message"),
-                                            NotificationType.ERROR, new NotificationListener() {
-              public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-                if (fixRoots()) {
-                  notification.expire();
-                }
-              }
-            });
+                                            GitBundle.getString("root.tracker.message"), NotificationType.ERROR,
+                                            new NotificationListener() {
+                                              public void hyperlinkUpdate(@NotNull Notification notification,
+                                                                          @NotNull HyperlinkEvent event) {
+                                                if (fixRoots()) {
+                                                  notification.expire();
+                                                }
+                                              }
+                                            });
 
           Notifications.Bus.notify(myNotification, myProject);
         }
@@ -336,18 +337,24 @@ public class GitRootTracker implements VcsListener {
    * @param rootSet   the mapped root set
    * @return true if there are unmapped subroots
    */
-  private static boolean hasUnmappedSubroots(final VirtualFile directory, HashSet<String> rootSet) {
+  private static boolean hasUnmappedSubroots(final VirtualFile directory, final HashSet<String> rootSet) {
     VirtualFile[] children = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile[]>() {
       public VirtualFile[] compute() {
         return directory.getChildren();
       }
     });
 
-    for (VirtualFile child : children) {
+    for (final VirtualFile child : children) {
       if (child.getName().equals(".git") || !child.isDirectory()) {
         continue;
       }
-      if (child.findChild(".git") != null && !rootSet.contains(child.getPath())) {
+      boolean hasUnmapped = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+        public Boolean compute() {
+          if (child.isValid()) return false;
+          return child.findChild(".git") != null && !rootSet.contains(child.getPath());
+        }
+      });
+      if (hasUnmapped) {
         return true;
       }
       if (hasUnmappedSubroots(child, rootSet)) {
