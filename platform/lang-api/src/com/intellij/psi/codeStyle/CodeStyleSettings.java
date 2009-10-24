@@ -35,7 +35,7 @@ import java.lang.reflect.Modifier;
 import java.util.*;
 
 public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
-  private ClassMap<CustomCodeStyleSettings> myCustomSettings = new ClassMap<CustomCodeStyleSettings>();
+  private final ClassMap<CustomCodeStyleSettings> myCustomSettings = new ClassMap<CustomCodeStyleSettings>();
   @NonNls private static final String ADDITIONAL_INDENT_OPTIONS = "ADDITIONAL_INDENT_OPTIONS";
   @NonNls private static final String FILETYPE = "fileType";
 
@@ -45,7 +45,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
   public CodeStyleSettings(boolean loadExtensions) {
     initTypeToName();
-    initImports();
+    initImportsByDefault();
 
     if (loadExtensions) {
       final CodeStyleSettingsProvider[] codeStyleSettingsProviders = Extensions.getExtensions(CodeStyleSettingsProvider.EXTENSION_POINT_NAME);
@@ -55,13 +55,15 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
     }
   }
 
-  private void initImports() {
-    PACKAGES_TO_USE_IMPORT_ON_DEMAND.insertEntryAt(new PackageTable.Entry("java.awt", false), 0);
-    PACKAGES_TO_USE_IMPORT_ON_DEMAND.insertEntryAt(new PackageTable.Entry("javax.swing", false), 1);
-    IMPORT_LAYOUT_TABLE.insertEntryAt(new ImportLayoutTable.PackageEntry("", true), 0);
-    IMPORT_LAYOUT_TABLE.insertEntryAt(new ImportLayoutTable.EmptyLineEntry(), 1);
-    IMPORT_LAYOUT_TABLE.insertEntryAt(new ImportLayoutTable.PackageEntry("javax", true), 2);
-    IMPORT_LAYOUT_TABLE.insertEntryAt(new ImportLayoutTable.PackageEntry("java", true), 3);
+  private void initImportsByDefault() {
+    PACKAGES_TO_USE_IMPORT_ON_DEMAND.addEntry(new PackageEntry(false, "java.awt", false));
+    PACKAGES_TO_USE_IMPORT_ON_DEMAND.addEntry(new PackageEntry(false,"javax.swing", false));
+    IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
+    IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
+    IMPORT_LAYOUT_TABLE.addEntry(new PackageEntry(false, "javax", true));
+    IMPORT_LAYOUT_TABLE.addEntry(new PackageEntry(false, "java", true));
+    IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
+    IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
   }
 
   private void initTypeToName() {
@@ -102,67 +104,64 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   }
 
   public CodeStyleSettings clone() {
-    try {
-      CodeStyleSettings clone = (CodeStyleSettings)super.clone();
-
-      copyCustomSettings(this, clone);
-      return clone;
-    }
-    catch (CloneNotSupportedException e) {
-      throw new RuntimeException(e);
-    }
+    CodeStyleSettings clone = new CodeStyleSettings();
+    clone.copyFrom(this);
+    return clone;
   }
 
-  private static void copyCustomSettings(CodeStyleSettings from, final CodeStyleSettings to) throws CloneNotSupportedException {
-    to.myCustomSettings = new ClassMap<CustomCodeStyleSettings>();
+  private void copyCustomSettingsFrom(CodeStyleSettings from) {
+    assert from != this;
+    myCustomSettings.clear();
     for (final CustomCodeStyleSettings settings : from.myCustomSettings.values()) {
-      to.addCustomSettings((CustomCodeStyleSettings) settings.clone());
+      addCustomSettings((CustomCodeStyleSettings) settings.clone());
     }
 
-    to.FIELD_TYPE_TO_NAME = (TypeToNameMap)from.FIELD_TYPE_TO_NAME.clone();
-    to.STATIC_FIELD_TYPE_TO_NAME = (TypeToNameMap)from.STATIC_FIELD_TYPE_TO_NAME.clone();
-    to.PARAMETER_TYPE_TO_NAME = (TypeToNameMap)from.PARAMETER_TYPE_TO_NAME.clone();
-    to.LOCAL_VARIABLE_TYPE_TO_NAME = (TypeToNameMap)from.LOCAL_VARIABLE_TYPE_TO_NAME.clone();
+    FIELD_TYPE_TO_NAME.copyFrom(from.FIELD_TYPE_TO_NAME);
+    STATIC_FIELD_TYPE_TO_NAME.copyFrom(from.STATIC_FIELD_TYPE_TO_NAME);
+    PARAMETER_TYPE_TO_NAME.copyFrom(from.PARAMETER_TYPE_TO_NAME);
+    LOCAL_VARIABLE_TYPE_TO_NAME.copyFrom(from.LOCAL_VARIABLE_TYPE_TO_NAME);
 
-    to.PACKAGES_TO_USE_IMPORT_ON_DEMAND = (PackageTable)from.PACKAGES_TO_USE_IMPORT_ON_DEMAND.clone();
-    to.IMPORT_LAYOUT_TABLE = (ImportLayoutTable)from.IMPORT_LAYOUT_TABLE.clone();
+    PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(from.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
+    IMPORT_LAYOUT_TABLE.copyFrom(from.IMPORT_LAYOUT_TABLE);
 
-    to.OTHER_INDENT_OPTIONS = (IndentOptions)from.OTHER_INDENT_OPTIONS.clone();
+    OTHER_INDENT_OPTIONS.copyFrom(from.OTHER_INDENT_OPTIONS);
 
-    to.myAdditionalIndentOptions = new LinkedHashMap<FileType, IndentOptions>();
+    myAdditionalIndentOptions.clear();
     for(Map.Entry<FileType, IndentOptions> optionEntry: from.myAdditionalIndentOptions.entrySet()) {
-      to.myAdditionalIndentOptions.put(optionEntry.getKey(),(IndentOptions)optionEntry.getValue().clone());
+      IndentOptions options = optionEntry.getValue();
+      myAdditionalIndentOptions.put(optionEntry.getKey(),(IndentOptions)options.clone());
     }
   }
 
-  public void copyFrom(CodeStyleSettings settings) {
-    Field[] fields = getClass().getDeclaredFields();
+  public void copyFrom(CodeStyleSettings from) {
+    copyPublicFields(from, this);
+
+    this.copyCustomSettingsFrom(from);
+  }
+
+  private static void copyPublicFields(Object from, Object to) {
+    assert from != to;
+    Field[] fields = to.getClass().getDeclaredFields();
     for (Field field : fields) {
       if (isPublic(field) && !isFinal(field)) {
         try {
-          copyFieldValue(settings, field);
+          copyFieldValue(from, to, field);
         }
         catch (Exception e) {
           throw new RuntimeException(e);
         }
       }
     }
-
-    try {
-      copyCustomSettings(settings,  this);
-    }
-    catch (CloneNotSupportedException e) {
-      throw new RuntimeException(e);
-    }
   }
-  private void copyFieldValue(final CodeStyleSettings settings, final Field field)
-    throws IllegalAccessException, CloneNotSupportedException {
+
+  private static void copyFieldValue(final Object from, Object to, final Field field)
+    throws IllegalAccessException {
     Class<?> fieldType = field.getType();
     if (fieldType.isPrimitive()) {
-      field.set(this, field.get(settings));
+      field.set(to, field.get(from));
     }
     else if (fieldType.equals(String.class)) {
-      field.set(this, field.get(settings));
+      field.set(to, field.get(from));
     }
     else {
       System.out.println("Field not copied " + field.getName());
@@ -248,18 +247,22 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
       result = 31 * result + (LABEL_INDENT_ABSOLUTE ? 1 : 0);
       return result;
     }
+
+    public void copyFrom(IndentOptions other) {
+      copyPublicFields(other, this);
+    }
   }
 
   @Deprecated
-  public IndentOptions JAVA_INDENT_OPTIONS = new IndentOptions();
+  public final IndentOptions JAVA_INDENT_OPTIONS = new IndentOptions();
   @Deprecated
-  public IndentOptions JSP_INDENT_OPTIONS = new IndentOptions();
+  public final IndentOptions JSP_INDENT_OPTIONS = new IndentOptions();
   @Deprecated
-  public IndentOptions XML_INDENT_OPTIONS = new IndentOptions();
+  public final IndentOptions XML_INDENT_OPTIONS = new IndentOptions();
 
-  public IndentOptions OTHER_INDENT_OPTIONS = new IndentOptions();
+  public final IndentOptions OTHER_INDENT_OPTIONS = new IndentOptions();
 
-  private Map<FileType,IndentOptions> myAdditionalIndentOptions = new LinkedHashMap<FileType, IndentOptions>();
+  private final Map<FileType,IndentOptions> myAdditionalIndentOptions = new LinkedHashMap<FileType, IndentOptions>();
 
   private static final String ourSystemLineSeparator = SystemProperties.getLineSeparator();
 
@@ -720,10 +723,10 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
   public boolean PREFER_LONGER_NAMES = true;
 
-  public TypeToNameMap FIELD_TYPE_TO_NAME = new TypeToNameMap();
-  public TypeToNameMap STATIC_FIELD_TYPE_TO_NAME = new TypeToNameMap();
-  @NonNls public TypeToNameMap PARAMETER_TYPE_TO_NAME = new TypeToNameMap();
-  public TypeToNameMap LOCAL_VARIABLE_TYPE_TO_NAME = new TypeToNameMap();
+  public final TypeToNameMap FIELD_TYPE_TO_NAME = new TypeToNameMap();
+  public final TypeToNameMap STATIC_FIELD_TYPE_TO_NAME = new TypeToNameMap();
+  @NonNls public final TypeToNameMap PARAMETER_TYPE_TO_NAME = new TypeToNameMap();
+  public final TypeToNameMap LOCAL_VARIABLE_TYPE_TO_NAME = new TypeToNameMap();
 
 //----------------- 'final' modifier settings -------
   public boolean GENERATE_FINAL_LOCALS = false;
@@ -735,14 +738,15 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
 //----------------- IMPORTS --------------------
 
+  public boolean LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
   public boolean USE_FQ_CLASS_NAMES = false;
   public boolean USE_FQ_CLASS_NAMES_IN_JAVADOC = true;
   public boolean USE_SINGLE_CLASS_IMPORTS = true;
   public boolean INSERT_INNER_CLASS_IMPORTS = false;
   public int CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 5;
   public int NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
-  public PackageTable PACKAGES_TO_USE_IMPORT_ON_DEMAND = new PackageTable();
-  public ImportLayoutTable IMPORT_LAYOUT_TABLE = new ImportLayoutTable();
+  public final PackageEntryTable PACKAGES_TO_USE_IMPORT_ON_DEMAND = new PackageEntryTable();
+  public final PackageEntryTable IMPORT_LAYOUT_TABLE = new PackageEntryTable();
   public boolean OPTIMIZE_IMPORTS_ON_THE_FLY = false;
   public boolean ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false;
 
@@ -1115,6 +1119,23 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
+    if (LAYOUT_STATIC_IMPORTS_SEPARATELY) {
+      // add <all other static imports> entry if there is none
+      boolean found = false;
+      for (PackageEntry entry : IMPORT_LAYOUT_TABLE.getEntries()) {
+        if (entry == PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        PackageEntry last = IMPORT_LAYOUT_TABLE.getEntryCount() == 0 ? null : IMPORT_LAYOUT_TABLE.getEntryAt(IMPORT_LAYOUT_TABLE.getEntryCount() - 1);
+        if (last != PackageEntry.BLANK_LINE_ENTRY) {
+          IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
+        }
+        IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
+      }
+    }
     importOldIndentOptions(element);
     for (final CustomCodeStyleSettings settings : myCustomSettings.values()) {
       settings.readExternal(element);
@@ -1269,9 +1290,9 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
     return getIndentOptions(fileType).USE_TAB_CHARACTER;
   }
 
-  public static class TypeToNameMap implements JDOMExternalizable, Cloneable {
-    private ArrayList<String> myPatterns = new ArrayList<String>();
-    private ArrayList<String> myNames = new ArrayList<String>();
+  public static class TypeToNameMap implements JDOMExternalizable {
+    private final List<String> myPatterns = new ArrayList<String>();
+    private final List<String> myNames = new ArrayList<String>();
 
     public void addPair(String pattern, String name) {
       myPatterns.add(pattern);
@@ -1323,11 +1344,12 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
       }
     }
 
-    public Object clone() throws CloneNotSupportedException {
-      TypeToNameMap clon = (TypeToNameMap)TypeToNameMap.super.clone();
-      clon.myPatterns = (ArrayList<String>)myPatterns.clone();
-      clon.myNames = (ArrayList<String>)myNames.clone();
-      return clon;
+    public void copyFrom(TypeToNameMap from) {
+      assert from != this;
+      myPatterns.clear();
+      myPatterns.addAll(from.myPatterns);
+      myNames.clear();
+      myNames.addAll(from.myNames);
     }
 
     public boolean equals(Object other) {
@@ -1371,311 +1393,6 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
   }
 
-  public static class PackageTable implements JDOMExternalizable, Cloneable {
-    public static class Entry implements Cloneable {
-      final String packageName;
-      final boolean withSubpackages;
-
-      public Entry(@NonNls String packageName, boolean withSubpackages) {
-        this.packageName = packageName;
-        this.withSubpackages = withSubpackages;
-      }
-
-      public String getPackageName() {
-        return packageName;
-      }
-
-      public boolean isWithSubpackages() {
-        return withSubpackages;
-      }
-
-      public boolean equals(Object obj) {
-        if (!(obj instanceof Entry)) {
-          return false;
-        }
-        Entry entry = (Entry)obj;
-        return entry.withSubpackages == withSubpackages
-               && Comparing.equal(entry.packageName, packageName);
-      }
-
-      public int hashCode() {
-        if (packageName == null) {
-          return 0;
-        }
-        return packageName.hashCode();
-      }
-
-    }
-
-    private ArrayList<Entry> myEntries = new ArrayList<Entry>();
-
-    public boolean equals(Object obj) {
-      if (!(obj instanceof PackageTable)) {
-        return false;
-      }
-      PackageTable other = (PackageTable)obj;
-      if (other.myEntries.size() != myEntries.size()) {
-        return false;
-      }
-      for (int i = 0; i < myEntries.size(); i++) {
-        Entry entry = myEntries.get(i);
-        Entry otherentry = other.myEntries.get(i);
-        if (!Comparing.equal(entry, otherentry)) {
-          return false;
-        }
-      }
-      return true;
-    }
-
-    public int hashCode() {
-      if (!myEntries.isEmpty() && myEntries.get(0) != null) {
-        return myEntries.get(0).hashCode();
-      }
-      return 0;
-    }
-
-    public Object clone() throws CloneNotSupportedException {
-      PackageTable clon = (PackageTable)PackageTable.super.clone();
-      clon.myEntries = (ArrayList<Entry>)myEntries.clone();
-      return clon;
-    }
-
-    public void copyFrom(PackageTable packageTable) {
-      myEntries = (ArrayList<Entry>)packageTable.myEntries.clone();
-    }
-
-    public Entry[] getEntries() {
-      return myEntries.toArray(new Entry[myEntries.size()]);
-    }
-
-    public void insertEntryAt(Entry entry, int i) {
-      myEntries.add(i, entry);
-    }
-
-    public void removeEntryAt(int i) {
-      myEntries.remove(i);
-    }
-
-    public Entry getEntryAt(int i) {
-      return myEntries.get(i);
-    }
-
-    public int getEntryCount() {
-      return myEntries.size();
-    }
-
-    public void setEntryAt(Entry entry, int i) {
-      myEntries.set(i, entry);
-    }
-
-    public boolean contains(String packageName) {
-      for (Entry entry : myEntries) {
-        if (packageName.startsWith(entry.packageName)) {
-          if (packageName.length() == entry.packageName.length()) return true;
-          if (entry.withSubpackages) {
-            if (packageName.charAt(entry.packageName.length()) == '.') return true;
-          }
-        }
-      }
-      return false;
-    }
-
-    public void readExternal(@NonNls Element element) throws InvalidDataException {
-      myEntries.clear();
-
-      for (final Object o : element.getChildren("package")) {
-        @NonNls Element e = (Element)o;
-        String packageName = e.getAttributeValue("name");
-        boolean withSubpackages = Boolean.parseBoolean(e.getAttributeValue("withSubpackages"));
-        if (packageName == null) {
-          throw new InvalidDataException();
-        }
-        myEntries.add(new Entry(packageName, withSubpackages));
-      }
-    }
-
-    public void writeExternal(Element parentNode) throws WriteExternalException {
-      for (Entry entry : myEntries) {
-        @NonNls Element element = new Element("package");
-        parentNode.addContent(element);
-        element.setAttribute("name", entry.packageName);
-        element.setAttribute("withSubpackages", Boolean.toString(entry.withSubpackages));
-      }
-    }
-  }
-
-  public static class ImportLayoutTable implements JDOMExternalizable, Cloneable {
-    private ArrayList<Entry> myEntries = new ArrayList<Entry>();
-
-    public interface Entry {
-    }
-
-    public static class PackageEntry implements Entry {
-      private final String myPackageName;
-      private final boolean myWithSubpackages;
-
-      public PackageEntry(@NonNls String packageName, boolean withSubpackages) {
-        myPackageName = packageName;
-        myWithSubpackages = withSubpackages;
-      }
-
-      public String getPackageName() {
-        return myPackageName;
-      }
-
-      public boolean isWithSubpackages() {
-        return myWithSubpackages;
-      }
-
-      public boolean matchesPackageName(String packageName) {
-        if (myPackageName.length() == 0 && myWithSubpackages) return true;
-        if (packageName.startsWith(myPackageName)) {
-          if (packageName.length() == myPackageName.length()) return true;
-          if (myWithSubpackages) {
-            if (packageName.charAt(myPackageName.length()) == '.') return true;
-          }
-        }
-        return false;
-      }
-
-      public boolean matchesClassName(String className) {
-        int dotIndex = className.lastIndexOf('.');
-        String packageName = dotIndex < 0 ? "" : className.substring(0, dotIndex);
-        return matchesPackageName(packageName);
-      }
-
-      public boolean equals(Object obj) {
-        if (!(obj instanceof PackageEntry)) {
-          return false;
-        }
-        PackageEntry entry = (PackageEntry)obj;
-        return entry.myWithSubpackages == myWithSubpackages
-               && Comparing.equal(entry.myPackageName, myPackageName);
-      }
-
-      public int hashCode() {
-        if (myPackageName == null) {
-          return 0;
-        }
-        return myPackageName.hashCode();
-      }
-    }
-
-    public static class EmptyLineEntry implements Entry {
-      public boolean equals(Object obj) {
-        return obj instanceof EmptyLineEntry;
-      }
-
-      public int hashCode() {
-        return 100;
-      }
-    }
-
-
-    public void copyFrom(ImportLayoutTable importLayoutTable) {
-      myEntries = (ArrayList<Entry>)importLayoutTable.myEntries.clone();
-    }
-
-    public Entry[] getEntries() {
-      return myEntries.toArray(new Entry[myEntries.size()]);
-    }
-
-    public void insertEntryAt(Entry entry, int i) {
-      myEntries.add(i, entry);
-    }
-
-    public void removeEntryAt(int i) {
-      myEntries.remove(i);
-    }
-
-    public Entry getEntryAt(int i) {
-      return myEntries.get(i);
-    }
-
-    public int getEntryCount() {
-      return myEntries.size();
-    }
-
-    public void setEntryAt(Entry entry, int i) {
-      myEntries.set(i, entry);
-    }
-
-    public void readExternal(Element element) throws InvalidDataException {
-      myEntries.clear();
-      List children = element.getChildren();
-      for (final Object aChildren : children) {
-        @NonNls Element e = (Element)aChildren;
-        @NonNls String name = e.getName();
-        if ("package".equals(name)) {
-          String packageName = e.getAttributeValue("name");
-          boolean withSubpackages = Boolean.parseBoolean(e.getAttributeValue("withSubpackages"));
-          if (packageName == null) {
-            throw new InvalidDataException();
-          }
-          myEntries.add(new PackageEntry(packageName, withSubpackages));
-        }
-        else {
-          if ("emptyLine".equals(name)) {
-            myEntries.add(new EmptyLineEntry());
-          }
-        }
-
-      }
-
-    }
-
-    public void writeExternal(Element parentNode) throws WriteExternalException {
-      for (Entry myEntry : myEntries) {
-        if (myEntry instanceof PackageEntry) {
-          PackageEntry entry = (PackageEntry)myEntry;
-          @NonNls Element element = new Element("package");
-          parentNode.addContent(element);
-          element.setAttribute("name", entry.getPackageName());
-          element.setAttribute("withSubpackages", entry.isWithSubpackages() ? "true" : "false");
-        }
-        else {
-          if (myEntry instanceof EmptyLineEntry) {
-            @NonNls Element element = new Element("emptyLine");
-            parentNode.addContent(element);
-          }
-        }
-      }
-    }
-
-    public boolean equals(Object obj) {
-      if (!(obj instanceof ImportLayoutTable)) {
-        return false;
-      }
-      ImportLayoutTable other = (ImportLayoutTable)obj;
-      if (other.myEntries.size() != myEntries.size()) {
-        return false;
-      }
-      for (int i = 0; i < myEntries.size(); i++) {
-        Entry entry = myEntries.get(i);
-        Entry otherentry = other.myEntries.get(i);
-        if (!Comparing.equal(entry, otherentry)) {
-          return false;
-        }
-      }
-      return true;
-    }
-
-    public int hashCode() {
-      if (!myEntries.isEmpty() && myEntries.get(0) != null) {
-        return myEntries.get(0).hashCode();
-      }
-      return 0;
-    }
-
-    public Object clone() throws CloneNotSupportedException {
-      ImportLayoutTable clon = (ImportLayoutTable)ImportLayoutTable.super.clone();
-      clon.myEntries = (ArrayList<Entry>)myEntries.clone();
-      return clon;
-    }
-
-
-  }
-
   private void registerAdditionalIndentOptions(FileType fileType, IndentOptions options) {
     myAdditionalIndentOptions.put(fileType, options);
   }
@@ -1689,9 +1406,8 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
   private void loadAdditionalIndentOptions() {
     myLoadedAdditionalIndentOptions = true;
-    final FileTypeIndentOptionsProvider[] fileTypeIndentOptionsProviders =
-      Extensions.getExtensions(FileTypeIndentOptionsProvider.EP_NAME);
-    for (final FileTypeIndentOptionsProvider provider : fileTypeIndentOptionsProviders) {
+    final FileTypeIndentOptionsProvider[] providers = Extensions.getExtensions(FileTypeIndentOptionsProvider.EP_NAME);
+    for (final FileTypeIndentOptionsProvider provider : providers) {
       if (!myAdditionalIndentOptions.containsKey(provider.getFileType())) {
         registerAdditionalIndentOptions(provider.getFileType(), provider.createIndentOptions());
       }
@@ -1701,16 +1417,13 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   @TestOnly
   public void clearCodeStyleSettings() throws Exception {
     CodeStyleSettings cleanSettings = new CodeStyleSettings();
-    Element element = new Element("temp");
-    cleanSettings.writeExternal(element);
-
-    readExternal(element);
+    copyFrom(cleanSettings);
     myAdditionalIndentOptions.clear(); //hack
     myLoadedAdditionalIndentOptions = false;
   }
 
   private static class TempFileType implements FileType {
-    private String myExtension;
+    private final String myExtension;
 
     private TempFileType(@NotNull final String extension) {
       myExtension = extension;

@@ -66,7 +66,7 @@ public class DocumentBasedFormattingModel implements FormattingModel {
     mySettings = settings;
     myFileType = fileType;
     myDocumentModel = FormattingDocumentModelImpl.createOn(file);
-    myDocument = ((FormattingDocumentModelImpl)myDocumentModel).getDocument();
+    myDocument = myDocumentModel.getDocument();
   }
 
   @NotNull
@@ -85,8 +85,8 @@ public class DocumentBasedFormattingModel implements FormattingModel {
 
     // When processing injection in cdata / comment we need not remove start / end markers that present as whitespace during check in
     // com.intellij.formatting.WhiteSpace and during building formatter model = blocks in e.g. com.intellij.psi.formatter.xml.XmlTagBlock
-    if ((removesStartMarker = (removesPattern(textRange, whiteSpace, marker = "<![CDATA[") ||
-        removesPattern(textRange, whiteSpace, marker ="<!--["))) ||
+    if ((removesStartMarker = removesPattern(textRange, whiteSpace, marker = "<![CDATA[") ||
+        removesPattern(textRange, whiteSpace, marker ="<!--[")) ||
         removesPattern(textRange, whiteSpace, marker = "]]>") ||
         removesPattern(textRange, whiteSpace, marker = "]-->")
       ) {

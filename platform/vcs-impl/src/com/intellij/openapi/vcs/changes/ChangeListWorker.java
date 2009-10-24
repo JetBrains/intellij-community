@@ -47,6 +47,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
   private ChangeListsIndexes myIdx;
   private final ChangesDelta myDelta;
+  private final List<String> myListsToDisappear;
 
   public ChangeListWorker(final Project project, final PlusMinus<Pair<String, AbstractVcs>> deltaListener) {
     myProject = project;
@@ -56,6 +57,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     mySwitchedHolder = new SwitchedFileHolder(project, FileHolder.HolderType.SWITCHED);
 
     myDelta = new ChangesDelta(project, deltaListener);
+    myListsToDisappear = new LinkedList<String>();
   }
 
   private ChangeListWorker(final ChangeListWorker worker) {
@@ -65,6 +67,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     myLocallyDeleted = worker.myLocallyDeleted.copy();
     mySwitchedHolder = (SwitchedFileHolder) worker.mySwitchedHolder.copy();
     myDelta = worker.myDelta;
+    myListsToDisappear = new LinkedList<String>(worker.myListsToDisappear);
     
     LocalChangeList defaultList = null;
     for (LocalChangeList changeList : worker.myMap.values()) {
@@ -97,6 +100,9 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     myMap.clear();
     myMap.putAll(worker.myMap);
     myDefault = worker.myDefault;
+
+    myListsToDisappear.clear();
+    myListsToDisappear.addAll(worker.myListsToDisappear);
     
     myDelta.step(myIdx, worker.myIdx);
     myIdx = new ChangeListsIndexes(worker.myIdx);
@@ -362,6 +368,14 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       dispatcher.changeListChanged(changeList);
     }
     mySwitchedHolder.calculateChildren();
+
+    for (String name : myListsToDisappear) {
+      final LocalChangeList changeList = myMap.get(name);
+      if (changeList.getChanges().isEmpty()) {
+        removeChangeList(name);
+      }
+    }
+    myListsToDisappear.clear();
   }
 
   public List<LocalChangeList> getListsCopy() {
@@ -637,6 +651,10 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     return changes;
   }
 
+  void setListsToDisappear(final Collection<String> names) {
+    myListsToDisappear.addAll(names);
+  }
+
   ChangeListManagerGate createSelfGate() {
     return new MyGate(this);
   }
@@ -682,11 +700,8 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       myWorker.moveChangesTo(toList, changes.toArray(new Change[changes.size()]));
     }
 
-    public void deleteIfEmpty(String name) {
-      final LocalChangeList list = myWorker.getCopyByName(name);
-      if ((list != null) && (list.getChanges().isEmpty()) && (! list.isDefault())) {
-        myWorker.removeChangeList(name);
-      }
+    public void setListsToDisappear(final Collection<String> names) {
+      myWorker.setListsToDisappear(names);
     }
   }
 }

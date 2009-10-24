@@ -22,6 +22,8 @@ import java.util.Collection;
 
 /**
  * @author nik
+ *
+ * todo[nik] delete
  */
 public interface CustomConfigFileSet extends JDOMExternalizable {
 

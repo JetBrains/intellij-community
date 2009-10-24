@@ -90,8 +90,8 @@ public class CvsFileAnnotation implements FileAnnotation{
 
     myCvsEntriesListener = new CvsEntriesListener() {
       public void entriesChanged(VirtualFile parent) {
-        if (myFile == null) return;
-        fireAnnotationChanged();
+        /*if (myFile == null) return;
+        fireAnnotationChanged();*/
       }
 
       private void fireAnnotationChanged() {

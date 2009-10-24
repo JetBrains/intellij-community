@@ -12,7 +12,6 @@
  */
 package org.netbeans.lib.cvsclient;
 
-import com.intellij.openapi.util.Ref;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.command.CommandAbortedException;
@@ -164,55 +163,116 @@ public final class RequestProcessor implements IRequestProcessor {
 
     BugLog.getInstance().assertNotNull(requests);
 
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
+    final ProcessRequestsHelper helper = (myTimeout == -1) ?
+                                         new DirectProcessRequestHelper() : new TimedOutProcessRequestHelper();
+    return helper.processRequests(requests, connectionStreams, communicationProgressHandler);
+  }
 
-    final Ref<IOException> ioExceptionRef = new Ref<IOException>();
-    final Ref<CommandException> commandExceptionRef = new Ref<CommandException>();
-    final Ref<Boolean> result = new Ref<Boolean>();
+  private abstract class ProcessRequestsHelper {
+    protected IOException myIOException;
+    protected CommandException myCommandException;
+    protected boolean myResult;
 
-    final Future<?> future = Executors.newSingleThreadExecutor().submit(new Runnable() {
-      public void run() {
-        try {
-          checkCanceled();
-          sendRequests(requests, connectionStreams, communicationProgressHandler);
-          checkCanceled();
+    protected abstract void before();
+    protected abstract void callRunnable(final Runnable runnable);
+    protected abstract void afterInRunnable();
+    protected abstract void after() throws CommandException;
 
-          sendRequest(requests.getResponseExpectingRequest(), connectionStreams);
-          connectionStreams.flushForReading();
+    public boolean processRequests(final Requests requests,
+                                   final IConnectionStreams connectionStreams,
+                                   final IRequestsProgressHandler communicationProgressHandler)
+      throws CommandException, IOCommandException {
+      final Runnable runnable = new Runnable() {
+        public void run() {
+          try {
+            checkCanceled();
+            sendRequests(requests, connectionStreams, communicationProgressHandler);
+            checkCanceled();
 
-          result.set(handleResponses(connectionStreams, new DefaultResponseHandler()));
+            sendRequest(requests.getResponseExpectingRequest(), connectionStreams);
+            connectionStreams.flushForReading();
+
+            myResult = handleResponses(connectionStreams, new DefaultResponseHandler());
+          }
+          catch (IOException e) {
+            myIOException = e;
+          }
+          catch (CommandException e) {
+            myCommandException = e;
+          }
+          finally {
+            afterInRunnable();
+          }
         }
-        catch (IOException e) {
-          ioExceptionRef.set(e);
-        }
-        catch (CommandException e) {
-          commandExceptionRef.set(e);
-        }
-        finally {
-          semaphore.up();
-        }
+      };
+
+      before();
+      callRunnable(runnable);
+      if (myIOException != null) throw new IOCommandException(myIOException);
+      if (myCommandException != null) throw myCommandException;
+      after();
+
+      return myResult;
+    }
+  }
+
+  private class TimedOutProcessRequestHelper extends ProcessRequestsHelper {
+    private final Semaphore mySemaphore;
+    private Future<?> myFuture;
+
+    private TimedOutProcessRequestHelper() {
+      mySemaphore = new Semaphore();
+    }
+
+    @Override
+    protected void before() {
+      mySemaphore.down();
+    }
+
+    @Override
+    protected void callRunnable(Runnable runnable) {
+      myFuture = Executors.newSingleThreadExecutor().submit(runnable);
+
+      final long tOut = (myTimeout < 20000) ? 20000 : myTimeout;
+      while (true) {
+        mySemaphore.waitFor(tOut);
+        if (myFuture.isDone() || myFuture.isCancelled()) break;
+        if (! commandStopper.isAlive()) break;
+        commandStopper.resetAlive();
       }
-    });
-
-    // todo: think more
-    final long tOut = (myTimeout < 20000) ? 20000 : myTimeout;
-    while (true) {
-      semaphore.waitFor(tOut);
-      if (future.isDone() || future.isCancelled()) break;
-      if (! commandStopper.isAlive()) break;
-      commandStopper.resetAlive();
     }
 
-    if (! ioExceptionRef.isNull()) throw new IOCommandException(ioExceptionRef.get());
-    if (! commandExceptionRef.isNull()) throw commandExceptionRef.get();
-
-    if ((! future.isDone() && (! future.isCancelled()) && (! commandStopper.isAlive()))) {
-      future.cancel(true);
-      throw new CommandException(new CommandAbortedException(), "Command execution timed out");
+    @Override
+    protected void afterInRunnable() {
+      mySemaphore.up();
     }
 
-    return result.isNull() ? false : result.get();
+    @Override
+    protected void after() throws CommandException {
+      if ((! myFuture.isDone() && (! myFuture.isCancelled()) && (! commandStopper.isAlive()))) {
+        myFuture.cancel(true);
+        throw new CommandException(new CommandAbortedException(), "Command execution timed out");
+      }
+    }
+  }
+
+  private class DirectProcessRequestHelper extends ProcessRequestsHelper {
+    @Override
+    protected void before() {
+    }
+
+    @Override
+    protected void callRunnable(Runnable runnable) {
+      runnable.run();
+    }
+
+    @Override
+    protected void afterInRunnable() {
+    }
+
+    @Override
+    protected void after() throws CommandException {
+    }
   }
 
   private void sendRequests(Requests requests, IConnectionStreams connectionStreams, IRequestsProgressHandler communicationProgressHandler)

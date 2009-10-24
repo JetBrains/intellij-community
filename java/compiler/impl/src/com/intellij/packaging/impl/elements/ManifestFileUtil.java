@@ -27,7 +27,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.artifacts.PackagingElementProcessor;
@@ -55,16 +54,19 @@ public class ManifestFileUtil {
   public static final String MANIFEST_FILE_NAME = PathUtil.getFileName(MANIFEST_PATH);
   public static final String MANIFEST_DIR_NAME = PathUtil.getParentPath(MANIFEST_PATH);
 
+  private ManifestFileUtil() {
+  }
+
   @Nullable
   public static VirtualFile findManifestFile(@NotNull CompositePackagingElement<?> root, PackagingElementResolvingContext context, ArtifactType artifactType) {
     return ArtifactUtil.findSourceFileByOutputPath(root, MANIFEST_PATH, context, artifactType);
   }
 
-  @NotNull 
-  public static String suggestManifestFilePathAndAddElement(@NotNull CompositePackagingElement<?> root, PackagingElementResolvingContext context, ArtifactType artifactType) {
+  @Nullable
+  public static VirtualFile suggestManifestFileDirectory(@NotNull CompositePackagingElement<?> root, PackagingElementResolvingContext context, ArtifactType artifactType) {
     final VirtualFile metaInfDir = ArtifactUtil.findSourceFileByOutputPath(root, MANIFEST_DIR_NAME, context, artifactType);
     if (metaInfDir != null) {
-      return metaInfDir.getPath() + "/" + MANIFEST_FILE_NAME;
+      return metaInfDir;
     }
 
     final Ref<VirtualFile> sourceDir = Ref.create(null);
@@ -89,17 +91,15 @@ public class ManifestFileUtil {
     });
 
     if (!sourceDir.isNull()) {
-      return sourceDir.get().getPath() + "/" + MANIFEST_PATH;
+      return sourceDir.get();
     }
 
 
     final Project project = context.getProject();
-    final VirtualFile dir = suggestBaseDir(project, sourceFile.get());
-    String filePath = dir.getPath() + "/" + MANIFEST_PATH;
-    PackagingElementFactory.getInstance().addFileCopy(root, MANIFEST_DIR_NAME, filePath);
-    return filePath;
+    return suggestBaseDir(project, sourceFile.get());
   }
 
+  @Nullable
   private static VirtualFile suggestBaseDir(Project project, final @Nullable VirtualFile file) {
     final VirtualFile[] contentRoots = ProjectRootManager.getInstance(project).getContentRoots();
     if (file == null && contentRoots.length > 0) {
@@ -189,7 +189,11 @@ public class ManifestFileUtil {
   @NotNull
   public static ManifestFileConfiguration createManifestFileConfiguration(CompositePackagingElement<?> element,
                                                                     final PackagingElementResolvingContext context, final ArtifactType artifactType) {
-    final VirtualFile manifestFile = findManifestFile(element, context, artifactType);
+    return createManifestFileConfiguration(findManifestFile(element, context, artifactType));
+  }
+
+  @NotNull
+  public static ManifestFileConfiguration createManifestFileConfiguration(@Nullable VirtualFile manifestFile) {
     final List<String> classpath = new ArrayList<String>();
     String mainClass = null;
     final String path;

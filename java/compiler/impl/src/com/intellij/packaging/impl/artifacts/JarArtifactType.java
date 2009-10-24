@@ -15,6 +15,7 @@
  */
 package com.intellij.packaging.impl.artifacts;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementOutputKind;
@@ -45,6 +46,6 @@ public class JarArtifactType extends ArtifactType {
   @NotNull
   @Override
   public CompositePackagingElement<?> createRootElement(@NotNull String artifactName) {
-    return new ArchivePackagingElement(artifactName + ".jar");
+    return new ArchivePackagingElement(FileUtil.sanitizeFileName(artifactName) + ".jar");
   }
 }
