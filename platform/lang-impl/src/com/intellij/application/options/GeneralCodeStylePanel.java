@@ -16,7 +16,6 @@
 
 package com.intellij.application.options;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -129,13 +128,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
     for(Map.Entry<FileType, IndentOptionsEditor> entry: myAdditionalIndentOptions.entrySet()) {
       FileType ft = entry.getKey();
-      String tabName;
-      if (ft instanceof LanguageFileType) {
-        tabName = ((LanguageFileType) ft).getLanguage().getDisplayName();
-      }
-      else {
-        tabName = ft.getName();
-      }
+      String tabName = ft instanceof LanguageFileType ? ((LanguageFileType)ft).getLanguage().getDisplayName() : ft.getName();
       myIndentOptionsTabs.addTab(tabName, entry.getValue().createPanel());
     }
 
@@ -195,7 +188,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   @Nullable
   private static FileTypeIndentOptionsProvider getDefaultIndentProvider() {
     FileTypeIndentOptionsProvider[] providers = Extensions.getExtensions(FileTypeIndentOptionsProvider.EP_NAME);
-    return (providers.length == 0) ? null : providers[0];
+    return providers.length == 0 ? null : providers[0];
   }
 
   public void apply(CodeStyleSettings settings) {
@@ -208,8 +201,10 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     else {
       myOtherIndentOptions.apply(settings, settings.OTHER_INDENT_OPTIONS);
 
-      for(FileType fileType: myAdditionalIndentOptions.keySet()) {
-        myAdditionalIndentOptions.get(fileType).apply(settings, settings.getAdditionalIndentOptions(fileType));
+      for(Map.Entry<FileType, IndentOptionsEditor> entry : myAdditionalIndentOptions.entrySet()) {
+        FileType fileType = entry.getKey();
+        IndentOptionsEditor editor = entry.getValue();
+        editor.apply(settings, settings.getAdditionalIndentOptions(fileType));
       }
     }
 
@@ -221,14 +216,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   }
 
   private IndentOptionsEditor findEditorForSameIndents() {
-    IndentOptionsEditor theEditor;
-    if (myAdditionalIndentOptions.isEmpty()) {
-      theEditor = myOtherIndentOptions;
-    }
-    else {
-      theEditor = myAdditionalIndentOptions.values().iterator().next();
-    }
-    return theEditor;
+    return myAdditionalIndentOptions.isEmpty() ? myOtherIndentOptions : myAdditionalIndentOptions.values().iterator().next();
   }
 
   private int getRightMarginImpl() {
@@ -275,18 +263,16 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
         return true;
       }
 
-      for(FileType fileType: myAdditionalIndentOptions.keySet()) {
-        if (myAdditionalIndentOptions.get(fileType).isModified(settings, settings.getAdditionalIndentOptions(fileType))) {
+      for(Map.Entry<FileType, IndentOptionsEditor> entry : myAdditionalIndentOptions.entrySet()) {
+        IndentOptionsEditor editor = entry.getValue();
+        FileType fileType = entry.getKey();
+        if (editor.isModified(settings, settings.getAdditionalIndentOptions(fileType))) {
           return true;
         }
       }
     }
 
-    if (!myRightMarginField.getText().equals(String.valueOf(settings.RIGHT_MARGIN))) {
-      return true;
-    }
-
-    return false;
+    return !myRightMarginField.getText().equals(String.valueOf(settings.RIGHT_MARGIN));
   }
 
   public JComponent getPanel() {
@@ -299,14 +285,15 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myOtherIndentOptions.reset(settings, settings.OTHER_INDENT_OPTIONS);
 
     boolean first = true;
-    for(FileType fileType: myAdditionalIndentOptions.keySet()) {
-      final IndentOptionsEditor editor = myAdditionalIndentOptions.get(fileType);
+    for(Map.Entry<FileType, IndentOptionsEditor> entry : myAdditionalIndentOptions.entrySet()) {
+      final IndentOptionsEditor editor = entry.getValue();
       if (settings.USE_SAME_INDENTS && first) {
         first = false;
         editor.reset(settings, settings.OTHER_INDENT_OPTIONS);
       }
       else {
-        editor.reset(settings, settings.getAdditionalIndentOptions(fileType));
+        FileType type = entry.getKey();
+        editor.reset(settings, settings.getAdditionalIndentOptions(type));
       }
     }
 

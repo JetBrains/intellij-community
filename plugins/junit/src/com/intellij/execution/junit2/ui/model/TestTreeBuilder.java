@@ -62,11 +62,8 @@ public class TestTreeBuilder extends AbstractTestTreeBuilder {
         parentToUpdate = test.getCommonAncestor(parentToUpdate);
         if (parentToUpdate.getParent() == null) break;
       }
-      final DefaultMutableTreeNode node = getNodeForElement(parentToUpdate);
-      if (node != null) {
-        updateSubtree(node);
-        myNodesToUpdate.clear();
-     }
+      getUi().queueUpdate(parentToUpdate);
+      myNodesToUpdate.clear();
     }
   };
 

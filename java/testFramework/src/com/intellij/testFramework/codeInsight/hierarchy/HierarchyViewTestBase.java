@@ -76,11 +76,14 @@ public abstract class HierarchyViewTestBase extends CodeInsightTestCase {
     final Object[] children = treeStructure.getChildElements(descriptor);
     //noinspection unchecked
     final List<Element> expectedChildren = new ArrayList<Element>(element.getChildren(NODE_ELEMENT_NAME));
-    assertEquals("Children of " + descriptor.getHighlightedText().getText(), expectedChildren.size(), children.length);
 
+    final StringBuilder messageBuilder = new StringBuilder("Actual children of [" + descriptor.getHighlightedText().getText() + "]:\n");
     for (Object child : children) {
-      ((HierarchyNodeDescriptor)child).update();
+      final HierarchyNodeDescriptor nodeDescriptor = (HierarchyNodeDescriptor)child;
+      nodeDescriptor.update();
+      messageBuilder.append("    [").append(nodeDescriptor.getHighlightedText().getText()).append("]\n");
     }
+    assertEquals(messageBuilder.toString(), expectedChildren.size(), children.length);
 
     Arrays.sort(children, new Comparator<Object>() {
       public int compare(final Object first, final Object second) {

@@ -24,6 +24,7 @@ import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.elements.ManifestFileUtil;
 import com.intellij.packaging.ui.ManifestFileConfiguration;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Map;
@@ -78,5 +79,14 @@ public class ManifestFilesInfo {
   public void clear() {
     myManifestFiles.clear();
     myOriginalManifestFiles.clear();
+  }
+
+  public boolean isManifestFile(@NotNull String path) {
+    for (ManifestFileConfiguration configuration : myManifestFiles.values()) {
+      if (path.equals(configuration.getManifestFilePath())) {
+        return true;
+      }
+    }
+    return false;
   }
 }

@@ -18,6 +18,7 @@ package com.intellij.application.options;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -63,7 +64,7 @@ public class SmartIndentOptionsEditor extends IndentOptionsEditor {
     options.SMART_TABS = isSmartTabValid(options.INDENT_SIZE, options.TAB_SIZE) && myCbSmartTabs.isSelected();
   }
 
-  public void reset(final CodeStyleSettings settings, final CodeStyleSettings.IndentOptions options) {
+  public void reset(@NotNull final CodeStyleSettings settings, @NotNull final CodeStyleSettings.IndentOptions options) {
     super.reset(settings, options);
     myContinuationIndentField.setText(String.valueOf(options.CONTINUATION_INDENT_SIZE));
     myCbSmartTabs.setSelected(options.SMART_TABS);

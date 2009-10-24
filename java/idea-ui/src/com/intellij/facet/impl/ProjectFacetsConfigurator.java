@@ -25,7 +25,6 @@ import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
@@ -47,7 +46,7 @@ import java.util.*;
  */
 public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.ChangeListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ProjectFacetsConfigurator");
-  private final Map<Module, ModifiableFacetModel> myModels = new HashMap<Module, ModifiableFacetModel>();
+  private final Map<Module, ModifiableFacetModel> myModifiableModels = new HashMap<Module, ModifiableFacetModel>();
   private final Map<Facet, FacetEditorImpl> myEditors = new HashMap<Facet, FacetEditorImpl>();
   private final Map<Module, FacetTreeModel> myTreeModels = new HashMap<Module, FacetTreeModel>();
   private final Map<FacetInfo, Facet> myInfo2Facet = new HashMap<FacetInfo, Facet>();
@@ -57,12 +56,10 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
   private final Set<Facet> myChangedFacets = new HashSet<Facet>();
   private final Set<Facet> myCreatedFacets = new HashSet<Facet>();
   private final StructureConfigurableContext myContext;
-  private final Project myProject;
   private UserDataHolderBase myProjectData = new UserDataHolderBase();
 
-  public ProjectFacetsConfigurator(final StructureConfigurableContext context, Project project, ProjectFacetsConfigurator facetsConfigurator) {
+  public ProjectFacetsConfigurator(final StructureConfigurableContext context, ProjectFacetsConfigurator facetsConfigurator) {
     myContext = context;
-    myProject = project;
 
     if (facetsConfigurator != null) {
       initFrom(facetsConfigurator);
@@ -73,6 +70,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
     myFacet2Info.putAll(facetsConfigurator.myFacet2Info);
     myInfo2Facet.putAll(facetsConfigurator.myInfo2Facet);
     myTreeModels.putAll(facetsConfigurator.myTreeModels);
+    myEditors.putAll(facetsConfigurator.myEditors);
   }
 
   public List<Facet> removeFacet(Facet facet) {
@@ -136,7 +134,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
   }
 
   public void clearMaps() {
-    myModels.clear();
+    myModifiableModels.clear();
     myEditors.clear();
     myTreeModels.clear();
     myInfo2Facet.clear();
@@ -146,13 +144,13 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
   }
 
   private boolean isNewFacet(Facet facet) {
-    final ModifiableFacetModel model = myModels.get(facet.getModule());
+    final ModifiableFacetModel model = myModifiableModels.get(facet.getModule());
     return model != null && model.isNewFacet(facet);
   }
 
   @NotNull
   public ModifiableFacetModel getOrCreateModifiableModel(final Module module) {
-    ModifiableFacetModel model = myModels.get(module);
+    ModifiableFacetModel model = myModifiableModels.get(module);
     if (model == null) {
       model = FacetManager.getInstance(module).createModifiableModel();
       model.addListener(new ModifiableFacetModel.Listener() {
@@ -160,7 +158,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
           fireFacetModelChanged(module);
         }
       }, null);
-      myModels.put(module, model);
+      myModifiableModels.put(module, model);
     }
     return model;
   }
@@ -210,7 +208,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
 
   @NotNull
   public FacetModel getFacetModel(Module module) {
-    final ModifiableFacetModel model = myModels.get(module);
+    final ModifiableFacetModel model = myModifiableModels.get(module);
     if (model != null) {
       return model;
     }
@@ -218,7 +216,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
   }
 
   public void commitFacets() {
-    for (ModifiableFacetModel model : myModels.values()) {
+    for (ModifiableFacetModel model : myModifiableModels.values()) {
       model.commit();
     }
 
@@ -226,7 +224,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
       entry.getValue().onFacetAdded(entry.getKey());
     }
 
-    myModels.clear();
+    myModifiableModels.clear();
     for (Facet facet : myChangedFacets) {
       Module module = facet.getModule();
       if (!module.isDisposed()) {
@@ -253,7 +251,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
   }
 
   public boolean isModified() {
-    for (ModifiableFacetModel model : myModels.values()) {
+    for (ModifiableFacetModel model : myModifiableModels.values()) {
       if (model.isModified()) {
         return true;
       }
@@ -349,7 +347,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
       facets.addAll(removeFacet(facet));
     }
     mySharedModuleData.remove(module);
-    myModels.remove(module);
+    myModifiableModels.remove(module);
     return facets;
   }
 

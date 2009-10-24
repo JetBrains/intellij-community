@@ -16,10 +16,7 @@
 
 package com.intellij.execution.junit2.states;
 
-import com.intellij.execution.junit2.TestProxy;
-import com.intellij.execution.junit2.TestProxyParent;
-import com.intellij.execution.junit2.TestRoot;
-import com.intellij.execution.junit2.TestRootImpl;
+import com.intellij.execution.junit2.*;
 import com.intellij.execution.junit2.segments.ObjectReader;
 import com.intellij.execution.junit2.segments.PacketConsumer;
 import com.intellij.execution.testframework.Filter;
@@ -59,6 +56,13 @@ public class TestStateUpdater implements PacketConsumer {
   private static class RunningStateSetter extends StateChanger {
     public void changeStateOf(final TestProxy testProxy, final ObjectReader reader) {
       testProxy.setState(TestState.RUNNING_STATE);
+      TestProxy parent = testProxy.getParent();
+      while (parent != null) {
+        final TestState state = parent.getState();
+        LOG.assertTrue(state instanceof SuiteState);
+        ((SuiteState)state).setRunning(true);
+        parent = parent.getParent();
+      }
     }
 
     public void modifyTestStack(final TestProxyParent globalRoot, final TestProxy test) {
@@ -101,6 +105,21 @@ public class TestStateUpdater implements PacketConsumer {
       }
       testProxy.setState(state);
       testProxy.setStatistics(new Statistics(reader));
+      final int magnitude = state.getMagnitude();
+
+      TestProxy parent = testProxy.getParent();
+      TestProxy child = testProxy;
+      while (parent != null) {
+        final List<TestProxy> children = parent.getChildren();
+        final TestState parentState = parent.getState();
+        LOG.assertTrue(parentState instanceof SuiteState);
+        if (children.indexOf(child) == children.size() - 1) {
+          ((SuiteState)parentState).setRunning(false);
+        }
+        ((SuiteState)parentState).updateMagnitude(magnitude);
+        child = parent;
+        parent = parent.getParent();
+      }
     }
   }
 

@@ -17,6 +17,7 @@ package com.intellij.application.options;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -65,7 +66,7 @@ public class JavaIndentOptionsEditor extends SmartIndentOptionsEditor {
     settings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS = myCbDontIndentTopLevelMembers.isSelected();
   }
 
-  public void reset(final CodeStyleSettings settings, final CodeStyleSettings.IndentOptions options) {
+  public void reset(@NotNull final CodeStyleSettings settings, @NotNull final CodeStyleSettings.IndentOptions options) {
     super.reset(settings, options);
     myLabelIndent.setText(Integer.toString(options.LABEL_INDENT_SIZE));
     myLabelIndentAbsolute.setSelected(options.LABEL_INDENT_ABSOLUTE);

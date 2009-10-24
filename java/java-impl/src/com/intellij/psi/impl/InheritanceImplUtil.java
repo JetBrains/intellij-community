@@ -16,6 +16,7 @@
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -155,6 +156,7 @@ public class InheritanceImplUtil {
   }
 
   private static boolean checkInheritor(PsiClass aClass, PsiClass baseClass, boolean checkDeep, Set<PsiClass> checkedClasses) {
+    ProgressManager.getInstance().checkCanceled();
     if (aClass != null) {
       PsiManager manager = baseClass.getManager();
       if (manager.areElementsEquivalent(baseClass, aClass)) {

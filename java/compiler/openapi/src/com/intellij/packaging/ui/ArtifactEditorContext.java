@@ -43,12 +43,16 @@ public interface ArtifactEditorContext extends PackagingElementResolvingContext 
   @NotNull
   ManifestFileConfiguration getManifestFile(CompositePackagingElement<?> element, ArtifactType artifactType);
 
+  boolean isManifestFile(String path);
+
+
   CompositePackagingElement<?> getRootElement(@NotNull Artifact artifact);
 
   void editLayout(@NotNull Artifact artifact, Runnable runnable);
 
   ArtifactEditor getOrCreateEditor(Artifact originalArtifact);
 
+  ArtifactEditor getThisArtifactEditor();
 
   void selectArtifact(@NotNull Artifact artifact);
 

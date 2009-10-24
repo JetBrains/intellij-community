@@ -54,6 +54,8 @@ class TestRenderer {
     mapIcon(PoolOfTestStates.COMPARISON_FAILURE, PoolOfTestIcons.FAILED_ICON);
     mapIcon(PoolOfTestStates.ERROR_INDEX, PoolOfTestIcons.ERROR_ICON);
     mapIcon(PoolOfTestStates.IGNORED_INDEX, PoolOfTestIcons.IGNORED_ICON);
+
+    mapIcon(-1, PoolOfTestIcons.NOT_RAN);
   }
 
   private static void mapIcon(final int index, final Icon icon) {
