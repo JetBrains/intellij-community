@@ -75,8 +75,7 @@ public class TestsLocationProviderUtil {
     final boolean inProjectContent = file != null && (index.isInContent(file));
 
     if (inProjectContent) {
-      // TODO
-      //return Collections.singletonList(file);
+      return Collections.singletonList(file);
     }
 
     //split file by "/" in parts
