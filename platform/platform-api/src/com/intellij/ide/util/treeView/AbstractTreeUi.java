@@ -2803,15 +2803,27 @@ public class AbstractTreeUi {
           }
         });
 
-        for (final Object toExpand : element) {
-          _expand(toExpand, new Runnable() {
-            public void run() {
-              done.setDone();
-            }
-          }, parentsOnly, checkIfInStructure, canSmartExpand);
-        }
+        expandNext(element, 0, parentsOnly, checkIfInStructure, canSmartExpand, done);
       }
     });
+  }
+
+  private void expandNext(final Object[] elements, final int index, final boolean parentsOnly, final boolean checkIfInStricture, final boolean canSmartExpand, final ActionCallback done) {
+    if (elements.length <= 0) {
+      done.setDone();
+      return;
+    }
+
+    if (index >= elements.length) {
+      return;
+    }
+
+    _expand(elements[index], new Runnable() {
+      public void run() {
+        done.setDone();
+        expandNext(elements, index + 1, parentsOnly, checkIfInStricture, canSmartExpand, done);
+      }
+    }, parentsOnly, checkIfInStricture, canSmartExpand);
   }
 
   public void collapseChildren(final Object element, @Nullable final Runnable onDone) {
