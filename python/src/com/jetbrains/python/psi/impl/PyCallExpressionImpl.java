@@ -110,15 +110,6 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
                         PyClass second_class = ((PyClassType)second_type).getPyClass();
                         assert second_class != null;
                         if (second_class.isSublclass(first_class)) {
-                          /*
-                          boolean matched = second_class == possible_class;
-                          if (! matched) {
-                            Iterator<PyClass> parent_iter = second_class.iterateAncestors().iterator();
-                            while (parent_iter.hasNext() && ! matched) {
-                              matched = possible_class == parent_iter.next();
-                            }
-                          }
-                          */
                           // TODO: super(Foo, Bar) is a superclass of Foo directly preceding Bar in MRO
                           return new PyClassType(first_class, false); // super(Foo, self) has type of Foo, modulo __get__()
                         }
