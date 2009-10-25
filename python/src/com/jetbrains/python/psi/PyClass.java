@@ -56,8 +56,15 @@ public interface PyClass extends PsiNamedElement, PyStatement, NameDefiner, PyDo
   boolean isNewStyleClass();
 
   /**
-   * A lazy way to list ancestor classes.
-   * @return an iterable of ancerstor classes, presumably width first.
+   * A lazy way to list ancestor classes width first, in method-resolution order (MRO).
+   * @return an iterable of ancestor classes.
    */
   Iterable<PyClass> iterateAncestors();
+
+  /**
+   * @param target
+   * @param parent
+   * @return True iff this and parent are the same or parent is one of our superclasses.
+   */
+  boolean isSublclass(PyClass parent);
 }

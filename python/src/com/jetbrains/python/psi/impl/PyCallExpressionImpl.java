@@ -86,6 +86,52 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
   public PyType getType() {
     PyExpression callee = getCallee();
     if (callee instanceof PyReferenceExpression) {
+      // hardwired special cases
+      if ("super".equals(callee.getText())) {
+        PsiElement must_be_super_init = ((PyReferenceExpression)callee).resolve();
+        if (must_be_super_init instanceof PyFunction) {
+          PyClass must_be_super = ((PyFunction)must_be_super_init).getContainingClass();
+          if (must_be_super == PyBuiltinCache.getInstance(getProject()).getClass("super")) {
+            PyArgumentList arglist = getArgumentList();
+            if (arglist != null) {
+              PyExpression[] args = arglist.getArguments();
+              if (args.length > 1) {
+                PyExpression first_arg = args[0];
+                if (first_arg instanceof PyReferenceExpression) {
+                  PsiElement possible_class = ((PyReferenceExpression)first_arg).resolve();
+                  if (possible_class instanceof PyClass && ((PyClass)possible_class).isNewStyleClass()) {
+                    final PyClass first_class = (PyClass)possible_class;
+                    // check 2nd argument, too; it should be an instance
+                    PyExpression second_arg = args[1];
+                    if (second_arg != null) {
+                      PyType second_type = second_arg.getType();
+                      if (second_type instanceof PyClassType) {
+                        // imitate isinstance(second_arg, possible_class)
+                        PyClass second_class = ((PyClassType)second_type).getPyClass();
+                        assert second_class != null;
+                        if (second_class.isSublclass(first_class)) {
+                          /*
+                          boolean matched = second_class == possible_class;
+                          if (! matched) {
+                            Iterator<PyClass> parent_iter = second_class.iterateAncestors().iterator();
+                            while (parent_iter.hasNext() && ! matched) {
+                              matched = possible_class == parent_iter.next();
+                            }
+                          }
+                          */
+                          // TODO: super(Foo, Bar) is a superclass of Foo directly preceding Bar in MRO
+                          return new PyClassType(first_class, false); // super(Foo, self) has type of Foo, modulo __get__()
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      // normal cases
       ResolveResult[] targets = ((PyReferenceExpression)callee).multiResolve(false);
       if (targets.length > 0) {
         PsiElement target = targets[0].getElement();

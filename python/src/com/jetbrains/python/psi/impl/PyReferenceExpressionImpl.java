@@ -192,6 +192,30 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
     final PyExpression qualifier = getQualifier();
     if (qualifier != null) {
+      // hardwired
+      /*
+      if ("super".equals(qualifier.getNode().getFirstChildNode().getText())) {
+        PsiElement parent = qualifier.getParent();
+        if (parent instanceof PyCallExpression) {
+          PyCallExpression super_call = (PyCallExpression)parent;
+          PyArgumentList arglist = super_call.getArgumentList();
+          if (arglist != null) {
+            PyExpression[] args = arglist.getArguments();
+            if (args.length > 0) {
+              PyExpression first_arg = args[0];
+              if (first_arg instanceof PyReferenceExpression) {
+                PsiElement possible_class = ((PyReferenceExpression)first_arg).resolve();
+                if (possible_class instanceof PyClass) {
+                  ret.poke(possible_class, RatedResolveResult.RATE_HIGH);
+                  return ret;
+                }
+              }
+            }
+          }
+        }
+      }
+      */
+      // normal attributes
       PyType qualifierType = qualifier.getType();
       if (qualifierType != null) {
         if (qualifier instanceof PyQualifiedExpression) {
@@ -529,7 +553,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (qualifier == null) {
       return HighlightSeverity.ERROR;
     }
-    if (qualifier.getType() != null) {
+    if (qualifier.getType() != null) {                                                                                    
       return HighlightSeverity.WARNING;
     }
     return null;

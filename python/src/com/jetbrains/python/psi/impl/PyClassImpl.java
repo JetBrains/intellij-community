@@ -179,6 +179,14 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     };
   }
 
+  public boolean isSublclass(PyClass parent) {
+    if (this == parent) return true;
+    for (PyClass superclass : iterateAncestors()) {
+      if (parent == superclass) return true;
+    }
+    return false;
+  }
+
   protected List<PyClass> getSuperClassesList() {
     PsiElement[] superClassElements = getSuperClassElements();
     if (superClassElements != null) {
