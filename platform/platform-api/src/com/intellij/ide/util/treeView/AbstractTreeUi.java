@@ -829,7 +829,12 @@ public class AbstractTreeUi {
       boolean notRequiredToUpdateChildren = !forcedNow && !wasExpanded;
 
       if (notRequiredToUpdateChildren && forceUpdate && !wasExpanded) {
-        notRequiredToUpdateChildren = getBuilder().isAlwaysShowPlus(descriptor);
+        boolean alwaysPlus = getBuilder().isAlwaysShowPlus(descriptor);
+        if (alwaysPlus && wasLeaf) {
+          notRequiredToUpdateChildren = false;
+        } else {
+          notRequiredToUpdateChildren = alwaysPlus;
+        }
       }
 
       final Ref<LoadedChildren> preloaded = new Ref<LoadedChildren>(loadedChildren);
@@ -2956,7 +2961,9 @@ public class AbstractTreeUi {
 
 
     if (myTree.isExpanded(getPathFor(toExpand)) && !myUnbuiltNodes.contains(toExpand)) {
-      processNodeActionsIfReady(toExpand);
+      if (!areChildrenToBeUpdated(toExpand)) {
+        processNodeActionsIfReady(toExpand);
+      }
     }
     else {
       if (!myUnbuiltNodes.contains(toExpand)) {
@@ -2968,6 +2975,9 @@ public class AbstractTreeUi {
     }
   }
 
+  private boolean areChildrenToBeUpdated(DefaultMutableTreeNode node) {
+    return getUpdater().isEnqueuedToUpdate(node) || isUpdatingParent(node);
+  }
 
   private String asString(DefaultMutableTreeNode node) {
     if (node == null) return null;
