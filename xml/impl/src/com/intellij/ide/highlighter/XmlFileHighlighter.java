@@ -44,6 +44,10 @@ public class XmlFileHighlighter extends SyntaxHighlighterBase {
     keys1.put(XmlTokenType.XML_COMMENT_START, XmlHighlighterColors.XML_COMMENT);
     keys1.put(XmlTokenType.XML_COMMENT_END, XmlHighlighterColors.XML_COMMENT);
     keys1.put(XmlTokenType.XML_COMMENT_CHARACTERS, XmlHighlighterColors.XML_COMMENT);
+    keys1.put(XmlTokenType.XML_CONDITIONAL_COMMENT_END, XmlHighlighterColors.XML_COMMENT);
+    keys1.put(XmlTokenType.XML_CONDITIONAL_COMMENT_END_START, XmlHighlighterColors.XML_COMMENT);
+    keys1.put(XmlTokenType.XML_CONDITIONAL_COMMENT_START, XmlHighlighterColors.XML_COMMENT);
+    keys1.put(XmlTokenType.XML_CONDITIONAL_COMMENT_START_END, XmlHighlighterColors.XML_COMMENT);
 
     keys1.put(XmlTokenType.XML_START_TAG_START, XmlHighlighterColors.XML_TAG);
     keys1.put(XmlTokenType.XML_END_TAG_START, XmlHighlighterColors.XML_TAG);

@@ -17,7 +17,7 @@ package com.intellij.lexer;
 
 public class XHtmlHighlightingLexer extends HtmlHighlightingLexer {
   public XHtmlHighlightingLexer() {
-    this(new XmlLexer());
+    this(new XmlLexer(true));
   }
 
   public XHtmlHighlightingLexer(Lexer baseLexer) {

@@ -16,7 +16,6 @@
 package com.intellij.psi.impl.source.html;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.util.TextRange;
@@ -39,20 +38,18 @@ public class HtmlConditionalCommentInjector implements MultiHostInjector {
     if (host instanceof XmlComment) {
       final ASTNode comment = host.getNode();
       if (comment != null) {
-        final ASTNode[] conditionalStarts = comment.getChildren(TokenSet.create(XmlTokenType.XML_CONDITIONAL_COMMENT_START_END));
-        if (conditionalStarts.length > 0) {
-          final ASTNode[] conditionalEnds = comment.getChildren(TokenSet.create(XmlTokenType.XML_CONDITIONAL_COMMENT_END_START));
-          if (conditionalEnds.length > 0) {
-            final ASTNode[] endOfEnd = comment.getChildren(TokenSet.create(XmlTokenType.XML_CONDITIONAL_COMMENT_END));
-            if (endOfEnd.length > 0) {
+        final ASTNode conditionalStart = comment.findChildByType(TokenSet.create(XmlTokenType.XML_CONDITIONAL_COMMENT_START_END));
+        if (conditionalStart != null) {
+          final ASTNode conditionalEnd = comment.findChildByType(TokenSet.create(XmlTokenType.XML_CONDITIONAL_COMMENT_END_START));
+          if (conditionalEnd != null) {
+            final ASTNode endOfEnd = comment.findChildByType(TokenSet.create(XmlTokenType.XML_CONDITIONAL_COMMENT_END));
+            if (endOfEnd != null) {
               final TextRange textRange = host.getTextRange();
               final int startOffset = textRange.getStartOffset();
-
-              final ASTNode start = conditionalStarts[0];
-              final ASTNode end = conditionalEnds[0];
-              registrar.startInjecting(HTMLLanguage.INSTANCE).addPlace(null, null, (PsiLanguageInjectionHost)host,
-                                                                       new TextRange(start.getTextRange().getEndOffset() - startOffset,
-                                                                                     end.getStartOffset() - startOffset)).doneInjecting();
+              registrar.startInjecting(host.getParent().getLanguage()).addPlace(null, null, (PsiLanguageInjectionHost)host,
+                                                                       new TextRange(
+                                                                         conditionalStart.getTextRange().getEndOffset() - startOffset,
+                                                                                     conditionalEnd.getStartOffset() - startOffset)).doneInjecting();
             }
           }
         }
