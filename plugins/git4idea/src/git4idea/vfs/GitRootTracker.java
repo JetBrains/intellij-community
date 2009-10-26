@@ -26,6 +26,10 @@ import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -57,6 +61,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * shows balloon that notifies user about the problem and offers to correct root mapping.
  */
 public class GitRootTracker implements VcsListener {
+
+  private static final Logger LOG = Logger.getInstance("#git4idea.vfs.GitRootTracker");
+
   /**
    * The context project
    */
@@ -169,7 +176,7 @@ public class GitRootTracker implements VcsListener {
       }
     };
     fileManager.addVirtualFileManagerListener(myVirtualFileManagerListener);
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
+    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
         myIsEnabled.set(true);
         checkRoots(true);
@@ -208,94 +215,106 @@ public class GitRootTracker implements VcsListener {
     if (!myIsEnabled.get() || (!rootsChanged && !myHasGitRoots.get())) {
       return;
     }
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        boolean hasInvalidRoots = false;
-        HashSet<String> rootSet = new HashSet<String>();
-        for (VcsDirectoryMapping m : myVcsManager.getDirectoryMappings()) {
-          if (!m.getVcs().equals(myVcs.getName())) {
-            continue;
+    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Checking unmapped Git roots...") {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            LOG.info("Checking unmapped Git roots...");
+            long start = System.currentTimeMillis();
+            doCheck();
+            LOG.info("Unmapped Git roots checked in " + (System.currentTimeMillis() - start) + "ms");
           }
-          String path = m.getDirectory();
-          if (path.length() == 0) {
-            VirtualFile baseDir = myProject.getBaseDir();
-            assert baseDir != null;
-            path = baseDir.getPath();
-          }
-          VirtualFile root = lookupFile(path);
-          if (root == null) {
-            hasInvalidRoots = true;
-            break;
-          }
-          else {
-            rootSet.add(root.getPath());
-          }
-        }
-        if (!hasInvalidRoots && rootSet.isEmpty()) {
-          myHasGitRoots.set(false);
-          return;
-        }
-        else {
-          myHasGitRoots.set(true);
-        }
-        if (!hasInvalidRoots) {
-          // check if roots have a problem
-          loop:
-          for (String path : rootSet) {
-            VirtualFile root = lookupFile(path);
-            VirtualFile gitRoot = GitUtil.gitRootOrNull(root);
-            if (gitRoot == null || hasUnmappedSubroots(root, rootSet)) {
-              hasInvalidRoots = true;
-              break;
-            }
-            for (String otherPath : rootSet) {
-              if (otherPath.equals(path)) {
-                continue;
-              }
-              if (otherPath.startsWith(path)) {
-                VirtualFile otherFile = lookupFile(otherPath);
-                if (otherFile == null) {
-                  hasInvalidRoots = true;
-                  break loop;
-                }
-                VirtualFile otherRoot = GitUtil.gitRootOrNull(otherFile);
-                if (otherRoot == null || otherRoot == root || otherFile != otherRoot) {
-                  hasInvalidRoots = true;
-                  break loop;
-                }
-              }
-            }
-          }
-        }
-        if (!hasInvalidRoots) {
-          // all roots are correct
-          if (myNotificationPosted.compareAndSet(true, false)) {
-            if (myNotification != null) {
-              if (!myNotification.isExpired()) {
-                myNotification.expire();
-              }
-
-              myNotification = null;
-            }
-          }
-          return;
-        }
-        if (myNotificationPosted.compareAndSet(false, true)) {
-          myNotification = new Notification(GIT_INVALID_ROOTS_ID, GitBundle.getString("root.tracker.message.title"),
-                                            GitBundle.getString("root.tracker.message"),
-                                            NotificationType.ERROR, new NotificationListener() {
-              public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-                if (fixRoots()) {
-                  notification.expire();
-                }
-              }
-            });
-
-          Notifications.Bus.notify(myNotification, myProject);
-        }
+        });
+        myMulticaster.gitRootsChanged();
       }
     });
-    myMulticaster.gitRootsChanged();
+  }
+
+  private void doCheck() {
+    boolean hasInvalidRoots = false;
+    HashSet<String> rootSet = new HashSet<String>();
+    for (VcsDirectoryMapping m : myVcsManager.getDirectoryMappings()) {
+      if (!m.getVcs().equals(myVcs.getName())) {
+        continue;
+      }
+      String path = m.getDirectory();
+      if (path.length() == 0) {
+        VirtualFile baseDir = myProject.getBaseDir();
+        assert baseDir != null;
+        path = baseDir.getPath();
+      }
+      VirtualFile root = lookupFile(path);
+      if (root == null) {
+        hasInvalidRoots = true;
+        break;
+      }
+      else {
+        rootSet.add(root.getPath());
+      }
+    }
+    if (!hasInvalidRoots && rootSet.isEmpty()) {
+      myHasGitRoots.set(false);
+      return;
+    }
+    else {
+      myHasGitRoots.set(true);
+    }
+    if (!hasInvalidRoots) {
+      // check if roots have a problem
+      loop:
+      for (String path : rootSet) {
+        VirtualFile root = lookupFile(path);
+        VirtualFile gitRoot = GitUtil.gitRootOrNull(root);
+        if (gitRoot == null || hasUnmappedSubroots(root, true, rootSet)) {
+          hasInvalidRoots = true;
+          break;
+        }
+        for (String otherPath : rootSet) {
+          if (otherPath.equals(path)) {
+            continue;
+          }
+          if (otherPath.startsWith(path)) {
+            VirtualFile otherFile = lookupFile(otherPath);
+            if (otherFile == null) {
+              hasInvalidRoots = true;
+              break loop;
+            }
+            VirtualFile otherRoot = GitUtil.gitRootOrNull(otherFile);
+            if (otherRoot == null || otherRoot == root || otherFile != otherRoot) {
+              hasInvalidRoots = true;
+              break loop;
+            }
+          }
+        }
+      }
+    }
+    if (!hasInvalidRoots) {
+      // all roots are correct
+      if (myNotificationPosted.compareAndSet(true, false)) {
+        if (myNotification != null) {
+          if (!myNotification.isExpired()) {
+            myNotification.expire();
+          }
+
+          myNotification = null;
+        }
+      }
+      return;
+    }
+    if (myNotificationPosted.compareAndSet(false, true)) {
+      myNotification = new Notification(GIT_INVALID_ROOTS_ID, GitBundle.getString("root.tracker.message.title"),
+                                        GitBundle.getString("root.tracker.message"),
+                                        NotificationType.ERROR, new NotificationListener() {
+          public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+            if (fixRoots()) {
+              notification.expire();
+            }
+          }
+        });
+
+      Notifications.Bus.notify(myNotification, myProject);
+    }
   }
 
   /**
@@ -305,15 +324,14 @@ public class GitRootTracker implements VcsListener {
    * @param rootSet   the mapped root set
    * @return true if there are unmapped subroots
    */
-  private static boolean hasUnmappedSubroots(VirtualFile directory, HashSet<String> rootSet) {
+  private static boolean hasUnmappedSubroots(VirtualFile directory, boolean isRoot, HashSet<String> rootSet) {
     for (VirtualFile child : directory.getChildren()) {
-      if (child.getName().equals(".git") || !child.isDirectory()) {
-        continue;
+      if (child.getName().equals(".git")) {
+        if (isRoot || !child.isDirectory())
+          continue;
+        return !rootSet.contains(directory.getPath());
       }
-      if (child.findChild(".git") != null && !rootSet.contains(child.getPath())) {
-        return true;
-      }
-      if (hasUnmappedSubroots(child, rootSet)) {
+      if (child.isDirectory() && hasUnmappedSubroots(child, false, rootSet)) {
         return true;
       }
     }

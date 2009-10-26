@@ -71,6 +71,7 @@ public class Win32Kernel {
 
   public static void release() {
     DATA = null;
+    BY_HANDLE_FILE_INFORMATION.INSTANCE = null;
   }
 
   private Map<String, FileInfo> myCache = new HashMap<String, FileInfo>();
