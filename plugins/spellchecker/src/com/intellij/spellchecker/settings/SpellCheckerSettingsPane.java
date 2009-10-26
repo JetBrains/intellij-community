@@ -31,12 +31,11 @@ import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.spellchecker.util.Strings;
 import com.intellij.ui.AddDeleteListPanel;
 import com.intellij.ui.HyperlinkLabel;
+import com.intellij.ui.OptionalChooserComponent;
+import com.intellij.ui.PathsChooserComponent;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.ruby.RBundle;
-import org.jetbrains.plugins.ruby.support.OptionalChooserComponent;
-import org.jetbrains.plugins.ruby.support.PathsChooserComponent;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -47,7 +46,6 @@ import java.util.List;
 
 public class SpellCheckerSettingsPane implements Disposable {
   private JPanel root;
-  private JPanel general;
   private JPanel linkContainer;
   private JPanel panelForDictionaryChooser;
   private JPanel panelForAcceptedWords;
@@ -91,8 +89,8 @@ public class SpellCheckerSettingsPane implements Disposable {
     pathsChooserComponent = new PathsChooserComponent(dictionariesFolders, new PathsChooserComponent.PathProcessor() {
       public boolean addPath(List<String> paths, String path) {
         if (paths.contains(path)) {
-          final String title = RBundle.message("module.settings.add.directory.title");
-          final String msg = RBundle.message("module.settings.directory.is.already.included");
+          final String title = SpellCheckerBundle.message("add.directory.title");
+          final String msg = SpellCheckerBundle.message("directory.is.already.included");
           Messages.showErrorDialog(root, msg, title);
           return false;
         }
