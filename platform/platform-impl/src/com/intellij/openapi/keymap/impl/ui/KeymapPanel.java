@@ -135,11 +135,13 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
   private JPanel createKeymapListPanel() {
     JPanel panel = new JPanel();
     panel.setLayout(new GridBagLayout());
-    panel.add(new JLabel(KeyMapBundle.message("keymaps.border.factory.title")), new GridBagConstraints(0,0, 1, 1, 0,0,GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,2,0,0), 0,0));
 
     myKeymapList = new JComboBox(myKeymapListModel);
     myKeymapList.setEditor(new MyEditor());
     myKeymapList.setRenderer(new MyKeymapRenderer());
+    JLabel keymapLabel = new JLabel(KeyMapBundle.message("keymaps.border.factory.title"));
+    keymapLabel.setLabelFor(myKeymapList);
+    panel.add(keymapLabel, new GridBagConstraints(0,0, 1, 1, 0,0,GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,2,0,0), 0,0));
     panel.add(myKeymapList, new GridBagConstraints(1,0,1,1,0,0,GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,4,0,0),0,0));
 
     panel.add(createKeymapButtonsPanel(), new GridBagConstraints(2,0,1,1,0,0,GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,0),0,0));

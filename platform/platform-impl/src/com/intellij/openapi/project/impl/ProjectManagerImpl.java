@@ -116,9 +116,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     connection.subscribe(StateStorage.STORAGE_TOPIC, new StateStorage.Listener() {
       public void storageFileChanged(final VirtualFileEvent event, @NotNull final StateStorage storage) {
         VirtualFile file = event.getFile();
-        LOG.info("[STORAGE] Check if application reload is required for: " + file.getPath());
         if (!file.isDirectory() && !(event.getRequestor() instanceof StateStorage.SaveSession)) {
-          LOG.info("[STORAGE] Scheduling application reload triggered by change in: " + file.getPath());
           saveChangedProjectFile(file, null, storage);
         }
       }
@@ -133,9 +131,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           connection.subscribe(StateStorage.STORAGE_TOPIC, new StateStorage.Listener() {
             public void storageFileChanged(final VirtualFileEvent event, @NotNull final StateStorage storage) {
               VirtualFile file = event.getFile();
-              LOG.info("[STORAGE] Check if project reload is required for: " + file.getPath());
               if (!file.isDirectory() && !(event.getRequestor() instanceof StateStorage.SaveSession)) {
-                LOG.info("[STORAGE] Scheduling project reload triggered by change in: " + file.getPath());
                 saveChangedProjectFile(file, project, storage);
               }
             }
@@ -575,7 +571,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   private void askToReloadProjectIfConfigFilesChangedExternally() {
-    LOG.info("[STORAGE] trying to reload project while myReloadBlockCount = " + myReloadBlockCount);
     if (myReloadBlockCount.get() == 0) {
       Set<Project> projects;
 
@@ -583,8 +578,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         if (myChangedProjectFiles.isEmpty()) return;
         projects = new HashSet<Project>(myChangedProjectFiles.keySet());
       }
-
-      LOG.info("[STORAGE] iterate over opened project & reload");
 
       List<Project> projectsToReload = new ArrayList<Project>();
 
@@ -661,8 +654,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     if (project.isDisposed()) return false;
     final HashSet<Pair<VirtualFile, StateStorage>> causes = new HashSet<Pair<VirtualFile, StateStorage>>();
 
-    LOG.info("[STORAGE] Should reload project now");
-
     synchronized (myChangedProjectFiles) {
       final List<Pair<VirtualFile, StateStorage>> changes = myChangedProjectFiles.remove(project);
       if (changes != null) {
@@ -677,7 +668,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         try {
-          LOG.info("[STORAGE] Checking if we could reinit components w/o project reload...");
           reloadOk[0] = ((ProjectEx)project).getStateStore().reload(causes);
         }
         catch (StateStorage.StateStorageException e) {
@@ -691,8 +681,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       }
     });
     if (reloadOk[0]) return false;
-
-    LOG.info("[STORAGE] Unable to reinit components, scheduling full project reload...");
 
     String message;
     if (causes.size() == 1) {
@@ -730,13 +718,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   private void scheduleReloadApplicationAndProject() {
-    LOG.info("[STORAGE] Scheduling reload with myReloadBlockCount = " + myReloadBlockCount);
-
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        LOG.info("[STORAGE] trying reloading application and should reload project");
         if (!tryToReloadApplication()) return;
-        LOG.info("[STORAGE] reloading project");
         askToReloadProjectIfConfigFilesChangedExternally();
       }
 

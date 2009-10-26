@@ -113,7 +113,7 @@ public class TestStateUpdater implements PacketConsumer {
         final List<TestProxy> children = parent.getChildren();
         final TestState parentState = parent.getState();
         LOG.assertTrue(parentState instanceof SuiteState);
-        if (children.indexOf(child) == children.size() - 1) {
+        if (child.equals(children.get(children.size() - 1))) {
           ((SuiteState)parentState).setRunning(false);
         }
         ((SuiteState)parentState).updateMagnitude(magnitude);

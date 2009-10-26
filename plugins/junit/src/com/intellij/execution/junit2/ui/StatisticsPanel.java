@@ -16,8 +16,6 @@
 
 package com.intellij.execution.junit2.ui;
 
-import com.intellij.execution.junit2.NewChildEvent;
-import com.intellij.execution.junit2.StatisticsChanged;
 import com.intellij.execution.junit2.TestEvent;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.ui.actions.TestContext;
@@ -70,9 +68,9 @@ class StatisticsPanel extends JPanel implements DataProvider{
     myTable.setVisible(true);
 //    myTestCaseInfo.setVisible(false);
     if (myCurrentTest.isLeaf() && myCurrentTest.getParent() != null) {
-      myChildInfo.onSelectionChanged(myCurrentTest.getParent());
+      myChildInfo.updateStatistics(myCurrentTest.getParent());
     } else{
-      myChildInfo.onSelectionChanged(myCurrentTest);
+      myChildInfo.updateStatistics(myCurrentTest);
     }
     final int idx = myChildInfo.getIndexOf(myCurrentTest);
     TableUtil.selectRows(myTable, new int[]{idx});
@@ -99,13 +97,7 @@ class StatisticsPanel extends JPanel implements DataProvider{
   private class MyJUnitListener extends JUnitAdapter {
     public void onTestChanged(final TestEvent event) {
       if (!StatisticsPanel.this.isShowing()) return;
-      if (event instanceof StatisticsChanged) {
-        if (myCurrentTest == event.getSource())
-          updateStatistics();
-      } else if (event instanceof NewChildEvent) {
-        if (event.getSource() == myCurrentTest && !myTable.isVisible())
-          updateStatistics();
-      }
+      if (myCurrentTest == event.getSource()) updateStatistics();
     }
 
     public void onTestSelected(final TestProxy test) {

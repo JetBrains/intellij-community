@@ -83,7 +83,7 @@ public class SuiteState extends TestState {
     return myCache.get(ALL_TESTS);
   }
 
-  public void changeStateAfterAddingChaildTo(final TestProxy test, final TestProxy child) {
+  public void changeStateAfterAddingChildTo(final TestProxy test, final TestProxy child) {
     if (child.getState().getMagnitude() <= getMagnitude()) {
       test.onStatisticsChanged();
       return;

@@ -1194,15 +1194,21 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
 
   private final class MyIdeView implements IdeView {
     public void selectElement(PsiElement element) {
-      selectPsiElement(element, true);
+      selectPsiElement(element, false);
+      boolean requestFocus = true;
       if (element != null) {
         final boolean isDirectory = element instanceof PsiDirectory;
         if (!isDirectory) {
           Editor editor = EditorHelper.openInEditor(element);
           if (editor != null) {
             ToolWindowManager.getInstance(myProject).activateEditorComponent();
+            requestFocus = false;
           }
         }
+      }
+
+      if (requestFocus) {
+        selectPsiElement(element, true);
       }
     }
 

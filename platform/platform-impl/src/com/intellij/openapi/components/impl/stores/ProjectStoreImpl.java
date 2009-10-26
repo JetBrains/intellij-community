@@ -624,14 +624,11 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     final Set<String> componentNames;
     try {
       componentNames = saveSession.analyzeExternalChanges(changedFiles);
-      LOG.info("[STORAGE] Changes affects: " + (componentNames == null ? "[NONE]" :
-               StringUtil.join(componentNames.toArray(new String[componentNames.size()]), ", ")));
       if (componentNames == null) return false;
 
       // TODO[mike]: This is a hack to prevent NPE (assert != null) in StateStorageManagerImpl.reload, storage is null for...
       for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
         if (pair.second == null) {
-          LOG.info("[STORAGE] Soft reload is not possible: no state for:" + pair.first.getName());
           return false;
         }
       }
@@ -641,7 +638,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       }
 
       if (!isReloadPossible(componentNames)) {
-        LOG.info("[STORAGE] Soft reload is not possible for some components :(");
         return false;
       }
     }

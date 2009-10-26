@@ -13,11 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.spellchecker.dictionary;
+package com.intellij.spellchecker.engine;
 
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
-public interface Processor {
+import java.util.List;
 
-  void process(@Nullable String word);
+public interface SuggestionProvider {
+
+  @NotNull
+  List<String> getSuggestions(@NotNull String text);
 }

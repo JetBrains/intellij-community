@@ -65,7 +65,7 @@ public abstract class TestState implements Printable {
     return null;
   }
 
-  public void changeStateAfterAddingChaildTo(final TestProxy test, final TestProxy child) {
+  public void changeStateAfterAddingChildTo(final TestProxy test, final TestProxy child) {
     test.setState(new SuiteState(test));
   }
 }

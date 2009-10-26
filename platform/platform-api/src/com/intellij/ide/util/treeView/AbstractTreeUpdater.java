@@ -316,4 +316,13 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   public void flush() {
     myUpdateQueue.sendFlush();
   }
+
+  public boolean isEnqueuedToUpdate(DefaultMutableTreeNode node) {
+    Iterator<TreeUpdatePass> nodes = myNodeQueue.iterator();
+    while (nodes.hasNext()) {
+      TreeUpdatePass each = nodes.next();
+      if (each.willUpdate(node)) return true;
+    }
+    return false;
+  }
 }

@@ -63,7 +63,7 @@ public class ArtifactsGenerator {
     generators.add(initTarget);
     initTarget.add(new Property(ArtifactAntGenerationContextImpl.ARTIFACTS_TEMP_DIR_PROPERTY, BuildProperties.propertyRelativePath(BuildProperties.getProjectBaseDirProperty(), "artifactsTemp")));
 
-    final Artifact[] artifacts = ArtifactManager.getInstance(myProject).getArtifacts();
+    final Artifact[] artifacts = ArtifactManager.getInstance(myProject).getSortedArtifacts();
     for (Artifact artifact : artifacts) {
       if (!myContext.shouldBuildIntoTempDirectory(artifact)) {
         generators.add(new CleanArtifactTarget(artifact, myContext));
