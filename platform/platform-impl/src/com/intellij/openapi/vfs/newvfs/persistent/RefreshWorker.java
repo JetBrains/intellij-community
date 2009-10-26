@@ -59,7 +59,7 @@ public class RefreshWorker {
     }
     else {
       if (delegate.getProtocol().equals(LocalFileSystem.PROTOCOL) && SystemInfo.isWindows && root.isDirectory() &&
-         (ApplicationManager.getApplication().isUnitTestMode() || Registry.is("filesystem.useNative"))) {
+         (!ApplicationManager.getApplication().isUnitTestMode() && Registry.is("filesystem.useNative"))) {
         delegate = new Win32LocalFileSystem();
       }
 
