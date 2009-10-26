@@ -84,7 +84,7 @@ public class PullUpConflictsUtil {
       }
     }
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
-    RefactoringConflictsUtil.analyzeAccessibilityConflicts(movedMembers, superClass, conflicts, null, targetRepresentativeElement);
+    RefactoringConflictsUtil.analyzeAccessibilityConflicts(movedMembers, superClass, conflicts, null, targetRepresentativeElement, abstractMethods);
     if (superClass != null) {
       checkSuperclassMembers(superClass, infos, conflicts);
       if (isInterfaceTarget) {
