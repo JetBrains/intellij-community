@@ -30,6 +30,14 @@ public class EncapsulateFieldsTest extends MultiFileTestCase{
     doTest("i", "There already is a method <b><code>Super setI(int)</code></b> which differs from setter <b><code>setI</code></b> by return type only.");
   }
 
+  public void testHideOverriderMethod() throws Exception {
+    doTest("i", "A", "There is already a <b><code>method <b><code>B.getI()</code></b></code></b> which would hide generated getter for a.i");
+  }
+
+  public void testHideOuterclassMethod() throws Exception {
+    doTest("i", "A.B", "There is already a <b><code>method <b><code>A.getI()</code></b></code></b> which would be hidden by generated getter");
+  }
+
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
@@ -41,11 +49,15 @@ public class EncapsulateFieldsTest extends MultiFileTestCase{
 
 
   private void doTest(final String fieldName, final String conflicts) throws Exception {
+    doTest(fieldName, "Test", conflicts);
+  }
+
+  private void doTest(final String fieldName, final String className, final String conflicts) throws Exception {
     doTest(new PerformAction() {
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
-        PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(myProject));
+        PsiClass aClass = myJavaFacade.findClass(className, GlobalSearchScope.projectScope(myProject));
 
-        assertNotNull("Class Test not found", aClass);
+        assertNotNull("Tested class not found", aClass);
 
 
         doTest(aClass, aClass.findFieldByName(fieldName, false), conflicts, true, true);
