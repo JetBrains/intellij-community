@@ -38,9 +38,7 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   }
 
   public static void release() {
-    if (ourSystem != null) {
-      Win32Kernel.release();
-    }
+    ourSystem = null;
   }
 
   private final Win32Kernel myKernel = new Win32Kernel();
