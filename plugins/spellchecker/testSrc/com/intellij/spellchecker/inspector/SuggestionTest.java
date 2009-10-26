@@ -23,19 +23,31 @@ import java.util.List;
 
 public class SuggestionTest extends JavaCodeInsightFixtureTestCase {
 
+  private SpellCheckerManager spManager;
+  private SpellCheckerManager getManager(){
+    if (spManager==null){
+      spManager = SpellCheckerManager.getInstance(getProject());
+    }
+    assert spManager!=null;
+    return spManager;
+  }
+
   public void testSuggestions(){
-    SpellCheckerManager manager = SpellCheckerManager.getInstance(getProject());
-    assert manager!=null;
-    List<String> result = manager.getSuggestions("upgade");
-    assertEquals(result.get(0),"upgrade");
+    List<String> result = getManager().getSuggestions("upgade");
+    assertEquals("upgrade",result.get(0));
   }
 
 
   public void testFirstLetterUppercaseSuggestions(){
+    List<String> result = getManager().getSuggestions("Upgade");
+    assertEquals("Upgrade",result.get(0));
+  }
+
+  public void testCamelCaseSuggestions(){
     SpellCheckerManager manager = SpellCheckerManager.getInstance(getProject());
     assert manager!=null;
-    List<String> result = manager.getSuggestions("Upgade");
-    assertEquals(result.get(0),"Upgrade");
+    List<String> result = manager.getSuggestions("TestUpgade");
+    assertEquals("TestUpgrade",result.get(0));
   }
 
 }

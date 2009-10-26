@@ -15,8 +15,11 @@
  */
 package com.intellij.spellchecker.engine;
 
-import com.intellij.spellchecker.dictionary.*;
+import com.intellij.spellchecker.dictionary.Dictionary;
+import com.intellij.spellchecker.dictionary.Loader;
+import com.intellij.spellchecker.dictionary.UserDictionary;
 import com.intellij.spellchecker.trie.Action;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,8 +37,8 @@ public class BaseSpellChecker implements SpellCheckerEngine {
 
   private Metrics metrics = new LevenshteinDistance();
 
-  private Processor processor = new Processor() {
-    public void process(@Nullable String word) {
+  private Consumer<String> consumer = new Consumer<String>() {
+    public void consume(@Nullable String word) {
       final String transformed = transform.transform(word);
       if (transformed != null) {
         engineDictionary.addToDictionary(transformed);
@@ -48,7 +51,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   }
 
   public void loadDictionary(@NotNull Loader loader) {
-    loader.load(processor);
+    loader.load(consumer);
   }
 
   public Transformation getTransformation() {

@@ -20,40 +20,40 @@ import com.intellij.spellchecker.dictionary.Loader;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 
+public class StreamLoader implements Loader {
 
-public class FileLoader implements Loader {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.StreamLoader");
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.FileLoader");
+  private InputStream stream;
 
-  private String url;
-
-  public FileLoader(String url) {
-    this.url = url;
+  public StreamLoader(InputStream stream) {
+    this.stream = stream;
   }
 
+
   public void load(@NotNull Consumer<String> consumer) {
-    File file = new File(url);
-    FileInputStream stream = null;
+    DataInputStream in = new DataInputStream(stream);
+    BufferedReader br = new BufferedReader(new InputStreamReader(in));
     try {
-      stream = new FileInputStream(file);
-      StreamLoader loader = new StreamLoader(stream);
-      loader.load(consumer);
+      String strLine;
+      while ((strLine = br.readLine()) != null) {
+        consumer.consume(strLine);
+      }
     }
     catch (Exception e) {
       LOG.error(e);
     }
     finally {
       try {
-        stream.close();
+        br.close();
       }
       catch (IOException ignored) {
+
       }
     }
   }
 
-
 }
+

@@ -1,0 +1,325 @@
+/*
+ * Copyright 2000-2009 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.spellchecker.settings;
+
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.newEditor.OptionsEditor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurable;
+import com.intellij.spellchecker.SpellCheckerManager;
+import com.intellij.spellchecker.dictionary.Dictionary;
+import com.intellij.spellchecker.util.SPFileUtil;
+import com.intellij.spellchecker.util.SpellCheckerBundle;
+import com.intellij.spellchecker.util.Strings;
+import com.intellij.ui.AddDeleteListPanel;
+import com.intellij.ui.HyperlinkLabel;
+import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ruby.RBundle;
+import org.jetbrains.plugins.ruby.support.OptionalChooserComponent;
+import org.jetbrains.plugins.ruby.support.PathsChooserComponent;
+
+import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
+import java.awt.*;
+import java.util.*;
+import java.util.List;
+
+public class SpellCheckerSettingsPane implements Disposable {
+  private JPanel root;
+  private JPanel general;
+  private JPanel linkContainer;
+  private JPanel panelForDictionaryChooser;
+  private JPanel panelForAcceptedWords;
+  private JPanel panelForFolderChooser;
+  private OptionalChooserComponent optionalChooserComponent;
+  private PathsChooserComponent pathsChooserComponent;
+  private final List<Pair<String, Boolean>> allDictionaries = new ArrayList<Pair<String, Boolean>>();
+  private final List<String> dictionariesFolders = new ArrayList<String>();
+  private final WordsPanel wordsPanel;
+  private final SpellCheckerManager manager;
+  private final SpellCheckerSettings settings;
+
+  public SpellCheckerSettingsPane(SpellCheckerSettings settings, final Project project) {
+    this.settings = settings;
+    manager = SpellCheckerManager.getInstance(project);
+    HyperlinkLabel link = new HyperlinkLabel(SpellCheckerBundle.message("link.to.inspection.settings"));
+    link.addHyperlinkListener(new HyperlinkListener() {
+      public void hyperlinkUpdate(final HyperlinkEvent e) {
+        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          final OptionsEditor optionsEditor = OptionsEditor.KEY.getData(DataManager.getInstance().getDataContext());
+          final ProjectInspectionToolsConfigurable toolsConfigurable = ProjectInspectionToolsConfigurable.getInstance(project);
+          if (optionsEditor != null && toolsConfigurable != null) {
+            optionsEditor.select(toolsConfigurable).doWhenDone(new Runnable() {
+              public void run() {
+                toolsConfigurable.selectInspectionTool("SpellCheckingInspection");
+              }
+            });
+
+          }
+
+        }
+      }
+    });
+    linkContainer.setLayout(new BorderLayout());
+    linkContainer.add(link);
+
+    // Fill in all the dictionaries folders (not implemented yet) and enabled dictionaries
+    fillAllDictionaries();
+
+
+    pathsChooserComponent = new PathsChooserComponent(dictionariesFolders, new PathsChooserComponent.PathProcessor() {
+      public boolean addPath(List<String> paths, String path) {
+        if (paths.contains(path)) {
+          final String title = RBundle.message("module.settings.add.directory.title");
+          final String msg = RBundle.message("module.settings.directory.is.already.included");
+          Messages.showErrorDialog(root, msg, title);
+          return false;
+        }
+        paths.add(path);
+
+        final ArrayList<Pair<String, Boolean>> currentDictionaries = optionalChooserComponent.getValue();
+        SPFileUtil.processFilesRecursively(path, new Consumer<String>() {
+          public void consume(final String s) {
+            currentDictionaries.add(Pair.create(s, true));
+          }
+        });
+        optionalChooserComponent.update();
+        return true;
+      }
+
+      public boolean removePath(List<String> paths, String path) {
+        if (paths.remove(path)) {
+          final ArrayList<Pair<String, Boolean>> result = new ArrayList<Pair<String, Boolean>>();
+          final ArrayList<Pair<String, Boolean>> currentDictionaries = optionalChooserComponent.getValue();
+          for (Pair<String, Boolean> pair : currentDictionaries) {
+            if (!pair.first.startsWith(path)) {
+              result.add(pair);
+            }
+          }
+          currentDictionaries.clear();
+          currentDictionaries.addAll(result);
+          optionalChooserComponent.update();
+          return true;
+        }
+        return false;
+      }
+    });
+    panelForFolderChooser.setLayout(new BorderLayout());
+    panelForFolderChooser.add(pathsChooserComponent.getContentPane(), BorderLayout.CENTER);
+
+
+    optionalChooserComponent = new OptionalChooserComponent(allDictionaries) {
+      @Override
+      public JCheckBox createCheckBox(String path, boolean checked) {
+        if (isUserDictionary(path)) {
+          path = FileUtil.toSystemIndependentName(path);
+          final int i = path.lastIndexOf('/');
+          if (i != -1) {
+            final String name = path.substring(i + 1);
+            return new JCheckBox("[user] " + name, checked);
+          }
+        }
+        return new JCheckBox("[bundled] " + FileUtil.toSystemDependentName(path), checked);
+      }
+    };
+
+    panelForDictionaryChooser.setLayout(new BorderLayout());
+    panelForDictionaryChooser.add(optionalChooserComponent.getContentPane(), BorderLayout.CENTER);
+
+
+    wordsPanel = new WordsPanel(manager);
+    panelForAcceptedWords.setLayout(new BorderLayout());
+    panelForAcceptedWords.add(wordsPanel, BorderLayout.CENTER);
+
+  }
+
+  public JComponent getPane() {
+    return root;
+  }
+
+  public boolean isModified() {
+    return wordsPanel.isModified() || optionalChooserComponent.isModified();
+  }
+
+  public void apply() throws ConfigurationException {
+    optionalChooserComponent.apply();
+    pathsChooserComponent.apply();
+    settings.setDictionaryFoldersPaths(pathsChooserComponent.getValues());
+
+    final HashSet<String> disabledDictionaries = new HashSet<String>();
+    final HashSet<String> bundledDisabledDictionaries = new HashSet<String>();
+    for (Pair<String, Boolean> pair : allDictionaries) {
+      if (!pair.second) {
+        final String scriptPath = pair.first;
+        if (isUserDictionary(scriptPath)) {
+          disabledDictionaries.add(scriptPath);
+        }
+        else {
+          bundledDisabledDictionaries.add(scriptPath);
+        }
+      }
+
+    }
+    settings.setDisabledDictionariesPaths(disabledDictionaries);
+    settings.setBundledDisabledDictionariesPaths(bundledDisabledDictionaries);
+
+    manager.update(wordsPanel.getWords(), settings);
+  }
+
+  private boolean isUserDictionary(final String dictionary) {
+    boolean isUserDictionary = false;
+    for (String dictionaryFolder : pathsChooserComponent.getValues()) {
+      if (dictionary.startsWith(dictionaryFolder)) {
+        isUserDictionary = true;
+        break;
+      }
+    }
+    return isUserDictionary;
+
+  }
+
+  public void reset() {
+    pathsChooserComponent.reset();
+    fillAllDictionaries();
+    optionalChooserComponent.reset();
+  }
+
+
+  private void fillAllDictionaries() {
+    dictionariesFolders.clear();
+    dictionariesFolders.addAll(settings.getDictionaryFoldersPaths());
+    allDictionaries.clear();
+    for (String dictionary : manager.getBundledDictionaries()) {
+      allDictionaries.add(new Pair<String, Boolean>(dictionary, !settings.getBundledDisabledDictionariesPaths().contains(dictionary)));
+    }
+
+    // user
+    //todo [shkate]: refactoring  - SpellCheckerManager contains the same code withing reloadConfiguration()
+    final Set<String> disabledDictionaries = settings.getDisabledDictionariesPaths();
+    for (String folder : dictionariesFolders) {
+      SPFileUtil.processFilesRecursively(folder, new Consumer<String>() {
+        public void consume(final String s) {
+          allDictionaries.add(Pair.create(s, !disabledDictionaries.contains(s)));
+        }
+      });
+    }
+  }
+
+
+  public void dispose() {
+    if (wordsPanel != null) {
+      wordsPanel.dispose();
+    }
+  }
+
+  public static final class WordDescriber {
+    private Dictionary dictionary;
+
+    public WordDescriber(Dictionary dictionary) {
+      this.dictionary = dictionary;
+    }
+
+    @NotNull
+    public List<String> process() {
+      if (this.dictionary == null) {
+        return new ArrayList<String>();
+      }
+      Set<String> words = this.dictionary.getEditableWords();
+      if (words == null) {
+        return new ArrayList<String>();
+      }
+      List<String> result = new ArrayList<String>();
+      for (String word : words) {
+        result.add(word);
+      }
+      Collections.sort(result);
+      return result;
+    }
+  }
+
+  private static final class WordsPanel extends AddDeleteListPanel implements Disposable {
+    private SpellCheckerManager manager;
+
+    private WordsPanel(SpellCheckerManager manager) {
+      super(null, new WordDescriber(manager.getUserDictionary()).process());
+      this.manager = manager;
+    }
+
+
+    protected Object findItemToAdd() {
+      String word = Messages.showInputDialog(com.intellij.spellchecker.util.SpellCheckerBundle.message("enter.simple.word"),
+                                             SpellCheckerBundle.message("add.new.word"), null);
+      if (word == null) {
+        return null;
+      }
+      else {
+        word = word.trim();
+      }
+
+      if (Strings.isMixedCase(word)) {
+        Messages.showWarningDialog(SpellCheckerBundle.message("entered.word.0.is.mixed.cased.you.must.enter.simple.word", word),
+                                   SpellCheckerBundle.message("add.new.word"));
+        return null;
+      }
+      if (!manager.hasProblem(word)) {
+        Messages.showWarningDialog(SpellCheckerBundle.message("entered.word.0.is.correct.you.no.need.to.add.this.in.list", word),
+                                   SpellCheckerBundle.message("add.new.word"));
+        return null;
+      }
+      return word;
+    }
+
+
+    public void dispose() {
+      myListModel.removeAllElements();
+    }
+
+    @Nullable
+    public List<String> getWords() {
+      Object[] pairs = getListItems();
+      if (pairs == null) {
+        return null;
+      }
+      List<String> words = new ArrayList<String>();
+      for (Object pair : pairs) {
+        words.add(pair.toString());
+      }
+      return words;
+    }
+
+    public boolean isModified() {
+      List<String> newWords = getWords();
+      Set<String> words = manager.getUserDictionary().getEditableWords();
+      if (words == null && newWords == null) {
+        return false;
+      }
+      if (words == null || newWords == null || newWords.size() != words.size()) {
+        return true;
+      }
+      return !(words.containsAll(newWords) && newWords.containsAll(words));
+    }
+  }
+
+
+}
