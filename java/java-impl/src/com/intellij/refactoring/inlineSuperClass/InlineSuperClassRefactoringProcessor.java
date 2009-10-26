@@ -20,11 +20,9 @@
  */
 package com.intellij.refactoring.inlineSuperClass;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -183,17 +181,14 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
     return showConflicts(conflicts);
   }
 
-  @Override
-  protected boolean showConflicts(final MultiMap<PsiElement, String> conflicts) {
-    if (!conflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
-      throw new RuntimeException(StringUtil.join(conflicts.values(), "\n"));
-    }
-    return super.showConflicts(conflicts);
-  }
-
-
   protected void performRefactoring(final UsageInfo[] usages) {
-    new PushDownProcessor(mySuperClass.getProject(), myMemberInfos, mySuperClass, new DocCommentPolicy(DocCommentPolicy.ASIS)).run();
+    new PushDownProcessor(mySuperClass.getProject(), myMemberInfos, mySuperClass, new DocCommentPolicy(DocCommentPolicy.ASIS)){
+      //push down conflicts are already collected
+      @Override
+      protected boolean showConflicts(MultiMap<PsiElement, String> conflicts) {
+        return true;
+      }
+    }.run();
     replaceInnerTypeUsages();
     super.performRefactoring(usages);
     try {

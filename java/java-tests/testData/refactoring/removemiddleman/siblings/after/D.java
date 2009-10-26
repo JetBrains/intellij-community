@@ -6,6 +6,6 @@ class D {
   }
 
   void bazz(Test t){
-      t.getMyField().foo();
+    t.foo();
   }
 }

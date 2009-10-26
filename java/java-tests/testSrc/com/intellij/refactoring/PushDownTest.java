@@ -58,7 +58,7 @@ public class PushDownTest extends LightCodeInsightTestCase {
         if (failure ? conflicts.isEmpty() : !conflicts.isEmpty()) {
           fail(failure ? "Conflict was not detected" : "False conflict was detected");
         }
-        return super.showConflicts(conflicts);
+        return true;
       }
     }.run();
 

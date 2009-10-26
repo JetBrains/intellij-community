@@ -148,14 +148,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     return showConflicts(conflicts);
   }
 
-  @Override
-  protected boolean showConflicts(final MultiMap<PsiElement, String> conflicts) {
-    if (!conflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
-      throw new RuntimeException(StringUtil.join(conflicts.values(), "\n"));
-    }
-    return super.showConflicts(conflicts);
-  }
-
+  
   private void calculateInitializersConflicts(MultiMap<PsiElement, String> conflicts) {
     final PsiClassInitializer[] initializers = sourceClass.getInitializers();
     for (PsiClassInitializer initializer : initializers) {

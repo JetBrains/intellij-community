@@ -16,7 +16,6 @@
 package com.intellij.refactoring.wrapreturnvalue;
 
 import com.intellij.ide.util.PackageUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -49,7 +48,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor {
 
@@ -226,15 +228,6 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
     }
     return showConflicts(conflicts);
   }
-
-  @Override
-  protected boolean showConflicts(final MultiMap<PsiElement, String> conflicts) {
-    if (!conflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
-      throw new RuntimeException(StringUtil.join(conflicts.values(), "\n"));
-    }
-    return super.showConflicts(conflicts);
-  }
-
 
   protected void performRefactoring(UsageInfo[] usageInfos) {
     if (!myUseExistingClass && !buildClass()) return;
