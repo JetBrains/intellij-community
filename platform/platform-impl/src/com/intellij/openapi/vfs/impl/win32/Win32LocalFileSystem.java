@@ -28,7 +28,25 @@ import java.util.Set;
  */
 public class Win32LocalFileSystem extends LocalFileSystemBase {
 
+  private static Win32LocalFileSystem ourSystem;
+
+  public static Win32LocalFileSystem getWin32Instance() {
+    if (ourSystem == null) {
+      ourSystem = new Win32LocalFileSystem();
+    }
+    return ourSystem;
+  }
+
+  public static void release() {
+    if (ourSystem != null) {
+      Win32Kernel.release();
+    }
+  }
+
   private final Win32Kernel myKernel = new Win32Kernel();
+
+  private Win32LocalFileSystem() {
+  }
 
   @Override
   public String[] list(VirtualFile file) {

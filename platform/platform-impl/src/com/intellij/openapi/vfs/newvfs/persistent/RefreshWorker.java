@@ -60,7 +60,7 @@ public class RefreshWorker {
     else {
       if (delegate.getProtocol().equals(LocalFileSystem.PROTOCOL) && SystemInfo.isWindows && root.isDirectory() &&
          (!ApplicationManager.getApplication().isUnitTestMode() && Registry.is("filesystem.useNative"))) {
-        delegate = new Win32LocalFileSystem();
+        delegate = Win32LocalFileSystem.getWin32Instance();
       }
 
       final PersistentFS persistence = (PersistentFS)ManagingFS.getInstance();

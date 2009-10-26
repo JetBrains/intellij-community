@@ -23,7 +23,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.impl.win32.Win32Kernel;
+import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -124,7 +124,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   }
 
   public void disposeComponent() {
-    Win32Kernel.release();
+    Win32LocalFileSystem.release();
   }
 
   @TestOnly
