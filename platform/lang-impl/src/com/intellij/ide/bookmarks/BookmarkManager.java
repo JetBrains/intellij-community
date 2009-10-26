@@ -87,7 +87,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
   public void addTextBookmark(VirtualFile file, int lineIndex, String description) {
     Bookmark b = new Bookmark(myProject, file, lineIndex, description);
     myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkAdded(b);
-    myBookmarks.add(b);
+    myBookmarks.add(0, b);
   }
 
   public static String getAutoDescription(final Editor editor, final int lineIndex) {
@@ -108,7 +108,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
     if (findFileBookmark(file) != null) return;
 
     Bookmark b = new Bookmark(myProject, file, description);
-    myBookmarks.add(b);
+    myBookmarks.add(0, b);
     myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkAdded(b);
   }
 
