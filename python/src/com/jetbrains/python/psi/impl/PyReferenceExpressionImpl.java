@@ -559,6 +559,10 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         return PyNoneType.INSTANCE;
       }
     }
+    else {
+      PyType maybe_type = PyUtil.getSpecialAttributeType(this);
+      if (maybe_type != null) return maybe_type;
+    }
     ResolveResult[] targets = multiResolve(false);
     if (targets.length == 0) return null;
     PsiElement target = targets[0].getElement();

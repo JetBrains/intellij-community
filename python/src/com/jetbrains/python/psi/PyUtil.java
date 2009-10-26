@@ -28,7 +28,11 @@ import com.intellij.psi.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -524,6 +528,51 @@ public class PyUtil {
       }
     }
     return superClasses.toArray(new PyClass[superClasses.size()]);
+  }
+
+  /**
+   * Finds the first identifier AST node under target element, and returns its text.
+   * @param target
+   * @return identifier text, or null.
+   */
+  public static @Nullable
+  String getIdentifier(PsiElement target) {
+    ASTNode node = target.getNode();
+    if (node != null) {
+      ASTNode ident_node = node.findChildByType(PyTokenTypes.IDENTIFIER);
+      if (ident_node != null) return ident_node.getText();
+    }
+    return null;
+  }
+
+
+  // TODO: move to a more proper place?
+  /**
+   * Determine the type of a special attribute. Currently supported: {@code __class__} and {@code __dict__}.
+   * @param ref reference to a possible attribute; only qualified references make sense.
+   * @return type, or null (if type cannot be determined, reference is not to a known attribute, etc.)
+   */
+  public static @Nullable
+  PyType getSpecialAttributeType(PyReferenceExpression ref) {
+    if (ref != null) {
+      PyExpression qualifier = ref.getQualifier();
+      if (qualifier != null) {
+        String attr_name = getIdentifier(ref.getElement());
+        if ("__class__".equals(attr_name)) {
+          PyType qual_type = qualifier.getType();
+          if (qual_type instanceof PyClassType) {
+            return new PyClassType(((PyClassType)qual_type).getPyClass(), true); // always as class, never instance
+          }
+        }
+        else if ("__dict__".equals(attr_name)) {
+          PyType qual_type = qualifier.getType();
+          if (qual_type instanceof PyClassType && ((PyClassType)qual_type).isDefinition()) {
+            return PyBuiltinCache.getInstance(ref.getProject()).getDictType();
+          }
+        }
+      }
+    }
+    return null;
   }
 
   /**

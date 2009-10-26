@@ -104,7 +104,10 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
       final PyExpression assignedValue = assignmentStatement.getAssignedValue();
       if (assignedValue != null) {
         if (assignedValue instanceof PyReferenceExpression) {
-          final PsiElement resolveResult = ((PyReferenceExpression)assignedValue).resolve();
+          final PyReferenceExpression refex = (PyReferenceExpression)assignedValue;
+          PyType maybe_type = PyUtil.getSpecialAttributeType(refex);
+          if (maybe_type != null) return maybe_type;
+          final PsiElement resolveResult = refex.resolve();
           if (resolveResult == this) {
             return null;  // fix SOE on "a = a"
           }
