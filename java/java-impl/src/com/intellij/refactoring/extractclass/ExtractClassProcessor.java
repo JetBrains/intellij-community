@@ -16,7 +16,6 @@
 package com.intellij.refactoring.extractclass;
 
 import com.intellij.ide.util.PackageUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -43,10 +42,12 @@ import com.intellij.refactoring.psi.MethodInheritanceUtils;
 import com.intellij.refactoring.psi.TypeParametersVisitor;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.refactoring.util.FixableUsagesRefactoringProcessor;
+import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -63,6 +64,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   private final Set<PsiClass> innerClassesToMakePublic = new HashSet<PsiClass>();
   private final List<PsiTypeParameter> typeParams = new ArrayList<PsiTypeParameter>();
   private final String newPackageName;
+  private final String myNewVisibility;
   private final boolean myGenerateAccessors;
   private final String newClassName;
   private final String delegateFieldName;
@@ -75,7 +77,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
                                List<PsiClass> innerClasses,
                                String newPackageName,
                                String newClassName) {
-    this(sourceClass, fields, methods, innerClasses, newPackageName, newClassName, false);
+    this(sourceClass, fields, methods, innerClasses, newPackageName, newClassName, null, false);
   }
 
   public ExtractClassProcessor(PsiClass sourceClass,
@@ -84,10 +86,12 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
                                List<PsiClass> classes,
                                String packageName,
                                String newClassName,
+                               String newVisibility,
                                boolean generateAccessors) {
     super(sourceClass.getProject());
     this.sourceClass = sourceClass;
     this.newPackageName = packageName;
+    myNewVisibility = newVisibility;
     myGenerateAccessors = generateAccessors;
     this.fields = new ArrayList<PsiField>(fields);
     this.methods = new ArrayList<PsiMethod>(methods);
@@ -217,11 +221,39 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   }
 
   protected void performRefactoring(UsageInfo[] usageInfos) {
-    if (!buildClass()) return;
+    final PsiClass psiClass = buildClass();
+    if (psiClass == null) return;
     if (delegationRequired) {
       buildDelegate();
     }
     super.performRefactoring(usageInfos);
+    if (myNewVisibility == null) return;
+    for (PsiMethod method : methods) {
+      final PsiMethod member = psiClass.findMethodBySignature(method, false);
+      if (member != null) {
+        fixVisibility(usageInfos, member);
+      }
+    }
+
+    for (PsiField field : fields) {
+      final PsiField member = psiClass.findFieldByName(field.getName(), false);
+      if (member != null) {
+        fixVisibility(usageInfos, member);
+      }
+    }
+  }
+
+  private void fixVisibility(UsageInfo[] usageInfos, PsiMember member) {
+    if (VisibilityUtil.ESCALATE_VISIBILITY.equals(myNewVisibility)) {
+      for (UsageInfo info : usageInfos) {
+        final PsiElement element = info.getElement();
+        if (element != null) {
+          VisibilityUtil.escalateVisibility(member, element);
+        }
+      }
+    } else {
+       RefactoringConflictsUtil.setVisibility(member.getModifierList(), myNewVisibility);
+    }
   }
 
 
@@ -484,7 +516,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   }
 
 
-  private boolean buildClass() {
+  private PsiClass buildClass() {
     final PsiManager manager = sourceClass.getManager();
     final Project project = sourceClass.getProject();
     final ExtractedClassBuilder extractedClassBuilder = new ExtractedClassBuilder();
@@ -538,15 +570,14 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
         final PsiElement addedFile = directory.add(newFile);
         final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
         final PsiElement shortenedFile = JavaCodeStyleManager.getInstance(project).shortenClassReferences(addedFile);
-        codeStyleManager.reformat(shortenedFile);
+        return ((PsiJavaFile)codeStyleManager.reformat(shortenedFile)).getClasses()[0];
       } else {
-        return false;
+        return null;
       }
     }
     catch (IncorrectOperationException e) {
-      return false;
+      return null;
     }
-    return true;
   }
 
   private List<PsiClass> calculateInterfacesSupported() {
