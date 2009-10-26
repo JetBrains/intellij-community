@@ -149,7 +149,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
         }
       }
       // maybe some unimported file has it, too
-      ProgressManager.getInstance().checkCanceled(); // before expensive index searches
+      ProgressManager.checkCanceled(); // before expensive index searches
       // NOTE: current indices have limitations, only finding direct definitions of classes and functions.
       Project project = node.getProject();
       GlobalSearchScope scope = null; // GlobalSearchScope.projectScope(project);

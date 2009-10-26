@@ -121,7 +121,7 @@ public class PyResolveUtil {
     PsiElement seeker = elt;
     PsiElement cap = getConcealingParent(elt);
     do {
-      ProgressManager.getInstance().checkCanceled();
+      ProgressManager.checkCanceled();
       if (!seeker.isValid()) return null; 
       if (fromunder) {
         fromunder = false; // only honour fromunder once per call
