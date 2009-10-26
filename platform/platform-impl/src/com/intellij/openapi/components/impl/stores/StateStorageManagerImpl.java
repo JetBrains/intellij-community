@@ -16,6 +16,7 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -47,6 +48,13 @@ import java.util.regex.Pattern;
 public abstract class StateStorageManagerImpl implements StateStorageManager, Disposable, StreamProvider, ComponentVersionProvider {
 
   private static final Logger LOG = Logger.getInstance("#" + StateStorageManagerImpl.class.getName());
+
+  private static final boolean ourHeadlessEnvironment;
+
+  static {
+    final ApplicationEx ex = ApplicationManagerEx.getApplicationEx();
+    ourHeadlessEnvironment = ex.isHeadlessEnvironment() || ex.isUnitTestMode();
+  }
 
   private final Map<String, String> myMacros = new HashMap<String, String>();
   private final Map<String, StateStorage> myStorages = new HashMap<String, StateStorage>();
@@ -269,7 +277,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
 
     final String extension = FileUtil.getExtension(new File(expandedFile).getName());
-    if (extension.length() == 0) {
+    if (!ourHeadlessEnvironment && extension.length() == 0) {
       throw new IllegalArgumentException("Extension is missing for storage file: " + expandedFile);
     }
 
