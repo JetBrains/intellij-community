@@ -112,9 +112,11 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
       configuration.setApplicationServer(appServer);
       configuration.setUrlToOpenInBrowser(configuration.getDefaultUrlForBrowser());
 
-      ((AppEngineServerModel)configuration.getServerModel()).setArtifact(artifact);
-      BuildArtifactsBeforeRun.setBuildArtifactBeforeRun(module.getProject(), configuration, artifact);
-      
+      if (artifact != null) {
+        ((AppEngineServerModel)configuration.getServerModel()).setArtifact(artifact);
+        BuildArtifactsBeforeRun.setBuildArtifactBeforeRun(module.getProject(), configuration, artifact);
+      }
+
       runManager.addConfiguration(runSettings, false);
       runManager.setActiveConfiguration(runSettings);
     }
@@ -160,6 +162,7 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
     }
   }
 
+  @Nullable
   private static Artifact findContainingArtifact(Module module, AppEngineFacet appEngineFacet) {
     final PackagingElementResolvingContext context = ArtifactManager.getInstance(module.getProject()).getResolvingContext();
     final List<ArtifactType> artifactTypes =
