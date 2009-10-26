@@ -15,12 +15,12 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.lifecycle.AtomicSectionsAware;
 import com.intellij.lifecycle.ControlledAlarmFactory;
 import com.intellij.lifecycle.SlowlyClosingAlarm;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Getter;
 import com.intellij.util.Alarm;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -36,15 +36,15 @@ public class ControlledCycle implements Runnable {
 
   private final AtomicBoolean myActive;
 
-  public ControlledCycle(final Project project, final Getter<Boolean> runnable) {
+  public ControlledCycle(final Project project, final MyCallback callback) {
     myActive = new AtomicBoolean(false);
     myRunnable = new Runnable() {
       boolean shouldBeContinued = true;
       public void run() {
         try {
-          shouldBeContinued = Boolean.TRUE.equals(runnable.get());
+          shouldBeContinued = callback.call(myControlledAlarm);
         } catch (ProcessCanceledException e) {
-          //
+          return;
         } catch (RuntimeException e) {
           LOG.info(e);
         }
@@ -73,5 +73,9 @@ public class ControlledCycle implements Runnable {
     } catch (ProcessCanceledException e) {
       //
     }
+  }
+
+  public interface MyCallback {
+    boolean call(final AtomicSectionsAware atomicSectionsAware);
   }
 }

@@ -16,6 +16,8 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
@@ -76,7 +78,7 @@ public class LazyRefreshingSelfQueue<T> {
   }
 
   // called by outside timer or something
-  public void updateStep() {
+  public void updateStep(@NotNull final ProgressIndicator pi) {
     final List<T> dirty = new LinkedList<T>();
 
     final long startTime = System.currentTimeMillis() - myUpdateInterval;
@@ -97,6 +99,7 @@ public class LazyRefreshingSelfQueue<T> {
     synchronized (myLock) {
       // get absolute
       while (! myQueue.isEmpty()) {
+        pi.checkCanceled();
         final Pair<Long, T> pair = myQueue.get(0);
         if (pair.getFirst() == null) {
           dirty.add(myQueue.removeFirst().getSecond());
@@ -121,6 +124,7 @@ public class LazyRefreshingSelfQueue<T> {
 
     LOG.debug("found something to update: " + (! dirty.isEmpty()));
     for (T t : dirty) {
+      ProgressManager.checkCanceled();
       myUpdater.consume(t);
       synchronized (myLock) {
         if (myInProgress.remove(t)) {

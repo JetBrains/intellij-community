@@ -18,6 +18,8 @@ package com.intellij.lifecycle;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -130,5 +132,19 @@ public class ControlledAlarmFactory {
     public boolean supportsScheduling() {
       return false;
     }
+  }
+
+  public static ProgressIndicator createProgressIndicator(final AtomicSectionsAware atomicSectionsAware) {
+    return new EmptyProgressIndicator() {
+      @Override
+      public boolean isCanceled() {
+        return atomicSectionsAware.shouldExitAsap();
+      }
+
+      @Override
+      public void checkCanceled() {
+        atomicSectionsAware.checkShouldExit();
+      }
+    };
   }
 }

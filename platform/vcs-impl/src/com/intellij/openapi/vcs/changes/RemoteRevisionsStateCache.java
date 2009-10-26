@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.lifecycle.AtomicSectionsAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
@@ -93,7 +94,7 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
     }
   }
 
-  public boolean updateStep() {
+  public boolean updateStep(final AtomicSectionsAware atomicSectionsAware) {
     final MultiMap<VcsRoot, String> dirty = new MultiMap<VcsRoot, String>();
     final long oldPoint = System.currentTimeMillis() - DISCRETE;
 
@@ -127,6 +128,7 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
 
     final Map<String, Pair<Boolean, VcsRoot>> results = new HashMap<String, Pair<Boolean, VcsRoot>>();
     for (VcsRoot vcsRoot : dirty.keySet()) {
+      atomicSectionsAware.checkShouldExit();
       final TreeDiffProvider provider = vcsRoot.vcs.getTreeDiffProvider();
       if (provider == null) continue;
 
