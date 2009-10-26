@@ -204,7 +204,7 @@ public class AbstractTreeUi {
   }
 
 
-  private boolean isNodeActionsPending() {
+  boolean isNodeActionsPending() {
     return !myNodeActions.isEmpty() || !myNodeChildrenActions.isEmpty();
   }
 
@@ -1235,7 +1235,7 @@ public class AbstractTreeUi {
   }
 
   public boolean isReady() {
-    return isIdle() && !hasPendingWork();
+    return isIdle() && !hasPendingWork() && !isNodeActionsPending();
   }
 
   public boolean hasPendingWork() {
@@ -1750,11 +1750,11 @@ public class AbstractTreeUi {
 
     final Object element = getBuilder().getTreeStructureElement((NodeDescriptor)o);
 
-    processActions(node, element, myNodeActions);
-
     boolean childrenReady = !isLoadedInBackground(element);
+
+    processActions(node, element, myNodeActions, childrenReady ? myNodeChildrenActions : null);
     if (childrenReady) {
-      processActions(node, element, myNodeChildrenActions);
+      processActions(node, element, myNodeChildrenActions, null);
     }
 
     if (!isUpdatingParent(node) && !isWorkerBusy()) {
@@ -1770,11 +1770,16 @@ public class AbstractTreeUi {
   }
 
 
-  private void processActions(DefaultMutableTreeNode node, Object element, final Map<Object, List<NodeAction>> nodeActions) {
+  private void processActions(DefaultMutableTreeNode node, Object element, final Map<Object, List<NodeAction>> nodeActions, @Nullable final Map<Object, List<NodeAction>> secondaryNodeAction) {
     final List<NodeAction> actions = nodeActions.get(element);
     if (actions != null) {
       nodeActions.remove(element);
+
+      List<NodeAction> secondary = secondaryNodeAction != null ? secondaryNodeAction.get(element) : null;
       for (NodeAction each : actions) {
+        if (secondary != null && secondary.contains(each)) {
+          secondary.remove(each);          
+        }
         each.onReady(node);
       }
     }
@@ -2798,15 +2803,27 @@ public class AbstractTreeUi {
           }
         });
 
-        for (final Object toExpand : element) {
-          _expand(toExpand, new Runnable() {
-            public void run() {
-              done.setDone();
-            }
-          }, parentsOnly, checkIfInStructure, canSmartExpand);
-        }
+        expandNext(element, 0, parentsOnly, checkIfInStructure, canSmartExpand, done);
       }
     });
+  }
+
+  private void expandNext(final Object[] elements, final int index, final boolean parentsOnly, final boolean checkIfInStricture, final boolean canSmartExpand, final ActionCallback done) {
+    if (elements.length <= 0) {
+      done.setDone();
+      return;
+    }
+
+    if (index >= elements.length) {
+      return;
+    }
+
+    _expand(elements[index], new Runnable() {
+      public void run() {
+        done.setDone();
+        expandNext(elements, index + 1, parentsOnly, checkIfInStricture, canSmartExpand, done);
+      }
+    }, parentsOnly, checkIfInStricture, canSmartExpand);
   }
 
   public void collapseChildren(final Object element, @Nullable final Runnable onDone) {

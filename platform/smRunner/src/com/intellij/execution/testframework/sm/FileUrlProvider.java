@@ -20,6 +20,7 @@ import com.intellij.execution.PsiLocation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.testIntegration.TestLocationProvider;
@@ -71,8 +72,10 @@ public class FileUrlProvider implements TestLocationProvider {
       lineNumber = 1;
       filePath = normalizedPath;
     }
-    //Now we should seach file with most sutable path
-    final List<VirtualFile> virtualFiles = LocationProviderUtil.findSuitableFilesFor(filePath);
+    // Now we should search file with most suitable path
+    // here path may be absolute or relative
+    final String systemIndependentPath = FileUtil.toSystemIndependentName(filePath);
+    final List<VirtualFile> virtualFiles = TestsLocationProviderUtil.findSuitableFilesFor(systemIndependentPath, project);
     if (virtualFiles.isEmpty()) {
       return Collections.emptyList();
     }
