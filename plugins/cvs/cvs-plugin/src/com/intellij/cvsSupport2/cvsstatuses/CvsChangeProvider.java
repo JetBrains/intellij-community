@@ -38,6 +38,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -88,6 +89,7 @@ public class CvsChangeProvider implements ChangeProvider {
     }
     for (FilePath path : dirtyScope.getRecursivelyDirtyDirectories()) {
       final VirtualFile dir = path.getVirtualFile();
+      ProgressManager.checkCanceled();
       if (dir != null) {
         processEntriesIn(dir, dirtyScope, builder, true);
       }
@@ -97,6 +99,7 @@ public class CvsChangeProvider implements ChangeProvider {
     }
 
     for (FilePath path : dirtyScope.getDirtyFiles()) {
+      ProgressManager.checkCanceled();
       if (path.isDirectory()) {
         final VirtualFile dir = path.getVirtualFile();
         if (dir != null) {
@@ -196,6 +199,7 @@ public class CvsChangeProvider implements ChangeProvider {
 
 
   private void processFile(final FilePath filePath, final ChangelistBuilder builder) {
+    ProgressManager.checkCanceled();
     final VirtualFile dir = filePath.getVirtualFileParent();
     if (dir == null) return;
 
@@ -207,6 +211,7 @@ public class CvsChangeProvider implements ChangeProvider {
   }
 
   private void processFile(final VirtualFile dir, @Nullable VirtualFile file, Entry entry, final ChangelistBuilder builder) {
+    ProgressManager.checkCanceled();
     final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(dir, entry.getFileName());
     final FileStatus status = CvsStatusProvider.getStatus(file, entry);
     final VcsRevisionNumber number = createRevisionNumber(entry.getRevision(), status);
@@ -436,6 +441,7 @@ public class CvsChangeProvider implements ChangeProvider {
     }
 
     for (final Entry entry : entries) {
+      ProgressManager.checkCanceled();
       String fileName = entry.getFileName();
       if (entry.isDirectory()) {
         if (nameToFileMap.containsKey(fileName)) {
@@ -463,6 +469,7 @@ public class CvsChangeProvider implements ChangeProvider {
     }
 
     for (final String name : nameToFileMap.keySet()) {
+      ProgressManager.checkCanceled();
       VirtualFile unknown = nameToFileMap.get(name);
       if (unknown.isDirectory()) {
         if (isInContent(unknown)) {
