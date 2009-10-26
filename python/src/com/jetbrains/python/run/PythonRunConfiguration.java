@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author yole
@@ -28,6 +29,12 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration imple
 
   protected PythonRunConfiguration(RunConfigurationModule module, ConfigurationFactory configurationFactory, String name) {
     super(name, module, configurationFactory);
+    addDefaultEnvs();
+  }
+
+  private void addDefaultEnvs() {
+    Map<String, String> envs = getEnvs();
+    envs.put("PYTHONUNBUFFERED", "1"); // unbuffered I/O is easier for IDE to handle
   }
 
   protected ModuleBasedConfiguration createInstance() {
