@@ -212,7 +212,7 @@ else:
 # grammar to parse parameter lists
 
 # // snatched from parsePythonValue.py, from pyparsing samples, copyright 2006 by Paul McGuire but under BSD license.
-# we don't suppress lots of punctuation becase we want it back when we reconstuct the lists
+# we don't suppress lots of punctuation because we want it back when we reconstuct the lists
 
 lparen,rparen,lbrack,rbrack,lbrace,rbrace,colon = map(Literal,"()[]{}:")
 
@@ -380,12 +380,13 @@ def makeNamesUnique(seq, name_map=None):
     if type(one) is list:
       ret.append(makeNamesUnique(one, name_map))
     else:
-      if one in name_map:
-        old_one = one
+      one_key = string.lstrip(one, "*") # starred parameters are unique sans stars
+      if one_key in name_map:
+        old_one = one_key
         one = one + "_" + str(name_map[old_one])
         name_map[old_one] += 1
       else:
-        name_map[one] = 1
+        name_map[one_key] = 1
       ret.append(one)
   return ret
   
@@ -477,6 +478,7 @@ class ModuleRedeclarator(object):
     (None, "zip"): "(seq1, seq2, *more_seqs)",
     (None, "range"): "(start=None, stop=None, step=None)", # suboptimal: allows empty arglist
     (None, "filter"): "(function_or_none, sequence)",
+    (None, "iter"): "(source, sentinel=None)",
   }
 
   if version[0] < 3:
