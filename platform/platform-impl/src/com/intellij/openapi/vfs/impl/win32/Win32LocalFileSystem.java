@@ -33,19 +33,33 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   @Override
   public String[] list(VirtualFile file) {
     try {
-      return myKernel.list(file.getPath());
+      String[] strings = myKernel.list(file.getPath());
+      //assert Arrays.asList(strings).equals(Arrays.asList(super.list(file)));
+      return strings;
     }
     catch (Exception e) {
+//      assert false;
       return super.list(file);
     }
   }
 
   @Override
+  public boolean exists(VirtualFile fileOrDirectory) {
+    if (fileOrDirectory.getParent() == null) return true;
+    boolean b = myKernel.exists(fileOrDirectory.getPath());
+    //assert b == super.exists(fileOrDirectory);
+    return b;
+  }
+
+  @Override
   public boolean isDirectory(VirtualFile file) {
     try {
-      return myKernel.isDirectory(file.getPath());
+      boolean b = myKernel.isDirectory(file.getPath());
+      //assert b == super.isDirectory(file);
+      return b;
     }
     catch (FileNotFoundException e) {
+//      assert false;
       return super.isDirectory(file);
     }
   }
@@ -53,9 +67,12 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   @Override
   public boolean isWritable(VirtualFile file) {
     try {
-      return myKernel.isWritable(file.getPath());
+      boolean b = myKernel.isWritable(file.getPath());
+      //assert b == super.isWritable(file);
+      return b;
     }
     catch (FileNotFoundException e) {
+//      assert false: file;
       return super.isWritable(file);
     }
   }
@@ -63,16 +80,14 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   @Override
   public long getTimeStamp(VirtualFile file) {
     try {
-      return myKernel.getTimeStamp(file.getPath());
+      long timeStamp = myKernel.getTimeStamp(file.getPath());
+      //assert timeStamp == super.getTimeStamp(file);
+      return timeStamp;
     }
     catch (FileNotFoundException e) {
+//      assert false;
       return super.getTimeStamp(file);
     }
-  }
-
-  @Override
-  public boolean exists(VirtualFile fileOrDirectory) {
-    return myKernel.exists(fileOrDirectory.getPath());
   }
 
   @Override

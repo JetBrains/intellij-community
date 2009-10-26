@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author nik
@@ -25,7 +26,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
   private Set<ProjectStructureElement> myElementWithNotCalculatedUsages = new HashSet<ProjectStructureElement>();
   private MergingUpdateQueue myAnalyzerQueue;
   private List<Runnable> myListeners = new ArrayList<Runnable>();
-  private boolean myStopped;
+  private final AtomicBoolean myStopped = new AtomicBoolean(false);
 
   public ProjectStructureDaemonAnalyzer(StructureConfigurableContext context) {
     Disposer.register(context, this);
@@ -33,7 +34,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
   }
 
   private void doUpdate(final ProjectStructureElement element, final boolean check, final boolean collectUsages) {
-    if (myStopped) return;
+    if (myStopped.get()) return;
 
     if (check) {
       doCheck(element);
@@ -47,7 +48,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
     final ProjectStructureProblemsHolder problemsHolder = new ProjectStructureProblemsHolder();
     new ReadAction() {
       protected void run(final Result result) {
-        if (myStopped) return;
+        if (myStopped.get()) return;
 
         if (LOG.isDebugEnabled()) {
           LOG.debug("checking " + element);
@@ -57,7 +58,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
     }.execute();
     invokeLater(new Runnable() {
       public void run() {
-        if (myStopped) return;
+        if (myStopped.get()) return;
 
         if (LOG.isDebugEnabled()) {
           LOG.debug("updating problems for " + element);
@@ -78,7 +79,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
   private void doCollectUsages(final ProjectStructureElement element) {
     final List<ProjectStructureElementUsage> usages = new ReadAction<List<ProjectStructureElementUsage>>() {
       protected void run(final Result<List<ProjectStructureElementUsage>> result) {
-        if (myStopped) return;
+        if (myStopped.get()) return;
 
         if (LOG.isDebugEnabled()) {
           LOG.debug("collecting usages in " + element);
@@ -89,7 +90,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
 
     invokeLater(new Runnable() {
       public void run() {
-        if (myStopped) return;
+        if (myStopped.get()) return;
 
         if (LOG.isDebugEnabled()) {
           LOG.debug("updating usages for " + element);
@@ -166,7 +167,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
 
   public void stop() {
     LOG.debug("analyzer stopped");
-    myStopped = true;
+    myStopped.set(true);
     myAnalyzerQueue.cancelAllUpdates();
     clearCaches();
     myAnalyzerQueue.deactivate();
@@ -183,7 +184,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
   }
 
   public void dispose() {
-    myStopped = true;
+    myStopped.set(true);
     myAnalyzerQueue.cancelAllUpdates();
   }
 
@@ -211,7 +212,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
     myAnalyzerQueue.activate();
     myAnalyzerQueue.queue(new Update("reset") {
       public void run() {
-        myStopped = false;
+        myStopped.set(false);
       }
     });
   }

@@ -34,15 +34,24 @@ import java.util.Map;
  */
 public class Win32Kernel {
 
-  private static Kernel32 myKernel = (Kernel32)Native.loadLibrary("kernel32", Kernel32.class, new HashMap<Object, Object>() {
-    {
-      put(Library.OPTION_TYPE_MAPPER, W32APITypeMapper.UNICODE);
-      put(Library.OPTION_FUNCTION_MAPPER, W32APIFunctionMapper.UNICODE);
-    }});
+  private static Kernel32 ourKernel;
 
   private static final int MAX_PATH = 0x00000104;
   public static final int FILE_ATTRIBUTE_DIRECTORY = 0x00000010;
   public static final int FILE_ATTRIBUTE_READONLY = 0x0001;
+
+  private synchronized static Kernel32 getKernel() {
+    if (ourKernel == null) {
+      ourKernel = (Kernel32)Native.loadLibrary("kernel32", Kernel32.class, new HashMap<Object, Object>() {
+        {
+          put(Library.OPTION_TYPE_MAPPER, W32APITypeMapper.UNICODE);
+          put(Library.OPTION_FUNCTION_MAPPER, W32APIFunctionMapper.UNICODE);
+        }});
+      WIN32_FIND_DATA.INSTANCE = new WIN32_FIND_DATA();
+      BY_HANDLE_FILE_INFORMATION.INSTANCE = new BY_HANDLE_FILE_INFORMATION();
+    }
+    return ourKernel;
+  }
 
   private static class FileInfo {
     private FileInfo(WIN32_FIND_DATA data) {
@@ -50,15 +59,22 @@ public class Win32Kernel {
       this.ftLastWriteTime = data.ftLastWriteTime.toLong();
     }
 
+    private FileInfo(BY_HANDLE_FILE_INFORMATION information) {
+      this.dwFileAttributes = information.dwFileAttributes;
+      this.ftLastWriteTime = information.ftLastWriteTime.toLong();
+    }
+
     int dwFileAttributes;
     long ftLastWriteTime;
   }
 
   private static W32API.HANDLE INVALID_HANDLE_VALUE = new W32API.HANDLE(Pointer.createConstant(0xFFFFFFFFl));
-  private static WIN32_FIND_DATA DATA = new WIN32_FIND_DATA();
 
   public static void release() {
-    DATA = null;
+    if (ourKernel != null) {
+      WIN32_FIND_DATA.INSTANCE = null;
+      BY_HANDLE_FILE_INFORMATION.INSTANCE = null;
+    }
   }
 
   private Map<String, FileInfo> myCache = new HashMap<String, FileInfo>();
@@ -68,22 +84,27 @@ public class Win32Kernel {
     myCache.clear();
 
     ArrayList<String> list = new ArrayList<String>();
-    W32API.HANDLE hFind = myKernel.FindFirstFile(absolutePath.replace('/', '\\') + "\\*", DATA);
+    W32API.HANDLE hFind = getKernel().FindFirstFile(absolutePath.replace('/', '\\') + "\\*", WIN32_FIND_DATA.INSTANCE);
     if (hFind.equals(INVALID_HANDLE_VALUE)) return new String[0];
     do {
-      String name = toString(DATA.cFileName);
-      if (name.equals(".") || name.equals("..")) {
+      String name = Native.toString(WIN32_FIND_DATA.INSTANCE.cFileName);
+      if (name.equals(".")) {
+        myCache.put(absolutePath, new FileInfo(WIN32_FIND_DATA.INSTANCE));
         continue;
       }
-      myCache.put(absolutePath + "/" + name, new FileInfo(DATA));
+      else if (name.equals("..")) {
+        continue;
+      }
+      myCache.put(absolutePath + "/" + name, new FileInfo(WIN32_FIND_DATA.INSTANCE));
       list.add(name);
     }
-    while (myKernel.FindNextFile(hFind, DATA));
-    myKernel.FindClose(hFind);
+    while (getKernel().FindNextFile(hFind, WIN32_FIND_DATA.INSTANCE));
+    getKernel().FindClose(hFind);
     return list.toArray(new String[list.size()]);
   }
 
   public boolean exists(String path) {
+    myCache.clear();
     try {
       getData(path);
       return true;
@@ -110,25 +131,20 @@ public class Win32Kernel {
     FileInfo data = myCache.get(path);
     if (data == null) {
       myCache.clear();
-      W32API.HANDLE hFind = myKernel.FindFirstFile(path.replace('/', '\\'), DATA);
-      if (hFind.equals(INVALID_HANDLE_VALUE)) throw new FileNotFoundException(path);
-      data = new FileInfo(DATA);
-      myKernel.FindClose(hFind);
+      if (!getKernel().GetFileAttributesEx(path.replace('/', '\\'), 0, BY_HANDLE_FILE_INFORMATION.INSTANCE)) {
+        throw new FileNotFoundException(path);
+      }
+      data = new FileInfo(BY_HANDLE_FILE_INFORMATION.INSTANCE);
       myCache.put(path, data);
     }
     return data;
   }
 
-  private static String toString(char[] array) {
-    for (int i = 0; i < array.length; i++) {
-      if (array[i] == 0) return new String(array, 0, i);
-    }
-    return new String(array);
-  }
-
   public interface Kernel32 extends StdCallLibrary {
 
     W32API.HANDLE FindFirstFile(String lpFileName, WIN32_FIND_DATA lpFindFileData);
+
+    boolean GetFileAttributesEx(String lpFileName, int level, BY_HANDLE_FILE_INFORMATION lpFileInformation);
 
     boolean FindNextFile(W32API.HANDLE hFindFile, WIN32_FIND_DATA lpFindFileData);
 
@@ -136,16 +152,17 @@ public class Win32Kernel {
   }
 
   public static class FILETIME extends Structure implements Structure.ByValue {
-    
+
     public int dwLowDateTime;
     public int dwHighDateTime;
 
     private static long l(int i) {
-        if (i >= 0) {
-            return i;
-        } else {
-            return ((long) i & 0x7FFFFFFFl) + 0x80000000l;
-        }
+      if (i >= 0) {
+        return i;
+      }
+      else {
+        return ((long)i & 0x7FFFFFFFl) + 0x80000000l;
+      }
     }
 
     public long toLong() {
@@ -155,6 +172,8 @@ public class Win32Kernel {
 
   @SuppressWarnings({"UnusedDeclaration"})
   public static class WIN32_FIND_DATA extends Structure {
+
+    public static WIN32_FIND_DATA INSTANCE;
 
     public int dwFileAttributes;
 
@@ -169,11 +188,24 @@ public class Win32Kernel {
     public int nFileSizeLow;
 
     public int dwReserved0;
-    
+
     public int dwReserved1;
 
     public char[] cFileName = new char[MAX_PATH];
 
     public char[] cAlternateFileName = new char[14];
+  }
+
+  @SuppressWarnings({"UnusedDeclaration"})
+  public static class BY_HANDLE_FILE_INFORMATION extends Structure {
+
+    public static BY_HANDLE_FILE_INFORMATION INSTANCE;
+
+    public int dwFileAttributes;
+    public FILETIME ftCreationTime;
+    public FILETIME ftLastAccessTime;
+    public FILETIME ftLastWriteTime;
+    public int nFileSizeHigh;
+    public int nFileSizeLow;
   }
 }

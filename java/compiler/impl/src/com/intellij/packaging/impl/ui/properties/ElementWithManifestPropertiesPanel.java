@@ -130,7 +130,7 @@ public abstract class ElementWithManifestPropertiesPanel<E extends CompositeElem
 
   private void createManifest() {
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    descriptor.setTitle("Select Directory for MANIFEST.MF file");
+    descriptor.setTitle("Select Directory for META-INF/MANIFEST.MF file");
     final VirtualFile[] files = FileChooser.chooseFiles(myContext.getProject(), descriptor, ManifestFileUtil.suggestManifestFileDirectory(myElement, myContext, myContext.getArtifactType()));
     if (files.length != 1) return;
 

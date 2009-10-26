@@ -102,7 +102,6 @@ public class TestProxy extends CompositePrintable implements PrintableTestProxy,
     pullEvent(new StateChangedEvent(this));
     if (myParent != null)
       myParent.onChanged(this);
-    fireStatisticsChanged();
     myNotifier.onChanged(this);
   }
 
@@ -163,7 +162,7 @@ public class TestProxy extends CompositePrintable implements PrintableTestProxy,
   }
 
   public void addChild(final TestProxy child) {
-    if (myChildren.getList().contains(child))
+    if (myChildren.contains(child))
       return;
     if (child.getParent() != null)
       return;//todo throw new RuntimeException("Test: "+child + " already has parent: " + child.getParent());
@@ -174,8 +173,7 @@ public class TestProxy extends CompositePrintable implements PrintableTestProxy,
       child.fireOnNewPrintable(child);
     }
     pullEvent(new NewChildEvent(this, child));
-    fireStatisticsChanged();
-    getState().changeStateAfterAddingChaildTo(this, child);
+    getState().changeStateAfterAddingChildTo(this, child);
     myNotifier.onChildAdded(this, child);
   }
 
@@ -204,11 +202,6 @@ public class TestProxy extends CompositePrintable implements PrintableTestProxy,
 
   public void onStatisticsChanged() {
     myChildren.resetCache();
-    fireStatisticsChanged();
-  }
-
-  private void fireStatisticsChanged() {
-    myChildren.resetCache();
     if (myParent != null)
       myParent.onStatisticsChanged();
     pullEvent(new StatisticsChanged(this));
@@ -220,12 +213,11 @@ public class TestProxy extends CompositePrintable implements PrintableTestProxy,
   }
 
   public void setStatistics(final Statistics statistics) {
-    myChildren.resetCache();
     if (!myState.isFinal()) {
-      LOG.error("" + myState.getMagnitude());
+      LOG.error(String.valueOf(myState.getMagnitude()));
     }
     myStatistics = statistics;
-    fireStatisticsChanged();
+    onStatisticsChanged();
   }
 
   public Statistics getStatisticsImpl() {

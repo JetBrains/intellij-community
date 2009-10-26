@@ -61,11 +61,6 @@ public abstract class ArtifactType {
   }
 
   @Nullable
-  public String getDefaultPathFor(@NotNull PackagingElement<?> element, @NotNull PackagingElementResolvingContext context) {
-    return getDefaultPathFor(element.getFilesKind(context));
-  }
-
-  @Nullable
   public abstract String getDefaultPathFor(@NotNull PackagingElementOutputKind kind);
 
   public boolean isSuitableItem(@NotNull PackagingSourceItem sourceItem) {

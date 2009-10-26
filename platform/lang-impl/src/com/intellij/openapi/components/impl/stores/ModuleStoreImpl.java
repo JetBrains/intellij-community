@@ -266,7 +266,6 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
 
   @Override
   public void reinitComponents(Set<String> componentNames, boolean reloadData) {
-    LOG.info("[STORAGE] Module: " + myModule.getName());
     super.reinitComponents(componentNames, reloadData);
   }
 

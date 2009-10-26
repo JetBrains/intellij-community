@@ -16,10 +16,12 @@
 package com.intellij.spellchecker.engine;
 
 public final class SpellCheckerFactory {
-    private SpellCheckerFactory() {
-    }
+  private SpellCheckerFactory() {
+  }
 
-    public static SpellCheckerEngine create() {
-        return new BaseSpellChecker();
-    }
+  public static SpellCheckerEngine create() {
+    return new BaseSpellChecker();
+  }
+
+ 
 }
