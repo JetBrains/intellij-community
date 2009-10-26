@@ -829,7 +829,12 @@ public class AbstractTreeUi {
       boolean notRequiredToUpdateChildren = !forcedNow && !wasExpanded;
 
       if (notRequiredToUpdateChildren && forceUpdate && !wasExpanded) {
-        notRequiredToUpdateChildren = getBuilder().isAlwaysShowPlus(descriptor);
+        boolean alwaysPlus = getBuilder().isAlwaysShowPlus(descriptor);
+        if (alwaysPlus && wasLeaf) {
+          notRequiredToUpdateChildren = false;
+        } else {
+          notRequiredToUpdateChildren = alwaysPlus;
+        }
       }
 
       final Ref<LoadedChildren> preloaded = new Ref<LoadedChildren>(loadedChildren);
