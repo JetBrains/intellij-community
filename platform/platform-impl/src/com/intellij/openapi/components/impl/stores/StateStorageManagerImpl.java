@@ -23,6 +23,7 @@ import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
@@ -265,6 +266,11 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     if (expandedFile == null) {
       myStorages.put(fileSpec, null);
       return null;
+    }
+
+    final String extension = FileUtil.getExtension(new File(expandedFile).getName());
+    if (extension.length() == 0) {
+      throw new IllegalArgumentException("Extension is missing for storage file: " + expandedFile);
     }
 
     return createFileStateStorage(fileSpec, expandedFile, myRootTagName, myPicoContainer);
