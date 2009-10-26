@@ -79,4 +79,9 @@ public class TreeUpdatePass {
   public String toString() {
     return "TreUpdatePass node=" + myNode + " stamp=" + myUpdateStamp + " expired=" + myExpired + " currentNode=" + myCurrentNode + " allocation=" + myAllocation;
   }
+
+  public boolean willUpdate(@NotNull DefaultMutableTreeNode node) {
+    @NotNull DefaultMutableTreeNode currentNode = myCurrentNode != null ? myCurrentNode : myNode;
+    return node.isNodeAncestor(currentNode);
+  }
 }

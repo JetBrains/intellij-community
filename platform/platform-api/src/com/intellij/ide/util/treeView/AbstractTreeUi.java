@@ -2956,7 +2956,9 @@ public class AbstractTreeUi {
 
 
     if (myTree.isExpanded(getPathFor(toExpand)) && !myUnbuiltNodes.contains(toExpand)) {
-      processNodeActionsIfReady(toExpand);
+      if (!areChildrenToBeUpdated(toExpand)) {
+        processNodeActionsIfReady(toExpand);
+      }
     }
     else {
       if (!myUnbuiltNodes.contains(toExpand)) {
@@ -2968,6 +2970,9 @@ public class AbstractTreeUi {
     }
   }
 
+  private boolean areChildrenToBeUpdated(DefaultMutableTreeNode node) {
+    return getUpdater().isEnqueuedToUpdate(node) || isUpdatingParent(node);
+  }
 
   private String asString(DefaultMutableTreeNode node) {
     if (node == null) return null;
