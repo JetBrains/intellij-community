@@ -145,7 +145,9 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
   }
 
   public void rootsChanged(ModuleRootEvent event) {
-    myPanel.rootsChanged();
+    if (myPanel != null) {
+      myPanel.rootsChanged();
+    }
   }
 
   public Sdk setSdk(final Sdk newJDK) {
