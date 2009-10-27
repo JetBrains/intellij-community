@@ -26,9 +26,11 @@ package com.intellij.psi.controlFlow;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,9 +44,17 @@ public class ControlFlowFactory {
   // psiElements hold weakly, controlFlows softly
   private final ConcurrentMap<PsiElement, Reference<CopyOnWriteArrayList<ControlFlowContext>>> cachedFlows = new ConcurrentWeakHashMap<PsiElement, Reference<CopyOnWriteArrayList<ControlFlowContext>>>();
 
+  private static final NotNullLazyKey<ControlFlowFactory, Project> INSTANCE_KEY = NotNullLazyKey.create("ControlFlowFactory.Instance.Cache", new NotNullFunction<Project, ControlFlowFactory>() {
+    @NotNull
+    public ControlFlowFactory fun(final Project project) {
+      return ServiceManager.getService(project, ControlFlowFactory.class);
+    }
+  });
+
   public static ControlFlowFactory getInstance(Project project) {
-    return ServiceManager.getService(project, ControlFlowFactory.class);
+    return INSTANCE_KEY.getValue(project);
   }
+
 
   public ControlFlowFactory(PsiManagerEx psiManager) {
     psiManager.registerRunnableToRunOnChange(new Runnable(){

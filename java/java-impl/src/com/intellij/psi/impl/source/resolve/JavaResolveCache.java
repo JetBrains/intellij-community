@@ -23,6 +23,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.psi.PsiEllipsisType;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
@@ -30,6 +31,7 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,8 +44,15 @@ import java.util.concurrent.ConcurrentMap;
 public class JavaResolveCache {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.JavaResolveCache");
 
+  private static final NotNullLazyKey<JavaResolveCache, Project> INSTANCE_KEY = NotNullLazyKey.create("JavaResolveCache.Instance.Cache", new NotNullFunction<Project, JavaResolveCache>() {
+    @NotNull
+    public JavaResolveCache fun(final Project project) {
+      return ServiceManager.getService(project, JavaResolveCache.class);
+    }
+  });
+
   public static JavaResolveCache getInstance(Project project) {
-    return ServiceManager.getService(project, JavaResolveCache.class);
+    return INSTANCE_KEY.getValue(project);
   }
 
   private final ConcurrentMap<PsiExpression, PsiType> myCalculatedTypes = new ConcurrentWeakHashMap<PsiExpression, PsiType>();

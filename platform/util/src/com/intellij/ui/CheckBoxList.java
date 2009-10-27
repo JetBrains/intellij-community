@@ -23,11 +23,12 @@ public class CheckBoxList extends JList {
       @Override
       public void keyTyped(KeyEvent e) {
         if (e.getKeyChar() == ' ') {
-          int index = CheckBoxList.this.getSelectedIndex();
-
-          if (index >= 0) {
-            JCheckBox checkbox = (JCheckBox)getModel().getElementAt(index);
-            setSelected(checkbox, index, checkBoxListListener);
+          int[] indices = CheckBoxList.this.getSelectedIndices();
+          for (int index : indices) {
+            if (index >= 0) {
+              JCheckBox checkbox = (JCheckBox)getModel().getElementAt(index);
+              setSelected(checkbox, index, checkBoxListListener);
+            }
           }
         }
       }
