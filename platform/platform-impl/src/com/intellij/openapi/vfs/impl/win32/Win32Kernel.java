@@ -66,21 +66,25 @@ public class Win32Kernel {
 
     ArrayList<String> list = new ArrayList<String>();
     W32API.HANDLE hFind = myKernel.FindFirstFile(absolutePath.replace('/', '\\') + "\\*", myData);
-    if (hFind.equals(INVALID_HANDLE_VALUE)) return new String[0];
-    do {
-      String name = Native.toString(myData.cFileName);
-      if (name.equals(".")) {
-        myCache.put(absolutePath, new FileInfo(myData));
-        continue;
+    try {
+      if (hFind.equals(INVALID_HANDLE_VALUE)) return new String[0];
+      do {
+        String name = Native.toString(myData.cFileName);
+        if (name.equals(".")) {
+          myCache.put(absolutePath, new FileInfo(myData));
+          continue;
+        }
+        else if (name.equals("..")) {
+          continue;
+        }
+        myCache.put(absolutePath + "/" + name, new FileInfo(myData));
+        list.add(name);
       }
-      else if (name.equals("..")) {
-        continue;
-      }
-      myCache.put(absolutePath + "/" + name, new FileInfo(myData));
-      list.add(name);
+      while (myKernel.FindNextFile(hFind, myData));
     }
-    while (myKernel.FindNextFile(hFind, myData));
-    myKernel.FindClose(hFind);
+    finally {
+      myKernel.FindClose(hFind);
+    }
     return list.toArray(new String[list.size()]);
   }
 
@@ -112,13 +116,19 @@ public class Win32Kernel {
     FileInfo data = myCache.get(path);
     if (data == null) {
       myCache.clear();
-      if (myKernel.FindFirstFile(path.replace('/', '\\'), myData).equals(INVALID_HANDLE_VALUE)) {
+      W32API.HANDLE handle = myKernel.FindFirstFile(path.replace('/', '\\'), myData);
+      if (handle.equals(INVALID_HANDLE_VALUE)) {
         throw new FileNotFoundException(path);
       }
+      myKernel.FindClose(handle);
       data = new FileInfo(myData);
       myCache.put(path, data);
     }
     return data;
+  }
+
+  public void release() throws Throwable {
+    myData.release();    
   }
 
   public interface Kernel32 extends StdCallLibrary {
@@ -171,5 +181,9 @@ public class Win32Kernel {
     public char[] cFileName = new char[MAX_PATH];
 
     public char[] cAlternateFileName = new char[14];
+
+    public void release() throws Throwable {
+      finalize();
+    }
   }
 }
