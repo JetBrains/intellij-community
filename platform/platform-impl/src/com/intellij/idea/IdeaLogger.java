@@ -186,7 +186,7 @@ public class IdeaLogger extends Logger {
         if (application != null && application.isComponentsCreated()) {
           if (application.hasComponent(ApplicationInfo.class)) {
             ApplicationInfoEx ideInfo = (ApplicationInfoEx)application.getComponent(ApplicationInfo.class);
-            return ideInfo.getFullApplicationName() + "  " + "Build #" + ideInfo.getBuildNumber();
+            return ideInfo.getFullApplicationName() + "  " + "Build #" + ideInfo.getBuild().asString();
           }
         }
         return null;

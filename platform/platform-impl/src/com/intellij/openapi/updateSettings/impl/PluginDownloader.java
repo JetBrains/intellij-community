@@ -290,7 +290,7 @@ public class PluginDownloader {
    */
   public static void updateFromRepository(final String pluginId, final @Nullable String pluginVersion) throws IOException {
     @NonNls final String url =
-      RepositoryHelper.DOWNLOAD_URL + URLEncoder.encode(pluginId, "UTF8") + "&build=" + ApplicationInfo.getInstance().getBuildNumber();
+      RepositoryHelper.DOWNLOAD_URL + URLEncoder.encode(pluginId, "UTF8") + "&build=" + ApplicationInfo.getInstance().getBuild().asString();
     final PluginDownloader downloader = new PluginDownloader(pluginId, url, pluginVersion);
     if (downloader.prepareToInstall()) {
       downloader.install();
