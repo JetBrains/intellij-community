@@ -53,6 +53,7 @@ import git4idea.ui.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.DateFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -153,6 +154,8 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
         });
         return new GitUpdateSession(exceptions);
       }
+      String stashMessage = "Uncommitted changes before update operation at " +
+                            DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, Locale.US).format(new Date());
       for (final VirtualFile root : roots) {
         try {
           // check if there is a remote for the branch
@@ -167,8 +170,7 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
           final Ref<Boolean> cancelled = new Ref<Boolean>(false);
           final Ref<Throwable> ex = new Ref<Throwable>();
           try {
-            boolean stashCreated =
-              rootsToStash.contains(root) && GitStashUtils.saveStash(myProject, root, "Uncommitted changes before update operation");
+            boolean stashCreated = rootsToStash.contains(root) && GitStashUtils.saveStash(myProject, root, stashMessage);
             try {
               // remember the current position
               GitRevisionNumber before = GitRevisionNumber.resolve(myProject, root, "HEAD");
