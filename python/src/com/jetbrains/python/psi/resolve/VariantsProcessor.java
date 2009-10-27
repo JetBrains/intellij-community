@@ -57,7 +57,7 @@ public class VariantsProcessor implements PsiScopeProcessor {
     if (element instanceof PsiNamedElement) {
       final PsiNamedElement psiNamedElement = (PsiNamedElement)element;
       final String name = psiNamedElement.getName();
-      if (!myVariants.containsKey(name)) {
+      if (name != null && !myVariants.containsKey(name)) {
         myVariants.put(name, setupItem(LookupElementBuilder.create(psiNamedElement)));
       }
     }

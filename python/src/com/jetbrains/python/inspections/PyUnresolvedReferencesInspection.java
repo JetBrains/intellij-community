@@ -156,7 +156,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
       List<PsiElement> symbols = new ArrayList<PsiElement>();
       symbols.addAll(StubIndex.getInstance().get(PyClassNameIndex.KEY, ref_text, project, scope));
       symbols.addAll(StubIndex.getInstance().get(PyFunctionNameIndex.KEY, ref_text, project, scope));
-      /* XXX CPU hog? */
+      // NOTE: possible CPU hog 
       if (symbols.size() > 0) {
         if (fix == null) fix = new ImportFromExistingFix(node, ref_text, false); // it might have been created in the previous scan, or not.
         for (PsiElement symbol : symbols) {
@@ -302,7 +302,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
                     PyClass cls = ((PyClassType)qtype).getPyClass();
                     if (cls != null && ! PyBuiltinCache.hasInBuiltins(cls)) {
                       if (reference.getElement().getParent() instanceof PyCallExpression) {
-                        actions.add(new AddMethodQuickFix(ref_text, cls));
+                        actions.add(new AddMethodQuickFix(ref_text, (PyClassType)qtype));
                       }
                       else actions.add(new AddFieldQuickFix(ref_text, cls));
                     }
