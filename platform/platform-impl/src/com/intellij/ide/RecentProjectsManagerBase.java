@@ -82,8 +82,18 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
   private void validateRecentProjects() {
     for (Iterator i = myState.recentPaths.iterator(); i.hasNext();) {
       String s = (String)i.next();
-      if (s == null || !(new File(s).exists())) {
+
+      if (s == null) {
         i.remove();
+      } else {
+        final File file = new File(s);
+        if (file.isDirectory()) {
+          if (!new File(file, ProjectUtil.DIRECTORY_BASED_PROJECT_DIR).exists()) {
+            i.remove();
+          }
+        } else if (!file.exists()) {
+          i.remove();
+        }
       }
     }
     while (myState.recentPaths.size() > MAX_RECENT_PROJECTS) {
