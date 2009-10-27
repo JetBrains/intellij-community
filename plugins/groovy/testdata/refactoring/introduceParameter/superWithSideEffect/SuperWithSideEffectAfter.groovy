@@ -1,6 +1,5 @@
 class Usage {
   int m() {
-    final T2 t = new T2()
-    return t.method(0, t.method(0) + 1);
+    return new T2().method(0);
   }
 }

@@ -44,11 +44,17 @@ public class IntroduceParameterTest extends LightCodeInsightFixtureTestCase {
 
   private void doTest(int replaceFieldsWithGetters, boolean removeUnusedParameters, boolean searchForSuper, boolean declareFinal)
     throws Throwable {
+    doTest(replaceFieldsWithGetters, removeUnusedParameters, searchForSuper, declareFinal, null);
+  }
+
+  private void doTest(int replaceFieldsWithGetters, boolean removeUnusedParameters, boolean searchForSuper, boolean declareFinal,
+                      String conflicts)
+    throws Throwable {
     final String beforeGroovy = getTestName(false)+"Before.groovy";
     final String afterGroovy = getTestName(false) + "After.groovy";
     final String javaClass = getTestName(false) + "MyClass.java";
     myFixture.configureByFiles(javaClass, beforeGroovy);
-    executeRefactoring(true, replaceFieldsWithGetters, "anObject", searchForSuper, declareFinal, removeUnusedParameters);
+    executeRefactoring(true, replaceFieldsWithGetters, "anObject", searchForSuper, declareFinal, removeUnusedParameters, conflicts);
     PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
     myFixture.checkResultByFile(beforeGroovy, afterGroovy, true);
   }
@@ -58,7 +64,8 @@ public class IntroduceParameterTest extends LightCodeInsightFixtureTestCase {
                                      @NonNls String parameterName,
                                      boolean searchForSuper,
                                      boolean declareFinal,
-                                     final boolean removeUnusedParameters) {
+                                     final boolean removeUnusedParameters,
+                                     final String conflicts) {
     boolean generateDelegate = false;
     Editor editor = myFixture.getEditor();
     int startOffset = editor.getSelectionModel().getSelectionStart();
@@ -101,7 +108,17 @@ public class IntroduceParameterTest extends LightCodeInsightFixtureTestCase {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            processor.run();
+            try {
+              processor.run();
+              if (conflicts != null) fail("Conflicts were expected");
+            }
+            catch (Exception e) {
+              if (conflicts == null){
+                e.printStackTrace();
+                fail("Conflicts were not expected");
+              }
+              assertEquals(conflicts, e.getMessage());
+            }
           }
         });
       }
@@ -138,7 +155,7 @@ public class IntroduceParameterTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testThisSubstitutionInQualifier() throws Throwable {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false, "field <b><code>Test.i</code></b> is not accesible from method <b><code>XTest.n()</code></b>. Value for introduced parameter in that method call will be incorrect.");
   }
 
   public void testFieldAccess() throws Throwable {
@@ -166,7 +183,7 @@ public class IntroduceParameterTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testSuperInExpression() throws Throwable {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false, "Parameter initializer contains <b><code>super</code></b>, but not all calls to method are in its class.");
   }
 
   public void testWeirdQualifierAndParameter() throws Throwable {
@@ -190,7 +207,7 @@ public class IntroduceParameterTest extends LightCodeInsightFixtureTestCase {
   }*/
 
   public void testSuperWithSideEffect() throws Throwable {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false, "Parameter initializer contains <b><code>super</code></b>, but not all calls to method are in its class.");
   }
 
   public void testConflictingField() throws Throwable {
