@@ -47,7 +47,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.Set;
 
-public class EncapsulateFieldsDialog extends RefactoringDialog {
+public class EncapsulateFieldsDialog extends RefactoringDialog implements EncapsulateFieldsDescriptor {
   private static final Logger LOG = Logger.getInstance(
           "#com.intellij.refactoring.encapsulateFields.EncapsulateFieldsDialog"
   );
@@ -485,6 +485,11 @@ public String getAccessorsVisibility() {
       }
     }
     return null;
+  }
+
+  @Override
+  protected boolean areButtonsValid() {
+    return getCheckedRows().length > 0;
   }
 
   private PsiMethod generateMethodPrototype(PsiField field, String methodName, boolean isGetter) {

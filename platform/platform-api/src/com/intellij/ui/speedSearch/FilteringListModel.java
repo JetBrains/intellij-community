@@ -31,7 +31,6 @@ import java.util.List;
  * @author max
  */
 public class FilteringListModel<T> extends AbstractListModel {
-  private final JList myList;
   private final ListModel myOriginalModel;
   private final List<T> myData = new ArrayList<T>();
   private Condition<T> myCondition = null;
@@ -52,7 +51,6 @@ public class FilteringListModel<T> extends AbstractListModel {
   };
 
   protected FilteringListModel(JList list) {
-    myList = list;
     myOriginalModel = list.getModel();
     myOriginalModel.addListDataListener(myListDataListener);
 
@@ -110,5 +108,13 @@ public class FilteringListModel<T> extends AbstractListModel {
 
   public boolean contains(T value) {
     return myData.contains(value);
+  }
+
+  public ListModel getOriginalModel() {
+    return myOriginalModel;
+  }
+
+  public void remove(int index) {
+    ((DefaultListModel)myOriginalModel).removeElement(myData.get(index));
   }
 }

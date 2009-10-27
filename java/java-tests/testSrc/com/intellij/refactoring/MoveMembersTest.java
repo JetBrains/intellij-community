@@ -10,7 +10,6 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.move.moveMembers.MockMoveMembersOptions;
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
-import com.intellij.util.containers.MultiMap;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -95,7 +94,7 @@ public class MoveMembersTest extends MultiFileTestCase {
       fail("conflict expected");
     }
     catch (Exception e) {
-      assertEquals(e.getMessage(), "Found conflicts: Field <b><code>B.ONE</code></b> has write access but is moved to an interface");
+      assertEquals("Field <b><code>B.ONE</code></b> has write access but is moved to an interface", e.getMessage());
     }
   }
 
@@ -139,15 +138,7 @@ public class MoveMembersTest extends MultiFileTestCase {
 
     MockMoveMembersOptions options = new MockMoveMembersOptions(targetClass.getQualifiedName(), memberSet);
     options.setMemberVisibility(null);
-    new MoveMembersProcessor(myProject, null, options){
-      @Override
-      protected boolean showConflicts(MultiMap<PsiElement, String> conflicts) {
-        if (!conflicts.isEmpty()) {
-          throw new RuntimeException("Found conflicts: " + conflicts.values().iterator().next());
-        }
-        return super.showConflicts(conflicts);
-      }
-    }.run();
+    new MoveMembersProcessor(myProject, null, options).run();
     FileDocumentManager.getInstance().saveAllDocuments();
   }
 }

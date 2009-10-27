@@ -112,14 +112,7 @@ public class ITNProxy {
       (ApplicationInfoEx) ApplicationManager.getApplication().getComponent(
         ApplicationInfo.class);
 
-    String buildNumber = appInfo.getBuildNumber();
-    try {
-      buildNumber = Integer.valueOf(buildNumber).toString();
-    } catch(NumberFormatException ex) {
-      buildNumber = "";
-    }
-
-    params.put("_build", buildNumber);
+    params.put("_build", appInfo.getBuild().asString());
     params.put("_description",
                (compilationTimestamp != null ? ("Build time: " + compilationTimestamp + "\n") : "") +
                error.getDescription() + "\n\n" + e.getStackTrace());

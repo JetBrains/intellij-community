@@ -23,7 +23,12 @@ public class _XmlLexer extends FlexAdapter {
   private int myState = __XmlLexer.YYINITIAL;
 
   public _XmlLexer(final __XmlLexer flexLexer) {
+    this(flexLexer, false);
+  }
+
+  public _XmlLexer(final __XmlLexer flexLexer, final boolean conditionalCommentsSupport) {
     super(flexLexer);
+    flexLexer.setConditionalCommentsSupport(conditionalCommentsSupport);
   }
 
   private void packState() {

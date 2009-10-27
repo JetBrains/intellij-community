@@ -6,7 +6,6 @@ package com.intellij.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.listeners.JavaRefactoringListenerManager;
@@ -24,46 +23,51 @@ public class PullUpTest extends LightCodeInsightTestCase {
 
 
   public void testQualifiedThis() throws Exception {
-    doTest(new Pair<String, Class<? extends PsiMember>> ("Inner", PsiClass.class));
+    doTest(new MemberDescriptor ("Inner", PsiClass.class));
   }
 
   public void testQualifiedSuper() throws Exception {
-    doTest(new Pair<String, Class<? extends PsiMember>> ("Inner", PsiClass.class));
+    doTest(new MemberDescriptor ("Inner", PsiClass.class));
   }
 
   public void testQualifiedReference() throws Exception {     // IDEADEV-25008
-    doTest(new Pair<String, Class<? extends PsiMember>> ("x", PsiField.class),
-           new Pair<String, Class<? extends PsiMember>> ("getX", PsiMethod.class),
-           new Pair<String, Class<? extends PsiMember>> ("setX", PsiMethod.class));
+    doTest(new MemberDescriptor ("x", PsiField.class),
+           new MemberDescriptor ("getX", PsiMethod.class),
+           new MemberDescriptor ("setX", PsiMethod.class));
 
+  }
+  
+  public void testPullUpAndAbstractize() throws Exception {
+    doTest(new MemberDescriptor("a", PsiMethod.class),
+           new MemberDescriptor("b", PsiMethod.class, true));
   }
 
   public void testTryCatchFieldInitializer() throws Exception {
-    doTest(new Pair<String, Class<? extends PsiMember>>("field", PsiField.class));
+    doTest(new MemberDescriptor("field", PsiField.class));
   }
 
   public void testIfFieldInitializationWithNonMovedField() throws Exception {
-    doTest(new Pair<String, Class<? extends PsiMember>>("f", PsiField.class));
+    doTest(new MemberDescriptor("f", PsiField.class));
   }
 
   public void testIfFieldMovedInitialization() throws Exception {
-    doTest(new Pair<String, Class<? extends PsiMember>>("f", PsiField.class));
+    doTest(new MemberDescriptor("f", PsiField.class));
   }
 
   public void testMultipleConstructorsFieldInitialization() throws Exception {
-    doTest(new Pair<String, Class<? extends PsiMember>>("f", PsiField.class));
+    doTest(new MemberDescriptor("f", PsiField.class));
   }
 
   public void testMultipleConstructorsFieldInitializationNoGood() throws Exception {
-    doTest(new Pair<String, Class<? extends PsiMember>>("f", PsiField.class));
+    doTest(new MemberDescriptor("f", PsiField.class));
   }
 
 
   public void testRemoveOverride() throws Exception {
-    doTest(new Pair<String, Class<? extends PsiMember>> ("get", PsiMethod.class));
+    doTest(new MemberDescriptor ("get", PsiMethod.class));
   }
 
-  private void doTest(Pair<String, Class<? extends PsiMember>>... membersToFind) throws Exception {
+  private void doTest(MemberDescriptor... membersToFind) throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     PsiElement elementAt = getFile().findElementAt(getEditor().getCaretModel().getOffset());
     final PsiClass sourceClass = PsiTreeUtil.getParentOfType(elementAt, PsiClass.class);
@@ -94,11 +98,11 @@ public class PullUpTest extends LightCodeInsightTestCase {
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
-  public static MemberInfo[] findMembers(final PsiClass sourceClass, final Pair<String, Class<? extends PsiMember>>... membersToFind) {
+  public static MemberInfo[] findMembers(final PsiClass sourceClass, final MemberDescriptor... membersToFind) {
     MemberInfo[] infos = new MemberInfo[membersToFind.length];
     for (int i = 0; i < membersToFind.length; i++) {
-      final Class<? extends PsiMember> clazz = membersToFind[i].getSecond();
-      final String name = membersToFind[i].getFirst();
+      final Class<? extends PsiMember> clazz = membersToFind[i].myClass;
+      final String name = membersToFind[i].myName;
       PsiMember member = null;
       if (PsiClass.class.isAssignableFrom(clazz)) {
         member = sourceClass.findInnerClassByName(name, false);
@@ -112,6 +116,7 @@ public class PullUpTest extends LightCodeInsightTestCase {
 
       assertNotNull(member);
       infos[i] = new MemberInfo(member);
+      infos[i].setToAbstract(membersToFind[i].myAbstract);
     }
     return infos;
   }
@@ -123,5 +128,22 @@ public class PullUpTest extends LightCodeInsightTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
+  }
+  
+  public static class MemberDescriptor {
+    private String myName;
+    private Class<? extends PsiMember> myClass;
+    private boolean myAbstract;
+
+    public MemberDescriptor(String name, Class<? extends PsiMember> aClass, boolean isAbstract) {
+      myName = name;
+      myClass = aClass;
+      myAbstract = isAbstract;
+    }
+
+
+    public MemberDescriptor(String name, Class<? extends PsiMember> aClass) {
+      this(name, aClass, false);
+    }
   }
 }

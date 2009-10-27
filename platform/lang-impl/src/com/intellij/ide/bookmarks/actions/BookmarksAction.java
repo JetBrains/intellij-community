@@ -49,6 +49,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.*;
+import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
@@ -257,7 +258,7 @@ public class BookmarksAction extends AnAction implements DumbAware {
     final DefaultListModel model = new DefaultListModel();
 
     for (Bookmark bookmark : BookmarkManager.getInstance(project).getValidBookmarks()) {
-      model.insertElementAt(new BookmarkItem(bookmark), 0);
+      model.addElement(new BookmarkItem(bookmark));
     }
 
     if (bookmarkAtPlace == null) {
@@ -601,11 +602,6 @@ public class BookmarksAction extends AnAction implements DumbAware {
       
       b.setDescription(description);
 
-      DefaultListModel model = (DefaultListModel)myList.getModel();
-      String fake = "Fake Element to make list re-count its size";
-      model.addElement(fake);
-      model.removeElement(fake);
-
       myPopup.setUiVisible(true);
       myPopup.setSize(myPopup.getContent().getPreferredSize());
     }
@@ -642,6 +638,12 @@ public class BookmarksAction extends AnAction implements DumbAware {
     }
   }
 
+  private static boolean notFiltered(JList list) {
+    if (!(list.getModel() instanceof FilteringListModel)) return true;
+    final FilteringListModel model = (FilteringListModel)list.getModel();
+    return model.getOriginalModel().getSize() == model.getSize();
+  }
+
   private static class MoveBookmarkUpAction extends AnAction {
     private final Project myProject;
     private final JList myList;
@@ -655,7 +657,7 @@ public class BookmarksAction extends AnAction implements DumbAware {
 
     @Override
     public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(getSelectedBookmarks(myList).size() == 1  && myList.getSelectedIndex() > 0);
+      e.getPresentation().setEnabled(notFiltered(myList) && getSelectedBookmarks(myList).size() == 1  && myList.getSelectedIndex() > 0);
     }
 
     @Override
@@ -679,7 +681,7 @@ public class BookmarksAction extends AnAction implements DumbAware {
     @Override
     public void update(AnActionEvent e) {
       int modelSize = myList.getModel().getSize();
-      if (modelSize == 0) {
+      if (modelSize == 0 || !notFiltered(myList)) {
         e.getPresentation().setEnabled(false);
       }
       else {

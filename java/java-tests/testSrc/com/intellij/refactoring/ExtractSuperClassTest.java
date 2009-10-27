@@ -6,16 +6,18 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.extractSuperclass.ExtractSuperClassProcessor;
-import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.DocCommentPolicy;
+import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NonNls;
@@ -27,16 +29,16 @@ import java.io.File;
  */
 public class ExtractSuperClassTest extends CodeInsightTestCase {
   public void testFinalFieldInitialization() throws Exception {   // IDEADEV-19704
-    doTest("Test", "TestSubclass", new Pair<String, Class<? extends PsiMember>>("X", PsiClass.class),
-           new Pair<String, Class<? extends PsiMember>>("x", PsiField.class));
+    doTest("Test", "TestSubclass", new PullUpTest.MemberDescriptor("X", PsiClass.class),
+           new PullUpTest.MemberDescriptor("x", PsiField.class));
   }
 
   public void testFieldInitializationWithCast() throws Exception {
-    doTest("Test", "TestSubclass", new Pair<String, Class<? extends PsiMember>>("x", PsiField.class));
+    doTest("Test", "TestSubclass", new PullUpTest.MemberDescriptor("x", PsiField.class));
   }
 
   public void testParameterNameEqualsFieldName() throws Exception {    // IDEADEV-10629
-    doTest("Test", "TestSubclass", new Pair<String, Class<? extends PsiMember>>("a", PsiField.class));
+    doTest("Test", "TestSubclass", new PullUpTest.MemberDescriptor("a", PsiField.class));
   }
 
   public void testExtendsLibraryClass() throws Exception {
@@ -44,7 +46,7 @@ public class ExtractSuperClassTest extends CodeInsightTestCase {
   }
 
   public void testRequiredImportRemoved() throws Exception {
-    doTest("foo.impl.B", "BImpl", new Pair<String, Class<? extends PsiMember>>("getInstance", PsiMethod.class));
+    doTest("foo.impl.B", "BImpl", new PullUpTest.MemberDescriptor("getInstance", PsiMethod.class));
   }
 
   public void testSubstituteGenerics() throws Exception {
@@ -68,7 +70,7 @@ public class ExtractSuperClassTest extends CodeInsightTestCase {
   }
 
   private void doTest(@NonNls final String className, @NonNls final String newClassName,
-                      Pair<String, Class<? extends PsiMember>>... membersToFind) throws Exception {
+                      PullUpTest.MemberDescriptor... membersToFind) throws Exception {
     String rootBefore = getRoot() + "/before";
     PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk("java 1.5"));
     final VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, rootBefore, myFilesToDelete);

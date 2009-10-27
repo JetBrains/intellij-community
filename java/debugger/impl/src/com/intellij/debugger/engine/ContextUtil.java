@@ -22,6 +22,7 @@ import com.intellij.debugger.jdi.LocalVariableProxyImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
@@ -58,7 +59,11 @@ public class ContextUtil {
       // process already closed
       return null;
     }
-    return positionManager.getSourcePosition(location);
+    try {
+      return positionManager.getSourcePosition(location);
+    } catch (IndexNotReadyException e) {
+      return null;
+    }
   }
 
   @Nullable

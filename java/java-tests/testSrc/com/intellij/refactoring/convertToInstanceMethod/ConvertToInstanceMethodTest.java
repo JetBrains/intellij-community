@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.JavaTestUtil;
+import com.intellij.util.VisibilityUtil;
 
 /**
  * @author dsl
@@ -36,7 +37,7 @@ public class ConvertToInstanceMethodTest extends LightCodeInsightTestCase {
     assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);
     PsiMethod method = (PsiMethod) targetElement;
     new ConvertToInstanceMethodProcessor(getProject(),
-                                         method, method.getParameterList().getParameters()[targetParameter], null).run();
+                                         method, method.getParameterList().getParameters()[targetParameter], VisibilityUtil.ESCALATE_VISIBILITY).run();
     checkResultByFile(filePath + ".after");
 
   }

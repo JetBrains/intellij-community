@@ -4,7 +4,11 @@ class Test implements I {
     return myField;
   }
 
-    void bar(I i) {
+  void foo() {
+    myField.foo();
+  }
+
+  void bar(I i) {
     i.foo();
   }
 }

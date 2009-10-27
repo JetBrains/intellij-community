@@ -591,10 +591,9 @@ public class FileBasedIndex implements ApplicationComponent {
       return; //indexed eagerly in foreground while building unindexed file list
     }
 
-    final ProgressManager progressManager = ProgressManager.getInstance();
-    progressManager.checkCanceled(); // DumbModeAction.CANCEL
+    ProgressManager.checkCanceled(); // DumbModeAction.CANCEL
 
-    final ProgressIndicator progressIndicator = progressManager.getProgressIndicator();
+    final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     if (progressIndicator instanceof BackgroundableProcessIndicator) {
       final BackgroundableProcessIndicator indicator = (BackgroundableProcessIndicator)progressIndicator;
       if (indicator.getDumbModeAction() == DumbModeAction.WAIT) {

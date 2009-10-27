@@ -26,4 +26,5 @@ public interface IDEAJUnitListener {
   void testStarted(String className, String methodName);
   void testFinished(String className, String methodName);
 
+  boolean isEnabled(Object configuration);
 }

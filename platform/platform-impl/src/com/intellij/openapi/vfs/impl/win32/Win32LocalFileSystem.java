@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.impl.win32;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,8 @@ import java.util.Set;
  */
 public class Win32LocalFileSystem extends LocalFileSystemBase {
 
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem");
+
   private static Win32LocalFileSystem ourSystem;
 
   public static Win32LocalFileSystem getWin32Instance() {
@@ -38,7 +41,16 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   }
 
   public static void release() {
+    Win32LocalFileSystem system = ourSystem;
     ourSystem = null;
+    if (system != null) {
+      try {
+        system.myKernel.release();
+      }
+      catch (Throwable throwable) {
+        LOG.error(throwable);
+      }
+    }
   }
 
   private final Win32Kernel myKernel = new Win32Kernel();
@@ -126,5 +138,4 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   public void removeWatchedRoot(@NotNull WatchRequest watchRequest) {
     throw new UnsupportedOperationException();
   }
-
 }

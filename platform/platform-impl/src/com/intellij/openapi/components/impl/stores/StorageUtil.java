@@ -298,6 +298,6 @@ public class StorageUtil {
     }
 
     return new File(statesDir, namesProvider.suggestName("state-" + new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date())
-                        + "-" + ApplicationInfo.getInstance().getBuildNumber()));
+                        + "-" + ApplicationInfo.getInstance().getBuild().asString()));
   }
 }

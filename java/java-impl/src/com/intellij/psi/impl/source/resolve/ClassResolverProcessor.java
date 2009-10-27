@@ -85,46 +85,62 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
   public void handleEvent(Event event, Object associated) {
     if (event == JavaScopeProcessorEvent.START_STATIC) {
       myStaticContext = true;
-    } else if (event == JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT) {
+    }
+    else if (event == JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT) {
       myCurrentFileContext = (PsiElement)associated;
     }
   }
 
   public boolean execute(PsiElement element, ResolveState state) {
-    if (element instanceof PsiClass) {
-      final PsiClass aClass = (PsiClass)element;
-      final String name = aClass.getName();
-      if (myClassName.equals(name)) {
-        if (myCandidates == null) {
-          myCandidates = new SmartList<ClassCandidateInfo>();
-        }
-        else {
-          String fqName = aClass.getQualifiedName();
-          if (fqName != null) {
-            for (ClassCandidateInfo info : myCandidates) {
-              final PsiClass otherClass = info.getElement();
-              assert otherClass != null;
-              if (fqName.equals(otherClass.getQualifiedName())) {
-                return true;
-              }
-              final PsiClass containingclass1 = aClass.getContainingClass();
-              final PsiClass containingclass2 = otherClass.getContainingClass();
-              if (containingclass1 != null && containingclass2 != null && containingclass2.isInheritor(containingclass1, true)) {
-                //shadowing
-                return true;
-              }
+    if (!(element instanceof PsiClass)) return true;
+    final PsiClass aClass = (PsiClass)element;
+    final String name = aClass.getName();
+    if (!myClassName.equals(name)) {
+      return true;
+    }
+    if (myCandidates == null) {
+      myCandidates = new SmartList<ClassCandidateInfo>();
+    }
+    else {
+      String fqName = aClass.getQualifiedName();
+      if (fqName != null) {
+        for (int i = myCandidates.size()-1; i>=0; i--) {
+          ClassCandidateInfo info = myCandidates.get(i);
+          final PsiClass otherClass = info.getElement();
+          assert otherClass != null;
+          if (fqName.equals(otherClass.getQualifiedName())) {
+            return true;
+          }
+          final PsiClass containingclass1 = aClass.getContainingClass();
+          final PsiClass containingclass2 = otherClass.getContainingClass();
+          if (containingclass1 != null && containingclass2 != null && containingclass2.isInheritor(containingclass1, true)) {
+            //shadowing
+            return true;
+          }
+
+          // single import wins over on-demand
+          if (myCurrentFileContext instanceof PsiImportStatementBase &&
+              info.getCurrentFileResolveScope() instanceof PsiImportStatementBase) {
+            PsiImportStatementBase myImport = (PsiImportStatementBase)myCurrentFileContext;
+            PsiImportStatementBase otherImport = (PsiImportStatementBase)info.getCurrentFileResolveScope();
+            if (myImport.isOnDemand() && !otherImport.isOnDemand()) return true;
+            if (!myImport.isOnDemand() && otherImport.isOnDemand()) {
+              myCandidates.remove(i);
             }
           }
         }
-
-        boolean accessible = myPlace == null || checkAccessibility(aClass);
-        myHasAccessibleCandidate |= accessible;
-        myHasInaccessibleCandidate |= !accessible;
-        myCandidates.add(new ClassCandidateInfo(aClass, state.get(PsiSubstitutor.KEY), !accessible, myCurrentFileContext));
-        myResult = null;
-        return !accessible;
       }
     }
+
+    boolean accessible = myPlace == null || checkAccessibility(aClass);
+    myHasAccessibleCandidate |= accessible;
+    myHasInaccessibleCandidate |= !accessible;
+    myCandidates.add(new ClassCandidateInfo(aClass, state.get(PsiSubstitutor.KEY), !accessible, myCurrentFileContext));
+    myResult = null;
+    if (!accessible) return true;
+    if (!(myCurrentFileContext instanceof PsiImportStatementBase)) return false;
+
+
     return true;
   }
 
@@ -182,10 +198,6 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
       }
     }
     return accessible;
-  }
-
-  public void forceResult(JavaResolveResult[] result) {
-    myResult = result;
   }
 
   @Override

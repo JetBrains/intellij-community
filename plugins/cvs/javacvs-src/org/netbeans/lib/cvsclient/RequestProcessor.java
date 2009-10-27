@@ -163,8 +163,9 @@ public final class RequestProcessor implements IRequestProcessor {
 
     BugLog.getInstance().assertNotNull(requests);
 
-    final ProcessRequestsHelper helper = (myTimeout == -1) ?
-                                         new DirectProcessRequestHelper() : new TimedOutProcessRequestHelper();
+    /*final ProcessRequestsHelper helper = (myTimeout == -1) ?
+                                         new DirectProcessRequestHelper() : new TimedOutProcessRequestHelper();*/
+    final ProcessRequestsHelper helper = new DirectProcessRequestHelper();
     return helper.processRequests(requests, connectionStreams, communicationProgressHandler);
   }
 

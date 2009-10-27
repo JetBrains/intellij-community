@@ -28,10 +28,7 @@ import com.intellij.refactoring.classMembers.DelegatingMemberInfoModel;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.classMembers.MemberInfoChange;
 import com.intellij.refactoring.classMembers.MemberInfoChangeListener;
-import com.intellij.refactoring.ui.MemberSelectionPanel;
-import com.intellij.refactoring.ui.MemberSelectionTable;
-import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
-import com.intellij.refactoring.ui.RefactoringDialog;
+import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
@@ -55,11 +52,14 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
   private final ReferenceEditorComboWithBrowseButton packageTextField;
   private final JTextField sourceClassTextField;
   private JCheckBox myGenerateAccessorsCb;
+  private VisibilityPanel myVisibilityPanel;
 
   ExtractClassDialog(PsiClass sourceClass, PsiMember selectedMember) {
     super(sourceClass.getProject(), true);
     setModal(true);
     setTitle(RefactorJBundle.message("extract.class.title"));
+    myVisibilityPanel = new VisibilityPanel(true, true);
+    myVisibilityPanel.setVisibility(null);
     this.sourceClass = sourceClass;
     final DocumentListener docListener = new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {
@@ -111,7 +111,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     final String newClassName = getClassName();
     final String packageName = getPackageName();
 
-    final ExtractClassProcessor processor = new ExtractClassProcessor(sourceClass, fields, methods, classes, packageName, newClassName, isGenerateAccessors());
+    final ExtractClassProcessor processor = new ExtractClassProcessor(sourceClass, fields, methods, classes, packageName, newClassName, myVisibilityPanel.getVisibility(), isGenerateAccessors());
     invokeRefactoring(processor);
   }
 
@@ -278,6 +278,8 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     myGenerateAccessorsCb = new JCheckBox("Generate accessors");
     myGenerateAccessorsCb.setMnemonic('G');
     panel.add(myGenerateAccessorsCb, BorderLayout.SOUTH);
+
+    panel.add(myVisibilityPanel, BorderLayout.EAST);
     return panel;
   }
 

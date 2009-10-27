@@ -159,7 +159,10 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
       model.inheritSdk();
     }
 
-    myPanel.forceInitFromModel();
+    if (myPanel != null) {
+      myPanel.forceInitFromModel();
+    }
+
     flushChangesToModel();
 
     return oldSdk;
