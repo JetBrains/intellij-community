@@ -859,6 +859,8 @@ public class CompileDriver {
           throw new ExitException(ExitStatus.CANCELLED);
         }
 
+        DumbService.getInstance(myProject).waitForSmartMode();
+
         if (snapshot == null || ContainerUtil.intersects(generatedTypes, compilerManager.getRegisteredInputTypes(translator))) {
           // rescan snapshot if previously generated files can influence the input of this compiler
           snapshot = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile[]>() {
@@ -1318,6 +1320,7 @@ public class CompileDriver {
     finally {
       CompilerUtil.refreshIOFiles(filesToRefresh);
       if (!generatedFiles.isEmpty()) {
+        DumbService.getInstance(myProject).waitForSmartMode();
         List<VirtualFile> vFiles = ApplicationManager.getApplication().runReadAction(new Computable<List<VirtualFile>>() {
           public List<VirtualFile> compute() {
             final ArrayList<VirtualFile> vFiles = new ArrayList<VirtualFile>(generatedFiles.size());
@@ -1544,6 +1547,7 @@ public class CompileDriver {
     final List<FileProcessingCompiler.ProcessingItem> toProcess = new ArrayList<FileProcessingCompiler.ProcessingItem>();
     final Set<String> allUrls = new HashSet<String>();
     final IOException[] ex = {null};
+    DumbService.getInstance(myProject).waitForSmartMode();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         try {

@@ -82,8 +82,8 @@ public class PerformanceWatcher implements ApplicationComponent {
       }
     });
 
-    myLogDir = new File(PathManager.getSystemPath() + "/log/threadDumps-" + myDateFormat.format(new Date())
-                        + "-" + ApplicationInfo.getInstance().getBuildNumber());
+    myLogDir = new File(PathManager.getLogPath() + "/threadDumps-" + myDateFormat.format(new Date())
+                        + "-" + ApplicationInfo.getInstance().getBuild().asString());
     myLogDir.mkdirs();
     myCurHangLogDir = myLogDir;
     myThreadMXBean = ManagementFactory.getThreadMXBean();
