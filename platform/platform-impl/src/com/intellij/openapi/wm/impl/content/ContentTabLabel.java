@@ -30,9 +30,11 @@ class ContentTabLabel extends BaseLabel {
 
   Content myContent;
   private final BaseButtonBehavior myBehavior;
+  private TabContentLayout myLayout;
 
-  public ContentTabLabel(final Content content, ToolWindowContentUi ui) {
-    super(ui, true);
+  public ContentTabLabel(final Content content, TabContentLayout layout) {
+    super(layout.myUi, true);
+    myLayout = layout;
     myContent = content;
     update();
 
@@ -48,7 +50,7 @@ class ContentTabLabel extends BaseLabel {
   }
 
   public void update() {
-    if (!myUi.isToDrawTabs()) {
+    if (!myLayout.isToDrawTabs()) {
       setHorizontalAlignment(JLabel.LEFT);
       setBorder(null);
     } else {
@@ -75,14 +77,15 @@ class ContentTabLabel extends BaseLabel {
     }
   }
 
+
   protected void paintComponent(final Graphics g) {
-    if (!isSelected() && myUi.isToDrawTabs()) {
+    if (!isSelected() && myLayout.isToDrawTabs()) {
       g.translate(0, 2);
     }
 
     super.paintComponent(g);
 
-    if (!isSelected() && myUi.isToDrawTabs()) {
+    if (!isSelected() && myLayout.isToDrawTabs()) {
       g.translate(0, -2);
     }
   }
