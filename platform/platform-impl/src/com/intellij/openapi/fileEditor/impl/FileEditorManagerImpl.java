@@ -174,6 +174,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     updateFileColor(file);
     updateFileIcon(file);
     updateFileName(file);
+    updateFileBackgroundColor(file);
   }
 
   /**
@@ -1139,6 +1140,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         if (isFileOpen(file)) {
           updateFileName(file);
           updateFileIcon(file); // file type can change after renaming
+          updateFileBackgroundColor(file);
         }
       }
       else if (VirtualFile.PROP_WRITABLE.equals(e.getPropertyName()) || VirtualFile.PROP_ENCODING.equals(e.getPropertyName())) {
@@ -1161,10 +1163,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
     public void fileMoved(VirtualFileMoveEvent e) {
       final VirtualFile file = e.getFile();
-      final VirtualFile[] selectedFiles = getSelectedFiles();
-      for (final VirtualFile selectedFile : selectedFiles) {
-        if (VfsUtil.isAncestor(file, selectedFile, false)) {
-          updateFileName(selectedFile);
+      final VirtualFile[] openFiles = getOpenFiles();
+      for (final VirtualFile openFile : openFiles) {
+        if (VfsUtil.isAncestor(file, openFile, false)) {
+          updateFileName(openFile);
+          updateFileBackgroundColor(openFile);
         }
       }
     }
@@ -1333,6 +1336,7 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
         if (isFileOpen(file)) {
           updateFileIcon(file);
           updateFileColor(file);
+          updateFileBackgroundColor(file);
         }
       }
     });
