@@ -23,12 +23,13 @@ import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-class OpenPartialDiffAction extends AnAction {
+class OpenPartialDiffAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.incrementalMerge.ui.OpenPartialDiffAction");
   private final int myLeftIndex;
   private final int myRightIndex;
