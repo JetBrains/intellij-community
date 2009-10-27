@@ -350,6 +350,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       LOG.error(ex);
     }
     finally {
+      dirtyScopeManager.changesProcessed();
+      
       synchronized (myDataLock) {
         myDelayedNotificator.getProxyDispatcher().changeListUpdateDone();
         myChangesViewManager.scheduleRefresh();

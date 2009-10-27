@@ -77,6 +77,11 @@ class VcsDirtyScopeManagerProxy extends VcsDirtyScopeManager {
     throw new UnsupportedOperationException();
   }
 
+  @Override
+  public Collection<FilePath> whatFilesDirty(Collection<FilePath> files) {
+    throw new UnsupportedOperationException();
+  }
+
   public boolean filePathsDirty(@Nullable final Collection<FilePath> filesDirty, @Nullable final Collection<FilePath> dirsRecursivelyDirty) {
     if (filesDirty != null) {
       myFiles.addAll(filesDirty);

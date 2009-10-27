@@ -24,6 +24,8 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
@@ -39,7 +41,7 @@ import java.util.List;
  */
 public class GitRevert extends BasicAction {
   @Override
-  public void perform(@NotNull Project project, GitVcs vcs, @NotNull List<VcsException> exceptions, @NotNull VirtualFile[] affectedFiles)
+  public void perform(@NotNull final Project project, GitVcs vcs, @NotNull List<VcsException> exceptions, @NotNull VirtualFile[] affectedFiles)
     throws VcsException {
     saveAll();
     final ChangeListManager changeManager = ChangeListManager.getInstance(project);
@@ -54,11 +56,15 @@ public class GitRevert extends BasicAction {
     }
     GitRollbackEnvironment re = GitRollbackEnvironment.getInstance(project);
     re.rollbackChanges(changes, exceptions, RollbackProgressListener.EMPTY);
-    VcsDirtyScopeManager mgr = VcsDirtyScopeManager.getInstance(project);
-    for (VirtualFile file : roots) {
-      mgr.dirDirtyRecursively(file);
-      file.refresh(true, true);
-    }
+
+    final RefreshSession session = RefreshQueue.getInstance().createSession(true, true, new Runnable() {
+      public void run() {
+        final VcsDirtyScopeManager mgr = VcsDirtyScopeManager.getInstance(project);
+        mgr.filesDirty(null, roots);
+      }
+    });
+    session.addAllFiles(roots);
+    session.launch();
   }
 
   @Override

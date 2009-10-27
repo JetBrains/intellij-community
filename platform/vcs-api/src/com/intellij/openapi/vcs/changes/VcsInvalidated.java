@@ -15,11 +15,13 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.vcs.FilePath;
+
 import java.util.List;
 
 public class VcsInvalidated {
-  private final List<VcsDirtyScope> myScopes;
-  private final boolean myEverythingDirty;
+  private List<VcsDirtyScope> myScopes;
+  private boolean myEverythingDirty;
 
   public VcsInvalidated(final List<VcsDirtyScope> scopes, final boolean everythingDirty) {
     myScopes = scopes;
@@ -36,5 +38,14 @@ public class VcsInvalidated {
 
   public boolean isEmpty() {
     return (! myEverythingDirty) && myScopes.isEmpty();
+  }
+
+  public boolean isFileDirty(final FilePath fp) {
+    if (myEverythingDirty) return true;
+
+    for (VcsDirtyScope scope : myScopes) {
+      if (scope.belongsTo(fp)) return true;
+    }
+    return false;
   }
 }

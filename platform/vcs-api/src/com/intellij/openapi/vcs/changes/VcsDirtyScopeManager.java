@@ -84,6 +84,8 @@ public abstract class VcsDirtyScopeManager {
 
   public abstract VcsInvalidated retrieveScopes();
 
+  public abstract Collection<FilePath> whatFilesDirty(final Collection<FilePath> files);
+
   /**
    * Requests an asynchronous file status update for all files specified and under the specified directories
    */

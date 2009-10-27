@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedList;
 
 /**
  * @author max
@@ -47,6 +48,8 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   private final VcsGuess myGuess;
   private final SynchronizedLife myLife;
 
+  private MyProgressHolder myProgressHolder;
+
   public VcsDirtyScopeManagerImpl(Project project, ChangeListManager changeListManager, ProjectLevelVcsManager vcsManager) {
     myProject = project;
     myChangeListManager = changeListManager;
@@ -55,6 +58,8 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     myLife = new SynchronizedLife();
     myGuess = new VcsGuess(myProject);
     myDirtBuilder = new DirtBuilder(myGuess);
+
+    myProgressHolder = new MyProgressHolder();
   }
 
   public void projectOpened() {
@@ -275,27 +280,103 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     });
   }
 
+  private class MyProgressHolder {
+    private VcsInvalidated myInProgressState;
+    private DirtBuilderReader myInProgressDirtBuilder;
+
+    public MyProgressHolder() {
+      myInProgressDirtBuilder = new DirtBuilder(myGuess);
+      myInProgressState = null;
+    }
+
+    public void takeNext(final DirtBuilderReader dirtBuilder) {
+      myInProgressDirtBuilder = dirtBuilder;
+      myInProgressState = null;
+    }
+
+    private MyProgressHolder(final DirtBuilderReader dirtBuilder, final VcsInvalidated vcsInvalidated) {
+      myInProgressDirtBuilder = dirtBuilder;
+      myInProgressState = vcsInvalidated;
+    }
+
+    public VcsInvalidated calculateInvalidated() {
+      if (myInProgressDirtBuilder != null) {
+        return ApplicationManager.getApplication().runReadAction(new Computable<VcsInvalidated>() {
+          public VcsInvalidated compute() {
+            final Scopes scopes = new Scopes(myProject, myGuess);
+            scopes.takeDirt(myInProgressDirtBuilder);
+            return scopes.retrieveAndClear();
+          }
+        });
+      }
+      return myInProgressState;
+    }
+
+    public void takeInvalidated(final VcsInvalidated invalidated) {
+      myInProgressState = invalidated;
+      myInProgressDirtBuilder = null;
+    }
+
+    public void processed() {
+      myInProgressState = null;
+      myInProgressDirtBuilder = null;
+    }
+
+    public MyProgressHolder copy() {
+      return new MyProgressHolder(myInProgressDirtBuilder, myInProgressState);
+    }
+  }
+
   @Nullable
   public VcsInvalidated retrieveScopes() {
-    final Ref<DirtBuilder> dirtCopyRef = new Ref<DirtBuilder>();
-
     final LifeDrop lifeDrop = myLife.doIfAlive(new Runnable() {
       public void run() {
-        dirtCopyRef.set(new DirtBuilder(myDirtBuilder));
+        myProgressHolder.takeNext(new DirtBuilder(myDirtBuilder));
         myDirtBuilder.reset();
       }
     });
 
-    if (lifeDrop.isDone() && (! dirtCopyRef.isNull())) {
-      return ApplicationManager.getApplication().runReadAction(new Computable<VcsInvalidated>() {
-        public VcsInvalidated compute() {
-          final Scopes scopes = new Scopes(myProject, myGuess);
-          scopes.takeDirt(dirtCopyRef.get());
-          return scopes.retrieveAndClear();
+    if (lifeDrop.isDone()) {
+      final VcsInvalidated invalidated = myProgressHolder.calculateInvalidated();
+
+      myLife.doIfAlive(new Runnable() {
+        public void run() {
+          myProgressHolder.takeInvalidated(invalidated);
         }
       });
+      return invalidated;
     }
     return null;
+  }
+
+  public void changesProcessed() {
+    myLife.doIfAlive(new Runnable() {
+      public void run() {
+        myProgressHolder.processed();
+      }
+    });
+  }
+
+  @Override
+  public Collection<FilePath> whatFilesDirty(final Collection<FilePath> files) {
+    final Collection<FilePath> result = new LinkedList<FilePath>();
+    final Ref<MyProgressHolder> inProgressHolderRef = new Ref<MyProgressHolder>();
+    final Ref<MyProgressHolder> currentHolderRef = new Ref<MyProgressHolder>();
+
+    myLife.doIfAlive(new Runnable() {
+      public void run() {
+        inProgressHolderRef.set(myProgressHolder.copy());
+        currentHolderRef.set(new MyProgressHolder(new DirtBuilder(myDirtBuilder), null));
+      }
+    });
+    final VcsInvalidated inProgressInvalidated = inProgressHolderRef.get().calculateInvalidated();
+    final VcsInvalidated currentInvalidated = currentHolderRef.get().calculateInvalidated();
+    for (FilePath fp : files) {
+      if (((inProgressInvalidated != null) && inProgressInvalidated.isFileDirty(fp)) || currentInvalidated.isFileDirty(fp)) {
+        result.add(fp);
+      }
+    }
+    return result;
   }
 
   private String toStringScopes(final VcsInvalidated vcsInvalidated) {
