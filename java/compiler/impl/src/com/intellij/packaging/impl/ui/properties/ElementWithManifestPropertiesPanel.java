@@ -161,10 +161,18 @@ public abstract class ElementWithManifestPropertiesPanel<E extends CompositeElem
       return;
     }
 
-    PackagingElementFactory.getInstance().addFileCopy(myElement, ManifestFileUtil.MANIFEST_DIR_NAME, file.getPath());
+    addManifestFile(file.getPath());
     myContext.getThisArtifactEditor().updateLayoutTree();
     updateComponents(new ManifestFileConfiguration(null, null, file.getPath()));
     apply();
+  }
+
+  private void addManifestFile(final String path) {
+    myContext.editLayout(myContext.getArtifact(), new Runnable() {
+      public void run() {
+        PackagingElementFactory.getInstance().addFileCopy(myElement, ManifestFileUtil.MANIFEST_DIR_NAME, path);
+      }
+    });
   }
 
   private void chooseManifest() {
@@ -179,8 +187,7 @@ public abstract class ElementWithManifestPropertiesPanel<E extends CompositeElem
     final VirtualFile[] files = FileChooser.chooseFiles(myContext.getProject(), descriptor);
     if (files.length != 1) return;
 
-    final String path = files[0].getPath();
-    PackagingElementFactory.getInstance().addFileCopy(myElement, ManifestFileUtil.MANIFEST_DIR_NAME, path);
+    addManifestFile(files[0].getPath());
     myContext.getThisArtifactEditor().updateLayoutTree();
     updateComponents(ManifestFileUtil.createManifestFileConfiguration(files[0]));
     apply();

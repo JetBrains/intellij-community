@@ -28,13 +28,10 @@ import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.engine.events.DebuggerCommandImpl;
-import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.sun.jdi.ObjectReference;
@@ -123,20 +120,7 @@ public final class DebuggerContextImpl implements DebuggerContext {
       objectReference = frameProxy != null ? frameProxy.thisObject() : null;
     }
     catch (EvaluateException e) {
-      DebuggerCommandImpl currentCommand = getDebugProcess().getManagerThread().getCurrentCommand();
-      if (currentCommand instanceof SuspendContextCommandImpl) {
-        final SuspendContextImpl currentCommandContext = ((SuspendContextCommandImpl)currentCommand).getSuspendContext();
-        final ThreadReferenceProxyImpl commandThread = currentCommandContext.getThread();
-        if (!Comparing.equal(commandThread, frameProxy.threadProxy())) {
-          LOG.info(e);
-          LOG.assertTrue(
-              false,
-              "Current Command: " + currentCommand.getClass().getName() + 
-              "\nCurrent Command Thread : " + (commandThread != null? commandThread.name() : "null") + 
-              "\nThread : " + frameProxy.threadProxy().name()
-          );
-        }
-      }
+      LOG.info(e);
       objectReference = null;
     }
     return new EvaluationContextImpl(getSuspendContext(), frameProxy, objectReference);

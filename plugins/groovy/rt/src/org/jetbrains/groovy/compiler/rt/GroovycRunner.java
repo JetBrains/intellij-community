@@ -16,9 +16,12 @@
 package org.jetbrains.groovy.compiler.rt;
 
 import groovy.lang.GroovyClassLoader;
+import org.codehaus.groovy.ast.ClassNode;
+import org.codehaus.groovy.classgen.GeneratorContext;
 import org.codehaus.groovy.control.*;
 import org.codehaus.groovy.control.messages.WarningMessage;
-import org.codehaus.groovy.tools.javac.JavaStubCompilationUnit;
+import org.codehaus.groovy.tools.javac.JavaAwareResolveVisitor;
+import org.codehaus.groovy.tools.javac.JavaStubGenerator;
 
 import java.io.*;
 import java.security.AccessController;
@@ -241,7 +244,7 @@ public class GroovycRunner {
     for (int i = 0; i < srcFiles.size(); i++) {
       final File file = (File)srcFiles.get(i);
       if (forStubs && file.getName().endsWith(".java")) {
-        ((JavaStubCompilationUnit)unit).addSourceFile(file); //add java source
+      //  unit.addSources(new File[]{file});
         continue;
       }
 
@@ -321,30 +324,49 @@ public class GroovycRunner {
     compilerMessages.add(new CompilerMessage(CompilerMessage.WARNING, message + ":\n" + writer, "<exception>", -1, -1));
   }
 
-  private static CompilationUnit createCompilationUnit(boolean forStubs, final CompilerConfiguration compilerConfiguration) {
-    compilerConfiguration.setClasspathList(Collections.EMPTY_LIST);
+  private static CompilationUnit createCompilationUnit(final boolean forStubs, final CompilerConfiguration config) {
+    config.setClasspathList(Collections.EMPTY_LIST);
 
-    final GroovyClassLoader classLoader = buildClassLoaderFor(compilerConfiguration);
-
-    if (forStubs) {
-      return new JavaStubCompilationUnit(compilerConfiguration, classLoader, compilerConfiguration.getTargetDirectory()) {
-        public void gotoPhase(int phase) throws CompilationFailedException {
-          super.gotoPhase(phase);
-          if (phase <= Phases.ALL) {
-            System.out.println(PRESENTABLE_MESSAGE + "Groovy stub generator: " + getPhaseDescription());
-          }
-        }
-      };
-    }
-    return new CompilationUnit(compilerConfiguration, null, classLoader) {
+    final GroovyClassLoader classLoader = buildClassLoaderFor(config);
+    final CompilationUnit unit = new CompilationUnit(config, null, classLoader) {
 
       public void gotoPhase(int phase) throws CompilationFailedException {
         super.gotoPhase(phase);
         if (phase <= Phases.ALL) {
-          System.out.println(PRESENTABLE_MESSAGE + "Groovy compiler: " + getPhaseDescription());
+          System.out.println(PRESENTABLE_MESSAGE + (forStubs ? "Groovy stub generator: " : "Groovy compiler: ") + getPhaseDescription());
         }
       }
     };
+    if (forStubs) {
+      //todo reuse JavaStubCompilationUnit in groovy 1.7
+      boolean useJava5 = config.getTargetBytecode().equals(CompilerConfiguration.POST_JDK5);
+      final JavaStubGenerator stubGenerator = new JavaStubGenerator(config.getTargetDirectory(), false, useJava5);
+
+      //but JavaStubCompilationUnit doesn't have this...
+      unit.addPhaseOperation(new CompilationUnit.PrimaryClassNodeOperation() {
+        public void call(SourceUnit source, GeneratorContext context, ClassNode node) throws CompilationFailedException {
+          new JavaAwareResolveVisitor(unit).startResolving(node, source);
+        }
+      },Phases.CONVERSION);
+
+      unit.addPhaseOperation(new CompilationUnit.PrimaryClassNodeOperation() {
+        public void call(final SourceUnit source, final GeneratorContext context, final ClassNode node) throws CompilationFailedException {
+          final String name = node.getNameWithoutPackage();
+          if ("package-info".equals(name)) {
+            return;
+          }
+
+          System.out.println(PRESENTABLE_MESSAGE + "Generating stub for " + name);
+          try {
+            stubGenerator.generateClass(node);
+          }
+          catch (FileNotFoundException e) {
+            source.addException(e);
+          }
+        }
+      },Phases.CONVERSION);
+    }
+    return unit;
   }
 
   static GroovyClassLoader buildClassLoaderFor(final CompilerConfiguration compilerConfiguration) {

@@ -27,6 +27,7 @@ import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
+import com.intellij.codeInsight.highlighting.HighlightUsagesDescriptionLocation;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
@@ -507,7 +508,7 @@ public class HighlightUtil {
             IntentionAction fix = QUICK_FIX_FACTORY.createMethodReturnFix(method, valueType, false);
             QuickFixAction.registerQuickFixAction(errorResult, fix);
           }
-        }
+        }   
         else {
           errorResult = checkAssignability(returnType, valueType, returnValue, statement);
           if (errorResult != null && valueType != null) {
@@ -517,7 +518,7 @@ public class HighlightUtil {
               QuickFixAction.registerQuickFixAction(errorResult, new SurroundWithArrayFix(null){
                 @Override
                 protected PsiExpression getExpression(final PsiElement element) {
-                  return returnValue != null && returnValue.isValid() ? returnValue : null;
+                  return returnValue.isValid() ? returnValue : null;
                 }
               });
             }
@@ -1857,7 +1858,16 @@ public class HighlightUtil {
         // do not highlight unknown packages - javac does not care about illegal package names
         if (isInsidePackageStatement(refName)) return null;
         if (result.isPackagePrefixPackageReference()) return null;
-        String description = JavaErrorMessages.message("cannot.resolve.symbol", refName.getText());
+        JavaResolveResult[] results = ref.multiResolve(true);
+        String description;
+        if (results.length > 1) {
+          String t1 = format(results[0].getElement());
+          String t2 = format(results[1].getElement());
+          description = JavaErrorMessages.message("ambiguous.reference", refName.getText(), t1, t2);
+        }
+        else {
+          description = JavaErrorMessages.message("cannot.resolve.symbol", refName.getText());
+        }
 
         HighlightInfoType type = HighlightInfoType.WRONG_REF;
         if (PsiUtil.isInsideJavadocComment(ref)) return null;
@@ -1905,6 +1915,12 @@ public class HighlightUtil {
       }
     }
     return highlightInfo;
+  }
+
+  private static String format(PsiElement element) {
+    if (element instanceof PsiClass) return formatClass((PsiClass)element);
+    if (element instanceof PsiMethod) return formatMethod((PsiMethod)element);
+    return ElementDescriptionUtil.getElementDescription(element, HighlightUsagesDescriptionLocation.INSTANCE);
   }
 
   private static boolean isInsidePackageStatement(PsiElement element) {

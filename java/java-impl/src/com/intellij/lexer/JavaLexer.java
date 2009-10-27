@@ -20,22 +20,37 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
+import gnu.trove.THashSet;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Set;
 
 public class JavaLexer extends LexerBase {
   private JavaLexer(boolean isAssertKeywordEnabled, boolean isJDK15) {
-    myTable = isAssertKeywordEnabled
-              ? isJDK15 ? ourTableWithAssertAndJDK15 : ourTableWithAssert
-              : isJDK15 ? ourTableWithJDK15 : ourTableWithoutAssert;
+    myTable = getTable(isAssertKeywordEnabled, isJDK15);
     myFlexlexer = new _JavaLexer(isAssertKeywordEnabled, isJDK15);
   }
 
   public JavaLexer(LanguageLevel level) {
     this(level.hasAssertKeyword(), level.hasEnumKeywordAndAutoboxing());
+  }
+
+  private static HashTable getTable(boolean isAssertKeywordEnabled, boolean isJDK15) {
+    return isAssertKeywordEnabled
+              ? isJDK15 ? ourTableWithAssertAndJDK15 : ourTableWithAssert
+              : isJDK15 ? ourTableWithJDK15 : ourTableWithoutAssert;
+  }
+
+  private static HashTable getTable(LanguageLevel level) {
+    return getTable(level.hasAssertKeyword(), level.hasEnumKeywordAndAutoboxing());
+  }
+
+
+  public static boolean isKeyword(String id, LanguageLevel level) {
+    return getTable(level).contains(id);
   }
 
   private CharSequence myBuffer;
@@ -54,6 +69,7 @@ public class JavaLexer extends LexerBase {
 
     private final char[][] myTable = new char[NUM_ENTRIES][];
     private final IElementType[] myKeywords = new IElementType[NUM_ENTRIES];
+    private final Set<String> myKeywordsInSet = new THashSet<String>();
 
     private void add(String s, IElementType tokenType) {
       char[] chars = s.toCharArray();
@@ -66,6 +82,11 @@ public class JavaLexer extends LexerBase {
 
       myTable[modHashCode] = chars;
       myKeywords[modHashCode] = tokenType;
+      myKeywordsInSet.add(s);
+    }
+
+    public boolean contains(String s) {
+      return myKeywordsInSet.contains(s);
     }
 
     private boolean contains(int hashCode, final CharSequence buffer, int offset) {

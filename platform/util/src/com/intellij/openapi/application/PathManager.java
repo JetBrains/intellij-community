@@ -72,6 +72,7 @@ public class PathManager {
 
         do {
           final String parent = root.getParent();
+          if (parent == null) return null;
           assert parent != null : "No parent found for " + root + "; " + BIN_FOLDER + " folder with " +
                                   "idea.properties" + " file not found";
           root = new File(parent).getAbsoluteFile(); // one step back to get folder
@@ -308,13 +309,11 @@ public class PathManager {
   }
 
   public static void loadProperties() {
-
     File propFile = FileUtil.findFirstThatExist(
       System.getProperty(PROPERTIES_FILE),
       SystemProperties.getUserHome() + "/idea.properties",
       getHomePath() + "/bin/idea.properties",
-      getHomePath() + "/community/bin/idea.properties"
-    );
+      getHomePath() + "/community/bin/idea.properties");
 
     if (propFile != null) {
       InputStream fis = null;
@@ -322,11 +321,15 @@ public class PathManager {
         fis = new BufferedInputStream(new FileInputStream(propFile));
         final PropertyResourceBundle bundle = new PropertyResourceBundle(fis);
         final Enumeration keys = bundle.getKeys();
+        String home = (String)bundle.handleGetObject("idea.home");
+        if (home != null && ourHomePath == null) {
+          ourHomePath = getAbsolutePath(substitueVars(home));
+        }
         final Properties sysProperties = System.getProperties();
         while (keys.hasMoreElements()) {
           String key = (String)keys.nextElement();
-          final String value = substitueVars(bundle.getString(key));
           if (sysProperties.getProperty(key, null) == null) { // load the property from the property file only if it is not defined yet
+            final String value = substitueVars(bundle.getString(key));
             sysProperties.setProperty(key, value);
           }
         }
@@ -354,7 +357,9 @@ public class PathManager {
 
   public static String substituteVars(String s, final String ideaHomePath) {
     if (s == null) return null;
-    if (s.startsWith("..")) s = ideaHomePath + File.separatorChar + BIN_FOLDER + File.separatorChar + s;
+    if (s.startsWith("..")) {
+      s = ideaHomePath + File.separatorChar + BIN_FOLDER + File.separatorChar + s;
+    }
     s = StringUtil.replace(s, "${idea.home}", ideaHomePath);
     final Properties props = System.getProperties();
     final Set keys = props.keySet();

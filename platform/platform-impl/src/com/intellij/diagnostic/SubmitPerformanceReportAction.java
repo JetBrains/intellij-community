@@ -24,8 +24,8 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.ZipUtil;
@@ -48,7 +48,7 @@ public class SubmitPerformanceReportAction extends AnAction implements DumbAware
   private final DateFormat myDateFormat = new SimpleDateFormat("yyyyMMdd-HHmmss");
 
   public void actionPerformed(final AnActionEvent e) {
-    String reportFileName = "perf_" + ApplicationInfo.getInstance().getBuildNumber() + "_" +
+    String reportFileName = "perf_" + ApplicationInfo.getInstance().getBuild().asString() + "_" +
                             SystemProperties.getUserName() + "_" + myDateFormat.format(new Date()) + ".zip";
     final File reportPath = new File(SystemProperties.getUserHome(), reportFileName);
     final File logDir = new File(PathManager.getSystemPath(), "log");

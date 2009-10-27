@@ -270,6 +270,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
     }
 
     for (Object o : Extensions.getExtensions(IDEATestNGListener.EP_NAME)) {
+      if (!((IDEATestNGListener)o).isEnabled(config)) continue;
       if (buf.length() > 0) buf.append(";");
       buf.append(o.getClass().getName());
       javaParameters.getClassPath().add(PathUtil.getJarPathForClass(o.getClass()));

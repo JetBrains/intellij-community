@@ -20,7 +20,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider;
 import com.intellij.openapi.util.IconLoader;
@@ -145,7 +148,9 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
   }
 
   public void rootsChanged(ModuleRootEvent event) {
-    myPanel.rootsChanged();
+    if (myPanel != null) {
+      myPanel.rootsChanged();
+    }
   }
 
   public Sdk setSdk(final Sdk newJDK) {
@@ -159,7 +164,10 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
       model.inheritSdk();
     }
 
-    myPanel.forceInitFromModel();
+    if (myPanel != null) {
+      myPanel.forceInitFromModel();
+    }
+
     flushChangesToModel();
 
     return oldSdk;

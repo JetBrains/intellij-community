@@ -97,11 +97,12 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
     }
 
     final String rootPath = CompilerPaths.getGeneratedDataDirectory(myProject) + "/groovyStubs/";
-    final File outDir = new File(rootPath + myProject.getLocationHash() + "/" + module.getName() + "/");
+    final File outDir = new File(rootPath + myProject.getLocationHash() + "/" + module.getName() + "/" + (tests ? "tests" : "production") + "/");
     outDir.mkdirs();
 
     if (!hasJava) {
       //always pass groovyc stub generator at least 1 java file, or it won't generate stubs
+      //todo not needed anymore with groovy 1.7?
       toCompile.add(createMockJavaFile(rootPath));
     }
 

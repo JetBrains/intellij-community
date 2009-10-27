@@ -32,6 +32,8 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -198,7 +200,7 @@ public class GroovyCompilerTest extends JavaCodeInsightFixtureTestCase {
                                                                  "  System.out.println(new Foo().foo());" +
                                                                  "}" +
                                                                  "}");
-    assertTrue(assertOneElement(make()).contains("WARNING: Groovyc couldn't generate stub"));
+    assertEmpty(make());
     assertOutput("Bar", "239");
 
     deleteClassFile("IFoo");
@@ -248,17 +250,7 @@ public class GroovyCompilerTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testMakeInTests() throws Throwable {
-    new WriteCommandAction(getProject()) {
-      protected void run(Result result) throws Throwable {
-        final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
-        final ModifiableRootModel rootModel = rootManager.getModifiableModel();
-        final ContentEntry entry = rootModel.getContentEntries()[0];
-        entry.removeSourceFolder(entry.getSourceFolders()[0]);
-        entry.addSourceFolder(myFixture.getTempDirFixture().findOrCreateDir("src"), false);
-        entry.addSourceFolder(myFixture.getTempDirFixture().findOrCreateDir("tests"), true);
-        rootModel.commit();
-      }
-    }.execute();
+    setupTestSources();
     myFixture.addFileToProject("tests/Super.groovy", "class Super {}");
     assertEmpty(make());
 
@@ -271,6 +263,39 @@ public class GroovyCompilerTest extends JavaCodeInsightFixtureTestCase {
     myFixture.addFileToProject("tests/Java.java", "public class Java {}");
     assertEmpty(make());
     assertOutput("Sub", "hello");
+  }
+
+  public void testTestsDependOnProduction() throws Throwable {
+    setupTestSources();
+    myFixture.addFileToProject("src/com/Bar.groovy", "package com\n" +
+                                                     "class Bar {}");
+    myFixture.addFileToProject("src/com/ToGenerateStubs.java", "package com;\n" +
+                                                     "public class ToGenerateStubs {}");
+    myFixture.addFileToProject("tests/com/BarTest.groovy", "package com\n" +
+                                                       "class BarTest extends Bar {}");
+    assertEmpty(make());
+  }
+
+  private void setupTestSources() {
+    new WriteCommandAction(getProject()) {
+      protected void run(Result result) throws Throwable {
+        final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
+        final ModifiableRootModel rootModel = rootManager.getModifiableModel();
+        final ContentEntry entry = rootModel.getContentEntries()[0];
+        entry.removeSourceFolder(entry.getSourceFolders()[0]);
+        entry.addSourceFolder(myFixture.getTempDirFixture().findOrCreateDir("src"), false);
+        entry.addSourceFolder(myFixture.getTempDirFixture().findOrCreateDir("tests"), true);
+        rootModel.commit();
+      }
+    }.execute();
+  }
+
+  public void testStubForGroovyExtendingJava() throws Exception {
+    myFixture.addClass("public class Foo {}");
+    myFixture.addFileToProject("Bar.groovy", "class Bar extends Foo {}");
+    myFixture.addClass("public class Goo extends Bar {}");
+
+    assertEmpty(make());
   }
 
   private void deleteClassFile(final String className) throws IOException {
@@ -287,8 +312,19 @@ public class GroovyCompilerTest extends JavaCodeInsightFixtureTestCase {
     file.setBinaryContent(file.contentsToByteArray(), file.getModificationStamp() + 1, file.getTimeStamp() + 1);
   }
 
-  private static void setFileText(PsiFile file, String barText) throws IOException {
-    VfsUtil.saveText(ObjectUtils.assertNotNull(file.getVirtualFile()), barText);
+  private static void setFileText(final PsiFile file, final String barText) throws IOException {
+    Runnable runnable = new Runnable() {
+      public void run() {
+        try {
+          VfsUtil.saveText(ObjectUtils.assertNotNull(file.getVirtualFile()), barText);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    };
+    ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.NON_MODAL);
+
   }
 
   private List<String> make() {
