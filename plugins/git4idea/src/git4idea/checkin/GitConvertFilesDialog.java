@@ -178,7 +178,8 @@ public class GitConvertFilesDialog extends DialogWrapper {
           Set<VirtualFile> fs = e.getValue();
           for (Iterator<VirtualFile> j = fs.iterator(); j.hasNext();) {
             VirtualFile f = j.next();
-            if (nl.equals(LoadTextUtil.detectLineSeparator(f, true))) {
+            String detectedLineSeparator = LoadTextUtil.detectLineSeparator(f, true);
+            if (detectedLineSeparator == null || nl.equals(detectedLineSeparator)) {
               j.remove();
             }
           }
