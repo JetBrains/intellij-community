@@ -4,6 +4,9 @@
  */
 package org.testng;
 
+import com.intellij.execution.configurations.ModuleBasedConfiguration;
+import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
+
 public class IDEACoverageListener implements IDEATestNGListener {
 
   public void onTestStart(final ITestResult iTestResult) {
@@ -52,5 +55,9 @@ public class IDEACoverageListener implements IDEATestNGListener {
   }
 
   public void onFinish(final ITestContext iTestContext) {
+  }
+
+  public boolean isEnabled(Object configuration) {
+    return CoverageEnabledConfiguration.get((ModuleBasedConfiguration)configuration).isCoverageEnabled();
   }
 }
