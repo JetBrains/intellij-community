@@ -166,5 +166,9 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
     public List<Library> chooseLibraries(List<Library> libraries, String title) {
       throw new UnsupportedOperationException("'chooseLibraries' not implemented in " + getClass().getName());
     }
+
+    public Artifact getArtifact() {
+      throw new UnsupportedOperationException("'getArtifact' not implemented in " + getClass().getName());
+    }
   }
 }
