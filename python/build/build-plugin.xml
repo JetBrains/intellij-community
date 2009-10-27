@@ -66,6 +66,9 @@
             <include name="src"/>
             <include name="pluginSrc"/>
         </dirset>
+      <dirset dir="${plugin.home}/../ultimate/ultimate-verifier">
+        <include name="src"/>
+      </dirset>
     </path>
 
     <!-- The task requires the following libraries from IntelliJ IDEA distribution: -->
