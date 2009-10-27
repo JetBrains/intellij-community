@@ -413,7 +413,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
 
     @NotNull
     public PsiClass[] getClasses(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
-      ArrayList<PsiClass> list = new ArrayList<PsiClass>();
+      List<PsiClass> list = new ArrayList<PsiClass>();
       final PsiDirectory[] dirs = psiPackage.getDirectories(scope);
       for (PsiDirectory dir : dirs) {
         PsiClass[] classes = JavaDirectoryService.getInstance().getClasses(dir);
