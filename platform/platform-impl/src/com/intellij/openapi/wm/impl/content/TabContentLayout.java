@@ -23,7 +23,6 @@ import com.intellij.ui.tabs.impl.singleRow.MoreIcon;
 import com.intellij.util.ui.BaseButtonBehavior;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.awt.*;
@@ -46,7 +45,7 @@ class TabContentLayout extends ContentLayout {
   ArrayList<ContentTabLabel> myTabs = new ArrayList<ContentTabLabel>();
   final Map<Content, ContentTabLabel> myContent2Tabs = new HashMap<Content, ContentTabLabel>();
 
-  final BaseLabel myIdLabel;
+  BaseLabel myIdLabel;
 
   private final MoreIcon myMoreIcon = new MoreIcon() {
     protected Rectangle getIconRec() {
@@ -58,18 +57,19 @@ class TabContentLayout extends ContentLayout {
     }
 
     protected int getIconY(final Rectangle iconRec) {
-      return iconRec.height / 2 - getIconHeight() / 2 + TitlePanel.STRUT;
+      return iconRec.height / TAB_ARC - getIconHeight() / TAB_ARC + TitlePanel.STRUT;
     }
   };
 
   TabContentLayout(ToolWindowContentUi ui) {
     super(ui);
 
-    myIdLabel = new BaseLabel(ui, false);
     myPopupListener = new MyPopupListener();
 
     new BaseButtonBehavior(myUi) {
       protected void execute(final MouseEvent e) {
+        if (!myUi.isCurrent(TabContentLayout.this)) return;
+
         if (myLastLayout != null) {
           final Rectangle moreRect = myLastLayout.moreRect;
           if (moreRect != null && moreRect.contains(e.getPoint())) {
@@ -78,6 +78,23 @@ class TabContentLayout extends ContentLayout {
         }
       }
     };
+  }
+
+  @Override
+  public void init() {
+    reset();
+
+    myIdLabel = new BaseLabel(myUi, false);
+    for (int i = 0; i < myUi.myManager.getContentCount(); i++) {
+      contentAdded(new ContentManagerEvent(this, myUi.myManager.getContent(i), i));
+    }
+  }
+
+  @Override
+  public void reset() {
+    myTabs.clear();
+    myContent2Tabs.clear();
+    myIdLabel = null;
   }
 
   private void showPopup() {
@@ -159,7 +176,7 @@ class TabContentLayout extends ContentLayout {
       }
 
 
-      data.moreRectWidth = myMoreIcon.getIconWidth() + MORE_ICON_BORDER * 2;
+      data.moreRectWidth = myMoreIcon.getIconWidth() + MORE_ICON_BORDER * TAB_ARC;
       data.toFitWidth = bounds.getSize().width - data.eachX;
 
       final ContentTabLabel selectedTab = myContent2Tabs.get(selected);
@@ -177,7 +194,6 @@ class TabContentLayout extends ContentLayout {
           break;
         }
       }
-
 
       boolean reachedBounds = false;
       data.moreRect = null;
@@ -278,35 +294,13 @@ class TabContentLayout extends ContentLayout {
     final GraphicsConfig c = new GraphicsConfig(g);
     c.setAntialiasing(true);
 
-
     for (ContentTabLabel each : myTabs) {
-      final Shape shape = getShapeFor(each);
-      final Rectangle bounds = each.getBounds();
-      if (myUi.myWindow.isActive()) {
-        Color from;
-        Color to;
-        if (each.isSelected()) {
-          from = new Color(90, 133, 215);
-          to = new Color(33, 87, 138);
-          g2d.setPaint(new GradientPaint(bounds.x, bounds.y, from, bounds.x, (float)bounds.getMaxY(), to));
-        }
-        else {
-          from = new Color(129, 147, 219);
-          to = new Color(84, 130, 171);
-          g2d.setPaint(new GradientPaint(bounds.x, bounds.y, from, bounds.x, (float)bounds.getMaxY(), to));
-        }
-      }
-      else {
-        g2d.setPaint(
-          new GradientPaint(bounds.x, bounds.y, new Color(152, 143, 134), bounds.x, (float)bounds.getMaxY(), new Color(165, 157, 149)));
-      }
-
-      g2d.fill(shape);
+      fillTabShape(g2d, each, getShapeFor(each), each.isSelected());
     }
 
     c.restore();
-
   }
+
 
   private Shape getShapeFor(ContentTabLabel label) {
     final Rectangle bounds = label.getBounds();
@@ -314,12 +308,12 @@ class TabContentLayout extends ContentLayout {
     if (bounds.width <= 0 || bounds.height <= 0) return new GeneralPath();
 
     if (!label.isSelected()) {
-      bounds.y += 3;
+      bounds.y += TAB_SHIFT;
     }
 
     bounds.width += 1;
 
-    int arc = 2;
+    int arc = TAB_ARC;
 
     final GeneralPath path = new GeneralPath();
     path.moveTo(bounds.x, bounds.y + bounds.height);
@@ -342,7 +336,7 @@ class TabContentLayout extends ContentLayout {
 
     final Graphics2D g2d = (Graphics2D)g;
 
-    final Color edges = myUi.myWindow.isActive() ? new Color(38, 63, 106) : new Color(130, 120, 111);
+    final Color edges = myUi.myWindow.isActive() ? TAB_BORDER_ACTIVE_WINDOW : TAB_BORDER_PASSIVE_WINDOW;
     g2d.setColor(edges);
     for (int i = 0; i < myTabs.size(); i++) {
       ContentTabLabel each = myTabs.get(i);
@@ -363,19 +357,7 @@ class TabContentLayout extends ContentLayout {
       each.update();
     }
 
-    myIdLabel.setText(myUi.myWindow.getId());
-    myIdLabel.setBorder(new EmptyBorder(0, 2, 0, 8));
-
-    if (myTabs.size() == 1) {
-      final String text = myTabs.get(0).getText();
-      if (text != null && text.trim().length() > 0) {
-        myIdLabel.setText(myIdLabel.getText() + " ");
-        myIdLabel.setBorder(new EmptyBorder(0, 2, 0, 0));
-      }
-    }
-
-    myUi.revalidate();
-    myUi.repaint();
+    updateIdLabel(myIdLabel);
   }
 
   @Override

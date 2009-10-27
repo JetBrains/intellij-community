@@ -26,6 +26,7 @@ import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.content.tabs.TabbedContentAction;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -50,8 +51,6 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   TabbedContentAction.MyNextTabAction myNextTabAction;
   TabbedContentAction.MyPreviousTabAction myPreviousTabAction;
 
-
-
   ContentLayout myTabsLayout = new TabContentLayout(this);
   ContentLayout myComboLayout = new ComboContentLayout(this);
 
@@ -64,17 +63,24 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     setOpaque(false);
 
     setBorder(new EmptyBorder(0, 0, 0, 2));
-
   }
 
-  public void setType(ToolWindowContentUiType type) {
+  public void setType(@NotNull ToolWindowContentUiType type) {
     if (myType != type) {
+
+      if (myType != null) {
+        getCurrentLayout().reset();
+      }
+
       myType = type;
+
+      getCurrentLayout().init();
       rebuild();
     }
   }
 
   private ContentLayout getCurrentLayout() {
+    assert myManager != null;
     return myType == ToolWindowContentUiType.TABBED ? myTabsLayout : myComboLayout;
   }
 
@@ -87,7 +93,14 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   }
 
   public void setManager(final ContentManager manager) {
+    if (myManager != null) {
+      getCurrentLayout().reset();
+    }
+
     myManager = manager;
+
+    getCurrentLayout().init();
+
     myManager.addContentManagerListener(new ContentManagerListener() {
       public void contentAdded(final ContentManagerEvent event) {
         getCurrentLayout().contentAdded(event);
@@ -116,8 +129,8 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     });
 
     initMouseListeners(this, ToolWindowContentUi.this);
-    update();
 
+    rebuild();
 
     myCloseAllAction = new TabbedContentAction.CloseAllAction(myManager);
     myNextTabAction = new TabbedContentAction.MyNextTabAction(myManager);
@@ -193,6 +206,9 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
   private void update() {
     getCurrentLayout().update();
+
+    revalidate();
+    repaint();
   }
 
   public boolean isSingleSelection() {
@@ -250,20 +266,22 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
 
     final DefaultActionGroup contentGroup = new DefaultActionGroup();
-    if (c instanceof ContentTabLabel) {
-      final Content content = ((ContentTabLabel)c).myContent;
-      contentGroup.add(new TabbedContentAction.CloseAction(content));
-      contentGroup.add(ui.myCloseAllAction);
-      contentGroup.add(new TabbedContentAction.CloseAllButThisAction(content));
-      contentGroup.addSeparator();
-      if (content.isPinnable()) {
-        contentGroup.add(PinToolwindowTabAction.getPinAction());
+    if (c instanceof BaseLabel) {
+      final Content content = ((BaseLabel)c).getContent();
+      if (content != null) {
+        contentGroup.add(new TabbedContentAction.CloseAction(content));
+        contentGroup.add(ui.myCloseAllAction);
+        contentGroup.add(new TabbedContentAction.CloseAllButThisAction(content));
+        contentGroup.addSeparator();
+        if (content.isPinnable()) {
+          contentGroup.add(PinToolwindowTabAction.getPinAction());
+          contentGroup.addSeparator();
+        }
+
+        contentGroup.add(ui.myNextTabAction);
+        contentGroup.add(ui.myPreviousTabAction);
         contentGroup.addSeparator();
       }
-
-      contentGroup.add(ui.myNextTabAction);
-      contentGroup.add(ui.myPreviousTabAction);
-      contentGroup.addSeparator();
     }
 
     c.addMouseListener(new PopupHandler() {
@@ -287,13 +305,15 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   private void processHide(final MouseEvent e) {
     IdeEventQueue.getInstance().blockNextEvents(e);
     final Component c = e.getComponent();
-    if (c instanceof ContentTabLabel) {
-      final ContentTabLabel tab = (ContentTabLabel)c;
-      if (myManager.canCloseContents() && tab.myContent.isCloseable()) {
-        myManager.removeContent(tab.myContent, true);
-      } else {
-        if (myManager.getContentCount() == 1) {
-          hideWindow(e);
+    if (c instanceof BaseLabel) {
+      final BaseLabel tab = (BaseLabel)c;
+      if (tab.getContent() != null) {
+        if (myManager.canCloseContents() && tab.getContent().isCloseable()) {
+          myManager.removeContent(tab.getContent(), true);
+        } else {
+          if (myManager.getContentCount() == 1) {
+            hideWindow(e);
+          }
         }
       }
     }
@@ -319,5 +339,10 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   }
 
   public void dispose() {
+
+  }
+
+  boolean isCurrent(ContentLayout layout) {
+    return getCurrentLayout() == layout;
   }
 }
