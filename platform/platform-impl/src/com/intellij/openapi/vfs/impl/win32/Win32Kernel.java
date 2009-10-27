@@ -66,8 +66,8 @@ public class Win32Kernel {
 
     ArrayList<String> list = new ArrayList<String>();
     W32API.HANDLE hFind = myKernel.FindFirstFile(absolutePath.replace('/', '\\') + "\\*", myData);
+    if (hFind.equals(INVALID_HANDLE_VALUE)) return new String[0];
     try {
-      if (hFind.equals(INVALID_HANDLE_VALUE)) return new String[0];
       do {
         String name = Native.toString(myData.cFileName);
         if (name.equals(".")) {
