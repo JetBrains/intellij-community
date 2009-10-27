@@ -30,7 +30,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -48,7 +47,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -327,26 +325,22 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
-    DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
+    final Project project = getProject();
+    DebuggerInvocationUtil.swingInvokeLater(project, new Runnable() {
       public void run() {
-        if (PsiManager.getInstance(myProject).isDisposed()) {
-          return;
-        }
         if (!isValid()) {
           return;
         }
 
-        DebuggerContextImpl context = DebuggerManagerEx.getInstanceEx(myProject).getContext();
+        DebuggerContextImpl context = DebuggerManagerEx.getInstanceEx(project).getContext();
         final DebugProcessImpl debugProcess = context.getDebugProcess();
 
-        if(debugProcess == null || !context.getDebuggerSession().isAttached()) {
+        if(debugProcess == null || !debugProcess.isAttached()) {
           updateCaches(null);
           updateGutter();
           afterUpdate.run();
         }
         else {
-          final ModalityState modalityState = ModalityState.current();
-
           debugProcess.getManagerThread().invoke(new DebuggerCommandImpl() {
             protected void action() throws Exception {
               ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -354,17 +348,17 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
                   updateCaches(debugProcess);
                 }
               });
-              DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
+              DebuggerInvocationUtil.swingInvokeLater(project, new Runnable() {
                 public void run() {
                   updateGutter();
                   afterUpdate.run();
                 }
-              }, modalityState);
+              });
             }
           });
         }
       }
-    }, ModalityState.defaultModalityState());
+    });
   }
 
   private void updateGutter() {

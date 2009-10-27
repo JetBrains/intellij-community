@@ -34,6 +34,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
@@ -102,7 +103,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
 
   protected void reload(PsiFile file) {
     super.reload(file);
-    myMethodName = LineBreakpoint.findMethodName(file, getHighlighter().getStartOffset());
+    myMethodName = findMethodName(file, getHighlighter().getStartOffset());
   }
 
   protected void createOrWaitPrepare(DebugProcessImpl debugProcess, String classToBeLoaded) {
@@ -174,7 +175,10 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     final SourcePosition position = getSourcePosition();
     if (position != null) {
       final GlobalSearchScope scope = debugProcess.getSearchScope();
-      return scope.accept(position.getFile().getVirtualFile());
+      final VirtualFile file = position.getFile().getVirtualFile();
+      if (file != null && ProjectRootManager.getInstance(debugProcess.getProject()).getFileIndex().isInContent(file)) {
+        return scope.accept(file);
+      }
     }
     return true;
   }
