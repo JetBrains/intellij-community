@@ -104,7 +104,6 @@
             debug="${compiler.debug}"
             nowarn="${compiler.generate.no.warnings}"
             memorymaximumsize="${compiler.max.memory}"
-            fork="true"
             executable="${jdk15.home}/bin/javac">
       <compilerarg line="${compiler.args}"/>
       <classpath refid="classpath.lib"/>
