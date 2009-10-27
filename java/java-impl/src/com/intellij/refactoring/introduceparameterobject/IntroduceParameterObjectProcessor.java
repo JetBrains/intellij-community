@@ -141,14 +141,6 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
     return showConflicts(conflicts);
   }
 
-  @Override
-  protected boolean showConflicts(final MultiMap<PsiElement, String> conflicts) {
-    if (!conflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
-      throw new RuntimeException(StringUtil.join(conflicts.values(), "\n"));
-    }
-    return super.showConflicts(conflicts);
-  }
-
   public void findUsages(@NotNull List<FixableUsageInfo> usages) {
     if (myUseExistingClass && existingClass != null) {
       myExistingClassCompatible = existingClassIsCompatible(existingClass, parameters, getterNames);

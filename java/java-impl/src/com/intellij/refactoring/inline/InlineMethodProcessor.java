@@ -42,7 +42,6 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceParameter.Util;
 import com.intellij.refactoring.rename.RenameJavaVariableProcessor;
-import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -139,21 +138,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
     addInaccessibleSuperCallsConflicts(usagesIn, conflicts);
 
-    if (!conflicts.isEmpty()) {
-      ConflictsDialog dialog = new ConflictsDialog(myProject, conflicts);
-      dialog.show();
-      if (!dialog.isOK()) {
-        if (dialog.isShowConflicts()) prepareSuccessful();
-        return false;
-      }
-    }
-
     if (!myInlineThisOnly) {
       if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, myMethod)) return false;
     }
-
-    prepareSuccessful();
-    return true;
+    return showConflicts(conflicts);
   }
 
   private void addInaccessibleSuperCallsConflicts(final UsageInfo[] usagesIn, final MultiMap<PsiElement, String> conflicts) {

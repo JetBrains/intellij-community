@@ -36,6 +36,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -464,10 +465,14 @@ public abstract class BaseRefactoringProcessor {
   }
 
   protected boolean showConflicts(final MultiMap<PsiElement,String> conflicts) {
-    if (!conflicts.isEmpty() && myPrepareSuccessfulSwingThreadCallback != null) {
+    if (!conflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
+      throw new RuntimeException(StringUtil.join(conflicts.values(), "\n"));
+    }
+
+    if (myPrepareSuccessfulSwingThreadCallback != null && !conflicts.isEmpty()) {
       final ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
       conflictsDialog.show();
-      if (!conflictsDialog.isOK()){
+      if (!conflictsDialog.isOK()) {
         if (conflictsDialog.isShowConflicts()) prepareSuccessful();
         return false;
       }
