@@ -76,9 +76,11 @@ public class GitConvertFilesDialog extends DialogWrapper {
   /**
    * The constructor
    *
-   * @param project the project to which this dialog is related
+   * @param project     the project to which this dialog is related
+   * @param settings    the git settings
+   * @param filesToShow the files to show sorted by vcs root
    */
-  GitConvertFilesDialog(Project project, Map<VirtualFile, Set<VirtualFile>> filesToShow) {
+  GitConvertFilesDialog(Project project, GitVcsSettings settings, Map<VirtualFile, Set<VirtualFile>> filesToShow) {
     super(project, true);
     ArrayList<VirtualFile> roots = new ArrayList<VirtualFile>(filesToShow.keySet());
     Collections.sort(roots, GitUtil.VIRTUAL_FILE_COMPARATOR);
@@ -194,15 +196,15 @@ public class GitConvertFilesDialog extends DialogWrapper {
           public void run() {
             VirtualFile[] selectedFiles = null;
             if (settings.LINE_SEPARATORS_CONVERSION_ASK) {
-              GitConvertFilesDialog d = new GitConvertFilesDialog(project, files);
+              GitConvertFilesDialog d = new GitConvertFilesDialog(project, settings, files);
               d.show();
               if (d.isOK()) {
-                settings.LINE_SEPARATORS_CONVERSION_ASK = d.myDoNotShowCheckBox.isSelected();
+                settings.LINE_SEPARATORS_CONVERSION_ASK = !d.myDoNotShowCheckBox.isSelected();
                 settings.LINE_SEPARATORS_CONVERSION = GitVcsSettings.ConversionPolicy.PROJECT_LINE_SEPARATORS;
                 selectedFiles = d.myFilesToConvert.getCheckedNodes(VirtualFile.class, null);
               }
               else if (d.getExitCode() == DO_NOT_CONVERT) {
-                settings.LINE_SEPARATORS_CONVERSION_ASK = d.myDoNotShowCheckBox.isSelected();
+                settings.LINE_SEPARATORS_CONVERSION_ASK = !d.myDoNotShowCheckBox.isSelected();
                 settings.LINE_SEPARATORS_CONVERSION = GitVcsSettings.ConversionPolicy.NONE;
               }
               else {
