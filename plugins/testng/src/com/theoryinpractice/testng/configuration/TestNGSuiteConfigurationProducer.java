@@ -48,7 +48,7 @@ public class TestNGSuiteConfigurationProducer extends TestNGConfigurationProduce
     final PsiFile containingFile = element.getContainingFile();
     if (containingFile == null) return null;
     final VirtualFile virtualFile = containingFile.getVirtualFile();
-    if (virtualFile == null) return null;
+    if (virtualFile == null || !virtualFile.isValid()) return null;
     if (!TestNGUtil.isTestngXML(virtualFile)) return null;
     myPsiElement = containingFile;
     final Project project = location.getProject();
