@@ -15,7 +15,10 @@
  */
 package com.intellij.spellchecker.settings;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -63,43 +66,10 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   }
 
 
-  public Set<String> getEnabledDictionariesPaths() {
-    final HashSet<String> enabledDictionaries = new HashSet<String>();
-    for (String folder : myDictionaryFoldersPaths) {
-      /*RFileUtil.processFilesRecursively(folder, new Consumer<String>() {
-        public void consume(final String s) {
-          if (!myDisabledDictionariesPaths.contains(s)){
-            enabledDictionaries.add(s);
-          }
-        }
-      });*/
-    }
-    return enabledDictionaries;
-  }
-
-  public Set<String> getBundledEnabledDictionariesPaths() {
-    final HashSet<String> bundledEnabledDictionaries = new HashSet<String>();
-    final List<String> builtInFolders = getBundledDictionariesFoldersPaths();
-    for (String folder : builtInFolders) {
-      /*RFileUtil.processFilesRecursively(folder, new Consumer<String>() {
-        public void consume(final String s) {
-          if (!myBundledDisabledDictionariesPaths.contains(s)){
-            bundledEnabledDictionaries.add(s);
-          }
-        }
-      });*/
-    }
-    return bundledEnabledDictionaries;
-  }
-
   public void setDisabledDictionariesPaths(Set<String> disabledDictionariesPaths) {
     myDisabledDictionariesPaths = disabledDictionariesPaths;
   }
 
-  public List<String> getBundledDictionariesFoldersPaths() {
-    /*return Collections.unmodifiableList(RubySupportLoader.getBuiltinScriptFolders());*/
-    return Collections.emptyList();
-  }
 
   public Set<String> getBundledDisabledDictionariesPaths() {
     return myBundledDisabledDictionariesPaths;
@@ -109,7 +79,14 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
     myBundledDisabledDictionariesPaths = bundledDisabledDictionariesPaths;
   }
 
+  @SuppressWarnings({"ConstantConditions"})
   public Element getState() {
+    if (myBundledDisabledDictionariesPaths.size() == 0 &&
+        myDictionaryFoldersPaths.size() == 0 &&
+        myDisabledDictionariesPaths.size() == 0) {
+      return null;
+    }
+
     final Element element = new Element(SPELLCHECKER_MANAGER_SETTINGS_TAG);
     // bundled
     element.setAttribute(BUNDLED_DICTIONARIES_ATTR_NAME, String.valueOf(myBundledDisabledDictionariesPaths.size()));
@@ -156,8 +133,7 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
         myDisabledDictionariesPaths.add(element.getAttributeValue(DICTIONARY_ATTR_NAME + i));
       }
     }
-    catch (Exception e) {
-      // ignore
+    catch (Exception ignored) {
     }
   }
 }
