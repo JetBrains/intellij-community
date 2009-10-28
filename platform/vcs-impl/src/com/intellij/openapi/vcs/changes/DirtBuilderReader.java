@@ -15,11 +15,11 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import java.util.List;
+import java.util.Collection;
 
 public interface DirtBuilderReader {
   boolean isEverythingDirty();
-  List<FilePathUnderVcs> getFilesForVcs();
-  List<FilePathUnderVcs> getDirsForVcs();
+  Collection<FilePathUnderVcs> getFilesForVcs();
+  Collection<FilePathUnderVcs> getDirsForVcs();
   boolean isEmpty();
 }

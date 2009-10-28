@@ -15,10 +15,11 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.VcsRoot;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.VcsRoot;
 
 public class FilePathUnderVcs {
   private final FilePath myPath;
@@ -40,5 +41,25 @@ public class FilePathUnderVcs {
 
   public AbstractVcs getVcs() {
     return myVcs;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    FilePathUnderVcs that = (FilePathUnderVcs)o;
+
+    if (myPath != null ? !myPath.equals(that.myPath) : that.myPath != null) return false;
+    if (myVcs != null ? ! Comparing.equal(myVcs.getName(), that.myVcs.getName()) : that.myVcs != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myPath != null ? myPath.hashCode() : 0;
+    result = 31 * result + (myVcs != null ? myVcs.getName().hashCode() : 0);
+    return result;
   }
 }
