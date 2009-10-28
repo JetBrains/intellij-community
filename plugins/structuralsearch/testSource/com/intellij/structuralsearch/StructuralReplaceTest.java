@@ -529,6 +529,26 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
 
   }
 
+  @Bombed(day = 29, month = Calendar.OCTOBER)
+  public void testReplaceExpr() {
+    String s1 = "new SimpleDateFormat(\"yyyyMMddHHmmss\")";
+    String s2 = "'expr";
+    String s3 = "new AtomicReference<DateFormat>($expr$)";
+    String expectedResult = "new AtomicReference<DateFormat>(new SimpleDateFormat(\"yyyyMMddHHmmss\"))";
+
+    actualResult = replacer.testReplace(s1, s2, s3, options);
+
+    assertEquals("Replacement of top-level expression only", expectedResult, actualResult);
+
+    String s4 = "get(\"smth\")";
+    String s5 = "'expr";
+    String s6 = "new Integer($expr$)";
+    String expectedResult1 = "new Integer(get(\"smth\"))";
+
+    actualResult = replacer.testReplace(s4, s5, s6, options);
+    assertEquals("Replacement of top-level expression only", expectedResult, actualResult);
+  }
+
   public void testReplaceParameter() {
     String s1 = "class A { void b(int c, int d, int e) {} }";
     String s2 = "int d";
