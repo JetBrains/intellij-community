@@ -72,7 +72,8 @@ public class YAMLUtil {
       for (YAMLPsiElement child : list) {
         if (child instanceof YAMLKeyValue){
           final YAMLKeyValue yamlKeyValue = (YAMLKeyValue)child;
-          if (name.equals(yamlKeyValue.getKeyText())){
+          // We use null as wildcard
+          if (name == null || name.equals(yamlKeyValue.getKeyText())){
             return yamlKeyValue;
           }
         }
