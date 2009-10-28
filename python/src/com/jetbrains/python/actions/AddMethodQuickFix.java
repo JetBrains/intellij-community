@@ -97,6 +97,10 @@ public class AddMethodQuickFix implements LocalQuickFix {
         if (arg instanceof PyKeywordArgument) { // foo(bar) -> def foo(self, bar_1)
           param_buf.append(", ").append(((PyKeywordArgument)arg).getKeyword()); //.append("_").append(cnt);
         }
+        else if (arg instanceof PyReferenceExpression) {
+          PyReferenceExpression refex = (PyReferenceExpression)arg;
+          param_buf.append(", ").append(refex.getReferencedName()).append("_").append(cnt);
+        }
         else { // use a boring name
           param_buf.append(", param_").append(cnt);
         }

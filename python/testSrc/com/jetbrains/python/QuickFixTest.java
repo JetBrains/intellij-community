@@ -37,7 +37,7 @@ public class QuickFixTest extends DaemonAnalyzerTestCase {
   public void testQualifyByImport() throws Exception {
     doInspectionTest(
       new String[]{"QualifyByImport.py", "QualifyByImportFoo.py"},
-      PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.NAME.use.import"), true, true
+      PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.qualify.with.module"), true, true
     );
   }
 
