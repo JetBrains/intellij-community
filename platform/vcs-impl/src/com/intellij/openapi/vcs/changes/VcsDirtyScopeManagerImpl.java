@@ -34,7 +34,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 
 /**
  * @author max
@@ -357,9 +356,10 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     });
   }
 
+  @NotNull
   @Override
-  public Collection<FilePath> whatFilesDirty(final Collection<FilePath> files) {
-    final Collection<FilePath> result = new LinkedList<FilePath>();
+  public Collection<FilePath> whatFilesDirty(@NotNull final Collection<FilePath> files) {
+    final Collection<FilePath> result = new ArrayList<FilePath>();
     final Ref<MyProgressHolder> inProgressHolderRef = new Ref<MyProgressHolder>();
     final Ref<MyProgressHolder> currentHolderRef = new Ref<MyProgressHolder>();
 
@@ -372,7 +372,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     final VcsInvalidated inProgressInvalidated = inProgressHolderRef.get().calculateInvalidated();
     final VcsInvalidated currentInvalidated = currentHolderRef.get().calculateInvalidated();
     for (FilePath fp : files) {
-      if (((inProgressInvalidated != null) && inProgressInvalidated.isFileDirty(fp)) || currentInvalidated.isFileDirty(fp)) {
+      if (inProgressInvalidated != null && inProgressInvalidated.isFileDirty(fp) || currentInvalidated.isFileDirty(fp)) {
         result.add(fp);
       }
     }
