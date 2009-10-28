@@ -832,27 +832,35 @@ public class FileBasedIndex implements ApplicationComponent {
     void process(final int inputId, V value);
   }
 
-  public <K, V> void processAllValues(final ID<K, V> indexId, AllValuesProcessor<V> processor, @NotNull Project project) {
+  public <K, V> void processAllValues(final ID<K, V> indexId, final AllValuesProcessor<V> processor, @NotNull Project project) {
     try {
       ensureUpToDate(indexId, project, null);
       final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
       if (index == null) {
         return;
       }
-      try {
-        index.getReadLock().lock();
-        for (K dataKey : index.getAllKeys()) {
-          final ValueContainer<V> container = index.getData(dataKey);
-          for (final Iterator<V> it = container.getValueIterator(); it.hasNext();) {
-            final V value = it.next();
-            for (final ValueContainer.IntIterator inputsIt = container.getInputIdsIterator(value); inputsIt.hasNext();) {
-              processor.process(inputsIt.next(), value);
+      final Ref<StorageException> storageEx = new Ref<StorageException>(null);
+      index.processAllKeys(new Processor<K>() {
+        public boolean process(K dataKey) {
+          try {
+            final ValueContainer<V> container = index.getData(dataKey);
+            for (final Iterator<V> it = container.getValueIterator(); it.hasNext();) {
+              final V value = it.next();
+              for (final ValueContainer.IntIterator inputsIt = container.getInputIdsIterator(value); inputsIt.hasNext();) {
+                processor.process(inputsIt.next(), value);
+              }
             }
+            return true;
+          }
+          catch (StorageException e) {
+            storageEx.set(e);
+            return false;
           }
         }
-      }
-      finally {
-        index.getReadLock().unlock();
+      });
+      final StorageException ex = storageEx.get();
+      if (ex != null) {
+        throw ex;
       }
     }
     catch (StorageException e) {
