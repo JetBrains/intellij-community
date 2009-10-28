@@ -89,7 +89,7 @@ public class AppEngineUploader {
     };
 
     final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-    final CompileScope compileScope = ArtifactCompileScope.create(compilerManager.createModuleCompileScope(module, true), Collections.singletonList(artifact));
+    final CompileScope compileScope = ArtifactCompileScope.createScopeWithArtifacts(compilerManager.createModuleCompileScope(module, true), Collections.singletonList(artifact));
     if (!compilerManager.isUpToDate(compileScope)) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
