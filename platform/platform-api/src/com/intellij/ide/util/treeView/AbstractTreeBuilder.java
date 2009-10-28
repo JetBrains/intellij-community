@@ -39,12 +39,13 @@ import java.util.*;
 public class AbstractTreeBuilder implements Disposable {
   private AbstractTreeUi myUi;
   private static final String TREE_BUILDER = "TreeBuilder";
+  public static final boolean DEFAULT_UPDATE_INACTIVE = true;
 
   public AbstractTreeBuilder(JTree tree,
                              DefaultTreeModel treeModel,
                              AbstractTreeStructure treeStructure,
                              @Nullable Comparator<NodeDescriptor> comparator) {
-    init(tree, treeModel, treeStructure, comparator, true);
+    this(tree, treeModel, treeStructure, comparator, DEFAULT_UPDATE_INACTIVE);
   }
   public AbstractTreeBuilder(JTree tree,
                              DefaultTreeModel treeModel,
@@ -55,14 +56,10 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   protected AbstractTreeBuilder() {
+
   }
 
 
-  protected void init(final JTree tree, final DefaultTreeModel treeModel, final AbstractTreeStructure treeStructure, final @Nullable Comparator<NodeDescriptor> comparator) {
-
-    myUi = createUi();
-    getUi().init(this, tree, treeModel, treeStructure, comparator);
-  }
   protected void init(final JTree tree, final DefaultTreeModel treeModel, final AbstractTreeStructure treeStructure, final @Nullable Comparator<NodeDescriptor> comparator,
                       final boolean updateIfInactive) {
 
@@ -70,6 +67,8 @@ public class AbstractTreeBuilder implements Disposable {
 
     myUi = createUi();
     getUi().init(this, tree, treeModel, treeStructure, comparator, updateIfInactive);
+
+    setPassthroughMode(isUnitTestingMode());
   }
 
   protected AbstractTreeUi createUi() {
@@ -305,11 +304,19 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   protected void runOnYeildingDone(Runnable onDone) {
-    UIUtil.invokeLaterIfNeeded(onDone);
+    if (myUi.isPassthroughMode()) {
+      onDone.run();
+    } else {
+      UIUtil.invokeLaterIfNeeded(onDone);
+    }
   }
 
   protected void yield(Runnable runnable) {
-    SwingUtilities.invokeLater(runnable);
+    if (myUi.isPassthroughMode()) {
+      runnable.run();
+    } else {
+      SwingUtilities.invokeLater(runnable);
+    }
   }
 
   public boolean isToYieldUpdateFor(DefaultMutableTreeNode node) {
@@ -334,7 +341,11 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   protected void updateAfterLoadedInBackground(Runnable runnable) {
-    UIUtil.invokeLaterIfNeeded(runnable);
+    if (myUi.isPassthroughMode()) {
+      runnable.run();
+    } else {
+      UIUtil.invokeLaterIfNeeded(runnable);
+    }
   }
 
   public final ActionCallback getIntialized() {
@@ -347,6 +358,10 @@ public class AbstractTreeBuilder implements Disposable {
 
   protected void sortChildren(Comparator<TreeNode> nodeComparator, DefaultMutableTreeNode node, ArrayList<TreeNode> children) {
     Collections.sort(children, nodeComparator);
+  }
+
+  public void setPassthroughMode(boolean passthrough) {
+    myUi.setPassthroughMode(passthrough);
   }
 
   public static class AbstractTreeNodeWrapper extends AbstractTreeNode<Object> {
@@ -448,6 +463,11 @@ public class AbstractTreeBuilder implements Disposable {
 
   public void scrollSelectionToVisible(@Nullable Runnable onDone, boolean shouldBeCentered) {
     myUi.scrollSelectionToVisible(onDone, shouldBeCentered);
+  }
+
+  protected boolean isUnitTestingMode() {
+    Application app = ApplicationManager.getApplication();
+    return app != null && app.isUnitTestMode();
   }
 
 }

@@ -75,7 +75,7 @@ public class TestTreeBuilder extends AbstractTestTreeBuilder {
     treeStructure.setSpecialNode(new SpecialNode(this, model));
     myModel = model;
     myModel.addListener(myListener);
-    init(tree, new DefaultTreeModel(new DefaultMutableTreeNode(treeStructure.createDescriptor(model.getRoot(), null))), treeStructure, IndexComparator.INSTANCE);
+    init(tree, new DefaultTreeModel(new DefaultMutableTreeNode(treeStructure.createDescriptor(model.getRoot(), null))), treeStructure, IndexComparator.INSTANCE, true);
     initRootNode();
   }
 
