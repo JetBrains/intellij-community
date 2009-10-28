@@ -8,6 +8,10 @@ import com.intellij.psi.*;
 public class SymbolNodeFilter extends JavaElementVisitor implements NodeFilter {
   private boolean result;
 
+  @Override public void visitExpression(PsiExpression expr) {
+    result = true;
+  }
+
   @Override public void visitLiteralExpression(PsiLiteralExpression psiLiteralExpression) {
     result = true;
   }

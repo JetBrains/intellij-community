@@ -1257,7 +1257,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals(
       "symbol matches parameterization",
       findMatchesCount(s81,s82_7),
-      27
+      29
     );
 
     assertEquals(
@@ -2196,9 +2196,9 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String s6_2 = "'a:[exprtype( *java\\.util\\.Collection )]";
     String s6_3 = "java.util.List '_a = '_b?;";
 
-    assertEquals("Matches for qualified expr type",findMatchesCount(s5,s6,true),1);
+    assertEquals("Matches for qualified expr type",findMatchesCount(s5,s6,true), 2);
     assertEquals("No matches for qualified expr type",findMatchesCount(s5_2,s6,true),0);
-    assertEquals("Matches for qualified expr type in hierarchy",findMatchesCount(s5,s6_2,true),1);
+    assertEquals("Matches for qualified expr type in hierarchy",findMatchesCount(s5,s6_2,true), 2);
 
     assertEquals("Matches for qualified var type in pattern",findMatchesCount(s5,s6_3,true),1);
     assertEquals("No matches for qualified var type in pattern",findMatchesCount(s5_2,s6_3,true),0);

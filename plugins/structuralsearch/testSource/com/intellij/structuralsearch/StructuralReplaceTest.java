@@ -546,7 +546,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String expectedResult1 = "new Integer(get(\"smth\"))";
 
     actualResult = replacer.testReplace(s4, s5, s6, options);
-    assertEquals("Replacement of top-level expression only", expectedResult, actualResult);
+    assertEquals("Replacement of top-level expression only", expectedResult1, actualResult);
   }
 
   public void testReplaceParameter() {
