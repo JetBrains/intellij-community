@@ -351,6 +351,19 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     }
   }
 
+  public void cleanupMemoryStorage() {
+    for (UpdatableIndex index : myIndices.values()) {
+      final IndexStorage indexStorage = ((MapReduceIndex)index).getStorage();
+      index.getWriteLock().lock();
+      try {
+        ((MemoryIndexStorage)indexStorage).clearMemoryMap();
+      }
+      finally {
+        index.getWriteLock().unlock();
+      }
+    }
+  }
+
 
   public void clearAllIndices() {
     for (UpdatableIndex index : myIndices.values()) {

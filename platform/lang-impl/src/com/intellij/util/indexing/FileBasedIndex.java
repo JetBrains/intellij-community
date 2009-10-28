@@ -42,8 +42,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiDocumentManager;
@@ -200,6 +202,20 @@ public class FileBasedIndex implements ApplicationComponent {
       }
     });
 
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      public void before(List<? extends VFileEvent> events) {
+        for (VFileEvent event : events) {
+          if (event.getRequestor() instanceof FileDocumentManager) {
+            cleanupMemoryStorage();
+            break;
+          }
+        }
+      }
+
+      public void after(List<? extends VFileEvent> events) {
+      }
+    });
+
     ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
       public void writeActionStarted(Object action) {
         myUpToDateIndices.clear();
@@ -257,7 +273,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
-  private String calcConfigPath(final String path) {
+  private static String calcConfigPath(final String path) {
     try {
       final String _path = FileUtil.toSystemIndependentName(new File(path).getCanonicalPath());
       return _path.endsWith("/")? _path : _path + "/" ;
@@ -1078,11 +1094,6 @@ public class FileBasedIndex implements ApplicationComponent {
 
   private StorageGuard.Holder setDataBufferingEnabled(final boolean enabled) {
     final StorageGuard.Holder holder = myStorageLock.enter(enabled);
-    if (!enabled) {
-      synchronized (myLastIndexedDocStamps) {
-        myLastIndexedDocStamps.clear();
-      }
-    }
     for (ID<?, ?> indexId : myIndices.keySet()) {
       final MapReduceIndex index = (MapReduceIndex)getIndex(indexId);
       assert index != null;
@@ -1090,6 +1101,25 @@ public class FileBasedIndex implements ApplicationComponent {
       ((MemoryIndexStorage)indexStorage).setBufferingEnabled(enabled);
     }
     return holder;
+  }
+
+  private void cleanupMemoryStorage() {
+    synchronized (myLastIndexedDocStamps) {
+      myLastIndexedDocStamps.clear();
+    }
+    for (ID<?, ?> indexId : myIndices.keySet()) {
+      final MapReduceIndex index = (MapReduceIndex)getIndex(indexId);
+      assert index != null;
+      final MemoryIndexStorage memStorage = (MemoryIndexStorage)index.getStorage();
+      index.getWriteLock().lock();
+      try {
+        memStorage.clearMemoryMap();
+      }
+      finally {
+        index.getWriteLock().unlock();
+      }
+      memStorage.fireMemoryStorageCleared();
+    }
   }
 
   private void dropUnregisteredIndices() {
