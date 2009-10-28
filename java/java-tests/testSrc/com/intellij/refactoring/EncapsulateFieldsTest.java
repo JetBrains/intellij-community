@@ -120,7 +120,7 @@ public class EncapsulateFieldsTest extends MultiFileTestCase{
       LocalFileSystem.getInstance().refresh(false);
       FileDocumentManager.getInstance().saveAllDocuments();
     }
-    catch (Exception e) {
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       if (conflicts != null) {
         Assert.assertEquals(conflicts, e.getMessage());
         return;

@@ -79,6 +79,10 @@ public class FilePathImpl implements FilePath {
     myIsDirectory = isDirectory;
   }
 
+  public FilePathImpl(@NotNull VirtualFile virtualFile) {
+    this(virtualFile.getParent(), virtualFile.getName(), virtualFile.isDirectory(), virtualFile, false);
+  }
+
   public int hashCode() {
     return StringUtil.stringHashCodeInsensitive(myFile.getPath());
   }
@@ -90,10 +94,6 @@ public class FilePathImpl implements FilePath {
     else {
       return myFile.equals(((FilePath)o).getIOFile());
     }
-  }
-
-  public FilePathImpl(@NotNull VirtualFile virtualFile) {
-    this(virtualFile.getParent(), virtualFile.getName(), virtualFile.isDirectory(), virtualFile, false);
   }
 
   public void refresh() {

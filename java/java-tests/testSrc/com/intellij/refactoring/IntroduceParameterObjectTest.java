@@ -137,7 +137,7 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
     try {
       doTestExistingClass(existingClassName, existingClassPackage);
     }
-    catch (RuntimeException e) {
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       assertEquals(exceptionMessage, e.getMessage());
       return;
     }

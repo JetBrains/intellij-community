@@ -24,6 +24,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
@@ -31,6 +32,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -69,14 +71,33 @@ public class PlatformTestUtil {
   }
 
   public static String print(JTree tree, boolean withSelection) {
+    return print(tree, withSelection, null);
+  }
+
+  public static String print(JTree tree, boolean withSelection, Condition<String> nodePrintCondition) {
     StringBuffer buffer = new StringBuffer();
     Object root = tree.getModel().getRoot();
-    printImpl(tree, root, buffer, 0, withSelection);
+    printImpl(tree, root, buffer, 0, withSelection, nodePrintCondition);
     return buffer.toString();
   }
 
-  private static void printImpl(JTree tree, Object root, StringBuffer buffer, int level, boolean withSelection) {
+  
+  private static void printImpl(JTree tree, Object root, StringBuffer buffer, int level, boolean withSelection, @Nullable Condition<String> nodePrintCondition) {
     DefaultMutableTreeNode defaultMutableTreeNode = (DefaultMutableTreeNode)root;
+
+
+    final Object userObject = defaultMutableTreeNode.getUserObject();
+    String nodeText;
+    if (userObject != null) {
+      nodeText = toString(userObject);
+    }
+    else {
+      nodeText = defaultMutableTreeNode + "";
+    }
+
+
+    if (nodePrintCondition != null && !nodePrintCondition.value(nodeText)) return;
+
     boolean expanded = tree.isExpanded(new TreePath(defaultMutableTreeNode.getPath()));
     StringUtil.repeatSymbol(buffer, ' ', level);
     if (expanded && !defaultMutableTreeNode.isLeaf()) {
@@ -93,13 +114,8 @@ public class PlatformTestUtil {
       buffer.append("[");
     }
 
-    final Object userObject = defaultMutableTreeNode.getUserObject();
-    if (userObject != null) {
-      buffer.append(toString(userObject));
-    }
-    else {
-      buffer.append(defaultMutableTreeNode);
-    }
+
+    buffer.append(nodeText);
 
     if (withSelection && selected) {
       buffer.append("]");
@@ -109,7 +125,7 @@ public class PlatformTestUtil {
     int childCount = tree.getModel().getChildCount(root);
     if (expanded) {
       for (int i = 0; i < childCount; i++) {
-        printImpl(tree, tree.getModel().getChild(root, i), buffer, level + 1, withSelection);
+        printImpl(tree, tree.getModel().getChild(root, i), buffer, level + 1, withSelection, nodePrintCondition);
       }
     }
   }

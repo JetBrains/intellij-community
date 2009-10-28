@@ -21,7 +21,7 @@ import com.intellij.openapi.vcs.VcsRoot;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DirtBuilder {
+public class DirtBuilder implements DirtBuilderReader {
   private final VcsGuess myGuess;
 
   private final List<FilePathUnderVcs> myFiles;

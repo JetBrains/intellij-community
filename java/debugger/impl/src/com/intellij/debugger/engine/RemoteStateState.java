@@ -25,7 +25,6 @@ import com.intellij.execution.configurations.RemoteState;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,7 +63,7 @@ public class RemoteStateState implements RemoteState {
     ConsoleViewImpl consoleView = new ConsoleViewImpl(myProject, false);
     RemoteDebugProcessHandler process = new RemoteDebugProcessHandler(myProject);
     consoleView.attachToProcess(process);
-    return new DefaultExecutionResult(consoleView, process, AnAction.EMPTY_ARRAY);
+    return new DefaultExecutionResult(consoleView, process);
   }
 
   public RemoteConnection getRemoteConnection() {

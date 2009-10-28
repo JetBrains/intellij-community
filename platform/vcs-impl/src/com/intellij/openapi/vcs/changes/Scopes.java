@@ -47,7 +47,7 @@ public class Scopes {
     takeDirt(builder);
   }
 
-  public void takeDirt(final DirtBuilder dirt) {
+  public void takeDirt(final DirtBuilderReader dirt) {
     if (dirt.isEverythingDirty()) {
       markEverythingDirty();
       return;
@@ -70,6 +70,7 @@ public class Scopes {
     getScope(vcs).addDirtyFile(newcomer);
   }
 
+  @NotNull
   public VcsInvalidated retrieveAndClear() {
     final ArrayList<VcsDirtyScope> scopesList = new ArrayList<VcsDirtyScope>(myScopes.values());
     final VcsInvalidated result = new VcsInvalidated(scopesList, myEverythingDirty);

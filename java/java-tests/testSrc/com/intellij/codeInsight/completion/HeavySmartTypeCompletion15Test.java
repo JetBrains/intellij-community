@@ -37,12 +37,19 @@ public class HeavySmartTypeCompletion15Test extends CompletionTestCase {
                                 "public class Bar<T> {" +
                                 "  protected Bar(java.util.List<T> list) {}" +
                                 "}");
+    doTest();
+  }
 
-    configureByFile(BASE_PATH + "/ProtectedAnonymousConstructor.java");
-    checkResultByFile(BASE_PATH + "/ProtectedAnonymousConstructor-out.java");
-
-    configureByFile(BASE_PATH + "/ProtectedAnonymousConstructor2.java");
-    checkResultByFile(BASE_PATH + "/ProtectedAnonymousConstructor2-out.java");
+  public void testProtectedAnonymousConstructor2() throws Throwable {
+    createClass("package pkg;" +
+                                "public class Foo {" +
+                                "  protected Foo(int a) {}" +
+                                "}");
+    createClass("package pkg;" +
+                                "public class Bar<T> {" +
+                                "  protected Bar(java.util.List<T> list) {}" +
+                                "}");
+    doTest();
   }
 
   public void testUnlockDocument() throws Throwable {

@@ -20,13 +20,14 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Flushable;
+import java.io.IOException;
 import java.util.Collection;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Dec 10, 2007
  */
-public interface IndexStorage<Key, Value> extends Flushable{
+public interface IndexStorage<Key, Value> extends Flushable {
   
   void addValue(Key key, int inputId, Value value) throws StorageException;
 
@@ -44,4 +45,6 @@ public interface IndexStorage<Key, Value> extends Flushable{
   Collection<Key> getKeys() throws StorageException;
   
   void close() throws StorageException;
+
+  void flush() throws IOException;
 }

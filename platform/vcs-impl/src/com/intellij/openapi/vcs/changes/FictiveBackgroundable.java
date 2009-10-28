@@ -34,6 +34,7 @@ class FictiveBackgroundable extends Task.Backgroundable {
 
   public void run(@NotNull final ProgressIndicator indicator) {
     myWaiter.run(indicator);
+    myWaiter.onSuccess();
   }
 
   public void done() {

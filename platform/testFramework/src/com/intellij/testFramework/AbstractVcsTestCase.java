@@ -56,6 +56,7 @@ public class AbstractVcsTestCase {
   protected VirtualFile myWorkingCopyDir;
   protected File myClientBinaryPath;
   protected IdeaProjectTestFixture myProjectFixture;
+  protected boolean myInitChangeListManager = true;
 
   protected ProcessOutput runClient(String exeName, @Nullable String stdin, @Nullable final File workingDir, String[] commandLine) throws IOException {
     final List<String> arguments = new ArrayList<String>();
@@ -114,7 +115,9 @@ public class AbstractVcsTestCase {
     myProjectFixture.setUp();
     myProject = myProjectFixture.getProject();
 
-    ((ProjectComponent) ChangeListManager.getInstance(myProject)).projectOpened();
+    if (myInitChangeListManager) {
+      ((ProjectComponent) ChangeListManager.getInstance(myProject)).projectOpened();
+    }
     ((ProjectComponent) VcsDirtyScopeManager.getInstance(myProject)).projectOpened();
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {

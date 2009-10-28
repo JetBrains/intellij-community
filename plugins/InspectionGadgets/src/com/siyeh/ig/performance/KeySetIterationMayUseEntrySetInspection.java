@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Bas Leijdekkers
+ * Copyright 2008-2009 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,10 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
 
@@ -148,7 +152,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
                     createNewVariableName(foreachStatement, parameterType);
             if (insertCast) {
                 replaceParameterAccess(parameter,
-                        "((Map.Entry)" + variableName + ')', map, 
+                        "((Map.Entry)" + variableName + ')', map,
                         foreachStatement);
             } else {
                 replaceParameterAccess(parameter, variableName, map,
@@ -165,8 +169,18 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
                                                    String variableName,
                                                    PsiElement map,
                                                    PsiElement context) {
-            context.accept(
-                    new ParameterAccessReplacer(parameter, variableName, map));
+            final ParameterAccessCollector collector =
+                    new ParameterAccessCollector(parameter, map);
+            context.accept(collector);
+            final List<PsiExpression> accesses =
+                    collector.getParameterAccesses();
+            for (PsiExpression access : accesses) {
+                if (access instanceof PsiMethodCallExpression) {
+                    replaceExpression(access, variableName + ".getValue()");
+                } else {
+                    replaceExpression(access, variableName + ".getKey()");
+                }
+            }
         }
 
         private static String createNewVariableName(
@@ -191,20 +205,20 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
                     true);
         }
 
-        private static class ParameterAccessReplacer
+        private static class ParameterAccessCollector
                 extends JavaRecursiveElementVisitor {
 
             private final PsiParameter parameter;
             private final PsiElement map;
-            private final String variableName;
             private final String parameterName;
 
-            public ParameterAccessReplacer(
-                    PsiParameter parameter, String variableName,
-                    PsiElement map) {
+            private final List<PsiExpression> parameterAccesses =
+                    new ArrayList();
+
+            public ParameterAccessCollector(
+                    PsiParameter parameter, PsiElement map) {
                 this.parameter = parameter;
                 parameterName = parameter.getName();
-                this.variableName = variableName;
                 this.map = map;
             }
 
@@ -224,16 +238,15 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
                     return;
                 }
                 try {
-                    if (!replaceValueUsage(expression)) {
-                        replaceExpression(expression,
-                                variableName + ".getKey()");
+                    if (!collectValueUsage(expression)) {
+                        parameterAccesses.add(expression);
                     }
                 } catch (IncorrectOperationException e) {
                     throw new RuntimeException(e);
                 }
             }
 
-            private boolean replaceValueUsage(
+            private boolean collectValueUsage(
                     PsiReferenceExpression expression)
                     throws IncorrectOperationException {
                 final PsiElement parent = expression.getParent();
@@ -265,9 +278,13 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
                 if (!map.equals(target2)) {
                     return false;
                 }
-                replaceExpression(methodCallExpression,
-                        variableName + ".getValue()");
+                parameterAccesses.add(methodCallExpression);
                 return true;
+            }
+
+            public List<PsiExpression> getParameterAccesses() {
+                Collections.reverse(parameterAccesses);
+                return parameterAccesses;
             }
         }
     }

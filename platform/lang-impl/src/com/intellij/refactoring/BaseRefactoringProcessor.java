@@ -464,9 +464,30 @@ public abstract class BaseRefactoringProcessor {
     performPsiSpoilingRefactoring();
   }
 
+  public static class ConflictsInTestsException extends RuntimeException {
+      private final Collection<? extends String> messages;
+
+      public ConflictsInTestsException(Collection<? extends String> messages) {
+        this.messages = messages;
+      }
+
+    public Collection<String> getMessages() {
+        List<String> result = new ArrayList<String>(messages);
+        for (int i = 0; i < messages.size(); i++) {
+          result.set(i, result.get(i).replaceAll("<[^>]+>", ""));
+        }
+        return result;
+      }
+
+    @Override
+    public String getMessage() {
+      return StringUtil.join(messages, "\n");
+    }
+  }
+
   protected boolean showConflicts(final MultiMap<PsiElement,String> conflicts) {
     if (!conflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
-      throw new RuntimeException(StringUtil.join(conflicts.values(), "\n"));
+      throw new ConflictsInTestsException(conflicts.values());
     }
 
     if (myPrepareSuccessfulSwingThreadCallback != null && !conflicts.isEmpty()) {

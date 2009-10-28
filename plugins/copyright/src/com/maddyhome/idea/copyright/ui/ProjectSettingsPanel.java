@@ -384,7 +384,9 @@ public class ProjectSettingsPanel extends PanelWithButtons {
         }
 
         public void setValue(ScopeSetting scopeSetting, CopyrightProfile copyrightProfile) {
+          if (copyrightProfile != null) {
             scopeSetting.setProfile(copyrightProfile);
+          }
         }
     };
 
