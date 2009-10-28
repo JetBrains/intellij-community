@@ -36,7 +36,7 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
   }
 
   protected CompilationLog compile(final Artifact... artifacts) throws Exception {
-    final CompileScope scope = ArtifactCompileScope.create(myProject, Arrays.asList(artifacts));
+    final CompileScope scope = ArtifactCompileScope.createArtifactsScope(myProject, Arrays.asList(artifacts));
     return compile(scope, CompilerFilter.ALL);
   }
 
