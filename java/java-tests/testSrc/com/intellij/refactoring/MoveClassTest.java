@@ -58,7 +58,7 @@ public class MoveClassTest extends CodeInsightTestCase {
       doTest("classAndSecondary", new String[]{"pack1.Class1", "pack1.Class2"}, "pack2");
       fail("Conflicts expected");
     }
-    catch (RuntimeException e) {
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       assertEquals("A package-local class <b><code>Class2</code></b> will no longer be accessible from field <b><code>User.class2</code></b>", e.getMessage());
     }
   }

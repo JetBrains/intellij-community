@@ -125,7 +125,7 @@ public class ExtractClassTest extends MultiFileTestCase{
       LocalFileSystem.getInstance().refresh(false);
       FileDocumentManager.getInstance().saveAllDocuments();
     }
-    catch (Exception e) {
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       if (conflicts != null) {
         Assert.assertEquals(e.getMessage(), conflicts);
         return;

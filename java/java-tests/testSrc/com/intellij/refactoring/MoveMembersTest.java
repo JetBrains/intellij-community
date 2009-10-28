@@ -93,7 +93,7 @@ public class MoveMembersTest extends MultiFileTestCase {
       doTest("B", "A", 0);
       fail("conflict expected");
     }
-    catch (Exception e) {
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       assertEquals("Field <b><code>B.ONE</code></b> has write access but is moved to an interface", e.getMessage());
     }
   }

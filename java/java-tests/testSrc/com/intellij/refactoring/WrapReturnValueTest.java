@@ -63,7 +63,7 @@ public class WrapReturnValueTest extends MultiFileTestCase{
         }
       });
     }
-    catch (RuntimeException e) {
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       if (exceptionMessage != null) {
         assertEquals(exceptionMessage, e.getMessage());
         return;

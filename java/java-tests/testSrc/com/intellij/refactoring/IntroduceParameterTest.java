@@ -47,7 +47,7 @@ public class IntroduceParameterTest extends LightCodeInsightTestCase {
         fail("Conflict expected");
       }
     }
-    catch (Exception e) {
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       if (conflict == null) {
         throw e;
       }
