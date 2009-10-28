@@ -140,6 +140,14 @@ public class MalformedFormatStringInspection extends BaseInspection{
                 return;
             }
             if(validators.length != argumentCount){
+                if (argumentCount == 1) {
+                    final PsiExpression argument =
+                            arguments[formatArgPosition + 1];
+                    final PsiType argumentType = argument.getType();
+                    if (argumentType instanceof PsiArrayType) {
+                        return;
+                    }
+                }
                 registerError(formatArgument, validators,
                         Integer.valueOf(argumentCount));
                 return;
