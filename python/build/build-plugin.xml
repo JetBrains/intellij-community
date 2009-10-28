@@ -22,14 +22,12 @@
     <!--<property file="build-plugin.properties"/>-->
 
     <property name="plugin.home" value="${basedir}/.."/>
-    <property name="plugin.revision" value="${build.vcs.number}"/>
-    <!--<property name="plugin.version" value="${ruby.plugin.version}.${plugin.revision}"/>-->
+    <property name="plugin.revision" value="${build.number}"/>
 
     <property name="idea.lib" value="${idea.home}/lib"/>
     <property name="idea.plugins" value="${idea.home}/plugins"/>
 
     <property name="build.number" value="snapshot"/>
-    <property name="build.vcs.number" value="unknown"/>
 
     <dirname property="basedir" file="${ant.file}"/>
     <property name="output" value="${basedir}/../dist"/>
