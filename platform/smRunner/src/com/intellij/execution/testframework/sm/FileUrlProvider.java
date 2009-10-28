@@ -102,7 +102,14 @@ public class FileUrlProvider implements TestLocationProvider {
       return null;
     }
 
-    final int lineStartOffset = doc.getLineStartOffset(lineNum - 1);
+    final int lineCount = doc.getLineCount();
+    final int lineStartOffset;
+    if (lineNum <= lineCount) {
+      lineStartOffset = doc.getLineStartOffset(lineNum - 1);
+    } else {
+      // unknown line
+      lineStartOffset = 0;
+    }
 
     PsiElement elementAtLine = psiFile.findElementAt(lineStartOffset);
     if (elementAtLine != null) {
