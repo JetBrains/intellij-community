@@ -49,11 +49,11 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
-    final PsiField psiField = PsiTreeUtil.getParentOfType(element, PsiField.class);
-    if (psiField == null) return false;
-    if (psiField.getTypeElement() == null) return false;
-    if (!PsiUtil.isLanguageLevel5OrHigher(psiField)) return false;
-    final PsiType psiType = psiField.getType();
+    final PsiVariable psiVariable = PsiTreeUtil.getParentOfType(element, PsiVariable.class);
+    if (psiVariable == null) return false;
+    if (psiVariable.getTypeElement() == null) return false;
+    if (!PsiUtil.isLanguageLevel5OrHigher(psiVariable)) return false;
+    final PsiType psiType = psiVariable.getType();
     final PsiClass psiTypeClass = PsiUtil.resolveClassInType(psiType);
     if (psiTypeClass != null) {
       final String qualifiedName = psiTypeClass.getQualifiedName();
@@ -72,11 +72,11 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
     final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-    final PsiField psiField = PsiTreeUtil.getParentOfType(element, PsiField.class);
-    LOG.assertTrue(psiField != null);
+    final PsiVariable psiVariable = PsiTreeUtil.getParentOfType(element, PsiVariable.class);
+    LOG.assertTrue(psiVariable != null);
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-    final PsiType fromType = psiField.getType();
+    final PsiType fromType = psiVariable.getType();
     PsiClassType toType;
     final String atomicQualifiedName = myFromToMap.get(fromType);
     if (atomicQualifiedName != null) {
@@ -111,19 +111,20 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
     }
 
     try {
-      psiField.getTypeElement().replace(elementFactory.createTypeElement(toType));
-      final PsiExpression initializer = psiField.getInitializer();
+      psiVariable.getTypeElement().replace(elementFactory.createTypeElement(toType));
+      final PsiExpression initializer = psiVariable.getInitializer();
       if (initializer != null) {
         final TypeConversionDescriptor directConversion = AtomicConversionRule.findDirectConversion(initializer, toType, initializer.getType());
         if (directConversion != null) {
           TypeMigrationReplacementUtil.replaceExpression(initializer, project, directConversion);
         }
       }
-      for (PsiReference reference : ReferencesSearch.search(psiField)) {
+      for (PsiReference reference : ReferencesSearch.search(psiVariable)) {
         PsiElement psiElement = reference.getElement();
         if (psiElement instanceof PsiExpression) {
-          if (psiElement.getParent() instanceof PsiExpression) {
-            psiElement = psiElement.getParent();
+          final PsiElement parent = psiElement.getParent();
+          if (parent instanceof PsiExpression && !(parent instanceof PsiReferenceExpression)) {
+            psiElement = parent;
           }
           final TypeConversionDescriptor directConversion = AtomicConversionRule.findDirectConversion(psiElement, toType, fromType);
           if (directConversion != null) {

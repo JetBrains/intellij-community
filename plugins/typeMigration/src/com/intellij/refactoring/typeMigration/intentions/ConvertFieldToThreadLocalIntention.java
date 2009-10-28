@@ -86,8 +86,9 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
       for (PsiReference reference : ReferencesSearch.search(psiField)) {
         PsiElement psiElement = reference.getElement();
         if (psiElement instanceof PsiExpression) {
-          if (psiElement.getParent() instanceof PsiExpression) {
-            psiElement = psiElement.getParent();
+          final PsiElement parent = psiElement.getParent();
+          if (parent instanceof PsiExpression && !(parent instanceof PsiReferenceExpression)) {
+            psiElement = parent;
           }
           final TypeConversionDescriptor directConversion = ThreadLocalConversionRule.findDirectConversion(psiElement, toType, fromType, labeler);
           if (directConversion != null) {
