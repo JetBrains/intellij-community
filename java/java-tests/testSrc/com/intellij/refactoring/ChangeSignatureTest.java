@@ -129,6 +129,10 @@ public class ChangeSignatureTest extends LightCodeInsightTestCase {
     }, false);
   }
 
+  public void testRemoveVarargParameter() throws Exception {
+    doTest(null, null, null, new ParameterInfoImpl[]{new ParameterInfoImpl(0)}, new ThrownExceptionInfo[0], false);
+  }
+
   public void testEnumConstructor() throws Exception {
     doTest(null, new ParameterInfoImpl[] {
       new ParameterInfoImpl(-1, "i", PsiType.INT, "10")
