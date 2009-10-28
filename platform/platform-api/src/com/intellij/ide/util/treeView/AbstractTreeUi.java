@@ -16,6 +16,8 @@
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -147,14 +149,8 @@ public class AbstractTreeUi {
   private ActionCallback myInitialized = new ActionCallback();
   private Map<Object, ActionCallback> myReadyCallbacks = new WeakHashMap<Object, ActionCallback>();
 
-  protected final void init(AbstractTreeBuilder builder,
-                            JTree tree,
-                            DefaultTreeModel treeModel,
-                            AbstractTreeStructure treeStructure,
-                            @Nullable Comparator<NodeDescriptor> comparator) {
+  private boolean myPassthroughMode = false;
 
-    init(builder, tree, treeModel, treeStructure, comparator, true);
-  }
 
   protected void init(AbstractTreeBuilder builder,
                       JTree tree,
@@ -250,23 +246,34 @@ public class AbstractTreeUi {
       if (timeToCleanup == null) continue;
       if (now >= timeToCleanup.longValue()) {
         ourUi2Countdown.remove(eachUi);
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        Runnable runnable = new Runnable() {
           public void run() {
             getBuilder().cleanUp();
           }
-        });
+        };
+        if (isPassthroughMode()) {
+          runnable.run();
+        } else {
+          UIUtil.invokeAndWaitIfNeeded(runnable);
+        }
       }
     }
   }
 
   protected void doCleanUp() {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+    Runnable cleanup = new Runnable() {
       public void run() {
         if (!isReleased()) {
           cleanUpNow();
         }
       }
-    });
+    };
+
+    if (isPassthroughMode()) {
+      cleanup.run();
+    } else {
+      UIUtil.invokeLaterIfNeeded(cleanup);
+    }
   }
 
   private void disposeClearanceService() {
@@ -587,7 +594,7 @@ public class AbstractTreeUi {
   private AsyncResult<Boolean> update(final NodeDescriptor nodeDescriptor, boolean now) {
     final AsyncResult<Boolean> result = new AsyncResult<Boolean>();
 
-    if (now) {
+    if (now || isPassthroughMode()) {
       return new AsyncResult<Boolean>().setDone(_update(nodeDescriptor));
     }
 
@@ -660,6 +667,8 @@ public class AbstractTreeUi {
   }
 
   private void assertIsDispatchThread() {
+    if (isPassthroughMode()) return;
+
     if (isTreeShowing() && !isEdt()) {
       LOG.error("Must be in event-dispatch thread");
     }
@@ -674,6 +683,8 @@ public class AbstractTreeUi {
   }
 
   private void assertNotDispatchThread() {
+    if (isPassthroughMode()) return;
+
     if (isEdt()) {
       LOG.error("Must not be in event-dispatch thread");
     }
@@ -2306,14 +2317,18 @@ public class AbstractTreeUi {
       }
     };
 
-    if (myWorker == null || myWorker.isDisposed()) {
-      myWorker = new WorkerThread("AbstractTreeBuilder.Worker", 1);
-      myWorker.start();
-      myWorker.addTaskFirst(pooledThreadRunnable);
-      myWorker.dispose(false);
-    }
-    else {
-      myWorker.addTaskFirst(pooledThreadRunnable);
+    if (isPassthroughMode()) {
+
+    } else {
+      if (myWorker == null || myWorker.isDisposed()) {
+        myWorker = new WorkerThread("AbstractTreeBuilder.Worker", 1);
+        myWorker.start();
+        myWorker.addTaskFirst(pooledThreadRunnable);
+        myWorker.dispose(false);
+      }
+      else {
+        myWorker.addTaskFirst(pooledThreadRunnable);
+      }
     }
   }
 
@@ -3053,6 +3068,10 @@ public class AbstractTreeUi {
     if (updater != null && myUpdateIfInactive) {
       updater.showNotify();
     }
+
+    if (myUpdater != null) {
+      myUpdater.setPassThroughMode(myPassthroughMode);
+    }
   }
 
   public DefaultMutableTreeNode getRootNode() {
@@ -3516,4 +3535,26 @@ public class AbstractTreeUi {
     }
   }
 
+  
+  public void setPassthroughMode(boolean passthrough) {
+    myPassthroughMode = passthrough;
+    AbstractTreeUpdater updater = getUpdater();
+
+    if (updater != null) {
+      updater.setPassThroughMode(myPassthroughMode);
+    }
+
+    if (!isUnitTestingMode()) {
+      LOG.error("Pass-through mode for TreeUi is allowed only for unit test mode");
+    }
+  }
+
+  public boolean isPassthroughMode() {
+    return myPassthroughMode;
+  }
+
+  private boolean isUnitTestingMode() {
+    Application app = ApplicationManager.getApplication();
+    return app != null && app.isUnitTestMode();
+  }
 }
