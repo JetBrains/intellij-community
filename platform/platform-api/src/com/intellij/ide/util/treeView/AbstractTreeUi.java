@@ -3544,7 +3544,7 @@ public class AbstractTreeUi {
       updater.setPassThroughMode(myPassthroughMode);
     }
 
-    if (!isUnitTestingMode()) {
+    if (!isUnitTestingMode() && passthrough) {
       LOG.error("Pass-through mode for TreeUi is allowed only for unit test mode");
     }
   }
