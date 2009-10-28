@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -84,7 +85,8 @@ public abstract class VcsDirtyScopeManager {
 
   public abstract VcsInvalidated retrieveScopes();
 
-  public abstract Collection<FilePath> whatFilesDirty(final Collection<FilePath> files);
+  @NotNull
+  public abstract Collection<FilePath> whatFilesDirty(@NotNull Collection<FilePath> files);
 
   /**
    * Requests an asynchronous file status update for all files specified and under the specified directories

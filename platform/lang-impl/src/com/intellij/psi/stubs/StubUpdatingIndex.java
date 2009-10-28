@@ -217,6 +217,10 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
         public void bufferingStateChanged(final boolean newState) {
           ((StubIndexImpl)StubIndexImpl.getInstance()).setDataBufferingEnabled(newState);
         }
+
+        public void memoryStorageCleared() {
+          ((StubIndexImpl)StubIndexImpl.getInstance()).cleanupMemoryStorage();
+        }
       });
     }
     return new MyIndex(indexId, owner, storage, getIndexer());

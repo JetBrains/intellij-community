@@ -133,10 +133,6 @@ public class DefaultHighlightVisitor extends PsiElementVisitor implements Highli
     HighlightInfo info;
     if (offset < fileLength && text != null && !StringUtil.startsWithChar(text, '\n') && !StringUtil.startsWithChar(text, '\r')) {
       int start = offset;
-      PsiElement prevElement = containingFile.findElementAt(offset - 1);
-      //if (offset > 0 && prevElement != null && prevElement.getText().equals("(") && StringUtil.startsWithChar(text, ')')) {
-      //  start = offset - 1;
-      //}
       int end = offset + 1;
       info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, start, end, element.getErrorDescription());
       info.navigationShift = offset - start;
