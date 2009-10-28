@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
@@ -134,6 +135,17 @@ public class UIUtil {
 
   public static Icon getOptionPanelQuestionIcon() {
     return UIManager.getIcon("OptionPane.questionIcon");
+  }
+
+  @NotNull
+  public static String removeMnemonic(@NotNull String s) {
+    if (s.indexOf('&') != -1) {
+      s = StringUtil.replace(s, "&", "");
+    }
+    if (s.indexOf(MNEMONIC) != -1) {
+      s = StringUtil.replace(s, String.valueOf(MNEMONIC), "");
+    }
+    return s;
   }
 
   public static String replaceMnemonicAmpersand(final String value) {

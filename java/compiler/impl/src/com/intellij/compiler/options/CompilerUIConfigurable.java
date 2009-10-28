@@ -24,7 +24,6 @@ import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.Options;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -39,19 +38,11 @@ public class CompilerUIConfigurable implements Configurable {
   private JCheckBox myCbCompileInBackground;
   private JCheckBox myCbClearOutputDirectory;
   private JCheckBox myCbCompileDependent;
-  private JRadioButton myDoNotDeploy;
-  private JRadioButton myDeploy;
-  private JRadioButton myShowDialog;
   private JCheckBox myCbAssertNotNull;
   private JLabel myPatternLegendLabel;
 
   public CompilerUIConfigurable(final Project project) {
     myProject = project;
-
-    ButtonGroup deployGroup = new ButtonGroup();
-    deployGroup.add(myShowDialog);
-    deployGroup.add(myDeploy);
-    deployGroup.add(myDoNotDeploy);
   }
 
   public void reset() {
@@ -66,16 +57,6 @@ public class CompilerUIConfigurable implements Configurable {
     configuration.convertPatterns();
 
     myResourcePatternsField.setText(patternsToString(configuration.getResourceFilePatterns()));
-
-    if (configuration.DEPLOY_AFTER_MAKE == Options.SHOW_DIALOG) {
-      myShowDialog.setSelected(true);
-    }
-    else if (configuration.DEPLOY_AFTER_MAKE == Options.PERFORM_ACTION_AUTOMATICALLY) {
-      myDeploy.setSelected(true);
-    }
-    else {
-      myDoNotDeploy.setSelected(true);
-    }
   }
 
   private static String patternsToString(final String[] patterns) {
@@ -102,9 +83,7 @@ public class CompilerUIConfigurable implements Configurable {
     String extensionString = myResourcePatternsField.getText().trim();
     applyResourcePatterns(extensionString, (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject));
 
-    configuration.DEPLOY_AFTER_MAKE = getSelectedDeploymentOption();
-
-    // this will schedule for compilation all files that might become compilable after resource patterns' changing 
+    // this will schedule for compilation all files that might become compilable after resource patterns' changing
     TranslatingCompilerFilesMonitor.getInstance().scanSourcesForCompilableFiles(myProject);
   }
 
@@ -149,15 +128,8 @@ public class CompilerUIConfigurable implements Configurable {
     final CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
     isModified |= ComparingUtils.isModified(myCbClearOutputDirectory, workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY);
     isModified |= ComparingUtils.isModified(myResourcePatternsField, patternsToString(compilerConfiguration.getResourceFilePatterns()));
-    isModified |= compilerConfiguration.DEPLOY_AFTER_MAKE != getSelectedDeploymentOption();
 
     return isModified;
-  }
-
-  private int getSelectedDeploymentOption() {
-    if (myShowDialog.isSelected()) return Options.SHOW_DIALOG;
-    if (myDeploy.isSelected()) return Options.PERFORM_ACTION_AUTOMATICALLY;
-    return Options.DO_NOTHING;
   }
 
   public String getDisplayName() {

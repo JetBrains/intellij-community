@@ -33,6 +33,8 @@ import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 
+import java.util.Collections;
+
 /**
  * @author nik
  */
@@ -63,6 +65,6 @@ public class BuildArtifactAction extends AnAction {
         }
       }.execute();
     }
-    CompilerManager.getInstance(myProject).make(ArtifactCompileScope.create(myProject, myArtifact), null);
+    CompilerManager.getInstance(myProject).make(ArtifactCompileScope.createArtifactsScope(myProject, Collections.singletonList(myArtifact)), null);
   }
 }
