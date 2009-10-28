@@ -862,6 +862,12 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
     checkResultByTestName();
   }
 
+  public void testConstructorArgsSmartEnter() throws Exception {
+    configureByTestName();
+    select(Lookup.COMPLETE_STATEMENT_SELECT_CHAR);
+    checkResultByTestName();
+  }
+
   private void configureByTestName() throws Exception {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
   }

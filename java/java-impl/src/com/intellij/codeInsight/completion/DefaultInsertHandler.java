@@ -93,8 +93,10 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
     myDocument = myEditor.getDocument();
 
     TailType tailType = getTailType(completionChar);
+    if (completionChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
+      tailType = TailType.SMART_COMPLETION;
+    }
 
-    //adjustContextAfterLookupStringInsertion();
     myState = new InsertHandlerState(myContext.getSelectionEndOffset(), myContext.getSelectionEndOffset());
 
     final boolean needLeftParenth = isToInsertParenth();
@@ -412,7 +414,6 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
       case '#':
       case '\"':
       case '[': return TailType.createSimpleTailType(completionChar);
-      case Lookup.COMPLETE_STATEMENT_SELECT_CHAR: return TailType.SMART_COMPLETION;
       //case '!': if (!(myLookupItem.getObject() instanceof PsiVariable)) return TailType.EXCLAMATION;
     }
     final TailType attr = myLookupItem.getTailType();
