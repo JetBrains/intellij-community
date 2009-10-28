@@ -181,13 +181,7 @@ public class PatternCompiler {
           addPredicate(handler,predicate);
         }
 
-        if (constraint.getScriptCodeConstraint()!= null && constraint.getScriptCodeConstraint().length() > 2) {
-          final String script = StringUtil.stripQuotesAroundValue(constraint.getScriptCodeConstraint());
-          final String s = ScriptSupport.checkValidScript(script);
-          if (s != null) throw new MalformedPatternException("Script constraint for " + constraint.getName() + " has problem "+s);
-          predicate = new ScriptPredicate(name, script);
-          addPredicate(handler,predicate);
-        }
+        addScriptConstraint(name, constraint, handler);
 
         if (constraint.getContainsConstraint() != null && constraint.getContainsConstraint().length() > 0) {
           predicate = new ContainsPredicate(name, constraint.getContainsConstraint());
@@ -206,23 +200,24 @@ public class PatternCompiler {
 
       MatchVariableConstraint constraint = options.getVariableConstraint(Configuration.CONTEXT_VAR_NAME);
       if (constraint != null) {
+        SubstitutionHandler handler = result.createSubstitutionHandler(
+          Configuration.CONTEXT_VAR_NAME,
+          Configuration.CONTEXT_VAR_NAME,
+          constraint.isPartOfSearchResults(),
+          constraint.getMinCount(),
+          constraint.getMaxCount(),
+          constraint.isGreedy()
+        );
+
         if (constraint.getWithinConstraint() != null && constraint.getWithinConstraint().length() > 0) {
           MatchPredicate predicate = new WithinPredicate(Configuration.CONTEXT_VAR_NAME, constraint.getWithinConstraint(), project);
           if (constraint.isInvertWithinConstraint()) {
             predicate = new NotPredicate(predicate);
           }
-
-          SubstitutionHandler handler = result.createSubstitutionHandler(
-            Configuration.CONTEXT_VAR_NAME,
-            Configuration.CONTEXT_VAR_NAME,
-            constraint.isPartOfSearchResults(),
-            constraint.getMinCount(),
-            constraint.getMaxCount(),
-            constraint.isGreedy()
-          );
-          
           addPredicate(handler,predicate);
         }
+
+        addScriptConstraint(Configuration.CONTEXT_VAR_NAME, constraint, handler);
       }
 
       buf.append(text.substring(prevOffset,text.length()));
@@ -286,6 +281,17 @@ public class PatternCompiler {
     }
 
     return result;
+  }
+
+  private static void addScriptConstraint(String name, MatchVariableConstraint constraint, SubstitutionHandler handler) {
+    MatchPredicate predicate;
+    if (constraint.getScriptCodeConstraint()!= null && constraint.getScriptCodeConstraint().length() > 2) {
+      final String script = StringUtil.stripQuotesAroundValue(constraint.getScriptCodeConstraint());
+      final String s = ScriptSupport.checkValidScript(script);
+      if (s != null) throw new MalformedPatternException("Script constraint for " + constraint.getName() + " has problem "+s);
+      predicate = new ScriptPredicate(name, script);
+      addPredicate(handler,predicate);
+    }
   }
 
   static void addPredicate(SubstitutionHandler handler, MatchPredicate predicate) {

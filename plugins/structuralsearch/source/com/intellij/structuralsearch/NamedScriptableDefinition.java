@@ -45,6 +45,11 @@ public class NamedScriptableDefinition implements JDOMExternalizable, Cloneable 
     if (attribute != null) {
       name = attribute.getValue();
     }
+
+    String s = element.getAttributeValue(SCRIPT);
+    if (s != null) {
+      setScriptCodeConstraint(s);
+    }
   }
 
   public void writeExternal(Element element) {

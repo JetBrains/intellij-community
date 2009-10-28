@@ -51,9 +51,9 @@ public class ScriptSupport {
       script.setBinding(binding);
 
       Object o = script.run();
-      //if (o instanceof String) return "\"" + o + "\"";
       return String.valueOf(o);
     } catch (GroovyRuntimeException ex) {
+      LoggerFactory.getInstance().getLoggerInstance(getClass().getName()).error(ex);
       return StringUtil.convertLineSeparators(ex.getLocalizedMessage());
     }
   }
