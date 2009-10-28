@@ -120,7 +120,7 @@ public class PsiFileNode extends BasePsiNode<PsiFile>{
   }
 
   public boolean canRepresent(final Object element) {
-    return super.canRepresent(element) || getValue().getVirtualFile() == element;
+    return super.canRepresent(element) || getValue() != null && getValue().getVirtualFile() == element;
   }
 
   @Override
