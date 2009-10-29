@@ -2414,7 +2414,7 @@ public class AbstractTreeUi {
   }
 
   private void insertNodesInto(final ArrayList<TreeNode> toInsert, final DefaultMutableTreeNode parentNode) {
-    sortChildren(parentNode, toInsert, false, false);
+    sortChildren(parentNode, toInsert, false, true);
     final ArrayList<TreeNode> all = new ArrayList<TreeNode>(toInsert.size() + parentNode.getChildCount());
     all.addAll(toInsert);
     all.addAll(TreeUtil.childrenToArray(parentNode));
@@ -2424,11 +2424,21 @@ public class AbstractTreeUi {
 
       int[] newNodeIndices = new int[toInsert.size()];
       int eachNewNodeIndex = 0;
+      TreeMap<Integer, TreeNode> insertSet = new TreeMap<Integer, TreeNode>();
       for (int i = 0; i < toInsert.size(); i++) {
         TreeNode eachNewNode = toInsert.get(i);
-        while (all.get(eachNewNodeIndex) != eachNewNode) eachNewNodeIndex++;
+        while (all.get(eachNewNodeIndex) != eachNewNode) {
+          eachNewNodeIndex++;
+        }
         newNodeIndices[i] = eachNewNodeIndex;
-        parentNode.insert((MutableTreeNode)eachNewNode, eachNewNodeIndex);
+        insertSet.put(eachNewNodeIndex, eachNewNode);
+      }
+
+      Iterator<Integer> indices = insertSet.keySet().iterator();
+      while (indices.hasNext()) {
+        Integer eachIndex = indices.next();
+        TreeNode eachNode = insertSet.get(eachIndex);
+        parentNode.insert((MutableTreeNode)eachNode, eachIndex);
       }
 
       myTreeModel.nodesWereInserted(parentNode, newNodeIndices);
@@ -2457,7 +2467,9 @@ public class AbstractTreeUi {
     assert descriptor != null;
 
     if (descriptor.getChildrenSortingStamp() >= getComparatorStamp() && !forceSort) return;
-    getBuilder().sortChildren(myNodeComparator, node, children);
+    if (children.size() > 0) {
+      getBuilder().sortChildren(myNodeComparator, node, children);
+    }
 
     if (updateStamp) {
       descriptor.setChildrenSortingStamp(getComparatorStamp());
