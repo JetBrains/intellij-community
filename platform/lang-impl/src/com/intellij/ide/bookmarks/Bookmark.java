@@ -55,7 +55,7 @@ public class Bookmark {
 
   private String myDescription;
   private char myMnemonic = 0;
-  public static final Font MNEMONIC_FONT = new Font("Monospaced", 0, 12);
+  public static final Font MNEMONIC_FONT = new Font("Monospaced", 0, 11);
 
   public Bookmark(Project project, VirtualFile file, String description) {
     this(project, file, -1, description);
@@ -199,15 +199,15 @@ public class Bookmark {
       g.setColor(Color.black);
       g.setFont(MNEMONIC_FONT);
 
-      g.drawString(Character.toString(myMnemonic), x + 1, y + getIconHeight() - MNEMONIC_FONT.getBaselineFor(myMnemonic) - 1);
+      g.drawString(Character.toString(myMnemonic), x + 2, y + getIconHeight() - 2);
     }
 
     public int getIconWidth() {
-      return 9;
+      return 10;
     }
 
     public int getIconHeight() {
-      return 10;
+      return 12;
     }
   }
 }
