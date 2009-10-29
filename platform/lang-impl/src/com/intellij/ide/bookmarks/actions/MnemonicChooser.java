@@ -83,7 +83,7 @@ public class MnemonicChooser extends JPanel {
   }
 
   private Color backgroundForMnemonic(char c) {
-    return isOccupied(c) ? LightColors.GREEN : LightColors.SLIGHTLY_GRAY;
+    return isOccupied(c) ? LightColors.YELLOW : LightColors.SLIGHTLY_GRAY;
   }
 
   private class MnemonicLabel extends JLabel {
