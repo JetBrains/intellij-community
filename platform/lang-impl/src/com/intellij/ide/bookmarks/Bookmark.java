@@ -32,7 +32,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -46,7 +45,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class Bookmark {
-  public static final Icon TICK = IconLoader.getIcon("/gutter/check.png");
+  private static final Icon TICK = IconLoader.getIcon("/gutter/check.png");
 
   private final VirtualFile myFile;
   private final OpenFileDescriptor myTarget;
@@ -74,7 +73,7 @@ public class Bookmark {
       myHighlighter.setGutterIconRenderer(new GutterIconRenderer() {
         @NotNull
         public Icon getIcon() {
-          return myMnemonic == 0 ? TICK : new MnemonicIcon(myMnemonic);
+          return Bookmark.this.getIcon();
         }
 
         public String getTooltipText() {
@@ -103,12 +102,7 @@ public class Bookmark {
   }
 
   public Icon getIcon() {
-    if (myFile.isDirectory()) {
-      return PsiManager.getInstance(myProject).findDirectory(myFile).getIcon(Iconable.ICON_FLAG_CLOSED);
-    }
-    else {
-      return PsiManager.getInstance(myProject).findFile(myFile).getIcon(Iconable.ICON_FLAG_CLOSED);
-    }
+    return myMnemonic == 0 ? TICK : new MnemonicIcon(myMnemonic);
   }
 
   public String getDescription() {
