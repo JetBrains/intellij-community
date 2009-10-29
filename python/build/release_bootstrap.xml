@@ -24,6 +24,7 @@
 
       <jvmarg line="-Xms64m -Xmx512m"/>
       <jvmarg line="-Dbuild.number=${build.number}"/>
+      <jvmarg line="-Djdk15.home=${jdk15.home}"/>
 
       <classpath>
         <fileset dir="${project.home}/build/lib">

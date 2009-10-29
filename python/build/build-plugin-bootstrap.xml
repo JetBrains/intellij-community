@@ -24,7 +24,6 @@
 
       <jvmarg line="-Xms64m -Xmx512m"/>
       <jvmarg line="-Dbuild.number=${build.number}"/>
-      <jvmarg line="-Dbuild.vcs.number=${build.vcs.number}"/>
 
       <classpath>
         <fileset dir="${project.home}/build/lib">
