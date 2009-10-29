@@ -51,9 +51,6 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
         .file("X.class", "data")
         .dir("dir")
           .file("Y.class")
-          .end()
-        .dir("META-INF")
-          .file("MANIFEST.MF")
     );
   }
 
@@ -69,9 +66,6 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
       .archive("a.jar")
         .archive("b.jar")
           .file("xxx.txt", "foo")
-          .dir("META-INF").file("MANIFEST.MF").end()
-          .end()
-        .dir("META-INF").file("MANIFEST.MF")
       );
   }
 
