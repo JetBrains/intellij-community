@@ -230,7 +230,9 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     });
     myShareProfileCheckBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        getSelectedPanel().setProfileShared(myShareProfileCheckBox.isSelected());
+        final SingleInspectionProfilePanel panel = getSelectedPanel();
+        LOG.assertTrue(panel != null, "No settings panel for: " + getSelectedObject());
+        panel.setProfileShared(myShareProfileCheckBox.isSelected());
         myProfiles.repaint();
       }
     });
@@ -315,7 +317,9 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
   }
 
   public void selectInspectionTool(String selectedToolShortName) {
-    getSelectedPanel().selectInspectionTool(selectedToolShortName);
+    final SingleInspectionProfilePanel panel = getSelectedPanel();
+    LOG.assertTrue(panel != null, "No settings panel for: " + getSelectedObject());
+    panel.selectInspectionTool(selectedToolShortName);
   }
 
   protected SingleInspectionProfilePanel getSelectedPanel() {
