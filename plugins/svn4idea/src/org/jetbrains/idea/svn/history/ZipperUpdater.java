@@ -15,8 +15,10 @@
  */
 package org.jetbrains.idea.svn.history;
 
+import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.util.Alarm;
 
+@SomeQueue
 public class ZipperUpdater {
   private final Alarm myAlarm;
   private boolean myRaised;

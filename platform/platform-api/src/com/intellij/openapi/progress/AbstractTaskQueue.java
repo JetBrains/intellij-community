@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import java.util.LinkedList;
 import java.util.Queue;
 
+@SomeQueue
 public abstract class AbstractTaskQueue<T> {
   private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.AbstractTaskQueue");
 

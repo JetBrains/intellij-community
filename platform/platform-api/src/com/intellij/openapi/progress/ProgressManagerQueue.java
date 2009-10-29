@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+@SomeQueue
 public class ProgressManagerQueue extends AbstractTaskQueue<Runnable> {
   private final ProgressManager myProgressManager;
   private final Task.Backgroundable myTask;
