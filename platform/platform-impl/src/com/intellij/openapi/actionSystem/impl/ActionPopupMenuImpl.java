@@ -55,7 +55,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu {
     public MyMenu(String place, @NotNull ActionGroup group, @Nullable PresentationFactory factory) {
       myPlace = place;
       myGroup = group;
-      myPresentationFactory = factory != null ? factory : new PresentationFactory();
+      myPresentationFactory = factory != null ? factory : new MenuItemPresentationFactory();
       addPopupMenuListener(new MyPopupMenuListener());
     }
 

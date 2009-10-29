@@ -15,33 +15,20 @@
  */
 package com.intellij.openapi.actionSystem.impl;
 
-import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.Presentation;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.util.SystemInfo;
 
-import java.util.WeakHashMap;
-
-public class PresentationFactory {
-  private final WeakHashMap<AnAction,Presentation> myAction2Presentation;
-
-  public PresentationFactory() {
-    myAction2Presentation = new WeakHashMap<AnAction, Presentation>();
-  }
-
-  public final Presentation getPresentation(@NotNull AnAction action){
-    Presentation presentation = myAction2Presentation.get(action);
-    if (presentation == null){
-      presentation = (Presentation)action.getTemplatePresentation().clone();
-      myAction2Presentation.put(action, processPresentation(presentation));
+/**
+ * @author Roman.Chernyatchik
+ */
+public class MenuItemPresentationFactory extends PresentationFactory {
+  protected Presentation processPresentation(Presentation presentation) {
+    if (SystemInfo.isMac && !UISettings.getInstance().SHOW_ICONS_IN_MENUS) {
+      presentation.setIcon(null);
+      presentation.setDisabledIcon(null);
+      presentation.setHoveredIcon(null);
     }
     return presentation;
-  }
-
-  protected Presentation processPresentation(Presentation presentation) {
-    return presentation;
-  }
-
-  public void reset() {
-    myAction2Presentation.clear();
   }
 }

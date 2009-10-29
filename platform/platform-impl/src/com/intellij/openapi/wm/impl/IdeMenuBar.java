@@ -23,7 +23,7 @@ import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
-import com.intellij.openapi.actionSystem.impl.PresentationFactory;
+import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.actionSystem.impl.WeakTimerListener;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -42,7 +42,7 @@ public class IdeMenuBar extends JMenuBar{
   private final MyTimerListener myTimerListener;
   private ArrayList<AnAction> myVisibleActions;
   private ArrayList<AnAction> myNewVisibleActions;
-  private final PresentationFactory myPresentationFactory;
+  private final MenuItemPresentationFactory myPresentationFactory;
   private final DataManager myDataManager;
   private final ActionManager myActionManager;
   private UISettingsListener myUISettingsListener;
@@ -53,7 +53,7 @@ public class IdeMenuBar extends JMenuBar{
     //(DefaultActionGroup)actionManager.getAction(IdeActions.GROUP_MAIN_MENU);
     myVisibleActions = new ArrayList<AnAction>();
     myNewVisibleActions = new ArrayList<AnAction>();
-    myPresentationFactory = new PresentationFactory();
+    myPresentationFactory = new MenuItemPresentationFactory();
     myDataManager = dataManager;
   }
 
@@ -69,6 +69,7 @@ public class IdeMenuBar extends JMenuBar{
     myUISettingsListener = new UISettingsListener() {
       public void uiSettingsChanged(final UISettings source) {
         updateMnemonicsVisibility();
+        myPresentationFactory.reset();
       }
     };
     UISettings.getInstance().addUISettingsListener(myUISettingsListener);
