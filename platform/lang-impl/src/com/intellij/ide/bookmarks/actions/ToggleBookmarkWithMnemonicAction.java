@@ -73,7 +73,7 @@ public class ToggleBookmarkWithMnemonicAction extends ToggleBookmarkAction {
         setRequestFocus(true).
         setMovable(false).
         setCancelKeyEnabled(false).
-        setAdText(bookmarks.hasBookmarksWithMnemonics() ? "Occupied marked yellow" : null).
+        setAdText(bookmarks.hasBookmarksWithMnemonics() ? "Yellow cells in use" : null).
         setResizable(false)
           .createPopup();
 
