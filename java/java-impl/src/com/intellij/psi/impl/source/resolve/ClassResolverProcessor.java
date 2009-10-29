@@ -106,6 +106,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     if (!myClassName.equals(name)) {
       return true;
     }
+    boolean accessible = myPlace == null || checkAccessibility(aClass);
     if (myCandidates == null) {
       myCandidates = new SmartList<ClassCandidateInfo>();
     }
@@ -126,6 +127,15 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
             return true;
           }
 
+          boolean infoAccessible = info.isAccessible();
+          if (infoAccessible && !accessible) {
+            return true;
+          }
+          if (!infoAccessible && accessible) {
+            myCandidates.remove(i);
+            continue;
+          }
+
           // single import wins over on-demand
           boolean myOnDemand = isOnDemand(myCurrentFileContext, aClass);
           boolean otherOnDemand = isOnDemand(info.getCurrentFileResolveScope(), otherClass);
@@ -137,7 +147,6 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
       }
     }
 
-    boolean accessible = myPlace == null || checkAccessibility(aClass);
     myHasAccessibleCandidate |= accessible;
     myHasInaccessibleCandidate |= !accessible;
     myCandidates.add(new ClassCandidateInfo(aClass, state.get(PsiSubstitutor.KEY), !accessible, myCurrentFileContext));
