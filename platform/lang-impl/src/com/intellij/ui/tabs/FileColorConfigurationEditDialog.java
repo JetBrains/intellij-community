@@ -41,10 +41,8 @@ import java.util.List;
 public class FileColorConfigurationEditDialog extends DialogWrapper {
   private FileColorConfiguration myConfiguration;
   private JComboBox myScopeComboBox;
-  private JCheckBox myShareCheckbox;
   private FileColorManagerImpl myManager;
   private HashMap<String,AbstractButton> myColorToButtonMap;
-  private boolean myShared;
 
   public FileColorConfigurationEditDialog(@NotNull final FileColorManagerImpl manager, @Nullable final FileColorConfiguration configuration) {
     super(true);
@@ -88,6 +86,17 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
     pathLabel.setLabelFor(myScopeComboBox);
     pathPanel.add(pathLabel, BorderLayout.WEST);
     pathPanel.add(myScopeComboBox, BorderLayout.CENTER);
+
+    /*
+    final JButton newScope = new JButton("Add scope...");
+    newScope.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        // TBD: refresh scope list
+      }
+    });
+    pathPanel.add(newScope, BorderLayout.EAST);
+    */
+
     result.add(pathPanel);
 
     final JPanel colorPanel = new JPanel();
@@ -98,13 +107,6 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
     colorPanel.add(createColorButtonsPanel(myConfiguration));
     colorPanel.add(Box.createHorizontalGlue());
     result.add(colorPanel);
-
-    final JPanel checkboxPanel = new JPanel(new BorderLayout());
-    checkboxPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
-    myShareCheckbox = new JCheckBox("Share configuration", myConfiguration == null ? false : myManager.isShared(myConfiguration));
-    myShareCheckbox.setMnemonic('S');
-    checkboxPanel.add(myShareCheckbox, BorderLayout.WEST);
-    result.add(checkboxPanel);
 
     return result;
   }
@@ -121,22 +123,23 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
     }
   }
 
-  public boolean isShared() {
-    return myShareCheckbox.isSelected();
-  }
-
   public FileColorConfiguration getConfiguration() {
     return myConfiguration;
   }
 
   private JComponent createColorButtonsPanel(final FileColorConfiguration configuration) {
-    final JPanel result = new JPanel();
-    result.setLayout(new BoxLayout(result, BoxLayout.X_AXIS));
-    result.setBackground(Color.WHITE);
+    final JPanel result = new JPanel(new BorderLayout());
     result.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
+    final JPanel inner = new JPanel();
+    inner.setLayout(new BoxLayout(inner, BoxLayout.X_AXIS));
+    inner.setBorder(
+      BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+    inner.setBackground(Color.WHITE);
+    result.add(inner, BorderLayout.CENTER);
+
     final ButtonGroup group = new ButtonGroup();
-    
+
     myColorToButtonMap = new HashMap<String, AbstractButton>();
 
     final Collection<String> names = myManager.getColorNames();
@@ -150,9 +153,9 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
       colorButton.setBackground(Color.WHITE);
       colorButton.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
       group.add(colorButton);
-      result.add(colorButton);
+      inner.add(colorButton);
       myColorToButtonMap.put(name, colorButton);
-      result.add(Box.createHorizontalStrut(5));
+      inner.add(Box.createHorizontalStrut(5));
     }
 
     if (configuration != null) {
