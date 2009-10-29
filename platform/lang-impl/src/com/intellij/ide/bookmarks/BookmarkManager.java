@@ -84,10 +84,11 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
     addTextBookmark(virtualFile, lineIndex, getAutoDescription(editor, lineIndex));
   }
 
-  public void addTextBookmark(VirtualFile file, int lineIndex, String description) {
+  public Bookmark addTextBookmark(VirtualFile file, int lineIndex, String description) {
     Bookmark b = new Bookmark(myProject, file, lineIndex, description);
     myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkAdded(b);
     myBookmarks.add(0, b);
+    return b;
   }
 
   public static String getAutoDescription(final Editor editor, final int lineIndex) {
@@ -103,13 +104,15 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
     return autoDescription;
   }
 
-  public void addFileBookmark(VirtualFile file, String description) {
-    if (file == null) return;
-    if (findFileBookmark(file) != null) return;
+  @Nullable
+  public Bookmark addFileBookmark(VirtualFile file, String description) {
+    if (file == null) return null;
+    if (findFileBookmark(file) != null) return null;
 
     Bookmark b = new Bookmark(myProject, file, description);
     myBookmarks.add(0, b);
     myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkAdded(b);
+    return b;
   }
 
 
@@ -140,6 +143,23 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
     }
 
     return null;
+  }
+
+  @Nullable
+  public Bookmark findBookmarkForMnemonic(char m) {
+    final char mm = Character.toUpperCase(m);
+    for (Bookmark bookmark : myBookmarks) {
+      if (mm == bookmark.getMnemonic()) return bookmark;
+    }
+    return null;
+  }
+
+  public boolean hasBookmarksWithMnemonics() {
+    for (Bookmark bookmark : myBookmarks) {
+      if (bookmark.getMnemonic() != 0) return true;
+    }
+
+    return false;
   }
 
   public void removeBookmark(Bookmark bookmark) {
@@ -173,21 +193,27 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
         String url = bookmarkElement.getAttributeValue("url");
         String line = bookmarkElement.getAttributeValue("line");
         String description = bookmarkElement.getAttributeValue("description");
+        String mnemonic = bookmarkElement.getAttributeValue("mnemonic");
 
+        Bookmark b = null;
         VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
         if (file != null) {
           if (line != null) {
             try {
               int lineIndex = Integer.parseInt(line);
-              addTextBookmark(file, lineIndex, description);
+              b = addTextBookmark(file, lineIndex, description);
             }
             catch (NumberFormatException e) {
               // Ignore. Will miss bookmark if line number cannot be parsed
             }
           }
           else {
-            addFileBookmark(file, description);
+            b = addFileBookmark(file, description);
           }
+        }
+
+        if (b != null && mnemonic != null && mnemonic.length() == 1) {
+          setMnemonic(mnemonic.charAt(0), b);
         }
       }
     }
@@ -207,6 +233,11 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
       int line = bookmark.getLine();
       if (line >= 0) {
         bookmarkElement.setAttribute("line", String.valueOf(line));
+      }
+
+      char mnemonic = bookmark.getMnemonic();
+      if (mnemonic != 0) {
+        bookmarkElement.setAttribute("mnemonic", String.valueOf(mnemonic));
       }
 
       element.addContent(bookmarkElement);
@@ -284,6 +315,13 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
       }
     });
     return bookmarks;
+  }
+
+  public void setMnemonic(char c, Bookmark bookmark) {
+    final Bookmark old = findBookmarkForMnemonic(c);
+    if (old != null) removeBookmark(old);
+
+    bookmark.setMnemonic(c);
   }
 
 

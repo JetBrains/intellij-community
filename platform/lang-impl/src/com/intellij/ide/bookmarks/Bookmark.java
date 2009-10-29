@@ -38,6 +38,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.LightColors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,6 +54,8 @@ public class Bookmark {
   private final Project myProject;
 
   private String myDescription;
+  private char myMnemonic = 0;
+  public static final Font MNEMONIC_FONT = new Font("Monospaced", 0, 12);
 
   public Bookmark(Project project, VirtualFile file, String description) {
     this(project, file, -1, description);
@@ -71,7 +74,7 @@ public class Bookmark {
       myHighlighter.setGutterIconRenderer(new GutterIconRenderer() {
         @NotNull
         public Icon getIcon() {
-          return TICK;
+          return myMnemonic == 0 ? TICK : new MnemonicIcon(myMnemonic);
         }
 
         public String getTooltipText() {
@@ -116,6 +119,14 @@ public class Bookmark {
     myDescription = description;
   }
 
+  public char getMnemonic() {
+    return myMnemonic;
+  }
+
+  public void setMnemonic(char mnemonic) {
+    myMnemonic = Character.toUpperCase(mnemonic);
+  }
+
   public VirtualFile getFile() {
     return myFile;
   }
@@ -155,19 +166,48 @@ public class Bookmark {
 
     if (psiFile == null) return presentableUrl;
 
-     StructureViewBuilder builder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(psiFile);
-     if (builder instanceof TreeBasedStructureViewBuilder) {
-       StructureViewModel model = ((TreeBasedStructureViewBuilder)builder).createStructureViewModel();
-       Object element = model.getCurrentEditorElement();
-       if (element instanceof NavigationItem) {
-         ItemPresentation presentation = ((NavigationItem)element).getPresentation();
-         if (presentation != null) {
-           presentableUrl = ((NavigationItem)element).getName() + " " + presentation.getLocationString();
-         }
-       }
-     }
+    StructureViewBuilder builder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(psiFile);
+    if (builder instanceof TreeBasedStructureViewBuilder) {
+      StructureViewModel model = ((TreeBasedStructureViewBuilder)builder).createStructureViewModel();
+      Object element = model.getCurrentEditorElement();
+      if (element instanceof NavigationItem) {
+        ItemPresentation presentation = ((NavigationItem)element).getPresentation();
+        if (presentation != null) {
+          presentableUrl = ((NavigationItem)element).getName() + " " + presentation.getLocationString();
+        }
+      }
+    }
 
-     return IdeBundle.message("bookmark.file.X.line.Y", presentableUrl,
-                              (myHighlighter.getDocument().getLineNumber(myHighlighter.getStartOffset()) + 1));
-   }
+    return IdeBundle
+      .message("bookmark.file.X.line.Y", presentableUrl, (myHighlighter.getDocument().getLineNumber(myHighlighter.getStartOffset()) + 1));
+  }
+
+  private static class MnemonicIcon implements Icon {
+    private final char myMnemonic;
+
+    private MnemonicIcon(char mnemonic) {
+      myMnemonic = mnemonic;
+    }
+
+    public void paintIcon(Component c, Graphics g, int x, int y) {
+      g.setColor(LightColors.YELLOW);
+      g.fillRect(x, y, getIconWidth(), getIconHeight());
+
+      g.setColor(Color.gray);
+      g.drawRect(x, y, getIconWidth(), getIconHeight());
+
+      g.setColor(Color.black);
+      g.setFont(MNEMONIC_FONT);
+
+      g.drawString(Character.toString(myMnemonic), x + 1, y + getIconHeight() - MNEMONIC_FONT.getBaselineFor(myMnemonic) - 1);
+    }
+
+    public int getIconWidth() {
+      return 9;
+    }
+
+    public int getIconHeight() {
+      return 10;
+    }
+  }
 }
