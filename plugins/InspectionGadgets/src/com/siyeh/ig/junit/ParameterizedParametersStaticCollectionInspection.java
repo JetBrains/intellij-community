@@ -43,7 +43,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class ParameterizedParametersStaticCollectionInspection extends BaseInspection{
-  private static final String PARAMETERS_FQN = "org.junit.runners.Parameterized$Parameters";
+  private static final String PARAMETERS_FQN = "org.junit.runners.Parameterized.Parameters";
   private static final String PARAMETERIZED_FQN = "org.junit.runners.Parameterized";
 
   @NotNull
