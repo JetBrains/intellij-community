@@ -16,9 +16,9 @@
 
 package com.intellij.codeInsight.navigation;
 
+import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
-import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.pom.Navigatable;
@@ -57,7 +57,6 @@ public final class NavigationUtil {
                                                                   final String title, final PsiElementProcessor<T> processor) {
     final JList list = new JList(elements);
     list.setCellRenderer(renderer);
-    renderer.installSpeedSearch(list);
 
     final Runnable runnable = new Runnable() {
       public void run() {
@@ -75,6 +74,8 @@ public final class NavigationUtil {
     if (title != null) {
       builder.setTitle(title);
     }
+    renderer.installSpeedSearch(builder);
+
     return builder.setItemChoosenCallback(runnable).createPopup();
   }
 

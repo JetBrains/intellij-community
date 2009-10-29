@@ -248,19 +248,21 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
           if (((DocumentWindowImpl)documentWindow).isOneLine()) {
             annotation.setAfterEndOfLine(false);
           }
-          final HighlightInfo highlightInfo = HighlightInfo.fromAnnotation(annotation, fixedTextRange);
-          addHighlightInfo(textRange, highlightInfo);
+          final HighlightInfo info = HighlightInfo.fromAnnotation(annotation, fixedTextRange);
+          addHighlightInfo(textRange, info);
         }
 
         if (!isDumbMode()) {
-          for (HighlightInfo info : highlightTodos(injectedPsi, injectedPsi.getText(), 0, injectedPsi.getTextLength())) {
-            List<TextRange> editables = injectedLanguageManager.intersectWithAllEditableFragments(injectedPsi, new ProperTextRange(info.startOffset, info.endOffset));
+          Collection<HighlightInfo> todos = highlightTodos(injectedPsi, injectedPsi.getText(), 0, injectedPsi.getTextLength());
+          for (HighlightInfo info : todos) {
+            ProperTextRange textRange = new ProperTextRange(info.startOffset, info.endOffset);
+            List<TextRange> editables = injectedLanguageManager.intersectWithAllEditableFragments(injectedPsi, textRange);
             for (TextRange editable : editables) {
               TextRange hostRange = documentWindow.injectedToHost(editable);
 
               HighlightInfo patched =
-              new HighlightInfo(info.forcedTextAttributes, info.type, hostRange.getStartOffset(), hostRange.getEndOffset(), info.description, info.toolTip,info.type.getSeverity(null), false, null,
-                                false);
+                new HighlightInfo(info.forcedTextAttributes, info.type, hostRange.getStartOffset(), hostRange.getEndOffset(),
+                                  info.description, info.toolTip, info.type.getSeverity(null), false, null, false);
               addHighlightInfo(hostRange, patched);
             }
           }
@@ -293,7 +295,9 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return textRange;
   }
 
-  private static void highlightInjectedIn(final PsiFile injectedPsi, final AnnotationHolderImpl annotationHolder, final HighlightErrorFilter[] errorFilters,
+  private static void highlightInjectedIn(final PsiFile injectedPsi,
+                                          final AnnotationHolderImpl annotationHolder,
+                                          final HighlightErrorFilter[] errorFilters,
                                           final InjectedLanguageManager injectedLanguageManager) {
     final DocumentWindow documentRange = ((VirtualFileWindow)injectedPsi.getViewProvider().getVirtualFile()).getDocumentWindow();
     assert documentRange != null;
@@ -355,7 +359,9 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     highlightInjectedSyntax(injectedLanguage, injectedPsi, annotationHolder);
   }
 
-  private static void highlightInjectedSyntax(final Language injectedLanguage, final PsiFile injectedPsi, final AnnotationHolderImpl annotationHolder) {
+  private static void highlightInjectedSyntax(final Language injectedLanguage,
+                                              final PsiFile injectedPsi,
+                                              final AnnotationHolderImpl annotationHolder) {
     List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> tokens = InjectedLanguageUtil.getHighlightTokens(injectedPsi);
     if (tokens == null) return;
 
@@ -371,7 +377,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       TextAttributesKey[] keys = syntaxHighlighter.getTokenHighlights(tokenType);
       if (textRange.getLength() == 0) continue;
 
-      Annotation annotation = annotationHolder.createInfoAnnotation(textRange.shiftRight(injectionHost.getTextRange().getStartOffset()), null);
+      TextRange annRange = textRange.shiftRight(injectionHost.getTextRange().getStartOffset());
+      Annotation annotation = annotationHolder.createAnnotation(annRange, HighlightInfoType.INJECTED_FRAGMENT_SEVERITY, null);
       if (annotation == null) continue; // maybe out of highlightable range
       // force attribute colors to override host' ones
 
@@ -470,7 +477,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
           int nextLimit = chunkSize;
           for (int i = 0; i < elements.size(); i++) {
             PsiElement element = elements.get(i);
-            progressManager.checkCanceled();
+            ProgressManager.checkCanceled();
 
             if (element != myFile && !skipParentsSet.isEmpty() && element.getFirstChild() != null && skipParentsSet.contains(element)) {
               skipParentsSet.add(element.getParent());

@@ -497,7 +497,6 @@ abstract class ComponentStoreImpl implements IComponentStore {
     for (String componentName : componentNames) {
       final PersistentStateComponent component = (PersistentStateComponent)myComponents.get(componentName);
       if (component != null) {
-        LOG.info("[STORAGE] Reinit component '" + componentName + "'");
         initPersistentComponent(component, reloadData);
       }
     }

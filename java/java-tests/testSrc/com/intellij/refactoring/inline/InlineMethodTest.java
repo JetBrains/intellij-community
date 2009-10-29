@@ -36,6 +36,10 @@ public class InlineMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testSuperInsideHierarchy() throws Exception {
+    doTest();
+  }
+
   public void testSideEffect() throws Exception { doTest(); }
 
   public void testInlineWithTry() throws Exception { doTest(); }

@@ -27,11 +27,6 @@ import org.jetbrains.annotations.NotNull;
 public class SerializableHasSerialVersionUIDFieldInspection
         extends SerializableInspection {
 
-    @Override
-    public boolean isEnabledByDefault() {
-        return true;
-    }
-
   @Override
     @NotNull
     public String getID() {

@@ -146,7 +146,7 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
 
     Set<PsiMethod> methods = new HashSet<PsiMethod>();
     for (PsiElement element : elements) {
-      ProgressManager.getInstance().checkCanceled();
+      ProgressManager.checkCanceled();
       if (element instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)element;
         if (PsiUtil.canBeOverriden(method)) {
@@ -183,7 +183,7 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
     final Set<PsiMethod> overridden = new HashSet<PsiMethod>();
     Set<PsiClass> classes = new THashSet<PsiClass>();
     for (PsiMethod method : methods) {
-      ProgressManager.getInstance().checkCanceled();
+      ProgressManager.checkCanceled();
       final PsiClass parentClass = method.getContainingClass();
       if (!"java.lang.Object".equals(parentClass.getQualifiedName())) {
         classes.add(parentClass);

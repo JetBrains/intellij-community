@@ -16,8 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,8 +29,8 @@ import java.awt.*;
 public class ContentEntriesEditor extends JavaContentEntriesEditor {
   private LanguageLevelConfigurable myLanguageLevelConfigurable;
 
-  public ContentEntriesEditor(Project project, String moduleName, ModifiableRootModel model, ModulesProvider modulesProvider) {
-    super(project, moduleName, model, modulesProvider);
+  public ContentEntriesEditor(String moduleName, final ModuleConfigurationState state) {
+    super(moduleName, state);
   }
 
   public void disposeUIResources() {
@@ -44,7 +43,12 @@ public class ContentEntriesEditor extends JavaContentEntriesEditor {
   }
 
   protected void addAdditionalSettingsToPanel(final JPanel mainPanel) {
-    myLanguageLevelConfigurable = new LanguageLevelConfigurable(myModel);
+    myLanguageLevelConfigurable = new LanguageLevelConfigurable() {
+      @Override
+      public LanguageLevelModuleExtension getLanguageLevelExtension() {
+        return getModel().getModuleExtension(LanguageLevelModuleExtension.class);
+      }
+    };
     mainPanel.add(myLanguageLevelConfigurable.createComponent(), BorderLayout.NORTH);
     myLanguageLevelConfigurable.reset();
   }

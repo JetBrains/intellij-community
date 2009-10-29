@@ -30,11 +30,7 @@ public class RemoveMiddleManTest extends MultiFileTestCase{
     return "/refactoring/removemiddleman/";
   }
 
-  private void doTest() throws Exception {
-    doTest(true);
-  }
-
-  private void doTest(final boolean delete) throws Exception {
+  private void doTest(final String conflict) throws Exception {
     doTest(new PerformAction() {
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
         PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.allScope(getProject()));
@@ -48,35 +44,42 @@ public class RemoveMiddleManTest extends MultiFileTestCase{
         for (PsiMethod method : methods) {
           final MemberInfo info = new MemberInfo(method);
           info.setChecked(true);
-          info.setToAbstract(delete);
+          info.setToAbstract(true);
           infos.add(info);
         }
-        RemoveMiddlemanProcessor processor = new RemoveMiddlemanProcessor(field, infos);
-        processor.run();
-        LocalFileSystem.getInstance().refresh(false);
-        FileDocumentManager.getInstance().saveAllDocuments();
+        try {
+          RemoveMiddlemanProcessor processor = new RemoveMiddlemanProcessor(field, infos);
+          processor.run();
+          LocalFileSystem.getInstance().refresh(false);
+          FileDocumentManager.getInstance().saveAllDocuments();
+          if (conflict != null) fail("Conflict expected");
+        }
+        catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+          if (conflict == null) throw e;
+          assertEquals(conflict, e.getMessage());
+        }
       }
     });
   }
 
   public void testNoGetter() throws Exception {
-    doTest();
+    doTest((String)null);
   }
 
   public void testSiblings() throws Exception {
-    doTest();
+    doTest("foo() will be deleted. Hierarchy will be broken");
   }
 
   
   public void testInterface() throws Exception {
-    doTest();
+    doTest("foo() will be deleted. Hierarchy will be broken");
   }
 
   public void testPresentGetter() throws Exception {
-    doTest();
+    doTest("foo() will be deleted. Hierarchy will be broken");
   }
 
   public void testInterfaceDelegation() throws Exception {
-    doTest();
+    doTest("foo() will be deleted. Hierarchy will be broken");
   }
 }

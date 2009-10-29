@@ -20,7 +20,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.pom.java.LanguageLevel;
 
 import javax.swing.*;
@@ -32,18 +31,16 @@ import java.awt.event.ActionListener;
  * User: anna
  * Date: 06-Jun-2006
  */
-public class LanguageLevelConfigurable implements UnnamedConfigurable {
+public abstract class LanguageLevelConfigurable implements UnnamedConfigurable {
   private LanguageLevelCombo myLanguageLevelCombo;
   private JPanel myPanel = new JPanel(new GridBagLayout());
-  public LanguageLevelModuleExtension myLanguageLevelExtension;
 
-  public LanguageLevelConfigurable(ModifiableRootModel rootModule) {
-    myLanguageLevelExtension = rootModule.getModuleExtension(LanguageLevelModuleExtension.class);
+  public LanguageLevelConfigurable() {
     myLanguageLevelCombo = new LanguageLevelCombo();
     myLanguageLevelCombo.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         final Object languageLevel = myLanguageLevelCombo.getSelectedItem();
-        myLanguageLevelExtension.setLanguageLevel(languageLevel instanceof LanguageLevel ? (LanguageLevel)languageLevel : null);
+        getLanguageLevelExtension().setLanguageLevel(languageLevel instanceof LanguageLevel ? (LanguageLevel)languageLevel : null);
       }
     });
     myLanguageLevelCombo.insertItemAt(LanguageLevelCombo.USE_PROJECT_LANGUAGE_LEVEL, 0);
@@ -56,20 +53,21 @@ public class LanguageLevelConfigurable implements UnnamedConfigurable {
   }
 
   public boolean isModified() {
-    return myLanguageLevelExtension.isChanged();
+    return getLanguageLevelExtension().isChanged();
   }
 
   public void apply() throws ConfigurationException {
-    myLanguageLevelExtension.commit();
+    getLanguageLevelExtension().commit();
   }
 
   public void reset() {
-    myLanguageLevelCombo.setSelectedItem(myLanguageLevelExtension.getLanguageLevel());
+    myLanguageLevelCombo.setSelectedItem(getLanguageLevelExtension().getLanguageLevel());
   }
 
   public void disposeUIResources() {
     myPanel = null;
     myLanguageLevelCombo = null;
-    myLanguageLevelExtension = null;
   }
+
+  public abstract LanguageLevelModuleExtension getLanguageLevelExtension();
 }

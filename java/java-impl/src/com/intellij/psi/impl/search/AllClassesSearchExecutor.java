@@ -69,14 +69,14 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
     for (final String name : names) {
       if (!parameters.nameMatches(name)) continue;
 
-      ProgressManager.getInstance().checkCanceled();
+      ProgressManager.checkCanceled();
       final PsiClass[] classes = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
         public PsiClass[] compute() {
           return cache.getClassesByName(name, scope);
         }
       });
       for (PsiClass psiClass : classes) {
-        ProgressManager.getInstance().checkCanceled();
+        ProgressManager.checkCanceled();
         if (!processor.process(psiClass)) {
           return false;
         }

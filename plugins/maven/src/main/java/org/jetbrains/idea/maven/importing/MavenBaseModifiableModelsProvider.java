@@ -162,11 +162,11 @@ public abstract class MavenBaseModifiableModelsProvider implements MavenModifiab
     }
 
     public ModuleRootModel getRootModel(Module module) {
-      return getRootModel(module);
+      return MavenBaseModifiableModelsProvider.this.getRootModel(module);
     }
 
     public FacetModel getFacetModel(Module module) {
-      return getFacetModel(module);
+      return MavenBaseModifiableModelsProvider.this.getFacetModel(module);
     }
   }
 

@@ -122,7 +122,12 @@ public class ChooseRunConfigurationAction extends AnAction {
 
     popup.registerAction("invokeAction", KeyStroke.getKeyStroke("shift ENTER"), new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        popup.handleSelect(true);
+        try {
+          popup.handleSelect(true);
+        }
+        finally {
+          myCurrentExecutor = null;
+        }
       }
     });
 
@@ -613,7 +618,7 @@ public class ChooseRunConfigurationAction extends AnAction {
       if (finalChoice && wrapper.available(executor)) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            if (myAction.getCurrentExecutor() == myAction.getAlternateExecutor()) {
+            if (executor == myAction.getAlternateExecutor()) {
               PropertiesComponent.getInstance().setValue(myAction.getAdKey(), Boolean.toString(true));
             }
 

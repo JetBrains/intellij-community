@@ -15,42 +15,45 @@
  */
 package com.intellij.spellchecker;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.spellchecker.dictionary.Loader;
-import com.intellij.spellchecker.dictionary.Processor;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 
 
 public class FileLoader implements Loader {
 
-    private String url;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.FileLoader");
 
-    public FileLoader(String url) {
-        this.url = url;
+  private String url;
+
+  public FileLoader(String url) {
+    this.url = url;
+  }
+
+  public void load(@NotNull Consumer<String> consumer) {
+    File file = new File(url);
+    FileInputStream stream = null;
+    try {
+      stream = new FileInputStream(file);
+      StreamLoader loader = new StreamLoader(stream);
+      loader.load(consumer);
     }
-
-    public void load(@NotNull Processor processor) {
-
-            InputStream io = SpellCheckerManager.class.getResourceAsStream(url);
-            DataInputStream in = new DataInputStream(io);
-            BufferedReader br = new BufferedReader(new InputStreamReader(in));
-          try{
-            String strLine;
-            while ((strLine = br.readLine()) != null) {
-                processor.process(strLine);
-            }
-            in.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-              br.close();
-            }
-            catch (IOException ignored) {
-
-            }
-          }
+    catch (Exception e) {
+      LOG.error(e);
     }
+    finally {
+      try {
+        stream.close();
+      }
+      catch (IOException ignored) {
+      }
+    }
+  }
+
 
 }

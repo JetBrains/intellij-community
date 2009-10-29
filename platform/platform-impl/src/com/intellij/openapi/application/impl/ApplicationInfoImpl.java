@@ -255,14 +255,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       }
     }
     else {
-      String bn = getBuildNumber();
-      if (!BUILD_STUB.equals(bn)) {
-        buffer.append('#');
-        buffer.append(bn);
-      }
-      else {
-        buffer.append("DevVersion");
-      }
+      buffer.append(getBuild().asString());
     }
     return buffer.toString();
   }

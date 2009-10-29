@@ -25,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 
+import java.beans.Introspector;
+
 /**
  * @author ilyas
  */
@@ -131,10 +133,10 @@ public class GroovyPropertyUtils {
 
     @NonNls String methodName = getterMethod.getName();
     if (methodName.startsWith("get") && methodName.length() > 3) {
-      return StringUtil.decapitalize(methodName.substring(3));
+      return decapitalize(methodName.substring(3));
     }
     else if (methodName.startsWith("is") && methodName.length() > 2 && PsiType.BOOLEAN.equals(getterMethod.getReturnType())) {
-      return StringUtil.decapitalize(methodName.substring(2));
+      return decapitalize(methodName.substring(2));
     }
     return methodName;
   }
@@ -190,7 +192,20 @@ public class GroovyPropertyUtils {
     return Character.toUpperCase(c) == c;
   }
 
-  public static boolean canBePropertyName(String name) {
+  /*public static boolean canBePropertyName(String name) {
     return !(name.length() > 1 && Character.isUpperCase(name.charAt(1)) && Character.isLowerCase(name.charAt(0)));
+  }*/
+
+  public static String capitalize(String s) {
+    if (s.length() == 0) return s;
+    if (s.length() == 1) return s.toUpperCase();
+    if (Character.isUpperCase(s.charAt(1))) return s;
+    final char[] chars = s.toCharArray();
+    chars[0] = Character.toUpperCase(chars[0]);
+    return new String(chars);
+  }
+
+  public static String decapitalize(String s) {
+    return Introspector.decapitalize(s);
   }
 }

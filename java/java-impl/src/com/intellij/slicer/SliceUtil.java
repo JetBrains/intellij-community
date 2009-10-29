@@ -217,9 +217,6 @@ public class SliceUtil {
     Collection<PsiMethod> superMethods = new THashSet<PsiMethod>(Arrays.asList(method.findDeepestSuperMethods()));
     superMethods.add(method);
     Collection<PsiMethod> overrides = new THashSet<PsiMethod>(superMethods);
-    //for (PsiMethod superMethod : superMethods) {
-    //  overrides.addAll(OverridingMethodsSearch.search(superMethod, parent.getScope().toSearchScope(), true).findAll());
-    //}
     final Set<PsiReference> processed = new THashSet<PsiReference>(); //usages of super method and overridden method can overlap
     for (final PsiMethod containingMethod : overrides) {
       if (!MethodReferencesSearch.search(containingMethod, parent.getScope().toSearchScope(), false).forEach(new Processor<PsiReference>() {

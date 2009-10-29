@@ -34,7 +34,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Options;
 import org.apache.oro.text.regex.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -69,8 +68,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private final Project myProject;
   private final ModuleManager myModuleManager;
   private final ExcludedEntriesConfiguration myExcludedEntriesConfiguration;
-
-  public int DEPLOY_AFTER_MAKE = Options.SHOW_DIALOG;
 
   private final Collection<BackendCompiler> myRegisteredCompilers = new ArrayList<BackendCompiler>();
   private JavacCompiler JAVAC_EXTERNAL_BACKEND;

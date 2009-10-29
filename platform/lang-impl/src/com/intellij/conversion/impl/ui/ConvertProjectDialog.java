@@ -65,13 +65,14 @@ public class ConvertProjectDialog extends DialogWrapper {
     }
 
     myBackupDir = ProjectConversionUtil.getBackupDir(context.getProjectBaseDir());
-    JLabel templateLabel = new JLabel();
     myTextPane.setFont(UIUtil.getLabelFont());
     myTextPane.setContentType("text/html");
-    myTextPane.setEditorKit(new HTMLEditorKit());
+    final HTMLEditorKit editorKit = new HTMLEditorKit();
+    editorKit.getStyleSheet().addRule(UIUtil.displayPropertiesToCSS(UIUtil.getLabelFont(), UIUtil.getLabelForeground()));
+    myTextPane.setEditorKit(editorKit);
     myTextPane.setEditable(false);
-    myTextPane.setBackground(templateLabel.getBackground());
-    myTextPane.setForeground(templateLabel.getForeground());
+    myTextPane.setBackground(UIUtil.getLabelBackground());
+    myTextPane.setForeground(UIUtil.getLabelForeground());
     myTextPane.setText(IdeBundle.message("label.text.project.has.older.format", context.getProjectFile().getName(), myBackupDir.getAbsolutePath()));
 
     myTextPane.addHyperlinkListener(new HyperlinkListener() {

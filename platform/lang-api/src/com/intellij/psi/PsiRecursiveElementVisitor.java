@@ -39,7 +39,7 @@ public abstract class PsiRecursiveElementVisitor extends PsiElementVisitor {
   public void visitElement(final PsiElement element) {
     level++;
     if (level < MAX_LEVEL_DEPTH) {
-      ProgressManager.getInstance().checkCanceled();
+      ProgressManager.checkCanceled();
 
       element.acceptChildren(this);
     }

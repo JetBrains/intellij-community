@@ -195,7 +195,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     JobUtil.invokeConcurrentlyUnderMyProgress(tools, new Processor<LocalInspectionTool>() {
       public boolean process(final LocalInspectionTool tool) {
         final ProgressManager progressManager = ProgressManager.getInstance();
-        progressManager.checkCanceled();
+        ProgressManager.checkCanceled();
         ProgressIndicator localIndicator = progressManager.getProgressIndicator();
 
         ProgressIndicator original = ((ProgressWrapper)localIndicator).getOriginalProgressIndicator();
@@ -211,7 +211,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         }
         tool.inspectionStarted(session);
         for (PsiElement element : elements) {
-          progressManager.checkCanceled();
+          ProgressManager.checkCanceled();
           element.accept(elementVisitor);
         }
         tool.inspectionFinished(session);

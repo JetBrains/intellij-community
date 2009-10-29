@@ -29,11 +29,8 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.jetbrains.annotations.Nullable;
 
 public class ModuleLinkImpl extends ModuleLink {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.deployment.ModuleLink");
@@ -41,15 +38,6 @@ public class ModuleLinkImpl extends ModuleLink {
   @NonNls private static final String TEMP_ELEMENT_NAME = "temp";
   private Module myModule;
   private String myModuleName;
-  private static final Map<PackagingMethod, String> methodToDescription = new HashMap<PackagingMethod, String>();
-
-  static {
-    methodToDescription.put(PackagingMethod.DO_NOT_PACKAGE, CompilerBundle.message("packaging.method.description.do.not.package"));
-    methodToDescription.put(PackagingMethod.COPY_FILES, CompilerBundle.message("packaging.method.description.copy.module.output"));
-    methodToDescription.put(PackagingMethod.JAR_AND_COPY_FILE, CompilerBundle.message("packaging.method.description.jar.module.and.copy"));
-    methodToDescription.put(PackagingMethod.JAR_AND_COPY_FILE_AND_LINK_VIA_MANIFEST, CompilerBundle.message("packaging.method.description.jar.module.link.via.manifest.and.copy"));
-    methodToDescription.put(PackagingMethod.INCLUDE_MODULE_IN_BUILD, CompilerBundle.message("packaging.method.description.include.module.in.build"));
-  }
 
   public ModuleLinkImpl(@NotNull Module module, @NotNull Module parentModule) {
     super(parentModule);
@@ -97,15 +85,6 @@ public class ModuleLinkImpl extends ModuleLink {
 
   public String getPresentableName() {
     return getName();
-  }
-
-  public String getDescription() {
-    final Module module = getModule();
-    return module == null ? "" : module.getModuleType().getName();
-  }
-
-  public String getDescriptionForPackagingMethod(PackagingMethod method) {
-    return methodToDescription.get(method);
   }
 
   public boolean resolveElement(ModulesProvider provider, final FacetsProvider facetsProvider) {

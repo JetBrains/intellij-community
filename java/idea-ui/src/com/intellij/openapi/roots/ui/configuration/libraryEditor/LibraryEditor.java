@@ -15,12 +15,14 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 
-public class LibraryEditor {
+public class LibraryEditor implements Disposable {
   private final Library myLibrary;
   private String myLibraryName = null;
   private Library.ModifiableModel myModel = null;
@@ -34,6 +36,9 @@ public class LibraryEditor {
       return myLibraryName;
     }
     return myLibrary.getName();
+  }
+
+  public void dispose() {
   }
 
   public String[] getUrls(OrderRootType rootType) {
@@ -83,10 +88,10 @@ public class LibraryEditor {
     }
   }
 
-
   public Library.ModifiableModel getModel() {
     if (myModel == null) {
       myModel = myLibrary.getModifiableModel();
+      Disposer.register(this, myModel);
     }
     return myModel;
   }

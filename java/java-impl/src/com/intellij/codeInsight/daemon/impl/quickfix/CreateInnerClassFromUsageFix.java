@@ -93,7 +93,8 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
     PsiElementListCellRenderer renderer = new PsiClassListCellRenderer();
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setCellRenderer(renderer);
-    renderer.installSpeedSearch(list);
+    final PopupChooserBuilder builder = new PopupChooserBuilder(list);
+    renderer.installSpeedSearch(builder);
 
     Runnable runnable = new Runnable() {
       public void run() {
@@ -118,7 +119,7 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
       }
     };
 
-    new PopupChooserBuilder(list).
+    builder.
       setTitle(QuickFixBundle.message("target.class.chooser.title")).
       setItemChoosenCallback(runnable).
       createPopup().

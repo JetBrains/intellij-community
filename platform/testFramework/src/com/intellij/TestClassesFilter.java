@@ -31,13 +31,12 @@ public class TestClassesFilter {
 
   private TestClassesFilter(Map<String, List<String>> filters) {
 
-    for (Iterator<String> eachGroupName = filters.keySet().iterator(); eachGroupName.hasNext();) {
-      String groupName = eachGroupName.next();
+    for (String groupName : filters.keySet()) {
       List<String> filterList = filters.get(groupName);
       ArrayList<Pattern> patterns = new ArrayList<Pattern>();
       myPatterns.put(groupName, patterns);
-      for (Iterator<String> iterator = filterList.iterator(); iterator.hasNext();) {
-        String filter = iterator.next().trim();
+      for (String aFilter : filterList) {
+        String filter = aFilter.trim();
         if (filter.length() == 0) continue;
         filter = filter.replaceAll("\\*", ".\\*");
         Pattern pattern = Pattern.compile(filter);
@@ -72,9 +71,8 @@ public class TestClassesFilter {
     }
   }
 
-  private boolean matches(Collection<Pattern> patterns, String className) {
-    for (Iterator<Pattern> iterator = patterns.iterator(); iterator.hasNext();) {
-      Pattern pattern = iterator.next();
+  private static boolean matches(Collection<Pattern> patterns, String className) {
+    for (Pattern pattern : patterns) {
       if (pattern.matcher(className).matches()) {
         return true;
       }
@@ -96,7 +94,7 @@ public class TestClassesFilter {
     }
   }
 
-  private boolean isAllExcludeDefinedGroup(String groupName) {
+  private static boolean isAllExcludeDefinedGroup(String groupName) {
     if (groupName == null){
       return true;
     }

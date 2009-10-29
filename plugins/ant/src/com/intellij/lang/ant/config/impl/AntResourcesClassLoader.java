@@ -28,7 +28,6 @@ import java.util.Set;
 *         Date: Oct 21, 2008
 */
 public class AntResourcesClassLoader extends UrlClassLoader {
-  private final ProgressManager myPm = ProgressManager.getInstance();
   private final Set<String> myMisses = new HashSet<String>();
 
   public AntResourcesClassLoader(final List<URL> urls, final ClassLoader parentLoader, final boolean canLockJars, final boolean canUseCache) {
@@ -43,7 +42,7 @@ public class AntResourcesClassLoader extends UrlClassLoader {
   }
 
   protected Class findClass(final String name) throws ClassNotFoundException {
-    myPm.checkCanceled();
+    ProgressManager.checkCanceled();
     try {
       return super.findClass(name);
     }

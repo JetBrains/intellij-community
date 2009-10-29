@@ -25,6 +25,7 @@ import java.util.List;
  * @author nik
  */
 public interface ArtifactEditor {
+  void updateLayoutTree();
 
   void putLibraryIntoDefaultLocation(@NotNull Library library);
 

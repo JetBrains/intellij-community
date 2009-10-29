@@ -35,13 +35,13 @@ import java.util.List;
 public class ModuleSourceItemGroup extends PackagingSourceItem {
   private final Module myModule;
 
-  public ModuleSourceItemGroup(Module module) {
+  public ModuleSourceItemGroup(@NotNull Module module) {
     super(false);
     myModule = module;
   }
 
   public SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
-    return new ModuleSourceItemPresentation(myModule);
+    return new ModuleSourceItemPresentation(myModule, context);
   }
 
   public boolean equals(Object obj) {
@@ -68,9 +68,11 @@ public class ModuleSourceItemGroup extends PackagingSourceItem {
 
   private static class ModuleSourceItemPresentation extends SourceItemPresentation {
     private final Module myModule;
+    private final ArtifactEditorContext myContext;
 
-    public ModuleSourceItemPresentation(Module module) {
+    public ModuleSourceItemPresentation(@NotNull Module module, ArtifactEditorContext context) {
       myModule = module;
+      myContext = context;
     }
 
     @Override
@@ -84,6 +86,21 @@ public class ModuleSourceItemGroup extends PackagingSourceItem {
       presentationData.setClosedIcon(myModule.getModuleType().getNodeIcon(false));
       presentationData.setOpenIcon(myModule.getModuleType().getNodeIcon(true));
       presentationData.addText(myModule.getName(), mainAttributes);
+    }
+
+    @Override
+    public boolean canNavigateToSource() {
+      return true;
+    }
+
+    @Override
+    public void navigateToSource() {
+      myContext.selectModule(myModule);
+    }
+
+    @Override
+    public Object getSourceObject() {
+      return myModule;
     }
 
     @Override

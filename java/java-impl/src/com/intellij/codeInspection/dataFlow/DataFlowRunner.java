@@ -124,7 +124,7 @@ public class DataFlowRunner {
       final long before = System.currentTimeMillis();
       while (!queue.isEmpty()) {
         if (!unitTestMode && System.currentTimeMillis() - before > timeLimit) return RunnerResult.TOO_COMPLEX;
-        ProgressManager.getInstance().checkCanceled();
+        ProgressManager.checkCanceled();
 
         DfaInstructionState instructionState = queue.remove(0);
         if (LOG.isDebugEnabled()) {

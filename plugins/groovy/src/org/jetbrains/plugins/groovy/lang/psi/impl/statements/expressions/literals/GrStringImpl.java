@@ -17,12 +17,14 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 /**
  * @author ilyas
@@ -38,7 +40,12 @@ public class GrStringImpl extends GrExpressionImpl implements GrString {
   }
 
   public PsiType getType() {
-    return getTypeByFQName("java.lang.String");
+    if (findChildByClass(GrStringInjection.class) != null) {
+      return getTypeByFQName(GrStringUtil.GROOVY_LANG_GSTRING);
+    }
+    else {
+      return getTypeByFQName(CommonClassNames.JAVA_LANG_STRING);
+    }
   }
 
   public boolean isPlainString() {

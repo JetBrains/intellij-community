@@ -116,9 +116,9 @@
   </grid>
   <buttonGroups>
     <group name="myInstrumentation">
-      <member id="ce761"/>
-      <member id="75c70"/>
-      <member id="dfc95"/>
+      <member id="633b5"/>
+      <member id="a7682"/>
+      <member id="a7ed5"/>
     </group>
   </buttonGroups>
 </form>

@@ -35,8 +35,6 @@ public abstract class ShowSuggestions implements LocalQuickFix, Iconable {
   private boolean processed;
 
 
-
-
   public ShowSuggestions(@NotNull TextRange textRange, @NotNull String word, @NotNull Project project) {
     this.textRange = textRange;
     this.word = word;

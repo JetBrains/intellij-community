@@ -25,6 +25,7 @@ import java.util.*;
 
 class FilterCache {
   private final ArrayList<TestProxy> myList = new ArrayList<TestProxy>(4);
+  private final Set<TestProxy> mySet = new HashSet<TestProxy>();
   private final Map<Filter, ArrayList<TestProxy>> myCache = new THashMap<Filter, ArrayList<TestProxy>>();
 
   public TestProxy[] select(final Filter filter) {
@@ -46,7 +47,12 @@ class FilterCache {
 
   public void add(final TestProxy test) {
     myList.add(test);
+    mySet.add(test);
     resetCache();
+  }
+
+  public boolean contains(TestProxy test) {
+    return mySet.contains(test);
   }
 
   public AbstractTestProxy detect(final Filter filter) {

@@ -31,7 +31,7 @@ public class ClassMap<T> {
     this(new THashMap<Class, T>());
   }
   protected ClassMap(Map<Class, T> map) {
-    myMap = map;
+    myMap = map; 
   }
 
   public void put(Class aClass, T value) {
@@ -66,5 +66,9 @@ public class ClassMap<T> {
 
   public final Collection<T> values() {
     return myMap.values();
+  }
+
+  public void clear() {
+    myMap.clear();
   }
 }

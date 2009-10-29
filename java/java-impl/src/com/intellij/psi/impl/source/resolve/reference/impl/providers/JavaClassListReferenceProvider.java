@@ -21,8 +21,8 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -88,7 +88,7 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
             return true;
           }
         }.getAllReferences()));
-        ProgressManager.getInstance().checkCanceled();
+        ProgressManager.checkCanceled();
       }
     }
     return results.toArray(new PsiReference[results.size()]);

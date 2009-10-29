@@ -141,9 +141,17 @@ public class IndexingStamp {
   };
 
   public static boolean isFileIndexed(VirtualFile file, ID<?, ?> indexName, final long indexCreationStamp) {
-    if (file instanceof NewVirtualFile && file.isValid()) {
-      synchronized (myTimestampsCache) {
-        return myTimestampsCache.get(file).get(indexName) == indexCreationStamp;
+    try {
+      if (file instanceof NewVirtualFile && file.isValid()) {
+        synchronized (myTimestampsCache) {
+          return myTimestampsCache.get(file).get(indexName) == indexCreationStamp;
+        }
+      }
+    }
+    catch (RuntimeException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof IOException) {
+        FileBasedIndex.getInstance().requestRebuild(indexName, cause);
       }
     }
 

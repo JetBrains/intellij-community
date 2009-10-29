@@ -38,7 +38,7 @@ public class ExtConnection extends ConnectionOnProcess {
 
   @NonNls public static final String DEFAULT_RSH = "ssh";
 
-  public static final int DEFAULT_PORT = 9999;
+  public static final int DEFAULT_PORT = 22;
 
   private final String myHost;
   private final String myUserName;

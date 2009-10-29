@@ -437,7 +437,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       }
     }
     for (final Condition<VirtualFile> filter : myFilters) {
-      ProgressManager.getInstance().checkCanceled();
+      ProgressManager.checkCanceled();
       if (filter.value(virtualFile)) {
         return true;
       }

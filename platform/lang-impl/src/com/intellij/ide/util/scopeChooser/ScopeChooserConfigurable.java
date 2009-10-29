@@ -20,6 +20,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.NonDefaultProjectConfigurable;
@@ -41,9 +42,13 @@ import com.intellij.util.Icons;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -53,10 +58,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Set;
+import java.util.*;
 
 /**
  * User: anna
@@ -65,7 +67,7 @@ import java.util.Set;
 public class ScopeChooserConfigurable extends MasterDetailsComponent implements NonDefaultProjectConfigurable, SearchableConfigurable {
   private static final Icon SCOPES = IconLoader.getIcon("/ide/scopeConfigurable.png");
   private static final Icon SAVE_ICON = IconLoader.getIcon("/runConfigurations/saveTempConfig.png");
-
+  private ScopeChooserConfigurableState myScopesState = new ScopeChooserConfigurableState();
   private final NamedScopesHolder myLocalScopesManager;
   private final NamedScopesHolder mySharedScopesManager;
 
@@ -85,7 +87,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     mySharedScopesManager = DependencyValidationManager.getInstance(project);
     myProject = project;
 
-    ServiceManager.getService(project, MasterDetailsStateService.class).register("ScopeChooserConfigurable.UI", this);
+    MasterDetailsStateService.getInstance(project).register("ScopeChooserConfigurable.UI", this);
     initTree();
   }
 
@@ -124,14 +126,24 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     loadStateOrder();
   }
 
+  @Override
+  protected PersistentStateComponent<?> getAdditionalSettings() {
+    return myScopesState;
+  }
+
+  @TestOnly
+  public void loadScopesState(ScopeChooserConfigurableState scopesState) {
+    myScopesState = scopesState;
+  }
+
   public boolean isModified() {
-    if (myRoot.getChildCount() != myState.order.size()) return true;
+    if (myRoot.getChildCount() != myScopesState.myOrder.size()) return true;
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final MyNode node = (MyNode)myRoot.getChildAt(i);
       final ScopeConfigurable scopeConfigurable = (ScopeConfigurable)node.getConfigurable();
       final NamedScope namedScope = scopeConfigurable.getEditableObject();
-      if (myState.order.size() <= i) return true;
-      final String name = myState.order.get(i);
+      if (myScopesState.myOrder.size() <= i) return true;
+      final String name = myScopesState.myOrder.get(i);
       if (!Comparing.strEqual(name, namedScope.getName())) return true;
       if (isInitialized(scopeConfigurable)) {
         final NamedScopesHolder holder = scopeConfigurable.getHolder();
@@ -171,17 +183,17 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
 
     TreeUtil.sort(myRoot, new Comparator<DefaultMutableTreeNode>() {
       public int compare(final DefaultMutableTreeNode o1, final DefaultMutableTreeNode o2) {
-        final int idx1 = myState.order.indexOf(((MyNode)o1).getDisplayName());
-        final int idx2 = myState.order.indexOf(((MyNode)o2).getDisplayName());
+        final int idx1 = myScopesState.myOrder.indexOf(((MyNode)o1).getDisplayName());
+        final int idx2 = myScopesState.myOrder.indexOf(((MyNode)o2).getDisplayName());
         return idx1 - idx2;
       }
     });
   }
 
   private void loadStateOrder() {
-    myState.order.clear();
+    myScopesState.myOrder.clear();
     for (int i = 0; i < myRoot.getChildCount(); i++) {
-      myState.order.add(((MyNode)myRoot.getChildAt(i)).getDisplayName());
+      myScopesState.myOrder.add(((MyNode)myRoot.getChildAt(i)).getDisplayName());
     }
   }
 
@@ -491,6 +503,20 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
 
     public ScopeChooserConfigurable getInstance() {
       return myConfigurable;
+    }
+  }
+
+  public static class ScopeChooserConfigurableState implements PersistentStateComponent<ScopeChooserConfigurableState> {
+    @Tag("order")
+    @AbstractCollection(surroundWithTag = false, elementTag = "scope", elementValueAttribute = "name")
+    public List<String> myOrder = new ArrayList<String>();
+
+    public ScopeChooserConfigurableState getState() {
+      return this;
+    }
+
+    public void loadState(ScopeChooserConfigurableState state) {
+      XmlSerializerUtil.copyBean(state, this);
     }
   }
 }

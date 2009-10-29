@@ -134,8 +134,13 @@ public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
     if (myNamespace == null) {
       return null;
     }
-    final XmlSchemaProvider provider = XmlSchemaProvider.getAvailableProvider(file);
-    return provider == null ? null : provider.getDefaultPrefix(myNamespace, file);
+    for (XmlSchemaProvider provider : XmlSchemaProvider.getAvailableProviders(file)) {
+      String prefix = provider.getDefaultPrefix(myNamespace, file);
+      if (prefix != null) {
+        return prefix;
+      }
+    }
+    return null; 
   }
 
   protected Set<String> getNamespaces(final XmlFile file) {

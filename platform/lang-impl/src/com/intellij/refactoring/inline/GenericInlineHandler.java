@@ -28,6 +28,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -79,7 +80,7 @@ public class GenericInlineHandler {
     final Project project = element.getProject();
     if (!conflicts.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        throw new ConflictsFoundInTestException("Refactoring cannot be performed:" + conflicts.values().iterator().next());
+        throw new BaseRefactoringProcessor.ConflictsInTestsException(conflicts.values());
       } else {
         final ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
         conflictsDialog.show();
@@ -154,12 +155,6 @@ public class GenericInlineHandler {
     final InlineHandler.Inliner inliner = inliners.get(language);
     if (inliner != null) {
       inliner.inlineUsage(usage, element);
-    }
-  }
-
-  public static class ConflictsFoundInTestException extends RuntimeException {
-    public ConflictsFoundInTestException(String message) {
-      super(message);
     }
   }
 

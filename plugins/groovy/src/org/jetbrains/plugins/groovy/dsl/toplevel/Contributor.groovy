@@ -21,7 +21,7 @@ class Contributor {
   }
 
   def getApplyFunction(delegate, PsiElement place, String fqn) {
-    def f = whatToDo.clone()
+    Closure f = whatToDo.clone()
 
     f.delegate = delegate
     f.resolveStrategy = Closure.DELEGATE_FIRST
@@ -38,7 +38,7 @@ class Contributor {
         try {
           if (ctx && ctx.isApplicable(place, fqn)) {
             use(cats) {
-              f()
+              f.call()
             }
           }
         }

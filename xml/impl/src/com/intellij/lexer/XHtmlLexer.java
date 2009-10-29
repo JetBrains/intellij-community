@@ -28,7 +28,7 @@ public class XHtmlLexer extends HtmlLexer {
   }
 
   public XHtmlLexer() {
-    this(new XmlLexer());
+    this(new XmlLexer(true));
   }
 
   protected boolean isHtmlTagState(int state) {

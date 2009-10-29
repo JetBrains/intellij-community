@@ -533,7 +533,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       fileName), text, LocalTimeCounter.currentTime(), false);
   }
 
-  protected static PsiFile createPseudoPhysicalFile(String fileName, String text) throws IncorrectOperationException {
+  protected static PsiFile createPseudoPhysicalFile(@NonNls String fileName, String text) throws IncorrectOperationException {
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
     return PsiFileFactory.getInstance(getProject()).createFileFromText(fileName, fileType, text, LocalTimeCounter.currentTime(), true);
   }

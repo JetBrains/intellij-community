@@ -71,7 +71,7 @@ public class PushDownConflicts {
     }
   }
 
-  public void checkTargetClassConflicts(PsiClass targetClass) {
+  public void checkTargetClassConflicts(PsiClass targetClass, boolean checkStatic) {
     for (final PsiMember movedMember : myMovedMembers) {
       checkMemberPlacementInTargetClassConflict(targetClass, movedMember);
     }
@@ -84,12 +84,23 @@ public class PushDownConflicts {
           final PsiExpression qualifier = referenceExpression.getQualifierExpression();
           if (qualifier != null) {
             final PsiType qualifierType = qualifier.getType();
+            PsiClass aClass = null;
             if (qualifierType instanceof PsiClassType) {
-              final PsiClass aClass = ((PsiClassType)qualifierType).resolve();
-              if (!InheritanceUtil.isInheritorOrSelf(aClass, targetClass, true)) {
-                myConflicts.putValue(aClass, RefactoringBundle.message("pushed.members.will.not.be.visible.from.certain.call.sites"));
-                break Members;
+              aClass = ((PsiClassType)qualifierType).resolve();
+            }
+            else {
+              if (!checkStatic) continue;
+              if (qualifier instanceof PsiReferenceExpression) {
+                final PsiElement resolved = ((PsiReferenceExpression)qualifier).resolve();
+                if (resolved instanceof PsiClass) {
+                  aClass = (PsiClass)resolved;
+                }
               }
+            }
+
+            if (!InheritanceUtil.isInheritorOrSelf(aClass, targetClass, true)) {
+              myConflicts.putValue(aClass, RefactoringBundle.message("pushed.members.will.not.be.visible.from.certain.call.sites"));
+              break Members;
             }
           }
         }

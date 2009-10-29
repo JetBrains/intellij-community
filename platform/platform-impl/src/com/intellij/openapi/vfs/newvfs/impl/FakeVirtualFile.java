@@ -49,4 +49,9 @@ public class FakeVirtualFile extends StubVirtualFile {
   public String getName() {
     return myName;
   }
+
+  @Override
+  public String toString() {
+    return getPath();
+  }
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.lifecycle.AtomicSectionsAware;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsListener;
@@ -25,5 +26,5 @@ public interface ChangesOnServerTracker extends PlusMinus<Pair<String, AbstractV
   // todo add vcs parameter???
   void invalidate(final Collection<String> paths);
   boolean isUpToDate(final Change change);
-  boolean updateStep();
+  boolean updateStep(final AtomicSectionsAware atomicSectionsAware);
 }

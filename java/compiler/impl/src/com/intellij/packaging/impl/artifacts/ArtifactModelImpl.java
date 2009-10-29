@@ -152,7 +152,8 @@ public class ArtifactModelImpl extends ArtifactModelBase implements ModifiableAr
   }
 
   @Nullable
-  public ArtifactImpl getModifiableCopy(ArtifactImpl artifact) {
+  public ArtifactImpl getModifiableCopy(Artifact artifact) {
+    //noinspection SuspiciousMethodCalls
     return myArtifact2ModifiableCopy.get(artifact);
   }
 

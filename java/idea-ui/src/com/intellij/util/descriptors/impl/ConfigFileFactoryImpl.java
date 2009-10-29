@@ -55,10 +55,6 @@ public class ConfigFileFactoryImpl extends ConfigFileFactory {
     return new ConfigFileContainerImpl(project, metaDataProvider, (ConfigFileInfoSetImpl)configuration);
   }
 
-  public CustomConfigFileSet createCustomConfigFileSet() {
-    return new CustomConfigFileSetImpl();
-  }
-
   private static String getText(final String templateName) throws IOException {
     final FileTemplateManager templateManager = FileTemplateManager.getInstance();
     final FileTemplate template = templateManager.getJ2eeTemplate(templateName);

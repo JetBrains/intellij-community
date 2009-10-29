@@ -19,8 +19,10 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
@@ -213,8 +215,12 @@ public abstract class CompletionContributor extends AbstractCompletionContributo
     return KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(actionId));
   }
 
-  public static List<CompletionContributor> forParameters(CompletionParameters parameters) {
-    return forLanguage(PsiUtilBase.getLanguageAtOffset(parameters.getPosition().getContainingFile(), parameters.getOffset()));
+  public static List<CompletionContributor> forParameters(final CompletionParameters parameters) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<List<CompletionContributor>>() {
+      public List<CompletionContributor> compute() {
+        return forLanguage(PsiUtilBase.getLanguageAtOffset(parameters.getPosition().getContainingFile(), parameters.getOffset()));
+      }
+    });
   }
 
   public static List<CompletionContributor> forLanguage(Language language) {

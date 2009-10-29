@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,6 +34,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -185,6 +187,23 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     };
   }
 
+  public void installSpeedSearch(PopupChooserBuilder builder) {
+    builder.setFilteringEnabled(new Function<Object, String>() {
+      public String fun(Object o) {
+        if (o instanceof PsiElement) {
+          return PsiElementListCellRenderer.this.getElementText((T)o);
+        }
+        else {
+          return o.toString();
+        }
+      }
+    });
+  }
+
+  /**
+   * User {@link #installSpeedSearch(com.intellij.openapi.ui.popup.PopupChooserBuilder)} instead
+   */
+  @Deprecated
   public void installSpeedSearch(JList list) {
     new ListSpeedSearch(list) {
       protected String getElementText(Object o) {

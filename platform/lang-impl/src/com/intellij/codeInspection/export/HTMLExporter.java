@@ -87,7 +87,7 @@ public class HTMLExporter {
     final String fullPath = folder + File.separator + fileName;
 
     if (indicator != null) {
-      ProgressManager.getInstance().checkCanceled();
+      ProgressManager.checkCanceled();
       indicator.setText(InspectionsBundle.message("inspection.export.generating.html.for", fullPath));
     }
 

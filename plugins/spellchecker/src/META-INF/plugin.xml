@@ -48,11 +48,11 @@
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
 
-    <projectService serviceInterface="com.intellij.spellchecker.options.SpellCheckerConfiguration"
-                    serviceImplementation="com.intellij.spellchecker.options.SpellCheckerConfiguration"/>
+    <projectService serviceInterface="com.intellij.spellchecker.settings.SpellCheckerSettings"
+                    serviceImplementation="com.intellij.spellchecker.settings.SpellCheckerSettings"/>
     <projectService serviceInterface="com.intellij.spellchecker.SpellCheckerManager"
                     serviceImplementation="com.intellij.spellchecker.SpellCheckerManager"/>
-    <projectConfigurable implementation="com.intellij.spellchecker.options.SpellCheckerConfigurable"/>
+    <projectConfigurable implementation="com.intellij.spellchecker.settings.SpellCheckerSettingsManager"/>
 
 
     <inspectionToolProvider

@@ -34,11 +34,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
   private final Map<Key, UpdatableValueContainer<Value>> myMap = new HashMap<Key,UpdatableValueContainer<Value>>();
   private final IndexStorage<Key, Value> myBackendStorage;
-  private final AtomicBoolean myBufferingEnabled = new AtomicBoolean(false);
   private final List<BufferingStateListener> myListeners = ContainerUtil.createEmptyCOWList();
-
-  public static interface BufferingStateListener {
+  private final AtomicBoolean myBufferingEnabled = new AtomicBoolean(false);
+  
+  public interface BufferingStateListener {
     void bufferingStateChanged(boolean newState);
+    void memoryStorageCleared();
   }
   
   public MemoryIndexStorage(IndexStorage<Key, Value> backend) {
@@ -53,11 +54,8 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
     myListeners.remove(listener);
   }
   
-  public synchronized void setBufferingEnabled(boolean enabled) {
+  public void setBufferingEnabled(boolean enabled) {
     final boolean wasEnabled = myBufferingEnabled.getAndSet(enabled);
-    if (wasEnabled && !enabled) {
-      myMap.clear();
-    }
     if (wasEnabled != enabled) {
       for (BufferingStateListener listener : myListeners) {
         listener.bufferingStateChanged(enabled);
@@ -65,12 +63,22 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
     }
   }
 
+  public void clearMemoryMap() {
+    myMap.clear();
+  }
+
+  public void fireMemoryStorageCleared() {
+    for (BufferingStateListener listener : myListeners) {
+      listener.memoryStorageCleared();
+    }
+  }
+
   public void close() throws StorageException {
     myBackendStorage.close();
   }
 
-  public synchronized void clear() throws StorageException {
-    myMap.clear();
+  public void clear() throws StorageException {
+    clearMemoryMap();
     myBackendStorage.clear();
   }
 
@@ -84,58 +92,65 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
     return keys;
   }
 
-  public synchronized boolean processKeys(final Processor<Key> processor) throws StorageException {
-    if (myBufferingEnabled.get()) {
-      final Set<Key> stopList = new HashSet<Key>();
+  public boolean processKeys(final Processor<Key> processor) throws StorageException {
+    final Set<Key> stopList = new HashSet<Key>();
 
-      Processor<Key> decoratingProcessor = new Processor<Key>() {
-        public boolean process(final Key key) {
-          if (stopList.contains(key)) return true;
+    Processor<Key> decoratingProcessor = new Processor<Key>() {
+      public boolean process(final Key key) {
+        if (stopList.contains(key)) return true;
 
-          final UpdatableValueContainer<Value> container = myMap.get(key);
-          if (container != null && container.size() == 0) return true;
-          return processor.process(key);
-        }
-      };
-
-      for (Key key : myMap.keySet()) {
-        if (!decoratingProcessor.process(key)) return false;
-        stopList.add(key);
+        final UpdatableValueContainer<Value> container = myMap.get(key);
+        if (container != null && container.size() == 0) return true;
+        return processor.process(key);
       }
-      return myBackendStorage.processKeys(decoratingProcessor);
+    };
+
+    for (Key key : myMap.keySet()) {
+      if (!decoratingProcessor.process(key)) return false;
+      stopList.add(key);
     }
-    else {
-      return myBackendStorage.processKeys(processor);
-    }
+    return myBackendStorage.processKeys(decoratingProcessor);
   }
 
   public void addValue(final Key key, final int inputId, final Value value) throws StorageException {
-    if (!myBufferingEnabled.get()) {
-      myBackendStorage.addValue(key, inputId, value);
+    if (myBufferingEnabled.get()) {
+      getMemValueContainer(key).addValue(inputId, value);
       return;
     }
-    getMemValueContainer(key).addValue(inputId, value);
+    final UpdatableValueContainer<Value> valueContainer = myMap.get(key);
+    if (valueContainer != null) {
+      valueContainer.addValue(inputId, value);
+    }
+
+    myBackendStorage.addValue(key, inputId, value);
   }
 
   public void removeValue(final Key key, final int inputId, final Value value) throws StorageException {
     if (myBufferingEnabled.get()) {
       getMemValueContainer(key).removeValue(inputId, value);
+      return;
     }
-    else {
-      myBackendStorage.removeValue(key, inputId, value);
+    final UpdatableValueContainer<Value> valueContainer = myMap.get(key);
+    if (valueContainer != null) {
+      valueContainer.removeValue(inputId, value);
     }
+    myBackendStorage.removeValue(key, inputId, value);
   }
 
   public void removeAllValues(Key key, int inputId) throws StorageException {
     if (myBufferingEnabled.get()) {
       getMemValueContainer(key).removeAllValues(inputId);
+      return;
     }
-    else {
-      myBackendStorage.removeAllValues(key, inputId);
+    final UpdatableValueContainer<Value> valueContainer = myMap.get(key);
+    if (valueContainer != null) {
+      valueContainer.removeAllValues(inputId);
     }
+
+    myBackendStorage.removeAllValues(key, inputId);
   }
 
-  private synchronized UpdatableValueContainer<Value> getMemValueContainer(final Key key) {
+  private UpdatableValueContainer<Value> getMemValueContainer(final Key key) {
     UpdatableValueContainer<Value> valueContainer = myMap.get(key);
     if (valueContainer == null) {
       valueContainer = new ChangeTrackingValueContainer<Value>(new ChangeTrackingValueContainer.Initializer<Value>() {
@@ -158,14 +173,12 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
   }
 
   @NotNull
-  public synchronized ValueContainer<Value> read(final Key key) throws StorageException {
-    if (!myBufferingEnabled.get()) {
-      return myBackendStorage.read(key);
-    }
+  public ValueContainer<Value> read(final Key key) throws StorageException {
     final ValueContainer<Value> valueContainer = myMap.get(key);
     if (valueContainer != null) {
       return valueContainer;
     }
+    
     return myBackendStorage.read(key);
   }
 

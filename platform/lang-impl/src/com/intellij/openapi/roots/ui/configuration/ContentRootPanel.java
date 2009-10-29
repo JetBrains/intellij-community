@@ -62,24 +62,25 @@ public abstract class ContentRootPanel extends JPanel {
   private static final Icon DELETE_FOLDER_ICON = IconLoader.getIcon("/modules/deleteContentFolder.png");
   private static final Icon DELETE_FOLDER_ROLLOVER_ICON = IconLoader.getIcon("/modules/deleteContentFolderRollover.png");
 
-  protected final ContentEntry myContentEntry;
   protected final ActionCallback myCallback;
   private JComponent myHeader;
   private JComponent myBottom;
   private final Map<JComponent, Color> myComponentToForegroundMap = new HashMap<JComponent, Color>();
 
-  public static interface ActionCallback {
+  public interface ActionCallback {
     void deleteContentEntry();
     void deleteContentFolder(ContentEntry contentEntry, ContentFolder contentFolder);
     void navigateFolder(ContentEntry contentEntry, ContentFolder contentFolder);
     void setPackagePrefix(SourceFolder folder, String prefix);
   }
 
-  public ContentRootPanel(ContentEntry contentEntry, ActionCallback callback) {
+  public ContentRootPanel(ActionCallback callback) {
     super(new GridBagLayout());
-    myContentEntry = contentEntry;
     myCallback = callback;
   }
+
+  @Nullable
+  protected abstract ContentEntry getContentEntry();
 
   public void initUI() {
     myHeader = createHeader();
@@ -98,10 +99,10 @@ public abstract class ContentRootPanel extends JPanel {
 
   private JComponent createHeader() {
     final JPanel panel = new JPanel(new GridBagLayout());
-    final JLabel headerLabel = new JLabel(toDisplayPath(myContentEntry.getUrl()));
+    final JLabel headerLabel = new JLabel(toDisplayPath(getContentEntry().getUrl()));
     headerLabel.setFont(headerLabel.getFont().deriveFont(Font.BOLD));
     headerLabel.setOpaque(false);
-    if (myContentEntry.getFile() == null) {
+    if (getContentEntry().getFile() == null) {
       headerLabel.setForeground(Color.RED);
     }
     final IconActionComponent deleteIconComponent = new IconActionComponent(DELETE_ROOT_ICON, DELETE_ROOT_ROLLOVER_ICON,
@@ -163,7 +164,7 @@ public abstract class ContentRootPanel extends JPanel {
 
   private JComponent createFolderComponent(final ContentFolder folder, Color foreground) {
     final VirtualFile folderFile = folder.getFile();
-    final VirtualFile contentEntryFile = myContentEntry.getFile();
+    final VirtualFile contentEntryFile = getContentEntry().getFile();
     final String packagePrefix = folder instanceof SourceFolder? ((SourceFolder)folder).getPackagePrefix() : "";
     if (folderFile != null && contentEntryFile != null) {
       String path = folderFile.equals(contentEntryFile)? "." :VfsUtil.getRelativePath(folderFile, contentEntryFile, File.separatorChar);
@@ -174,14 +175,14 @@ public abstract class ContentRootPanel extends JPanel {
       hyperlinkLabel.setMinimumSize(new Dimension(0, 0));
       hyperlinkLabel.addHyperlinkListener(new HyperlinkListener() {
         public void hyperlinkUpdate(HyperlinkEvent e) {
-          myCallback.navigateFolder(myContentEntry, folder);
+          myCallback.navigateFolder(getContentEntry(), folder);
         }
       });
       registerTextComponent(hyperlinkLabel, foreground);
       return new UnderlinedPathLabel(hyperlinkLabel);
     }
     else {
-      String path = toRelativeDisplayPath(folder.getUrl(), myContentEntry.getUrl());
+      String path = toRelativeDisplayPath(folder.getUrl(), getContentEntry().getUrl());
       if (packagePrefix.length() > 0) {
         path = path + " (" + packagePrefix + ")";
       }
@@ -195,7 +196,7 @@ public abstract class ContentRootPanel extends JPanel {
 
   private JComponent createFolderDeleteComponent(final ContentFolder folder) {
     final String tooltipText;
-    if (folder.getFile() != null && myContentEntry.getFile() != null) {
+    if (folder.getFile() != null && getContentEntry().getFile() != null) {
       if (folder instanceof SourceFolder) {
         tooltipText = ((SourceFolder)folder).isTestSource()
                       ? ProjectBundle.message("module.paths.unmark.tests.tooltip")
@@ -213,7 +214,7 @@ public abstract class ContentRootPanel extends JPanel {
     }
     return new IconActionComponent(DELETE_FOLDER_ICON, DELETE_FOLDER_ROLLOVER_ICON, tooltipText, new Runnable() {
       public void run() {
-        myCallback.deleteContentFolder(myContentEntry, folder);
+        myCallback.deleteContentFolder(getContentEntry(), folder);
       }
     });
   }
@@ -223,10 +224,11 @@ public abstract class ContentRootPanel extends JPanel {
   }
 
   public boolean isUnderExcludedDirectory(final VirtualFile file) {
-    if (myContentEntry == null) {
+    final ContentEntry contentEntry = getContentEntry();
+    if (contentEntry == null) {
       return false;
     }
-    final ExcludeFolder[] excludeFolders = myContentEntry.getExcludeFolders();
+    final ExcludeFolder[] excludeFolders = contentEntry.getExcludeFolders();
     for (ExcludeFolder excludeFolder : excludeFolders) {
       final VirtualFile excludedDir = excludeFolder.getFile();
       if (excludedDir == null) {
@@ -239,11 +241,13 @@ public abstract class ContentRootPanel extends JPanel {
     return false;
   }
 
+  @Nullable
   public ExcludeFolder getExcludeFolder(VirtualFile file) {
-    if (myContentEntry == null) {
+    final ContentEntry contentEntry = getContentEntry();
+    if (contentEntry == null) {
       return null;
     }
-    final ExcludeFolder[] excludeFolders = myContentEntry.getExcludeFolders();
+    final ExcludeFolder[] excludeFolders = contentEntry.getExcludeFolders();
     for (final ExcludeFolder excludeFolder : excludeFolders) {
       final VirtualFile f = excludeFolder.getFile();
       if (f == null) {

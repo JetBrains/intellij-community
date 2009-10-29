@@ -99,7 +99,7 @@ public class ResolveCache {
                                         Map<? super TRef,Reference<TResult>>[] maps,
                                         boolean needToPreventRecursion,
                                         boolean incompleteCode) {
-    ProgressManager.getInstance().checkCanceled();
+    ProgressManager.checkCanceled();
 
     int clearCountOnStart = myClearCount.intValue();
 

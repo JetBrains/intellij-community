@@ -84,13 +84,13 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
 
     int caretOffset = myEditor.getCaretModel().getOffset();
     for (int i = visibleHighlights.size() - 1; i >= 0; i--) {
-      ProgressManager.getInstance().checkCanceled();
+      ProgressManager.checkCanceled();
       HighlightInfo info = visibleHighlights.get(i);
       if (info.startOffset <= caretOffset && showAddImportHint(info)) return;
     }
 
     for (int i = 0; i < visibleHighlights.size(); i++) {
-      ProgressManager.getInstance().checkCanceled();
+      ProgressManager.checkCanceled();
       HighlightInfo info = visibleHighlights.get(i);
       if (info.startOffset > caretOffset && showAddImportHint(info)) return;
     }

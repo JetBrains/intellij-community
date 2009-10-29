@@ -263,7 +263,8 @@ public class LibraryTableEditor implements Disposable {
   }
 
   private void removeLibrary(Library library) {
-    myLibraryToEditorMap.remove(library);
+    final LibraryEditor libraryEditor = myLibraryToEditorMap.remove(library);
+    if (libraryEditor != null) Disposer.dispose(libraryEditor);
     myTableModifiableModel.removeLibrary(library);
     if (myProject != null){
       ModuleStructureConfigurable.getInstance(myProject).fireItemsChangeListener(library);
@@ -278,6 +279,7 @@ public class LibraryTableEditor implements Disposable {
       public void run() {
         for (LibraryEditor libraryEditor : myLibraryToEditorMap.values()) {
           libraryEditor.commit();
+          Disposer.dispose(libraryEditor);
         }
         myTableModifiableModel.commit();
       }
@@ -287,6 +289,10 @@ public class LibraryTableEditor implements Disposable {
   }
 
   public void cancelChanges() {
+    for (LibraryEditor libraryEditor : new ArrayList<LibraryEditor>(myLibraryToEditorMap.values())) {
+      Disposer.dispose(libraryEditor);
+    }
+
     myLibraryToEditorMap.clear();
   }
 
@@ -314,7 +320,7 @@ public class LibraryTableEditor implements Disposable {
   }
 
   private Object[] getSelectedElements() {
-    if (myTreeBuilder.isDisposed()) return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    if (myTreeBuilder == null || myTreeBuilder.isDisposed()) return ArrayUtil.EMPTY_OBJECT_ARRAY;
     final TreePath[] selectionPaths = myTreeBuilder.getTree().getSelectionPaths();
     if (selectionPaths == null) {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
@@ -351,7 +357,7 @@ public class LibraryTableEditor implements Disposable {
 
   @Nullable
   private Library getSelectedLibrary() {
-    if (myTreeBuilder.getTreeStructure() instanceof LibraryTreeStructure) {
+    if (myTreeBuilder != null && myTreeBuilder.getTreeStructure() instanceof LibraryTreeStructure) {
       return ((LibraryTreeStructure)myTreeBuilder.getTreeStructure()).getLibrary();
     } else {
       return convertElementToLibrary(getSelectedElement());
@@ -423,7 +429,7 @@ public class LibraryTableEditor implements Disposable {
   }
 
   public void dispose() {
-
+    myTreeBuilder = null;
   }
 
   private class AddLibraryAction implements ActionListener {

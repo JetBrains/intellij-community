@@ -33,8 +33,22 @@ public class GroovyActionsTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testSelectWordBeforeMethod() throws Throwable {
+    doTestForSelectWord(1);
+  }
+
+  public void testSWInGString1() throws Exception {doTestForSelectWord(1);}
+  public void testSWInGString2() throws Exception {doTestForSelectWord(2);}
+  public void testSWInGString3() throws Exception {doTestForSelectWord(3);}
+  public void testSWInGString4() throws Exception {doTestForSelectWord(4);}
+  public void testSWInGString5() throws Exception {doTestForSelectWord(5);}
+  public void testSWInParameterList() throws Exception {doTestForSelectWord(3);}
+
+  private void doTestForSelectWord(int count) throws Exception {
     myFixture.configureByFile(getTestName(false) + ".groovy");
-    performEditorAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET);
+    myFixture.getEditor().getSettings().setCamelWords(true);
+    for (int i = 0; i < count; i++) {
+      performEditorAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET);
+    }
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }
 

@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.lifecycle.AtomicSectionsAware;
+import com.intellij.lifecycle.ControlledAlarmFactory;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
@@ -82,15 +85,17 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
   }
 
-  public boolean updateStep() {
+  public boolean updateStep(final AtomicSectionsAware atomicSectionsAware) {
     final List<LazyRefreshingSelfQueue<String>> list = new ArrayList<LazyRefreshingSelfQueue<String>>();
     mySomethingChanged = false;
     synchronized (myLock) {
       list.addAll(myRefreshingQueues.values());
     }
     LOG.debug("queues refresh started, queues: " + list.size());
+    final ProgressIndicator pi = ControlledAlarmFactory.createProgressIndicator(atomicSectionsAware);
     for (LazyRefreshingSelfQueue<String> queue : list) {
-      queue.updateStep();
+      atomicSectionsAware.checkShouldExit();
+      queue.updateStep(pi);
     }
     return mySomethingChanged;
   }
@@ -210,6 +215,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
 
     public void consume(String s) {
       LOG.debug("update for: " + s);
+      //todo check canceled
       final VirtualFile vf = myLfs.refreshAndFindFileByIoFile(new File(s));
       final ItemLatestState state;
       final DiffProvider diffProvider = myVcsRoot.vcs.getDiffProvider();

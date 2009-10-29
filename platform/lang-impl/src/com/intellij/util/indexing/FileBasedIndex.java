@@ -42,8 +42,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiDocumentManager;
@@ -200,6 +202,20 @@ public class FileBasedIndex implements ApplicationComponent {
       }
     });
 
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      public void before(List<? extends VFileEvent> events) {
+        for (VFileEvent event : events) {
+          if (event.getRequestor() instanceof FileDocumentManager) {
+            cleanupMemoryStorage();
+            break;
+          }
+        }
+      }
+
+      public void after(List<? extends VFileEvent> events) {
+      }
+    });
+
     ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
       public void writeActionStarted(Object action) {
         myUpToDateIndices.clear();
@@ -257,7 +273,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
-  private String calcConfigPath(final String path) {
+  private static String calcConfigPath(final String path) {
     try {
       final String _path = FileUtil.toSystemIndependentName(new File(path).getCanonicalPath());
       return _path.endsWith("/")? _path : _path + "/" ;
@@ -591,10 +607,9 @@ public class FileBasedIndex implements ApplicationComponent {
       return; //indexed eagerly in foreground while building unindexed file list
     }
 
-    final ProgressManager progressManager = ProgressManager.getInstance();
-    progressManager.checkCanceled(); // DumbModeAction.CANCEL
+    ProgressManager.checkCanceled(); // DumbModeAction.CANCEL
 
-    final ProgressIndicator progressIndicator = progressManager.getProgressIndicator();
+    final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     if (progressIndicator instanceof BackgroundableProcessIndicator) {
       final BackgroundableProcessIndicator indicator = (BackgroundableProcessIndicator)progressIndicator;
       if (indicator.getDumbModeAction() == DumbModeAction.WAIT) {
@@ -817,27 +832,35 @@ public class FileBasedIndex implements ApplicationComponent {
     void process(final int inputId, V value);
   }
 
-  public <K, V> void processAllValues(final ID<K, V> indexId, AllValuesProcessor<V> processor, @NotNull Project project) {
+  public <K, V> void processAllValues(final ID<K, V> indexId, final AllValuesProcessor<V> processor, @NotNull Project project) {
     try {
       ensureUpToDate(indexId, project, null);
       final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
       if (index == null) {
         return;
       }
-      try {
-        index.getReadLock().lock();
-        for (K dataKey : index.getAllKeys()) {
-          final ValueContainer<V> container = index.getData(dataKey);
-          for (final Iterator<V> it = container.getValueIterator(); it.hasNext();) {
-            final V value = it.next();
-            for (final ValueContainer.IntIterator inputsIt = container.getInputIdsIterator(value); inputsIt.hasNext();) {
-              processor.process(inputsIt.next(), value);
+      final Ref<StorageException> storageEx = new Ref<StorageException>(null);
+      index.processAllKeys(new Processor<K>() {
+        public boolean process(K dataKey) {
+          try {
+            final ValueContainer<V> container = index.getData(dataKey);
+            for (final Iterator<V> it = container.getValueIterator(); it.hasNext();) {
+              final V value = it.next();
+              for (final ValueContainer.IntIterator inputsIt = container.getInputIdsIterator(value); inputsIt.hasNext();) {
+                processor.process(inputsIt.next(), value);
+              }
             }
+            return true;
+          }
+          catch (StorageException e) {
+            storageEx.set(e);
+            return false;
           }
         }
-      }
-      finally {
-        index.getReadLock().unlock();
+      });
+      final StorageException ex = storageEx.get();
+      if (ex != null) {
+        throw ex;
       }
     }
     catch (StorageException e) {
@@ -1079,11 +1102,6 @@ public class FileBasedIndex implements ApplicationComponent {
 
   private StorageGuard.Holder setDataBufferingEnabled(final boolean enabled) {
     final StorageGuard.Holder holder = myStorageLock.enter(enabled);
-    if (!enabled) {
-      synchronized (myLastIndexedDocStamps) {
-        myLastIndexedDocStamps.clear();
-      }
-    }
     for (ID<?, ?> indexId : myIndices.keySet()) {
       final MapReduceIndex index = (MapReduceIndex)getIndex(indexId);
       assert index != null;
@@ -1091,6 +1109,25 @@ public class FileBasedIndex implements ApplicationComponent {
       ((MemoryIndexStorage)indexStorage).setBufferingEnabled(enabled);
     }
     return holder;
+  }
+
+  private void cleanupMemoryStorage() {
+    synchronized (myLastIndexedDocStamps) {
+      myLastIndexedDocStamps.clear();
+    }
+    for (ID<?, ?> indexId : myIndices.keySet()) {
+      final MapReduceIndex index = (MapReduceIndex)getIndex(indexId);
+      assert index != null;
+      final MemoryIndexStorage memStorage = (MemoryIndexStorage)index.getStorage();
+      index.getWriteLock().lock();
+      try {
+        memStorage.clearMemoryMap();
+      }
+      finally {
+        index.getWriteLock().unlock();
+      }
+      memStorage.fireMemoryStorageCleared();
+    }
   }
 
   private void dropUnregisteredIndices() {
@@ -1104,8 +1141,12 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   public void requestRebuild(ID<?, ?> indexId) {
+    requestRebuild(indexId, new Throwable());
+  }
+
+  public void requestRebuild(ID<?, ?> indexId, Throwable throwable) {
     cleanupProcessedFlag();
-    LOG.info("Rebuild requested for index " + indexId, new Throwable());
+    LOG.info("Rebuild requested for index " + indexId, throwable);
     myRebuildStatus.get(indexId).set(REQUIRES_REBUILD);
   }
 

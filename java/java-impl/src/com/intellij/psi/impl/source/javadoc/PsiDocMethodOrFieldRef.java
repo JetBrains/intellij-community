@@ -36,6 +36,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,6 +63,25 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     final PsiElement scope = getScope();
     final PsiElement element = getNameElement();
     if (scope == null || element == null) return new MyReference(null);
+
+    PsiReference psiReference = getReferenceInScope(scope, element);
+    if (psiReference != null) return psiReference;
+
+    if (scope instanceof PsiClass) {
+      PsiClass classScope = ((PsiClass)scope);
+      PsiClass containingClass = classScope.getContainingClass();
+      while (containingClass != null) {
+        classScope = containingClass;
+        psiReference = getReferenceInScope(classScope, element);
+        if (psiReference != null) return psiReference;
+        containingClass = classScope.getContainingClass();
+      }
+    }
+    return new MyReference(null);
+  }
+
+  @Nullable
+  private PsiReference getReferenceInScope(PsiElement scope, PsiElement element) {
     final String name = element.getText();
 
 
@@ -107,9 +127,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
         };
       }
     }
-
-    
-    return new MyReference(null);
+    return null;
   }
 
   public static PsiVariable[] getAllVariables(PsiElement scope, PsiElement place) {
@@ -152,7 +170,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
 
     List<String> types = new ArrayList<String>();
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (child.getNode().getElementType() == JavaDocElementType.DOC_TYPE_HOLDER) {
+      if (child.getNode().getElementType() == DOC_TYPE_HOLDER) {
         final String[] typeStrings = child.getText().split("[, ]");  //avoid param types list parsing hmm mathod(paramType1, paramType2, ...) -> typeElement1, identifier2, ...
         if (typeStrings != null) {
           for (String type : typeStrings) {
@@ -167,12 +185,12 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     return types.toArray(new String[types.size()]);
   }
 
+  @Nullable
   private PsiElement getScope(){
     if (getFirstChildNode().getElementType() == ElementType.DOC_REFERENCE_HOLDER) {
       final PsiElement firstChildPsi = SourceTreeToPsiMap.treeElementToPsi(getFirstChildNode().getFirstChildNode());
       if (firstChildPsi instanceof PsiJavaCodeReferenceElement) {
         PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)firstChildPsi;
-        if(referenceElement == null) return null;
         final PsiElement referencedElement = referenceElement.resolve();
         if (referencedElement instanceof PsiClass) return referencedElement;
         return null;
@@ -180,9 +198,9 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       else if (firstChildPsi instanceof PsiKeyword) {
         final PsiKeyword keyword = (PsiKeyword)firstChildPsi;
 
-        if (keyword.getTokenType().equals(JavaTokenType.THIS_KEYWORD)) {
+        if (keyword.getTokenType().equals(THIS_KEYWORD)) {
           return JavaResolveUtil.getContextClass(this);
-        } else if (keyword.getTokenType().equals(JavaTokenType.SUPER_KEYWORD)) {
+        } else if (keyword.getTokenType().equals(SUPER_KEYWORD)) {
           final PsiClass contextClass = JavaResolveUtil.getContextClass(this);
           if (contextClass != null) return contextClass.getSuperClass();
           return null;

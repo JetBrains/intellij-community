@@ -36,6 +36,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -463,11 +464,36 @@ public abstract class BaseRefactoringProcessor {
     performPsiSpoilingRefactoring();
   }
 
+  public static class ConflictsInTestsException extends RuntimeException {
+      private final Collection<? extends String> messages;
+
+      public ConflictsInTestsException(Collection<? extends String> messages) {
+        this.messages = messages;
+      }
+
+    public Collection<String> getMessages() {
+        List<String> result = new ArrayList<String>(messages);
+        for (int i = 0; i < messages.size(); i++) {
+          result.set(i, result.get(i).replaceAll("<[^>]+>", ""));
+        }
+        return result;
+      }
+
+    @Override
+    public String getMessage() {
+      return StringUtil.join(messages, "\n");
+    }
+  }
+
   protected boolean showConflicts(final MultiMap<PsiElement,String> conflicts) {
-    if (!conflicts.isEmpty() && myPrepareSuccessfulSwingThreadCallback != null) {
+    if (!conflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
+      throw new ConflictsInTestsException(conflicts.values());
+    }
+
+    if (myPrepareSuccessfulSwingThreadCallback != null && !conflicts.isEmpty()) {
       final ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
       conflictsDialog.show();
-      if (!conflictsDialog.isOK()){
+      if (!conflictsDialog.isOK()) {
         if (conflictsDialog.isShowConflicts()) prepareSuccessful();
         return false;
       }

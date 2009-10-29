@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Bas Leijdekkers
+ * Copyright 2007-2009 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,25 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class UnpredictableBigDecimalConstructorCallInspection
         extends BaseInspection {
+
+    public boolean ignoreReferences = true;
+    public boolean ignoreComplexLiterals = false;
 
     @NotNull
     public String getDisplayName() {
@@ -36,11 +47,79 @@ public class UnpredictableBigDecimalConstructorCallInspection
                 "unpredictable.big.decimal.constructor.call.problem.descriptor");
     }
 
+    @Override
+    public JComponent createOptionsPanel() {
+        final MultipleCheckboxOptionsPanel optionsPanel =
+                new MultipleCheckboxOptionsPanel(this);
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "unpredictable.big.decimal.constructor.call.ignore.references.option"),
+                "ignoreReferences");
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "unpredictable.big.decimal.constructor.call.ignore.complex.literals.option"),
+                "ignoreComplexLiterals");
+        return optionsPanel;
+    }
+
+    @Override
+    protected InspectionGadgetsFix buildFix(Object... infos) {
+        final PsiNewExpression newExpression = (PsiNewExpression) infos[0];
+        final PsiExpressionList argumentList = newExpression.getArgumentList();
+        if (argumentList == null) {
+            return null;
+        }
+        final PsiExpression[] arguments = argumentList.getExpressions();
+        if (arguments.length == 0) {
+            return null;
+        }
+        final PsiExpression firstArgument = arguments[0];
+        if (!(firstArgument instanceof PsiLiteralExpression)) {
+            return null;
+        }
+        return new ReplaceDoubleArgumentWithStringFix(firstArgument.getText());
+    }
+
+    private class ReplaceDoubleArgumentWithStringFix
+            extends InspectionGadgetsFix {
+
+        private final String argumentText;
+
+        public ReplaceDoubleArgumentWithStringFix(String argumentText) {
+            this.argumentText = argumentText;
+        }
+
+        @NotNull
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "unpredictable.big.decimal.constructor.call.quickfix",
+                    argumentText);
+        }
+
+        @Override
+        protected void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiElement element = descriptor.getPsiElement();
+            final PsiNewExpression newExpression =
+                    (PsiNewExpression) element.getParent();
+            final PsiExpressionList argumentList =
+                    newExpression.getArgumentList();
+            if (argumentList == null) {
+                return;
+            }
+            final PsiExpression[] arguments = argumentList.getExpressions();
+            if (arguments.length == 0) {
+                return;
+            }
+            final PsiExpression firstArgument = arguments[0];
+            replaceExpression(firstArgument,
+                    '"' + firstArgument.getText() + '"');
+        }
+    }
+
     public BaseInspectionVisitor buildVisitor() {
         return new UnpredictableBigDecimalConstructorCallVisitor();
     }
 
-    private static class UnpredictableBigDecimalConstructorCallVisitor
+    private class UnpredictableBigDecimalConstructorCallVisitor
             extends BaseInspectionVisitor {
 
         @Override public void visitNewExpression(PsiNewExpression expression) {
@@ -70,7 +149,45 @@ public class UnpredictableBigDecimalConstructorCallInspection
             if (type != PsiType.DOUBLE) {
                 return;
             }
-            registerNewExpressionError(expression);
+            final PsiExpressionList argumentList = expression.getArgumentList();
+            if (argumentList == null) {
+                return;
+            }
+            final PsiExpression[] arguments = argumentList.getExpressions();
+            if (arguments.length == 0) {
+                return;
+            }
+            final PsiExpression firstArgument = arguments[0];
+            if (!checkArguments(firstArgument)) {
+                return;
+            }
+            registerNewExpressionError(expression, expression);
+        }
+
+        private boolean checkArguments(@Nullable PsiExpression firstArgument) {
+            if (firstArgument == null) {
+                return false;
+            }
+            if (firstArgument instanceof PsiReferenceExpression) {
+                if (ignoreReferences) {
+                    return false;
+                }
+            } else if (firstArgument instanceof PsiBinaryExpression) {
+                if (ignoreComplexLiterals) {
+                    return false;
+                }
+                final PsiBinaryExpression binaryExpression =
+                        (PsiBinaryExpression) firstArgument;
+                final PsiExpression lhs = binaryExpression.getLOperand();
+                if (!checkArguments(lhs)) {
+                    return false;
+                }
+                final PsiExpression rhs = binaryExpression.getROperand();
+                if (!checkArguments(rhs)) {
+                    return false;
+                }
+            }
+            return true;
         }
     }
 }

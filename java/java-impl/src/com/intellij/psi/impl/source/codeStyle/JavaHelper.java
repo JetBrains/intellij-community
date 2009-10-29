@@ -36,9 +36,8 @@ public class JavaHelper extends Helper {
 
     if (element.getTreePrev() != null) {
       ASTNode prev = element.getTreePrev();
-      ASTNode lastCompositePrev;
       while (prev instanceof CompositeElement && !TreeUtil.isStrongWhitespaceHolder(prev.getElementType())) {
-        lastCompositePrev = prev;
+        ASTNode lastCompositePrev = prev;
         prev = prev.getLastChildNode();
         if (prev == null) { // element.prev is "empty composite"
           return getIndentInner(lastCompositePrev, includeNonSpace, recursionLevel + 1);

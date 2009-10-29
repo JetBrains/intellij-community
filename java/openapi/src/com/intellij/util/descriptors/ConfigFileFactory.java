@@ -40,8 +40,6 @@ public abstract class ConfigFileFactory {
 
   public abstract ConfigFileMetaDataRegistry createMetaDataRegistry();
 
-  public abstract CustomConfigFileSet createCustomConfigFileSet();
-
   @Nullable
   public abstract VirtualFile createFile(@Nullable Project project, String url, ConfigFileVersion version, final boolean forceNew);
 

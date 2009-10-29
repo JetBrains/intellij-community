@@ -21,7 +21,6 @@
 package com.intellij.refactoring.replaceConstructorWithBuilder;
 
 import com.intellij.ide.util.PackageUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -266,14 +265,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
     return "create" + StringUtil.capitalize(myConstructors[0].getName());
   }
 
-  @Override
-  protected boolean showConflicts(MultiMap<PsiElement, String> conflicts) {
-    if (!conflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
-      throw new RuntimeException(StringUtil.join(conflicts.values(), "\n"));
-    }
-    return super.showConflicts(conflicts);
-  }
-
+  
   @Override
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();

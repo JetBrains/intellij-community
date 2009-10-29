@@ -43,12 +43,16 @@ public interface ArtifactEditorContext extends PackagingElementResolvingContext 
   @NotNull
   ManifestFileConfiguration getManifestFile(CompositePackagingElement<?> element, ArtifactType artifactType);
 
+  boolean isManifestFile(String path);
+
+
   CompositePackagingElement<?> getRootElement(@NotNull Artifact artifact);
 
   void editLayout(@NotNull Artifact artifact, Runnable runnable);
 
   ArtifactEditor getOrCreateEditor(Artifact originalArtifact);
 
+  ArtifactEditor getThisArtifactEditor();
 
   void selectArtifact(@NotNull Artifact artifact);
 
@@ -64,4 +68,6 @@ public interface ArtifactEditorContext extends PackagingElementResolvingContext 
   List<Module> chooseModules(List<Module> modules, final String title);
 
   List<Library> chooseLibraries(List<Library> libraries, String title);
+
+  Artifact getArtifact();
 }

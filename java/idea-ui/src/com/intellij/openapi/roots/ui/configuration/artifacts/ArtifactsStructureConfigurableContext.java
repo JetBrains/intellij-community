@@ -34,6 +34,8 @@ public interface ArtifactsStructureConfigurableContext extends PackagingElementR
   @NotNull
   ManifestFileConfiguration getManifestFile(CompositePackagingElement<?> element, ArtifactType artifactType);
 
+  boolean isManifestFile(String path);
+
   CompositePackagingElement<?> getRootElement(@NotNull Artifact artifact);
 
   void editLayout(@NotNull Artifact artifact, Runnable action);

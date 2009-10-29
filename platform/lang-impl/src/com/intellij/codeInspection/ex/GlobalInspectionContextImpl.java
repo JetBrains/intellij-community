@@ -623,7 +623,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   public void incrementJobDoneAmount(JobDescriptor job, String message) {
     if (myProgressIndicator == null) return;
 
-    ProgressManager.getInstance().checkCanceled();
+    ProgressManager.checkCanceled();
 
     int old = job.getDoneAmount();
     job.setDoneAmount(old + 1);

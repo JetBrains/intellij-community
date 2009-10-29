@@ -36,7 +36,6 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.util.Set;
-import java.util.jar.Manifest;
 
 public abstract class DeploymentUtil {
   public static DeploymentUtil getInstance() {
@@ -93,8 +92,6 @@ public abstract class DeploymentUtil {
 
   public abstract void reportDeploymentDescriptorDoesNotExists(ConfigFile descriptor, CompileContext context, Module module);
 
-  @Nullable public abstract Manifest createManifest(@NotNull BuildRecipe buildRecipe);
-
   public abstract void addJavaModuleOutputs(@NotNull Module module,
                                             @NotNull ModuleLink[] containingModules,
                                             @NotNull BuildRecipe instructions,
@@ -109,14 +106,6 @@ public abstract class DeploymentUtil {
                                    @NotNull BuildRecipe instructions,
                                    @NotNull CompileContext context,
                                    String explodedPath);
-
-  public static boolean checkFileExists(final File file, CompileContext context) {
-    if (!file.exists()) {
-      context.addMessage(CompilerMessageCategory.ERROR, CompilerBundle.message("compiler.message.text.file.does.not.exist", file),null,-1,-1);
-      return false;
-    }
-    return true;
-  }
 
   public static String concatPaths(String... paths) {
     final StringBuilder builder = new StringBuilder();
@@ -193,8 +182,6 @@ public abstract class DeploymentUtil {
       StringBuilderSpinAllocator.dispose(relativePath);
     }
   }
-
-  public abstract @Nullable File findUserSuppliedManifestFile(@NotNull BuildRecipe buildRecipe);
 
   public abstract void checkConfigFile(final ConfigFile descriptor, final CompileContext compileContext, final Module module);
 

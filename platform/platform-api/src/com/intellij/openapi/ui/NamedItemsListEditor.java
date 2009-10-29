@@ -25,19 +25,19 @@ import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
-import com.intellij.openapi.util.Cloner;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.*;
 import com.intellij.util.Icons;
+import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.Equality;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
 import java.awt.event.KeyEvent;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
@@ -62,7 +62,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
         myOriginalItems = items;
         myResultItems = items;
         reset();
-        
+
         initTree();
     }
 
@@ -138,14 +138,36 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
         return true;
     }
 
-    protected abstract UnnamedConfigurable createConfigurable(T item); 
+    protected abstract UnnamedConfigurable createConfigurable(T item);
 
     @Override
     protected void onItemDeleted(Object item) {
         myItems.remove((T)item);
     }
 
-    private class ItemConfigurable extends NamedConfigurable {
+    protected void setDisplayName(T item, String name) {
+      myNamer.setName(item, name);
+    }
+
+    @Nullable
+    protected UnnamedConfigurable getItemConfigurable(final T item) {
+      final Ref<UnnamedConfigurable> result = new Ref<UnnamedConfigurable>();
+      TreeUtil.traverse((TreeNode)myTree.getModel().getRoot(), new TreeUtil.Traverse() {
+        public boolean accept(Object node) {
+          final NamedConfigurable configurable = (NamedConfigurable)((DefaultMutableTreeNode)node).getUserObject();
+          if (configurable.getEditableObject() == item) {
+            result.set(((ItemConfigurable)configurable).myConfigurable);
+            return false;
+          }
+          else {
+            return true;
+          }
+        }
+      });
+      return result.get();
+    }
+
+  private class ItemConfigurable extends NamedConfigurable {
         private final T myItem;
         private final UnnamedConfigurable myConfigurable;
 
@@ -156,7 +178,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
         }
 
         public void setDisplayName(String name) {
-            myNamer.setName(myItem, name);
+          NamedItemsListEditor.this.setDisplayName(myItem, name);
         }
 
         public Object getEditableObject() {
@@ -176,6 +198,9 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
         }
 
         public Icon getIcon() {
+            if (myConfigurable instanceof Iconable) {
+              return ((Iconable)myConfigurable).getIcon(0);
+            }
             return null;
         }
 
@@ -216,6 +241,10 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
         myResultItems = myItems;
     }
 
+    protected List<T> getCurrentItems() {
+      return Collections.unmodifiableList(myItems);
+    }
+
     public List<T> getItems() {
         return myResultItems;
     }
@@ -239,6 +268,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
             myNamer.setName(clone, profileName);
             addNewNode(clone);
             selectNodeInTree(clone);
+            onItemCloned(clone);
         }
 
 
@@ -248,28 +278,37 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
         }
     }
 
-    private class AddAction extends AnAction {
+    protected void onItemCloned(T clone) {
+    }
+
+  private class AddAction extends AnAction {
         public AddAction() {
             super("Add", "Add", Icons.ADD_ICON);
             registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
         }
 
         public void actionPerformed(AnActionEvent event) {
-            final String name = askForProfileName("Create new {0}");
-            if (name == null) return;
-            createItem(name);
+          final T newItem = createItem();
+          if (newItem != null) {
+            onItemCreated(newItem);
+          }
         }
-
     }
 
     public void selectItem(T item) {
         selectNodeInTree(findByName(myNamer.getName(item)));
     }
 
-    public void createItem(@NotNull String name) {
+    @Nullable
+    protected T createItem() {
+      final String name = askForProfileName("Create new {0}");
+      if (name == null) return null;
       final T newItem = myFactory.create();
       myNamer.setName(newItem, name);
+      return newItem;
+    }
 
+    protected void onItemCreated(T newItem) {
       addNewNode(newItem);
       selectNodeInTree(newItem);
     }

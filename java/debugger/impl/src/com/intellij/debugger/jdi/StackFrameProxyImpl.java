@@ -25,10 +25,13 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ArrayUtil;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
 
 public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
@@ -245,6 +248,34 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     catch (InvalidStackFrameException e) {
       clearCaches();
       return getValue(localVariable);
+    }
+  }
+
+  public Collection<Value> getArgumentValues() throws EvaluateException {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    try {
+      final StackFrame stackFrame = getStackFrame();
+      if (stackFrame != null) {
+        //return stackFrame.getArgumentValues();
+        try {
+          final Method method = StackFrame.class.getMethod("getArgumentValues");
+          //noinspection unchecked
+          return (Collection<Value>)method.invoke(stackFrame, ArrayUtil.EMPTY_OBJECT_ARRAY);
+        }
+        catch (NoSuchMethodException ignored) {
+        }
+        catch (InvocationTargetException e) {
+          throw new EvaluateException("", e.getCause());
+        }
+        catch (IllegalAccessException e) {
+          LOG.error(e);
+        }
+      }
+      return Collections.emptyList();
+    }
+    catch (InvalidStackFrameException e) {
+      clearCaches();
+      return getArgumentValues();
     }
   }
 

@@ -20,6 +20,7 @@ import org.codehaus.groovy.ast.ASTNode;
 import org.codehaus.groovy.ast.AnnotatedNode;
 import org.codehaus.groovy.ast.ClassNode;
 import org.codehaus.groovy.ast.ModuleNode;
+import org.codehaus.groovy.classgen.GeneratorContext;
 import org.codehaus.groovy.control.*;
 import org.codehaus.groovy.control.messages.*;
 import org.codehaus.groovy.syntax.SyntaxException;
@@ -55,10 +56,31 @@ public class GroovyCompilerWrapper {
     return compiledFiles;
   }
 
-  private static void addCompiledFiles(CompilationUnit compilationUnit, List compiledFiles, boolean forStubs, List collector) throws IOException {
+  private static void addCompiledFiles(CompilationUnit compilationUnit, final List compiledFiles, final boolean forStubs, final List collector) throws IOException {
     File targetDirectory = compilationUnit.getConfiguration().getTargetDirectory();
 
-    String outputPath = targetDirectory.getCanonicalPath().replace(File.separatorChar, '/');
+    final String outputPath = targetDirectory.getCanonicalPath().replace(File.separatorChar, '/');
+
+    if (forStubs) {
+      compilationUnit.applyToPrimaryClassNodes(new CompilationUnit.PrimaryClassNodeOperation() {
+        public void call(SourceUnit source, GeneratorContext context, ClassNode classNode) throws CompilationFailedException {
+          final String topLevel = classNode.getName();
+          final String stubPath = outputPath + "/" + topLevel.replace('.', '/') + ".java";
+          String fileName = source.getName();
+          if (new File(stubPath).exists()) {
+            compiledFiles.add(new OutputItemImpl(outputPath, stubPath, fileName));
+          }
+          /*
+          else {
+            collector.add(new CompilerMessage(CompilerMessage.WARNING, "Groovyc didn't generate stub for " + topLevel, fileName,
+                                              classNode.getLineNumber(), classNode.getColumnNumber()));
+          }
+          */
+        }
+      });
+      return;
+    }
+
     final SortedSet allClasses = new TreeSet();
     List listOfClasses = compilationUnit.getClasses();
     for (int i = 0; i < listOfClasses.size(); i++) {
@@ -77,24 +99,15 @@ public class GroovyCompilerWrapper {
       for (int i = 0; i < topLevelClasses.size(); i++) {
         final ClassNode classNode = (ClassNode)topLevelClasses.get(i);
         final String topLevel = classNode.getName();
-        if (forStubs) {
-          final String stubPath = outputPath + "/" + topLevel.replace('.', '/') + ".java";
-          if (new File(stubPath).exists()) {
-            compiledFiles.add(new OutputItemImpl(outputPath, stubPath, fileName));
+        final String nested = topLevel + "$";
+        final SortedSet tail = allClasses.tailSet(topLevel);
+        for (Iterator tailIter = tail.iterator(); tailIter.hasNext();) {
+          String className = (String)tailIter.next();
+          if (className.equals(topLevel) || className.startsWith(nested)) {
+            tailIter.remove();
+            compiledFiles.add(new OutputItemImpl(outputPath, outputPath + "/" + className.replace('.', '/') + ".class", fileName));
           } else {
-            collector.add(new CompilerMessage(CompilerMessage.WARNING, "Groovyc couldn't generate stub for " + topLevel, fileName, classNode.getLineNumber(), classNode.getColumnNumber()));
-          }
-        } else {
-          final String nested = topLevel + "$";
-          final SortedSet tail = allClasses.tailSet(topLevel);
-          for (Iterator tailIter = tail.iterator(); tailIter.hasNext();) {
-            String className = (String)tailIter.next();
-            if (className.equals(topLevel) || className.startsWith(nested)) {
-              tailIter.remove();
-              compiledFiles.add(new OutputItemImpl(outputPath, outputPath + "/" + className.replace('.', '/') + ".class", fileName));
-            } else {
-              break;
-            }
+            break;
           }
         }
       }

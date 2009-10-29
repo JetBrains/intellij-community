@@ -137,10 +137,6 @@ public class GrModifierListImpl extends GroovyPsiElementImpl implements GrModifi
       }
     }
 
-    if (parent instanceof GrTypeDefinition && PsiModifier.STATIC.equals(modifier)) {
-      if (((GrTypeDefinition)parent).getContainingClass() == null) return true;
-    }
-
     return false;
   }
 

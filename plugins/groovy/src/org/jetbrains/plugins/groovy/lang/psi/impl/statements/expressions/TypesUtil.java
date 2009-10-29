@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
@@ -67,7 +68,17 @@ public class TypesUtil {
       return JavaPsiFacade.getInstance(binaryExpression.getProject()).getElementFactory().createTypeByFQClassName(qName, scope);
     }
 
-    return getOverloadedOperatorType(lType, binaryExpression.getOperationTokenType(), binaryExpression, new PsiType[]{rType});
+    final PsiType type = getOverloadedOperatorType(lType, binaryExpression.getOperationTokenType(), binaryExpression, new PsiType[]{rType});
+    if (type != null) {
+      return type;
+    }
+
+    if (rType.equalsToText(GrStringUtil.GROOVY_LANG_GSTRING)) {
+      PsiType gstringType = JavaPsiFacade.getInstance(binaryExpression.getProject()).getElementFactory()
+        .createTypeByFQClassName(GrStringUtil.GROOVY_LANG_GSTRING, binaryExpression.getResolveScope());
+      return getOverloadedOperatorType(lType, binaryExpression.getOperationTokenType(), binaryExpression, new PsiType[]{gstringType});
+    }
+    return null;
   }
 
   @Nullable

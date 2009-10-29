@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -41,6 +42,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 public class PushDownProcessor extends BaseRefactoringProcessor {
@@ -93,7 +96,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
     for (UsageInfo usage : usagesIn) {
       final PsiElement element = usage.getElement();
       if (element instanceof PsiClass) {
-        pushDownConflicts.checkTargetClassConflicts((PsiClass)element);
+        pushDownConflicts.checkTargetClassConflicts((PsiClass)element, usagesIn.length > 1);
       }
     }
 
@@ -318,6 +321,22 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
     }
     for (MemberInfo memberInfo : myMemberInfos) {
       final PsiMember member = memberInfo.getMember();
+      final List<PsiReference> refsToRebind = new ArrayList<PsiReference>();
+      final PsiModifierList list = member.getModifierList();
+      LOG.assertTrue(list != null);
+      if (list.hasModifierProperty(PsiModifier.STATIC)) {
+        for (final PsiReference reference : ReferencesSearch.search(member)) {
+          final PsiElement element = reference.getElement();
+          if (element instanceof PsiReferenceExpression) {
+            final PsiExpression qualifierExpression = ((PsiReferenceExpression)element).getQualifierExpression();
+            if (qualifierExpression instanceof PsiReferenceExpression && !(((PsiReferenceExpression)qualifierExpression).resolve() instanceof PsiClass)) {
+              continue;
+            }
+          }
+          refsToRebind.add(reference);
+        }
+      }
+
       PsiMember newMember = null;
       if (member instanceof PsiField) {
         ((PsiField)member).normalizeDeclaration();
@@ -357,6 +376,9 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
 
       if (newMember != null) {
         decodeRefs(newMember, targetClass);
+        for (PsiReference psiReference : refsToRebind) {
+          JavaCodeStyleManagerImpl.getInstance(myProject).shortenClassReferences(psiReference.bindToElement(newMember));
+        }
         final JavaRefactoringListenerManager listenerManager = JavaRefactoringListenerManager.getInstance(newMember.getProject());
         ((JavaRefactoringListenerManagerImpl)listenerManager).fireMemberMoved(myClass, newMember);
       }

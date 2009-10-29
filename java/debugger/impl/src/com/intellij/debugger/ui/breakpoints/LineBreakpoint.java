@@ -34,12 +34,14 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.Processor;
@@ -101,10 +103,19 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
 
   protected void reload(PsiFile file) {
     super.reload(file);
-    myMethodName = LineBreakpoint.findMethodName(file, getHighlighter().getStartOffset());
+    myMethodName = findMethodName(file, getHighlighter().getStartOffset());
+  }
+
+  protected void createOrWaitPrepare(DebugProcessImpl debugProcess, String classToBeLoaded) {
+    if (isInScopeOf(debugProcess)) {
+      super.createOrWaitPrepare(debugProcess, classToBeLoaded);
+    }
   }
 
   protected void createRequestForPreparedClass(final DebugProcessImpl debugProcess, final ReferenceType classType) {
+    if (!isInScopeOf(debugProcess)) {
+      return;
+    }
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         try {
@@ -160,6 +171,18 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     });
   }
 
+  private boolean isInScopeOf(DebugProcessImpl debugProcess) {
+    final SourcePosition position = getSourcePosition();
+    if (position != null) {
+      final GlobalSearchScope scope = debugProcess.getSearchScope();
+      final VirtualFile file = position.getFile().getVirtualFile();
+      if (file != null && ProjectRootManager.getInstance(debugProcess.getProject()).getFileIndex().isInContent(file)) {
+        return scope.accept(file);
+      }
+    }
+    return true;
+  }
+
   public boolean evaluateCondition(EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
     if(CLASS_FILTERS_ENABLED){
       Value value = context.getThisObject();
@@ -173,9 +196,8 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
       }
       ClassFilter [] filters = getClassFilters();
       boolean matches = false;
-      for (int i = 0; i < filters.length; i++) {
-        ClassFilter classFilter = filters[i];
-        if(classFilter.isEnabled() && classFilter.matches(name)) {
+      for (ClassFilter classFilter : filters) {
+        if (classFilter.isEnabled() && classFilter.matches(name)) {
           matches = true;
           break;
         }
@@ -185,9 +207,8 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
       }
 
       ClassFilter [] ifilters = getClassExclusionFilters();
-      for (int i = 0; i < ifilters.length; i++) {
-        ClassFilter classFilter = ifilters[i];
-        if(classFilter.isEnabled() && classFilter.matches(name)) {
+      for (ClassFilter classFilter : ifilters) {
+        if (classFilter.isEnabled() && classFilter.matches(name)) {
           return false;
         }
       }

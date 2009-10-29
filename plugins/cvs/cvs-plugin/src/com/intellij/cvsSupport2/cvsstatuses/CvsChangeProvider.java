@@ -86,28 +86,37 @@ public class CvsChangeProvider implements ChangeProvider {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Processing changes for scope " + dirtyScope);
     }
+    final Runnable checkCanceled = new Runnable() {
+      public void run() {
+        if (progress != null) {
+          progress.checkCanceled();
+        }
+      }
+    };
     for (FilePath path : dirtyScope.getRecursivelyDirtyDirectories()) {
       final VirtualFile dir = path.getVirtualFile();
+      checkCanceled.run();
       if (dir != null) {
-        processEntriesIn(dir, dirtyScope, builder, true);
+        processEntriesIn(dir, dirtyScope, builder, true, checkCanceled);
       }
       else {
-        processFile(path, builder);
+        processFile(path, builder, checkCanceled);
       }
     }
 
     for (FilePath path : dirtyScope.getDirtyFiles()) {
+      checkCanceled.run();
       if (path.isDirectory()) {
         final VirtualFile dir = path.getVirtualFile();
         if (dir != null) {
-          processEntriesIn(dir, dirtyScope, builder, false);
+          processEntriesIn(dir, dirtyScope, builder, false, checkCanceled);
         }
         else {
-          processFile(path, builder);
+          processFile(path, builder, checkCanceled);
         }
       }
       else {
-        processFile(path, builder);
+        processFile(path, builder, checkCanceled);
       }
     }
     if (LOG.isDebugEnabled()) {
@@ -122,7 +131,8 @@ public class CvsChangeProvider implements ChangeProvider {
   public void doCleanup(final List<VirtualFile> files) {
   }
 
-  private void processEntriesIn(@NotNull VirtualFile dir, VcsDirtyScope scope, ChangelistBuilder builder, boolean recursively) {
+  private void processEntriesIn(@NotNull VirtualFile dir, VcsDirtyScope scope, ChangelistBuilder builder, boolean recursively,
+                                final Runnable checkCanceled) {
     final FilePath path = VcsContextFactory.SERVICE.getInstance().createFilePathOn(dir);
     if (!scope.belongsTo(path)) {
       if (LOG.isDebugEnabled()) {
@@ -130,7 +140,7 @@ public class CvsChangeProvider implements ChangeProvider {
       }
       return;
     }
-    final DirectoryContent dirContent = getDirectoryContent(dir);
+    final DirectoryContent dirContent = getDirectoryContent(dir, checkCanceled);
 
     for (VirtualFile file : dirContent.getUnknownFiles()) {
       builder.processUnversionedFile(file);
@@ -162,7 +172,7 @@ public class CvsChangeProvider implements ChangeProvider {
       builder.processChange(new Change(CurrentContentRevision.create(path), CurrentContentRevision.create(path), FileStatus.DELETED), CvsVcs2.getKey());
     }
     for (VirtualFileEntry fileEntry : dirContent.getFiles()) {
-      processFile(dir, fileEntry.getVirtualFile(), fileEntry.getEntry(), builder);
+      processFile(dir, fileEntry.getVirtualFile(), fileEntry.getEntry(), builder, checkCanceled);
     }
 
     if (recursively) {
@@ -172,7 +182,7 @@ public class CvsChangeProvider implements ChangeProvider {
           if (file.isDirectory()) {
             final boolean isIgnored = myFileIndex.isIgnored(file);
             if (!isIgnored) {
-              processEntriesIn(file, scope, builder, true);
+              processEntriesIn(file, scope, builder, true, checkCanceled);
             }
             else {
               if (LOG.isDebugEnabled()) {
@@ -195,7 +205,8 @@ public class CvsChangeProvider implements ChangeProvider {
   }
 
 
-  private void processFile(final FilePath filePath, final ChangelistBuilder builder) {
+  private void processFile(final FilePath filePath, final ChangelistBuilder builder, final Runnable checkCanceled) {
+    checkCanceled.run();
     final VirtualFile dir = filePath.getVirtualFileParent();
     if (dir == null) return;
 
@@ -206,7 +217,9 @@ public class CvsChangeProvider implements ChangeProvider {
     checkSwitchedFile(filePath, builder, dir, entry);
   }
 
-  private void processFile(final VirtualFile dir, @Nullable VirtualFile file, Entry entry, final ChangelistBuilder builder) {
+  private void processFile(final VirtualFile dir, @Nullable VirtualFile file, Entry entry, final ChangelistBuilder builder,
+                           final Runnable checkCanceled) {
+    checkCanceled.run();
     final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(dir, entry.getFileName());
     final FileStatus status = CvsStatusProvider.getStatus(file, entry);
     final VcsRevisionNumber number = createRevisionNumber(entry.getRevision(), status);
@@ -418,7 +431,7 @@ public class CvsChangeProvider implements ChangeProvider {
     return file == null || !FileTypeManager.getInstance().isFileIgnored(file.getName());
   }
 
-  private static DirectoryContent getDirectoryContent(VirtualFile directory) {
+  private static DirectoryContent getDirectoryContent(VirtualFile directory, final Runnable checkCanceled) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Retrieving directory content for " + directory);
     }
@@ -436,6 +449,7 @@ public class CvsChangeProvider implements ChangeProvider {
     }
 
     for (final Entry entry : entries) {
+      checkCanceled.run();
       String fileName = entry.getFileName();
       if (entry.isDirectory()) {
         if (nameToFileMap.containsKey(fileName)) {
@@ -463,6 +477,7 @@ public class CvsChangeProvider implements ChangeProvider {
     }
 
     for (final String name : nameToFileMap.keySet()) {
+      checkCanceled.run();
       VirtualFile unknown = nameToFileMap.get(name);
       if (unknown.isDirectory()) {
         if (isInContent(unknown)) {

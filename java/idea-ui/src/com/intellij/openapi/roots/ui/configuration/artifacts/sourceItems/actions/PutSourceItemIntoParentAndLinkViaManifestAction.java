@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
@@ -41,13 +40,9 @@ import java.util.List;
 /**
  * @author nik
  */
-public class PutSourceItemIntoParentAndLinkViaManifestAction extends AnAction {
-  private final SourceItemsTree mySourceItemsTree;
-  private final ArtifactEditorEx myArtifactEditor;
-
+public class PutSourceItemIntoParentAndLinkViaManifestAction extends PutIntoDefaultLocationActionBase {
   public PutSourceItemIntoParentAndLinkViaManifestAction(SourceItemsTree sourceItemsTree, ArtifactEditorEx artifactEditor) {
-    mySourceItemsTree = sourceItemsTree;
-    myArtifactEditor = artifactEditor;
+    super(sourceItemsTree, artifactEditor);
   }
 
   @Override
@@ -61,12 +56,15 @@ public class PutSourceItemIntoParentAndLinkViaManifestAction extends AnAction {
     }
 
     boolean enable = parentInfo != null;
+    boolean isProvideElements = false;
     for (PackagingSourceItem item : mySourceItemsTree.getSelectedItems()) {
+      isProvideElements |= item.isProvideElements();
       if (!item.getKindOfProducedElements().containsJarFiles()) {
         enable = false;
         break;
       }
     }
+    enable &= isProvideElements;
     presentation.setVisible(enable);
     presentation.setEnabled(enable);
   }

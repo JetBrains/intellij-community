@@ -19,25 +19,25 @@
  */
 
 package com.intellij.compiler.impl.javaCompiler.eclipse;
-              
+
 import com.intellij.compiler.OutputParser;
 import com.intellij.compiler.impl.javaCompiler.FileObject;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
-import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.compiler.InvalidInputException;
 import org.eclipse.jdt.internal.compiler.*;
@@ -164,7 +164,7 @@ public class EclipseCompilerDriver {
   }
 
   public boolean processMessageLine(final OutputParser.Callback callback, final String outputDir, Project project) {
-    ProgressManager.getInstance().checkCanceled();
+    ProgressManager.checkCanceled();
     CompilationResult result;
     try {
       result = myCompilationResults.take();
@@ -243,7 +243,7 @@ public class EclipseCompilerDriver {
     public char[] getContents() {
       final String fileName = String.valueOf(getFileName());
       try {
-        ProgressManager.getInstance().checkCanceled();
+        ProgressManager.checkCanceled();
         return FileUtil.loadFileText(new File(fileName), myDefaultEncoding);
       }
       catch (IOException e) {

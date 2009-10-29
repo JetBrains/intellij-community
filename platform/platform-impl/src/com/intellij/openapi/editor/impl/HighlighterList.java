@@ -26,19 +26,30 @@ import java.util.Iterator;
 import java.util.List;
 
 public abstract class HighlighterList {
-  private final List<RangeHighlighterImpl> mySegmentHighlighters = new SortedList<RangeHighlighterImpl>(MY_RANGE_COMPARATOR) {
+  private final SortedList<RangeHighlighterImpl> mySegmentHighlighters = new SortedList<RangeHighlighterImpl>(MY_RANGE_COMPARATOR) {
     @Override
     protected void sort(List<RangeHighlighterImpl> delegate) {
       Iterator<RangeHighlighterImpl> it = delegate.iterator();
+      boolean needSort = false;
+      RangeHighlighterImpl lastHighlighter = null;
 
       while (it.hasNext()) {
         RangeHighlighterImpl highlighter = it.next();
         if (!highlighter.isValid()) {
+          needSort = true;
           it.remove();
         }
+
+        if (lastHighlighter != null) {
+          if (!needSort) needSort = MY_RANGE_COMPARATOR.compare(lastHighlighter, highlighter) > 0;
+        }
+        
+        lastHighlighter = highlighter;
       }
 
-      super.sort(delegate);
+      if (needSort) {
+        super.sort(delegate);
+      }
     }
   };
 
@@ -65,6 +76,7 @@ public abstract class HighlighterList {
     myDocumentListener = new DocumentAdapter() {
       public void documentChanged(DocumentEvent e) {
         myIsDirtied = true;
+        mySegmentHighlighters.markDirty();
       }
     };
     myDoc = doc;

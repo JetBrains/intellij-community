@@ -114,7 +114,6 @@ public class ActionUtil {
           presentation.putClientProperty(WAS_ENABLED_BEFORE_DUMB, enabledBeforeUpdate);
         }
         presentation.setEnabled(false);
-        presentation.setVisible(false);
       }
     }
     

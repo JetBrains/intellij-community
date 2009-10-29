@@ -120,12 +120,12 @@ public class ExtractClassTest extends MultiFileTestCase{
   private static void doTest(final PsiClass aClass, final ArrayList<PsiMethod> methods, final ArrayList<PsiField> fields, final String conflicts,
                              boolean generateGettersSetters) {
     try {
-      ExtractClassProcessor processor = new ExtractClassProcessor(aClass, fields, methods, new ArrayList<PsiClass>(), "", "Extracted", generateGettersSetters);
+      ExtractClassProcessor processor = new ExtractClassProcessor(aClass, fields, methods, new ArrayList<PsiClass>(), "", "Extracted", null, generateGettersSetters);
       processor.run();
       LocalFileSystem.getInstance().refresh(false);
       FileDocumentManager.getInstance().saveAllDocuments();
     }
-    catch (Exception e) {
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       if (conflicts != null) {
         Assert.assertEquals(e.getMessage(), conflicts);
         return;

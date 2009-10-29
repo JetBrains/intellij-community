@@ -1274,17 +1274,20 @@ public class StringUtil {
     return result;
   }
 
-  public static int countNewLines(final CharSequence text) {
-    int lineShift = 0;
+  public static int countNewLines(@NotNull CharSequence text) {
+    return countChars(text, '\n');
+  }
+
+  public static int countChars(@NotNull CharSequence text, char c) {
+    int count = 0;
 
     for(int i = 0; i < text.length(); ++i) {
       final char ch = text.charAt(i);
-
-      if (ch == '\n') {
-        ++lineShift;
+      if (ch == c) {
+        ++count;
       }
     }
-    return lineShift;
+    return count;
   }
 
   public static String capitalsOnly(String s) {

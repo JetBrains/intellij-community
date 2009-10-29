@@ -59,6 +59,7 @@ public class StructureConfigurableContext implements Disposable {
   }
 
   public void dispose() {
+    clear();
   }
 
   public ModulesConfigurator getModulesConfigurator() {
@@ -77,8 +78,7 @@ public class StructureConfigurableContext implements Disposable {
 
   public void resetLibraries() {
     final LibraryTablesRegistrar tablesRegistrar = LibraryTablesRegistrar.getInstance();
-
-    myLevel2Providers.clear();
+    clear();
     myLevel2Providers.put(LibraryTablesRegistrar.APPLICATION_LEVEL, new LibrariesModifiableModel(tablesRegistrar.getLibraryTable(), myProject));
     myLevel2Providers.put(LibraryTablesRegistrar.PROJECT_LEVEL, new LibrariesModifiableModel(tablesRegistrar.getLibraryTable(myProject), myProject));
     for (final LibraryTable table : tablesRegistrar.getCustomLibraryTables()) {
@@ -129,7 +129,6 @@ public class StructureConfigurableContext implements Disposable {
   @Nullable
   public Library getLibrary(final String libraryName, final String libraryLevel) {
 /* the null check is added only to prevent NPE when called from getLibrary */
-    if (myLevel2Providers.isEmpty()) resetLibraries();
     final LibrariesModifiableModel model = myLevel2Providers.get(libraryLevel);
     return model == null ? null : findLibraryModel(libraryName, model);
   }
@@ -149,8 +148,15 @@ public class StructureConfigurableContext implements Disposable {
 
 
   public void reset() {
-    myDaemonAnalyzer.reset();
     resetLibraries();
     myModulesConfigurator.resetModuleEditors();
+    myDaemonAnalyzer.reset(); // should be called after resetLibraries!
+  }
+
+  public void clear() {
+    for (LibrariesModifiableModel model : myLevel2Providers.values()) {
+      model.disposeUncommittedLibraries();
+    }
+    myLevel2Providers.clear();
   }
 }

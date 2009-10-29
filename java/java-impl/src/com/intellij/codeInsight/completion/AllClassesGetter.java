@@ -178,7 +178,7 @@ public class AllClassesGetter {
   private static String getPackagePrefix(final PsiElement context, final int offset) {
     final String fileText = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       public String compute() {
-        ProgressManager.getInstance().checkCanceled();
+        ProgressManager.checkCanceled();
         return context.getContainingFile().getText();
       }
     });
@@ -200,7 +200,7 @@ public class AllClassesGetter {
     //noinspection AutoUnboxing
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
-        ProgressManager.getInstance().checkCanceled();
+        ProgressManager.checkCanceled();
 
         if (!context.isValid() || !psiClass.isValid()) return false;
 

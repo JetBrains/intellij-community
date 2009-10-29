@@ -40,9 +40,9 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileInfoMan
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceOwner;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileSystemItemUtil;
+import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
-import com.intellij.psi.search.FilenameIndex;
 import com.intellij.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -132,7 +132,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
 
                 final GlobalSearchScope scope = ProjectScope.getProjectScope(project);
                 for (final String name : resultNames) {
-                  ProgressManager.getInstance().checkCanceled();
+                  ProgressManager.checkCanceled();
 
                   final PsiFile[] files = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile[]>() {
                     public PsiFile[] compute() {

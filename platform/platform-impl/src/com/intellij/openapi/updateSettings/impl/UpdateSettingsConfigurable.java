@@ -158,10 +158,11 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
 
       myPeriodCombo.setRenderer(new MappingListCellRenderer(PERIOD_VALUE_MAP));
 
-      final String majorVersion = ApplicationInfo.getInstance().getMajorVersion();
+      final ApplicationInfo appInfo = ApplicationInfo.getInstance();
+      final String majorVersion = appInfo.getMajorVersion();
       String versionNumber = "";
       if (majorVersion != null && majorVersion.trim().length() > 0) {
-        final String minorVersion = ApplicationInfo.getInstance().getMinorVersion();
+        final String minorVersion = appInfo.getMinorVersion();
         if (minorVersion != null && minorVersion.trim().length() > 0) {
           versionNumber = majorVersion + "." + minorVersion;
         }
@@ -169,11 +170,8 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
           versionNumber = majorVersion + ".0";
         }
       }
-      myVersionNumber.setText(ApplicationInfo.getInstance().getVersionName() + " " + versionNumber);
-      String currentBuild = (ApplicationInfo.getInstance().getBuildNumber() == null)
-                            ? IdeBundle.message("updates.current.build.unknown")
-                            : ApplicationInfo.getInstance().getBuildNumber();
-      myBuildNumber.setText(currentBuild);
+      myVersionNumber.setText(appInfo.getVersionName() + " " + versionNumber);
+      myBuildNumber.setText(appInfo.getBuild().asString());
 
       myCbCheckForUpdates.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {

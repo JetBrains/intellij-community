@@ -42,8 +42,12 @@ class ArtifactsStructureConfigurableContextImpl implements ArtifactsStructureCon
   private Project myProject;
   private Map<Artifact, CompositePackagingElement<?>> myModifiableRoots = new HashMap<Artifact, CompositePackagingElement<?>>();
   private Map<Artifact, ArtifactEditorImpl> myArtifactEditors = new HashMap<Artifact, ArtifactEditorImpl>();
+  private Map<ArtifactPointer, ArtifactEditorSettings> myEditorSettings = new HashMap<ArtifactPointer, ArtifactEditorSettings>();
+  private final ArtifactEditorSettings myDefaultSettings;
 
-  public ArtifactsStructureConfigurableContextImpl(StructureConfigurableContext context, Project project, final ArtifactAdapter modifiableModelListener) {
+  public ArtifactsStructureConfigurableContextImpl(StructureConfigurableContext context, Project project,
+                                                   ArtifactEditorSettings defaultSettings, final ArtifactAdapter modifiableModelListener) {
+    myDefaultSettings = defaultSettings;
     myModifiableModelListener = modifiableModelListener;
     myContext = context;
     myProject = project;
@@ -73,15 +77,19 @@ class ArtifactsStructureConfigurableContextImpl implements ArtifactsStructureCon
   public CompositePackagingElement<?> getRootElement(@NotNull Artifact artifact) {
     artifact = getOriginalArtifact(artifact);
     if (myModifiableModel != null) {
-      final CompositePackagingElement<?> rootElement = myModifiableModel.getArtifactByOriginal(artifact).getRootElement();
-      if (rootElement != artifact.getRootElement()) {
-        myModifiableRoots.put(artifact, rootElement);
+      final Artifact modifiableArtifact = myModifiableModel.getModifiableCopy(artifact);
+      if (modifiableArtifact != null) {
+        myModifiableRoots.put(artifact, modifiableArtifact.getRootElement());
       }
     }
-    CompositePackagingElement<?> root = myModifiableRoots.get(artifact);
+    return getOrCreateModifiableRootElement(artifact);
+  }
+
+  private CompositePackagingElement<?> getOrCreateModifiableRootElement(Artifact originalArtifact) {
+    CompositePackagingElement<?> root = myModifiableRoots.get(originalArtifact);
     if (root == null) {
-      root = ArtifactUtil.copyFromRoot(artifact.getRootElement(), myProject);
-      myModifiableRoots.put(artifact, root);
+      root = ArtifactUtil.copyFromRoot(originalArtifact.getRootElement(), myProject);
+      myModifiableRoots.put(originalArtifact, root);
     }
     return root;
   }
@@ -90,7 +98,7 @@ class ArtifactsStructureConfigurableContextImpl implements ArtifactsStructureCon
     artifact = getOriginalArtifact(artifact);
     final ModifiableArtifact modifiableArtifact = getModifiableArtifactModel().getOrCreateModifiableArtifact(artifact);
     if (modifiableArtifact.getRootElement() == artifact.getRootElement()) {
-      modifiableArtifact.setRootElement(getRootElement(artifact));
+      modifiableArtifact.setRootElement(getOrCreateModifiableRootElement(artifact));
     }
     action.run();
     myContext.getDaemonAnalyzer().queueUpdate(new ArtifactProjectStructureElement(myContext, this, artifact));
@@ -100,7 +108,8 @@ class ArtifactsStructureConfigurableContextImpl implements ArtifactsStructureCon
     artifact = getOriginalArtifact(artifact);
     ArtifactEditorImpl artifactEditor = myArtifactEditors.get(artifact);
     if (artifactEditor == null) {
-      artifactEditor = new ArtifactEditorImpl(this, artifact);
+      final ArtifactEditorSettings settings = myEditorSettings.get(ArtifactPointerManager.getInstance(myProject).create(artifact));
+      artifactEditor = new ArtifactEditorImpl(this, artifact, settings != null ? settings : myDefaultSettings);
       myArtifactEditors.put(artifact, artifactEditor);
     }
     return artifactEditor;
@@ -120,6 +129,10 @@ class ArtifactsStructureConfigurableContextImpl implements ArtifactsStructureCon
     return myModifiableModel;
   }
 
+  public ArtifactEditorSettings getDefaultSettings() {
+    return myDefaultSettings;
+  }
+
   @NotNull
   public ModulesProvider getModulesProvider() {
     return myContext.getModulesConfigurator();
@@ -133,6 +146,10 @@ class ArtifactsStructureConfigurableContextImpl implements ArtifactsStructureCon
   @NotNull
   public ManifestFileConfiguration getManifestFile(CompositePackagingElement<?> element, ArtifactType artifactType) {
     return myManifestFilesInfo.getManifestFile(element, artifactType, this);
+  }
+
+  public boolean isManifestFile(String path) {
+    return myManifestFilesInfo.isManifestFile(path);
   }
 
   public ManifestFilesInfo getManifestFilesInfo() {
@@ -151,5 +168,13 @@ class ArtifactsStructureConfigurableContextImpl implements ArtifactsStructureCon
       Disposer.dispose(editor);
     }
     myArtifactEditors.clear();
+  }
+
+  public void saveEditorSettings() {
+    myEditorSettings.clear();
+    for (ArtifactEditorImpl artifactEditor : myArtifactEditors.values()) {
+      final ArtifactPointer pointer = ArtifactPointerManager.getInstance(myProject).create(artifactEditor.getArtifact());
+      myEditorSettings.put(pointer, artifactEditor.createSettings());
+    }
   }
 }

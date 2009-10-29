@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -35,16 +36,17 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
   private final Map<Library, LibraryEditor> myLibrary2EditorMap = new HashMap<Library, LibraryEditor>();
   private final Set<Library> myRemovedLibraries = new HashSet<Library>();
 
-  private final LibraryTable.ModifiableModel myLibrariesModifiableModel;
+  private LibraryTable.ModifiableModel myLibrariesModifiableModel;
   private final Project myProject;
+  private LibraryTable myTable;
 
   public LibrariesModifiableModel(final LibraryTable table, final Project project) {
     myProject = project;
-    myLibrariesModifiableModel = table.getModifiableModel();
+    myTable = table;
   }
 
   public Library createLibrary(String name) {
-    final Library library = myLibrariesModifiableModel.createLibrary(name);
+    final Library library = getLibrariesModifiableModel().createLibrary(name);
     //createLibraryEditor(library);
     final BaseLibrariesConfigurable configurable = ProjectStructureConfigurable.getInstance(myProject).getConfigurableFor(library);
     configurable.createLibraryNode(library);
@@ -52,11 +54,17 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
   }
 
   public void removeLibrary(@NotNull Library library) {
-    if (myLibrariesModifiableModel.getLibraryByName(library.getName()) == null) return;
+    if (getLibrariesModifiableModel().getLibraryByName(library.getName()) == null) return;
 
-    myRemovedLibraries.add(library);
     removeLibraryEditor(library);
-    myLibrariesModifiableModel.removeLibrary(library);
+    final Library existingLibrary = myTable.getLibraryByName(library.getName());
+    getLibrariesModifiableModel().removeLibrary(library);
+    if (existingLibrary == library) {
+      myRemovedLibraries.add(library);
+    } else {
+      // dispose uncommitted library
+      Disposer.dispose(library);
+    }
   }
 
   public void commit() {
@@ -65,31 +73,33 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
 
   @NotNull
   public Iterator<Library> getLibraryIterator() {
-    return myLibrariesModifiableModel.getLibraryIterator();
+    return getLibrariesModifiableModel().getLibraryIterator();
   }
 
   public Library getLibraryByName(@NotNull String name) {
-    return myLibrariesModifiableModel.getLibraryByName(name);
+    return getLibrariesModifiableModel().getLibraryByName(name);
   }
 
   @NotNull
   public Library[] getLibraries() {
-    return myLibrariesModifiableModel.getLibraries();
+    return getLibrariesModifiableModel().getLibraries();
   }
 
   public boolean isChanged() {
     for (LibraryEditor libraryEditor : myLibrary2EditorMap.values()) {
       if (libraryEditor.hasChanges()) return true;
     }
-    return myLibrariesModifiableModel.isChanged();
+    return getLibrariesModifiableModel().isChanged();
   }
 
   public void deferredCommit(){
     for (LibraryEditor libraryEditor : new ArrayList<LibraryEditor>(myLibrary2EditorMap.values())) {
-      libraryEditor.commit();
+      libraryEditor.commit(); // TODO: is seems like commit will recreate the editor, but it should not
+      Disposer.dispose(libraryEditor);
     }
     if (!(myLibrary2EditorMap.isEmpty() && myRemovedLibraries.isEmpty())) {
-      myLibrariesModifiableModel.commit();
+      getLibrariesModifiableModel().commit();
+      myLibrariesModifiableModel = null;
     }
     myLibrary2EditorMap.clear();
     myRemovedLibraries.clear();
@@ -124,16 +134,35 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
   private void removeLibraryEditor(final Library library) {
     final LibraryEditor libraryEditor = myLibrary2EditorMap.remove(library);
     if (libraryEditor != null) {
-      for (Iterator it = myLibrary2EditorMap.keySet().iterator(); it.hasNext();) {
-        final Library lib = (Library)it.next();
-        if (libraryEditor == myLibrary2EditorMap.get(lib)) {
-          it.remove();
-        }
-      }
+      Disposer.dispose(libraryEditor);
     }
   }
 
   public Library.ModifiableModel getLibraryModifiableModel(final Library library) {
     return getLibraryEditor(library).getModel();
+  }
+
+  private LibraryTable.ModifiableModel getLibrariesModifiableModel() {
+    if (myLibrariesModifiableModel == null) {
+      myLibrariesModifiableModel = myTable.getModifiableModel();
+    }
+
+    return myLibrariesModifiableModel;
+  }
+
+  public void disposeUncommittedLibraries() {
+    for (final Library library : new ArrayList<Library>(myLibrary2EditorMap.keySet())) {
+      final Library existingLibrary = myTable.getLibraryByName(library.getName());
+      if (existingLibrary != library) {
+        Disposer.dispose(library);
+      }
+
+      final LibraryEditor libraryEditor = myLibrary2EditorMap.get(library);
+      if (libraryEditor != null) {
+        Disposer.dispose(libraryEditor);
+      }
+    }
+
+    myLibrary2EditorMap.clear();
   }
 }

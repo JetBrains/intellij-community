@@ -282,11 +282,12 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
         else {
           final PsiMember refMember = element.getCopyableUserData(REFERENCED_MEMBER_KEY);
           if (refMember != null) {
+            LOG.assertTrue(ref instanceof PsiReferenceExpression);
             element.putCopyableUserData(REFERENCED_MEMBER_KEY, null);
             PsiElement refElement1 = ref.resolve();
             if (refMember != refElement1 && !refMember.getManager().areElementsEquivalent(refMember, refElement1)) {
               try {
-                ref = (PsiJavaCodeReferenceElement) ref.bindToElement(refMember);
+                ref = (PsiJavaCodeReferenceElement) ((PsiReferenceExpression)ref).bindToElementViaStaticImport(refMember.getContainingClass());
               }
               catch (IncorrectOperationException e) {
                 // TODO[yole] ignore?

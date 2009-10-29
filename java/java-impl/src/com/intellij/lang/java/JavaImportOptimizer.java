@@ -37,32 +37,30 @@ public class JavaImportOptimizer implements ImportOptimizer {
 
   @NotNull
   public Runnable processFile(final PsiFile file) {
-    if (file instanceof PsiJavaFile) {
-      Project project = file.getProject();
-      final PsiImportList newImportList = JavaCodeStyleManager.getInstance(project).prepareOptimizeImportsResult((PsiJavaFile)file);
-      return new Runnable() {
-        public void run() {
-          try {
-            if (newImportList != null) {
-              final PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
-              final Document document = manager.getDocument(file);
-              if (document != null) {
-                manager.commitDocument(document);
-              }
-              final PsiImportList oldImportList = ((PsiJavaFile)file).getImportList();
-              assert oldImportList != null;
-              oldImportList.replace(newImportList);
-            }
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
-        }
-      };
-    }
-    else {
+    if (!(file instanceof PsiJavaFile)) {
       return EmptyRunnable.getInstance();
     }
+    Project project = file.getProject();
+    final PsiImportList newImportList = JavaCodeStyleManager.getInstance(project).prepareOptimizeImportsResult((PsiJavaFile)file);
+    return new Runnable() {
+      public void run() {
+        try {
+          if (newImportList != null) {
+            final PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
+            final Document document = manager.getDocument(file);
+            if (document != null) {
+              manager.commitDocument(document);
+            }
+            final PsiImportList oldImportList = ((PsiJavaFile)file).getImportList();
+            assert oldImportList != null;
+            oldImportList.replace(newImportList);
+          }
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      }
+    };
   }
 
   public boolean supports(PsiFile file) {

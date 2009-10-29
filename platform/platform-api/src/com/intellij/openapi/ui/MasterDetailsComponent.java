@@ -38,9 +38,14 @@ import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Icons;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
+import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.util.xmlb.annotations.Tag;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,9 +94,12 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
   }
 
   public static class UIState {
+    @Tag("splitter-proportions")
     public SplitterProportionsDataImpl proportions = new SplitterProportionsDataImpl();
+    @Tag("last-edited")
     public String lastEditedConfigurable;
-    public List<String> order = new ArrayList<String>();
+    @Tag("settings")
+    public Element mySettingsElement;
   }
 
   protected UIState myState = new UIState();
@@ -370,14 +378,35 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     return path.toString();
   }
 
+  @Nullable
+  protected PersistentStateComponent<?> getAdditionalSettings() {
+    return null;
+  }
+
   public UIState getState() {
+    myState.mySettingsElement = null;
+    PersistentStateComponent<?> additionalSettings = getAdditionalSettings();
+    if (additionalSettings != null) {
+      final Object state = additionalSettings.getState();
+      if (state != null) {
+        myState.mySettingsElement = XmlSerializer.serialize(state, new SkipDefaultValuesSerializationFilters());
+      }
+    }
     return myState;
   }
 
   public void loadState(final UIState object) {
     myState.lastEditedConfigurable = object.lastEditedConfigurable;
     myState.proportions = object.proportions;
-    myState.order = object.order;
+    final PersistentStateComponent<?> additionalSettings = getAdditionalSettings();
+    if (additionalSettings != null) {
+      final Element settingsElement = object.mySettingsElement;
+      if (settingsElement != null) {
+        final Class<?> stateType = ReflectionUtil.getRawType(ReflectionUtil.resolveVariableInHierarchy(PersistentStateComponent.class.getTypeParameters()[0], additionalSettings.getClass()));
+        //noinspection unchecked
+        ((PersistentStateComponent)additionalSettings).loadState(XmlSerializer.deserialize(settingsElement, stateType));
+      }
+    }
   }
 
   public void disposeUIResources() {

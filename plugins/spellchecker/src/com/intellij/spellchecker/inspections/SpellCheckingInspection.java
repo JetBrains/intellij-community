@@ -49,6 +49,9 @@ import java.util.Map;
 
 
 public class SpellCheckingInspection extends LocalInspectionTool {
+  
+  public static final String SPELL_CHECKING_INSPECTION_TOOL_NAME = "SpellCheckingInspection";
+
   @Nls
   @NotNull
   public String getGroupDisplayName() {
@@ -64,7 +67,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
   @NonNls
   @NotNull
   public String getShortName() {
-    return "SpellCheckingInspection";
+    return SPELL_CHECKING_INSPECTION_TOOL_NAME;
   }
 
   public boolean isEnabledByDefault() {
@@ -79,19 +82,19 @@ public class SpellCheckingInspection extends LocalInspectionTool {
   private static final Map<Language, SpellcheckingStrategy> factories = new HashMap<Language, SpellcheckingStrategy>();
 
   private static void ensureFactoriesAreLoaded() {
-      synchronized (factories) {
-        if (!factories.isEmpty()) return;
-        final SpellcheckingStrategy[] spellcheckingStrategies = Extensions.getExtensions(SpellcheckingStrategy.EP_NAME);
-        if (spellcheckingStrategies != null) {
-          for (SpellcheckingStrategy spellcheckingStrategy : spellcheckingStrategies) {
-            final Language language = spellcheckingStrategy.getLanguage();
-            if (language != Language.ANY) {
-              factories.put(language, spellcheckingStrategy);
-            }
+    synchronized (factories) {
+      if (!factories.isEmpty()) return;
+      final SpellcheckingStrategy[] spellcheckingStrategies = Extensions.getExtensions(SpellcheckingStrategy.EP_NAME);
+      if (spellcheckingStrategies != null) {
+        for (SpellcheckingStrategy spellcheckingStrategy : spellcheckingStrategies) {
+          final Language language = spellcheckingStrategy.getLanguage();
+          if (language != Language.ANY) {
+            factories.put(language, spellcheckingStrategy);
           }
         }
       }
     }
+  }
 
 
   private static SpellcheckingStrategy getFactoryByLanguage(@NotNull Language lang) {
@@ -106,7 +109,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
       public void visitElement(final PsiElement element) {
 
         final ASTNode node = element.getNode();
-        if (node == null){
+        if (node == null) {
           return;
         }
         // Extract parser definition from element
@@ -115,17 +118,18 @@ public class SpellCheckingInspection extends LocalInspectionTool {
         final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
 
         // Handle selected options
-        if (parserDefinition != null){
+        if (parserDefinition != null) {
           if (parserDefinition.getStringLiteralElements().contains(elementType)) {
-            if (!processLiterals){
+            if (!processLiterals) {
               return;
             }
           }
           else if (parserDefinition.getCommentTokens().contains(elementType)) {
-            if (!processComments){
+            if (!processComments) {
               return;
             }
-          } else if (!processCode){
+          }
+          else if (!processCode) {
             return;
           }
         }
@@ -246,6 +250,18 @@ public class SpellCheckingInspection extends LocalInspectionTool {
     verticalBox.add(new SingleCheckboxOptionsPanel(SpellCheckerBundle.message("process.code"), this, "processCode"));
     verticalBox.add(new SingleCheckboxOptionsPanel(SpellCheckerBundle.message("process.literals"), this, "processLiterals"));
     verticalBox.add(new SingleCheckboxOptionsPanel(SpellCheckerBundle.message("process.comments"), this, "processComments"));
+    /*HyperlinkLabel linkToSettings = new HyperlinkLabel(SpellCheckerBundle.message("link.to.settings"));
+    linkToSettings.addHyperlinkListener(new HyperlinkListener() {
+      public void hyperlinkUpdate(final HyperlinkEvent e) {
+        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          final OptionsEditor optionsEditor = OptionsEditor.KEY.getData(DataManager.getInstance().getDataContext());
+          // ??project?
+
+        }
+      }
+    });
+
+    verticalBox.add(linkToSettings);*/
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(verticalBox, BorderLayout.NORTH);
     return panel;

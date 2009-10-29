@@ -65,15 +65,16 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   private JPanel myPropertiesPanelWrapper;
   private JPanel myPropertiesPanel;
   private LayoutTreeBuilder myBuilder;
-  private boolean mySortElements = true;
+  private boolean mySortElements;
   private LayoutTreeStructure myTreeStructure;
 
   public LayoutTreeComponent(ArtifactEditorImpl artifactsEditor, ComplexElementSubstitutionParameters substitutionParameters,
-                               ArtifactEditorContext context, Artifact originalArtifact) {
+                             ArtifactEditorContext context, Artifact originalArtifact, boolean sortElements) {
     myArtifactsEditor = artifactsEditor;
     mySubstitutionParameters = substitutionParameters;
     myContext = context;
     myOriginalArtifact = originalArtifact;
+    mySortElements = sortElements;
     myTree = new LayoutTree(myArtifactsEditor);
     myTreeStructure = new LayoutTreeStructure();
     myBuilder = new LayoutTreeBuilder();
@@ -100,6 +101,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   public void setSortElements(boolean sortElements) {
     mySortElements = sortElements;
     myBuilder.setNodeDescriptorComparator(getComparator());
+    ((ArtifactsStructureConfigurableContextImpl)myArtifactsEditor.getContext().getParent()).getDefaultSettings().setSortElements(sortElements);
   }
 
   @Nullable
@@ -128,7 +130,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
 
   public void updatePropertiesPanel(final boolean force) {
     final PackagingElement<?> selected = getSelection().getElementIfSingle();
-    if (force || Comparing.equal(selected, mySelectedElementInfo.myElement)) {
+    if (!force && Comparing.equal(selected, mySelectedElementInfo.myElement)) {
       return;
     }
     mySelectedElementInfo.save();
@@ -433,6 +435,24 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     updateAndSelect(myTree.getRootPackagingNode(), toSelect);
   }
 
+  public void packInto(@NotNull final List<? extends PackagingSourceItem> items, final String pathToJar) {
+    final List<PackagingElement<?>> toSelect = new ArrayList<PackagingElement<?>>();
+    final CompositePackagingElement<?> rootElement = getArtifact().getRootElement();
+    editLayout(new Runnable() {
+      public void run() {
+        final CompositePackagingElement<?> archive = PackagingElementFactory.getInstance().getOrCreateArchive(rootElement, pathToJar);
+        for (PackagingSourceItem item : items) {
+          final List<? extends PackagingElement<?>> elements = item.createElements(myContext);
+          archive.addOrFindChildren(elements);
+        }
+        toSelect.add(archive);
+      }
+    });
+
+    myArtifactsEditor.getSourceItemsTree().rebuildTree();
+    updateAndSelect(myTree.getRootPackagingNode(), toSelect);
+  }
+
   public boolean isPropertiesModified() {
     final PackagingElementPropertiesPanel panel = mySelectedElementInfo.myCurrentPanel;
     return panel != null && panel.isModified();
@@ -484,6 +504,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
       else {
         cardLayout.show(myPropertiesPanelWrapper, EMPTY_CARD);
       }
+      myPropertiesPanelWrapper.repaint();
     }
   }
 

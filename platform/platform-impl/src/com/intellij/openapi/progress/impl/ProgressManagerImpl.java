@@ -44,9 +44,9 @@ public class ProgressManagerImpl extends ProgressManager {
 
   private static final ThreadLocal<ProgressIndicator> myThreadIndicator = new ThreadLocal<ProgressIndicator>();
   private final AtomicInteger myCurrentProgressCount = new AtomicInteger(0);
+  private final AtomicInteger myCurrentUnsafeProgressCount = new AtomicInteger(0);
   private final AtomicInteger myCurrentModalProgressCount = new AtomicInteger(0);
 
-  private static volatile boolean ourNeedToCheckCancel = false;
   private static volatile int ourLockedCheckCounter = 0;
   private final List<ProgressFunComponentProvider> myFunComponentProviders = new ArrayList<ProgressFunComponentProvider>();
   @NonNls private static final String NAME = "Progress Cancel Checker";
@@ -68,27 +68,24 @@ public class ProgressManagerImpl extends ProgressManager {
     }
   }
 
-  public void checkCanceled() {
-    // Q: how about 2 cancelable progresses in time??
-    if (ourNeedToCheckCancel) { // smart optimization!
-      ourNeedToCheckCancel = false;
-      final ProgressIndicator progress = getProgressIndicator();
-      if (progress != null) {
-        try {
-          progress.checkCanceled();
-        }
-        catch (ProcessCanceledException e) {
-          if (Thread.holdsLock(PsiLock.LOCK)) {
-            ourLockedCheckCounter++;
-            if (ourLockedCheckCounter > 10) {
-              ourLockedCheckCounter = 0;
-              ourNeedToCheckCancel = true;
-            }
-          }
-          else {
+  @Override
+  protected void doCheckCanceled() throws ProcessCanceledException {
+    final ProgressIndicator progress = getProgressIndicator();
+    if (progress != null) {
+      try {
+        progress.checkCanceled();
+      }
+      catch (ProcessCanceledException e) {
+        if (Thread.holdsLock(PsiLock.LOCK)) {
+          ourLockedCheckCounter++;
+          if (ourLockedCheckCounter > 10) {
             ourLockedCheckCounter = 0;
-            progress.checkCanceled();
+            ourNeedToCheckCancel = true;
           }
+        }
+        else {
+          ourLockedCheckCounter = 0;
+          progress.checkCanceled();
         }
       }
     }
@@ -173,11 +170,15 @@ public class ProgressManagerImpl extends ProgressManager {
     return myCurrentProgressCount.get() > 0;
   }
 
+  public boolean hasUnsafeProgressIndicator() {
+    return myCurrentUnsafeProgressCount.get() > 0;
+  }
+
   public boolean hasModalProgressIndicator() {
     return myCurrentModalProgressCount.get() > 0;
   }
 
-  public void runProcess(@NotNull final Runnable process, final ProgressIndicator progress) throws ProcessCanceledException {
+  public void runProcess(@NotNull final Runnable process, final ProgressIndicator progress) {
     executeProcessUnderProgress(new Runnable(){
       public void run() {
         synchronized (process) {
@@ -209,6 +210,7 @@ public class ProgressManagerImpl extends ProgressManager {
 
     final boolean modal = progress != null && progress.isModal();
     if (modal) myCurrentModalProgressCount.incrementAndGet();
+    if (progress == null || progress instanceof ProgressWindow) myCurrentUnsafeProgressCount.incrementAndGet();
 
     try {
       process.run();
@@ -218,6 +220,7 @@ public class ProgressManagerImpl extends ProgressManager {
 
       myCurrentProgressCount.decrementAndGet();
       if (modal) myCurrentModalProgressCount.decrementAndGet();
+      if (progress == null || progress instanceof ProgressWindow) myCurrentUnsafeProgressCount.decrementAndGet();
     }
   }
 

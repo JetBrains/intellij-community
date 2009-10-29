@@ -23,39 +23,39 @@ import com.intellij.testFramework.UsefulTestCase;
 public class LocationProviderUtilTest extends UsefulTestCase {
   public void testExtractProtocol() {
     assertEquals(null,
-                 LocationProviderUtil.extractProtocol(""));
+                 TestsLocationProviderUtil.extractProtocol(""));
     assertEquals(null,
-                 LocationProviderUtil.extractProtocol("file:/"));
+                 TestsLocationProviderUtil.extractProtocol("file:/"));
 
     assertEquals("file",
-                 LocationProviderUtil.extractProtocol("file://"));
+                 TestsLocationProviderUtil.extractProtocol("file://"));
     assertEquals("file",
-                 LocationProviderUtil.extractProtocol("file:///some/path/file.rb:24"));
+                 TestsLocationProviderUtil.extractProtocol("file:///some/path/file.rb:24"));
     assertEquals("file",
-                 LocationProviderUtil.extractProtocol("file://./some/path/file.rb:24"));
+                 TestsLocationProviderUtil.extractProtocol("file://./some/path/file.rb:24"));
 
     assertEquals("ruby_qn",
-                 LocationProviderUtil.extractProtocol("ruby_qn://"));
+                 TestsLocationProviderUtil.extractProtocol("ruby_qn://"));
     assertEquals("ruby_qn",
-                 LocationProviderUtil.extractProtocol("ruby_qn://A::B.method"));
+                 TestsLocationProviderUtil.extractProtocol("ruby_qn://A::B.method"));
   }
 
   public void testExtractPath() {
     assertEquals(null,
-                 LocationProviderUtil.extractPath(""));
+                 TestsLocationProviderUtil.extractPath(""));
     assertEquals(null,
-                 LocationProviderUtil.extractPath("file:/"));
+                 TestsLocationProviderUtil.extractPath("file:/"));
 
     assertEquals("",
-                 LocationProviderUtil.extractPath("file://"));
+                 TestsLocationProviderUtil.extractPath("file://"));
     assertEquals("/some/path/file.rb:24",
-                 LocationProviderUtil.extractPath("file:///some/path/file.rb:24"));
+                 TestsLocationProviderUtil.extractPath("file:///some/path/file.rb:24"));
     assertEquals("./some/path/file.rb:24",
-                 LocationProviderUtil.extractPath("file://./some/path/file.rb:24"));
+                 TestsLocationProviderUtil.extractPath("file://./some/path/file.rb:24"));
 
     assertEquals("",
-                 LocationProviderUtil.extractPath("ruby_qn://"));
+                 TestsLocationProviderUtil.extractPath("ruby_qn://"));
     assertEquals("A::B.method", 
-                 LocationProviderUtil.extractPath("ruby_qn://A::B.method"));
+                 TestsLocationProviderUtil.extractPath("ruby_qn://A::B.method"));
   }
 }

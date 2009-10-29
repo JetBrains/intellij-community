@@ -165,8 +165,20 @@ public class DefaultJDOMExternalizer {
         Field field = data.getClass().getField(fieldName);
         Class type = field.getType();
         int modifiers = field.getModifiers();
-        if ((modifiers & Modifier.PUBLIC) == 0 || (modifiers & Modifier.STATIC) != 0 || (modifiers & Modifier.FINAL) != 0) continue;
+        if ((modifiers & Modifier.PUBLIC) == 0 || (modifiers & Modifier.STATIC) != 0) continue;
         field.setAccessible(true); // class might be non-public
+        if ((modifiers & Modifier.FINAL) != 0) {
+          // read external contents of final field
+          Object value = field.get(data);
+          if (ReflectionCache.isInstance(value, JDOMExternalizable.class)) {
+            final List children = e.getChildren("value");
+            for (Object child : children) {
+              Element valueTag = (Element)child;
+              ((JDOMExternalizable)value).readExternal(valueTag);
+            }
+          }
+          continue;
+        }
         String value = e.getAttributeValue("value");
         if (type.isPrimitive()) {
           if (value != null) {

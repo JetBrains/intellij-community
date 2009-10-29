@@ -30,7 +30,7 @@ public class MoveCommentToSeparateLineIntention extends Intention {
         return new CommentOnLineWithSourcePredicate();
     }
 
-    public void processIntention(PsiElement element)
+    public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
         final PsiComment selectedComment = (PsiComment)element;
         PsiElement elementToCheck = selectedComment;

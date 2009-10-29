@@ -211,4 +211,9 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
   public int getTypeSortWeight(final boolean sortByType) {
     return 4;
   }
+
+  @Override
+  public boolean isAlwaysShowPlus() {
+    return true;
+  }
 }

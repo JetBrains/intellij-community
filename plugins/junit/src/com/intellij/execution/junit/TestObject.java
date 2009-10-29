@@ -192,18 +192,18 @@ public abstract class TestObject implements JavaCommandLine {
     }
 
     final Object[] listeners = Extensions.getExtensions(IDEAJUnitListener.EP_NAME);
-    if (listeners.length > 0) {
+    final StringBuffer buf = new StringBuffer();
+    for (final Object listener : listeners) {
+      if (!((IDEAJUnitListener)listener).isEnabled(myConfiguration)) continue;
+      final Class classListener = listener.getClass();
+      buf.append(classListener.getName()).append("\n");
+      myJavaParameters.getClassPath().add(PathUtil.getJarPathForClass(classListener));
+    }
+    if (buf.length() > 0) {
       try {
         final File tempFile = FileUtil.createTempFile("junitlisteners", "");
         tempFile.deleteOnExit();
         myJavaParameters.getProgramParametersList().add("@@" + tempFile.getPath());
-
-        final StringBuffer buf = new StringBuffer();
-        for (final Object listener : listeners) {
-          final Class classListener = listener.getClass();
-          buf.append(classListener.getName()).append("\n");
-          myJavaParameters.getClassPath().add(PathUtil.getJarPathForClass(classListener));
-        }
         FileUtil.writeToFile(tempFile, buf.toString().getBytes());
       }
       catch (IOException e) {

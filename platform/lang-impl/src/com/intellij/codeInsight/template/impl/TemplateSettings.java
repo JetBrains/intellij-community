@@ -261,13 +261,14 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     if (myDeletedTemplates.size() > 0) {
       Element deleted = new Element(DELETED_TEMPLATES);
       for (final TemplateKey deletedTemplate : myDeletedTemplates) {
-        Element template = new Element(TEMPLATE);
-        template.setAttribute(NAME, deletedTemplate.key);
-        if (deletedTemplate.groupName != null) {
-          template.setAttribute(GROUP, deletedTemplate.groupName);
+        if (deletedTemplate.key != null) {
+          Element template = new Element(TEMPLATE);
+          template.setAttribute(NAME, deletedTemplate.key);
+          if (deletedTemplate.groupName != null) {
+            template.setAttribute(GROUP, deletedTemplate.groupName);
+          }
+          deleted.addContent(template);
         }
-        deleted.addContent(template);
-
       }
       parentNode.addContent(deleted);
     }

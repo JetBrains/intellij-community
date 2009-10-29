@@ -17,6 +17,7 @@ package com.intellij.packaging.artifacts;
 
 import com.intellij.packaging.elements.CompositePackagingElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
@@ -38,4 +39,6 @@ public interface ModifiableArtifactModel extends ArtifactModel {
 
   void commit();
 
+  @Nullable
+  Artifact getModifiableCopy(Artifact artifact);
 }

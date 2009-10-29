@@ -106,6 +106,7 @@ public abstract class GitRepositoryAction extends AnAction {
         }
       }
     }, null);
+    myDelayedTasks.clear();
     vcs.showErrors(exceptions, actionName);
   }
 

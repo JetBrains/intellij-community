@@ -16,9 +16,10 @@
 
 package com.intellij.application.options;
 
-import com.intellij.ui.OptionGroup;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.ui.OptionGroup;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -108,7 +109,7 @@ public class IndentOptionsEditor extends OptionGroup {
     options.USE_TAB_CHARACTER = myCbUseTab.isSelected();
   }
 
-  public void reset(final CodeStyleSettings settings, CodeStyleSettings.IndentOptions options) {
+  public void reset(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings.IndentOptions options) {
     myTabSizeField.setText(String.valueOf(options.TAB_SIZE));
     myCbUseTab.setSelected(options.USE_TAB_CHARACTER);
 

@@ -54,7 +54,7 @@ public class VfsIndexer {
   }
 
   private static void _writeFileIndex(DataOutputStream out, VirtualFile file, VirtualFileFilter filter, List<VirtualFile> result) throws IOException {
-    ProgressManager.getInstance().checkCanceled();
+    ProgressManager.checkCanceled();
 
     result.add(file);
     if (out != null){
@@ -101,7 +101,7 @@ public class VfsIndexer {
   }
 
   private static void _readFileIndex(DataInputStream in, VirtualFile file, VirtualFileFilter filter, List<VirtualFile> result) throws IOException {
-    ProgressManager.getInstance().checkCanceled();
+    ProgressManager.checkCanceled();
 
     result.add(file);
     int childrenCount = in.readInt();

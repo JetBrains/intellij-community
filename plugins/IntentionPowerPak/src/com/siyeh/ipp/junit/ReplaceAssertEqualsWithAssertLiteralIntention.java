@@ -58,53 +58,58 @@ public class ReplaceAssertEqualsWithAssertLiteralIntention
         final PsiMethodCallExpression call =
                 (PsiMethodCallExpression)element;
         final PsiReferenceExpression expression = call.getMethodExpression();
-        final PsiElement qualifier = expression.getQualifier();
-        final String qualifierText;
-        if (qualifier == null) {
-            qualifierText = "";
-        } else {
-            qualifierText = qualifier.getText() + '.';
-        }
         final PsiExpressionList argumentList = call.getArgumentList();
         final PsiExpression[] args = argumentList.getExpressions();
-        final String callString;
         final String assertString;
+        final String actualArgumentText;
         if (args.length == 2) {
             @NonNls final String argText = args[0].getText();
             final PsiExpression otherArg;
             if ("true".equals(argText) ||
-                    "false".equals(argText) ||
-                    "null".equals(argText)) {
+                "false".equals(argText) ||
+                "null".equals(argText)) {
                 otherArg = args[1];
             } else {
                 otherArg = args[0];
             }
+            actualArgumentText = otherArg.getText();
             assertString = getAssertString(argText);
-            callString = qualifierText + assertString + '(' +
-                    otherArg.getText() + ')';
         } else {
             @NonNls final String argText = args[1].getText();
             final PsiExpression otherArg;
             if ("true".equals(argText) ||
-                    "false".equals(argText) ||
-                    "null".equals(argText)) {
+                "false".equals(argText) ||
+                "null".equals(argText)) {
                 otherArg = args[2];
             } else {
                 otherArg = args[1];
             }
+            actualArgumentText = otherArg.getText();
             assertString = getAssertString(argText);
-            callString = qualifierText + assertString + '(' +
-                    args[0].getText() + ", " + otherArg.getText() + ')';
         }
+        final PsiElement qualifier = expression.getQualifier();
+        final StringBuilder newExpression = new StringBuilder();
         if (qualifier == null) {
             final PsiMethod containingMethod =
                     PsiTreeUtil.getParentOfType(call, PsiMethod.class);
             if (containingMethod != null &&
                 AnnotationUtil.isAnnotated(containingMethod, "org.junit.Test", true)) {
-                ImportUtils.addStaticImport(element, "org.junit.Assert", assertString);
+                if (ImportUtils.nameCanBeStaticallyImported(
+                        "org.junit.Assert", assertString, element)) {
+                    ImportUtils.addStaticImport("org.junit.Assert", assertString, element);
+                } else {
+                    newExpression.append("org.junit.Assert.");
+                }
             }
+        } else {
+            newExpression.append(qualifier.getText());
+            newExpression.append('.');
         }
-        replaceExpression(callString, call);
+        newExpression.append(assertString);
+        newExpression.append('(');
+        newExpression.append(actualArgumentText);
+        newExpression.append(')');
+        replaceExpression(newExpression.toString(), call);
     }
 
     @NonNls

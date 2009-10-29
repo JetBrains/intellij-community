@@ -66,8 +66,7 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
       }
     });
     if (createdElement != null) {
-      final PsiElement navigationElement = getNavigationElement(createdElement);
-      view.selectElement(navigationElement == null ? createdElement : navigationElement);
+      view.selectElement(createdElement);
     }
   }
 

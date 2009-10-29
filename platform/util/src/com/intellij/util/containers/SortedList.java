@@ -63,6 +63,10 @@ public class SortedList<T> extends AbstractList<T>{
     }
   }
 
+  public void markDirty() {
+    mySorted = false;
+  }
+
   protected void sort(List<T> delegate) {
     Collections.sort(myDelegate, myComparator);
   }

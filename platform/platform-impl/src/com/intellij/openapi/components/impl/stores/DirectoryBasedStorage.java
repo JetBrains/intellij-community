@@ -284,7 +284,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
               if (virtualFile != null) {
                 try {
                   LOG.debug("Removing configuration file: " + virtualFile.getPresentableUrl());
-                  virtualFile.delete(DirectoryBasedStorage.this);
+                  virtualFile.delete(MySaveSession.this);
                 }
                 catch (IOException e) {
                   LOG.error(e);

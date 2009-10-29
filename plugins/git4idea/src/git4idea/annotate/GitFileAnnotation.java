@@ -17,6 +17,9 @@ package git4idea.annotate;
 
 import com.intellij.openapi.editor.EditorGutterAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusListener;
+import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
@@ -71,6 +74,9 @@ public class GitFileAnnotation implements FileAnnotation {
    * listener for file system events
    */
   private final VirtualFileAdapter myFileListener;
+
+  private final MyFileStatusListener myFileStatusListener;
+
   /**
    * the virtual file for which annotations are generated
    */
@@ -134,9 +140,12 @@ public class GitFileAnnotation implements FileAnnotation {
         }
       };
       VirtualFileManager.getInstance().addVirtualFileListener(myFileListener);
+      myFileStatusListener = new MyFileStatusListener();
+      FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener);
     }
     else {
       myFileListener = null;
+      myFileStatusListener = null;
     }
   }
 
@@ -178,6 +187,7 @@ public class GitFileAnnotation implements FileAnnotation {
   public void dispose() {
     if (myMonitorFlag) {
       VirtualFileManager.getInstance().removeVirtualFileListener(myFileListener);
+      FileStatusManager.getInstance(myProject).removeFileStatusListener(myFileStatusListener);
     }
   }
 
@@ -362,6 +372,25 @@ public class GitFileAnnotation implements FileAnnotation {
      */
     public String getAuthor() {
       return myAuthor;
+    }
+  }
+
+  private class MyFileStatusListener implements FileStatusListener {
+    public void fileStatusesChanged() {
+      checkAndFire();
+    }
+
+    public void fileStatusChanged(@NotNull VirtualFile virtualFile) {
+      if (myFile.equals(virtualFile)) {
+        checkAndFire();
+      }
+    }
+
+    private void checkAndFire() {
+      // for the case of commit changes... remove annotation gutter
+      if (FileStatus.NOT_CHANGED.equals(FileStatusManager.getInstance(myProject).getStatus(myFile))) {
+        fireAnnotationChanged();
+      }
     }
   }
 }

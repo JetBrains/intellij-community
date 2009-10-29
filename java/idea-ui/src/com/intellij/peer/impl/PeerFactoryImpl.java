@@ -36,9 +36,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.JavaContentEntriesEditor;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
 import com.intellij.openapi.ui.DialogWrapperPeerFactory;
 import com.intellij.openapi.ui.PackageChooser;
 import com.intellij.openapi.ui.SplitterProportionsData;
@@ -251,9 +250,8 @@ public class PeerFactoryImpl extends PeerFactory {
     return projectJdk;
   }
 
-  public ModuleConfigurationEditor createModuleConfigurationEditor(final Project project, final String moduleName, final ModifiableRootModel model,
-                                                                   final ModulesProvider modulesProvider) {
-    return new JavaContentEntriesEditor(project, moduleName, model, modulesProvider);
+  public ModuleConfigurationEditor createModuleConfigurationEditor(final String moduleName, ModuleConfigurationState state) {
+    return new JavaContentEntriesEditor(moduleName, state);
   }
 
 }

@@ -4,12 +4,12 @@
  */
 package com.intellij.refactoring;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.refactoring.inlineSuperClass.InlineSuperClassRefactoringProcessor;
-import com.intellij.JavaTestUtil;
 
 public class InlineSuperClassTest extends MultiFileTestCase {
   protected String getTestRoot() {
@@ -50,7 +50,7 @@ public class InlineSuperClassTest extends MultiFileTestCase {
         }
       });
     }
-    catch (RuntimeException e) {
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       if (fail) {
         return;
       }

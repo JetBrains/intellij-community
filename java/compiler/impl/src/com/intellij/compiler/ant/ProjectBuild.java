@@ -42,10 +42,10 @@ public abstract class ProjectBuild extends Generator {
 
     // the sequence in which modules are imported is important cause output path properties for dependent modules should be defined first
 
-    final StringBuilder alltargetNames = new StringBuilder();
-    alltargetNames.append(BuildProperties.TARGET_INIT);
-    alltargetNames.append(", ");
-    alltargetNames.append(BuildProperties.TARGET_CLEAN);
+    final StringBuilder buildModulesTargetNames = new StringBuilder();
+    buildModulesTargetNames.append(BuildProperties.TARGET_INIT);
+    buildModulesTargetNames.append(", ");
+    buildModulesTargetNames.append(BuildProperties.TARGET_CLEAN);
     final ModuleChunk[] chunks = genOptions.getModuleChunks();
 
     if (chunks.length > 0) {
@@ -55,10 +55,10 @@ public abstract class ProjectBuild extends Generator {
         myAntProject.add(createModuleBuildGenerator(chunk, genOptions), 1);
         final String[] targets = ChunkBuildExtension.getAllTargets(chunk);
         for (String target : targets) {
-          if (alltargetNames.length() > 0) {
-            alltargetNames.append(", ");
+          if (buildModulesTargetNames.length() > 0) {
+            buildModulesTargetNames.append(", ");
           }
-          alltargetNames.append(target);
+          buildModulesTargetNames.append(target);
         }
       }
     }
@@ -78,19 +78,21 @@ public abstract class ProjectBuild extends Generator {
 
     myAntProject.add(new CleanProject(genOptions, artifactsGenerator), 1);
 
+    myAntProject.add(new Target(BuildProperties.TARGET_BUILD_MODULES, buildModulesTargetNames.toString(),
+                                CompilerBundle.message("generated.ant.build.build.all.modules.target.name"), null), 1);
+    
+    StringBuilder buildAllTargetNames = new StringBuilder();
+    buildAllTargetNames.append(BuildProperties.TARGET_BUILD_MODULES);
     if (artifactsGenerator != null) {
       List<Generator> generators = artifactsGenerator.generate();
       for (Generator generator : generators) {
         myAntProject.add(generator, 1);
       }
 
-      if (alltargetNames.length() > 0) {
-        alltargetNames.append(", ");
-      }
-      alltargetNames.append(ArtifactsGenerator.BUILD_ALL_ARTIFACTS_TARGET);
+      buildAllTargetNames.append(", ").append(ArtifactsGenerator.BUILD_ALL_ARTIFACTS_TARGET);
     }
 
-    myAntProject.add(new Target(BuildProperties.TARGET_ALL, alltargetNames.toString(),
+    myAntProject.add(new Target(BuildProperties.TARGET_ALL, buildAllTargetNames.toString(),
                                 CompilerBundle.message("generated.ant.build.build.all.target.name"), null), 1);
   }
 

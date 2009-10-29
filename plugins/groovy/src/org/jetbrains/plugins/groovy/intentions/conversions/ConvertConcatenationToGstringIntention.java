@@ -56,7 +56,9 @@ public class ConvertConcatenationToGstringIntention extends Intention {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(element.getProject());
     final GrExpression newExpr = factory.createExpressionFromText(GrStringUtil.addQuotes(builder.toString(), true));
     final GrExpression expression = ((GrBinaryExpression)element).replaceWithExpression(newExpr, true);
-    GrStringUtil.removeUnnecessaryBracesInGString((GrString)expression);
+    if (expression instanceof GrString) {
+      GrStringUtil.removeUnnecessaryBracesInGString((GrString)expression);
+    }
   }
 
   private static void performIntention(GrBinaryExpression expr, StringBuilder builder) {
@@ -156,8 +158,8 @@ public class ConvertConcatenationToGstringIntention extends Intention {
 
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
       final PsiClassType stringType = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, element.getResolveScope());
-      final PsiClassType gstringType = factory.createTypeByFQClassName("groovy.lang.GString", element.getResolveScope());
-      if (!TypeConversionUtil.isAssignable(stringType, type) && !TypeConversionUtil.isAssignable(gstringType, type)) return false;
+      final PsiClassType gstringType = factory.createTypeByFQClassName(GrStringUtil.GROOVY_LANG_GSTRING, element.getResolveScope());
+      if (!(TypeConversionUtil.isAssignable(stringType, type) || TypeConversionUtil.isAssignable(gstringType, type))) return false;
 
       return true;
     }

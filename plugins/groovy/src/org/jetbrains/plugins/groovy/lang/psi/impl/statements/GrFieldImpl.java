@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.SearchScope;
@@ -138,8 +137,8 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
   }
 
   public boolean isProperty() {
-    final String name = getName();
-    if (!GroovyPropertyUtils.canBePropertyName(name)) return false;
+//    final String name = getName();
+//    if (!GroovyPropertyUtils.canBePropertyName(name)) return false;
     final PsiClass clazz = getContainingClass();
     if (clazz == null) return false;
     if (clazz.isInterface()) return false;
@@ -153,7 +152,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     mySetter = null;
 
     if (isProperty() && !hasModifierProperty(PsiModifier.FINAL)) {
-      String name = "set" + StringUtil.capitalize(getName());
+      String name = "set" + GroovyPropertyUtils.capitalize(getName());
       final GrAccessorMethod setter = new GrAccessorMethodImpl(this, true, name);
       final PsiClass clazz = getContainingClass();
       if (!hasContradictingMethods(setter, clazz)) {
@@ -182,7 +181,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     if (isProperty()) {
       String name = getName();
       final PsiClass clazz = getContainingClass();
-      name = StringUtil.capitalize(name);
+      name = GroovyPropertyUtils.capitalize(name);
       GrAccessorMethod getter1 = new GrAccessorMethodImpl(this, false, "get" + name);
       if (hasContradictingMethods(getter1, clazz)) getter1 = null;
 
@@ -304,7 +303,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
         closure.accept(new GrNamedArgumentSearchVisitor(paramName, set));
       }
     }
-    return namedParameters.toArray(new HashSet[0]);
+    return namedParameters.toArray(new HashSet[namedParameters.size()]);
   }
 
   public GrDocComment getGrDocComment() {

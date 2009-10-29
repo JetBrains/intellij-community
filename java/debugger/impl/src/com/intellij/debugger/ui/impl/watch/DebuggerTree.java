@@ -520,6 +520,11 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
         myChildren.clear();
         myChildren.add(myNodeManager.createMessageNode(new MessageDescriptor(e.getMessage())));
       }
+      catch (InvalidStackFrameException e) {
+        LOG.info(e);
+        myChildren.clear();
+        notifyCancelled();
+      }
       catch (InternalException e) {
         if (e.errorCode() == 35) {
           myChildren.add(
@@ -533,13 +538,14 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
       updateUI(true);
     }
 
-    protected void buildVariables(final StackFrameDescriptorImpl stackDescriptor, final EvaluationContextImpl evaluationContext)
-      throws EvaluateException {
+    protected void buildVariables(final StackFrameDescriptorImpl stackDescriptor, final EvaluationContextImpl evaluationContext) throws EvaluateException {
       final StackFrameProxyImpl frame = stackDescriptor.getFrameProxy();
-      for (final LocalVariableProxyImpl local : frame.visibleVariables()) {
-        final LocalVariableDescriptorImpl localVariableDescriptor = myNodeManager.getLocalVariableDescriptor(stackDescriptor, local);
-        final DebuggerTreeNodeImpl variableNode = myNodeManager.createNode(localVariableDescriptor, evaluationContext);
-        myChildren.add(variableNode);
+      if (frame != null) {
+        for (final LocalVariableProxyImpl local : frame.visibleVariables()) {
+          final LocalVariableDescriptorImpl localVariableDescriptor = myNodeManager.getLocalVariableDescriptor(stackDescriptor, local);
+          final DebuggerTreeNodeImpl variableNode = myNodeManager.createNode(localVariableDescriptor, evaluationContext);
+          myChildren.add(variableNode);
+        }
       }
     }
   }

@@ -82,8 +82,8 @@ public class PerformanceWatcher implements ApplicationComponent {
       }
     });
 
-    myLogDir = new File(PathManager.getSystemPath() + "/log/threadDumps-" + myDateFormat.format(new Date())
-                        + "-" + ApplicationInfo.getInstance().getBuildNumber());
+    myLogDir = new File(PathManager.getLogPath() + "/threadDumps-" + myDateFormat.format(new Date())
+                        + "-" + ApplicationInfo.getInstance().getBuild().asString());
     myLogDir.mkdirs();
     myCurHangLogDir = myLogDir;
     myThreadMXBean = ManagementFactory.getThreadMXBean();
@@ -111,14 +111,16 @@ public class PerformanceWatcher implements ApplicationComponent {
 
   private static void deleteOldThreadDumps() {
     File allLogsDir = new File(PathManager.getSystemPath(), "log");
-    final String[] dirs = allLogsDir.list(new FilenameFilter() {
-      public boolean accept(final File dir, final String name) {
-        return name.startsWith("threadDumps-");
+    if (allLogsDir.isDirectory()) {
+      final String[] dirs = allLogsDir.list(new FilenameFilter() {
+        public boolean accept(final File dir, final String name) {
+          return name.startsWith("threadDumps-");
+        }
+      });
+      Arrays.sort(dirs);
+      for (int i = 0; i < dirs.length - 11; i++) {
+        FileUtil.delete(new File(allLogsDir, dirs [i]));
       }
-    });
-    Arrays.sort(dirs);
-    for (int i = 0; i < dirs.length - 11; i++) {
-      FileUtil.delete(new File(allLogsDir, dirs [i]));
     }
   }
 

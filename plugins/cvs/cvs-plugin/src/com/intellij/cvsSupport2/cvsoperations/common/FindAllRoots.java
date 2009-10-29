@@ -15,10 +15,11 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.common;
 
+import com.intellij.CvsBundle;
+import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
-import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -27,7 +28,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.CvsBundle;
 
 import java.io.File;
 import java.util.*;
@@ -139,13 +139,13 @@ public class FindAllRoots {
   private void setText(final String text) {
     if (myProgress == null) return;
     myProgress.setText(text);
-    ProgressManager.getInstance().checkCanceled();
+    ProgressManager.checkCanceled();
   }
 
   private void setText2(final String text) {
     if (myProgress == null) return;
     myProgress.setText2(text);
-    ProgressManager.getInstance().checkCanceled();
+    ProgressManager.checkCanceled();
   }
 
   private void process(VirtualFile root) {
@@ -174,7 +174,7 @@ public class FindAllRoots {
   private void setFraction() {
     if (myProgress == null) return;
     myProgress.setFraction((double)myProcessedFiles / (double)mySuitableFiles);
-    ProgressManager.getInstance().checkCanceled();
+    ProgressManager.checkCanceled();
   }
 
   public Collection<File> getDirectoriesToBeUpdated() {

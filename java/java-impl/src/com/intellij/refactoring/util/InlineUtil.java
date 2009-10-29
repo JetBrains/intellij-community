@@ -248,7 +248,7 @@ public class InlineUtil {
       public void run() {
         ReferencesSearch.search(method).forEach(new Processor<PsiReference>() {
           public boolean process(final PsiReference psiReference) {
-            ProgressManager.getInstance().checkCanceled();
+            ProgressManager.checkCanceled();
             if (getTailCallType(psiReference) == TailCallType.None) {
               nonTailCallUsages.add(psiReference);
               return false;

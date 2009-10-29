@@ -33,6 +33,7 @@ public abstract class NodeDescriptor<E> {
   private int myIndex = -1;
 
   private long myChildrenSortingStamp = -1;
+  private long myUpdateCount;
 
   public NodeDescriptor(Project project, NodeDescriptor parentDescriptor) {
     myProject = project;
@@ -94,6 +95,14 @@ public abstract class NodeDescriptor<E> {
 
   public final void setChildrenSortingStamp(long stamp) {
     myChildrenSortingStamp = stamp;
+  }
+
+  public final long getUpdateCount() {
+    return myUpdateCount;
+  }
+
+  public final void setUpdateCount(long updateCount) {
+    myUpdateCount = updateCount;
   }
 
   public abstract static class NodeComparator<T extends NodeDescriptor> implements Comparator<T> {

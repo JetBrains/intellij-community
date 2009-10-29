@@ -25,8 +25,12 @@ import com.intellij.spellchecker.dictionary.Dictionary;
 import com.intellij.spellchecker.dictionary.Loader;
 import com.intellij.spellchecker.engine.SpellCheckerEngine;
 import com.intellij.spellchecker.engine.SpellCheckerFactory;
+import com.intellij.spellchecker.engine.SuggestionProvider;
+import com.intellij.spellchecker.settings.SpellCheckerSettings;
 import com.intellij.spellchecker.state.StateLoader;
+import com.intellij.spellchecker.util.SPFileUtil;
 import com.intellij.spellchecker.util.Strings;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,13 +47,26 @@ public class SpellCheckerManager {
 
   private Dictionary userDictionary;
 
+  private final String[] bundledDictionaries = new String[]{"english.dic", "jetbrains.dic"};
+
+  @NotNull
+  private final SuggestionProvider suggestionProvider = new BaseSuggestionProvider(this);
+
+  private final SpellCheckerSettings settings;
+
   public static SpellCheckerManager getInstance(Project project) {
     return ServiceManager.getService(project, SpellCheckerManager.class);
   }
 
-  public SpellCheckerManager(Project project) {
+  public SpellCheckerManager(Project project, SpellCheckerSettings settings) {
     this.project = project;
+    this.settings = settings;
     reloadConfiguration();
+
+  }
+
+  public Project getProject() {
+    return project;
   }
 
   public Dictionary getUserDictionary() {
@@ -64,7 +81,26 @@ public class SpellCheckerManager {
   private void fillEngineDictionary() {
     spellChecker.reset();
     final StateLoader stateLoader = new StateLoader(project);
-    Loader[] loaders = new Loader[]{new FileLoader("english.dic"), new FileLoader("jetbrains.dic"), stateLoader};
+    final List<Loader> loaders = new ArrayList<Loader>();
+    for (String dictionary : bundledDictionaries) {
+      if (this.settings == null || !this.settings.getBundledDisabledDictionariesPaths().contains(dictionary)) {
+        loaders.add(new StreamLoader(SpellCheckerManager.class.getResourceAsStream(dictionary)));
+      }
+    }
+    if (this.settings != null && this.settings.getDictionaryFoldersPaths() != null) {
+      final Set<String> disabledDictionaries = settings.getDisabledDictionariesPaths();
+      for (String folder : this.settings.getDictionaryFoldersPaths()) {
+        SPFileUtil.processFilesRecursively(folder, new Consumer<String>() {
+          public void consume(final String s) {
+            if (!disabledDictionaries.contains(s)) {
+              loaders.add(new FileLoader(s));
+            }
+          }
+        });
+
+      }
+    }
+    loaders.add(stateLoader);
     for (Loader loader : loaders) {
       spellChecker.loadDictionary(loader);
     }
@@ -84,22 +120,31 @@ public class SpellCheckerManager {
     }
   }
 
-  public void updateUserWords(@Nullable Collection<String> words) {
-    Set<String> transformed = spellChecker.getTransformation().transform(words);
-    userDictionary.replaceAll(transformed);
-    fillEngineDictionary();
+  public void update(@Nullable Collection<String> words, SpellCheckerSettings allDictionaries) {
+    reloadConfiguration();
     restartInspections();
   }
 
+
+  @NotNull
+  public List<String> getBundledDictionaries() {
+    return (bundledDictionaries != null ? Arrays.asList(bundledDictionaries) : Collections.<String>emptyList());
+  }
 
   @NotNull
   public static HighlightDisplayLevel getHighlightDisplayLevel() {
     return HighlightDisplayLevel.find(SpellCheckerSeveritiesProvider.TYPO);
   }
 
-
   @NotNull
-  public List<String> getSuggestions(@NotNull String word) {
+  public List<String> getSuggestions(@NotNull String text) {
+    return suggestionProvider.getSuggestions(text);
+  }
+
+
+  
+  @NotNull
+  protected List<String> getRawSuggestions(@NotNull String word) {
     if (!spellChecker.isCorrect(word)) {
       List<String> suggestions = spellChecker.getSuggestions(word, MAX_SUGGESTIONS_THRESHOLD, MAX_METRICS);
       if (suggestions.size() != 0) {
@@ -142,7 +187,6 @@ public class SpellCheckerManager {
       }
     });
   }
-
 
 
 }

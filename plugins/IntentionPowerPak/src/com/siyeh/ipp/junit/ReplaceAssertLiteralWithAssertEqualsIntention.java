@@ -84,16 +84,21 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention
         }
         final StringBuilder newExpression = new StringBuilder();
         final PsiElement qualifier = methodExpression.getQualifier();
-        if (qualifier != null) {
-            newExpression.append(qualifier.getText());
-            newExpression.append('.');
-        } else {
+        if (qualifier == null) {
             final PsiMethod containingMethod =
                     PsiTreeUtil.getParentOfType(call, PsiMethod.class);
             if (containingMethod != null &&
                 AnnotationUtil.isAnnotated(containingMethod, "org.junit.Test", true)) {
-                ImportUtils.addStaticImport(element, "org.junit.Assert", "assertEquals");
+                if (ImportUtils.nameCanBeStaticallyImported(
+                        "org.junit.Assert", "assertEquals", element)) {
+                    ImportUtils.addStaticImport("org.junit.Assert", "assertEquals", element);
+                } else {
+                    newExpression.append("org.junit.Assert.");
+                }
             }
+        } else {
+            newExpression.append(qualifier.getText());
+            newExpression.append('.');
         }
         newExpression.append("assertEquals(");
         final String postfix = methodName.substring("assert".length());

@@ -19,14 +19,14 @@ import com.intellij.compiler.ant.*;
 import com.intellij.compiler.ant.taskdefs.PatternSetRef;
 import com.intellij.compiler.ant.taskdefs.Property;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleFileIndex;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.progress.ProgressManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyFileTypeLoader;
@@ -109,7 +109,7 @@ public class GroovyAntCustomCompilerProvider extends ChunkCustomCompilerExtensio
         final Set<String> scriptExtensions = GroovyFileTypeLoader.getCustomGroovyScriptExtensions();
         final ContentIterator groovyFileSearcher = new ContentIterator() {
           public boolean processFile(VirtualFile fileOrDir) {
-            ProgressManager.getInstance().checkCanceled();
+            ProgressManager.checkCanceled();
             if (isCompilableGroovyFile(fileOrDir, scriptExtensions)) {
               return false;
             }

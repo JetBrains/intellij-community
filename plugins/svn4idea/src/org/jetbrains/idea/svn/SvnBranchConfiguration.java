@@ -371,7 +371,7 @@ public class SvnBranchConfiguration {
     logClient.doList(branchesUrl, SVNRevision.UNDEFINED, SVNRevision.HEAD, false, new ISVNDirEntryHandler() {
         public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
           if (underProgress) {
-            ProgressManager.getInstance().checkCanceled();
+            ProgressManager.checkCanceled();
           }
           final SVNURL currentUrl = dirEntry.getURL();
           if (! branchesUrl.equals(currentUrl)) {

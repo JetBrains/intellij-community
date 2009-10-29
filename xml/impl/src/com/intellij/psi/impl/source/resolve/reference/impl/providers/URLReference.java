@@ -11,10 +11,11 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -180,12 +182,17 @@ public class URLReference implements PsiReference, QuickFixProvider, EmptyResolv
     return myElement.getManager().areElementsEquivalent(resolve(),element);
   }
 
+  @NotNull
   public Object[] getVariants() {
     final XmlFile file = (XmlFile)myElement.getContainingFile();
-    final XmlSchemaProvider provider = XmlSchemaProvider.getAvailableProvider(file);
-    if (provider != null) {
-      final Set<String> strings = provider.getAvailableNamespaces(file, null);
-      return ArrayUtil.toObjectArray(strings);
+    Set<String> list = new HashSet<String>();
+    for (XmlSchemaProvider provider : Extensions.getExtensions(XmlSchemaProvider.EP_NAME)) {
+      if (provider.isAvailable(file)) {
+        list.addAll(provider.getAvailableNamespaces(file, null));
+      }
+    }
+    if (!list.isEmpty()) {
+      return ArrayUtil.toObjectArray(list);
     }
     String[] resourceUrls = ExternalResourceManager.getInstance().getResourceUrls(null, true);
     final XmlDocument document = file.getDocument();

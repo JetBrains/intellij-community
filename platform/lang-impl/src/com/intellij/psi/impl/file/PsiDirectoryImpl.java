@@ -196,7 +196,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
 
   public boolean processChildren(PsiElementProcessor<PsiFileSystemItem> processor) {
     checkValid();
-    ProgressManager.getInstance().checkCanceled();
+    ProgressManager.checkCanceled();
 
     for (VirtualFile vFile : myFile.getChildren()) {
       if (processor instanceof PsiFileSystemItemProcessor &&

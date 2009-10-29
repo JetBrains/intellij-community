@@ -61,7 +61,7 @@ public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, Refer
 
     final TextOccurenceProcessor processor = new TextOccurenceProcessor() {
       public boolean execute(PsiElement element, int offsetInElement) {
-        ProgressManager.getInstance().checkCanceled();
+        ProgressManager.checkCanceled();
         if (DEBUG) {
           System.out.println("!!! About to check "+element);
         }

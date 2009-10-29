@@ -399,7 +399,7 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   public void testIntConstInSwitch() throws Exception { doTest(); }
 
   public void testDoubleEmptyArray() throws Exception {
-    configureByFile(BASE_PATH + "/"+getTestName(false)+".java");
+    configureByTestName();
     checkResultByFile(BASE_PATH + "/"+getTestName(false) + ".java");
     assertEquals(2, myItems.length);
   }
@@ -453,24 +453,24 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   public void testArrayIndexTailType() throws Throwable { doTest(); }
 
   public void testHonorSelection() throws Throwable {
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    configureByTestName();
     select();
-    checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
+    checkResultByTestName();
   }
 
   public void testTypeParametersInheritors() throws Throwable {
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    configureByTestName();
     assertStringItems("Foo", "Bar", "Goo");
     select();
-    checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
+    checkResultByTestName();
   }
 
   public void testVoidExpectedType() throws Throwable {
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    configureByTestName();
     assertStringItems("notify", "notifyAll", "wait", "wait", "wait", "equals", "getClass", "hashCode", "toString");
     type('e');
-    select();                         
-    checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
+    select();
+    checkResultByTestName();
   }
 
   public void testDoubleSemicolonPenetration() throws Throwable { doTest(); }
@@ -488,9 +488,9 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   }
 
   public void testSmartFinish() throws Throwable {
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    configureByTestName();
     select(Lookup.COMPLETE_STATEMENT_SELECT_CHAR);
-    checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
+    checkResultByTestName();
   }
 
   public void testSillyAssignmentInTernary() throws Throwable { doTest(); }
@@ -504,7 +504,7 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   public void testSameNamedFieldAndLocal() throws Throwable { doTest(); }
 
   public void testAbstractClassTwice() throws Throwable {
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    configureByTestName();
     final int offset = myEditor.getCaretModel().getOffset();
     select();
     myEditor.getCaretModel().moveToOffset(offset);
@@ -514,12 +514,12 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   public void testConstantTwice() throws Throwable { doTest(); }
 
   public void testConstantTwice2() throws Throwable {
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    configureByTestName();
     assertEquals(2, myItems.length);
   }
 
   public void testNoKeyConstant() throws Throwable {
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    configureByTestName();
     assertEquals(2, myItems.length);
     assertEquals("A_KEY", myItems[0].getLookupString());
     assertEquals("Key.create", myItems[1].getLookupString());
@@ -570,19 +570,19 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   public void testAfterNewInTernary() throws Throwable { doTest(); }
 
   public void testSuggestAnythingWhenWildcardExpected() throws Throwable {
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    configureByTestName();
     assertStringItems("X<java.lang.Object>", "Y", "Z<java.lang.Object>"); 
   }
 
   public void testNewVararg() throws Throwable {
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    configureByTestName();
     assertStringItems("Foo", "Foo");
     assertEquals(0, myItems[0].as(PsiTypeLookupItem.class).getBracketsCount());
     assertEquals(1, myItems[1].as(PsiTypeLookupItem.class).getBracketsCount());
   }
 
   public void testInsideStringLiteral() throws Throwable {
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    configureByTestName();
     assertNull(myItems);
     checkResultByFile(BASE_PATH + "/" + getTestName(false) + ".java");
 
@@ -593,12 +593,12 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   public void testCastGenericQualifier() throws Throwable { doTest(); }
 
   public void testEverythingDoubles() throws Throwable {
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    configureByTestName();
     assertStringItems("hashCode", "indexOf", "lastIndexOf", "size");
   }
 
   public void testNonStaticInnerClass() throws Throwable {
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    configureByTestName();
     assertNull(myItems);
     checkResultByFile(BASE_PATH + "/" + getTestName(false) + ".java");
   }
@@ -626,7 +626,7 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   public void testSuggestNull() throws Throwable { doTest(); }
 
   public void testNoNullAfterDot() throws Throwable {
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    configureByTestName();
     assertNull(myItems);
     checkResultByFile(BASE_PATH + "/" + getTestName(false) + ".java");
   }
@@ -691,44 +691,44 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   public void testCastToArray() throws Throwable { doTest(); }
 
   public void testDontAutoCastWhenAlreadyCasted() throws Throwable {
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    configureByTestName();
     assertEquals("s", myItems[0].getLookupString());
     assertEquals("String.copyValueOf", myItems[1].getLookupString());
     select();
-    checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
+    checkResultByTestName();
   }
 
   public void testAutoCastWhenAlreadyCasted() throws Throwable { doTest(); }
 
   public void testCommaDoublePenetration() throws Throwable {
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    configureByTestName();
     select(',');
-    checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
+    checkResultByTestName();
   }
 
   public void testSuperMethodArguments() throws Throwable {
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    configureByTestName();
     getLookup().setCurrentItem(getLookup().getItems().get(1));
     select();
-    checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
+    checkResultByTestName();
   }
 
   public void testDelegateMethodArguments() throws Throwable {
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    configureByTestName();
     getLookup().setCurrentItem(getLookup().getItems().get(1));
     select();
-    checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
+    checkResultByTestName();
   }
 
   public void testSuperConstructorArguments() throws Throwable {
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    configureByTestName();
     getLookup().setCurrentItem(getLookup().getItems().get(2));
     select();
-    checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
+    checkResultByTestName();
   }
 
   private void doAntiTest() throws Exception {
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    configureByTestName();
     assertNull(myItems);
     checkResultByFile(BASE_PATH + "/" + getTestName(false) + ".java");
   }
@@ -856,6 +856,22 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
     doTest();
   }
 
+  public void testTabMethodCall() throws Exception {
+    configureByTestName();
+    select(Lookup.REPLACE_SELECT_CHAR);
+    checkResultByTestName();
+  }
+
+  public void testConstructorArgsSmartEnter() throws Exception {
+    configureByTestName();
+    select(Lookup.COMPLETE_STATEMENT_SELECT_CHAR);
+    checkResultByTestName();
+  }
+
+  private void configureByTestName() throws Exception {
+    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+  }
+
   public void testIDEADEV13148() throws Exception {
     configureByFile(BASE_PATH + "/IDEADEV13148.java");
     testByCount(0);
@@ -901,9 +917,9 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   public void _testCallVarargArgument() throws Throwable { doTest(); }
 
   public void testTabToReplaceClassKeyword() throws Throwable {
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    configureByTestName();
     selectItem(myItems[0], Lookup.REPLACE_SELECT_CHAR);
-    checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
+    checkResultByTestName();
   }
 
   public void testNoTypeParametersForToArray() throws Throwable {
@@ -935,7 +951,7 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   public void testWildcardedInstanceof3() throws Throwable { doTest(); }
 
   public void testTypeVariableInstanceOf() throws Throwable {
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    configureByTestName();
     performAction();
     assertStringItems("Bar", "Goo");
   }
@@ -945,7 +961,7 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   }
 
   public void testInsideGenericClassLiteral() throws Throwable {
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    configureByTestName();
     testByCount(3, "String.class", "StringBuffer.class", "StringBuilder.class");
   }
 
@@ -958,7 +974,7 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   }
 
   public void testInnerEnum() throws Exception {
-    configureByFile(BASE_PATH + "/"+getTestName(false)+".java");
+    configureByTestName();
 
     getLookup().setCurrentItem(ContainerUtil.find(myItems, new Condition<LookupElement>() {
       public boolean value(final LookupElement lookupItem) {
@@ -966,18 +982,18 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
       }
     }));
     select('\n');
-    checkResultByFile(BASE_PATH + "/"+getTestName(false) + "-out.java");
+    checkResultByTestName();
   }
 
   private void doTest(boolean performAction, boolean selectItem) throws Exception {
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    configureByTestName();
     if (performAction) {
       performAction();
     }
     if (selectItem) {
       selectItem(myItems[0]);
     }
-    checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
+    checkResultByTestName();
   }
 
   private void doActionTest() throws Exception {
@@ -1007,11 +1023,11 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
     }
 
     try {
-      configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+      configureByTestName();
       if (myItems != null && myItems.length == 1) {
         select(c);
       }
-      checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
+      checkResultByTestName();
     }
     finally {
       if (c != Lookup.NORMAL_SELECT_CHAR) {
@@ -1019,6 +1035,10 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
       }
     }
 
+  }
+
+  private void checkResultByTestName() throws Exception {
+    checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
   }
 
   protected void setUp() throws Exception {

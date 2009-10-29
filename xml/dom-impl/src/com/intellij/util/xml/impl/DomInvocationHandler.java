@@ -311,7 +311,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   public boolean isValid() {
-    ProgressManager.getInstance().checkCanceled();
+    ProgressManager.checkCanceled();
     final DomParentStrategy parentStrategy = getParentStrategy();
     if (!parentStrategy.isValid()) {
       return false;
@@ -406,12 +406,12 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   public void accept(final DomElementVisitor visitor) {
-    ProgressManager.getInstance().checkCanceled();
+    ProgressManager.checkCanceled();
     myManager.getVisitorDescription(visitor.getClass()).acceptElement(visitor, getProxy());
   }
 
   public void acceptChildren(DomElementVisitor visitor) {
-    ProgressManager.getInstance().checkCanceled();
+    ProgressManager.checkCanceled();
     final DomElement element = getProxy();
     for (final AbstractDomChildrenDescription description : getGenericInfo().getChildrenDescriptions()) {
       for (final DomElement value : description.getValues(element)) {

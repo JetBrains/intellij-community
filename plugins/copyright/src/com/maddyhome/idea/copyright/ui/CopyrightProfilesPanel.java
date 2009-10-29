@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ConfigurationException;
@@ -60,7 +59,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent {
   private final AtomicBoolean myInitialized = new AtomicBoolean(false);
 
   public CopyrightProfilesPanel(Project project) {
-      ServiceManager.getService(project, MasterDetailsStateService.class).register("Copyright.UI", this);
+      MasterDetailsStateService.getInstance(project).register("Copyright.UI", this);
         myProject = project;
         myManager = CopyrightManager.getInstance(project);
         initTree();

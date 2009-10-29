@@ -21,7 +21,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mGSTRING_CONTENT;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 import java.util.List;
 
@@ -40,19 +42,51 @@ public class GroovyLiteralSelectioner extends GroovyBasicSelectioner {
     if (node == null) return false;
     ASTNode[] children = node.getChildren(null);
     return children.length == 1 &&
-        (children[0].getElementType() == GroovyTokenTypes.mSTRING_LITERAL ||
+           (children[0].getElementType() == GroovyTokenTypes.mSTRING_LITERAL ||
             children[0].getElementType() == GroovyTokenTypes.mGSTRING_LITERAL);
   }
 
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
     List<TextRange> result = super.select(e, editorText, cursorOffset, editor);
 
-    TextRange range = e.getTextRange();
+/*    TextRange range = e.getTextRange();
     if (range.getLength() <= 2) {
       result.add(range);
-    } else {
-      result.add(new TextRange(range.getStartOffset() + 1, range.getEndOffset() - 1));
     }
+    else {
+      result.add(new TextRange(range.getStartOffset() + 1, range.getEndOffset() - 1));
+    }*/
+
+    int startOffset = -1;
+    int endOffset = -1;
+    final String text = e.getText();
+    final int stringOffset = e.getTextOffset();
+    if (e.getNode().getElementType() == mGSTRING_CONTENT) {
+      int cur;
+      int index = -1;
+      while (true) {
+        cur = text.indexOf('\n', index + 1);
+        if (cur < 0 || cur + stringOffset > cursorOffset) break;
+        index = cur;
+      }
+      if (index >= 0) {
+        startOffset = stringOffset + index + 1;
+      }
+
+      index = text.indexOf('\n', cursorOffset - stringOffset);
+      if (index >= 0) {
+        endOffset = stringOffset + index + 1;
+      }
+    }
+
+    if (startOffset >= 0 && endOffset >= 0) {
+      result.add(new TextRange(startOffset, endOffset));
+    }
+
+    final String content = GrStringUtil.removeQuotes(text);
+
+    final int offset = stringOffset + text.indexOf(content);
+    result.add(new TextRange(offset, offset + content.length()));
     return result;
   }
 }

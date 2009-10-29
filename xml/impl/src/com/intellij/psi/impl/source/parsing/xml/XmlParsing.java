@@ -321,7 +321,9 @@ public class XmlParsing {
     advance();
     while (true) {
       final IElementType tt = token();
-      if (tt == XML_COMMENT_CHARACTERS) {
+      if (tt == XML_COMMENT_CHARACTERS|| tt == XML_CONDITIONAL_COMMENT_START
+        || tt == XML_CONDITIONAL_COMMENT_START_END || tt == XML_CONDITIONAL_COMMENT_END_START
+        || tt == XML_CONDITIONAL_COMMENT_END) {
         advance();
         continue;
       }

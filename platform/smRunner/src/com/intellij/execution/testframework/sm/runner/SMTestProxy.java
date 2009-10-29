@@ -17,7 +17,7 @@ package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.testframework.*;
-import com.intellij.execution.testframework.sm.LocationProviderUtil;
+import com.intellij.execution.testframework.sm.TestsLocationProviderUtil;
 import com.intellij.execution.testframework.sm.runner.states.*;
 import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
 import com.intellij.execution.testframework.ui.PrintableTestProxy;
@@ -136,8 +136,8 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
       return null;
     }
 
-    final String protocolId = LocationProviderUtil.extractProtocol(myLocationUrl);
-    final String path = LocationProviderUtil.extractPath(myLocationUrl);
+    final String protocolId = TestsLocationProviderUtil.extractProtocol(myLocationUrl);
+    final String path = TestsLocationProviderUtil.extractPath(myLocationUrl);
 
     if (protocolId != null && path != null) {
       for (TestLocationProvider provider : Extensions.getExtensions(TestLocationProvider.EP_NAME)) {

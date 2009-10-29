@@ -267,14 +267,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
       }
     }
 
-    //cleanup
     myContext.getDaemonAnalyzer().clearCaches();
-    SwingUtilities.invokeLater(new Runnable(){
-      public void run() {
-        if (myWasUiDisposed) return;
-        reset();
-      }
-    });
   }
 
   public void reset() {
@@ -325,7 +318,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     for (Configurable each : myName2Config) {
       each.disposeUIResources();
     }
-
+    myContext.clear();
     myName2Config.clear();
 
     myModuleConfigurator.getFacetsConfigurator().clearMaps();

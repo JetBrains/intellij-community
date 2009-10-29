@@ -64,6 +64,10 @@ public class ArtifactSourceItem extends PackagingSourceItem {
     return myArtifact.getArtifactType() instanceof JarArtifactType ? PackagingElementOutputKind.JAR_FILES : PackagingElementOutputKind.OTHER;
   }
 
+  public Artifact getArtifact() {
+    return myArtifact;
+  }
+
   public int hashCode() {
     return myArtifact.hashCode();
   }

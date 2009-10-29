@@ -47,8 +47,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -229,7 +229,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       return;
     }
     for (PsiElement element : elements) {
-      ProgressManager.getInstance().checkCanceled();
+      ProgressManager.checkCanceled();
 
       if (unusedSymbolEnabled && element instanceof PsiIdentifier) {
         PsiIdentifier identifier = (PsiIdentifier)element;
@@ -241,7 +241,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       else if (unusedImportEnabled && element instanceof PsiImportList) {
         final PsiImportStatementBase[] imports = ((PsiImportList)element).getAllImportStatements();
         for (PsiImportStatementBase statement : imports) {
-          ProgressManager.getInstance().checkCanceled();
+          ProgressManager.checkCanceled();
           final HighlightInfo info = processImport(statement, unusedImportKey);
           if (info != null) {
             result.add(info);
@@ -318,7 +318,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   private boolean isImplicitUsage(final PsiModifierListOwner element) {
     if (UnusedSymbolLocalInspection.isInjected(element, myUnusedSymbolInspection)) return true;
     for (ImplicitUsageProvider provider : myImplicitUsageProviders) {
-      ProgressManager.getInstance().checkCanceled();
+      ProgressManager.checkCanceled();
       if (provider.isImplicitUsage(element)) {
         return true;
       }
@@ -329,7 +329,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   private boolean isImplicitRead(final PsiVariable element) {
     for(ImplicitUsageProvider provider: myImplicitUsageProviders) {
-      ProgressManager.getInstance().checkCanceled();
+      ProgressManager.checkCanceled();
       if (provider.isImplicitRead(element)) {
         return true;
       }
@@ -339,7 +339,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   private boolean isImplicitWrite(final PsiVariable element) {
     for(ImplicitUsageProvider provider: myImplicitUsageProviders) {
-      ProgressManager.getInstance().checkCanceled();
+      ProgressManager.checkCanceled();
       if (provider.isImplicitWrite(element)) {
         return true;
       }

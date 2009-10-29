@@ -335,13 +335,13 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   public ResolveCache getResolveCache() {
-    myProgressManager.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
+    ProgressManager.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
     return myResolveCache;
   }
 
 
   public boolean areElementsEquivalent(PsiElement element1, PsiElement element2) {
-    myProgressManager.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
+    ProgressManager.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
 
     if (element1 == element2) return true;
     if (element1 == null || element2 == null) {
@@ -386,7 +386,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   public PsiDirectory findDirectory(@NotNull VirtualFile file) {
-    myProgressManager.checkCanceled();
+    ProgressManager.checkCanceled();
 
     return myFileManager.findDirectory(file);
   }

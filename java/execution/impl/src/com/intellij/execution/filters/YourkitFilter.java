@@ -88,7 +88,8 @@ public class YourkitFilter implements Filter{
       final JList list = new JList(myPsiFiles);
       list.setCellRenderer(renderer);
 
-      renderer.installSpeedSearch(list);
+      final PopupChooserBuilder builder = new PopupChooserBuilder(list);
+      renderer.installSpeedSearch(builder);
 
       final Runnable runnable = new Runnable() {
         public void run() {
@@ -106,7 +107,7 @@ public class YourkitFilter implements Filter{
 
       final Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
 
-      new PopupChooserBuilder(list).
+      builder.
         setTitle("Choose file").
         setItemChoosenCallback(runnable).
         createPopup().showInBestPositionFor(editor);

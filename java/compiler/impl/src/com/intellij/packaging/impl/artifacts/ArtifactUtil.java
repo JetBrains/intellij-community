@@ -15,8 +15,11 @@
  */
 package com.intellij.packaging.impl.artifacts;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerProjectExtension;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -355,56 +358,55 @@ public class ArtifactUtil {
     return files.isEmpty() ? null : files.get(0);
   }
 
-  public static List<VirtualFile> findSourceFilesByOutputPath(CompositePackagingElement<?> parent, String outputPath,
-                                                 PackagingElementResolvingContext context, ArtifactType artifactType) {
-    outputPath = StringUtil.trimStart(outputPath, "/");
-    if (outputPath.length() == 0) {
+  public static List<VirtualFile> findSourceFilesByOutputPath(CompositePackagingElement<?> parent, final String outputPath,
+                                                 final PackagingElementResolvingContext context, final ArtifactType artifactType) {
+    final String path = StringUtil.trimStart(outputPath, "/");
+    if (path.length() == 0) {
       return Collections.emptyList();
     }
 
-    int i = outputPath.indexOf('/');
-    final String firstName = i != -1 ? outputPath.substring(0, i) : outputPath;
-    String tail = i != -1 ? outputPath.substring(i+1) : "";
+    int i = path.indexOf('/');
+    final String firstName = i != -1 ? path.substring(0, i) : path;
+    final String tail = i != -1 ? path.substring(i+1) : "";
 
-    final List<CompositePackagingElement<?>> compositeChildren = new SmartList<CompositePackagingElement<?>>();
-    final List<FileCopyPackagingElement> fileCopies = new SmartList<FileCopyPackagingElement>();
-    final List<DirectoryCopyPackagingElement> dirCopies = new SmartList<DirectoryCopyPackagingElement>();
+    final List<VirtualFile> result = new SmartList<VirtualFile>();
     processElements(parent.getChildren(), context, artifactType, new Processor<PackagingElement<?>>() {
       public boolean process(PackagingElement<?> element) {
+        //todo[nik] replace by method findSourceFile() in PackagingElement
         if (element instanceof CompositePackagingElement) {
           final CompositePackagingElement<?> compositeElement = (CompositePackagingElement<?>)element;
           if (firstName.equals(compositeElement.getName())) {
-            compositeChildren.add(compositeElement);
+            result.addAll(findSourceFilesByOutputPath(compositeElement, tail, context, artifactType));
           }
         }
         else if (element instanceof FileCopyPackagingElement) {
           final FileCopyPackagingElement fileCopyElement = (FileCopyPackagingElement)element;
-          if (firstName.equals(fileCopyElement.getOutputFileName())) {
-            fileCopies.add(fileCopyElement);
+          if (firstName.equals(fileCopyElement.getOutputFileName()) && tail.length() == 0) {
+            ContainerUtil.addIfNotNull(fileCopyElement.findFile(), result);
           }
         }
         else if (element instanceof DirectoryCopyPackagingElement) {
-          dirCopies.add((DirectoryCopyPackagingElement)element);
+          final VirtualFile sourceRoot = ((DirectoryCopyPackagingElement)element).findFile();
+          if (sourceRoot != null) {
+            ContainerUtil.addIfNotNull(sourceRoot.findFileByRelativePath(path), result);
+          }
+        }
+        else if (element instanceof ModuleOutputPackagingElement) {
+          final Module module = ((ModuleOutputPackagingElement)element).findModule(context);
+          final ContentEntry[] contentEntries = context.getModulesProvider().getRootModel(module).getContentEntries();
+          for (ContentEntry contentEntry : contentEntries) {
+            for (SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
+              final VirtualFile sourceRoot = sourceFolder.getFile();
+              if (!sourceFolder.isTestSource() && sourceRoot != null) {
+                ContainerUtil.addIfNotNull(sourceRoot.findFileByRelativePath(path), result);
+              }
+            }
+          }
         }
         return true;
       }
     });
 
-    List<VirtualFile> result = new SmartList<VirtualFile>();
-    for (CompositePackagingElement<?> child : compositeChildren) {
-      result.addAll(findSourceFilesByOutputPath(child, tail, context, artifactType));
-    }
-    if (tail.length() == 0) {
-      for (FileCopyPackagingElement fileCopy : fileCopies) {
-        ContainerUtil.addIfNotNull(fileCopy.findFile(), result);
-      }
-    }
-    for (DirectoryCopyPackagingElement dirCopy : dirCopies) {
-      final VirtualFile sourceRoot = dirCopy.findFile();
-      if (sourceRoot != null) {
-        ContainerUtil.addIfNotNull(sourceRoot.findFileByRelativePath(outputPath), result);
-      }
-    }
     return result;
   }
 

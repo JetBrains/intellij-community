@@ -15,13 +15,11 @@
  */
 package com.intellij.xml.actions;
 
-import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.javaee.UriUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -35,6 +33,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.*;
 import com.intellij.ui.content.*;
+import com.intellij.util.Function;
 import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
 import com.intellij.xml.XmlBundle;
@@ -44,7 +43,6 @@ import org.apache.xerces.jaxp.JAXPConstants;
 import org.apache.xerces.jaxp.SAXParserFactoryImpl;
 import org.apache.xerces.util.XMLGrammarPoolImpl;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXNotRecognizedException;
@@ -66,7 +64,7 @@ import java.util.concurrent.Future;
 /**
  * @author Mike
  */
-public class ValidateXmlActionHandler implements CodeInsightActionHandler {
+public class ValidateXmlActionHandler implements Function<PsiFile, Void> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.actions.ValidateXmlAction");
   private static final Key<NewErrorTreeViewPanel> KEY = Key.create("ValidateXmlAction.KEY");
   @NonNls private static final String SCHEMA_FULL_CHECKING_FEATURE_ID = "http://apache.org/xml/features/validation/schema-full-checking";
@@ -83,8 +81,6 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
   private final boolean myForceChecking;
   @NonNls
   private static final String ENTITY_RESOLVER_PROPERTY_NAME = "http://apache.org/xml/properties/internal/entity-resolver";
-  @NonNls
-  public static final String XMLNS_PREFIX = "xmlns";
 
   public ValidateXmlActionHandler(boolean _forceChecking) {
     myForceChecking = _forceChecking;
@@ -349,10 +345,12 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
     }
   }
 
-  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public Void fun(PsiFile file) {
+    Project project = file.getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     doValidate(project,file);
+    return null;
   }
 
   public void doValidate(Project project, PsiFile file) {

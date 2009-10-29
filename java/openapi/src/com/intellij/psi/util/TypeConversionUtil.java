@@ -672,6 +672,7 @@ public class TypeConversionUtil {
 
     if (left instanceof PsiArrayType) return false;
     if (right instanceof PsiPrimitiveType) {
+      if (isVoidType(right)) return false;
       if (!(left instanceof PsiPrimitiveType)) {
         return left instanceof PsiClassType && isBoxable((PsiClassType)left, (PsiPrimitiveType)right);
       }
@@ -921,6 +922,12 @@ public class TypeConversionUtil {
       LOG.error("Not inheritor: " + derivedClass + " super: " + superClass);
     }
     return substitutor;
+  }
+
+  @NotNull
+  public static PsiSubstitutor getSuperClassSubstitutor(@NotNull PsiClass superClass, @NotNull PsiClassType classType) {
+      final PsiClassType.ClassResolveResult classResolveResult = classType.resolveGenerics();
+      return getSuperClassSubstitutor(superClass, classResolveResult.getElement(), classResolveResult.getSubstitutor());
   }
 
   private static PsiSubstitutor getSuperClassSubstitutorInner(PsiClass base,

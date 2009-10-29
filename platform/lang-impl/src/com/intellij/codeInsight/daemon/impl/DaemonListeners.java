@@ -49,10 +49,8 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -68,6 +66,7 @@ import gnu.trove.THashSet;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -265,16 +264,19 @@ public class DaemonListeners implements Disposable {
     if (file instanceof PsiCodeFragment) return true;
     Project project = file.getProject();
     if (!ModuleUtil.projectContainsFile(project, virtualFile, false)) return false;
+    FileEditor[] editors = FileEditorManager.getInstance(myProject).getEditors(virtualFile);
+    for (FileEditor editor : editors) {
+      if (!editor.isModified()) return false;
+    }
+    FilePath path = new FilePathImpl(virtualFile);
+    boolean vcsIsThinking = !VcsDirtyScopeManager.getInstance(myProject).whatFilesDirty(Arrays.asList(path)).isEmpty();
+    if (vcsIsThinking) return false;
+
     AbstractVcs activeVcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(virtualFile);
     if (activeVcs == null) return true;
     FileStatus status = FileStatusManager.getInstance(project).getStatus(virtualFile);
 
-    if (status == FileStatus.MODIFIED || status == FileStatus.ADDED) return true;
-    FileEditor[] editors = FileEditorManager.getInstance(myProject).getEditors(virtualFile);
-    for (FileEditor editor : editors) {
-      if (editor.isModified()) return true;
-    }
-    return false;
+    return status == FileStatus.MODIFIED || status == FileStatus.ADDED;
   }
 
   private class MyApplicationListener extends ApplicationAdapter {

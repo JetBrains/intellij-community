@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
+import com.intellij.ui.speedSearch.FilteringListModel;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -120,7 +121,7 @@ public class ListUtil {
   }
 
   public static int moveSelectedItemsUp(JList list) {
-    DefaultListModel model = (DefaultListModel)list.getModel();
+    DefaultListModel model = getModel(list);
     int[] indices = list.getSelectedIndices();
     if (!canMoveSelectedItemsUp(list)) return 0;
     for(int i = 0; i < indices.length; i++){
@@ -144,7 +145,7 @@ public class ListUtil {
   }
 
   public static int moveSelectedItemsDown(JList list) {
-    DefaultListModel model = (DefaultListModel)list.getModel();
+    DefaultListModel model = getModel(list);
     int[] indices = list.getSelectedIndices();
     if (!canMoveSelectedItemsDown(list)) return 0;
     for(int i = indices.length - 1; i >= 0 ; i--){
@@ -160,6 +161,14 @@ public class ListUtil {
       list.scrollRectToVisible(cellBounds);
     }
     return indices.length;
+  }
+
+  private static DefaultListModel getModel(JList list) {
+    final ListModel model = list.getModel();
+    if (model instanceof FilteringListModel) {
+      return (DefaultListModel)((FilteringListModel)model).getOriginalModel();
+    }
+    return (DefaultListModel)model;
   }
 
   public static boolean canMoveSelectedItemsDown(JList list) {
@@ -256,6 +265,7 @@ public class ListUtil {
   private static ListModelExtension getExtensions(ListModel model) {
     if (model instanceof DefaultListModel) return DEFAULT_MODEL;
     if (model instanceof SortedListModel) return SORTED_MODEL;
+    if (model instanceof FilteringListModel) return FILTERED_MODEL;
 
     if (model == null) LOG.assertTrue(false);
     else LOG.assertTrue(false, "Unknown model class: " + model.getClass().getName());
@@ -283,6 +293,16 @@ public class ListUtil {
     }
 
     public void remove(SortedListModel model, int index) {
+      model.remove(index);
+    }
+  };
+
+  private static final ListModelExtension FILTERED_MODEL = new ListModelExtension<FilteringListModel>() {
+    public Object get(FilteringListModel model, int index) {
+      return model.getElementAt(index);
+    }
+
+    public void remove(FilteringListModel model, int index) {
       model.remove(index);
     }
   };

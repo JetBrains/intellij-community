@@ -31,12 +31,28 @@ public class IntroduceParameterTest extends LightCodeInsightTestCase {
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
   }
-  
+
   private void doTest(int replaceFieldsWithGetters, boolean removeUnusedParameters, boolean searchForSuper, boolean declareFinal,
                       final boolean generateDelegate) throws Exception {
-    configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
-    perform(true, replaceFieldsWithGetters, "anObject", searchForSuper, declareFinal, removeUnusedParameters, generateDelegate);
-    checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
+    doTest(replaceFieldsWithGetters, removeUnusedParameters, searchForSuper, declareFinal, generateDelegate, null);
+  }
+
+  private void doTest(int replaceFieldsWithGetters, boolean removeUnusedParameters, boolean searchForSuper, boolean declareFinal, final boolean generateDelegate,
+                      String conflict) throws Exception {
+    try {
+      configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
+      perform(true, replaceFieldsWithGetters, "anObject", searchForSuper, declareFinal, removeUnusedParameters, generateDelegate);
+      checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
+      if (conflict != null) {
+        fail("Conflict expected");
+      }
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      if (conflict == null) {
+        throw e;
+      }
+      assertEquals(conflict, e.getMessage());
+    }
   }
 
   public void testNoUsages() throws Exception {
@@ -60,7 +76,7 @@ public class IntroduceParameterTest extends LightCodeInsightTestCase {
   }
 
   public void testThisSubstitutionInQualifier() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false, false, "field <b><code>Test.i</code></b> is not accesible from method <b><code>XTest.n()</code></b>. Value for introduced parameter in that method call will be incorrect.");
   }
 
   public void testFieldAccess() throws Exception {
@@ -88,7 +104,7 @@ public class IntroduceParameterTest extends LightCodeInsightTestCase {
   }
 
   public void testSuperInExpression() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false, false, "Parameter initializer contains <b><code>super</code></b>, but not all calls to method are in its class.");
   }
 
   public void testNull() throws Exception {
@@ -124,7 +140,7 @@ public class IntroduceParameterTest extends LightCodeInsightTestCase {
   }
 
   public void testSuperWithSideEffect() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false, false, "Parameter initializer contains <b><code>super</code></b>, but not all calls to method are in its class.");
   }
 
   public void testConflictingField() throws Exception {

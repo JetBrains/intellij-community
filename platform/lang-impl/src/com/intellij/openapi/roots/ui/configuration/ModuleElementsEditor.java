@@ -35,15 +35,15 @@ import java.util.List;
  */
 public abstract class ModuleElementsEditor implements ModuleConfigurationEditor {
   protected final Project myProject;
-  protected final ModifiableRootModel myModel;
   protected JComponent myComponent;
   private final List<Disposable> myDisposables = new ArrayList<Disposable>();
 
   protected History myHistory;
+  private ModuleConfigurationState myState;
 
-  protected ModuleElementsEditor(Project project, ModifiableRootModel model) {
-    myProject = project;
-    myModel = model;
+  protected ModuleElementsEditor(ModuleConfigurationState state) {
+    myProject = state.getProject();
+    myState = state;
   }
 
   public void setHistory(final History history) {
@@ -51,7 +51,15 @@ public abstract class ModuleElementsEditor implements ModuleConfigurationEditor 
   }
 
   public boolean isModified() {
-    return myModel != null && myModel.isChanged();
+    return getModel() != null && getModel().isChanged();
+  }
+
+  protected ModifiableRootModel getModel() {
+    return myState.getRootModel();
+  }
+
+  protected ModuleConfigurationState getState() {
+    return myState;
   }
 
   public void canApply() throws ConfigurationException {}

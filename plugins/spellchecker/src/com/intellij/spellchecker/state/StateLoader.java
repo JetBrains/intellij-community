@@ -19,7 +19,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.spellchecker.dictionary.Dictionary;
 import com.intellij.spellchecker.dictionary.Loader;
-import com.intellij.spellchecker.dictionary.Processor;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -35,7 +35,7 @@ public class StateLoader implements Loader {
     }
 
 
-    public void load(@NotNull Processor processor) {
+    public void load(@NotNull Consumer<String> consumer) {
         AggregatedDictionaryState state = ServiceManager.getService(project, AggregatedDictionaryState.class);
         state.setProject(project);
         state.loadState();
@@ -43,7 +43,7 @@ public class StateLoader implements Loader {
         final Set<String> storedWords = dictionary.getWords();
         if (storedWords!=null){
             for (String word : storedWords) {
-                processor.process(word);
+                consumer.consume(word);
             }
         }
     }

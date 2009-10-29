@@ -364,34 +364,32 @@ public class ClsStubBuilder {
       final byte flags = PsiMethodStubImpl.packFlags(isConstructor, isAnnotationMethod, isVarargs, isDeprecated, false);
 
       String canonicalMethodName = isConstructor ? myResult.getName() : name;
-      final boolean[] parsedViaGenericSignature = new boolean[1];
       final List<String> args = new ArrayList<String>();
       final List<String> throwables = exceptions != null ? new ArrayList<String>() : null;
-      final PsiModifierListStub[] modlist = new PsiModifierListStub[1];
-      PsiMethodStubImpl stub = new PsiMethodStubImpl(myResult, StringRef.fromString(canonicalMethodName), flags, null){
-        @Override
-        protected TypeInfo createReturnType() {
-          modlist[0] = new PsiModifierListStubImpl(this, packMethodFlags(access));
-          parsedViaGenericSignature[0] = false;
-          String returnType;
-          if (signature == null) {
-            returnType = parseMethodViaDescription(desc, this, args);
-          }
-          else {
-            try {
-              returnType = parseMethodViaGenericSignature(signature, this, args, throwables);
-              parsedViaGenericSignature[0] = true;
-            }
-            catch (ClsFormatException e) {
-              returnType = parseMethodViaDescription(desc, this, args);
-            }
-          }
-          return TypeInfo.fromString(returnType);
+
+      PsiMethodStubImpl stub = new PsiMethodStubImpl(myResult, StringRef.fromString(canonicalMethodName), flags, null);
+
+      final PsiModifierListStub modlist = new PsiModifierListStubImpl(stub, packMethodFlags(access));
+      boolean parsedViaGenericSignature = false;
+      String returnType;
+      if (signature == null) {
+        returnType = parseMethodViaDescription(desc, stub, args);
+      }
+      else {
+        try {
+          returnType = parseMethodViaGenericSignature(signature, stub, args, throwables);
+          parsedViaGenericSignature = true;
         }
-      };
+        catch (ClsFormatException e) {
+          returnType = parseMethodViaDescription(desc, stub, args);
+        }
+      }
+
+      stub.setReturnType(TypeInfo.fromString(returnType));
+
 
       boolean nonStaticInnerClassConstructor =
-        isConstructor && !parsedViaGenericSignature[0] && !(myParent instanceof PsiFileStub) && (myModlist.getModifiersMask() & Opcodes.ACC_STATIC) == 0;
+        isConstructor && !parsedViaGenericSignature && !(myParent instanceof PsiFileStub) && (myModlist.getModifiersMask() & Opcodes.ACC_STATIC) == 0;
 
       final PsiParameterListStubImpl parameterList = new PsiParameterListStubImpl(stub);
       final int paramCount = args.size();
@@ -408,11 +406,11 @@ public class ClsStubBuilder {
         new PsiModifierListStubImpl(parameterStub, 0);
       }
 
-      String[] thrownTypes = buildThrowsList(exceptions, throwables, parsedViaGenericSignature[0]);
+      String[] thrownTypes = buildThrowsList(exceptions, throwables, parsedViaGenericSignature);
       new PsiClassReferenceListStubImpl(JavaStubElementTypes.THROWS_LIST, stub, thrownTypes, PsiReferenceList.Role.THROWS_LIST);
 
       int ignoreCount = (access & Opcodes.ACC_STATIC) != 0 ? 0 : 1;
-      return new AnnotationParamCollectingVisitor(stub, modlist[0], ignoreCount, paramCount, paramStubs);
+      return new AnnotationParamCollectingVisitor(stub, modlist, ignoreCount, paramCount, paramStubs);
     }
 
     private static String[] buildThrowsList(String[] exceptions, List<String> throwables, boolean parsedViaGenericSignature) {

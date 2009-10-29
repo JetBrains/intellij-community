@@ -56,7 +56,7 @@ public class CompilerPathsEx extends CompilerPaths {
     }
 
     protected void acceptDirectory(final VirtualFile file, final String fileRoot, final String filePath) {
-      ProgressManager.getInstance().checkCanceled();
+      ProgressManager.checkCanceled();
       final VirtualFile[] children = file.getChildren();
       for (final VirtualFile child : children) {
         final String name = child.getName();

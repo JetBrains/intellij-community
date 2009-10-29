@@ -21,7 +21,6 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import static com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind.*;
 import com.intellij.codeInsight.intention.impl.CreateClassDialog;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.template.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -714,7 +713,7 @@ public class CreateFromUsageUtils {
     ExpectedTypesProvider provider = ExpectedTypesProvider.getInstance(manager.getProject());
     JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     for (int i = 0; i < Math.min(MAX_GUESSED_MEMBERS_COUNT, members.length); i++) {
-      ProgressManager.getInstance().checkCanceled();
+      ProgressManager.checkCanceled();
       PsiMember member = members[i];
       PsiClass aClass = member.getContainingClass();
       if (aClass instanceof PsiAnonymousClass) continue;

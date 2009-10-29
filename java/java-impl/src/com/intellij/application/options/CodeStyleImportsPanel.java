@@ -16,21 +16,24 @@
 package com.intellij.application.options;
 
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.editor.SyntaxHighlighterColors;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.PackageEntry;
+import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.ui.*;
 import com.intellij.util.ui.Table;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableModel;
+import javax.swing.event.*;
+import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 public class CodeStyleImportsPanel extends JPanel {
   private JCheckBox myCbUseFQClassNames;
@@ -41,9 +44,8 @@ public class CodeStyleImportsPanel extends JPanel {
   private JCheckBox myCbAddUnambiguousImportsOnTheFly;
   private JTextField myClassCountField;
   private JTextField myNamesCountField;
-  private final CodeStyleSettings.ImportLayoutTable myImportLayoutList = new CodeStyleSettings.ImportLayoutTable();
-  private CodeStyleSettings.PackageTable myPackageList = new CodeStyleSettings.PackageTable();
-  private CodeStyleSettings.ImportLayoutTable.PackageEntry myOtherPackageEntry = null;
+  private final PackageEntryTable myImportLayoutList = new PackageEntryTable();
+  private final PackageEntryTable myPackageList = new PackageEntryTable();
 
   private Table myImportLayoutTable;
   private JButton myMoveUpButton;
@@ -60,6 +62,7 @@ public class CodeStyleImportsPanel extends JPanel {
   private JPanel myPackagesPanel;
   private JPanel myImportsLayoutPanel;
   private JPanel myWholePanel;
+  private JCheckBox myCbLayoutStaticImportsSeparately;
 
   public CodeStyleImportsPanel(CodeStyleSettings settings){
     mySettings = settings;
@@ -69,8 +72,8 @@ public class CodeStyleImportsPanel extends JPanel {
 
     myGeneralPanel.add(createGeneralOptionsPanel(), BorderLayout.CENTER);
     myJSPPanel.add(createJspImportLayoutPanel(), BorderLayout.CENTER);
-    myPackagesPanel.add(createPackagesPanel(), BorderLayout.NORTH);
     myImportsLayoutPanel.add(createImportLayoutPanel(), BorderLayout.NORTH);
+    myPackagesPanel.add(createPackagesPanel(), BorderLayout.NORTH);
   }
 
   private JPanel createJspImportLayoutPanel() {
@@ -157,10 +160,55 @@ public class CodeStyleImportsPanel extends JPanel {
   private JPanel createImportLayoutPanel() {
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.import.layout")));
+    myCbLayoutStaticImportsSeparately = new JCheckBox("Layout static imports separately");
+
+    myCbLayoutStaticImportsSeparately.addItemListener(new ItemListener(){
+      public void itemStateChanged(ItemEvent e) {
+        if (areStaticImportsEnabled()) {
+          boolean found = false;
+          for (int i=myImportLayoutList.getEntryCount()-1; i>=0; i--) {
+            PackageEntry entry = myImportLayoutList.getEntryAt(i);
+            if (entry == PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY) {
+              found = true;
+              break;
+            }
+          }
+          if (!found) {
+            int index = myImportLayoutList.getEntryCount();
+            if (index != 0 && myImportLayoutList.getEntryAt(index-1) != PackageEntry.BLANK_LINE_ENTRY) {
+              myImportLayoutList.addEntry(PackageEntry.BLANK_LINE_ENTRY);
+            }
+            myImportLayoutList.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
+          }
+        }
+        else {
+          for (int i=myImportLayoutList.getEntryCount()-1; i>=0; i--) {
+            PackageEntry entry = myImportLayoutList.getEntryAt(i);
+            if (entry.isStatic()) {
+              myImportLayoutList.removeEntryAt(i);
+            }
+          }
+        }
+        refreshTable(myImportLayoutTable, myImportLayoutList);
+        refreshTable(myPackageTable, myPackageList);
+      }
+    });
+    panel.add(myCbLayoutStaticImportsSeparately, BorderLayout.NORTH);
     panel.add(createImportLayoutTable(), BorderLayout.CENTER);
     panel.add(createImportLayoutButtonsPanel(), BorderLayout.EAST);
     panel.setPreferredSize(new Dimension(-1, 200));
     return panel;
+  }
+
+  private void refreshTable(final Table table, final PackageEntryTable packageTable) {
+    AbstractTableModel model = (AbstractTableModel)table.getModel();
+    table.createDefaultColumnsFromModel();
+    model.fireTableDataChanged();
+    resizeColumns(packageTable, table);
+  }
+
+  private boolean areStaticImportsEnabled() {
+    return myCbLayoutStaticImportsSeparately.isSelected();
   }
 
   private JPanel createImportLayoutButtonsPanel() {
@@ -258,7 +306,7 @@ public class CodeStyleImportsPanel extends JPanel {
     if(selected < 0) {
       selected = myImportLayoutList.getEntryCount();
     }
-    CodeStyleSettings.ImportLayoutTable.PackageEntry entry = new CodeStyleSettings.ImportLayoutTable.PackageEntry("", true);
+    PackageEntry entry = new PackageEntry(false,"", true);
     myImportLayoutList.insertEntryAt(entry, selected);
     refreshTableModel(selected, myImportLayoutTable);
   }
@@ -267,8 +315,6 @@ public class CodeStyleImportsPanel extends JPanel {
     AbstractTableModel model = (AbstractTableModel)table.getModel();
     model.fireTableRowsInserted(selectedRow, selectedRow);
     table.setRowSelectionInterval(selectedRow, selectedRow);
-//    myImportLayoutTable.requestFocus();
-//    myImportLayoutTable.editCellAt(selected, 0);
     TableUtil.editCellAt(table, selectedRow, 0);
     Component editorComp = table.getEditorComponent();
     if(editorComp != null) {
@@ -281,7 +327,7 @@ public class CodeStyleImportsPanel extends JPanel {
     if(selected < 0) {
       selected = myPackageList.getEntryCount();
     }
-    CodeStyleSettings.PackageTable.Entry entry = new CodeStyleSettings.PackageTable.Entry("", true);
+    PackageEntry entry = new PackageEntry(false,"", true);
     myPackageList.insertEntryAt(entry, selected);
     refreshTableModel(selected, myPackageTable);
   }
@@ -291,8 +337,7 @@ public class CodeStyleImportsPanel extends JPanel {
     if(selected < 0) {
       selected = myImportLayoutList.getEntryCount();
     }
-    CodeStyleSettings.ImportLayoutTable.EmptyLineEntry entry = new CodeStyleSettings.ImportLayoutTable.EmptyLineEntry();
-    myImportLayoutList.insertEntryAt(entry, selected);
+    myImportLayoutList.insertEntryAt(PackageEntry.BLANK_LINE_ENTRY, selected);
     AbstractTableModel model = (AbstractTableModel)myImportLayoutTable.getModel();
     model.fireTableRowsInserted(selected, selected);
     myImportLayoutTable.setRowSelectionInterval(selected, selected);
@@ -302,26 +347,11 @@ public class CodeStyleImportsPanel extends JPanel {
     int selected = myImportLayoutTable.getSelectedRow();
     if(selected < 0)
       return;
-    CodeStyleSettings.ImportLayoutTable.Entry entry = myImportLayoutList.getEntryAt(selected);
-    if(isOtherEntry(entry)) {
-      boolean isFound = false;
-      CodeStyleSettings.ImportLayoutTable.Entry[] entries = myImportLayoutList.getEntries();
-      for(int i = 0; i < entries.length; i++){
-        if(i != selected && isOtherEntry(entries[i])) {
-          isFound = true;
-          break;
-        }
-      }
-      if(!isFound) {
-        return;
-      }
+    PackageEntry entry = myImportLayoutList.getEntryAt(selected);
+    if(entry == PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY || entry == PackageEntry.ALL_OTHER_IMPORTS_ENTRY) {
+      return;
     }
-    if(myImportLayoutTable.isEditing()) {
-      TableCellEditor editor = myImportLayoutTable.getCellEditor();
-      if (editor != null) {
-        editor.stopCellEditing();
-      }
-    }
+    TableUtil.stopEditing(myImportLayoutTable);
     myImportLayoutList.removeEntryAt(selected);
     AbstractTableModel model = (AbstractTableModel)myImportLayoutTable.getModel();
     model.fireTableRowsDeleted(selected, selected);
@@ -335,14 +365,8 @@ public class CodeStyleImportsPanel extends JPanel {
 
   private void removeEntryFromPackages() {
     int selected = myPackageTable.getSelectedRow();
-    if(selected < 0)
-      return;
-    if(myPackageTable.isEditing()) {
-      TableCellEditor editor = myPackageTable.getCellEditor();
-      if (editor != null) {
-        editor.stopCellEditing();
-      }
-    }
+    if(selected < 0) return;
+    TableUtil.stopEditing(myPackageTable);
     myPackageList.removeEntryAt(selected);
     AbstractTableModel model = (AbstractTableModel)myPackageTable.getModel();
     model.fireTableRowsDeleted(selected, selected);
@@ -359,14 +383,9 @@ public class CodeStyleImportsPanel extends JPanel {
     if(selected < 1) {
       return;
     }
-    if(myImportLayoutTable.isEditing()) {
-      TableCellEditor editor = myImportLayoutTable.getCellEditor();
-      if (editor != null) {
-        editor.stopCellEditing();
-      }
-    }
-    CodeStyleSettings.ImportLayoutTable.Entry entry = myImportLayoutList.getEntryAt(selected);
-    CodeStyleSettings.ImportLayoutTable.Entry previousEntry = myImportLayoutList.getEntryAt(selected-1);
+    TableUtil.stopEditing(myImportLayoutTable);
+    PackageEntry entry = myImportLayoutList.getEntryAt(selected);
+    PackageEntry previousEntry = myImportLayoutList.getEntryAt(selected-1);
     myImportLayoutList.setEntryAt(previousEntry, selected);
     myImportLayoutList.setEntryAt(entry, selected-1);
 
@@ -380,14 +399,9 @@ public class CodeStyleImportsPanel extends JPanel {
     if(selected >= myImportLayoutList.getEntryCount()-1) {
       return;
     }
-    if(myImportLayoutTable.isEditing()) {
-      TableCellEditor editor = myImportLayoutTable.getCellEditor();
-      if (editor != null) {
-        editor.stopCellEditing();
-      }
-    }
-    CodeStyleSettings.ImportLayoutTable.Entry entry = myImportLayoutList.getEntryAt(selected);
-    CodeStyleSettings.ImportLayoutTable.Entry nextEntry = myImportLayoutList.getEntryAt(selected+1);
+    TableUtil.stopEditing(myImportLayoutTable);
+    PackageEntry entry = myImportLayoutList.getEntryAt(selected);
+    PackageEntry nextEntry = myImportLayoutList.getEntryAt(selected+1);
     myImportLayoutList.setEntryAt(nextEntry, selected);
     myImportLayoutList.setEntryAt(entry, selected+1);
 
@@ -397,66 +411,110 @@ public class CodeStyleImportsPanel extends JPanel {
   }
 
   private JComponent createPackagesTable() {
+    myPackageTable = createTableForPackageEntries(myPackageList);
+    return ScrollPaneFactory.createScrollPane(myPackageTable);
+  }
+
+  private Table createTableForPackageEntries(final PackageEntryTable packageTable) {
     final String[] names = {
       ApplicationBundle.message("listbox.import.package"),
-      ApplicationBundle.message("listbox.import.with.subpackages")
+      ApplicationBundle.message("listbox.import.with.subpackages"),
     };
     // Create a model of the data.
     TableModel dataModel = new AbstractTableModel() {
-      public int getColumnCount() { return names.length; }
-      public int getRowCount() { return myPackageList.getEntryCount();}
-      public Object getValueAt(int row, int col) {
-        CodeStyleSettings.PackageTable.Entry entry = myPackageList.getEntryAt(row);
-        if(col == 0) {
-          if(entry != null) {
-            return entry.getPackageName();
-          }
-        }
-
-        if(col == 1) {
-          if(entry != null) {
-            return entry.isWithSubpackages() ? Boolean.TRUE : Boolean.FALSE;
-          }
-        }
-        return null;
+      public int getColumnCount() {
+        return names.length + (areStaticImportsEnabled()?1:0);
       }
-      public String getColumnName(int column) { return names[column]; }
-      public Class getColumnClass(int c) {
-        if(c == 0) {
-          return String.class;
+
+      public int getRowCount() {
+        return packageTable.getEntryCount();
+      }
+
+      public Object getValueAt(int row, int col) {
+        PackageEntry entry = packageTable.getEntryAt(row);
+        if (entry == null || !isCellEditable(row, col)) return null;
+        col += areStaticImportsEnabled() ? 0 : 1;
+        if(col == 0) {
+          return entry.isStatic();
         }
-        if(c == 1) {
+        if(col == 1) {
+          return entry.getPackageName();
+        }
+        if(col == 2) {
+          return entry.isWithSubpackages() ? Boolean.TRUE : Boolean.FALSE;
+        }
+        throw new IllegalArgumentException(String.valueOf(col));
+      }
+
+      public String getColumnName(int column) {
+        if (areStaticImportsEnabled() && column == 0) return "Static";
+        column -= areStaticImportsEnabled() ? 1 : 0;
+        return names[column];
+      }
+
+      public Class getColumnClass(int col) {
+        col += areStaticImportsEnabled() ? 0 : 1;
+        if(col == 0) {
           return Boolean.class;
         }
-        return null;
+        if(col == 1) {
+          return String.class;
+        }
+        if(col == 2) {
+          return Boolean.class;
+        }
+        throw new IllegalArgumentException(String.valueOf(col));
       }
+
       public boolean isCellEditable(int row, int col) {
-        return true;
+        PackageEntry packageEntry = packageTable.getEntryAt(row);
+        return !packageEntry.isSpecial();
       }
 
       public void setValueAt(Object aValue, int row, int col) {
-        CodeStyleSettings.PackageTable.Entry packageEntry = myPackageList.getEntryAt(row);
+        PackageEntry packageEntry = packageTable.getEntryAt(row);
+        col += areStaticImportsEnabled() ? 0 : 1;
         if(col == 0) {
-          CodeStyleSettings.PackageTable.Entry newPackageEntry = new CodeStyleSettings.PackageTable.Entry(((String)aValue).trim(), packageEntry.isWithSubpackages());
-          myPackageList.setEntryAt(newPackageEntry, row);
+          PackageEntry newPackageEntry = new PackageEntry((Boolean)aValue, packageEntry.getPackageName(), packageEntry.isWithSubpackages());
+          packageTable.setEntryAt(newPackageEntry, row);
         }
-
-        if(col == 1) {
-          CodeStyleSettings.PackageTable.Entry newPackageEntry = new CodeStyleSettings.PackageTable.Entry(packageEntry.getPackageName(), ((Boolean)aValue).booleanValue());
-          myPackageList.setEntryAt(newPackageEntry, row);
+        else if(col == 1) {
+          PackageEntry newPackageEntry = new PackageEntry(packageEntry.isStatic(), ((String)aValue).trim(), packageEntry.isWithSubpackages());
+          packageTable.setEntryAt(newPackageEntry, row);
+        }
+        else if(col == 2) {
+          PackageEntry newPackageEntry = new PackageEntry(packageEntry.isStatic(), packageEntry.getPackageName(), ((Boolean)aValue).booleanValue());
+          packageTable.setEntryAt(newPackageEntry, row);
+        }
+        else {
+          throw new IllegalArgumentException(String.valueOf(col));
         }
       }
     };
 
     // Create the table
-    myPackageTable = new Table(dataModel);
-    myPackageTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    TableCellEditor editor = myPackageTable.getDefaultEditor(String.class);
-    myPackageTable.fixColumnWidthToHeader(1);
+    final Table result = new Table(dataModel);
+    result.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    resizeColumns(packageTable, result);
+
+    TableCellEditor editor = result.getDefaultEditor(String.class);
     if (editor instanceof DefaultCellEditor) {
       ((DefaultCellEditor)editor).setClickCountToStart(1);
     }
-    myPackageTable.getSelectionModel().addListSelectionListener(
+
+    TableCellEditor beditor = result.getDefaultEditor(Boolean.class);
+    beditor.addCellEditorListener(new CellEditorListener() {
+      public void editingStopped(ChangeEvent e) {
+        if (areStaticImportsEnabled()) {
+          result.repaint(); // add/remove static keyword
+        }
+      }
+
+      public void editingCanceled(ChangeEvent e) {
+      }
+    });
+
+    result.getSelectionModel().addListSelectionListener(
       new ListSelectionListener(){
         public void valueChanged(ListSelectionEvent e){
           updateButtons();
@@ -464,124 +522,64 @@ public class CodeStyleImportsPanel extends JPanel {
       }
     );
 
-    return ScrollPaneFactory.createScrollPane(myPackageTable);
+    return result;
+  }
+
+  private void resizeColumns(final PackageEntryTable packageTable, Table result) {
+    ColoredTableCellRenderer packageRenderer = new ColoredTableCellRenderer() {
+      @Override
+      protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+        PackageEntry entry = packageTable.getEntryAt(row);
+
+        if (entry == PackageEntry.BLANK_LINE_ENTRY) {
+          append("                                               <blank line>", SimpleTextAttributes.LINK_ATTRIBUTES);
+        }
+        else {
+          TextAttributes attributes = SyntaxHighlighterColors.KEYWORD.getDefaultAttributes();
+          append("import", SimpleTextAttributes.fromTextAttributes(attributes));
+          if (entry.isStatic()) {
+            append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            append("static", SimpleTextAttributes.fromTextAttributes(attributes));
+          }
+          append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+
+          if (entry == PackageEntry.ALL_OTHER_IMPORTS_ENTRY || entry == PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY) {
+            append("all other imports", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          }
+          else {
+            append(entry.getPackageName() + ".*", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          }
+        }
+      }
+    };
+    if (areStaticImportsEnabled()) {
+      result.fixColumnWidthToHeader(0);
+      result.fixColumnWidthToHeader(2);
+      result.getColumnModel().getColumn(1).setCellRenderer(packageRenderer);
+      result.getColumnModel().getColumn(0).setCellRenderer(new BooleanTableCellRenderer());
+      result.getColumnModel().getColumn(2).setCellRenderer(new BooleanTableCellRenderer());
+    }
+    else {
+      result.fixColumnWidthToHeader(1);
+      result.getColumnModel().getColumn(0).setCellRenderer(packageRenderer);
+      result.getColumnModel().getColumn(1).setCellRenderer(new BooleanTableCellRenderer());
+    }
   }
 
   private void updateButtons(){
     int selectedImport = myImportLayoutTable.getSelectedRow();
     myMoveUpButton.setEnabled(selectedImport >= 1);
     myMoveDownButton.setEnabled(selectedImport < myImportLayoutTable.getRowCount()-1);
-    if(selectedImport < 0 || myOtherPackageEntry == myImportLayoutList.getEntryAt(selectedImport)) {
-      myRemovePackageFromImportLayoutButton.setEnabled(false);
-    }
-    else {
-      myRemovePackageFromImportLayoutButton.setEnabled(true);
-    }
+    PackageEntry entry = selectedImport < 0 ? null : myImportLayoutList.getEntryAt(selectedImport);
+    boolean canRemove =  entry != null && entry != PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY && entry != PackageEntry.ALL_OTHER_IMPORTS_ENTRY;
+    myRemovePackageFromImportLayoutButton.setEnabled(canRemove);
 
     int selectedPackage = myPackageTable.getSelectedRow();
     myRemovePackageFromPackagesButton.setEnabled(selectedPackage >= 0);
-
-  }
-
-  private static boolean isOtherEntry(CodeStyleSettings.ImportLayoutTable.Entry entry) {
-    if(!(entry instanceof CodeStyleSettings.ImportLayoutTable.PackageEntry)) {
-      return false;
-    }
-    CodeStyleSettings.ImportLayoutTable.PackageEntry packageEntry = (CodeStyleSettings.ImportLayoutTable.PackageEntry)entry;
-    String packageName = packageEntry.getPackageName();
-    return packageName.length() == 0 && packageEntry.isWithSubpackages();
   }
 
   private JComponent createImportLayoutTable() {
-    final String[] names = {
-      ApplicationBundle.message("listbox.import.package"),
-      ApplicationBundle.message("listbox.import.with.subpackages")
-    };
-    // Create a model of the data.
-    TableModel dataModel = new AbstractTableModel() {
-      public int getColumnCount() { return names.length; }
-      public int getRowCount() { return myImportLayoutList.getEntryCount();}
-      public Object getValueAt(int row, int col) {
-        CodeStyleSettings.ImportLayoutTable.Entry entry = myImportLayoutList.getEntryAt(row);
-        if(col == 0) {
-          if(isOtherEntry(entry) && entry == myOtherPackageEntry) {
-            return ApplicationBundle.message("listbox.import.all.other.imports");
-          }
-          else if(entry instanceof CodeStyleSettings.ImportLayoutTable.PackageEntry) {
-            CodeStyleSettings.ImportLayoutTable.PackageEntry packageEntry = (CodeStyleSettings.ImportLayoutTable.PackageEntry)entry;
-            return packageEntry.getPackageName();
-          }
-          else {
-            return ApplicationBundle.message("listbox.import.blank.line");
-          }
-        }
-
-        if(col == 1) {
-          if(isOtherEntry(entry) && entry == myOtherPackageEntry) {
-            return null;
-          }
-          else if(entry instanceof CodeStyleSettings.ImportLayoutTable.PackageEntry) {
-            CodeStyleSettings.ImportLayoutTable.PackageEntry packageEntry = (CodeStyleSettings.ImportLayoutTable.PackageEntry)entry;
-            return packageEntry.isWithSubpackages() ? Boolean.TRUE : Boolean.FALSE;
-          }
-          else {
-            return null;
-          }
-        }
-        return null;
-      }
-      public String getColumnName(int column) { return names[column]; }
-      public Class getColumnClass(int c) {
-        if(c == 0) {
-          return String.class;
-        }
-        if(c == 1) {
-          return Boolean.class;
-        }
-        return null;
-//        return CodeStyleSettings.ImportLayoutTable.Entry.class;
-      }
-      public boolean isCellEditable(int row, int col) {
-        CodeStyleSettings.ImportLayoutTable.Entry entry = myImportLayoutList.getEntryAt(row);
-        if (isOtherEntry(entry) && entry == myOtherPackageEntry) {
-          return false;
-        }
-        return entry instanceof CodeStyleSettings.ImportLayoutTable.PackageEntry;
-      }
-
-      public void setValueAt(Object aValue, int row, int col) {
-        CodeStyleSettings.ImportLayoutTable.Entry entry = myImportLayoutList.getEntryAt(row);
-        if(col == 0 && entry instanceof CodeStyleSettings.ImportLayoutTable.PackageEntry) {
-          CodeStyleSettings.ImportLayoutTable.PackageEntry packageEntry = (CodeStyleSettings.ImportLayoutTable.PackageEntry)entry;
-          CodeStyleSettings.ImportLayoutTable.PackageEntry newPackageEntry = new CodeStyleSettings.ImportLayoutTable.PackageEntry(((String)aValue).trim(), packageEntry.isWithSubpackages());
-          myImportLayoutList.setEntryAt(newPackageEntry, row);
-        }
-        if(col == 1 && entry instanceof CodeStyleSettings.ImportLayoutTable.PackageEntry) {
-          CodeStyleSettings.ImportLayoutTable.PackageEntry packageEntry = (CodeStyleSettings.ImportLayoutTable.PackageEntry)entry;
-          CodeStyleSettings.ImportLayoutTable.PackageEntry newPackageEntry = new CodeStyleSettings.ImportLayoutTable.PackageEntry(packageEntry.getPackageName(), aValue.equals(Boolean.TRUE));
-          myImportLayoutList.setEntryAt(newPackageEntry, row);
-        }
-      }
-    };
-
-    // Create the table
-    myImportLayoutTable = new Table(dataModel);
-    myImportLayoutTable.setDefaultRenderer(Boolean.class, new BooleanTableCellRenderer());
-    myImportLayoutTable.fixColumnWidthToHeader(1);
-    myImportLayoutTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    TableCellEditor editor = myImportLayoutTable.getDefaultEditor(String.class);
-    if (editor instanceof DefaultCellEditor) {
-      ((DefaultCellEditor)editor).setClickCountToStart(1);
-    }
-
-    myImportLayoutTable.getSelectionModel().addListSelectionListener(
-      new ListSelectionListener(){
-        public void valueChanged(ListSelectionEvent e){
-          updateButtons();
-        }
-      }
-    );
-
+    myImportLayoutTable = createTableForPackageEntries(myImportLayoutList);
     return ScrollPaneFactory.createScrollPane(myImportLayoutTable);
   }
 
@@ -596,14 +594,9 @@ public class CodeStyleImportsPanel extends JPanel {
     myCbOptimizeImportsOnTheFly.setSelected(mySettings.OPTIMIZE_IMPORTS_ON_THE_FLY);
 
     myImportLayoutList.copyFrom(mySettings.IMPORT_LAYOUT_TABLE);
-    CodeStyleSettings.ImportLayoutTable.Entry[] entries = myImportLayoutList.getEntries();
-    for (CodeStyleSettings.ImportLayoutTable.Entry entry : entries) {
-      if (isOtherEntry(entry)) {
-        myOtherPackageEntry = (CodeStyleSettings.ImportLayoutTable.PackageEntry)entry;
-      }
-    }
-    myPackageList = new CodeStyleSettings.PackageTable();
     myPackageList.copyFrom(mySettings.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
+    
+    myCbLayoutStaticImportsSeparately.setSelected(mySettings.LAYOUT_STATIC_IMPORTS_SEPARATELY);
 
     AbstractTableModel model = (AbstractTableModel)myImportLayoutTable.getModel();
     model.fireTableDataChanged();
@@ -630,6 +623,7 @@ public class CodeStyleImportsPanel extends JPanel {
   public void apply() {
     stopTableEditing();
 
+    mySettings.LAYOUT_STATIC_IMPORTS_SEPARATELY = areStaticImportsEnabled();
     mySettings.USE_FQ_CLASS_NAMES = myCbUseFQClassNames.isSelected();
     mySettings.USE_FQ_CLASS_NAMES_IN_JAVADOC = myCbUseFQClassNamesInJavaDoc.isSelected();
     mySettings.USE_SINGLE_CLASS_IMPORTS = myCbUseSingleClassImports.isSelected();
@@ -649,41 +643,25 @@ public class CodeStyleImportsPanel extends JPanel {
       //just a bad number
     }
 
+    myImportLayoutList.removeEmptyPackages();
     mySettings.IMPORT_LAYOUT_TABLE.copyFrom(myImportLayoutList);
 
-    CodeStyleSettings.ImportLayoutTable.Entry[] entries = myImportLayoutList.getEntries();
-    int removedEntryCount = 0;
-    for(int i = 0; i < entries.length; i++){
-      CodeStyleSettings.ImportLayoutTable.Entry entry = entries[i];
-      if(isOtherEntry(entry) && entry != myOtherPackageEntry) {
-        mySettings.IMPORT_LAYOUT_TABLE.removeEntryAt(i-removedEntryCount);
-        removedEntryCount++;
-      }
-    }
-
-    mySettings.PACKAGES_TO_USE_IMPORT_ON_DEMAND = myPackageList;
+    myPackageList.removeEmptyPackages();
+    mySettings.PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(myPackageList);
 
     mySettings.JSP_PREFER_COMMA_SEPARATED_IMPORT_LIST = myJspImportCommaSeparated.isSelected();
   }
 
+
   private void stopTableEditing() {
-    if(myImportLayoutTable.isEditing()) {
-      TableCellEditor editor = myImportLayoutTable.getCellEditor();
-      if (editor != null) {
-        editor.stopCellEditing();
-      }
-    }
-    if(myPackageTable.isEditing()) {
-      TableCellEditor editor = myPackageTable.getCellEditor();
-      if (editor != null) {
-        editor.stopCellEditing();
-      }
-    }
+    TableUtil.stopEditing(myImportLayoutTable);
+    TableUtil.stopEditing(myPackageTable);
   }
 
   public boolean isModified() {
-
-    boolean isModified = isModified(myCbUseFQClassNames, mySettings.USE_FQ_CLASS_NAMES);
+    boolean
+    isModified  = isModified(myCbLayoutStaticImportsSeparately, mySettings.LAYOUT_STATIC_IMPORTS_SEPARATELY);
+    isModified |= isModified(myCbUseFQClassNames, mySettings.USE_FQ_CLASS_NAMES);
     isModified |= isModified(myCbUseFQClassNamesInJavaDoc, mySettings.USE_FQ_CLASS_NAMES_IN_JAVADOC);
     isModified |= isModified(myCbUseSingleClassImports, mySettings.USE_SINGLE_CLASS_IMPORTS);
     isModified |= isModified(myCbInsertInnerClassImports, mySettings.INSERT_INNER_CLASS_IMPORTS);
@@ -713,30 +691,14 @@ public class CodeStyleImportsPanel extends JPanel {
     return checkBox.isSelected() != value;
   }
 
-  private static boolean isModified(CodeStyleSettings.ImportLayoutTable list, CodeStyleSettings.ImportLayoutTable table) {
+  private static boolean isModified(PackageEntryTable list, PackageEntryTable table) {
     if(list.getEntryCount() != table.getEntryCount()) {
       return true;
     }
 
     for(int i=0; i<list.getEntryCount(); i++) {
-      CodeStyleSettings.ImportLayoutTable.Entry entry1 = list.getEntryAt(i);
-      CodeStyleSettings.ImportLayoutTable.Entry entry2 = table.getEntryAt(i);
-      if(!entry1.equals(entry2)) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  private static boolean isModified(CodeStyleSettings.PackageTable list, CodeStyleSettings.PackageTable table) {
-    if(list.getEntryCount() != table.getEntryCount()) {
-      return true;
-    }
-
-    for(int i=0; i<list.getEntryCount(); i++) {
-      CodeStyleSettings.PackageTable.Entry entry1 = list.getEntryAt(i);
-      CodeStyleSettings.PackageTable.Entry entry2 = table.getEntryAt(i);
+      PackageEntry entry1 = list.getEntryAt(i);
+      PackageEntry entry2 = table.getEntryAt(i);
       if(!entry1.equals(entry2)) {
         return true;
       }

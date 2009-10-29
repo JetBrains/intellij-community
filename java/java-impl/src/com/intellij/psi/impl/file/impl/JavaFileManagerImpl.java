@@ -164,7 +164,7 @@ public class JavaFileManagerImpl implements JavaFileManager {
     if (found instanceof PsiClass) return false;
 
     VirtualFile faultyContainer = PsiUtil.getVirtualFile(found);
-    LOG.error("Non class in class list: " + faultyContainer);
+    LOG.error("Non class in class list: " + faultyContainer+". found: "+found);
     if (faultyContainer != null && faultyContainer.isValid()) {
       FileBasedIndex.getInstance().requestReindex(faultyContainer);
     }

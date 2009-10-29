@@ -71,7 +71,7 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
 
     PsiClass[] classes = file.getClasses();
     for (PsiClass aClass : classes) {
-      ProgressManager.getInstance().checkCanceled();
+      ProgressManager.checkCanceled();
       addElementsToFold(result, aClass, document, true, quick);
     }
 
@@ -99,7 +99,7 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
 
     PsiElement[] children = aClass.getChildren();
     for (PsiElement child : children) {
-      ProgressManager.getInstance().checkCanceled();
+      ProgressManager.checkCanceled();
 
       if (child instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)child;

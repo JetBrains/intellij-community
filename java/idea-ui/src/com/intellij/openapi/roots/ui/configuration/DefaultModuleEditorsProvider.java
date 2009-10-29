@@ -18,7 +18,6 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.module.ModuleConfigurationEditor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,12 +40,10 @@ public class DefaultModuleEditorsProvider implements ModuleComponent, ModuleConf
     ModifiableRootModel rootModel = state.getRootModel();
     Module module = rootModel.getModule();
     String moduleName = module.getName();
-    ModulesProvider provider = state.getModulesProvider();
-    Project project = state.getProject();
     List<ModuleConfigurationEditor> editors = new ArrayList<ModuleConfigurationEditor>();
-    editors.add(new ContentEntriesEditor(project, moduleName, rootModel, provider));
-    editors.add(new OutputEditor(project, rootModel));
-    editors.add(new ClasspathEditor(project, rootModel, provider));
+    editors.add(new ContentEntriesEditor(moduleName, state));
+    editors.add(new OutputEditor(state));
+    editors.add(new ClasspathEditor(state));
     return editors.toArray(new ModuleConfigurationEditor[editors.size()]);
   }
 }

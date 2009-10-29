@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -74,6 +75,12 @@ class VcsDirtyScopeManagerProxy extends VcsDirtyScopeManager {
   }
 
   public VcsInvalidated retrieveScopes() {
+    throw new UnsupportedOperationException();
+  }
+
+  @NotNull
+  @Override
+  public Collection<FilePath> whatFilesDirty(@NotNull Collection<FilePath> files) {
     throw new UnsupportedOperationException();
   }
 

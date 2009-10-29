@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodStub {
-  private final TypeInfo myReturnType;
+  private TypeInfo myReturnType;
   private final byte myFlags;
   private final StringRef myName;
   private StringRef myDefaultValueText;
@@ -51,14 +51,9 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
                            final StringRef defaultValueText) {
     super(parent, isAnnotationMethod(flags) ? JavaStubElementTypes.ANNOTATION_METHOD : JavaStubElementTypes.METHOD);
 
-    myReturnType = createReturnType();
     myFlags = flags;
     myName = name;
     myDefaultValueText = defaultValueText;
-  }
-
-  protected TypeInfo createReturnType() {
-    return myReturnType;
   }
 
   public PsiMethodStubImpl(final StubElement parent,
@@ -72,6 +67,10 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
     myFlags = flags;
     myName = name;
     myDefaultValueText = defaultValueText;
+  }
+
+  public void setReturnType(TypeInfo returnType) {
+    myReturnType = returnType;
   }
 
   public boolean isConstructor() {

@@ -239,4 +239,9 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
   public boolean shouldDrillDownOnEmptyElement() {
     return true;
   }
+
+  @Override
+  public boolean isAlwaysShowPlus() {
+    return true;
+  }
 }

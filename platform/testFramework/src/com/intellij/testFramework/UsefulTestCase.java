@@ -121,8 +121,12 @@ public abstract class UsefulTestCase extends TestCase {
 
     CodeStyleSettings codeStyleSettings = getCurrentCodeStyleSettings();
     codeStyleSettings.getIndentOptions(StdFileTypes.JAVA);
-    checkSettingsEqual(myOldCodeStyleSettings, codeStyleSettings, "Code style settings damaged");
-    codeStyleSettings.clearCodeStyleSettings();
+    try {
+      checkSettingsEqual(myOldCodeStyleSettings, codeStyleSettings, "Code style settings damaged");
+    }
+    finally {
+      codeStyleSettings.clearCodeStyleSettings();
+    }
     myOldCodeStyleSettings = null;
 
     VariableInplaceRenamer.checkCleared();

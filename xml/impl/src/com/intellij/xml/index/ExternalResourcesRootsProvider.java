@@ -44,7 +44,9 @@ public class ExternalResourcesRootsProvider implements IndexedRootsProvider {
     LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
     VirtualFile extResources = localFileSystem.findFileByPath(path);
     HashSet<String> roots = new HashSet<String>(2);
-    roots.add(standardSchemas.getUrl());
+    if (standardSchemas != null) {
+      roots.add(standardSchemas.getUrl());
+    }
     if (extResources != null) {
       roots.add(extResources.getUrl());
     }

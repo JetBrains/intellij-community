@@ -537,6 +537,10 @@ public class RootModelImpl implements ModifiableRootModel {
     return addContentEntry(new ContentEntryImpl(url, this));
   }
 
+  public boolean isDisposed() {
+    return myDisposed;
+  }
+
   private ContentEntry addContentEntry(ContentEntry e) {
     if (myContent.contains(e)) {
       for (ContentEntry contentEntry : getContentEntries()) {

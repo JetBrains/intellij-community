@@ -15,6 +15,7 @@
  */
 package git4idea.update;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -61,6 +62,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * and processed as well.
  */
 public class GitUpdateEnvironment implements UpdateEnvironment {
+  private static final Logger LOG = Logger.getInstance("#git4idea.update.GitUpdateEnvironment");
   /**
    * The vcs instance
    */
@@ -103,12 +105,17 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
     throws ProcessCanceledException {
     List<VcsException> exceptions = new ArrayList<VcsException>();
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
+    projectManager.blockReloadingProjectOnExternalChanges();
     try {
       HashSet<VirtualFile> rootsToStash = new HashSet<VirtualFile>();
+      List<LocalChangeList> listsCopy = null;
+      ChangeListManagerEx changeManager = (ChangeListManagerEx)ChangeListManagerEx.getInstance(myProject);
       if (mySettings.UPDATE_STASH) {
-        ChangeListManagerEx changeManager = (ChangeListManagerEx)ChangeListManagerEx.getInstance(myProject);
-        for (LocalChangeList l : changeManager.getChangeListsCopy()) {
-          for (Change c : l.getChanges()) {
+        listsCopy = changeManager.getChangeListsCopy();
+        for (LocalChangeList l : listsCopy) {
+          final Collection<Change> changeCollection = l.getChanges();
+          LOG.debug("Stashing " + changeCollection.size() + " changes from '" + l.getName() + "'");
+          for (Change c : changeCollection) {
             if (c.getAfterRevision() != null) {
               VirtualFile r = GitUtil.getGitRootOrNull(c.getAfterRevision().getFile());
               if (r != null) {
@@ -159,7 +166,6 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
           }
           final Ref<Boolean> cancelled = new Ref<Boolean>(false);
           final Ref<Throwable> ex = new Ref<Throwable>();
-          projectManager.blockReloadingProjectOnExternalChanges();
           try {
             boolean stashCreated =
               rootsToStash.contains(root) && GitStashUtils.saveStash(myProject, root, "Uncommitted changes before update operation");
@@ -256,6 +262,13 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
               if (stashCreated) {
                 try {
                   GitStashUtils.popLastStash(myProject, root);
+                  for (LocalChangeList changeList : listsCopy) {
+                    final Collection<Change> changes = changeList.getChanges();
+                    if (! changes.isEmpty()) {
+                      LOG.debug("After unstash: moving " + changes.size() + " changes to '" + changeList.getName() + "'");
+                      changeManager.moveChangesTo(changeList, changes.toArray(new Change[changes.size()]));
+                    }
+                  }
                 }
                 catch (final VcsException ue) {
                   exceptions.add(ue);

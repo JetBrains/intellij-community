@@ -16,10 +16,9 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ContentFolder;
-import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.ExcludeFolder;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,14 +28,15 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.List;
 
-public class JavaContentRootPanel extends ContentRootPanel {
+public abstract class JavaContentRootPanel extends ContentRootPanel {
   private static final Color SOURCES_COLOR = new Color(0x0A50A1);
   private static final Icon ADD_PREFIX_ICON = IconLoader.getIcon("/modules/setPackagePrefix.png");
   private static final Icon ADD_PREFIX_ROLLOVER_ICON = IconLoader.getIcon("/modules/setPackagePrefixRollover.png");
 
-  public JavaContentRootPanel(ContentEntry contentEntry, ActionCallback callback) {
-    super(contentEntry, callback);
+  public JavaContentRootPanel(ActionCallback callback) {
+    super(callback);
   }
 
   @Nullable
@@ -52,7 +52,7 @@ public class JavaContentRootPanel extends ContentRootPanel {
                                                                       ProjectBundle.message("module.paths.package.prefix.tooltip"), new Runnable() {
       public void run() {
         final String message = ProjectBundle.message("module.paths.package.prefix.prompt",
-                                                     toRelativeDisplayPath(folder.getUrl(), myContentEntry.getUrl() + ":"));
+                                                     toRelativeDisplayPath(folder.getUrl(), getContentEntry().getUrl() + ":"));
         final String prefix = Messages.showInputDialog(JavaContentRootPanel.this, message,
                                                        ProjectBundle.message("module.paths.package.prefix.title"), Messages.getQuestionIcon(), folder.getPackagePrefix(), null);
         if (prefix != null) {
@@ -68,10 +68,10 @@ public class JavaContentRootPanel extends ContentRootPanel {
   }
 
   protected void addFolderGroupComponents() {
-    final java.util.List<ContentFolder> sources = new ArrayList<ContentFolder>();
-    final java.util.List<ContentFolder> testSources = new ArrayList<ContentFolder>();
-    final java.util.List<ContentFolder> excluded = new ArrayList<ContentFolder>();
-    final SourceFolder[] sourceFolders = myContentEntry.getSourceFolders();
+    final List<ContentFolder> sources = new ArrayList<ContentFolder>();
+    final List<ContentFolder> testSources = new ArrayList<ContentFolder>();
+    final List<ContentFolder> excluded = new ArrayList<ContentFolder>();
+    final SourceFolder[] sourceFolders = getContentEntry().getSourceFolders();
     for (SourceFolder folder : sourceFolders) {
       if (folder.isSynthetic()) {
         continue;
@@ -88,7 +88,7 @@ public class JavaContentRootPanel extends ContentRootPanel {
       }
     }
 
-    final ExcludeFolder[] excludeFolders = myContentEntry.getExcludeFolders();
+    final ExcludeFolder[] excludeFolders = getContentEntry().getExcludeFolders();
     for (final ExcludeFolder excludeFolder : excludeFolders) {
       if (!excludeFolder.isSynthetic()) {
         excluded.add(excludeFolder);

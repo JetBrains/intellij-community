@@ -423,7 +423,7 @@ public class PsiUtil {
         if (qualifier != null) {
           if (qualifier instanceof GrReferenceExpression) {
             PsiElement qualifierResolved = ((GrReferenceExpression)qualifier).resolve();
-            if (qualifierResolved instanceof PsiClass) { //static context
+            if (qualifierResolved instanceof PsiClass || qualifierResolved instanceof PsiPackage) { //static context
               if (owner instanceof PsiClass) {
                 return true;
               }

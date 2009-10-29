@@ -23,15 +23,17 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -44,23 +46,24 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.encapsulateFields.EncapsulateFieldsProcessor");
 
   private PsiClass myClass;
-  private final EncapsulateFieldsDialog myDialog;
+  @NotNull
+  private final EncapsulateFieldsDescriptor myDescriptor;
   private PsiField[] myFields;
 
   private HashMap<String,PsiMethod> myNameToGetter;
   private HashMap<String,PsiMethod> myNameToSetter;
 
-  public EncapsulateFieldsProcessor(Project project, EncapsulateFieldsDialog dialog) {
+  public EncapsulateFieldsProcessor(Project project, @NotNull EncapsulateFieldsDescriptor descriptor) {
     super(project);
-    myDialog = dialog;
+    myDescriptor = descriptor;
+    myFields = myDescriptor.getSelectedFields();
+    myClass = myFields[0].getContainingClass();
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
@@ -73,37 +76,54 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     return RefactoringBundle.message("encapsulate.fields.command.name", UsageViewUtil.getDescriptiveName(myClass));
   }
 
-  public void doRun() {
-    myFields = myDialog.getSelectedFields();
-    if (myFields.length == 0){
-      String message = RefactoringBundle.message("encapsulate.fields.no.fields.selected");
-      CommonRefactoringUtil.showErrorMessage(EncapsulateFieldsHandler.REFACTORING_NAME, message, HelpID.ENCAPSULATE_FIELDS, myProject);
-      return;
-    }
-    myClass = myFields[0].getContainingClass();
-
-    super.doRun();
-  }
-
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
-    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
 
-    if (myDialog != null) {
-      checkExistingMethods(myDialog.getGetterPrototypes(), conflicts, true);
-      checkExistingMethods(myDialog.getSetterPrototypes(), conflicts, false);
+    checkExistingMethods(myDescriptor.getGetterPrototypes(), conflicts, true);
+    checkExistingMethods(myDescriptor.getSetterPrototypes(), conflicts, false);
+    final Collection<PsiClass> classes = ClassInheritorsSearch.search(myClass).findAll();
+    for (int i = 0; i < myFields.length; i++) {
+      final PsiField field = myFields[i];
+      final Set<PsiMethod> setters = new HashSet<PsiMethod>();
+      final Set<PsiMethod> getters = new HashSet<PsiMethod>();
 
-      if(conflicts.size() > 0) {
-        ConflictsDialog dialog = new ConflictsDialog(myProject, conflicts);
-        dialog.show();
-        if(!dialog.isOK()){
-          if (dialog.isShowConflicts()) prepareSuccessful();
-          return false;
+      for (PsiClass aClass : classes) {
+        final PsiMethod getterOverrider = aClass.findMethodBySignature(myDescriptor.getGetterPrototypes()[i], false);
+        if (getterOverrider != null) {
+          getters.add(getterOverrider);
+        }
+        final PsiMethod setterOverrider = aClass.findMethodBySignature(myDescriptor.getSetterPrototypes()[i], false);
+        if (setterOverrider != null) {
+          setters.add(setterOverrider);
+        }
+      }
+      if (!getters.isEmpty() || !setters.isEmpty()) {
+        for (PsiReference reference : ReferencesSearch.search(field)) {
+          final PsiElement place = reference.getElement();
+          LOG.assertTrue(place instanceof PsiReferenceExpression);
+          final PsiExpression qualifierExpression = ((PsiReferenceExpression)place).getQualifierExpression();
+          final PsiClass ancestor;
+          if (qualifierExpression == null) {
+            ancestor = PsiTreeUtil.getParentOfType(place, PsiClass.class, false);
+          }
+          else {
+            ancestor = PsiUtil.resolveClassInType(qualifierExpression.getType());
+          }
+
+          final boolean isGetter = !PsiUtil.isAccessedForWriting((PsiExpression)place);
+          for (PsiMethod overridden : isGetter ? getters : setters) {
+            if (InheritanceUtil.isInheritorOrSelf(myClass, ancestor, true)) {
+              conflicts.putValue(overridden, "There is already a " +
+                                             CommonRefactoringUtil.htmlEmphasize(RefactoringUIUtil.getDescription(overridden, true)) +
+                                             " which would hide generated " +
+                                             (isGetter ? "getter" : "setter") + " for " + place.getText());
+              break;
+            }
+          }
         }
       }
     }
-
-    prepareSuccessful();
-    return true;
+    return showConflicts(conflicts);
   }
 
   private void checkExistingMethods(PsiMethod[] prototypes, MultiMap<PsiElement, String> conflicts, boolean isGetter) {
@@ -126,16 +146,40 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
                                                 CommonRefactoringUtil.htmlEmphasize(prototype.getName()));
           conflicts.putValue(existing, message);
         }
+      } else {
+        PsiClass containingClass = myClass.getContainingClass();
+        while (containingClass != null && existing == null) {
+          existing = containingClass.findMethodBySignature(prototype, true);
+          if (existing != null) {
+            for (PsiReference reference : ReferencesSearch.search(existing)) {
+              final PsiElement place = reference.getElement();
+              LOG.assertTrue(place instanceof PsiReferenceExpression);
+              final PsiExpression qualifierExpression = ((PsiReferenceExpression)place).getQualifierExpression();
+              final PsiClass inheritor;
+              if (qualifierExpression == null) {
+                inheritor = PsiTreeUtil.getParentOfType(place, PsiClass.class, false);
+              } else {
+                inheritor = PsiUtil.resolveClassInType(qualifierExpression.getType());
+              }
+
+              if (InheritanceUtil.isInheritorOrSelf(inheritor, myClass, true)) {
+                conflicts.putValue(existing, "There is already a " + CommonRefactoringUtil.htmlEmphasize(RefactoringUIUtil.getDescription(existing, true)) + " which would be hidden by generated " + (isGetter ? "getter" : "setter"));
+                break;
+              }
+            }
+          }
+          containingClass = containingClass.getContainingClass();
+        }
       }
     }
   }
 
   @NotNull protected UsageInfo[] findUsages() {
-    boolean findGet = myDialog.isToEncapsulateGet();
-    boolean findSet = myDialog.isToEncapsulateSet();
+    boolean findGet = myDescriptor.isToEncapsulateGet();
+    boolean findSet = myDescriptor.isToEncapsulateSet();
     PsiModifierList newModifierList = null;
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(myProject);
-    if (!myDialog.isToUseAccessorsWhenAccessible()){
+    if (!myDescriptor.isToUseAccessorsWhenAccessible()){
       PsiElementFactory factory = facade.getElementFactory();
       try{
         PsiField field = factory.createField("a", PsiType.INT);
@@ -146,8 +190,8 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
         LOG.error(e);
       }
     }
-    PsiMethod[] getterPrototypes = myDialog.getGetterPrototypes();
-    PsiMethod[] setterPrototypes = myDialog.getSetterPrototypes();
+    PsiMethod[] getterPrototypes = myDescriptor.getGetterPrototypes();
+    PsiMethod[] setterPrototypes = myDescriptor.getSetterPrototypes();
     ArrayList<UsageInfo> array = new ArrayList<UsageInfo>();
     PsiField[] fields = myFields;
     for(int i = 0; i < fields.length; i++){
@@ -164,7 +208,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
         if (!findSet || field.hasModifierProperty(PsiModifier.FINAL)) {
           if (!PsiUtil.isAccessedForReading(ref)) continue;
         }
-        if (!myDialog.isToUseAccessorsWhenAccessible()) {
+        if (!myDescriptor.isToUseAccessorsWhenAccessible()) {
           PsiClass accessObjectClass = null;
           PsiExpression qualifier = ref.getQualifierExpression();
           if (qualifier != null) {
@@ -199,7 +243,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
 
   protected void performRefactoring(UsageInfo[] usages) {
     // change visibility of fields
-    if (myDialog.getFieldsVisibility() != null){
+    if (myDescriptor.getFieldsVisibility() != null){
       // "as is"
       for (PsiField field : myFields) {
         setNewFieldVisibility(field);
@@ -207,16 +251,18 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     }
 
     // generate accessors
-    myNameToGetter = new com.intellij.util.containers.HashMap<String, PsiMethod>();
-    myNameToSetter = new com.intellij.util.containers.HashMap<String, PsiMethod>();
+    myNameToGetter = new HashMap<String, PsiMethod>();
+    myNameToSetter = new HashMap<String, PsiMethod>();
     for(int i = 0; i < myFields.length; i++){
       PsiField field = myFields[i];
-      if (myDialog.isToEncapsulateGet()){
-        PsiMethod[] prototypes = myDialog.getGetterPrototypes();
+      if (myDescriptor.isToEncapsulateGet()){
+        PsiMethod[] prototypes = myDescriptor.getGetterPrototypes();
+        assert prototypes != null;
         addOrChangeAccessor(prototypes[i], myNameToGetter);
       }
-      if (myDialog.isToEncapsulateSet() && !field.hasModifierProperty(PsiModifier.FINAL)){
-        PsiMethod[] prototypes = myDialog.getSetterPrototypes();
+      if (myDescriptor.isToEncapsulateSet() && !field.hasModifierProperty(PsiModifier.FINAL)){
+        PsiMethod[] prototypes = myDescriptor.getSetterPrototypes();
+        assert prototypes != null;
         addOrChangeAccessor(prototypes[i], myNameToSetter);
       }
     }
@@ -246,9 +292,9 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
 
   private void setNewFieldVisibility(PsiField field) {
     try{
-      if (myDialog.getFieldsVisibility() != null){
+      if (myDescriptor.getFieldsVisibility() != null){
         field.normalizeDeclaration();
-        PsiUtil.setModifierProperty(field, myDialog.getFieldsVisibility(), true);
+        PsiUtil.setModifierProperty(field, myDescriptor.getFieldsVisibility(), true);
       }
     }
     catch(IncorrectOperationException e){
@@ -261,7 +307,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     PsiMethod result = existing;
     try{
       if (existing == null){
-        PsiUtil.setModifierProperty(prototype, myDialog.getAccessorsVisibility(), true);
+        PsiUtil.setModifierProperty(prototype, myDescriptor.getAccessorsVisibility(), true);
         result = (PsiMethod) myClass.add(prototype);
       }
       else{
@@ -288,8 +334,8 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
 
   private void processUsage(MyUsageInfo usage) {
     PsiField field = myFields[usage.fieldIndex];
-    boolean processGet = myDialog.isToEncapsulateGet();
-    boolean processSet = myDialog.isToEncapsulateSet() && !field.hasModifierProperty(PsiModifier.FINAL);
+    boolean processGet = myDescriptor.isToEncapsulateGet();
+    boolean processSet = myDescriptor.isToEncapsulateSet() && !field.hasModifierProperty(PsiModifier.FINAL);
     if (!processGet && !processSet) return;
     PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
 
@@ -425,7 +471,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   }
 
   private PsiMethodCallExpression createSetterCall(final int fieldIndex, final PsiExpression setterArgument, PsiReferenceExpression expr) throws IncorrectOperationException {
-    String[] setterNames = myDialog.getSetterNames();
+    String[] setterNames = myDescriptor.getSetterNames();
     PsiElementFactory factory = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory();
     final String setterName = setterNames[fieldIndex];
     @NonNls String text = setterName + "(a)";
@@ -451,7 +497,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   @Nullable
   private PsiMethodCallExpression createGetterCall(final int fieldIndex, PsiReferenceExpression expr)
           throws IncorrectOperationException {
-    String[] getterNames = myDialog.getGetterNames();
+    String[] getterNames = myDescriptor.getGetterNames();
     PsiElementFactory factory = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory();
     final String getterName = getterNames[fieldIndex];
     @NonNls String text = getterName + "()";

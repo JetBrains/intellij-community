@@ -64,6 +64,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
 
   /**
    * Returns the array of children for the PSI element.
+   * Important: In some implementations children are only composite elements, i.e. not a leaf elements
    *
    * @return the array of child elements.
    */

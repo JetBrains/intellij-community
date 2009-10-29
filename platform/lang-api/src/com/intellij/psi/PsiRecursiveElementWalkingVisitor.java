@@ -40,7 +40,7 @@ public abstract class PsiRecursiveElementWalkingVisitor extends PsiElementVisito
   }
 
   public void visitElement(final PsiElement element) {
-    ProgressManager.getInstance().checkCanceled();
+    ProgressManager.checkCanceled();
 
     myWalkingState.elementStarted(element);
   }

@@ -36,6 +36,7 @@ import java.util.Set;
 
 public abstract class BuildProperties extends CompositeGenerator {
     public static final @NonNls String TARGET_ALL = "all";
+    public static final @NonNls String TARGET_BUILD_MODULES = "build.modules";
     public static final @NonNls String TARGET_CLEAN = "clean";
     public static final @NonNls String TARGET_INIT = "init";
     public static final @NonNls String DEFAULT_TARGET = TARGET_ALL;

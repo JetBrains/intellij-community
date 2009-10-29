@@ -30,14 +30,15 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.StatusBarProgress;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -143,8 +144,12 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
   final void setUpdatable(boolean updatable) {
     if (myUpdatable != updatable) {
       myUpdatable = updatable;
-      if (myUpdatable) {
-        updateTree(false);
+      if (updatable) {
+        DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
+          public void run() {
+            updateTree(false);
+          }
+        });
       }
     }
   }

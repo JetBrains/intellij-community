@@ -66,6 +66,10 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
     return myParent.getManifestFile(element, artifactType);
   }
 
+  public boolean isManifestFile(String path) {
+    return myParent.isManifestFile(path);
+  }
+
   @NotNull
   public Project getProject() {
     return myParent.getProject();
@@ -81,6 +85,10 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
 
   public ArtifactEditor getOrCreateEditor(Artifact artifact) {
     return myParent.getOrCreateEditor(artifact);
+  }
+
+  public ArtifactEditor getThisArtifactEditor() {
+    return myEditor;
   }
 
   public void selectArtifact(@NotNull Artifact artifact) {
@@ -108,7 +116,8 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
         for (OrderEntry entry : rootModel.getOrderEntries()) {
           if (entry instanceof ModuleLibraryOrderEntryImpl) {
             final ModuleLibraryOrderEntryImpl libraryEntry = (ModuleLibraryOrderEntryImpl)entry;
-            if (libraryName.equals(libraryEntry.getLibraryName())) {
+            if (libraryName != null && libraryName.equals(libraryEntry.getLibraryName())
+               || libraryName == null && library.equals(libraryEntry.getLibrary())) {
               ModuleStructureConfigurable.getInstance(getProject()).selectOrderEntry(module, libraryEntry);
               return;
             }
@@ -168,6 +177,10 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
     ChooseLibrariesDialog dialog = new ChooseLibrariesDialog(getProject(), libraries, title, null);
     dialog.show();
     return dialog.isOK() ? dialog.getChosenElements() : Collections.<Library>emptyList();
+  }
+
+  public Artifact getArtifact() {
+    return myEditor.getArtifact();
   }
 
   public ArtifactsStructureConfigurableContext getParent() {

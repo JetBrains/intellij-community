@@ -113,6 +113,13 @@ public class EditorFactoryImpl extends EditorFactory {
     return document;
   }
 
+  @NotNull
+  public Document createDocument(boolean allowUpdatesWithoutWriteAction) {
+    DocumentImpl document = new DocumentImpl(allowUpdatesWithoutWriteAction);
+    myEditorEventMulticaster.registerDocument(document);
+    return document;
+  }
+
   public void refreshAllEditors() {
     for (Editor editor : myEditors) {
       ((EditorEx)editor).reinitSettings();

@@ -153,7 +153,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     if (editor.getSelectionModel().hasSelection() || editor.getSelectionModel().hasBlockSelection()) return null;
 
     LogicalPosition caretPos = editor.getCaretModel().getLogicalPosition();
-    if (caretPos.line == 1 || caretPos.column == 0) {
+    if (caretPos.line == 0 || caretPos.column == 0) {
       return null;
     }
     int lineStartOffset = editor.getDocument().getLineStartOffset(caretPos.line);

@@ -22,6 +22,7 @@ public class GrStringUtil {
   private static final String QUOTE = "'";
   private static final String DOUBLE_QUOTES = "\"";
   private static final String TRIPLE_DOUBLE_QUOTES = "\"\"\"";
+  public static final String GROOVY_LANG_GSTRING = "groovy.lang.GString";
 
   private GrStringUtil() {
   }
@@ -141,6 +142,7 @@ public class GrStringUtil {
    * @param literal
    * @return
    */
+  //todo use this code
   public static GrString replaceStringInjectionByLiteral(PsiElement injection, GrLiteral literal) {
     if (injection.getParent() instanceof GrClosableBlock) {
       injection = injection.getParent();
@@ -234,7 +236,8 @@ public class GrStringUtil {
         final GrClosableBlock closableBlock = ((GrStringInjection)child).getClosableBlock();
         final GrReferenceExpression refExpr = (GrReferenceExpression)closableBlock.getStatements()[0];
         final GrReferenceExpression copy = (GrReferenceExpression)refExpr.copy();
-        closableBlock.replace(copy);
+        final ASTNode oldNode = closableBlock.getNode();
+        oldNode.getTreeParent().replaceChild(oldNode, copy.getNode());
       }
     }
   }

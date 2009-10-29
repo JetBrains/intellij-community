@@ -17,11 +17,14 @@
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -63,8 +66,7 @@ public abstract class ReferenceSetBase<T extends PsiReference> {
     do {
       next = findNextSeparator(str, current);
       final TextRange range = new TextRange(offset + current + 1, offset + (next > 0 ? next : str.length()));
-      final T ref = createReference(range, index++);
-      references.add(ref);
+      references.addAll(createReferences(range, index ++));
     } while ((current = next) >= 0);
 
     return references;
@@ -76,8 +78,16 @@ public abstract class ReferenceSetBase<T extends PsiReference> {
     return next;
   }
 
-  @NotNull
-  protected abstract T createReference(final TextRange range, final int index);
+  @Nullable
+  protected T createReference(final TextRange range, final int index) {
+    return null;
+  }
+
+  protected List<T> createReferences(final TextRange range, final int index) {
+    T reference = createReference(range, index);
+
+    return reference == null? Collections.<T>emptyList() : Collections.singletonList(reference);
+  }
 
   public PsiElement getElement() {
     return myElement;

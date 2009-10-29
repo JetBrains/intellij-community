@@ -74,7 +74,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleManagerImpl");
   public static final Key<String> DISPOSED_MODULE_NAME = Key.create("DisposedNeverAddedModuleName");
   private final Project myProject;
-  private ModuleModelImpl myModuleModel = new ModuleModelImpl();
+  private volatile ModuleModelImpl myModuleModel = new ModuleModelImpl();
 
   @NonNls public static final String COMPONENT_NAME = "ProjectModuleManager";
   private static final String MODULE_GROUP_SEPARATOR = "/";
@@ -798,7 +798,6 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
     public void commitWithRunnable(Runnable runnable) {
       commitModel(this, runnable);
-      myIsWritable = false;
       clearRenamingStuff();
     }
 
@@ -908,11 +907,24 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
         Disposer.dispose(module);
       }
 
-      myModuleModel = moduleModel;
-
       if (runnable != null) {
         runnable.run();
       }
+
+      final Map<Module, String> modulesToNewNamesMap = moduleModel.myModuleToNewName;
+      final Set<Module> modulesToBeRenamed = modulesToNewNamesMap.keySet();
+      modulesToBeRenamed.removeAll(moduleModel.myModulesToDispose);
+      final List<Module> modules = new ArrayList<Module>();
+      for (final Module aModulesToBeRenamed : modulesToBeRenamed) {
+        ModuleImpl module = (ModuleImpl)aModulesToBeRenamed;
+        moduleModel.myPathToModule.remove(module.getModuleFilePath());
+        modules.add(module);
+        module.rename(modulesToNewNamesMap.get(module));
+        moduleModel.myPathToModule.put(module.getModuleFilePath(), module);
+      }
+
+      moduleModel.myIsWritable = false;
+      myModuleModel = moduleModel;
 
       for (Module module : removedModules) {
         fireModuleRemoved(module);
@@ -927,18 +939,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
         fireModuleAdded(addedModule);
         cleanCachedStuff();
       }
-      final Map<Module, String> modulesToNewNamesMap = moduleModel.myModuleToNewName;
-      final Set<Module> modulesToBeRenamed = modulesToNewNamesMap.keySet();
-      modulesToBeRenamed.removeAll(moduleModel.myModulesToDispose);
-      final List<Module> modules = new ArrayList<Module>();
-      for (final Module aModulesToBeRenamed : modulesToBeRenamed) {
-        ModuleImpl module = (ModuleImpl)aModulesToBeRenamed;
-        moduleModel.myPathToModule.remove(module.getModuleFilePath());
-        modules.add(module);
-        module.rename(modulesToNewNamesMap.get(module));
-        moduleModel.myPathToModule.put(module.getModuleFilePath(), module);
-        cleanCachedStuff();
-      }
+      cleanCachedStuff();
       fireModulesRenamed(modules);
       cleanCachedStuff();
     }
