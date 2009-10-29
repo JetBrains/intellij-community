@@ -20,7 +20,6 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.deployment.DeploymentUtil;
-import com.intellij.openapi.deployment.DeploymentUtilImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -162,19 +161,14 @@ public class JarsBuilder {
     File jarFile = createTempFile();
     myBuiltJars.put(jar, jarFile);
 
-    Manifest manifest = createManifest(jar);
-    DeploymentUtilImpl.setManifestAttributes(manifest.getMainAttributes(), jar.getClasspath());
+    Manifest manifest = null;
     final JarOutputStream jarOutputStream = createJarOutputStream(jarFile, manifest);
 
     try {
       final THashSet<String> writtenPaths = new THashSet<String>();
-      writtenPaths.add(JarFile.MANIFEST_NAME);
       for (Pair<String, VirtualFile> pair : jar.getPackedFiles()) {
         File file = VfsUtil.virtualToIoFile(pair.getSecond());
-        String relativePath = pair.getFirst();
-        if (!JarFile.MANIFEST_NAME.equalsIgnoreCase(relativePath)) {
-          addFileToJar(jarOutputStream, file, relativePath, writtenPaths);
-        }
+        addFileToJar(jarOutputStream, file, pair.getFirst(), writtenPaths);
       }
 
       for (Pair<String, JarInfo> nestedJar : jar.getPackedJars()) {
@@ -198,7 +192,7 @@ public class JarsBuilder {
 
   protected JarOutputStream createJarOutputStream(final File jarFile, final Manifest manifest) throws IOException {
     FileUtil.createParentDirs(jarFile);
-    return new JarOutputStream(new BufferedOutputStream(new FileOutputStream(jarFile)), manifest);
+    return new JarOutputStream(new BufferedOutputStream(new FileOutputStream(jarFile)));
   }
 
   protected File createTempFile() throws IOException {

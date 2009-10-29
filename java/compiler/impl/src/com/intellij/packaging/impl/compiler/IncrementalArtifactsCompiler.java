@@ -15,17 +15,16 @@
  */
 package com.intellij.packaging.impl.compiler;
 
-import com.intellij.compiler.impl.CompilerUtil;
+import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.impl.CompilerCacheManager;
+import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.FileProcessingCompilerStateCache;
 import com.intellij.compiler.impl.packagingCompiler.*;
-import com.intellij.compiler.CompilerManagerImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.deployment.DeploymentUtil;
-import com.intellij.openapi.deployment.DeploymentUtilImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -52,9 +51,11 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.IOException;
 import java.util.*;
-import java.util.jar.Manifest;
 
 /**
  * @author nik
@@ -291,8 +292,6 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
         }
       }
 
-      createManifestFiles(builderContext.getManifestFiles());
-
       JarsBuilder builder = new JarsBuilder(changedJars, fileFilter, context);
       final boolean processed = builder.buildJars(writtenPaths);
       if (!processed) {
@@ -328,39 +327,6 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
       return false;
     }
     return true;
-  }
-
-  private static void createManifestFiles(final List<ManifestFileInfo> manifestFileInfos) throws IOException {
-    for (ManifestFileInfo manifestFileInfo : manifestFileInfos) {
-      File outputFile = new File(FileUtil.toSystemDependentName(manifestFileInfo.getOutputPath()));
-      Manifest manifest;
-      if (outputFile.exists()) {
-        FileInputStream stream = new FileInputStream(outputFile);
-        try {
-          manifest = new Manifest(stream);
-        }
-        finally {
-          stream.close();
-        }
-      }
-      else {
-        manifest = new Manifest();
-      }
-
-      DeploymentUtilImpl.setManifestAttributes(manifest.getMainAttributes(), manifestFileInfo.getClasspath());
-
-      FileUtil.createParentDirs(outputFile);
-      FileOutputStream out = null;
-      try {
-        out = new FileOutputStream(outputFile);
-        manifest.write(out);
-      }
-      finally {
-        if (out != null) {
-          out.close();
-        }
-      }
-    }
   }
 
   private static void processDestinations(final List<ArtifactPackagingProcessingItem> items) {

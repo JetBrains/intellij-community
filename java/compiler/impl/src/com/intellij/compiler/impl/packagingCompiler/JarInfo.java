@@ -18,7 +18,6 @@ package com.intellij.compiler.impl.packagingCompiler;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -31,17 +30,11 @@ public class JarInfo {
   private List<Pair<String, VirtualFile>> myPackedFiles;
   private LinkedHashSet<Pair<String, JarInfo>> myPackedJars;
   private List<DestinationInfo> myDestinations;
-  private List<String> myClasspath;
 
   public JarInfo() {
-    this(null);
-  }
-
-  public JarInfo(List<String> classpath) {
     myDestinations = new ArrayList<DestinationInfo>();
     myPackedFiles = new ArrayList<Pair<String, VirtualFile>>();
     myPackedJars = new LinkedHashSet<Pair<String, JarInfo>>();
-    myClasspath = classpath;
   }
 
   public void addDestination(DestinationInfo info) {
@@ -72,11 +65,6 @@ public class JarInfo {
       }
     }
     return list;
-  }
-
-  @Nullable
-  public List<String> getClasspath() {
-    return myClasspath;
   }
 
   public List<DestinationInfo> getAllDestinations() {
