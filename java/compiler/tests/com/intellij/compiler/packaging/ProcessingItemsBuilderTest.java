@@ -22,34 +22,23 @@ import java.util.*;
 public class ProcessingItemsBuilderTest extends IncrementalPackagingTestCase {
 
   public void testCopyFileToExploded() throws Exception {
-    doTest(true, false, true,
-           start().copy("a.jsp", "/a.jsp"));
+    doTest(true, false, start().copy("a.jsp", "/a.jsp"));
   }
 
   public void testCopyDirToExploded() throws Exception {
-    doTest(true, false, true,
-           start().copy("dir", "/out", "a.jsp", "b.jsp"));
+    doTest(true, false, start().copy("dir", "/out", "a.jsp", "b.jsp"));
   }
 
   public void testCopyFileToJar() throws Exception {
-    doTest(false, true, true,
-           start().copy("a.jsp", "/a.jsp"));
+    doTest(false, true, start().copy("a.jsp", "/a.jsp"));
   }
 
   public void testCopyDirToJar() throws Exception {
-    doTest(false, true, true,
-           start().copy("dir", "/out", "a.jsp", "b.jsp"));
+    doTest(false, true, start().copy("dir", "/out", "a.jsp", "b.jsp"));
   }
 
   public void testJarDirectory() throws Exception {
-    doTest(true, true, false,
-           start().jar("dir", "/path/to/inner.jar", "a.html", "b.html"));
-  }
-
-  public void testCopyFileToParent() throws Exception {
-    doTest(true, true, false, start()
-      .copy("a.jar", "../a.jar")
-      .copy("b.jsp", "b.jsp"));
+    doTest(true, true, start().jar("dir", "/path/to/inner.jar", "a.html", "b.html"));
   }
 
   public void testCopyFileToParentExternal() throws Exception {
@@ -57,93 +46,12 @@ public class ProcessingItemsBuilderTest extends IncrementalPackagingTestCase {
       .copy("a.jar", "../a.jar"));
   }
 
-  public void testJarFileToParent() throws Exception {
-    doTest(new MockBuildConfiguration(true, true, "/out/exploded", "/out2/my.jar"), start()
-      .jar("dir", "../a.jar", "a.jsp")
-      .copy("b.jsp", "b.jsp"));
-  }
-
-  public void testCopyDirToEar() throws Exception {
-    doTest(true, true, false, start()
-      .copy("a.jsp", "/a.jsp")
-      .inner("w.war", false, false)
-        .copy("b.jsp", "/b.jsp")
-        .up()
-      .copy("c.jsp", "/c.jsp")
-    );
-  }
-
-  public void testCopyDirToWarAndEar() throws Exception {
-    doTest(true, true, false, start()
-      .copy("a.jsp", "/a.jsp")
-      .inner("w.war", true, true)
-        .copy("b.jsp", "/b.jsp")
-        .up()
-      .copy("c.jsp", "/c.jsp")
-    );
-  }
-
-  public void testJarDirToEar() throws Exception {
-    doTest(true, true, false, start()
-      .inner("w.war", false, false)
-        .jar("dir", "/a.jar", "a.jsp")
-        .up()
-    );
-  }
-
-  public void testExternalInnerJar() throws Exception {
-    doTest(start()
-      .copy("a.class", "/a.class")
-      .inner("../dep.jar", false, false)
-        .copy("b.class", "/b.class")
-        .up()
-    );
-  }
-
-  public void testExternalInnerJarWithLib() throws Exception {
-    doTest(start()
-      .copy("a.class", "/a.class")
-      .inner("../dep.jar", false, false)
-         .copy("a.jar", "../a.jar")
-         .copy("b.class", "/b.class")
-         .up());
-  }
-
-  public void testJarDirToWarAndEar() throws Exception {
-    doTest(true, true, false, start()
-      .inner("w.war", true, true)
-        .jar("dir", "/a.jar", "a.jsp")
-        .up()
-    );
-  }
-
-  public void testCopyExternalDepsToEar() throws Exception {
-    doTest(true, true, false, start()
-      .inner("w.war", false, false)
-        .copy("a.jsp", "/a.jsp")
-        .copy("b.jar", "../b.jar")
-        .up());
-  }
-
-  public void testJarExternalDepsToEar() throws Exception {
-    doTest(true, true, false, start()
-      .inner("w.war", false, false)
-        .copy("a.jsp", "/a.jsp")
-        .jar("dir", "../d.jar", "b.jsp", "c.jsp")
-        .up());
-  }
-
   private File getExpectedFile(final String expectedFileName) {
     return new File(PathManagerEx.getTestDataPath(), "compiler" + File.separator + "packaging" +
                                                      File.separator + expectedFileName);
   }
 
-  private void doTest(BuildRecipeInfo info) throws IOException {
-    doTest(new MockBuildConfiguration(true, true, "/outExp/exploded", "/outJar/my.jar"), info);
-  }
-
-  private void doTest(final boolean explodedEnabled, final boolean jarEnabled, final boolean buildExternalDependencies,
-                      BuildRecipeInfo info) throws IOException {
+  private void doTest(final boolean explodedEnabled, final boolean jarEnabled, BuildRecipeInfo info) throws IOException {
     doTest(new MockBuildConfiguration(explodedEnabled, jarEnabled), info);
   }
   private void doTest(final MockBuildConfiguration mockBuildConfiguration, BuildRecipeInfo info) throws IOException {
@@ -183,10 +91,6 @@ public class ProcessingItemsBuilderTest extends IncrementalPackagingTestCase {
       builder.append("\n");
       JarInfo jarInfo = pair.getFirst();
       builder.append("jar#").append(jar2Num.get(jarInfo));
-      List<String> classpath = jarInfo.getClasspath();
-      if (classpath != null && !classpath.isEmpty()) {
-        builder.append(", classpath=").append(classpath);
-      }
       builder.append("\n");
 
       builder.append(pair.getSecond()).append("->").append("\n");

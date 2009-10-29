@@ -47,12 +47,6 @@ public abstract class IncrementalPackagingTestCase extends LiteFixture {
     final OldProcessingItemsBuilderContext context = new OldProcessingItemsBuilderContext(compileContext);
     new ProcessingItemsBuilder(participant, context).build();
     buildRecipe.visitInstructions(new BuildInstructionVisitor() {
-      public boolean visitCompoundBuildInstruction(final CompoundBuildInstruction instruction) throws Exception {
-        final BuildParticipant buildParticipant = new MockBuildParticipant(instruction.getBuildProperties(),
-                                                                           instruction.getChildInstructions(compileContext));
-        new ProcessingItemsBuilder(buildParticipant, context).build();
-        return true;
-      }
     }, false);
     return context.getProcessingItems();
   }
@@ -217,15 +211,6 @@ public abstract class IncrementalPackagingTestCase extends LiteFixture {
 
     protected ProcessingItemsBuilderTest.BuildRecipeInfo copy(String sourceFile, final String outputRelativePath) {
       return add(new FileCopyInstructionImpl(new File(PROJECT_DIR + sourceFile), false, null, outputRelativePath, null));
-    }
-
-    protected ProcessingItemsBuilderTest.BuildRecipeInfo inner(String relativeOutput, boolean explodedEnabled, boolean jarEnabled) {
-      final ProcessingItemsBuilderTest.BuildRecipeInfo inner = new ProcessingItemsBuilderTest.BuildRecipeInfo(this);
-      final MockBuildConfiguration configuration = new MockBuildConfiguration(explodedEnabled, jarEnabled, "/out" + myCount + "/exploded", "/out" + myCount + "/my.jar");
-      myCount++;
-      final MockBuildParticipant participant = new MockBuildParticipant(configuration, inner.myBuildRecipe);
-      add(new CompoundBuildInstructionImpl(participant, relativeOutput));
-      return inner;
     }
 
     protected ProcessingItemsBuilderTest.BuildRecipeInfo up() {

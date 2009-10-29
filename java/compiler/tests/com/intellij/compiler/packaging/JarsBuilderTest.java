@@ -37,32 +37,6 @@ public class JarsBuilderTest extends IncrementalPackagingTestCase {
              .jar("dir", "/a.jar", "x.class"));
   }
 
-  public void testWarAndEar() throws Exception {
-    doTest(true, true, false, start()
-      .copy("lib/b.jar", "/b.jar")
-      .inner("w.war", true, true)
-        .jar("dir", "/a.jar", "a.jsp")
-        .up()
-    );
-  }
-
-  public void testCopyExternalDepsToEar() throws Exception {
-    doTest(false, true, false, start()
-      .inner("w.war", false, false)
-        .copy("a.jsp", "/a.jsp")
-        .copy("b.jar", "../b.jar")
-        .up()
-      .copy("lib/c.jar", "/c.jar"));
-  }
-
-  public void testJarExternalDepsToEar() throws Exception {
-    doTest(true, true, false, start()
-      .inner("w.war", false, false)
-        .jar("dir", "../d.jar", "b.jsp", "c.jsp")
-        .up()
-      .copy("lib/e.jar", "/e.jar"));
-  }
-
   private void doTest(final boolean explodedEnabled, final boolean jarEnabled, final boolean buildExternalDependencies,
                       final BuildRecipeInfo info) throws Exception {
     final MockBuildConfiguration configuration = new MockBuildConfiguration(explodedEnabled, jarEnabled);
