@@ -427,9 +427,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
 
     SMRunnerUtil.runInEventDispatchThread(new Runnable() {
       public void run() {
-        //TODO remove manual update!
-        myTreeBuilder.performUpdate();
-
         myTreeBuilder.select(testProxy, null);
       }
     }, ModalityState.NON_MODAL);
