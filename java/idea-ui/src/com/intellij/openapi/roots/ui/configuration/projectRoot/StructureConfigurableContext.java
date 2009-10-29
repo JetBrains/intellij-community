@@ -59,7 +59,6 @@ public class StructureConfigurableContext implements Disposable {
   }
 
   public void dispose() {
-    clear();
   }
 
   public ModulesConfigurator getModulesConfigurator() {
@@ -78,7 +77,8 @@ public class StructureConfigurableContext implements Disposable {
 
   public void resetLibraries() {
     final LibraryTablesRegistrar tablesRegistrar = LibraryTablesRegistrar.getInstance();
-    clear();
+
+    myLevel2Providers.clear();
     myLevel2Providers.put(LibraryTablesRegistrar.APPLICATION_LEVEL, new LibrariesModifiableModel(tablesRegistrar.getLibraryTable(), myProject));
     myLevel2Providers.put(LibraryTablesRegistrar.PROJECT_LEVEL, new LibrariesModifiableModel(tablesRegistrar.getLibraryTable(myProject), myProject));
     for (final LibraryTable table : tablesRegistrar.getCustomLibraryTables()) {
@@ -154,9 +154,6 @@ public class StructureConfigurableContext implements Disposable {
   }
 
   public void clear() {
-    for (LibrariesModifiableModel model : myLevel2Providers.values()) {
-      model.disposeUncommittedLibraries();
-    }
     myLevel2Providers.clear();
   }
 }

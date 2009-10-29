@@ -155,8 +155,7 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
       public void run() {
         ApplicationManager.getApplication().runReadAction(new Runnable(){
           public void run() {
-            final Graph<ModifiableRootModel> originalGraph = myModulesConfigurator.createGraphGenerator();
-            final Graph<Chunk<ModifiableRootModel>> graph = ModuleCompilerUtil.toChunkGraph(originalGraph);
+            final Graph<Chunk<ModifiableRootModel>> graph = ModuleCompilerUtil.toChunkGraph(myModulesConfigurator.createGraphGenerator());
             final Collection<Chunk<ModifiableRootModel>> chunks = graph.getNodes();
             String cycles = "";
             int count = 0;
@@ -183,9 +182,6 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
                 myWarningLabel.repaint();}
               }
             );
-            for (ModifiableRootModel model : originalGraph.getNodes()) {
-              model.dispose();
-            }
           }
         });
       }
