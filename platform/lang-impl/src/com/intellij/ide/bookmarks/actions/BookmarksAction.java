@@ -657,8 +657,8 @@ public class BookmarksAction extends AnAction implements DumbAware {
                              return true;
                            }
                          });
-      
-      b.setDescription(description);
+
+      BookmarkManager.getInstance(myProject).setDescription(b, description);
 
       myPopup.setUiVisible(true);
       myPopup.setSize(myPopup.getContent().getPreferredSize());

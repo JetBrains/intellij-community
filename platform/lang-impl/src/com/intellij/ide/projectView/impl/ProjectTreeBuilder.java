@@ -145,6 +145,10 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
       updateForFile(b.getFile());
     }
 
+    public void bookmarkChanged(Bookmark b) {
+      updateForFile(b.getFile());
+    }
+
     private void updateForFile(VirtualFile file) {
       PsiElement element = findPsi(file);
       if (element != null) {

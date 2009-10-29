@@ -51,7 +51,7 @@ public class ToggleBookmarkWithMnemonicAction extends ToggleBookmarkAction {
         @Override
         protected void onMnemonicChosen(char c) {
           popup[0].cancel();
-          bookmarks.setMnemonic(c, bookmark);
+          bookmarks.setMnemonic(bookmark, c);
         }
 
         @Override

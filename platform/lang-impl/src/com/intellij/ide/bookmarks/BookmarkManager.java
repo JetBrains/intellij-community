@@ -213,7 +213,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
         }
 
         if (b != null && mnemonic != null && mnemonic.length() == 1) {
-          setMnemonic(mnemonic.charAt(0), b);
+          setMnemonic(b, mnemonic.charAt(0));
         }
       }
     }
@@ -317,11 +317,17 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
     return bookmarks;
   }
 
-  public void setMnemonic(char c, Bookmark bookmark) {
+  public void setMnemonic(Bookmark bookmark, char c) {
     final Bookmark old = findBookmarkForMnemonic(c);
     if (old != null) removeBookmark(old);
 
     bookmark.setMnemonic(c);
+    myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(bookmark);
+  }
+
+  public void setDescription(Bookmark bookmark, String description) {
+    bookmark.setDescription(description);
+    myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(bookmark);
   }
 
 
