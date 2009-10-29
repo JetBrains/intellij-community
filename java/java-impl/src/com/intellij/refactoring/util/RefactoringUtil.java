@@ -1115,7 +1115,7 @@ public class RefactoringUtil {
     final Set<PsiTypeParameter> used = new HashSet<PsiTypeParameter>();
     for (final PsiElement element : elements) {
       if (element == null) continue;
-      element.accept(new JavaRecursiveElementWalkingVisitor() {
+      element.accept(new JavaRecursiveElementVisitor() {  //pull up extends cls class with type params
 
         @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
           super.visitReferenceElement(reference);
