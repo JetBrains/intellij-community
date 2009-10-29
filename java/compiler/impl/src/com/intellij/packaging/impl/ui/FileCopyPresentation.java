@@ -19,7 +19,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.packaging.impl.elements.PackagingElementFactoryImpl;
+import com.intellij.packaging.impl.elements.FileCopyElementType;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.packaging.ui.PackagingElementWeights;
@@ -65,12 +65,12 @@ public class FileCopyPresentation extends PackagingElementPresentation {
 
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
     if (myFile != null && !myFile.isDirectory() || myContext.isManifestFile(mySourcePath)) {
-      presentationData.setIcons(myFile != null ? myFile.getIcon() : PackagingElementFactoryImpl.FileCopyElementType.ICON);
+      presentationData.setIcons(myFile != null ? myFile.getIcon() : FileCopyElementType.ICON);
       presentationData.addText(myOutputFileName, mainAttributes);
       presentationData.addText(" (" + mySourcePath + ")", commentAttributes);
     }
     else {
-      presentationData.setIcons(PackagingElementFactoryImpl.FileCopyElementType.ICON);
+      presentationData.setIcons(FileCopyElementType.ICON);
       presentationData.addText(myOutputFileName, SimpleTextAttributes.ERROR_ATTRIBUTES);
       final VirtualFile parentFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(mySourcePath));
       presentationData.addText("(" + mySourcePath + ")",
