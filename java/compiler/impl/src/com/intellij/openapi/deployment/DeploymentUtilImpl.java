@@ -29,7 +29,6 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -48,8 +47,6 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.util.*;
 import java.util.jar.Attributes;
-import java.util.jar.JarFile;
-import java.util.jar.Manifest;
 
 /**
  * @author Alexey Kudravtsev
@@ -285,18 +282,6 @@ public class DeploymentUtilImpl extends DeploymentUtil {
     return relativePath;
   }
 
-  public @Nullable File findUserSuppliedManifestFile(@NotNull BuildRecipe buildRecipe) {
-    final Ref<File> ref = Ref.create(null);
-    buildRecipe.visitInstructions(new BuildInstructionVisitor() {
-      public boolean visitInstruction(BuildInstruction instruction) throws Exception {
-        final File file = instruction.findFileByRelativePath(JarFile.MANIFEST_NAME);
-        ref.set(file);
-        return file == null;
-      }
-    }, false);
-    return ref.get();
-  }
-
   public void checkConfigFile(final ConfigFile descriptor, final CompileContext compileContext, final Module module) {
     if (new File(VfsUtil.urlToPath(descriptor.getUrl())).exists()) {
       String message = getConfigFileErrorMessage(descriptor);
@@ -310,17 +295,6 @@ public class DeploymentUtilImpl extends DeploymentUtil {
     else {
       DeploymentUtil.getInstance().reportDeploymentDescriptorDoesNotExists(descriptor, compileContext, module);
     }
-  }
-
-  public @Nullable Manifest createManifest(@NotNull BuildRecipe buildRecipe) {
-    if (findUserSuppliedManifestFile(buildRecipe) != null) {
-      return null;
-    }
-
-    final List<String> classpathElements = getExternalDependenciesClasspath(buildRecipe);
-    final Manifest manifest = new Manifest();
-    setManifestAttributes(manifest.getMainAttributes(), classpathElements);
-    return manifest;
   }
 
   public static void setManifestAttributes(final Attributes mainAttributes, final @Nullable List<String> classpathElements) {

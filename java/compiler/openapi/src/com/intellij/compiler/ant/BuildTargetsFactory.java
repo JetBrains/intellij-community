@@ -37,8 +37,6 @@ public abstract class BuildTargetsFactory {
 
   public abstract Target createBuildExplodedTarget(ExplodedAndJarTargetParameters parameters, BuildRecipe buildRecipe, String description);
 
-  public abstract Target createBuildJarTarget(ExplodedAndJarTargetParameters parameters, BuildRecipe buildRecipe, String description);
-
   public abstract Generator createComment(String comment);
 
   //for test

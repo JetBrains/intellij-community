@@ -21,7 +21,6 @@
 package com.intellij.compiler.ant;
 
 import com.intellij.compiler.ant.j2ee.BuildExplodedTarget;
-import com.intellij.compiler.ant.j2ee.BuildJarTarget;
 import com.intellij.compiler.ant.j2ee.CompositeBuildTarget;
 import com.intellij.compiler.ant.taskdefs.Target;
 import com.intellij.openapi.compiler.make.BuildRecipe;
@@ -40,10 +39,6 @@ public class BuildTargetsFactoryImpl extends BuildTargetsFactory {
 
   public Target createBuildExplodedTarget(final ExplodedAndJarTargetParameters parameters, final BuildRecipe buildRecipe, final String description) {
     return new BuildExplodedTarget(parameters, buildRecipe, description);
-  }
-
-  public Target createBuildJarTarget(final ExplodedAndJarTargetParameters parameters, final BuildRecipe buildRecipe, final String description) {
-    return new BuildJarTarget(parameters, buildRecipe, description);
   }
 
 

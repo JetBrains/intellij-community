@@ -15,21 +15,8 @@
  */
 package com.intellij.openapi.compiler.make;
 
-import com.intellij.openapi.compiler.CompileContext;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
 
 public interface JarAndCopyBuildInstruction extends FileCopyInstruction {
-  @Deprecated
-  void makeJar(@NotNull CompileContext context,
-               @NotNull File jarFile,
-               @Nullable FileFilter fileFilter) throws IOException;
-  File getJarFile();
 
-  @Deprecated
-  void deleteTemporaryJars();
 }
