@@ -50,7 +50,6 @@ public class ContentComboLabel extends BaseLabel {
   public ContentComboLabel(ComboContentLayout layout) {
     super(layout.myUi, true);
     myLayout = layout;
-
     addMouseListener(new MouseAdapter(){});
   }
 
@@ -64,6 +63,8 @@ public class ContentComboLabel extends BaseLabel {
   }
 
   private void showPopup() {
+    if (!isToDrawCombo()) return;
+
     final ContentManager manager = myUi.myManager;
     BaseListPopupStep step = new BaseListPopupStep<Content>(null, manager.getContents()) {
       @Override
@@ -150,6 +151,12 @@ public class ContentComboLabel extends BaseLabel {
     super.paintChildren(g);
     if (isToDrawCombo()) {
       myComboIcon.paintIcon(this, g);
+      g.setColor(new Color(255, 255, 255, 100));
+      int x = myComboIcon.getIconRec().x - 3;
+      int yTop = myComboIcon.getIconRec().y;
+      int yBottom = yTop + myComboIcon.getIconHeight();
+      g.drawLine(x, yTop + 1, x, yBottom - 3);
+
     }
   }
 
