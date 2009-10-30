@@ -93,7 +93,9 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
   }
 
   private static boolean isOnDemand(PsiElement fileContext, PsiClass psiClass) {
-    if (fileContext instanceof PsiImportStatementBase && ((PsiImportStatementBase)fileContext).isOnDemand()) return true;
+    if (fileContext instanceof PsiImportStatementBase) {
+      return ((PsiImportStatementBase)fileContext).isOnDemand();
+    }
     String fqn = psiClass.getQualifiedName();
     if (fqn == null) return false;
     return "java.lang".equals(StringUtil.getPackageName(fqn));
