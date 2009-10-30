@@ -70,7 +70,6 @@ public class CoverageEnabledConfiguration implements JDOMExternalizable{
   private CoverageRunner myCoverageRunner;
   private boolean mySampling = false;
   private boolean myTrackTestFolders = false;
-  private final String myName;
   private final Project myProject;
   private CoverageSuite myCurrentCoverageSuite;
   private final ModuleBasedConfiguration myConfiguration;
@@ -78,7 +77,6 @@ public class CoverageEnabledConfiguration implements JDOMExternalizable{
 
   public CoverageEnabledConfiguration(ModuleBasedConfiguration configuration) {
     myConfiguration = configuration;
-    myName = configuration.getName();
     myProject = configuration.getProject();
   }
 
@@ -230,7 +228,7 @@ public class CoverageEnabledConfiguration implements JDOMExternalizable{
     if (myCoverageFilePath == null || !isMergeWithPreviousResults()) {
       @NonNls final String coverageRootPath = PathManager.getSystemPath() + File.separator + "coverage";
       myCoverageFilePath =
-          coverageRootPath + File.separator + myProject.getName() + '$' + FileUtil.sanitizeFileName(myName) + "." +
+          coverageRootPath + File.separator + myProject.getName() + '$' + FileUtil.sanitizeFileName(myConfiguration.getName()) + "." +
           (myCoverageRunner != null ? myCoverageRunner.getDataFileExtension() : CoverageRunner.getInstance(IDEACoverageRunner.class).getDataFileExtension());
       new File(coverageRootPath).mkdirs();
     }
@@ -278,7 +276,7 @@ public class CoverageEnabledConfiguration implements JDOMExternalizable{
   }
 
   public String getName() {
-    return myName;
+    return myConfiguration.getName();
   }
 
   @NotNull

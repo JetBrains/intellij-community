@@ -25,17 +25,19 @@ import javax.swing.*;
 
 public class CoverageRunConfigurationExtension extends RunConfigurationExtension {
   public void handleStartProcess(final ModuleBasedConfiguration configuration, OSProcessHandler handler) {
-    handler.addProcessListener(new ProcessAdapter() {
-      public void processTerminated(final ProcessEvent event) {
-        final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(configuration.getProject());
-        final CoverageEnabledConfiguration coverageEnabledConfiguration = CoverageEnabledConfiguration.get(configuration);
-        final CoverageSuite coverageSuite = coverageEnabledConfiguration.getCurrentCoverageSuite();
-        if (coverageSuite != null) {
-          coverageDataManager.coverageGathered(coverageSuite);
+    final CoverageEnabledConfiguration coverageEnabledConfiguration = CoverageEnabledConfiguration.get(configuration);
+    if (coverageEnabledConfiguration.isCoverageEnabled()) {
+      handler.addProcessListener(new ProcessAdapter() {
+        public void processTerminated(final ProcessEvent event) {
+          final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(configuration.getProject());
+          final CoverageEnabledConfiguration coverageEnabledConfiguration = CoverageEnabledConfiguration.get(configuration);
+          final CoverageSuite coverageSuite = coverageEnabledConfiguration.getCurrentCoverageSuite();
+          if (coverageSuite != null) {
+            coverageDataManager.coverageGathered(coverageSuite);
+          }
         }
-      }
-    });
-
+      });
+    }
   }
 
   public <T extends ModuleBasedConfiguration & RunJavaConfiguration> SettingsEditor createEditor(T configuration) {
@@ -62,6 +64,7 @@ public class CoverageRunConfigurationExtension extends RunConfigurationExtension
 
   public <T extends ModuleBasedConfiguration & RunJavaConfiguration> void updateJavaParameters(T configuration, JavaParameters params, RunnerSettings runnerSettings) {
     final CoverageEnabledConfiguration coverageEnabledConfiguration = CoverageEnabledConfiguration.get(configuration);
+    coverageEnabledConfiguration.setCurrentCoverageSuite(null);
     if ((!(runnerSettings.getData() instanceof DebuggingRunnerData) ||
          coverageEnabledConfiguration.getCoverageRunner() instanceof IDEACoverageRunner) &&
         coverageEnabledConfiguration.isCoverageEnabled()) {
