@@ -535,7 +535,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       }
       myProcessorPath = pathBuilder.toString();
 
-      myProcessorPath = annotationProcessingSettings.getAttributeValue("processorPath", "");
       myProcessorsMap.clear();
       for (Element processorChild : ((Collection<Element>)annotationProcessingSettings.getChildren("processor"))) {
         final String name = processorChild.getAttributeValue("name");

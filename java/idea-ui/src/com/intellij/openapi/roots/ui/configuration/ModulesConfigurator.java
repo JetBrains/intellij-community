@@ -151,11 +151,11 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     final ModuleEditor editor = getModuleEditor(module);
     ModuleRootModel rootModel = null;
     if (editor != null) {
-      rootModel = editor.getModifiableRootModel();
+      rootModel = editor.getRootModel();
     }
     if (rootModel == null && getModule(module.getName()) != null) {
       createModuleEditor(module);
-      rootModel = getModuleEditor(module).getModifiableRootModel();
+      rootModel = getModuleEditor(module).getRootModel();
     }
 
     return rootModel;

@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Comparing;
@@ -40,30 +39,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class LibraryLinkImpl extends LibraryLink {
-  private static final Map<PackagingMethod, String> methodToDescriptionForDirs = new HashMap<PackagingMethod, String>();
-  private static final Map<PackagingMethod, String> methodToDescriptionForFiles = new HashMap<PackagingMethod, String>();
   @NonNls public static final String LEVEL_ATTRIBUTE_NAME = "level";
   @NonNls public static final String URL_ELEMENT_NAME = "url";
   @NonNls private static final String TEMP_ELEMENT_NAME = "temp";
   @NonNls public static final String NAME_ATTRIBUTE_NAME = "name";
 
   @NonNls private static final String JAR_SUFFIX = ".jar";
-
-  static {
-    methodToDescriptionForDirs.put(PackagingMethod.DO_NOT_PACKAGE, CompilerBundle.message("packaging.method.description.do.not.package"));
-    methodToDescriptionForDirs.put(PackagingMethod.COPY_FILES, CompilerBundle.message("packaging.method.description.copy.directories"));
-    methodToDescriptionForDirs.put(PackagingMethod.JAR_AND_COPY_FILE, CompilerBundle.message("packaging.method.description.jar.and.copy.file"));
-    methodToDescriptionForDirs.put(PackagingMethod.JAR_AND_COPY_FILE_AND_LINK_VIA_MANIFEST, CompilerBundle.message("packaging.method.description.jar.and.copy.file.and.link.via.manifest"));
-
-    methodToDescriptionForFiles.put(PackagingMethod.DO_NOT_PACKAGE, CompilerBundle.message("packaging.method.description.do.not.package"));
-    methodToDescriptionForFiles.put(PackagingMethod.COPY_FILES, CompilerBundle.message("packaging.method.description.copy.files"));
-    methodToDescriptionForFiles.put(PackagingMethod.COPY_FILES_AND_LINK_VIA_MANIFEST, CompilerBundle.message("packaging.method.description.copy.files.and.link.via.manifest"));
-  }
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.deployment.LibraryLink");
   private LibraryInfo myLibraryInfo;
@@ -135,26 +119,6 @@ public class LibraryLinkImpl extends LibraryLink {
     final String path = PathUtil.toPresentableUrl(url);
 
     return FileUtil.toSystemDependentName(path);
-  }
-
-  public String getDescription() {
-    String levelName = myLibraryInfo.getLevel();
-    if (levelName.equals(MODULE_LEVEL)) {
-      return CompilerBundle.message("library.link.description.module.library");
-    }
-    final LibraryTable table = findTable(levelName, myProject);
-    return table == null ? "???" : table.getPresentation().getDisplayName(false);
-  }
-
-  public String getDescriptionForPackagingMethod(PackagingMethod method) {
-    if (hasDirectoriesOnly()) {
-      final String text = methodToDescriptionForDirs.get(method);
-      return text != null ? text : methodToDescriptionForFiles.get(method);
-    }
-    else {
-      final String text = methodToDescriptionForFiles.get(method);
-      return text != null ? text : methodToDescriptionForDirs.get(method);
-    }
   }
 
   public List<String> getUrls() {

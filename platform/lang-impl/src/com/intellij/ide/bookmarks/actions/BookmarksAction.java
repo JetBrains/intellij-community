@@ -52,6 +52,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -106,35 +107,6 @@ public class BookmarksAction extends AnAction implements DumbAware {
     pathLabel.setFont(font.deriveFont((float)10));
 
     final JList list = new JList(model);
-    list.addKeyListener(new KeyAdapter() {
-      public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_DELETE) {
-          int index = list.getSelectedIndex();
-          if (index == -1 || index >= list.getModel().getSize()) {
-            return;
-          }
-          Object[] values = list.getSelectedValues();
-          for (Object value : values) {
-            if (value instanceof BookmarkItem) {
-              BookmarkItem item = (BookmarkItem)value;
-              model.removeElement(item);
-              if (model.getSize() > 0) {
-                if (model.getSize() == index) {
-                  list.setSelectedIndex(model.getSize() - 1);
-                }
-                else if (model.getSize() > index) {
-                  list.setSelectedIndex(index);
-                }
-              }
-              else {
-                list.clearSelection();
-              }
-              BookmarkManager.getInstance(project).removeBookmark(item.myBookmark);
-            }
-          }
-        }
-      }
-    });
 
     final PreviewPanel previewPanel = new PreviewPanel(project);
 
@@ -236,7 +208,7 @@ public class BookmarksAction extends AnAction implements DumbAware {
     final JComponent toolBar = actionToolbar.getComponent();
     toolBar.setOpaque(false);
 
-    JBPopup popup = new PopupChooserBuilder(list).
+    final JBPopup popup = new PopupChooserBuilder(list).
       setTitle("Bookmarks").
       setMovable(true).
       setAutoselectOnMouseMove(false).
@@ -249,6 +221,48 @@ public class BookmarksAction extends AnAction implements DumbAware {
           return ((ItemWrapper)o).speedSearchText();
         }
       }).createPopup();
+
+    list.addKeyListener(new KeyAdapter() {
+      public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_DELETE) {
+          int index = list.getSelectedIndex();
+          if (index == -1 || index >= list.getModel().getSize()) {
+            return;
+          }
+          Object[] values = list.getSelectedValues();
+          for (Object value : values) {
+            if (value instanceof BookmarkItem) {
+              BookmarkItem item = (BookmarkItem)value;
+              model.removeElement(item);
+              if (model.getSize() > 0) {
+                if (model.getSize() == index) {
+                  list.setSelectedIndex(model.getSize() - 1);
+                }
+                else if (model.getSize() > index) {
+                  list.setSelectedIndex(index);
+                }
+              }
+              else {
+                list.clearSelection();
+              }
+              BookmarkManager.getInstance(project).removeBookmark(item.myBookmark);
+            }
+          }
+        }
+        else if (e.getModifiersEx() == 0) {
+          char mnemonic = e.getKeyChar();
+          final Bookmark bookmark = BookmarkManager.getInstance(project).findBookmarkForMnemonic(mnemonic);
+          if (bookmark != null) {
+            popup.cancel();
+            IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(new Runnable() {
+              public void run() {
+                bookmark.navigate();
+              }
+            });
+          }
+        }
+      }
+    });
 
     editDescriptionAction.setPopup(popup);
     popup.showCenteredInCurrentWindow(project);
@@ -270,6 +284,7 @@ public class BookmarksAction extends AnAction implements DumbAware {
 
   private interface ItemWrapper {
     void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected);
+    void updateMnemonicLabel(JLabel label);
 
     void execute(Project project);
 
@@ -292,6 +307,10 @@ public class BookmarksAction extends AnAction implements DumbAware {
 
     public void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected) {
       renderer.append(speedSearchText());
+    }
+
+    public void updateMnemonicLabel(JLabel label) {
+      label.setText("");
     }
 
     public String speedSearchText() {
@@ -325,6 +344,10 @@ public class BookmarksAction extends AnAction implements DumbAware {
 
     public void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected) {
       renderer.append(speedSearchText());
+    }
+
+    public void updateMnemonicLabel(JLabel label) {
+      label.setText("");
     }
 
     public String speedSearchText() {
@@ -366,6 +389,7 @@ public class BookmarksAction extends AnAction implements DumbAware {
         renderer.setIcon(fileOrDir.getIcon(Iconable.ICON_FLAG_CLOSED));
       }
 
+
       FileStatus fileStatus = FileStatusManager.getInstance(project).getStatus(file);
       TextAttributes attributes = new TextAttributes(fileStatus.getColor(), null, null, EffectType.LINE_UNDERSCORE, Font.PLAIN);
       renderer.append(file.getName(), SimpleTextAttributes.fromTextAttributes(attributes));
@@ -392,6 +416,16 @@ public class BookmarksAction extends AnAction implements DumbAware {
       String description = myBookmark.getDescription();
       if (description != null) {
         renderer.append(" " + description, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      }
+    }
+
+    public void updateMnemonicLabel(JLabel label) {
+      final char mnemonic = myBookmark.getMnemonic();
+      if (mnemonic != 0) {
+        label.setText(Character.toString(mnemonic) + '.');
+      }
+      else {
+        label.setText("");
       }
     }
 
@@ -443,18 +477,42 @@ public class BookmarksAction extends AnAction implements DumbAware {
     }
   }
 
-  private static class ItemRenderer extends ColoredListCellRenderer {
+  private static class ItemRenderer extends JPanel implements ListCellRenderer {
     private final Project myProject;
+    private ColoredListCellRenderer myRenderer;
 
     private ItemRenderer(Project project) {
+      super(new BorderLayout());
       myProject = project;
+
+      setBackground(UIUtil.getListBackground());
+
+      final JLabel label = new JLabel();
+      label.setFont(Bookmark.MNEMONIC_FONT);
+
+      label.setPreferredSize(new JLabel("W.").getPreferredSize());
+      label.setOpaque(false);
+
+      if (BookmarkManager.getInstance(project).hasBookmarksWithMnemonics()) {
+        add(label, BorderLayout.WEST);
+      }
+
+      myRenderer = new ColoredListCellRenderer() {
+        @Override
+        protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+          if (value instanceof ItemWrapper) {
+            final ItemWrapper wrapper = (ItemWrapper)value;
+            wrapper.setupRenderer(this, myProject, selected);
+            wrapper.updateMnemonicLabel(label);
+          }
+        }
+      };
+      add(myRenderer, BorderLayout.CENTER);
     }
 
-    @Override
-    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-      if (value instanceof ItemWrapper) {
-        ((ItemWrapper)value).setupRenderer(this, myProject, selected);
-      }
+    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+      myRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      return this;
     }
   }
 
@@ -599,8 +657,8 @@ public class BookmarksAction extends AnAction implements DumbAware {
                              return true;
                            }
                          });
-      
-      b.setDescription(description);
+
+      BookmarkManager.getInstance(myProject).setDescription(b, description);
 
       myPopup.setUiVisible(true);
       myPopup.setSize(myPopup.getContent().getPreferredSize());

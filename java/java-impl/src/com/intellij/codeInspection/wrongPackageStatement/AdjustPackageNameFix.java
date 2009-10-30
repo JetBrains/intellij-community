@@ -68,12 +68,11 @@ public class AdjustPackageNameFix implements LocalQuickFix {
         }
       }
       else {
+        final PsiPackageStatement packageStatement = factory.createPackageStatement(myTargetPackage.getQualifiedName());
         if (myStatement != null) {
-          PsiJavaCodeReferenceElement packageReferenceElement = factory.createPackageReferenceElement(myTargetPackage);
-          myStatement.getPackageReference().replace(packageReferenceElement);
+          myStatement.getPackageReference().replace(packageStatement.getPackageReference());
         }
         else {
-          PsiPackageStatement packageStatement = factory.createPackageStatement(myTargetPackage.getQualifiedName());
           myFile.addAfter(packageStatement, null);
         }
       }

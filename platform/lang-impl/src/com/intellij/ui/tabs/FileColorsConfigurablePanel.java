@@ -53,29 +53,11 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     myEnabledCheckBox.setMnemonic('F');
     topPanel.add(myEnabledCheckBox);
 
-    myTabsEnabledCheckBox = new JCheckBox("Enable Colors in Editor Tabs");
+    myTabsEnabledCheckBox = new JCheckBox("Use colors in Editor Tabs");
     myTabsEnabledCheckBox.setMnemonic('T');
     topPanel.add(myTabsEnabledCheckBox);
     topPanel.add(Box.createHorizontalGlue());
 
-    final JButton addButton = new JButton("Add...");
-    addButton.setMnemonic('A');
-    addButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        final FileColorConfigurationEditDialog dialog = new FileColorConfigurationEditDialog(myManager, null);
-        dialog.show();
-
-        if (dialog.getExitCode() == 0) {
-          if (dialog.isShared()) {
-            mySharedTable.addConfiguration(dialog.getConfiguration());
-          } else {
-            myLocalTable.addConfiguration(dialog.getConfiguration());
-          }
-        }
-      }
-    });
-
-    topPanel.add(addButton);
     add(topPanel, BorderLayout.NORTH);
 
     final JPanel mainPanel = new JPanel(new GridLayout(2, 1));
@@ -102,7 +84,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     //localPanel.add(new JLabel("Local colors:"), BorderLayout.NORTH);
     localPanel.add(StripeTable.createScrollPane(myLocalTable), BorderLayout.CENTER);
     localPanel.add(Box.createVerticalStrut(10), BorderLayout.SOUTH);
-    localPanel.add(buildButtons(myLocalTable, "Share", new ActionListener() {
+    localPanel.add(buildButtons(manager, myLocalTable, "Share", new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         share();
       }
@@ -128,7 +110,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     sharedPanel.setBorder(BorderFactory.createTitledBorder("Shared colors:"));
     //sharedPanel.add(new JLabel("Shared colors:"), BorderLayout.NORTH);
     sharedPanel.add(StripeTable.createScrollPane(mySharedTable), BorderLayout.CENTER);
-    sharedPanel.add(buildButtons(mySharedTable, "Unshare", new ActionListener() {
+    sharedPanel.add(buildButtons(manager, mySharedTable, "Unshare", new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         unshare();
       }
@@ -149,6 +131,23 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     });
     warningPanel.add(editScopes, BorderLayout.EAST);
     add(warningPanel, BorderLayout.SOUTH);
+  }
+
+  private static JButton createAddButton(final FileColorSettingsTable table, final FileColorManagerImpl manager) {
+    final JButton addButton = new JButton("Add...");
+    addButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, addButton.getMaximumSize().height));
+    addButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        final FileColorConfigurationEditDialog dialog = new FileColorConfigurationEditDialog(manager, null);
+        dialog.show();
+
+        if (dialog.getExitCode() == 0) {
+          table.addConfiguration(dialog.getConfiguration());
+        }
+      }
+    });
+
+    return addButton;
   }
 
   private void unshare() {
@@ -177,9 +176,14 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     }
   }
 
-  private static Component buildButtons(final FileColorSettingsTable table, final String shareButtonText, final ActionListener shareButtonListener) {
+  private static Component buildButtons(final FileColorManagerImpl manager,
+                                        final FileColorSettingsTable table,
+                                        final String shareButtonText,
+                                        final ActionListener shareButtonListener) {
     final JPanel result = new JPanel();
     result.setLayout(new BoxLayout(result, BoxLayout.Y_AXIS));
+
+    result.add(createAddButton(table, manager));
 
     final JButton removeButton = new JButton("Remove");
     result.add(removeButton);

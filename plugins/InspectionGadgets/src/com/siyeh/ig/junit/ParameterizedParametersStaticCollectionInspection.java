@@ -37,15 +37,14 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 public class ParameterizedParametersStaticCollectionInspection extends BaseInspection{
-  private static final String PARAMETERS_FQN = Parameterized.Parameters.class.getName().replace('$', '.');
+  private static final String PARAMETERS_FQN = "org.junit.runners.Parameterized.Parameters";
+  private static final String PARAMETERIZED_FQN = "org.junit.runners.Parameterized";
 
   @NotNull
   protected String buildErrorString(Object... infos) {
@@ -58,13 +57,13 @@ public class ParameterizedParametersStaticCollectionInspection extends BaseInspe
     return new BaseInspectionVisitor() {
       @Override
       public void visitClass(PsiClass aClass) {
-        final PsiAnnotation annotation = AnnotationUtil.findAnnotation(aClass, RunWith.class.getName());
+        final PsiAnnotation annotation = AnnotationUtil.findAnnotation(aClass, "org.junit.runner.RunWith");
         if (annotation != null) {
           for (PsiNameValuePair pair : annotation.getParameterList().getAttributes()) {
             final PsiAnnotationMemberValue value = pair.getValue();
             if (value instanceof PsiClassObjectAccessExpression) {
               final PsiTypeElement typeElement = ((PsiClassObjectAccessExpression)value).getOperand();
-              if (typeElement.getType().getCanonicalText().equals(Parameterized.class.getName())) {
+              if (typeElement.getType().getCanonicalText().equals(PARAMETERIZED_FQN)) {
                 List<MethodCandidate> candidates = new ArrayList<MethodCandidate>();
                 for (PsiMethod method : aClass.getMethods()) {
                   PsiType returnType = method.getReturnType();

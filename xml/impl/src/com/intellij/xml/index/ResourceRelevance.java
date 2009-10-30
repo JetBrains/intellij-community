@@ -30,11 +30,11 @@ import java.util.List;
  */
 public enum ResourceRelevance {
 
-  MAPPED,
-  SOURCE,
-  LIBRARY,
+  NONE,
   STANDARD,
-  NONE;
+  LIBRARY,
+  SOURCE,
+  MAPPED;
 
   public static ResourceRelevance getRelevance(VirtualFile file, Module module, ProjectFileIndex fileIndex) {
     Module moduleForFile = fileIndex.getModuleForFile(file);

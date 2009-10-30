@@ -76,15 +76,23 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   public final void select(final Object element) {
-    select(element, null);
+    getUi().userSelect(new Object[] {element}, null, false, true);
   }
 
   public final void select(final Object element, @Nullable final Runnable onDone) {
-    getUi().select(element, onDone);
+    getUi().userSelect(new Object[] {element}, onDone, false, true);
   }
 
   public final void select(final Object element, @Nullable final Runnable onDone, boolean addToSelection) {
-    getUi().select(element, onDone, addToSelection);
+    getUi().userSelect(new Object[] {element}, onDone, addToSelection, true);
+  }
+
+  public final void select(final Object[] elements, @Nullable final Runnable onDone) {
+    getUi().userSelect(elements, onDone, false, true);
+  }
+
+  public final void select(final Object[] elements, @Nullable final Runnable onDone, boolean addToSelection) {
+    getUi().userSelect(elements, onDone, addToSelection, true);
   }
 
   public final void expand(Object element, @Nullable Runnable onDone) {
@@ -99,13 +107,6 @@ public class AbstractTreeBuilder implements Disposable {
     getUi().collapseChildren(element, onDone);
   }
 
-  public final void select(final Object[] elements, @Nullable final Runnable onDone) {
-    getUi().select(elements, onDone);
-  }
-
-  public final void select(final Object[] elements, @Nullable final Runnable onDone, boolean addToSelection) {
-    getUi().select(elements, onDone, addToSelection);
-  }
 
   protected AbstractTreeNode createSearchingTreeNodeWrapper() {
     return new AbstractTreeNodeWrapper();
@@ -454,7 +455,7 @@ public class AbstractTreeBuilder implements Disposable {
   public <T> boolean select(Class nodeClass, TreeVisitor<T> visitor, @Nullable Runnable onDone, boolean addToSelection) {
     final Object element = accept(nodeClass, visitor);
     if (element != null) {
-      getUi().select(element, onDone, addToSelection);
+      select(element, onDone, addToSelection);
       return true;
     }
 

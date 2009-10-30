@@ -179,8 +179,11 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
         final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
         final StringBuffer buf = new StringBuffer();
-        ((PsiExpression)value).accept(new PsiExpressionTrimRenderer(buf));
-        setText(buf.toString());
+        final PsiExpression expr = (PsiExpression)value;
+        if (expr.isValid()) {
+          expr.accept(new PsiExpressionTrimRenderer(buf));
+          setText(buf.toString());
+        }
         return rendererComponent;
       }
     });

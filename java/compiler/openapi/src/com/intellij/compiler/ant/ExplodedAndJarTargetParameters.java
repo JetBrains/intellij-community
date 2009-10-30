@@ -17,7 +17,6 @@
 package com.intellij.compiler.ant;
 
 import com.intellij.openapi.compiler.make.BuildConfiguration;
-import com.intellij.openapi.compiler.make.CompoundBuildInstruction;
 import com.intellij.openapi.module.Module;
 
 /**
@@ -34,19 +33,13 @@ public class ExplodedAndJarTargetParameters {
   private final String myExplodedPathProperty;
   private final String myJarPathProperty;
   private final BuildConfiguration myBuildConfiguration;
-  private final CompoundBuildInstructionNaming myCompoundBuildInstructionNaming;
 
-  public ExplodedAndJarTargetParameters(final ModuleChunk chunk,
-                                           final Module containingModule,
-                                           final GenerationOptions generationOptions,
-                                           final BuildConfiguration buildConfiguration,
-                                           final String explodedPathParameter,
-                                           final String jarPathParameter,
-                                           final String buildExplodedTargetName,
-                                           final String buildJarTargetName,
-                                           final String explodedPathProperty,
-                                           final String jarPathProperty, final CompoundBuildInstructionNaming compoundBuildInstructionNaming) {
-    myCompoundBuildInstructionNaming = compoundBuildInstructionNaming;
+  public ExplodedAndJarTargetParameters(final ModuleChunk chunk, final Module containingModule, final GenerationOptions generationOptions,
+                                        final BuildConfiguration buildConfiguration, final String explodedPathParameter, final String jarPathParameter,
+                                        final String buildExplodedTargetName,
+                                        final String buildJarTargetName,
+                                        final String explodedPathProperty,
+                                        final String jarPathProperty) {
     myBuildConfiguration = buildConfiguration;
     myChunk = chunk;
     myContainingModule = containingModule;
@@ -93,10 +86,6 @@ public class ExplodedAndJarTargetParameters {
 
   public String getJarPathProperty() {
     return myJarPathProperty;
-  }
-
-  public CompoundBuildInstructionNaming getCompoundBuildInstructionNaming() {
-    return myCompoundBuildInstructionNaming;
   }
 
   public BuildConfiguration getBuildConfiguration() {

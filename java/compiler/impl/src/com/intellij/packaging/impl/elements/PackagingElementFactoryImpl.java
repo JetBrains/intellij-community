@@ -15,11 +15,7 @@
  */
 package com.intellij.packaging.impl.elements;
 
-import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDialog;
-import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
@@ -27,27 +23,19 @@ import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactPointerManager;
 import com.intellij.packaging.elements.*;
-import com.intellij.packaging.impl.artifacts.ArtifactUtil;
-import com.intellij.packaging.impl.ui.properties.ArchiveElementPropertiesPanel;
-import com.intellij.packaging.impl.ui.properties.DirectoryElementPropertiesPanel;
 import com.intellij.packaging.ui.ArtifactEditorContext;
-import com.intellij.packaging.ui.PackagingElementPropertiesPanel;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Icons;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -229,7 +217,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   }
 
   @NotNull
-  private static String suggestFileName(@NotNull CompositePackagingElement<?> parent, @NonNls @NotNull String prefix, @NonNls @NotNull String suffix) {
+  public static String suggestFileName(@NotNull CompositePackagingElement<?> parent, @NonNls @NotNull String prefix, @NonNls @NotNull String suffix) {
     String name = prefix + suffix;
     int i = 2;
     while (findArchiveOrDirectoryByName(parent, name) != null) {
@@ -282,144 +270,12 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     return Collections.singletonList(root);
   }
 
-  private static class DirectoryElementType extends CompositePackagingElementType<DirectoryPackagingElement> {
-    private static final Icon ICON = IconLoader.getIcon("/actions/newFolder.png");
-
-    private DirectoryElementType() {
-      super("directory", CompilerBundle.message("element.type.name.directory"));
-    }
-
-    @Override
-    public Icon getCreateElementIcon() {
-      return ICON;
-    }
-
-    @NotNull
-    public DirectoryPackagingElement createEmpty(@NotNull Project project) {
-      return new DirectoryPackagingElement();
-    }
-
-    @Override
-    public PackagingElementPropertiesPanel createElementPropertiesPanel(@NotNull DirectoryPackagingElement element,
-                                                                                                   @NotNull ArtifactEditorContext context) {
-      if (ArtifactUtil.isArchiveName(element.getDirectoryName())) {
-        return new DirectoryElementPropertiesPanel(element, context);
-      }
-      return null;
-    }
-
-    public DirectoryPackagingElement createComposite(@NotNull ArtifactEditorContext context, CompositePackagingElement<?> parent) {
-      final String initialValue = suggestFileName(parent, "folder", "");
-      final String name = Messages.showInputDialog(context.getProject(), "Enter directory name: ", "New Directory", null, initialValue, null);
-      if (name == null) return null;
-      return new DirectoryPackagingElement(name);
-    }
-  }
-
-  private static class ArchiveElementType extends CompositePackagingElementType<ArchivePackagingElement> {
-    private ArchiveElementType() {
-      super("archive", CompilerBundle.message("element.type.name.archive"));
-    }
-
-    @Override
-    public Icon getCreateElementIcon() {
-      return Icons.JAR_ICON;
-    }
-
-    @NotNull
-    @Override
-    public ArchivePackagingElement createEmpty(@NotNull Project project) {
-      return new ArchivePackagingElement();
-    }
-
-    @Override
-    public PackagingElementPropertiesPanel createElementPropertiesPanel(@NotNull ArchivePackagingElement element,
-                                                                                                 @NotNull ArtifactEditorContext context) {
-      final String name = element.getArchiveFileName();
-      if (name.length() >= 4 && name.charAt(name.length() - 4) == '.' && StringUtil.endsWithIgnoreCase(name, "ar")) {
-        return new ArchiveElementPropertiesPanel(element, context);
-      }
-      return null;
-    }
-
-    public ArchivePackagingElement createComposite(@NotNull ArtifactEditorContext context, CompositePackagingElement<?> parent) {
-      final String initialValue = suggestFileName(parent, "archive", ".jar");
-      final String name = Messages.showInputDialog(context.getProject(), "Enter archive name: ", "New Archive", null, initialValue, null);
-      if (name == null) return null;
-      return new ArchivePackagingElement(name);
-    }
-  }
-
-  public static class FileCopyElementType extends PackagingElementType<FileCopyPackagingElement> {
-    public static final Icon ICON = IconLoader.getIcon("/fileTypes/text.png");
-
-    private FileCopyElementType() {
-      super("file-copy", "File");
-    }
-
-    @Override
-    public Icon getCreateElementIcon() {
-      return ICON;
-    }
-
-    @Override
-    public boolean canCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact) {
-      return true;
-    }
-
-    @NotNull
-    public List<? extends FileCopyPackagingElement> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
-                                                                     @NotNull CompositePackagingElement<?> parent) {
-      final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, true, true, false, true);
-      final FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, context.getProject());
-      final VirtualFile[] files = chooser.choose(null, context.getProject());
-      final List<FileCopyPackagingElement> list = new ArrayList<FileCopyPackagingElement>();
-      for (VirtualFile file : files) {
-        list.add(new FileCopyPackagingElement(file.getPath()));
-      }
-      return list;
-    }
-
-    @NotNull
-    public FileCopyPackagingElement createEmpty(@NotNull Project project) {
-      return new FileCopyPackagingElement();
-    }
-  }
-
-  public static class DirectoryCopyElementType extends PackagingElementType<DirectoryCopyPackagingElement> {
-    public static final Icon COPY_OF_FOLDER_ICON = IconLoader.getIcon("/nodes/copyOfFolder.png");
-
-    private DirectoryCopyElementType() {
-      super("dir-copy", "Directory Content");
-    }
-
-    @Override
-    public Icon getCreateElementIcon() {
-      return COPY_OF_FOLDER_ICON;
-    }
-
-    @Override
-    public boolean canCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact) {
-      return true;
-    }
-
-    @NotNull
-    public List<? extends DirectoryCopyPackagingElement> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
-                                                                     @NotNull CompositePackagingElement<?> parent) {
-      final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, true);
-      final FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, context.getProject());
-      final VirtualFile[] files = chooser.choose(null, context.getProject());
-      final List<DirectoryCopyPackagingElement> list = new ArrayList<DirectoryCopyPackagingElement>();
-      for (VirtualFile file : files) {
-        list.add(new DirectoryCopyPackagingElement(file.getPath()));
-      }
-      return list;
-    }
-
-    @NotNull
-    public DirectoryCopyPackagingElement createEmpty(@NotNull Project project) {
-      return new DirectoryCopyPackagingElement();
-    }
+  public static PackagingElement<?> createDirectoryOrArchiveWithParents(@NotNull String path, final boolean archive) {
+    path = FileUtil.toSystemIndependentName(path);
+    final String parentPath = PathUtil.getParentPath(path);
+    final String fileName = PathUtil.getFileName(path);
+    final PackagingElement<?> element = archive ? new ArchivePackagingElement(fileName) : new DirectoryPackagingElement(fileName);
+    return getInstance().createParentDirectories(parentPath, element);
   }
 
   private static class ArtifactRootElementType extends PackagingElementType<ArtifactRootElement<?>> {

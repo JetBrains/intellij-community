@@ -63,7 +63,7 @@ public class ChunkBuildPluginExtension extends ChunkBuildExtension {
                                            PluginBuildProperties.getBuildExplodedTargetName(configurationName),
                                            PluginBuildProperties.getBuildJarTargetName(configurationName),
                                            PluginBuildProperties.getExplodedPathProperty(configurationName),
-                                           PluginBuildProperties.getJarPathProperty(configurationName), null);
+                                           PluginBuildProperties.getJarPathProperty(configurationName));
       final Set<Library> libs = new HashSet<Library>();
       PluginBuildUtil.getLibraries(module, libs);
       @NonNls String jarPath = chunk.getBaseDir().getPath() + "/" + chunk.getName();

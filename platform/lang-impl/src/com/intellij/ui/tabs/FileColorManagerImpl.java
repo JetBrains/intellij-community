@@ -41,14 +41,14 @@ import java.util.List;
     id = "other",
     file = "$WORKSPACE_FILE$")})
 public class FileColorManagerImpl extends FileColorManager implements PersistentStateComponent<Element> {
-  private boolean myEnabled = false;
+  private boolean myEnabled = true;
 
   private FileColorsModel myModel;
 
   private FileColorSharedConfigurationManager mySharedConfigurationManager;
 
   private Project myProject;
-  private boolean myEnabledForTabs;
+  private boolean myEnabledForTabs = true;
 
   private static Map<String, Color> ourDefaultColors;
 

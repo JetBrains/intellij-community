@@ -62,16 +62,17 @@ public class JUnitUnusedCodeExtension extends UnusedCodeExtension {
       }
       else if (psiElement instanceof PsiMethod) {
         final PsiMethod psiMethod = (PsiMethod)psiElement;
+        if (JUnitUtil.getTestMethod(psiElement) != null) return true;
         final String name = psiMethod.getName();
         if (psiMethod.hasModifierProperty(PsiModifier.PUBLIC) &&
              !psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
-          if (name.startsWith("test") || "suite".equals(name) || "setUp".equals(name) || "tearDown".equals(name)) {
+          if ("suite".equals(name) || "setUp".equals(name) || "tearDown".equals(name)) {
             return true;
           }
           if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
             if (AnnotationUtil.isAnnotated(psiMethod, Arrays.asList(BeforeClass.class.getName(), AfterClass.class.getName(), Parameterized.Parameters.class.getName().replace('$', '.')))) return true;
           } else {
-            if (AnnotationUtil.isAnnotated(psiMethod, Arrays.asList(Before.class.getName(), After.class.getName(), Test.class.getName()))) return true;
+            if (AnnotationUtil.isAnnotated(psiMethod, Arrays.asList(Before.class.getName(), After.class.getName()))) return true;
           }
         }
       }

@@ -48,7 +48,9 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.Collections;
 import java.util.EventObject;
+import java.util.List;
 
 /**
  * @author peter
@@ -124,13 +126,27 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private void scheduleAdvertising() {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
-        if (myEditor.isDisposed()) return; //tests?
-        for (final CompletionContributor contributor : CompletionContributor.forParameters(myParameters)) {
+        if (isOutdated()) return; //tests?
+        final List<CompletionContributor> list = ApplicationManager.getApplication().runReadAction(new Computable<List<CompletionContributor>>() {
+          public List<CompletionContributor> compute() {
+            if (isOutdated()) {
+              return Collections.emptyList();
+            }
+
+            return CompletionContributor.forParameters(myParameters);
+          }
+        });
+        for (final CompletionContributor contributor : list) {
           if (myLookup.getAdvertisementText() != null) return;
           if (!myLookup.isCalculating() && !myLookup.isVisible()) return;
 
           String s = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+            @Nullable
             public String compute() {
+              if (isOutdated()) {
+                return null;
+              }
+
               return contributor.advertise(myParameters);
             }
           });
@@ -140,7 +156,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
             myLookup.setAdvertisementText(s);
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
-                if (myEditor.isDisposed() || myEditor.getComponent().getRootPane() == null) {
+                if (isOutdated() || myEditor.getComponent().getRootPane() == null) {
                   return;
                 }
                 updateLookup();
@@ -151,6 +167,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         }
       }
     });
+  }
+
+  private boolean isOutdated() {
+    return myEditor.isDisposed() || myDisposed;
   }
 
   private void trackModifiers() {
@@ -242,7 +262,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   private void updateLookup() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (myEditor.isDisposed() || myDisposed) return;
+    if (isOutdated()) return;
 
     if (!myInitialized) {
       myInitialized = true;

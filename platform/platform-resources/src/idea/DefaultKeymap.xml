@@ -562,6 +562,9 @@
     <action id="ToggleBookmark">
       <keyboard-shortcut first-keystroke="F11"/>
     </action>
+    <action id="ToggleBookmarkWithMnemonic">
+      <keyboard-shortcut first-keystroke="control F11"/>
+    </action>
     <action id="MoveStatementDown">
       <keyboard-shortcut first-keystroke="control shift DOWN"/>
     </action>

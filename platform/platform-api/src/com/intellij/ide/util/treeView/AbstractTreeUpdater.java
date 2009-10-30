@@ -62,6 +62,8 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
         };
       }
     };
+    myUpdateQueue.setRestartTimerOnAdd(false);
+
     final UiNotifyConnector uiNotifyConnector = new UiNotifyConnector(component, myUpdateQueue);
     Disposer.register(this, myUpdateQueue);
     Disposer.register(this, uiNotifyConnector);
@@ -140,10 +142,10 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
         final DefaultMutableTreeNode eachNode = eachYielding.getCurrentNode();
         if (eachNode != null) {
           if (eachNode.isNodeAncestor(toAdd.getNode())) {
-            toAdd.expire();
+            eachYielding.setUpdateStamp(newUpdateCount);
           }
           else {
-            eachYielding.setUpdateStamp(newUpdateCount);
+            toAdd.expire();
           }
         }
       }
@@ -235,7 +237,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
         }
       };
 
-      invokeLater(runnable);
+      myTreeBuilder.getReady(this).doWhenDone(runnable);
     }
   }
 
@@ -328,5 +330,23 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
       if (each.willUpdate(node)) return true;
     }
     return false;
+  }
+
+  public final void queueSelection(final SelectionRequest request) {
+    queue(new Update("UserSelection", Update.LOW_PRIORITY) {
+      public void run() {
+        request.execute(myTreeBuilder.getUi());
+      }
+
+      @Override
+      public boolean isExpired() {
+        return myTreeBuilder.isDisposed();
+      }
+
+      @Override
+      public void setRejected() {
+        request.reject();
+      }
+    });
   }
 }

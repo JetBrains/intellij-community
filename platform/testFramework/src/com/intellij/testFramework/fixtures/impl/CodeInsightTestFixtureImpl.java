@@ -1133,7 +1133,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     List<IntentionAction> result = new ArrayList<IntentionAction>();
 
-    List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getFileLeveleHighlights(file.getProject(), file);
+    List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getFileLevelHighlights(file.getProject(), file);
     for (HighlightInfo info : infos) {
       for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
         HighlightInfo.IntentionActionDescriptor actionInGroup = pair.first;

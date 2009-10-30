@@ -16,14 +16,12 @@
 package com.intellij.compiler.impl.packagingCompiler;
 
 import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.make.BuildParticipant;
 import com.intellij.openapi.compiler.make.BuildConfiguration;
+import com.intellij.openapi.compiler.make.BuildParticipant;
 import com.intellij.openapi.compiler.make.BuildRecipe;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.deployment.DeploymentUtilImpl;
 import com.intellij.openapi.util.MultiValuesMap;
-import com.intellij.packaging.impl.compiler.ArtifactPackagingProcessingItem;
+import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.*;
 
@@ -72,8 +70,7 @@ public class OldProcessingItemsBuilderContext extends ProcessingItemsBuilderCont
     JarInfo jarInfo = getCachedJar(buildConfiguration);
     boolean addJarContent = jarInfo == null;
     if (jarInfo == null) {
-      List<String> classpath = DeploymentUtilImpl.getExternalDependenciesClasspath(buildRecipe);
-      jarInfo = new JarInfo(classpath);
+      jarInfo = new JarInfo();
       putCachedJar(buildConfiguration, jarInfo);
     }
     jarInfo.addDestination(destinationInfo);

@@ -101,7 +101,7 @@ public class ExpectedHighlightingData {
                                   PsiFile file) {
     myFile = file;
     myText = document.getText();
-    highlightingTypes = new THashMap<String,ExpectedHighlightingSet>();
+    highlightingTypes = new LinkedHashMap<String,ExpectedHighlightingSet>();
     highlightingTypes.put(ERROR_MARKER, new ExpectedHighlightingSet(HighlightInfoType.ERROR, HighlightSeverity.ERROR, false, true));
     highlightingTypes.put(WARNING_MARKER, new ExpectedHighlightingSet(HighlightInfoType.WARNING, HighlightSeverity.WARNING, false, checkWarnings));
     highlightingTypes.put(INFORMATION_MARKER, new ExpectedHighlightingSet(HighlightInfoType.INFO, HighlightSeverity.INFO, false, checkWeakWarnings));
@@ -185,10 +185,7 @@ public class ExpectedHighlightingData {
     String text = document.getText();
 
     final Set<String> markers = highlightingTypes.keySet();
-    String typesRegex = "";
-    for (String marker : markers) {
-      typesRegex += (typesRegex.length() == 0 ? "" : "|") + "(?:" + marker + ")";
-    }
+    String typesRegex = "(?:"+StringUtil.join(markers, ")|(?:")+")";
 
     // er...
     // any code then <marker> (with optional descr="...") then any code then </marker> then any code
@@ -196,7 +193,7 @@ public class ExpectedHighlightingData {
                  //"(.+?)</" + marker + ">).*";
     Pattern p = Pattern.compile(pat, Pattern.DOTALL);
     Out:
-    for (; ;) {
+    while (true) {
       Matcher m = p.matcher(text);
       if (!m.matches()) break;
       int startOffset = m.start(1);
@@ -209,7 +206,7 @@ public class ExpectedHighlightingData {
         startOffset = m.start(1);
         expectedHighlightingSet = highlightingTypes.get(marker);
       }
-      int pos=3;
+      int pos = 3;
       @NonNls String descr = m.group(pos++);
       if (descr == null) {
         // no descr means any string by default
@@ -241,20 +238,19 @@ public class ExpectedHighlightingData {
         final Matcher matcher2 = pat2.matcher(rest);
         LOG.assertTrue(matcher2.matches(), "Cannot find closing </" + marker + ">");
         content = matcher2.group(1);
-        endOffset = m.start(pos-1) + matcher2.start(2);
+        endOffset = m.start(pos - 1) + matcher2.start(2);
       }
       else {
         // <XXX/>
         content = "";
-        endOffset = m.start(pos-1);
+        endOffset = m.start(pos - 1);
       }
 
       document.replaceString(startOffset, endOffset, content);
       TextAttributes forcedAttributes = null;
       if (foregroundColor != null) {
-        forcedAttributes = new TextAttributes(Color.decode(foregroundColor), Color.decode(backgroundColor),
-                                                              Color.decode(effectColor), EffectType.valueOf(effectType),
-                                                              Integer.parseInt(fontType));
+        forcedAttributes = new TextAttributes(Color.decode(foregroundColor), Color.decode(backgroundColor), Color.decode(effectColor),
+                                              EffectType.valueOf(effectType), Integer.parseInt(fontType));
       }
 
       TextRange textRange = new TextRange(startOffset, startOffset + content.length());
@@ -273,9 +269,9 @@ public class ExpectedHighlightingData {
       }
 
 
-      HighlightInfo highlightInfo = new HighlightInfo(forcedAttributes, type, textRange.getStartOffset(), textRange.getEndOffset(), descr,
-                                                       descr, expectedHighlightingSet.severity, expectedHighlightingSet.endOfLine, null,
-                                                      false);
+      HighlightInfo highlightInfo =
+        new HighlightInfo(forcedAttributes, type, textRange.getStartOffset(), textRange.getEndOffset(), descr, descr,
+                          expectedHighlightingSet.severity, expectedHighlightingSet.endOfLine, null, false);
       expectedHighlightingSet.infos.add(highlightInfo);
       text = document.getText();
     }

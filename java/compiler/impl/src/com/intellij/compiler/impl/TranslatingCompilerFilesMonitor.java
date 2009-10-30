@@ -169,18 +169,22 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       if (_forceCompile || pathsToRecompile != null && !pathsToRecompile.isEmpty()) {
         while (scopeSrcIterator.hasNext()) {
           final VirtualFile file = scopeSrcIterator.next();
-          if (!file.isValid() || configuration.isExcludedFromCompilation(file) || !compiler.isCompilableFile(file, context)) {
+          if (!file.isValid()) {
             continue;
           }
           final int fileId = getFileId(file);
           if (_forceCompile) {
-            toCompile.add(file);
-            if (pathsToRecompile == null || !pathsToRecompile.contains(fileId)) {
-              addSourceForRecompilation(projectId, file, null);
+            if (compiler.isCompilableFile(file, context) && !configuration.isExcludedFromCompilation(file)) {
+              toCompile.add(file);
+              if (pathsToRecompile == null || !pathsToRecompile.contains(fileId)) {
+                addSourceForRecompilation(projectId, file, null);
+              }
             }
           }
           else if (pathsToRecompile.contains(fileId)) {
-            toCompile.add(file);
+            if (compiler.isCompilableFile(file, context) && !configuration.isExcludedFromCompilation(file)) {
+              toCompile.add(file);
+            }
           }
         }
       }

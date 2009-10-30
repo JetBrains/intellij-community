@@ -26,4 +26,6 @@ public interface BookmarksListener {
 
   void bookmarkAdded(Bookmark b);
   void bookmarkRemoved(Bookmark b);
+
+  void bookmarkChanged(Bookmark b);
 }

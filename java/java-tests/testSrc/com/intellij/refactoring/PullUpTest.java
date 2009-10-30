@@ -104,8 +104,22 @@ public class PullUpTest extends LightCodeInsightTestCase {
       final Class<? extends PsiMember> clazz = membersToFind[i].myClass;
       final String name = membersToFind[i].myName;
       PsiMember member = null;
+      boolean overrides = false;
+      PsiReferenceList refList = null;
       if (PsiClass.class.isAssignableFrom(clazz)) {
         member = sourceClass.findInnerClassByName(name, false);
+        if (member == null) {
+          final PsiClass[] supers = sourceClass.getSupers();
+          for (PsiClass superTypeClass : supers) {
+            if (superTypeClass.getName().equals(name)) {
+              member = superTypeClass;
+              overrides = true;
+              refList = superTypeClass.isInterface() ? sourceClass.getImplementsList() : sourceClass.getExtendsList();
+              break;
+            }
+          }
+        }
+
       } else if (PsiMethod.class.isAssignableFrom(clazz)) {
         final PsiMethod[] methods = sourceClass.findMethodsByName(name, false);
         assertEquals(1, methods.length);
@@ -115,7 +129,7 @@ public class PullUpTest extends LightCodeInsightTestCase {
       }
 
       assertNotNull(member);
-      infos[i] = new MemberInfo(member);
+      infos[i] = new MemberInfo(member, overrides, refList);
       infos[i].setToAbstract(membersToFind[i].myAbstract);
     }
     return infos;
