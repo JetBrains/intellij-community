@@ -864,12 +864,14 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return myUsageSearcherFactory != null;
   }
 
-  private void checkReadonlyUsages() {
+  private boolean checkReadonlyUsages() {
     final Set<VirtualFile> readOnlyUsages = getReadOnlyUsagesFiles();
 
     if (!readOnlyUsages.isEmpty()) {
-      ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(readOnlyUsages.toArray(new VirtualFile[readOnlyUsages.size()]));
+      return
+        !ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(readOnlyUsages.toArray(new VirtualFile[readOnlyUsages.size()])).hasReadonlyFiles();
     }
+    return true;
   }
 
   private Set<Usage> getReadOnlyUsages() {
@@ -1268,7 +1270,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
 
     public void run() {
-      checkReadonlyUsages();
+      if (!checkReadonlyUsages()) return;
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       if (myCannotMakeString != null && myChangesDetected) {
         if (canPerformReRun() && allTargetsAreValid()) {
