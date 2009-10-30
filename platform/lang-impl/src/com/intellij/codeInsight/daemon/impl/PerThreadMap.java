@@ -16,20 +16,28 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.util.UserDataHolder;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * User: cdr
  */
 public abstract class PerThreadMap<T, KeyT extends UserDataHolder> {
+
   @NotNull
   public abstract Collection<T> initialValue(@NotNull KeyT key);
 
-  private final ThreadLocal<List<T>> CACHE = new ThreadLocal<List<T>>();
+  private final ThreadLocal<Map<KeyT,List<T>>> CACHE = new ThreadLocal<Map<KeyT, List<T>>>(){
+    @Override
+    protected Map<KeyT, List<T>> initialValue() {
+      return new THashMap<KeyT, List<T>>();
+    }
+  };
 
   private List<T> cloneTemplates(Collection<T> templates) {
     List<T> result = new ArrayList<T>(templates.size());
@@ -51,11 +59,12 @@ public abstract class PerThreadMap<T, KeyT extends UserDataHolder> {
 
   @NotNull
   public List<T> get(@NotNull KeyT key) {
-    List<T> cached = CACHE.get();
+    Map<KeyT, List<T>> map = CACHE.get();
+    List<T> cached = map.get(key);
     if (cached == null) {
       Collection<T> templates = initialValue(key);
       cached = cloneTemplates(templates);
-      CACHE.set(cached);
+      map.put(key, cached);
     }
     return cached;
   }
