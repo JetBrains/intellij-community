@@ -223,6 +223,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         return true;
       }
     }, "Inspection tools");
+    ProgressManager.checkCanceled();
 
     inspectInjectedPsi(elements, tools);
 
