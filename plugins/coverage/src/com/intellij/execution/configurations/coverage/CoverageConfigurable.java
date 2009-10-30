@@ -115,7 +115,7 @@ public class CoverageConfigurable<T extends ModuleBasedConfiguration & RunJavaCo
     final CoverageEnabledConfiguration configuration = CoverageEnabledConfiguration.get(runConfiguration);
     final CoverageRunner runner = configuration.getCoverageRunner();
     if (runner != null) {
-      myCoverageRunnerCb.setSelectedItem(runner);
+      myCoverageRunnerCb.setSelectedItem(new CoverageRunnerItem(runner));
     } else {
       final String runnerId = configuration.getRunnerId();
       if (runnerId != null){
