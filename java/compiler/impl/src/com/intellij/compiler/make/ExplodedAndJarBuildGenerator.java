@@ -37,15 +37,4 @@ public abstract class ExplodedAndJarBuildGenerator {
     return null;
   }
 
-  @Nullable
-  public ZipFileSet[] generateTagsForJarTarget(@NotNull BuildInstruction instruction, @NotNull ExplodedAndJarTargetParameters parameters,
-                                         final Ref<Boolean> tempDirUsed) throws Exception {
-    return null;
-  }
-
-  @Nullable
-  public Tag[] generateJarBuildPrepareTags(@NotNull BuildInstruction instruction, @NotNull ExplodedAndJarTargetParameters parameters) throws Exception {
-    return null;
-  }
-
 }
