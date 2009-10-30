@@ -244,7 +244,10 @@ public class AnnotationUtil {
           fqns = new ArrayList<String>();
           final PsiAnnotation[] annos = modList.getAnnotations();
           for (PsiAnnotation anno : annos) {
-            fqns.add(anno.getQualifiedName());
+            final String qName = anno.getQualifiedName();
+            if (qName != null) {
+              fqns.add(qName);
+            }
           }
           if (fqns.isEmpty()) return false;
         }
