@@ -299,11 +299,25 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                           final AnnotationHolderImpl annotationHolder,
                                           final HighlightErrorFilter[] errorFilters,
                                           final InjectedLanguageManager injectedLanguageManager) {
+    Language injectedLanguage = injectedPsi.getLanguage();
+    runAnnotatorsForInjected(injectedPsi, annotationHolder, errorFilters, injectedLanguageManager, injectedLanguage);
+    highlightInjectedSyntax(injectedLanguage, injectedPsi, annotationHolder);
+  }
+
+  private static final PerThreadMap<Annotator,Language> cachedAnnotators = new PerThreadMap<Annotator, Language>() {
+    @NotNull
+    @Override
+    public Collection<Annotator> initialValue(@NotNull Language key) {
+      return LanguageAnnotators.INSTANCE.allForLanguage(key);
+    }
+  };
+  private static void runAnnotatorsForInjected(final PsiFile injectedPsi, final AnnotationHolderImpl annotationHolder,
+                                               final HighlightErrorFilter[] errorFilters, final InjectedLanguageManager injectedLanguageManager,
+                                               Language injectedLanguage) {
     final DocumentWindow documentRange = ((VirtualFileWindow)injectedPsi.getViewProvider().getVirtualFile()).getDocumentWindow();
     assert documentRange != null;
     assert documentRange.getText().equals(injectedPsi.getText());
-    Language injectedLanguage = injectedPsi.getLanguage();
-    final List<Annotator> annotators = LanguageAnnotators.INSTANCE.allForLanguage(injectedLanguage);
+    final List<Annotator> annotators = cachedAnnotators.get(injectedLanguage);
     final AnnotationHolderImpl fixingOffsetsHolder = new AnnotationHolderImpl() {
       public boolean add(final Annotation annotation) {
         return true; // we are going to hand off the annotation to the annotationHolder anyway
@@ -356,7 +370,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     };
 
     injectedPsi.accept(visitor);
-    highlightInjectedSyntax(injectedLanguage, injectedPsi, annotationHolder);
   }
 
   private static void highlightInjectedSyntax(final Language injectedLanguage,
@@ -467,7 +480,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
     final HighlightInfoHolder holder = createInfoHolder();
     holder.setWritable(true);
-    final ProgressManager progressManager = ProgressManager.getInstance();
     setProgressLimit((long)elements.size() * visitorArray.length);
 
     final int chunkSize = Math.max(1, elements.size() / 100); // one percent precision is enough

@@ -16,6 +16,7 @@
 package com.intellij.lang.annotation;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
@@ -35,5 +36,5 @@ public interface Annotator {
    * @param psiElement the element to annotate.
    * @param holder     the container which receives annotations created by the plugin.
    */
-  void annotate(PsiElement psiElement, AnnotationHolder holder);
+  void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder);
 }

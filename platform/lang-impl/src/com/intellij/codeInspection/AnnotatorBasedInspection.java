@@ -60,7 +60,7 @@ public class AnnotatorBasedInspection extends GlobalInspectionTool {
   @NotNull
   @Override
   public String getGroupDisplayName() {
-    return "General";
+    return GENERAL_GROUP_NAME;
   }
 
   @Nls
@@ -76,12 +76,14 @@ public class AnnotatorBasedInspection extends GlobalInspectionTool {
     return "Annotator";
   }
 
-  private static class MyPsiRecursiveElementVisitor extends PsiRecursiveElementVisitor implements PsiLanguageInjectionHost.InjectedPsiVisitor {
-    private AnnotationHolder myHolder;
+  private static class MyPsiRecursiveElementVisitor extends PsiRecursiveElementVisitor
+    implements PsiLanguageInjectionHost.InjectedPsiVisitor {
+    private final AnnotationHolder myHolder;
     private List<Annotator> annotators;
     private PsiFile myFile;
 
-    public MyPsiRecursiveElementVisitor(final InspectionManager manager, final GlobalInspectionContext globalContext,
+    public MyPsiRecursiveElementVisitor(final InspectionManager manager,
+                                        final GlobalInspectionContext globalContext,
                                         final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
       myHolder = new AnnotationHolderImpl() {
         @Override
@@ -104,9 +106,13 @@ public class AnnotatorBasedInspection extends GlobalInspectionTool {
           return createProblem(elt, message, ProblemHighlightType.INFORMATION, HighlightSeverity.INFORMATION, null);
         }
 
-        private Annotation createProblem(PsiElement elt, String message, ProblemHighlightType problemHighlightType,
-                                         HighlightSeverity severity, TextRange range) {
-          GlobalInspectionUtil.createProblem(elt, message, problemHighlightType, range, manager, problemDescriptionsProcessor, globalContext);
+        private Annotation createProblem(PsiElement elt,
+                                         String message,
+                                         ProblemHighlightType problemHighlightType,
+                                         HighlightSeverity severity,
+                                         TextRange range) {
+          GlobalInspectionUtil
+            .createProblem(elt, message, problemHighlightType, range, manager, problemDescriptionsProcessor, globalContext);
           return super.createAnnotation(elt.getTextRange(), severity, message);
         }
 
@@ -133,15 +139,8 @@ public class AnnotatorBasedInspection extends GlobalInspectionTool {
         @Override
         protected Annotation createAnnotation(TextRange range, HighlightSeverity severity, String message) {
           if (severity != HighlightSeverity.INFORMATION) {
-            GlobalInspectionUtil.createProblem(
-              myFile,
-              message,
-              HighlightInfo.convertSeverityToProblemHighlight(severity),
-              range,
-              manager,
-              problemDescriptionsProcessor,
-              globalContext
-            );
+            GlobalInspectionUtil.createProblem(myFile, message, HighlightInfo.convertSeverityToProblemHighlight(severity), range, manager,
+                                               problemDescriptionsProcessor, globalContext);
           }
           return super.createAnnotation(range, severity, message);
         }
@@ -158,12 +157,9 @@ public class AnnotatorBasedInspection extends GlobalInspectionTool {
     public void visitElement(PsiElement element) {
       super.visitElement(element);
 
-      List<Annotator> annotators = this.annotators != null ?
-        this.annotators:LanguageAnnotators.INSTANCE.allForLanguage(element.getLanguage());
-      if (!annotators.isEmpty()) {
-        for(Annotator annotator:annotators) {
-          annotator.annotate(element, myHolder);
-        }
+      List<Annotator> elemAnnos = annotators != null ? annotators : LanguageAnnotators.INSTANCE.allForLanguage(element.getLanguage());
+      for (Annotator annotator : elemAnnos) {
+        annotator.annotate(element, myHolder);
       }
       if (element instanceof PsiLanguageInjectionHost) {
         ((PsiLanguageInjectionHost)element).processInjectedPsi(this);
@@ -174,7 +170,8 @@ public class AnnotatorBasedInspection extends GlobalInspectionTool {
       try {
         annotators = LanguageAnnotators.INSTANCE.allForLanguage(injectedPsi.getLanguage());
         injectedPsi.acceptChildren(this);
-      } finally {
+      }
+      finally {
         annotators = null;
       }
     }
