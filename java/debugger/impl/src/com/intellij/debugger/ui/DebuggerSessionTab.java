@@ -33,6 +33,8 @@ import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.filters.ExceptionFilter;
+import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
@@ -511,7 +513,9 @@ public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements
 
   public void addThreadDump(List<ThreadState> threads) {
     final Project project = getProject();
-    final ConsoleView consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
+    final TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
+    consoleBuilder.addFilter(new ExceptionFilter(myDebuggerSession.getSearchScope()));
+    final ConsoleView consoleView = consoleBuilder.getConsole();
     final DefaultActionGroup toolbarActions = new DefaultActionGroup();
     final ThreadDumpPanel panel = new ThreadDumpPanel(project, consoleView, toolbarActions, threads);
 

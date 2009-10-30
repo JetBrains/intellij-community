@@ -181,7 +181,8 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
     }
   };
 
-  private final CompositeFilter myMessageFilter;
+  private final CompositeFilter myPredefinedMessageFilter;
+  private final CompositeFilter myCustomFilter;
 
   private ArrayList<String> myHistory = new ArrayList<String>();
   private int myHistorySize = 20;
@@ -239,12 +240,11 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
     myProject = project;
     myFileType = fileType;
 
-    myMessageFilter = new CompositeFilter(project);
-    final ConsoleFilterProvider[] filterProviders = Extensions.getExtensions(ConsoleFilterProvider.FILTER_PROVIDERS);
-    for (ConsoleFilterProvider filterProvider : filterProviders) {
-      final Filter[] defaultFilters = filterProvider.getDefaultFilters(project);
-      for (Filter filter : defaultFilters) {
-        addMessageFilter(filter);
+    myCustomFilter = new CompositeFilter(project);
+    myPredefinedMessageFilter = new CompositeFilter(project);
+    for (ConsoleFilterProvider filterProvider : Extensions.getExtensions(ConsoleFilterProvider.FILTER_PROVIDERS)) {
+      for (Filter filter : filterProvider.getDefaultFilters(project)) {
+        myPredefinedMessageFilter.addFilter(filter);
       }
     }
 
@@ -533,7 +533,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
   }
 
   public void addMessageFilter(final Filter filter) {
-    myMessageFilter.addFilter(filter);
+    myCustomFilter.addFilter(filter);
   }
 
   public void printHyperlink(final String hyperlinkText, final HyperlinkInfo info) {
@@ -782,28 +782,29 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
   }
 
   private void highlightHyperlinks(final int line1, final int line2){
-    if (myMessageFilter != null){
-      ApplicationManager.getApplication().assertIsDispatchThread();
-      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      final Document document = myEditor.getDocument();
-      final CharSequence chars = document.getCharsSequence();
-      final TextAttributes hyperlinkAttributes = getHyperlinkAttributes();
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    final Document document = myEditor.getDocument();
+    final CharSequence chars = document.getCharsSequence();
+    final TextAttributes hyperlinkAttributes = getHyperlinkAttributes();
 
-      for(int line = line1; line <= line2; line++) {
-        if (line < 0) continue;
-        final int startOffset = document.getLineStartOffset(line);
-        int endOffset = document.getLineEndOffset(line);
-        if (endOffset < document.getTextLength()){
-          endOffset++; // add '\n'
-        }
-        final String text = chars.subSequence(startOffset, endOffset).toString();
-        final Filter.Result result = myMessageFilter.applyFilter(text, endOffset);
-        if (result != null){
-          final int highlightStartOffset = result.highlightStartOffset;
-          final int highlightEndOffset = result.highlightEndOffset;
-          final HyperlinkInfo hyperlinkInfo = result.hyperlinkInfo;
-          addHyperlink(highlightStartOffset, highlightEndOffset, result.highlightAttributes, hyperlinkInfo, hyperlinkAttributes);
-        }
+    for(int line = line1; line <= line2; line++) {
+      if (line < 0) continue;
+      final int startOffset = document.getLineStartOffset(line);
+      int endOffset = document.getLineEndOffset(line);
+      if (endOffset < document.getTextLength()){
+        endOffset++; // add '\n'
+      }
+      final String text = chars.subSequence(startOffset, endOffset).toString();
+      Filter.Result result = myCustomFilter.applyFilter(text, endOffset);
+      if (result == null) {
+        result = myPredefinedMessageFilter.applyFilter(text, endOffset);
+      }
+      if (result != null){
+        final int highlightStartOffset = result.highlightStartOffset;
+        final int highlightEndOffset = result.highlightEndOffset;
+        final HyperlinkInfo hyperlinkInfo = result.hyperlinkInfo;
+        addHyperlink(highlightStartOffset, highlightEndOffset, result.highlightAttributes, hyperlinkInfo, hyperlinkAttributes);
       }
     }
   }

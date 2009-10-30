@@ -39,9 +39,16 @@ public class ExceptionFilter implements Filter, DumbAware {
   private static final String AT_PREFIX = AT + " ";
   private static final String STANDALONE_AT = " " + AT + " ";
   private static final TextAttributes HYPERLINK_ATTRIBUTES = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES);
+  private final GlobalSearchScope mySearchScope;
 
   public ExceptionFilter(@NotNull final Project project) {
     myProject = project;
+    mySearchScope = GlobalSearchScope.allScope(myProject);
+  }
+
+  public ExceptionFilter(@NotNull final GlobalSearchScope scope) {
+    myProject = scope.getProject();
+    mySearchScope = scope;
   }
 
   public Result applyFilter(final String line, final int textEndOffset) {
@@ -81,7 +88,7 @@ public class ExceptionFilter implements Filter, DumbAware {
     try{
       final int lineNumber = Integer.parseInt(lineString);
       final PsiManager manager = PsiManager.getInstance(myProject);
-      PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(className, GlobalSearchScope.allScope(myProject));
+      PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(className, mySearchScope);
       if (aClass == null) return null;
       final PsiFile file = (PsiFile) aClass.getContainingFile().getNavigationElement();
       if (file == null) return null;
