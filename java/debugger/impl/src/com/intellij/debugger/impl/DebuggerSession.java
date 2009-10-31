@@ -341,11 +341,10 @@ public class DebuggerSession implements AbstractDebuggerSession {
 
   @Nullable
   protected ExecutionResult attach(@NotNull final Executor executor, @NotNull final ProgramRunner runner, final ModuleRunProfile profile, final RunProfileState state, final RemoteConnection remoteConnection, final boolean pollConnection) throws ExecutionException {
-    final ExecutionResult executionResult = myDebugProcess.attachVirtualMachine(executor, runner, this, state, remoteConnection, pollConnection);
     final String addressDisplayName = DebuggerBundle.getAddressDisplayName(remoteConnection);
     final String transportName = DebuggerBundle.getTransportName(remoteConnection);
     final Module[] modules = profile.getModules();
-    if (modules == null || modules.length == 0) {
+    if (modules.length == 0) {
       mySearchScope = GlobalSearchScope.allScope(getProject());
     }
     else {
@@ -356,6 +355,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
       }
       mySearchScope = scope;
     }
+    final ExecutionResult executionResult = myDebugProcess.attachVirtualMachine(executor, runner, this, state, remoteConnection, pollConnection);
     getContextManager().setState(SESSION_EMPTY_CONTEXT, STATE_WAITING_ATTACH, EVENT_START_WAIT_ATTACH, DebuggerBundle.message("status.waiting.attach", addressDisplayName, transportName));
     return executionResult;
   }

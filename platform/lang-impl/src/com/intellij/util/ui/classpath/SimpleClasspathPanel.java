@@ -163,12 +163,14 @@ public class SimpleClasspathPanel extends JPanel {
     list.scrollRectToVisible(cellRect);
   }
 
-  private static Collection<Library> ensureApplicationLevel(final Library library, final Set<VirtualFile> existingFiles) {
+  private static Collection<Library> ensureApplicationLevel(final Library library, final Set<VirtualFile> existingFiles,
+                                                            final Disposable parentDisposable) {
     if (library.getTable() == null || !LibraryTablesRegistrar.APPLICATION_LEVEL.equals(library.getTable().getTableLevel())) {
       final ArrayList<Library> result = new ArrayList<Library>();
       for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
         if (!existingFiles.add(file)) continue;
         final Library newLibrary = LibraryTableImplUtil.createModuleLevelLibrary(null, null);
+        Disposer.register(parentDisposable, newLibrary);
         final Library.ModifiableModel libModel = newLibrary.getModifiableModel();
         libModel.addRoot(file, OrderRootType.CLASSES);
         libModel.commit();
@@ -264,7 +266,7 @@ public class SimpleClasspathPanel extends JPanel {
             final List<Library> libraries = dialog.getSelectedLibraries();
             final ArrayList<Library> result = new ArrayList<Library>();
             for (Library o : libraries) {
-              result.addAll(ensureApplicationLevel(o, existingFiles));
+              result.addAll(ensureApplicationLevel(o, existingFiles, myDisposable));
             }
             return result;
           }

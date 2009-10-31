@@ -73,7 +73,7 @@ public abstract class CommandLineState implements RunnableState {
     return new AnAction[]{new PauseOutputAction(console, processHandler)};
   }
 
-  protected TextConsoleBuilder getConsoleBuilder() {
+  public TextConsoleBuilder getConsoleBuilder() {
     return myConsoleBuilder;
   }
 

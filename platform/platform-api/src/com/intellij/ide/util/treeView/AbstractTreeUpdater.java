@@ -237,7 +237,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
         }
       };
 
-      invokeLater(runnable);
+      myTreeBuilder.getReady(this).doWhenDone(runnable);
     }
   }
 

@@ -297,6 +297,52 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleModuleDeps("m1", "m2");
   }
 
+  public void testInterModuleDependenciesIfThereArePropertiesInArtifactHeaderDefinedInParent() throws Exception {
+    createProjectPom("<groupId>${groupProp}</groupId>" +
+                     "<artifactId>parent</artifactId>" +
+                     "<version>${versionProp}</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<properties>" +
+                     "  <groupProp>test</groupProp>" +
+                     "  <versionProp>1</versionProp>" +
+                     "</properties>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    createModulePom("m1",
+                    "<parent>" +
+                    "  <groupId>${groupProp}</groupId>" +
+                    "  <artifactId>parent</artifactId>" +
+                    "  <version>${versionProp}</version>" +
+                    "</parent>" +
+                    "<artifactId>m1</artifactId>" +
+
+                    "<dependencies>" +
+                    "  <dependency>" +
+                    "    <groupId>${groupProp}</groupId>" +
+                    "    <artifactId>m2</artifactId>" +
+                    "    <version>${versionProp}</version>" +
+                    "  </dependency>" +
+                    "</dependencies>");
+
+    createModulePom("m2",
+                    "<parent>" +
+                    "  <groupId>${groupProp}</groupId>" +
+                    "  <artifactId>parent</artifactId>" +
+                    "  <version>${versionProp}</version>" +
+                    "</parent>" +
+                    "<artifactId>m2</artifactId>");
+
+    importProject();
+    assertModules("parent", "m1", "m2");
+
+    assertModuleModuleDeps("m1", "m2");
+  }
+
   public void testDependencyOnSelf() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

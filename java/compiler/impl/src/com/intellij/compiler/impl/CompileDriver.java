@@ -478,7 +478,8 @@ public class CompileDriver {
               // in case another project was opened in the frame while the compiler was working (See SCR# 28591)
               statusBar.setInfo(statusMessage);
               if (duration > ONE_MINUTE_MS) {
-                ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.MESSAGES_WINDOW, MessageType.INFO, statusMessage);
+                final MessageType messageType = errorCount > 0 ? MessageType.ERROR : warningCount > 0 ? MessageType.WARNING : MessageType.INFO;
+                ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.MESSAGES_WINDOW, messageType, statusMessage);
               }
             }
             if (_status != ExitStatus.UP_TO_DATE && compileContext.getMessageCount(null) > 0) {
