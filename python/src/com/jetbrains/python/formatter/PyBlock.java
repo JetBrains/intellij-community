@@ -24,13 +24,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyStatementList;
-import com.jetbrains.python.psi.PyStatementPart;
+import com.jetbrains.python.psi.*;
+import static com.jetbrains.python.psi.PyUtil.sure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -138,6 +138,16 @@ public class PyBlock implements Block {
     }
     if (parentType == PyElementTypes.LIST_LITERAL_EXPRESSION || parentType == PyElementTypes.ARGUMENT_LIST) {
       childIndent = Indent.getContinuationIndent();
+    }
+    try { // maybe enter was pressed and cut us from a previous (nested) statement list
+      PsiElement prev = sure(child.getPsi().getPrevSibling());
+      sure(prev instanceof PyStatement);
+      PsiElement lastchild = PsiTreeUtil.getDeepestLast(prev);
+      sure(lastchild.getParent() instanceof PyStatementList);
+      childIndent = Indent.getNormalIndent();
+    }
+    catch (IncorrectOperationException ignored) {
+      // not our cup of tea
     }
 
     return new PyBlock(_language, child, childAlignment, childIndent, wrap, _settings);
