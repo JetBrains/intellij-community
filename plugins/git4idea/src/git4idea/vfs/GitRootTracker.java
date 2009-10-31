@@ -350,8 +350,7 @@ public class GitRootTracker implements VcsListener {
       }
       boolean hasUnmapped = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
         public Boolean compute() {
-          if (child.isValid()) return false;
-          return child.findChild(".git") != null && !rootSet.contains(child.getPath());
+          return child.isValid() && child.findChild(".git") != null && !rootSet.contains(child.getPath());
         }
       });
       if (hasUnmapped) {

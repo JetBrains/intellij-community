@@ -131,7 +131,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
   private void actionPerfomed(final AnActionEvent event) {
     if (myAction instanceof ActionGroup && !(myAction instanceof CustomComponentAction) && ((ActionGroup)myAction).isPopup()) {
       final ActionManagerImpl am = (ActionManagerImpl)ActionManager.getInstance();
-      ActionPopupMenu popupMenu = am.createActionPopupMenu(event.getPlace(), (ActionGroup)myAction, new PresentationFactory() {
+      ActionPopupMenu popupMenu = am.createActionPopupMenu(event.getPlace(), (ActionGroup)myAction, new MenuItemPresentationFactory() {
         @Override
         protected Presentation processPresentation(Presentation presentation) {
           if (myNoIconsInPopup) {

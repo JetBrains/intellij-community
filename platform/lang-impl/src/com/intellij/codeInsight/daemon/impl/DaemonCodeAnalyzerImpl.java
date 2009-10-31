@@ -593,7 +593,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
   @NotNull
   @TestOnly
-  public static List<HighlightInfo> getFileLeveleHighlights(Project project,PsiFile file ) {
+  public static List<HighlightInfo> getFileLevelHighlights(Project project,PsiFile file ) {
     return UpdateHighlightersUtil.getFileLeveleHighlights(project, file);
   }
 }

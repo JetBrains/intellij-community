@@ -2414,7 +2414,7 @@ public class AbstractTreeUi {
   }
 
   private void insertNodesInto(final ArrayList<TreeNode> toInsert, final DefaultMutableTreeNode parentNode) {
-    sortChildren(parentNode, toInsert, false, false);
+    sortChildren(parentNode, toInsert, false, true);
     final ArrayList<TreeNode> all = new ArrayList<TreeNode>(toInsert.size() + parentNode.getChildCount());
     all.addAll(toInsert);
     all.addAll(TreeUtil.childrenToArray(parentNode));
@@ -2424,11 +2424,21 @@ public class AbstractTreeUi {
 
       int[] newNodeIndices = new int[toInsert.size()];
       int eachNewNodeIndex = 0;
+      TreeMap<Integer, TreeNode> insertSet = new TreeMap<Integer, TreeNode>();
       for (int i = 0; i < toInsert.size(); i++) {
         TreeNode eachNewNode = toInsert.get(i);
-        while (all.get(eachNewNodeIndex) != eachNewNode) eachNewNodeIndex++;
+        while (all.get(eachNewNodeIndex) != eachNewNode) {
+          eachNewNodeIndex++;
+        }
         newNodeIndices[i] = eachNewNodeIndex;
-        parentNode.insert((MutableTreeNode)eachNewNode, eachNewNodeIndex);
+        insertSet.put(eachNewNodeIndex, eachNewNode);
+      }
+
+      Iterator<Integer> indices = insertSet.keySet().iterator();
+      while (indices.hasNext()) {
+        Integer eachIndex = indices.next();
+        TreeNode eachNode = insertSet.get(eachIndex);
+        parentNode.insert((MutableTreeNode)eachNode, eachIndex);
       }
 
       myTreeModel.nodesWereInserted(parentNode, newNodeIndices);
@@ -2457,7 +2467,9 @@ public class AbstractTreeUi {
     assert descriptor != null;
 
     if (descriptor.getChildrenSortingStamp() >= getComparatorStamp() && !forceSort) return;
-    getBuilder().sortChildren(myNodeComparator, node, children);
+    if (children.size() > 0) {
+      getBuilder().sortChildren(myNodeComparator, node, children);
+    }
 
     if (updateStamp) {
       descriptor.setChildrenSortingStamp(getComparatorStamp());
@@ -2508,7 +2520,7 @@ public class AbstractTreeUi {
   }
 
   public void select(final Object[] elements, @Nullable final Runnable onDone, boolean addToSelection, boolean deferred) {
-    _select(elements, onDone, addToSelection, true, false, true, deferred, false);
+    _select(elements, onDone, addToSelection, true, false, true, deferred, false, false);
   }
 
   void _select(final Object[] elements,
@@ -2517,7 +2529,7 @@ public class AbstractTreeUi {
                final boolean checkCurrentSelection,
                final boolean checkIfInStructure) {
 
-    _select(elements, onDone, addToSelection, checkCurrentSelection, checkIfInStructure, true, false, false);
+    _select(elements, onDone, addToSelection, checkCurrentSelection, checkIfInStructure, true, false, false, false);
   }
 
   void _select(final Object[] elements,
@@ -2527,7 +2539,14 @@ public class AbstractTreeUi {
                final boolean checkIfInStructure,
                final boolean scrollToVisible) {
 
-    _select(elements, onDone, addToSelection, checkCurrentSelection, checkIfInStructure, scrollToVisible, false, false);
+    _select(elements, onDone, addToSelection, checkCurrentSelection, checkIfInStructure, scrollToVisible, false, false, false);
+  }
+
+  public void userSelect(final Object[] elements,
+               final Runnable onDone,
+               final boolean addToSelection,
+               boolean scroll) {
+    _select(elements, onDone, addToSelection, true, false, scroll, false, true, true);    
   }
 
   void _select(final Object[] elements,
@@ -2537,7 +2556,14 @@ public class AbstractTreeUi {
                final boolean checkIfInStructure,
                final boolean scrollToVisible,
                final boolean deferred,
-               final boolean canSmartExpand) {
+               final boolean canSmartExpand,
+               final boolean mayQueue) {
+
+    AbstractTreeUpdater updater = getUpdater();
+    if (mayQueue && updater != null) {
+      updater.queueSelection(new SelectionRequest(elements, onDone, addToSelection, checkCurrentSelection, checkIfInStructure, scrollToVisible, deferred, canSmartExpand));
+      return;
+    }
 
     boolean willAffectSelection = elements.length > 0 || (elements.length == 0 && addToSelection);
     if (!willAffectSelection) {

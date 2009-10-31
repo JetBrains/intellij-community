@@ -63,9 +63,13 @@ public class AnnotationProcessingCompiler implements SourceProcessingCompiler{
     final List<ProcessingItem> items = new ArrayList<ProcessingItem>(files.length);
     final Set<Module> excludedModules = config.getExcludedModules();
     for (final VirtualFile file : files) {
-      if (excludedModules.size() == 0 || !excludedModules.contains(context.getModuleByFile(file))) {
-        items.add(new MyProcessingItem(file));
+      if (excludedModules.size() != 0 && excludedModules.contains(context.getModuleByFile(file))) {
+        continue;
       }
+      if (config.isExcludedFromCompilation(file)) {
+        continue;
+      }
+      items.add(new MyProcessingItem(file));
     }
     return items.toArray(new ProcessingItem[items.size()]);
   }

@@ -37,7 +37,8 @@ public class SMTRunnerTreeBuilder extends AbstractTestTreeBuilder {
           new DefaultTreeModel(new DefaultMutableTreeNode(structure.getRootElement())),
           structure,
           IndexComparator.INSTANCE);
-    
+
+    setCanYieldUpdate(true);
     initRootNode();
   }
 

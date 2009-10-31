@@ -41,4 +41,7 @@ public class PresentationFactory {
     return presentation;
   }
 
+  public void reset() {
+    myAction2Presentation.clear();
+  }
 }

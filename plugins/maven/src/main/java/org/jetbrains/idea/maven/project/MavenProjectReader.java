@@ -19,7 +19,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
@@ -52,6 +51,8 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+
+import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 
 public class MavenProjectReader {
   private static final String UNKNOWN = MavenId.UNKNOWN_VALUE;
@@ -453,8 +454,8 @@ public class MavenProjectReader {
   }
 
   private boolean resolveInheritance(final MavenGeneralSettings generalSettings,
-                                     Model model,
-                                     VirtualFile file,
+                                     final Model model,
+                                     final VirtualFile file,
                                      final List<String> activeProfiles,
                                      final Set<VirtualFile> recursionGuard,
                                      final MavenProjectReaderProjectLocator locator) {
@@ -528,7 +529,7 @@ public class MavenProjectReader {
       Properties context = MavenEmbedderFactory.collectSystemProperties();
 
       ProjectBuilderConfiguration config = new DefaultProjectBuilderConfiguration().setExecutionProperties(context);
-      model = interpolator.interpolate(model, basedir, config, false);
+      model = interpolator.interpolate(ModelUtils.cloneModel(model), basedir, config, false);
     }
     catch (ModelInterpolationException e) {
       MavenLog.LOG.warn(e);

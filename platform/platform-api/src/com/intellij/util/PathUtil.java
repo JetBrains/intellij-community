@@ -29,6 +29,8 @@ import java.io.File;
 import java.util.StringTokenizer;
 
 public class PathUtil {
+  private PathUtil() {
+  }
 
   public static String getLocalPath(VirtualFile file) {
     if (file == null || !file.isValid()) {
@@ -125,17 +127,30 @@ public class PathUtil {
   }
 
   public static String suggestFileName(final String text) {
-    return text.replace(' ', '_')
-               .replace('.', '_')
-               .replace(File.separatorChar, '_')
-               .replace('\t', '_')
-               .replace('\n', '_')
-               .replace(':', '_')
-               .replace('*', '_')
-               .replace('?', '_')
-               .replace('<', '_')
-               .replace('>', '_')
-               .replace('/', '_')
-               .replace('"', '_');
+    StringBuilder result = new StringBuilder();
+    for (int i = 0; i < text.length(); i++) {
+      char c = text.charAt(i);
+      if (!isValidFileNameChar(c) || c == '.' || Character.isWhitespace(c)) {
+        result.append('_');
+      }
+      else {
+        result.append(c);
+      }
+    }
+    return result.toString();
+  }
+
+  public static boolean isValidFileName(@NotNull String fileName) {
+    for (int i = 0; i < fileName.length(); i++) {
+      if (!isValidFileNameChar(fileName.charAt(i))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static boolean isValidFileNameChar(char c) {
+    return c != '/' && c != '\\' && c != '\t' && c != '\n' && c != '\r' && c != ':' && c != ';' && c != '*' && c != '?'
+        && c != '"' && c != '\'' && c != '<' && c != '>';
   }
 }

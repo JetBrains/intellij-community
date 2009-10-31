@@ -27,6 +27,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.libraries.Library;
@@ -142,6 +143,13 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
       );
     }
     return myModifiableRootModelProxy;
+  }
+
+  public ModuleRootModel getRootModel() {
+    if (myModifiableRootModel != null) {
+      return getModifiableRootModelProxy();
+    }
+    return ModuleRootManager.getInstance(myModule);
   }
 
   public boolean isModified() {

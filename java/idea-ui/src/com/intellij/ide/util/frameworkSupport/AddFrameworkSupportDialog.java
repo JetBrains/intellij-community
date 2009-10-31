@@ -6,7 +6,6 @@ package com.intellij.ide.util.frameworkSupport;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksPanel;
-import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
@@ -78,6 +77,11 @@ public class AddFrameworkSupportDialog extends DialogWrapper {
       }
     }.execute();
     super.doOKAction();
+  }
+
+  @Override
+  protected String getHelpId() {
+    return "reference.frameworks.support.dialog";
   }
 
   protected JComponent createCenterPanel() {

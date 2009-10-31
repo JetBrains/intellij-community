@@ -56,22 +56,7 @@ public abstract class BuildParticipantBase extends BuildParticipant {
     final ConfigFile[] deploymentDescriptors = getDeploymentDescriptors();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        for (ConfigFile descriptor : deploymentDescriptors) {
-          VirtualFile virtualFile = descriptor.getVirtualFile();
-          if (virtualFile != null) {
-            ConfigFileMetaData metaData = descriptor.getMetaData();
-            final File file = VfsUtil.virtualToIoFile(virtualFile);
-            final String fileName;
-            if (metaData.isFileNameFixed()) {
-              fileName = metaData.getFileName();
-            }
-            else {
-              fileName = virtualFile.getName();
-            }
-            instructions.addFileCopyInstruction(file, false, myModule, metaData.getDirectoryPath() + "/" + fileName, null);
-          }
-
-        }
+        registerDescriptorCopyingInstructions(BuildParticipantBase.this.myModule, deploymentDescriptors, instructions);
 
 
         final CustomConfigFile[] customDescriptors = getCustomDescriptors();
@@ -85,6 +70,25 @@ public abstract class BuildParticipantBase extends BuildParticipant {
         }
       }
     });
+  }
+
+  public static void registerDescriptorCopyingInstructions(Module module, ConfigFile[] deploymentDescriptors, BuildRecipe instructions) {
+    for (ConfigFile descriptor : deploymentDescriptors) {
+      VirtualFile virtualFile = descriptor.getVirtualFile();
+      if (virtualFile != null) {
+        ConfigFileMetaData metaData = descriptor.getMetaData();
+        final File file = VfsUtil.virtualToIoFile(virtualFile);
+        final String fileName;
+        if (metaData.isFileNameFixed()) {
+          fileName = metaData.getFileName();
+        }
+        else {
+          fileName = virtualFile.getName();
+        }
+        instructions.addFileCopyInstruction(file, false, module, metaData.getDirectoryPath() + "/" + fileName, null);
+      }
+
+    }
   }
 
   protected CustomConfigFile[] getCustomDescriptors() {

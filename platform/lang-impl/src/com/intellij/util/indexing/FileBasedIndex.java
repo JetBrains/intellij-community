@@ -832,27 +832,35 @@ public class FileBasedIndex implements ApplicationComponent {
     void process(final int inputId, V value);
   }
 
-  public <K, V> void processAllValues(final ID<K, V> indexId, AllValuesProcessor<V> processor, @NotNull Project project) {
+  public <K, V> void processAllValues(final ID<K, V> indexId, final AllValuesProcessor<V> processor, @NotNull Project project) {
     try {
       ensureUpToDate(indexId, project, null);
       final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
       if (index == null) {
         return;
       }
-      try {
-        index.getReadLock().lock();
-        for (K dataKey : index.getAllKeys()) {
-          final ValueContainer<V> container = index.getData(dataKey);
-          for (final Iterator<V> it = container.getValueIterator(); it.hasNext();) {
-            final V value = it.next();
-            for (final ValueContainer.IntIterator inputsIt = container.getInputIdsIterator(value); inputsIt.hasNext();) {
-              processor.process(inputsIt.next(), value);
+      final Ref<StorageException> storageEx = new Ref<StorageException>(null);
+      index.processAllKeys(new Processor<K>() {
+        public boolean process(K dataKey) {
+          try {
+            final ValueContainer<V> container = index.getData(dataKey);
+            for (final Iterator<V> it = container.getValueIterator(); it.hasNext();) {
+              final V value = it.next();
+              for (final ValueContainer.IntIterator inputsIt = container.getInputIdsIterator(value); inputsIt.hasNext();) {
+                processor.process(inputsIt.next(), value);
+              }
             }
+            return true;
+          }
+          catch (StorageException e) {
+            storageEx.set(e);
+            return false;
           }
         }
-      }
-      finally {
-        index.getReadLock().unlock();
+      });
+      final StorageException ex = storageEx.get();
+      if (ex != null) {
+        throw ex;
       }
     }
     catch (StorageException e) {
@@ -1030,51 +1038,66 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
-  // returns false if doc was not indexed because the file does not fit in scope
-  private boolean indexUnsavedDocument(final Document document, final ID<?, ?> requestedIndexId, Project project, GlobalSearchScope filter) throws StorageException {
-    final VirtualFile vFile = myFileDocumentManager.getFile(document);
-    if (!(vFile instanceof VirtualFileWithId) || !vFile.isValid()) {
-      return true;
-    }
-    if (filter != null && !filter.accept(vFile)) {
-      return false;
-    }
-    final PsiFile dominantContentFile = findDominantPsiForDocument(document, project);
-
-    DocumentContent content;
-    if (dominantContentFile != null && dominantContentFile.getModificationStamp() != document.getModificationStamp()) {
-      content = new PsiContent(document, dominantContentFile);
-    }
-    else {
-      content = new AuthenticContent(document);
-    }
-
-    final long currentDocStamp = content.getModificationStamp();
-    if (currentDocStamp != myLastIndexedDocStamps.getAndSet(document, requestedIndexId, currentDocStamp).longValue()) {
-      final FileContent newFc = new FileContent(vFile, content.getText(), vFile.getCharset());
-
-      if (dominantContentFile != null) {
-        dominantContentFile.putUserData(PsiFileImpl.BUILDING_STUB, true);
-        newFc.putUserData(PSI_FILE, dominantContentFile);
-      }
-
-      if (content instanceof AuthenticContent) {
-        newFc.putUserData(EDITOR_HIGHLIGHTER, document instanceof DocumentImpl
-                                              ? ((DocumentImpl)document).getEditorHighlighterForCachesBuilding() : null);
-      }
-
-      if (getInputFilter(requestedIndexId).acceptInput(vFile)) {
-        newFc.putUserData(PROJECT, project);
-        final int inputId = Math.abs(getFileId(vFile));
-        getIndex(requestedIndexId).update(inputId, newFc);
-      }
-
-      if (dominantContentFile != null) {
-        dominantContentFile.putUserData(PsiFileImpl.BUILDING_STUB, null);
-      }
-    }
+// returns false if doc was not indexed because the file does not fit in scope
+private boolean indexUnsavedDocument(final Document document, final ID<?, ?> requestedIndexId, final Project project,
+                                     GlobalSearchScope filter) throws StorageException {
+  final VirtualFile vFile = myFileDocumentManager.getFile(document);
+  if (!(vFile instanceof VirtualFileWithId) || !vFile.isValid()) {
     return true;
   }
+  if (filter != null && !filter.accept(vFile)) {
+    return false;
+  }
+  final PsiFile dominantContentFile = findDominantPsiForDocument(document, project);
+
+  final DocumentContent content;
+  if (dominantContentFile != null && dominantContentFile.getModificationStamp() != document.getModificationStamp()) {
+    content = new PsiContent(document, dominantContentFile);
+  }
+  else {
+    content = new AuthenticContent(document);
+  }
+
+  final long currentDocStamp = content.getModificationStamp();
+  if (currentDocStamp != myLastIndexedDocStamps.getAndSet(document, requestedIndexId, currentDocStamp).longValue()) {
+    final Ref<StorageException> exRef = new Ref<StorageException>(null);
+    ProgressManager.getInstance().executeNonCancelableSection(new Runnable() {
+      public void run() {
+        try {
+          final FileContent newFc = new FileContent(vFile, content.getText(), vFile.getCharset());
+
+          if (dominantContentFile != null) {
+                dominantContentFile.putUserData(PsiFileImpl.BUILDING_STUB, true);
+                newFc.putUserData(PSI_FILE, dominantContentFile);
+              }
+
+          if (content instanceof AuthenticContent) {
+                newFc.putUserData(EDITOR_HIGHLIGHTER, document instanceof DocumentImpl
+                                                      ? ((DocumentImpl)document).getEditorHighlighterForCachesBuilding() : null);
+              }
+
+          if (getInputFilter(requestedIndexId).acceptInput(vFile)) {
+                newFc.putUserData(PROJECT, project);
+                final int inputId = Math.abs(getFileId(vFile));
+                getIndex(requestedIndexId).update(inputId, newFc);
+              }
+
+          if (dominantContentFile != null) {
+                dominantContentFile.putUserData(PsiFileImpl.BUILDING_STUB, null);
+              }
+        }
+        catch (StorageException e) {
+          exRef.set(e);
+        }
+      }
+    });
+    final StorageException storageException = exRef.get();
+    if (storageException != null) {
+      throw storageException;
+    }
+  }
+  return true;
+}
 
   public static final Key<PsiFile> PSI_FILE = new Key<PsiFile>("PSI for stubs");
   public static final Key<EditorHighlighter> EDITOR_HIGHLIGHTER = new Key<EditorHighlighter>("Editor");
@@ -1249,7 +1272,21 @@ public class FileBasedIndex implements ApplicationComponent {
       final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
       assert index != null;
 
-      index.update(inputId, currentFC);
+      final Ref<StorageException> exRef = new Ref<StorageException>(null);
+      ProgressManager.getInstance().executeNonCancelableSection(new Runnable() {
+        public void run() {
+          try {
+            index.update(inputId, currentFC);
+          }
+          catch (StorageException e) {
+            exRef.set(e);
+          }
+        }
+      });
+      final StorageException storageException = exRef.get();
+      if (storageException != null) {
+        throw storageException;
+      }
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
           if (file.isValid()) {

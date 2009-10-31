@@ -274,40 +274,6 @@ public class ProcessingItemsBuilder extends BuildInstructionVisitor {
     }
   }
 
-  public boolean visitCompoundBuildInstruction(final CompoundBuildInstruction instruction) throws Exception {
-    String outputPath = DeploymentUtil.appendToPath(myOutputPaths.peek(), instruction.getOutputRelativePath());
-    myOutputPaths.push(outputPath);
-    BuildRecipe childInstructions = instruction.getChildInstructions(myContext.getCompileContext());
-    NestedJarInfo oldNestedJar = null;
-    if (myNestedJars != null) {
-      if (instruction.isExternalDependencyInstruction()) {
-        oldNestedJar = myNestedJars.pop();
-      }
-      DestinationInfo destinationInfo;
-      if (!myNestedJars.isEmpty()) {
-        NestedJarInfo nestedJar = myNestedJars.peek();
-        destinationInfo = new JarDestinationInfo(trimParentPrefix(instruction.getOutputRelativePath()), nestedJar.myJarInfo, nestedJar.myDestination);
-      }
-      else {
-        String jarPath = getCanonicalConcat(myBuildConfiguration.getJarPath(), instruction.getOutputRelativePath());
-        destinationInfo = createExplodedDestination(jarPath);
-      }
-      myNestedJars.push(myContext.createNestedJarInfo(destinationInfo, instruction.getBuildProperties(), childInstructions));
-    }
-
-    buildItems(childInstructions);
-
-    if (myNestedJars != null) {
-      myNestedJars.pop();
-      if (oldNestedJar != null) {
-        myNestedJars.push(oldNestedJar);
-      }
-    }
-    myOutputPaths.pop();
-
-    return true;
-  }
-
   public static class NestedJarInfo {
     private final JarInfo myJarInfo;
     private final DestinationInfo myDestination;

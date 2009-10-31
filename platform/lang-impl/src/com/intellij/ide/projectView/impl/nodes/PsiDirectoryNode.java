@@ -210,7 +210,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
     if (bookmarkAtFile != null) {
       RowIcon composite = new RowIcon(2);
       composite.setIcon(original, 0);
-      composite.setIcon(Bookmark.TICK, 1);
+      composite.setIcon(bookmarkAtFile.getIcon(), 1);
       return addReadMark(composite, file.isWritable());
     }
 

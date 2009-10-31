@@ -104,10 +104,6 @@ public abstract class ContainerElement implements JDOMExternalizable, Cloneable,
     return 0;
   }
 
-  public abstract String getDescription();
-
-  public abstract String getDescriptionForPackagingMethod(PackagingMethod method);
-
   public ContainerElement clone() {
     throw new UnsupportedOperationException();
   }

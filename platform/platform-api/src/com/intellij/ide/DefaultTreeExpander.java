@@ -32,17 +32,26 @@ public class DefaultTreeExpander implements TreeExpander {
 
   public void expandAll() {
     TreeUtil.expandAll(myTree);
+    showSelectionCentered();
   }
 
   public boolean canExpand() {
-    return true;
+    return myTree.isShowing();
   }
 
   public void collapseAll() {
-    TreeUtil.collapseAll(myTree, 0);
+    TreeUtil.collapseAll(myTree, 1);
+    showSelectionCentered();
+  }
+
+  private void showSelectionCentered() {
+    final int[] rowz = myTree.getSelectionRows();
+    if (rowz != null && rowz.length > 0) {
+      TreeUtil.showRowCentered(myTree, rowz[0], false);
+    }
   }
 
   public boolean canCollapse() {
-    return true;
+    return myTree.isShowing();
   }
 }

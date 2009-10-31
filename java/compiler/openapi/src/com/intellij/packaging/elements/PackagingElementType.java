@@ -57,8 +57,8 @@ public abstract class PackagingElementType<E extends PackagingElement<?>> {
   public abstract boolean canCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact);
 
   @NotNull 
-  public abstract List<? extends E> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
-                                                    @NotNull CompositePackagingElement<?> parent);
+  public abstract List<? extends PackagingElement<?>> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
+                                                                      @NotNull CompositePackagingElement<?> parent);
 
   @NotNull
   public abstract E createEmpty(@NotNull Project project);

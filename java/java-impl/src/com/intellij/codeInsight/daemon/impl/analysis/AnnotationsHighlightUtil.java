@@ -148,7 +148,7 @@ public class AnnotationsHighlightUtil {
       if (annotation == annotationToCheck) continue;
       PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
       if (nameRef == null) continue;
-      PsiClass aClass = (PsiClass)nameRef.resolve();
+      PsiElement aClass = nameRef.resolve();
       if (resolved.equals(aClass)) {
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, element, JavaErrorMessages.message("annotation.duplicate.annotation"));
       }

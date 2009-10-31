@@ -232,9 +232,13 @@ public class ImportHelper{
 
     Map<String, Set<String>> classNames = new THashMap<String, Set<String>>();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(file.getProject());
-    for (String onDemand : onDemands) {
+    for (int i = onDemands.size()-1; i>=0; i--) {
+      String onDemand = onDemands.get(i);
       PsiPackage aPackage = facade.findPackage(onDemand);
-      if (aPackage == null) continue;
+      if (aPackage == null) {
+        onDemands.remove(i);
+        continue;
+      }
       PsiClass[] psiClasses = aPackage.getClasses(resolveScope);
       Set<String> set = new THashSet<String>(psiClasses.length);
       for (PsiClass psiClass : psiClasses) {

@@ -620,7 +620,11 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
                element instanceof PsiThisExpression || element instanceof PsiSuperExpression ||
                element instanceof PsiTypeElement ||
                element instanceof PsiClassObjectAccessExpression) {
-          context.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, element.getTextRange().getEndOffset());
+          int newEnd = element.getTextRange().getEndOffset();
+          if (element instanceof PsiMethodCallExpression) {
+            newEnd = ((PsiMethodCallExpression)element).getMethodExpression().getElement().getTextRange().getEndOffset();
+          }
+          context.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, newEnd);
           element = element.getParent();
         }
       }

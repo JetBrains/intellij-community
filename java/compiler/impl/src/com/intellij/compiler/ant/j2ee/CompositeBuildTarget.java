@@ -41,7 +41,6 @@ public class CompositeBuildTarget extends CompositeGenerator {
                               final String depends, @Nullable String jarPath) {
 
     final File moduleBaseDir = parameters.getChunk().getBaseDir();
-    final Module containingModule = parameters.getContainingModule();
     final Target buildTarget = new Target(targetName, depends, targetDescription, null);
     final BuildConfiguration buildConfiguration = parameters.getBuildConfiguration();
 

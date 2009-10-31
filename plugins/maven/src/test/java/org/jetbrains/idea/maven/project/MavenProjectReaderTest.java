@@ -737,6 +737,28 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("value", p.getName());
   }
 
+  public void testPropertiesFromParentInParentSection() throws Exception {
+    createProjectPom("<groupId>${groupProp}</groupId>" +
+                     "<artifactId>parent</artifactId>" +
+                     "<version>${versionProp}</version>" +
+
+                     "<properties>" +
+                     "  <groupProp>test</groupProp>" +
+                     "  <versionProp>1</versionProp>" +
+                     "</properties>");
+
+    VirtualFile module = createModulePom("module",
+                                         "<parent>" +
+                                         "  <groupId>${groupProp}</groupId>" +
+                                         "  <artifactId>parent</artifactId>" +
+                                         "  <version>${versionProp}</version>" +
+                                         "</parent>" +
+                                         "<artifactId>module</artifactId>");
+
+    org.apache.maven.project.MavenProject p = readProject(module);
+    assertEquals("test:module:1", p.getGroupId() + ":" + p.getArtifactId() + ":" + p.getVersion());
+  }
+
   public void testInheritingSettingsFromParentAndAlignCorrectly() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
