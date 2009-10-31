@@ -60,7 +60,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
                 JavaCodeStyleManager.getInstance(project);
         final String indexText =
                 codeStyleManager.suggestUniqueVariableName("i", statement, true);
-        final String iteratedValueText;
+        final String variableNameRoot;
         if (iteratedValue instanceof PsiMethodCallExpression) {
             final PsiMethodCallExpression methodCallExpression =
                     (PsiMethodCallExpression)iteratedValue;
@@ -71,38 +71,38 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
                 return;
             }
             if (name.startsWith("to") && name.length() > 2) {
-                iteratedValueText = StringUtil.decapitalize(name.substring(2));
+                variableNameRoot = StringUtil.decapitalize(name.substring(2));
             } else if (name.startsWith("get") && name.length() > 3) {
-                iteratedValueText = StringUtil.decapitalize(name.substring(3));
+                variableNameRoot = StringUtil.decapitalize(name.substring(3));
             } else {
-                iteratedValueText = name;
+                variableNameRoot = name;
             }
         } else if (iteratedValue instanceof PsiTypeCastExpression) {
-            PsiTypeCastExpression castExpression =
+            final PsiTypeCastExpression castExpression =
                     (PsiTypeCastExpression) iteratedValue;
             final PsiExpression operand = castExpression.getOperand();
             if (operand == null) {
-                iteratedValueText = "";
+                variableNameRoot = "";
             } else {
-                iteratedValueText = operand.getText();
+                variableNameRoot = operand.getText();
             }
         } else {
-            iteratedValueText = iteratedValue.getText();
+            variableNameRoot = iteratedValue.getText();
         }
         final String lengthText;
         if (isArray) {
             lengthText = codeStyleManager.suggestUniqueVariableName(
-                    iteratedValueText + "Length", statement, true);
+                    variableNameRoot + "Length", statement, true);
         } else {
             lengthText = codeStyleManager.suggestUniqueVariableName(
-                    iteratedValueText + "Size", statement, true);
+                    variableNameRoot + "Size", statement, true);
         }
         final CodeStyleSettings codeStyleSettings =
                 CodeStyleSettingsManager.getSettings(project);
         if (iteratedValue instanceof PsiMethodCallExpression) {
             final String variableName =
                     codeStyleManager.suggestUniqueVariableName(
-                            iteratedValueText, statement, true);
+                            variableNameRoot, statement, true);
             final StringBuilder declaration = new StringBuilder();
             if (codeStyleSettings.GENERATE_FINAL_LOCALS) {
                 declaration.append("final ");
@@ -111,7 +111,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
             declaration.append(' ');
             declaration.append(variableName);
             declaration.append('=');
-            declaration.append(iteratedValueText);
+            declaration.append(iteratedValue.getText());
             declaration.append(';');
             final PsiElementFactory elementFactory =
                     JavaPsiFacade.getElementFactory(project);
@@ -132,7 +132,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
             newStatement.append(iteratedValue.getText());
             newStatement.append(')');
         } else {
-            newStatement.append(iteratedValueText);
+            newStatement.append(variableNameRoot);
         }
         if (isArray) {
             newStatement.append(".length;");
@@ -158,7 +158,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
             newStatement.append(iteratedValue.getText());
             newStatement.append(')');
         } else {
-            newStatement.append(iteratedValueText);
+            newStatement.append(variableNameRoot);
         }
         if (isArray) {
             newStatement.append('[');
