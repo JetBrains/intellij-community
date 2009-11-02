@@ -28,7 +28,6 @@ import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInspection.HintAction;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.openapi.project.Project;
@@ -131,7 +130,7 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
 
     if (classes.length == 1
-        && CodeStyleSettingsManager.getSettings(project).ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY
+        && com.intellij.codeInsight.CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY
         && (allowCaretNearRef || !isCaretNearRef(editor, myRef))
         && !JspPsiUtil.isInJspFile(psiFile)
         && codeAnalyzer.canChangeFileSilently(psiFile)

@@ -105,6 +105,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   private final PassExecutorService myPassExecutorService;
   private static final Key<List<HighlightInfo>> HIGHLIGHTS_TO_REMOVE_KEY = Key.create("HIGHLIGHTS_TO_REMOVE");
 
+
   public DaemonCodeAnalyzerImpl(Project project, DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings, EditorTracker editorTracker) {
     myProject = project;
 
@@ -615,4 +616,5 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   public static List<HighlightInfo> getFileLevelHighlights(Project project,PsiFile file ) {
     return UpdateHighlightersUtil.getFileLeveleHighlights(project, file);
   }
+
 }

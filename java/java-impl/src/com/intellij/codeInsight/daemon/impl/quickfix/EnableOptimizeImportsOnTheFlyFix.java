@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -22,7 +23,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.annotations.NotNull;
 
 public class EnableOptimizeImportsOnTheFlyFix implements IntentionAction{
@@ -39,12 +39,12 @@ public class EnableOptimizeImportsOnTheFlyFix implements IntentionAction{
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return file.getManager().isInProject(file)
            && file instanceof PsiJavaFile
-           && !CodeStyleSettingsManager.getSettings(project).OPTIMIZE_IMPORTS_ON_THE_FLY
+           && !com.intellij.codeInsight.CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY
       ;
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    CodeStyleSettingsManager.getSettings(project).OPTIMIZE_IMPORTS_ON_THE_FLY = true;
+    CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY = true;
     DaemonCodeAnalyzer.getInstance(project).restart();
   }
 
