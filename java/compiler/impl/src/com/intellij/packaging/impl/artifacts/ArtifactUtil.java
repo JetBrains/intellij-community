@@ -393,12 +393,14 @@ public class ArtifactUtil {
         }
         else if (element instanceof ModuleOutputPackagingElement) {
           final Module module = ((ModuleOutputPackagingElement)element).findModule(context);
-          final ContentEntry[] contentEntries = context.getModulesProvider().getRootModel(module).getContentEntries();
-          for (ContentEntry contentEntry : contentEntries) {
-            for (SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
-              final VirtualFile sourceRoot = sourceFolder.getFile();
-              if (!sourceFolder.isTestSource() && sourceRoot != null) {
-                ContainerUtil.addIfNotNull(sourceRoot.findFileByRelativePath(path), result);
+          if (module != null) {
+            final ContentEntry[] contentEntries = context.getModulesProvider().getRootModel(module).getContentEntries();
+            for (ContentEntry contentEntry : contentEntries) {
+              for (SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
+                final VirtualFile sourceRoot = sourceFolder.getFile();
+                if (!sourceFolder.isTestSource() && sourceRoot != null) {
+                  ContainerUtil.addIfNotNull(sourceRoot.findFileByRelativePath(path), result);
+                }
               }
             }
           }
