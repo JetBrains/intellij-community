@@ -26,7 +26,7 @@ import java.util.Collections;
 /**
  * @author nik
  */
-public class PluginBuildParticipantProvider extends BuildParticipantProvider<PluginBuildParticipant> {
+public class PluginBuildParticipantProvider extends BuildParticipantProvider {
   public Collection<PluginBuildParticipant> getParticipants(final Module module) {
     if (module.getModuleType() != PluginModuleType.getInstance()) {
       return Collections.emptyList();

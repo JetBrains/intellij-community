@@ -21,23 +21,26 @@ import com.intellij.openapi.compiler.make.BuildConfiguration;
 import com.intellij.openapi.compiler.make.BuildParticipantBase;
 import com.intellij.openapi.compiler.make.BuildRecipe;
 import com.intellij.openapi.deployment.DeploymentUtil;
-import com.intellij.openapi.deployment.LibraryLink;
-import com.intellij.openapi.deployment.ModuleLink;
-import com.intellij.openapi.deployment.PackagingMethod;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.elements.ArtifactRootElement;
+import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.elements.PackagingElementFactory;
+import com.intellij.packaging.impl.artifacts.ArtifactImpl;
+import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.descriptors.ConfigFile;
-import com.intellij.util.descriptors.CustomConfigFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NonNls;
@@ -48,8 +51,8 @@ import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
-import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 
 /**
  * @author peter
@@ -58,43 +61,131 @@ public class PluginBuildParticipant extends BuildParticipantBase {
   @NonNls private static final String CLASSES = "/classes";
   @NonNls private static final String LIB = "/lib/";
   @NonNls private static final String LIB_DIRECTORY = "lib";
+  private final Module myModule;
   private final PluginBuildConfiguration myPluginBuildConfiguration;
 
   public PluginBuildParticipant(final Module module, final PluginBuildConfiguration pluginBuildConfiguration) {
     super(module);
+    myModule = module;
     myPluginBuildConfiguration = pluginBuildConfiguration;
   }
 
   public BuildRecipe getBuildInstructions(final CompileContext context) {
     //todo[nik] cache?
     final BuildRecipe buildRecipe = DeploymentUtil.getInstance().createBuildRecipe();
-    registerBuildInstructions(buildRecipe, context);
     return buildRecipe;
   }
 
-  protected void registerBuildInstructions(final BuildRecipe instructions, final CompileContext context) {
-    Sdk jdk = IdeaJdk.findIdeaJdk(ModuleRootManager.getInstance(getModule()).getSdk());
+  @Override
+  public Artifact createArtifact(CompileContext context) {
+    Sdk jdk = IdeaJdk.findIdeaJdk(ModuleRootManager.getInstance(myModule).getSdk());
     if (jdk != null && IdeaJdk.isFromIDEAProject(jdk.getHomePath())) {
-      return;
+      return null;
     }
-
-    registerDescriptorCopyingInstructions(instructions, context);
 
     if (jdk == null) {
-      context.addMessage(CompilerMessageCategory.ERROR, DevKitBundle.message("jdk.type.incorrect", getModule().getName()), null, -1, -1);
-      return;
+      context.addMessage(CompilerMessageCategory.ERROR, DevKitBundle.message("jdk.type.incorrect", myModule.getName()), null, -1, -1);
+      return null;
     }
 
-    final Module[] wrongSetDependencies = PluginBuildUtil.getWrongSetDependencies(getModule());
+    final String outputPath = PluginBuildUtil.getPluginExPath(myModule);
+    if (outputPath == null) {
+      return null;
+    }
+
+    if (!checkDependencies(context)) {
+      return null;
+    }
+
+
+    final PackagingElementFactory factory = PackagingElementFactory.getInstance();
+    final ArtifactRootElement<?> root = factory.createArtifactRootElement();
+
+    ConfigFile configFile = myPluginBuildConfiguration.getPluginXML();
+    if (configFile != null) {
+      DeploymentUtil.getInstance().checkConfigFile(configFile, context, myModule);
+      factory.addFileCopy(root, "META-INF/", VfsUtil.urlToPath(configFile.getUrl()));
+
+      final XmlFile xmlFile = configFile.getXmlFile();
+      if (xmlFile != null) {
+        final XmlDocument document = xmlFile.getDocument();
+        if (document != null) {
+          final DomElement domElement = DomManager.getDomManager(xmlFile.getProject()).getDomElement(document.getRootTag());
+          if (domElement instanceof IdeaPlugin) {
+            for(Dependency dependency: ((IdeaPlugin)domElement).getDependencies()) {
+              final String file = dependency.getConfigFile().getValue();
+              final VirtualFile virtualFile = configFile.getVirtualFile();
+              assert virtualFile != null;
+              final VirtualFile parent = virtualFile.getParent();
+              assert parent != null;
+              final String url = parent.getUrl();
+              factory.addFileCopy(root, "META-INF/", VfsUtil.urlToPath(url) + "/" + file);
+            }
+          }
+        }
+      }
+    }
+
+    HashSet<Module> modules = new HashSet<Module>();
+    PluginBuildUtil.getDependencies(myModule, modules);
+
+    final CompositePackagingElement<?> classesDir = factory.getOrCreateDirectory(root, CLASSES);
+    for (Module dep : modules) {
+      classesDir.addOrFindChild(factory.createModuleOutput(dep));
+    }
+    classesDir.addOrFindChild(factory.createModuleOutput(myModule));
+
+    HashSet<Library> libs = new HashSet<Library>();
+    PluginBuildUtil.getLibraries(myModule, libs);
+    for (Module dependentModule : modules) {
+      PluginBuildUtil.getLibraries(dependentModule, libs);
+    }
+
+
+    // libraries
+    final VirtualFile libDir = jdk.getHomeDirectory().findFileByRelativePath(LIB_DIRECTORY);
+    for (Library library : libs) {
+      boolean hasDirsOnly = true;
+      VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
+      for (VirtualFile file : files) {
+        if (file.getFileSystem() instanceof JarFileSystem) {
+          hasDirsOnly = false;
+          file = ((JarFileSystem)file.getFileSystem()).getVirtualFileForJar(file);
+        }
+        if (libDir != null && file != null && VfsUtil.isAncestor(libDir, file, false)) {
+          context.addMessage(CompilerMessageCategory.ERROR, DevKitBundle.message("dont.add.idea.libs.to.classpath", file.getName()), null,
+                             -1, -1);
+        }
+      }
+
+      final List<? extends PackagingElement<?>> elements = factory.createLibraryElements(library);
+      if (hasDirsOnly) {
+        //todo split one lib into 2 separate libs if there are jars and dirs
+        classesDir.addOrFindChildren(elements);
+      }
+      else {
+        factory.getOrCreateDirectory(root, LIB).addOrFindChildren(elements);
+      }
+    }
+    
+    return new ArtifactImpl(getArtifactName(), PlainArtifactType.getInstance(), false, root, FileUtil.toSystemIndependentName(outputPath));
+  }
+
+  private String getArtifactName() {
+    return myModule.getName() + ":plugin";
+  }
+
+  private boolean checkDependencies(CompileContext context) {
+    final Module[] wrongSetDependencies = PluginBuildUtil.getWrongSetDependencies(myModule);
     if (wrongSetDependencies.length != 0) {
       boolean realProblems = false;
-      final String pluginId = DescriptorUtil.getPluginId(getModule());
+      final String pluginId = DescriptorUtil.getPluginId(myModule);
 
       for (Module dependency : wrongSetDependencies) {
         if (!PluginModuleType.isOfType(dependency)) {
           realProblems = true;
           context.addMessage(CompilerMessageCategory.ERROR,
-                             DevKitBundle.message("incorrect.dependency.non-plugin-module", dependency.getName(), getModule().getName()), null,
+                             DevKitBundle.message("incorrect.dependency.non-plugin-module", dependency.getName(), myModule.getName()), null,
                              -1, -1);
         }
         else {
@@ -114,115 +205,18 @@ public class PluginBuildParticipant extends BuildParticipantBase {
             // make this a warning instead?
             realProblems = true;
             context.addMessage(CompilerMessageCategory.ERROR,
-                               DevKitBundle.message("incorrect.dependency.not-declared", dependency.getName(), getModule().getName()), null, -1,
+                               DevKitBundle.message("incorrect.dependency.not-declared", dependency.getName(), myModule.getName()), null, -1,
                                -1);
           }
         }
       }
-      if (realProblems) return;
+      if (realProblems) return false;
     }
-
-    final String explodedPath = myPluginBuildConfiguration.getExplodedPath();
-    if (explodedPath == null) return; //where to put everything?
-    HashSet<Module> modules = new HashSet<Module>();
-    PluginBuildUtil.getDependencies(getModule(), modules);
-
-    ModuleLink[] containingModules = new ModuleLink[modules.size()];
-    int i = 0;
-    final DeploymentUtil makeUtil = DeploymentUtil.getInstance();
-    for (Module dep : modules) {
-      ModuleLink link = makeUtil.createModuleLink(dep, getModule());
-      containingModules[i++] = link;
-      link.setPackagingMethod(PackagingMethod.COPY_FILES);
-      link.setURI(CLASSES);
-    }
-
-    // output may be excluded, copy it nevertheless
-    makeUtil.addModuleOutputContents(context, instructions, getModule(), getModule(), CLASSES, explodedPath, null);
-
-    // child Java utility modules
-    makeUtil.addJavaModuleOutputs(getModule(), containingModules, instructions, context, explodedPath, DevKitBundle.message("presentable.plugin.module.name",
-                                                                                                                            ModuleUtil.getModuleNameInReadAction(getModule())));
-
-    HashSet<Library> libs = new HashSet<Library>();
-    PluginBuildUtil.getLibraries(getModule(), libs);
-    for (Module dependentModule : modules) {
-      PluginBuildUtil.getLibraries(dependentModule, libs);
-    }
-
-    final LibraryLink[] libraryLinks = new LibraryLink[libs.size()];
-    i = 0;
-    for (Library library : libs) {
-      LibraryLink link = makeUtil.createLibraryLink(library, getModule());
-      libraryLinks[i++] = link;
-      link.setPackagingMethod(PackagingMethod.COPY_FILES);
-      final boolean onlyDirs = link.hasDirectoriesOnly();
-      if (onlyDirs) {//todo split one lib into 2 separate libs if there are jars and dirs
-        link.setURI(CLASSES);
-      }
-      else {
-        link.setURI(LIB);
-      }
-    }
-
-    // libraries
-    final VirtualFile libDir = jdk.getHomeDirectory().findFileByRelativePath(LIB_DIRECTORY);
-    for (i = 0; i < libraryLinks.length; i++) {
-      LibraryLink libraryLink = libraryLinks[i];
-      final Library library = libraryLink.getLibrary();
-      if (library != null) {
-        VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
-        for (VirtualFile file : files) {
-          if (file.getFileSystem() instanceof JarFileSystem) {
-            file = ((JarFileSystem)file.getFileSystem()).getVirtualFileForJar(file);
-          }
-          if (libDir != null && file != null && VfsUtil.isAncestor(libDir, file, false)) {
-            context.addMessage(CompilerMessageCategory.ERROR, DevKitBundle.message("dont.add.idea.libs.to.classpath", file.getName()), null,
-                               -1, -1);
-          }
-        }
-        makeUtil.addLibraryLink(context, instructions, libraryLink, getModule(), explodedPath);
-      }
-    }
-  }
-
-  protected CustomConfigFile[] getCustomDescriptors() {
-    final ConfigFile[] configFiles = getDeploymentDescriptors();
-    if (configFiles.length == 1) {
-      final ConfigFile configFile = configFiles[0];
-      final XmlFile xmlFile = configFile.getXmlFile();
-      if (xmlFile != null) {
-        final XmlDocument document = xmlFile.getDocument();
-        if (document != null) {
-          final DomElement domElement = DomManager.getDomManager(xmlFile.getProject()).getDomElement(document.getRootTag());
-          if (domElement instanceof IdeaPlugin) {
-            final ArrayList<CustomConfigFile> list = new ArrayList<CustomConfigFile>();
-            for(Dependency dependency: ((IdeaPlugin)domElement).getDependencies()) {
-              final String file = dependency.getConfigFile().getValue();
-              final VirtualFile virtualFile = configFile.getVirtualFile();
-              assert virtualFile != null;
-              final VirtualFile parent = virtualFile.getParent();
-              assert parent != null;
-              final String url = parent.getUrl();
-              list.add(new CustomConfigFile(url + "/" + file, configFile.getMetaData().getDirectoryPath()));
-            }
-            return list.toArray(new CustomConfigFile[list.size()]);
-          }
-        }
-      }
-    }
-    return super.getCustomDescriptors();
-  }
-
-  protected ConfigFile[] getDeploymentDescriptors() {
-    ConfigFile configFile = myPluginBuildConfiguration.getPluginXML();
-    if (configFile != null) {
-      return new ConfigFile[]{configFile};
-    }
-    return ConfigFile.EMPTY_ARRAY;
+    return true;
   }
 
   public BuildConfiguration getBuildConfiguration() {
     return myPluginBuildConfiguration;
   }
+
 }

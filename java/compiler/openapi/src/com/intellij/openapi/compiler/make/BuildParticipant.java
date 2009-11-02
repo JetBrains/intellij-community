@@ -17,6 +17,7 @@ package com.intellij.openapi.compiler.make;
 
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.module.Module;
+import com.intellij.packaging.artifacts.Artifact;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -39,6 +40,9 @@ public abstract class BuildParticipant {
   public abstract BuildRecipe getBuildInstructions(final CompileContext context);
 
   public abstract BuildConfiguration getBuildConfiguration();
+
+  @Nullable
+  public abstract Artifact createArtifact(CompileContext context);
 
   @Nullable
   public String getOrCreateTemporaryDirForExploded() {

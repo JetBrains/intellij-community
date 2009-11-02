@@ -20,7 +20,6 @@ import com.intellij.compiler.ant.taskdefs.AntProject;
 import com.intellij.compiler.ant.taskdefs.Target;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.packaging.artifacts.ArtifactManager;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -68,13 +67,7 @@ public abstract class ProjectBuild extends Generator {
     initTarget.add(new Comment(CompilerBundle.message("generated.ant.build.initialization.section.comment")));
     myAntProject.add(initTarget, 1);
 
-    ArtifactsGenerator artifactsGenerator;
-    if (ArtifactManager.getInstance(project).getArtifacts().length > 0) {
-      artifactsGenerator = new ArtifactsGenerator(project, genOptions);
-    }
-    else {
-      artifactsGenerator = null;
-    }
+    ArtifactsGenerator artifactsGenerator = new ArtifactsGenerator(project, genOptions);
 
     myAntProject.add(new CleanProject(genOptions, artifactsGenerator), 1);
 
@@ -83,7 +76,7 @@ public abstract class ProjectBuild extends Generator {
     
     StringBuilder buildAllTargetNames = new StringBuilder();
     buildAllTargetNames.append(BuildProperties.TARGET_BUILD_MODULES);
-    if (artifactsGenerator != null) {
+    if (artifactsGenerator.hasArtifacts()) {
       List<Generator> generators = artifactsGenerator.generate();
       for (Generator generator : generators) {
         myAntProject.add(generator, 1);

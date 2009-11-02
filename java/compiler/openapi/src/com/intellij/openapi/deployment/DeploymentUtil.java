@@ -97,15 +97,6 @@ public abstract class DeploymentUtil {
                                             @NotNull BuildRecipe instructions,
                                             @NotNull CompileContext context,
                                             String explodedPath, final String linkContainerDescription);
-  @Deprecated
-  /**@deprecated
-   * use {@link DeploymentUtil.addJavaModuleOutputs()}
-   */
-  public abstract void addJavaModuleOutputs(@NotNull Module module,
-                                   @NotNull ModuleLink[] containingModules,
-                                   @NotNull BuildRecipe instructions,
-                                   @NotNull CompileContext context,
-                                   String explodedPath);
 
   public static String concatPaths(String... paths) {
     final StringBuilder builder = new StringBuilder();

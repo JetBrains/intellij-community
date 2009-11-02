@@ -52,19 +52,19 @@ public class IncrementalPackagingCompiler extends PackagingCompilerBase {
   @Override
   protected PackagingProcessingItem[] collectItems(OldProcessingItemsBuilderContext builderContext, final Project project) {
     Module[] allModules = ModuleManager.getInstance(project).getSortedModules();
-    final BuildParticipantProvider<?>[] providers = DeploymentUtilImpl.getBuildParticipantProviders();
-    for (BuildParticipantProvider<?> provider : providers) {
+    final BuildParticipantProvider[] providers = DeploymentUtilImpl.getBuildParticipantProviders();
+    for (BuildParticipantProvider provider : providers) {
       addItemsForProvider(provider, allModules, builderContext);
     }
     return builderContext.getProcessingItems();
   }
 
-  private static <P extends BuildParticipant> void addItemsForProvider(final BuildParticipantProvider<P> provider,
+  private static void addItemsForProvider(final BuildParticipantProvider provider,
                                                                        final Module[] modulesToCompile,
                                                                        OldProcessingItemsBuilderContext builderContext) {
     for (Module module : modulesToCompile) {
-      final Collection<P> participants = provider.getParticipants(module);
-      for (P participant : participants) {
+      final Collection<? extends BuildParticipant> participants = provider.getParticipants(module);
+      for (BuildParticipant participant : participants) {
         addItemsForParticipant(participant, builderContext);
       }
     }

@@ -346,14 +346,6 @@ public class DeploymentUtilImpl extends DeploymentUtil {
                                    @NotNull ModuleLink[] containingModules,
                                    @NotNull BuildRecipe instructions,
                                    @NotNull CompileContext context,
-                                   String explodedPath) {
-    addJavaModuleOutputs(module, containingModules, instructions, context, explodedPath, "");
-  }
-
-  public void addJavaModuleOutputs(@NotNull final Module module,
-                                   @NotNull ModuleLink[] containingModules,
-                                   @NotNull BuildRecipe instructions,
-                                   @NotNull CompileContext context,
                                    String explodedPath, final String linkContainerDescription) {
     addJavaModuleOutputs(module, containingModules, instructions, context, explodedPath, linkContainerDescription, null);
   }
@@ -460,7 +452,7 @@ public class DeploymentUtilImpl extends DeploymentUtil {
     return buildParticipant.getOrCreateTemporaryDirForExploded();
   }
 
-  public static BuildParticipantProvider<?>[] getBuildParticipantProviders() {
+  public static BuildParticipantProvider[] getBuildParticipantProviders() {
     return Extensions.getExtensions(BuildParticipantProvider.EXTENSION_POINT_NAME);
   }
 }

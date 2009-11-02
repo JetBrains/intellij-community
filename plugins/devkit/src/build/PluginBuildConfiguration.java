@@ -117,7 +117,7 @@ public class PluginBuildConfiguration extends BuildConfiguration implements Modu
 
   public void disposeComponent() {
   }
-
+                                                                       
   public void readExternal(Element element) throws InvalidDataException {
     String url = element.getAttributeValue(URL_ATTR);
     if (url != null) {

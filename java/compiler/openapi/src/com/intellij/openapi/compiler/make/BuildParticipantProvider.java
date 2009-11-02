@@ -24,10 +24,10 @@ import java.util.Collection;
 /**
  * @author nik
  */
-public abstract class BuildParticipantProvider<P extends BuildParticipant> {
+public abstract class BuildParticipantProvider {
   public static final ExtensionPointName<BuildParticipantProvider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.compiler.buildParticipantProvider");
 
 
-  public abstract Collection<P> getParticipants(Module module);
+  public abstract Collection<? extends BuildParticipant> getParticipants(Module module);
 
 }

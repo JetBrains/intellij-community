@@ -24,8 +24,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.make.BuildParticipant;
+import com.intellij.openapi.compiler.make.BuildParticipantProvider;
 import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -46,6 +50,7 @@ import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -71,7 +76,20 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
     final CompileContext context = builderContext.getCompileContext();
 
     final Set<Artifact> artifactsToBuild = ArtifactCompileScope.getArtifactsToBuild(project, context.getCompileScope());
-    for (Artifact artifact : ArtifactManager.getInstance(project).getArtifacts()) {
+    List<Artifact> additionalArtifacts = new ArrayList<Artifact>();
+    for (BuildParticipantProvider provider : BuildParticipantProvider.EXTENSION_POINT_NAME.getExtensions()) {
+      for (Module module : ModuleManager.getInstance(project).getModules()) {
+        final Collection<? extends BuildParticipant> participants = provider.getParticipants(module);
+        for (BuildParticipant participant : participants) {
+          ContainerUtil.addIfNotNull(participant.createArtifact(context), additionalArtifacts);
+        }
+      }
+    }
+    artifactsToBuild.addAll(additionalArtifacts);
+
+    final List<Artifact> allArtifacts = new ArrayList<Artifact>(Arrays.asList(ArtifactManager.getInstance(project).getArtifacts()));
+    allArtifacts.addAll(additionalArtifacts);
+    for (Artifact artifact : allArtifacts) {
       final String outputPath = artifact.getOutputPath();
       if (outputPath != null && outputPath.length() != 0) {
         collectItems(builderContext, artifact, outputPath, project, artifactsToBuild.contains(artifact));
