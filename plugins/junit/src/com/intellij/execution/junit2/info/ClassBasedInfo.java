@@ -19,6 +19,7 @@ package com.intellij.execution.junit2.info;
 import com.intellij.execution.Location;
 import com.intellij.execution.junit2.segments.ObjectReader;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class ClassBasedInfo extends TestInfoImpl {
   private final DisplayTestInfoExtractor myClassInfo;
@@ -38,6 +39,7 @@ public abstract class ClassBasedInfo extends TestInfoImpl {
     myComment = null;
   }
 
+  @Nullable
   public Location getLocation(final Project project) {
     return myClass.getLocation(project);
   }

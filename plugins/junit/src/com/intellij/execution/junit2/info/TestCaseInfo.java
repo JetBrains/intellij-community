@@ -17,15 +17,11 @@
 package com.intellij.execution.junit2.info;
 
 import com.intellij.execution.Location;
-import com.intellij.execution.PsiLocation;
 import com.intellij.execution.junit2.segments.ObjectReader;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureUtil;
-
-import java.io.File;
+import org.jetbrains.annotations.Nullable;
 
 class TestCaseInfo extends ClassBasedInfo {
   private String myMethod;
@@ -43,9 +39,10 @@ class TestCaseInfo extends ClassBasedInfo {
     return myMethod;
   }
 
+  @Nullable
   public Location getLocation(final Project project) {
     final Location<PsiClass> classLocation = (Location<PsiClass>)super.getLocation(project);
-    if (classLocation == null) return getPsiFile(project);
+    if (classLocation == null) return null;
     String strippedMethodName = myMethod; //navigation to for parametr. methods
     final int idx = myMethod.indexOf('[');
     if (idx != -1) {
@@ -55,16 +52,7 @@ class TestCaseInfo extends ClassBasedInfo {
         MethodSignatureUtil.createMethodSignature(strippedMethodName, PsiType.EMPTY_ARRAY, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY), true);
     if (method != null)
       return new MethodLocation(project, method, classLocation);
-    final Location<PsiFile> fileLocation = getPsiFile(project);
-    if (fileLocation == null) return classLocation;
-    else return fileLocation;
-  }
-
-  private Location<PsiFile> getPsiFile(final Project project) {
-    final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(myMethod.replace(File.separatorChar, '/'));
-    if (virtualFile != null)
-      return PsiLocation.fromPsiElement(project, PsiManager.getInstance(project).findFile(virtualFile));
-    return null;
+    return classLocation;
   }
 
   public boolean shouldRun() {
