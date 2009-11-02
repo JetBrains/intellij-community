@@ -36,4 +36,6 @@ public interface ProblemDescriptor extends CommonProblemDescriptor{
    * @since 9.0
    */
   void setTextAttributes(TextAttributesKey key);
+
+  boolean showTooltip();
 }

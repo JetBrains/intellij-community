@@ -393,12 +393,14 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     @NonNls final String link = "<a href=\"#inspection/" + tool.getShortName() + "\"> " + DaemonBundle.message("inspection.extended.description") +
                                 "</a>" + myShortcutText;
 
-    @NonNls String tooltip;
-    if (message.startsWith("<html>")) {
-      tooltip = message.contains("</body>") ? message.replace("</body>", link + "</body>") : message.replace("</html>", link + "</html>");
-    }
-    else {
-      tooltip = "<html><body>" + XmlStringUtil.escapeString(message) + link + "</body></html>";
+    @NonNls String tooltip = null;
+    if (descriptor.showTooltip()) {
+      if (message.startsWith("<html>")) {
+        tooltip = message.contains("</body>") ? message.replace("</body>", link + "</body>") : message.replace("</html>", link + "</html>");
+      }
+      else {
+        tooltip = "<html><body>" + XmlStringUtil.escapeString(message) + link + "</body></html>";
+      }
     }
     HighlightInfo highlightInfo = highlightInfoFromDescriptor(descriptor, type, plainMessage, tooltip);
     registerQuickFixes(tool, descriptor, highlightInfo, emptyActionRegistered);

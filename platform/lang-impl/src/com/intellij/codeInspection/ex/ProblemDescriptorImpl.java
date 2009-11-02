@@ -44,6 +44,7 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
   private Navigatable myNavigatable;
   private final boolean myAfterEndOfLine;
   private final TextRange myTextRangeInElement;
+  private final boolean myShowTooltip;
   private final HintAction myHintAction;
   private TextAttributesKey myEnforcedTextAttributes;
 
@@ -55,8 +56,18 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
   public ProblemDescriptorImpl(@NotNull PsiElement startElement, @NotNull PsiElement endElement, String descriptionTemplate, LocalQuickFix[] fixes,
                                ProblemHighlightType highlightType, boolean isAfterEndOfLine, final TextRange rangeInElement,
                                @Nullable HintAction hintAction) {
+    this(startElement, endElement, descriptionTemplate, fixes, highlightType, isAfterEndOfLine, rangeInElement, true, hintAction);
+  }
+
+  public ProblemDescriptorImpl(@NotNull PsiElement startElement, @NotNull PsiElement endElement, String descriptionTemplate, LocalQuickFix[] fixes,
+                               ProblemHighlightType highlightType,
+                               boolean isAfterEndOfLine,
+                               final TextRange rangeInElement,
+                               final boolean tooltip,
+                               @Nullable HintAction hintAction) {
 
     super(fixes, descriptionTemplate);
+    myShowTooltip = tooltip;
     myHintAction = hintAction;
     LOG.assertTrue(startElement.isValid(), startElement);
     LOG.assertTrue(startElement == endElement || endElement.isValid(), endElement);
@@ -179,5 +190,9 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
 
   public HintAction getHintAction() {
     return myHintAction;
+  }
+
+  public boolean showTooltip() {
+    return myShowTooltip;
   }
 }

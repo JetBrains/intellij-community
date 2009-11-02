@@ -144,6 +144,14 @@ public class InspectionManagerEx extends InspectionManager {
     return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, null, hintAction);
   }
 
+  @Override
+  public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
+                                                   @NotNull String descriptionTemplate,
+                                                   boolean showTooltip,
+                                                   ProblemHighlightType highlightType, LocalQuickFix... fixes) {
+    return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, null, showTooltip, null);
+  }
+
   public GlobalInspectionContextImpl createNewGlobalContext(boolean reuse) {
     if (reuse) {
       if (myGlobalInspectionContext == null) {
