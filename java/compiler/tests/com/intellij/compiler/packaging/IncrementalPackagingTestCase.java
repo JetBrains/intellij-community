@@ -18,6 +18,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.testFramework.LiteFixture;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -127,6 +128,11 @@ public abstract class IncrementalPackagingTestCase extends LiteFixture {
 
     public BuildConfiguration getBuildConfiguration() {
       return myBuildConfiguration;
+    }
+
+    @Override
+    public Artifact createArtifact(CompileContext context) {
+      return null;
     }
 
     public Module getModule() {
