@@ -19,7 +19,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.util.containers.ConcurrentHashMap;
@@ -58,6 +57,7 @@ public class SubstitutedExpressionEvaluationHelper {
     return myHelper.computeExpression(e, false, new PsiConstantEvaluationHelper.AuxEvaluator() {
       @Nullable
       public Object computeExpression(final PsiExpression o, final PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
+        PsiType resolvedType = null;
         if (o instanceof PsiMethodCallExpression) {
           final PsiMethodCallExpression c = (PsiMethodCallExpression)o;
           final PsiMethod m = (PsiMethod)c.getMethodExpression().resolve();
@@ -66,8 +66,8 @@ public class SubstitutedExpressionEvaluationHelper {
             // find substitution
             final Object substituted = calcSubstituted(m);
             if (substituted != null) return substituted;
-            //return returnType.getCanonicalText().equals(CommonClassNames.JAVA_LANG_STRING)? "\""+ o.getText()+"\"" : o.getText();
           }
+          resolvedType = returnType;
         }
         else if (o instanceof PsiReferenceExpression) {
           final PsiElement resolved = ((PsiReferenceExpression)o).resolve();
@@ -76,6 +76,7 @@ public class SubstitutedExpressionEvaluationHelper {
             final Object substituted = calcSubstituted((PsiModifierListOwner)resolved);
             if (substituted != null) return substituted;
             if (resolved instanceof PsiVariable) {
+              resolvedType = ((PsiVariable)resolved).getType();
               final Collection<PsiExpression> values = DfaUtil.getCachedVariableValues(((PsiVariable)resolved), o);
               // return the first computed value as far as we do not support multiple injection
               for (PsiExpression value : values) {
@@ -89,9 +90,22 @@ public class SubstitutedExpressionEvaluationHelper {
         }
         if (uncomputables != null) uncomputables.add(o);
         if (includeUncomputablesAsLiterals) {
-          final PsiExpression expression = o instanceof PsiMethodCallExpression ? ((PsiMethodCallExpression)o).getMethodExpression() : o;
-          final String text = expression.getText().replaceAll("\\s", "");
-          return "\"" + StringUtil.escapeStringCharacters(text) + "\"";
+          if (resolvedType != null) {
+            if (PsiPrimitiveType.DOUBLE.isAssignableFrom(resolvedType)) return 1; // magic number!
+          }
+          final StringBuilder sb = new StringBuilder();
+          o.accept(new PsiRecursiveElementWalkingVisitor() {
+            @Override
+            public void visitElement(PsiElement element) {
+              if (element instanceof PsiExpressionList) return;
+              if (element instanceof PsiIdentifier) {
+                if (sb.length() > 0) sb.append(".");
+                sb.append(element.getText());
+              }
+              super.visitElement(element);
+            }
+          });
+          return sb.toString();
         }
         return null;
       }
