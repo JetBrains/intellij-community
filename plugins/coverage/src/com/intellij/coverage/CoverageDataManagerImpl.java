@@ -1,8 +1,6 @@
 package com.intellij.coverage;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import static com.intellij.coverage.PackageAnnotator.ClassCoverageInfo;
-import static com.intellij.coverage.PackageAnnotator.PackageCoverageInfo;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.Disposable;
@@ -45,6 +43,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
 
+import static com.intellij.coverage.PackageAnnotator.ClassCoverageInfo;
+import static com.intellij.coverage.PackageAnnotator.PackageCoverageInfo;
+
 /**
  * @author ven
  */
@@ -72,6 +73,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   }
 
   private CoverageSuiteImpl myCurrentSuite;
+  private Map<Editor, SrcFileAnnotator> myAnnotators = new HashMap<Editor, SrcFileAnnotator>();
   private EditorFactoryListener myEditorFactoryListener;
 
   public CoverageDataManagerImpl(final Project project, UltimateVerifier verifier) {
@@ -226,6 +228,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     myDirCoverageInfos.clear();
     myTestDirCoverageInfos.clear();
     myClassCoverageInfos.clear();
+    disposeAnnotators();
 
     if (suite == null) {
       triggerPresentationUpdate();
@@ -371,25 +374,27 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     final Document document = editor.getDocument();
     final PsiFile psiFile = documentManager.getPsiFile(document);
     if (psiFile instanceof PsiClassOwner && psiFile.isPhysical()) {
-      final SrcFileAnnotator annotator = new SrcFileAnnotator(psiFile, editor);
+      SrcFileAnnotator annotator = getAnnotator(editor);
+      if (annotator == null) {
+        annotator = new SrcFileAnnotator(psiFile, editor);
+      }
       annotator.hideCoverageData();
       if (myCurrentSuite != null) {
         final List<PsiPackage> packages = getCurrentSuitePackages();
         if (isUnderFilteredPackages((PsiClassOwner)psiFile, packages)) {
-          Disposer.register(myProject, annotator);
           annotator.showCoverageInformation(myCurrentSuite);
         } else {
           final List<PsiClass> classes = getCurrentSuiteClasses();
           for (PsiClass aClass : classes) {
             final PsiFile containingFile = aClass.getContainingFile();
             if (psiFile.equals(containingFile)) {
-              Disposer.register(myProject, annotator);
               annotator.showCoverageInformation(myCurrentSuite);
               break;
             }
           }
         }
       }
+      myAnnotators.put(editor, annotator);
     }
   }
 
@@ -406,7 +411,14 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
         });
       }
 
-      public void editorReleased(EditorFactoryEvent event) {}
+      public void editorReleased(EditorFactoryEvent event) {
+        final Editor editor = event.getEditor();
+        if (editor.getProject() != null && editor.getProject() != myProject) return;
+        final SrcFileAnnotator fileAnnotator = myAnnotators.remove(editor);
+        if (fileAnnotator != null) {
+          Disposer.dispose(fileAnnotator);
+        }
+      }
     };
     EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener);
     myProjectManagerListener = new ProjectManagerAdapter() {
@@ -526,5 +538,19 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
 
   public boolean isSubCoverageActive() {
     return mySubCoverageIsActive;
+  }
+
+  @Nullable
+  public SrcFileAnnotator getAnnotator(Editor editor) {
+    return myAnnotators.get(editor);
+  }
+
+  public void disposeAnnotators() {
+    for (SrcFileAnnotator annotator : myAnnotators.values()) {
+      if (annotator != null) {
+        Disposer.dispose(annotator);
+      }
+    }
+    myAnnotators.clear();
   }
 }
