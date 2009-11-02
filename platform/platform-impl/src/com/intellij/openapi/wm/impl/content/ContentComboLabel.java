@@ -15,22 +15,14 @@
  */
 package com.intellij.openapi.wm.impl.content;
 
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Arrays;
 
 public class ContentComboLabel extends BaseLabel {
 
@@ -92,7 +84,8 @@ public class ContentComboLabel extends BaseLabel {
     int width = 0;
     for (int i = 0; i < myUi.myManager.getContentCount(); i++) {
       String text = myUi.myManager.getContent(i).getDisplayName();
-      int eachTextWidth = getFontMetrics(getFont()).stringWidth(text);
+      FontMetrics metrics = getFontMetrics(getFont());
+      int eachTextWidth = metrics.stringWidth(text != null ? text : "");
       width = Math.max(eachTextWidth, width);
     }
 
