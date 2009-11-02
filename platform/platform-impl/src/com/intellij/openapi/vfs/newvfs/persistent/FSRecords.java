@@ -47,7 +47,7 @@ import java.util.concurrent.TimeUnit;
 public class FSRecords implements Disposable, Forceable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.vfs.persistent.FSRecords");
 
-  private static final int VERSION = 8;
+  private static final int VERSION = 9;
 
   private static final int PARENT_OFFSET = 0;
   private static final int PARENT_SIZE = 4;
@@ -57,7 +57,9 @@ public class FSRecords implements Disposable, Forceable {
   private static final int FLAGS_SIZE = 4;
   private static final int ATTREF_OFFSET = FLAGS_OFFSET + FLAGS_SIZE;
   private static final int ATTREF_SIZE = 4;
-  private static final int TIMESTAMP_OFFSET = ATTREF_OFFSET + ATTREF_SIZE;
+  private static final int CONTENT_OFFSET = ATTREF_OFFSET + ATTREF_SIZE;
+  private static final int CONTENT_SIZE = 4;
+  private static final int TIMESTAMP_OFFSET = CONTENT_OFFSET + CONTENT_SIZE;
   private static final int TIMESTAMP_SIZE = 8;
   private static final int MODCOUNT_OFFSET = TIMESTAMP_OFFSET + TIMESTAMP_SIZE;
   private static final int MODCOUNT_SIZE = 4;
@@ -96,9 +98,11 @@ public class FSRecords implements Disposable, Forceable {
     private static int refCount = 0;
     private static final Object LOCK = new Object();
     private static final TObjectIntHashMap<String> myAttributeIds = new TObjectIntHashMap<String>();
+    private static int CONTENT_ID;
 
     private static PersistentStringEnumerator myNames;
     private static Storage myAttributes;
+    private static Storage myContents;
     private static ResizeableMappedFile myRecords;
     private static final TIntArrayList myFreeRecords = new TIntArrayList();
 
@@ -158,6 +162,7 @@ public class FSRecords implements Disposable, Forceable {
 
       final File namesFile = new File(basePath, "names.dat");
       final File attributesFile = new File(basePath, "attrib.dat");
+      final File contentsFile = new File(basePath, "content.dat");
       final File recordsFile = new File(basePath, "records.dat");
 
       if (!namesFile.exists()) {
@@ -172,6 +177,7 @@ public class FSRecords implements Disposable, Forceable {
 
         myNames = new PersistentStringEnumerator(namesFile);
         myAttributes = Storage.create(attributesFile.getCanonicalPath());
+        myContents = Storage.create(contentsFile.getCanonicalPath());
         myRecords = new ResizeableMappedFile(recordsFile, 20 * 1024);
 
         if (myRecords.length() == 0) {
@@ -198,6 +204,7 @@ public class FSRecords implements Disposable, Forceable {
           deleted &= FileUtil.delete(getCorruptionMarkerFile());
           deleted &= deleteWithSubordinates(namesFile);
           deleted &= Storage.deleteFiles(attributesFile.getCanonicalPath());
+          deleted &= Storage.deleteFiles(contentsFile.getCanonicalPath());
           deleted &= deleteWithSubordinates(recordsFile);
 
           if (!deleted) {
@@ -293,6 +300,7 @@ public class FSRecords implements Disposable, Forceable {
         if (myNames != null) {
           myNames.force();
           myAttributes.force();
+          myContents.force();
           myRecords.force();
         }
       }
@@ -301,9 +309,8 @@ public class FSRecords implements Disposable, Forceable {
     public static void flushSome() {
       synchronized (lock) {
         myNames.force();
-        boolean attrsClean = myAttributes.flushSome();
 
-        if (attrsClean) {
+        if (myAttributes.flushSome() && myContents.flushSome()) {
           try {
             markClean();
           }
@@ -316,14 +323,13 @@ public class FSRecords implements Disposable, Forceable {
     }
 
     public static boolean isDirty() {
-      return myDirty || myNames.isDirty() || myAttributes.isDirty() || myRecords.isDirty();
+      return myDirty || myNames.isDirty() || myAttributes.isDirty() || myContents.isDirty() || myRecords.isDirty();
     }
 
 
     private static int getVersion() throws IOException {
-      final int storageVersion = myAttributes.getVersion();
       final int recordsVersion = myRecords.getInt(HEADER_VERSION_OFFSET);
-      if (storageVersion != recordsVersion) return -1;
+      if (myAttributes.getVersion() != recordsVersion || myContents.getVersion() != recordsVersion) return -1;
 
       return recordsVersion;
     }
@@ -331,6 +337,7 @@ public class FSRecords implements Disposable, Forceable {
     private static void setCurrentVersion() throws IOException {
       myRecords.putInt(HEADER_VERSION_OFFSET, VERSION);
       myAttributes.setVersion(VERSION);
+      myContents.setVersion(VERSION);
       myRecords.putInt(HEADER_CONNECTION_STATUS_OFFSET, SAFELY_CLOSED_MAGIC);
     }
 
@@ -342,8 +349,8 @@ public class FSRecords implements Disposable, Forceable {
       return myNames;
     }
 
-    public static Storage getAttributes() {
-      return myAttributes;
+    public static Storage getAttributes(int attId) {
+      return attId == CONTENT_ID ? myContents : myAttributes;
     }
 
     public static ResizeableMappedFile getRecords() {
@@ -375,6 +382,11 @@ public class FSRecords implements Disposable, Forceable {
         myAttributes = null;
       }
 
+      if (myContents != null) {
+        myContents.dispose();
+        myContents = null;
+      }
+
       if (myRecords != null) {
         markClean();
         myRecords.close();
@@ -396,6 +408,10 @@ public class FSRecords implements Disposable, Forceable {
 
       int id = myNames.enumerate(attId);
       myAttributeIds.put(attId, id);
+
+      if (PersistentFS.FILE_CONTENT.getId().equals(attId)) {
+        CONTENT_ID = id;
+      }
       return id;
     }
 
@@ -425,8 +441,8 @@ public class FSRecords implements Disposable, Forceable {
     return DbConnection.getRecords();
   }
 
-  private static Storage getAttributes() {
-    return DbConnection.getAttributes();
+  private static Storage getAttributes(int attId) {
+    return DbConnection.getAttributes(attId);
   }
 
   public static PersistentStringEnumerator getNames() {
@@ -483,17 +499,8 @@ public class FSRecords implements Disposable, Forceable {
     synchronized (lock) {
       try {
         DbConnection.markDirty();
-        int att_page = getAttributeRecordId(id);
-        if (att_page != 0) {
-          final DataInputStream attStream = getAttributes().readStream(att_page);
-          while (attStream.available() > 0) {
-            attStream.readInt(); // Attribute ID;
-            int attAddress = attStream.readInt();
-            getAttributes().deleteRecord(attAddress);
-          }
-          attStream.close();
-          getAttributes().deleteRecord(att_page);
-        }
+        deleteAttribute(id, -1);
+        deleteAttribute(id, DbConnection.CONTENT_ID);
 
         DbConnection.cleanRecord(id);
         addToFreeRecordsList(id);
@@ -501,6 +508,20 @@ public class FSRecords implements Disposable, Forceable {
       catch (Throwable e) {
         throw DbConnection.handleError(e);
       }
+    }
+  }
+
+  private void deleteAttribute(int id, int isContent) throws IOException {
+    int att_page = getAttributeRecordId(id, isContent);
+    if (att_page != 0) {
+      final DataInputStream attStream = getAttributes(isContent).readStream(att_page);
+      while (attStream.available() > 0) {
+        attStream.readInt(); // Attribute ID;
+        int attAddress = attStream.readInt();
+        getAttributes(isContent).deleteRecord(attAddress);
+      }
+      attStream.close();
+      getAttributes(isContent).deleteRecord(att_page);
     }
   }
 
@@ -838,22 +859,27 @@ public class FSRecords implements Disposable, Forceable {
     getRecords().putInt(id * RECORD_SIZE + MODCOUNT_OFFSET, value);
   }
 
-  private static int getAttributeRecordId(final int id) throws IOException {
-    return getRecords().getInt(id * RECORD_SIZE + ATTREF_OFFSET);
+  private static int getAttributeRecordId(final int id, int attributeId) throws IOException {
+    return getRecords().getInt(getAttrOffset(id, attributeId));
+  }
+
+  private static int getAttrOffset(int id, int attributeId) {
+    return id * RECORD_SIZE + (DbConnection.CONTENT_ID == attributeId ? CONTENT_OFFSET : ATTREF_OFFSET);
   }
 
   @Nullable
   public DataInputStream readAttribute(int id, String attId) {
     try {
       synchronized (attId) {
-        final int att;
+        final int page;
+        int encodedAttId;
         synchronized (lock) {
-          int encodedAttId = DbConnection.getAttributeId(attId);
-          att = findAttributePage(id, encodedAttId, false);
-          if (att == 0) return null;
+          encodedAttId = DbConnection.getAttributeId(attId);
+          page = findAttributePage(id, encodedAttId, false);
+          if (page == 0) return null;
         }
 
-        return getAttributes().readStream(att);
+        return getAttributes(encodedAttId).readStream(page);
       }
     }
     catch (Throwable e) {
@@ -869,17 +895,16 @@ public class FSRecords implements Disposable, Forceable {
     if ((getFlags(fileId) & FREE_RECORD_FLAG) != 0) { // TODO: This assertion is a bit timey, will remove when bug is caught.
       throw DbConnection.handleError(new AssertionError("Trying to find an attribute of deleted page"));
     }
-
-    int attrsRecord = getAttributeRecordId(fileId);
+    int attrsRecord = getAttributeRecordId(fileId, attributeId);
 
     if (attrsRecord == 0) {
       if (!createIfNotFound) return 0;
 
-      attrsRecord = getAttributes().createNewRecord();
-      getRecords().putInt(fileId * RECORD_SIZE + ATTREF_OFFSET, attrsRecord);
+      attrsRecord = getAttributes(attributeId).createNewRecord();
+      getRecords().putInt(getAttrOffset(fileId, attributeId), attrsRecord);
     }
     else {
-      final DataInputStream attrRefs = getAttributes().readStream(attrsRecord);
+      final DataInputStream attrRefs = getAttributes(attributeId).readStream(attrsRecord);
       try {
         while (attrRefs.available() > 0) {
           final int attIdOnPage = attrRefs.readInt();
@@ -894,9 +919,9 @@ public class FSRecords implements Disposable, Forceable {
     }
 
     if (createIfNotFound) {
-      Storage.AppenderStream appender = getAttributes().appendStream(attrsRecord);
+      Storage.AppenderStream appender = getAttributes(attributeId).appendStream(attrsRecord);
       appender.writeInt(attributeId);
-      int attAddress = getAttributes().createNewRecord();
+      int attAddress = getAttributes(attributeId).createNewRecord();
       appender.writeInt(attAddress);
       appender.close();
       return attAddress;
@@ -920,15 +945,16 @@ public class FSRecords implements Disposable, Forceable {
 
       try {
         synchronized (myAttributeId) {
-          final int att;
+          final int page;
+          int encodedAttId;
           synchronized (lock) {
             DbConnection.markDirty();
             incModCount(myFileId);
-            final int encodedAttId = DbConnection.getAttributeId(myAttributeId);
-            att = findAttributePage(myFileId, encodedAttId, true);
+            encodedAttId = DbConnection.getAttributeId(myAttributeId);
+            page = findAttributePage(myFileId, encodedAttId, true);
           }
 
-          final DataOutputStream sinkStream = getAttributes().writeStream(att);
+          final DataOutputStream sinkStream = getAttributes(encodedAttId).writeStream(page);
           sinkStream.write(((ByteArrayOutputStream)out).toByteArray());
           sinkStream.close();
         }
@@ -1000,9 +1026,17 @@ public class FSRecords implements Disposable, Forceable {
     String name = getName(id);
     LOG.assertTrue(parentId == 0 || name.length() > 0, "File with empty name found under " + getName(parentId) + ", id=" + id);
 
+    checkStorageSanity(id, usedAttributeRecordIds, validAttributeIds, -1);
+    checkStorageSanity(id, usedAttributeRecordIds, validAttributeIds, DbConnection.CONTENT_ID);
+
+    long length = getLength(id);
+    assert length >= -1: "Invalid file length found for " + name + ": " + length;
+  }
+
+  private static void checkStorageSanity(int id, IntArrayList usedAttributeRecordIds, IntArrayList validAttributeIds, int attId) {
     int attributeRecordId;
     try {
-      attributeRecordId = getAttributeRecordId(id);
+      attributeRecordId = getAttributeRecordId(id, attId);
     }
     catch(IOException ex) {
       throw DbConnection.handleError(ex);
@@ -1011,23 +1045,20 @@ public class FSRecords implements Disposable, Forceable {
     assert attributeRecordId >= 0;
     if (attributeRecordId > 0) {
       try {
-        checkAttributesSanity(attributeRecordId, usedAttributeRecordIds, validAttributeIds);
+        checkAttributesSanity(attributeRecordId, usedAttributeRecordIds, validAttributeIds, attId);
       }
       catch (IOException ex) {
         throw DbConnection.handleError(ex);
       }
     }
-
-    long length = getLength(id);
-    assert length >= -1: "Invalid file length found for " + name + ": " + length;
   }
 
   private static void checkAttributesSanity(final int attributeRecordId, final IntArrayList usedAttributeRecordIds,
-                                            final IntArrayList validAttributeIds) throws IOException {
+                                            final IntArrayList validAttributeIds, int attrId) throws IOException {
     assert !usedAttributeRecordIds.contains(attributeRecordId);
     usedAttributeRecordIds.add(attributeRecordId);
 
-    final DataInputStream dataInputStream = getAttributes().readStream(attributeRecordId);
+    final DataInputStream dataInputStream = getAttributes(attrId).readStream(attributeRecordId);
     try {
       final int streamSize = dataInputStream.available();
       assert (streamSize % 8) == 0;
@@ -1040,7 +1071,7 @@ public class FSRecords implements Disposable, Forceable {
           assert getNames().valueOf(attId).length() > 0;
           validAttributeIds.add(attId);
         }
-        getAttributes().checkSanity(attDataRecordId);
+        getAttributes(attId).checkSanity(attDataRecordId);
       }
     }
     finally {
