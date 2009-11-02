@@ -32,16 +32,18 @@ public class PersistentLineMarker extends RangeMarkerImpl {
   public void documentChanged(DocumentEvent e) {
     if (!isValid()) return;
 
-    DocumentEventImpl event = (DocumentEventImpl) e;
+    DocumentEventImpl event = (DocumentEventImpl)e;
     if (event.isWholeTextReplaced()) {
       myLine = event.translateLineViaDiff(myLine);
       if (myLine < 0 || myLine >= getDocument().getLineCount()) {
         invalidate();
-      } else {
+      }
+      else {
         myStart = MarkupModelImpl.getFirstNonspaceCharOffset(getDocument(), myLine);
         myEnd = myStart;
       }
-    } else {
+    }
+    else {
       super.documentChanged(e);
       if (isValid()) {
         myLine = getDocument().getLineNumber(myStart);
