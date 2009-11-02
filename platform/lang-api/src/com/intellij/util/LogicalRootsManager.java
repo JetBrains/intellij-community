@@ -28,8 +28,12 @@ import java.util.EventListener;
 import java.util.List;
 
 /**
+ * // TODO: merge with FileReferenceHelper & drop
+ *
  * @author spleaner
+ * @deprecated Use FileReferenceHelper instead
  */
+@Deprecated
 public abstract class LogicalRootsManager {
 
   public static LogicalRootsManager getLogicalRootsManager(@NotNull final Project project) {
@@ -54,7 +58,7 @@ public abstract class LogicalRootsManager {
 
   public abstract <T extends LogicalRoot> void registerLogicalRootProvider(@NotNull final LogicalRootType<T> rootType, @NotNull NotNullFunction<Module,List<T>> provider);
 
-  public static interface LogicalRootListener extends EventListener {
+  public interface LogicalRootListener extends EventListener {
     void logicalRootsChanged();
   }
 }

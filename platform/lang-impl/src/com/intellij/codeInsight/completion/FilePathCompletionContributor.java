@@ -27,28 +27,30 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import static com.intellij.patterns.PlatformPatterns.psiElement;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileInfoManager;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceOwner;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileSystemItemUtil;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.*;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+
+import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 /**
  * @author spleaner
@@ -62,11 +64,6 @@ public class FilePathCompletionContributor extends CompletionContributor {
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     ProcessingContext context,
                                     @NotNull CompletionResultSet result) {
-        final String prefix = result.getPrefixMatcher().getPrefix();
-        if (prefix.length() == 0) {
-          return;
-        }
-
         final PsiReference psiReference = parameters.getPosition().getContainingFile().findReferenceAt(parameters.getOffset());
         if (getReference(psiReference) != null) {
           final String shortcut = getActionShortcut(IdeActions.ACTION_CLASS_NAME_COMPLETION);
@@ -83,94 +80,106 @@ public class FilePathCompletionContributor extends CompletionContributor {
       protected void addCompletions(@NotNull final CompletionParameters parameters,
                                     ProcessingContext context,
                                     @NotNull final CompletionResultSet _result) {
-        final String prefix = _result.getPrefixMatcher().getPrefix();
-        if (prefix.length() == 0) { // todo[spL]: no prefix no completion
-          return;
-        }
-
         @NotNull final CompletionResultSet result = _result.caseInsensitive();
-
         final PsiElement e = parameters.getPosition();
-
+        final Project project = e.getProject();
 
         final PsiReference psiReference = ApplicationManager.getApplication().runReadAction(new Computable<PsiReference>() {
           public PsiReference compute() {
             //noinspection ConstantConditions
-            return parameters.getPosition().getContainingFile().findReferenceAt(parameters.getOffset());
+            return parameters.getPosition().getContainingFile().getOriginalFile().findReferenceAt(parameters.getOffset());
           }
         });
 
-        if (getReference(psiReference) != null) {
-          final Project project = e.getProject();
-          final String[] fileNames = getAllNames(project);
-          final List<String> resultNames = new ArrayList<String>();
-          for (String fileName : fileNames) {
-            if (StringUtil.startsWithIgnoreCase(fileName, prefix)) {
-              resultNames.add(fileName);
-            }
+        final Pair<FileReference, Boolean> fileReferencePair = getReference(psiReference);
+        if (fileReferencePair != null) {
+          final FileReference first = fileReferencePair.getFirst();
+          if (first == null) return;
+
+          final FileReferenceSet set = first.getFileReferenceSet();
+          String prefix = set.getPathString();
+
+          final List<String>[] pathPrefixParts = new List[] {null};
+          int lastSlashIndex;
+          if ((lastSlashIndex = prefix.lastIndexOf('/')) != -1) {
+            pathPrefixParts[0] = StringUtil.split(prefix.substring(0, lastSlashIndex), "/");
+            prefix = prefix.substring(lastSlashIndex + 1);
           }
 
-          final LogicalRootsManager logicalRootsManager = LogicalRootsManager.getLogicalRootsManager(project);
-          final PsiManager psiManager = PsiManager.getInstance(project);
-
-          final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
-
-          final VirtualFile contextFile = parameters.getOriginalFile().getVirtualFile();
+          final PsiFile originalFile = parameters.getOriginalFile();
+          final VirtualFile contextFile = originalFile.getVirtualFile();
           if (contextFile != null) {
+            final String[] fileNames = getAllNames(project);
+            final Set<String> resultNames = new TreeSet<String>();
+            for (String fileName : fileNames) {
+              if (prefix.length() == 0 || StringUtil.startsWithIgnoreCase(fileName, prefix)) {
+                resultNames.add(fileName);
+              }
+            }
+
+            final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
+
             final Module contextModule = index.getModuleForFile(contextFile);
             if (contextModule != null) {
-              final Module[] dependencies = ModuleRootManager.getInstance(contextModule).getDependencies();
+              final FileReferenceHelper contextHelper = FileReferenceHelperRegistrar.getNotNullHelper(originalFile);
 
-              final Set<Module> modules = new HashSet<Module>(dependencies.length + 1);
-              modules.addAll(Arrays.asList(dependencies));
-              modules.add(contextModule);
+              final GlobalSearchScope scope = ProjectScope.getProjectScope(project);
+              for (final String name : resultNames) {
+                ProgressManager.checkCanceled();
 
-              final LogicalRoot contextRoot = logicalRootsManager.findLogicalRoot(contextFile);
-              if (contextRoot != null) {
-                final VirtualFile contextRootFile = contextRoot.getVirtualFile();
-                final LogicalRootType contextRootType = contextRoot.getType();
+                final PsiFile[] files = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile[]>() {
+                  public PsiFile[] compute() {
+                    return FilenameIndex.getFilesByName(project, name, scope);
+                  }
+                });
 
-                final GlobalSearchScope scope = ProjectScope.getProjectScope(project);
-                for (final String name : resultNames) {
-                  ProgressManager.checkCanceled();
+                if (files.length > 0) {
+                  for (final PsiFile file : files) {
+                    ProgressManager.checkCanceled();
 
-                  final PsiFile[] files = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile[]>() {
-                    public PsiFile[] compute() {
-                      return FilenameIndex.getFilesByName(project, name, scope);
-                    }
-                  });
-
-                  if (files.length > 0) {
-                    for (final PsiFile file : files) {
-                      ApplicationManager.getApplication().runReadAction(new Runnable() {
-                        public void run() {
-                          final VirtualFile virtualFile = file.getVirtualFile();
-                          if (virtualFile != null && virtualFile.isValid()) {
-                            final Module module = index.getModuleForFile(virtualFile);
-                            if (modules.contains(module)) {
-                              final LogicalRoot logicalRoot = logicalRootsManager.findLogicalRoot(virtualFile);
-                              if (logicalRoot != null && contextRootType == logicalRoot.getType()) {
-                                final VirtualFile _context = contextRoot == logicalRoot ? contextRootFile : project.getBaseDir();
-                                if (_context != null) {
-                                  final PsiDirectory psiFile = psiManager.findDirectory(_context);
-                                  if (psiFile != null) {
-                                    result.addElement(new FilePathLookupItem(file, psiFile));
-                                  }
-                                }
-                              }
+                    ApplicationManager.getApplication().runReadAction(new Runnable() {
+                      public void run() {
+                        final VirtualFile virtualFile = file.getVirtualFile();
+                        if (virtualFile != null && virtualFile.isValid() && virtualFile != contextFile) {
+                          if (contextHelper.isMine(project, virtualFile)) {
+                            if (pathPrefixParts[0] == null || fileMatchesPathPrefix(contextHelper.getPsiFileSystemItem(project, virtualFile), pathPrefixParts[0])) {
+                              result.addElement(new FilePathLookupItem(file, contextHelper));
                             }
                           }
                         }
-                      });
-                    }
+                      }
+                    });
                   }
                 }
               }
             }
           }
+
+          if (fileReferencePair.getSecond()) result.stopHere();
         }
       }
     });
+  }
+
+  private static boolean fileMatchesPathPrefix(@Nullable final PsiFileSystemItem file, @NotNull final List<String> pathPrefix) {
+    if (file == null) return false;
+
+    final List<String> contextParts = new ArrayList<String>();
+    PsiFileSystemItem parentFile = file;
+    PsiFileSystemItem parent;
+    while ((parent = parentFile.getParent()) != null) {
+      if (parent.getName().length() > 0) contextParts.add(0, parent.getName().toLowerCase());
+      parentFile = parent;
+    }
+
+    final String path = StringUtil.join(contextParts, "/");
+
+    int nextIndex = 0;
+    for (final String s : pathPrefix) {
+      if ((nextIndex = path.indexOf(s.toLowerCase(), nextIndex)) == -1) return false;
+    }
+
+    return true;
   }
 
   private static String[] getAllNames(@NotNull final Project project) {
@@ -196,7 +205,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
   }
 
   @Nullable
-  private static PsiReference getReference(final PsiReference original) {
+  private static Pair<FileReference, Boolean> getReference(final PsiReference original) {
     if (original == null) {
       return null;
     }
@@ -205,14 +214,14 @@ public class FilePathCompletionContributor extends CompletionContributor {
       final PsiMultiReference multiReference = (PsiMultiReference)original;
       for (PsiReference reference : multiReference.getReferences()) {
         if (reference instanceof FileReference) {
-          return reference;
+          return Pair.create((FileReference) reference, false);
         }
       }
     }
     else if (original instanceof FileReferenceOwner) {
       final FileReference fileReference = ((FileReferenceOwner)original).getLastFileReference();
       if (fileReference != null) {
-        return fileReference;
+        return Pair.create(fileReference, true);
       }
     }
 
@@ -220,20 +229,18 @@ public class FilePathCompletionContributor extends CompletionContributor {
   }
 
   public class FilePathLookupItem extends LookupElement {
-    private final String myRelativePath;
     private final String myName;
     private final String myPath;
     private final String myInfo;
     private final Icon myIcon;
     private final PsiFile myFile;
+    private FileReferenceHelper myReferenceHelper;
 
-    public FilePathLookupItem(@NotNull final PsiFile file, @NotNull final PsiFileSystemItem context) {
+    public FilePathLookupItem(@NotNull final PsiFile file, @NotNull final FileReferenceHelper referenceHelper) {
       myName = file.getName();
       myPath = file.getVirtualFile().getPath();
 
-      final String relative = PsiFileSystemItemUtil.getRelativePath(context, file);
-
-      myRelativePath = relative == null ? null : relative.equals(myName) ? null : relative;
+      myReferenceHelper = referenceHelper;
 
       myInfo = FileInfoManager.getFileAdditionalInfo(file);
       myIcon = file.getFileType().getIcon();
@@ -244,14 +251,14 @@ public class FilePathCompletionContributor extends CompletionContributor {
     @SuppressWarnings({"HardCodedStringLiteral"})
     @Override
     public String toString() {
-      return String.format("%s (%s, %s)", myName, myInfo == null ? "" : myInfo, myRelativePath == null ? "" : myRelativePath);
+      return String.format("%s (%s, %s)", myName, myInfo == null ? "" : myInfo, myPath == null ? "" : myPath);
     }
 
     @NotNull
     @Override
     public Object getObject() {
       return myFile;
-    }
+    }                                                                   
 
     @NotNull
     public String getLookupString() {
@@ -262,21 +269,26 @@ public class FilePathCompletionContributor extends CompletionContributor {
     public void handleInsert(InsertionContext context) {
       if (myFile.isValid()) {
         final PsiReference psiReference = context.getFile().findReferenceAt(context.getStartOffset());
-        final PsiReference fileReference = getReference(psiReference);
-        LOG.assertTrue(fileReference != null);
+        final Pair<FileReference, Boolean> fileReferencePair = getReference(psiReference);
+        LOG.assertTrue(fileReferencePair != null);
 
-        fileReference.bindToElement(myFile);
+        fileReferencePair.getFirst().bindToElement(myFile, true);
       }
     }
 
     @Override
     public void renderElement(LookupElementPresentation presentation) {
+      final VirtualFile virtualFile = myFile.getVirtualFile();
+      LOG.assertTrue(virtualFile != null);
+      final PsiFileSystemItem root = myReferenceHelper.findRoot(myFile.getProject(), virtualFile);
+      final String relativePath = PsiFileSystemItemUtil.getRelativePath(root, myReferenceHelper.getPsiFileSystemItem(myFile.getProject(), virtualFile));
+
       final StringBuilder sb = new StringBuilder();
       if (myInfo != null) {
         sb.append(" (").append(myInfo);
       }
 
-      if (myRelativePath != null) {
+      if (relativePath != null && !relativePath.equals(myName)) {
         if (myInfo != null) {
           sb.append(", ");
         }
@@ -284,7 +296,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
           sb.append(" (");
         }
 
-        sb.append(myRelativePath);
+        sb.append(relativePath);
       }
 
       if (sb.length() > 0) {

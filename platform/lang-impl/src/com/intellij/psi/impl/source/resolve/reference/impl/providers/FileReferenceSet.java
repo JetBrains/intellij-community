@@ -17,18 +17,18 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -363,5 +363,13 @@ public class FileReferenceSet {
       myOptions = new HashMap<CustomizableReferenceProvider.CustomizationKey, Object>(5);
     }
     myOptions.put(key, value);
+  }
+
+  public boolean couldBeConvertedTo(final boolean relative) {
+    return true;
+  }
+
+  public boolean absoluteUrlNeedsStartSlash() {
+    return true;
   }
 }
