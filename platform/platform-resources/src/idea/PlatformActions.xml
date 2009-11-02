@@ -227,6 +227,7 @@
         <action id="ToggleFloatingMode" class="com.intellij.ide.actions.ToggleFloatingModeAction"/>
         <action id="ToggleSideMode" class="com.intellij.ide.actions.ToggleSideModeAction"/>
         <action id="ToggleContentUiTypeMode" class="com.intellij.ide.actions.ToggleContentUiTypeAction"/>
+        <action id="ShowContent" class="com.intellij.ide.actions.ShowContentAction"/>
         <separator/>
         <action id="NextTab" class="com.intellij.ide.actions.NextTabAction"/>
         <action id="PreviousTab" class="com.intellij.ide.actions.PreviousTabAction"/>

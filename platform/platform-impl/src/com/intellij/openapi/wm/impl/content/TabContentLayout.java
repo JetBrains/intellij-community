@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl.content;
 
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.wm.impl.TitlePanel;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -386,6 +387,17 @@ class TabContentLayout extends ContentLayout {
     if (tab != null) {
       myTabs.remove(tab);
       myContent2Tabs.remove(event.getContent());
+    }
+  }
+
+  @Override
+  public void showContentPopup(ListPopup listPopup) {
+    Content selected = myUi.myManager.getSelectedContent();
+    if (selected != null) {
+      ContentTabLabel tab = myContent2Tabs.get(selected);
+      listPopup.showUnderneathOf(tab);
+    } else {
+      listPopup.showUnderneathOf(myIdLabel);
     }
   }
 }

@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
@@ -364,5 +365,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
     }
   }
 
-  
+  public void showContentPopup(InputEvent inputEvent) {
+    myContentUI.showContentPopup(inputEvent);
+  }
 }

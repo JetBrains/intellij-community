@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl.content;
 
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.ui.content.ContentManagerEvent;
 
 import javax.swing.border.EmptyBorder;
@@ -90,5 +91,5 @@ abstract class ContentLayout {
     g2d.fill(shape);
   }
 
-
+  public abstract void showContentPopup(ListPopup listPopup);
 }

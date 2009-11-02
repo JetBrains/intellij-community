@@ -16,7 +16,11 @@
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.actions.ShowContentAction;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindowContentUiType;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
@@ -32,11 +36,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Arrays;
 
 public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyChangeListener, DataProvider {
   public static final String POPUP_PLACE = "ToolwindowPopup";
@@ -51,6 +57,8 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   TabbedContentAction.MyNextTabAction myNextTabAction;
   TabbedContentAction.MyPreviousTabAction myPreviousTabAction;
 
+  ShowContentAction myShowContent;
+
   ContentLayout myTabsLayout = new TabContentLayout(this);
   ContentLayout myComboLayout = new ComboContentLayout(this);
 
@@ -61,6 +69,8 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     myContent.setOpaque(false);
     myContent.setFocusable(false);
     setOpaque(false);
+
+    myShowContent = new ShowContentAction(myWindow, myContent);
 
     setBorder(new EmptyBorder(0, 0, 0, 2));
   }
@@ -269,6 +279,8 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     if (c instanceof BaseLabel) {
       final Content content = ((BaseLabel)c).getContent();
       if (content != null) {
+        contentGroup.add(ui.myShowContent);
+        contentGroup.addSeparator();
         contentGroup.add(new TabbedContentAction.CloseAction(content));
         contentGroup.add(ui.myCloseAllAction);
         contentGroup.add(new TabbedContentAction.CloseAllButThisAction(content));
@@ -344,5 +356,35 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
   boolean isCurrent(ContentLayout layout) {
     return getCurrentLayout() == layout;
+  }
+
+  public void showContentPopup(InputEvent inputEvent) {
+    BaseListPopupStep step = new BaseListPopupStep<Content>(null, myManager.getContents()) {
+      @Override
+      public PopupStep onChosen(Content selectedValue, boolean finalChoice) {
+        myManager.setSelectedContent(selectedValue, true, true);
+        return FINAL_CHOICE;
+      }
+
+      @NotNull
+      @Override
+      public String getTextFor(Content value) {
+        return value.getDisplayName();
+      }
+
+      @Override
+      public Icon getIconFor(Content aValue) {
+        return aValue.getIcon();
+      }
+
+      @Override
+      public boolean isMnemonicsNavigationEnabled() {
+        return true;
+      }
+    };
+
+    step.setDefaultOptionIndex(Arrays.asList(myManager.getContents()).indexOf(myManager.getSelectedContent()));
+    getCurrentLayout().showContentPopup(JBPopupFactory.getInstance().createListPopup(step));
+
   }
 }

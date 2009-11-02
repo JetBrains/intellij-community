@@ -45,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
@@ -160,6 +161,9 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     public void activate(@Nullable Runnable runnable, boolean autoFocusContents, boolean forced) {
+    }
+
+    public void showContentPopup(InputEvent inputEvent) {
     }
   };
 

@@ -58,43 +58,8 @@ public class ContentComboLabel extends BaseLabel {
     super.processMouseEvent(e);
 
     if (UIUtil.isActionClick(e)) {
-      showPopup();
+      myUi.showContentPopup(e);
     }
-  }
-
-  private void showPopup() {
-    if (!isToDrawCombo()) return;
-
-    final ContentManager manager = myUi.myManager;
-    BaseListPopupStep step = new BaseListPopupStep<Content>(null, manager.getContents()) {
-      @Override
-      public PopupStep onChosen(Content selectedValue, boolean finalChoice) {
-        manager.setSelectedContent(selectedValue);
-        return FINAL_CHOICE;
-      }
-
-      @NotNull
-      @Override
-      public String getTextFor(Content value) {
-        return value.getDisplayName();
-      }
-
-      @Override
-      public Icon getIconFor(Content aValue) {
-        return aValue.getIcon();
-      }
-
-      @Override
-      public boolean isMnemonicsNavigationEnabled() {
-        return true;
-      }
-    };
-
-    step.setDefaultOptionIndex(Arrays.asList(manager.getContents()).indexOf(manager.getSelectedContent()));
-
-    ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
-    popup.setMinimumSize(new Dimension(getPreferredSize().width, 0));
-    popup.showUnderneathOf(this);
   }
 
   void update() {

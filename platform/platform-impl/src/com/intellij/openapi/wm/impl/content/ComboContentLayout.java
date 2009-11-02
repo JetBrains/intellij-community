@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl.content;
 
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.wm.impl.TitlePanel;
 import com.intellij.ui.content.ContentManagerEvent;
 
@@ -153,5 +154,11 @@ class ComboContentLayout extends ContentLayout {
 
   @Override
   public void contentRemoved(ContentManagerEvent event) {
+  }
+
+  @Override
+  public void showContentPopup(ListPopup listPopup) {
+    listPopup.setMinimumSize(new Dimension(myComboLabel.getPreferredSize().width, 0));
+    listPopup.showUnderneathOf(myComboLabel);
   }
 }
