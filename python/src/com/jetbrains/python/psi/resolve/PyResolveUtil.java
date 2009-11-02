@@ -166,19 +166,26 @@ public class PyResolveUtil {
     return null;
   }
 
+  /**
+   * Assumes that the start element is inside a function definition. Runs processor through the outer contexts of that function,
+   * from closest to outermost. Does not scan anything within the function.
+   * Makes sense for finding names that are not visible at definition time but are visible at call time.
+   * @param start element to start from; if it is not within a function, nothing happens.
+   * @param processor should be ready to see duplicate names defined differently in nested contexts.
+   * @return the element for which processor's {@code execute()} returned true, or null.
+   */
   @Nullable
-  public static PsiElement resolveOffContext(@NotNull PyReferenceExpression refex) {
+  public static PsiElement scanOuterContext(@NotNull PsiScopeProcessor processor, @NotNull PyElement start) {
     // if we're under a cap, an external object that we want to use might be also defined below us.
     // look through all contexts, closest first.
     PsiElement ret = null;
-    PsiElement our_cap = getConcealingParent(refex);
-    ResolveProcessor proc = new ResolveProcessor(refex.getReferencedName()); // processor reusable till first hit
+    PsiElement our_cap = PsiTreeUtil.getParentOfType(start, PyFunction.class);
     if (our_cap != null) {
       PsiElement cap = our_cap;
       while (true) {
-        cap = getConcealingParent(cap);
-        if (cap == null) cap = refex.getContainingFile();
-        ret = treeCrawlUp(proc, true, cap);
+        cap = PsiTreeUtil.getParentOfType(cap, PyFunction.class);
+        if (cap == null) cap = start.getContainingFile();
+        ret = treeCrawlUp(processor, true, cap);
         if ((ret != null) && !PsiTreeUtil.isAncestor(our_cap, ret, true)) { // found something and it is below our cap
           // maybe we're in a method, and what we found is in its class context?
           if (! refersFromMethodToClass(our_cap, ret)) {
@@ -190,6 +197,7 @@ public class PyResolveUtil {
     }
     return ret;
   }
+
 
   /**
    * @param inner an element presumably inside a method within a class, or a method itself.

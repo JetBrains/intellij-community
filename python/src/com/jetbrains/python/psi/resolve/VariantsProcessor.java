@@ -7,9 +7,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.util.Icons;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 
 public class VariantsProcessor implements PsiScopeProcessor {
@@ -58,7 +60,7 @@ public class VariantsProcessor implements PsiScopeProcessor {
       final PsiNamedElement psiNamedElement = (PsiNamedElement)element;
       final String name = psiNamedElement.getName();
       if (name != null && !myVariants.containsKey(name)) {
-        myVariants.put(name, setupItem(LookupElementBuilder.create(psiNamedElement)));
+        myVariants.put(name, setupItem(LookupElementBuilder.create(psiNamedElement).setIcon(element.getIcon(0))));
       }
     }
     else if (element instanceof PyReferenceExpression) {
@@ -73,8 +75,11 @@ public class VariantsProcessor implements PsiScopeProcessor {
       for (PyElement expr : definer.iterateNames()) {
         if (expr != null) { // NOTE: maybe rather have SingleIterables skip nulls outright?
           String referencedName = expr.getName();
+          Icon icon = element.getIcon(0);
+          // things like PyTargetExpression cannot have a general icon, but here we only have variables
+          if (icon == null) icon = Icons.VARIABLE_ICON;
           if (referencedName != null && !myVariants.containsKey(referencedName)) {
-            LookupElementBuilder lookup_item = setupItem(LookupElementBuilder.create(referencedName));
+            LookupElementBuilder lookup_item = setupItem(LookupElementBuilder.create(referencedName).setIcon(icon));
             if (definer instanceof PyImportElement) { // set notice to imported module name if needed
               PsiElement maybe_from_import = definer.getParent();
               if (maybe_from_import instanceof PyFromImportStatement) {

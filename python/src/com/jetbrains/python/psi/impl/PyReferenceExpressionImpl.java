@@ -246,7 +246,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       uexpr = PyResolveUtil.treeCrawlUp(new ResolveProcessor(referencedName), true, bfile);
     }
     if (uexpr == null) {
-      uexpr = PyResolveUtil.resolveOffContext(this);
+      //uexpr = PyResolveUtil.resolveOffContext(this);
+      uexpr = PyResolveUtil.scanOuterContext(new ResolveProcessor(referencedName), this);
     }
     uexpr = turnDirIntoInit(uexpr); // treeCrawlUp might have found a dir
     if (uexpr != null) ret.poke(uexpr, getRate(uexpr));
@@ -425,6 +426,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     // include our own names
     final VariantsProcessor processor = new VariantsProcessor();
     PyResolveUtil.treeCrawlUp(processor, this); // names from here
+    PyResolveUtil.scanOuterContext(processor, this); // possible names from around us at call time
 
     // in a call, include function's arg names
     PyCallExpression call_expr = PsiTreeUtil.getParentOfType(this, PyCallExpression.class);
