@@ -41,17 +41,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class MyTestInjector {
-  private LanguageInjector myInjector;
-  private ConcatenationAwareInjector myQLInPlaceInjector;
-  private ConcatenationAwareInjector myJSInPlaceInjector;
-  private ConcatenationAwareInjector mySeparatedJSInjector;
+  private final List<ConcatenationAwareInjector> myInjectors = new ArrayList();
   private final PsiManager myPsiManager;
-  private ConcatenationAwareInjector myQLPrefixedInjector;
   private MultiHostInjector myMultiHostInjector;
-  private ConcatenationAwareInjector myBrokenUpPrefix;
 
   @TestOnly
   public MyTestInjector(PsiManager psiManager) {
@@ -59,23 +54,24 @@ public class MyTestInjector {
   }
 
   public void injectAll() {
-    myInjector = injectVariousStuffEverywhere(myPsiManager);
+    injectVariousStuffEverywhere(myPsiManager);
 
     Project project = myPsiManager.getProject();
     Language ql = findLanguageByID("JPAQL");
     Language js = findLanguageByID("JavaScript");
-    myQLInPlaceInjector = registerForStringVarInitializer(project, ql, "ql", null, null);
-    myQLPrefixedInjector = registerForStringVarInitializer(project, ql, "qlPrefixed", "xxx", null);
-    myJSInPlaceInjector = registerForStringVarInitializer(project, js, "js", null, null);
-    mySeparatedJSInjector = registerForStringVarInitializer(project, js, "jsSeparated", " + ", " + 'separator'");
-    myBrokenUpPrefix = registerForStringVarInitializer(project, js, "jsBrokenPrefix", "xx ", "");
+    registerForStringVarInitializer(project, ql, "ql", null, null);
+    registerForStringVarInitializer(project, ql, "qlPrefixed", "xxx", null);
+    registerForStringVarInitializer(project, js, "js", null, null);
+    registerForStringVarInitializer(project, js, "jsSeparated", " + ", " + 'separator'");
+    registerForStringVarInitializer(project, js, "jsBrokenPrefix", "xx ", "");
   }
 
-  private static ConcatenationAwareInjector registerForStringVarInitializer(@NotNull Project project,
-                                                                            @NotNull final Language language,
+  private ConcatenationAwareInjector registerForStringVarInitializer(@NotNull Project project,
+                                                                            final Language language,
                                                                             @NotNull @NonNls final String varName,
                                                                             @NonNls final String prefix,
                                                                             @NonNls final String suffix) {
+    if (language == null) return null;
     ConcatenationAwareInjector injector = new ConcatenationAwareInjector() {
       public void getLanguagesToInject(@NotNull MultiHostRegistrar injectionPlacesRegistrar, @NotNull PsiElement... operands) {
         PsiVariable variable = PsiTreeUtil.getParentOfType(operands[0], PsiVariable.class);
@@ -108,24 +104,18 @@ public class MyTestInjector {
       }
     };
     JavaConcatenationInjectorManager.getInstance(project).registerConcatenationInjector(injector);
+    myInjectors.add(injector);
     return injector;
   }
 
 
   public void uninjectAll() {
-    myPsiManager.unregisterLanguageInjector(myInjector);
     Project project = myPsiManager.getProject();
-    boolean b = JavaConcatenationInjectorManager.getInstance(project).unregisterConcatenationInjector(myQLInPlaceInjector);
-    assert b;
-    b = JavaConcatenationInjectorManager.getInstance(project).unregisterConcatenationInjector(myJSInPlaceInjector);
-    assert b;
-    b = JavaConcatenationInjectorManager.getInstance(project).unregisterConcatenationInjector(mySeparatedJSInjector);
-    assert b;
-    b = JavaConcatenationInjectorManager.getInstance(project).unregisterConcatenationInjector(myQLPrefixedInjector);
-    assert b;
-    b = JavaConcatenationInjectorManager.getInstance(project).unregisterConcatenationInjector(myBrokenUpPrefix);
-    assert b;
-    b = InjectedLanguageManager.getInstance(project).unregisterMultiHostInjector(myMultiHostInjector);
+    for (ConcatenationAwareInjector i : myInjectors) {
+      boolean b = JavaConcatenationInjectorManager.getInstance(project).unregisterConcatenationInjector(i);
+      assert b;
+    }
+    boolean b = InjectedLanguageManager.getInstance(project).unregisterMultiHostInjector(myMultiHostInjector);
     assert b;
   }
 
@@ -137,9 +127,10 @@ public class MyTestInjector {
     return null;
   }
 
-  private LanguageInjector injectVariousStuffEverywhere(PsiManager psiManager) {
+  private void injectVariousStuffEverywhere(PsiManager psiManager) {
     final Language ql = findLanguageByID("JPAQL");
     final Language js = findLanguageByID("JavaScript");
+    if (ql == null || js == null) return;
     myMultiHostInjector = new MultiHostInjector() {
       public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
         XmlAttributeValue value = (XmlAttributeValue)context;
@@ -273,9 +264,7 @@ public class MyTestInjector {
       }
     };
 
-    psiManager.registerLanguageInjector(myInjector);
-
-    return myInjector;
+    psiManager.registerLanguageInjector(myInjector, psiManager.getProject());
   }
 
   private static void inject(final PsiLanguageInjectionHost host, final InjectedLanguagePlaces placesToInject, final Language language) {
