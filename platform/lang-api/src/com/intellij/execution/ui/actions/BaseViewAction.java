@@ -20,12 +20,12 @@ import com.intellij.execution.ui.layout.Grid;
 import com.intellij.execution.ui.layout.GridCell;
 import com.intellij.execution.ui.layout.Tab;
 import com.intellij.execution.ui.layout.ViewContext;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class BaseViewAction extends AnAction {
+public abstract class BaseViewAction extends DumbAwareAction {
 
   public final void update(final AnActionEvent e) {
     ViewContext context = getViewFacade(e);

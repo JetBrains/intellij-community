@@ -29,6 +29,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 
@@ -81,7 +82,7 @@ public abstract class CommandLineState implements RunnableState {
     myConsoleBuilder = consoleBuilder;
   }
 
-  protected static class PauseOutputAction extends ToggleAction {
+  protected static class PauseOutputAction extends ToggleAction implements DumbAware{
     private final ConsoleView myConsole;
     private final ProcessHandler myProcessHandler;
 

@@ -20,10 +20,10 @@
  */
 package com.intellij.execution.ui.layout.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAwareAction;
 
-public class RestoreLayoutAction extends AnAction {
+public class RestoreLayoutAction extends DumbAwareAction {
 
   public void actionPerformed(final AnActionEvent e) {
     ToggleToolbarLayoutAction.getRunnerUi(e).restoreLayout();
