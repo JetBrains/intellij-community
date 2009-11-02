@@ -209,7 +209,7 @@ public class SpellCheckerSettingsPane implements Disposable {
     dictionariesFolders.addAll(settings.getDictionaryFoldersPaths());
     allDictionaries.clear();
     for (String dictionary : manager.getBundledDictionaries()) {
-      allDictionaries.add(new Pair<String, Boolean>(dictionary, !settings.getBundledDisabledDictionariesPaths().contains(dictionary)));
+      allDictionaries.add(Pair.create(dictionary, !settings.getBundledDisabledDictionariesPaths().contains(dictionary)));
     }
 
     // user
