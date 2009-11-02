@@ -67,9 +67,6 @@
     <extensionPoint name="antCustomCompiler"
                     interface="com.intellij.compiler.ant.ChunkCustomCompilerExtension"/>
 
-    <extensionPoint name="explodedAndJarBuildGenerator"
-                    interface="com.intellij.compiler.make.ExplodedAndJarBuildGenerator"/>
-
     <extensionPoint name="methodImplementor"
                     interface="com.intellij.codeInsight.MethodImplementor"/>
 

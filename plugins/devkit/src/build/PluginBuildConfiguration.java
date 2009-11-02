@@ -18,7 +18,6 @@ package org.jetbrains.idea.devkit.build;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.compiler.make.BuildConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.startup.StartupManager;
@@ -46,7 +45,7 @@ import org.jetbrains.idea.devkit.module.PluginDescriptorConstants;
 
 import java.io.File;
 
-public class PluginBuildConfiguration extends BuildConfiguration implements ModuleComponent, JDOMExternalizable {
+public class PluginBuildConfiguration implements ModuleComponent, JDOMExternalizable {
   private final Module myModule;
   private final ConfigFileContainer myPluginXmlContainer;
   private VirtualFilePointer myPluginXmlPointer;
@@ -69,26 +68,6 @@ public class PluginBuildConfiguration extends BuildConfiguration implements Modu
   @Nullable
   public static PluginBuildConfiguration getInstance(Module module) {
     return module.getComponent(PluginBuildConfiguration.class);
-  }
-
-  public String getArchiveExtension() {
-    return "jar";
-  }
-
-  public String getJarPath() {
-    return null;
-  }
-
-  public String getExplodedPath() {
-    return PluginBuildUtil.getPluginExPath(myModule);
-  }
-
-  public boolean isJarEnabled() {
-    return false;
-  }
-
-  public boolean isExplodedEnabled() {
-    return true;
   }
 
   public void projectOpened() {}

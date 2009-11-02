@@ -15,13 +15,8 @@
  */
 package com.intellij.openapi.compiler.make;
 
-import com.intellij.openapi.module.Module;
-
 public interface BuildInstruction {
   String getOutputRelativePath();
-  Module getModule();
 
   boolean accept(BuildInstructionVisitor visitor) throws Exception;
-
-  boolean isExternalDependencyInstruction();
 }

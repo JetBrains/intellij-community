@@ -17,9 +17,7 @@ package org.jetbrains.idea.devkit.build;
 
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
-import com.intellij.openapi.compiler.make.BuildConfiguration;
-import com.intellij.openapi.compiler.make.BuildParticipantBase;
-import com.intellij.openapi.compiler.make.BuildRecipe;
+import com.intellij.openapi.compiler.make.BuildParticipant;
 import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -57,7 +55,7 @@ import java.util.List;
 /**
  * @author peter
 */
-public class PluginBuildParticipant extends BuildParticipantBase {
+public class PluginBuildParticipant extends BuildParticipant {
   @NonNls private static final String CLASSES = "/classes";
   @NonNls private static final String LIB = "/lib/";
   @NonNls private static final String LIB_DIRECTORY = "lib";
@@ -65,15 +63,9 @@ public class PluginBuildParticipant extends BuildParticipantBase {
   private final PluginBuildConfiguration myPluginBuildConfiguration;
 
   public PluginBuildParticipant(final Module module, final PluginBuildConfiguration pluginBuildConfiguration) {
-    super(module);
+    super();
     myModule = module;
     myPluginBuildConfiguration = pluginBuildConfiguration;
-  }
-
-  public BuildRecipe getBuildInstructions(final CompileContext context) {
-    //todo[nik] cache?
-    final BuildRecipe buildRecipe = DeploymentUtil.getInstance().createBuildRecipe();
-    return buildRecipe;
   }
 
   @Override
@@ -213,10 +205,6 @@ public class PluginBuildParticipant extends BuildParticipantBase {
       if (realProblems) return false;
     }
     return true;
-  }
-
-  public BuildConfiguration getBuildConfiguration() {
-    return myPluginBuildConfiguration;
   }
 
 }

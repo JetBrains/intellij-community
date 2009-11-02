@@ -14,27 +14,17 @@
  * limitations under the License.
  */
 
-package com.intellij.compiler.impl.packagingCompiler;
+package com.intellij.packaging.elements;
 
-import java.util.List;
+import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.compiler.CompileContext;
 
 /**
  * @author nik
  */
-public class ManifestFileInfo {
-  private final String myOutputPath;
-  private final List<String> myClasspath;
+public abstract class PackagingFileFilter {
 
-  public ManifestFileInfo(final String outputPath, final List<String> classpath) {
-    myOutputPath = outputPath;
-    myClasspath = classpath;
-  }
+  public abstract boolean accept(@NotNull VirtualFile virtualFile, @NotNull CompileContext context);
 
-  public String getOutputPath() {
-    return myOutputPath;
-  }
-
-  public List<String> getClasspath() {
-    return myClasspath;
-  }
 }

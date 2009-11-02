@@ -18,7 +18,6 @@ package com.intellij.compiler;
 import com.intellij.compiler.impl.*;
 import com.intellij.compiler.impl.javaCompiler.AnnotationProcessingCompiler;
 import com.intellij.compiler.impl.javaCompiler.JavaCompiler;
-import com.intellij.compiler.impl.packagingCompiler.IncrementalPackagingCompiler;
 import com.intellij.compiler.impl.resourceCompiler.ResourceCompiler;
 import com.intellij.compiler.impl.rmiCompiler.RmicCompiler;
 import com.intellij.openapi.compiler.*;
@@ -69,7 +68,6 @@ public class CompilerManagerImpl extends CompilerManager {
     addCompiler(new AnnotationProcessingCompiler(project));
     addCompiler(new ResourceCompiler(project, compilerConfiguration));
     addCompiler(new RmicCompiler());
-    addCompiler(new IncrementalPackagingCompiler());
     addCompiler(new IncrementalArtifactsCompiler());
 
     for(Compiler compiler: Extensions.getExtensions(Compiler.EP_NAME, myProject)) {

@@ -66,13 +66,13 @@ import java.util.*;
  * @author nik
  */
 public class IncrementalArtifactsCompiler implements PackagingCompiler {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.packaging.impl.compiler.IncrementalArtifactsCompiler");
   private static final Key<List<String>> FILES_TO_DELETE_KEY = Key.create("artifacts_files_to_delete");
   private static final Key<Set<Artifact>> AFFECTED_ARTIFACTS = Key.create("affected_artifacts");
   private static final Key<ArtifactsProcessingItemsBuilderContext> BUILDER_CONTEXT_KEY = Key.create("artifacts_builder_context");
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.packagingCompiler.PackagingCompilerBase");
   @Nullable private PackagingCompilerCache myOutputItemsCache;
 
-  protected static ArtifactPackagingProcessingItem[] collectItems(ArtifactsProcessingItemsBuilderContext builderContext, final Project project) {
+  private static ArtifactPackagingProcessingItem[] collectItems(ArtifactsProcessingItemsBuilderContext builderContext, final Project project) {
     final CompileContext context = builderContext.getCompileContext();
 
     final Set<Artifact> artifactsToBuild = ArtifactCompileScope.getArtifactsToBuild(project, context.getCompileScope());
@@ -103,19 +103,45 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
     return builderContext.getProcessingItems();
   }
 
-  protected static void onBuildFinished(ArtifactsProcessingItemsBuilderContext context)
-      throws Exception {
-    final CompileContext compileContext = context.getCompileContext();
-    final Set<Artifact> artifacts = getAffectedArtifacts(compileContext);
-    for (Artifact artifact : artifacts) {
-      for (ArtifactPropertiesProvider provider : artifact.getPropertiesProviders()) {
-        artifact.getProperties(provider).onBuildFinished(artifact, compileContext);
-      }
-    }
-  }
+  @NotNull
+  public ProcessingItem[] getProcessingItems(final CompileContext context) {
+    return new ReadAction<ProcessingItem[]>() {
+      protected void run(final Result<ProcessingItem[]> result) {
+        ArtifactsProcessingItemsBuilderContext builderContext = new ArtifactsProcessingItemsBuilderContext(context);
+        context.putUserData(BUILDER_CONTEXT_KEY, builderContext);
+        ArtifactPackagingProcessingItem[] allProcessingItems = collectItems(builderContext, context.getProject());
 
-  public static Set<Artifact> getAffectedArtifacts(final CompileContext compileContext) {
-    return compileContext.getUserData(AFFECTED_ARTIFACTS);
+        if (LOG.isDebugEnabled()) {
+          int num = Math.min(100, allProcessingItems.length);
+          LOG.debug("All files (" + num + " of " + allProcessingItems.length + "):");
+          for (int i = 0; i < num; i++) {
+            LOG.debug(allProcessingItems[i].getFile().getPath());
+          }
+        }
+
+        try {
+          final FileProcessingCompilerStateCache cache =
+              CompilerCacheManager.getInstance(context.getProject()).getFileProcessingCompilerCache(IncrementalArtifactsCompiler.this);
+          for (ArtifactPackagingProcessingItem item : allProcessingItems) {
+            item.init(cache);
+          }
+        }
+        catch (IOException e) {
+          context.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), null, -1, -1);
+          result.setResult(ProcessingItem.EMPTY_ARRAY);
+          return;
+        }
+
+        boolean hasFilesToDelete = collectFilesToDelete(context, builderContext.getProcessingItems());
+        if (hasFilesToDelete) {
+          MockProcessingItem mockItem = new MockProcessingItem(new LightVirtualFile("239239293"));
+          result.setResult(ArrayUtil.append(allProcessingItems, mockItem, ProcessingItem.class));
+        }
+        else {
+          result.setResult(allProcessingItems);
+        }
+      }
+    }.execute().getResultObject();
   }
 
   private static void collectItems(@NotNull ArtifactsProcessingItemsBuilderContext builderContext,
@@ -125,77 +151,10 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
     final CompositePackagingElement<?> rootElement = artifact.getRootElement();
     final VirtualFile outputFile = LocalFileSystem.getInstance().findFileByPath(outputPath);
     final CopyToDirectoryInstructionCreator instructionCreator =
-        new CopyToDirectoryInstructionCreator(builderContext, outputPath, outputFile);
+      new CopyToDirectoryInstructionCreator(builderContext, outputPath, outputFile);
     final PackagingElementResolvingContext resolvingContext = ArtifactManager.getInstance(project).getResolvingContext();
     builderContext.setCollectingEnabledItems(enable);
     rootElement.computeIncrementalCompilerInstructions(instructionCreator, resolvingContext, builderContext, artifact.getArtifactType());
-  }
-
-  @NotNull
-  public String getDescription() {
-    return "Artifacts Packaging Compiler";
-  }
-
-  @NotNull
-  private PackagingCompilerCache getOutputItemsCache(final Project project) {
-    if (myOutputItemsCache == null) {
-      myOutputItemsCache = new PackagingCompilerCache(
-          CompilerPaths.getCompilerSystemDirectory(project).getPath() + File.separator + "incremental_artifacts_timestamp.dat");
-    }
-    return myOutputItemsCache;
-  }
-
-  public void processOutdatedItem(final CompileContext context, final String url, @Nullable final ValidityState state) {
-  }
-
-  protected boolean collectFilesToDelete(final CompileContext context, final ArtifactPackagingProcessingItem[] allProcessingItems) {
-    List<String> filesToDelete = new ArrayList<String>();
-    Set<String> outputPaths = createPathsHashSet();
-    for (ArtifactPackagingProcessingItem item : allProcessingItems) {
-      for (Pair<DestinationInfo, Boolean> destinationInfo : item.getDestinations()) {
-        String outputPath = getOutputPathWithJarSeparator(destinationInfo.getFirst());
-        outputPaths.add(outputPath);
-      }
-    }
-
-    final Iterator<String> pathIterator = getOutputItemsCache(context.getProject()).getUrlsIterator();
-    while (pathIterator.hasNext()) {
-      String path = pathIterator.next();
-      if (!outputPaths.contains(path)) {
-        filesToDelete.add(path);
-      }
-    }
-
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Files to delete (" + filesToDelete.size() + "):");
-      for (String path : filesToDelete) {
-        LOG.debug(path);
-      }
-    }
-
-    if (filesToDelete.isEmpty()) {
-      return false;
-    }
-    context.putUserData(FILES_TO_DELETE_KEY, filesToDelete);
-    return true;
-  }
-
-  private static String getOutputPathWithJarSeparator(DestinationInfo destinationInfo) {
-    String outputPath = destinationInfo.getOutputFilePath();
-    if (destinationInfo instanceof JarDestinationInfo) {
-      final String fullOutputPath = destinationInfo.getOutputPath();
-      final String fileOutputPath = destinationInfo.getOutputFilePath();
-      if (fullOutputPath.startsWith(fileOutputPath)) {
-        outputPath += JarFileSystem.JAR_SEPARATOR + DeploymentUtil.trimForwardSlashes(fullOutputPath.substring(fileOutputPath.length()));
-      }
-    }
-    return outputPath;
-  }
-
-  private static THashSet<String> createPathsHashSet() {
-    return SystemInfo.isFileSystemCaseSensitive
-           ? new THashSet<String>()
-           : new THashSet<String>(CaseInsensitiveStringHashingStrategy.INSTANCE);
   }
 
   public ProcessingItem[] process(final CompileContext context, final ProcessingItem[] items) {
@@ -226,28 +185,11 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
     return processedItems.toArray(new ProcessingItem[processedItems.size()]);
   }
 
-  private static void removeInvalidItems(List<ArtifactPackagingProcessingItem> processedItems) {
-    Set<VirtualFile> files = new THashSet<VirtualFile>(processedItems.size());
-    for (ArtifactPackagingProcessingItem item : processedItems) {
-      files.add(item.getFile());
-    }
-    RefreshQueue.getInstance().refresh(false, false, null, files.toArray(new VirtualFile[files.size()]));
-
-    final Iterator<ArtifactPackagingProcessingItem> iterator = processedItems.iterator();
-    while (iterator.hasNext()) {
-      ArtifactPackagingProcessingItem item = iterator.next();
-      final VirtualFile file = item.getFile();
-      if (!file.isValid()) {
-        iterator.remove();
-      }
-    }
-  }
-
   private static boolean doBuild(final CompileContext context,
-                          final ProcessingItem[] items,
-                          final List<ArtifactPackagingProcessingItem> processedItems,
-                          final Set<String> writtenPaths,
-                          final Set<String> deletedJars) {
+                                 final ProcessingItem[] items,
+                                 final List<ArtifactPackagingProcessingItem> processedItems,
+                                 final Set<String> writtenPaths,
+                                 final Set<String> deletedJars) {
     final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
 
     if (LOG.isDebugEnabled()) {
@@ -347,6 +289,105 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
     return true;
   }
 
+  public static Set<Artifact> getAffectedArtifacts(final CompileContext compileContext) {
+    return compileContext.getUserData(AFFECTED_ARTIFACTS);
+  }
+
+  @NotNull
+  public String getDescription() {
+    return "Artifacts Packaging Compiler";
+  }
+
+  @NotNull
+  private PackagingCompilerCache getOutputItemsCache(final Project project) {
+    if (myOutputItemsCache == null) {
+      myOutputItemsCache = new PackagingCompilerCache(
+          CompilerPaths.getCompilerSystemDirectory(project).getPath() + File.separator + "incremental_artifacts_timestamp.dat");
+    }
+    return myOutputItemsCache;
+  }
+
+  public void processOutdatedItem(final CompileContext context, final String url, @Nullable final ValidityState state) {
+  }
+
+  protected boolean collectFilesToDelete(final CompileContext context, final ArtifactPackagingProcessingItem[] allProcessingItems) {
+    List<String> filesToDelete = new ArrayList<String>();
+    Set<String> outputPaths = createPathsHashSet();
+    for (ArtifactPackagingProcessingItem item : allProcessingItems) {
+      for (Pair<DestinationInfo, Boolean> destinationInfo : item.getDestinations()) {
+        String outputPath = getOutputPathWithJarSeparator(destinationInfo.getFirst());
+        outputPaths.add(outputPath);
+      }
+    }
+
+    final Iterator<String> pathIterator = getOutputItemsCache(context.getProject()).getUrlsIterator();
+    while (pathIterator.hasNext()) {
+      String path = pathIterator.next();
+      if (!outputPaths.contains(path)) {
+        filesToDelete.add(path);
+      }
+    }
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Files to delete (" + filesToDelete.size() + "):");
+      for (String path : filesToDelete) {
+        LOG.debug(path);
+      }
+    }
+
+    if (filesToDelete.isEmpty()) {
+      return false;
+    }
+    context.putUserData(FILES_TO_DELETE_KEY, filesToDelete);
+    return true;
+  }
+
+  private static String getOutputPathWithJarSeparator(DestinationInfo destinationInfo) {
+    String outputPath = destinationInfo.getOutputFilePath();
+    if (destinationInfo instanceof JarDestinationInfo) {
+      final String fullOutputPath = destinationInfo.getOutputPath();
+      final String fileOutputPath = destinationInfo.getOutputFilePath();
+      if (fullOutputPath.startsWith(fileOutputPath)) {
+        outputPath += JarFileSystem.JAR_SEPARATOR + DeploymentUtil.trimForwardSlashes(fullOutputPath.substring(fileOutputPath.length()));
+      }
+    }
+    return outputPath;
+  }
+
+  protected static void onBuildFinished(ArtifactsProcessingItemsBuilderContext context)
+    throws Exception {
+    final CompileContext compileContext = context.getCompileContext();
+    final Set<Artifact> artifacts = getAffectedArtifacts(compileContext);
+    for (Artifact artifact : artifacts) {
+      for (ArtifactPropertiesProvider provider : artifact.getPropertiesProviders()) {
+        artifact.getProperties(provider).onBuildFinished(artifact, compileContext);
+      }
+    }
+  }
+
+  private static THashSet<String> createPathsHashSet() {
+    return SystemInfo.isFileSystemCaseSensitive
+           ? new THashSet<String>()
+           : new THashSet<String>(CaseInsensitiveStringHashingStrategy.INSTANCE);
+  }
+
+  private static void removeInvalidItems(List<ArtifactPackagingProcessingItem> processedItems) {
+    Set<VirtualFile> files = new THashSet<VirtualFile>(processedItems.size());
+    for (ArtifactPackagingProcessingItem item : processedItems) {
+      files.add(item.getFile());
+    }
+    RefreshQueue.getInstance().refresh(false, false, null, files.toArray(new VirtualFile[files.size()]));
+
+    final Iterator<ArtifactPackagingProcessingItem> iterator = processedItems.iterator();
+    while (iterator.hasNext()) {
+      ArtifactPackagingProcessingItem item = iterator.next();
+      final VirtualFile file = item.getFile();
+      if (!file.isValid()) {
+        iterator.remove();
+      }
+    }
+  }
+
   private static void processDestinations(final List<ArtifactPackagingProcessingItem> items) {
     for (ArtifactPackagingProcessingItem item : items) {
       item.setProcessed();
@@ -435,47 +476,6 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
 
   public boolean validateConfiguration(final CompileScope scope) {
     return true;
-  }
-
-  @NotNull
-  public ProcessingItem[] getProcessingItems(final CompileContext context) {
-    return new ReadAction<ProcessingItem[]>() {
-      protected void run(final Result<ProcessingItem[]> result) {
-        ArtifactsProcessingItemsBuilderContext builderContext = new ArtifactsProcessingItemsBuilderContext(context);
-        context.putUserData(BUILDER_CONTEXT_KEY, builderContext);
-        ArtifactPackagingProcessingItem[] allProcessingItems = collectItems(builderContext, context.getProject());
-
-        if (LOG.isDebugEnabled()) {
-          int num = Math.min(100, allProcessingItems.length);
-          LOG.debug("All files (" + num + " of " + allProcessingItems.length + "):");
-          for (int i = 0; i < num; i++) {
-            LOG.debug(allProcessingItems[i].getFile().getPath());
-          }
-        }
-
-        try {
-          final FileProcessingCompilerStateCache cache =
-              CompilerCacheManager.getInstance(context.getProject()).getFileProcessingCompilerCache(IncrementalArtifactsCompiler.this);
-          for (ArtifactPackagingProcessingItem item : allProcessingItems) {
-            item.init(cache);
-          }
-        }
-        catch (IOException e) {
-          context.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), null, -1, -1);
-          result.setResult(ProcessingItem.EMPTY_ARRAY);
-          return;
-        }
-
-        boolean hasFilesToDelete = collectFilesToDelete(context, builderContext.getProcessingItems());
-        if (hasFilesToDelete) {
-          MockProcessingItem mockItem = new MockProcessingItem(new LightVirtualFile("239239293"));
-          result.setResult(ArrayUtil.append(allProcessingItems, mockItem, ProcessingItem.class));
-        }
-        else {
-          result.setResult(allProcessingItems);
-        }
-      }
-    }.execute().getResultObject();
   }
 
   private static class MockProcessingItem implements ProcessingItem {

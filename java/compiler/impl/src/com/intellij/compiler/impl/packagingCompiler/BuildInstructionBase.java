@@ -20,7 +20,6 @@
 package com.intellij.compiler.impl.packagingCompiler;
 
 import com.intellij.openapi.compiler.make.BuildInstruction;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.UserDataHolderBase;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -31,28 +30,18 @@ import java.util.Collection;
 
 public abstract class BuildInstructionBase extends UserDataHolderBase implements BuildInstruction, Cloneable {
   private final String myOutputRelativePath;
-  private final Module myModule;
   private Collection<File> myFilesToDelete;
 
-  protected BuildInstructionBase(String outputRelativePath, Module module) {
+  protected BuildInstructionBase(String outputRelativePath) {
     myOutputRelativePath = outputRelativePath;
-    myModule = module;
   }
 
   public String getOutputRelativePath() {
     return myOutputRelativePath;
   }
 
-  public Module getModule() {
-    return myModule;
-  }
-
   public BuildInstructionBase clone() {
     return (BuildInstructionBase)super.clone();
-  }
-
-  public boolean isExternalDependencyInstruction() {
-    return getOutputRelativePath().startsWith("..");
   }
 
   public void addFileToDelete(File file) {
