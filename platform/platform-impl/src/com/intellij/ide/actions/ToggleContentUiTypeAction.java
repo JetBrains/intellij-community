@@ -17,22 +17,22 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowContentUiType;
 
-public class ToggleSideModeAction extends BaseToolWindowToggleAction {
+public class ToggleContentUiTypeAction extends BaseToolWindowToggleAction {
 
   @Override
   protected boolean isSelected(ToolWindow window) {
-    return window.isSplitMode();
+    return window.getContentUiType() == ToolWindowContentUiType.TABBED;
   }
 
   @Override
   protected void setSelected(ToolWindow window, boolean state) {
-    window.setSplitMode(state, null);
+    window.setContentUiType(state ? ToolWindowContentUiType.TABBED : ToolWindowContentUiType.COMBO, null);
   }
 
   @Override
   protected void update(ToolWindow window, Presentation presentation) {
-    presentation.setEnabled(window.isAvailable());
+    presentation.setEnabled(window.getContentManager().getContentCount() > 1);
   }
-
 }

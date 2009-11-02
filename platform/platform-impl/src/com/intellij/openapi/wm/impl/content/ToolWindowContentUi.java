@@ -16,71 +16,53 @@
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.actions.ShowContentAction;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.impl.TitlePanel;
+import com.intellij.openapi.wm.ToolWindowContentUiType;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.content.*;
-import com.intellij.ui.content.tabs.TabbedContentAction;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
-import com.intellij.ui.tabs.impl.singleRow.MoreIcon;
-import com.intellij.util.ui.BaseButtonBehavior;
+import com.intellij.ui.content.tabs.TabbedContentAction;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.PopupMenuEvent;
-import javax.swing.event.PopupMenuListener;
 import java.awt.*;
-import java.awt.event.*;
-import java.awt.geom.GeneralPath;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Arrays;
 
 public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyChangeListener, DataProvider {
   public static final String POPUP_PLACE = "ToolwindowPopup";
 
-  private ContentManager myManager;
+  ContentManager myManager;
 
-  ArrayList<ContentTabLabel> myTabs = new ArrayList<ContentTabLabel>();
-  private final Map<Content, ContentTabLabel> myContent2Tabs = new HashMap<Content, ContentTabLabel>();
 
-  private final JPanel myContent = new JPanel(new BorderLayout());
+  final JPanel myContent = new JPanel(new BorderLayout());
   ToolWindowImpl myWindow;
 
   TabbedContentAction.CloseAllAction myCloseAllAction;
   TabbedContentAction.MyNextTabAction myNextTabAction;
   TabbedContentAction.MyPreviousTabAction myPreviousTabAction;
 
+  ShowContentAction myShowContent;
 
-  private final BaseLabel myIdLabel = new BaseLabel(this, false);
+  ContentLayout myTabsLayout = new TabContentLayout(this);
+  ContentLayout myComboLayout = new ComboContentLayout(this);
 
-  private final MoreIcon myMoreIcon = new MoreIcon() {
-    protected Rectangle getIconRec() {
-      return myLastLayout.moreRect;
-    }
-
-    protected boolean isActive() {
-      return myWindow.isActive();
-    }
-
-    protected int getIconY(final Rectangle iconRec) {
-      return iconRec.height / 2 - getIconHeight() / 2 + TitlePanel.STRUT;
-    }
-  };
-
-  private JPopupMenu myPopup;
-  private final PopupMenuListener myPopupListener;
-
-  private static final int MORE_ICON_BORDER = 6;
-
-  private LayoutData myLastLayout;
+  private ToolWindowContentUiType myType = ToolWindowContentUiType.TABBED;
 
   public ToolWindowContentUi(ToolWindowImpl window) {
     myWindow = window;
@@ -88,20 +70,28 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     myContent.setFocusable(false);
     setOpaque(false);
 
+    myShowContent = new ShowContentAction(myWindow, myContent);
+
     setBorder(new EmptyBorder(0, 0, 0, 2));
+  }
 
-    myPopupListener = new MyPopupListener();
+  public void setType(@NotNull ToolWindowContentUiType type) {
+    if (myType != type) {
 
-    new BaseButtonBehavior(this) {
-      protected void execute(final MouseEvent e) {
-        if (myLastLayout != null) {
-          final Rectangle moreRect = myLastLayout.moreRect;
-          if (moreRect != null && moreRect.contains(e.getPoint())) {
-            showPopup();
-          }
-        }
+      if (myType != null) {
+        getCurrentLayout().reset();
       }
-    };
+
+      myType = type;
+
+      getCurrentLayout().init();
+      rebuild();
+    }
+  }
+
+  private ContentLayout getCurrentLayout() {
+    assert myManager != null;
+    return myType == ToolWindowContentUiType.TABBED ? myTabsLayout : myComboLayout;
   }
 
   public JComponent getComponent() {
@@ -113,27 +103,26 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   }
 
   public void setManager(final ContentManager manager) {
+    if (myManager != null) {
+      getCurrentLayout().reset();
+    }
+
     myManager = manager;
+
+    getCurrentLayout().init();
+
     myManager.addContentManagerListener(new ContentManagerListener() {
       public void contentAdded(final ContentManagerEvent event) {
-        final ContentTabLabel tab = new ContentTabLabel(event.getContent(), ToolWindowContentUi.this);
-        myTabs.add(event.getIndex(), tab);
-        myContent2Tabs.put(event.getContent(), tab);
+        getCurrentLayout().contentAdded(event);
         event.getContent().addPropertyChangeListener(ToolWindowContentUi.this);
         rebuild();
       }
 
       public void contentRemoved(final ContentManagerEvent event) {
-        final ContentTabLabel tab = myContent2Tabs.get(event.getContent());
-        if (tab != null) {
-          myTabs.remove(tab);
-          myContent2Tabs.remove(event.getContent());
-          event.getContent().removePropertyChangeListener(ToolWindowContentUi.this);
-
-          ensureSelectedContentVisible();
-
-          rebuild();
-        }
+        event.getContent().removePropertyChangeListener(ToolWindowContentUi.this);
+        getCurrentLayout().contentRemoved(event);
+        ensureSelectedContentVisible();
+        rebuild();
       }
 
       public void contentRemoveQuery(final ContentManagerEvent event) {
@@ -150,8 +139,8 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     });
 
     initMouseListeners(this, ToolWindowContentUi.this);
-    update();
 
+    rebuild();
 
     myCloseAllAction = new TabbedContentAction.CloseAllAction(myManager);
     myNextTabAction = new TabbedContentAction.MyNextTabAction(myManager);
@@ -179,242 +168,33 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
 
   private void rebuild() {
-    removeAll();
-
-    add(myIdLabel);
-    initMouseListeners(myIdLabel, this);
-
-    for (ContentTabLabel each : myTabs) {
-      add(each);
-      initMouseListeners(each, this);
-    }
-
-    update();
+    getCurrentLayout().rebuild();
+    getCurrentLayout().update();
 
     revalidate();
     repaint();
 
-    if (myTabs.size() == 0 && myWindow.isToHideOnEmptyContent()) {
+    if (myManager.getContentCount() == 0 && myWindow.isToHideOnEmptyContent()) {
       myWindow.hide(null);
     }
   }
 
-  private class LayoutData {
-    int toFitWidth;
-    int requiredWidth;
-    Dimension layoutSize = getSize();
-    boolean fullLayout = true;
 
-    int moreRectWidth;
-
-    ArrayList<ContentTabLabel> toLayout = new ArrayList<ContentTabLabel>();
-    ArrayList<ContentTabLabel> toDrop = new ArrayList<ContentTabLabel>();
-
-    Rectangle moreRect;
-
-    public int eachX;
-    public int eachY;
-    public int contentCount = myManager.getContentCount();
-  }
 
   public void doLayout() {
-    LayoutData data = new LayoutData();
-
-    data.eachX = 0;
-    data.eachY = TitlePanel.STRUT;
-
-    myIdLabel.setBounds(data.eachX, data.eachY, myIdLabel.getPreferredSize().width, getHeight());
-    data.eachX += myIdLabel.getPreferredSize().width;
-    int tabsStart = data.eachX;
-
-    if (myManager.getContentCount() == 0) return;
-
-    Content selected = myManager.getSelectedContent();
-    if (selected == null) {
-      selected = myManager.getContents()[0];
-    }
-
-    if (myLastLayout != null && myLastLayout.layoutSize.equals(getSize()) && myLastLayout.contentCount == myManager.getContentCount()) {
-      for (ContentTabLabel each : myTabs) {
-        if (!each.isValid()) break;
-        if (each.myContent == selected && each.getBounds().width != 0) {
-          data = myLastLayout;
-          data.fullLayout = false;
-        }
-      }
-    }
-
-
-    if (data.fullLayout) {
-      for (ContentTabLabel eachTab : myTabs) {
-        final Dimension eachSize = eachTab.getPreferredSize();
-        data.requiredWidth += eachSize.width;
-        data.requiredWidth++;
-        data.toLayout.add(eachTab);
-      }
-
-
-      data.moreRectWidth = myMoreIcon.getIconWidth() + MORE_ICON_BORDER * 2;
-      data.toFitWidth = getSize().width - data.eachX;
-
-      final ContentTabLabel selectedTab = myContent2Tabs.get(selected);
-      while (true) {
-        if (data.requiredWidth <= data.toFitWidth) break;
-        if (data.toLayout.size() <= 1) break;
-
-        if (data.toLayout.get(0) != selectedTab) {
-          dropTab(data, data.toLayout.remove(0));
-        } else if (data.toLayout.get(data.toLayout.size() - 1) != selectedTab) {
-          dropTab(data, data.toLayout.remove(data.toLayout.size() - 1));
-        } else {
-          break;
-        }
-      }
-
-
-      boolean reachedBounds = false;
-      data.moreRect = null;
-      for (ContentTabLabel each : data.toLayout) {
-        if (isToDrawTabs()) {
-          data.eachY = 0;
-        } else {
-          data.eachY = TitlePanel.STRUT;
-        }
-        final Dimension eachSize = each.getPreferredSize();
-          if (data.eachX + eachSize.width < data.toFitWidth + tabsStart) {
-            each.setBounds(data.eachX, data.eachY, eachSize.width, getHeight() - data.eachY);
-            data.eachX += eachSize.width;
-            data.eachX++;
-          } else {
-            if (!reachedBounds) {
-              final int width = getWidth() - data.eachX - data.moreRectWidth;
-              each.setBounds(data.eachX, data.eachY, width, getHeight() - data.eachY);
-              data.eachX += width;
-              data.eachX ++;
-            } else {
-              each.setBounds(0, 0, 0, 0);
-            }
-            reachedBounds = true;
-          }
-      }
-
-      for (ContentTabLabel each : data.toDrop) {
-        each.setBounds(0, 0, 0, 0);
-      }
-    }
-
-    if (data.toDrop.size() > 0) {
-      data.moreRect = new Rectangle(data.eachX + MORE_ICON_BORDER, 0, myMoreIcon.getIconWidth(), getHeight());
-      final int selectedIndex = myManager.getIndexOfContent(myManager.getSelectedContent());
-      if (selectedIndex == 0) {
-        myMoreIcon.setPaintedIcons(false, true);
-      } else if (selectedIndex == myManager.getContentCount() - 1) {
-        myMoreIcon.setPaintedIcons(true, false);
-      } else {
-        myMoreIcon.setPaintedIcons(true, true);
-      }
-    } else {
-      data.moreRect = null;
-    }
-    
-    myLastLayout = data;
+    getCurrentLayout().layout();
   }
 
-  private void dropTab(final LayoutData data, final ContentTabLabel toDropLabel) {
-    data.requiredWidth -= (toDropLabel.getPreferredSize().width + 1);
-    data.toDrop.add(toDropLabel);
-    if (data.toDrop.size() == 1) {
-      data.toFitWidth -= data.moreRectWidth;
-    }
-  }
 
   protected void paintComponent(final Graphics g) {
     super.paintComponent(g);
-    if (!isToDrawTabs()) return;
-
-    final Graphics2D g2d = (Graphics2D)g;
-
-    final GraphicsConfig c = new GraphicsConfig(g);
-    c.setAntialiasing(true);
-
-
-    for (ContentTabLabel each : myTabs) {
-      final Shape shape = getShapeFor(each);
-      final Rectangle bounds = each.getBounds();
-      if (myWindow.isActive()) {
-        Color from;
-        Color to;
-        if (each.isSelected()) {
-          from = new Color(90, 133, 215);
-          to = new Color(33, 87, 138);
-          g2d.setPaint(new GradientPaint(bounds.x, bounds.y, from, bounds.x, (float)bounds.getMaxY(), to));
-        }
-        else {
-          from = new Color(129, 147, 219);
-          to = new Color(84, 130, 171);
-          g2d.setPaint(new GradientPaint(bounds.x, bounds.y, from, bounds.x, (float)bounds.getMaxY(), to));
-        }
-      }
-      else {
-        g2d.setPaint(
-          new GradientPaint(bounds.x, bounds.y, new Color(152, 143, 134), bounds.x, (float)bounds.getMaxY(), new Color(165, 157, 149)));
-      }
-
-      g2d.fill(shape);
-    }
-
-    c.restore();
+    getCurrentLayout().paintComponent(g);
   }
 
   protected void paintChildren(final Graphics g) {
     super.paintChildren(g);
-    if (!isToDrawTabs()) return;
-
-    final GraphicsConfig c = new GraphicsConfig(g);
-    c.setAntialiasing(true);
-
-    final Graphics2D g2d = (Graphics2D)g;
-
-    final Color edges = myWindow.isActive() ? new Color(38, 63, 106) : new Color(130, 120, 111);
-    g2d.setColor(edges);
-    for (int i = 0; i < myTabs.size(); i++) {
-      ContentTabLabel each = myTabs.get(i);
-      final Shape shape = getShapeFor(each);
-      g2d.draw(shape);
-    }
-
-    c.restore();
-
-    if (myLastLayout != null && myLastLayout.moreRect != null) {
-      myMoreIcon.paintIcon(this, g);
-    }
+    getCurrentLayout().paintChildren(g);
   }
-
-  private Shape getShapeFor(ContentTabLabel label) {
-    final Rectangle bounds = label.getBounds();
-
-    if (bounds.width <= 0 || bounds.height <= 0) return new GeneralPath();
-
-    if (!label.isSelected()) {
-      bounds.y += 3;
-    }
-
-    bounds.width += 1;
-
-    int arc = 2;
-
-    final GeneralPath path = new GeneralPath();
-    path.moveTo(bounds.x, bounds.y + bounds.height);
-    path.lineTo(bounds.x, bounds.y + arc);
-    path.quadTo(bounds.x, bounds.y, bounds.x + arc, bounds.y);
-    path.lineTo(bounds.x + bounds.width - arc, bounds.y);
-    path.quadTo(bounds.x + bounds.width, bounds.y, bounds.x + bounds.width, bounds.y + arc);
-    path.lineTo(bounds.x + bounds.width, bounds.y + bounds.height);
-    path.closePath();
-
-    return path;
-  }
-
 
   public Dimension getMinimumSize() {
     return getPreferredSize();
@@ -435,20 +215,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   }
 
   private void update() {
-    for (ContentTabLabel each : myTabs) {
-      each.update();
-    }
-
-    myIdLabel.setText(myWindow.getId());
-    myIdLabel.setBorder(new EmptyBorder(0, 2, 0, 8));
-
-    if (myTabs.size() == 1) {
-      final String text = myTabs.get(0).getText();
-      if (text != null && text.trim().length() > 0) {
-        myIdLabel.setText(myIdLabel.getText() + " ");
-        myIdLabel.setBorder(new EmptyBorder(0, 2, 0, 0));
-      }
-    }
+    getCurrentLayout().update();
 
     revalidate();
     repaint();
@@ -509,20 +276,24 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
 
     final DefaultActionGroup contentGroup = new DefaultActionGroup();
-    if (c instanceof ContentTabLabel) {
-      final Content content = ((ContentTabLabel)c).myContent;
-      contentGroup.add(new TabbedContentAction.CloseAction(content));
-      contentGroup.add(ui.myCloseAllAction);
-      contentGroup.add(new TabbedContentAction.CloseAllButThisAction(content));
-      contentGroup.addSeparator();
-      if (content.isPinnable()) {
-        contentGroup.add(PinToolwindowTabAction.getPinAction());
+    if (c instanceof BaseLabel) {
+      final Content content = ((BaseLabel)c).getContent();
+      if (content != null) {
+        contentGroup.add(ui.myShowContent);
+        contentGroup.addSeparator();
+        contentGroup.add(new TabbedContentAction.CloseAction(content));
+        contentGroup.add(ui.myCloseAllAction);
+        contentGroup.add(new TabbedContentAction.CloseAllButThisAction(content));
+        contentGroup.addSeparator();
+        if (content.isPinnable()) {
+          contentGroup.add(PinToolwindowTabAction.getPinAction());
+          contentGroup.addSeparator();
+        }
+
+        contentGroup.add(ui.myNextTabAction);
+        contentGroup.add(ui.myPreviousTabAction);
         contentGroup.addSeparator();
       }
-
-      contentGroup.add(ui.myNextTabAction);
-      contentGroup.add(ui.myPreviousTabAction);
-      contentGroup.addSeparator();
     }
 
     c.addMouseListener(new PopupHandler() {
@@ -546,13 +317,15 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   private void processHide(final MouseEvent e) {
     IdeEventQueue.getInstance().blockNextEvents(e);
     final Component c = e.getComponent();
-    if (c instanceof ContentTabLabel) {
-      final ContentTabLabel tab = (ContentTabLabel)c;
-      if (myManager.canCloseContents() && tab.myContent.isCloseable()) {
-        myManager.removeContent(tab.myContent, true);
-      } else {
-        if (myManager.getContentCount() == 1) {
-          hideWindow(e);
+    if (c instanceof BaseLabel) {
+      final BaseLabel tab = (BaseLabel)c;
+      if (tab.getContent() != null) {
+        if (myManager.canCloseContents() && tab.getContent().isCloseable()) {
+          myManager.removeContent(tab.getContent(), true);
+        } else {
+          if (myManager.getContentCount() == 1) {
+            hideWindow(e);
+          }
         }
       }
     }
@@ -577,45 +350,41 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     return null;
   }
 
-  public boolean isToDrawTabs() {
-    return myTabs.size() > 1;
-  }
-
-  private void showPopup() {
-    myPopup = new JPopupMenu();
-    myPopup.addPopupMenuListener(myPopupListener);
-    for (final ContentTabLabel each : myTabs) {
-      final JCheckBoxMenuItem item = new JCheckBoxMenuItem(each.getText());
-      if (myManager.isSelected(each.myContent)) {
-        item.setSelected(true);
-      }
-      item.addActionListener(new ActionListener() {
-        public void actionPerformed(final ActionEvent e) {
-          myManager.setSelectedContent(each.myContent, true);
-        }
-      });
-      myPopup.add(item);
-    }
-    myPopup.show(this, myLastLayout.moreRect.x, myLastLayout.moreRect.y);
-  }
-
   public void dispose() {
+
   }
 
+  boolean isCurrent(ContentLayout layout) {
+    return getCurrentLayout() == layout;
+  }
 
-  private class MyPopupListener implements PopupMenuListener {
-    public void popupMenuWillBecomeVisible(final PopupMenuEvent e) {
-    }
-
-    public void popupMenuWillBecomeInvisible(final PopupMenuEvent e) {
-      if (myPopup != null) {
-        myPopup.removePopupMenuListener(this);
+  public void showContentPopup(InputEvent inputEvent) {
+    BaseListPopupStep step = new BaseListPopupStep<Content>(null, myManager.getContents()) {
+      @Override
+      public PopupStep onChosen(Content selectedValue, boolean finalChoice) {
+        myManager.setSelectedContent(selectedValue, true, true);
+        return FINAL_CHOICE;
       }
-      myPopup = null;
-    }
 
-    public void popupMenuCanceled(final PopupMenuEvent e) {
-    }
+      @NotNull
+      @Override
+      public String getTextFor(Content value) {
+        return value.getDisplayName();
+      }
+
+      @Override
+      public Icon getIconFor(Content aValue) {
+        return aValue.getIcon();
+      }
+
+      @Override
+      public boolean isMnemonicsNavigationEnabled() {
+        return true;
+      }
+    };
+
+    step.setDefaultOptionIndex(Arrays.asList(myManager.getContents()).indexOf(myManager.getSelectedContent()));
+    getCurrentLayout().showContentPopup(JBPopupFactory.getInstance().createListPopup(step));
+
   }
-
 }

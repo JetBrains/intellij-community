@@ -29,7 +29,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.impl.ShadowBorderPainter;
-import static com.intellij.openapi.ui.impl.ShadowBorderPainter.*;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -57,6 +56,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static com.intellij.openapi.ui.impl.ShadowBorderPainter.*;
 
 public class AbstractPopup implements JBPopup {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.AbstractPopup");
@@ -549,6 +550,10 @@ public class AbstractPopup implements JBPopup {
 
     if (myMinSize == null) {
       myMinSize = myContent.getMinimumSize();
+    }
+
+    if (sizeToSet == null) {
+      sizeToSet = myContent.getPreferredSize();
     }
 
     if (sizeToSet != null) {
@@ -1197,5 +1202,9 @@ public class AbstractPopup implements JBPopup {
 
   public Component getOwner() {
     return myRequestorComponent;
+  }
+
+  public void setMinimumSize(Dimension size) {
+    myMinSize = size;
   }
 }

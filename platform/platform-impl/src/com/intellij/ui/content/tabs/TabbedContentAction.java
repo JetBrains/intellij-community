@@ -113,7 +113,7 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
         }
       }
       return false;
-    }
+    }        
   }
 
   public static class CloseAllAction extends TabbedContentAction {
