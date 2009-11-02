@@ -94,12 +94,6 @@ public class CoverageEnabledConfiguration implements JDOMExternalizable{
   }
 
   public void readExternal(Element element) throws InvalidDataException {
-    if (element.getAttributeValue(COVERAGE_ENABLED_ATTRIBUTE_NAME) == null) { //try old format
-      Element parentElement = element.getParentElement();
-      if (parentElement != null && parentElement.getAttributeValue(COVERAGE_ENABLED_ATTRIBUTE_NAME) != null && parentElement.getAttributeValue(COVERAGE_MERGE_ATTRIBUTE_NAME) != null) {
-        element = parentElement;
-      }
-    }
     myIsCoverageEnabled = element.getAttributeValue(COVERAGE_ENABLED_ATTRIBUTE_NAME) != null && Boolean.valueOf(element.getAttributeValue(COVERAGE_ENABLED_ATTRIBUTE_NAME)).booleanValue();
 
     final String mergeAttribute = element.getAttributeValue(COVERAGE_MERGE_ATTRIBUTE_NAME);
