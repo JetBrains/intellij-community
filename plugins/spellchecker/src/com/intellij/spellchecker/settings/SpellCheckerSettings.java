@@ -81,9 +81,9 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
 
   @SuppressWarnings({"ConstantConditions"})
   public Element getState() {
-    if (myBundledDisabledDictionariesPaths.size() == 0 &&
-        myDictionaryFoldersPaths.size() == 0 &&
-        myDisabledDictionariesPaths.size() == 0) {
+    if (myBundledDisabledDictionariesPaths.isEmpty() &&
+        myDictionaryFoldersPaths.isEmpty() &&
+        myDisabledDictionariesPaths.isEmpty()) {
       return null;
     }
 
