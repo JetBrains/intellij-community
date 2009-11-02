@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -109,6 +110,7 @@ public class QuickEditAction implements IntentionAction {
     final String text = InjectedLanguageManager.getInstance(project).getUnescapedText(injectedFile);
     final PsiFile file2 =
         factory.createFileFromText("dummy." + fileType.getDefaultExtension(), fileType, text, LocalTimeCounter.currentTime(), true);
+    file2.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, SmartPointerManager.getInstance(project).createSmartPsiElementPointer(file));
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file2);
     assert document != null;
     EditorActionManager.getInstance().setReadonlyFragmentModificationHandler(document, new ReadonlyFragmentModificationHandler() {
