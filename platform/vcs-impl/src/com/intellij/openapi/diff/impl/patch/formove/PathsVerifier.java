@@ -47,11 +47,13 @@ public class PathsVerifier {
   private final List<Pair<VirtualFile, FilePatch>> myTextPatches;
   private final List<Pair<VirtualFile, FilePatch>> myBinaryPatches;
   private final List<VirtualFile> myWritableFiles;
+  private final BaseMapper myBaseMapper;
 
-  public PathsVerifier(final Project project, final VirtualFile baseDirectory, final List<FilePatch> patches) {
+  public PathsVerifier(final Project project, final VirtualFile baseDirectory, final List<FilePatch> patches, BaseMapper baseMapper) {
     myProject = project;
     myBaseDirectory = baseDirectory;
     myPatches = patches;
+    myBaseMapper = baseMapper;
 
     myMovedFiles = new HashMap<VirtualFile, MovedFileData>();
     myBeforePaths = new ArrayList<FilePath>();
@@ -161,7 +163,7 @@ public class PathsVerifier {
     }
 
     protected boolean check() throws IOException {
-      final VirtualFile beforeFile = PatchApplier.getFile(myBaseDirectory, myBeforeName);
+      final VirtualFile beforeFile = myBaseMapper.getFile(myPatch, myBeforeName);
       // todo maybe deletion may be ok, just warning
       if (! checkExistsAndValid(beforeFile, myBeforeName)) {
         return false;
@@ -223,7 +225,7 @@ public class PathsVerifier {
         setErrorMessage(fileNotFoundMessage(myAfterName));
         return false;
       }
-      final VirtualFile beforeFile = PatchApplier.getFile(myBaseDirectory, myBeforeName);
+      final VirtualFile beforeFile = myBaseMapper.getFile(myPatch, myBeforeName);
       if (! checkExistsAndValid(beforeFile, myBeforeName)) {
         return false;
       }
@@ -254,8 +256,8 @@ public class PathsVerifier {
     }
 
     public boolean canBeApplied() {
-      final VirtualFile beforeFile = PatchApplier.getFile(myBaseDirectory, myBeforeName);
-      final VirtualFile afterFile = PatchApplier.getFile(myBaseDirectory, myAfterName);
+      final VirtualFile beforeFile = myBaseMapper.getFile(myPatch, myBeforeName);
+      final VirtualFile afterFile = myBaseMapper.getFile(myPatch, myAfterName);
       return precheck(beforeFile, afterFile);
     }
 
@@ -466,5 +468,10 @@ public class PathsVerifier {
       }
       return afterFile;
     }
+  }
+
+  public interface BaseMapper {
+    @Nullable
+    VirtualFile getFile(final FilePatch patch, final String path);
   }
 }

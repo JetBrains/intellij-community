@@ -55,7 +55,7 @@ import java.util.List;
 public abstract class ChangesTreeList<T> extends JPanel {
   private final Tree myTree;
   private final JList myList;
-  private final Project myProject;
+  protected final Project myProject;
   private final boolean myShowCheckboxes;
   private final boolean myHighlightProblems;
   private boolean myShowFlatten;
@@ -330,6 +330,14 @@ public abstract class ChangesTreeList<T> extends JPanel {
     repaint();
   }
 
+  public int getSelectionCount() {
+    if (myShowFlatten) {
+      return myList.getSelectedIndices().length;
+    } else {
+      return myTree.getSelectionCount();
+    }
+  }
+
   @NotNull
   public List<T> getSelectedChanges() {
     if (myShowFlatten) {
@@ -397,6 +405,14 @@ public abstract class ChangesTreeList<T> extends JPanel {
     if (myInclusionListener != null) {
       myInclusionListener.run();
     }
+  }
+
+  // no listener supposed to be called
+  public void setIncludedChanges(final Collection<T> changes) {
+    myIncludedChanges.clear();
+    myIncludedChanges.addAll(changes);
+    myTree.repaint();
+    myList.repaint();
   }
 
   public void includeChange(final T change) {

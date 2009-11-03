@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.history;
+package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.util.Alarm;
@@ -23,13 +23,18 @@ public class ZipperUpdater {
   private final Alarm myAlarm;
   private boolean myRaised;
   private final Object myLock = new Object();
-  private final static int DELAY = 300;
+  private final int myDelay;
 
-  public ZipperUpdater() {
+  public ZipperUpdater(final int delay) {
+    myDelay = delay;
     myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   }
 
   public void queue(final Runnable runnable) {
+    queue(runnable, false);
+  }
+
+  public void queue(final Runnable runnable, final boolean urgent) {
     synchronized (myLock) {
       myRaised = true;
     }
@@ -41,6 +46,6 @@ public class ZipperUpdater {
         }
         runnable.run();
       }
-    }, DELAY);
+    }, urgent ? 0 : myDelay);
   }
 }

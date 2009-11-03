@@ -70,6 +70,10 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
     return ArrayUtil.toStringArray(allKeys);
   }
 
+  public static Collection<VirtualFile> getVirtualFilesByName(final Project project, final String name, final GlobalSearchScope scope) {
+    return FileBasedIndex.getInstance().getContainingFiles(NAME, name, scope);
+  }
+
   public static PsiFile[] getFilesByName(final Project project, final String name, final GlobalSearchScope scope) {
     final Collection<VirtualFile> files = FileBasedIndex.getInstance().getContainingFiles(NAME, name, scope);
     if (files.isEmpty()) return PsiFile.EMPTY_ARRAY;
