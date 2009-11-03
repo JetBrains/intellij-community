@@ -41,6 +41,15 @@ public interface InlineHandler {
      * was triggered should be inlined.
      */
     boolean isOnlyOneReferenceToInline();
+
+    /**
+     * Special settings for the case when inline cannot be performed due to already reported (by error hint) problem
+     */
+    Settings CANNOT_INLINE_SETTINGS = new Settings() {
+      public boolean isOnlyOneReferenceToInline() {
+        return false;
+      }
+    };
   }
 
   /**
@@ -55,7 +64,7 @@ public interface InlineHandler {
   /**
    * @param element inlined element
    */
-  void removeDefinition(PsiElement element);
+  void removeDefinition(PsiElement element, Settings settings);
 
   /**
    * @param element inlined element
