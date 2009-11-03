@@ -136,7 +136,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public void copyFrom(CodeStyleSettings from) {
     copyPublicFields(from, this);
 
-    this.copyCustomSettingsFrom(from);
+    copyCustomSettingsFrom(from);
   }
 
   private static void copyPublicFields(Object from, Object to) {
@@ -747,8 +747,6 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public int NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
   public final PackageEntryTable PACKAGES_TO_USE_IMPORT_ON_DEMAND = new PackageEntryTable();
   public final PackageEntryTable IMPORT_LAYOUT_TABLE = new PackageEntryTable();
-  public boolean OPTIMIZE_IMPORTS_ON_THE_FLY = false;
-  public boolean ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false;
 
 //----------------- ORDER OF MEMBERS ------------------
 

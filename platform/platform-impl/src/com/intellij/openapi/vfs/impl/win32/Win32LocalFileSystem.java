@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.FileNotFoundException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 
@@ -31,29 +32,19 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem");
 
-  private static Win32LocalFileSystem ourSystem;
+  private static final ThreadLocal<Win32LocalFileSystem> THREAD_LOCAL = new ThreadLocal<Win32LocalFileSystem>() {
+    @Override
+    protected Win32LocalFileSystem initialValue() {
+      return new Win32LocalFileSystem();
+    }
+  };
 
   public static Win32LocalFileSystem getWin32Instance() {
-    if (ourSystem == null) {
-      ourSystem = new Win32LocalFileSystem();
-    }
-    return ourSystem;
-  }
-
-  public static void release() {
-    Win32LocalFileSystem system = ourSystem;
-    ourSystem = null;
-    if (system != null) {
-      try {
-        system.myKernel.release();
-      }
-      catch (Throwable throwable) {
-        LOG.error(throwable);
-      }
-    }
+    return THREAD_LOCAL.get();
   }
 
   private final Win32Kernel myKernel = new Win32Kernel();
+  private boolean checkMe = false;
 
   private Win32LocalFileSystem() {
   }
@@ -62,11 +53,15 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   public String[] list(VirtualFile file) {
     try {
       String[] strings = myKernel.list(file.getPath());
-      //assert Arrays.asList(strings).equals(Arrays.asList(super.list(file)));
+      if (checkMe && !Arrays.asList(strings).equals(Arrays.asList(super.list(file)))) {
+        LOG.error(file.getPath());
+      }
       return strings;
     }
     catch (Exception e) {
-//      assert false;
+      if (checkMe) {
+        assert false;
+      }
       return super.list(file);
     }
   }
@@ -75,7 +70,9 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   public boolean exists(VirtualFile fileOrDirectory) {
     if (fileOrDirectory.getParent() == null) return true;
     boolean b = myKernel.exists(fileOrDirectory.getPath());
-    //assert b == super.exists(fileOrDirectory);
+    if (checkMe && b != super.exists(fileOrDirectory)) {
+      LOG.error(fileOrDirectory.getPath());
+    }
     return b;
   }
 
@@ -83,11 +80,12 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   public boolean isDirectory(VirtualFile file) {
     try {
       boolean b = myKernel.isDirectory(file.getPath());
-      //assert b == super.isDirectory(file);
+      if (checkMe && b != super.isDirectory(file)) {
+        LOG.error(file.getPath());
+      }
       return b;
     }
     catch (FileNotFoundException e) {
-//      assert false;
       return super.isDirectory(file);
     }
   }
@@ -96,11 +94,12 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   public boolean isWritable(VirtualFile file) {
     try {
       boolean b = myKernel.isWritable(file.getPath());
-      //assert b == super.isWritable(file);
+      if (checkMe && b != super.isWritable(file)) {
+        LOG.error(file.getPath());
+      }
       return b;
     }
     catch (FileNotFoundException e) {
-//      assert false: file;
       return super.isWritable(file);
     }
   }
@@ -109,11 +108,13 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   public long getTimeStamp(VirtualFile file) {
     try {
       long timeStamp = myKernel.getTimeStamp(file.getPath());
-      //assert timeStamp == super.getTimeStamp(file);
+      if (checkMe && timeStamp != super.getTimeStamp(file)) {
+        timeStamp = myKernel.getTimeStamp(file.getPath());
+        LOG.error(file.getPath());
+      }
       return timeStamp;
     }
     catch (FileNotFoundException e) {
-//      assert false;
       return super.getTimeStamp(file);
     }
   }

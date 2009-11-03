@@ -54,7 +54,7 @@ public class RemoveMiddleManTest extends MultiFileTestCase{
           FileDocumentManager.getInstance().saveAllDocuments();
           if (conflict != null) fail("Conflict expected");
         }
-        catch (Exception e) {
+        catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
           if (conflict == null) throw e;
           assertEquals(conflict, e.getMessage());
         }

@@ -114,10 +114,18 @@ public abstract class UsefulTestCase extends TestCase {
       return;
     }
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    Element newS = new Element("temp");
-    settings.writeExternal(newS);
-    Assert.assertEquals("Code insight settings damaged", DEFAULT_SETTINGS_EXTERNALIZED, JDOMUtil.writeElement(newS, "\n"));
-
+    try {
+      Element newS = new Element("temp");
+      settings.writeExternal(newS);
+      Assert.assertEquals("Code insight settings damaged", DEFAULT_SETTINGS_EXTERNALIZED, JDOMUtil.writeElement(newS, "\n"));
+    }
+    catch (AssertionError error) {
+      CodeInsightSettings clean = new CodeInsightSettings();
+      Element temp = new Element("temp");
+      clean.writeExternal(temp);
+      settings.loadState(temp);
+      throw error;
+    }
 
     CodeStyleSettings codeStyleSettings = getCurrentCodeStyleSettings();
     codeStyleSettings.getIndentOptions(StdFileTypes.JAVA);

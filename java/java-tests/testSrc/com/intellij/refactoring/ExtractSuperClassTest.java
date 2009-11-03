@@ -53,6 +53,10 @@ public class ExtractSuperClassTest extends CodeInsightTestCase {
     doTest("B", "AB");
   }
 
+  public void testExtendsList() throws Exception {
+    doTest("Test", "TestSubclass", new PullUpTest.MemberDescriptor("List", PsiClass.class));
+  }
+
   @Override
   protected Sdk getTestProjectJdk() {
     return JavaSdkImpl.getMockJdk15("mock 1.5");

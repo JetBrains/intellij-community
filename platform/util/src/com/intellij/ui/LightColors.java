@@ -29,4 +29,5 @@ public interface LightColors {
   Color CYAN = new Color(0xccffff);
 
   Color SLIGHTLY_GREEN = new Color(0xeeffee);
+  Color SLIGHTLY_GRAY = new Color(0xf5f5f5);
 }

@@ -90,7 +90,7 @@ public class ReplaceConstructorWithBuilderTest extends MultiFileTestCase {
             fail("Conflicts were not detected:" + conflicts);
           }
         }
-        catch (Exception e) {
+        catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
 
           if (conflicts == null) {
             fail("Conflict detected:" + e.getMessage());

@@ -16,6 +16,8 @@
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -147,14 +149,8 @@ public class AbstractTreeUi {
   private ActionCallback myInitialized = new ActionCallback();
   private Map<Object, ActionCallback> myReadyCallbacks = new WeakHashMap<Object, ActionCallback>();
 
-  protected final void init(AbstractTreeBuilder builder,
-                            JTree tree,
-                            DefaultTreeModel treeModel,
-                            AbstractTreeStructure treeStructure,
-                            @Nullable Comparator<NodeDescriptor> comparator) {
+  private boolean myPassthroughMode = false;
 
-    init(builder, tree, treeModel, treeStructure, comparator, true);
-  }
 
   protected void init(AbstractTreeBuilder builder,
                       JTree tree,
@@ -250,23 +246,34 @@ public class AbstractTreeUi {
       if (timeToCleanup == null) continue;
       if (now >= timeToCleanup.longValue()) {
         ourUi2Countdown.remove(eachUi);
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        Runnable runnable = new Runnable() {
           public void run() {
             getBuilder().cleanUp();
           }
-        });
+        };
+        if (isPassthroughMode()) {
+          runnable.run();
+        } else {
+          UIUtil.invokeAndWaitIfNeeded(runnable);
+        }
       }
     }
   }
 
   protected void doCleanUp() {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+    Runnable cleanup = new Runnable() {
       public void run() {
         if (!isReleased()) {
           cleanUpNow();
         }
       }
-    });
+    };
+
+    if (isPassthroughMode()) {
+      cleanup.run();
+    } else {
+      UIUtil.invokeLaterIfNeeded(cleanup);
+    }
   }
 
   private void disposeClearanceService() {
@@ -352,7 +359,7 @@ public class AbstractTreeUi {
 
   protected void doExpandNodeChildren(final DefaultMutableTreeNode node) {
     getTreeStructure().commit();
-    getUpdater().addSubtreeToUpdate(node);
+    addSubtreeToUpdate(node);
     getUpdater().performUpdate();
   }
 
@@ -587,7 +594,7 @@ public class AbstractTreeUi {
   private AsyncResult<Boolean> update(final NodeDescriptor nodeDescriptor, boolean now) {
     final AsyncResult<Boolean> result = new AsyncResult<Boolean>();
 
-    if (now) {
+    if (now || isPassthroughMode()) {
       return new AsyncResult<Boolean>().setDone(_update(nodeDescriptor));
     }
 
@@ -660,6 +667,8 @@ public class AbstractTreeUi {
   }
 
   private void assertIsDispatchThread() {
+    if (isPassthroughMode()) return;
+
     if (isTreeShowing() && !isEdt()) {
       LOG.error("Must be in event-dispatch thread");
     }
@@ -674,6 +683,8 @@ public class AbstractTreeUi {
   }
 
   private void assertNotDispatchThread() {
+    if (isPassthroughMode()) return;
+
     if (isEdt()) {
       LOG.error("Must not be in event-dispatch thread");
     }
@@ -702,10 +713,10 @@ public class AbstractTreeUi {
     final ActionCallback result = new ActionCallback();
     DefaultMutableTreeNode node = getNodeForElement(element, false);
     if (node != null) {
-      updater.addSubtreeToUpdate(node);
+      addSubtreeToUpdate(node);
     }
     else {
-      updater.addSubtreeToUpdate(getRootNode());
+      addSubtreeToUpdate(getRootNode());
     }
 
     updater.runAfterUpdate(new Runnable() {
@@ -854,6 +865,9 @@ public class AbstractTreeUi {
               update(descriptor, true);
               descriptorWasUpdated = true;
             }
+
+            if (processAlwaysLeaf(node)) return;
+
             Pair<Boolean, LoadedChildren> unbuilt = processUnbuilt(node, descriptor, pass, wasExpanded, null);
             if (unbuilt.getFirst()) return;
             preloaded.set(unbuilt.getSecond());
@@ -865,6 +879,8 @@ public class AbstractTreeUi {
       final boolean childForceUpdate = isChildNodeForceUpdate(node, forceUpdate, wasExpanded);
 
       if (!forcedNow && isToBuildInBackground(descriptor)) {
+        if (processAlwaysLeaf(node)) return;
+
         queueBackgroundUpdate(
           new UpdateInfo(descriptor, pass, canSmartExpand(node, toSmartExpand), wasExpanded, childForceUpdate, descriptorWasUpdated), node);
         return;
@@ -873,17 +889,31 @@ public class AbstractTreeUi {
         if (!descriptorWasUpdated) {
           update(descriptor, false).doWhenDone(new Runnable() {
             public void run() {
+              if (processAlwaysLeaf(node)) return;
               updateNodeChildrenNow(node, pass, preloaded.get(), toSmartExpand, wasExpanded, wasLeaf, childForceUpdate);
             }
           });
         }
         else {
+          if (processAlwaysLeaf(node)) return;
+
           updateNodeChildrenNow(node, pass, preloaded.get(), toSmartExpand, wasExpanded, wasLeaf, childForceUpdate);
         }
       }
     }
     finally {
       processNodeActionsIfReady(node);
+    }
+  }
+
+  private boolean processAlwaysLeaf(DefaultMutableTreeNode node) {
+    Object element = getElementFor(node);
+    if (getTreeStructure().isAlwaysLeaf(element)) {
+      removeLoading(node, true);
+      processNodeActionsIfReady(node);
+      return true;
+    } else {
+      return false;
     }
   }
 
@@ -2188,7 +2218,7 @@ public class AbstractTreeUi {
     TreePath parentPath = path.getParentPath();
     if (myTree.isVisible(path) || (parentPath != null && myTree.isExpanded(parentPath))) {
       if (myTree.isExpanded(path)) {
-        getUpdater().addSubtreeToUpdate(node);
+        addSubtreeToUpdate(node);
       }
       else {
         insertLoadingNode(node, false);
@@ -2306,14 +2336,18 @@ public class AbstractTreeUi {
       }
     };
 
-    if (myWorker == null || myWorker.isDisposed()) {
-      myWorker = new WorkerThread("AbstractTreeBuilder.Worker", 1);
-      myWorker.start();
-      myWorker.addTaskFirst(pooledThreadRunnable);
-      myWorker.dispose(false);
-    }
-    else {
-      myWorker.addTaskFirst(pooledThreadRunnable);
+    if (isPassthroughMode()) {
+
+    } else {
+      if (myWorker == null || myWorker.isDisposed()) {
+        myWorker = new WorkerThread("AbstractTreeBuilder.Worker", 1);
+        myWorker.start();
+        myWorker.addTaskFirst(pooledThreadRunnable);
+        myWorker.dispose(false);
+      }
+      else {
+        myWorker.addTaskFirst(pooledThreadRunnable);
+      }
     }
   }
 
@@ -2399,7 +2433,7 @@ public class AbstractTreeUi {
   }
 
   private void insertNodesInto(final ArrayList<TreeNode> toInsert, final DefaultMutableTreeNode parentNode) {
-    sortChildren(parentNode, toInsert, false, false);
+    sortChildren(parentNode, toInsert, false, true);
     final ArrayList<TreeNode> all = new ArrayList<TreeNode>(toInsert.size() + parentNode.getChildCount());
     all.addAll(toInsert);
     all.addAll(TreeUtil.childrenToArray(parentNode));
@@ -2409,11 +2443,21 @@ public class AbstractTreeUi {
 
       int[] newNodeIndices = new int[toInsert.size()];
       int eachNewNodeIndex = 0;
+      TreeMap<Integer, TreeNode> insertSet = new TreeMap<Integer, TreeNode>();
       for (int i = 0; i < toInsert.size(); i++) {
         TreeNode eachNewNode = toInsert.get(i);
-        while (all.get(eachNewNodeIndex) != eachNewNode) eachNewNodeIndex++;
+        while (all.get(eachNewNodeIndex) != eachNewNode) {
+          eachNewNodeIndex++;
+        }
         newNodeIndices[i] = eachNewNodeIndex;
-        parentNode.insert((MutableTreeNode)eachNewNode, eachNewNodeIndex);
+        insertSet.put(eachNewNodeIndex, eachNewNode);
+      }
+
+      Iterator<Integer> indices = insertSet.keySet().iterator();
+      while (indices.hasNext()) {
+        Integer eachIndex = indices.next();
+        TreeNode eachNode = insertSet.get(eachIndex);
+        parentNode.insert((MutableTreeNode)eachNode, eachIndex);
       }
 
       myTreeModel.nodesWereInserted(parentNode, newNodeIndices);
@@ -2442,7 +2486,9 @@ public class AbstractTreeUi {
     assert descriptor != null;
 
     if (descriptor.getChildrenSortingStamp() >= getComparatorStamp() && !forceSort) return;
-    getBuilder().sortChildren(myNodeComparator, node, children);
+    if (children.size() > 0) {
+      getBuilder().sortChildren(myNodeComparator, node, children);
+    }
 
     if (updateStamp) {
       descriptor.setChildrenSortingStamp(getComparatorStamp());
@@ -2467,13 +2513,25 @@ public class AbstractTreeUi {
     node.removeAllChildren();
   }
 
-  public void addSubtreeToUpdate(final DefaultMutableTreeNode root) {
-    addSubtreeToUpdate(root, null);
+  public boolean addSubtreeToUpdate(final DefaultMutableTreeNode root) {
+    return addSubtreeToUpdate(root, null);
   }
 
-  public void addSubtreeToUpdate(final DefaultMutableTreeNode root, Runnable runAfterUpdate) {
+  public boolean addSubtreeToUpdate(final DefaultMutableTreeNode root, Runnable runAfterUpdate) {
+    Object element = getElementFor(root);
+    if (getTreeStructure().isAlwaysLeaf(element)) {
+      removeLoading(root, true);
+
+      if (runAfterUpdate != null) {
+        getReady(this).doWhenDone(runAfterUpdate);
+      }
+      return false;
+    }
+
     getUpdater().runAfterUpdate(runAfterUpdate);
     getUpdater().addSubtreeToUpdate(root);
+
+    return true;
   }
 
   public boolean wasRootNodeInitialized() {
@@ -2493,7 +2551,7 @@ public class AbstractTreeUi {
   }
 
   public void select(final Object[] elements, @Nullable final Runnable onDone, boolean addToSelection, boolean deferred) {
-    _select(elements, onDone, addToSelection, true, false, true, deferred, false);
+    _select(elements, onDone, addToSelection, true, false, true, deferred, false, false);
   }
 
   void _select(final Object[] elements,
@@ -2502,7 +2560,7 @@ public class AbstractTreeUi {
                final boolean checkCurrentSelection,
                final boolean checkIfInStructure) {
 
-    _select(elements, onDone, addToSelection, checkCurrentSelection, checkIfInStructure, true, false, false);
+    _select(elements, onDone, addToSelection, checkCurrentSelection, checkIfInStructure, true, false, false, false);
   }
 
   void _select(final Object[] elements,
@@ -2512,7 +2570,14 @@ public class AbstractTreeUi {
                final boolean checkIfInStructure,
                final boolean scrollToVisible) {
 
-    _select(elements, onDone, addToSelection, checkCurrentSelection, checkIfInStructure, scrollToVisible, false, false);
+    _select(elements, onDone, addToSelection, checkCurrentSelection, checkIfInStructure, scrollToVisible, false, false, false);
+  }
+
+  public void userSelect(final Object[] elements,
+               final Runnable onDone,
+               final boolean addToSelection,
+               boolean scroll) {
+    _select(elements, onDone, addToSelection, true, false, scroll, false, true, true);    
   }
 
   void _select(final Object[] elements,
@@ -2522,7 +2587,14 @@ public class AbstractTreeUi {
                final boolean checkIfInStructure,
                final boolean scrollToVisible,
                final boolean deferred,
-               final boolean canSmartExpand) {
+               final boolean canSmartExpand,
+               final boolean mayQueue) {
+
+    AbstractTreeUpdater updater = getUpdater();
+    if (mayQueue && updater != null) {
+      updater.queueSelection(new SelectionRequest(elements, onDone, addToSelection, checkCurrentSelection, checkIfInStructure, scrollToVisible, deferred, canSmartExpand));
+      return;
+    }
 
     boolean willAffectSelection = elements.length > 0 || (elements.length == 0 && addToSelection);
     if (!willAffectSelection) {
@@ -2967,7 +3039,7 @@ public class AbstractTreeUi {
     }
     else {
       if (!myUnbuiltNodes.contains(toExpand)) {
-        getUpdater().addSubtreeToUpdate(toExpand);
+        addSubtreeToUpdate(toExpand);
       }
       else {
         expand(toExpand, canSmartExpand);
@@ -3052,6 +3124,10 @@ public class AbstractTreeUi {
     myUpdater = updater;
     if (updater != null && myUpdateIfInactive) {
       updater.showNotify();
+    }
+
+    if (myUpdater != null) {
+      myUpdater.setPassThroughMode(myPassthroughMode);
     }
   }
 
@@ -3278,7 +3354,7 @@ public class AbstractTreeUi {
         }
 
         if (hasUnbuiltChildren) {
-          getUpdater().addSubtreeToUpdate(node);
+          addSubtreeToUpdate(node);
         }
       }
       else {
@@ -3516,4 +3592,26 @@ public class AbstractTreeUi {
     }
   }
 
+  
+  public void setPassthroughMode(boolean passthrough) {
+    myPassthroughMode = passthrough;
+    AbstractTreeUpdater updater = getUpdater();
+
+    if (updater != null) {
+      updater.setPassThroughMode(myPassthroughMode);
+    }
+
+    if (!isUnitTestingMode() && passthrough) {
+      LOG.error("Pass-through mode for TreeUi is allowed only for unit test mode");
+    }
+  }
+
+  public boolean isPassthroughMode() {
+    return myPassthroughMode;
+  }
+
+  private boolean isUnitTestingMode() {
+    Application app = ApplicationManager.getApplication();
+    return app != null && app.isUnitTestMode();
+  }
 }

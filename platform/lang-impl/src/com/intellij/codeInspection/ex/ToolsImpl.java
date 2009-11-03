@@ -47,8 +47,8 @@ public class ToolsImpl implements Tools {
   private static final Logger LOG = Logger.getInstance("#" + ToolsImpl.class.getName());
   public static final String ENABLED_TAG = "enabled_by_default";
 
-  private String myShortName;
-  private ScopeToolState myDefaultState;
+  private final String myShortName;
+  private final ScopeToolState myDefaultState;
   private List<ScopeToolState> myTools;
   private boolean myEnabled;
 

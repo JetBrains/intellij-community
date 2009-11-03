@@ -23,7 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurable;
+import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.dictionary.Dictionary;
 import com.intellij.spellchecker.util.SPFileUtil;
@@ -66,7 +66,7 @@ public class SpellCheckerSettingsPane implements Disposable {
       public void hyperlinkUpdate(final HyperlinkEvent e) {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           final OptionsEditor optionsEditor = OptionsEditor.KEY.getData(DataManager.getInstance().getDataContext());
-          final ProjectInspectionToolsConfigurable toolsConfigurable = ProjectInspectionToolsConfigurable.getInstance(project);
+          final ErrorsConfigurable toolsConfigurable = ErrorsConfigurable.SERVICE.getInstance(project);
           if (optionsEditor != null && toolsConfigurable != null) {
             optionsEditor.select(toolsConfigurable).doWhenDone(new Runnable() {
               public void run() {
@@ -209,7 +209,7 @@ public class SpellCheckerSettingsPane implements Disposable {
     dictionariesFolders.addAll(settings.getDictionaryFoldersPaths());
     allDictionaries.clear();
     for (String dictionary : manager.getBundledDictionaries()) {
-      allDictionaries.add(new Pair<String, Boolean>(dictionary, !settings.getBundledDisabledDictionariesPaths().contains(dictionary)));
+      allDictionaries.add(Pair.create(dictionary, !settings.getBundledDisabledDictionariesPaths().contains(dictionary)));
     }
 
     // user

@@ -58,7 +58,7 @@ public class PushDownImportsTest extends MultiFileTestCase {
         }
       });
     }
-    catch (RuntimeException e) {
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       if (fail) {
         return;
       }

@@ -15,12 +15,17 @@
  */
 package com.intellij.openapi.wm.impl.content;
 
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.ui.content.Content;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.WatermarkIcon;
 
 import javax.swing.*;
 import java.awt.*;
 
 class BaseLabel extends JLabel {
+
+  protected static final int TAB_SHIFT = 2;
 
   protected ToolWindowContentUi myUi;
 
@@ -61,4 +66,33 @@ class BaseLabel extends JLabel {
     super.paintComponent(g);
   }
 
+  protected void updateTextAndIcon(Content content, boolean isSelected) {
+    if (content == null) {
+      setText(null);
+      setIcon(null);
+    } else {
+      setText(content.getDisplayName());
+      setActiveFg(isSelected ? Color.white : new Color(188, 195, 219));
+
+      setPassiveFg(isSelected ? Color.white : new Color(213, 210, 202));
+
+      setToolTipText(content.getDescription());
+
+      final boolean show = Boolean.TRUE.equals(content.getUserData(ToolWindow.SHOW_CONTENT_ICON));
+      if (show) {
+       if (isSelected) {
+         setIcon(content.getIcon());
+       } else {
+         setIcon(content.getIcon() != null ? new WatermarkIcon(content.getIcon(), .5f) : null);
+       }
+      } else {
+        setIcon(null);
+      }
+    }
+  }
+
+
+  public Content getContent() {
+    return null;
+  }
 }

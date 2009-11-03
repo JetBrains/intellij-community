@@ -137,7 +137,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     }
   }
 
-  public synchronized void close() throws StorageException {
+  public void close() throws StorageException {
     try {
       flush();
       myMap.close();
@@ -157,7 +157,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     }
   }
 
-  public synchronized void clear() throws StorageException{
+  public void clear() throws StorageException{
     try {
       myMap.close();
     }

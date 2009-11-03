@@ -31,7 +31,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
@@ -40,7 +39,9 @@ import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 
 public abstract class RunConfigurationExtension {
@@ -77,18 +78,25 @@ public abstract class RunConfigurationExtension {
   protected abstract void readExternal(ModuleBasedConfiguration runConfiguration, Element element) throws InvalidDataException;
 
   public static void readSettings(ModuleBasedConfiguration runConfiguration, Element parentNode) throws InvalidDataException {
-    List children = parentNode.getChildren("extension");
+    final List children = parentNode.getChildren("extension");
+    final Map<String, RunConfigurationExtension> extensions = new HashMap<String, RunConfigurationExtension>();
+    for (RunConfigurationExtension extension : Extensions.getExtensions(EP_NAME)) {
+      extensions.put(extension.getName(), extension);
+    }
     boolean found = true;
-    ext: for (Object o : children) {
+    for (Object o : children) {
       final Element element = (Element)o;
       final String extensionName = element.getAttributeValue("name");
-      for (RunConfigurationExtension extension : Extensions.getExtensions(EP_NAME)) {
-        if (Comparing.strEqual(extensionName, extension.getName())) {
-          extension.readExternal(runConfiguration, element);
-          continue ext;
-        }
+      final RunConfigurationExtension extension = extensions.remove(extensionName);
+      if (extension != null) {
+        extension.readExternal(runConfiguration, element);
+      } else {
+        found = false;
       }
-      found = false;
+    }
+    //try to read from old format if possible
+    for (RunConfigurationExtension extension : extensions.values()) {
+      extension.readExternal(runConfiguration, parentNode);
     }
     if (!found) {
       runConfiguration.putCopyableUserData(RUN_EXTENSIONS, children);

@@ -30,7 +30,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
       doTest("Super");
       fail();
     }
-    catch (RuntimeException e) {
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       String message = e.getMessage();
       assertTrue(message, message.startsWith("constructor <b><code>Super.Super()</code></b> has 1 usage that is not safe to delete"));
     }
@@ -40,7 +40,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
       doTest("Super");
       fail();
     }
-    catch (RuntimeException e) {
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       String message = e.getMessage();
       assertTrue(message, message.startsWith("constructor <b><code>Super.Super()</code></b> has 1 usage that is not safe to delete"));
     }

@@ -124,6 +124,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return myProjectConfigurable;
   }
 
+  @NotNull
   public Module[] getModules() {
     return myModuleModel.getModules();
   }
@@ -147,21 +148,21 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return null;
   }
 
-  public ModuleRootModel getRootModel(Module module) {
+  public ModuleRootModel getRootModel(@NotNull Module module) {
     final ModuleEditor editor = getModuleEditor(module);
     ModuleRootModel rootModel = null;
     if (editor != null) {
-      rootModel = editor.getModifiableRootModel();
+      rootModel = editor.getRootModel();
     }
     if (rootModel == null && getModule(module.getName()) != null) {
       createModuleEditor(module);
-      rootModel = getModuleEditor(module).getModifiableRootModel();
+      rootModel = getModuleEditor(module).getRootModel();
     }
 
     return rootModel;
   }
 
-  public FacetModel getFacetModel(Module module) {
+  public FacetModel getFacetModel(@NotNull Module module) {
     return myFacetsConfigurator.getOrCreateModifiableModel(module);
   }
 

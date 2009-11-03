@@ -518,6 +518,9 @@
     <action id="NextTab">
       <keyboard-shortcut first-keystroke="alt RIGHT"/>
     </action>
+    <action id="ShowContent">
+      <keyboard-shortcut first-keystroke="alt DOWN"/>
+    </action>
     <action id="NextEditorTab">
       <keyboard-shortcut first-keystroke="alt shift RIGHT"/>
     </action>
@@ -561,6 +564,9 @@
     </action>
     <action id="ToggleBookmark">
       <keyboard-shortcut first-keystroke="F11"/>
+    </action>
+    <action id="ToggleBookmarkWithMnemonic">
+      <keyboard-shortcut first-keystroke="control F11"/>
     </action>
     <action id="MoveStatementDown">
       <keyboard-shortcut first-keystroke="control shift DOWN"/>
@@ -974,6 +980,9 @@
     </action>
     <action id="NextTab">
       <keyboard-shortcut first-keystroke="control RIGHT"/>
+    </action>
+    <action id="ShowContent">
+      <keyboard-shortcut first-keystroke="control DOWN"/>
     </action>
     <action id="NextEditorTab">
       <keyboard-shortcut first-keystroke="control shift RIGHT"/>

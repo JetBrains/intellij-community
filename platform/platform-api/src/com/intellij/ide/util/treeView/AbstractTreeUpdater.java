@@ -23,13 +23,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.treeStructure.treetable.TreeTableTree;
+import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
-import com.intellij.util.Alarm;
-import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -62,6 +62,8 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
         };
       }
     };
+    myUpdateQueue.setRestartTimerOnAdd(false);
+
     final UiNotifyConnector uiNotifyConnector = new UiNotifyConnector(component, myUpdateQueue);
     Disposer.register(this, myUpdateQueue);
     Disposer.register(this, uiNotifyConnector);
@@ -140,10 +142,10 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
         final DefaultMutableTreeNode eachNode = eachYielding.getCurrentNode();
         if (eachNode != null) {
           if (eachNode.isNodeAncestor(toAdd.getNode())) {
-            toAdd.expire();
+            eachYielding.setUpdateStamp(newUpdateCount);
           }
           else {
-            eachYielding.setUpdateStamp(newUpdateCount);
+            toAdd.expire();
           }
         }
       }
@@ -235,17 +237,21 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
         }
       };
 
-      invokeLater(runnable);
+      myTreeBuilder.getReady(this).doWhenDone(runnable);
     }
   }
 
   protected void invokeLater(Runnable runnable) {
-    final Application app = ApplicationManager.getApplication();
-    if (app != null) {
-      app.invokeLater(runnable);
-    }
-    else {
-      UIUtil.invokeAndWaitIfNeeded(runnable);
+    if (myTreeBuilder.getUi().isPassthroughMode()) {
+      runnable.run();
+    } else {
+      final Application app = ApplicationManager.getApplication();
+      if (app != null) {
+        app.invokeLater(runnable);
+      }
+      else {
+        UIUtil.invokeAndWaitIfNeeded(runnable);
+      }
     }
   }
 
@@ -324,5 +330,23 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
       if (each.willUpdate(node)) return true;
     }
     return false;
+  }
+
+  public final void queueSelection(final SelectionRequest request) {
+    queue(new Update("UserSelection", Update.LOW_PRIORITY) {
+      public void run() {
+        request.execute(myTreeBuilder.getUi());
+      }
+
+      @Override
+      public boolean isExpired() {
+        return myTreeBuilder.isDisposed();
+      }
+
+      @Override
+      public void setRejected() {
+        request.reject();
+      }
+    });
   }
 }

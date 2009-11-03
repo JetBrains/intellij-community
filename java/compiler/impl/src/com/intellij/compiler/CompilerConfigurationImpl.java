@@ -34,7 +34,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Options;
 import org.apache.oro.text.regex.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -54,7 +53,7 @@ import java.util.*;
 public class CompilerConfigurationImpl extends CompilerConfiguration implements PersistentStateComponent<Element>, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerConfiguration");
   @NonNls public static final String TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME = "tests.external.compiler.home";
-  public static final int DEPENDENCY_FORMAT_VERSION = 53;
+  public static final int DEPENDENCY_FORMAT_VERSION = 54;
 
   @SuppressWarnings({"WeakerAccess"}) public String DEFAULT_COMPILER;
   @NotNull private BackendCompiler myDefaultJavaCompiler;
@@ -69,8 +68,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private final Project myProject;
   private final ModuleManager myModuleManager;
   private final ExcludedEntriesConfiguration myExcludedEntriesConfiguration;
-
-  public int DEPLOY_AFTER_MAKE = Options.SHOW_DIALOG;
 
   private final Collection<BackendCompiler> myRegisteredCompilers = new ArrayList<BackendCompiler>();
   private JavacCompiler JAVAC_EXTERNAL_BACKEND;
@@ -538,7 +535,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       }
       myProcessorPath = pathBuilder.toString();
 
-      myProcessorPath = annotationProcessingSettings.getAttributeValue("processorPath", "");
       myProcessorsMap.clear();
       for (Element processorChild : ((Collection<Element>)annotationProcessingSettings.getChildren("processor"))) {
         final String name = processorChild.getAttributeValue("name");

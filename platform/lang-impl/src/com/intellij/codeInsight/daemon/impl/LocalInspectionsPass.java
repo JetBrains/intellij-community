@@ -223,6 +223,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         return true;
       }
     }, "Inspection tools");
+    ProgressManager.checkCanceled();
 
     inspectInjectedPsi(elements, tools);
 
@@ -392,12 +393,14 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     @NonNls final String link = "<a href=\"#inspection/" + tool.getShortName() + "\"> " + DaemonBundle.message("inspection.extended.description") +
                                 "</a>" + myShortcutText;
 
-    @NonNls String tooltip;
-    if (message.startsWith("<html>")) {
-      tooltip = message.contains("</body>") ? message.replace("</body>", link + "</body>") : message.replace("</html>", link + "</html>");
-    }
-    else {
-      tooltip = "<html><body>" + XmlStringUtil.escapeString(message) + link + "</body></html>";
+    @NonNls String tooltip = null;
+    if (descriptor.showTooltip()) {
+      if (message.startsWith("<html>")) {
+        tooltip = message.contains("</body>") ? message.replace("</body>", link + "</body>") : message.replace("</html>", link + "</html>");
+      }
+      else {
+        tooltip = "<html><body>" + XmlStringUtil.escapeString(message) + link + "</body></html>";
+      }
     }
     HighlightInfo highlightInfo = highlightInfoFromDescriptor(descriptor, type, plainMessage, tooltip);
     registerQuickFixes(tool, descriptor, highlightInfo, emptyActionRegistered);
@@ -470,22 +473,23 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     InspectionManager inspectionManager = InspectionManager.getInstance(injectedPsi.getProject());
     final ProblemsHolder problemsHolder = new ProblemsHolder(inspectionManager, injectedPsi);
     final PsiElement host = injectedPsi.getContext();
-    for (LocalInspectionTool tool : tools) {
-      if (host != null && InspectionManagerEx.inspectionResultSuppressed(host, tool)) {
-          continue;
-      }
-      final PsiElementVisitor visitor = tool.buildVisitor(problemsHolder, true);
-      assert !(visitor instanceof PsiRecursiveElementVisitor) : "The visitor returned from LocalInspectionTool.buildVisitor() must not be recursive. "+tool;
-      injectedPsi.accept(new PsiRecursiveElementWalkingVisitor() {
-        @Override public void visitElement(PsiElement element) {
-          element.accept(visitor);
-          super.visitElement(element);
+
+    final PsiElement[] elements = getElementsIntersectingRange(injectedPsi, 0, injectedPsi.getTextLength());
+    if (elements.length != 0) {
+      for (LocalInspectionTool tool : tools) {
+        if (host != null && InspectionManagerEx.inspectionResultSuppressed(host, tool)) {
+            continue;
         }
-      });
-      List<ProblemDescriptor> problems = problemsHolder.getResults();
-      if (problems != null && !problems.isEmpty()) {
-        InjectedPsiInspectionResult res = new InjectedPsiInspectionResult(tool, injectedPsi, new SmartList<ProblemDescriptor>(problems));
-        result.add(res);
+        final PsiElementVisitor visitor = tool.buildVisitor(problemsHolder, true);
+        assert !(visitor instanceof PsiRecursiveElementVisitor) : "The visitor returned from LocalInspectionTool.buildVisitor() must not be recursive. "+tool;
+        for (PsiElement element : elements) {
+          element.accept(visitor);
+        }
+        List<ProblemDescriptor> problems = problemsHolder.getResults();
+        if (problems != null && !problems.isEmpty()) {
+          InjectedPsiInspectionResult res = new InjectedPsiInspectionResult(tool, injectedPsi, new SmartList<ProblemDescriptor>(problems));
+          result.add(res);
+        }
       }
     }
   }

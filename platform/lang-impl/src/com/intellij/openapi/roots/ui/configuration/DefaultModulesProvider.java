@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.facet.FacetModel;
 import com.intellij.facet.FacetManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
@@ -34,6 +35,7 @@ public class DefaultModulesProvider implements ModulesProvider {
     myProject = project;
   }
 
+  @NotNull
   public Module[] getModules() {
     return ModuleManager.getInstance(myProject).getModules();
   }
@@ -42,11 +44,11 @@ public class DefaultModulesProvider implements ModulesProvider {
     return ModuleManager.getInstance(myProject).findModuleByName(name);
   }
 
-  public ModuleRootModel getRootModel(Module module) {
+  public ModuleRootModel getRootModel(@NotNull Module module) {
     return ModuleRootManager.getInstance(module);
   }
 
-  public FacetModel getFacetModel(Module module) {
+  public FacetModel getFacetModel(@NotNull Module module) {
     return FacetManager.getInstance(module);
   }
 }

@@ -47,6 +47,8 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
   private JList myExcludePackagesList;
   private JButton myAddPackageButton;
   private JButton myRemoveButton;
+  private JCheckBox myCbAddUnambiguousImports;
+  private JCheckBox myCbOptimizeImports;
 
   private DefaultListModel myExcludePackagesModel;
   @NonNls private static final Pattern ourPackagePattern = Pattern.compile("(\\w+\\.)*\\w+");
@@ -117,6 +119,8 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
 
 
     myCbShowImportPopup.setSelected(daemonSettings.isImportHintEnabled());
+    myCbOptimizeImports.setSelected(codeInsightSettings.OPTIMIZE_IMPORTS_ON_THE_FLY);
+    myCbAddUnambiguousImports.setSelected(codeInsightSettings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY);
 
     myExcludePackagesModel = new DefaultListModel();
     for(String aPackage: codeInsightSettings.EXCLUDED_PACKAGES) {
@@ -136,6 +140,8 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
     codeInsightSettings.ADD_IMPORTS_ON_PASTE = getSmartPasteValue();
     codeInsightSettings.EXCLUDED_PACKAGES = getExcludedPackages();
     daemonSettings.setImportHintEnabled(myCbShowImportPopup.isSelected());
+    codeInsightSettings.OPTIMIZE_IMPORTS_ON_THE_FLY = myCbOptimizeImports.isSelected();
+    codeInsightSettings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = myCbAddUnambiguousImports.isSelected();
   }
 
   private String[] getExcludedPackages() {
@@ -156,7 +162,9 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
     DaemonCodeAnalyzerSettings daemonSettings = DaemonCodeAnalyzerSettings.getInstance();
 
     boolean isModified = isModified(myCbShowImportPopup, daemonSettings.isImportHintEnabled());
-    
+    isModified |= isModified(myCbOptimizeImports, codeInsightSettings.OPTIMIZE_IMPORTS_ON_THE_FLY);
+    isModified |= isModified(myCbAddUnambiguousImports, codeInsightSettings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY);
+
     isModified |= getSmartPasteValue() != codeInsightSettings.ADD_IMPORTS_ON_PASTE;
     isModified |= !Arrays.deepEquals(getExcludedPackages(), codeInsightSettings.EXCLUDED_PACKAGES);
 

@@ -20,9 +20,12 @@ import com.intellij.facet.FacetModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModel;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface ModulesProvider {
   ModulesProvider EMPTY_MODULES_PROVIDER = new ModulesProvider() {
+    @NotNull
     public Module[] getModules() {
       return Module.EMPTY_ARRAY;
     }
@@ -30,20 +33,21 @@ public interface ModulesProvider {
       return null;
     }
 
-    public ModuleRootModel getRootModel(Module module) {
+    public ModuleRootModel getRootModel(@NotNull Module module) {
       return ModuleRootManager.getInstance(module);
     }
 
-    public FacetModel getFacetModel(Module module) {
+    public FacetModel getFacetModel(@NotNull Module module) {
       return FacetManager.getInstance(module);
     }
   };
-  
+  @NotNull
   Module[] getModules();
 
+  @Nullable
   Module getModule(String name);
 
-  ModuleRootModel getRootModel(Module module);
+  ModuleRootModel getRootModel(@NotNull Module module);
 
-  FacetModel getFacetModel(Module module);
+  FacetModel getFacetModel(@NotNull Module module);
 }

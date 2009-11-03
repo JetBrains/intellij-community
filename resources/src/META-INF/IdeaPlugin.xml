@@ -67,9 +67,6 @@
     <extensionPoint name="antCustomCompiler"
                     interface="com.intellij.compiler.ant.ChunkCustomCompilerExtension"/>
 
-    <extensionPoint name="explodedAndJarBuildGenerator"
-                    interface="com.intellij.compiler.make.ExplodedAndJarBuildGenerator"/>
-
     <extensionPoint name="methodImplementor"
                     interface="com.intellij.codeInsight.MethodImplementor"/>
 
@@ -541,6 +538,16 @@
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ColorChooserIntentionAction</className>
       <category>Declaration</category>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.ConvertAbsolutePathToRelativeIntentionAction</className>
+      <category>Other</category>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.ConvertRelativePathToAbsoluteIntentionAction</className>
+      <category>Other</category>
     </intentionAction>
 
     <intentionAction>

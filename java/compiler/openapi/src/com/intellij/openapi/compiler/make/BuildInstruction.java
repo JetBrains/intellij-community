@@ -15,31 +15,8 @@
  */
 package com.intellij.openapi.compiler.make;
 
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.module.Module;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
-import java.util.Set;
-import java.util.jar.JarOutputStream;
-
 public interface BuildInstruction {
   String getOutputRelativePath();
-  Module getModule();
-
-  @Deprecated
-  void addFilesToJar(@NotNull CompileContext context,
-                     @NotNull File jarFile,
-                     @NotNull JarOutputStream outputStream,
-                     BuildRecipe dependencies,
-                     @Nullable Set<String> writtenRelativePaths,
-                     @Nullable FileFilter fileFilter) throws IOException;
 
   boolean accept(BuildInstructionVisitor visitor) throws Exception;
-
-  boolean isExternalDependencyInstruction();
-  File findFileByRelativePath(String relativePath);
 }

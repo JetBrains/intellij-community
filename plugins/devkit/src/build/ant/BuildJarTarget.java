@@ -43,7 +43,8 @@ public class BuildJarTarget extends Target {
   public BuildJarTarget(final ModuleChunk chunk,
                         final GenerationOptions genOptions,
                         final PluginBuildConfiguration moduleBuildProperties) {
-    super(PluginBuildProperties.getBuildJarTargetName(chunk.getName()), null, DevKitBundle.message("ant.build.jar.description", chunk.getName()), null);
+    super(PluginBuildProperties.getBuildJarTargetName(chunk.getName()), BuildProperties.getCompileTargetName(chunk.getName()),
+          DevKitBundle.message("ant.build.jar.description", chunk.getName()), null);
 
     final File moduleBaseDir = chunk.getBaseDir();
 

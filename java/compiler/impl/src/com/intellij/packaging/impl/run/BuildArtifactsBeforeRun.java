@@ -136,7 +136,7 @@ public class BuildArtifactsBeforeRun implements BeforeRunTaskProvider<BuildArtif
       public void run() {
         final CompilerManager manager = CompilerManager.getInstance(myProject);
         finished.down();
-        manager.make(ArtifactCompileScope.create(myProject, artifacts), compilerFilter, callback);
+        manager.make(ArtifactCompileScope.createArtifactsScope(myProject, artifacts), compilerFilter, callback);
       }
     }, ModalityState.NON_MODAL);
 

@@ -248,19 +248,21 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
           if (((DocumentWindowImpl)documentWindow).isOneLine()) {
             annotation.setAfterEndOfLine(false);
           }
-          final HighlightInfo highlightInfo = HighlightInfo.fromAnnotation(annotation, fixedTextRange);
-          addHighlightInfo(textRange, highlightInfo);
+          final HighlightInfo info = HighlightInfo.fromAnnotation(annotation, fixedTextRange);
+          addHighlightInfo(textRange, info);
         }
 
         if (!isDumbMode()) {
-          for (HighlightInfo info : highlightTodos(injectedPsi, injectedPsi.getText(), 0, injectedPsi.getTextLength())) {
-            List<TextRange> editables = injectedLanguageManager.intersectWithAllEditableFragments(injectedPsi, new ProperTextRange(info.startOffset, info.endOffset));
+          Collection<HighlightInfo> todos = highlightTodos(injectedPsi, injectedPsi.getText(), 0, injectedPsi.getTextLength());
+          for (HighlightInfo info : todos) {
+            ProperTextRange textRange = new ProperTextRange(info.startOffset, info.endOffset);
+            List<TextRange> editables = injectedLanguageManager.intersectWithAllEditableFragments(injectedPsi, textRange);
             for (TextRange editable : editables) {
               TextRange hostRange = documentWindow.injectedToHost(editable);
 
               HighlightInfo patched =
-              new HighlightInfo(info.forcedTextAttributes, info.type, hostRange.getStartOffset(), hostRange.getEndOffset(), info.description, info.toolTip,info.type.getSeverity(null), false, null,
-                                false);
+                new HighlightInfo(info.forcedTextAttributes, info.type, hostRange.getStartOffset(), hostRange.getEndOffset(),
+                                  info.description, info.toolTip, info.type.getSeverity(null), false, null, false);
               addHighlightInfo(hostRange, patched);
             }
           }
@@ -293,13 +295,29 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return textRange;
   }
 
-  private static void highlightInjectedIn(final PsiFile injectedPsi, final AnnotationHolderImpl annotationHolder, final HighlightErrorFilter[] errorFilters,
+  private static void highlightInjectedIn(final PsiFile injectedPsi,
+                                          final AnnotationHolderImpl annotationHolder,
+                                          final HighlightErrorFilter[] errorFilters,
                                           final InjectedLanguageManager injectedLanguageManager) {
+    Language injectedLanguage = injectedPsi.getLanguage();
+    runAnnotatorsForInjected(injectedPsi, annotationHolder, errorFilters, injectedLanguageManager, injectedLanguage);
+    highlightInjectedSyntax(injectedLanguage, injectedPsi, annotationHolder);
+  }
+
+  private static final PerThreadMap<Annotator,Language> cachedAnnotators = new PerThreadMap<Annotator, Language>() {
+    @NotNull
+    @Override
+    public Collection<Annotator> initialValue(@NotNull Language key) {
+      return LanguageAnnotators.INSTANCE.allForLanguage(key);
+    }
+  };
+  private static void runAnnotatorsForInjected(final PsiFile injectedPsi, final AnnotationHolderImpl annotationHolder,
+                                               final HighlightErrorFilter[] errorFilters, final InjectedLanguageManager injectedLanguageManager,
+                                               Language injectedLanguage) {
     final DocumentWindow documentRange = ((VirtualFileWindow)injectedPsi.getViewProvider().getVirtualFile()).getDocumentWindow();
     assert documentRange != null;
     assert documentRange.getText().equals(injectedPsi.getText());
-    Language injectedLanguage = injectedPsi.getLanguage();
-    final List<Annotator> annotators = LanguageAnnotators.INSTANCE.allForLanguage(injectedLanguage);
+    final List<Annotator> annotators = cachedAnnotators.get(injectedLanguage);
     final AnnotationHolderImpl fixingOffsetsHolder = new AnnotationHolderImpl() {
       public boolean add(final Annotation annotation) {
         return true; // we are going to hand off the annotation to the annotationHolder anyway
@@ -352,10 +370,11 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     };
 
     injectedPsi.accept(visitor);
-    highlightInjectedSyntax(injectedLanguage, injectedPsi, annotationHolder);
   }
 
-  private static void highlightInjectedSyntax(final Language injectedLanguage, final PsiFile injectedPsi, final AnnotationHolderImpl annotationHolder) {
+  private static void highlightInjectedSyntax(final Language injectedLanguage,
+                                              final PsiFile injectedPsi,
+                                              final AnnotationHolderImpl annotationHolder) {
     List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> tokens = InjectedLanguageUtil.getHighlightTokens(injectedPsi);
     if (tokens == null) return;
 
@@ -371,7 +390,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       TextAttributesKey[] keys = syntaxHighlighter.getTokenHighlights(tokenType);
       if (textRange.getLength() == 0) continue;
 
-      Annotation annotation = annotationHolder.createInfoAnnotation(textRange.shiftRight(injectionHost.getTextRange().getStartOffset()), null);
+      TextRange annRange = textRange.shiftRight(injectionHost.getTextRange().getStartOffset());
+      Annotation annotation = annotationHolder.createAnnotation(annRange, HighlightInfoType.INJECTED_FRAGMENT_SEVERITY, null);
       if (annotation == null) continue; // maybe out of highlightable range
       // force attribute colors to override host' ones
 
@@ -460,7 +480,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
     final HighlightInfoHolder holder = createInfoHolder();
     holder.setWritable(true);
-    final ProgressManager progressManager = ProgressManager.getInstance();
     setProgressLimit((long)elements.size() * visitorArray.length);
 
     final int chunkSize = Math.max(1, elements.size() / 100); // one percent precision is enough

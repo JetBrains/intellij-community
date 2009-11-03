@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.ClassCandidateInfo;
@@ -91,6 +92,15 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     }
   }
 
+  private static boolean isOnDemand(PsiElement fileContext, PsiClass psiClass) {
+    if (fileContext instanceof PsiImportStatementBase) {
+      return ((PsiImportStatementBase)fileContext).isOnDemand();
+    }
+    String fqn = psiClass.getQualifiedName();
+    if (fqn == null) return false;
+    return "java.lang".equals(StringUtil.getPackageName(fqn));
+  }
+
   public boolean execute(PsiElement element, ResolveState state) {
     if (!(element instanceof PsiClass)) return true;
     final PsiClass aClass = (PsiClass)element;
@@ -98,6 +108,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     if (!myClassName.equals(name)) {
       return true;
     }
+    boolean accessible = myPlace == null || checkAccessibility(aClass);
     if (myCandidates == null) {
       myCandidates = new SmartList<ClassCandidateInfo>();
     }
@@ -118,28 +129,32 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
             return true;
           }
 
+          boolean infoAccessible = info.isAccessible();
+          if (infoAccessible && !accessible) {
+            return true;
+          }
+          if (!infoAccessible && accessible) {
+            myCandidates.remove(i);
+            continue;
+          }
+
           // single import wins over on-demand
-          if (myCurrentFileContext instanceof PsiImportStatementBase &&
-              info.getCurrentFileResolveScope() instanceof PsiImportStatementBase) {
-            PsiImportStatementBase myImport = (PsiImportStatementBase)myCurrentFileContext;
-            PsiImportStatementBase otherImport = (PsiImportStatementBase)info.getCurrentFileResolveScope();
-            if (myImport.isOnDemand() && !otherImport.isOnDemand()) return true;
-            if (!myImport.isOnDemand() && otherImport.isOnDemand()) {
-              myCandidates.remove(i);
-            }
+          boolean myOnDemand = isOnDemand(myCurrentFileContext, aClass);
+          boolean otherOnDemand = isOnDemand(info.getCurrentFileResolveScope(), otherClass);
+          if (myOnDemand && !otherOnDemand) return true;
+          if (!myOnDemand && otherOnDemand) {
+            myCandidates.remove(i);
           }
         }
       }
     }
 
-    boolean accessible = myPlace == null || checkAccessibility(aClass);
     myHasAccessibleCandidate |= accessible;
     myHasInaccessibleCandidate |= !accessible;
     myCandidates.add(new ClassCandidateInfo(aClass, state.get(PsiSubstitutor.KEY), !accessible, myCurrentFileContext));
     myResult = null;
     if (!accessible) return true;
     if (!(myCurrentFileContext instanceof PsiImportStatementBase)) return false;
-
 
     return true;
   }

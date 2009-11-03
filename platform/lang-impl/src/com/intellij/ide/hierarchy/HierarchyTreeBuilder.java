@@ -80,6 +80,8 @@ public class HierarchyTreeBuilder extends AbstractTreeBuilder {
   }
 
   protected boolean isAutoExpandNode(final NodeDescriptor nodeDescriptor) {
+    if (getTreeStructure().getRootElement().equals(nodeDescriptor.getElement())) return true;
+
     if (nodeDescriptor instanceof HierarchyNodeDescriptor) {
       return false;
     }

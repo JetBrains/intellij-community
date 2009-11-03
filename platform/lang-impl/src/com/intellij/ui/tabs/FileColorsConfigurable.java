@@ -64,11 +64,11 @@ public class FileColorsConfigurable implements Configurable, NonDefaultProjectCo
   }
 
   public void apply() throws ConfigurationException {
-    myPanel.apply();
+    if (myPanel != null) myPanel.apply();
   }
 
   public void reset() {
-    myPanel.reset();
+    if (myPanel != null) myPanel.reset();
   }
 
   public void disposeUIResources() {

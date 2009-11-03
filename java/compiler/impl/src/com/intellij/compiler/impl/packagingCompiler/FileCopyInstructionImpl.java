@@ -15,110 +15,27 @@
  */
 package com.intellij.compiler.impl.packagingCompiler;
 
-import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.make.BuildInstructionVisitor;
-import com.intellij.openapi.compiler.make.BuildRecipe;
 import com.intellij.openapi.compiler.make.FileCopyInstruction;
-import com.intellij.openapi.compiler.make.PackagingFileFilter;
-import com.intellij.openapi.deployment.DeploymentUtil;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.util.io.ZipUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
-import java.util.List;
-import java.util.Set;
-import java.util.jar.JarOutputStream;
 
 public class FileCopyInstructionImpl extends BuildInstructionBase implements FileCopyInstruction {
   private File myFile;
   private boolean myIsDirectory;
-  // for a directory keep the subset of changed files that need to be copied
-  private List<FileCopyInstructionImpl> myChangedSet;
-  private @Nullable final PackagingFileFilter myFileFilter;
 
-  protected FileCopyInstructionImpl(File source,
-                                 boolean isDirectory,
-                                 Module module,
-                                 String outputRelativePath) {
-    this(source, isDirectory, module, outputRelativePath, null);
-  }
-
-  public FileCopyInstructionImpl(File source,
-                                 boolean isDirectory,
-                                 Module module,
-                                 String outputRelativePath,
-                                 @Nullable final PackagingFileFilter fileFilter) {
-    super(outputRelativePath, module);
-    myFileFilter = fileFilter;
+  public FileCopyInstructionImpl(File source, boolean isDirectory, String outputRelativePath) {
+    super(outputRelativePath);
     setFile(source, isDirectory);
-  }
-
-  @Nullable
-  public PackagingFileFilter getFileFilter() {
-    return myFileFilter;
   }
 
   public boolean accept(BuildInstructionVisitor visitor) throws Exception {
     return visitor.visitFileCopyInstruction(this);
   }
 
-  public File findFileByRelativePath(String relativePath) {
-    if (!relativePath.startsWith(getOutputRelativePath())) return null;
-    final String pathFromFile = relativePath.substring(getOutputRelativePath().length());
-    if (!myIsDirectory) {
-      return "".equals(pathFromFile) ? myFile : null;
-    }
-    final File file = DeploymentUtil.canonicalRelativePath(myFile, pathFromFile);
-
-    return file.exists() ? file : null;
-  }
-
-  public void addFilesToJar(@NotNull CompileContext context,
-                            @NotNull File jarFile,
-                            @NotNull JarOutputStream outputStream,
-                            BuildRecipe dependencies,
-                            @Nullable Set<String> writtenRelativePaths,
-                            @Nullable FileFilter fileFilter) throws IOException {
-    final String outputRelativePath = getOutputRelativePath();
-
-    File file = getFile();
-    if (isExternalDependencyInstruction()) {
-      // copy dependent file along with jar file
-      final File toFile = DeploymentUtil.canonicalRelativePath(jarFile, outputRelativePath);
-      DeploymentUtil.getInstance().copyFile(file, toFile, context, null, fileFilter);
-      dependencies.addInstruction(this);
-    }
-    else {
-      boolean ok = ZipUtil.addFileOrDirRecursively(outputStream, jarFile, file, outputRelativePath, fileFilter, writtenRelativePaths);
-      if (!ok) {
-        DeploymentUtil.reportRecursiveCopying(context, file.getPath(), jarFile.getPath(), "",
-                                        CompilerBundle.message("message.text.setup.jar.outside.directory.path", file.getPath()));
-      }
-    }
-  }
-
   public String toString() {
-    if (myChangedSet == null) {
-      if (getModule() != null) {
-        return CompilerBundle.message("file.copy.instruction.file.from.module.to.file.message.text", getFile(),
-                                  ModuleUtil.getModuleNameInReadAction(getModule()), getOutputRelativePath());
-      } else {
-        return CompilerBundle.message("file.copy.instruction.file.to.file.message.text", getFile(), getOutputRelativePath());
-      }
-    }
-    else {
-      StringBuilder builder = new StringBuilder(CompilerBundle.message("file.copy.instruction.message.text", myFile));
-      for (FileCopyInstruction fileCopyInstruction : myChangedSet) {
-        builder.append(fileCopyInstruction).append(", ");
-      }
-      return builder.toString();
-    }
+    return CompilerBundle.message("file.copy.instruction.file.to.file.message.text", getFile(), getOutputRelativePath());
   }
 
   public boolean equals(Object o) {

@@ -54,7 +54,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 
-public class LightPlatformCodeInsightTestCase extends LightPlatformTestCase {
+public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTestCase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.LightCodeInsightTestCase");
 
   protected static Editor myEditor;

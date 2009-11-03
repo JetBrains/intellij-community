@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.InputEvent;
 
 public interface ToolWindow {
 
@@ -135,6 +136,10 @@ public interface ToolWindow {
    */
   void setAvailable(boolean available, @Nullable Runnable runnable);
 
+  void setContentUiType(ToolWindowContentUiType type, @Nullable Runnable runnable);
+
+  ToolWindowContentUiType getContentUiType();
+
   void installWatcher(ContentManager contentManager);
 
   /**
@@ -154,6 +159,8 @@ public interface ToolWindow {
   boolean isToHideOnEmptyContent();
   
   boolean isDisposed();
+
+  void showContentPopup(InputEvent inputEvent);
 
   class Border extends EmptyBorder {
     public Border() {

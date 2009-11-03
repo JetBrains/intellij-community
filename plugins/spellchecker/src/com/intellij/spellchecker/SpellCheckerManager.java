@@ -19,6 +19,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.spellchecker.dictionary.Dictionary;
@@ -47,7 +48,7 @@ public class SpellCheckerManager {
 
   private Dictionary userDictionary;
 
-  private final String[] bundledDictionaries = new String[]{"english.dic", "jetbrains.dic"};
+  private final String[] BUNDLED_DICTIONARIES = new String[]{"english.dic", "jetbrains.dic"};
 
   @NotNull
   private final SuggestionProvider suggestionProvider = new BaseSuggestionProvider(this);
@@ -82,7 +83,7 @@ public class SpellCheckerManager {
     spellChecker.reset();
     final StateLoader stateLoader = new StateLoader(project);
     final List<Loader> loaders = new ArrayList<Loader>();
-    for (String dictionary : bundledDictionaries) {
+    for (String dictionary : getBundledDictionaries()) {
       if (this.settings == null || !this.settings.getBundledDisabledDictionariesPaths().contains(dictionary)) {
         loaders.add(new StreamLoader(SpellCheckerManager.class.getResourceAsStream(dictionary)));
       }
@@ -128,7 +129,12 @@ public class SpellCheckerManager {
 
   @NotNull
   public List<String> getBundledDictionaries() {
-    return (bundledDictionaries != null ? Arrays.asList(bundledDictionaries) : Collections.<String>emptyList());
+    final ArrayList<String> dictionaries = new ArrayList<String>();
+    dictionaries.addAll(Arrays.asList(BUNDLED_DICTIONARIES));
+    for (BundledDictionaryProvider provider : Extensions.getExtensions(BundledDictionaryProvider.EP_NAME)) {
+      dictionaries.addAll(Arrays.asList(provider.getBundledDictionaries()));
+    }
+    return dictionaries;
   }
 
   @NotNull

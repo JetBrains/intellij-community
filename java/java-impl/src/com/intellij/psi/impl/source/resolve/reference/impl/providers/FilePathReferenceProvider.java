@@ -45,6 +45,17 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
         return true;
       }
 
+      @Override
+      public boolean couldBeConvertedTo(boolean relative) {
+        return !relative;
+      }
+
+      @Override
+      public boolean absoluteUrlNeedsStartSlash() {
+        final String s = getPathString();
+        return s != null && s.length() > 0 && s.charAt(0) == '/';
+      }
+
       @NotNull public Collection<PsiFileSystemItem> computeDefaultContexts() {
         final Module module = ModuleUtil.findModuleForPsiElement(getElement());
         return getRoots(module, true);

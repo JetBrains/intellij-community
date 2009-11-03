@@ -18,14 +18,12 @@ package com.intellij.util.indexing;
 
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
-import com.intellij.util.concurrency.JBLock;
-import com.intellij.util.concurrency.JBReentrantReadWriteLock;
-import com.intellij.util.concurrency.LockFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This storage is needed for indexing yet unsaved data without saving those changes to 'main' backend storage
@@ -36,14 +34,12 @@ import java.util.*;
 public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
   private final Map<Key, UpdatableValueContainer<Value>> myMap = new HashMap<Key,UpdatableValueContainer<Value>>();
   private final IndexStorage<Key, Value> myBackendStorage;
-  private boolean myBufferingEnabled = false;
   private final List<BufferingStateListener> myListeners = ContainerUtil.createEmptyCOWList();
-  private final JBReentrantReadWriteLock myLock = LockFactory.createReadWriteLock();
-  private final JBLock r = myLock.readLock();
-  private final JBLock w = myLock.writeLock();
-
+  private final AtomicBoolean myBufferingEnabled = new AtomicBoolean(false);
+  
   public interface BufferingStateListener {
     void bufferingStateChanged(boolean newState);
+    void memoryStorageCleared();
   }
   
   public MemoryIndexStorage(IndexStorage<Key, Value> backend) {
@@ -59,21 +55,21 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
   }
   
   public void setBufferingEnabled(boolean enabled) {
-    w.lock();
-    try {
-      final boolean wasEnabled = myBufferingEnabled;
-      myBufferingEnabled = enabled;
-      if (wasEnabled && !enabled) {
-        myMap.clear();
-      }
-      if (wasEnabled != enabled) {
-        for (BufferingStateListener listener : myListeners) {
-          listener.bufferingStateChanged(enabled);
-        }
+    final boolean wasEnabled = myBufferingEnabled.getAndSet(enabled);
+    if (wasEnabled != enabled) {
+      for (BufferingStateListener listener : myListeners) {
+        listener.bufferingStateChanged(enabled);
       }
     }
-    finally {
-      w.unlock();
+  }
+
+  public void clearMemoryMap() {
+    myMap.clear();
+  }
+
+  public void fireMemoryStorageCleared() {
+    for (BufferingStateListener listener : myListeners) {
+      listener.memoryStorageCleared();
     }
   }
 
@@ -82,14 +78,8 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
   }
 
   public void clear() throws StorageException {
-    w.lock();
-    try {
-      myMap.clear();
-      myBackendStorage.clear();
-    }
-    finally {
-      w.unlock();
-    }
+    clearMemoryMap();
+    myBackendStorage.clear();
   }
 
   public void flush() throws IOException {
@@ -103,75 +93,60 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
   }
 
   public boolean processKeys(final Processor<Key> processor) throws StorageException {
-    r.lock();
-    try {
-      if (myBufferingEnabled) {
-        final Set<Key> stopList = new HashSet<Key>();
+    final Set<Key> stopList = new HashSet<Key>();
 
-        Processor<Key> decoratingProcessor = new Processor<Key>() {
-          public boolean process(final Key key) {
-            if (stopList.contains(key)) return true;
+    Processor<Key> decoratingProcessor = new Processor<Key>() {
+      public boolean process(final Key key) {
+        if (stopList.contains(key)) return true;
 
-            final UpdatableValueContainer<Value> container = myMap.get(key);
-            if (container != null && container.size() == 0) return true;
-            return processor.process(key);
-          }
-        };
-
-        for (Key key : myMap.keySet()) {
-          if (!decoratingProcessor.process(key)) return false;
-          stopList.add(key);
-        }
-        return myBackendStorage.processKeys(decoratingProcessor);
+        final UpdatableValueContainer<Value> container = myMap.get(key);
+        if (container != null && container.size() == 0) return true;
+        return processor.process(key);
       }
-    }
-    finally {
-      r.unlock();
-    }
+    };
 
-    return myBackendStorage.processKeys(processor);
+    for (Key key : myMap.keySet()) {
+      if (!decoratingProcessor.process(key)) return false;
+      stopList.add(key);
+    }
+    return myBackendStorage.processKeys(decoratingProcessor);
   }
 
   public void addValue(final Key key, final int inputId, final Value value) throws StorageException {
-    w.lock();
-    try {
-      if (myBufferingEnabled) {
-        getMemValueContainer(key).addValue(inputId, value);
-        return;
-      }
+    if (myBufferingEnabled.get()) {
+      getMemValueContainer(key).addValue(inputId, value);
+      return;
     }
-    finally {
-      w.unlock();
+    final UpdatableValueContainer<Value> valueContainer = myMap.get(key);
+    if (valueContainer != null) {
+      valueContainer.addValue(inputId, value);
     }
 
     myBackendStorage.addValue(key, inputId, value);
   }
 
   public void removeValue(final Key key, final int inputId, final Value value) throws StorageException {
-    w.lock();
-    try {
-      if (myBufferingEnabled) {
-        getMemValueContainer(key).removeValue(inputId, value);
-        return;
-      }
+    if (myBufferingEnabled.get()) {
+      getMemValueContainer(key).removeValue(inputId, value);
+      return;
     }
-    finally {
-      w.unlock();
+    final UpdatableValueContainer<Value> valueContainer = myMap.get(key);
+    if (valueContainer != null) {
+      valueContainer.removeValue(inputId, value);
     }
     myBackendStorage.removeValue(key, inputId, value);
   }
 
   public void removeAllValues(Key key, int inputId) throws StorageException {
-    w.lock();
-    try {
-      if (myBufferingEnabled) {
-        getMemValueContainer(key).removeAllValues(inputId);
-        return;
-      }
+    if (myBufferingEnabled.get()) {
+      getMemValueContainer(key).removeAllValues(inputId);
+      return;
     }
-    finally {
-      w.unlock();
+    final UpdatableValueContainer<Value> valueContainer = myMap.get(key);
+    if (valueContainer != null) {
+      valueContainer.removeAllValues(inputId);
     }
+
     myBackendStorage.removeAllValues(key, inputId);
   }
 
@@ -199,18 +174,9 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
 
   @NotNull
   public ValueContainer<Value> read(final Key key) throws StorageException {
-    r.lock();
-    try {
-      if (myBufferingEnabled) {
-        final ValueContainer<Value> valueContainer = myMap.get(key);
-        if (valueContainer != null) {
-          return valueContainer;
-        }
-        return myBackendStorage.read(key);
-      }
-    }
-    finally {
-      r.unlock();
+    final ValueContainer<Value> valueContainer = myMap.get(key);
+    if (valueContainer != null) {
+      return valueContainer;
     }
     
     return myBackendStorage.read(key);

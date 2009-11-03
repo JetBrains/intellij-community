@@ -117,7 +117,7 @@ public class DefaultHighlightVisitor extends PsiElementVisitor implements Highli
 
   public static HighlightInfo createErrorElementInfo(final PsiErrorElement element) {
     TextRange range = element.getTextRange();
-    if (range.getLength() > 0) {
+    if (!range.isEmpty()) {
       final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, range, element.getErrorDescription());
       for(ErrorQuickFixProvider provider: Extensions.getExtensions(ErrorQuickFixProvider.EP_NAME)) {
         provider.registerErrorQuickFix(element, highlightInfo);
@@ -132,14 +132,7 @@ public class DefaultHighlightVisitor extends PsiElementVisitor implements Highli
     String text = elementAtOffset == null ? null : elementAtOffset.getText();
     HighlightInfo info;
     if (offset < fileLength && text != null && !StringUtil.startsWithChar(text, '\n') && !StringUtil.startsWithChar(text, '\r')) {
-      int start = offset;
-      PsiElement prevElement = containingFile.findElementAt(offset - 1);
-      //if (offset > 0 && prevElement != null && prevElement.getText().equals("(") && StringUtil.startsWithChar(text, ')')) {
-      //  start = offset - 1;
-      //}
-      int end = offset + 1;
-      info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, start, end, element.getErrorDescription());
-      info.navigationShift = offset - start;
+      info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, offset, offset + 1, element.getErrorDescription());
     }
     else {
       int start;

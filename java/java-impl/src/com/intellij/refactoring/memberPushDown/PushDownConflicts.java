@@ -99,7 +99,7 @@ public class PushDownConflicts {
             }
 
             if (!InheritanceUtil.isInheritorOrSelf(aClass, targetClass, true)) {
-              myConflicts.putValue(aClass, RefactoringBundle.message("pushed.members.will.not.be.visible.from.certain.call.sites"));
+              myConflicts.putValue(referenceExpression, RefactoringBundle.message("pushed.members.will.not.be.visible.from.certain.call.sites"));
               break Members;
             }
           }

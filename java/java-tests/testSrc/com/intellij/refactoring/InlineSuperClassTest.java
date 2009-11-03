@@ -50,7 +50,7 @@ public class InlineSuperClassTest extends MultiFileTestCase {
         }
       });
     }
-    catch (RuntimeException e) {
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       if (fail) {
         return;
       }

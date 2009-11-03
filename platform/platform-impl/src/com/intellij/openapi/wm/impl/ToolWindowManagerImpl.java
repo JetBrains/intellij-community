@@ -1209,9 +1209,24 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return getInfo(id).isSplit();
   }
 
+  ToolWindowContentUiType getContentUiType(String id) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    checkId(id);
+    return getInfo(id).getContentUiType();
+  }
+
   void setSideTool(String id, boolean isSide) {
     final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
     setSplitModeImpl(id, isSide, commandList);
+    execute(commandList);
+  }
+
+  public void setContentUiType(String id, ToolWindowContentUiType type) {
+    final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
+    checkId(id);
+    WindowInfoImpl info = getInfo(id);
+    info.setContentUiType(type);
+    appendApplyWindowInfoCmd(info, commandList);
     execute(commandList);
   }
 
@@ -1848,6 +1863,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     public void hiddenSide(final InternalDecorator source) {
       hideToolWindow(source.getToolWindow().getId(), true);
+    }
+
+    public void contentUiTypeChanges(InternalDecorator source, ToolWindowContentUiType type) {
+      setContentUiType(source.getToolWindow().getId(), type);
     }
 
     /**

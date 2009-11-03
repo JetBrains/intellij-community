@@ -35,16 +35,19 @@ import java.util.Map;
 public class Win32Kernel {
 
   private static final int MAX_PATH = 0x00000104;
+
   public static final int FILE_ATTRIBUTE_DIRECTORY = 0x00000010;
   public static final int FILE_ATTRIBUTE_READONLY = 0x0001;
 
-  private Kernel32 myKernel = (Kernel32)Native.loadLibrary("kernel32", Kernel32.class, new HashMap<Object, Object>() {
+  private static W32API.HANDLE INVALID_HANDLE_VALUE = new W32API.HANDLE(Pointer.createConstant(0xFFFFFFFFl));
+
+  private static Kernel32 myKernel = (Kernel32)Native.loadLibrary("kernel32", Kernel32.class, new HashMap<Object, Object>() {
         {
           put(Library.OPTION_TYPE_MAPPER, W32APITypeMapper.UNICODE);
           put(Library.OPTION_FUNCTION_MAPPER, W32APIFunctionMapper.UNICODE);
         }});
 
-  WIN32_FIND_DATA myData = new WIN32_FIND_DATA();
+  private final WIN32_FIND_DATA myData = new WIN32_FIND_DATA();
 
   private static class FileInfo {
     private FileInfo(WIN32_FIND_DATA data) {
@@ -56,8 +59,6 @@ public class Win32Kernel {
     long ftLastWriteTime;
   }
 
-  private static W32API.HANDLE INVALID_HANDLE_VALUE = new W32API.HANDLE(Pointer.createConstant(0xFFFFFFFFl));
-
   private Map<String, FileInfo> myCache = new HashMap<String, FileInfo>();
 
   public String[] list(String absolutePath) {
@@ -65,22 +66,23 @@ public class Win32Kernel {
     myCache.clear();
 
     ArrayList<String> list = new ArrayList<String>();
-    W32API.HANDLE hFind = myKernel.FindFirstFile(absolutePath.replace('/', '\\') + "\\*", myData);
+    WIN32_FIND_DATA data = myData;
+    W32API.HANDLE hFind = myKernel.FindFirstFile(absolutePath.replace('/', '\\') + "\\*", data);
     if (hFind.equals(INVALID_HANDLE_VALUE)) return new String[0];
     try {
       do {
-        String name = Native.toString(myData.cFileName);
+        String name = Native.toString(data.cFileName);
         if (name.equals(".")) {
-          myCache.put(absolutePath, new FileInfo(myData));
+          myCache.put(absolutePath, new FileInfo(data));
           continue;
         }
         else if (name.equals("..")) {
           continue;
         }
-        myCache.put(absolutePath + "/" + name, new FileInfo(myData));
+        myCache.put(absolutePath + "/" + name, new FileInfo(data));
         list.add(name);
       }
-      while (myKernel.FindNextFile(hFind, myData));
+      while (myKernel.FindNextFile(hFind, data));
     }
     finally {
       myKernel.FindClose(hFind);
@@ -91,7 +93,7 @@ public class Win32Kernel {
   public boolean exists(String path) {
     myCache.clear();
     try {
-      getData(path);
+      getInfo(path);
       return true;
     }
     catch (FileNotFoundException e) {
@@ -100,35 +102,36 @@ public class Win32Kernel {
   }
 
   public boolean isDirectory(String path) throws FileNotFoundException {
-    FileInfo data = getData(path);
+    FileInfo data = getInfo(path);
     return (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
   }
 
   public boolean isWritable(String path) throws FileNotFoundException {
-    return (getData(path).dwFileAttributes & FILE_ATTRIBUTE_READONLY) == 0;
+    return (getInfo(path).dwFileAttributes & FILE_ATTRIBUTE_READONLY) == 0;
   }
 
   public long getTimeStamp(String path) throws FileNotFoundException {
-    return getData(path).ftLastWriteTime;
+    return getInfo(path).ftLastWriteTime;
   }
 
-  private FileInfo getData(String path) throws FileNotFoundException {
-    FileInfo data = myCache.get(path);
-    if (data == null) {
+  private FileInfo getInfo(String path) throws FileNotFoundException {
+    FileInfo info = myCache.get(path);
+    if (info == null) {
       myCache.clear();
-      W32API.HANDLE handle = myKernel.FindFirstFile(path.replace('/', '\\'), myData);
+      WIN32_FIND_DATA data = myData;
+      W32API.HANDLE handle = myKernel.FindFirstFile(path.replace('/', '\\'), data);
       if (handle.equals(INVALID_HANDLE_VALUE)) {
         throw new FileNotFoundException(path);
       }
       myKernel.FindClose(handle);
-      data = new FileInfo(myData);
-      myCache.put(path, data);
+      info = new FileInfo(data);
+      myCache.put(path, info);
     }
-    return data;
+    return info;
   }
 
   public void release() throws Throwable {
-    myData.release();    
+    myData.release();
   }
 
   public interface Kernel32 extends StdCallLibrary {

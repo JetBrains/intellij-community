@@ -15,11 +15,9 @@
  */
 package com.intellij.openapi.wm.impl.content;
 
-import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ui.BaseButtonBehavior;
-import com.intellij.util.ui.WatermarkIcon;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -30,9 +28,11 @@ class ContentTabLabel extends BaseLabel {
 
   Content myContent;
   private final BaseButtonBehavior myBehavior;
+  private TabContentLayout myLayout;
 
-  public ContentTabLabel(final Content content, ToolWindowContentUi ui) {
-    super(ui, true);
+  public ContentTabLabel(final Content content, TabContentLayout layout) {
+    super(layout.myUi, true);
+    myLayout = layout;
     myContent = content;
     update();
 
@@ -48,7 +48,7 @@ class ContentTabLabel extends BaseLabel {
   }
 
   public void update() {
-    if (!myUi.isToDrawTabs()) {
+    if (!myLayout.isToDrawTabs()) {
       setHorizontalAlignment(JLabel.LEFT);
       setBorder(null);
     } else {
@@ -56,34 +56,19 @@ class ContentTabLabel extends BaseLabel {
       setBorder(new EmptyBorder(0, 8, 0, 8));
     }
 
-    setText(myContent.getDisplayName());
-    setActiveFg(isSelected() ? Color.white : new Color(188, 195, 219));
-
-    setPassiveFg(isSelected() ? Color.white : new Color(213, 210, 202));
-
-    setToolTipText(myContent.getDescription());
-
-    final boolean show = Boolean.TRUE.equals(myContent.getUserData(ToolWindow.SHOW_CONTENT_ICON));
-    if (show) {
-     if (isSelected()) {
-       setIcon(myContent.getIcon());
-     } else {
-       setIcon(myContent.getIcon() != null ? new WatermarkIcon(myContent.getIcon(), .5f) : null);
-     }
-    } else {
-      setIcon(null);
-    }
+    updateTextAndIcon(myContent, isSelected());
   }
 
+
   protected void paintComponent(final Graphics g) {
-    if (!isSelected() && myUi.isToDrawTabs()) {
-      g.translate(0, 2);
+    if (!isSelected() && myLayout.isToDrawTabs()) {
+      g.translate(0, TAB_SHIFT);
     }
 
     super.paintComponent(g);
 
-    if (!isSelected() && myUi.isToDrawTabs()) {
-      g.translate(0, -2);
+    if (!isSelected() && myLayout.isToDrawTabs()) {
+      g.translate(0, -TAB_SHIFT);
     }
   }
 
@@ -91,4 +76,8 @@ class ContentTabLabel extends BaseLabel {
     return myUi.myWindow.getContentManager().isSelected(myContent);
   }
 
+  @Override
+  public Content getContent() {
+    return myContent;
+  }
 }

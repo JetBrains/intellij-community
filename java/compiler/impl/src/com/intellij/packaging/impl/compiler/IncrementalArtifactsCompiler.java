@@ -15,18 +15,21 @@
  */
 package com.intellij.packaging.impl.compiler;
 
-import com.intellij.compiler.impl.CompilerUtil;
+import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.impl.CompilerCacheManager;
+import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.FileProcessingCompilerStateCache;
 import com.intellij.compiler.impl.packagingCompiler.*;
-import com.intellij.compiler.CompilerManagerImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.make.BuildParticipant;
+import com.intellij.openapi.compiler.make.BuildParticipantProvider;
 import com.intellij.openapi.deployment.DeploymentUtil;
-import com.intellij.openapi.deployment.DeploymentUtilImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -47,30 +50,46 @@ import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.IOException;
 import java.util.*;
-import java.util.jar.Manifest;
 
 /**
  * @author nik
  */
 public class IncrementalArtifactsCompiler implements PackagingCompiler {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.packaging.impl.compiler.IncrementalArtifactsCompiler");
   private static final Key<List<String>> FILES_TO_DELETE_KEY = Key.create("artifacts_files_to_delete");
   private static final Key<Set<Artifact>> AFFECTED_ARTIFACTS = Key.create("affected_artifacts");
   private static final Key<ArtifactsProcessingItemsBuilderContext> BUILDER_CONTEXT_KEY = Key.create("artifacts_builder_context");
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.packagingCompiler.PackagingCompilerBase");
   @Nullable private PackagingCompilerCache myOutputItemsCache;
 
-  protected static ArtifactPackagingProcessingItem[] collectItems(ArtifactsProcessingItemsBuilderContext builderContext, final Project project) {
+  private static ArtifactPackagingProcessingItem[] collectItems(ArtifactsProcessingItemsBuilderContext builderContext, final Project project) {
     final CompileContext context = builderContext.getCompileContext();
 
     final Set<Artifact> artifactsToBuild = ArtifactCompileScope.getArtifactsToBuild(project, context.getCompileScope());
-    for (Artifact artifact : ArtifactManager.getInstance(project).getArtifacts()) {
+    List<Artifact> additionalArtifacts = new ArrayList<Artifact>();
+    for (BuildParticipantProvider provider : BuildParticipantProvider.EXTENSION_POINT_NAME.getExtensions()) {
+      for (Module module : ModuleManager.getInstance(project).getModules()) {
+        final Collection<? extends BuildParticipant> participants = provider.getParticipants(module);
+        for (BuildParticipant participant : participants) {
+          ContainerUtil.addIfNotNull(participant.createArtifact(context), additionalArtifacts);
+        }
+      }
+    }
+    artifactsToBuild.addAll(additionalArtifacts);
+
+    final List<Artifact> allArtifacts = new ArrayList<Artifact>(Arrays.asList(ArtifactManager.getInstance(project).getArtifacts()));
+    allArtifacts.addAll(additionalArtifacts);
+    for (Artifact artifact : allArtifacts) {
       final String outputPath = artifact.getOutputPath();
       if (outputPath != null && outputPath.length() != 0) {
         collectItems(builderContext, artifact, outputPath, project, artifactsToBuild.contains(artifact));
@@ -84,19 +103,45 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
     return builderContext.getProcessingItems();
   }
 
-  protected static void onBuildFinished(ArtifactsProcessingItemsBuilderContext context)
-      throws Exception {
-    final CompileContext compileContext = context.getCompileContext();
-    final Set<Artifact> artifacts = getAffectedArtifacts(compileContext);
-    for (Artifact artifact : artifacts) {
-      for (ArtifactPropertiesProvider provider : artifact.getPropertiesProviders()) {
-        artifact.getProperties(provider).onBuildFinished(artifact, compileContext);
-      }
-    }
-  }
+  @NotNull
+  public ProcessingItem[] getProcessingItems(final CompileContext context) {
+    return new ReadAction<ProcessingItem[]>() {
+      protected void run(final Result<ProcessingItem[]> result) {
+        ArtifactsProcessingItemsBuilderContext builderContext = new ArtifactsProcessingItemsBuilderContext(context);
+        context.putUserData(BUILDER_CONTEXT_KEY, builderContext);
+        ArtifactPackagingProcessingItem[] allProcessingItems = collectItems(builderContext, context.getProject());
 
-  public static Set<Artifact> getAffectedArtifacts(final CompileContext compileContext) {
-    return compileContext.getUserData(AFFECTED_ARTIFACTS);
+        if (LOG.isDebugEnabled()) {
+          int num = Math.min(100, allProcessingItems.length);
+          LOG.debug("All files (" + num + " of " + allProcessingItems.length + "):");
+          for (int i = 0; i < num; i++) {
+            LOG.debug(allProcessingItems[i].getFile().getPath());
+          }
+        }
+
+        try {
+          final FileProcessingCompilerStateCache cache =
+              CompilerCacheManager.getInstance(context.getProject()).getFileProcessingCompilerCache(IncrementalArtifactsCompiler.this);
+          for (ArtifactPackagingProcessingItem item : allProcessingItems) {
+            item.init(cache);
+          }
+        }
+        catch (IOException e) {
+          context.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), null, -1, -1);
+          result.setResult(ProcessingItem.EMPTY_ARRAY);
+          return;
+        }
+
+        boolean hasFilesToDelete = collectFilesToDelete(context, builderContext.getProcessingItems());
+        if (hasFilesToDelete) {
+          MockProcessingItem mockItem = new MockProcessingItem(new LightVirtualFile("239239293"));
+          result.setResult(ArrayUtil.append(allProcessingItems, mockItem, ProcessingItem.class));
+        }
+        else {
+          result.setResult(allProcessingItems);
+        }
+      }
+    }.execute().getResultObject();
   }
 
   private static void collectItems(@NotNull ArtifactsProcessingItemsBuilderContext builderContext,
@@ -106,10 +151,146 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
     final CompositePackagingElement<?> rootElement = artifact.getRootElement();
     final VirtualFile outputFile = LocalFileSystem.getInstance().findFileByPath(outputPath);
     final CopyToDirectoryInstructionCreator instructionCreator =
-        new CopyToDirectoryInstructionCreator(builderContext, outputPath, outputFile);
+      new CopyToDirectoryInstructionCreator(builderContext, outputPath, outputFile);
     final PackagingElementResolvingContext resolvingContext = ArtifactManager.getInstance(project).getResolvingContext();
     builderContext.setCollectingEnabledItems(enable);
     rootElement.computeIncrementalCompilerInstructions(instructionCreator, resolvingContext, builderContext, artifact.getArtifactType());
+  }
+
+  public ProcessingItem[] process(final CompileContext context, final ProcessingItem[] items) {
+    final Set<String> deletedJars = deleteOutdatedFiles(context);
+
+    final List<ArtifactPackagingProcessingItem> processedItems = new ArrayList<ArtifactPackagingProcessingItem>();
+    final Set<String> writtenPaths = createPathsHashSet();
+    final Ref<Boolean> built = Ref.create(false);
+    CompilerUtil.runInContext(context, "Copying files", new ThrowableRunnable<RuntimeException>() {
+      public void run() throws RuntimeException {
+        built.set(doBuild(context, items, processedItems, writtenPaths, deletedJars));
+      }
+    });
+    if (!built.get()) {
+      return ProcessingItem.EMPTY_ARRAY;
+    }
+
+    context.getProgressIndicator().setText(CompilerBundle.message("packaging.compiler.message.updating.caches"));
+    context.getProgressIndicator().setText2("");
+    refreshOutputFiles(writtenPaths);
+    new ReadAction() {
+      protected void run(final Result result) {
+        processDestinations(processedItems);
+      }
+    }.execute();
+    removeInvalidItems(processedItems);
+    updateOutputCache(context.getProject(), processedItems);
+    return processedItems.toArray(new ProcessingItem[processedItems.size()]);
+  }
+
+  private static boolean doBuild(final CompileContext context,
+                                 final ProcessingItem[] items,
+                                 final List<ArtifactPackagingProcessingItem> processedItems,
+                                 final Set<String> writtenPaths,
+                                 final Set<String> deletedJars) {
+    final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
+
+    if (LOG.isDebugEnabled()) {
+      int num = Math.min(100, items.length);
+      LOG.debug("Files to process (" + num + " of " + items.length + "):");
+      for (int i = 0; i < num; i++) {
+        LOG.debug(items[i].getFile().getPath());
+      }
+    }
+    final DeploymentUtil deploymentUtil = DeploymentUtil.getInstance();
+    final FileFilter fileFilter = new IgnoredFileFilter();
+    final ArtifactsProcessingItemsBuilderContext builderContext = context.getUserData(BUILDER_CONTEXT_KEY);
+    final Set<JarInfo> changedJars = new THashSet<JarInfo>();
+    for (String deletedJar : deletedJars) {
+      final Collection<JarInfo> infos = builderContext.getJarInfos(deletedJar);
+      if (infos != null) {
+        changedJars.addAll(infos);
+      }
+    }
+
+    try {
+      int i = 0;
+      for (final ProcessingItem item0 : items) {
+        if (item0 instanceof MockProcessingItem) continue;
+        final ArtifactPackagingProcessingItem item = (ArtifactPackagingProcessingItem)item0;
+        context.getProgressIndicator().checkCanceled();
+
+        final Ref<IOException> exception = Ref.create(null);
+        new ReadAction() {
+          protected void run(final Result result) {
+            final File fromFile = VfsUtil.virtualToIoFile(item.getFile());
+            for (DestinationInfo destination : item.getEnabledDestinations()) {
+              if (destination instanceof ExplodedDestinationInfo) {
+                final ExplodedDestinationInfo explodedDestination = (ExplodedDestinationInfo)destination;
+                File toFile = new File(FileUtil.toSystemDependentName(explodedDestination.getOutputPath()));
+                if (fromFile.exists()) {
+                  try {
+                    deploymentUtil.copyFile(fromFile, toFile, context, writtenPaths, fileFilter);
+                  }
+                  catch (IOException e) {
+                    exception.set(e);
+                    return;
+                  }
+                }
+              }
+              else {
+                changedJars.add(((JarDestinationInfo)destination).getJarInfo());
+              }
+            }
+          }
+        }.execute();
+        if (exception.get() != null) {
+          throw exception.get();
+        }
+
+        context.getProgressIndicator().setFraction(++i * 1.0 / items.length);
+        processedItems.add(item);
+        if (testMode) {
+          CompilerManagerImpl.addRecompiledPath(FileUtil.toSystemDependentName(item.getFile().getPath()));
+        }
+      }
+
+      JarsBuilder builder = new JarsBuilder(changedJars, fileFilter, context);
+      final boolean processed = builder.buildJars(writtenPaths);
+      if (!processed) {
+        return false;
+      }
+
+      Set<VirtualFile> recompiledSources = new HashSet<VirtualFile>();
+      for (JarInfo info : builder.getJarsToBuild()) {
+        for (Pair<String, VirtualFile> pair : info.getPackedFiles()) {
+          recompiledSources.add(pair.getSecond());
+        }
+      }
+      for (ArtifactPackagingProcessingItem processedItem : processedItems) {
+        recompiledSources.remove(processedItem.getFile());
+      }
+      for (VirtualFile source : recompiledSources) {
+        ArtifactPackagingProcessingItem item = builderContext.getItemBySource(source);
+        LOG.assertTrue(item != null, source);
+        processedItems.add(item);
+        if (testMode) {
+          CompilerManagerImpl.addRecompiledPath(FileUtil.toSystemDependentName(item.getFile().getPath()));
+        }
+      }
+
+      onBuildFinished(builderContext);
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      LOG.info(e);
+      context.addMessage(CompilerMessageCategory.ERROR, e.getLocalizedMessage(), null, -1, -1);
+      return false;
+    }
+    return true;
+  }
+
+  public static Set<Artifact> getAffectedArtifacts(final CompileContext compileContext) {
+    return compileContext.getUserData(AFFECTED_ARTIFACTS);
   }
 
   @NotNull
@@ -173,38 +354,21 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
     return outputPath;
   }
 
+  protected static void onBuildFinished(ArtifactsProcessingItemsBuilderContext context)
+    throws Exception {
+    final CompileContext compileContext = context.getCompileContext();
+    final Set<Artifact> artifacts = getAffectedArtifacts(compileContext);
+    for (Artifact artifact : artifacts) {
+      for (ArtifactPropertiesProvider provider : artifact.getPropertiesProviders()) {
+        artifact.getProperties(provider).onBuildFinished(artifact, compileContext);
+      }
+    }
+  }
+
   private static THashSet<String> createPathsHashSet() {
     return SystemInfo.isFileSystemCaseSensitive
            ? new THashSet<String>()
            : new THashSet<String>(CaseInsensitiveStringHashingStrategy.INSTANCE);
-  }
-
-  public ProcessingItem[] process(final CompileContext context, final ProcessingItem[] items) {
-    final Set<String> deletedJars = deleteOutdatedFiles(context);
-
-    final List<ArtifactPackagingProcessingItem> processedItems = new ArrayList<ArtifactPackagingProcessingItem>();
-    final Set<String> writtenPaths = createPathsHashSet();
-    final Ref<Boolean> built = Ref.create(false);
-    CompilerUtil.runInContext(context, "Copying files", new ThrowableRunnable<RuntimeException>() {
-      public void run() throws RuntimeException {
-        built.set(doBuild(context, items, processedItems, writtenPaths, deletedJars));
-      }
-    });
-    if (!built.get()) {
-      return ProcessingItem.EMPTY_ARRAY;
-    }
-
-    context.getProgressIndicator().setText(CompilerBundle.message("packaging.compiler.message.updating.caches"));
-    context.getProgressIndicator().setText2("");
-    refreshOutputFiles(writtenPaths);
-    new ReadAction() {
-      protected void run(final Result result) {
-        processDestinations(processedItems);
-      }
-    }.execute();
-    removeInvalidItems(processedItems);
-    updateOutputCache(context.getProject(), processedItems);
-    return processedItems.toArray(new ProcessingItem[processedItems.size()]);
   }
 
   private static void removeInvalidItems(List<ArtifactPackagingProcessingItem> processedItems) {
@@ -220,145 +384,6 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
       final VirtualFile file = item.getFile();
       if (!file.isValid()) {
         iterator.remove();
-      }
-    }
-  }
-
-  private static boolean doBuild(final CompileContext context,
-                          final ProcessingItem[] items,
-                          final List<ArtifactPackagingProcessingItem> processedItems,
-                          final Set<String> writtenPaths,
-                          final Set<String> deletedJars) {
-    final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
-
-    if (LOG.isDebugEnabled()) {
-      int num = Math.min(100, items.length);
-      LOG.debug("Files to process (" + num + " of " + items.length + "):");
-      for (int i = 0; i < num; i++) {
-        LOG.debug(items[i].getFile().getPath());
-      }
-    }
-    final DeploymentUtil deploymentUtil = DeploymentUtil.getInstance();
-    final FileFilter fileFilter = new IgnoredFileFilter();
-    final ArtifactsProcessingItemsBuilderContext builderContext = context.getUserData(BUILDER_CONTEXT_KEY);
-    final Set<JarInfo> changedJars = new THashSet<JarInfo>();
-    for (String deletedJar : deletedJars) {
-      final Collection<JarInfo> infos = builderContext.getJarInfos(deletedJar);
-      if (infos != null) {
-        changedJars.addAll(infos);
-      }
-    }
-
-    try {
-      int i = 0;
-      for (final ProcessingItem item0 : items) {
-        if (item0 instanceof MockProcessingItem) continue;
-        final ArtifactPackagingProcessingItem item = (ArtifactPackagingProcessingItem)item0;
-        context.getProgressIndicator().checkCanceled();
-
-        final Ref<IOException> exception = Ref.create(null);
-        new ReadAction() {
-          protected void run(final Result result) {
-            final File fromFile = VfsUtil.virtualToIoFile(item.getFile());
-            for (DestinationInfo destination : item.getEnabledDestinations()) {
-              if (destination instanceof ExplodedDestinationInfo) {
-                final ExplodedDestinationInfo explodedDestination = (ExplodedDestinationInfo)destination;
-                File toFile = new File(FileUtil.toSystemDependentName(explodedDestination.getOutputPath()));
-                if (fromFile.exists()) {
-                  try {
-                    deploymentUtil.copyFile(fromFile, toFile, context, writtenPaths, fileFilter);
-                  }
-                  catch (IOException e) {
-                    exception.set(e);
-                    return;
-                  }
-                }
-              }
-              else {
-                changedJars.add(((JarDestinationInfo)destination).getJarInfo());
-              }
-            }
-          }
-        }.execute();
-        if (exception.get() != null) {
-          throw exception.get();
-        }
-
-        context.getProgressIndicator().setFraction(++i * 1.0 / items.length);
-        processedItems.add(item);
-        if (testMode) {
-          CompilerManagerImpl.addRecompiledPath(FileUtil.toSystemDependentName(item.getFile().getPath()));
-        }
-      }
-
-      createManifestFiles(builderContext.getManifestFiles());
-
-      JarsBuilder builder = new JarsBuilder(changedJars, fileFilter, context);
-      final boolean processed = builder.buildJars(writtenPaths);
-      if (!processed) {
-        return false;
-      }
-
-      Set<VirtualFile> recompiledSources = new HashSet<VirtualFile>();
-      for (JarInfo info : builder.getJarsToBuild()) {
-        for (Pair<String, VirtualFile> pair : info.getPackedFiles()) {
-          recompiledSources.add(pair.getSecond());
-        }
-      }
-      for (ArtifactPackagingProcessingItem processedItem : processedItems) {
-        recompiledSources.remove(processedItem.getFile());
-      }
-      for (VirtualFile source : recompiledSources) {
-        ArtifactPackagingProcessingItem item = builderContext.getItemBySource(source);
-        LOG.assertTrue(item != null, source);
-        processedItems.add(item);
-        if (testMode) {
-          CompilerManagerImpl.addRecompiledPath(FileUtil.toSystemDependentName(item.getFile().getPath()));
-        }
-      }
-
-      onBuildFinished(builderContext);
-    }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
-    catch (Exception e) {
-      LOG.info(e);
-      context.addMessage(CompilerMessageCategory.ERROR, e.getLocalizedMessage(), null, -1, -1);
-      return false;
-    }
-    return true;
-  }
-
-  private static void createManifestFiles(final List<ManifestFileInfo> manifestFileInfos) throws IOException {
-    for (ManifestFileInfo manifestFileInfo : manifestFileInfos) {
-      File outputFile = new File(FileUtil.toSystemDependentName(manifestFileInfo.getOutputPath()));
-      Manifest manifest;
-      if (outputFile.exists()) {
-        FileInputStream stream = new FileInputStream(outputFile);
-        try {
-          manifest = new Manifest(stream);
-        }
-        finally {
-          stream.close();
-        }
-      }
-      else {
-        manifest = new Manifest();
-      }
-
-      DeploymentUtilImpl.setManifestAttributes(manifest.getMainAttributes(), manifestFileInfo.getClasspath());
-
-      FileUtil.createParentDirs(outputFile);
-      FileOutputStream out = null;
-      try {
-        out = new FileOutputStream(outputFile);
-        manifest.write(out);
-      }
-      finally {
-        if (out != null) {
-          out.close();
-        }
       }
     }
   }
@@ -451,47 +476,6 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
 
   public boolean validateConfiguration(final CompileScope scope) {
     return true;
-  }
-
-  @NotNull
-  public ProcessingItem[] getProcessingItems(final CompileContext context) {
-    return new ReadAction<ProcessingItem[]>() {
-      protected void run(final Result<ProcessingItem[]> result) {
-        ArtifactsProcessingItemsBuilderContext builderContext = new ArtifactsProcessingItemsBuilderContext(context);
-        context.putUserData(BUILDER_CONTEXT_KEY, builderContext);
-        ArtifactPackagingProcessingItem[] allProcessingItems = collectItems(builderContext, context.getProject());
-
-        if (LOG.isDebugEnabled()) {
-          int num = Math.min(100, allProcessingItems.length);
-          LOG.debug("All files (" + num + " of " + allProcessingItems.length + "):");
-          for (int i = 0; i < num; i++) {
-            LOG.debug(allProcessingItems[i].getFile().getPath());
-          }
-        }
-
-        try {
-          final FileProcessingCompilerStateCache cache =
-              CompilerCacheManager.getInstance(context.getProject()).getFileProcessingCompilerCache(IncrementalArtifactsCompiler.this);
-          for (ArtifactPackagingProcessingItem item : allProcessingItems) {
-            item.init(cache);
-          }
-        }
-        catch (IOException e) {
-          context.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), null, -1, -1);
-          result.setResult(ProcessingItem.EMPTY_ARRAY);
-          return;
-        }
-
-        boolean hasFilesToDelete = collectFilesToDelete(context, builderContext.getProcessingItems());
-        if (hasFilesToDelete) {
-          MockProcessingItem mockItem = new MockProcessingItem(new LightVirtualFile("239239293"));
-          result.setResult(ArrayUtil.append(allProcessingItems, mockItem, ProcessingItem.class));
-        }
-        else {
-          result.setResult(allProcessingItems);
-        }
-      }
-    }.execute().getResultObject();
   }
 
   private static class MockProcessingItem implements ProcessingItem {

@@ -49,10 +49,8 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -65,9 +63,11 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -134,9 +134,13 @@ public class DaemonListeners implements Disposable {
 
     myEditorTracker = editorTracker;
     myEditorTrackerListener = new EditorTrackerListener() {
-      public void activeEditorsChanged(List<Editor> editors) {
-        if (!editors.isEmpty()) {
-          stopDaemon(true);  // do not stop daemon if idea loses focus
+      private List<Editor> myActiveEditors = Collections.emptyList();
+
+      public void activeEditorsChanged(@NotNull List<Editor> editors) {
+        List<Editor> activeEditors = myEditorTracker.getActiveEditors();
+        if (!myActiveEditors.equals(activeEditors)) {
+          myActiveEditors = activeEditors;
+          stopDaemon(true);  // do not stop daemon if idea loses/gains focus
         }
       }
     };
@@ -265,21 +269,24 @@ public class DaemonListeners implements Disposable {
     if (file instanceof PsiCodeFragment) return true;
     Project project = file.getProject();
     if (!ModuleUtil.projectContainsFile(project, virtualFile, false)) return false;
+    FileEditor[] editors = FileEditorManager.getInstance(myProject).getEditors(virtualFile);
+    for (FileEditor editor : editors) {
+      if (!editor.isModified()) return false;
+    }
+    FilePath path = new FilePathImpl(virtualFile);
+    boolean vcsIsThinking = !VcsDirtyScopeManager.getInstance(myProject).whatFilesDirty(Arrays.asList(path)).isEmpty();
+    if (vcsIsThinking) return false;
+
     AbstractVcs activeVcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(virtualFile);
     if (activeVcs == null) return true;
     FileStatus status = FileStatusManager.getInstance(project).getStatus(virtualFile);
 
-    if (status == FileStatus.MODIFIED || status == FileStatus.ADDED) return true;
-    FileEditor[] editors = FileEditorManager.getInstance(myProject).getEditors(virtualFile);
-    for (FileEditor editor : editors) {
-      if (editor.isModified()) return true;
-    }
-    return false;
+    return status == FileStatus.MODIFIED || status == FileStatus.ADDED;
   }
 
   private class MyApplicationListener extends ApplicationAdapter {
     public void beforeWriteActionStart(Object action) {
-      if (myDaemonCodeAnalyzer.getUpdateProgress().isCanceled()) return;
+      if (!myDaemonCodeAnalyzer.isRunning()) return;
       if (LOG.isDebugEnabled()) {
         LOG.debug("cancelling code highlighting by write action:" + action);
       }
@@ -293,7 +300,7 @@ public class DaemonListeners implements Disposable {
     }
 
     public void writeActionFinished(Object action) {
-      if (myDaemonCodeAnalyzer.getUpdateProgress().isRunning()) {
+      if (myDaemonCodeAnalyzer.isRunning()) {
         return;
       }
       if (action instanceof DocumentRunnable) {
@@ -317,7 +324,7 @@ public class DaemonListeners implements Disposable {
       }
 
       cutOperationJustHappened = myCutActionName.equals(event.getCommandName());
-      if (myDaemonCodeAnalyzer.getUpdateProgress().isCanceled()) return;
+      if (!myDaemonCodeAnalyzer.isRunning()) return;
       if (LOG.isDebugEnabled()) {
         LOG.debug("cancelling code highlighting by command:" + event.getCommand());
       }
@@ -353,7 +360,7 @@ public class DaemonListeners implements Disposable {
           }
         }
       }
-      else if (!myDaemonCodeAnalyzer.getUpdateProgress().isRunning()) {
+      else if (!myDaemonCodeAnalyzer.isRunning()) {
         stopDaemon(true);
       }
     }

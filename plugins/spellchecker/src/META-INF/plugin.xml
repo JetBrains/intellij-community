@@ -43,6 +43,7 @@
 
   <extensionPoints>
     <extensionPoint name="support" interface="com.intellij.spellchecker.tokenizer.SpellcheckingStrategy"/>
+    <extensionPoint name="bundledDictionaryProvider" interface="com.intellij.spellchecker.BundledDictionaryProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

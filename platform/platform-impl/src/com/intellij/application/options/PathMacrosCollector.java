@@ -18,6 +18,7 @@ package com.intellij.application.options;
 import com.intellij.openapi.components.PathMacroMap;
 import org.jdom.Element;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -32,6 +33,9 @@ public class PathMacrosCollector extends PathMacroMap {
   private static final String FILE_PROTOCOL = "file://";
   private static final String JAR_PROTOCOL = "jar://";
 
+  private static final Set<String> ourSystemMacroNames = new HashSet<String>(
+    Arrays.asList(PathMacrosImpl.APPLICATION_HOME_MACRO_NAME, PathMacrosImpl.MODULE_DIR_MACRO_NAME, PathMacrosImpl.PROJECT_DIR_MACRO_NAME));
+
   private PathMacrosCollector() {
     Pattern pattern = Pattern.compile("\\$(.*?)\\$");
     myMatcher = pattern.matcher("");
@@ -40,7 +44,9 @@ public class PathMacrosCollector extends PathMacroMap {
   public static Set<String> getMacroNames(Element root) {
     final PathMacrosCollector collector = new PathMacrosCollector();
     collector.substitute(root, true);
-    return new HashSet<String>(collector.myMacroMap.keySet());
+    final HashSet<String> result = new HashSet<String>(collector.myMacroMap.keySet());
+    result.removeAll(ourSystemMacroNames);
+    return result;
   }
 
   public String substitute(String text, boolean caseSensitive) {
