@@ -17,6 +17,7 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.lang.refactoring.InlineHandlers;
@@ -48,7 +49,9 @@ public class GenericInlineHandler {
   public static boolean invoke(final PsiElement element, final Editor editor, final InlineHandler languageSpecific) {
     final PsiReference invocationReference = TargetElementUtilBase.findReference(editor);
     final InlineHandler.Settings settings = languageSpecific.prepareInlineElement(element, editor, invocationReference != null);
-    if (settings == null) return false;
+    if (settings == null || settings == InlineHandler.Settings.CANNOT_INLINE_SETTINGS) {
+      return settings != null;
+    }
 
     final Collection<PsiReference> allReferences =
       settings.isOnlyOneReferenceToInline() ? Collections.singleton(invocationReference) : ReferencesSearch.search(element).findAll();
@@ -123,7 +126,7 @@ public class GenericInlineHandler {
             }
 
             if (!settings.isOnlyOneReferenceToInline()) {
-              languageSpecific.removeDefinition(element);
+              languageSpecific.removeDefinition(element, settings);
             }
           }
         }, RefactoringBundle.message("inline.command", subj), null);

@@ -122,6 +122,7 @@ public class FileBasedIndex implements ApplicationComponent {
   private static final String USE_MULTITHREADED_INDEXING = "fileIndex.multithreaded";
   private @Nullable String myConfigPath;
   private @Nullable String mySystemPath;
+  private final boolean myIsUnitTestMode;
 
   public void requestReindex(final VirtualFile file) {
     myChangedFilesUpdater.invalidateIndices(file, true);
@@ -134,7 +135,7 @@ public class FileBasedIndex implements ApplicationComponent {
   public FileBasedIndex(final VirtualFileManagerEx vfManager, FileDocumentManager fdm, MessageBus bus) throws IOException {
     myVfManager = vfManager;
     myFileDocumentManager = fdm;
-
+    myIsUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     myConfigPath = calcConfigPath(PathManager.getConfigPath());
     mySystemPath = calcConfigPath(PathManager.getSystemPath());
 
@@ -1229,7 +1230,7 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
     }
 
     if (tasks.size() > 0) {
-      if (Registry.get(USE_MULTITHREADED_INDEXING).asBoolean()) {
+      if (Registry.get(USE_MULTITHREADED_INDEXING).asBoolean() && !myIsUnitTestMode) {
         final Job<Object> job = JobScheduler.getInstance().createJob("IndexJob", Job.DEFAULT_PRIORITY / 2);
         try {
           for (Runnable task : tasks) {

@@ -38,7 +38,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
@@ -212,7 +211,7 @@ public class AddImportAction implements PriorityQuestionAction {
 
     try{
       bindReference(ref, targetClass);
-      if (CodeStyleSettingsManager.getSettings(myProject).OPTIMIZE_IMPORTS_ON_THE_FLY) {
+      if (com.intellij.codeInsight.CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY) {
         Document document = myEditor.getDocument();
         PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
         new OptimizeImportsProcessor(myProject, psiFile).runWithoutProgress();

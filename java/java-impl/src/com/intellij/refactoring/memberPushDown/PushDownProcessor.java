@@ -42,9 +42,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class PushDownProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.memberPushDown.PushDownProcessor");
@@ -376,6 +374,12 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
 
       if (newMember != null) {
         decodeRefs(newMember, targetClass);
+        //rebind imports first
+        Collections.sort(refsToRebind, new Comparator<PsiReference>() {
+          public int compare(PsiReference o1, PsiReference o2) {
+            return PsiUtil.BY_POSITION.compare(o1.getElement(), o2.getElement());
+          }
+        });
         for (PsiReference psiReference : refsToRebind) {
           JavaCodeStyleManagerImpl.getInstance(myProject).shortenClassReferences(psiReference.bindToElement(newMember));
         }

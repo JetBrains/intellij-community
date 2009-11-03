@@ -27,6 +27,7 @@ import java.util.Queue;
 /**
  * @author yole
  */
+@SomeQueue
 public class BackgroundTaskQueue {
   private final Project myProject;
   private final Queue<Task> myQueue = new LinkedList<Task>();

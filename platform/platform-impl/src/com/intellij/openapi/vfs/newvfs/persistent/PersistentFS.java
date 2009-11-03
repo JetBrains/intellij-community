@@ -48,7 +48,7 @@ import java.util.*;
 
 public class PersistentFS extends ManagingFS implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.PersistentFS");
-  private static final FileAttribute FILE_CONTENT = new FileAttribute("PersistentFS.File.Contents", 1);
+  static final FileAttribute FILE_CONTENT = new FileAttribute("PersistentFS.File.Contents", 1);
 
   private static final int CHILDREN_CACHED_FLAG = 0x01;
   static final int IS_DIRECTORY_FLAG = 0x02;

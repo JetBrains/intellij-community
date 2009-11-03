@@ -57,7 +57,7 @@ public class Change {
     assert beforeRevision != null || afterRevision != null;
     myBeforeRevision = beforeRevision;
     myAfterRevision = afterRevision;
-    myFileStatus = fileStatus;
+    myFileStatus = fileStatus == null ? convertStatus(beforeRevision, afterRevision) : fileStatus;
   }
 
   private static FileStatus convertStatus(ContentRevision beforeRevision, ContentRevision afterRevision) {

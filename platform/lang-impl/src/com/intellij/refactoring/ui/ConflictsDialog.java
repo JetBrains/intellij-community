@@ -40,9 +40,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.regex.Pattern;
 
 public class ConflictsDialog extends DialogWrapper{
@@ -55,7 +54,7 @@ public class ConflictsDialog extends DialogWrapper{
   public ConflictsDialog(Project project, MultiMap<PsiElement, String> conflictDescriptions) {
     super(project, true);
     myProject = project;
-    List<String> conflicts = new ArrayList<String>();
+    final LinkedHashSet<String> conflicts = new LinkedHashSet<String>();
 
     for (String conflict : conflictDescriptions.values()) {
       conflicts.add(conflict);
@@ -182,7 +181,8 @@ public class ConflictsDialog extends DialogWrapper{
     }
 
     private UsagePresentation getPresentation(final UsagePresentation usagePresentation, PsiElement element) {
-      final String conflictDescription = " (" + Pattern.compile("<[^<>]*>").matcher(StringUtil.join(myElementConflictDescription.get(element), "\n")).replaceAll("") + ")";
+      final Collection<String> elementConflicts = new LinkedHashSet<String>(myElementConflictDescription.get(element));
+      final String conflictDescription = " (" + Pattern.compile("<[^<>]*>").matcher(StringUtil.join(elementConflicts, "\n")).replaceAll("") + ")";
       return new UsagePresentation() {
         @NotNull
         public TextChunk[] getText() {
@@ -207,7 +207,7 @@ public class ConflictsDialog extends DialogWrapper{
     }
 
     private class DescriptionOnlyUsage implements Usage {
-      private final String myConflictDescription = Pattern.compile("<[^<>]*>").matcher(StringUtil.join(myElementConflictDescription.get(null), "\n")).replaceAll("");
+      private final String myConflictDescription = Pattern.compile("<[^<>]*>").matcher(StringUtil.join(new LinkedHashSet<String>(myElementConflictDescription.get(null)), "\n")).replaceAll("");
 
       @NotNull
       public UsagePresentation getPresentation() {

@@ -14,8 +14,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.introduceparameterobject.IntroduceParameterObjectProcessor;
 import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.JavaTestUtil;
-
-import java.util.ArrayList;
+import com.intellij.util.VisibilityUtil;
 
 public class IntroduceParameterObjectTest extends MultiFileTestCase{
   protected String getTestRoot() {
@@ -39,9 +38,8 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
 
         final PsiMethod method = aClass.findMethodsByName("foo", false)[0];
         final ParameterTablePanel.VariableData[] datas = generateParams(method);
-        IntroduceParameterObjectProcessor processor = new IntroduceParameterObjectProcessor("Param", "", method, datas,
-                                                                                            null, delegate, false,
-                                                                                            createInner);
+        IntroduceParameterObjectProcessor processor = new IntroduceParameterObjectProcessor("Param", "", method, datas, delegate, false,
+                                                                                            createInner, null, false);
         processor.run();
         LocalFileSystem.getInstance().refresh(false);
         FileDocumentManager.getInstance().saveAllDocuments();
@@ -106,17 +104,24 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
     doTest(true, false);
   }
 
-  private void doTestExistingClass(final String existingClassName, final String existingClassPackage) throws Exception {
+  private void doTestExistingClass(final String existingClassName, final String existingClassPackage, final boolean generateAccessors) throws Exception {
+    doTestExistingClass(existingClassName, existingClassPackage, generateAccessors, null);
+  }
+
+  private void doTestExistingClass(final String existingClassName, final String existingClassPackage, final boolean generateAccessors,
+                                   final String newVisibility) throws Exception {
     doTest(new PerformAction() {
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
         PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(getProject()));
+        if (aClass == null) {
+          aClass = myJavaFacade.findClass("p2.Test", GlobalSearchScope.projectScope(getProject()));
+        }
         assertNotNull("Class Test not found", aClass);
 
         final PsiMethod method = aClass.findMethodsByName("foo", false)[0];
         IntroduceParameterObjectProcessor processor = new IntroduceParameterObjectProcessor(existingClassName, existingClassPackage, method,
-                                                                                            generateParams(method),
-                                                                                            new ArrayList<String>(), false, true,
-                                                                                            false);
+                                                                                            generateParams(method), false, true,
+                                                                                            false, newVisibility, generateAccessors);
         processor.run();
         LocalFileSystem.getInstance().refresh(false);
         FileDocumentManager.getInstance().saveAllDocuments();
@@ -125,17 +130,18 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
   }
 
   public void testIntegerWrapper() throws Exception {
-    doTestExistingClass("Integer", "java.lang");
+    doTestExistingClass("Integer", "java.lang", false);
   }
 
   public void testIntegerIncremental() throws Exception {
     checkExceptionThrown("Integer", "java.lang", "Cannot perform the refactoring.\n" +
-                                                 "Selected class is not compatible with chosen parameters");
+                                                 "Setters for the following fields are required:\n" +
+                                                 "value.\n");
   }
 
   private void checkExceptionThrown(String existingClassName, String existingClassPackage, String exceptionMessage) throws Exception {
     try {
-      doTestExistingClass(existingClassName, existingClassPackage);
+      doTestExistingClass(existingClassName, existingClassPackage, false);
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       assertEquals(exceptionMessage, e.getMessage());
@@ -144,12 +150,28 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
     fail("Conflict was not found");
   }
 
+  public void testGenerateGetterSetterForExistingBean() throws Exception {
+    doTestExistingClass("Param", "", true);
+  }
+
+  public void testExistingBeanVisibility() throws Exception {
+    doTestExistingClass("Param", "p", false, VisibilityUtil.ESCALATE_VISIBILITY);
+  }
+
+  public void testExistingBeanIfNoGeneration() throws Exception {
+    checkExceptionThrown("Param", "", "Cannot perform the refactoring.\n" + "Setters for the following fields are required:\n" + "i.\n");
+  }
+
+  public void testParamNameConflict() throws Exception {
+    doTestExistingClass("Param", "", true);
+  }
+
 
   public void testExistentBean() throws Exception {
-    doTestExistingClass("Param", "");
+    doTestExistingClass("Param", "", false);
   }
 
   public void testWrongBean() throws Exception {
-    checkExceptionThrown("Param", "", "Cannot perform the refactoring.\n" + "Selected class is not compatible with chosen parameters");
+    checkExceptionThrown("Param", "", "Cannot perform the refactoring.\n" + "Getters for the following fields are required:\n" + "i.\n");
   }
 }

@@ -19,15 +19,12 @@
  */
 package com.intellij.compiler.impl.packagingCompiler;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.compiler.make.BuildInstructionVisitor;
 import com.intellij.openapi.compiler.make.BuildInstruction;
+import com.intellij.openapi.compiler.make.BuildInstructionVisitor;
 import com.intellij.openapi.compiler.make.BuildRecipe;
-import com.intellij.openapi.compiler.make.PackagingFileFilter;
 import com.intellij.openapi.deployment.DeploymentUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -69,21 +66,8 @@ public class BuildRecipeImpl implements BuildRecipe {
     return true;
   }
 
-  public void addAll(@NotNull BuildRecipe buildRecipe) {
-    buildRecipe.visitInstructions(new BuildInstructionVisitor() {
-      public boolean visitInstruction(BuildInstruction instruction) throws RuntimeException {
-        addInstruction(instruction);
-        return true;
-      }
-    }, false);
-  }
-
-  public void addFileCopyInstruction(@NotNull File file,
-                                     boolean isDirectory,
-                                     Module module,
-                                     String outputRelativePath,
-                                     @Nullable PackagingFileFilter fileFilter) {
-    addInstruction(new FileCopyInstructionImpl(file, isDirectory, module, DeploymentUtil.trimForwardSlashes(outputRelativePath),fileFilter));
+  public void addFileCopyInstruction(@NotNull File file, boolean isDirectory, String outputRelativePath) {
+    addInstruction(new FileCopyInstructionImpl(file, isDirectory, DeploymentUtil.trimForwardSlashes(outputRelativePath)));
   }
 
   public String toString() {

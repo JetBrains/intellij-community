@@ -30,10 +30,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ActiveRunnable;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowType;
-import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.content.Content;
@@ -48,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
@@ -135,6 +133,16 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
       return false;
     }
 
+    public void setContentUiType(ToolWindowContentUiType type, @Nullable Runnable runnable) {
+    }
+
+    public void setDefaultContentUiType(@NotNull ToolWindowContentUiType type) {
+    }
+
+    public ToolWindowContentUiType getContentUiType() {
+      return ToolWindowContentUiType.TABBED;
+    }
+
     public void setAvailable(boolean available, @Nullable Runnable runnable) {
     }
 
@@ -156,6 +164,9 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     public void activate(@Nullable Runnable runnable, boolean autoFocusContents, boolean forced) {
+    }
+
+    public void showContentPopup(InputEvent inputEvent) {
     }
   };
 

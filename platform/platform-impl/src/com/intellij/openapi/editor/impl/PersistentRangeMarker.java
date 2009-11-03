@@ -65,6 +65,9 @@ public class PersistentRangeMarker extends RangeMarkerImpl {
       else{
         myEnd = getDocument().getLineStartOffset(myEndLine) + myEndColumn;
       }
+      if (myEnd < myStart) {
+        invalidate();
+      }
     }
     else{
       super.documentChanged(e);

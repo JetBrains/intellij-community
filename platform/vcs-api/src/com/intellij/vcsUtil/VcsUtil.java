@@ -258,6 +258,16 @@ public class VcsUtil {
     });
   }
 
+  @Nullable
+  public static VirtualFile getVirtualFileWithRefresh(final File file) {
+    final LocalFileSystem lfs = LocalFileSystem.getInstance();
+    VirtualFile result = lfs.findFileByIoFile(file);
+    if (result == null) {
+      result = lfs.refreshAndFindFileByIoFile(file);
+    }
+    return result;
+  }
+
   public static String getFileContent(final String path) {
     return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       public String compute() {

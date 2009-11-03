@@ -17,6 +17,7 @@
 package com.intellij.openapi.paths;
 
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -31,7 +32,7 @@ import java.util.*;
  * @author Dmitry Avdeev
  */
 public class PathReferenceManagerImpl extends PathReferenceManager {
-  private final StaticPathReferenceProvider myStaticProvider = new StaticPathReferenceProvider();
+  private final StaticPathReferenceProvider myStaticProvider = new StaticPathReferenceProvider(null);
   private final PathReferenceProvider myGlobalPathsProvider = new GlobalPathReferenceProvider();
   private static final Comparator<PsiReference> START_OFFSET_COMPARATOR = new Comparator<PsiReference>() {
     public int compare(final PsiReference o1, final PsiReference o2) {
@@ -79,7 +80,7 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
 
   @NotNull
   public PathReferenceProvider createStaticPathReferenceProvider(final boolean relativePathsAllowed) {
-    final StaticPathReferenceProvider provider = new StaticPathReferenceProvider();
+    final StaticPathReferenceProvider provider = new StaticPathReferenceProvider(null);
     provider.setRelativePathsAllowed(relativePathsAllowed);
     return provider;
   }
@@ -88,13 +89,20 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
   public PsiReference[] createReferences(@NotNull final PsiElement psiElement,
                                          final boolean soft,
                                          boolean endingSlashNotAllowed,
-                                         final boolean relativePathsAllowed,
-                                         PathReferenceProvider... additionalProviders) {
+                                         final boolean relativePathsAllowed, PathReferenceProvider... additionalProviders) {
+    return createReferences(psiElement, soft, endingSlashNotAllowed, relativePathsAllowed, null, additionalProviders);
+  }
+
+  @NotNull
+  public PsiReference[] createReferences(@NotNull final PsiElement psiElement,
+                                         final boolean soft,
+                                         boolean endingSlashNotAllowed,
+                                         final boolean relativePathsAllowed, FileType[] suitableFileTypes, PathReferenceProvider... additionalProviders) {
 
     List<PsiReference> mergedReferences = new ArrayList<PsiReference>();
     processProvider(psiElement, myGlobalPathsProvider, mergedReferences, soft);
 
-    StaticPathReferenceProvider staticProvider = new StaticPathReferenceProvider();
+    StaticPathReferenceProvider staticProvider = new StaticPathReferenceProvider(suitableFileTypes);
     staticProvider.setEndingSlashNotAllowed(endingSlashNotAllowed);
     staticProvider.setRelativePathsAllowed(relativePathsAllowed);
     processProvider(psiElement, staticProvider, mergedReferences, soft);
@@ -125,7 +133,7 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
 
   @NotNull
   public PsiReference[] createReferences(@NotNull PsiElement psiElement, final boolean soft, PathReferenceProvider... additionalProviders) {
-    return createReferences(psiElement, soft, false, true, additionalProviders);
+    return createReferences(psiElement, soft, false, true, null, additionalProviders);
   }
 
   private static PsiReference[] mergeReferences(PsiElement element, List<PsiReference> references) {

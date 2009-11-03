@@ -95,6 +95,10 @@ public abstract class FilePatch {
 
   public ApplyPatchStatus apply(final VirtualFile fileToPatch, final ApplyPatchContext context, final Project project) throws IOException, ApplyPatchException {
     context.addAffectedFile(getTarget(fileToPatch));
+    return applyImpl(fileToPatch, project);
+  }
+
+  public ApplyPatchStatus applyImpl(final VirtualFile fileToPatch, final Project project) throws IOException, ApplyPatchException {
     if (isNewFile()) {
       applyCreate(fileToPatch);
     }

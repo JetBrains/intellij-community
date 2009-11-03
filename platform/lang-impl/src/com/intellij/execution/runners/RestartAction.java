@@ -23,6 +23,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 
@@ -31,7 +32,7 @@ import javax.swing.*;
 /**
  * @author dyoma
  */
-public class RestartAction extends AnAction {
+public class RestartAction extends AnAction implements DumbAware {
   private ProcessHandler myProcessHandler;
   private final ProgramRunner myRunner;
   private final RunContentDescriptor myDescriptor;

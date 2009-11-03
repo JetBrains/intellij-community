@@ -35,8 +35,8 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -156,7 +156,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       list.deleteChildRange(list.getFirstChild(), list.getLastChild());
       return;
     }
-    RefactoringConflictsUtil.setVisibility(list, getVisibility(parentClass, targetClass));
+    VisibilityUtil.setVisibility(list, getVisibility(parentClass, targetClass));
   }
 
   protected String getVisibility(PsiClass parentClass, PsiClass targetClass) {

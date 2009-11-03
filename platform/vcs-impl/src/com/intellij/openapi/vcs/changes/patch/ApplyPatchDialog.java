@@ -23,7 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.*;
-import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
+import com.intellij.openapi.diff.impl.patch.formove.PathMerger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -200,11 +200,11 @@ public class ApplyPatchDialog extends DialogWrapper {
             (! patch.getBeforeName().equals(patch.getAfterName()))) {
 
           final VirtualFile baseDirectory = getBaseDirectory();
-          final VirtualFile beforeFile = PatchApplier.getFile(baseDirectory, patch.getBeforeName());
+          final VirtualFile beforeFile = PathMerger.getFile(baseDirectory, patch.getBeforeName());
 
           if (beforeFile != null) {
             final List<String> tail = new ArrayList<String>();
-            final VirtualFile partFile = PatchApplier.getFile(baseDirectory, patch.getAfterName(), tail);
+            final VirtualFile partFile = PathMerger.getFile(baseDirectory, patch.getAfterName(), tail);
             final StringBuilder sb = new StringBuilder(partFile.getPath());
             for (String s : tail) {
               if (sb.charAt(sb.length() - 1) != '/') {

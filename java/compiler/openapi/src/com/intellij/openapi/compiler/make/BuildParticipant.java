@@ -16,39 +16,13 @@
 package com.intellij.openapi.compiler.make;
 
 import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.module.Module;
+import com.intellij.packaging.artifacts.Artifact;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
 
 public abstract class BuildParticipant {
   public static final BuildParticipant[] EMPTY_ARRAY = new BuildParticipant[0];
 
-  public void afterJarCreated(File jarFile, CompileContext context) throws Exception {
-  }
-
-  public void afterExplodedCreated(File outputDir, CompileContext context) throws Exception {
-  }
-
-  public void buildStarted(CompileContext context) {
-  }
-
-  public void buildFinished(CompileContext context) throws Exception {
-  }
-
-  public abstract BuildRecipe getBuildInstructions(final CompileContext context);
-
-  public abstract BuildConfiguration getBuildConfiguration();
-
   @Nullable
-  public String getOrCreateTemporaryDirForExploded() {
-    return null;
-  }
+  public abstract Artifact createArtifact(CompileContext context);
 
-  public abstract Module getModule();
-
-  public boolean willBuildExploded() {
-    BuildConfiguration configuration = getBuildConfiguration();
-    return configuration.isExplodedEnabled() && configuration.getExplodedPath() != null;
-  }
 }

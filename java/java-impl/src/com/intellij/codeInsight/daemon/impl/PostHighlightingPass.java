@@ -52,7 +52,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -641,7 +640,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private boolean timeToOptimizeImports() {
-    if (!CodeStyleSettingsManager.getSettings(myProject).OPTIMIZE_IMPORTS_ON_THE_FLY) return false;
+    if (!com.intellij.codeInsight.CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY) return false;
 
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);

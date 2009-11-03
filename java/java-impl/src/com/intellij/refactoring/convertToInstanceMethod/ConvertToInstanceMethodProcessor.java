@@ -179,10 +179,10 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     final PsiModifierList copy = (PsiModifierList)myMethod.getModifierList().copy();
     if (myNewVisibility != null) {
       if (myNewVisibility.equals(VisibilityUtil.ESCALATE_VISIBILITY)) {
-        RefactoringConflictsUtil.setVisibility(copy, PsiModifier.PUBLIC);
+        VisibilityUtil.setVisibility(copy, PsiModifier.PUBLIC);
       }
       else {
-        RefactoringConflictsUtil.setVisibility(copy, myNewVisibility);
+        VisibilityUtil.setVisibility(copy, myNewVisibility);
       }
     }
 

@@ -36,6 +36,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -176,8 +177,19 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
       @Override
       protected ActionCallback beforeUpdate(final TreeUpdatePass pass) {
         if (!myDirtyFileSet.isEmpty()) { // suppress redundant cache validations
-          validateCache();
-          getTodoTreeStructure().validateCache();
+          final AsyncResult callback = new AsyncResult();
+          DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
+            public void run() {
+              try {
+                validateCache();
+                getTodoTreeStructure().validateCache();
+              }
+              finally {
+                callback.setDone();
+              }
+            }
+          });
+          return callback;
         }
 
         return new ActionCallback.Done();

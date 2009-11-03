@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsListener;
+import com.intellij.openapi.vcs.ZipperUpdater;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener;
@@ -34,6 +35,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MergeInfoUpdatesListener {
+  private final static int DELAY = 300;
+
   private final Project myProject;
   private final MessageBusConnection myConnection;
   private List<RootsAndBranches> myMergeInfoRefreshActions;
@@ -42,7 +45,7 @@ public class MergeInfoUpdatesListener {
   public MergeInfoUpdatesListener(final Project project, final MessageBusConnection connection) {
     myConnection = connection;
     myProject = project;
-    myUpdater = new ZipperUpdater();
+    myUpdater = new ZipperUpdater(DELAY);
   }
 
   public void addPanel(final RootsAndBranches action) {

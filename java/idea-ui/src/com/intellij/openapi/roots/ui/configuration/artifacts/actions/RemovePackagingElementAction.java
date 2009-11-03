@@ -19,23 +19,35 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
+import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeSelection;
+import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
+import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.util.Icons;
+
+import java.util.List;
 
 /**
  * @author nik
  */
-public class RemovePackagingElementAction extends DumbAwareAction {
-  private final ArtifactEditorEx myArtifactEditor;
+public class RemovePackagingElementAction extends LayoutTreeActionBase {
 
   public RemovePackagingElementAction(ArtifactEditorEx artifactEditor) {
-    super(ProjectBundle.message("action.name.remove.packaging.element"), ProjectBundle.message("action.description.remove.packaging.elements"), Icons.DELETE_ICON);
-    myArtifactEditor = artifactEditor;
+    super(ProjectBundle.message("action.name.remove.packaging.element"), ProjectBundle.message("action.description.remove.packaging.elements"), Icons.DELETE_ICON,
+          artifactEditor);
   }
 
   @Override
-  public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(!myArtifactEditor.getLayoutTreeComponent().getSelection().getElements().isEmpty()
-                                   && !myArtifactEditor.getLayoutTreeComponent().isEditing());
+  protected boolean isEnabled() {
+    final LayoutTreeSelection selection = myArtifactEditor.getLayoutTreeComponent().getSelection();
+    if (selection.getElements().isEmpty() || myArtifactEditor.getLayoutTreeComponent().isEditing()) {
+      return false;
+    }
+    for (PackagingElementNode<?> node : selection.getNodes()) {
+      if (node.getParentNode() == null) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public void actionPerformed(AnActionEvent e) {

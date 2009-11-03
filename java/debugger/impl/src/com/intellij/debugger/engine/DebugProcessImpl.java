@@ -46,8 +46,11 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
+import com.intellij.execution.configurations.CommandLineState;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.filters.ExceptionFilter;
+import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessListener;
@@ -1621,6 +1624,12 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
     try {
       synchronized (myProcessListeners) {
+        if (state instanceof CommandLineState) {
+          final TextConsoleBuilder consoleBuilder = ((CommandLineState)state).getConsoleBuilder();
+          if (consoleBuilder != null) {
+            consoleBuilder.addFilter(new ExceptionFilter(session.getSearchScope()));
+          }
+        }
         myExecutionResult = state.execute(executor, runner);
         if (myExecutionResult == null) {
           fail();

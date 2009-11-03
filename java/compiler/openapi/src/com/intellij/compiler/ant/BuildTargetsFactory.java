@@ -32,11 +32,6 @@ public abstract class BuildTargetsFactory {
     return ServiceManager.getService(BuildTargetsFactory.class);
   }
 
-  public abstract CompositeGenerator createCompositeBuildTarget(ExplodedAndJarTargetParameters parameters, @NonNls String targetName, 
-                                                                String description, String depends, @Nullable String jarPath);
-
-  public abstract Target createBuildExplodedTarget(ExplodedAndJarTargetParameters parameters, BuildRecipe buildRecipe, String description);
-
   public abstract Generator createComment(String comment);
 
   //for test

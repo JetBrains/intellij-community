@@ -35,8 +35,7 @@ import org.jetbrains.annotations.Nullable;
 public final class RegExpAnnotator extends RegExpElementVisitor implements Annotator {
     private AnnotationHolder myHolder;
 
-    // made this synchronized after running into the assertion below a couple of times.
-    public synchronized void annotate(PsiElement psiElement, AnnotationHolder holder) {
+    public void annotate(PsiElement psiElement, AnnotationHolder holder) {
         assert myHolder == null : "unsupported concurrent annotator invocation";
         try {
             myHolder = holder;

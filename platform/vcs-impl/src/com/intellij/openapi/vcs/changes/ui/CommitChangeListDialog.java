@@ -88,6 +88,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private final Map<String, String> myListComments;
   private String myLastSelectedListName;
+  private CommitLegendPanel.ChangeInfoCalculator myChangesInfoCalculator;
 
   private static class MyUpdateButtonsRunnable implements Runnable {
     private CommitChangeListDialog myDialog;
@@ -234,7 +235,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     if (comment != null) {
       setCommitMessage(comment);
       myLastKnownComment = comment;
-      myLastSelectedListName = initialSelection.getName();
+      myLastSelectedListName = initialSelection == null ? null : initialSelection.getName();
     } else {
       setCommitMessage(VcsConfiguration.getInstance(project).LAST_COMMIT_MESSAGE);
       updateComment();
@@ -748,7 +749,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     rootPane.add(browserHeader, BorderLayout.NORTH);
 
     JPanel infoPanel = new JPanel(new BorderLayout());
-    myLegend = new CommitLegendPanel();
+    myChangesInfoCalculator = new CommitLegendPanel.ChangeInfoCalculator();
+    myLegend = new CommitLegendPanel(myChangesInfoCalculator);
     infoPanel.add(myLegend.getComponent(), BorderLayout.NORTH);
     infoPanel.add(myAdditionalOptionsPanel, BorderLayout.CENTER);
     rootPane.add(infoPanel, BorderLayout.EAST);
@@ -899,7 +901,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private void updateLegend() {
     if (myDisposed) return;
-    myLegend.update(myBrowser.getCurrentDisplayedChanges(), myBrowserExtender.getCurrentIncludedChanges());
+    myChangesInfoCalculator.update(myBrowser.getCurrentDisplayedChanges(), myBrowserExtender.getCurrentIncludedChanges());
+    myLegend.update();
   }
 
   @NotNull

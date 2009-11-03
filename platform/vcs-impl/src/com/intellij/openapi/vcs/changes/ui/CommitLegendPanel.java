@@ -24,6 +24,7 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -47,8 +48,10 @@ public class CommitLegendPanel {
   private JLabel myDeletedLabel;
   private JPanel myHeadingPanel;
 
+  private final InfoCalculator myInfoCalculator;
 
-  public CommitLegendPanel() {
+  public CommitLegendPanel(InfoCalculator infoCalculator) {
+    myInfoCalculator = infoCalculator;
     final Color background = UIUtil.getListBackground();
     myModifiedPanel.setBackground(background);
     myNewPanel.setBackground(background);
@@ -66,15 +69,23 @@ public class CommitLegendPanel {
     boldLabel(myDeletedLabel, true);
   }
 
-  public JComponent getComponent() {
+  public JPanel getComponent() {
     return myRootPanel;
   }
 
-  public void update(final List<Change> displayedChanges, final List<Change> includedChanges) {
-    updateCategory(myTotalShown, myTotalIncluded, displayedChanges, includedChanges, ALL_FILTER);
-    updateCategory(myModifiedShown, myModifiedIncluded, displayedChanges, includedChanges, MODIFIED_FILTER);
-    updateCategory(myNewShown, myNewIncluded, displayedChanges, includedChanges, NEW_FILTER);
-    updateCategory(myDeletedShown, myDeletedIncluded, displayedChanges, includedChanges, DELETED_FILTER);
+  public void update() {
+    final int deleted = myInfoCalculator.getDeleted();
+    final int modified = myInfoCalculator.getModified();
+    final int cntNew = myInfoCalculator.getNew();
+
+    final int includedDeleted = myInfoCalculator.getIncludedDeleted();
+    final int includedModified = myInfoCalculator.getIncludedModified();
+    final int includedNew = myInfoCalculator.getIncludedNew();
+
+    updateCategory(myTotalShown, myTotalIncluded, deleted + modified + cntNew, includedDeleted + includedModified + includedNew);
+    updateCategory(myModifiedShown, myModifiedIncluded, modified, includedModified);
+    updateCategory(myNewShown, myNewIncluded, cntNew, includedNew);
+    updateCategory(myDeletedShown, myDeletedIncluded, deleted, includedDeleted);
   }
 
   private void createUIComponents() {
@@ -85,45 +96,12 @@ public class CommitLegendPanel {
     boolean matches(T item);
   }
 
-  private static final Filter<Change> MODIFIED_FILTER = new Filter<Change>() {
-    public boolean matches(final Change item) {
-      return item.getType() == Change.Type.MODIFICATION || item.getType() == Change.Type.MOVED;
-    }
-  };
-  private static final Filter<Change> NEW_FILTER = new Filter<Change>() {
-    public boolean matches(final Change item) {
-      return item.getType() == Change.Type.NEW;
-    }
-  };
-  private static final Filter<Change> DELETED_FILTER = new Filter<Change>() {
-    public boolean matches(final Change item) {
-      return item.getType() == Change.Type.DELETED;
-    }
-  };
-  private static final Filter<Change> ALL_FILTER = new Filter<Change>() {
-    public boolean matches(final Change item) {
-      return true;
-    }
-  };
-
-  private static <T> int countMatchingItems(List<T> items, Filter<T> filter) {
-    int count = 0;
-    for (T item : items) {
-      if (filter.matches(item)) count++;
-    }
-
-    return count;
-  }
-
   private static void updateCategory(JLabel totalLabel,
                                      JLabel includedLabel,
-                                     List<Change> totalList,
-                                     List<Change> includedList,
-                                     Filter<Change> filter) {
-    int totalCount = countMatchingItems(totalList, filter);
-    int includedCount = countMatchingItems(includedList, filter);
-    updateLabel(totalLabel, totalCount, false);
-    updateLabel(includedLabel, includedCount, totalCount != includedCount);
+                                     int totalCnt,
+                                     int includedCnt) {
+    updateLabel(totalLabel, totalCnt, false);
+    updateLabel(includedLabel, includedCnt, totalCnt != includedCnt);
   }
 
   private static void updateLabel(JLabel label, int count, boolean bold) {
@@ -134,5 +112,78 @@ public class CommitLegendPanel {
 
   private static void boldLabel(final JLabel label, final boolean bold) {
     label.setFont(label.getFont().deriveFont(bold ? Font.BOLD : Font.PLAIN));
+  }
+
+  public interface InfoCalculator {
+    int getNew();
+    int getModified();
+    int getDeleted();
+    int getIncludedNew();
+    int getIncludedModified();
+    int getIncludedDeleted();
+  }
+
+  public static class ChangeInfoCalculator implements InfoCalculator {
+    private List<Change> myDisplayedChanges;
+    private List<Change> myIncludedChanges;
+
+    public ChangeInfoCalculator() {
+      myDisplayedChanges = Collections.emptyList();
+      myIncludedChanges = Collections.emptyList();
+    }
+
+    public void update(final List<Change> displayedChanges, final List<Change> includedChanges) {
+      myDisplayedChanges = displayedChanges;
+      myIncludedChanges = includedChanges;
+    }
+
+    public int getNew() {
+      return countMatchingItems(myDisplayedChanges, NEW_FILTER);
+    }
+
+    public int getModified() {
+      return countMatchingItems(myDisplayedChanges, MODIFIED_FILTER);
+    }
+
+    public int getDeleted() {
+      return countMatchingItems(myDisplayedChanges, DELETED_FILTER);
+    }
+
+    public int getIncludedNew() {
+      return countMatchingItems(myIncludedChanges, NEW_FILTER);
+    }
+
+    public int getIncludedModified() {
+      return countMatchingItems(myIncludedChanges, MODIFIED_FILTER);
+    }
+
+    public int getIncludedDeleted() {
+      return countMatchingItems(myIncludedChanges, DELETED_FILTER);
+    }
+
+    private static final Filter<Change> MODIFIED_FILTER = new Filter<Change>() {
+      public boolean matches(final Change item) {
+        return item.getType() == Change.Type.MODIFICATION || item.getType() == Change.Type.MOVED;
+      }
+    };
+    private static final Filter<Change> NEW_FILTER = new Filter<Change>() {
+      public boolean matches(final Change item) {
+        return item.getType() == Change.Type.NEW;
+      }
+    };
+    private static final Filter<Change> DELETED_FILTER = new Filter<Change>() {
+      public boolean matches(final Change item) {
+        return item.getType() == Change.Type.DELETED;
+      }
+    };
+
+    private static <T> int countMatchingItems(List<T> items, Filter<T> filter) {
+      int count = 0;
+      for (T item : items) {
+        if (filter.matches(item)) count++;
+      }
+
+      return count;
+    }
   }
 }

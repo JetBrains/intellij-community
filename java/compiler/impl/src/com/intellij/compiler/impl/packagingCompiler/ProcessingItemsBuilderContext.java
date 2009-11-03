@@ -31,22 +31,14 @@ import java.util.*;
 public abstract class ProcessingItemsBuilderContext<Item extends FileProcessingCompiler.ProcessingItem> {
   protected final Map<VirtualFile, Item> myItemsBySource;
   private final Map<String, VirtualFile> mySourceByOutput;
-  private final Map<VirtualFile, JarInfo> myCachedJarForDir;
   private final MultiValuesMap<String, JarInfo> myJarsByPath;
   private final CompileContext myCompileContext;
-  private final List<ManifestFileInfo> myManifestFiles;
 
   public ProcessingItemsBuilderContext(final CompileContext compileContext) {
     myCompileContext = compileContext;
-    myManifestFiles = new ArrayList<ManifestFileInfo>();
     myItemsBySource = new HashMap<VirtualFile, Item>();
     mySourceByOutput = new HashMap<String, VirtualFile>();
-    myCachedJarForDir = new HashMap<VirtualFile, JarInfo>();
     myJarsByPath = new MultiValuesMap<String, JarInfo>();
-  }
-
-  public List<ManifestFileInfo> getManifestFiles() {
-    return myManifestFiles;
   }
 
   public abstract Item[] getProcessingItems();
@@ -79,20 +71,8 @@ public abstract class ProcessingItemsBuilderContext<Item extends FileProcessingC
     return mySourceByOutput.get(outputPath);
   }
 
-  public JarInfo getCachedJar(final VirtualFile sourceFile) {
-    return myCachedJarForDir.get(sourceFile);
-  }
-
-  public void putCachedJar(final VirtualFile sourceFile, final JarInfo jarInfo) {
-    myCachedJarForDir.put(sourceFile, jarInfo);
-  }
-
   public CompileContext getCompileContext() {
     return myCompileContext;
-  }
-
-  public void addManifestFile(final ManifestFileInfo manifestFileInfo) {
-    myManifestFiles.add(manifestFileInfo);
   }
 
   public Item getOrCreateProcessingItem(VirtualFile sourceFile) {

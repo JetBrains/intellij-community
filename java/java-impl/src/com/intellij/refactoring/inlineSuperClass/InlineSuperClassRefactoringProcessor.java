@@ -174,8 +174,9 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
       }
         //todo check accessibility conflicts
     }
-    for (PsiElement element : pushDownConflicts.getConflicts().keySet()) {
-      conflicts.put(element, pushDownConflicts.getConflicts().get(element));
+    final MultiMap<PsiElement, String> conflictsMap = pushDownConflicts.getConflicts();
+    for (PsiElement element : conflictsMap.keySet()) {
+      conflicts.put(element, conflictsMap.get(element));
     }
     checkConflicts(refUsages, conflicts);
     return showConflicts(conflicts);

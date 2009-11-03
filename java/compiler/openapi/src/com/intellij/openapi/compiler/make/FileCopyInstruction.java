@@ -24,6 +24,4 @@ public interface FileCopyInstruction extends BuildInstruction {
 
   boolean isDirectory();
 
-  @Nullable
-  PackagingFileFilter getFileFilter();
 }

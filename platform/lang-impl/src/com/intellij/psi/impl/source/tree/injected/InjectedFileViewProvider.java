@@ -46,8 +46,9 @@ class InjectedFileViewProvider extends SingleRootFileViewProvider {
   InjectedFileViewProvider(@NotNull PsiManager psiManager,
                            @NotNull VirtualFileWindow virtualFile,
                            @NotNull Place shreds,
-                           @NotNull DocumentWindow documentWindow) {
-    super(psiManager, (VirtualFile)virtualFile);
+                           @NotNull DocumentWindow documentWindow,
+                           @NotNull Language language) {
+    super(psiManager, (VirtualFile)virtualFile, true, language);
     myDocumentWindow = documentWindow;
     synchronized (myLock) {
       myShreds = shreds;

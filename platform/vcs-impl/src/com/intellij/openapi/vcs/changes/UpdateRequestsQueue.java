@@ -21,6 +21,7 @@ import com.intellij.lifecycle.ScheduledSlowlyClosingAlarm;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -36,6 +37,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * Tries to zip several update requests into one (if starts and see several requests in the queue)
  * own inner synchronization
  */
+@SomeQueue
 public class UpdateRequestsQueue {
   private final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.UpdateRequestsQueue");
   private final Project myProject;

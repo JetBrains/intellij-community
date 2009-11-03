@@ -518,6 +518,9 @@
     <action id="NextTab">
       <keyboard-shortcut first-keystroke="alt RIGHT"/>
     </action>
+    <action id="ShowContent">
+      <keyboard-shortcut first-keystroke="alt DOWN"/>
+    </action>
     <action id="NextEditorTab">
       <keyboard-shortcut first-keystroke="alt shift RIGHT"/>
     </action>
@@ -977,6 +980,9 @@
     </action>
     <action id="NextTab">
       <keyboard-shortcut first-keystroke="control RIGHT"/>
+    </action>
+    <action id="ShowContent">
+      <keyboard-shortcut first-keystroke="control DOWN"/>
     </action>
     <action id="NextEditorTab">
       <keyboard-shortcut first-keystroke="control shift RIGHT"/>

@@ -18,27 +18,28 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsRoot;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 public class DirtBuilder implements DirtBuilderReader {
   private final VcsGuess myGuess;
 
-  private final List<FilePathUnderVcs> myFiles;
-  private final List<FilePathUnderVcs> myDirs;
+  private final Set<FilePathUnderVcs> myFiles;
+  private final Set<FilePathUnderVcs> myDirs;
   private boolean myEverythingDirty;
 
   public DirtBuilder(final VcsGuess guess) {
     myGuess = guess;
-    myDirs = new ArrayList<FilePathUnderVcs>();
-    myFiles = new ArrayList<FilePathUnderVcs>();
+    myDirs = new HashSet<FilePathUnderVcs>();
+    myFiles = new HashSet<FilePathUnderVcs>();
     myEverythingDirty = false;
   }
 
   public DirtBuilder(final DirtBuilder builder) {
     myGuess = builder.myGuess;
-    myDirs = new ArrayList<FilePathUnderVcs>(builder.myDirs);
-    myFiles = new ArrayList<FilePathUnderVcs>(builder.myFiles);
+    myDirs = new HashSet<FilePathUnderVcs>(builder.myDirs);
+    myFiles = new HashSet<FilePathUnderVcs>(builder.myFiles);
     myEverythingDirty = builder.myEverythingDirty;
   }
 
@@ -72,11 +73,11 @@ public class DirtBuilder implements DirtBuilderReader {
     return myEverythingDirty;
   }
 
-  public List<FilePathUnderVcs> getFilesForVcs() {
+  public Collection<FilePathUnderVcs> getFilesForVcs() {
     return myFiles;
   }
 
-  public List<FilePathUnderVcs> getDirsForVcs() {
+  public Collection<FilePathUnderVcs> getDirsForVcs() {
     return myDirs;
   }
 

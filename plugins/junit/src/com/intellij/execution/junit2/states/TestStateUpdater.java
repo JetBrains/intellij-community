@@ -90,6 +90,7 @@ public class TestStateUpdater implements PacketConsumer {
       state.setMagitude(myInstanceMagnitude);
       state.initializeFrom(reader);
       testProxy.setState(state);
+      complete(testProxy);
     }
 
     public void setMagnitude(final int magnitude) {
@@ -105,21 +106,25 @@ public class TestStateUpdater implements PacketConsumer {
       }
       testProxy.setState(state);
       testProxy.setStatistics(new Statistics(reader));
-      final int magnitude = state.getMagnitude();
+      complete(testProxy);
+    }
+  }
 
-      TestProxy parent = testProxy.getParent();
-      TestProxy child = testProxy;
-      while (parent != null) {
-        final List<TestProxy> children = parent.getChildren();
-        final TestState parentState = parent.getState();
-        LOG.assertTrue(parentState instanceof SuiteState);
-        if (child.equals(children.get(children.size() - 1))) {
-          ((SuiteState)parentState).setRunning(false);
-        }
-        ((SuiteState)parentState).updateMagnitude(magnitude);
-        child = parent;
-        parent = parent.getParent();
+  private static void complete(TestProxy testProxy) {
+    final int magnitude = testProxy.getState().getMagnitude();
+
+    TestProxy parent = testProxy.getParent();
+    TestProxy child = testProxy;
+    while (parent != null) {
+      final List<TestProxy> children = parent.getChildren();
+      final TestState parentState = parent.getState();
+      LOG.assertTrue(parentState instanceof SuiteState);
+      if (child.equals(children.get(children.size() - 1))) {
+        ((SuiteState)parentState).setRunning(false);
       }
+      ((SuiteState)parentState).updateMagnitude(magnitude);
+      child = parent;
+      parent = parent.getParent();
     }
   }
 

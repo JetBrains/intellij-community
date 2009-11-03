@@ -81,7 +81,7 @@ public class HtmlAttributeValueGetter extends XmlAttributeValueGetter {
             "Authorization", "Cache-Control", "Connection", "Content-Encoding", "Content-Language", "Content-Length", "Content-Location",
             "Content-MD5", "Content-Range", "Content-Type", "Date", "ETag", "Expect", "Expires", "From", "Host", "If-Match",
             "If-Modified-Since", "If-None-Match", "If-Range", "If-Unmodified-Since", "Last-Modified", "Location", "Max-Forwards", "Pragma",
-            "Proxy-Authenticate", "Proxy-Authorization", "Range", "Referer", "Retry-After", "Server", "TE", "Trailer", "Transfer-Encoding",
+            "Proxy-Authenticate", "Proxy-Authorization", "Range", "Referer", "Refresh", "Retry-After", "Server", "TE", "Trailer", "Transfer-Encoding",
             "Upgrade", "User-Agent", "Vary", "Via", "Warning", "WWW-Authenticate"};
       }
       else if("content".equals(name) && "meta".equals(tagName)) {

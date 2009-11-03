@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.CompositePack
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.RenameablePackagingElement;
 import com.intellij.ui.TreeSpeedSearch;
@@ -213,8 +214,19 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
         myArtifactsEditor.queueValidation();
         myArtifactsEditor.getLayoutTreeComponent().updatePropertiesPanel(true);
         addSubtreeToUpdate((DefaultMutableTreeNode)path.getLastPathComponent());
+        requestFocusToTree();
       }
       return stopped;
+    }
+
+    @Override
+    public void cancelCellEditing() {
+      super.cancelCellEditing();
+      requestFocusToTree();
+    }
+
+    private void requestFocusToTree() {
+      IdeFocusManager.getInstance(myArtifactsEditor.getContext().getProject()).requestFocus(LayoutTree.this, true);
     }
   }
 }

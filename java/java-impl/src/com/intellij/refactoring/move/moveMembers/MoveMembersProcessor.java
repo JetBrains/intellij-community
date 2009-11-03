@@ -225,18 +225,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
     if(myNewVisibility == null) return;
 
-    if (VisibilityUtil.ESCALATE_VISIBILITY.equals(myNewVisibility)) {
-      for (UsageInfo usage : usages) {
-        if (usage instanceof MoveMembersUsageInfo) {
-          final PsiElement place = usage.getElement();
-          if (place != null) {
-            VisibilityUtil.escalateVisibility(newMember, place);
-          }
-        }
-      }
-    } else {
-      RefactoringConflictsUtil.setVisibility(modifierList, myNewVisibility);
-    }
+    VisibilityUtil.fixVisibility(usages, newMember, myNewVisibility);
   }
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
@@ -264,7 +253,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
       PsiModifierList copy = member.getModifierList();
       if (copy!=null) copy= (PsiModifierList)copy.copy();
       if (newVisibility != null) {
-        if (copy!=null) RefactoringConflictsUtil.setVisibility(copy, newVisibility);
+        if (copy!=null) VisibilityUtil.setVisibility(copy, newVisibility);
       }
       modifierListCopies.put(member, copy);
     }

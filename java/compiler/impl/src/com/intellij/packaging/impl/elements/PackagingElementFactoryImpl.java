@@ -142,7 +142,17 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
 
   @Override
   public void addFileCopy(@NotNull CompositePackagingElement<?> root, @NotNull String outputDirectoryPath, @NotNull String sourceFilePath) {
-    getOrCreateDirectory(root, outputDirectoryPath).addOrFindChild(new FileCopyPackagingElement(sourceFilePath));
+    addFileCopy(root, outputDirectoryPath, sourceFilePath, null);
+  }
+
+  @Override
+  public void addFileCopy(@NotNull CompositePackagingElement<?> root, @NotNull String outputDirectoryPath, @NotNull String sourceFilePath,
+                          @Nullable String outputFileName) {
+    final String fileName = PathUtil.getFileName(sourceFilePath);
+    if (outputFileName != null && outputFileName.equals(fileName)) {
+      outputFileName = null;
+    }
+    getOrCreateDirectory(root, outputDirectoryPath).addOrFindChild(new FileCopyPackagingElement(sourceFilePath, outputFileName));
   }
 
   @NotNull

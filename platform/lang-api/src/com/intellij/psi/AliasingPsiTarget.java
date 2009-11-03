@@ -33,13 +33,13 @@ public class AliasingPsiTarget extends DelegatePsiTarget implements PomRenameabl
     return setAliasName(newName);
   }
 
-  @NotNull
+   @NotNull
   public String getName() {
     return StringUtil.notNullize(getNameAlias(((PsiNamedElement)getNavigationElement()).getName()));
   }
 
-  @Nullable
-  public AliasingPsiTarget setAliasName(@Nullable String newAliasName) {
+  @NotNull
+  public AliasingPsiTarget setAliasName(@NotNull String newAliasName) {
     return this;
   }
 
@@ -48,4 +48,9 @@ public class AliasingPsiTarget extends DelegatePsiTarget implements PomRenameabl
     return delegatePsiTargetName;
   }
 
+  protected void renameTargets(@NotNull String newDelegateName) {
+    if (!newDelegateName.equals(((PsiNamedElement)getNavigationElement()).getName())) {
+      ((PsiNamedElement)getNavigationElement()).setName(newDelegateName);
+    }
+  }
 }

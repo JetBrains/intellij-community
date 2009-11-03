@@ -128,9 +128,9 @@ public class AnnotationUtil {
   }
 
   @NotNull
-  public static PsiAnnotation[] findAnnotations(final PsiMember psiMember, @NotNull Collection<String> annotationNames) {
-    if (psiMember == null) return PsiAnnotation.EMPTY_ARRAY;
-    final PsiModifierList modifierList = psiMember.getModifierList();
+  public static PsiAnnotation[] findAnnotations(final PsiModifierListOwner modifierListOwner, @NotNull Collection<String> annotationNames) {
+    if (modifierListOwner == null) return PsiAnnotation.EMPTY_ARRAY;
+    final PsiModifierList modifierList = modifierListOwner.getModifierList();
     if (modifierList == null) return PsiAnnotation.EMPTY_ARRAY;
     final PsiAnnotation[] annotations = modifierList.getAnnotations();
     ArrayList<PsiAnnotation> result = null;
@@ -244,7 +244,10 @@ public class AnnotationUtil {
           fqns = new ArrayList<String>();
           final PsiAnnotation[] annos = modList.getAnnotations();
           for (PsiAnnotation anno : annos) {
-            fqns.add(anno.getQualifiedName());
+            final String qName = anno.getQualifiedName();
+            if (qName != null) {
+              fqns.add(qName);
+            }
           }
           if (fqns.isEmpty()) return false;
         }

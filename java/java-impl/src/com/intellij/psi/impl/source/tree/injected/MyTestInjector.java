@@ -29,7 +29,9 @@ import com.intellij.lang.injection.ConcatenationAwareInjector;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -41,42 +43,37 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class MyTestInjector {
-  private LanguageInjector myInjector;
-  private ConcatenationAwareInjector myQLInPlaceInjector;
-  private ConcatenationAwareInjector myJSInPlaceInjector;
-  private ConcatenationAwareInjector mySeparatedJSInjector;
   private final PsiManager myPsiManager;
-  private ConcatenationAwareInjector myQLPrefixedInjector;
-  private MultiHostInjector myMultiHostInjector;
-  private ConcatenationAwareInjector myBrokenUpPrefix;
 
   @TestOnly
   public MyTestInjector(PsiManager psiManager) {
     myPsiManager = psiManager;
   }
 
-  public void injectAll() {
-    myInjector = injectVariousStuffEverywhere(myPsiManager);
+  public void injectAll(Disposable parent) {
+    injectVariousStuffEverywhere(parent, myPsiManager);
 
     Project project = myPsiManager.getProject();
     Language ql = findLanguageByID("JPAQL");
     Language js = findLanguageByID("JavaScript");
-    myQLInPlaceInjector = registerForStringVarInitializer(project, ql, "ql", null, null);
-    myQLPrefixedInjector = registerForStringVarInitializer(project, ql, "qlPrefixed", "xxx", null);
-    myJSInPlaceInjector = registerForStringVarInitializer(project, js, "js", null, null);
-    mySeparatedJSInjector = registerForStringVarInitializer(project, js, "jsSeparated", " + ", " + 'separator'");
-    myBrokenUpPrefix = registerForStringVarInitializer(project, js, "jsBrokenPrefix", "xx ", "");
+    registerForStringVarInitializer(parent, project, ql, "ql", null, null);
+    registerForStringVarInitializer(parent, project, ql, "qlPrefixed", "xxx", null);
+    registerForStringVarInitializer(parent, project, js, "js", null, null);
+    registerForStringVarInitializer(parent, project, js, "jsSeparated", " + ", " + 'separator'");
+    registerForStringVarInitializer(parent, project, js, "jsBrokenPrefix", "xx ", "");
   }
 
-  private static ConcatenationAwareInjector registerForStringVarInitializer(@NotNull Project project,
-                                                                            @NotNull final Language language,
-                                                                            @NotNull @NonNls final String varName,
-                                                                            @NonNls final String prefix,
-                                                                            @NonNls final String suffix) {
-    ConcatenationAwareInjector injector = new ConcatenationAwareInjector() {
+  private static void registerForStringVarInitializer(@NotNull Disposable parent,
+                                                      @NotNull final Project project,
+                                                      final Language language,
+                                                      @NotNull @NonNls final String varName,
+                                                      @NonNls final String prefix,
+                                                      @NonNls final String suffix) {
+    if (language == null) return;
+    final ConcatenationAwareInjector injector = new ConcatenationAwareInjector() {
       public void getLanguagesToInject(@NotNull MultiHostRegistrar injectionPlacesRegistrar, @NotNull PsiElement... operands) {
         PsiVariable variable = PsiTreeUtil.getParentOfType(operands[0], PsiVariable.class);
         if (variable == null) return;
@@ -108,25 +105,12 @@ public class MyTestInjector {
       }
     };
     JavaConcatenationInjectorManager.getInstance(project).registerConcatenationInjector(injector);
-    return injector;
-  }
-
-
-  public void uninjectAll() {
-    myPsiManager.unregisterLanguageInjector(myInjector);
-    Project project = myPsiManager.getProject();
-    boolean b = JavaConcatenationInjectorManager.getInstance(project).unregisterConcatenationInjector(myQLInPlaceInjector);
-    assert b;
-    b = JavaConcatenationInjectorManager.getInstance(project).unregisterConcatenationInjector(myJSInPlaceInjector);
-    assert b;
-    b = JavaConcatenationInjectorManager.getInstance(project).unregisterConcatenationInjector(mySeparatedJSInjector);
-    assert b;
-    b = JavaConcatenationInjectorManager.getInstance(project).unregisterConcatenationInjector(myQLPrefixedInjector);
-    assert b;
-    b = JavaConcatenationInjectorManager.getInstance(project).unregisterConcatenationInjector(myBrokenUpPrefix);
-    assert b;
-    b = InjectedLanguageManager.getInstance(project).unregisterMultiHostInjector(myMultiHostInjector);
-    assert b;
+    Disposer.register(parent, new Disposable() {
+      public void dispose() {
+        boolean b = JavaConcatenationInjectorManager.getInstance(project).unregisterConcatenationInjector(injector);
+        assert b;
+      }
+    });
   }
 
   private static Language findLanguageByID(@NonNls String id) {
@@ -137,10 +121,12 @@ public class MyTestInjector {
     return null;
   }
 
-  private LanguageInjector injectVariousStuffEverywhere(PsiManager psiManager) {
+  private static void injectVariousStuffEverywhere(Disposable parent, final PsiManager psiManager) {
     final Language ql = findLanguageByID("JPAQL");
     final Language js = findLanguageByID("JavaScript");
-    myMultiHostInjector = new MultiHostInjector() {
+    if (ql == null || js == null) return;
+
+    final MultiHostInjector myMultiHostInjector = new MultiHostInjector() {
       public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
         XmlAttributeValue value = (XmlAttributeValue)context;
         PsiElement parent = value.getParent();
@@ -167,6 +153,11 @@ public class MyTestInjector {
       }
     };
     InjectedLanguageManager.getInstance(psiManager.getProject()).registerMultiHostInjector(myMultiHostInjector);
+    Disposer.register(parent, new Disposable() {
+      public void dispose() {
+        InjectedLanguageManager.getInstance(psiManager.getProject()).unregisterMultiHostInjector(myMultiHostInjector);
+      }
+    });
 
     LanguageInjector myInjector = new LanguageInjector() {
       public void getLanguagesToInject(@NotNull PsiLanguageInjectionHost host, @NotNull InjectedLanguagePlaces placesToInject) {
@@ -273,9 +264,7 @@ public class MyTestInjector {
       }
     };
 
-    psiManager.registerLanguageInjector(myInjector);
-
-    return myInjector;
+    psiManager.registerLanguageInjector(myInjector, parent);
   }
 
   private static void inject(final PsiLanguageInjectionHost host, final InjectedLanguagePlaces placesToInject, final Language language) {

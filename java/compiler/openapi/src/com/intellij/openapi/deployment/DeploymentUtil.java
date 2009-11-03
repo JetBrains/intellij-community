@@ -16,19 +16,12 @@
 package com.intellij.openapi.deployment;
 
 import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.make.BuildRecipe;
-import com.intellij.openapi.compiler.make.PackagingFileFilter;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.PathUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.descriptors.ConfigFile;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,20 +35,6 @@ public abstract class DeploymentUtil {
     return ServiceManager.getService(DeploymentUtil.class);
   }
 
-  public abstract boolean addModuleOutputContents(@NotNull CompileContext context,
-                                                  @NotNull BuildRecipe items,
-                                                  @NotNull Module sourceModule,
-                                                  Module targetModule,
-                                                  @NonNls String outputRelativePath,
-                                                  @Nullable @NonNls String possibleBaseOuputPath,
-                                                  @Nullable PackagingFileFilter fileFilter);
-
-  public abstract void addLibraryLink(@NotNull CompileContext context,
-                                      @NotNull BuildRecipe items,
-                                      @NotNull LibraryLink libraryLink,
-                                      @NotNull Module module,
-                                      String possibleBaseOutputPath);
-
   public abstract void copyFile(@NotNull File fromFile,
                                 @NotNull File toFile,
                                 @NotNull CompileContext context,
@@ -65,17 +44,7 @@ public abstract class DeploymentUtil {
   public abstract boolean addItemsRecursively(@NotNull BuildRecipe items,
                                               @NotNull File root,
                                               Module module,
-                                              String outputRelativePath,
-                                              @Nullable PackagingFileFilter fileFilter,
-                                              @Nullable String possibleBaseOutputPath);
-
-  public static void reportRecursiveCopying(CompileContext context, final String sourceDirPath, String targetDirPath,
-                                            final String dirTitle, String additionalMessage) {
-    final String message = CompilerBundle.message(
-      "message.text.copy.dirTitle.dirPath.to.targetDirPath.will.lead.to.recursive.copying.additionalMessage", dirTitle,
-      FileUtil.toSystemDependentName(sourceDirPath), FileUtil.toSystemDependentName(targetDirPath), additionalMessage);
-    context.addMessage(CompilerMessageCategory.ERROR, message,null,-1,-1);
-  }
+                                              String outputRelativePath, @Nullable String possibleBaseOutputPath);
 
   public static String trimForwardSlashes(@NotNull String path) {
     while (path.length() != 0 && (path.charAt(0) == '/' || path.charAt(0) == File.separatorChar)) {
@@ -84,28 +53,7 @@ public abstract class DeploymentUtil {
     return path;
   }
 
-  public static String trimTrailingSlashes(@NotNull String path) {
-    int l = path.length() - 1;
-    while (l >= 0 && (path.charAt(l) == '/' || path.charAt(l) == File.separatorChar)) l--;
-    return path.substring(0, l+1);
-  }
-
   public abstract void reportDeploymentDescriptorDoesNotExists(ConfigFile descriptor, CompileContext context, Module module);
-
-  public abstract void addJavaModuleOutputs(@NotNull Module module,
-                                            @NotNull ModuleLink[] containingModules,
-                                            @NotNull BuildRecipe instructions,
-                                            @NotNull CompileContext context,
-                                            String explodedPath, final String linkContainerDescription);
-  @Deprecated
-  /**@deprecated
-   * use {@link DeploymentUtil.addJavaModuleOutputs()}
-   */
-  public abstract void addJavaModuleOutputs(@NotNull Module module,
-                                   @NotNull ModuleLink[] containingModules,
-                                   @NotNull BuildRecipe instructions,
-                                   @NotNull CompileContext context,
-                                   String explodedPath);
 
   public static String concatPaths(String... paths) {
     final StringBuilder builder = new StringBuilder();
@@ -127,14 +75,6 @@ public abstract class DeploymentUtil {
     }
     return path + trimForwardSlashes(name);
   }
-
-  public static File canonicalRelativePath(File file, final String outputRelativePath) {
-    return new File(PathUtil.getCanonicalPath(appendToPath(file.getPath(),outputRelativePath)));
-  }
-
-  public abstract ModuleLink createModuleLink(@NotNull Module dep, @NotNull Module module);
-
-  public abstract LibraryLink createLibraryLink(Library library, @NotNull Module parentModule);
 
   public abstract BuildRecipe createBuildRecipe();
 

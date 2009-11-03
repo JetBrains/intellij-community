@@ -35,7 +35,7 @@ public abstract class AbstractTreeStructure {
     return false;
   }
 
-  public boolean isAlwaysLeaf() {
+  public boolean isAlwaysLeaf(Object element) {
     return false;
   }
 

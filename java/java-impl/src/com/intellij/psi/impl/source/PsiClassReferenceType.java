@@ -20,9 +20,11 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author max
@@ -36,8 +38,16 @@ public class PsiClassReferenceType extends PsiClassType {
   }
 
   private static PsiAnnotation[] extractAnnosFromReference(PsiJavaCodeReferenceElement reference) {
-    PsiAnnotation[] annotations = PsiTreeUtil.getChildrenOfType(reference, PsiAnnotation.class);
-    return annotations == null ? PsiAnnotation.EMPTY_ARRAY : annotations;
+    List<PsiAnnotation> result = null;
+    for(PsiElement child = reference.getFirstChild(); child != null; child = child.getNextSibling()){
+      if (child instanceof PsiAnnotation) {
+        if (result == null) result = new SmartList<PsiAnnotation>();
+        result.add((PsiAnnotation)child);
+      }
+    }
+
+    if (result == null) return PsiAnnotation.EMPTY_ARRAY;
+    return result.toArray(new PsiAnnotation[result.size()]);
   }
 
   public PsiClassReferenceType(@NotNull PsiJavaCodeReferenceElement reference, LanguageLevel languageLevel, PsiAnnotation[] annotations) {

@@ -23,7 +23,4 @@ public abstract class BuildInstructionVisitor {
   public boolean visitFileCopyInstruction(FileCopyInstruction instruction) throws Exception {
     return visitInstruction(instruction);
   }
-  public boolean visitJarAndCopyBuildInstruction(JarAndCopyBuildInstruction instruction) throws Exception {
-    return visitFileCopyInstruction(instruction);
-  }
 }

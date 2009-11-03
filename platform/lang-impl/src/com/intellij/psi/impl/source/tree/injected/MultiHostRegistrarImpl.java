@@ -191,7 +191,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
       }
       FileDocumentManagerImpl.registerDocument(decodedDocument, virtualFile);
 
-      InjectedFileViewProvider viewProvider = new InjectedFileViewProvider(myPsiManager, virtualFile, place, documentWindow);
+      InjectedFileViewProvider viewProvider = new InjectedFileViewProvider(myPsiManager, virtualFile, place, documentWindow, myLanguage);
       ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(myLanguage);
       assert parserDefinition != null : "Parser definition for language "+myLanguage+" is null";
       PsiFile psiFile = parserDefinition.createFile(viewProvider);

@@ -46,12 +46,6 @@ import java.util.Collection;
 import java.util.Set;
 
 public class RefactoringConflictsUtil {
-  public static void setVisibility(PsiModifierList modifierList, @Modifier String newVisibility) throws IncorrectOperationException {
-    modifierList.setModifierProperty(PsiModifier.PRIVATE, false);
-    modifierList.setModifierProperty(PsiModifier.PUBLIC, false);
-    modifierList.setModifierProperty(PsiModifier.PROTECTED, false);
-    modifierList.setModifierProperty(newVisibility, true);
-  }
 
   public static void analyzeAccessibilityConflicts(@NotNull Set<PsiMember> membersToMove,
                                                 @NotNull final PsiClass targetClass,
@@ -75,7 +69,7 @@ public class RefactoringConflictsUtil {
 
       if (newVisibility != null) {
         try {
-          if (modifierList!=null)    setVisibility(modifierList, newVisibility);
+          if (modifierList!=null)    VisibilityUtil.setVisibility(modifierList, newVisibility);
         }
         catch (IncorrectOperationException ex) {
           /* do nothing and hope for the best */

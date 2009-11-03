@@ -63,21 +63,6 @@ public class EditorTracker extends AbstractProjectComponent {
 
   private IdeFrameImpl myIdeFrame;
   private Window myActiveWindow = null;
-  private final WindowFocusListener myIdeFrameFocusListener = new WindowFocusListener() {
-    public void windowGainedFocus(WindowEvent e) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("windowGainedFocus for IdeFrame");
-      }
-      setActiveWindow(myIdeFrame);
-    }
-
-    public void windowLostFocus(WindowEvent e) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("windowLostFocus for IdeFrame");
-      }
-      setActiveWindow(null);
-    }
-  };
 
   //todo:
   //toolwindow manager is unfortunately needed since
@@ -99,14 +84,6 @@ public class EditorTracker extends AbstractProjectComponent {
         setActiveWindow(myIdeFrame);
       }
     }, myProject);
-    if (myIdeFrame != null) {
-      myIdeFrame.addWindowFocusListener(myIdeFrameFocusListener);
-      Disposer.register(myProject, new Disposable() {
-        public void dispose() {
-          myIdeFrame.removeWindowFocusListener(myIdeFrameFocusListener);
-        }
-      });
-    }
 
     myEditorFactoryListener = new MyEditorFactoryListener();
     myEditorFactory.addEditorFactoryListener(myEditorFactoryListener);

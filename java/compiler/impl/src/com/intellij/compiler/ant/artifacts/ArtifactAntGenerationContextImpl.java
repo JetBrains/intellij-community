@@ -24,7 +24,6 @@ import com.intellij.compiler.ant.taskdefs.Property;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.elements.ArtifactAntGenerationContext;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import gnu.trove.THashMap;
@@ -50,10 +49,10 @@ public class ArtifactAntGenerationContextImpl implements ArtifactAntGenerationCo
   private List<Generator> myBeforeCurrentArtifact = new ArrayList<Generator>();
   private Set<Artifact> myArtifactsToClean = new THashSet<Artifact>();
 
-  public ArtifactAntGenerationContextImpl(Project project, GenerationOptions generationOptions) {
+  public ArtifactAntGenerationContextImpl(Project project, GenerationOptions generationOptions, List<Artifact> allArtifacts) {
     myProject = project;
     myGenerationOptions = generationOptions;
-    for (Artifact artifact : ArtifactManager.getInstance(project).getArtifacts()) {
+    for (Artifact artifact : allArtifacts) {
       if (ArtifactUtil.shouldClearArtifactOutputBeforeRebuild(artifact)) {
         myArtifactsToClean.add(artifact);
       }

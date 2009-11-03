@@ -153,6 +153,7 @@ public abstract class MavenBaseModifiableModelsProvider implements MavenModifiab
   }
 
   private class MavenModulesProvider implements ModulesProvider {
+    @NotNull
     public Module[] getModules() {
       return getModuleModel().getModules();
     }
@@ -161,11 +162,11 @@ public abstract class MavenBaseModifiableModelsProvider implements MavenModifiab
       return getModuleModel().findModuleByName(name);
     }
 
-    public ModuleRootModel getRootModel(Module module) {
+    public ModuleRootModel getRootModel(@NotNull Module module) {
       return MavenBaseModifiableModelsProvider.this.getRootModel(module);
     }
 
-    public FacetModel getFacetModel(Module module) {
+    public FacetModel getFacetModel(@NotNull Module module) {
       return MavenBaseModifiableModelsProvider.this.getFacetModel(module);
     }
   }

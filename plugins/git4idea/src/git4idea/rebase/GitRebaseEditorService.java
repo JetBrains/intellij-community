@@ -18,9 +18,8 @@ package git4idea.rebase;
 import com.intellij.ide.XmlRpcServer;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.commands.GitHandler;
+import git4idea.commands.GitLineHandler;
 import git4idea.commands.ScriptGenerator;
 import gnu.trove.THashMap;
 import org.apache.commons.codec.DecoderException;
@@ -35,11 +34,6 @@ import java.util.Random;
  * The service that generates editor script for
  */
 public class GitRebaseEditorService implements ApplicationComponent {
-  /**
-   * the logger
-   */
-  private static final Logger LOG = Logger.getInstance(GitRebaseEditorService.class.getName());
-
   /**
    * The editor command that is set to env variable
    */
@@ -65,7 +59,7 @@ public class GitRebaseEditorService implements ApplicationComponent {
    */
   private final static Random oursRandom = new Random();
   /**
-   * If true, the component has been intialized
+   * If true, the component has been initialized
    */
   private boolean myInitialized = false;
   /**
@@ -138,24 +132,27 @@ public class GitRebaseEditorService implements ApplicationComponent {
   }
 
   /**
-   * @return the handler instance
+   * Register the handler in the service
+   *
+   * @param handler the handler to register
+   * @return the handler identifier
    */
-  public GitRebaseEditorHandler getHandler(Project project, VirtualFile root) {
+  public int registerHandler(GitRebaseEditorHandler handler) {
     initComponent();
-    GitRebaseEditorHandler rc = null;
+    Integer rc = null;
     synchronized (myHandlersLock) {
       for (int i = Integer.MAX_VALUE; i > 0; i--) {
         int code = Math.abs(oursRandom.nextInt());
         // note that code might still be negative at this point if it is Integer.MIN_VALUE.
         if (code > 0 && !myHandlers.containsKey(code)) {
-          rc = new GitRebaseEditorHandler(this, project, root, code);
+          rc = code;
           break;
         }
       }
       if (rc == null) {
         throw new IllegalStateException("There is a problem with random number allocation");
       }
-      myHandlers.put(rc.getHandlerNo(), rc);
+      myHandlers.put(rc, handler);
     }
     return rc;
   }
@@ -166,7 +163,7 @@ public class GitRebaseEditorService implements ApplicationComponent {
    *
    * @param handlerNo the handler number.
    */
-  void unregisterHandler(final int handlerNo) {
+  public void unregisterHandler(final int handlerNo) {
     synchronized (myHandlersLock) {
       if (myHandlers.remove(handlerNo) == null) {
         throw new IllegalStateException("The handler " + handlerNo + " has been already remoted");
@@ -175,7 +172,7 @@ public class GitRebaseEditorService implements ApplicationComponent {
   }
 
   /**
-   * Unregister handler
+   * Get handler
    *
    * @param handlerNo the handler number.
    */
@@ -184,10 +181,21 @@ public class GitRebaseEditorService implements ApplicationComponent {
     synchronized (myHandlersLock) {
       GitRebaseEditorHandler h = myHandlers.get(handlerNo);
       if (h == null) {
-        throw new IllegalStateException("The handler " + handlerNo + " has been already remoted");
+        throw new IllegalStateException("The handler " + handlerNo + " is not registered");
       }
       return h;
     }
+  }
+
+  /**
+   * Configure handler with editor
+   *
+   * @param h        the handler to configure
+   * @param editorNo the editor number
+   */
+  public void configureHandler(GitLineHandler h, int editorNo) {
+    h.setEnvironment(GitHandler.GIT_EDITOR_ENV, getEditorCommand());
+    h.setEnvironment(GitRebaseEditorMain.IDEA_REBASE_HANDER_NO, Integer.toString(editorNo));
   }
 
 
@@ -202,6 +210,7 @@ public class GitRebaseEditorService implements ApplicationComponent {
      * @param path      the path to edit
      * @return exit code
      */
+    @SuppressWarnings({"UnusedDeclaration"})
     public int editCommits(int handlerNo, String path) {
       return getHandler(handlerNo).editCommits(path);
     }

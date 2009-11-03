@@ -188,7 +188,7 @@ public class SpellCheckerSettingsPane implements Disposable {
   private boolean isUserDictionary(final String dictionary) {
     boolean isUserDictionary = false;
     for (String dictionaryFolder : pathsChooserComponent.getValues()) {
-      if (dictionary.startsWith(dictionaryFolder)) {
+      if (FileUtil.toSystemIndependentName(dictionary).startsWith(dictionaryFolder)) {
         isUserDictionary = true;
         break;
       }
@@ -209,7 +209,7 @@ public class SpellCheckerSettingsPane implements Disposable {
     dictionariesFolders.addAll(settings.getDictionaryFoldersPaths());
     allDictionaries.clear();
     for (String dictionary : manager.getBundledDictionaries()) {
-      allDictionaries.add(new Pair<String, Boolean>(dictionary, !settings.getBundledDisabledDictionariesPaths().contains(dictionary)));
+      allDictionaries.add(Pair.create(dictionary, !settings.getBundledDisabledDictionariesPaths().contains(dictionary)));
     }
 
     // user

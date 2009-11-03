@@ -15,7 +15,7 @@
  */
 package com.intellij.packaging.elements;
 
-import com.intellij.openapi.compiler.make.PackagingFileFilter;
+import com.intellij.packaging.elements.PackagingFileFilter;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

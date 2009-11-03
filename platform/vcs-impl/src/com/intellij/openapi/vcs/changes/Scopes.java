@@ -21,10 +21,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Scopes {
   private final Project myProject;
@@ -52,11 +49,11 @@ public class Scopes {
       markEverythingDirty();
       return;
     }
-    final List<FilePathUnderVcs> dirs = dirt.getDirsForVcs();
+    final Collection<FilePathUnderVcs> dirs = dirt.getDirsForVcs();
     for (FilePathUnderVcs dir : dirs) {
       getScope(dir.getVcs()).addDirtyDirRecursively(dir.getPath());
     }
-    final List<FilePathUnderVcs> files = dirt.getFilesForVcs();
+    final Collection<FilePathUnderVcs> files = dirt.getFilesForVcs();
     for (FilePathUnderVcs file : files) {
       getScope(file.getVcs()).addDirtyFile(file.getPath());
     }

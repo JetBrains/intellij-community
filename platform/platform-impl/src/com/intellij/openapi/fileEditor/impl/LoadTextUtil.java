@@ -319,7 +319,7 @@ public final class LoadTextUtil {
     }
     CharSequence cs = getTextByBinaryPresentation(file.contentsToByteArray(), file);
     lineSeparator = file.getUserData(DETECTED_LINE_SEPARATOR_KEY);
-    if (lineSeparator.equals(newLineSeparator)) {
+    if (lineSeparator == null || lineSeparator.equals(newLineSeparator)) {
       return;
     }
     if (!newLineSeparator.equals("\n")) {

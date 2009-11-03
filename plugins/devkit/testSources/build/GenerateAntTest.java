@@ -65,8 +65,9 @@ public class GenerateAntTest extends IdeaTestCase {
     dataOutput.flush();
     final String lowercased = StringUtil.toLowerCase(myModule.getName());
     final String expected = "<target name=\"plugin.build.jar."+
-                            lowercased +"\" description=\"Build plugin archive for module &apos;" + myModule.getName() + "&apos;\">\n" +
-                            "  <jar destfile=\"${"+ lowercased + ".path.jar}\" duplicate=\"preserve\">\n" +
+                            lowercased + "\" depends=\"compile.module." + lowercased + 
+                            "\" description=\"Build plugin archive for module &apos;" + myModule.getName() + "&apos;\">\n" +
+                            "  <jar destfile=\"${"+ lowercased + ".plugin.path.jar}\" duplicate=\"preserve\">\n" +
                             "    <zipfileset dir=\"${module." + lowercased + ".basedir}/classes\"/>\n" +
                             "    <zipfileset file=\"${module." + lowercased + ".basedir}/META-INF/plugin.xml\" prefix=\"META-INF\"/>\n" +
                             "    <manifest>\n" +

@@ -53,14 +53,19 @@ public class JobUtil {
     final Job<String> job = JobScheduler.getInstance().createJob(jobName, Job.DEFAULT_PRIORITY);
 
     for (final T thing : things) {
-      //noinspection HardCodedStringLiteral
       job.addTask(new Runnable(){
         public void run() {
-          if (!thingProcessor.process(thing)) {
+          try {
+            if (!thingProcessor.process(thing)) {
+              job.cancel();
+            }
+          }
+          catch (ProcessCanceledException e) {
             job.cancel();
+            throw e;
           }
         }
-      }, "done");
+      });
     }
     try {
       job.scheduleAndWaitForResults();
@@ -77,7 +82,9 @@ public class JobUtil {
   }
 
   // execute in multiple threads, with checkCanceled in each delegated to our current progress
-  public static <T> boolean invokeConcurrentlyUnderMyProgress(@NotNull Collection<T> things, @NotNull final Processor<T> thingProcessor, @NotNull @NonNls String jobName) throws ProcessCanceledException {
+  public static <T> boolean invokeConcurrentlyUnderMyProgress(@NotNull Collection<T> things,
+                                                              @NotNull final Processor<T> thingProcessor,
+                                                              @NotNull @NonNls String jobName) throws ProcessCanceledException {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     return invokeConcurrentlyForAll(things, new Processor<T>() {
       public boolean process(final T t) {

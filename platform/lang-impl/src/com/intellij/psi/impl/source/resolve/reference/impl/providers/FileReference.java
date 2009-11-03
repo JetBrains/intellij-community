@@ -336,9 +336,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     throw new IncorrectOperationException("Manipulator for this element is not defined: " + getElement());
   }
 
-  /* Happens when it's been moved to another folder */
-  public PsiElement bindToElement(@NotNull final PsiElement element) throws IncorrectOperationException {
-    
+  public PsiElement bindToElement(@NotNull final PsiElement element, final boolean absolute) throws IncorrectOperationException {
     if (!(element instanceof PsiFileSystemItem)) throw new IncorrectOperationException("Cannot bind to element, should be instanceof PsiFileSystemItem: " + element);
 
     final PsiFileSystemItem fileSystemItem = (PsiFileSystemItem)element;
@@ -354,8 +352,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
 
     String newName;
 
-    if (myFileReferenceSet.isAbsolutePathReference()) {
-      boolean hasSlash = myFileReferenceSet.getPathString().startsWith("/");
+    if (absolute) {
       PsiFileSystemItem root = null;
       PsiFileSystemItem dstItem = null;
       for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
@@ -375,7 +372,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
       if (relativePath == null) {
         return element;
       }
-      newName = hasSlash ? "/" + relativePath : relativePath  ;
+      newName = myFileReferenceSet.absoluteUrlNeedsStartSlash() ? "/" + relativePath : relativePath  ;
 
     } else { // relative path
       PsiFileSystemItem curItem = null;
@@ -425,6 +422,11 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     }
 
     return rename(newName);
+  }
+
+  /* Happens when it's been moved to another folder */
+  public PsiElement bindToElement(@NotNull final PsiElement element) throws IncorrectOperationException {
+    return bindToElement(element, myFileReferenceSet.isAbsolutePathReference());
   }
 
   protected PsiElement rename(final String newName) throws IncorrectOperationException {

@@ -38,6 +38,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -46,14 +47,20 @@ import java.util.List;
 public class ArtifactsGenerator {
   @NonNls public static final String BUILD_ALL_ARTIFACTS_TARGET = "build.all.artifacts";
   @NonNls private static final String INIT_ARTIFACTS_TARGET = "init.artifacts";
-  private final Project myProject;
   private final PackagingElementResolvingContext myResolvingContext;
   private ArtifactAntGenerationContextImpl myContext;
+  private List<Artifact> myAllArtifacts;
 
   public ArtifactsGenerator(Project project, GenerationOptions genOptions) {
-    myProject = project;
-    myResolvingContext = ArtifactManager.getInstance(myProject).getResolvingContext();
-    myContext = new ArtifactAntGenerationContextImpl(project, genOptions);
+    myResolvingContext = ArtifactManager.getInstance(project).getResolvingContext();
+
+    myAllArtifacts = new ArrayList<Artifact>(Arrays.asList(ArtifactManager.getInstance(project).getSortedArtifacts()));
+
+    myContext = new ArtifactAntGenerationContextImpl(project, genOptions, myAllArtifacts);
+  }
+
+  public boolean hasArtifacts() {
+    return !myAllArtifacts.isEmpty();
   }
 
   public List<Generator> generate() {
@@ -63,8 +70,7 @@ public class ArtifactsGenerator {
     generators.add(initTarget);
     initTarget.add(new Property(ArtifactAntGenerationContextImpl.ARTIFACTS_TEMP_DIR_PROPERTY, BuildProperties.propertyRelativePath(BuildProperties.getProjectBaseDirProperty(), "artifactsTemp")));
 
-    final Artifact[] artifacts = ArtifactManager.getInstance(myProject).getSortedArtifacts();
-    for (Artifact artifact : artifacts) {
+    for (Artifact artifact : myAllArtifacts) {
       if (!myContext.shouldBuildIntoTempDirectory(artifact)) {
         generators.add(new CleanArtifactTarget(artifact, myContext));
       }
@@ -76,7 +82,7 @@ public class ArtifactsGenerator {
     initTarget.add(new Mkdir(BuildProperties.propertyRef(ArtifactAntGenerationContextImpl.ARTIFACTS_TEMP_DIR_PROPERTY)));
 
     StringBuilder depends = new StringBuilder();
-    for (Artifact artifact : artifacts) {
+    for (Artifact artifact : myAllArtifacts) {
       Target target = createArtifactTarget(artifact);
       generators.add(target);
 
@@ -91,7 +97,7 @@ public class ArtifactsGenerator {
     }
 
     Target buildAllArtifacts = new Target(BUILD_ALL_ARTIFACTS_TARGET, depends.toString(), "Build all artifacts", null);
-    for (Artifact artifact : artifacts) {
+    for (Artifact artifact : myAllArtifacts) {
       final String artifactOutputPath = artifact.getOutputPath();
       if (!StringUtil.isEmpty(artifactOutputPath) && myContext.shouldBuildIntoTempDirectory(artifact)) {
         final String outputPath = BuildProperties.propertyRef(myContext.getConfiguredArtifactOutputProperty(artifact));
@@ -169,7 +175,7 @@ public class ArtifactsGenerator {
 
   public List<String> getCleanTargetNames() {
     final List<String> targets = new ArrayList<String>();
-    for (Artifact artifact : ArtifactManager.getInstance(myProject).getArtifacts()) {
+    for (Artifact artifact : myAllArtifacts) {
       if (!myContext.shouldBuildIntoTempDirectory(artifact)) {
         targets.add(myContext.getCleanTargetName(artifact));
       }

@@ -65,4 +65,9 @@ public abstract class InspectionManager {
                                                             final ProblemHighlightType highlightType,
                                                             @Nullable final HintAction hintAction,
                                                             final LocalQuickFix... fixes);
+
+  public abstract ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
+                                                            @NotNull final String descriptionTemplate,
+                                                            final boolean showTooltip,
+                                                            final ProblemHighlightType highlightType, final LocalQuickFix... fixes);
 }

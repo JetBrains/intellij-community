@@ -40,8 +40,6 @@ public class CodeStyleImportsPanel extends JPanel {
   private JCheckBox myCbUseFQClassNamesInJavaDoc;
   private JCheckBox myCbUseSingleClassImports;
   private JCheckBox myCbInsertInnerClassImports;
-  private JCheckBox myCbOptimizeImportsOnTheFly;
-  private JCheckBox myCbAddUnambiguousImportsOnTheFly;
   private JTextField myClassCountField;
   private JTextField myNamesCountField;
   private final PackageEntryTable myImportLayoutList = new PackageEntryTable();
@@ -128,12 +126,6 @@ public class CodeStyleImportsPanel extends JPanel {
 
     myCbUseFQClassNamesInJavaDoc = new JCheckBox(ApplicationBundle.message("checkbox.use.fully.qualified.class.names.in.javadoc"));
     group.add(myCbUseFQClassNamesInJavaDoc);
-
-    myCbOptimizeImportsOnTheFly = new JCheckBox(ApplicationBundle.message("checkbox.optimize.imports.on.the.fly"));
-    group.add(myCbOptimizeImportsOnTheFly);
-
-    myCbAddUnambiguousImportsOnTheFly = new JCheckBox(ApplicationBundle.message("checkbox.add.unambiguous.imports.on.the.fly"));
-    group.add(myCbAddUnambiguousImportsOnTheFly);
 
     myClassCountField = new JTextField(3);
     myNamesCountField = new JTextField(3);
@@ -590,8 +582,6 @@ public class CodeStyleImportsPanel extends JPanel {
     myCbInsertInnerClassImports.setSelected(mySettings.INSERT_INNER_CLASS_IMPORTS);
     myClassCountField.setText(Integer.toString(mySettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND));
     myNamesCountField.setText(Integer.toString(mySettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND));
-    myCbAddUnambiguousImportsOnTheFly.setSelected(mySettings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY);
-    myCbOptimizeImportsOnTheFly.setSelected(mySettings.OPTIMIZE_IMPORTS_ON_THE_FLY);
 
     myImportLayoutList.copyFrom(mySettings.IMPORT_LAYOUT_TABLE);
     myPackageList.copyFrom(mySettings.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
@@ -628,8 +618,6 @@ public class CodeStyleImportsPanel extends JPanel {
     mySettings.USE_FQ_CLASS_NAMES_IN_JAVADOC = myCbUseFQClassNamesInJavaDoc.isSelected();
     mySettings.USE_SINGLE_CLASS_IMPORTS = myCbUseSingleClassImports.isSelected();
     mySettings.INSERT_INNER_CLASS_IMPORTS = myCbInsertInnerClassImports.isSelected();
-    mySettings.OPTIMIZE_IMPORTS_ON_THE_FLY = myCbOptimizeImportsOnTheFly.isSelected();
-    mySettings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = myCbAddUnambiguousImportsOnTheFly.isSelected();
     try{
       mySettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = Integer.parseInt(myClassCountField.getText());
     }
@@ -665,8 +653,6 @@ public class CodeStyleImportsPanel extends JPanel {
     isModified |= isModified(myCbUseFQClassNamesInJavaDoc, mySettings.USE_FQ_CLASS_NAMES_IN_JAVADOC);
     isModified |= isModified(myCbUseSingleClassImports, mySettings.USE_SINGLE_CLASS_IMPORTS);
     isModified |= isModified(myCbInsertInnerClassImports, mySettings.INSERT_INNER_CLASS_IMPORTS);
-    isModified |= isModified(myCbOptimizeImportsOnTheFly, mySettings.OPTIMIZE_IMPORTS_ON_THE_FLY);
-    isModified |= isModified(myCbAddUnambiguousImportsOnTheFly, mySettings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY);
     isModified |= isModified(myClassCountField, mySettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND);
     isModified |= isModified(myNamesCountField, mySettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND);
 

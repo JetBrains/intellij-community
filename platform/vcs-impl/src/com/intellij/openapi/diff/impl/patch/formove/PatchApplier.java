@@ -27,13 +27,13 @@ import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchAction;
-import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -68,16 +69,63 @@ public class PatchApplier {
     myTargetChangeList = targetChangeList;
     myCustomForBinaries = customForBinaries;
     myRemainingPatches = new ArrayList<FilePatch>();
-    myVerifier = new PathsVerifier(myProject, myBaseDirectory, myPatches);
+    myVerifier = new PathsVerifier(myProject, myBaseDirectory, myPatches, new PathsVerifier.BaseMapper() {
+      @Nullable
+      public VirtualFile getFile(FilePatch patch, String path) {
+        return PathMerger.getFile(myBaseDirectory, path);
+      }
+    });
   }
 
-  // todo progress
   public ApplyPatchStatus execute() {
     myRemainingPatches.addAll(myPatches);
 
-    final Ref<ApplyPatchStatus> refStatus = new Ref<ApplyPatchStatus>(ApplyPatchStatus.FAILURE);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
+    final ApplyPatchStatus status = ApplicationManager.getApplication().runWriteAction(new Computable<ApplyPatchStatus>() {
+      public ApplyPatchStatus compute() {
+        final Ref<ApplyPatchStatus> refStatus = new Ref<ApplyPatchStatus>(ApplyPatchStatus.FAILURE);
+        CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+          public void run() {
+            refStatus.set(executeWritable());
+          }
+        }, VcsBundle.message("patch.apply.command"), null);
+        return refStatus.get();
+      }
+    });
+    showApplyStatus(myProject, status);
+    refreshFiles();
+    return status;
+  }
+
+  public static ApplyPatchStatus executePatchGroup(final Collection<PatchApplier> group) {
+    if (group.isEmpty()) return ApplyPatchStatus.SUCCESS; //?
+    final Project project = group.iterator().next().myProject;
+
+    ApplyPatchStatus result = ApplicationManager.getApplication().runWriteAction(new Computable<ApplyPatchStatus>() {
+      public ApplyPatchStatus compute() {
+        final Ref<ApplyPatchStatus> refStatus = new Ref<ApplyPatchStatus>(null);
+        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+          public void run() {
+            for (PatchApplier applier : group) {
+              refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.executeWritable()));
+            }
+          }
+        }, VcsBundle.message("patch.apply.command"), null);
+        return refStatus.get();
+      }
+    });
+    result = result == null ? ApplyPatchStatus.FAILURE : result;
+
+    for (PatchApplier applier : group) {
+      applier.refreshFiles();
+    }
+    showApplyStatus(project, result);
+    return result;
+  }
+
+  protected ApplyPatchStatus executeWritable() {
+    return ApplicationManager.getApplication().runWriteAction(new Computable<ApplyPatchStatus>() {
+      public ApplyPatchStatus compute() {
+        final Ref<ApplyPatchStatus> refStatus = new Ref<ApplyPatchStatus>(ApplyPatchStatus.FAILURE);
         CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
           public void run() {
             if (! myVerifier.execute()) {
@@ -100,16 +148,12 @@ public class PatchApplier {
             }
           } // end of Command run
         }, VcsBundle.message("patch.apply.command"), null);
+        return refStatus.get();
       }
     });
-    showApplyStatus(refStatus.get());
-
-    refreshFiles();
-
-    return refStatus.get();
   }
 
-  private void refreshFiles() {
+  protected void refreshFiles() {
     final List<FilePath> directlyAffected = myVerifier.getDirectlyAffected();
     final List<VirtualFile> indirectlyAffected = myVerifier.getAllAffected();
 
@@ -192,14 +236,14 @@ public class PatchApplier {
     return status;
   }
 
-  private void showApplyStatus(final ApplyPatchStatus status) {
+  protected static void showApplyStatus(final Project project, final ApplyPatchStatus status) {
     if (status == ApplyPatchStatus.ALREADY_APPLIED) {
-      showError(myProject, VcsBundle.message("patch.apply.already.applied"), false);
+      showError(project, VcsBundle.message("patch.apply.already.applied"), false);
     }
     else if (status == ApplyPatchStatus.PARTIAL) {
-      showError(myProject, VcsBundle.message("patch.apply.partially.applied"), false);
+      showError(project, VcsBundle.message("patch.apply.partially.applied"), false);
     } else if (ApplyPatchStatus.SUCCESS.equals(status)) {
-      ToolWindowManager.getInstance(myProject).notifyByBalloon(ChangesViewContentManager.TOOLWINDOW_ID, MessageType.INFO,
+      ToolWindowManager.getInstance(project).notifyByBalloon(ChangesViewContentManager.TOOLWINDOW_ID, MessageType.INFO,
                                                                VcsBundle.message("patch.apply.success.applied.text"));
     }
   }
@@ -256,54 +300,6 @@ public class PatchApplier {
         }
       });
     }
-  }
-
-  @Nullable
-  public static VirtualFile getFile(final VirtualFile baseDir, final String path) {
-    if (path == null) {
-      return null;
-    }
-    final List<String> tail = new ArrayList<String>();
-    final VirtualFile file = getFile(baseDir, path, tail);
-    if (tail.isEmpty()) {
-      return file;
-    }
-    return null;
-  }
-
-  @Nullable
-  public static VirtualFile getFile(final VirtualFile baseDir, final String path, final List<String> tail) {
-    VirtualFile child = baseDir;
-
-    final String[] pieces = RelativePathCalculator.split(path);
-
-    for (int i = 0; i < pieces.length; i++) {
-      final String piece = pieces[i];
-      if (child == null) {
-        return null;
-      }
-      if ("".equals(piece) || ".".equals(piece)) {
-        continue;
-      }
-      if ("..".equals(piece)) {
-        child = child.getParent();
-        continue;
-      }
-
-      VirtualFile nextChild = child.findChild(piece);
-      if (nextChild == null) {
-        if (tail != null) {
-          for (int j = i; j < pieces.length; j++) {
-            final String pieceInner = pieces[j];
-            tail.add(pieceInner);
-          }
-        }
-        return child;
-      }
-      child = nextChild;
-    }
-
-    return child;
   }
 
   private class FilesMover implements Runnable {

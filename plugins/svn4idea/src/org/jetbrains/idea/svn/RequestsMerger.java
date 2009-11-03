@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
@@ -36,6 +37,7 @@ import java.util.Map;
  * - if request had been submitted while refresh action was in progress, new refresh action is initiated right after first refresh action finishes
  *
  */
+@SomeQueue
 public class RequestsMerger {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.RequestsMerger");
   private static final int ourDelay = 300;
