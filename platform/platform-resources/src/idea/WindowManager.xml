@@ -15,6 +15,6 @@
     <!-- right stripe -->
     <window_info id="Commander" active="false" anchor="right" order="0" auto_hide="false" internal_type="sliding" type="sliding" visible="false" weight="0.4" />
     <window_info id="Ant Build" active="false" anchor="right" order="1" auto_hide="false" internal_type="docked" type="docked" visible="false" weight="0.25" />
-    <window_info id="Hierarchy" active="false" anchor="right" order="2" auto_hide="false" internal_type="docked" type="docked" visible="false" weight="0.25" />
+    <window_info id="Hierarchy" active="false" anchor="right" order="2" auto_hide="false" internal_type="docked" type="docked" visible="false" weight="0.25" content_ui="combo"/>
   </layout>
 </component>
