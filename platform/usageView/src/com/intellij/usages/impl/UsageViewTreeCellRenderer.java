@@ -29,6 +29,7 @@ import com.intellij.usages.*;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import java.awt.*;
 
 /**
  * @author max
@@ -130,6 +131,19 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
       if (parent != null && parent.isRoot()) {
         original = new SimpleTextAttributes(original.getStyle() | SimpleTextAttributes.STYLE_BOLD, original.getFgColor(), original.getWaveColor());
       }
+    }
+    // Fix problems with black background or white text as foreground
+    // Logic of checking hsb component was taken from CssColorGutterRenderer
+    if (original.getBgColor() != null){
+      Color fgColor = original.getFgColor();
+      if (fgColor != null){
+        final float hsb[] = new float[3];
+        Color.RGBtoHSB(fgColor.getRed(), fgColor.getGreen(), fgColor.getBlue(), hsb);
+        if (hsb[2] > 0.7f){
+          fgColor = null;
+        }
+      }
+      return new SimpleTextAttributes(original.getStyle(), fgColor, original.getWaveColor());
     }
     return original;
   }
