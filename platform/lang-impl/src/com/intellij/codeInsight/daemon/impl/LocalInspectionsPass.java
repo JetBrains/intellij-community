@@ -275,9 +275,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     if (problemDescriptors == null) return;
     InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
     final HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName()), myFile).getSeverity();
-    ProgressManager progressManager = ProgressManager.getInstance();
     for (ProblemDescriptor problemDescriptor : problemDescriptors) {
-      progressManager.checkCanceled();
+      ProgressManager.checkCanceled();
       if (!(ignoreSuppressed && InspectionManagerEx.inspectionResultSuppressed(problemDescriptor.getPsiElement(), tool))) {
         myDescriptors.add(problemDescriptor);
         HighlightInfoType type = highlightTypeFromDescriptor(problemDescriptor, severity);

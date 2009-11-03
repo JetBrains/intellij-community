@@ -53,7 +53,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -75,25 +74,6 @@ public class UpdateHighlightersUtil {
     public int compare(final TextRange o1, final TextRange o2) {
       if (o1.contains(o2) || o2.contains(o1)) return 0;
       return o1.getStartOffset() - o2.getStartOffset();
-    }
-  };
-  private static final TObjectHashingStrategy<HighlightInfo> DISTINQUISH_INVALID_MARKERS = new TObjectHashingStrategy<HighlightInfo>() {
-    public int computeHashCode(HighlightInfo info) {
-      return info.getActualStartOffset();
-    }
-
-    public boolean equals(HighlightInfo info1, HighlightInfo info2) {
-      if (info1 == info2) return true;
-      if (info1.highlighter != null && !info1.highlighter.isValid()) return false;
-      if (info2.highlighter != null && !info2.highlighter.isValid()) return false;
-      return info1.getSeverity() == info2.getSeverity() &&
-             info1.getActualStartOffset() == info2.getActualStartOffset() &&
-             info1.getActualEndOffset() == info2.getActualEndOffset() &&
-             info1.type.equals(info2.type) &&
-             Comparing.equal(info1.getGutterIconRenderer(), info2.getGutterIconRenderer()) &&
-             Comparing.equal(info1.forcedTextAttributes, info2.forcedTextAttributes) &&
-             Comparing.strEqual(info1.description, info2.description)
-        ;
     }
   };
 
