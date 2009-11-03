@@ -38,6 +38,7 @@ import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.lang.reflect.InvocationHandler;
@@ -243,7 +244,7 @@ public class DumbServiceImpl extends DumbService {
             }
             finally {
               myProcessedItems += myCurrentBaseTotal;
-              ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
+              SwingUtilities.invokeLater(new DumbAwareRunnable() {
                 public void run() {
                   if (myProject.isDisposed()) {
                     return;
