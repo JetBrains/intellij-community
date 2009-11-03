@@ -118,7 +118,7 @@ public abstract class VersionsComponent {
           if (version.equals(info.getVersion())) {
             return info;
           }
-          if (version.startsWith(info.getVersion())) {
+          if (version.contains(info.getVersion())) {
             approximatedVersion = info;
           }
         }
