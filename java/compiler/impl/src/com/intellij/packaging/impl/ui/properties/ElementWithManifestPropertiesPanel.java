@@ -162,9 +162,9 @@ public abstract class ElementWithManifestPropertiesPanel<E extends CompositeElem
     }
 
     addManifestFile(file.getPath());
-    myContext.getThisArtifactEditor().updateLayoutTree();
     updateComponents(new ManifestFileConfiguration(null, null, file.getPath()));
     apply();
+    myContext.getThisArtifactEditor().updateLayoutTree();
   }
 
   private void addManifestFile(final String path) {
@@ -188,9 +188,9 @@ public abstract class ElementWithManifestPropertiesPanel<E extends CompositeElem
     if (files.length != 1) return;
 
     addManifestFile(files[0].getPath());
-    myContext.getThisArtifactEditor().updateLayoutTree();
     updateComponents(ManifestFileUtil.createManifestFileConfiguration(files[0]));
     apply();
+    myContext.getThisArtifactEditor().updateLayoutTree();
   }
 
   private void updateComponents(@NotNull ManifestFileConfiguration configuration) {
