@@ -160,38 +160,22 @@ public abstract class CompilerTestCase extends ModuleTestCase {
           doCompile(new CompileStatusNotification() {
             public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
               try {
-                String prefix = myModuleRoot.getPath();
+                String prefix = FileUtil.toSystemIndependentName(myModuleRoot.getPath());
                 if (!StringUtil.endsWithChar(prefix, '/')) {
                   prefix += "/";
                 }
-                String[] pathsToDelete = CompilerManagerImpl.getPathsToDelete()/*CompileManager.getInstance(myProject).getPathsToDelete()*/;
-                /*
-                if ("throwsListDiffersInBaseAndDerived".equals(name)) {
-                  System.out.println("Original paths to delete, count: " + pathsToDelete.length);
-                }
-                */
-                for (String aPathsToDelete : pathsToDelete) {
-                  String path = aPathsToDelete.replace(File.separatorChar, '/');
-                  /*
-                  if ("throwsListDiffersInBaseAndDerived".equals(name)) {
-                    System.out.println("path = \"" + path + "\"");
-                  }
-                  */
-                  if (FileUtil.startsWith(path, prefix)/*path.startsWith(prefix)*/) {
-                    path = path.substring(prefix.length(), path.length());
+                for (String p : CompilerManagerImpl.getPathsToDelete()) {
+                  String path = FileUtil.toSystemIndependentName(p);
+                  if (FileUtil.startsWith(path, prefix)) {
+                    path = path.substring(prefix.length());
                   }
                   myDeletedPaths.add(path);
                 }
 
-                prefix = myModuleRoot.getPath();
-                if (!StringUtil.endsWithChar(prefix, '/')) {
-                  prefix += "/";
-                }
-                String[] pathsToRecompile = getCompiledPathsToCheck()/*CompileManager.getInstance(myProject).getPathsToRecompile()*/;
-                for (String aPathsToRecompile : pathsToRecompile) {
-                  String path = aPathsToRecompile.replace(File.separatorChar, '/');
-                  if (FileUtil.startsWith(path, prefix)/*path.startsWith(prefix)*/) {
-                    path = path.substring(prefix.length(), path.length());
+                for (String p : getCompiledPathsToCheck()) {
+                  String path = FileUtil.toSystemIndependentName(p);
+                  if (FileUtil.startsWith(path, prefix)) {
+                    path = path.substring(prefix.length());
                   }
                   myRecompiledPaths.add(path);
                 }
