@@ -1999,6 +1999,7 @@ public class AbstractTreeUi {
               if (newElement.get() != null) {
                 createMapping(newElement.get(), childNode);
               }
+              getDescriptorFrom(parentNode).setChildrenSortingStamp(-1);
             }
 
             if (index == null) {
