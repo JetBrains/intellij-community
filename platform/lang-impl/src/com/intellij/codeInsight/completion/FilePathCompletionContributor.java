@@ -251,7 +251,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
     @SuppressWarnings({"HardCodedStringLiteral"})
     @Override
     public String toString() {
-      return String.format("%s (%s, %s)", myName, myInfo == null ? "" : myInfo, myPath == null ? "" : myPath);
+      return String.format("%s (%s)", myName, myInfo == null ? "" : myInfo);
     }
 
     @NotNull
