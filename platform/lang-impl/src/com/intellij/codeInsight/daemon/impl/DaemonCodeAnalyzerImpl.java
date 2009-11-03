@@ -105,7 +105,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   private StatusBarUpdater myStatusBarUpdater;
   private final PassExecutorService myPassExecutorService;
   private static final Key<List<HighlightInfo>> HIGHLIGHTS_TO_REMOVE_KEY = Key.create("HIGHLIGHTS_TO_REMOVE");
-  private final AtomicInteger myModificationCount = new AtomicInteger();
+  private int myModificationCount = 0;
 
   public DaemonCodeAnalyzerImpl(Project project, DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings, EditorTracker editorTracker) {
     myProject = project;
@@ -339,8 +339,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return myFileStatusMap;
   }
 
-  public int getModificationCount() {
-    return myModificationCount.get();
+  public synchronized int getModificationCount() {
+    return myModificationCount;
   }
   
   public synchronized boolean isRunning() {
@@ -358,7 +358,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
   private synchronized void cancelUpdateProgress(final boolean start, @NonNls String reason) {
     PassExecutorService.log(myUpdateProgress, null, reason, start);
-    myModificationCount.incrementAndGet();
+    myModificationCount++;
 
     if (myUpdateProgress != null) {
       myUpdateProgress.cancel();

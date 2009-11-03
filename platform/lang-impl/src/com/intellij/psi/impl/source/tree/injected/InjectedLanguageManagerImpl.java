@@ -22,6 +22,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -35,14 +36,15 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.Disposable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -270,6 +272,30 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
   @Override
   public PsiElement findInjectedElementAt(@NotNull PsiFile hostFile, int hostDocumentOffset) {
     return InjectedLanguageUtil.findInjectedElementNoCommitWithOffset(hostFile, hostDocumentOffset);
+  }
+
+  private final Map<Class,MultiHostInjector[]> myInjectorsClone = new THashMap<Class, MultiHostInjector[]>();
+  @TestOnly
+  public void pushInjectors() {
+    assert myInjectorsClone.isEmpty() : myInjectorsClone;
+    myInjectorsClone.putAll(injectors);
+  }
+  @TestOnly
+  public void checkInjectorsAreDisposed() {
+    try {
+      for (Map.Entry<Class, MultiHostInjector[]> entry : injectors.entrySet()) {
+        Class key = entry.getKey();
+        MultiHostInjector[] oldInjectors = myInjectorsClone.get(key);
+        for (MultiHostInjector injector : entry.getValue()) {
+          if (!ArrayUtil.contains(injector, oldInjectors)) {
+            throw new AssertionError("Injector was not disposed: " + key + " -> " + injector);
+          }
+        }
+      }
+    }
+    finally {
+      myInjectorsClone.clear();
+    }
   }
 
   public interface InjProcessor {
