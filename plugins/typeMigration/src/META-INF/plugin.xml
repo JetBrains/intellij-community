@@ -5,6 +5,7 @@
   </description>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
   <extensions defaultExtensionNs="com.intellij">
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <codeInsight.changeVariableTypeQuickFixProvider
         implementation="com.intellij.refactoring.typeMigration.TypeMigrationVariableTypeFixProvider"/>
     <intentionAction>
