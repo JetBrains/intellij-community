@@ -20,7 +20,9 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -30,8 +32,10 @@ import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.ui.RefactoringDialog;
+import com.intellij.refactoring.ui.VisibilityPanel;
 import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.RecentsManager;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +73,11 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
   private JCheckBox keepMethodAsDelegate;
   private ReferenceEditorComboWithBrowseButton packageTextField;
   private ReferenceEditorComboWithBrowseButton existingClassField;
+  private JPanel myVisibilityComponent;
+  private JCheckBox myGenerateAccessorsCheckBox;
+  private VisibilityPanel myVisibilityPanel;
   private static final String RECENTS_KEY = "IntroduceParameterObject.RECENTS_KEY";
+  private static final String EXISTING_KEY = "IntroduceParameterObject.EXISTING_KEY";
 
   public IntroduceParameterObjectDialog(PsiMethod sourceMethod) {
     super(sourceMethod.getProject(), true);
@@ -119,9 +127,14 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
     createNewClassButton.addActionListener(listener);
     myCreateInnerClassRadioButton.addActionListener(listener);
     toggleRadioEnablement();
+
+    myVisibilityPanel = new VisibilityPanel(true, true);
+    myVisibilityPanel.setVisibility(null);
+    myVisibilityComponent.add(myVisibilityPanel, BorderLayout.WEST);
   }
 
   private void toggleRadioEnablement() {
+    enableGenerateAccessors();
     UIUtil.setEnabled(myUseExistingPanel, useExistingClassButton.isSelected(), true);
     UIUtil.setEnabled(myCreateNewClassPanel, createNewClassButton.isSelected(), true);
     UIUtil.setEnabled(myInnerClassPanel, myCreateInnerClassRadioButton.isSelected(), true);
@@ -137,22 +150,18 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
     final boolean keepMethod = keepMethodAsDelegate();
     final String className;
     final String packageName;
-    final List<String> getterNames;
     final boolean createInnerClass = myCreateInnerClassRadioButton.isSelected();
     if (createInnerClass) {
       className = getInnerClassName();
       packageName = "";
-      getterNames = null;
     } else if (useExistingClass) {
       final String existingClassName = getExistingClassName();
-      getterNames = new ArrayList<String>();
       className = StringUtil.getShortName(existingClassName);
       packageName = StringUtil.getPackageName(existingClassName);
     }
     else {
       packageName = getPackageName();
       className = getClassName();
-      getterNames = null;
     }
     List<ParameterTablePanel.VariableData> parameters = new ArrayList<ParameterTablePanel.VariableData>();
     for (ParameterTablePanel.VariableData data : parameterInfo) {
@@ -161,8 +170,9 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
       }
     }
     invokeRefactoring(new IntroduceParameterObjectProcessor(className, packageName, sourceMethod,
-                                                            parameters.toArray(new ParameterTablePanel.VariableData[parameters.size()]), getterNames, keepMethod, useExistingClass,
-                                                            createInnerClass));
+                                                            parameters.toArray(new ParameterTablePanel.VariableData[parameters.size()]),
+                                                            keepMethod, useExistingClass,
+                                                            createInnerClass, myVisibilityPanel.getVisibility(), myGenerateAccessorsCheckBox.isSelected()));
   }
 
   @Override
@@ -291,11 +301,35 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
         if (selectedClass != null) {
           final String className = selectedClass.getQualifiedName();
           existingClassField.setText(className);
+          RecentsManager.getInstance(myProject).registerRecentEntry(EXISTING_KEY, className);
         }
       }
-    }, "", PsiManager.getInstance(myProject), true, RECENTS_KEY);
+    }, "", PsiManager.getInstance(myProject), true, EXISTING_KEY);
 
-    existingClassField.getChildComponent().getDocument().addDocumentListener(adapter);
+    existingClassField.getChildComponent().getDocument().addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
+      @Override
+      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
+        validateButtons();
+        enableGenerateAccessors();
+      }
+    });
+  }
 
+  private void enableGenerateAccessors() {
+    boolean existingNotALibraryClass = false;
+    if (useExistingClassButton.isSelected()) {
+      final PsiClass selectedClass =
+        JavaPsiFacade.getInstance(myProject).findClass(existingClassField.getText(), GlobalSearchScope.projectScope(myProject));
+      if (selectedClass != null) {
+        final PsiFile containingFile = selectedClass.getContainingFile();
+        if (containingFile != null) {
+          final VirtualFile virtualFile = containingFile.getVirtualFile();
+          if (virtualFile != null) {
+            existingNotALibraryClass = ProjectRootManager.getInstance(myProject).getFileIndex().isInSourceContent(virtualFile);
+          }
+        }
+      }
+    }
+    myGenerateAccessorsCheckBox.setEnabled(existingNotALibraryClass);
   }
 }

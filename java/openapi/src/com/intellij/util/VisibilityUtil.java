@@ -28,6 +28,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 
@@ -120,5 +121,26 @@ public class VisibilityUtil  {
 
   public static String toPresentableText(@Modifier String modifier) {
     return PsiBundle.visibilityPresentation(modifier);
+  }
+
+  public static void fixVisibility(UsageInfo[] usageInfos, PsiMember member, final String newVisibility) {
+    if (newVisibility == null) return;
+    if (ESCALATE_VISIBILITY.equals(newVisibility)) {
+      for (UsageInfo info : usageInfos) {
+        final PsiElement element = info.getElement();
+        if (element != null) {
+          escalateVisibility(member, element);
+        }
+      }
+    } else {
+       setVisibility(member.getModifierList(), newVisibility);
+    }
+  }
+
+  public static void setVisibility(PsiModifierList modifierList, @Modifier String newVisibility) throws IncorrectOperationException {
+    modifierList.setModifierProperty(PsiModifier.PRIVATE, false);
+    modifierList.setModifierProperty(PsiModifier.PUBLIC, false);
+    modifierList.setModifierProperty(PsiModifier.PROTECTED, false);
+    modifierList.setModifierProperty(newVisibility, true);
   }
 }

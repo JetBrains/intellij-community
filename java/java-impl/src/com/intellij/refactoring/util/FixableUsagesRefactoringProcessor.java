@@ -42,11 +42,13 @@ public abstract class FixableUsagesRefactoringProcessor extends BaseRefactoringP
   protected void performRefactoring(UsageInfo[] usageInfos) {
     RefactoringUtil.sortDepthFirstRightLeftOrder(usageInfos);
     for (UsageInfo usageInfo : usageInfos) {
-      try {
-        ((FixableUsageInfo)usageInfo).fixUsage();
-      }
-      catch (IncorrectOperationException e) {
-        LOG.info(e);
+      if (usageInfo instanceof FixableUsageInfo) {
+        try {
+          ((FixableUsageInfo)usageInfo).fixUsage();
+        }
+        catch (IncorrectOperationException e) {
+          LOG.info(e);
+        }
       }
     }
   }

@@ -25,7 +25,6 @@ import com.intellij.refactoring.move.moveMembers.MoveMemberHandler;
 import com.intellij.refactoring.move.moveMembers.MoveMembersOptions;
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
 import com.intellij.refactoring.util.EnumConstantsUtil;
-import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
@@ -155,7 +154,7 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
         //might need to make modifiers explicit, see IDEADEV-11416
         final PsiModifierList list = memberCopy.getModifierList();
         assert list != null;
-        RefactoringConflictsUtil.setVisibility(list, VisibilityUtil.getVisibilityModifier(member.getModifierList()));
+        VisibilityUtil.setVisibility(list, VisibilityUtil.getVisibilityModifier(member.getModifierList()));
         list.setModifierProperty(PsiModifier.STATIC, member.hasModifierProperty(PsiModifier.STATIC));
         list.setModifierProperty(PsiModifier.FINAL, member.hasModifierProperty(PsiModifier.FINAL));
       }
@@ -172,7 +171,7 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
         assert list != null;
         list.setModifierProperty(PsiModifier.STATIC, member.hasModifierProperty(PsiModifier.STATIC));
         list.setModifierProperty(PsiModifier.FINAL, member.hasModifierProperty(PsiModifier.FINAL));
-        RefactoringConflictsUtil.setVisibility(list, VisibilityUtil.getVisibilityModifier(member.getModifierList()));
+        VisibilityUtil.setVisibility(list, VisibilityUtil.getVisibilityModifier(member.getModifierList()));
       }
 
       member.delete();
