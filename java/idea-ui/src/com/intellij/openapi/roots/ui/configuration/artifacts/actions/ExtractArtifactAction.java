@@ -36,22 +36,18 @@ import java.util.Collection;
 /**
  * @author nik
  */
-public class ExtractArtifactAction extends DumbAwareAction {
-  private ArtifactEditorEx myEditor;
-
+public class ExtractArtifactAction extends LayoutTreeActionBase {
   public ExtractArtifactAction(ArtifactEditorEx editor) {
-    super(ProjectBundle.message("action.name.extract.artifact"));
-    myEditor = editor;
+    super(ProjectBundle.message("action.name.extract.artifact"), editor);
   }
 
   @Override
-  public void update(AnActionEvent e) {
-    final LayoutTreeSelection selection = myEditor.getLayoutTreeComponent().getSelection();
-    e.getPresentation().setEnabled(selection.getCommonParentElement() != null);
+  protected boolean isEnabled() {
+    return myArtifactEditor.getLayoutTreeComponent().getSelection().getCommonParentElement() != null;
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final LayoutTreeComponent treeComponent = myEditor.getLayoutTreeComponent();
+    final LayoutTreeComponent treeComponent = myArtifactEditor.getLayoutTreeComponent();
     final LayoutTreeSelection selection = treeComponent.getSelection();
     final CompositePackagingElement<?> parent = selection.getCommonParentElement();
     if (parent == null) return;
@@ -61,12 +57,12 @@ public class ExtractArtifactAction extends DumbAwareAction {
     }
 
     final Collection<? extends PackagingElement> selectedElements = selection.getElements();
-    final String name = Messages.showInputDialog(myEditor.getMainComponent(), ProjectBundle.message("label.text.specify.artifact.name"),
+    final String name = Messages.showInputDialog(myArtifactEditor.getMainComponent(), ProjectBundle.message("label.text.specify.artifact.name"),
                                                  ProjectBundle.message("dialog.title.extract.artifact"), null);
     if (name != null) {
-      final Project project = myEditor.getContext().getProject();
+      final Project project = myArtifactEditor.getContext().getProject();
       //todo[nik] select type?
-      final ModifiableArtifact artifact = myEditor.getContext().getModifiableArtifactModel().addArtifact(name, PlainArtifactType.getInstance());
+      final ModifiableArtifact artifact = myArtifactEditor.getContext().getModifiableArtifactModel().addArtifact(name, PlainArtifactType.getInstance());
       treeComponent.editLayout(new Runnable() {
         public void run() {
           for (PackagingElement<?> element : selectedElements) {
