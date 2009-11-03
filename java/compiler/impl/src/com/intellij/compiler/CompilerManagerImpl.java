@@ -286,9 +286,6 @@ public class CompilerManagerImpl extends CompilerManager {
     ourCompiledPaths = new ArrayList<String>();
   }
 
-  /**
-   * @param path a relative to output directory path
-   */
   public static void addDeletedPath(String path) {
     ourDeletedPaths.add(path);
   }
