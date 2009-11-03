@@ -121,6 +121,7 @@ public class MigrationPanel extends JPanel implements Disposable {
       public void run() {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
+            if (builder.isDisposed()) return;
             myRootsTree.expandPath(new TreePath(myRootsTree.getModel().getRoot()));
             final Collection<? extends AbstractTreeNode> children = currentRoot.getChildren();
             if (!children.isEmpty()) {
