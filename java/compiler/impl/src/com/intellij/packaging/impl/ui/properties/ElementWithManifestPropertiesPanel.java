@@ -170,7 +170,7 @@ public abstract class ElementWithManifestPropertiesPanel<E extends CompositeElem
   private void addManifestFile(final String path) {
     myContext.editLayout(myContext.getArtifact(), new Runnable() {
       public void run() {
-        PackagingElementFactory.getInstance().addFileCopy(myElement, ManifestFileUtil.MANIFEST_DIR_NAME, path);
+        PackagingElementFactory.getInstance().addFileCopy(myElement, ManifestFileUtil.MANIFEST_DIR_NAME, path, ManifestFileUtil.MANIFEST_FILE_NAME);
       }
     });
   }

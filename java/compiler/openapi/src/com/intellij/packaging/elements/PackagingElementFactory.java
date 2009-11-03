@@ -77,16 +77,20 @@ public abstract class PackagingElementFactory {
   @NotNull
   public abstract CompositePackagingElement<?> getOrCreateArchive(@NotNull CompositePackagingElement<?> parent, @NotNull String relativePath);
 
+  public abstract void addFileCopy(@NotNull CompositePackagingElement<?> root, @NotNull String outputDirectoryPath, @NotNull String sourceFilePath,
+                                   final String outputFileName);
+
   public abstract void addFileCopy(@NotNull CompositePackagingElement<?> root, @NotNull String outputDirectoryPath, @NotNull String sourceFilePath);
 
   @NotNull
   public abstract PackagingElement<?> createParentDirectories(@NotNull String relativeOutputPath, @NotNull PackagingElement<?> element);
 
+
   @NotNull
   public abstract List<? extends PackagingElement<?>> createParentDirectories(@NotNull String relativeOutputPath, @NotNull List<? extends PackagingElement<?>> elements);
 
-
   @NotNull
+  
   public abstract CompositePackagingElementType<?>[] getCompositeElementTypes();
 
   @Nullable
