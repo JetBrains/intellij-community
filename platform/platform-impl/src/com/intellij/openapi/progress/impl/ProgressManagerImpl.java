@@ -85,7 +85,7 @@ public class ProgressManagerImpl extends ProgressManager {
         }
         else {
           ourLockedCheckCounter = 0;
-          progress.checkCanceled();
+          throw e;
         }
       }
     }

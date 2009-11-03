@@ -290,6 +290,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     super.setUp();
     initApplication(this);
     doSetup(new SimpleLightProjectDescriptor(getModuleType(), getProjectJDK()), configureLocalInspectionTools(), myAvailableInspectionTools);
+    ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject())).pushInjectors();
+
     storeSettings();
 
     myThreadTracker = new ThreadTracker();
@@ -357,7 +359,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     assertFalse(getPsiManager().isDisposed());
 
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(new CodeStyleSettings());
-    ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject())).pushInjectors();
   }
 
   protected void enableInspectionTool(LocalInspectionTool tool){

@@ -114,6 +114,8 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   private void createPropertiesPanel() {
     myPropertiesPanel = new JPanel(new BorderLayout());
     final JPanel emptyPanel = new JPanel();
+    emptyPanel.setMinimumSize(new Dimension(0, 0));
+    emptyPanel.setPreferredSize(new Dimension(0, 0));
 
     myPropertiesPanelWrapper = new JPanel(new CardLayout());
     myPropertiesPanelWrapper.add(EMPTY_CARD, emptyPanel);
@@ -480,7 +482,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
         myCurrentPanel = element.getType().createElementPropertiesPanel(myElement, myContext);
         myPropertiesPanel.removeAll();
         if (myCurrentPanel != null) {
-          myPropertiesPanel.add(BorderLayout.CENTER, myCurrentPanel.createComponent());
+          myPropertiesPanel.add(BorderLayout.CENTER, ScrollPaneFactory.createScrollPane(myCurrentPanel.createComponent()));
           myCurrentPanel.reset();
         }
       }

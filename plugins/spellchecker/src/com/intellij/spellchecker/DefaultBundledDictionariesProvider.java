@@ -13,17 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.rebase;
+package com.intellij.spellchecker;
 
 /**
- * The interface
+ * @author oleg
  */
-public interface GitRebaseEditorHandler {
-  /**
-   * Edit commits request
-   *
-   * @param path the path to editing
-   * @return the exit code to be returned from editor
-   */
-  int editCommits(String path);
+public class DefaultBundledDictionariesProvider implements BundledDictionaryProvider {
+  public String[] getBundledDictionaries() {
+    return new String[]{"english.dic", "jetbrains.dic"};
+  }
 }

@@ -32,6 +32,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -180,6 +181,30 @@ public class GitUIUtil {
    */
   public static void showOperationError(final Project project, final VcsException ex, @NonNls @NotNull final String operation) {
     showOperationError(project, operation, ex.getMessage());
+  }
+
+  /**
+   * Show errors associated with the specified operation
+   *
+   * @param project   the project
+   * @param exs       the exceptions to show
+   * @param operation the operation name
+   */
+  public static void showOperationErrors(final Project project,
+                                         final Collection<VcsException> exs,
+                                         @NonNls @NotNull final String operation) {
+    if (exs.size() == 1) {
+      //noinspection ThrowableResultOfMethodCallIgnored
+      showOperationError(project, operation, exs.iterator().next().getMessage());
+    }
+    else if (exs.size() > 1) {
+      // TODO use dialog in order to show big messages
+      StringBuilder b = new StringBuilder();
+      for (VcsException ex : exs) {
+        b.append(GitBundle.message("errors.message.item", ex.getMessage()));
+      }
+      showOperationError(project, operation, GitBundle.message("errors.message", b.toString()));
+    }
   }
 
   /**

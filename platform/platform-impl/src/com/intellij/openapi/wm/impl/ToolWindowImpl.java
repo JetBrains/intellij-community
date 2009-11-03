@@ -30,6 +30,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.impl.ContentImpl;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -165,6 +166,10 @@ public final class ToolWindowImpl implements ToolWindowEx {
     if (runnable != null) {
       myToolWindowManager.invokeLater(runnable);
     }
+  }
+
+  public void setDefaultContentUiType(@NotNull ToolWindowContentUiType type) {
+    myToolWindowManager.setDefaultContentUiType(this, type);
   }
 
   public ToolWindowContentUiType getContentUiType() {

@@ -19,12 +19,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.commands.GitHandler;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
-import git4idea.rebase.GitRebaseEditorHandler;
-import git4idea.rebase.GitRebaseEditorMain;
+import git4idea.rebase.GitInteractiveRebaseEditorHandler;
 import git4idea.rebase.GitRebaseEditorService;
 import git4idea.rebase.GitRebaseLineListener;
 import org.jetbrains.annotations.NotNull;
@@ -51,14 +49,13 @@ public abstract class GitRebaseActionBase extends GitRepositoryAction {
     }
     final VirtualFile root = h.workingDirectoryFile();
     GitRebaseEditorService service = GitRebaseEditorService.getInstance();
-    GitRebaseEditorHandler editor = service.getHandler(project, root);
+    GitInteractiveRebaseEditorHandler editor = new GitInteractiveRebaseEditorHandler(service, project, root);
     GitRebaseLineListener resultListener = new GitRebaseLineListener();
     h.addLineListener(resultListener);
     configureEditor(editor);
     affectedRoots.add(root);
     try {
-      h.setEnvironment(GitHandler.GIT_EDITOR_ENV, service.getEditorCommand());
-      h.setEnvironment(GitRebaseEditorMain.IDEA_REBASE_HANDER_NO, Integer.toString(editor.getHandlerNo()));
+      service.configureHandler(h, editor.getHandlerNo());
       GitHandlerUtil.doSynchronously(h, GitBundle.getString("rebasing.title"), h.printableCommandLine());
     }
     finally {
@@ -105,7 +102,7 @@ public abstract class GitRebaseActionBase extends GitRepositoryAction {
    *
    * @param editor the editor to configure
    */
-  protected void configureEditor(GitRebaseEditorHandler editor) {
+  protected void configureEditor(GitInteractiveRebaseEditorHandler editor) {
   }
 
   /**

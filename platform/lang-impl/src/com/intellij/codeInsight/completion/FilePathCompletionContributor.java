@@ -23,6 +23,9 @@ import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileNameMatcher;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -31,6 +34,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -68,7 +72,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
         if (getReference(psiReference) != null) {
           final String shortcut = getActionShortcut(IdeActions.ACTION_CLASS_NAME_COMPLETION);
           final CompletionService service = CompletionService.getCompletionService();
-          if (StringUtil.isEmpty(service.getAdvertisementText()) && shortcut != null) {
+          if (/*StringUtil.isEmpty(service.getAdvertisementText()) &&*/ shortcut != null) {
             service.setAdvertisementText(CodeInsightBundle.message("class.completion.file.path", shortcut));
           }
         }
@@ -87,7 +91,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
         final PsiReference psiReference = ApplicationManager.getApplication().runReadAction(new Computable<PsiReference>() {
           public PsiReference compute() {
             //noinspection ConstantConditions
-            return parameters.getPosition().getContainingFile().getOriginalFile().findReferenceAt(parameters.getOffset());
+            return parameters.getPosition().getContainingFile().findReferenceAt(parameters.getOffset());
           }
         });
 
@@ -97,7 +101,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
           if (first == null) return;
 
           final FileReferenceSet set = first.getFileReferenceSet();
-          String prefix = set.getPathString();
+          String prefix = set.getPathString().replace(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED, "");
 
           final List<String>[] pathPrefixParts = new List[] {null};
           int lastSlashIndex;
@@ -112,7 +116,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
             final String[] fileNames = getAllNames(project);
             final Set<String> resultNames = new TreeSet<String>();
             for (String fileName : fileNames) {
-              if (prefix.length() == 0 || StringUtil.startsWithIgnoreCase(fileName, prefix)) {
+              if (filenameMatchesPrefixOrType(fileName, prefix, set.getSuitableFileTypes(), parameters.getInvocationCount())) {
                 resultNames.add(fileName);
               }
             }
@@ -155,10 +159,37 @@ public class FilePathCompletionContributor extends CompletionContributor {
             }
           }
 
+          if (set.getSuitableFileTypes().length > 0 && parameters.getInvocationCount() == 1) {
+            final String shortcut = getActionShortcut(IdeActions.ACTION_CLASS_NAME_COMPLETION);
+            final CompletionService service = CompletionService.getCompletionService();
+            if (shortcut != null) {
+              service.setAdvertisementText(CodeInsightBundle.message("class.completion.file.path.all.variants", shortcut));
+            }
+          }
+
           if (fileReferencePair.getSecond()) result.stopHere();
         }
       }
     });
+  }
+
+  private static boolean filenameMatchesPrefixOrType(final String fileName, final String prefix, final FileType[] suitableFileTypes, final int invocationCount) {
+    final boolean prefixMatched = prefix.length() == 0 || StringUtil.startsWithIgnoreCase(fileName, prefix);
+    if (prefixMatched && (suitableFileTypes.length == 0 || invocationCount > 1)) return true;
+
+    if (prefixMatched) {
+      final String extension = FileUtil.getExtension(fileName);
+      if (extension.length() == 0) return false;
+
+      for (final FileType fileType : suitableFileTypes) {
+        final List<FileNameMatcher> matchers = FileTypeManager.getInstance().getAssociations(fileType);
+        for (final FileNameMatcher matcher : matchers) {
+          if (matcher.accept(fileName)) return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   private static boolean fileMatchesPathPrefix(@Nullable final PsiFileSystemItem file, @NotNull final List<String> pathPrefix) {
@@ -251,7 +282,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
     @SuppressWarnings({"HardCodedStringLiteral"})
     @Override
     public String toString() {
-      return String.format("%s (%s)", myName, myInfo == null ? "" : myInfo);
+      return String.format("%s%s", myName, myInfo == null ? "" : " (" + myInfo + ")");
     }
 
     @NotNull

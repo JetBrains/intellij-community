@@ -21,9 +21,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
+import git4idea.rebase.GitInteractiveRebaseEditorHandler;
 import git4idea.rebase.GitRebaseActionDialog;
 import git4idea.rebase.GitRebaseUtils;
-import git4idea.rebase.GitRebaseEditorHandler;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Iterator;
@@ -70,7 +70,7 @@ public abstract class GitAbstractRebaseResumeAction extends GitRebaseActionBase 
    * {@inheritDoc}
    */
   @Override
-  protected void configureEditor(GitRebaseEditorHandler editor) {
+  protected void configureEditor(GitInteractiveRebaseEditorHandler editor) {
     editor.setRebaseEditorShown();
   }
 

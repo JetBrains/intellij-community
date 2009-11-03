@@ -249,7 +249,9 @@ public class ParseUtil {
     private static final TokenSet BIND_PRECEDING_COMMENT_BIT_SET = TokenSet.create(JavaElementType.FIELD, JavaElementType.METHOD,
                                                                                    JavaElementType.CLASS, JavaElementType.CLASS_INITIALIZER);
 
-    private static final TokenSet PRECEDING_COMMENT_OR_SPACE_BIT_SET = TokenSet.create(JavaTokenType.C_STYLE_COMMENT, JavaTokenType.END_OF_LINE_COMMENT,
+    private static final TokenSet PRECEDING_COMMENT_OR_SPACE_BIT_SET = TokenSet.create(JavaTokenType.C_STYLE_COMMENT,
+                                                                                       JavaTokenType.END_OF_LINE_COMMENT,
+                                                                                       JavaDocElementType.DOC_COMMENT,
                                                                                        TokenType.WHITE_SPACE);
 
     private static void bindPrecedingComment(TreeElement comment, ASTNode bindTo) {

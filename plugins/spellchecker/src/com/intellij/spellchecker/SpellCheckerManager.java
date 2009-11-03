@@ -48,7 +48,7 @@ public class SpellCheckerManager {
 
   private Dictionary userDictionary;
 
-  private final String[] BUNDLED_DICTIONARIES = new String[]{"english.dic", "jetbrains.dic"};
+
 
   @NotNull
   private final SuggestionProvider suggestionProvider = new BaseSuggestionProvider(this);
@@ -83,9 +83,12 @@ public class SpellCheckerManager {
     spellChecker.reset();
     final StateLoader stateLoader = new StateLoader(project);
     final List<Loader> loaders = new ArrayList<Loader>();
-    for (String dictionary : getBundledDictionaries()) {
-      if (this.settings == null || !this.settings.getBundledDisabledDictionariesPaths().contains(dictionary)) {
-        loaders.add(new StreamLoader(SpellCheckerManager.class.getResourceAsStream(dictionary)));
+    // Load bundled dictionaries from corresponding jars
+    for (BundledDictionaryProvider provider : Extensions.getExtensions(BundledDictionaryProvider.EP_NAME)) {
+      for (String dictionary : provider.getBundledDictionaries()) {
+        if (this.settings == null || !this.settings.getBundledDisabledDictionariesPaths().contains(dictionary)) {
+          loaders.add(new StreamLoader(provider.getClass().getResourceAsStream(dictionary)));
+        }
       }
     }
     if (this.settings != null && this.settings.getDictionaryFoldersPaths() != null) {
@@ -130,7 +133,6 @@ public class SpellCheckerManager {
   @NotNull
   public List<String> getBundledDictionaries() {
     final ArrayList<String> dictionaries = new ArrayList<String>();
-    dictionaries.addAll(Arrays.asList(BUNDLED_DICTIONARIES));
     for (BundledDictionaryProvider provider : Extensions.getExtensions(BundledDictionaryProvider.EP_NAME)) {
       dictionaries.addAll(Arrays.asList(provider.getBundledDictionaries()));
     }
