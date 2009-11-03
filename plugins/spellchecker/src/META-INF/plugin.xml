@@ -63,5 +63,6 @@
     
     <spellchecker.support implementation="com.intellij.spellchecker.tokenizer.SpellcheckingStrategy"/>
     <spellchecker.support implementation="com.intellij.spellchecker.tokenizer.HtmlSpellcheckingStrategy"/>
+    <spellchecker.bundledDictionaryProvider implementation="com.intellij.spellchecker.DefaultBundledDictionariesProvider"/>
   </extensions>
 </idea-plugin>
