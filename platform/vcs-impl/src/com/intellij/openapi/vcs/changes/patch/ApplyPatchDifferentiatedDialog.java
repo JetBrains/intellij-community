@@ -529,7 +529,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     private final NewBaseSelector myNewBaseSelector;
 
     private MapDirectory() {
-      super("Map base directory", "Map base directory", IconLoader.getIcon("/actions/browser-externalJavaDoc.png"));
+      super("Map base directory", "Map base directory", IconLoader.getIcon("/vcs/mapBase.png"));
       myNewBaseSelector = new NewBaseSelector();
     }
 
