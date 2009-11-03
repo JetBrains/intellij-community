@@ -17,6 +17,7 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -41,6 +42,7 @@ import java.util.*;
 public class FileReferenceSet {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet");
 
+  private static final FileType[] EMPTY_FILE_TYPES = {};
   private static final char SEPARATOR = '/';
   private static final String SEPARATOR_STRING = "/";
   private static final Key<CachedValue<Collection<PsiFileSystemItem>>> DEFAULT_CONTEXTS_KEY = new Key<CachedValue<Collection<PsiFileSystemItem>>>("default file contexts");
@@ -61,6 +63,25 @@ public class FileReferenceSet {
   private Collection<PsiFileSystemItem> myDefaultContexts;
   private final boolean myEndingSlashNotAllowed;
   private @Nullable Map<CustomizableReferenceProvider.CustomizationKey, Object> myOptions;
+  private FileType[] mySuitableFileTypes;
+
+  public FileReferenceSet(String str,
+                          PsiElement element,
+                          int startInElement,
+                          PsiReferenceProvider provider,
+                          boolean caseSensitive,
+                          boolean endingSlashNotAllowed,
+                          FileType[] suitableFileTypes) {
+    myElement = element;
+    myStartInElement = startInElement;
+    myCaseSensitive = caseSensitive;
+    myPathString = str.trim();
+    myEndingSlashNotAllowed = endingSlashNotAllowed;
+    myOptions = provider instanceof CustomizableReferenceProvider ? ((CustomizableReferenceProvider)provider).getOptions() : null;
+    mySuitableFileTypes = suitableFileTypes;
+
+    reparse(str);
+  }
 
   public static FileReferenceSet createSet(PsiElement element, final boolean soft, boolean endingSlashNotAllowed, final boolean urlEncoded) {
 
@@ -103,14 +124,7 @@ public class FileReferenceSet {
                           PsiReferenceProvider provider,
                           final boolean isCaseSensitive,
                           boolean endingSlashNotAllowed) {
-    myElement = element;
-    myStartInElement = startInElement;
-    myCaseSensitive = isCaseSensitive;
-    myPathString = str.trim();
-    myEndingSlashNotAllowed = endingSlashNotAllowed;
-    myOptions = provider instanceof CustomizableReferenceProvider ? ((CustomizableReferenceProvider)provider).getOptions() : null;
-
-    reparse(str);
+    this(str, element, startInElement, provider, isCaseSensitive, endingSlashNotAllowed, null);
   }
 
   public FileReferenceSet(final @NotNull PsiElement element) {
@@ -371,5 +385,10 @@ public class FileReferenceSet {
 
   public boolean absoluteUrlNeedsStartSlash() {
     return true;
+  }
+
+  @NotNull
+  public FileType[] getSuitableFileTypes() {
+    return mySuitableFileTypes == null ? EMPTY_FILE_TYPES : mySuitableFileTypes;
   }
 }
