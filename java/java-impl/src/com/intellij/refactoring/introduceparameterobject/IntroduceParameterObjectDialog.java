@@ -32,11 +32,11 @@ import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.ui.RefactoringDialog;
-import com.intellij.refactoring.ui.VisibilityPanel;
 import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.RecentsManager;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -73,9 +73,8 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
   private JCheckBox keepMethodAsDelegate;
   private ReferenceEditorComboWithBrowseButton packageTextField;
   private ReferenceEditorComboWithBrowseButton existingClassField;
-  private JPanel myVisibilityComponent;
   private JCheckBox myGenerateAccessorsCheckBox;
-  private VisibilityPanel myVisibilityPanel;
+  private JCheckBox myEscalateVisibilityCheckBox;
   private static final String RECENTS_KEY = "IntroduceParameterObject.RECENTS_KEY";
   private static final String EXISTING_KEY = "IntroduceParameterObject.EXISTING_KEY";
 
@@ -126,19 +125,17 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
     useExistingClassButton.addActionListener(listener);
     createNewClassButton.addActionListener(listener);
     myCreateInnerClassRadioButton.addActionListener(listener);
+    myGenerateAccessorsCheckBox.setSelected(true);
+    myEscalateVisibilityCheckBox.setSelected(true);
     toggleRadioEnablement();
-
-    myVisibilityPanel = new VisibilityPanel(true, true);
-    myVisibilityPanel.setVisibility(null);
-    myVisibilityComponent.add(myVisibilityPanel, BorderLayout.WEST);
   }
 
   private void toggleRadioEnablement() {
-    enableGenerateAccessors();
     UIUtil.setEnabled(myUseExistingPanel, useExistingClassButton.isSelected(), true);
     UIUtil.setEnabled(myCreateNewClassPanel, createNewClassButton.isSelected(), true);
     UIUtil.setEnabled(myInnerClassPanel, myCreateInnerClassRadioButton.isSelected(), true);
     validateButtons();
+    enableGenerateAccessors();
   }
 
   protected String getDimensionServiceKey() {
@@ -169,10 +166,12 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
         parameters.add(data);
       }
     }
+    final String newVisibility =
+      myEscalateVisibilityCheckBox.isEnabled() && myEscalateVisibilityCheckBox.isSelected() ? VisibilityUtil.ESCALATE_VISIBILITY : null;
     invokeRefactoring(new IntroduceParameterObjectProcessor(className, packageName, sourceMethod,
                                                             parameters.toArray(new ParameterTablePanel.VariableData[parameters.size()]),
                                                             keepMethod, useExistingClass,
-                                                            createInnerClass, myVisibilityPanel.getVisibility(), myGenerateAccessorsCheckBox.isSelected()));
+                                                            createInnerClass, newVisibility, myGenerateAccessorsCheckBox.isSelected()));
   }
 
   @Override
@@ -331,5 +330,6 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
       }
     }
     myGenerateAccessorsCheckBox.setEnabled(existingNotALibraryClass);
+    myEscalateVisibilityCheckBox.setEnabled(existingNotALibraryClass);
   }
 }

@@ -41,7 +41,6 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -163,6 +162,10 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
     for (PsiMethod siblingMethod : overridingMethods) {
       findUsagesForMethod(siblingMethod, usages);
     }
+
+    if (myNewVisibility != null) {
+      usages.add(new BeanClassVisibilityUsageInfo(existingClass, usages.toArray(new UsageInfo[usages.size()]), myNewVisibility, myExistingClassCompatibleConstructor));
+    }
   }
 
   private void findUsagesForMethod(PsiMethod overridingMethod, List<FixableUsageInfo> usages) {
@@ -217,10 +220,6 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
     final PsiClass psiClass = buildClass();
     if (psiClass != null) {
       super.performRefactoring(usageInfos);
-      VisibilityUtil.fixVisibility(usageInfos, psiClass, myNewVisibility);
-      if (myExistingClassCompatibleConstructor != null) {
-        VisibilityUtil.fixVisibility(usageInfos, myExistingClassCompatibleConstructor, myNewVisibility);
-      }
     }
   }
 

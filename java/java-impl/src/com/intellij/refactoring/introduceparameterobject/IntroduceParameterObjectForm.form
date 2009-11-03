@@ -33,7 +33,7 @@
       </component>
       <grid id="79318" layout-manager="GridBagLayout">
         <constraints>
-          <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="6" column="0" row-span="1" col-span="4" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
           <gridbag top="10" left="0" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties/>
@@ -48,18 +48,9 @@
               <text value="&amp;Create new class"/>
             </properties>
           </component>
-          <component id="2b175" class="javax.swing.JRadioButton" binding="useExistingClassButton">
-            <constraints>
-              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-              <gridbag top="10" left="0" bottom="0" right="0" weightx="1.0" weighty="0.0"/>
-            </constraints>
-            <properties>
-              <text value="&amp;Use existing class"/>
-            </properties>
-          </component>
           <grid id="57543" binding="myCreateNewClassPanel" layout-manager="GridBagLayout">
             <constraints>
-              <grid row="1" column="0" row-span="1" col-span="4" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+              <grid row="1" column="0" row-span="1" col-span="6" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
               <gridbag top="0" left="20" bottom="0" right="0" weightx="1.0" weighty="0.0"/>
             </constraints>
             <properties/>
@@ -104,7 +95,7 @@
           </grid>
           <grid id="37fbd" binding="myUseExistingPanel" layout-manager="GridBagLayout">
             <constraints>
-              <grid row="5" column="0" row-span="1" col-span="3" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+              <grid row="5" column="0" row-span="1" col-span="4" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
               <gridbag top="0" left="20" bottom="0" right="0" weightx="1.0" weighty="0.0"/>
             </constraints>
             <properties/>
@@ -126,6 +117,24 @@
                 </constraints>
                 <properties/>
               </component>
+              <component id="286f3" class="javax.swing.JCheckBox" binding="myGenerateAccessorsCheckBox" default-binding="true">
+                <constraints>
+                  <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
+                  <gridbag weightx="0.0" weighty="0.0"/>
+                </constraints>
+                <properties>
+                  <text value="&amp;Generate accessors"/>
+                </properties>
+              </component>
+              <component id="97fed" class="javax.swing.JCheckBox" binding="myEscalateVisibilityCheckBox" default-binding="true">
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <gridbag weightx="0.0" weighty="0.0"/>
+                </constraints>
+                <properties>
+                  <text value="&amp;Escalate visibility"/>
+                </properties>
+              </component>
             </children>
           </grid>
           <component id="3eb4" class="javax.swing.JRadioButton" binding="myCreateInnerClassRadioButton" default-binding="true">
@@ -139,7 +148,7 @@
           </component>
           <grid id="9a2f8" binding="myInnerClassPanel" layout-manager="GridBagLayout">
             <constraints>
-              <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+              <grid row="3" column="0" row-span="1" col-span="3" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
               <gridbag top="0" left="20" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
             </constraints>
             <properties/>
@@ -166,6 +175,15 @@
               </component>
             </children>
           </grid>
+          <component id="2b175" class="javax.swing.JRadioButton" binding="useExistingClassButton">
+            <constraints>
+              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+              <gridbag top="10" left="0" bottom="0" right="0" weightx="1.0" weighty="0.0"/>
+            </constraints>
+            <properties>
+              <text value="&amp;Use existing class"/>
+            </properties>
+          </component>
         </children>
       </grid>
       <grid id="783a4" binding="myParamsPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
@@ -184,24 +202,6 @@
         </constraints>
         <properties>
           <text value="Keep method as &amp;delegate"/>
-        </properties>
-      </component>
-      <grid id="d3a44" binding="myVisibilityComponent" layout-manager="BorderLayout" hgap="0" vgap="0">
-        <constraints>
-          <grid row="6" column="3" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-          <gridbag top="10" left="0" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
-        </constraints>
-        <properties/>
-        <border type="none"/>
-        <children/>
-      </grid>
-      <component id="286f3" class="javax.swing.JCheckBox" binding="myGenerateAccessorsCheckBox" default-binding="true">
-        <constraints>
-          <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-          <gridbag weightx="0.0" weighty="0.0"/>
-        </constraints>
-        <properties>
-          <text value="&amp;Generate accessors"/>
         </properties>
       </component>
     </children>
