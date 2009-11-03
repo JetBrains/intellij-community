@@ -1572,6 +1572,13 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   }
 
+  public void setDefaultContentUiType(ToolWindowImpl toolWindow, ToolWindowContentUiType type) {
+    final WindowInfoImpl info = getInfo(toolWindow.getId());
+    if (info.wasRead()) return;
+    toolWindow.setContentUiType(type, null);
+  }
+
+
   public void doWhenFocusSettlesDown(@NotNull final Runnable runnable) {
     final boolean needsRestart = isIdleQueueEmpty();
     myIdleRequests.add(runnable);
@@ -1694,6 +1701,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       }
     };
   }
+
 
   /**
    * This command creates and shows <code>FloatingDecorator</code>.

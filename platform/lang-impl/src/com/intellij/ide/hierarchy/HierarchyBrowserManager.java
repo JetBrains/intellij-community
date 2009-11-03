@@ -23,10 +23,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.ui.content.ContentManager;
 
 @State(
@@ -51,6 +48,7 @@ public final class HierarchyBrowserManager implements PersistentStateComponent<H
   public HierarchyBrowserManager(final Project project) {
     final ToolWindowManager toolWindowManager=ToolWindowManager.getInstance(project);
     final ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.HIERARCHY, true, ToolWindowAnchor.RIGHT, project);
+    toolWindow.setDefaultContentUiType(ToolWindowContentUiType.COMBO);
     myContentManager = toolWindow.getContentManager();
     toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowHierarchy.png"));
     new ContentManagerWatcher(toolWindow,myContentManager);

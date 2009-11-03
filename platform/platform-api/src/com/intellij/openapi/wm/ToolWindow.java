@@ -17,6 +17,7 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.content.ContentManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -137,6 +138,7 @@ public interface ToolWindow {
   void setAvailable(boolean available, @Nullable Runnable runnable);
 
   void setContentUiType(ToolWindowContentUiType type, @Nullable Runnable runnable);
+  void setDefaultContentUiType(@NotNull ToolWindowContentUiType type);
 
   ToolWindowContentUiType getContentUiType();
 
