@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
@@ -30,6 +31,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -216,7 +218,12 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         continue;
       }
       final String fileName = patch.getBeforeFileName();
-      final Collection<VirtualFile> variants = filterVariants(patch, FilenameIndex.getVirtualFilesByName(myProject, fileName, scope));
+      final Collection<VirtualFile> files = ApplicationManager.getApplication().runReadAction(new Computable<Collection<VirtualFile>>() {
+        public Collection<VirtualFile> compute() {
+          return FilenameIndex.getVirtualFilesByName(myProject, fileName, scope);
+        }
+      });
+      final Collection<VirtualFile> variants = filterVariants(patch, files);
 
       final FilePatchInProgress filePatchInProgress = new FilePatchInProgress(patch, variants, baseDir);
       result.add(filePatchInProgress);
