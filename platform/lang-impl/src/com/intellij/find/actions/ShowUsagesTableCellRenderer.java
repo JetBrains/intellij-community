@@ -18,11 +18,11 @@ package com.intellij.find.actions;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.ui.FileColorManager;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.FileColorManager;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
@@ -89,8 +89,11 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
       else if (column == 2) {
         for (int i = 1; i < text.length; i++) {
           TextChunk textChunk = text[i];
-          SimpleTextAttributes attributes =
-            deriveAttributesWithColor(SimpleTextAttributes.fromTextAttributes(textChunk.getAttributes()), fileBgColor);
+          final SimpleTextAttributes attrs = SimpleTextAttributes.fromTextAttributes(textChunk.getAttributes());
+          final Color selectedColor = attrs.getStyle() == SimpleTextAttributes.STYLE_BOLD ? Color.WHITE : Color.GRAY;
+          SimpleTextAttributes attributes = isSelected ?
+            new SimpleTextAttributes(UIUtil.getListSelectionBackground(), selectedColor, selectedColor, attrs.getStyle())
+            : deriveAttributesWithColor(attrs, fileBgColor);
           textChunks.append(textChunk.getText(), attributes);
         }
       }

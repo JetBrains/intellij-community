@@ -32,9 +32,9 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
     initProjectsManager(false);
 
     myNavigator = MavenProjectsNavigator.getInstance(myProject);
+    myNavigator.initForTests();
     myNavigator.setGroupModules(true);
 
-    myNavigator.initForTests();
     myStructure = myNavigator.getStructureForTests();
   }
 
@@ -52,7 +52,6 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
                          "<version>1</version>");
     myProjectsManager.resetManagedFilesAndProfilesInTests(Collections.singletonList(myProjectPom), Collections.EMPTY_LIST);
     waitForReadingCompletion();
-    assertTrue(getRootNodes().isEmpty());
 
     myProjectsManager.fireActivatedInTests();
     assertEquals(1, getRootNodes().size());
@@ -112,7 +111,7 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
     assertEquals(m, getRootNodes().get(0).getModulesNode().getProjectNodes().get(0).getFile());
   }
 
-  public void testReconnectingModulesWhenProjectBacomesParent() throws Exception {
+  public void testReconnectingModulesWhenProjectBecomesParent() throws Exception {
     myProjectsManager.fireActivatedInTests();
 
     createProjectPom("<groupId>test</groupId>" +

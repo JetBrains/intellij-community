@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.startup.impl;
 
+import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,10 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbAwareRunnable;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -34,24 +32,22 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
-/**
- * @author mike
- */
 public class StartupManagerImpl extends StartupManagerEx {
-  private final List<Runnable> myActivities = new ArrayList<Runnable>();
-  private final List<Runnable> myPostStartupActivities = Collections.synchronizedList(new ArrayList<Runnable>());
-  private final List<Runnable> myPreStartupActivities = Collections.synchronizedList(new ArrayList<Runnable>());
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.impl.StartupManagerImpl");
 
-  private volatile FileSystemSynchronizerImpl myFileSystemSynchronizer = new FileSystemSynchronizerImpl();
-  private volatile boolean myStartupActivityRunning = false;
-  private volatile boolean myStartupActivityPassed = false;
-  private volatile boolean myPostStartupActivityPassed = false;
-  private volatile boolean myBackgroundIndexing = false;
+  private final List<Runnable> myPreStartupActivities = Collections.synchronizedList(new ArrayList<Runnable>());
+  private final List<Runnable> myStartupActivities = new ArrayList<Runnable>();
+  private final List<Runnable> myPostStartupActivities = Collections.synchronizedList(new ArrayList<Runnable>());
+
+  private final List<CacheUpdater> myCacheUpdaters = new LinkedList<CacheUpdater>();
+
+  private volatile boolean myPreStartupActivitiesPassed = false;
+  private volatile boolean myStartupActivitiesRunning = false;
+  private volatile boolean myStartupActivitiesPassed = false;
+  private volatile boolean myPostStartupActivitiesPassed = false;
 
   private final Project myProject;
 
@@ -59,107 +55,113 @@ public class StartupManagerImpl extends StartupManagerEx {
     myProject = project;
   }
 
-  public void registerStartupActivity(Runnable runnable) {
-    LOG.assertTrue(!myStartupActivityPassed, "Registering startup activity that will never be run");
-    myActivities.add(runnable);
-  }
-
-  public synchronized void registerPostStartupActivity(Runnable runnable) {
-    LOG.assertTrue(!myPostStartupActivityPassed, "Registering post-startup activity that will never be run");
-    myPostStartupActivities.add(runnable);
-  }
-
-  public void setBackgroundIndexing(boolean backgroundIndexing) {
-    myBackgroundIndexing = backgroundIndexing;
-  }
-
-  public boolean startupActivityRunning() {
-    return myStartupActivityRunning;
-  }
-
-  public boolean startupActivityPassed() {
-    return myStartupActivityPassed;
-  }
-
-  public boolean postStartupActivityPassed() {
-    return myPostStartupActivityPassed;
-  }
-
+  @Override
   public void registerPreStartupActivity(@NotNull Runnable runnable) {
+    LOG.assertTrue(!myPreStartupActivitiesPassed, "Registering pre startup activity that will never be run");
     myPreStartupActivities.add(runnable);
   }
 
-  public FileSystemSynchronizerImpl getFileSystemSynchronizer() {
-    return myFileSystemSynchronizer;
+  @Override
+  public void registerStartupActivity(Runnable runnable) {
+    LOG.assertTrue(!myStartupActivitiesPassed, "Registering startup activity that will never be run");
+    myStartupActivities.add(runnable);
+  }
+
+  @Override
+  public synchronized void registerPostStartupActivity(Runnable runnable) {
+    LOG.assertTrue(!myPostStartupActivitiesPassed, "Registering post-startup activity that will never be run");
+    myPostStartupActivities.add(runnable);
+  }
+
+  @Override
+  public void registerCacheUpdater(CacheUpdater updater) {
+    LOG.assertTrue(!myStartupActivitiesPassed, CacheUpdater.class.getSimpleName() + " must be registered before startup activity finished");
+    myCacheUpdaters.add(updater);
+  }
+
+  @Override
+  public boolean startupActivityRunning() {
+    return myStartupActivitiesRunning;
+  }
+
+  @Override
+  public boolean startupActivityPassed() {
+    return myStartupActivitiesPassed;
+  }
+
+  @Override
+  public boolean postStartupActivityPassed() {
+    return myPostStartupActivitiesPassed;
   }
 
   public void runStartupActivities() {
-    ApplicationManager.getApplication().runReadAction(
-      new Runnable() {
-        public void run() {
-          assert !HeavyProcessLatch.INSTANCE.isRunning();
-          HeavyProcessLatch.INSTANCE.processStarted();
-          try {
-            runActivities(myPreStartupActivities);
-            if (myFileSystemSynchronizer != null || !ApplicationManager.getApplication().isUnitTestMode()) {
-              myFileSystemSynchronizer.setCancelable(true);
-              try {
-                myFileSystemSynchronizer.executeFileUpdate();
-              }
-              catch (ProcessCanceledException e) {
-                throw e;
-              }
-              catch (Throwable e) {
-                LOG.error(e);
-              }
-              myFileSystemSynchronizer = null;
-            }
-            myStartupActivityRunning = true;
-            runActivities(myActivities);
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        assert !HeavyProcessLatch.INSTANCE.isRunning();
+        HeavyProcessLatch.INSTANCE.processStarted();
+        try {
+          runActivities(myPreStartupActivities);
+          myPreStartupActivitiesPassed = true;
 
-            myStartupActivityRunning = false;
-            myStartupActivityPassed = true;
-          }
-          finally {
-            HeavyProcessLatch.INSTANCE.processFinished();
-          }
+          myStartupActivitiesRunning = true;
+          runActivities(myStartupActivities);
+
+          myStartupActivitiesRunning = false;
+          myStartupActivitiesPassed = true;
+
+          startCacheUpdate();
+        }
+        finally {
+          HeavyProcessLatch.INSTANCE.processFinished();
         }
       }
-    );
+    });
   }
 
   public synchronized void runPostStartupActivities() {
-    final Application app = ApplicationManager.getApplication();
+    Application app = ApplicationManager.getApplication();
     app.assertIsDispatchThread();
-    if (myBackgroundIndexing || DumbService.getInstance(myProject).isDumb()) {
-      final List<Runnable> dumbAware = CollectionFactory.arrayList();
-      for (Iterator<Runnable> iterator = myPostStartupActivities.iterator(); iterator.hasNext();) {
-        Runnable runnable = iterator.next();
-        if (runnable instanceof DumbAware) {
-          dumbAware.add(runnable);
-          iterator.remove();
-        }
+
+    if (myPostStartupActivitiesPassed) return;
+
+    final List<Runnable> dumbAware = CollectionFactory.arrayList();
+    final List<Runnable> nonDumbAware = CollectionFactory.arrayList();
+
+    for (Runnable each : myPostStartupActivities) {
+      if (each instanceof DumbAware) {
+        dumbAware.add(each);
       }
-      runActivities(dumbAware);
-      DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
-        public void run() {
-          if (myProject.isDisposed()) return;
-
-          runActivities(myPostStartupActivities);
-          myPostStartupActivities.clear();
-          myPostStartupActivityPassed = true;
-        }
-      });
-    }
-    else {
-      runActivities(myPostStartupActivities);
-      myPostStartupActivities.clear();
-      myPostStartupActivityPassed = true;
+      else {
+        nonDumbAware.add(each);
+      }
     }
 
-    if (app.isUnitTestMode()) return;
+    runActivities(dumbAware);
+    DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
+      public void run() {
+        if (myProject.isDisposed()) return;
+        runActivities(nonDumbAware);
 
-    VirtualFileManager.getInstance().refresh(!app.isHeadlessEnvironment());
+        myPostStartupActivitiesPassed = true;
+        myPostStartupActivities.clear();
+      }
+    });
+
+    if (!app.isUnitTestMode()) {
+      VirtualFileManager.getInstance().refresh(!app.isHeadlessEnvironment());
+    }
+  }
+
+  private void startCacheUpdate() {
+    try {
+      DumbServiceImpl.getInstance(myProject).queueCacheUpdate(myCacheUpdaters);
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+    }
   }
 
   private static void runActivities(final List<Runnable> activities) {
@@ -199,7 +201,7 @@ public class StartupManagerImpl extends StartupManagerEx {
       };
     }
 
-    if (myProject.isInitialized() || (application.isUnitTestMode() && myPostStartupActivityPassed)) {
+    if (myProject.isInitialized() || (application.isUnitTestMode() && myPostStartupActivitiesPassed)) {
       // in tests which simulate project opening, post-startup activities could have been run already. Then we should act as if the project was initialized
       if (application.isDispatchThread()) {
         runnable.run();
@@ -221,17 +223,23 @@ public class StartupManagerImpl extends StartupManagerEx {
 
   @TestOnly
   public void prepareForNextTest() {
-    myActivities.clear();
-    myPostStartupActivities.clear();
     myPreStartupActivities.clear();
+    myStartupActivities.clear();
+    myPostStartupActivities.clear();
+    myCacheUpdaters.clear();
+
+    myPreStartupActivitiesPassed = false;
+    myStartupActivitiesRunning = false;
+    myStartupActivitiesPassed = false;
+    myPostStartupActivitiesPassed = false;
   }
 
   @TestOnly
   public void checkCleared() {
     try {
-      assert myActivities.isEmpty() : "Activities: "+myActivities;
-      assert myPostStartupActivities.isEmpty() : "Post Activities: "+myPostStartupActivities;
-      assert myPreStartupActivities.isEmpty() : "Pre Activities: "+myPreStartupActivities;
+      assert myStartupActivities.isEmpty() : "Activities: " + myStartupActivities;
+      assert myPostStartupActivities.isEmpty() : "Post Activities: " + myPostStartupActivities;
+      assert myPreStartupActivities.isEmpty() : "Pre Activities: " + myPreStartupActivities;
     }
     finally {
       prepareForNextTest();

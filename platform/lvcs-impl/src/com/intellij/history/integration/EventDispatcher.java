@@ -20,8 +20,8 @@ import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.utils.LocalHistoryLog;
-import com.intellij.ide.startup.CacheUpdater;
-import com.intellij.ide.startup.FileContent;
+import com.intellij.ide.caches.FileContent;
+import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.vfs.*;
@@ -38,7 +38,6 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
   private final IdeaGateway myGateway;
   private final LocalHistoryFacade myFacade;
 
-  private final boolean isFirstTimeRefresh = true;
   private int myRefreshDepth = 0;
   private CacheUpdaterProcessor myProcessor;
 
@@ -54,13 +53,6 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
   }
 
   public void afterRefreshFinish(boolean asynchonous) {
-    if (myRefreshDepth == 0) {
-      // the listener may may be attached during a refresh.
-      return;
-    }
-
-    myRefreshDepth--;
-    myFacade.finishRefreshing();
   }
 
   private boolean isRefreshing() {
@@ -76,11 +68,21 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
   }
 
   public void updatingDone() {
+    assert isRefreshing();
+
+    if (myRefreshDepth == 0) {
+      // the listener may may be attached during a refresh.
+      return;
+    }
+
+    myRefreshDepth--;
+    myFacade.finishRefreshing();
+
     myProcessor = null;
   }
 
   public void canceled() {
-    throw new UnsupportedOperationException();
+    updatingDone();
   }
 
   public void commandStarted(CommandEvent e) {

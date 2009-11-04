@@ -18,6 +18,7 @@ package com.intellij.refactoring.introduceparameterobject.usageInfo;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
@@ -93,7 +94,7 @@ public class MergeMethodArguments extends FixableUsageInfo {
     parametersInfo.add(new ParameterInfoImpl(-1, parameterName, new PsiImmediateClassType(psiClass, subst), null) {
       @Override
       public PsiExpression getValue(final PsiCallExpression expr) throws IncorrectOperationException {
-        return psiFacade.getElementFactory().createExpressionFromText(getMergedParam(expr), expr);
+        return (PsiExpression)JavaCodeStyleManager.getInstance(getProject()).shortenClassReferences(psiFacade.getElementFactory().createExpressionFromText(getMergedParam(expr), expr));
       }
     });
     final PsiParameter[] parameters = method.getParameterList().getParameters();

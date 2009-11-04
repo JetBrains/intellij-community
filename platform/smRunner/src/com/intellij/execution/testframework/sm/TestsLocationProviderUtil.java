@@ -91,17 +91,29 @@ public class TestsLocationProviderUtil {
         fileName = pathComponent;
       }
     }
+    if (fileName == null) {
+      return Collections.emptyList();
+    }
+    return findFilesClosestToTarget(folders, collectCandidates(project, fileName));
+  }
 
-    //otherwise let's find all files with the same name and similar relative path
-    final List<FileInfo> filesInfo = collectCandidates(project, fileName);
+  /**
+   * Looks for files with given name which are close to given path
+   * @param targetParentFolders folders path
+   * @param candidates
+   * @return
+   */
+  public static List<VirtualFile> findFilesClosestToTarget(@NotNull final List<String> targetParentFolders,
+                                                           final List<FileInfo> candidates) {
+    // let's find all files with similar relative path
 
-    if (filesInfo.isEmpty()) {
+    if (candidates.isEmpty()) {
       return Collections.emptyList();
     }
 
     // let's iterate relative path components and determine which files are closer to our relative path
-    for (String folderName : folders) {
-      for (FileInfo info : filesInfo) {
+    for (String folderName : targetParentFolders) {
+      for (FileInfo info : candidates) {
         info.processRelativePathComponent(folderName);
       }
     }
@@ -110,7 +122,7 @@ public class TestsLocationProviderUtil {
     // we also assume that relative files and folders should have at least one common parent folder - just
     // to remove false positives on some cases
     int maxProximity = 0;
-    for (FileInfo fileInfo : filesInfo) {
+    for (FileInfo fileInfo : candidates) {
       final int proximity = fileInfo.getProximity();
       if (proximity > maxProximity) {
         maxProximity = proximity;
@@ -119,7 +131,7 @@ public class TestsLocationProviderUtil {
 
     if (maxProximity >= MIN_PROXIMITY_TRESHOLD) {
       final List<VirtualFile> files = new ArrayList<VirtualFile>();
-      for (FileInfo info : filesInfo) {
+      for (FileInfo info : candidates) {
         if (info.getProximity() == maxProximity) {
           files.add(info.getFile());
         }
@@ -130,14 +142,7 @@ public class TestsLocationProviderUtil {
     return Collections.emptyList();
   }
 
-  //private static int compare(final FileInfo info1, final FileInfo info2) {
-  //  final int proximity1 = info1.getProximity();
-  //  final int proximity2 = info2.getProximity();
-  //
-  //  return proximity2 - proximity1;
-  //}
-
-  private static List<FileInfo> collectCandidates(Project project, String fileName) {
+  public static List<FileInfo> collectCandidates(Project project, String fileName) {
     final List<FileInfo> filesInfo = new ArrayList<FileInfo>();
     final ChooseByNameContributor[] contributors = Extensions.getExtensions(ChooseByNameContributor.FILE_EP_NAME);
     for (ChooseByNameContributor contributor : contributors) {

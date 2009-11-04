@@ -63,7 +63,7 @@ public class GroovyInlineHandler implements InlineHandler {
     return null;
   }
 
-  public void removeDefinition(final PsiElement element) {
+  public void removeDefinition(final PsiElement element, Settings settings) {
     final PsiElement owner = element.getParent().getParent();
     if (element instanceof GrVariable &&
         owner instanceof GrVariableDeclarationOwner) {

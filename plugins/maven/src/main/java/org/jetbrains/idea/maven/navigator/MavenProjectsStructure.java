@@ -121,17 +121,11 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     return myRoot;
   }
 
-  public void buildTree() {
-    updateProjects(myProjectsManager.getProjects(), Collections.EMPTY_LIST);
-  }
-
-  public void update(boolean restructure) {
-    if (restructure) {
-      buildTree();
-    }
-    else {
-      updateFrom(myRoot);
-    }
+  public void update() {
+    List<MavenProject> projects = myProjectsManager.getProjects();
+    List<MavenProject> deleted = new ArrayList<MavenProject>(myProjectToNodeMapping.keySet());
+    deleted.removeAll(projects);
+    updateProjects(projects, deleted);
   }
 
   private void updateFrom(SimpleNode node) {

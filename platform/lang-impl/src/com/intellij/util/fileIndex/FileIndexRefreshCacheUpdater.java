@@ -16,9 +16,11 @@
 
 package com.intellij.util.fileIndex;
 
-import com.intellij.ide.startup.CacheUpdater;
-import com.intellij.ide.startup.FileContent;
+import com.intellij.ide.caches.CacheUpdater;
+import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -34,20 +36,22 @@ import java.util.Set;
 public class FileIndexRefreshCacheUpdater extends VirtualFileAdapter implements CacheUpdater, VirtualFileManagerListener, Disposable {
   private final AbstractFileIndex myFileIndex;
   private final VirtualFileManagerEx myVirtualFileManager;
+  private final ProjectRootManagerEx myProjectRootManager;
   private final Set<VirtualFile> myChangedFiles = new HashSet<VirtualFile>();
   private final Set<VirtualFile> myRemovedFiles = new HashSet<VirtualFile>();
 
-  public FileIndexRefreshCacheUpdater(final AbstractFileIndex fileIndex) {
+  public FileIndexRefreshCacheUpdater(Project project, final AbstractFileIndex fileIndex) {
     myFileIndex = fileIndex;
     myVirtualFileManager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
+    myProjectRootManager = ProjectRootManagerEx.getInstanceEx(project);
     myVirtualFileManager.addVirtualFileManagerListener(this);
     myVirtualFileManager.addVirtualFileListener(this,this);
-    myVirtualFileManager.registerRefreshUpdater(this);
+    myProjectRootManager.registerRefreshUpdater(this);
   }
 
   public void dispose() {
     myVirtualFileManager.removeVirtualFileManagerListener(this);
-    myVirtualFileManager.unregisterRefreshUpdater(this);
+    myProjectRootManager.unregisterRefreshUpdater(this);
   }
 
   public void beforeRefreshStart(boolean asynchonous) {

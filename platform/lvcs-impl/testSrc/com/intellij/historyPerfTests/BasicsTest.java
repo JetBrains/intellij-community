@@ -20,9 +20,9 @@ import com.intellij.history.FileRevisionTimestampComparator;
 import com.intellij.history.core.changes.Change;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.integration.CacheUpdaterHelper;
+import com.intellij.history.integration.LocalHistoryCacheUpdater;
 import com.intellij.history.integration.TestIdeaGateway;
 import com.intellij.history.integration.TestVirtualFile;
-import com.intellij.history.integration.Updater;
 import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -201,7 +201,7 @@ public class BasicsTest extends LocalVcsPerformanceTestCase {
   private void updateFrom(VirtualFile root) {
     TestIdeaGateway gw = new TestIdeaGateway();
     gw.setContentRoots(root);
-    Updater u = new Updater(vcs, gw);
+    LocalHistoryCacheUpdater u = new LocalHistoryCacheUpdater("test", vcs, gw);
     CacheUpdaterHelper.performUpdate(u);
   }
 }

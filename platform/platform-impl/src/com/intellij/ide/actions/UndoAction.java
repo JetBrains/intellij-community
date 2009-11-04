@@ -17,9 +17,8 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.project.DumbAware;
 
-public class UndoAction extends UndoRedoAction implements DumbAware {
+public class UndoAction extends UndoRedoAction {
   @Override
   protected boolean isAvailable(FileEditor editor, UndoManager undoManager) {
     return undoManager.isUndoAvailable(editor);

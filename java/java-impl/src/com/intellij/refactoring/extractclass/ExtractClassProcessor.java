@@ -42,7 +42,6 @@ import com.intellij.refactoring.psi.MethodInheritanceUtils;
 import com.intellij.refactoring.psi.TypeParametersVisitor;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.refactoring.util.FixableUsagesRefactoringProcessor;
-import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -231,28 +230,15 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     for (PsiMethod method : methods) {
       final PsiMethod member = psiClass.findMethodBySignature(method, false);
       if (member != null) {
-        fixVisibility(usageInfos, member);
+        VisibilityUtil.fixVisibility(usageInfos, member, myNewVisibility);
       }
     }
 
     for (PsiField field : fields) {
       final PsiField member = psiClass.findFieldByName(field.getName(), false);
       if (member != null) {
-        fixVisibility(usageInfos, member);
+        VisibilityUtil.fixVisibility(usageInfos, member, myNewVisibility);
       }
-    }
-  }
-
-  private void fixVisibility(UsageInfo[] usageInfos, PsiMember member) {
-    if (VisibilityUtil.ESCALATE_VISIBILITY.equals(myNewVisibility)) {
-      for (UsageInfo info : usageInfos) {
-        final PsiElement element = info.getElement();
-        if (element != null) {
-          VisibilityUtil.escalateVisibility(member, element);
-        }
-      }
-    } else {
-       RefactoringConflictsUtil.setVisibility(member.getModifierList(), myNewVisibility);
     }
   }
 

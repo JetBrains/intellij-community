@@ -160,56 +160,27 @@ public class EventDispatcherRefreshingTest extends EventDispatcherTestCase {
   }
 
   @Test
-  public void testSeveralUpdatesInsideOneRefresh() {
+  public void testSeveralUpdates() {
     vcs.createDirectory("dir");
     fireRefreshStarted();
 
     fireCreated(new TestVirtualFile("dir/f1", null, -1));
     assertFalse(vcs.hasEntry("dir/f1"));
 
-    CacheUpdaterHelper.performUpdate(d);
+    updateAndFireRefreshFinished();
     assertTrue(vcs.hasEntry("dir/f1"));
+
+    fireRefreshStarted();
 
     fireCreated(new TestVirtualFile("dir/f2", null, -1));
     assertFalse(vcs.hasEntry("dir/f2"));
 
-    CacheUpdaterHelper.performUpdate(d);
-    assertTrue(vcs.hasEntry("dir/f2"));
-
-    fireRefreshFinished();
-
-    List<Revision> rr = vcs.getRevisionsFor("dir");
-    assertEquals(2, rr.size());
-    assertEquals("External change", rr.get(0).getCauseChangeName());
-  }
-
-  @Test
-  public void testChangeSetsDuringSeveralUpdatersInsideOneRefresh() {
-    vcs.createDirectory("dir");
-    long timestamp = -1;
-    vcs.createFile("dir/f", null, timestamp, false);
-
-    assertEquals(2, vcs.getRevisionsFor("dir").size());
-
-    fireRefreshStarted();
-
-    vcs.createDirectory("dir/dir1");
-    long timestamp3 = -1;
-    vcs.createFile("dir/f1", null, timestamp3, false);
-
-    CacheUpdaterHelper.performUpdate(d);
-
-    vcs.createDirectory("dir/dir2");
-    long timestamp1 = -1;
-    vcs.createFile("dir/f2", null, timestamp1, false);
-
     updateAndFireRefreshFinished();
 
-    assertEquals(3, vcs.getRevisionsFor("dir").size());
-
-    long timestamp2 = -1;
-    vcs.createFile("dir/f3", null, timestamp2, false);
-    assertEquals(4, vcs.getRevisionsFor("dir").size());
+    List<Revision> rr = vcs.getRevisionsFor("dir");
+    assertEquals(3, rr.size());
+    assertEquals("External change", rr.get(0).getCauseChangeName());
+    assertEquals("External change", rr.get(1).getCauseChangeName());
   }
 
   @Test
@@ -221,8 +192,10 @@ public class EventDispatcherRefreshingTest extends EventDispatcherTestCase {
   @Test
   public void testEmptyRefreshWithSeveralUpdates() {
     fireRefreshStarted();
-    CacheUpdaterHelper.performUpdate(d);
-    CacheUpdaterHelper.performUpdate(d);
+    updateAndFireRefreshFinished();
+    fireRefreshStarted();
+    updateAndFireRefreshFinished();
+    fireRefreshStarted();
     updateAndFireRefreshFinished();
   }
 

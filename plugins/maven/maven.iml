@@ -93,6 +93,8 @@
     </orderEntry>
     <orderEntry type="module" module-name="idea-ui" exported="" />
     <orderEntry type="module" module-name="openapi" exported="" />
+    <orderEntry type="module" module-name="platform-impl" />
+    <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="xml" exported="" />
     <orderEntry type="module" module-name="dom-openapi" exported="" />
     <orderEntry type="module" module-name="dom-impl" exported="" />
@@ -105,7 +107,6 @@
     <orderEntry type="library" name="jgoodies-forms" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="testFramework-java" exported="" scope="TEST" />
-    <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="jetgroovy" scope="TEST" />
   </component>
   <component name="copyright">

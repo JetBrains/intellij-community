@@ -18,9 +18,8 @@ package com.intellij.psi.impl;
 
 import com.intellij.formatting.FormatterEx;
 import com.intellij.formatting.FormatterImpl;
-import com.intellij.ide.startup.CacheUpdater;
-import com.intellij.ide.startup.FileContent;
-import com.intellij.ide.startup.FileSystemSynchronizer;
+import com.intellij.ide.caches.CacheUpdater;
+import com.intellij.ide.caches.FileContent;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.openapi.Disposable;
@@ -293,12 +292,10 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
     StartupManagerEx startupManager = StartupManagerEx.getInstanceEx(myProject);
     if (startupManager != null) {
-      FileSystemSynchronizer synchronizer = startupManager.getFileSystemSynchronizer();
-
       if (PsiManagerConfiguration.getInstance().REPOSITORY_ENABLED) {
         CacheUpdater[] updaters = myCacheManager.getCacheUpdaters();
         for (CacheUpdater updater : updaters) {
-          synchronizer.registerCacheUpdater(updater);
+          startupManager.registerCacheUpdater(updater);
         }
       }
     }

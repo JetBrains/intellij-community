@@ -15,7 +15,7 @@
  */
 package com.intellij.mock;
 
-import com.intellij.ide.startup.CacheUpdater;
+import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.ModificationTracker;
@@ -82,9 +82,6 @@ public class MockVirtualFileManager extends VirtualFileManagerEx {
   }
 
   public void afterRefreshFinish(boolean asynchronous, ModalityState modalityState) {
-  }
-
-  public void addEventToFireByRefresh(Runnable action, boolean asynchronous, ModalityState modalityState) {
   }
 
   public void registerRefreshUpdater(CacheUpdater updater) {

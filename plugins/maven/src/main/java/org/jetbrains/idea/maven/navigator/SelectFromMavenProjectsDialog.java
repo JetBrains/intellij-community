@@ -62,7 +62,7 @@ public class SelectFromMavenProjectsDialog extends DialogWrapper {
         return false;
       }
     };
-    treeStructure.buildTree();
+    treeStructure.update();
 
     final SimpleNode[] selection = new SimpleNode[]{null};
     treeStructure.accept(new SimpleNodeVisitor() {

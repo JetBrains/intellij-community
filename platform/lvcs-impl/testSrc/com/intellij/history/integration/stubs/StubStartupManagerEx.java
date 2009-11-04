@@ -16,8 +16,8 @@
 
 package com.intellij.history.integration.stubs;
 
+import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.startup.StartupManagerEx;
-import com.intellij.ide.startup.FileSystemSynchronizer;
 import org.jetbrains.annotations.NotNull;
 
 public class StubStartupManagerEx extends StartupManagerEx {
@@ -33,10 +33,6 @@ public class StubStartupManagerEx extends StartupManagerEx {
     throw new UnsupportedOperationException();
   }
 
-  public FileSystemSynchronizer getFileSystemSynchronizer() {
-    throw new UnsupportedOperationException();
-  }
-
   public boolean startupActivityRunning() {
     throw new UnsupportedOperationException();
   }
@@ -49,8 +45,12 @@ public class StubStartupManagerEx extends StartupManagerEx {
     throw new UnsupportedOperationException();
   }
 
-  public void registerPreStartupActivity(@NotNull Runnable runnable) // should be used only to register to FileSystemSynchronizer!
-  {
+  public void registerPreStartupActivity(@NotNull Runnable runnable) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void registerCacheUpdater(CacheUpdater updater) {
     throw new UnsupportedOperationException();
   }
 }

@@ -176,7 +176,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
           throw EvaluateExceptionUtil.createEvaluateException(e);
         }
         else {
-          // JDI bug: although isSuspended() == true, frameCount() may throw IncompatibleTharedStateException
+          // JDI bug: although isSuspended() == true, frameCount() may throw IncompatibleThreadStateException
           // see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4783403
           // unfortunately, impossible to get this information at the moment, so assume the frame count is null
           myFrameCount = 0;

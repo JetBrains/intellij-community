@@ -23,7 +23,7 @@ import org.junit.Test;
 
 import java.util.List;
 
-public class UpdaterTest extends LocalVcsTestCase {
+public class LocalHistoryCacheUpdaterTest extends LocalVcsTestCase {
   LocalVcs vcs = new InMemoryLocalVcs();
   TestIdeaGateway gw = new TestIdeaGateway();
   TestFileFilter filter = (TestFileFilter)gw.getFileFilter();
@@ -61,7 +61,7 @@ public class UpdaterTest extends LocalVcsTestCase {
   @Test
   public void testSelectingOnlyUniqueRoots() {
     VirtualFile root = new TestVirtualFile("root");
-    Updater u = new Updater(vcs, gw);
+    LocalHistoryCacheUpdater u = new LocalHistoryCacheUpdater("test", vcs, gw);
     VirtualFile[] result = u.selectParentlessRootsAndSort(list(root, root));
     assertArrayEquals(array(root), result);
   }
@@ -509,7 +509,7 @@ public class UpdaterTest extends LocalVcsTestCase {
 
   private void updateWith(VirtualFile... roots) {
     gw.setContentRoots(roots);
-    Updater u = new Updater(vcs, gw);
+    LocalHistoryCacheUpdater u = new LocalHistoryCacheUpdater("test", vcs, gw);
     CacheUpdaterHelper.performUpdate(u);
   }
 }
