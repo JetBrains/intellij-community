@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.psi.PsiReferenceFactory;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
@@ -40,8 +41,10 @@ import java.lang.reflect.Type;
 public abstract class DomManager implements ModificationTracker {
   public static final Key<Module> MOCK_ELEMENT_MODULE = Key.create("MockElementModule");
 
+  private final static NotNullLazyKey<DomManager, Project> INSTANCE_CACHE = ServiceManager.createLazyKey(DomManager.class);
+
   public static DomManager getDomManager(Project project) {
-    return ServiceManager.getService(project, DomManager.class);
+    return INSTANCE_CACHE.getValue(project);
   }
 
   public abstract Project getProject();
