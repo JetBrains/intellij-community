@@ -27,6 +27,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.pom.java.LanguageLevel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 public class LanguageLevelModuleExtension extends ModuleExtension<LanguageLevelModuleExtension> {
   @NonNls private static final String LANGUAGE_LEVEL_ELEMENT_NAME = "LANGUAGE_LEVEL";
@@ -69,6 +70,7 @@ public class LanguageLevelModuleExtension extends ModuleExtension<LanguageLevelM
     myLanguageLevel = languageLevel;
   }
 
+  @Nullable
   public LanguageLevel getLanguageLevel() {
     return myLanguageLevel;
   }
