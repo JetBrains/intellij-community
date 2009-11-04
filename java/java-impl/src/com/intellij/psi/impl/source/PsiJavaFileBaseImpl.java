@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -34,7 +35,6 @@ import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.impl.source.resolve.ClassCollectingProcessor;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
-import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
@@ -42,8 +42,11 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
-import com.intellij.reference.SoftReference;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MostlySingularMultiMap;
@@ -54,7 +57,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.ConcurrentMap;
 
 public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJavaFile {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiJavaFileBaseImpl");
@@ -62,14 +64,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   private final CachedValue<MostlySingularMultiMap<String, ClassCollectingProcessor.ResultWithContext>> myResolveCache;
 
   @NonNls private static final String[] IMPLICIT_IMPORTS = { "java.lang" };
-  private static final ParameterizedCachedValueProvider<LanguageLevel,PsiJavaFileBaseImpl> LANGUAGE_LEVEL_PROVIDER = new ParameterizedCachedValueProvider<LanguageLevel, PsiJavaFileBaseImpl>() {
-    public CachedValueProvider.Result<LanguageLevel> compute(PsiJavaFileBaseImpl file) {
-      LanguageLevel level = file.getLanguageLevelInner();
-      return CachedValueProvider.Result.create(level, ProjectRootManager.getInstance(file.getProject()));
-    }
-  };
 
-  private static final Key<ResolveCache.MapPair<PsiJavaFile,ConcurrentMap<String, SoftReference<JavaResolveResult[]>>>> CACHED_CLASSES_MAP_KEY = Key.create("CACHED_CLASSES_MAP_KEY");
   protected PsiJavaFileBaseImpl(IElementType elementType, IElementType contentElementType, FileViewProvider viewProvider) {
     super(elementType, contentElementType, viewProvider);
     myResolveCache = myManager.getCachedValuesManager().createCachedValue(new MyCacheBuilder(), false);
@@ -404,10 +399,21 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     return JavaCodeStyleManager.getInstance(getProject()).addImport(this, aClass);
   }
 
-  private static final Key<ParameterizedCachedValue<LanguageLevel, PsiJavaFileBaseImpl>> LANGUAGE_LEVEL_KEY = Key.create("LANGUAGE_LEVEL");
+  private static final NotNullLazyKey<LanguageLevel, PsiJavaFileBaseImpl> LANGUAGE_LEVEL_KEY = NotNullLazyKey.create("LANGUAGE_LEVEL", new NotNullFunction<PsiJavaFileBaseImpl, LanguageLevel>() {
+    @NotNull
+    public LanguageLevel fun(PsiJavaFileBaseImpl file) {
+      return file.getLanguageLevelInner();
+    }
+  });
+
   @NotNull
   public LanguageLevel getLanguageLevel() {
-    return getManager().getCachedValuesManager().getParameterizedCachedValue(this, LANGUAGE_LEVEL_KEY, LANGUAGE_LEVEL_PROVIDER, false, this);
+    return LANGUAGE_LEVEL_KEY.getValue(this);
+  }
+
+  public void clearCaches() {
+    super.clearCaches();
+    putUserData(LANGUAGE_LEVEL_KEY, null);
   }
 
   private LanguageLevel getLanguageLevelInner() {
