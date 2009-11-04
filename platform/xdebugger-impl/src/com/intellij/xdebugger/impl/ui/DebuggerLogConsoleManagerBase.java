@@ -81,14 +81,17 @@ public abstract class DebuggerLogConsoleManagerBase implements DebuggerLogConsol
     myEnvironment = env;
   }
 
-  public void addLogConsole(String name, Reader reader, long skippedContent, Icon icon) {
+  @NotNull
+  public LogConsoleBase addLogConsole(String name, Reader reader, long skippedContent, Icon icon) {
     final Ref<Content> content = new Ref<Content>();
-    addLogConsole(new LogConsoleBase(myProject, reader, skippedContent, name, false, new DefaultLogFilterModel(myProject)) {
+    LogConsoleBase console = new LogConsoleBase(myProject, reader, skippedContent, name, false, new DefaultLogFilterModel(myProject)) {
       public boolean isActive() {
         final Content logContent = content.get();
         return logContent != null && logContent.isSelected();
       }
-    }, icon, content);
+    };
+    addLogConsole(console, icon, content);
+    return console;
   }
 
   public void addLogConsole(final String name, final String path, final long skippedContent, Icon icon) {
