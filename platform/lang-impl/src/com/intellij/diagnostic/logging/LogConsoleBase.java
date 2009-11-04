@@ -450,6 +450,10 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     return myBuildInActions;
   }
 
+  public void writeToConsole(String text, Key outputType) {
+    myProcessHandler.notifyTextAvailable(text, outputType);
+  }
+
   private static class LightProcessHandler extends ProcessHandler {
     protected void destroyProcessImpl() {
       throw new UnsupportedOperationException();
