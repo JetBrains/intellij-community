@@ -16,7 +16,7 @@
 
 package com.intellij.history.integration;
 
-import com.intellij.ide.startup.FileContent;
+import com.intellij.ide.caches.FileContent;
 import com.intellij.history.core.InMemoryLocalVcs;
 import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.LocalVcsTestCase;
@@ -26,7 +26,7 @@ import org.junit.Test;
 
 public class UpdaterAsCacheUpdaterTest extends LocalVcsTestCase {
   LocalVcs vcs = new InMemoryLocalVcs();
-  Updater updater;
+  LocalHistoryCacheUpdater updater;
 
   TestVirtualFile root;
   TestVirtualFile file;
@@ -39,7 +39,7 @@ public class UpdaterAsCacheUpdaterTest extends LocalVcsTestCase {
 
     TestIdeaGateway gw = new TestIdeaGateway();
     gw.setContentRoots(root);
-    updater = new Updater(vcs, gw);
+    updater = new LocalHistoryCacheUpdater("test", vcs, gw);
   }
 
   @Test

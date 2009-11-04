@@ -37,9 +37,9 @@ public class LocalHistoryServiceFileListeningTest extends LocalHistoryServiceTes
 
   @Test
   public void testUnsubscribingRefreshUpdatersOnShutdown() {
-    assertTrue(fileManager.hasRefreshUpdater());
+    assertTrue(rootManager.hasRefreshUpdater());
     service.shutdown();
-    assertFalse(fileManager.hasRefreshUpdater());
+    assertFalse(rootManager.hasRefreshUpdater());
   }
 
   @Test

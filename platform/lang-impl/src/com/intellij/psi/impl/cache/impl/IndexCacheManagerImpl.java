@@ -16,7 +16,7 @@
 
 package com.intellij.psi.impl.cache.impl;
 
-import com.intellij.ide.startup.CacheUpdater;
+import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;

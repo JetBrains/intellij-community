@@ -19,8 +19,7 @@ package com.intellij.util.indexing;
 import com.intellij.AppTopics;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.ide.startup.BackgroundableCacheUpdater;
-import com.intellij.ide.startup.impl.FileSystemSynchronizerImpl;
+import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -36,6 +35,7 @@ import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.CollectingContentIterator;
 import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -104,7 +104,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   };
 
-  private final ChangedFilesUpdater myChangedFilesUpdater;
+  private final ChangedFilesCollector myChangedFilesCollector;
 
   private final List<IndexableFileSet> myIndexableSets = ContainerUtil.createEmptyCOWList();
 
@@ -125,7 +125,7 @@ public class FileBasedIndex implements ApplicationComponent {
   private final boolean myIsUnitTestMode;
 
   public void requestReindex(final VirtualFile file) {
-    myChangedFilesUpdater.invalidateIndices(file, true);
+    myChangedFilesCollector.invalidateIndices(file, true);
   }
 
   public interface InputFilter {
@@ -256,10 +256,8 @@ public class FileBasedIndex implements ApplicationComponent {
         }
       }
 
-      myChangedFilesUpdater = new ChangedFilesUpdater();
-      vfManager.addVirtualFileListener(myChangedFilesUpdater);
-
-      vfManager.registerRefreshUpdater(myChangedFilesUpdater);
+      myChangedFilesCollector = new ChangedFilesCollector();
+      vfManager.addVirtualFileListener(myChangedFilesCollector);
 
       registerIndexableSet(new AdditionalIndexableFileSet());
     }
@@ -451,7 +449,7 @@ public class FileBasedIndex implements ApplicationComponent {
     
     LOG.info("START INDEX SHUTDOWN");
     try {
-      myChangedFilesUpdater.forceUpdate(null);
+      myChangedFilesCollector.forceUpdate(null, null);
 
       for (ID<?, ?> indexId : myIndices.keySet()) {
         final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
@@ -461,8 +459,7 @@ public class FileBasedIndex implements ApplicationComponent {
         index.dispose();
       }
 
-      myVfManager.removeVirtualFileListener(myChangedFilesUpdater);
-      myVfManager.unregisterRefreshUpdater(myChangedFilesUpdater);
+      myVfManager.removeVirtualFileListener(myChangedFilesCollector);
 
       FileUtil.delete(getMarkerFile());
     }
@@ -577,11 +574,11 @@ public class FileBasedIndex implements ApplicationComponent {
     myReentrancyGuard.set(Boolean.TRUE);
 
     try {
-      myChangedFilesUpdater.ensureAllInvalidateTasksCompleted();
+      myChangedFilesCollector.ensureAllInvalidateTasksCompleted();
       if (isUpToDateCheckEnabled()) {
         try {
           checkRebuild(indexId, false);
-          myChangedFilesUpdater.forceUpdate(filter);
+          myChangedFilesCollector.forceUpdate(project, filter);
           indexUnsavedDocuments(indexId, project, filter);
         }
         catch (StorageException e) {
@@ -898,12 +895,11 @@ public class FileBasedIndex implements ApplicationComponent {
           try {
             clearIndex(indexId);
             if (!cleanupOnly) {
-              final FileSystemSynchronizerImpl synchronizer = new FileSystemSynchronizerImpl();
-              synchronizer.setCancelable(false);
               for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-                synchronizer.registerCacheUpdater(new UnindexedFilesUpdater(project, ProjectRootManager.getInstance(project), FileBasedIndex.this));
+                UnindexedFilesUpdater updater =
+                  new UnindexedFilesUpdater(project, ProjectRootManager.getInstance(project), FileBasedIndex.this);
+                DumbServiceImpl.getInstance(project).queueCacheUpdate(Collections.<CacheUpdater>singleton(updater));
               }
-              synchronizer.executeFileUpdate();
             }
           }
           catch (StorageException e) {
@@ -1177,8 +1173,22 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
     return pair != null? pair.getSecond() : null;
   }
 
-  public void indexFileContent(com.intellij.ide.startup.FileContent content) {
-    myChangedFilesUpdater.ensureAllInvalidateTasksCompleted();
+  public Collection<VirtualFile> getFilesToUpdate(final Project project) {
+    final ProjectFileIndex projectIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    return ContainerUtil.findAll(myChangedFilesCollector.getAllFilesToUpdate(), new Condition<VirtualFile>() {
+      public boolean value(VirtualFile virtualFile) {
+        return projectIndex.isInContent(virtualFile);
+      }
+    });
+  }
+
+  public void processRefreshedFile(@NotNull Project project, final com.intellij.ide.caches.FileContent fileContent) {
+    myChangedFilesCollector.ensureAllInvalidateTasksCompleted();
+    myChangedFilesCollector.processFileImpl(project, fileContent);
+  }
+
+  public void indexFileContent(@Nullable Project project, com.intellij.ide.caches.FileContent content) {
+    myChangedFilesCollector.ensureAllInvalidateTasksCompleted();
     final VirtualFile file = content.getVirtualFile();
     FileContent fc = null;
 
@@ -1204,7 +1214,6 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
             psiFile.putUserData(PsiFileImpl.BUILDING_STUB, true);
             fc.putUserData(PSI_FILE, psiFile);
           }
-          Project project = content.getUserData(PROJECT);
           if (project == null) {
             project = ProjectUtil.guessProjectForFile(file);
           }
@@ -1250,7 +1259,7 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
     }
 
     if (!pce.isNull()) {
-      myChangedFilesUpdater.scheduleForUpdate(file);
+      myChangedFilesCollector.scheduleForUpdate(file);
       throw pce.get();
     }
 
@@ -1331,7 +1340,7 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
     }
   }
 
-  private final class ChangedFilesUpdater extends VirtualFileAdapter implements BackgroundableCacheUpdater {
+  private final class ChangedFilesCollector extends VirtualFileAdapter {
     private final Set<VirtualFile> myFilesToUpdate = new LinkedHashSet<VirtualFile>();
     private final Queue<InvalidationTask> myFutureInvalidations = new LinkedList<InvalidationTask>();
     private final JBReentrantReadWriteLock myLock = LockFactory.createReadWriteLock();
@@ -1593,55 +1602,30 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
       }
     }
 
-    public boolean initiallyBackgrounded() {
-      if (ApplicationManager.getApplication().isCommandLine() || ApplicationManager.getApplication().isUnitTestMode()) {
-        return false;
-      }
-      return Registry.get(DumbServiceImpl.FILE_INDEX_BACKGROUND).asBoolean();
-    }
-
-    public boolean canBeSentToBackground(Collection<VirtualFile> remaining) {
-      return true;
-    }
-
-    public void backgrounded(Collection<VirtualFile> remaining) {
-      new BackgroundCacheUpdaterRunner(remaining).processFiles(this);
-    }
-
-    public VirtualFile[] queryNeededFiles() {
+    public Collection<VirtualFile> getAllFilesToUpdate() {
       r.lock();
       try {
-        if (myFilesToUpdate.isEmpty()) {
-          return VirtualFile.EMPTY_ARRAY;
-        }
-        return myFilesToUpdate.toArray(new VirtualFile[myFilesToUpdate.size()]);
+        if (myFilesToUpdate.isEmpty())  return Collections.EMPTY_LIST;
+        return new ArrayList<VirtualFile>(myFilesToUpdate);
       }
       finally {
         r.unlock();
       }
     }
 
-    public void processFile(final com.intellij.ide.startup.FileContent fileContent) {
-      myChangedFilesUpdater.ensureAllInvalidateTasksCompleted();
-      processFileImpl(fileContent);
-    }
-
     private final Semaphore myForceUpdateSemaphore = new Semaphore();
 
-    public void forceUpdate(@Nullable GlobalSearchScope filter) {
-      myChangedFilesUpdater.ensureAllInvalidateTasksCompleted();
-      final VirtualFile[] files = queryNeededFiles();
-      if (files.length > 0) {
-        for (VirtualFile file: files) {
-          if (filter == null || filter.accept(file)) {
-            try {
-              myForceUpdateSemaphore.down();
-              // process only files that can affect result
-              processFileImpl(new com.intellij.ide.startup.FileContent(file));
-            }
-            finally {
-              myForceUpdateSemaphore.up();
-            }
+    public void forceUpdate(@Nullable Project project, @Nullable GlobalSearchScope filter) {
+      myChangedFilesCollector.ensureAllInvalidateTasksCompleted();
+      for (VirtualFile file: getAllFilesToUpdate()) {
+        if (filter == null || filter.accept(file)) {
+          try {
+            myForceUpdateSemaphore.down();
+            // process only files that can affect result
+            processFileImpl(project, new com.intellij.ide.caches.FileContent(file));
+          }
+          finally {
+            myForceUpdateSemaphore.up();
           }
         }
       }
@@ -1658,13 +1642,7 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
       }
     }
 
-    public void updatingDone() {
-    }
-
-    public void canceled() {
-    }
-    
-    private void processFileImpl(final com.intellij.ide.startup.FileContent fileContent) {
+    private void processFileImpl(Project project, final com.intellij.ide.caches.FileContent fileContent) {
       final VirtualFile file = fileContent.getVirtualFile();
       final boolean reallyRemoved;
       w.lock();
@@ -1675,7 +1653,7 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
         w.unlock();
       }
       if (reallyRemoved && file.isValid()) {
-        indexFileContent(fileContent);
+        indexFileContent(project, fileContent);
         IndexingStamp.flushCache();
       }
     }
@@ -1797,7 +1775,7 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
   }
 
   public void removeIndexableSet(IndexableFileSet set) {
-    myChangedFilesUpdater.forceUpdate(null);
+    myChangedFilesCollector.forceUpdate(null, null);
     myIndexableSets.remove(set);
   }
 

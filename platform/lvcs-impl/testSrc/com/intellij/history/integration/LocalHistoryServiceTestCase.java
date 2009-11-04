@@ -24,8 +24,7 @@ import com.intellij.history.integration.stubs.StubCommandProcessor;
 import com.intellij.history.integration.stubs.StubProjectRootManagerEx;
 import com.intellij.history.integration.stubs.StubStartupManagerEx;
 import com.intellij.history.integration.stubs.StubVirtualFileManagerEx;
-import com.intellij.ide.startup.CacheUpdater;
-import com.intellij.ide.startup.FileSystemSynchronizer;
+import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.vfs.*;
@@ -90,13 +89,8 @@ public class LocalHistoryServiceTestCase extends LocalVcsTestCase {
     private CacheUpdater myUpdater;
 
     @Override
-    public FileSystemSynchronizer getFileSystemSynchronizer() {
-      return new FileSystemSynchronizer() {
-        @Override
-        public void registerCacheUpdater(@NotNull CacheUpdater u) {
-          myUpdater = u;
-        }
-      };
+    public void registerCacheUpdater(CacheUpdater updater) {
+      myUpdater = updater;
     }
 
     public void synchronizeFileSystem() {
@@ -105,21 +99,36 @@ public class LocalHistoryServiceTestCase extends LocalVcsTestCase {
   }
 
   protected class MyProjectRootManagerEx extends StubProjectRootManagerEx {
-    private CacheUpdater myUpdater;
+    private CacheUpdater myRootsChangeUpdater;
+    private CacheUpdater myRefreshUpdater;
 
     @Override
-    public void registerChangeUpdater(CacheUpdater u) {
-      myUpdater = u;
+    public void registerRootsChangeUpdater(CacheUpdater u) {
+      myRootsChangeUpdater = u;
     }
 
     @Override
-    public void unregisterChangeUpdater(CacheUpdater u) {
-      if (myUpdater == u) myUpdater = null;
+    public void unregisterRootsChangeUpdater(CacheUpdater u) {
+      if (myRootsChangeUpdater == u) myRootsChangeUpdater = null;
+    }
+
+    @Override
+    public void registerRefreshUpdater(CacheUpdater updater) {
+      myRefreshUpdater = updater;
+    }
+
+    @Override
+    public void unregisterRefreshUpdater(CacheUpdater updater) {
+      if (myRefreshUpdater == updater) myRefreshUpdater = null;
+    }
+
+    public boolean hasRefreshUpdater() {
+      return myRefreshUpdater != null;
     }
 
     public void updateRoots() {
-      if (myUpdater != null) {
-        doUpdateRoots(myUpdater);
+      if (myRootsChangeUpdater != null) {
+        doUpdateRoots(myRootsChangeUpdater);
       }
     }
   }
@@ -127,7 +136,6 @@ public class LocalHistoryServiceTestCase extends LocalVcsTestCase {
   protected class MyVirtualFileManagerEx extends StubVirtualFileManagerEx {
     private VirtualFileListener myFileListener;
     private VirtualFileManagerListener myFileManagerListener;
-    private CacheUpdater myRefreshUpdater;
 
     public void fireBeforeRefreshStart(boolean async) {
       myFileManagerListener.beforeRefreshStart(async);
@@ -187,20 +195,6 @@ public class LocalHistoryServiceTestCase extends LocalVcsTestCase {
 
     public boolean hasVirtualFileManagerListener() {
       return myFileManagerListener != null;
-    }
-
-    @Override
-    public void registerRefreshUpdater(CacheUpdater u) {
-      myRefreshUpdater = u;
-    }
-
-    @Override
-    public void unregisterRefreshUpdater(CacheUpdater u) {
-      if (myRefreshUpdater == u) myRefreshUpdater = null;
-    }
-
-    public boolean hasRefreshUpdater() {
-      return myRefreshUpdater != null;
     }
   }
 

@@ -39,9 +39,8 @@ public class DumbModeIndicator extends AbstractProjectComponent {
         myAlarm.addRequest(new Runnable() {
           public void run() {
             myHandler = DumbService.getInstance(myProject).showDumbModeNotification(
-              "Index update is in progress...<br>" +
-              "During this process some actions that require these indices won't be available.<br>" +
-              "<a href=\'help\'>Click here for more info</a>");
+              "Updating indexes...<br>" +
+              "Some of advanced features (refactorings, navigation, etc.) are not available.");
           }
         }, 1000);
       }

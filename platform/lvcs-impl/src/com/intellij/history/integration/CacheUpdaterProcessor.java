@@ -18,7 +18,7 @@ package com.intellij.history.integration;
 
 import com.intellij.history.core.ContentFactory;
 import com.intellij.history.core.LocalVcs;
-import com.intellij.ide.startup.FileContent;
+import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
@@ -51,7 +51,7 @@ public class CacheUpdaterProcessor {
   public VirtualFile[] queryNeededFiles() {
     List<VirtualFile> result = new ArrayList<VirtualFile>(myFilesToCreate);
     result.addAll(myFilesToUpdate);
-    return result.toArray(new VirtualFile[0]);
+    return result.toArray(new VirtualFile[result.size()]);
   }
 
   public void processFile(FileContent c) {
@@ -70,10 +70,10 @@ public class CacheUpdaterProcessor {
       // But it is much better to fix this bug somehow else...
       // but for now we can live with this hack 8)
       if (myVcs.hasEntry(path)) return;
-      myVcs.createFile(path, contentFactoryFor(c), f.getTimeStamp(), !f.isWritable());
+      myVcs.createFile(path, contentFactoryFor(c), c.getTimeStamp(), !c.isWritable());
     }
     else {
-      myVcs.changeFileContent(path, contentFactoryFor(c), f.getTimeStamp());
+      myVcs.changeFileContent(path, contentFactoryFor(c), c.getTimeStamp());
     }
   }
 

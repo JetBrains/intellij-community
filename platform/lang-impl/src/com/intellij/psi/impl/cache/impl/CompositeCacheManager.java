@@ -16,7 +16,7 @@
 
 package com.intellij.psi.impl.cache.impl;
 
-import com.intellij.ide.startup.CacheUpdater;
+import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.cache.CacheManager;

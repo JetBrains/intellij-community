@@ -20,29 +20,38 @@ import com.intellij.diagnostic.Diagnostic;
 import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.utils.LocalHistoryLog;
-import com.intellij.ide.startup.CacheUpdater;
-import com.intellij.ide.startup.FileContent;
+import com.intellij.ide.caches.CacheUpdater;
+import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
-public class Updater implements CacheUpdater {
+public class LocalHistoryCacheUpdater implements CacheUpdater {
   private final LocalVcs myVcs;
   private final IdeaGateway myGateway;
-  private final VirtualFile[] myVfsRoots;
+  private final String myChangeSetName;
 
-  private final CacheUpdaterProcessor myProcessor;
+  private VirtualFile[] myVfsRoots;
+  private CacheUpdaterProcessor myProcessor;
 
-  public Updater(LocalVcs vcs, IdeaGateway gw) {
+  public LocalHistoryCacheUpdater(String changeSetName, LocalVcs vcs, IdeaGateway gw) {
+    myChangeSetName = changeSetName;
     myVcs = vcs;
     myGateway = gw;
-    myVfsRoots = selectParentlessRootsAndSort(gw.getContentRoots());
+  }
+
+  public VirtualFile[] queryNeededFiles() {
+    myVfsRoots = selectParentlessRootsAndSort(myGateway.getContentRoots());
     myProcessor = new CacheUpdaterProcessor(myVcs);
+
+    myVcs.beginChangeSet();
+
+    deleteObsoleteRoots();
+    createAndUpdateRoots();
+
+    return myProcessor.queryNeededFiles();
   }
 
   protected VirtualFile[] selectParentlessRootsAndSort(List<VirtualFile> roots) {
@@ -69,25 +78,18 @@ public class Updater implements CacheUpdater {
     return p == null || !myGateway.getFileFilter().isUnderContentRoot(p);
   }
 
-  public VirtualFile[] queryNeededFiles() {
-    myVcs.beginChangeSet();
-
-    deleteObsoleteRoots();
-    createAndUpdateRoots();
-
-    return myProcessor.queryNeededFiles();
-  }
-
   public void processFile(FileContent c) {
     myProcessor.processFile(c);
   }
 
   public void updatingDone() {
-    myVcs.endChangeSet(null);
+    myVcs.endChangeSet(myChangeSetName);
+    myVfsRoots = null;
+    myProcessor = null;
   }
 
   public void canceled() {
-    // TODO ? Save changes processed so far?
+    updatingDone();
   }
 
   private void deleteObsoleteRoots() {

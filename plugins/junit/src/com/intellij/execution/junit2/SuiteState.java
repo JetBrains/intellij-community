@@ -28,7 +28,7 @@ import java.util.List;
 
 public class SuiteState extends TestState {
   private final TestProxy myTest;
-  private int myMaxMagnitude = -1;
+  private int myMaxMagnitude = PoolOfTestStates.NOT_RUN_INDEX;
   private boolean myHasRunning;
   private final StateCache myCache = new StateCache();
 
@@ -96,7 +96,9 @@ public class SuiteState extends TestState {
   }
 
   public void updateMagnitude(int magnitude) {
-    if (myMaxMagnitude < magnitude) {
+    if (myMaxMagnitude == PoolOfTestStates.NOT_RUN_INDEX) {
+      myMaxMagnitude = magnitude;
+    } else if (myMaxMagnitude < magnitude) {
       myMaxMagnitude = magnitude;
     }
   }

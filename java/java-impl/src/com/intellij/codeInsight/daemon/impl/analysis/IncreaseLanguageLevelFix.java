@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -25,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
@@ -38,6 +40,8 @@ import java.util.EnumMap;
  * @author cdr
  */
 public class IncreaseLanguageLevelFix implements IntentionAction {
+  private static final Logger LOG = Logger.getInstance("#" + IncreaseLanguageLevelFix.class.getName());
+
   private final LanguageLevel myLevel;
   private static final Map<LanguageLevel, String[]> acceptableJDKVersions = new EnumMap<LanguageLevel, String[]>(LanguageLevel.class);
 
@@ -62,11 +66,12 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
     return CodeInsightBundle.message("set.language.level");
   }
 
-  private boolean isJdkSupportsLevel(Sdk jdk) {
+  private static boolean isJdkSupportsLevel(@Nullable final Sdk jdk, final LanguageLevel level) {
+    if (jdk == null) return true;
     final JavaSdk sdk = JavaSdk.getInstance();
     final String versionString = jdk.getVersionString();
     if (versionString == null) return false;
-    String[] acceptableVersionNumbers = acceptableJDKVersions.get(myLevel);
+    final String[] acceptableVersionNumbers = acceptableJDKVersions.get(level);
     for (String number : acceptableVersionNumbers) {
       if (sdk.compareTo(versionString, number) >= 0) return true;
     }
@@ -74,15 +79,22 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    Module module = ModuleUtil.findModuleForFile(file.getVirtualFile(), project);
-    return isJdkSupportsLevel(getRelevantJdk(project, module));
+    final VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null) return false;
+    final Module module = ModuleUtil.findModuleForFile(virtualFile, project);
+    return isLanguageLevelAcceptable(project, module, myLevel);
+  }
+
+  public static boolean isLanguageLevelAcceptable(final Project project, Module module, final LanguageLevel level) {
+    return isJdkSupportsLevel(getRelevantJdk(project, module), level);
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    Module module = ModuleUtil.findModuleForFile(file.getVirtualFile(), project);
-    LanguageLevel moduleLevel = module == null ? null : LanguageLevelModuleExtension.getInstance(module).getLanguageLevel();
-    Sdk jdk = getRelevantJdk(project, module);
-    if (moduleLevel != null && isJdkSupportsLevel(jdk)) {
+    final VirtualFile virtualFile = file.getVirtualFile();
+    LOG.assertTrue(virtualFile != null);
+    final Module module = ModuleUtil.findModuleForFile(virtualFile, project);
+    final LanguageLevel moduleLevel = module == null ? null : LanguageLevelModuleExtension.getInstance(module).getLanguageLevel();
+    if (moduleLevel != null && isLanguageLevelAcceptable(project, module, myLevel)) {
       final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
       rootModel.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(myLevel);
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -96,6 +108,7 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
     }
   }
 
+  @Nullable
   private static Sdk getRelevantJdk(final Project project, @Nullable Module module) {
     Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectJdk();
     Sdk moduleJdk = module == null ? null : ModuleRootManager.getInstance(module).getSdk();

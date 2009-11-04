@@ -20,12 +20,13 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class UndoRedoAction extends AnAction implements DumbAware {
+public abstract class UndoRedoAction extends DumbAwareAction {
   public UndoRedoAction() {
     setEnabledInModalContext(true);
   }
@@ -34,17 +35,25 @@ public abstract class UndoRedoAction extends AnAction implements DumbAware {
     DataContext dataContext = e.getDataContext();
     FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
     UndoManager undoManager = getUndoManager(editor, dataContext);
+    Project project = getProject(editor, dataContext);
 
+    if (editor == null && project != null) {
+      if (DumbService.getInstance(project).isDumb()) {
+        DumbService.getInstance(project).showDumbModeNotification("Global Undo and Redo are not available while indices are being built");
+        return;
+      }
+    }
+    
     perform(editor, undoManager);
   }
 
-  public void update(AnActionEvent event){
+  public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
 
     // do not allow global undo in dialogs
-    if (editor == null && dataContext.getData(DataConstants.IS_MODAL_CONTEXT) == Boolean.TRUE){
+    if (editor == null && dataContext.getData(DataConstants.IS_MODAL_CONTEXT) == Boolean.TRUE) {
       presentation.setEnabled(false);
       return;
     }
@@ -68,7 +77,7 @@ public abstract class UndoRedoAction extends AnAction implements DumbAware {
 
   private static Project getProject(FileEditor editor, DataContext dataContext) {
     Project project;
-    if (editor instanceof TextEditor){
+    if (editor instanceof TextEditor) {
       project = ((TextEditor)editor).getEditor().getProject();
     }
     else {

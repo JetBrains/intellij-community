@@ -24,16 +24,14 @@ import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.SvnConfiguration;
-import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.util.Date;
 
 public class SvnAnnotationProvider implements AnnotationProvider {
@@ -44,15 +42,19 @@ public class SvnAnnotationProvider implements AnnotationProvider {
   }
 
   public FileAnnotation annotate(final VirtualFile file) throws VcsException {
-    return annotate(file, new SvnFileRevision(myVcs, SVNRevision.WORKING, SVNRevision.WORKING, null, null, null, null, null));
+    return annotate(file, new SvnFileRevision(myVcs, SVNRevision.WORKING, SVNRevision.WORKING, null, null, null, null, null), true);
   }
 
   public FileAnnotation annotate(final VirtualFile file, final VcsFileRevision revision) throws VcsException {
+    return annotate(file, revision, false);
+  }
+
+  private FileAnnotation annotate(final VirtualFile file, final VcsFileRevision revision, final boolean loadExternally) throws VcsException {
     if (file.isDirectory()) {
       throw new VcsException(SvnBundle.message("exception.text.cannot.annotate.directory"));
     }
     final FileAnnotation[] annotation = new FileAnnotation[1];
-    final SVNException[] exception = new SVNException[1];
+    final VcsException[] exception = new VcsException[1];
 
     Runnable command = new Runnable() {
       public void run() {
@@ -60,16 +62,22 @@ public class SvnAnnotationProvider implements AnnotationProvider {
         try {
           final File ioFile = new File(file.getPath()).getAbsoluteFile();
 
-          final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-          myVcs.createWCClient().doGetFileContents(ioFile, SVNRevision.UNDEFINED, SVNRevision.BASE, true, buffer);
-          final String contents = LoadTextUtil.getTextByBinaryPresentation(buffer.toByteArray(), file, false).toString();
+          final String contents;
+          if (loadExternally) {
+            final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            myVcs.createWCClient().doGetFileContents(ioFile, SVNRevision.UNDEFINED, SVNRevision.BASE, true, buffer);
+            contents = LoadTextUtil.getTextByBinaryPresentation(buffer.toByteArray(), file, false).toString();
+          } else {
+            revision.loadContent();
+            contents = LoadTextUtil.getTextByBinaryPresentation(revision.getContent(), file, false).toString();
+          }
 
           final SvnFileAnnotation result = new SvnFileAnnotation(myVcs, file, contents);
 
           SVNWCClient wcClient = myVcs.createWCClient();
           SVNInfo info = wcClient.doInfo(ioFile, SVNRevision.WORKING);
           if (info == null) {
-              exception[0] = new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "File ''{0}'' is not under version control", ioFile));
+              exception[0] = new VcsException(new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "File ''{0}'' is not under version control", ioFile)));
               return;
           }
           final String url = info.getURL() == null ? null : info.getURL().toString();
@@ -129,7 +137,8 @@ public class SvnAnnotationProvider implements AnnotationProvider {
           };
 
           final boolean supportsMergeinfo = SvnUtil.checkRepositoryVersion15(myVcs, url);
-          client.doAnnotate(ioFile, SVNRevision.UNDEFINED, SVNRevision.create(0), endRevision, true, supportsMergeinfo, annotateHandler, null);
+          final SVNRevision svnRevision = ((SvnRevisionNumber)revision.getRevisionNumber()).getRevision();
+          client.doAnnotate(ioFile, svnRevision, SVNRevision.create(0), endRevision, true, supportsMergeinfo, annotateHandler, null);
 
           client.doLog(new File[]{ioFile}, endRevision, SVNRevision.create(1), SVNRevision.UNDEFINED, false, false, supportsMergeinfo, 0, null,
                        new ISVNLogEntryHandler() {
@@ -145,6 +154,10 @@ public class SvnAnnotationProvider implements AnnotationProvider {
           annotation[0] = result;
         }
         catch (SVNException e) {
+          exception[0] = new VcsException(e);
+        } catch (IOException e) {
+          exception[0] = new VcsException(e);
+        } catch (VcsException e) {
           exception[0] = e;
         }
       }

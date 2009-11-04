@@ -16,7 +16,7 @@
 
 package com.intellij.history.integration.stubs;
 
-import com.intellij.ide.startup.CacheUpdater;
+import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -30,13 +30,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class StubProjectRootManagerEx extends ProjectRootManagerEx {
+public abstract class StubProjectRootManagerEx extends ProjectRootManagerEx {
 
-  public void registerChangeUpdater(CacheUpdater updater) {
+  public void registerRootsChangeUpdater(CacheUpdater updater) {
     throw new UnsupportedOperationException();
   }
 
-  public void unregisterChangeUpdater(CacheUpdater updater) {
+  public void unregisterRootsChangeUpdater(CacheUpdater updater) {
     throw new UnsupportedOperationException();
   }
 

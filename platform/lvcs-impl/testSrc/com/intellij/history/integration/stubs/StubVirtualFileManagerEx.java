@@ -16,7 +16,7 @@
 
 package com.intellij.history.integration.stubs;
 
-import com.intellij.ide.startup.CacheUpdater;
+import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.ModificationTracker;
@@ -90,10 +90,6 @@ public class StubVirtualFileManagerEx extends VirtualFileManagerEx {
   }
 
   public void afterRefreshFinish(boolean asynchronous, ModalityState modalityState) {
-    throw new UnsupportedOperationException();
-  }
-
-  public void addEventToFireByRefresh(Runnable action, boolean asynchronous, ModalityState modalityState) {
     throw new UnsupportedOperationException();
   }
 

@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.startup;
+package com.intellij.openapi.project;
 
+import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -31,15 +33,13 @@ import java.util.concurrent.ArrayBlockingQueue;
 * @author peter
 */
 @SuppressWarnings({"SynchronizeOnThis"})
-public class FileContentQueue extends ArrayBlockingQueue<FileContent> {
+public class FileContentQueue {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.FileContentQueue");
   private static final long SIZE_THRESHOLD = 1024*1024;
   private long myTotalSize;
 
-  public FileContentQueue() {
-    super(256);
-    myTotalSize = 0;
-  }
+  private final ArrayBlockingQueue<FileContent> myQueue = new ArrayBlockingQueue<FileContent>(256);
+  private FileContent myPushbackBuffer;
 
   public void queue(final Collection<VirtualFile> files, @Nullable final ProgressIndicator indicator) {
     final Runnable contentLoadingRunnable = new Runnable() {
@@ -61,7 +61,7 @@ public class FileContentQueue extends ArrayBlockingQueue<FileContent> {
         }
         finally {
           try {
-            put(new FileContent(null));
+            myQueue.put(new FileContent(null));
           }
           catch (InterruptedException e) {
             LOG.error(e);
@@ -111,13 +111,21 @@ public class FileContentQueue extends ArrayBlockingQueue<FileContent> {
       content.setEmptyContent();
     }
 
-    put(content);
+    myQueue.put(content);
   }
 
   public FileContent take() {
-    final FileContent result;
+    FileContent result;
+    synchronized (this) {
+      if (myPushbackBuffer != null) {
+        result = myPushbackBuffer;
+        myPushbackBuffer = null;
+        return result;
+      }
+    }
+
     try {
-      result = super.take();
+      result = myQueue.take();
     }
     catch (InterruptedException e) {
       throw new RuntimeException(e);
@@ -126,7 +134,8 @@ public class FileContentQueue extends ArrayBlockingQueue<FileContent> {
     synchronized (this) {
       try {
         final VirtualFile file = result.getVirtualFile();
-        if (file == null || !file.isValid() || result.getLength() >= SIZE_THRESHOLD) return result;
+        if (file == null) return null;
+        if (!file.isValid() || result.getLength() >= SIZE_THRESHOLD) return result;
         myTotalSize -= result.getLength();
       }
       finally {
@@ -135,5 +144,10 @@ public class FileContentQueue extends ArrayBlockingQueue<FileContent> {
     }
 
     return result;
+  }
+
+  public synchronized void pushback(@NotNull FileContent content) {
+    LOG.assertTrue(myPushbackBuffer == null, "Pushback buffer is already full");
+    myPushbackBuffer = content;
   }
 }

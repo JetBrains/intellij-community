@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package com.intellij.ide.startup;
+package com.intellij.ide.caches;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -26,15 +25,23 @@ import java.io.IOException;
  * @author max
  */
 public class FileContent extends UserDataHolderBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.FileContent");
   private static final byte[] EMPTY_CONTENT = new byte[0];
 
   private final VirtualFile myVirtualFile;
   private byte[] myCachedBytes;
-  private long myLength = -1;
+  private long myCachedLength = -1;
+  private long myCachedTimeStamp = -1;
+  private Boolean myCachedWritable;
 
   public FileContent(VirtualFile virtualFile) {
     myVirtualFile = virtualFile;
+  }
+
+  public void cache() throws IOException {
+    getBytes();
+    getLength();
+    getTimeStamp();
+    isWritable();
   }
 
   public byte[] getBytes() throws IOException {
@@ -47,6 +54,7 @@ public class FileContent extends UserDataHolderBase {
 
   public void setEmptyContent() {
     myCachedBytes = EMPTY_CONTENT;
+    myCachedLength = 0;
   }
 
   public VirtualFile getVirtualFile() {
@@ -54,10 +62,23 @@ public class FileContent extends UserDataHolderBase {
   }
 
   public long getLength() {
-    if (myLength == -1) {
-      myLength = myVirtualFile.getLength();
+    if (myCachedLength == -1) {
+      myCachedLength = myVirtualFile.getLength();
     }
+    return myCachedLength;
+  }
 
-    return myLength;
+  public long getTimeStamp() {
+    if (myCachedTimeStamp == -1) {
+      myCachedTimeStamp = myVirtualFile.getTimeStamp();
+    }
+    return myCachedTimeStamp;
+  }
+
+  public boolean isWritable() {
+    if (myCachedWritable == null) {
+      myCachedWritable = myVirtualFile.isWritable();
+    }
+    return myCachedWritable == Boolean.TRUE;
   }
 }

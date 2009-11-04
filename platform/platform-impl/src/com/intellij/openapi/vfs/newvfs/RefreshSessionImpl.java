@@ -19,13 +19,8 @@
  */
 package com.intellij.openapi.vfs.newvfs;
 
-import com.intellij.ide.startup.CacheUpdater;
-import com.intellij.ide.startup.SyncSession;
-import com.intellij.ide.startup.impl.FileSystemSynchronizerImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
@@ -44,28 +39,24 @@ public class RefreshSessionImpl extends RefreshSession {
   private final boolean myIsAsync;
   private final boolean myIsRecursive;
   private final Runnable myFinishRunnable;
-  private final List<CacheUpdater> myRefreshParticipants;
-  
+
   private List<VirtualFile> myWorkQueue = new ArrayList<VirtualFile>();
   private List<VFileEvent> myEvents = new ArrayList<VFileEvent>();
   private final Semaphore mySemaphore = new Semaphore();
   private volatile boolean iHaveEventsToFire;
 
   public RefreshSessionImpl(final boolean isAsync, boolean reqursively,
-                            final Runnable finishRunnable,
-                            final List<CacheUpdater> refreshParticipants) {
-    myRefreshParticipants = refreshParticipants;
+                            final Runnable finishRunnable) {
     myIsRecursive = reqursively;
     myFinishRunnable = finishRunnable;
     myIsAsync = isAsync;
   }
 
-  public RefreshSessionImpl(final List<VFileEvent> events, final List<CacheUpdater> refreshParticipants) {
+  public RefreshSessionImpl(final List<VFileEvent> events) {
     myIsAsync = false;
     myIsRecursive = false;
     myFinishRunnable = null;
     myEvents = new ArrayList<VFileEvent>(events);
-    myRefreshParticipants = refreshParticipants;
   }
 
   public void addAllFiles(final Collection<VirtualFile> files) {
@@ -139,7 +130,6 @@ public class RefreshSessionImpl extends RefreshSession {
         ManagingFS.getInstance().processEvents(mergeEventsAndReset());
         scan();
       }
-      notifyCacheUpdaters();
     }
     finally {
       try {
@@ -163,32 +153,4 @@ public class RefreshSessionImpl extends RefreshSession {
     myEvents = new ArrayList<VFileEvent>();
     return events;
   }
-
-  private void notifyCacheUpdaters() {
-    final FileSystemSynchronizerImpl synchronizer = new FileSystemSynchronizerImpl();
-    //noinspection ForLoopReplaceableByForEach
-    for (int i = 0; i < myRefreshParticipants.size(); i++) {
-      CacheUpdater participant = myRefreshParticipants.get(i);
-      synchronizer.registerCacheUpdater(participant);
-    }
-
-    final SyncSession syncSession = synchronizer.collectFilesToUpdate();
-    int filesCount = syncSession.getFilesToUpdate().size();
-    if (filesCount > 0) {
-      boolean runWithProgress = !ApplicationManager.getApplication().isUnitTestMode() && filesCount > 50;
-      if (runWithProgress) {
-        Runnable process = new Runnable() {
-          public void run() {
-            synchronizer.executeFileUpdate(syncSession);
-          }
-        };
-        ProgressManager.getInstance()
-          .runProcessWithProgressSynchronously(process, VfsBundle.message("file.update.modified.progress"), false, null);
-      }
-      else {
-        synchronizer.executeFileUpdate(syncSession);
-      }
-    }
-  }
-
 }

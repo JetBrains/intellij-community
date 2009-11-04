@@ -20,15 +20,15 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 import org.jetbrains.idea.maven.utils.MavenIcons;
@@ -60,6 +60,7 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
 
   private SimpleTree myTree;
   private MavenProjectsStructure myStructure;
+  private ToolWindow myToolWindow;
 
   public static MavenProjectsNavigator getInstance(Project project) {
     return project.getComponent(MavenProjectsNavigator.class);
@@ -81,7 +82,7 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
 
   public void loadState(MavenProjectsNavigatorState state) {
     myState = state;
-    update(true);
+    scheduleStructureUpdate();
   }
 
   public boolean getGroupModules() {
@@ -91,7 +92,7 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
   public void setGroupModules(boolean value) {
     if (myState.groupStructurally != value) {
       myState.groupStructurally = value;
-      update(true);
+      scheduleStructureUpdate();
     }
   }
 
@@ -102,7 +103,7 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
   public void setShowIgnored(boolean value) {
     if (myState.showIgnored != value) {
       myState.showIgnored = value;
-      update(true);
+      scheduleStructureUpdate();
     }
   }
 
@@ -113,7 +114,7 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
   public void setShowBasicPhasesOnly(boolean value) {
     if (myState.showBasicPhasesOnly != value) {
       myState.showBasicPhasesOnly = value;
-      update(false);
+      scheduleStructureUpdate();
     }
   }
 
@@ -126,16 +127,13 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
   @TestOnly
   public void initForTests() {
     doInit();
+    initTree();
+    initStructure();
   }
 
   private void doInit() {
-    if (myInitialized.getAndSet(true)) return;
-
-    initTree();
-    listenForActivation();
-
+    listenForProjectsChanges();
     if (isUnitTestMode()) return;
-
     MavenUtil.runWhenInitialized(myProject, new DumbAwareRunnable() {
       public void run() {
         initToolWindow();
@@ -145,11 +143,46 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
 
   @Override
   public void disposeComponent() {
-    myInitialized.set(false);
   }
 
-  private boolean isInitialized() {
-    return myInitialized.get();
+  private void listenForProjectsChanges() {
+    myProjectsManager.addProjectsTreeListener(new MyProjectsListener());
+
+    myShortcutsManager.addListener(new MavenShortcutsManager.Listener() {
+      public void shortcutsUpdated() {
+        scheduleStructureRequest(new Runnable() {
+          public void run() {
+            myStructure.updateGoals();
+          }
+        });
+      }
+    });
+
+    myTasksManager.addListener(new MavenTasksManager.Listener() {
+      public void compileTasksChanged() {
+        scheduleStructureRequest(new Runnable() {
+          public void run() {
+            myStructure.updateGoals();
+          }
+        });
+      }
+    });
+  }
+
+  private void initToolWindow() {
+    initTree();
+    JPanel panel = new MavenProjectsNavigatorPanel(myProject, myTree);
+
+    ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(myProject);
+    myToolWindow = manager.registerToolWindow(TOOL_WINDOW_ID, panel, ToolWindowAnchor.RIGHT, myProject, true);
+    myToolWindow.setIcon(MavenIcons.MAVEN_ICON);
+
+    manager.addToolWindowManagerListener(new ToolWindowManagerAdapter() {
+      @Override
+      public void stateChanged() {
+        scheduleStructureUpdate();
+      }
+    });
   }
 
   private void initTree() {
@@ -182,65 +215,6 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
     };
 
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
-    myStructure = new MavenProjectsStructure(myProject, myProjectsManager, myTasksManager, myShortcutsManager, this, myTree);
-  }
-
-  private void listenForActivation() {
-    myProjectsManager.addManagerListener(new MavenProjectsManager.Listener() {
-      public void activated() {
-        scheduleStructureUpdate(new Runnable() {
-          public void run() {
-            myStructure.buildTree();
-          }
-        });
-        listenForProjectsChanges();
-      }
-
-      public void scheduledImportsChanged() {
-      }
-    });
-  }
-
-  private void listenForProjectsChanges() {
-    myProjectsManager.addProjectsTreeListener(new MyProjectsListener());
-
-    myShortcutsManager.addListener(new MavenShortcutsManager.Listener() {
-      public void shortcutsUpdated() {
-        scheduleStructureUpdate(new Runnable() {
-          public void run() {
-            myStructure.updateGoals();
-          }
-        });
-      }
-    });
-
-    myTasksManager.addListener(new MavenTasksManager.Listener() {
-      public void compileTasksChanged() {
-        scheduleStructureUpdate(new Runnable() {
-          public void run() {
-            myStructure.updateGoals();
-          }
-        });
-      }
-    });
-  }
-
-  private void initToolWindow() {
-    JPanel panel = new MavenProjectsNavigatorPanel(myProject, myTree);
-
-    ToolWindowManager manager = ToolWindowManager.getInstance(myProject);
-    ToolWindow toolWindow = manager.registerToolWindow(TOOL_WINDOW_ID, panel, ToolWindowAnchor.RIGHT, myProject, true);
-    toolWindow.setIcon(MavenIcons.MAVEN_ICON);
-  }
-
-  private void update(boolean restructure) {
-    if (!isInitialized()) return;
-    myStructure.update(restructure);
-  }
-
-  public void selectInTree(MavenProject project) {
-    if (!isInitialized()) return;
-    myStructure.select(project);
   }
 
   @TestOnly
@@ -248,14 +222,56 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
     return myStructure;
   }
 
-  private void scheduleStructureUpdate(Runnable r) {
-    MavenUtil.invokeLater(myProject, r);
+  public void selectInTree(final MavenProject project) {
+    scheduleStructureRequest(new Runnable() {
+      public void run() {
+        myStructure.select(project);
+      }
+    });
   }
 
-  private class MyProjectsListener extends MavenProjectsTree.ListenerAdapter {
+  private void scheduleStructureRequest(final Runnable r) {
+    if (isUnitTestMode()) {
+      r.run();
+      return;
+    }
+
+    if (myToolWindow == null) return;
+    MavenUtil.invokeLater(myProject, new Runnable() {
+      public void run() {
+        if (!myToolWindow.isVisible()) return;
+        if (myStructure == null) {
+          initStructure();
+        }
+        r.run();
+      }
+    });
+  }
+
+  private void initStructure() {
+    myStructure = new MavenProjectsStructure(myProject, myProjectsManager, myTasksManager,
+                                             myShortcutsManager, this, myTree);
+  }
+
+  private void scheduleStructureUpdate() {
+    scheduleStructureRequest(new Runnable() {
+      public void run() {
+        myStructure.update();
+      }
+    });
+  }
+
+  private class MyProjectsListener extends MavenProjectsTree.ListenerAdapter implements MavenProjectsManager.Listener {
+    public void activated() {
+      scheduleStructureUpdate();
+    }
+
+    public void scheduledImportsChanged() {
+    }
+
     @Override
     public void projectsIgnoredStateChanged(final List<MavenProject> ignored, final List<MavenProject> unignored, Object message) {
-      scheduleStructureUpdate(new Runnable() {
+      scheduleStructureRequest(new Runnable() {
         public void run() {
           myStructure.updateIgnored(ContainerUtil.concat(ignored, unignored));
         }
@@ -264,7 +280,7 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
 
     @Override
     public void profilesChanged(final List<String> profiles) {
-      scheduleStructureUpdate(new Runnable() {
+      scheduleStructureRequest(new Runnable() {
         public void run() {
           myStructure.setActiveProfiles(profiles);
         }
@@ -272,30 +288,26 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
     }
 
     @Override
-    public void projectsUpdated(final List<Pair<MavenProject, MavenProjectChanges>> updated,
-                                final List<MavenProject> deleted,
+    public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated,
+                                List<MavenProject> deleted,
                                 Object message) {
-      scheduleStructureUpdate(new Runnable() {
-        public void run() {
-          myStructure.updateProjects(MavenUtil.collectFirsts(updated), deleted);
-        }
-      });
+      scheduleUpdateProjects(MavenUtil.collectFirsts(updated), deleted);
     }
 
     public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
                                 org.apache.maven.project.MavenProject nativeMavenProject,
                                 Object message) {
-      updateProject(projectWithChanges.first);
+      scheduleUpdateProjects(Collections.singletonList(projectWithChanges.first), Collections.EMPTY_LIST);
     }
 
     public void pluginsResolved(MavenProject project) {
-      updateProject(project);
+      scheduleUpdateProjects(Collections.singletonList(project), Collections.EMPTY_LIST);
     }
 
-    private void updateProject(final MavenProject project) {
-      scheduleStructureUpdate(new Runnable() {
+    private void scheduleUpdateProjects(final List<MavenProject> projects, final List<MavenProject> deleted) {
+      scheduleStructureRequest(new Runnable() {
         public void run() {
-          myStructure.updateProjects(Collections.singletonList(project), Collections.EMPTY_LIST);
+          myStructure.updateProjects(projects, deleted);
         }
       });
     }

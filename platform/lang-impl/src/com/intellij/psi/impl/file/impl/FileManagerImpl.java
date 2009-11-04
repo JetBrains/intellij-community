@@ -542,6 +542,9 @@ public class FileManagerImpl implements FileManager {
            ) {
           iterator.remove();
         }
+        else if (psi instanceof PsiFileImpl) {
+          ((PsiFileImpl)psi).clearCaches();
+        }
       }
     }
     myVFileToViewProviderMap.clear();
