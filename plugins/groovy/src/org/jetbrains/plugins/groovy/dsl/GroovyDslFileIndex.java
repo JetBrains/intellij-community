@@ -42,8 +42,7 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.unscramble.UnscrambleDialog;
-import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.*;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
@@ -57,8 +56,8 @@ import javax.swing.event.HyperlinkEvent;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
+import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -78,6 +77,8 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
   private static final Map<String, Pair<GroovyDslExecutor, Long>> ourMapping =
     new ConcurrentHashMap<String, Pair<GroovyDslExecutor, Long>>();
+  private static final MultiMap<String, LinkedBlockingQueue<Pair<GroovyFile, GroovyDslExecutor>>> filesInProcessing =
+    new ConcurrentMultiMap<String, LinkedBlockingQueue<Pair<GroovyFile, GroovyDslExecutor>>>();
 
   private final EnumeratorStringDescriptor myKeyDescriptor = new EnumeratorStringDescriptor();
   private static final byte[] ENABLED_FLAG = new byte[]{(byte)239};
@@ -281,24 +282,40 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
                                       final long stamp,
                                       final String text) {
     final Project project = file.getProject();
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+    final String fileUrl = vfile.getUrl();
+
+    final Runnable parseScript = new Runnable() {
       public void run() {
-        synchronized (vfile) { //ensure that only one thread calculates dsl executor
-          GroovyDslExecutor executor = getCachedExecutor(vfile, stamp);
-          if (executor == null) {
-            executor = createExecutor(text, vfile, project);
-            // executor is not only time-consuming to create, but also takes some PermGenSpace
-            // => we can't afford garbage-collecting it together with PsiFile
-            // => cache globally by file path
-            ourMapping.put(vfile.getUrl(), Pair.create(executor, stamp));
-            if (executor != null) {
-              activateUntilModification(vfile);
-            }
+        GroovyDslExecutor executor = getCachedExecutor(vfile, stamp);
+        if (executor == null) {
+          executor = createExecutor(text, vfile, project);
+          // executor is not only time-consuming to create, but also takes some PermGenSpace
+          // => we can't afford garbage-collecting it together with PsiFile
+          // => cache globally by file path
+          ourMapping.put(vfile.getUrl(), Pair.create(executor, stamp));
+          if (executor != null) {
+            activateUntilModification(vfile);
           }
-          queue.offer(Pair.create(file, executor));
+        }
+
+        // access to our multimap should be synchronized
+        synchronized (vfile) {
+          // put evaluated executor to all queues
+          final Collection<LinkedBlockingQueue<Pair<GroovyFile, GroovyDslExecutor>>> queuesForFile = filesInProcessing.remove(fileUrl);
+          for (LinkedBlockingQueue<Pair<GroovyFile, GroovyDslExecutor>> queue : queuesForFile) {
+            queue.offer(Pair.create(file, executor));
+          }
         }
       }
-    });
+    };
+
+    synchronized (vfile) { //ensure that only one thread calculates dsl executor
+      final boolean isNewRequest = !filesInProcessing.containsKey(fileUrl);
+      filesInProcessing.putValue(fileUrl, queue);
+      if (isNewRequest) {
+        ApplicationManager.getApplication().executeOnPooledThread(parseScript);
+      }
+    }
   }
 
   @Nullable
@@ -324,7 +341,6 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
       return null;
     }
   }
-
   private static void invokeDslErrorPopup(Throwable e, final Project project, VirtualFile vfile) {
     final StringWriter writer = new StringWriter();
     e.printStackTrace(new PrintWriter(writer));
