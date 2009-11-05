@@ -122,6 +122,24 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     public static TemplateKey keyOf(TemplateImpl template) {
       return new TemplateKey(template.getGroupName(), template.getKey());
     }
+
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      TemplateKey that = (TemplateKey)o;
+
+      if (groupName != null ? !groupName.equals(that.groupName) : that.groupName != null) return false;
+      if (key != null ? !key.equals(that.key) : that.key != null) return false;
+
+      return true;
+    }
+
+    public int hashCode() {
+      int result = groupName != null ? groupName.hashCode() : 0;
+      result = 31 * result + (key != null ? key.hashCode() : 0);
+      return result;
+    }
   }
 
   public TemplateSettings(SchemesManagerFactory schemesManagerFactory) {
