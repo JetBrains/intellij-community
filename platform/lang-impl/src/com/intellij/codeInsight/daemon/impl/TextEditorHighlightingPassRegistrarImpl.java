@@ -56,10 +56,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     private final int[] startingPredecessorIds;
     private final int[] completionPredecessorIds;
 
-    private PassConfig(@NotNull TextEditorHighlightingPassFactory passFactory,
-                      boolean runIntentionsPassAfter,
-                      @NotNull int[] completionPredecessorIds,
-                      @NotNull int[] startingPredecessorIds) {
+    private PassConfig(@NotNull TextEditorHighlightingPassFactory passFactory, @NotNull int[] completionPredecessorIds, @NotNull int[] startingPredecessorIds) {
       this.completionPredecessorIds = completionPredecessorIds;
       this.startingPredecessorIds = startingPredecessorIds;
       this.passFactory = passFactory;
@@ -87,7 +84,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
                                                              boolean runIntentionsPassAfter,
                                                              int forcedPassId) {
     assert !checkedForCycles;
-    PassConfig info = new PassConfig(factory, runIntentionsPassAfter,
+    PassConfig info = new PassConfig(factory,
                                      runAfterCompletionOf == null || runAfterCompletionOf.length == 0 ? ArrayUtil.EMPTY_INT_ARRAY : runAfterCompletionOf,
                                      runAfterOfStartingOf == null || runAfterOfStartingOf.length == 0 ? ArrayUtil.EMPTY_INT_ARRAY : runAfterOfStartingOf);
     int passId = forcedPassId == -1 ? nextAvailableId++ : forcedPassId;
