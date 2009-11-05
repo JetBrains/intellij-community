@@ -22,7 +22,7 @@ import java.util.List;
 public class PyBreakContinueGotoProvider implements GotoDeclarationHandler {
 
   public PsiElement getGotoDeclarationTarget(PsiElement source) {
-    if (source.getLanguage() instanceof PythonLanguage) {
+    if (source != null && source.getLanguage() instanceof PythonLanguage) {
       ParentMatcher parent_matcher = new ParentMatcher(PyForStatement.class, PyWhileStatement.class);
       parent_matcher.limitBy(PyFunction.class, PyClass.class);
       List<? extends PsiElement> cycle_list = parent_matcher.search(source);
