@@ -36,18 +36,6 @@ import org.jetbrains.yaml.YAMLTokenTypes;
     return 0 <= loc && loc < zzBuffer.length() ? zzBuffer.charAt(loc) : (char) -1;
   }
 
-  private void eatTrailingSpaces() {
-    int i=0;
-    int offset = yylength() - 1;
-    char c = getChar(offset);
-    while (c == ' ' || c == '\t'){
-      i++;
-      offset--;
-      c = getChar(offset);
-    }
-    yypushback(i);
-  }
-
 %}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////// REGEXPS DECLARATIONS //////////////////////////////////////////////////////////////////////////
@@ -155,9 +143,8 @@ STRING=                         '([^\\']|{ESCAPE_SEQUENCE}|(''))*?'?
                                     yypushback(yylength());
                                 }
 
-[^ \t\n,{\[|>][^\n#,}\]]*       {   eatTrailingSpaces();
-                                    return TEXT;
-                                }
+[^ \t\n,{\[|>][^\n#,}\]]*[^ \t\n#,}\]]
+                                {   return TEXT; }
 .                               {   return TEXT; }
 }
 

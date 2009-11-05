@@ -138,4 +138,12 @@ public class YAMLLexerTest extends LexerTestCase {
            "  avg:  0.288");
   }
 
+  public void testWrong_string_highlighting(){
+    doTest("status:\n" +
+           "    draft: \"Brouillon\"  \n" +
+           "    reviewed: \"Révisé\"  \n" +
+           "    hidden: \"Caché\"\n" +
+           "    published: \"Publié\"");
+  }
+
 }
