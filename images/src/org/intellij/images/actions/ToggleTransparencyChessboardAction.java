@@ -26,21 +26,22 @@ import org.intellij.images.ui.ImageComponentDecorator;
  * @see org.intellij.images.ui.ImageComponentDecorator#setTransparencyChessboardVisible
  */
 public final class ToggleTransparencyChessboardAction extends ToggleAction {
-    public boolean isSelected(AnActionEvent e) {
-        ImageComponentDecorator decorator = (ImageComponentDecorator) e.getDataContext().getData(ImageComponentDecorator.class.getName());
-        return decorator != null && decorator.isEnabledForActionPlace(e.getPlace()) && decorator.isTransparencyChessboardVisible();
-    }
+  public boolean isSelected(AnActionEvent e) {
+    ImageComponentDecorator decorator = (ImageComponentDecorator)e.getDataContext().getData(ImageComponentDecorator.class.getName());
+    return decorator != null && decorator.isEnabledForActionPlace(e.getPlace()) && decorator.isTransparencyChessboardVisible();
+  }
 
-    public void setSelected(AnActionEvent e, boolean state) {
-        ImageComponentDecorator decorator = (ImageComponentDecorator) e.getDataContext().getData(ImageComponentDecorator.class.getName());
-        if (decorator != null && decorator.isEnabledForActionPlace(e.getPlace())) {
-            decorator.setTransparencyChessboardVisible(state);
-        }
+  public void setSelected(AnActionEvent e, boolean state) {
+    ImageComponentDecorator decorator = (ImageComponentDecorator)e.getDataContext().getData(ImageComponentDecorator.class.getName());
+    if (decorator != null && decorator.isEnabledForActionPlace(e.getPlace())) {
+      decorator.setTransparencyChessboardVisible(state);
     }
+  }
 
-    public void update(final AnActionEvent e) {
-        super.update(e);
-        ImageComponentDecorator decorator = (ImageComponentDecorator) e.getDataContext().getData(ImageComponentDecorator.class.getName());
-        e.getPresentation().setEnabled(decorator != null && decorator.isEnabledForActionPlace(e.getPlace()));
-    }
+  public void update(final AnActionEvent e) {
+    super.update(e);
+    ImageComponentDecorator decorator = (ImageComponentDecorator)e.getDataContext().getData(ImageComponentDecorator.class.getName());
+    e.getPresentation().setEnabled(decorator != null && decorator.isEnabledForActionPlace(e.getPlace()));
+    e.getPresentation().setText(isSelected(e) ? "Hide Chessboard" : "Show Chessboard");
+  }
 }

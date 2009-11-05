@@ -22,6 +22,16 @@
     <action id="CommanderSwapPanels" class="com.intellij.ide.actions.SwapPanelsAction" icon="/actions/swapPanels.png">
       <add-to-group group-id="PairFileActions" anchor="first"/>
     </action>
+
+    <group id="ImagesCommanderActions1" text="Images Commander Actions (1)">
+      <reference id="Images.EditExternaly"/>
+      <add-to-group anchor="after" group-id="CommanderPopupMenu" relative-to-action="EditSource"/>
+    </group>
+
+    <group id="ImagesCommanderActions2" text="Images Commander Actions (2)">
+      <reference id="Images.ShowThumbnails"/>
+      <add-to-group anchor="after" group-id="CommanderPopupMenu" relative-to-action="AddToFavorites"/>
+    </group>
   </actions>
 </idea-plugin>
 
