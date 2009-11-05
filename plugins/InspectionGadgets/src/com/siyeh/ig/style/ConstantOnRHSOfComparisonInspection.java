@@ -27,6 +27,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ComparisonUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ConstantOnRHSOfComparisonInspection extends BaseInspection {
@@ -71,14 +72,14 @@ public class ConstantOnRHSOfComparisonInspection extends BaseInspection {
             if (rhs == null) {
                 return;
             }
-            final PsiExpression lhs = expression.getLOperand();
             final PsiJavaToken sign = expression.getOperationSign();
-            final String rhsText = rhs.getText();
             final String flippedComparison =
                     ComparisonUtils.getFlippedComparison(sign);
             if (flippedComparison == null) {
                 return;
             }
+            final PsiExpression lhs = expression.getLOperand();
+            final String rhsText = rhs.getText();
             final String lhsText = lhs.getText();
             replaceExpression(expression,
                     rhsText + ' ' + flippedComparison + ' ' + lhsText);
@@ -99,11 +100,15 @@ public class ConstantOnRHSOfComparisonInspection extends BaseInspection {
             }
             final PsiExpression lhs = expression.getLOperand();
             final PsiExpression rhs = expression.getROperand();
-            if (!PsiUtil.isConstantExpression(rhs) ||
-                    PsiUtil.isConstantExpression(lhs)) {
+            if (!isConstantExpression(rhs) || isConstantExpression(lhs)) {
                 return;
             }
             registerError(expression);
+        }
+
+        private boolean isConstantExpression(PsiExpression expression) {
+            return ExpressionUtils.isNullLiteral(expression) ||
+                    PsiUtil.isConstantExpression(expression);
         }
     }
 }
