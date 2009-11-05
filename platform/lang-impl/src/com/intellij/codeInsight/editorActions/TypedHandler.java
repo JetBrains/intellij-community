@@ -476,15 +476,15 @@ public class TypedHandler implements TypedActionHandler {
     return quoteHandler.isInsideLiteral(iterator);
   }
 
-  private static void indentClosingBrace(final Project project, final Editor editor){
+  private static void indentClosingBrace(@NotNull Project project, @NotNull Editor editor){
     indentBrace(project, editor, '}');
   }
 
-  private static void indentOpenedBrace(final Project project, final Editor editor){
+  static void indentOpenedBrace(@NotNull Project project, @NotNull Editor editor){
     indentBrace(project, editor, '{');
   }
 
-  private static void indentBrace(final Project project, final Editor editor, final char braceChar) {
+  private static void indentBrace(@NotNull final Project project, @NotNull final Editor editor, final char braceChar) {
     final int offset = editor.getCaretModel().getOffset() - 1;
     final Document document = editor.getDocument();
     CharSequence chars = document.getCharsSequence();

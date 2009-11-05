@@ -1540,7 +1540,7 @@ public class AbstractTreeUi {
   public List<Object> getLoadedChildrenFor(Object element) {
     List<Object> result = new ArrayList<Object>();
 
-    DefaultMutableTreeNode node = (DefaultMutableTreeNode)findNodeByElement(element);
+    DefaultMutableTreeNode node = (DefaultMutableTreeNode)getNodeForElement(element, false);
     if (node != null) {
       for (int i = 0; i < node.getChildCount(); i++) {
         TreeNode each = node.getChildAt(i);
@@ -1772,6 +1772,8 @@ public class AbstractTreeUi {
   }
 
   private void processNodeActionsIfReady(final DefaultMutableTreeNode node) {
+    assertIsDispatchThread();
+
     if (isNodeBeingBuilt(node)) return;
 
     final Object o = node.getUserObject();

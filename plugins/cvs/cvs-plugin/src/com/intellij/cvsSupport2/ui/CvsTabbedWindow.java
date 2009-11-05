@@ -194,7 +194,7 @@ public class CvsTabbedWindow {
     if (toolWindowManager != null) {
       ToolWindow toolWindow = toolWindowManager.getToolWindow(ToolWindowId.CVS);
       if (toolWindow != null) {
-        toolWindow.activate(null);
+        toolWindow.activate(null, false);
       }
     }
   }
