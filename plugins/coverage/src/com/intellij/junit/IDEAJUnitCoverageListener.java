@@ -4,6 +4,7 @@
  */
 package com.intellij.junit;
 
+import com.intellij.coverage.IDEACoverageRunner;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.rt.execution.junit.IDEAJUnitListener;
@@ -22,7 +23,8 @@ public class IDEAJUnitCoverageListener implements IDEAJUnitListener {
   }
 
   public boolean isEnabled(Object configuration) {
-    return CoverageEnabledConfiguration.get((ModuleBasedConfiguration)configuration).isCoverageEnabled();
+    final CoverageEnabledConfiguration enabledConfiguration = CoverageEnabledConfiguration.get((ModuleBasedConfiguration)configuration);
+    return enabledConfiguration.isCoverageEnabled() && enabledConfiguration.getCoverageRunner() instanceof IDEACoverageRunner;
   }
 
   private static Object getData() {
