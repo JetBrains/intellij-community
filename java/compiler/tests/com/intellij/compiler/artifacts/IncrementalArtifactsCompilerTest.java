@@ -19,10 +19,10 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
 
   public void testOneFileInTwoArtifacts() throws Exception {
     final VirtualFile file = createFile("file.txt");
-    final Artifact a1 = addArtifact("a1", PlainArtifactType.getInstance(),
+    final Artifact a1 = addArtifact("a1",
                                     root().dir("dir").file(file.getPath()).build());
 
-    final Artifact a2 = addArtifact("a2", PlainArtifactType.getInstance(),
+    final Artifact a2 = addArtifact("a2",
                                     root().dir("dir2").file(file.getPath()).build());
 
     compileProject();

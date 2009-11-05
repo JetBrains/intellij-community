@@ -16,7 +16,7 @@ import java.util.List;
 public class ArtifactUtilTest extends PackagingElementsTestCase {
 
   public void testProcessParents() throws Exception {
-    final Artifact exploded = addArtifact("exploded:", PlainArtifactType.getInstance(), root().build());
+    final Artifact exploded = addArtifact("exploded:", root().build());
     final Artifact war = addArtifact("war", PlainArtifactType.getInstance(),
                                     archive("web.war")
                                         .dir("dir")

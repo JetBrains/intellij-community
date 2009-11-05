@@ -109,10 +109,6 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
     CompilerProjectExtension.getInstance(myProject).setCompilerOutputUrl(baseUrl + "/out");
   }
 
-  protected Artifact addArtifact(final PackagingElementBuilder builder) {
-    return addArtifact("a", PlainArtifactType.getInstance(), builder.build());
-  }
-
   protected static TestFileSystemBuilder fs() {
     return new TestFileSystemBuilder(new TestFileSystemItem("root", false, true), null);
   }

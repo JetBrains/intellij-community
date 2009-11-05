@@ -28,9 +28,26 @@ import java.io.IOException;
  * @author nik
  */
 public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
+  protected Artifact addArtifact(PackagingElementBuilder builder) {
+    return addArtifact("a", builder.build());
+  }
+
+  protected void assertLayout(Artifact artifact, String expected) {
+    assertLayout(artifact.getRootElement(), expected);
+  }
 
   protected void assertLayout(PackagingElement element, String expected) {
     ArtifactsTestUtil.assertLayout(element, expected);
+  }
+
+  protected String getProjectBasePath() {
+    return getBaseDir().getPath();
+  }
+
+  protected VirtualFile getBaseDir() {
+    final VirtualFile baseDir = myProject.getBaseDir();
+    assertNotNull(baseDir);
+    return baseDir;
   }
 
   protected static PackagingElementFactory getFactory() {
@@ -57,7 +74,7 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
     return new WriteAction<VirtualFile>() {
       protected void run(final Result<VirtualFile> result) {
         try {
-          VirtualFile parent = myProject.getBaseDir();
+          VirtualFile parent = getBaseDir();
           assertNotNull(parent);
           StringTokenizer parents = new StringTokenizer(PathUtil.getParentPath(path), "/");
           while (parents.hasMoreTokens()) {

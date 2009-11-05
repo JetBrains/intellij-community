@@ -60,7 +60,11 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
   }
 
   protected Artifact addArtifact(String name) {
-    return addArtifact(name, PlainArtifactType.getInstance(), null);
+    return addArtifact(name, null);
+  }
+
+  protected Artifact addArtifact(String name, final CompositePackagingElement<?> root) {
+    return addArtifact(name, PlainArtifactType.getInstance(), root);
   }
 
   protected Artifact addArtifact(final String name, final ArtifactType type, final CompositePackagingElement<?> root) {
