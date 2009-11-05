@@ -146,4 +146,11 @@ public class YAMLLexerTest extends LexerTestCase {
            "    published: \"Publié\"");
   }
 
+  public void testValue_injection(){
+    doTest("key:\n" + "    one: 1 text\n" + "    other: {{count}} text");
+  }
+
+  public void testValue_injection_2(){
+    doTest("key:\n" + "    one: 1 text\n" + "    other: some {{count}} text");
+  }
 }

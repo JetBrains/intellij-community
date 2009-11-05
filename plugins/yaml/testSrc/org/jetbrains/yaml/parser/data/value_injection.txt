@@ -1,0 +1,15 @@
+YAML file
+  YAML document
+    YAML key value
+      PsiElement(scalar key)('key:')
+      PsiElement(Eol)('\n')
+      PsiElement(indent)('    ')
+      YAML compound value
+        YAML key value
+          PsiElement(scalar key)('one:')
+          PsiElement(text)('1 text')
+        PsiElement(Eol)('\n')
+        PsiElement(indent)('    ')
+        YAML key value
+          PsiElement(scalar key)('other:')
+          PsiElement(text)('some {{count}} text')

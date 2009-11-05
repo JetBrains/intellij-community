@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
@@ -19,8 +20,12 @@ import java.util.List;
  */
 public class YAMLUtil {
   public static boolean isScalarValue(final PsiElement element) {
+    if (element == null){
+      return false;
+    }
     //noinspection ConstantConditions
-    return element != null && YAMLTokenTypes.SCALAR_VALUES.contains(element.getNode().getElementType());
+    final IElementType type = element.getNode().getElementType();
+    return YAMLTokenTypes.SCALAR_VALUES.contains(type) || type == YAMLTokenTypes.TEXT;
   }
 
   public static boolean isScalarOrEmptyCompoundValue(final PsiElement element) {

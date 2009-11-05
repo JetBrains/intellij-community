@@ -49,7 +49,9 @@ WHITE_SPACE =                   {WHITE_SPACE_CHAR}+
 LINE =                          .*
 COMMENT =                       "#"{LINE}
 
-KEY =                           [a-zA-Z_][a-zA-Z0-9\-_ ]*:
+ID =                            [a-zA-Z_][a-zA-Z0-9\-_ ]*
+KEY =                           {ID}:
+INJECTION =                     "{{" {ID} "}"{0,2}
 
 ESCAPE_SEQUENCE=                \\[^\n]
 DSTRING=                        \"([^\\\"]|{ESCAPE_SEQUENCE})*?\"?
@@ -143,7 +145,7 @@ STRING=                         '([^\\']|{ESCAPE_SEQUENCE}|(''))*?'?
                                     yypushback(yylength());
                                 }
 
-[^ \t\n,{\[|>][^\n#,}\]]*[^ \t\n#,}\]]
+({INJECTION} | [^ \t\n,{\[|>]) ({INJECTION} | [^\n#,}\]])* ({INJECTION} | [^ \t\n#,}\]])
                                 {   return TEXT; }
 .                               {   return TEXT; }
 }

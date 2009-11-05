@@ -94,6 +94,10 @@ public class YAMLParserTest extends LightPlatformTestCase {
            "  avg:  0.288");
   }
 
+  public void testValue_injection() throws Throwable {
+    doTest("key:\n" + "    one: 1 text\n" + "    other: some {{count}} text");
+  }
+
   private void doTest(@NonNls final String code) {
     final PsiFile psiFile = PsiFileFactory.getInstance(getProject()).createFileFromText("temp.yml", YAMLFileType.YML,
                                                                   code, LocalTimeCounter.currentTime(), true);
