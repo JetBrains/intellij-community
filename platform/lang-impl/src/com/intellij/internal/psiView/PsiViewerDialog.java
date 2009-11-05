@@ -404,8 +404,8 @@ public class PsiViewerDialog extends DialogWrapper {
         if (fqn.contains(".")) {
           filename = fqn.substring(fqn.lastIndexOf('.') + 1);
         }
-        if (fqn.contains("$")) {
-          filename = filename.substring(0, fqn.indexOf('$'));
+        if (filename.contains("$")) {
+          filename = filename.substring(0, filename.indexOf('$'));
         }
         filename += ".java";
         final PsiFile[] files = FilenameIndex.getFilesByName(myProject, filename, GlobalSearchScope.allScope(myProject));
