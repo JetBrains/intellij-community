@@ -61,6 +61,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
         final String indexText =
                 codeStyleManager.suggestUniqueVariableName("i", statement, true);
         final String variableNameRoot;
+        final String iteratedValueText = iteratedValue.getText();
         if (iteratedValue instanceof PsiMethodCallExpression) {
             final PsiMethodCallExpression methodCallExpression =
                     (PsiMethodCallExpression)iteratedValue;
@@ -86,8 +87,17 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
             } else {
                 variableNameRoot = operand.getText();
             }
+        } else if (iteratedValue instanceof PsiJavaCodeReferenceElement) {
+            final PsiJavaCodeReferenceElement referenceElement =
+                    (PsiJavaCodeReferenceElement) iteratedValue;
+            final String referenceName = referenceElement.getReferenceName();
+            if (referenceName == null) {
+                variableNameRoot = iteratedValueText;
+            } else {
+                variableNameRoot = referenceName;
+            }
         } else {
-            variableNameRoot = iteratedValue.getText();
+            variableNameRoot = iteratedValueText;
         }
         final String lengthText;
         if (isArray) {
@@ -111,7 +121,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
             declaration.append(' ');
             declaration.append(variableName);
             declaration.append('=');
-            declaration.append(iteratedValue.getText());
+            declaration.append(iteratedValueText);
             declaration.append(';');
             final PsiElementFactory elementFactory =
                     JavaPsiFacade.getElementFactory(project);
@@ -129,10 +139,10 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
         newStatement.append(" = ");
         if (iteratedValue instanceof PsiTypeCastExpression) {
             newStatement.append('(');
-            newStatement.append(iteratedValue.getText());
+            newStatement.append(iteratedValueText);
             newStatement.append(')');
         } else {
-            newStatement.append(variableNameRoot);
+            newStatement.append(iteratedValueText);
         }
         if (isArray) {
             newStatement.append(".length;");
@@ -155,10 +165,10 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
         newStatement.append(" = ");
         if (iteratedValue instanceof PsiTypeCastExpression) {
             newStatement.append('(');
-            newStatement.append(iteratedValue.getText());
+            newStatement.append(iteratedValueText);
             newStatement.append(')');
         } else {
-            newStatement.append(variableNameRoot);
+            newStatement.append(iteratedValueText);
         }
         if (isArray) {
             newStatement.append('[');

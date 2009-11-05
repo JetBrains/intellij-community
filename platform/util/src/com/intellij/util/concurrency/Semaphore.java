@@ -17,26 +17,49 @@ package com.intellij.util.concurrency;
 
 import com.intellij.openapi.diagnostic.Logger;
 
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.AbstractQueuedSynchronizer;
+
 public class Semaphore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.concurrency.Semaphore");
-  private int mySemaphore = 0;
 
-  public synchronized void down() {
-    mySemaphore++;
-  }
+  private static final class Sync extends AbstractQueuedSynchronizer {
+    public int tryAcquireShared(int acquires) {
+      return getState() == 0 ? 1 : -1;
+    }
 
-  public synchronized void up() {
-    mySemaphore--;
-    if (mySemaphore == 0) {
-      notifyAll();
+    public boolean tryReleaseShared(int releases) {
+      // Decrement count; signal when transition to zero
+      while (true) {
+        int c = getState();
+        if (c == 0) return false;
+        int nextc = c - 1;
+        if (compareAndSetState(c, nextc)) return nextc == 0;
+      }
+    }
+
+    final void down() {
+      while (true) {
+        int current = getState();
+        int next = current + 1;
+        if (compareAndSetState(current, next)) return;
+      }
     }
   }
 
-  public synchronized void waitFor() {
+  private final Sync sync = new Sync();
+
+  public void up() {
+    sync.releaseShared(1);
+  }
+
+  public void down() {
+    sync.down();
+  }
+
+  public void waitFor() {
     try {
-      while (mySemaphore > 0) {
-        wait();
-      }
+      sync.acquireSharedInterruptibly(1);
     }
     catch (InterruptedException e) {
       LOG.debug(e);
@@ -44,22 +67,9 @@ public class Semaphore {
     }
   }
 
-  public synchronized boolean waitFor(final long timeout) {
+  public boolean waitFor(final long timeout) {
     try {
-      if (mySemaphore == 0) return true;
-      final long startTime = System.currentTimeMillis();
-      long waitTime = timeout;
-      while (mySemaphore > 0) {
-        wait(waitTime);
-        final long elapsed = System.currentTimeMillis() - startTime;
-        if (elapsed < timeout) {
-          waitTime = timeout - elapsed;
-        }
-        else {
-          break;
-        }
-      }
-      return mySemaphore == 0;
+      return sync.tryAcquireSharedNanos(1, TimeUnit.MILLISECONDS.toNanos(timeout));
     }
     catch (InterruptedException e) {
       LOG.debug(e);

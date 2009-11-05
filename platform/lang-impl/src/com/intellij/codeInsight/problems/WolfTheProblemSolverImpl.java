@@ -18,7 +18,6 @@ package com.intellij.codeInsight.problems;
 
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
-import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -294,8 +293,8 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
     try {
       GeneralHighlightingPass pass = new GeneralHighlightingPass(myProject, psiFile, document, 0, document.getTextLength(), false) {
-        protected HighlightInfoHolder createInfoHolder() {
-          return new HighlightInfoHolder(psiFile, HighlightInfoFilter.EMPTY_ARRAY) {
+        protected HighlightInfoHolder createInfoHolder(final PsiFile file) {
+          return new HighlightInfoHolder(file, HighlightInfoFilter.EMPTY_ARRAY) {
             public boolean add(HighlightInfo info) {
               if (info != null && info.getSeverity() == HighlightSeverity.ERROR) {
                 throw new HaveGotErrorException(info, myHasErrorElement);
@@ -305,17 +304,6 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
           };
         }
 
-        protected AnnotationHolderImpl createAnnotationHolder() {
-          return new AnnotationHolderImpl(){
-            public boolean add(Annotation annotation) {
-              if (annotation != null && annotation.getSeverity() == HighlightSeverity.ERROR) {
-                HighlightInfo highlightInfo = HighlightInfo.fromAnnotation(annotation);
-                throw new HaveGotErrorException(highlightInfo, myHasErrorElement);
-              }
-              return super.add(annotation);
-            }
-          };
-        }
       };
       pass.collectInformation(progressIndicator);
     }

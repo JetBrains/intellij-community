@@ -112,7 +112,6 @@ public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
     }
 
     HighlightInfoHolder holder = new HighlightInfoHolder(myFile, HighlightInfoFilter.EMPTY_ARRAY);
-    holder.setWritable(true);
     List<HighlightInfo> infos = ContainerUtil.map(annotations, new Function<Annotation, HighlightInfo>() {
       public HighlightInfo fun(Annotation annotation) {
         return HighlightInfo.fromAnnotation(annotation);

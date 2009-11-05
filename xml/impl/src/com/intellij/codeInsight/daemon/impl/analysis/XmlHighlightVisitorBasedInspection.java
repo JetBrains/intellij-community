@@ -73,7 +73,6 @@ public class XmlHighlightVisitorBasedInspection extends GlobalInspectionTool {
             return true;
           }
         };
-        myHolder.setWritable(true);
         super.visitFile(file);
       }
 

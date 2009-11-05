@@ -23,7 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.*;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -65,9 +65,10 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
   };
   private Map<String, LocalFileSystem.WatchRequest> myWatchedOutputs = new HashMap<String, LocalFileSystem.WatchRequest>();
 
-  public ArtifactManagerImpl(Project project) {
+  public ArtifactManagerImpl(Project project, VirtualFileManager virtualFileManager) {
     myProject = project;
     myResolvingContext = new DefaultPackagingElementResolvingContext(myProject);
+    virtualFileManager.addVirtualFileListener(new ArtifactVirtualFileListener(myProject, this), myProject);
   }
 
   @NotNull

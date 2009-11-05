@@ -27,9 +27,7 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class ExternalAnnotationsManager {
@@ -41,12 +39,7 @@ public abstract class ExternalAnnotationsManager {
     NOWHERE
   }
 
-  private static final NotNullLazyKey<ExternalAnnotationsManager, Project> INSTANCE_KEY = NotNullLazyKey.create("ExternalAnnotationsManager.Instance.Cache", new NotNullFunction<Project, ExternalAnnotationsManager>() {
-    @NotNull
-    public ExternalAnnotationsManager fun(final Project project) {
-      return ServiceManager.getService(project, ExternalAnnotationsManager.class);
-    }
-  });
+  private static final NotNullLazyKey<ExternalAnnotationsManager, Project> INSTANCE_KEY = ServiceManager.createLazyKey(ExternalAnnotationsManager.class);
 
   public static ExternalAnnotationsManager getInstance(Project project) {
     return INSTANCE_KEY.getValue(project);

@@ -39,7 +39,6 @@ public class HighlightInfoHolder {
   private int myErrorCount;
   private int myWarningCount;
   private int myInfoCount;
-  private boolean writable = false;
   private final List<HighlightInfo> myInfos = new ArrayList<HighlightInfo>(5);
 
   public HighlightInfoHolder(@NotNull PsiFile contextFile, @NotNull HighlightInfoFilter... filters) {
@@ -48,7 +47,6 @@ public class HighlightInfoHolder {
   }
 
   public boolean add(@Nullable HighlightInfo info) {
-    if (!writable) throw new IllegalStateException("Update highlight holder after visit finished; "+this+"; info="+info);
     if (info == null || !accepted(info)) return false;
 
     HighlightSeverity severity = info.getSeverity();
@@ -73,8 +71,6 @@ public class HighlightInfoHolder {
   }
 
   public void clear() {
-    if (!writable) throw new IllegalStateException("Clearing holder after visit finished; " + this);
-
     myErrorCount = 0;
     myWarningCount = 0;
     myInfoCount = 0;
@@ -105,18 +101,6 @@ public class HighlightInfoHolder {
       added |= add(highlightInfo);
     }
     return added;
-  }
-
-  // ASSERTIONS ONLY
-  public void setWritable(final boolean writable) {
-    if (this.writable == writable) {
-      LOG.error("this.writable != writable");
-    }
-    this.writable = writable;
-  }
-
-  public boolean isWritable() {
-    return writable;
   }
 
   public int size() {

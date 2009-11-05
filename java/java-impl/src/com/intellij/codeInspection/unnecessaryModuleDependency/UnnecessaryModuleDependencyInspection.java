@@ -44,31 +44,8 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
       for (final Module dependency : declaredDependencies) {
         if (scope.contains(dependency.getModuleFile())) { //external references are rejected -> annotator doesn't provide any information on them -> false positives
           if (modules == null || !modules.contains(dependency)) {
-            descriptors.add(manager.createProblemDescriptor(InspectionsBundle.message("unnecessary.module.dependency.problem.descriptor", module.getName(), dependency.getName()), new QuickFix(){
-              @NotNull
-              public String getName() {
-                return "Remove dependency";
-              }
-
-              @NotNull
-              public String getFamilyName() {
-                return getName();
-              }
-
-              public void applyFix(@NotNull Project project, @NotNull CommonProblemDescriptor descriptor) {
-                final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-                for (OrderEntry entry : model.getOrderEntries()) {
-                  if (entry instanceof ModuleOrderEntry) {
-                    final Module mDependency = ((ModuleOrderEntry)entry).getModule();
-                    if (Comparing.equal(mDependency, dependency)) {
-                      model.removeOrderEntry(entry);
-                      break;
-                    }
-                  }
-                }
-                model.commit();
-              }
-            }));
+            descriptors.add(manager.createProblemDescriptor(InspectionsBundle.message("unnecessary.module.dependency.problem.descriptor", module.getName(), dependency.getName()),
+                                                            new RemoveModuleDependencyFix(module, dependency)));
           }
         }
       }
@@ -91,5 +68,39 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
   @NonNls
   public String getShortName() {
     return "UnnecessaryModuleDependencyInspection";
+  }
+
+  public static class RemoveModuleDependencyFix implements QuickFix {
+    private final Module myModule;
+    private final Module myDependency;
+
+    public RemoveModuleDependencyFix(Module module, Module dependency) {
+      myModule = module;
+      myDependency = dependency;
+    }
+
+    @NotNull
+    public String getName() {
+      return "Remove dependency";
+    }
+
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
+
+    public void applyFix(@NotNull Project project, @NotNull CommonProblemDescriptor descriptor) {
+      final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
+      for (OrderEntry entry : model.getOrderEntries()) {
+        if (entry instanceof ModuleOrderEntry) {
+          final Module mDependency = ((ModuleOrderEntry)entry).getModule();
+          if (Comparing.equal(mDependency, myDependency)) {
+            model.removeOrderEntry(entry);
+            break;
+          }
+        }
+      }
+      model.commit();
+    }
   }
 }

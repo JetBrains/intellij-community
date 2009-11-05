@@ -40,7 +40,7 @@ public interface DocumentWindow extends Document {
   TextRange intersectWithEditable(@NotNull TextRange range);
 
   @Nullable
-  TextRange getHostRange(int offset);
+  TextRange getHostRange(int hostOffset);
 
   int injectedToHostLine(int line);
 

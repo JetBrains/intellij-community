@@ -27,20 +27,21 @@ import org.intellij.images.editor.actionSystem.ImageEditorActionUtil;
  * @see ImageEditor#setGridVisible
  */
 public final class ToggleGridAction extends ToggleAction {
-    public boolean isSelected(AnActionEvent e) {
-        ImageEditor editor = ImageEditorActionUtil.getValidEditor(e);
-        return editor != null && editor.isGridVisible();
-    }
+  public boolean isSelected(AnActionEvent e) {
+    ImageEditor editor = ImageEditorActionUtil.getValidEditor(e);
+    return editor != null && editor.isGridVisible();
+  }
 
-    public void setSelected(AnActionEvent e, boolean state) {
-        ImageEditor editor = ImageEditorActionUtil.getValidEditor(e);
-        if (editor != null) {
-            editor.setGridVisible(state);
-        }
+  public void setSelected(AnActionEvent e, boolean state) {
+    ImageEditor editor = ImageEditorActionUtil.getValidEditor(e);
+    if (editor != null) {
+      editor.setGridVisible(state);
     }
+  }
 
-    public void update(final AnActionEvent e) {
-        super.update(e);
-        ImageEditorActionUtil.setEnabled(e);
-    }
+  public void update(final AnActionEvent e) {
+    super.update(e);
+    ImageEditorActionUtil.setEnabled(e);
+    e.getPresentation().setText(isSelected(e) ? "Hide Grid" : "Show Grid");
+  }
 }

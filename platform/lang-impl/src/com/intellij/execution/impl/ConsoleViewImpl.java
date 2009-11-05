@@ -823,7 +823,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
     myHyperlinks.add(highlighter, hyperlinkInfo);
   }
 
-  private class ClearAllAction extends AnAction{
+  private class ClearAllAction extends AnAction implements DumbAware {
     private ClearAllAction(){
       super(ExecutionBundle.message("clear.all.from.console.action.name"));
     }
@@ -833,7 +833,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
     }
   }
 
-  private class CopyAction extends AnAction{
+  private class CopyAction extends AnAction implements DumbAware {
     private CopyAction(){
       super(myEditor != null && myEditor.getSelectionModel().hasSelection() ? ExecutionBundle.message("copy.selected.content.action.name") : ExecutionBundle.message("copy.content.action.name"));
     }
