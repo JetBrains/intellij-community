@@ -103,13 +103,11 @@ public class DumbServiceImpl extends DumbService {
 
     if (ApplicationManager.getApplication().isDispatchThread() && !isDumb()) {
       int size = runner.queryNeededFiles(indicator);
-      System.out.println("querying on request: " + size);
       if (size < 10) {
         if (size > 0) {
           runner.processFiles(indicator, false);
         }
         runner.updatingDone();
-        System.out.println("finished " + size);
         return;
       }
 
@@ -117,7 +115,6 @@ public class DumbServiceImpl extends DumbService {
     }
 
     try {
-      System.out.println("queuing request");
       myUpdatesQueue.put(runner);
     }
     catch (InterruptedException e) {
@@ -127,14 +124,12 @@ public class DumbServiceImpl extends DumbService {
 
   private void updateStarted() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    System.out.println("entering dumb mode");
     myDumb.set(true);
     myPublisher.enteredDumbMode();
   }
 
   private void updateFinished() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    System.out.println("exiting dumb mode");
     myDumb.set(false);
     myPublisher.exitDumbMode();
     while (true) {
@@ -231,7 +226,6 @@ public class DumbServiceImpl extends DumbService {
     private void notifyStartedIfNotInDumbMode() {
       ApplicationManager.getApplication().invokeAndWait(new Runnable() {
         public void run() {
-          System.out.println("trying to enter dumb mode");
           if (myProject.isDisposed()) return;
           if (!isDumb()) {
             updateStarted();
@@ -246,7 +240,6 @@ public class DumbServiceImpl extends DumbService {
     private void notifyFinishedIfQueueEmpty() {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          System.out.println("trying to exit dumb mode");
           if (myProject.isDisposed()) return;
           if (myUpdatesQueue.isEmpty()) updateFinished();
         }
@@ -287,7 +280,6 @@ public class DumbServiceImpl extends DumbService {
       runner.processFiles(indicator, true);
 
       long after = System.currentTimeMillis();
-      System.out.println("indexed " + myCurrentUpdateTotal + " files in " + (after - before));
     }
 
     private void updatingDone(CacheUpdateRunner runner) {

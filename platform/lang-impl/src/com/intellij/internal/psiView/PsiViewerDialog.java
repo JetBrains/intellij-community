@@ -40,7 +40,11 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.search.FilenameIndex;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.SortedComboBoxModel;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
@@ -55,8 +59,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
@@ -68,6 +71,8 @@ public class PsiViewerDialog extends DialogWrapper {
   private final Tree myTree;
   private final ViewerTreeBuilder myTreeBuilder;
 
+  private final JList myRefs;
+
   private Editor myEditor;
   private String myLastParsedText = null;
 
@@ -76,13 +81,13 @@ public class PsiViewerDialog extends DialogWrapper {
   private FileType[] myFileTypes;
 
   private JCheckBox myShowWhiteSpacesBox;
-
   private JPanel myStructureTreePanel;
   private JPanel myTextPanel;
   private JPanel myPanel;
   private JPanel myChoicesPanel;
   private JCheckBox myShowTreeNodesCheckBox;
   private JComboBox myDialectsComboBox;
+  private JPanel myReferencesPanel;
 
   public PsiViewerDialog(Project project,boolean modal) {
     super(project, true);
@@ -105,6 +110,16 @@ public class PsiViewerDialog extends DialogWrapper {
     panel.add(scrollPane, BorderLayout.CENTER);
     myStructureTreePanel.setLayout(new BorderLayout());
     myStructureTreePanel.add(panel, BorderLayout.CENTER);
+
+    myRefs = new JList(new DefaultListModel());
+    JScrollPane refScrollPane = new JScrollPane(myRefs);
+    JPanel refPanel = new JPanel(new BorderLayout());
+    refPanel.add(refScrollPane, BorderLayout.CENTER);
+    myReferencesPanel.setLayout(new BorderLayout());
+    myReferencesPanel.add(refPanel, BorderLayout.CENTER);
+    final GoToListener listener = new GoToListener(myRefs, project);
+    myRefs.addKeyListener(listener);
+    myRefs.addMouseListener(listener);
 
     setModal(modal);
     setOKButtonText("&Build PSI Tree");
@@ -342,8 +357,19 @@ public class PsiViewerDialog extends DialogWrapper {
           if (end <= textLength) {
             myHighlighter = myEditor.getMarkupModel().addRangeHighlighter(start, end, HighlighterLayer.FIRST + 1, myAttributes, HighlighterTargetArea.EXACT_RANGE);
           }
+          updateReferences(element);
         }
       }
+    }
+
+    public void updateReferences(PsiElement element) {
+      final DefaultListModel model = (DefaultListModel)myRefs.getModel();
+      model.clear();
+      if (element != null) {
+        for (PsiReference reference : element.getReferences()) {
+          model.addElement(reference.getClass().getName());
+        }
+      }      
     }
 
     private void clearSelection() {
@@ -359,5 +385,53 @@ public class PsiViewerDialog extends DialogWrapper {
     EditorFactory.getInstance().releaseEditor(myEditor);
 
     super.dispose();
+  }
+
+  private static class GoToListener implements KeyListener, MouseListener {
+    private final JList myList;
+    private final Project myProject;
+
+    public GoToListener(JList list, Project project) {
+      myList = list;
+      myProject = project;
+    }
+
+    private void navigate() {
+      final Object value = myList.getSelectedValue();
+      if (value instanceof String) {
+        final String fqn = (String)value;
+        String filename = fqn;
+        if (fqn.contains(".")) {
+          filename = fqn.substring(fqn.lastIndexOf('.') + 1);
+        }
+        if (filename.contains("$")) {
+          filename = filename.substring(0, filename.indexOf('$'));
+        }
+        filename += ".java";
+        final PsiFile[] files = FilenameIndex.getFilesByName(myProject, filename, GlobalSearchScope.allScope(myProject));
+        if (files != null && files.length > 0) {
+          files[0].navigate(true);
+        }
+      }
+    }
+
+    public void keyPressed(KeyEvent e) {
+      if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+        navigate();
+      }
+    }
+
+    public void mouseClicked(MouseEvent e) {
+      if (e.getClickCount() > 1) {
+        navigate();
+      }
+    }
+
+    public void keyTyped(KeyEvent e) {}
+    public void keyReleased(KeyEvent e) {}
+    public void mousePressed(MouseEvent e) {}
+    public void mouseReleased(MouseEvent e) {}
+    public void mouseEntered(MouseEvent e) {}
+    public void mouseExited(MouseEvent e) {}
   }
 }

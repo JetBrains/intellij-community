@@ -21,6 +21,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.patterns.*;
 import com.intellij.pom.references.PomReferenceProvider;
@@ -58,8 +59,10 @@ public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
   };
   private final Project myProject;
 
-  public static ReferenceProvidersRegistry getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, ReferenceProvidersRegistry.class);
+  private final static NotNullLazyKey<ReferenceProvidersRegistry, Project> INSTANCE_CACHE = ServiceManager.createLazyKey(ReferenceProvidersRegistry.class);
+
+  public static ReferenceProvidersRegistry getInstance(Project project) {
+    return INSTANCE_CACHE.getValue(project);
   }
 
   public ReferenceProvidersRegistry(Project project) {

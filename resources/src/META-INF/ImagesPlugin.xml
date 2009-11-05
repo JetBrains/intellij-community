@@ -1,12 +1,6 @@
-<idea-plugin>
+<idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
 
   <vendor>Alexey Efimov</vendor>
-
-  <name>Images</name>
-  <version>1.1</version>
-
-  <depends>com.intellij.modules.lang</depends>
-  <depends optional="true" config-file="images-commander-integration.xml">com.intellij.commander</depends>
 
   <resource-bundle>org.intellij.images.ImagesBundle</resource-bundle>
 
@@ -35,42 +29,48 @@
   <actions>
     <action class="org.intellij.images.actions.EditExternalyAction"
             id="Images.EditExternaly"
-            icon="/org/intellij/images/icons/EditExternaly.png">
+            icon="/org/intellij/images/icons/EditExternaly.png"
+            text="Open image in external editor">
       <keyboard-shortcut first-keystroke="control alt F4" keymap="$default"/>
       <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="EditSource"/>
     </action>
     <action class="org.intellij.images.actions.ShowThumbnailsAction"
-            id="Images.ShowThumbnails">
+            id="Images.ShowThumbnails" text="Show image thumbnails">
       <keyboard-shortcut first-keystroke="shift control T" keymap="$default"/>
       <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="AddToFavorites"/>
     </action>
     <action class="org.intellij.images.actions.ToggleTransparencyChessboardAction"
             id="Images.ToggleTransparencyChessboard"
-            icon="/org/intellij/images/icons/ToggleTransparencyChessboard.png">
+            icon="/org/intellij/images/icons/ToggleTransparencyChessboard.png"
+            text="Show Chessboard">
     </action>
     <group id="Images.EditorToolbar">
       <reference id="Images.ToggleTransparencyChessboard"/>
       <action class="org.intellij.images.editor.actions.ToggleGridAction"
               id="Images.Editor.ToggleGrid"
-              icon="/org/intellij/images/icons/ToggleGrid.png">
+              icon="/org/intellij/images/icons/ToggleGrid.png"
+              text="Show Grid">
         <keyboard-shortcut first-keystroke="control QUOTE" keymap="$default"/>
       </action>
       <separator/>
       <action class="org.intellij.images.editor.actions.ZoomInAction"
               id="Images.Editor.ZoomIn"
-              icon="/org/intellij/images/icons/ZoomIn.png">
+              icon="/org/intellij/images/icons/ZoomIn.png"
+              text="Zoom In">
         <keyboard-shortcut first-keystroke="control ADD" keymap="$default"/>
         <keyboard-shortcut first-keystroke="control EQUALS" keymap="$default"/>
       </action>
       <action class="org.intellij.images.editor.actions.ZoomOutAction"
               id="Images.Editor.ZoomOut"
-              icon="/org/intellij/images/icons/ZoomOut.png">
+              icon="/org/intellij/images/icons/ZoomOut.png"
+              text="Zoom Out">
         <keyboard-shortcut first-keystroke="control SUBTRACT" keymap="$default"/>
         <keyboard-shortcut first-keystroke="control MINUS" keymap="$default"/>
       </action>
       <action class="org.intellij.images.editor.actions.ActualSizeAction"
               id="Images.Editor.ActualSize"
-              icon="/org/intellij/images/icons/ActualSize.png">
+              icon="/org/intellij/images/icons/ActualSize.png"
+              text="Zoom to actual size">
         <keyboard-shortcut first-keystroke="control DIVIDE" keymap="$default"/>
         <keyboard-shortcut first-keystroke="control SLASH" keymap="$default"/>
       </action>

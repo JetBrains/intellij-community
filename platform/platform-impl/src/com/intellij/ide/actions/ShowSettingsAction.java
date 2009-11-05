@@ -18,6 +18,7 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.IdeConfigurablesGroup;
@@ -44,7 +45,9 @@ public class ShowSettingsAction extends AnAction implements DumbAware {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         final long endTime = System.nanoTime();
-        System.out.println("Displaying settings dialog took " + ((endTime - startTime) / 1000000) + " ms");
+        if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+          System.out.println("Displaying settings dialog took " + ((endTime - startTime) / 1000000) + " ms");
+        }
       }
     });
     ShowSettingsUtil.getInstance().showSettingsDialog(project, group);

@@ -19,6 +19,8 @@ import com.intellij.openapi.util.UserDataHolder;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -44,7 +46,9 @@ public abstract class PerThreadMap<T, KeyT extends UserDataHolder> {
     for (T template : templates) {
       Class<? extends T> aClass = (Class<? extends T>)template.getClass();
       try {
-        T clone = aClass.newInstance();
+        Constructor<? extends T> constructor = aClass.getDeclaredConstructor();
+        constructor.setAccessible(true);
+        T clone = constructor.newInstance();
         result.add(clone);
       }
       catch (InstantiationException e) {
@@ -52,6 +56,12 @@ public abstract class PerThreadMap<T, KeyT extends UserDataHolder> {
       }
       catch (IllegalAccessException e) {
         throw new RuntimeException("Cannot access annotator "+aClass+". There must be public no-args constructor", e);
+      }
+      catch (NoSuchMethodException e) {
+        throw new RuntimeException("Cannot create annotator "+aClass+". There must be public no-args constructor", e);
+      }
+      catch (InvocationTargetException e) {
+        throw new RuntimeException("Error during creating annotator "+aClass, e);
       }
     }
     return result;

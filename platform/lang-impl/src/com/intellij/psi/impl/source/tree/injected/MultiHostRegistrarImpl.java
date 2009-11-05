@@ -480,13 +480,10 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
           int end = escaper.getOffsetInHost(range.getEndOffset() - prevHostEndOffset - prefixLength, rangeInsideHost);
           if (end == -1) {
             end = rangeInsideHost.getEndOffset();
-            tokens.add(Trinity.<IElementType, PsiLanguageInjectionHost, TextRange>create(tokenType, host, new ProperTextRange(start, end)));
             prevHostEndOffset = shredEndOffset;
           }
-          else {
-            TextRange rangeInHost = new ProperTextRange(start, end);
-            tokens.add(Trinity.create(tokenType, host, rangeInHost));
-          }
+          TextRange rangeInHost = new ProperTextRange(start, end);
+          tokens.add(Trinity.create(tokenType, host, rangeInHost));
         }
         range = spilled;
       }

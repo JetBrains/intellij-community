@@ -22,7 +22,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.util.NotNullLazyKey;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
@@ -95,12 +94,7 @@ public abstract class DumbService {
     }, modalityState);
   }
 
-  private static final NotNullLazyKey<DumbService, Project> INSTANCE_KEY = NotNullLazyKey.create("DumbService.Cache", new NotNullFunction<Project, DumbService>() {
-    @NotNull
-    public DumbService fun(final Project project) {
-      return ServiceManager.getService(project, DumbService.class);
-    }
-  });
+  private static final NotNullLazyKey<DumbService, Project> INSTANCE_KEY = ServiceManager.createLazyKey(DumbService.class);
 
   public static DumbService getInstance(@NotNull Project project) {
     return INSTANCE_KEY.getValue(project);

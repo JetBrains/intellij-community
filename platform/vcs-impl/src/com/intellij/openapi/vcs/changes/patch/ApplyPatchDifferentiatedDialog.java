@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
@@ -30,6 +31,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -85,6 +87,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private ChangesLegendCalculator myInfoCalculator;
   private CommitLegendPanel myCommitLegendPanel;
   private final Consumer<ApplyPatchDifferentiatedDialog> myCallback;
+
+  private boolean myContainBasedChanges;
 
   public ApplyPatchDifferentiatedDialog(final Project project, final Consumer<ApplyPatchDifferentiatedDialog> callback) {
     super(project, true);
@@ -214,7 +218,12 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         continue;
       }
       final String fileName = patch.getBeforeFileName();
-      final Collection<VirtualFile> variants = filterVariants(patch, FilenameIndex.getVirtualFilesByName(myProject, fileName, scope));
+      final Collection<VirtualFile> files = ApplicationManager.getApplication().runReadAction(new Computable<Collection<VirtualFile>>() {
+        public Collection<VirtualFile> compute() {
+          return FilenameIndex.getVirtualFilesByName(myProject, fileName, scope);
+        }
+      });
+      final Collection<VirtualFile> variants = filterVariants(patch, files);
 
       final FilePatchInProgress filePatchInProgress = new FilePatchInProgress(patch, variants, baseDir);
       result.add(filePatchInProgress);
@@ -332,6 +341,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     myPatches.clear();
     myChangesTreeList.setChangesToDisplay(Collections.<FilePatchInProgress.PatchChange>emptyList());
     myChangesTreeList.repaint();
+    myContainBasedChanges = false;
   }
 
   @Override
@@ -394,97 +404,6 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
     return myCenterPanel;
   }
-
-  // create change
-  /*private void showDiff() {
-    List<Change> changes = new ArrayList<Change>();
-    ApplyPatchContext context = getApplyPatchContext().getPrepareContext();
-    Object[] selection = myPatchContentsList.getSelectedValues();
-    if (selection.length == 0) {
-      if (myPatches == null) return;
-      selection = ArrayUtil.toObjectArray(myPatches);
-    }
-    for(Object o: selection) {
-      final TextFilePatch patch = (TextFilePatch) o;
-      try {
-        if (patch.isNewFile()) {
-          final FilePath newFilePath = FilePathImpl.createNonLocal(patch.getAfterName(), false);
-          final String content = patch.getNewFileText();
-          ContentRevision revision = new SimpleContentRevision(content, newFilePath, patch.getAfterVersionId());
-          changes.add(new Change(null, revision));
-        } else if ((! patch.isDeletedFile()) && (patch.getBeforeName() != null) && (patch.getAfterName() != null) &&
-            (! patch.getBeforeName().equals(patch.getAfterName()))) {
-
-          final VirtualFile baseDirectory = getBaseDirectory();
-          final VirtualFile beforeFile = PatchApplier.getFile(baseDirectory, patch.getBeforeName());
-
-          if (beforeFile != null) {
-            final List<String> tail = new ArrayList<String>();
-            final VirtualFile partFile = PatchApplier.getFile(baseDirectory, patch.getAfterName(), tail);
-            final StringBuilder sb = new StringBuilder(partFile.getPath());
-            for (String s : tail) {
-              if (sb.charAt(sb.length() - 1) != '/') {
-                sb.append('/');
-              }
-              sb.append(s);
-            }
-
-            final Change change =
-                changeForPath(beforeFile, patch, FilePathImpl.createNonLocal(FileUtil.toSystemIndependentName(sb.toString()), false));
-            if (change != null) {
-              changes.add(change);
-            }
-          } else {
-            Messages.showErrorDialog(myProject, "Cannot show difference: cannot find file " + patch.getBeforeName(),
-                                     VcsBundle.message("patch.apply.dialog.title"));
-          }
-        }
-          else {
-          final VirtualFile fileToPatch = patch.findFileToPatch(context);
-          if (fileToPatch != null) {
-            final FilePathImpl filePath = new FilePathImpl(fileToPatch);
-            final CurrentContentRevision currentRevision = new CurrentContentRevision(filePath);
-            if (patch.isDeletedFile()) {
-              changes.add(new Change(currentRevision, null));
-            }
-            else {
-              final Change change = changeForPath(fileToPatch, patch, null);
-              if (change != null) {
-                changes.add(change);
-              }
-            }
-          }
-        }
-      }
-      catch (Exception e) {
-        Messages.showErrorDialog(myProject, "Error loading changes for " + patch.getAfterFileName() + ": " + e.getMessage(),
-                                 VcsBundle.message("patch.apply.dialog.title"));
-        return;
-      }
-    }
-    ShowDiffAction.showDiffForChange(changes.toArray(new Change[changes.size()]), 0, myProject,
-                                     ShowDiffAction.DiffExtendUIFactory.NONE, false);
-  }
-
-  @Nullable
-  private Change changeForPath(final VirtualFile fileToPatch, final TextFilePatch patch, final FilePath newFilePath) {
-    try {
-    final FilePathImpl filePath = new FilePathImpl(fileToPatch);
-    final CurrentContentRevision currentRevision = new CurrentContentRevision(filePath);
-    final Document doc = FileDocumentManager.getInstance().getDocument(fileToPatch);
-    String baseContent = doc.getText();
-    StringBuilder newText = new StringBuilder();
-    patch.applyModifications(baseContent, newText);
-    ContentRevision revision = new SimpleContentRevision(newText.toString(), (newFilePath == null) ? filePath : newFilePath, patch.getAfterVersionId());
-    return new Change(currentRevision, revision);
-    } catch (ApplyPatchException e) {
-      ApplyPatchContext context = new ApplyPatchContext(getBaseDirectory(), 0, false, false);
-      // just show diff here. maybe refactor further..
-      ApplyPatchAction.mergeAgainstBaseVersion(myProject, fileToPatch, context, patch, ApplyPatchAction.ApplyPatchMergeRequestFactory.INSTANCE_READ_ONLY);
-      return null;
-    }
-  } */
-
 
   private static class MyChangeTreeList extends ChangesTreeList<FilePatchInProgress.PatchChange> {
     private MyChangeTreeList(Project project,
@@ -576,6 +495,14 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     myChangesTreeList.setChangesToDisplay(changes);
     myChangesTreeList.setIncludedChanges(included);
     myChangesTreeList.repaint();
+
+    myContainBasedChanges = false;
+    for (FilePatchInProgress patch : myPatches) {
+      if (patch.baseExistsOrAdded()) {
+        myContainBasedChanges = true;
+        break;
+      }
+    }
   }
 
   private List<FilePatchInProgress.PatchChange> getAllChanges() {
@@ -820,23 +747,27 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
 
     public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(! myPatches.isEmpty());
+      e.getPresentation().setEnabled((! myPatches.isEmpty()) && myContainBasedChanges);
     }
 
     public void actionPerformed(AnActionEvent e) {
-      if (myPatches.isEmpty()) return;
+      if (myPatches.isEmpty() || (! myContainBasedChanges)) return;
       final List<FilePatchInProgress.PatchChange> changes = getAllChanges();
       final List<FilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
       int idx = 0;
+      boolean goodChange = false;
       if (! selectedChanges.isEmpty()) {
         final FilePatchInProgress.PatchChange c = selectedChanges.get(0);
         for (FilePatchInProgress.PatchChange change : changes) {
+          if (! change.getPatchInProgress().baseExistsOrAdded()) continue;
+          goodChange = true;
           if (change.equals(c)) {
             break;
           }
           ++ idx;
         }
       }
+      if (! goodChange) return;
       idx = (idx == changes.size()) ? 0 : idx;
       ShowDiffAction.showDiffForChange(changes.toArray(new Change[changes.size()]), idx, myProject,
                                        ShowDiffAction.DiffExtendUIFactory.NONE, false);

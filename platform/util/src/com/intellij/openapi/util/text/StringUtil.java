@@ -191,7 +191,8 @@ public class StringUtil {
     return fqName;
   }
 
-  @NotNull public static String getPackageName(@NotNull String fqName) {
+  @NotNull
+  public static String getPackageName(@NotNull String fqName) {
     return getPackageName(fqName, '.');
   }
 

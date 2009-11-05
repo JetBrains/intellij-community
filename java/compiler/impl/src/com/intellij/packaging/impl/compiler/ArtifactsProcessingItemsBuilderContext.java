@@ -16,10 +16,12 @@
 package com.intellij.packaging.impl.compiler;
 
 import com.intellij.compiler.impl.packagingCompiler.DestinationInfo;
+import com.intellij.compiler.impl.packagingCompiler.ExplodedDestinationInfo;
 import com.intellij.compiler.impl.packagingCompiler.ProcessingItemsBuilderContext;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.elements.ArtifactIncrementalCompilerContext;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
@@ -33,7 +35,11 @@ public class ArtifactsProcessingItemsBuilderContext extends ProcessingItemsBuild
     super(compileContext);
   }
 
-  public boolean addDestination(VirtualFile sourceFile, DestinationInfo destinationInfo) {
+  public boolean addDestination(@NotNull VirtualFile sourceFile, @NotNull DestinationInfo destinationInfo) {
+    if (destinationInfo instanceof ExplodedDestinationInfo && sourceFile.equals(destinationInfo.getOutputFile())) {
+      return false;
+    }
+
     if (checkOutputPath(destinationInfo.getOutputPath(), sourceFile)) {
       getOrCreateProcessingItem(sourceFile).addDestination(destinationInfo, myCollectingEnabledItems);
       return true;

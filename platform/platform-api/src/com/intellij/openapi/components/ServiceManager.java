@@ -18,6 +18,9 @@ package com.intellij.openapi.components;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NotNullLazyKey;
+import com.intellij.util.NotNullFunction;
+import org.jetbrains.annotations.NotNull;
 
 
 /**
@@ -36,5 +39,13 @@ public class ServiceManager {
   public static <T> T getService(Project project, Class<T> serviceClass) {
     return (T)project.getPicoContainer().getComponentInstance(serviceClass.getName());
   }
- 
+
+  public static <T> NotNullLazyKey<T, Project> createLazyKey(final Class<T> serviceClass) {
+    return NotNullLazyKey.create("Service: " + serviceClass.getName(), new NotNullFunction<Project, T>() {
+      @NotNull
+      public T fun(Project project) {
+        return getService(project, serviceClass);
+      }
+    });
+  }
 }

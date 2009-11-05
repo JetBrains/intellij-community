@@ -25,18 +25,12 @@ import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.psi.javadoc.JavadocManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class JavaPsiFacade {
-  private static final NotNullLazyKey<JavaPsiFacade, Project> INSTANCE_KEY = NotNullLazyKey.create("JavaPsiFacade.Instance.Cache", new NotNullFunction<Project, JavaPsiFacade>() {
-    @NotNull
-    public JavaPsiFacade fun(final Project project) {
-      return ServiceManager.getService(project, JavaPsiFacade.class);
-    }
-  });
+  private static final NotNullLazyKey<JavaPsiFacade, Project> INSTANCE_KEY = ServiceManager.createLazyKey(JavaPsiFacade.class);
   
   public static JavaPsiFacade getInstance(Project project) {
     return INSTANCE_KEY.getValue(project);

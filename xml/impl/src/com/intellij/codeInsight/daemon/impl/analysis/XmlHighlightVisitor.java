@@ -391,7 +391,6 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
     if (!(tag instanceof HtmlTag)) {
       final HighlightInfoType tagProblemInfoType = HighlightInfoType.WRONG_REF;
-      IntentionAction[] quickFixes = new IntentionAction[]{removeAttributeIntention};
 
       final ASTNode node = SourceTreeToPsiMap.psiElementToTree(attribute);
       assert node != null;
@@ -403,9 +402,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       );
       addToResults(highlightInfo);
 
-      for (IntentionAction quickFix : quickFixes) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, quickFix);
-      }
+      QuickFixAction.registerQuickFixAction(highlightInfo, removeAttributeIntention);
 
       return highlightInfo;
     }
@@ -496,7 +493,6 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   }
 
   private void doCheckRefs(final PsiElement value, final PsiReference[] references, int start) {
-    ProgressManager progressManager = ProgressManager.getInstance();
     for (int i = start; i < references.length; ++i) {
       PsiReference reference = references[i];
       ProgressManager.checkCanceled();
