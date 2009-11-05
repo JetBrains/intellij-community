@@ -484,6 +484,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
         if (myCurrentPanel != null) {
           myPropertiesPanel.add(BorderLayout.CENTER, ScrollPaneFactory.createScrollPane(myCurrentPanel.createComponent()));
           myCurrentPanel.reset();
+          myPropertiesPanel.revalidate();
         }
       }
     }
