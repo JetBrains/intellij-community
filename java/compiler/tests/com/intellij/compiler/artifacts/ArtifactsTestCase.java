@@ -43,10 +43,14 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
   }
 
   protected void deleteArtifact(final Artifact artifact) {
+    final ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
+    model.removeArtifact(artifact);
+    commitModel(model);
+  }
+
+  protected static void commitModel(final ModifiableArtifactModel model) {
     new WriteAction() {
       protected void run(final Result result) {
-        final ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
-        model.removeArtifact(artifact);
         model.commit();
       }
     }.execute();
@@ -55,7 +59,7 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
   protected Artifact rename(Artifact artifact, String newName) {
     final ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
     model.getOrCreateModifiableArtifact(artifact).setName(newName);
-    model.commit();
+    commitModel(model);
     return artifact;
   }
 
