@@ -17,6 +17,8 @@ package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diff.DiffRequestFactory;
+import com.intellij.openapi.diff.MergeRequest;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
@@ -36,12 +38,16 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.ZipperUpdater;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.actions.ChangeDiffRequestPresentable;
+import com.intellij.openapi.vcs.changes.actions.DiffPresentationReturnValue;
+import com.intellij.openapi.vcs.changes.actions.DiffRequestPresentable;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -753,24 +759,42 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     public void actionPerformed(AnActionEvent e) {
       if (myPatches.isEmpty() || (! myContainBasedChanges)) return;
       final List<FilePatchInProgress.PatchChange> changes = getAllChanges();
+      Collections.sort(changes, MyChangeComparator.getInstance());
       final List<FilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
+
+      int selectedIdx = 0;
       int idx = 0;
-      boolean goodChange = false;
+      final ArrayList<DiffRequestPresentable> diffRequestPresentables = new ArrayList<DiffRequestPresentable>(changes.size());
       if (! selectedChanges.isEmpty()) {
         final FilePatchInProgress.PatchChange c = selectedChanges.get(0);
         for (FilePatchInProgress.PatchChange change : changes) {
-          if (! change.getPatchInProgress().baseExistsOrAdded()) continue;
-          goodChange = true;
+          final FilePatchInProgress patchInProgress = change.getPatchInProgress();
+          if (! patchInProgress.baseExistsOrAdded()) continue;
+          final DiffRequestPresentable diffRequestPresentable = change.createDiffRequestPresentable(myProject);
+          if (diffRequestPresentable != null) {
+            diffRequestPresentables.add(diffRequestPresentable);
+          }
           if (change.equals(c)) {
-            break;
+            selectedIdx = idx;
           }
           ++ idx;
         }
       }
-      if (! goodChange) return;
-      idx = (idx == changes.size()) ? 0 : idx;
-      ShowDiffAction.showDiffForChange(changes.toArray(new Change[changes.size()]), idx, myProject,
-                                       ShowDiffAction.DiffExtendUIFactory.NONE, false);
+      if (diffRequestPresentables.isEmpty()) return;
+      selectedIdx = (selectedIdx >= diffRequestPresentables.size()) ? 0 : selectedIdx;
+      ShowDiffAction.showDiffImpl(myProject, diffRequestPresentables, selectedIdx, ShowDiffAction.DiffExtendUIFactory.NONE, false);
+    }
+  }
+
+  private static class MyChangeComparator implements Comparator<FilePatchInProgress.PatchChange> {
+    private static final MyChangeComparator ourInstance = new MyChangeComparator();
+
+    public static MyChangeComparator getInstance() {
+      return ourInstance;
+    }
+
+    public int compare(FilePatchInProgress.PatchChange o1, FilePatchInProgress.PatchChange o2) {
+      return o1.getPatchInProgress().getIoCurrentBase().compareTo(o2.getPatchInProgress().getIoCurrentBase());
     }
   }
 }

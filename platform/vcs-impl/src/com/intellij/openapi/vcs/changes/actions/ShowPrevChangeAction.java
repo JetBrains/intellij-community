@@ -18,12 +18,16 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.diff.DiffManager;
+import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.diff.DiffViewer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeRequestChain;
+
+import java.awt.*;
 
 /**
  * @author yole
@@ -47,9 +51,16 @@ public class ShowPrevChangeAction extends AnAction implements DumbAware {
 
     final DiffViewer diffViewer = e.getData(PlatformDataKeys.DIFF_VIEWER);
     if (diffViewer == null) return;
-    final SimpleDiffRequest request = chain.moveBack();
+
+    final DiffRequest request = chain.moveBack();
     if (request != null) {
-      diffViewer.setDiffRequest(request);
+      if (diffViewer.getContentsNumber() == request.getContents().length) {
+        diffViewer.setDiffRequest(request);
+      } else {
+        final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+        window.setVisible(false);
+        DiffManager.getInstance().getDiffTool().show(request);
+      }
     }
   }
 }

@@ -13,19 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.diff;
+package com.intellij.openapi.vcs.changes.actions;
 
-import javax.swing.*;
-
-/**
- * @author dyoma
- */
-public interface DiffViewer {
-  void setDiffRequest(DiffRequest request);
-
-  JComponent getComponent();
-
-  JComponent getPreferredFocusedComponent();
-
-  int getContentsNumber();
+public enum DiffPresentationReturnValue {
+  removeFromList,
+  useRequest,
+  quit
 }
