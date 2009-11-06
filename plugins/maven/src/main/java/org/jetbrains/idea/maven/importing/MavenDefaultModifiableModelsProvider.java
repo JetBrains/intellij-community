@@ -133,6 +133,9 @@ public class MavenDefaultModifiableModelsProvider extends MavenBaseModifiableMod
           each.dispose();
         }
         myModuleModel.dispose();
+        if (myArtifactModel != null) {
+          myArtifactModel.dispose();
+        }
       }
     });
   }

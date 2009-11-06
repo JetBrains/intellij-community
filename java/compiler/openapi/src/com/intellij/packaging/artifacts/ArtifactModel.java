@@ -33,5 +33,8 @@ public interface ArtifactModel {
   @NotNull
   Artifact getArtifactByOriginal(@NotNull Artifact artifact);
 
+  @NotNull
+  Artifact getOriginalArtifact(@NotNull Artifact artifact);
+
   Collection<? extends Artifact> getArtifactsByType(@NotNull ArtifactType type);
 }

@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven;
+package org.jetbrains.idea.maven.importing;
 
+import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.indices.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectProblem;
@@ -28,7 +29,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertModules("project");
 
     MavenProject root = getRootProjects().get(0);
-    assertProblems(root, "Pom file has syntax errors.");
+    assertProblems(root, "'pom.xml' has syntax errors");
   }
 
   public void testUndefinedPropertyInHeader() throws Exception {
@@ -55,7 +56,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertModules("project");
 
     MavenProject root = getRootProjects().get(0);
-    assertProblems(root, "Parent 'test:parent:1' not found.");
+    assertProblems(root, "Parent 'test:parent:1' not found");
   }
 
   public void testUnresolvedParentForInvalidProject() throws Exception {
@@ -76,9 +77,9 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
 
     MavenProject root = getRootProjects().get(0);
     assertProblems(root,
-                   "Parent 'test:parent:1' not found.",
+                   "Parent 'test:parent:1' not found",
                    "Packaging 'jar' is invalid. Aggregator projects require 'pom' as packaging.",
-                   "Missing module: 'foo'.");
+                   "Module 'foo' not found");
   }
 
   public void testMissingModules() throws Exception {
@@ -94,7 +95,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertModules("project");
 
     MavenProject root = getRootProjects().get(0);
-    assertProblems(root, "Missing module: 'foo'.");
+    assertProblems(root, "Module 'foo' not found");
   }
 
   public void testInvalidProjectModel() throws Exception {
@@ -137,8 +138,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     MavenProject root = getRootProjects().get(0);
     assertProblems(root);
 
-    assertProblems(getModules(root).get(0),
-                   "Pom file has syntax errors.");
+    assertProblems(getModules(root).get(0), "'pom.xml' has syntax errors");
   }
 
   public void testSeveratInvalidModulesAndWithSameName() throws Exception {
@@ -316,10 +316,10 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
 
     assertProblems(root);
     assertProblems(getModules(root).get(0),
-                   "Unresolved dependency: 'xxx:xxx:jar:1'.",
-                   "Unresolved dependency: 'yyy:yyy:jar:2'.");
+                   "Unresolved dependency: 'xxx:xxx:jar:1'",
+                   "Unresolved dependency: 'yyy:yyy:jar:2'");
     assertProblems(getModules(root).get(1),
-                   "Unresolved dependency: 'zzz:zzz:jar:3'.");
+                   "Unresolved dependency: 'zzz:zzz:jar:3'");
   }
 
   public void testUnresolvedPomTypeDependency() throws Exception {
@@ -341,7 +341,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertModuleLibDeps("project");
 
     MavenProject root = getRootProjects().get(0);
-    assertProblems(root, "Unresolved dependency: 'xxx:yyy:pom:4.0'.");
+    assertProblems(root, "Unresolved dependency: 'xxx:yyy:pom:4.0'");
   }
 
   public void testDoesNotReportInterModuleDependenciesAsUnresolved() throws Exception {
@@ -454,7 +454,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                   "</build>");
 
     MavenProject root = getRootProjects().get(0);
-    assertProblems(root, "Unresolved build extension: 'xxx:yyy:1'.");
+    assertProblems(root, "Unresolved build extension: 'xxx:yyy:1'");
   }
 
   public void testUnresolvedExtensionsAfterResolve() throws Exception {
@@ -474,7 +474,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
 
     resolveDependenciesAndImport();
     MavenProject root = getRootProjects().get(0);
-    assertProblems(root, "Unresolved build extension: 'xxx:yyy:1'.");
+    assertProblems(root, "Unresolved build extension: 'xxx:yyy:1'");
   }
 
   public void testDoesNotReportExtensionsThatWereNotTriedToBeResolved() throws Exception {
@@ -575,10 +575,10 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
 
     assertProblems(root);
     assertProblems(getModules(root).get(0),
-                   "Unresolved build extension: 'xxx:xxx:1'.");
+                   "Unresolved build extension: 'xxx:xxx:1'");
     assertProblems(getModules(root).get(1),
-                   "Unresolved build extension: 'yyy:yyy:1'.",
-                   "Unresolved build extension: 'zzz:zzz:1'.");
+                   "Unresolved build extension: 'yyy:yyy:1'",
+                   "Unresolved build extension: 'zzz:zzz:1'");
   }
 
   public void testUnresolvedPlugins() throws Exception {
@@ -597,7 +597,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                   "</build>");
 
     MavenProject root = getRootProjects().get(0);
-    assertProblems(root, "Unresolved plugin: 'xxx:yyy:1'.");
+    assertProblems(root, "Unresolved plugin: 'xxx:yyy:1'");
   }
 
   public void testDoNotReportResolvedPlugins() throws Exception {
@@ -641,7 +641,31 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertModules("project");
 
     MavenProject root = getRootProjects().get(0);
-    assertProblems(root, "Unresolved plugin: 'xxx:yyy:1'.");
+    assertProblems(root, "Unresolved plugin: 'xxx:yyy:1'");
+  }
+
+  public void testInvalidSettingsXml() throws Exception {
+    updateSettingsXml("<localRepo<<");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+    assertModules("project");
+
+    MavenProject root = getRootProjects().get(0);
+    assertProblems(root, "'settings.xml' has syntax errors");
+  }
+
+  public void testInvalidProfilesXml() throws Exception {
+    createProfilesXml("<prof<<");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+    assertModules("project");
+
+    MavenProject root = getRootProjects().get(0);
+    assertProblems(root, "'profiles.xml' has syntax errors");
   }
 
   private void assertProblems(MavenProject project, String... expectedProblems) {

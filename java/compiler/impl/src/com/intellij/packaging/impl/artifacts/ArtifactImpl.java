@@ -16,11 +16,9 @@
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.packaging.artifacts.ArtifactProperties;
-import com.intellij.packaging.artifacts.ArtifactPropertiesProvider;
-import com.intellij.packaging.artifacts.ArtifactType;
-import com.intellij.packaging.artifacts.ModifiableArtifact;
+import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
@@ -37,16 +35,23 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
   private String myName;
   private boolean myBuildOnMake;
   private String myOutputPath;
+  private final EventDispatcher<ArtifactListener> myDispatcher;
   private ArtifactType myArtifactType;
   private Map<ArtifactPropertiesProvider, ArtifactProperties<?>> myProperties;
 
   public ArtifactImpl(@NotNull String name, @NotNull ArtifactType artifactType, boolean buildOnMake, @NotNull CompositePackagingElement<?> rootElement,
                       String outputPath) {
+    this(name, artifactType, buildOnMake, rootElement, outputPath, null);
+  }
+  public ArtifactImpl(@NotNull String name, @NotNull ArtifactType artifactType, boolean buildOnMake, @NotNull CompositePackagingElement<?> rootElement,
+                      String outputPath,
+                      EventDispatcher<ArtifactListener> dispatcher) {
     myName = name;
     myArtifactType = artifactType;
     myBuildOnMake = buildOnMake;
     myRootElement = rootElement;
     myOutputPath = outputPath;
+    myDispatcher = dispatcher;
     myProperties = new HashMap<ArtifactPropertiesProvider, ArtifactProperties<?>>();
     resetProperties();
   }
@@ -86,8 +91,8 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
     return Collections.unmodifiableCollection(myProperties.keySet());
   }
 
-  public ArtifactImpl createCopy() {
-    final ArtifactImpl artifact = new ArtifactImpl(myName, myArtifactType, myBuildOnMake, myRootElement, myOutputPath);
+  public ArtifactImpl createCopy(EventDispatcher<ArtifactListener> dispatcher) {
+    final ArtifactImpl artifact = new ArtifactImpl(myName, myArtifactType, myBuildOnMake, myRootElement, myOutputPath, dispatcher);
     for (Map.Entry<ArtifactPropertiesProvider, ArtifactProperties<?>> entry : myProperties.entrySet()) {
       final ArtifactProperties newProperties = artifact.myProperties.get(entry.getKey());
       //noinspection unchecked
@@ -97,7 +102,11 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
   }
 
   public void setName(@NotNull String name) {
+    String oldName = myName;
     myName = name;
+    if (myDispatcher != null) {
+      myDispatcher.getMulticaster().artifactChanged(this, oldName);
+    }
   }
 
   @NonNls @Override

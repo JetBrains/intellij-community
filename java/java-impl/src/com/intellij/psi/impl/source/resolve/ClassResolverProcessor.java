@@ -102,7 +102,8 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     if ("java.lang".equals(packageName)) return true;
 
     // class from my package imported implicitly
-    PsiFile file = myPlace == null ? null : myPlace.getContainingFile();
+    PsiFile file = myPlace == null ? null : FileContextUtil.getContextFile(myPlace);
+    
     return file instanceof PsiJavaFile && ((PsiJavaFile)file).getPackageName().equals(packageName);
   }
 

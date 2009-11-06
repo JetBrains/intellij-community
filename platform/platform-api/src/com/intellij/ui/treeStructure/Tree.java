@@ -281,6 +281,7 @@ public class Tree extends JTree implements Autoscroll, TestableUi {
           }
         }
 
+        if (last == null) continue;
         Rectangle lastBounds = getPathBounds(getPath(last));
 
         if (firstBounds == null || lastBounds == null) continue;

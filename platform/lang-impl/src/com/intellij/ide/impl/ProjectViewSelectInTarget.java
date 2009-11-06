@@ -27,9 +27,9 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +61,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
 
     final ProjectView projectView = ProjectView.getInstance(project);
     ToolWindowManager windowManager=ToolWindowManager.getInstance(project);
-    final ToolWindowEx projectViewToolWindow = (ToolWindowEx) windowManager.getToolWindow(ToolWindowId.PROJECT_VIEW);
+    final ToolWindow projectViewToolWindow = windowManager.getToolWindow(ToolWindowId.PROJECT_VIEW);
     final Runnable runnable = new Runnable() {
       public void run() {
         if (requestFocus) {

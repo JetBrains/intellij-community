@@ -18,19 +18,16 @@ package com.intellij.packaging.impl.elements;
 import com.intellij.compiler.ant.BuildProperties;
 import com.intellij.compiler.ant.Generator;
 import com.intellij.openapi.project.Project;
-import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.artifacts.ArtifactType;
-import com.intellij.packaging.artifacts.ArtifactPointer;
-import com.intellij.packaging.artifacts.ArtifactPointerManager;
+import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.ui.ArtifactElementPresentation;
 import com.intellij.packaging.impl.ui.DelegatedPackagingElementPresentation;
-import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
+import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -107,14 +104,14 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
   public ArtifactPackagingElementState getState() {
     final ArtifactPackagingElementState state = new ArtifactPackagingElementState();
     if (myArtifactPointer != null) {
-      state.setArtifactName(myArtifactPointer.getName());
+      state.setArtifactName(myArtifactPointer.getArtifactName());
     }
     return state;
   }
 
   public void loadState(ArtifactPackagingElementState state) {
     final String name = state.getArtifactName();
-    myArtifactPointer = name != null ? ArtifactPointerManager.getInstance(myProject).create(name) : null;
+    myArtifactPointer = name != null ? ArtifactPointerManager.getInstance(myProject).createPointer(name) : null;
   }
 
   @Override
@@ -135,7 +132,7 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
 
   @Nullable
   public String getArtifactName() {
-    return myArtifactPointer != null ? myArtifactPointer.getName() : null;
+    return myArtifactPointer != null ? myArtifactPointer.getArtifactName() : null;
   }
 
 

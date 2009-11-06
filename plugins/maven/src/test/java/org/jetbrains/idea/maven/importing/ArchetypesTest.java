@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven;
+package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import gnu.trove.THashMap;
+import org.jetbrains.idea.maven.MavenTestCase;
 import org.jetbrains.idea.maven.execution.MavenExecutor;
 import org.jetbrains.idea.maven.execution.MavenExternalExecutor;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;

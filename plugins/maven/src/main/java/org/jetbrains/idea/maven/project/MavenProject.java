@@ -101,7 +101,6 @@ public class MavenProject {
 
     if (updateLastReadStamp) newState.myLastReadStamp++;
 
-    newState.myValid = readerResult.isValid;
     newState.myActiveProfilesIds = readerResult.activeProfiles;
     newState.myReadingProblems = readerResult.readingProblems;
     newState.myLocalRepository = readerResult.localRepository;
@@ -346,8 +345,8 @@ public class MavenProject {
     return MavenUtil.getProfilesXmlIoFile(myFile);
   }
 
-  public boolean hasErrors() {
-    return !myState.myValid;
+  public boolean hasReadingProblems() {
+    return !myState.myReadingProblems.isEmpty();
   }
 
   public List<String> getActiveProfilesIds() {
@@ -441,7 +440,7 @@ public class MavenProject {
                                                             getFile(),
                                                             getActiveProfilesIds(),
                                                             locator);
-    MavenProjectChanges changes = set(result, false, result.isValid, false);
+    MavenProjectChanges changes = set(result, false, result.readingProblems.isEmpty(), false);
     return Pair.create(changes, result.nativeMavenProject);
   }
 
@@ -454,7 +453,7 @@ public class MavenProject {
                                                              getFile(),
                                                              getActiveProfilesIds(),
                                                              console);
-    if (result == null || !result.isValid) return Pair.create(false, MavenProjectChanges.NONE);
+    if (result == null || !result.readingProblems.isEmpty()) return Pair.create(false, MavenProjectChanges.NONE);
     MavenProjectChanges changes = setFolders(result);
     return Pair.create(true, changes);
   }
@@ -468,56 +467,60 @@ public class MavenProject {
     if (state.myProblemsCache == null) {
       synchronized (state) {
         if (state.myProblemsCache == null) {
-          state.myProblemsCache = collectProblems(state);
+          state.myProblemsCache = collectProblems(myFile, state);
         }
       }
     }
     return state.myProblemsCache;
   }
 
-  private static List<MavenProjectProblem> collectProblems(State state) {
+  private static List<MavenProjectProblem> collectProblems(VirtualFile file, State state) {
     List<MavenProjectProblem> result = new ArrayList<MavenProjectProblem>();
 
-    validateParent(state, result);
+    validateParent(file, state, result);
     result.addAll(state.myReadingProblems);
 
     for (Map.Entry<String, String> each : state.myModulesPathsAndNames.entrySet()) {
       if (LocalFileSystem.getInstance().findFileByPath(each.getKey()) == null) {
-        result.add(new MavenProjectProblem(ProjectBundle.message("maven.project.problem.missingModule", each.getValue()), false));
+        result.add(createDependencyProblem(file, ProjectBundle.message("maven.project.problem.moduleNotFound", each.getValue())));
       }
     }
 
-    validateDependencies(state, result);
-    validateExtensions(state, result);
-    validatePlugins(state, result);
+    validateDependencies(file, state, result);
+    validateExtensions(file, state, result);
+    validatePlugins(file, state, result);
 
     return result;
   }
 
-  private static void validateParent(State state, List<MavenProjectProblem> result) {
+  private static void validateParent(VirtualFile file, State state, List<MavenProjectProblem> result) {
     if (!isParentResolved(state)) {
-      result.add(new MavenProjectProblem(ProjectBundle.message("maven.project.problem.parentNotFound", state.myParentId), true));
+      result.add(createDependencyProblem(file, ProjectBundle.message("maven.project.problem.parentNotFound", state.myParentId)));
     }
   }
 
-  private static void validateDependencies(State state, List<MavenProjectProblem> result) {
+  private static void validateDependencies(VirtualFile file, State state, List<MavenProjectProblem> result) {
     for (MavenArtifact each : getUnresolvedDependencies(state)) {
-      result.add(new MavenProjectProblem(
-        ProjectBundle.message("maven.project.problem.unresolvedDependency", each.getDisplayStringWithType()), false));
+      result.add(createDependencyProblem(file, ProjectBundle.message("maven.project.problem.unresolvedDependency",
+                                                               each.getDisplayStringWithType())));
     }
   }
 
-  private static void validateExtensions(State state, List<MavenProjectProblem> result) {
+  private static void validateExtensions(VirtualFile file, State state, List<MavenProjectProblem> result) {
     for (MavenArtifact each : getUnresolvedExtensions(state)) {
-      result.add(new MavenProjectProblem(
-        ProjectBundle.message("maven.project.problem.unresolvedExtension", each.getDisplayStringSimple()), false));
+      result.add(createDependencyProblem(file, ProjectBundle.message("maven.project.problem.unresolvedExtension",
+                                                               each.getDisplayStringSimple())));
     }
   }
 
-  private static void validatePlugins(State state, List<MavenProjectProblem> result) {
+  private static void validatePlugins(VirtualFile file, State state, List<MavenProjectProblem> result) {
     for (MavenPlugin each : getUnresolvedPlugins(state)) {
-      result.add(new MavenProjectProblem(ProjectBundle.message("maven.project.problem.unresolvedPlugin", each), false));
+      result.add(createDependencyProblem(file, ProjectBundle.message("maven.project.problem.unresolvedPlugin", each)));
     }
+  }
+
+  private static MavenProjectProblem createDependencyProblem(VirtualFile file, String description) {
+    return new MavenProjectProblem(file, description, MavenProjectProblem.ProblemType.DEPENDENCY);
   }
 
   private static boolean isParentResolved(State state) {
@@ -817,8 +820,6 @@ public class MavenProject {
   private static class State implements Cloneable, Serializable {
     long myLastReadStamp = 0;
 
-    boolean myValid;
-
     MavenId myMavenId;
     MavenId myParentId;
     String myPackaging;
@@ -851,7 +852,7 @@ public class MavenProject {
     List<MavenRemoteRepository> myRemoteRepositories;
 
     List<String> myActiveProfilesIds;
-    List<MavenProjectProblem> myReadingProblems;
+    Collection<MavenProjectProblem> myReadingProblems;
     Set<MavenId> myUnresolvedArtifactIds;
     File myLocalRepository;
 

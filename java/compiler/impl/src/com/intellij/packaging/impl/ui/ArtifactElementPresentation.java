@@ -24,43 +24,51 @@ import com.intellij.packaging.ui.PackagingElementWeights;
 import com.intellij.packaging.ui.TreeNodePresentation;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
  */
 public class ArtifactElementPresentation extends TreeNodePresentation {
-  private final Artifact myArtifact;
+  private final ArtifactPointer myArtifactPointer;
   private final ArtifactEditorContext myContext;
-  private final String myName;
 
   public ArtifactElementPresentation(ArtifactPointer artifactPointer, ArtifactEditorContext context) {
-    myName = artifactPointer != null ? artifactPointer.getName() : "<unknown>";
-    myArtifact = artifactPointer != null ? artifactPointer.findArtifact(context.getArtifactModel()) : null;
+    myArtifactPointer = artifactPointer;
     myContext = context;
   }
 
   public String getPresentableName() {
-    return myName;
+    return myArtifactPointer != null ? myArtifactPointer.getArtifactName(myContext.getArtifactModel()) : "<unknown>";
   }
 
   @Override
   public boolean canNavigateToSource() {
-    return myArtifact != null;
+    return findArtifact() != null;
   }
 
   @Override
   public Object getSourceObject() {
-    return myArtifact;
+    return myArtifactPointer;
   }
 
   @Override
   public void navigateToSource() {
-    myContext.selectArtifact(myArtifact);
+    final Artifact artifact = findArtifact();
+    if (artifact != null) {
+      myContext.selectArtifact(artifact);
+    }
   }
 
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
-    presentationData.setIcons(myArtifact != null ? myArtifact.getArtifactType().getIcon() : PlainArtifactType.ARTIFACT_ICON);
-    presentationData.addText(myName, myArtifact != null ? mainAttributes : SimpleTextAttributes.ERROR_ATTRIBUTES);
+    final Artifact artifact = findArtifact();
+    presentationData.setIcons(artifact != null ? artifact.getArtifactType().getIcon() : PlainArtifactType.ARTIFACT_ICON);
+    presentationData.addText(getPresentableName(), artifact != null ? mainAttributes : SimpleTextAttributes.ERROR_ATTRIBUTES);
+  }
+
+  @Nullable
+  private Artifact findArtifact() {
+    return myArtifactPointer != null ? myArtifactPointer.findArtifact(myContext.getArtifactModel()) : null;
   }
 
   @Override

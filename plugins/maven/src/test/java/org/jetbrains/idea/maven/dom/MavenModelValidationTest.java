@@ -91,4 +91,184 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
                      "<<error>version</error>></version>");
     checkHighlighting();
   }
+
+  public void testAddingSettingsXmlReadingProblemsToProjectTag() throws Exception {
+    VfsUtil.saveText(myProjectPom,
+                     "<project>" +
+                     "  <modelVersion>4.0.0</modelVersion>" +
+                     "  <groupId>test</groupId>" +
+                     "  <artifactId>project</artifactId>" +
+                     "  <version>1</version>" +
+                     "</project>");
+    updateSettingsXml("<<<");
+
+    myProjectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
+    waitForReadingCompletion();
+
+    VfsUtil.saveText(myProjectPom,
+                     "<<error descr=\"'settings.xml' has syntax errors\">project</error>>" +
+                     "  <modelVersion>4.0.0</modelVersion>" +
+                     "  <groupId>test</groupId>" +
+                     "  <artifactId>project</artifactId>" +
+                     "  <version>1</version>" +
+                     "</project>");
+    checkHighlighting();
+  }
+
+  public void testAddingProfilesXmlReadingProblemsToProjectTag() throws Exception {
+    VfsUtil.saveText(myProjectPom,
+                     "<project>" +
+                     "  <modelVersion>4.0.0</modelVersion>" +
+                     "  <groupId>test</groupId>" +
+                     "  <artifactId>project</artifactId>" +
+                     "  <version>1</version>" +
+                     "</project>");
+    createProfilesXml("<<<");
+
+    myProjectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
+    waitForReadingCompletion();
+
+    VfsUtil.saveText(myProjectPom,
+                     "<<error descr=\"'profiles.xml' has syntax errors\">project</error>>" +
+                     "  <modelVersion>4.0.0</modelVersion>" +
+                     "  <groupId>test</groupId>" +
+                     "  <artifactId>project</artifactId>" +
+                     "  <version>1</version>" +
+                     "</project>");
+    checkHighlighting();
+  }
+
+  public void testAddingStructureReadingProblemsToParentTag() throws Exception {
+    VfsUtil.saveText(myProjectPom,
+                     "<project>" +
+                     "  <modelVersion>4.0.0</modelVersion>" +
+                     "  <groupId>test</groupId>" +
+                     "  <artifactId>project</artifactId>" +
+                     "  <version>1</version>" +
+                     "  <parent>" +
+                     "    <groupId>test</groupId>" +
+                     "    <artifactId>project</artifactId>" +
+                     "    <version>1</version>" +
+                     "  </parent>" +
+                     "</project>");
+    myProjectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
+    waitForReadingCompletion();
+
+    VfsUtil.saveText(myProjectPom,
+                     "<project>" +
+                     "  <modelVersion>4.0.0</modelVersion>" +
+                     "  <groupId>test</groupId>" +
+                     "  <artifactId>project</artifactId>" +
+                     "  <version>1</version>" +
+                     "  <<error descr=\"Self-inheritance found\">parent</error>>" +
+                     "    <groupId>test</groupId>" +
+                     "    <artifactId>project</artifactId>" +
+                     "    <version>1</version>" +
+                     "  </parent>" +
+                     "</project>");
+    checkHighlighting();
+  }
+
+  public void testAddingParentReadingProblemsToParentTag() throws Exception {
+    createModulePom("parent",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>parent</artifactId>" +
+                    "<version>1</version>" +
+                    "<<<");
+
+    VfsUtil.saveText(myProjectPom,
+                     "<project>" +
+                     "  <modelVersion>4.0.0</modelVersion>" +
+                     "  <groupId>test</groupId>" +
+                     "  <artifactId>project</artifactId>" +
+                     "  <version>1</version>" +
+                     "  <parent>" +
+                     "    <groupId>test</groupId>" +
+                     "    <artifactId>parent</artifactId>" +
+                     "    <version>1</version>" +
+                     "    <relativePath>parent/pom.xml</relativePath>" +
+                     "  </parent>" +
+                     "</project>");
+    myProjectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
+    waitForReadingCompletion();
+
+    VfsUtil.saveText(myProjectPom,
+                     "<project>" +
+                     "  <modelVersion>4.0.0</modelVersion>" +
+                     "  <groupId>test</groupId>" +
+                     "  <artifactId>project</artifactId>" +
+                     "  <version>1</version>" +
+                     "  <<error descr=\"Parent 'test:parent:1' has problems\">parent</error>>" +
+                     "    <groupId>test</groupId>" +
+                     "    <artifactId>parent</artifactId>" +
+                     "    <version>1</version>" +
+                     "    <relativePath>parent/pom.xml</relativePath>" +
+                     "  </parent>" +
+                     "</project>");
+    checkHighlighting();
+  }
+
+  public void testDoNotAddReadingSyntaxProblemsToProjectTag() throws Exception {
+    VfsUtil.saveText(myProjectPom,
+                     "<project>" +
+                     "  <modelVersion>4.0.0</modelVersion>" +
+                     "  <groupId>test</groupId>" +
+                     "  <artifactId>project</artifactId>" +
+                     "  <version>1</version>" +
+                     "  <" +
+                     "</project>");
+    myProjectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
+    waitForReadingCompletion();
+
+    VfsUtil.saveText(myProjectPom,
+                     "<project>" +
+                     "  <modelVersion>4.0.0</modelVersion>" +
+                     "  <groupId>test</groupId>" +
+                     "  <artifactId>project</artifactId>" +
+                     "  <version>1</version>" +
+                     "  <" +
+                     "<error><</error>/project>");
+    checkHighlighting();
+  }
+
+  public void testDoNotAddDependencyAndModuleProblemsToProjectTag() throws Exception {
+    VfsUtil.saveText(myProjectPom,
+                     "<project>" +
+                     "  <modelVersion>4.0.0</modelVersion>" +
+                     "  <groupId>test</groupId>" +
+                     "  <artifactId>project</artifactId>" +
+                     "  <version>1</version>" +
+                     "  <modules>" +
+                     "    <module>foo</module>" +
+                     "  </modules>" +
+                     "  <dependencies>" +
+                     "    <dependency>" +
+                     "      <groupId>xxx</groupId>" +
+                     "      <artifactId>yyy</artifactId>" +
+                     "      <version>xxx</version>" +
+                     "    </dependency>" +
+                     "  </dependencies>" +
+                     "</project>");
+    myProjectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
+    waitForReadingCompletion();
+
+    VfsUtil.saveText(myProjectPom,
+                     "<project>" +
+                     "  <modelVersion>4.0.0</modelVersion>" +
+                     "  <groupId>test</groupId>" +
+                     "  <artifactId>project</artifactId>" +
+                     "  <version>1</version>" +
+                     "  <modules>" +
+                     "    <module><error>foo</error></module>" +
+                     "  </modules>" +
+                     "  <dependencies>" +
+                     "    <dependency>" +
+                     "      <groupId><error>xxx</error></groupId>" +
+                     "      <artifactId><error>yyy</error></artifactId>" +
+                     "      <version><error>xxx</error></version>" +
+                     "    </dependency>" +
+                     "  </dependencies>" +
+                     "</project>");
+    checkHighlighting();
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ComparisonUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ConstantOnLHSOfComparisonInspection extends BaseInspection {
@@ -68,16 +69,20 @@ public class ConstantOnLHSOfComparisonInspection extends BaseInspection {
             final PsiBinaryExpression expression =
                     (PsiBinaryExpression) descriptor.getPsiElement();
             final PsiExpression rhs = expression.getROperand();
-            final PsiExpression lhs = expression.getLOperand();
+            if (rhs == null) {
+                return;
+            }
             final PsiJavaToken sign = expression.getOperationSign();
-            final String flippedSign =
+            final String flippedComparison =
                     ComparisonUtils.getFlippedComparison(sign);
-            assert rhs != null;
+            if (flippedComparison == null) {
+                return;
+            }
+            final PsiExpression lhs = expression.getLOperand();
             final String rhsText = rhs.getText();
             final String lhsText = lhs.getText();
             replaceExpression(expression,
-                    rhsText + ' ' + flippedSign + ' ' + lhsText);
-
+                    rhsText + ' ' + flippedComparison + ' ' + lhsText);
         }
     }
 
@@ -87,7 +92,7 @@ public class ConstantOnLHSOfComparisonInspection extends BaseInspection {
         @Override public void visitBinaryExpression(
                 @NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
-            if(!(expression.getROperand() != null)) {
+            if (!(expression.getROperand() != null)) {
                 return;
             }
             if (!ComparisonUtils.isComparison(expression)) {
@@ -95,11 +100,16 @@ public class ConstantOnLHSOfComparisonInspection extends BaseInspection {
             }
             final PsiExpression lhs = expression.getLOperand();
             final PsiExpression rhs = expression.getROperand();
-            if (!PsiUtil.isConstantExpression(lhs)
-                    || PsiUtil.isConstantExpression(rhs)) {
+            if (!isConstantExpression(lhs)
+                    || isConstantExpression(rhs)) {
                 return;
             }
             registerError(expression);
+        }
+
+        private boolean isConstantExpression(PsiExpression expression) {
+            return ExpressionUtils.isNullLiteral(expression) ||
+                    PsiUtil.isConstantExpression(expression);
         }
     }
 }

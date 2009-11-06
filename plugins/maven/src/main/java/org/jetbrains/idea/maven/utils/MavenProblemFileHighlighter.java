@@ -13,26 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.idea.maven.utils;
 
-package com.intellij.codeInsight.unwrap;
-
-import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.actions.BaseCodeInsightAction;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import org.jetbrains.idea.maven.dom.MavenDomUtil;
 
-public class UnwrapAction extends BaseCodeInsightAction{
-  public UnwrapAction() {
-    super(true);
-    setEnabledInModalContext(true);
+public class MavenProblemFileHighlighter implements Condition<VirtualFile> {
+  private final Project myProject;
+
+  public MavenProblemFileHighlighter(Project project) {
+    myProject = project;
   }
 
-  protected CodeInsightActionHandler getHandler(){
-    return new UnwrapHandler();
-  }
-
-  protected boolean isValidForFile(Project project, Editor editor, PsiFile file) {
-    return !LanguageUnwrappers.INSTANCE.allForLanguage(file.getLanguage()).isEmpty();
+  public boolean value(VirtualFile file) {
+    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
+    return psiFile != null && MavenDomUtil.isMavenFile(psiFile);
   }
 }

@@ -56,6 +56,7 @@ public class FileListPasteProvider implements PasteProvider {
     catch (IOException e) {
       return;
     }
+    if (fileList == null) return;
     List<PsiElement> elements = new ArrayList<PsiElement>();
     for (File file : fileList) {
       final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);

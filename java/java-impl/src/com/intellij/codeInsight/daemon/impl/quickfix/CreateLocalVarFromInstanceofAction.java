@@ -143,7 +143,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
 
   private static boolean atSameLine(final PsiExpression condition, final Editor editor) {
     int line = editor.getCaretModel().getLogicalPosition().line;
-    return editor.offsetToLogicalPosition(condition.getTextOffset()).line == line;
+    return editor.getDocument().getLineNumber(condition.getTextOffset()) == line;
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) {

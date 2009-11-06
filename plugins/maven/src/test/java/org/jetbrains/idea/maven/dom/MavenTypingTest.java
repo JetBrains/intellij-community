@@ -241,9 +241,7 @@ public class MavenTypingTest extends MavenDomTestCase {
   }
 
   private void assertTypeResultInRegularFile(VirtualFile f, char c, String expected) throws IOException {
-    myCodeInsightFixture.configureFromExistingVirtualFile(f);
-    myCodeInsightFixture.type(c);
-
+    type(f, c);
     myCodeInsightFixture.checkResult(expected);
   }
 

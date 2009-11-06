@@ -27,7 +27,9 @@ public abstract class ArtifactPointerManager {
     return ServiceManager.getService(project, ArtifactPointerManager.class);
   }
 
-  public abstract ArtifactPointer create(@NotNull String name);
+  public abstract ArtifactPointer createPointer(@NotNull String name);
 
-  public abstract ArtifactPointer create(@NotNull Artifact artifact);
+  public abstract ArtifactPointer createPointer(@NotNull Artifact artifact);
+
+  public abstract ArtifactPointer createPointer(@NotNull Artifact artifact, @NotNull ArtifactModel artifactModel);
 }

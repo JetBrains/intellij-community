@@ -92,10 +92,15 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     return PsiManager.getInstance(myProject).findFile(f);
   }
 
-  private void configTest(VirtualFile f) throws IOException {
+  protected void configTest(VirtualFile f) throws IOException {
     if (Comparing.equal(myConfigTimestamps.get(f), f.getModificationStamp())) return;
     myCodeInsightFixture.configureFromExistingVirtualFile(f);
     myConfigTimestamps.put(f, f.getModificationStamp());
+  }
+
+  protected void type(VirtualFile f, char c) throws IOException {
+    configTest(f);
+    myCodeInsightFixture.type(c);
   }
 
   protected PsiReference getReferenceAtCaret(VirtualFile f) throws IOException {

@@ -17,21 +17,22 @@ package com.intellij.openapi.project;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.caches.CacheUpdater;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.BalloonHandler;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.lang.reflect.InvocationHandler;
@@ -40,19 +41,18 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DumbServiceImpl extends DumbService {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.DumbServiceImpl");
-  private final AtomicBoolean myDumb = new AtomicBoolean();
+  private volatile boolean myDumb = false;
   private final DumbModeListener myPublisher;
-  private final LinkedBlockingQueue<CacheUpdateRunner> myUpdatesQueue = new LinkedBlockingQueue<CacheUpdateRunner>();
+  private final Queue<IndexUpdateRunnable> myUpdatesQueue = new Queue<IndexUpdateRunnable>(5);
   private final Queue<Runnable> myRunWhenSmartQueue = new Queue<Runnable>(5);
   private final Project myProject;
 
-
+  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
   public static DumbServiceImpl getInstance(@NotNull Project project) {
     return (DumbServiceImpl)DumbService.getInstance(project);
   }
@@ -60,8 +60,6 @@ public class DumbServiceImpl extends DumbService {
   public DumbServiceImpl(Project project, MessageBus bus) {
     myProject = project;
     myPublisher = bus.syncPublisher(DUMB_MODE);
-
-    new CacheUpdateProcessor().start();
   }
 
   @Override
@@ -70,12 +68,11 @@ public class DumbServiceImpl extends DumbService {
   }
 
   public boolean isDumb() {
-    return myDumb.get();
+    return myDumb;
   }
 
   @Override
   public void runWhenSmart(Runnable runnable) {
-    // todo: run is swing thread
     if (!isDumb()) {
       runnable.run();
     }
@@ -88,49 +85,56 @@ public class DumbServiceImpl extends DumbService {
 
   public void queueCacheUpdate(Collection<CacheUpdater> updaters) {
     // prevent concurrent modifications
-    final Collection<CacheUpdater> updatersCopy = new ArrayList<CacheUpdater>(updaters);
-    CacheUpdateRunner runner = new CacheUpdateRunner(myProject, updatersCopy);
+    final CacheUpdateRunner runner = new CacheUpdateRunner(myProject, new ArrayList<CacheUpdater>(updaters));
 
-    if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      EmptyProgressIndicator i = new EmptyProgressIndicator();
-      runner.queryNeededFiles(i);
-      runner.processFiles(i, false);
-      runner.updatingDone();
-      return;
-    }
-
-    ProgressIndicator indicator = new EmptyProgressIndicator();
-
-    if (ApplicationManager.getApplication().isDispatchThread() && !isDumb()) {
-      int size = runner.queryNeededFiles(indicator);
-      if (size < 10) {
+    final Application application = ApplicationManager.getApplication();
+    if (application.isDispatchThread() && !myDumb && application.isWriteAccessAllowed()) {
+      ProgressIndicator indicator = new EmptyProgressIndicator();
+      final int size = runner.queryNeededFiles(indicator);
+      if (size < 50) {
+        // if not that many files found, process them on the spot, avoiding entering dumb mode
         if (size > 0) {
           runner.processFiles(indicator, false);
         }
         runner.updatingDone();
         return;
       }
-
-      updateStarted();
     }
 
-    try {
-      myUpdatesQueue.put(runner);
-    }
-    catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    }
+
+    final IndexUpdateRunnable updateRunnable = new IndexUpdateRunnable(runner);
+
+    invokeOnEDT(new DumbAwareRunnable() {
+      public void run() {
+        if (myProject.isDisposed()) {
+          return;
+        }
+        // ok to test and set the flag like this, because the change is always done from dispatch thread
+        final boolean wasDumb = myDumb;
+        if (!wasDumb) {
+          myDumb = true;
+          myPublisher.enteredDumbMode();
+
+          updateRunnable.run();
+        }
+        else {
+          myUpdatesQueue.addLast(updateRunnable);
+        }
+      }
+    });
   }
 
-  private void updateStarted() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    myDumb.set(true);
-    myPublisher.enteredDumbMode();
+  private static void invokeOnEDT(DumbAwareRunnable runnable) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      runnable.run();
+    }
+    else {
+      SwingUtilities.invokeLater(runnable);
+    }
   }
 
   private void updateFinished() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    myDumb.set(false);
+    myDumb = false;
     myPublisher.exitDumbMode();
     while (true) {
       final Runnable runnable;
@@ -139,6 +143,9 @@ public class DumbServiceImpl extends DumbService {
           break;
         }
         runnable = myRunWhenSmartQueue.pullFirst();
+      }
+      if (myProject.isDisposed()) {
+        return;
       }
       runnable.run();
     }
@@ -163,151 +170,116 @@ public class DumbServiceImpl extends DumbService {
     return statusBar.notifyProgressByBalloon(MessageType.WARNING, message, null, listener);
   }
 
-  private class CacheUpdateProcessor implements Runnable {
-    private int myProcessedItems;
-    private int myTotalItems;
-    private int myCurrentUpdateTotal;
+  private static final Ref<CacheUpdateRunner> NULL_ACTION = new Ref<CacheUpdateRunner>(null);
+  
+  private class IndexUpdateRunnable implements Runnable {
+    private final CacheUpdateRunner myAction;
+    private double myProcessedItems;
+    private volatile int myTotalItems;
+    private double myCurrentBaseTotal;
 
-    public void start() {
-      new Thread(this).start();
+    public IndexUpdateRunnable(CacheUpdateRunner action) {
+      myAction = action;
+      myTotalItems = 0;
+      myCurrentBaseTotal = 0;
     }
 
     public void run() {
-      while (true) {
-        CacheUpdateRunner runner = null;
-        while (runner == null) {
-          if (myProject.isDisposed()) return;
-          try {
-            runner = myUpdatesQueue.poll(500, TimeUnit.MILLISECONDS);
-          }
-          catch (InterruptedException e) {
-            LOG.info(e);
-            return;
-          }
-        }
-        if (myProject.isDisposed()) return;
+      if (myProject.isDisposed()) {
+        return;
+      }
 
-        final Semaphore sema = new Semaphore();
-        sema.down();
+      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, IdeBundle.message("progress.indexing"), false) {
 
-        final CacheUpdateRunner finalRunner = runner;
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            new Task.Backgroundable(myProject, IdeBundle.message("progress.indexing"), false) {
-              @Override
-              public void run(@NotNull final ProgressIndicator indicator) {
+        private final ArrayBlockingQueue<Ref<CacheUpdateRunner>> myActionQueue = new ArrayBlockingQueue<Ref<CacheUpdateRunner>>(1);
+
+        @Override
+        public void run(@NotNull final ProgressIndicator indicator) {
+          final ProgressIndicator proxy =
+            (ProgressIndicator)Proxy.newProxyInstance(indicator.getClass().getClassLoader(), new Class[]{ProgressIndicator.class}, new InvocationHandler() {
+              public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                if ("setFraction".equals(method.getName())) {
+                  final double fraction = (Double)args[0];
+                  args[0] = new Double((myProcessedItems + fraction * myCurrentBaseTotal) / myTotalItems);
+                }
                 try {
-                  notifyStartedIfNotInDumbMode();
-                  try {
-                    processPendingUpdates(finalRunner, createIndicatorProxy(indicator));
-                  }
-                  finally {
-                    notifyFinishedIfQueueEmpty();
-                  }
+                  return method.invoke(indicator, args);
                 }
-                catch (Throwable e) {
-                  if (!(e instanceof ProcessCanceledException)) {
-                    LOG.error(e);
+                catch (InvocationTargetException e) {
+                  final Throwable cause = e.getCause();
+                  if (cause instanceof ProcessCanceledException) {
+                    throw cause;
                   }
-                }
-                finally {
-                  sema.up();
+                  throw e;
                 }
               }
-
-            }.queue();
-          }
-        });
-
-        sema.waitFor();
-      }
-    }
-
-    private void notifyStartedIfNotInDumbMode() {
-      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-        public void run() {
-          if (myProject.isDisposed()) return;
-          if (!isDumb()) {
-            updateStarted();
-            myProcessedItems = 0;
-            myTotalItems = 0;
-            myCurrentUpdateTotal = 0;
-          }
+            });
+          runAction(proxy, myAction);
         }
-      }, ModalityState.defaultModalityState());
-    }
 
-    private void notifyFinishedIfQueueEmpty() {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          if (myProject.isDisposed()) return;
-          if (myUpdatesQueue.isEmpty()) updateFinished();
+        private void runAction(ProgressIndicator indicator, CacheUpdateRunner updateRunner) {
+          do {
+            int count = 0;
+            try {
+              indicator.setIndeterminate(true);
+              indicator.setText(IdeBundle.message("progress.indexing.scanning"));
+              count = updateRunner.queryNeededFiles(indicator);
+
+              myCurrentBaseTotal = count;
+              myTotalItems += count;
+
+              indicator.setIndeterminate(false);
+              indicator.setText(IdeBundle.message("progress.indexing.updaing"));
+              updateRunner.processFiles(indicator, true);
+            }
+            finally {
+              updateRunner.updatingDone();
+              myProcessedItems += count;
+              invokeOnEDT(new DumbAwareRunnable() {
+                public void run() {
+                  if (myUpdatesQueue.isEmpty()) {
+                    // really terminate the tesk
+                    myActionQueue.offer(NULL_ACTION);
+                    updateFinished();
+                  }
+                  else {
+                    //run next dumb action
+                    final IndexUpdateRunnable nextUpdateRunnable = myUpdatesQueue.pullFirst();
+                    // run next action under already existing progress indicator
+                    if (!myActionQueue.offer(new Ref<CacheUpdateRunner>(nextUpdateRunnable.myAction))) {
+                      LOG.assertTrue(false, "Action queue rejected next updateRunnable!");
+                      nextUpdateRunnable.run();
+                    }
+                  }
+                }
+              });
+
+              // try to obtain the next action or terminate if no actions left
+              try {
+                Ref<CacheUpdateRunner> ref;
+                do {
+                  ref = myActionQueue.poll(500, TimeUnit.MILLISECONDS);
+                  updateRunner = ref != null? ref.get() : null;
+                  if (myProject.isDisposed()) {
+                    // just terminate the progress task
+                    break;
+                  }
+                }
+                while (ref == null);
+              }
+              catch (InterruptedException ignored) {
+                LOG.info(ignored);
+                break;
+              }
+            }
+          }
+          while (updateRunner != null);
+          // make it impossible to add actions to the queue anymore
+          myActionQueue.offer(NULL_ACTION);
         }
+
       });
     }
-
-    private void processPendingUpdates(CacheUpdateRunner runner, ProgressIndicator indicator) {
-      while (true) {
-        if (myProject.isDisposed()) break;
-
-        queryNeededFiles(runner, indicator);
-        processFiles(runner, indicator);
-        updatingDone(runner);
-
-        try {
-          if (myProject.isDisposed()) break;
-          runner = myUpdatesQueue.poll(100, TimeUnit.MILLISECONDS);
-          if (runner == null) return;
-        }
-        catch (InterruptedException e) {
-          LOG.info(e);
-          break;
-        }
-      }
-    }
-
-    private void queryNeededFiles(CacheUpdateRunner runner, ProgressIndicator indicator) {
-      indicator.setIndeterminate(true);
-      indicator.setText(IdeBundle.message("progress.indexing.scanning"));
-      myCurrentUpdateTotal = runner.queryNeededFiles(indicator);
-      myTotalItems += myCurrentUpdateTotal;
-    }
-
-    private void processFiles(CacheUpdateRunner runner, ProgressIndicator indicator) {
-      long before = System.currentTimeMillis();
-      indicator.setIndeterminate(false);
-      indicator.setText(IdeBundle.message("progress.indexing.updaing"));
-      runner.processFiles(indicator, true);
-
-      long after = System.currentTimeMillis();
-    }
-
-    private void updatingDone(CacheUpdateRunner runner) {
-      runner.updatingDone();
-      myProcessedItems += myCurrentUpdateTotal;
-    }
-
-    private ProgressIndicator createIndicatorProxy(final ProgressIndicator indicator) {
-      return (ProgressIndicator)Proxy
-        .newProxyInstance(indicator.getClass().getClassLoader(), new Class[]{ProgressIndicator.class}, new InvocationHandler() {
-          public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            if ("setFraction".equals(method.getName())) {
-              double fraction = (Double)args[0];
-              args[0] = new Double((myProcessedItems + fraction * myCurrentUpdateTotal) / myTotalItems);
-            }
-
-            try {
-              return method.invoke(indicator, args);
-            }
-            catch (InvocationTargetException e) {
-              final Throwable cause = e.getCause();
-              if (cause instanceof ProcessCanceledException) {
-                throw cause;
-              }
-              throw e;
-            }
-          }
-        });
-    }
   }
+
 }

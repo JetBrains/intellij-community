@@ -127,9 +127,8 @@ public class UpdaterTreeState {
   public void addAll(final UpdaterTreeState state) {
     myToExpand.putAll(state.myToExpand);
 
-    final Iterator<Object> toSelect = state.myToSelect.keySet().iterator();
-    while (toSelect.hasNext()) {
-      Object each = toSelect.next();
+    Object[] toSelect = state.getToSelect();
+    for (Object each : toSelect) {
       if (!myAdjustedSelection.containsKey(each)) {
         myToSelect.put(each, each);
       }

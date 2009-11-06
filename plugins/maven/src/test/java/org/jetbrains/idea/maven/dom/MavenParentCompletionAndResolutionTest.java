@@ -260,13 +260,17 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
   public void testHighlightingUnknownValues() throws Throwable {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
+                  "<version>1</version>");
 
-                  "<parent>" +
-                  "  <groupId><error>xxx</error></groupId>" +
-                  "  <artifactId><error>xxx</error></artifactId>" +
-                  "  <version><error>xxx</error></version>" +
-                  "</parent>");
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<parent>" +
+                     "  <groupId><error>xxx</error></groupId>" +
+                     "  <artifactId><error>xxx</error></artifactId>" +
+                     "  <version><error>xxx</error></version>" +
+                     "</parent>");
 
     checkHighlighting();
   }
@@ -310,14 +314,18 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
   public void testHighlightingInvalidRelativePath() throws Throwable {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
+                  "<version>1</version>");
 
-                  "<parent>" +
-                  "  <groupId>junit</groupId>" +
-                  "  <artifactId>junit</artifactId>" +
-                  "  <version>4.0</version>" +
-                  "  <relativePath><error>parent/pom.xml</error></relativePath>" +
-                  "</parent>");
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<parent>" +
+                     "  <groupId>junit</groupId>" +
+                     "  <artifactId>junit</artifactId>" +
+                     "  <version>4.0</version>" +
+                     "  <relativePath><error>parent/pom.xml</error></relativePath>" +
+                     "</parent>");
 
     checkHighlighting();
   }

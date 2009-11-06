@@ -1238,7 +1238,7 @@ public class StringUtil {
     return result.toString();
   }
 
-  private static String replace(final String text, final String[] from, final String[] to) {
+  public static String replace(final String text, final String[] from, final String[] to) {
     final StringBuilder result = new StringBuilder(text.length());
     replace:
     for (int i = 0; i < text.length(); i++) {
