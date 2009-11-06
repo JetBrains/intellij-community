@@ -22,13 +22,14 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * @author yole
  */
-public class OpenDirectoryProjectAction extends AnAction {
+public class OpenDirectoryProjectAction extends AnAction implements DumbAware {
   public void actionPerformed(final AnActionEvent e) {
     final FileChooserDescriptor descriptor = new OpenProjectFileChooserDescriptor(false);
     final Project project = e.getData(PlatformDataKeys.PROJECT);
