@@ -849,6 +849,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(SynchronizeOnThisInspection.class);
         m_inspectionClasses.add(SynchronizedMethodInspection.class);
         m_inspectionClasses.add(SystemRunFinalizersOnExitInspection.class);
+        m_inspectionClasses.add(ThreadLocalNotStaticFinalInspection.class);
         m_inspectionClasses.add(ThreadPriorityInspection.class);
         m_inspectionClasses.add(ThreadRunInspection.class);
         m_inspectionClasses.add(ThreadStartInConstructionInspection.class);

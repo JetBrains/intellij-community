@@ -18,13 +18,10 @@ package com.siyeh.ig.fixes;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.FinalUtils;
 import com.siyeh.ig.psiutils.InitializationUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,11 +36,7 @@ public class MakeFieldFinalFix extends InspectionGadgetsFix {
 
     @Nullable
     public static InspectionGadgetsFix buildFix(PsiField field) {
-        if (field.hasModifierProperty(PsiModifier.STATIC)) {
-            if (!canStaticFieldBeFinal(field)) {
-                return null;
-            }
-        } else if (!canInstanceFieldBeFinal(field)) {
+        if (!FinalUtils.canFieldBeFinal(field)) {
             return null;
         }
         final String name = field.getName();
@@ -53,77 +46,6 @@ public class MakeFieldFinalFix extends InspectionGadgetsFix {
     @NotNull
     public static InspectionGadgetsFix buildFixUnconditional(PsiField field) {
         return new MakeFieldFinalFix(field.getName());
-    }
-
-    private static boolean canStaticFieldBeFinal(PsiField field) {
-        final boolean hasInitializer = field.hasInitializer();
-        final boolean initializedInOneStaticInitializer =
-                isInitializedInOneStaticInitializer(field);
-        if (hasInitializer) {
-            if (initializedInOneStaticInitializer) {
-                return false;
-            }
-        } else {
-            if (!initializedInOneStaticInitializer) {
-                return false;
-            }
-        }
-        final Query<PsiReference> query = ReferencesSearch.search(field);
-        for (PsiReference reference : query) {
-            final PsiElement element = reference.getElement();
-            if (!(element instanceof PsiExpression)) {
-                continue;
-            }
-            final PsiExpression expression = (PsiExpression) element;
-            if (!PsiUtil.isOnAssignmentLeftHand(expression)) {
-                continue;
-            }
-            final PsiMethod method = PsiTreeUtil.getParentOfType(
-                    expression, PsiMethod.class);
-            if (method != null) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private static boolean canInstanceFieldBeFinal(PsiField field) {
-        final boolean hasInitializer = field.hasInitializer();
-        final boolean initializedInOneInitializer =
-                isInitializedInOneInitializer(field);
-        final boolean initializedInConstructors =
-                isInitializedInConstructors(field);
-        if (hasInitializer) {
-            if (initializedInOneInitializer) {
-                return false;
-            }
-            if (initializedInConstructors) {
-                return false;
-            }
-        } else if (initializedInOneInitializer) {
-            if (initializedInConstructors) {
-                return false;
-            }
-        } else if (!initializedInConstructors) {
-            return false;
-        }
-        final Query<PsiReference> query = ReferencesSearch.search(field);
-        for (PsiReference reference : query) {
-            final PsiElement element = reference.getElement();
-            if (!(element instanceof PsiExpression)) {
-                continue;
-            }
-            final PsiExpression expression = (PsiExpression) element;
-            if (!PsiUtil.isOnAssignmentLeftHand(expression)) {
-                continue;
-            }
-            final PsiMethod method = PsiTreeUtil.getParentOfType(
-                    expression, PsiMethod.class);
-            if (method != null && !method.isConstructor()) {
-                return false;
-            }
-        }
-        return true;
     }
 
     @NotNull
