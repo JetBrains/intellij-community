@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,6 +41,10 @@ public class MockEditorFactory extends EditorFactory {
   }
 
   public Editor createEditor(@NotNull Document document, Project project) {
+    return null;
+  }
+
+  public Editor createEditor(@NotNull Document document, Project project, @NotNull VirtualFile file, boolean isViewer) {
     return null;
   }
 
