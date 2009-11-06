@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.actions.MergeActionGroup;
@@ -49,8 +48,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.security.InvalidParameterException;
-import java.util.HashMap;
-import java.util.Map;
 
 public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSidesContainer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.DiffPanelImpl");
@@ -79,7 +76,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     }
   };
   private boolean myDisposed = false;
-  private final DiffPanelImpl.MyDataProvider myDataProvider;
+  private final GenericDataProvider myDataProvider;
 
   public DiffPanelImpl(final Window owner, Project project, boolean enableToolbar) {
     myOptions = new DiffPanelOptions(this);
@@ -96,7 +93,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     mySplitter = new DiffSplitter(myLeftSide.getComponent(), myRightSide.getComponent(),
                                   new DiffDividerPaint(this, FragmentSide.SIDE1));
     myPanel.insertDiffComponent(mySplitter, new MyScrollingPanel());
-    myDataProvider = new MyDataProvider();
+    myDataProvider = new MyGenericDataProvider(this);
     myPanel.setDataProvider(myDataProvider);
 
     final ComparisonPolicy comparisonPolicy = getComparisonPolicy();
@@ -200,6 +197,10 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
   public JComponent getPreferredFocusedComponent() {
     return myCurrentSide.getFocusableComponent();
+  }
+
+  public int getContentsNumber() {
+    return 2;
   }
 
   public ComparisonPolicy getComparisonPolicy() {
@@ -306,9 +307,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     if (data.getHints().contains(DiffTool.HINT_DO_NOT_IGNORE_WHITESPACES)) {
       setComparisonPolicy(ComparisonPolicy.DEFAULT, false);
     }
-    if (myDiffRequest instanceof SimpleDiffRequest) {
-      myDataProvider.putData(((SimpleDiffRequest) myDiffRequest).getGenericData());
-    }
+    myDataProvider.putData(myDiffRequest.getGenericData());
 
     setContents(data.getContents()[0], data.getContents()[1]);
     setTitle1(data.getContentTitles()[0]);
@@ -360,32 +359,28 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     }
   }
 
-  private class MyDataProvider implements DataProvider {
-    private final Map<String, Object> myGenericData;
+  private class MyGenericDataProvider extends GenericDataProvider {
+    private DiffPanelImpl myDiffPanel;
 
-    private MyDataProvider() {
-      myGenericData = new HashMap<String, Object>();
+    private MyGenericDataProvider(DiffPanelImpl diffPanel) {
+      myDiffPanel = diffPanel;
     }
 
     private final FocusDiffSide myFocusDiffSide = new FocusDiffSide() {
       public Editor getEditor() {
-        return getCurrentSide().getEditor();
+        return myDiffPanel.getCurrentSide().getEditor();
       }
 
       public int[] getFragmentStartingLines() {
-        return getFragmentBeginnings();
+        return myDiffPanel.getFragmentBeginnings();
       }
     };
 
-    void putData(final Map<String, Object> map) {
-      myGenericData.putAll(map);
-    }
-
+    @Override
     public Object getData(String dataId) {
-      if (DataConstants.DIFF_VIEWER.equals(dataId)) return DiffPanelImpl.this;
-      if (FocusDiffSide.FOCUSED_DIFF_SIDE.equals(dataId)) return myCurrentSide == null ? null : myFocusDiffSide;
-      return myGenericData.get(dataId);
+      if (DataConstants.DIFF_VIEWER.equals(dataId)) return myDiffPanel;
+      if (FocusDiffSide.FOCUSED_DIFF_SIDE.equals(dataId)) return myDiffPanel.myCurrentSide == null ? null : myFocusDiffSide;
+      return super.getData(dataId);
     }
   }
-
 }

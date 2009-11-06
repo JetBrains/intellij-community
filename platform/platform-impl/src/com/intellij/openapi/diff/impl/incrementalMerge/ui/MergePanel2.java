@@ -23,6 +23,7 @@ import com.intellij.openapi.diff.actions.NextDiffAction;
 import com.intellij.openapi.diff.actions.PreviousDiffAction;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.diff.impl.EditingSides;
+import com.intellij.openapi.diff.impl.GenericDataProvider;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.incrementalMerge.ChangeCounter;
 import com.intellij.openapi.diff.impl.incrementalMerge.ChangeList;
@@ -72,6 +73,7 @@ public class MergePanel2 implements DiffViewer {
   private final DividersRepainter myDividersRepainter = new DividersRepainter();
   private StatusUpdater myStatusUpdater;
   private final DialogBuilder myBuilder;
+  private MergePanel2.MyDataProvider myProvider;
 
   public MergePanel2(DialogBuilder builder, Disposable parent) {
     ArrayList<EditorPlace> editorPlaces = new ArrayList<EditorPlace>();
@@ -105,7 +107,8 @@ public class MergePanel2 implements DiffViewer {
     FontSizeSynchronizer.attachTo(editorPlaces);
     myPanel = new DiffPanelOutterComponent(TextDiffType.MERGE_TYPES, TOOLBAR);
     myPanel.insertDiffComponent(new ThreePanels(myEditorsPanels, myDividers), new MyScrollingPanel());
-    myPanel.setDataProvider(new MyDataProvider());
+    myProvider = new MyDataProvider();
+    myPanel.setDataProvider(myProvider);
     myBuilder = builder;
   }
 
@@ -233,6 +236,7 @@ public class MergePanel2 implements DiffViewer {
     }
     LOG.assertTrue(!myDuringCreation);
     myDuringCreation = true;
+    myProvider.putData(data.getGenericData());
     try {
       myData = data;
       String[] titles = myData.getContentTitles();
@@ -273,6 +277,10 @@ public class MergePanel2 implements DiffViewer {
 
   public JComponent getPreferredFocusedComponent() {
     return getEditorPlace(1).getContentComponent();
+  }
+
+  public int getContentsNumber() {
+    return 3;
   }
 
   private boolean hasAllEditors() {
@@ -390,7 +398,7 @@ public class MergePanel2 implements DiffViewer {
     return contentType;
   }
 
-  private class MyDataProvider implements DataProvider {
+  private class MyDataProvider extends GenericDataProvider {
     public Object getData(String dataId) {
       if (FocusDiffSide.FOCUSED_DIFF_SIDE.equals(dataId)) {
         int index = getFocusedEditorIndex();
@@ -405,7 +413,7 @@ public class MergePanel2 implements DiffViewer {
         }
       }
       else if (DataConstants.DIFF_VIEWER.equals(dataId)) return MergePanel2.this;
-      return null;
+      return super.getData(dataId);
     }
 
     private int getFocusedEditorIndex() {

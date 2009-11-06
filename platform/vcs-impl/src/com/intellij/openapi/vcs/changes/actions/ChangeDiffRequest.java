@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NullableFactory;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeRequestChain;
@@ -44,7 +45,8 @@ import java.util.List;
  * @author yole
  */
 public class ChangeDiffRequest implements ChangeRequestChain {
-  private final List<Change> myChanges;
+  private final List<DiffRequestPresentable> mySteps;
+  private final boolean myShowFrame;
   private int myIndex;
   
   private final ShowDiffAction.DiffExtendUIFactory myActionsFactory;
@@ -53,9 +55,11 @@ public class ChangeDiffRequest implements ChangeRequestChain {
   private final AnAction myNextChangeAction;
   private final Project myProject;
 
-  public ChangeDiffRequest(final Project project, final List<Change> changes, final ShowDiffAction.DiffExtendUIFactory actionsFactory) {
+  public ChangeDiffRequest(final Project project, final List<DiffRequestPresentable> steps, final ShowDiffAction.DiffExtendUIFactory actionsFactory,
+                           final boolean showFrame) {
     myProject = project;
-    myChanges = changes;
+    mySteps = steps;
+    myShowFrame = showFrame;
 
     myIndex = 0;
     myActionsFactory = actionsFactory;
@@ -64,24 +68,36 @@ public class ChangeDiffRequest implements ChangeRequestChain {
     myNextChangeAction = ActionManager.getInstance().getAction("Diff.NextChange");
   }
 
+  private void onEveryMove(final DiffRequest simpleRequest, final boolean showFrame) {
+    simpleRequest.passForDataContext(VcsDataKeys.DIFF_REQUEST_CHAIN, this);
+    if (showFrame) {
+      simpleRequest.addHint(DiffTool.HINT_SHOW_FRAME);
+    }
+    else {
+      simpleRequest.addHint(DiffTool.HINT_SHOW_MODAL_DIALOG);
+    }
+    if (mySteps.size() > 1) {
+      simpleRequest.addHint(DiffTool.HINT_ALLOW_NO_DIFFERENCES);
+    }
+  }
+
   public boolean quickCheckHaveStuff() {
-    if (myChanges.isEmpty()) return false;
-    if (myChanges.size() == 1) {
-      final Change change = myChanges.get(0);
-      return checkContentsAvailable(change.getBeforeRevision(), change.getAfterRevision());
+    if (mySteps.isEmpty()) return false;
+    if (mySteps.size() == 1) {
+      return mySteps.get(0).haveStuff();
     }
     return true;
   }
 
   @Nullable
-  public SimpleDiffRequest init(final int idx) {
-    if (idx < 0 || idx > (myChanges.size() - 1)) return null;
+  public DiffRequest init(final int idx) {
+    if (idx < 0 || idx > (mySteps.size() - 1)) return null;
     myIndex = idx - 1;
     return moveForward();
   }
 
   public boolean canMoveForward() {
-    return myIndex < (myChanges.size() - 1);
+    return myIndex < (mySteps.size() - 1);
   }
 
   public boolean canMoveBack() {
@@ -89,7 +105,7 @@ public class ChangeDiffRequest implements ChangeRequestChain {
   }
 
   @Nullable
-  public SimpleDiffRequest moveForward() {
+  public DiffRequest moveForward() {
     return moveImpl(new MoveDirection() {
       public boolean canMove() {
         return canMoveForward();
@@ -101,20 +117,24 @@ public class ChangeDiffRequest implements ChangeRequestChain {
   }
 
   @Nullable
-  private SimpleDiffRequest moveImpl(final MoveDirection moveDirection) {
+  private DiffRequest moveImpl(final MoveDirection moveDirection) {
     while (moveDirection.canMove()) {
       final int nextIdx = myIndex + moveDirection.direction();
-      final Change change = myChanges.get(nextIdx);
-      final SimpleDiffRequest request = new SimpleDiffRequest(myProject, null);
-      final MyReturnValue returnValue = getRequestForChange(request, change);
-      if (MyReturnValue.quit.equals(returnValue)) {
+
+      final DiffRequestPresentable diffRequestPresentable = mySteps.get(nextIdx);
+      final DiffRequestPresentable.MyResult result = diffRequestPresentable.step();
+      final DiffPresentationReturnValue returnValue = result.getReturnValue();
+      if (DiffPresentationReturnValue.quit.equals(returnValue)) {
         return null;
       }
-      if (MyReturnValue.removeFromList.equals(returnValue)) {
-        myChanges.remove(nextIdx);
+      if (DiffPresentationReturnValue.removeFromList.equals(returnValue)) {
+        mySteps.remove(nextIdx);
         continue;
       }
+      final DiffRequest request = result.getRequest();
+      takeStuffFromFactory(request, diffRequestPresentable.createActions(myActionsFactory));
       myIndex = nextIdx;
+      onEveryMove(request, myShowFrame);
       return request;
     }
     return null;
@@ -126,7 +146,7 @@ public class ChangeDiffRequest implements ChangeRequestChain {
   }
 
   @Nullable
-  public SimpleDiffRequest moveBack() {
+  public DiffRequest moveBack() {
     return moveImpl(new MoveDirection() {
       public boolean canMove() {
         return canMoveBack();
@@ -137,32 +157,18 @@ public class ChangeDiffRequest implements ChangeRequestChain {
     });
   }
 
-  private static enum MyReturnValue {
-    removeFromList,
-    useRequest,
-    quit;
-  }
-
-  @Nullable
-  private MyReturnValue getRequestForChange(final SimpleDiffRequest request, final Change change) {
-    if (! canShowChange(change)) return MyReturnValue.removeFromList;
-    if (! loadCurrentContents(request, change)) return MyReturnValue.quit;
-    takeStuffFromFactory(request, change);
-    return MyReturnValue.useRequest;
-  }
-
-  private void takeStuffFromFactory(final SimpleDiffRequest request, final Change change) {
-    if (myChanges.size() > 1 || (myActionsFactory != null)) {
+  private void takeStuffFromFactory(final DiffRequest request, final List<? extends AnAction> actions) {
+    if (mySteps.size() > 1 || (myActionsFactory != null)) {
       request.setToolbarAddons(new DiffRequest.ToolbarAddons() {
         public void customize(DiffToolbar toolbar) {
-          if (myChanges.size() > 1)
+          if (mySteps.size() > 1)
           toolbar.addSeparator();
           toolbar.addAction(myPrevChangeAction);
           toolbar.addAction(myNextChangeAction);
 
           if (myActionsFactory != null) {
             toolbar.addSeparator();
-            for (AnAction action : myActionsFactory.createActions(change)) {
+            for (AnAction action : actions) {
               toolbar.addAction(action);
             }
           }
@@ -177,131 +183,5 @@ public class ChangeDiffRequest implements ChangeRequestChain {
         }
       });
     }
-  }
-
-  private boolean loadCurrentContents(final SimpleDiffRequest request, final Change change) {
-    final ContentRevision bRev = change.getBeforeRevision();
-    final ContentRevision aRev = change.getAfterRevision();
-
-    String beforePath = bRev != null ? bRev.getFile().getPath() : null;
-    String afterPath = aRev != null ? aRev.getFile().getPath() : null;
-    String title;
-    if (beforePath != null && afterPath != null && !beforePath.equals(afterPath)) {
-      title = beforePath + " -> " + afterPath;
-    }
-    else if (beforePath != null) {
-      title = beforePath;
-    }
-    else if (afterPath != null) {
-      title = afterPath;
-    }
-    else {
-      title = VcsBundle.message("diff.unknown.path.title");
-    }
-    request.setWindowTitle(title);
-
-    boolean result = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      public void run() {
-        request.setContents(createContent(bRev), createContent(aRev));
-      }
-    }, VcsBundle.message("progress.loading.diff.revisions"), true, myProject);
-    if (! result) return false;
-
-    String beforeRevisionTitle = (bRev != null) ? bRev.getRevisionNumber().asString() : "";
-    String afterRevisionTitle = (aRev != null) ? aRev.getRevisionNumber().asString() : "";
-    if (beforeRevisionTitle.length() == 0) {
-      beforeRevisionTitle = "Base version";
-    }
-    if (afterRevisionTitle.length() == 0) {
-      afterRevisionTitle = "Your version";
-    }
-    request.setContentTitles(beforeRevisionTitle, afterRevisionTitle);
-    return true;
-  }
-
-  @NotNull
-  private DiffContent createContent(final ContentRevision revision) {
-    ProgressManager.checkCanceled();
-    if (revision == null) return new SimpleContent("");
-    if (revision instanceof CurrentContentRevision) {
-      final CurrentContentRevision current = (CurrentContentRevision)revision;
-      final VirtualFile vFile = current.getVirtualFile();
-      return vFile != null ? new FileContent(myProject, vFile) : new SimpleContent("");
-    }
-
-    String revisionContent;
-    try {
-      revisionContent = revision.getContent();
-    }
-    catch(VcsException ex) {
-      // TODO: correct exception handling
-      revisionContent = null;
-    }
-    SimpleContent content = revisionContent == null
-                            ? new SimpleContent("")
-                            : new SimpleContent(revisionContent, revision.getFile().getFileType());
-    VirtualFile vFile = revision.getFile().getVirtualFile();
-    if (vFile != null) {
-      content.setCharset(vFile.getCharset());
-      content.setBOM(vFile.getBOM());
-    }
-    content.setReadOnly(true);
-    return content;
-  }
-
-  private boolean canShowChange(final Change change) {
-    final ContentRevision bRev = change.getBeforeRevision();
-    final ContentRevision aRev = change.getAfterRevision();
-
-    if ((bRev != null && (bRev.getFile().getFileType().isBinary() || bRev.getFile().isDirectory())) ||
-        (aRev != null && (aRev.getFile().getFileType().isBinary() || aRev.getFile().isDirectory()))) {
-      if (bRev != null && bRev.getFile().getFileType() == FileTypes.UNKNOWN && !bRev.getFile().isDirectory()) {
-        if (! checkContentsAvailable(bRev, aRev)) return false;
-        if (!checkAssociate(myProject, bRev.getFile())) return false;
-      }
-      else if (aRev != null && aRev.getFile().getFileType() == FileTypes.UNKNOWN && !aRev.getFile().isDirectory()) {
-        if (! checkContentsAvailable(bRev, aRev)) return false;
-        if (!checkAssociate(myProject, aRev.getFile())) return false;
-      }
-      else {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  private static boolean checkContentsAvailable(@Nullable final ContentRevision bRev, @Nullable final ContentRevision aRev) {
-    String bContents = null;
-    if (bRev != null) {
-      try {
-        bContents = bRev.getContent();
-      } catch (VcsException e) {
-        //
-      }
-    }
-    String aContents = null;
-    if (aRev != null) {
-      try {
-        aContents = aRev.getContent();
-      } catch (VcsException e) {
-        //
-      }
-    }
-    return (bContents != null) || (aContents != null);
-  }
-
-  private static boolean checkAssociate(final Project project, final FilePath file) {
-    int rc = Messages.showDialog(project,
-                                 VcsBundle.message("diff.unknown.file.type.prompt", file.getName()),
-                                 VcsBundle.message("diff.unknown.file.type.title"),
-                                 new String[] {
-                                   VcsBundle.message("diff.unknown.file.type.associate"),
-                                   CommonBundle.getCancelButtonText()
-                                 }, 0, Messages.getQuestionIcon());
-    if (rc == 0) {
-      FileType fileType = FileTypeChooser.associateFileType(file.getName());
-      return fileType != null && !fileType.isBinary();
-    }
-    return false;
   }
 }

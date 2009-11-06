@@ -521,9 +521,8 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     final List<File> files = new ArrayList<File>();
     final HashSet<AntFilesProvider> processed = new HashSet<AntFilesProvider>(); // aux collection 
     // check 'classpathref'
-    final ProgressManager progressManager = ProgressManager.getInstance();
     for (PsiReference reference : getReferences()) {
-      progressManager.checkCanceled();
+      ProgressManager.checkCanceled();
       if (reference instanceof AntRefIdReference) {
         final PsiElement resolved = reference.resolve();
         if (resolved instanceof AntFilesProvider) {
@@ -533,7 +532,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     }
     // check nested elements
     for (AntElement antElement : getChildren()) {
-      progressManager.checkCanceled();
+      ProgressManager.checkCanceled();
       if (antElement instanceof AntFilesProvider) {
         files.addAll(((AntFilesProvider)antElement).getFiles(processed));
       }

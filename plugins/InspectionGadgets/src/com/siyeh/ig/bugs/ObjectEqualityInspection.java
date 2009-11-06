@@ -20,7 +20,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -143,8 +142,6 @@ public class ObjectEqualityInspection extends BaseInspection {
 
         private boolean implementorsHaveOnlyPrivateConstructors(
                 final PsiClass aClass) {
-            final PsiManager manager = aClass.getManager();
-            final PsiSearchHelper searchHelper = manager.getSearchHelper();
             final GlobalSearchScope scope =
                     GlobalSearchScope.allScope(aClass.getProject());
             final PsiElementProcessor.CollectElementsWithLimit<PsiClass>

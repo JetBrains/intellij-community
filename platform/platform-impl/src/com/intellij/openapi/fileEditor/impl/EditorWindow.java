@@ -442,7 +442,7 @@ public class EditorWindow {
           */
           // open only selected file in the new splitter instead of opening all tabs
           final VirtualFile file = selectedEditor.getFile();
-          fileEditorManager.openFileImpl3(res, file, false, null);
+          fileEditorManager.openFileImpl3(res, file, false, null, true);
           res.setFilePinned (file, isFilePinned (file));
 
           res.setSelectedEditor(selectedEditor, true);
@@ -457,8 +457,8 @@ public class EditorWindow {
           splitter.setSecondComponent(res.myPanel);
           panel.revalidate();
           final VirtualFile file = firstEC.getFile();
-          fileEditorManager.openFileImpl3(this, file, true, null);
-          fileEditorManager.openFileImpl3(res, file, false, null);
+          fileEditorManager.openFileImpl3(this, file, true, null, true);
+          fileEditorManager.openFileImpl3(res, file, false, null, true);
         }
       }
     }

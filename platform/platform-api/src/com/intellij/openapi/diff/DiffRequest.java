@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff;
 
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
@@ -23,8 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 
 /**
  * A request for a diff or merge operation.
@@ -35,9 +35,12 @@ public abstract class DiffRequest {
   private ToolbarAddons myToolbarAddons = ToolbarAddons.NOTHING;
   @NonNls private static final String COMMON_DIFF_GROUP_KEY = "DiffWindow";
   private Factory<JComponent> myBottomComponentFactory = null;
+  private final HashSet myHints = new HashSet();
+  private final Map<String, Object> myGenericData;
 
   protected DiffRequest(Project project) {
     myProject = project;
+    myGenericData = new HashMap<String, Object>(2);
   }
 
   public void setToolbarAddons(@NotNull ToolbarAddons toolbarAddons) {
@@ -75,7 +78,31 @@ public abstract class DiffRequest {
    * @return not null (possibly empty) collection of hints for diff tool.
    */
   public Collection getHints() {
-    return Collections.emptySet();
+    return Collections.unmodifiableCollection(myHints);
+  }
+
+  public void passForDataContext(final DataKey key, final Object value) {
+    myGenericData.put(key.getName(), value);
+  }
+
+  public Map<String, Object> getGenericData() {
+    return myGenericData;
+  }
+
+  /**
+   * @param hint
+   * @see DiffRequest#getHints()
+   */
+  public void addHint(Object hint) {
+    myHints.add(hint);
+  }
+
+  /**
+   * @param hint
+   * @see DiffRequest#getHints()
+   */
+  public void removeHint(Object hint) {
+    myHints.remove(hint);
   }
 
   /**

@@ -481,6 +481,33 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertProblems(readResult);
   }
 
+  public void testDoNotGoIntoRecursionWhenTryingToResolveParentInDefaultPath() throws Exception {
+    VirtualFile child = createModulePom("child",
+                                        "<groupId>test</groupId>" +
+                                        "<artifactId>child</artifactId>" +
+                                        "<version>1</version>" +
+
+                                        "<parent>" +
+                                        "  <groupId>test</groupId>" +
+                                        "  <artifactId>parent</artifactId>" +
+                                        "  <version>1</version>" +
+                                        "</parent>");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>subChild</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<parent>" +
+                     "  <groupId>test</groupId>" +
+                     "  <artifactId>child</artifactId>" +
+                     "  <version>1</version>" +
+                     "  <relativePath>child/pom.xml</relativePath>" +
+                     "</parent>");
+
+    MavenProjectReaderResult readResult = readProject(child, new NullProjectLocator());
+    assertProblems(readResult);
+  }
+
   public void testExpandingSystemAndEnvProperties() throws Exception {
     createProjectPom("<name>${java.home}</name>" +
                      "<packaging>${env.TEMP}</packaging>");

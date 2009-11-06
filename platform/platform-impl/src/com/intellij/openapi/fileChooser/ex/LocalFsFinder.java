@@ -16,6 +16,8 @@
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -24,6 +26,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class LocalFsFinder implements FileLookup.Finder, FileLookup {
@@ -123,6 +127,11 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
           result.add(eachFile);
         }
       }
+      Collections.sort(result, new Comparator<LookupFile>() {
+        public int compare(LookupFile o1, LookupFile o2) {
+          return FileUtil.comparePaths(o1.getName(), o2.getName());
+        }
+      });
 
       return result;
     }
@@ -187,6 +196,11 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
       for (File each : files) {
         result.add(new IoFile(each));
       }
+      Collections.sort(result, new Comparator<LookupFile>() {
+        public int compare(LookupFile o1, LookupFile o2) {
+          return FileUtil.comparePaths(o1.getName(), o2.getName());
+        }
+      });
 
       return result;
     }

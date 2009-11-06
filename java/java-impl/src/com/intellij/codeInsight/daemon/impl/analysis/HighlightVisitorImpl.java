@@ -687,7 +687,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override public void visitReferenceElement(PsiJavaCodeReferenceElement ref) {
-    JavaResolveResult result = null;
+    JavaResolveResult result;
     try {
       result = ref.advancedResolve(true);
     }

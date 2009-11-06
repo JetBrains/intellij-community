@@ -188,14 +188,6 @@ public class CvsOperationExecutor {
     }
   }
 
-  private static void setCancelText(final CvsHandler handler) {
-    ProgressManager progressManager = ProgressManager.getInstance();
-    String cancelButtonText = handler.getCancelButtonText();
-    if (cancelButtonText != null) {
-      progressManager.setCancelButtonText(cancelButtonText);
-    }
-  }
-
   private boolean doNotShowProgress() {
     return isInProgress() || isInTestMode() || !myShowProgress || !ApplicationManager.getApplication().isDispatchThread();
   }

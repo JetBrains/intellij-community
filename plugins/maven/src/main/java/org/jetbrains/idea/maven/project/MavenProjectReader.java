@@ -91,7 +91,7 @@ public class MavenProjectReader {
                                                                     MavenProjectReaderProjectLocator locator) {
     ModelWithProblems modelWithValidity = myRawModelsAndProblemsCache.get(file);
     if (modelWithValidity == null) {
-      modelWithValidity = doReadProjectModel(file, generalSettings);
+      modelWithValidity = doReadProjectModel(file, generalSettings, false);
       myRawModelsAndProblemsCache.put(file, modelWithValidity);
     }
 
@@ -105,7 +105,7 @@ public class MavenProjectReader {
     return Pair.create(modelWithValidity, activatedProfiles);
   }
 
-  private ModelWithProblems doReadProjectModel(VirtualFile file, MavenGeneralSettings generalSettings) {
+  private ModelWithProblems doReadProjectModel(VirtualFile file, MavenGeneralSettings generalSettings, boolean headerOnly) {
     Model result = new Model();
     LinkedHashSet<MavenProjectProblem> problems = createProblemsList();
 
@@ -118,6 +118,9 @@ public class MavenProjectReader {
     result.setGroupId(findChildValueByPath(xmlProject, "groupId"));
     result.setArtifactId(findChildValueByPath(xmlProject, "artifactId"));
     result.setVersion(findChildValueByPath(xmlProject, "version"));
+
+    if (headerOnly) return new ModelWithProblems(result, problems);
+
     result.setPackaging(findChildValueByPath(xmlProject, "packaging"));
     result.setName(findChildValueByPath(xmlProject, "name"));
 
@@ -461,15 +464,11 @@ public class MavenProjectReader {
           @Override
           @Nullable
           protected Pair<VirtualFile, ModelWithProblems> processRelativeParent(VirtualFile parentFile) {
-            Pair<VirtualFile, ModelWithProblems> result = super.processRelativeParent(parentFile);
-            if (result == null) return null;
-
+            Model parentModel = doReadProjectModel(parentFile, generalSettings, true).model;
             MavenId parentId = parentDesc[0].getParentId();
-            Model model = result.second.model;
-            if (!(parentId.equals(model.getGroupId(), model.getArtifactId(), model.getVersion()))) {
-              return null;
-            }
-            return result;
+            if (!parentId.equals(new MavenId(parentModel))) return null;
+
+            return super.processRelativeParent(parentFile);
           }
 
           @Override
