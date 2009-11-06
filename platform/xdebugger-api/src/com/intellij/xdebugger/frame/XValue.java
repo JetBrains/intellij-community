@@ -26,6 +26,7 @@ public abstract class XValue extends XValueContainer {
   /**
    * Start computing presentation of the value in the debugger tree and call {@link XValueNode#setPresentation(String, javax.swing.Icon, String, String, boolean)}
    * when computation is finished.
+   * Note that this method is called from the Event Dispatch thread so it should return quickly.
    * @param node node.
    */
   public abstract void computePresentation(@NotNull XValueNode node);
@@ -49,7 +50,8 @@ public abstract class XValue extends XValueContainer {
 
   /**
    * Start computing source position of the value and call {@link XNavigatable#setSourcePosition(com.intellij.xdebugger.XSourcePosition)}
-   * when computation is finished 
+   * when computation is finished.
+   * Note that this method is called from the Event Dispatch thread so it should return quickly.
    * @param navigatable navigatable
    */
   public void computeSourcePosition(@NotNull XNavigatable navigatable) {
