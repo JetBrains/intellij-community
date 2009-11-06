@@ -19,7 +19,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
@@ -59,13 +58,11 @@ public class SearchUtils{
     }
 
     public static Iterable<PsiMethod> findOverridingMethods(PsiMethod method){
-        final PsiSearchHelper searchHelper = method.getManager().getSearchHelper();
         return new ArrayIterable<PsiMethod>(OverridingMethodsSearch.search(method, method.getUseScope(), true).toArray(new PsiMethod[0]));
        // return OverridingMethodsSearch.search(method, method.getUseScope(), true).findAll();
     }
 
     public static Iterable<PsiClass> findClassInheritors(PsiClass aClass, boolean deep){
-        final PsiSearchHelper searchHelper = aClass.getManager().getSearchHelper();
         return new ArrayIterable<PsiClass>(ClassInheritorsSearch.search(aClass, aClass.getUseScope(), deep).toArray(new PsiClass[0]));
        // return ClassInheritorsSearch.search(aClass, deep);
     }
