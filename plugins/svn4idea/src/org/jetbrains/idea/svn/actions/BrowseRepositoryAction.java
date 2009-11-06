@@ -15,12 +15,15 @@
  */
 package org.jetbrains.idea.svn.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -67,12 +70,22 @@ public class BrowseRepositoryAction extends AnAction {
       JComponent component = myDialog.createBrowserComponent(true);
 
       add(component, BorderLayout.CENTER);
-      add(myDialog.createToolbar(false), BorderLayout.WEST);
+      add(myDialog.createToolbar(false, new HelpAction()), BorderLayout.WEST);
     }
 
     public void dispose() {
       myDialog.disposeRepositoryBrowser();
       ToolWindowManager.getInstance(myProject).unregisterToolWindow(BrowseRepositoryAction.REPOSITORY_BROWSER_TOOLWINDOW);
+    }
+
+    private class HelpAction extends AnAction {
+      public HelpAction() {
+        super(CommonBundle.getHelpButtonText(), null, IconLoader.getIcon("/actions/help.png"));
+      }
+
+      public void actionPerformed(AnActionEvent e) {
+        HelpManager.getInstance().invokeHelp("reference.svn.repository");
+      }
     }
   }
 }

@@ -24,7 +24,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -88,7 +87,6 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   private final SvnVcs myVCS;
   private RepositoryBrowserComponent myRepositoryBrowser;
 
-  @NonNls private static final String HELP_ID = "vcs.subversion.browseSVN";
   @NonNls public static final String COPY_OF_PREFIX = "CopyOf";
   @NonNls public static final String NEW_FOLDER_POSTFIX = "NewFolder";
 
@@ -117,8 +115,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     init();
   }
 
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HELP_ID);
+  protected String getHelpId() {
+    return "reference.svn.repository";
   }
 
   protected Action[] createActions() {
@@ -133,7 +131,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     return true;
   }
 
-  public JComponent createToolbar(boolean horizontal) {
+  public JComponent createToolbar(final boolean horizontal, final AnAction... additionalActions) {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new AddLocationAction());
     group.add(new EditLocationAction());
@@ -175,8 +173,16 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       }
     }, getRepositoryBrowser());
     group.add(action);
-    if (!horizontal) {
+
+    if ((additionalActions != null) || (! horizontal)) {
       group.addSeparator();
+    }
+    if (additionalActions != null) {
+      for (AnAction anAction : additionalActions) {
+        group.add(anAction);
+      }
+    }
+    if (! horizontal) {
       group.add(new CloseToolWindowAction());
     }
     return ActionManager.getInstance().createActionToolbar(PLACE_TOOLBAR, group, horizontal).getComponent();
@@ -217,7 +223,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     JPanel top = new JPanel(new BorderLayout());
 
     top.add(new JLabel("Repositories:"), BorderLayout.WEST);
-    top.add(createToolbar(true), BorderLayout.EAST);
+    top.add(createToolbar(true, null), BorderLayout.EAST);
     parentPanel.add(top, BorderLayout.NORTH);
 
     JComponent panel =  createBrowserComponent(false);
