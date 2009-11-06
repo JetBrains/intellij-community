@@ -88,7 +88,7 @@ public class AppEngineServerModel implements ServerModel {
     myServerParameters = settings.getServerParameters();
     final String artifactName = settings.getArtifact();
     if (artifactName != null) {
-      myArtifactPointer = ArtifactPointerManager.getInstance(myCommonModel.getProject()).create(artifactName);
+      myArtifactPointer = ArtifactPointerManager.getInstance(myCommonModel.getProject()).createPointer(artifactName);
     }
     else {
       myArtifactPointer = null;
@@ -118,7 +118,7 @@ public class AppEngineServerModel implements ServerModel {
 
   public void setArtifact(@Nullable Artifact artifact) {
     if (artifact != null) {
-      myArtifactPointer = ArtifactPointerManager.getInstance(myCommonModel.getProject()).create(artifact);
+      myArtifactPointer = ArtifactPointerManager.getInstance(myCommonModel.getProject()).createPointer(artifact);
     }
     else {
       myArtifactPointer = null;
@@ -139,7 +139,7 @@ public class AppEngineServerModel implements ServerModel {
     public AppEngineModelSettings(int port, ArtifactPointer pointer, String serverParameters) {
       myPort = port;
       myServerParameters = serverParameters;
-      myArtifact = pointer != null ? pointer.getName() : null;
+      myArtifact = pointer != null ? pointer.getArtifactName() : null;
     }
 
     public int getPort() {
