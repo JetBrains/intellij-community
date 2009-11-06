@@ -196,7 +196,11 @@ public class GitRootTracker implements VcsListener {
    * {@inheritDoc}
    */
   public void directoryMappingChanged() {
-    scheduleRootsCheck(true);
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        scheduleRootsCheck(true);
+      }
+    });
   }
 
   private void scheduleRootsCheck(final boolean rootsChanged) {
