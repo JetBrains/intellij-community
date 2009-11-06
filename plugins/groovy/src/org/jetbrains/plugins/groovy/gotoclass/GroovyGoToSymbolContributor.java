@@ -44,8 +44,8 @@ public class GroovyGoToSymbolContributor implements ChooseByNameContributor {
   }
 
   public NavigationItem[] getItemsByName(String name, String pattern, Project project, boolean includeNonProjectItems) {
-    final GlobalSearchScope scope = includeNonProjectItems ? null : GlobalSearchScope.projectScope(project);
-    
+    GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
+
     List<NavigationItem> symbols = new ArrayList<NavigationItem>();
     symbols.addAll(StubIndex.getInstance().get(GrShortClassNameIndex.KEY, name, project, scope));
     symbols.addAll(StubIndex.getInstance().get(GrFieldNameIndex.KEY, name, project, scope));
