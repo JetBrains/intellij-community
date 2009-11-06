@@ -224,8 +224,8 @@ public class QuickFixAction extends AnAction {
     Set<VirtualFile> readOnlyFiles = new THashSet<VirtualFile>();
     for (RefElement refElement : refElements) {
       PsiElement psiElement = refElement.getElement();
-      if (psiElement == null) continue;
-      if (!psiElement.isWritable()) readOnlyFiles.add(psiElement.getContainingFile().getVirtualFile());
+      if (psiElement == null || psiElement.getContainingFile() == null) continue;
+      readOnlyFiles.add(psiElement.getContainingFile().getVirtualFile());
     }
     return readOnlyFiles;
   }
