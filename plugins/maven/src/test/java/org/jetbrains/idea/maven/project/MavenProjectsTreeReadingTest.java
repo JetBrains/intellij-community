@@ -605,7 +605,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     assertEquals("resolved: project ", listener.log);
     assertNotNull(nativeProject[0]);
-    assertTrue(project.hasErrors());
+    assertTrue(project.hasReadingProblems());
   }
 
   public void testDoNotUpdateChildAfterParentWasResolved() throws Exception {

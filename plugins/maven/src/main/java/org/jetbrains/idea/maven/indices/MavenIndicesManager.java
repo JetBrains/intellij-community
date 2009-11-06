@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.indices;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
@@ -31,8 +30,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import gnu.trove.THashSet;
 import org.apache.maven.archetype.catalog.Archetype;
 import org.apache.maven.archetype.catalog.ArchetypeCatalog;
@@ -43,6 +40,7 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.idea.maven.utils.MavenRehighlighter;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
@@ -310,16 +308,7 @@ public class MavenIndicesManager implements ApplicationComponent {
 
   private void scheduleRehighlightAllPoms(final Project projectOrNull) {
     if (projectOrNull == null) return;
-    MavenUtil.invokeLater(projectOrNull, new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            ((PsiModificationTrackerImpl)PsiManager.getInstance(projectOrNull).getModificationTracker()).incCounter();
-            DaemonCodeAnalyzer.getInstance(projectOrNull).restart();
-          }
-        });
-      }
-    });
+    MavenRehighlighter.rehighlight(projectOrNull);
   }
 
   public synchronized Set<ArchetypeInfo> getArchetypes() {

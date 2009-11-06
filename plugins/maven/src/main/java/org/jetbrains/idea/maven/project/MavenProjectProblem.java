@@ -15,30 +15,67 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+
 import java.io.Serializable;
 
 public class MavenProjectProblem implements Serializable {
+  public enum ProblemType {
+    SYNTAX, STRUCTURE, DEPENDENCY, PARENT, SETTINGS_OR_PROFILES;
+  }
+
+  private String myUrl;
   private String myDescription;
-  private boolean isCritical;
+  private ProblemType myType;
 
   protected MavenProjectProblem() {
   }
 
-  public MavenProjectProblem(String description, boolean critical) {
+  public MavenProjectProblem(VirtualFile file, String description, ProblemType type) {
+    myUrl = file.getUrl();
     myDescription = description;
-    isCritical = critical;
+    myType = type;
+  }
+
+  public String getUrl() {
+    return myUrl;
   }
 
   public String getDescription() {
     return myDescription;
   }
 
-  public boolean isCritical() {
-    return isCritical;
+  public ProblemType getType() {
+    return myType;
+  }
+
+  public VirtualFile findFile() {
+    return VirtualFileManager.getInstance().findFileByUrl(myUrl);
   }
 
   @Override
   public String toString() {
-    return (isCritical ? "!!!" : "") + myDescription;
+    return myType + ":" + myDescription + ":" + myUrl;
+  }
+
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    MavenProjectProblem that = (MavenProjectProblem)o;
+
+    if (!myDescription.equals(that.myDescription)) return false;
+    if (myType != that.myType) return false;
+    if (!myUrl.equals(that.myUrl)) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    int result = myUrl.hashCode();
+    result = 31 * result + myDescription.hashCode();
+    result = 31 * result + myType.hashCode();
+    return result;
   }
 }

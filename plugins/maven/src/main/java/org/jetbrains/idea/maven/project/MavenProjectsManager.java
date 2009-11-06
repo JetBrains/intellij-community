@@ -36,6 +36,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.EventDispatcher;
@@ -324,7 +325,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
         Iterator<MavenProject> it = toResolve.iterator();
         while (it.hasNext()) {
           MavenProject each = it.next();
-          if (each.hasErrors()) it.remove();
+          if (each.hasReadingProblems()) it.remove();
         }
 
         if (haveChanges(toImport) || !deleted.isEmpty()) {
@@ -362,7 +363,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
       }
 
       private boolean shouldScheduleProject(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
-        return !projectWithChanges.first.hasErrors() && projectWithChanges.second.hasChanges();
+        return !projectWithChanges.first.hasReadingProblems() && projectWithChanges.second.hasChanges();
       }
 
       private void processMessage(Object message) {

@@ -303,7 +303,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   public enum ErrorLevel {
-    NONE, WARNING, ERROR
+    NONE, ERROR
   }
 
   public abstract class CustomNode extends SimpleNode {
@@ -443,8 +443,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     private SimpleTextAttributes prepareAttribs(SimpleTextAttributes from) {
       ErrorLevel level = getOverallErrorLevel();
-      Color waveColor = level == ErrorLevel.NONE
-                        ? null : (level == ErrorLevel.WARNING ? Color.GRAY : Color.RED);
+      Color waveColor = level == ErrorLevel.NONE ? null : Color.RED;
       int style = from.getStyle();
       if (waveColor != null) style |= SimpleTextAttributes.STYLE_WAVED;
       return new SimpleTextAttributes(from.getBgColor(),
@@ -629,19 +628,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     private void updateErrorLevel() {
-      if (!myMavenProject.hasErrors()) {
-        setNodeErrorLevel(ErrorLevel.NONE);
-        return;
-      }
-      List<MavenProjectProblem> problems = myMavenProject.getProblems();
-      boolean isError = false;
-      for (MavenProjectProblem each : problems) {
-        if (each.isCritical()) {
-          isError = true;
-          break;
-        }
-      }
-      setNodeErrorLevel(isError ? ErrorLevel.ERROR : ErrorLevel.WARNING);
+      setNodeErrorLevel(myMavenProject.getProblems().isEmpty() ? ErrorLevel.NONE : ErrorLevel.ERROR);
     }
 
     @Override
@@ -675,8 +662,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       desc.append("  </table>");
       desc.append("</td>");
       desc.append("</tr>");
-      appendProblems(desc, true);
-      appendProblems(desc, false);
+      appendProblems(desc);
 
       if (getModulesErrorLevel() != ErrorLevel.NONE) {
         desc.append("<tr>");
@@ -698,8 +684,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       return result;
     }
 
-    private void appendProblems(StringBuilder desc, boolean critical) {
-      List<MavenProjectProblem> problems = collectProblems(critical);
+    private void appendProblems(StringBuilder desc) {
+      List<MavenProjectProblem> problems = myMavenProject.getProblems();
       if (problems.isEmpty()) return;
 
       desc.append("<tr>");
@@ -709,8 +695,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       for (MavenProjectProblem each : problems) {
         desc.append("<tr>");
         if (first) {
-          desc.append("<td valign=top>" + MavenUtil.formatHtmlImage(critical ? ERROR_ICON_URL : WARNING_ICON_URL) + "</td>");
-          desc.append("<td valign=top>" + (critical ? "Errors" : "Warnings") + ":</td>");
+          desc.append("<td valign=top>" + MavenUtil.formatHtmlImage(ERROR_ICON_URL) + "</td>");
+          desc.append("<td valign=top>Problems:</td>");
           first = false;
         }
         else {
@@ -725,7 +711,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     private String wrappedText(MavenProjectProblem each) {
-      String text = each.getDescription();
+      String text = StringUtil.replace(each.getDescription(), new String[]{"<", ">"}, new String[]{"&lt;", "&gt;"});
       StringBuffer result = new StringBuffer();
       int count = 0;
       for (int i = 0; i < text.length(); i++) {
@@ -740,14 +726,6 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
         }
       }
       return result.toString();
-    }
-
-    private List<MavenProjectProblem> collectProblems(boolean critical) {
-      List<MavenProjectProblem> result = new ArrayList<MavenProjectProblem>();
-      for (MavenProjectProblem each : myMavenProject.getProblems()) {
-        if (critical == each.isCritical()) result.add(each);
-      }
-      return result;
     }
 
     public void updateGoals() {
@@ -1012,7 +990,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       else {
         setNameAndTooltip(myPluginInfo.getGoalPrefix(), null, myPlugin.getDisplayString());
       }
-      setNodeErrorLevel(myPluginInfo == null ? ErrorLevel.WARNING : ErrorLevel.NONE);
+      setNodeErrorLevel(myPluginInfo == null ? ErrorLevel.ERROR : ErrorLevel.NONE);
 
       // there is no need to update goals since plugins do not change
       if (hadPluginInfo || myPluginInfo == null) return;

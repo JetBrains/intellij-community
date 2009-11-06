@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven;
+package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.indices.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.project.MavenProject;
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven;
+package org.jetbrains.idea.maven.importing;
 
 import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.io.File;

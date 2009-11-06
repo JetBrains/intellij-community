@@ -28,7 +28,7 @@ import gnu.trove.THashSet;
 import java.util.*;
 
 public class CacheUpdateSession {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.SyncSession");
+  private static final Logger LOG = Logger.getInstance("#" + CacheUpdateSession.class.getName());
   private static final Key<Boolean> FILED_TO_INDEX = Key.create(CacheUpdateSession.class.getSimpleName() + ".FAILED_TO_INDEX");
   private final Collection<VirtualFile> myFilesToUpdate;
   private final List<Pair<CacheUpdater, Collection<VirtualFile>>> myUpdatersWithFiles =

@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven;
+package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.idea.maven.MavenImportingTestCase;
 
 import java.io.File;
 import java.util.Arrays;
@@ -128,7 +129,7 @@ public class DependenciesManagementTest extends MavenImportingTestCase {
 
     // maven doesn't expect imported pom to be in the reactor,
     // when it is fixed, let us know
-    assertTrue(myProjectsManager.findProject(project).hasErrors());
+    assertTrue(myProjectsManager.findProject(project).hasReadingProblems());
     assertModuleLibDeps("project");
 
     // actually should be

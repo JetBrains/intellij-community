@@ -26,6 +26,7 @@ import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -51,7 +52,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>");
 
-    assertTrue(readProject(myProjectPom, new NullProjectLocator()).isValid);
+    assertProblems(readProject(myProjectPom, new NullProjectLocator()));
 
     createProjectPom("<foo>" +
                      "</bar>" +
@@ -61,7 +62,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                      "<version>1</version>");
 
     MavenProjectReaderResult result = readProject(myProjectPom, new NullProjectLocator());
-    assertFalse(result.isValid);
+    assertProblems(result, "'pom.xml' has syntax errors");
     org.apache.maven.project.MavenProject p = result.nativeMavenProject;
 
     assertEquals(new File(myProjectPom.getPath()), p.getFile());
@@ -85,7 +86,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                                          "  <version>1</version>" +
                                          "</parent>");
 
-    assertFalse(readProject(module, new NullProjectLocator()).isValid);
+    assertProblems(readProject(module, new NullProjectLocator()), "Parent 'test:parent:1' has problems");
   }
 
   public void testProjectWithAbsentParentXmlIsValid() throws Exception {
@@ -94,7 +95,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                      "  <artifactId>parent</artifactId>" +
                      "  <version>1</version>" +
                      "</parent>");
-    assertTrue(readProject(myProjectPom, new NullProjectLocator()).isValid);
+    assertProblems(readProject(myProjectPom, new NullProjectLocator()));
   }
 
   public void testProjectWithSelfParentIsInvalid() throws Exception {
@@ -106,7 +107,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>");
-    assertFalse(readProject(myProjectPom, new NullProjectLocator()).isValid);
+    assertProblems(readProject(myProjectPom, new NullProjectLocator()), "Self-inheritance found");
   }
 
   public void testInvalidProfilesXml() throws Exception {
@@ -116,7 +117,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
     createProfilesXml("<profiles");
 
-    assertFalse(readProject(myProjectPom, new NullProjectLocator()).isValid);
+    assertProblems(readProject(myProjectPom, new NullProjectLocator()), "'profiles.xml' has syntax errors");
   }
 
   public void testInvalidSettingsXml() throws Exception {
@@ -126,7 +127,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
     updateSettingsXml("<settings");
 
-    assertFalse(readProject(myProjectPom, new NullProjectLocator()).isValid);
+    assertProblems(readProject(myProjectPom, new NullProjectLocator()), "'settings.xml' has syntax errors");
   }
 
   public void testInvalidXmlWithNotClosedTag() throws Exception {
@@ -136,7 +137,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                      "<name>foo</name>");
 
     MavenProjectReaderResult readResult = readProject(myProjectPom, new NullProjectLocator());
-    assertFalse(readResult.isValid);
+    assertProblems(readResult, "'pom.xml' has syntax errors");
     org.apache.maven.project.MavenProject p = readResult.nativeMavenProject;
 
     assertEquals(new File(myProjectPom.getPath()), p.getFile());
@@ -157,7 +158,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                      "<name>foo</name>");
 
     MavenProjectReaderResult readResult = readProject(myProjectPom, new NullProjectLocator());
-    assertFalse(readResult.isValid);
+    assertProblems(readResult, "'pom.xml' has syntax errors");
     org.apache.maven.project.MavenProject p = readResult.nativeMavenProject;
 
     assertEquals(new File(myProjectPom.getPath()), p.getFile());
@@ -431,7 +432,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("value12", p.getPackaging());
   }
 
-  public void testHandlingRecursionProprietly() throws Exception {
+  public void testHandlingRecursiveProperties() throws Exception {
     createProjectPom("<properties>" +
                      "  <prop1>${prop2}</prop1>" +
                      "  <prop2>${prop1}</prop2>" +
@@ -445,7 +446,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("${prop2}", p.getPackaging());
   }
 
-  public void testHandlingRecursionProprietlyAndDoNotForgetCoClearRecursionGuard() throws Exception {
+  public void testHandlingRecursionProprielyAndDoNotForgetCoClearRecursionGuard() throws Exception {
     File repositoryPath = new File(myDir, "repository");
     setRepositoryPath(repositoryPath.getPath());
 
@@ -477,7 +478,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                                         "</parent>");
 
     MavenProjectReaderResult readResult = readProject(child, new NullProjectLocator());
-    assertTrue(readResult.isValid);
+    assertProblems(readResult);
   }
 
   public void testExpandingSystemAndEnvProperties() throws Exception {
@@ -1098,7 +1099,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
   private org.apache.maven.project.MavenProject readProject(VirtualFile file, String... profiles) {
     MavenProjectReaderResult readResult = readProject(file, new NullProjectLocator(), profiles);
-    assertTrue(readResult.isValid);
+    assertProblems(readResult);
     return readResult.nativeMavenProject;
   }
 
@@ -1136,6 +1137,14 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertPathEquals(targetPath, resource.getTargetPath());
     assertOrderedElementsAreEqual(resource.getIncludes(), includes);
     assertOrderedElementsAreEqual(resource.getExcludes(), excludes);
+  }
+
+  private void assertProblems(MavenProjectReaderResult readerResult, String... expectedProblems) {
+    List<String> actualProblems = new ArrayList<String>();
+    for (MavenProjectProblem each : readerResult.readingProblems) {
+      actualProblems.add(each.getDescription());
+    }
+    assertOrderedElementsAreEqual(actualProblems, expectedProblems);
   }
 
   private static class NullProjectLocator implements MavenProjectReaderProjectLocator {

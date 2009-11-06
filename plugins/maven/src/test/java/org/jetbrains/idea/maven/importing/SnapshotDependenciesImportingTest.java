@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven;
+package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.idea.maven.MavenImportingTestCase;
 
 import java.io.File;
 import java.io.IOException;
