@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.editor.colors.impl;
+package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Roman Chernyatchik
+ * @author Roman.Chernyatchik
  */
-public interface BundledColorSchemesProvider {
-  ExtensionPointName<BundledColorSchemesProvider> EP_NAME = ExtensionPointName.create("com.intellij.bundledColorSchemesProvider");
+public interface BundledQuickListsProvider {
+    ExtensionPointName<BundledQuickListsProvider> EP_NAME = ExtensionPointName.create("com.intellij.bundledQuickListsProvider");
 
   /**
-   * Provides custom bundled color schemes.
-   * @return Array of relative paths without extensions for schemes.
-   * E.g. : ["/colorSchemes/colbalt", "myscheme"] for colorSchemes/colbalt.xml, myscheme.xml
+   * Provides custom bundled actions quick lists.
+   * @return Array of relative paths without extensions for lists.
+   * E.g. : ["/quickLists/myList", "otherList"] for quickLists/myList.xml, otherList.xml
    */
   @NotNull
-  String[] getBundledSchemesRelativePaths();
+  String[] getBundledListsRelativePaths();
 }

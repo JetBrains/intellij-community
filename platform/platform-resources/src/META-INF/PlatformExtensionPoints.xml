@@ -82,6 +82,7 @@
   <extensionPoint name="browserSettingsProvider" interface="com.intellij.ide.BrowserSettingsProvider"/>
 
   <extensionPoint name="bundledColorSchemesProvider" interface="com.intellij.openapi.editor.colors.impl.BundledColorSchemesProvider"/>
+  <extensionPoint name="bundledQuickListsProvider" interface="com.intellij.openapi.actionSystem.impl.BundledQuickListsProvider"/>
   <extensionPoint name="bundledKeymapProvider" interface="com.intellij.openapi.keymap.impl.BundledKeymapProvider"/>
 
   <extensionPoint name="toolWindow" beanClass="com.intellij.openapi.wm.ToolWindowEP"/>

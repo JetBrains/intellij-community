@@ -20,8 +20,10 @@ import com.intellij.ide.actions.QuickSwitchSchemeAction;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.impl.BundledQuickListsProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,6 +33,7 @@ import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Document;
@@ -41,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -65,9 +69,7 @@ public class QuickListsManager implements ExportableApplicationComponent, NamedJ
         "$ROOT_CONFIG$/quicklists",
         new SchemeProcessor<QuickList>(){
           public QuickList readScheme(final Document schemeContent) throws InvalidDataException, IOException, JDOMException {
-            QuickList list = new QuickList();
-            list.readExternal(schemeContent.getRootElement());
-            return list;
+            return loadListFromDocument(schemeContent);
           }
 
           public Document writeScheme(final QuickList scheme) throws WriteExternalException {
@@ -96,7 +98,15 @@ public class QuickListsManager implements ExportableApplicationComponent, NamedJ
         },
         RoamingType.PER_USER);
 
+    loadAdditionalDefaultSchemes();
+
     registerActions();
+  }
+
+  private QuickList loadListFromDocument(Document schemeContent) {
+    QuickList list = new QuickList();
+    list.readExternal(schemeContent.getRootElement());
+    return list;
   }
 
   @NotNull
@@ -179,6 +189,48 @@ public class QuickListsManager implements ExportableApplicationComponent, NamedJ
 
   public SchemesManager<QuickList, QuickList> getSchemesManager() {
     return mySchemesManager;
+  }
+
+
+  private void loadAdditionalDefaultSchemes() {
+    //Get color schemes from EPs
+    for (BundledQuickListsProvider provider : BundledQuickListsProvider.EP_NAME.getExtensions()) {
+      final String[] paths = provider.getBundledListsRelativePaths();
+
+      for (final String path : paths) {
+        try {
+          final InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(provider, path);
+          if (inputStream == null) {
+            // Error shouldn't occur during this operation
+            // thus we report error instead of info
+            LOG.error("Cannot read quick list from " +  path);
+            continue;
+          }
+
+          final Document document;
+          try {
+            document = JDOMUtil.loadDocument(inputStream);
+          }
+          catch (JDOMException e) {
+            LOG.info("Error reading quick list from  " + path + ": " + e.getLocalizedMessage());
+            throw e;
+          }
+          final QuickList scheme = loadListFromDocument(document);
+          mySchemesManager.addNewScheme(scheme, false);
+        }
+        catch (final Exception e) {
+          ApplicationManager.getApplication().invokeLater(
+            new Runnable(){
+              public void run() {
+                // Error shouldn't occur during this operation
+                // thus we report error instead of info
+                LOG.error("Cannot read quick list from " + path + ": " + e.getLocalizedMessage(), e);
+              }
+            }
+          );
+        }
+      }
+    }
   }
 
   private static class InvokeQuickListAction extends QuickSwitchSchemeAction {
