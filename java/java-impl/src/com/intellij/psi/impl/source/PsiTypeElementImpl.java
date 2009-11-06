@@ -19,12 +19,14 @@ import com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedSoftReference;
@@ -132,7 +134,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     PsiType type = cached == null ? null : cached.get();
     if (type != null) return type;
     try {
-      String combinedAnnos = StringUtil.join(getApplicableAnnotations(), ANNOTATION_TEXT, " ");
+      String combinedAnnos = getCombinedAnnosText();
       String text = combinedAnnos.length() == 0 ? getText().trim() : combinedAnnos + " " + getText().trim();
       type = JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeFromText(text, context);
       myCachedDetachedType = new PatchedSoftReference<PsiType>(type);
@@ -141,6 +143,13 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       return getType();
     }
     return type;
+  }
+
+  @NotNull
+  private String getCombinedAnnosText() {
+    boolean typeAnnotationsSupported = PsiUtil.getLanguageLevel(this).isAtLeast(LanguageLevel.JDK_1_7);
+    if (!typeAnnotationsSupported) return "";
+    return StringUtil.join(getApplicableAnnotations(), ANNOTATION_TEXT, " ");
   }
 
   private static final Function<PsiAnnotation, String> ANNOTATION_TEXT = new Function<PsiAnnotation, String>() {
