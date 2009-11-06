@@ -155,9 +155,7 @@ public class StaticMethodOnlyUsedInOneClassInspection
         private PsiClass usageClass = null;
 
         public boolean process(PsiReference reference) {
-            final ProgressManager progressManager =
-                    ProgressManager.getInstance();
-            progressManager.checkCanceled();
+            ProgressManager.checkCanceled();
             final PsiElement element = reference.getElement();
             final PsiClass usageClass =
                     ClassUtils.getContainingClass(element);

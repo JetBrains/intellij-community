@@ -77,9 +77,8 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
 
   private static PsiMethod[] filterInheritedMethods(PsiMethod[] methods) {
     ArrayList<PsiMethod> list = new ArrayList<PsiMethod>(methods.length);
-    ProgressManager progressManager = ProgressManager.getInstance();
     for (PsiMethod method : methods) {
-      progressManager.checkCanceled();
+      ProgressManager.checkCanceled();
       if (method.isConstructor()) continue;
       PsiMethod[] supers = method.findSuperMethods();
       if (supers.length > 0) continue;

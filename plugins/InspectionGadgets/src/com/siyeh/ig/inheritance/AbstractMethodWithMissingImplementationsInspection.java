@@ -18,7 +18,6 @@ package com.siyeh.ig.inheritance;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.MethodSignature;
@@ -151,8 +150,6 @@ public class AbstractMethodWithMissingImplementationsInspection
         }
 
         public void run() {
-            final PsiManager manager = aClass.getManager();
-            final PsiSearchHelper searchHelper = manager.getSearchHelper();
             final SearchScope searchScope = aClass.getUseScope();
           inheritors = ClassInheritorsSearch.search(aClass, searchScope, true)
                   .findAll();
