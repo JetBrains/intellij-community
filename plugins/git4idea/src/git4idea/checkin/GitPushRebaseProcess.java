@@ -122,6 +122,7 @@ public class GitPushRebaseProcess extends GitBaseRebaseProcess {
   protected void cleanupHandler(VirtualFile root, GitLineHandler h) {
     if (myRebaseEditorNo != null) {
       myRebaseEditorService.unregisterHandler(myRebaseEditorNo);
+      myRebaseEditorNo = null;
     }
   }
 
