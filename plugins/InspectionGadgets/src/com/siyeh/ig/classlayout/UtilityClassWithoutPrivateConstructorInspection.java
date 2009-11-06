@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.siyeh.HardcodedMethodConstants;
@@ -67,10 +68,28 @@ public class UtilityClassWithoutPrivateConstructorInspection
     @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         final PsiClass aClass = (PsiClass)infos[0];
-        if (hasNullArgConstructor(aClass)) {
-            return new MakeConstructorPrivateFix();
-        } else {
+        final PsiMethod constructor = getNullArgConstructor(aClass);
+        if (constructor == null) {
+            final Query<PsiReference> query =
+                    ReferencesSearch.search(aClass, aClass.getUseScope());
+            for (PsiReference reference : query) {
+                final PsiElement element = reference.getElement();
+                final PsiElement parent = element.getParent();
+                if (parent instanceof PsiNewExpression) {
+                    return null;
+                }
+            }
             return new CreateEmptyPrivateConstructor();
+        } else {
+            final Query<PsiReference> query =
+                    ReferencesSearch.search(constructor,
+                            constructor.getUseScope());
+            final PsiReference reference = query.findFirst();
+            if (reference == null) {
+                return new MakeConstructorPrivateFix();
+            } else {
+                return null;
+            }
         }
     }
 
@@ -91,14 +110,14 @@ public class UtilityClassWithoutPrivateConstructorInspection
             if (aClass == null) {
                 return;
             }
-            final PsiManager psiManager = PsiManager.getInstance(project);
-          final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+            final PsiElementFactory factory = psiFacade.getElementFactory();
             final PsiMethod constructor = factory.createConstructor();
             final PsiModifierList modifierList = constructor.getModifierList();
             modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
             aClass.add(constructor);
             final CodeStyleManager styleManager =
-                    psiManager.getCodeStyleManager();
+                    CodeStyleManager.getInstance(project);
             styleManager.reformat(constructor);
         }
     }
@@ -220,14 +239,15 @@ public class UtilityClassWithoutPrivateConstructorInspection
         }
     }
 
-    static boolean hasNullArgConstructor(PsiClass aClass) {
+    @Nullable
+    static PsiMethod getNullArgConstructor(PsiClass aClass) {
         final PsiMethod[] constructors = aClass.getConstructors();
         for (final PsiMethod constructor : constructors) {
             final PsiParameterList params = constructor.getParameterList();
             if (params.getParametersCount() == 0) {
-                return true;
+                return constructor;
             }
         }
-        return false;
+        return null;
     }
 }
