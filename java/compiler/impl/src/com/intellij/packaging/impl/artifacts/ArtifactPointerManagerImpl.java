@@ -20,72 +20,98 @@ import com.intellij.packaging.artifacts.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
  * @author nik
  */
 public class ArtifactPointerManagerImpl extends ArtifactPointerManager {
+  private final Map<String, ArtifactPointerImpl> myUnresolvedPointers = new HashMap<String, ArtifactPointerImpl>();
+  private final Map<Artifact, ArtifactPointerImpl> myPointers = new HashMap<Artifact, ArtifactPointerImpl>();
   private final Project myProject;
-  private final Map<String, ArtifactPointerImpl> myPointers = new HashMap<String, ArtifactPointerImpl>();
 
   public ArtifactPointerManagerImpl(Project project) {
     myProject = project;
-    myProject.getMessageBus().connect().subscribe(ArtifactManager.TOPIC, new ArtifactAdapter() {
+    project.getMessageBus().connect().subscribe(ArtifactManager.TOPIC, new ArtifactAdapter() {
       @Override
       public void artifactRemoved(@NotNull Artifact artifact) {
-        final ArtifactPointerImpl pointer = myPointers.get(artifact.getName());
-        if (pointer != null) {
-          pointer.setArtifact(null);
-        }
+        disposePointer(artifact);
       }
 
       @Override
       public void artifactAdded(@NotNull Artifact artifact) {
-        final ArtifactPointerImpl artifactPointer = myPointers.get(artifact.getName());
-        if (artifactPointer != null) {
-          artifactPointer.setArtifact(artifact);
+        final ArtifactPointerImpl pointer = myPointers.get(artifact);
+        if (pointer != null) {
+          pointer.setName(artifact.getName());
+        }
+        
+        final ArtifactPointerImpl unresolved = myUnresolvedPointers.remove(artifact.getName());
+        if (unresolved != null) {
+          unresolved.setArtifact(artifact);
+          if (pointer == null) {
+            myPointers.put(artifact, unresolved);
+          }
         }
       }
 
       @Override
       public void artifactChanged(@NotNull Artifact artifact, @NotNull String oldName) {
-        final ArtifactPointerImpl pointer = myPointers.get(oldName);
+        final ArtifactPointerImpl pointer = myPointers.get(artifact);
         if (pointer != null) {
-          pointer.setArtifact(artifact);
-          final String newName = artifact.getName();
-          if (!newName.equals(oldName)) {
-            pointer.setName(newName);
-            myPointers.remove(oldName);
-            myPointers.put(newName, pointer);
+          pointer.setName(artifact.getName());
+        }
+        
+        final ArtifactPointerImpl unresolved = myUnresolvedPointers.remove(artifact.getName());
+        if (unresolved != null) {
+          unresolved.setArtifact(artifact);
+          if (pointer == null) {
+            myPointers.put(artifact, unresolved);
           }
         }
       }
     });
   }
 
-  public void updateAllPointers() {
-    for (ArtifactPointerImpl pointer : myPointers.values()) {
-      pointer.getArtifact();
+  private void disposePointer(Artifact artifact) {
+    final ArtifactPointerImpl pointer = myPointers.remove(artifact);
+    if (pointer != null) {
+      pointer.setArtifact(null);
+      myUnresolvedPointers.put(pointer.getArtifactName(), pointer);
     }
   }
 
-  public ArtifactPointer create(@NotNull String name) {
-    ArtifactPointerImpl pointer = myPointers.get(name);
+  public ArtifactPointer createPointer(@NotNull String name) {
+    final Artifact artifact = ArtifactManager.getInstance(myProject).findArtifact(name);
+    if (artifact != null) {
+      return createPointer(artifact);
+    }
+
+    ArtifactPointerImpl pointer = myUnresolvedPointers.get(name);
     if (pointer == null) {
-      pointer = new ArtifactPointerImpl(myProject, name);
-      myPointers.put(name, pointer);
+      pointer = new ArtifactPointerImpl(name);
+      myUnresolvedPointers.put(name, pointer);
     }
     return pointer;
   }
 
-  public ArtifactPointer create(@NotNull Artifact artifact) {
-    final String name = artifact.getName();
-    ArtifactPointerImpl pointer = myPointers.get(name);
+  public ArtifactPointer createPointer(@NotNull Artifact artifact) {
+    ArtifactPointerImpl pointer = myPointers.get(artifact);
     if (pointer == null) {
-      pointer = new ArtifactPointerImpl(myProject, name);
-      myPointers.put(artifact.getName(), pointer);
+      pointer = new ArtifactPointerImpl(artifact);
+      myPointers.put(artifact, pointer);
     }
     return pointer;
+  }
+
+  @Override
+  public ArtifactPointer createPointer(@NotNull Artifact artifact, @NotNull ArtifactModel artifactModel) {
+    return createPointer(artifactModel.getOriginalArtifact(artifact));
+  }
+
+  public void disposePointers(List<Artifact> artifacts) {
+    for (Artifact artifact : artifacts) {
+      disposePointer(artifact);
+    }
   }
 }

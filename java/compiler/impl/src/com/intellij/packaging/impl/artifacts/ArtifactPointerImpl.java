@@ -15,9 +15,7 @@
  */
 package com.intellij.packaging.impl.artifacts;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactModel;
 import com.intellij.packaging.artifacts.ArtifactPointer;
 import org.jetbrains.annotations.NotNull;
@@ -26,35 +24,42 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public class ArtifactPointerImpl implements ArtifactPointer {
-  private final Project myProject;
   private String myName;
   private Artifact myArtifact;
 
-  public ArtifactPointerImpl(@NotNull Project project, @NotNull String name) {
-    myProject = project;
+  public ArtifactPointerImpl(@NotNull String name) {
     myName = name;
   }
 
+  public ArtifactPointerImpl(@NotNull Artifact artifact) {
+    myArtifact = artifact;
+    myName = artifact.getName();
+  }
+
   @NotNull
-  public String getName() {
+  public String getArtifactName() {
     return myName;
   }
 
   public Artifact getArtifact() {
-    if (myArtifact == null) {
-      myArtifact = findArtifact(ArtifactManager.getInstance(myProject));
-    }
     return myArtifact;
   }
 
-  public Artifact findArtifact(@NotNull ArtifactModel artifactModel) {
-    if (myArtifact != null) {
-      final Artifact artifact = artifactModel.getArtifactByOriginal(myArtifact);
-      if (!artifact.equals(myArtifact)) {
-        return artifact;
-      }
+  @NotNull
+  public String getArtifactName(@NotNull ArtifactModel artifactModel) {
+    final Artifact artifact = getArtifact();
+    if (artifact != null) {
+      return artifactModel.getArtifactByOriginal(artifact).getName();
     }
-    return artifactModel.findArtifact(myName);
+    return myName;
+  }
+
+  public Artifact findArtifact(@NotNull ArtifactModel artifactModel) {
+    final Artifact artifact = getArtifact();
+    if (artifact != null) {
+      return artifactModel.getArtifactByOriginal(artifact);
+    }
+    return null;
   }
 
   void setArtifact(Artifact artifact) {

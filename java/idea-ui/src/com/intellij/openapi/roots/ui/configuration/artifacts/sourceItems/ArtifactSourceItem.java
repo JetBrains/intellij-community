@@ -15,15 +15,19 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.artifacts.ArtifactPointerManager;
 import com.intellij.packaging.artifacts.ArtifactPointer;
+import com.intellij.packaging.artifacts.ArtifactPointerManager;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.packaging.elements.PackagingElementOutputKind;
 import com.intellij.packaging.impl.artifacts.JarArtifactType;
 import com.intellij.packaging.impl.ui.ArtifactElementPresentation;
-import com.intellij.packaging.ui.*;
+import com.intellij.packaging.ui.ArtifactEditorContext;
+import com.intellij.packaging.ui.PackagingSourceItem;
+import com.intellij.packaging.ui.SourceItemPresentation;
+import com.intellij.packaging.ui.SourceItemWeights;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -40,7 +44,7 @@ public class ArtifactSourceItem extends PackagingSourceItem {
   }
 
   public SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
-    final ArtifactPointer pointer = ArtifactPointerManager.getInstance(context.getProject()).create(myArtifact);
+    final ArtifactPointer pointer = ArtifactPointerManager.getInstance(context.getProject()).createPointer(myArtifact, context.getArtifactModel());
     return new DelegatedSourceItemPresentation(new ArtifactElementPresentation(pointer, context)) {
       @Override
       public int getWeight() {
@@ -51,7 +55,9 @@ public class ArtifactSourceItem extends PackagingSourceItem {
 
   @NotNull
   public List<? extends PackagingElement<?>> createElements(@NotNull ArtifactEditorContext context) {
-    return Collections.singletonList(PackagingElementFactory.getInstance().createArtifactElement(myArtifact, context.getProject()));
+    final Project project = context.getProject();
+    final ArtifactPointer pointer = ArtifactPointerManager.getInstance(project).createPointer(myArtifact, context.getArtifactModel());
+    return Collections.singletonList(PackagingElementFactory.getInstance().createArtifactElement(pointer, project));
   }
 
   public boolean equals(Object obj) {

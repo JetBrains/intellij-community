@@ -32,7 +32,7 @@ import java.util.List;
 public class ArtifactChooser extends ElementsChooser<ArtifactPointer> {
   private static final Comparator<ArtifactPointer> ARTIFACT_COMPARATOR = new Comparator<ArtifactPointer>() {
     public int compare(ArtifactPointer o1, ArtifactPointer o2) {
-      return o1.getName().compareToIgnoreCase(o2.getName());
+      return o1.getArtifactName().compareToIgnoreCase(o2.getArtifactName());
     }
   };
   private static final ElementProperties INVALID_ARTIFACT_PROPERTIES = new ElementProperties() {
@@ -57,7 +57,7 @@ public class ArtifactChooser extends ElementsChooser<ArtifactPointer> {
 
   @Override
   protected String getItemText(@NotNull ArtifactPointer value) {
-    return value.getName();
+    return value.getArtifactName();
   }
 
   @Override

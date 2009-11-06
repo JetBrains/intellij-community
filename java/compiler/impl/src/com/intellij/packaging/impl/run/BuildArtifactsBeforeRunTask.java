@@ -46,7 +46,7 @@ public class BuildArtifactsBeforeRunTask extends BeforeRunTask {
     final List<Element> children = element.getChildren(ARTIFACT_ELEMENT);
     final ArtifactPointerManager pointerManager = ArtifactPointerManager.getInstance(myProject);
     for (Element child : children) {
-      myArtifactPointers.add(pointerManager.create(child.getAttributeValue(NAME_ATTRIBUTE)));
+      myArtifactPointers.add(pointerManager.createPointer(child.getAttributeValue(NAME_ATTRIBUTE)));
     }
   }
 
@@ -54,7 +54,7 @@ public class BuildArtifactsBeforeRunTask extends BeforeRunTask {
   public void writeExternal(Element element) {
     super.writeExternal(element);
     for (ArtifactPointer pointer : myArtifactPointers) {
-      element.addContent(new Element(ARTIFACT_ELEMENT).setAttribute(NAME_ATTRIBUTE, pointer.getName()));
+      element.addContent(new Element(ARTIFACT_ELEMENT).setAttribute(NAME_ATTRIBUTE, pointer.getArtifactName()));
     }
   }
 
@@ -74,14 +74,14 @@ public class BuildArtifactsBeforeRunTask extends BeforeRunTask {
   }
 
   public void addArtifact(Artifact artifact) {
-    final ArtifactPointer pointer = ArtifactPointerManager.getInstance(myProject).create(artifact);
+    final ArtifactPointer pointer = ArtifactPointerManager.getInstance(myProject).createPointer(artifact);
     if (!myArtifactPointers.contains(pointer)) {
       myArtifactPointers.add(pointer);
     }
   }
 
   public void removeArtifact(Artifact artifact) {
-    myArtifactPointers.remove(ArtifactPointerManager.getInstance(myProject).create(artifact));
+    myArtifactPointers.remove(ArtifactPointerManager.getInstance(myProject).createPointer(artifact));
   }
 
   public boolean equals(Object o) {

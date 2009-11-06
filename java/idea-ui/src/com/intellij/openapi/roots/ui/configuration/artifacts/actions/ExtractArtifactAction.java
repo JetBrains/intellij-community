@@ -16,7 +16,6 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
@@ -71,7 +70,7 @@ public class ExtractArtifactAction extends LayoutTreeActionBase {
           for (PackagingElement element : selectedElements) {
             parent.removeChild(element);
           }
-          parent.addOrFindChild(new ArtifactPackagingElement(project, ArtifactPointerManager.getInstance(project).create(artifact)));
+          parent.addOrFindChild(new ArtifactPackagingElement(project, ArtifactPointerManager.getInstance(project).createPointer(artifact, myArtifactEditor.getContext().getArtifactModel())));
         }
       });
       treeComponent.rebuildTree();

@@ -27,6 +27,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactPointer;
 import com.intellij.packaging.artifacts.ArtifactPointerManager;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.ui.ArtifactEditorContext;
@@ -114,7 +115,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   @NotNull
   @Override
   public PackagingElement<?> createArtifactElement(@NotNull Artifact artifact, @NotNull Project project) {
-    return new ArtifactPackagingElement(project, ArtifactPointerManager.getInstance(project).create(artifact));
+    return new ArtifactPackagingElement(project, ArtifactPointerManager.getInstance(project).createPointer(artifact));
   }
 
   @NotNull
@@ -202,6 +203,12 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
       elements.add(file.isDirectory() && file.isInLocalFileSystem() ? new DirectoryCopyPackagingElement(path) : new FileCopyPackagingElement(path));
     }
     return elements;
+  }
+
+  @NotNull
+  @Override
+  public PackagingElement<?> createArtifactElement(@NotNull ArtifactPointer artifactPointer, @NotNull Project project) {
+    return new ArtifactPackagingElement(project, artifactPointer);
   }
 
   @NotNull
