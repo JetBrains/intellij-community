@@ -43,7 +43,7 @@ public class ImportDialog extends RepositoryBrowserDialog {
 
   @Override
   protected String getHelpId() {
-    return "vcs.import.into.svn";
+    return "vcs.subversion.import";
   }
 
   private void updateOKAction() {
