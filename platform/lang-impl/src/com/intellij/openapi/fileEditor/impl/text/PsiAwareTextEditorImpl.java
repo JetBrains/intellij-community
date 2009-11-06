@@ -41,6 +41,10 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
     return new PsiAwareTextEditorComponent(project, file, this);
   }
 
+  public void initFolding() {
+    CodeFoldingManager.getInstance(myProject).buildInitialFoldings(getEditor());
+  }
+
   public BackgroundEditorHighlighter getBackgroundHighlighter() {
     if (myBackgroundHighlighter == null) {
       myBackgroundHighlighter = new TextEditorBackgroundHighlighter(myProject, getEditor());
@@ -58,7 +62,6 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
       super(project, file, textEditor);
       myProject = project;
       myFile = file;
-      CodeFoldingManager.getInstance(project).buildInitialFoldings(getEditor());
     }
 
     @Override

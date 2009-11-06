@@ -22,9 +22,11 @@ import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -192,9 +194,9 @@ public final class EditorsSplitters extends JPanel {
       if (comp != null) {
         removeAll();
         add(comp, BorderLayout.CENTER);
-        final EditorComposite lastSelected = getManager ().getLastSelected();
+        final EditorComposite lastSelected = getManager().getLastSelected();
         if(lastSelected != null)  {
-          getManager().openFileImpl3(myCurrentWindow, lastSelected.getFile(), true, null);
+          getManager().openFileImpl3(myCurrentWindow, lastSelected.getFile(), true, null, true);
           //lastSelected.getComponent().requestFocus();
           //ToolWindowManager.getInstance(getManager().myProject).activateEditorComponent();
         }
@@ -248,13 +250,14 @@ public final class EditorsSplitters extends JPanel {
         VirtualFile currentFile = null;
         for (final Element file : children) {
           final HistoryEntry entry = new HistoryEntry(getManager().getProject(), file.getChild(HistoryEntry.TAG));
-          getManager().openFileImpl3(window, entry.myFile, false, entry);
+          boolean isCurrent = Boolean.valueOf(file.getAttributeValue("current")).booleanValue();
+          getManager().openFileImpl3(window, entry.myFile, false, entry, isCurrent);
           if (getManager().isFileOpen(entry.myFile)) {
             window.setFilePinned(entry.myFile, Boolean.valueOf(file.getAttributeValue("pinned")).booleanValue());
             if (Boolean.valueOf(file.getAttributeValue("current-in-tab")).booleanValue()) {
               currentFile = entry.myFile;
             }
-            if (Boolean.valueOf(file.getAttributeValue("current")).booleanValue()) {
+            if (isCurrent) {
               setCurrentWindow(window, false);
             }
           }
