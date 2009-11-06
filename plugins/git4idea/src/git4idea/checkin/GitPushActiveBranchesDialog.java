@@ -28,6 +28,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.tree.TreeUtil;
 import git4idea.GitBranch;
 import git4idea.GitRevisionNumber;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.actions.GitShowAllSubmittedFilesAction;
 import git4idea.commands.*;
@@ -278,6 +279,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
     if (!exceptions.isEmpty()) {
       GitUIUtil.showOperationErrors(myProject, exceptions, "git rebase");
     }
+    GitUtil.refreshFiles(myProject, roots);
   }
 
   /**
