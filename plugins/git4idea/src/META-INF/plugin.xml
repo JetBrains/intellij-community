@@ -75,6 +75,7 @@
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs"/>
     <checkoutProvider implementation="git4idea.checkout.GitCheckoutProvider"/>
+    <vcsPopupProvider implementation="git4idea.actions.GitQuickListContentProvider"/>
 
     <projectService
         serviceInterface="git4idea.annotate.GitAnnotationProvider"
