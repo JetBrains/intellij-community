@@ -32,7 +32,7 @@ import java.util.Collection;
  * @author max
  */
 public class QuickChangeCodeStyleSchemeAction extends QuickSwitchSchemeAction {
-  protected void fillActions(Project project, DefaultActionGroup group) {
+  protected void fillActions(Project project, DefaultActionGroup group, DataContext dataContext) {
     final CodeStyleSettingsManager manager = CodeStyleSettingsManager.getInstance(project);
     if (manager.PER_PROJECT_SETTINGS != null) {
       //noinspection HardCodedStringLiteral

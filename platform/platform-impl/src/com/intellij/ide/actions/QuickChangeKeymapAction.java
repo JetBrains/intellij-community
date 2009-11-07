@@ -15,10 +15,7 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
@@ -32,7 +29,7 @@ import java.util.Collection;
  * @author max
  */
 public class QuickChangeKeymapAction extends QuickSwitchSchemeAction {
-  protected void fillActions(Project project, DefaultActionGroup group) {
+  protected void fillActions(Project project, DefaultActionGroup group, DataContext dataContext) {
     final KeymapManagerEx manager = (KeymapManagerEx) KeymapManager.getInstance();
     final Keymap current = manager.getActiveKeymap();
 
