@@ -24,10 +24,13 @@ import org.jetbrains.annotations.NotNull;
 public interface ArtifactPointer {
 
   @NotNull
-  String getName();
+  String getArtifactName();
 
   @Nullable
   Artifact getArtifact();
+
+  @NotNull
+  String getArtifactName(@NotNull ArtifactModel artifactModel);
 
   @Nullable
   Artifact findArtifact(@NotNull ArtifactModel artifactModel);

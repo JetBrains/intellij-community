@@ -15,9 +15,13 @@
  */
 package git4idea.actions;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -26,7 +30,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -36,8 +39,7 @@ import java.util.List;
 /**
  * Basic abstract action handler for all Git actions to extend.
  */
-public abstract class BasicAction extends AnAction {
-  protected static final String ACTION_CANCELLED_MSG = GitBundle.message("command.cancelled");
+public abstract class BasicAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
@@ -48,6 +50,7 @@ public abstract class BasicAction extends AnAction {
       }
     });
     final VirtualFile[] vFiles = event.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    assert vFiles != null : "The action is only available when files are selected";
 
     assert project != null;
     final GitVcs vcs = GitVcs.getInstance(project);
@@ -132,10 +135,12 @@ public abstract class BasicAction extends AnAction {
   @NotNull
   protected abstract String getActionName();
 
+  @SuppressWarnings({"MethodMayBeStatic"})
   protected boolean isRecursive() {
     return true;
   }
 
+  @SuppressWarnings({"MethodMayBeStatic", "UnusedDeclaration"})
   protected boolean appliesTo(@NotNull Project project, @NotNull VirtualFile file) {
     return !file.isDirectory();
   }

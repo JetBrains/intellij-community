@@ -19,6 +19,9 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.EffectType;
@@ -94,18 +97,21 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
                                 && WolfTheProblemSolver.getInstance(((PsiElement)element).getProject())
                                    .isProblemFile(PsiUtilBase.getVirtualFile((PsiElement)element));
 
-        if (element instanceof PsiElement) {
-          final PsiElement psiElement = (PsiElement)element;
-          final Project project = psiElement.getProject();
+        if (element instanceof PsiElement || element instanceof DataProvider) {
+          final PsiElement psiElement = element instanceof PsiElement ? (PsiElement)element : (PsiElement) ((DataProvider)element).getData(
+            DataConstants.PSI_ELEMENT);
+          if (psiElement != null) {
+            final Project project = psiElement.getProject();
 
-          final VirtualFile virtualFile = PsiUtilBase.getVirtualFile(psiElement);
-          isProblemFile = WolfTheProblemSolver.getInstance(project).isProblemFile(virtualFile);
+            final VirtualFile virtualFile = PsiUtilBase.getVirtualFile(psiElement);
+            isProblemFile = WolfTheProblemSolver.getInstance(project).isProblemFile(virtualFile);
 
-          final FileColorManager fileColorManager = FileColorManager.getInstance(project);
-          if (virtualFile != null && fileColorManager.isEnabled()) {
-            final Color fileColor = fileColorManager.getFileColor(psiElement.getContainingFile());
-            if (fileColor != null) {
-              bgColor = fileColor;
+            final FileColorManager fileColorManager = FileColorManager.getInstance(project);
+            if (virtualFile != null && fileColorManager.isEnabled()) {
+              final Color fileColor = fileColorManager.getFileColor(psiElement.getContainingFile());
+              if (fileColor != null) {
+                bgColor = fileColor;
+              }
             }
           }
         }

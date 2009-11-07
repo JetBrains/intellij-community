@@ -41,7 +41,7 @@ import java.util.List;
  */
 public class TestsLocationProviderUtil {
   @NonNls private static final String PROTOCOL_SEPARATOR = "://";
-  private static final int MIN_PROXIMITY_TRESHOLD = 1;
+  private static final int MIN_PROXIMITY_THRESHOLD = 1;
 
   private TestsLocationProviderUtil() {
   }
@@ -94,17 +94,19 @@ public class TestsLocationProviderUtil {
     if (fileName == null) {
       return Collections.emptyList();
     }
-    return findFilesClosestToTarget(folders, collectCandidates(project, fileName));
+    return findFilesClosestToTarget(folders, collectCandidates(project, fileName, true), MIN_PROXIMITY_THRESHOLD);
   }
 
   /**
    * Looks for files with given name which are close to given path
    * @param targetParentFolders folders path
    * @param candidates
+   * @param minProximityThreshold
    * @return
    */
   public static List<VirtualFile> findFilesClosestToTarget(@NotNull final List<String> targetParentFolders,
-                                                           final List<FileInfo> candidates) {
+                                                           final List<FileInfo> candidates,
+                                                           final int minProximityThreshold) {
     // let's find all files with similar relative path
 
     if (candidates.isEmpty()) {
@@ -129,7 +131,7 @@ public class TestsLocationProviderUtil {
       }
     }
 
-    if (maxProximity >= MIN_PROXIMITY_TRESHOLD) {
+    if (maxProximity >= minProximityThreshold) {
       final List<VirtualFile> files = new ArrayList<VirtualFile>();
       for (FileInfo info : candidates) {
         if (info.getProximity() == maxProximity) {
@@ -142,12 +144,13 @@ public class TestsLocationProviderUtil {
     return Collections.emptyList();
   }
 
-  public static List<FileInfo> collectCandidates(Project project, String fileName) {
+  public static List<FileInfo> collectCandidates(final Project project, final String fileName,
+                                                 final boolean includeNonProjectItems) {
     final List<FileInfo> filesInfo = new ArrayList<FileInfo>();
     final ChooseByNameContributor[] contributors = Extensions.getExtensions(ChooseByNameContributor.FILE_EP_NAME);
     for (ChooseByNameContributor contributor : contributors) {
       // let's find files with same name in project and libraries
-      final NavigationItem[] navigationItems = contributor.getItemsByName(fileName, fileName, project, true);
+      final NavigationItem[] navigationItems = contributor.getItemsByName(fileName, fileName, project, includeNonProjectItems);
       for (NavigationItem navigationItem : navigationItems) {
         if (navigationItem instanceof PsiFile) {
           final VirtualFile itemFile = ((PsiFile)navigationItem).getVirtualFile();

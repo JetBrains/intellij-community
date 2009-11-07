@@ -88,7 +88,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     if (originalFileType == StdFileTypes.JAVA && c == '{') {
       int offset = editor.getCaretModel().getOffset();
       HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset - 1);
-      while (iterator.getTokenType() != null && iterator.getTokenType() == TokenType.WHITE_SPACE) {
+      while (iterator.getTokenType() == TokenType.WHITE_SPACE) {
         iterator.retreat();
       }
       if (iterator.getTokenType() == JavaTokenType.RBRACKET || iterator.getTokenType() == JavaTokenType.EQ) {
@@ -101,6 +101,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
       }
       if (PsiTreeUtil.getParentOfType(leaf, PsiCodeBlock.class, false, PsiMember.class) != null) {
         EditorModificationUtil.insertStringAtCaret(editor, "{", false, true);
+        TypedHandler.indentOpenedBrace(project, editor);
         return Result.STOP;
       }
     }

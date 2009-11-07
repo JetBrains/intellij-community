@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -57,7 +58,7 @@ public class ActionUtil {
     }
 
     String message;
-    final String beAvailableUntil = " available while IntelliJ IDEA is updating indices";
+    final String beAvailableUntil = " available while " + ApplicationNamesInfo.getInstance().getProductName() + " is updating indices";
     if (actionNames.isEmpty()) {
       message = "This action is not" + beAvailableUntil;
     } else if (actionNames.size() == 1) {

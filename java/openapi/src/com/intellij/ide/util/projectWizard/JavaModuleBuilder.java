@@ -19,6 +19,7 @@ package com.intellij.ide.util.projectWizard;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerModuleExtension;
@@ -188,6 +189,6 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
 
   @Override
   public boolean isSuitableSdk(final Sdk sdk) {
-    return sdk.getSdkType() instanceof JavaSdkType;
+    return sdk.getSdkType() == JavaSdk.getInstance();
   }
 }

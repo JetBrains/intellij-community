@@ -29,6 +29,7 @@ import com.intellij.codeInspection.deprecation.DeprecationInspection;
 import com.intellij.codeInspection.duplicateThrows.DuplicateThrowsInspection;
 import com.intellij.codeInspection.emptyMethod.EmptyMethodInspection;
 import com.intellij.codeInspection.equalsAndHashcode.EqualsAndHashcode;
+import com.intellij.codeInspection.inconsistentLanguageLevel.InconsistentLanguageLevelInspection;
 import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
@@ -65,6 +66,7 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider {
     return new Class[] {
       DeadCodeInspection.class,
       UnusedLibrariesInspection.class,
+      InconsistentLanguageLevelInspection.class,
       VisibilityInspection.class,
       CanBeFinalInspection.class,
       UnusedParametersInspection.class,

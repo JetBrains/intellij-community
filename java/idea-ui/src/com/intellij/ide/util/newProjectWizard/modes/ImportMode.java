@@ -73,7 +73,7 @@ public class ImportMode extends WizardMode {
   }
 
   public boolean isAvailable(WizardContext context) {
-    return true;
+    return Extensions.getExtensions(ProjectImportProvider.PROJECT_IMPORT_PROVIDER).length > 0;
   }
 
   @Nullable

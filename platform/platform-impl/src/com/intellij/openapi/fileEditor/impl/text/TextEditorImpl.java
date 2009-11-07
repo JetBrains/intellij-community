@@ -50,6 +50,8 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor{
     return new TextEditorComponent(project, file, this);
   }
 
+  public void initFolding() {}
+
   public void dispose(){
     myComponent.dispose();
   }

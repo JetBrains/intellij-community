@@ -15,12 +15,12 @@
  */
 package git4idea.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -41,7 +41,7 @@ import java.util.List;
 /**
  * Initialize git repository action
  */
-public class GitInit extends AnAction {
+public class GitInit extends DumbAwareAction {
   /**
    * {@inheritDoc}
    */

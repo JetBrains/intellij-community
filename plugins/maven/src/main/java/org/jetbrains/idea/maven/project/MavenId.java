@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.project;
 
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.model.Model;
 
 import java.io.Serializable;
 
@@ -30,6 +31,10 @@ public class MavenId implements Serializable {
     this.myGroupId = groupId;
     this.myArtifactId = artifactId;
     this.myVersion = version;
+  }
+
+  public MavenId(Model model) {
+    this(model.getGroupId(), model.getArtifactId(), model.getVersion());
   }
 
   public MavenId(Artifact artifact) {

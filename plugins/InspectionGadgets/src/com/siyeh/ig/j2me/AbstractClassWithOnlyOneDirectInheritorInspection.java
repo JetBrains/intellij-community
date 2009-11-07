@@ -17,12 +17,10 @@ package com.siyeh.ig.j2me;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.siyeh.InspectionGadgetsBundle;
@@ -73,8 +71,6 @@ public class AbstractClassWithOnlyOneDirectInheritorInspection
         }
 
         private static boolean hasOneInheritor(final PsiClass aClass) {
-            final PsiManager manager = aClass.getManager();
-            final PsiSearchHelper searchHelper = manager.getSearchHelper();
             final SearchScope searchScope = aClass.getUseScope();
             final PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor =
                     new PsiElementProcessor.CollectElementsWithLimit<PsiClass>(2);

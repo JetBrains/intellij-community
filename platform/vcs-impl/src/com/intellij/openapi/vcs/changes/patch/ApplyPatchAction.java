@@ -33,16 +33,15 @@ import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.diff.MergeRequest;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -83,6 +82,7 @@ public class ApplyPatchAction extends AnAction {
         PatchApplier.executePatchGroup(appliers);
       }
     };
+    FileDocumentManager.getInstance().saveAllDocuments();
     final ApplyPatchDifferentiatedDialog dialog = new ApplyPatchDifferentiatedDialog(project, callback);
     dialog.show();
   }
@@ -140,46 +140,23 @@ public class ApplyPatchAction extends AnAction {
   @Nullable
   public static ApplyPatchStatus mergeAgainstBaseVersion(final Project project, final VirtualFile file, final FilePath pathBeforeRename,
                                                          final TextFilePatch patch, final PatchMergeRequestFactory mergeRequestFactory) {
-    final String beforeVersionId = patch.getBeforeVersionId();
-    if (beforeVersionId == null) {
+    final ApplyPatchForBaseRevisionTexts threeTexts = ApplyPatchForBaseRevisionTexts.create(project, file, pathBeforeRename, patch);
+    if (threeTexts == null) {
       return null;
     }
-    final DefaultPatchBaseVersionProvider provider = new DefaultPatchBaseVersionProvider(project, file, beforeVersionId);
-    if (provider.canProvideContent()) {
-      final StringBuilder newText = new StringBuilder();
-      final Ref<CharSequence> contentRef = new Ref<CharSequence>();
-      final Ref<ApplyPatchStatus> statusRef = new Ref<ApplyPatchStatus>();
-      try {
-        provider.getBaseVersionContent(pathBeforeRename, new Processor<CharSequence>() {
-          public boolean process(final CharSequence text) {
-            newText.setLength(0);
-            try {
-              statusRef.set(patch.applyModifications(text, newText));
-            }
-            catch(ApplyPatchException ex) {
-              return true;  // continue to older versions
-            }
-            contentRef.set(text);
-            return false;
-          }
-        });
-      }
-      catch (VcsException vcsEx) {
-        Messages.showErrorDialog(project, VcsBundle.message("patch.load.base.revision.error", patch.getBeforeName(), vcsEx.getMessage()),
-                                 VcsBundle.message("patch.apply.dialog.title"));
-        return ApplyPatchStatus.FAILURE;
-      }
-      ApplyPatchStatus status = statusRef.get();
-      if (status != null) {
-        if (status != ApplyPatchStatus.ALREADY_APPLIED) {
-          return showMergeDialog(project, file, contentRef.get(), newText.toString(), mergeRequestFactory);
-        }
-        else {
-          return status;
-        }
-      }
+    ApplyPatchStatus status = threeTexts.getStatus();
+    if (ApplyPatchStatus.FAILURE.equals(status)) {
+      final VcsException vcsExc = threeTexts.getException();
+      Messages.showErrorDialog(project, VcsBundle.message("patch.load.base.revision.error", patch.getBeforeName(),
+                                                          vcsExc == null ? null : vcsExc.getMessage()), VcsBundle.message("patch.apply.dialog.title"));
+      return status;
     }
-    return null;
+    if (status != ApplyPatchStatus.ALREADY_APPLIED) {
+      return showMergeDialog(project, file, threeTexts.getBase(), threeTexts.getPatched(), mergeRequestFactory);
+    }
+    else {
+      return status;
+    }
   }
 
   private static ApplyPatchStatus showMergeDialog(Project project, VirtualFile file, CharSequence content, final String patchedContent,

@@ -1009,7 +1009,7 @@ public class FSRecords implements Disposable, Forceable {
     }
 
     long endTime = System.currentTimeMillis();
-    System.out.println("Sanity check took " + (endTime-startTime) + " ms");
+    //System.out.println("Sanity check took " + (endTime-startTime) + " ms");
   }
 
 

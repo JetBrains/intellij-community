@@ -21,6 +21,7 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.SetupJDKFix;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
@@ -98,13 +99,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }  
 
   public boolean suitableForFile(PsiFile file) {
-    return true;
+    return !InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file);
   }
 
   public void visit(PsiElement element, HighlightInfoHolder holder) {
-    if (!holder.isWritable()) {
-      throw new UnsupportedOperationException();
-    }
     myHolder = holder;
 
     if (LOG.isDebugEnabled()) {
@@ -689,7 +687,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override public void visitReferenceElement(PsiJavaCodeReferenceElement ref) {
-    JavaResolveResult result = null;
+    JavaResolveResult result;
     try {
       result = ref.advancedResolve(true);
     }
@@ -747,7 +745,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       visitExpression(expression);
       if (myHolder.hasErrorResults()) return;
     }
-    JavaResolveResult result = null;
+    JavaResolveResult result;
     try {
       result = expression.advancedResolve(false);
     }

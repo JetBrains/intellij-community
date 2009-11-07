@@ -348,7 +348,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     myProjectsManager.importProjects();
 
     for (MavenProject each : myProjectsTree.getProjects()) {
-      if (each.hasErrors()) {
+      if (each.hasReadingProblems()) {
         System.out.println(each + " has problems: " + each.getProblems());
       }
     }

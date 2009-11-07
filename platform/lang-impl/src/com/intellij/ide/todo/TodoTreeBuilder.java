@@ -675,8 +675,9 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
 
     public void beforeChildRemoval(PsiTreeChangeEvent e) {
       // If local midification
-      if (e.getFile() != null) {
-        markFileAsDirty(e.getFile());
+      final PsiFile file = e.getFile();
+      if (file != null) {
+        markFileAsDirty(file);
         updateTree(true);
         return;
       }
@@ -699,6 +700,12 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
           }
         }
         updateTree(true);
+      }
+      else {
+        if (PsiTreeUtil.getParentOfType(child, PsiComment.class, false) != null) { // change inside comment
+          markFileAsDirty(child.getContainingFile());
+          updateTree(true);
+        }
       }
     }
 

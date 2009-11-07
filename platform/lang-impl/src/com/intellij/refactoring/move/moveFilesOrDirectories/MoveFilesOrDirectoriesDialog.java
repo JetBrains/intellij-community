@@ -42,7 +42,7 @@ import java.awt.*;
 import java.io.File;
 
 public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
-  public static interface Callback {
+  public interface Callback {
     void run(MoveFilesOrDirectoriesDialog dialog);
   }
 
@@ -152,6 +152,7 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
               myTargetDirectory = DirectoryUtil.mkdirs(PsiManager.getInstance(myProject), directoryName);
             }
             catch (IncorrectOperationException e) {
+              // ignore
             }
           }
         };

@@ -297,7 +297,7 @@ public class ArtifactUtil {
     return result;
   }
 
-  private static void processFileOrDirectoryCopyElements(Artifact artifact,
+  public static void processFileOrDirectoryCopyElements(Artifact artifact,
                                                          PackagingElementProcessor<FileOrDirectoryCopyPackagingElement<?>> processor,
                                                          PackagingElementResolvingContext context,
                                                          boolean processSubstitutions) {

@@ -31,7 +31,6 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -44,12 +43,7 @@ import java.util.concurrent.ConcurrentMap;
 public class JavaResolveCache {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.JavaResolveCache");
 
-  private static final NotNullLazyKey<JavaResolveCache, Project> INSTANCE_KEY = NotNullLazyKey.create("JavaResolveCache.Instance.Cache", new NotNullFunction<Project, JavaResolveCache>() {
-    @NotNull
-    public JavaResolveCache fun(final Project project) {
-      return ServiceManager.getService(project, JavaResolveCache.class);
-    }
-  });
+  private static final NotNullLazyKey<JavaResolveCache, Project> INSTANCE_KEY = ServiceManager.createLazyKey(JavaResolveCache.class);
 
   public static JavaResolveCache getInstance(Project project) {
     return INSTANCE_KEY.getValue(project);

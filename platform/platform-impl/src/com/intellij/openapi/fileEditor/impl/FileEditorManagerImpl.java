@@ -35,6 +35,7 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
@@ -436,7 +437,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     final Ref<Pair<FileEditor[], FileEditorProvider[]>> resHolder = new Ref<Pair<FileEditor[], FileEditorProvider[]>>();
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
-        resHolder.set(openFileImpl3(window, file, focusEditor, entry));
+        resHolder.set(openFileImpl3(window, file, focusEditor, entry, true));
       }
     }, "", null);
     return resHolder.get();
@@ -449,10 +450,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
    *              invalid file become selected. That's why we do not require that
    *              passed file is valid.
    * @param entry map between FileEditorProvider and FileEditorState. If this parameter
-   *              is not <code>null</code> then it's used to restore state for the newly created
+   * @param current
    */
-  @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl3(final EditorWindow window, @NotNull final VirtualFile file, final boolean focusEditor,
-                                                                  final HistoryEntry entry) {
+  @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl3(final EditorWindow window,
+                                                                  @NotNull final VirtualFile file,
+                                                                  final boolean focusEditor,
+                                                                  final HistoryEntry entry,
+                                                                  boolean current) {
     // Open file
     FileEditor[] editors;
     FileEditorProvider[] providers;
@@ -494,6 +498,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
           LOG.assertTrue(provider != null);
           LOG.assertTrue(provider.accept(myProject, file));
           final FileEditor editor = provider.createEditor(myProject, file);
+          if (current && editor instanceof TextEditorImpl) {
+            ((TextEditorImpl)editor).initFolding();
+          }
           editors[i] = editor;
           LOG.assertTrue(editor != null);
           LOG.assertTrue(editor.isValid());

@@ -19,6 +19,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -32,12 +33,16 @@ import com.intellij.spellchecker.state.StateLoader;
 import com.intellij.spellchecker.util.SPFileUtil;
 import com.intellij.spellchecker.util.Strings;
 import com.intellij.util.Consumer;
+import com.sun.net.ssl.internal.ssl.SSLEngineImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.InputStream;
 import java.util.*;
 
 public class SpellCheckerManager {
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.SpellCheckerManager");
 
   private static final int MAX_SUGGESTIONS_THRESHOLD = 5;
   private static final int MAX_METRICS = 1;
@@ -87,7 +92,13 @@ public class SpellCheckerManager {
     for (BundledDictionaryProvider provider : Extensions.getExtensions(BundledDictionaryProvider.EP_NAME)) {
       for (String dictionary : provider.getBundledDictionaries()) {
         if (this.settings == null || !this.settings.getBundledDisabledDictionariesPaths().contains(dictionary)) {
-          loaders.add(new StreamLoader(provider.getClass().getResourceAsStream(dictionary)));
+          final Class<? extends BundledDictionaryProvider> loaderClass = provider.getClass();
+          final InputStream stream = loaderClass.getResourceAsStream(dictionary);
+          if (stream != null){
+            loaders.add(new StreamLoader(stream));
+          } else {
+            LOG.warn("Couldn't load dictionary '" + dictionary + "' for loader '" + loaderClass + "'");
+          }
         }
       }
     }

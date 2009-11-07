@@ -29,7 +29,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -48,7 +47,10 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
 
 public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParameterListOwner> extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.makeMethodStatic.MakeMethodStaticProcessor");
@@ -193,8 +195,6 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
   @NotNull
   protected UsageInfo[] findUsages() {
     ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
-    PsiManager manager = myMember.getManager();
-    PsiSearchHelper helper = manager.getSearchHelper();
 
     result.addAll(Arrays.asList(MakeStaticUtil.findClassRefsInMember(myMember, true)));
 

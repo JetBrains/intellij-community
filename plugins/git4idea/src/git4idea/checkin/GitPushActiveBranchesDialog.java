@@ -28,6 +28,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.tree.TreeUtil;
 import git4idea.GitBranch;
 import git4idea.GitRevisionNumber;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.actions.GitShowAllSubmittedFilesAction;
 import git4idea.commands.*;
@@ -178,9 +179,6 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
       if (r.commits.size() == 0) {
         continue;
       }
-      if (r.remoteCommits > 0) {
-        return true;
-      }
       boolean seenCheckedNode = false;
       for (int j = 0; j < node.getChildCount(); j++) {
         if (node.getChildAt(j) instanceof CheckedTreeNode) {
@@ -194,6 +192,9 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
             }
           }
         }
+      }
+      if (seenCheckedNode && r.remoteCommits > 0) {
+        return true;
       }
     }
     return false;
@@ -278,6 +279,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
     if (!exceptions.isEmpty()) {
       GitUIUtil.showOperationErrors(myProject, exceptions, "git rebase");
     }
+    GitUtil.refreshFiles(myProject, roots);
   }
 
   /**
@@ -357,7 +359,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
         continue;
       }
       Root r = (Root)node.getUserObject();
-      if( seenMerges && seenUnchecked) {
+      if (seenMerges && seenUnchecked) {
         error = GitBundle.getString("push.active.error.merges.unchecked");
       }
       if (seenMerges && reorderNeeded) {

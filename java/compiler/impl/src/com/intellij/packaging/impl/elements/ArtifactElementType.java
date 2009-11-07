@@ -58,7 +58,7 @@ public class ArtifactElementType extends ComplexPackagingElementType<ArtifactPac
     List<Artifact> artifacts = context.chooseArtifacts(getAvailableArtifacts(context, artifact), CompilerBundle.message("dialog.title.choose.artifacts"));
     final List<ArtifactPackagingElement> elements = new ArrayList<ArtifactPackagingElement>();
     for (Artifact selected : artifacts) {
-      elements.add(new ArtifactPackagingElement(project, ArtifactPointerManager.getInstance(project).create(selected.getName())));
+      elements.add(new ArtifactPackagingElement(project, ArtifactPointerManager.getInstance(project).createPointer(selected, context.getArtifactModel())));
     }
     return elements;
   }

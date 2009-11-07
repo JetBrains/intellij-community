@@ -979,4 +979,15 @@
       <expected>OK</expected>
     </test>
   </bug>
+
+  <bug id="IDEA-25680">
+    <test info="true">
+      <pattern>(?x)a\ b\ c</pattern>
+      <expected>OK</expected>
+    </test>
+    <test verify="false" info="true">
+      <pattern><![CDATA[a<weak_warning descr="Redundant character escape">\ </weak_warning>b]]></pattern>
+      <expected>OK</expected>
+    </test>
+  </bug>
 </tests>

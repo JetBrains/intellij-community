@@ -106,8 +106,6 @@ public class CommonRefactoringUtil {
     boolean seenNonWritablePsiFilesWithoutVirtualFile = false;
 
     for (PsiElement element : elements) {
-      if (element.isWritable()) continue;
-
       if (element instanceof PsiDirectory) {
         PsiDirectory dir = (PsiDirectory)element;
         final VirtualFile vFile = dir.getVirtualFile();
@@ -140,13 +138,11 @@ public class CommonRefactoringUtil {
             }
           }
           else {
-            if (!directory.isWritable()) {
-              if (virtualFile.getFileSystem() instanceof JarFileSystem) {
-                failed.add(virtualFile);
-              }
-              else {
-                readonly.add(virtualFile);
-              }
+            if (virtualFile.getFileSystem() instanceof JarFileSystem) {
+              failed.add(virtualFile);
+            }
+            else {
+              readonly.add(virtualFile);
             }
           }
         }
@@ -160,15 +156,19 @@ public class CommonRefactoringUtil {
       else {
         PsiFile file = element.getContainingFile();
         if (file == null) {
-          seenNonWritablePsiFilesWithoutVirtualFile = true;
+          if (!element.isWritable()) {
+            seenNonWritablePsiFilesWithoutVirtualFile = true;
+          }
         }
-        else if (!file.isWritable()) {
+        else {
           final VirtualFile vFile = file.getVirtualFile();
           if (vFile != null) {
             readonly.add(vFile);
           }
           else {
-            seenNonWritablePsiFilesWithoutVirtualFile = true;
+            if (!element.isWritable()) {
+              seenNonWritablePsiFilesWithoutVirtualFile = true;
+            }
           }
         }
       }

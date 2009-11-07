@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.diff.DiffRequest;
 import org.jetbrains.annotations.Nullable;
 import com.intellij.openapi.diff.SimpleDiffRequest;
 
@@ -24,8 +25,8 @@ public interface ChangeRequestChain {
   boolean canMoveBack();
 
   @Nullable
-  SimpleDiffRequest moveForward();
+  DiffRequest moveForward();
 
   @Nullable
-  SimpleDiffRequest moveBack();
+  DiffRequest moveBack();
 }

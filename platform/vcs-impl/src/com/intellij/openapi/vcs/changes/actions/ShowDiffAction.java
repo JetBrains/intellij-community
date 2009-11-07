@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diff.DiffManager;
+import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.DiffTool;
 import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.fileTypes.FileType;
@@ -29,12 +30,10 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -193,7 +192,12 @@ public class ShowDiffAction extends AnAction implements DumbAware {
       newIndex = 0;
     }
     
-    showDiffImpl(project, changeList, newIndex, actionsFactory, showFrame);
+    showDiffImpl(project, ObjectsConvertor.convert(changeList,
+            new Convertor<Change, DiffRequestPresentable>() {
+              public ChangeDiffRequestPresentable convert(Change o) {
+                return new ChangeDiffRequestPresentable(project, o);
+              }
+            }), newIndex, actionsFactory, showFrame);
   }
 
   public static void showDiffForChange(Change[] changes, int index, final Project project, @Nullable DiffExtendUIFactory actionsFactory,
@@ -210,27 +214,21 @@ public class ShowDiffAction extends AnAction implements DumbAware {
         break;
       }
     }
-    showDiffImpl(project, changeList, index, actionsFactory, showFrame);
+    showDiffImpl(project, ObjectsConvertor.convert(changeList,
+            new Convertor<Change, DiffRequestPresentable>() {
+              public ChangeDiffRequestPresentable convert(Change o) {
+                return new ChangeDiffRequestPresentable(project, o);
+              }
+            }), index, actionsFactory, showFrame);
   }
 
-  private static void showDiffImpl(Project project, List<Change> changeList, int index, DiffExtendUIFactory actionsFactory, boolean showFrame) {
+  public static void showDiffImpl(final Project project, List<DiffRequestPresentable> changeList, int index, DiffExtendUIFactory actionsFactory, boolean showFrame) {
+    final ChangeDiffRequest request = new ChangeDiffRequest(project, changeList, actionsFactory, showFrame);
+    
     final DiffTool tool = DiffManager.getInstance().getDiffTool();
-
-    final ChangeDiffRequest request = new ChangeDiffRequest(project, changeList, actionsFactory);
     if (! request.quickCheckHaveStuff()) return;
-    final SimpleDiffRequest simpleRequest = request.init(index);
+    final DiffRequest simpleRequest = request.init(index);
     if (simpleRequest != null) {
-      simpleRequest.passForDataContext(VcsDataKeys.DIFF_REQUEST_CHAIN, request);
-
-      if (showFrame) {
-        simpleRequest.addHint(DiffTool.HINT_SHOW_FRAME);
-      }
-      else {
-        simpleRequest.addHint(DiffTool.HINT_SHOW_MODAL_DIALOG);
-      }
-      if (changeList.size() > 1) {
-        simpleRequest.addHint(DiffTool.HINT_ALLOW_NO_DIFFERENCES);
-      }
       tool.show(simpleRequest);
     }
   }

@@ -76,6 +76,7 @@ public class FilesForRefresh {
     }
 
     // todo remove
+    /*
     System.out.println("recursive");
     for (File file : myRecursively) {
       System.out.println(file.getAbsolutePath());
@@ -84,6 +85,7 @@ public class FilesForRefresh {
     for (File file : myPoints) {
       System.out.println(file.getAbsolutePath());
     }
+    */
   }
 
   private void filterEqual(final List<File> files) {

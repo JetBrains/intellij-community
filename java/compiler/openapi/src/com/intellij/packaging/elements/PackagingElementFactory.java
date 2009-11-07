@@ -20,6 +20,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactPointer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,6 +53,9 @@ public abstract class PackagingElementFactory {
 
   @NotNull
   public abstract List<? extends PackagingElement<?>> createLibraryElements(@NotNull Library library);
+
+  @NotNull
+  public abstract PackagingElement<?> createArtifactElement(@NotNull ArtifactPointer artifactPointer, @NotNull Project project);
 
   @NotNull
   public abstract PackagingElement<?> createArtifactElement(@NotNull Artifact artifact, @NotNull Project project);

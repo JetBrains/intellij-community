@@ -41,7 +41,7 @@ public class LazyPatchContentRevision implements ContentRevision {
     myPatch = patch;
   }
 
-  public String getContent() throws VcsException {
+  public String getContent() {
     if (myContent == null) {
       try {
         final Document doc = FileDocumentManager.getInstance().getDocument(myVf);

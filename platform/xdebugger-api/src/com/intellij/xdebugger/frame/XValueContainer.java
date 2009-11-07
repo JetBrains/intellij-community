@@ -24,7 +24,8 @@ import java.util.Collections;
  */
 public abstract class XValueContainer {
   /**
-   * Start computing children of the value. Call {@link XCompositeNode#addChildren(java.util.List, boolean)} to add child nodes
+   * Start computing children of the value. Call {@link XCompositeNode#addChildren(java.util.List, boolean)} to add child nodes.
+   * Note that this method is called from the Event Dispatch thread so it should return quickly. 
    * @param node node in the tree
    */
   public void computeChildren(@NotNull XCompositeNode node) {

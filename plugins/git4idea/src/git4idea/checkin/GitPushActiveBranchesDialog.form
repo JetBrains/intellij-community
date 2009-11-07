@@ -47,24 +47,6 @@
               <text resource-bundle="git4idea/i18n/GitBundle" key="push.active.view"/>
             </properties>
           </component>
-          <component id="2dbc5" class="javax.swing.JButton" binding="myFetchButton" default-binding="true">
-            <constraints>
-              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="git4idea/i18n/GitBundle" key="push.active.fetch"/>
-              <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="push.active.fetch.tooltip"/>
-            </properties>
-          </component>
-          <component id="5c023" class="javax.swing.JButton" binding="myRebaseButton" default-binding="true">
-            <constraints>
-              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="git4idea/i18n/GitBundle" key="push.active.rebase"/>
-              <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="push.active.rebase.tooltip"/>
-            </properties>
-          </component>
           <component id="8ca38" class="javax.swing.JCheckBox" binding="myAutoStashCheckBox" default-binding="true">
             <constraints>
               <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
@@ -80,6 +62,24 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
             </constraints>
           </vspacer>
+          <component id="2dbc5" class="javax.swing.JButton" binding="myFetchButton" default-binding="true">
+            <constraints>
+              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="git4idea/i18n/GitBundle" key="push.active.fetch"/>
+              <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="push.active.fetch.tooltip"/>
+            </properties>
+          </component>
+          <component id="5c023" class="javax.swing.JButton" binding="myRebaseButton" default-binding="true">
+            <constraints>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="git4idea/i18n/GitBundle" key="push.active.rebase"/>
+              <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="push.active.rebase.tooltip"/>
+            </properties>
+          </component>
         </children>
       </grid>
     </children>

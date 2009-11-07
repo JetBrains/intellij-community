@@ -26,4 +26,6 @@ public interface DiffViewer {
   JComponent getComponent();
 
   JComponent getPreferredFocusedComponent();
+
+  int getContentsNumber();
 }

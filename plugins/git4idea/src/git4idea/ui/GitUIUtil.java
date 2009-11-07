@@ -128,23 +128,25 @@ public class GitUIUtil {
    * @param gitRootChooser     git root selector
    * @param currentBranchLabel current branch label (might be null)
    */
-  public static void setupRootChooser(final Project project,
-                                      final List<VirtualFile> roots,
-                                      final VirtualFile defaultRoot,
-                                      final JComboBox gitRootChooser,
+  public static void setupRootChooser(@NotNull final Project project,
+                                      @NotNull final List<VirtualFile> roots,
+                                      @Nullable final VirtualFile defaultRoot,
+                                      @NotNull final JComboBox gitRootChooser,
                                       @Nullable final JLabel currentBranchLabel) {
     for (VirtualFile root : roots) {
       gitRootChooser.addItem(root);
     }
     gitRootChooser.setRenderer(getVirtualFileListCellRenderer());
-    gitRootChooser.setSelectedItem(defaultRoot);
+    if (defaultRoot != null) {
+      gitRootChooser.setSelectedItem(defaultRoot);
+    }
     if (currentBranchLabel != null) {
       final ActionListener listener = new ActionListener() {
         public void actionPerformed(final ActionEvent e) {
           try {
             VirtualFile root = (VirtualFile)gitRootChooser.getSelectedItem();
+            assert root != null : "The root must not be null";
             GitBranch current = GitBranch.current(project, root);
-            assert currentBranchLabel != null;
             if (current == null) {
               currentBranchLabel.setText(NO_CURRENT_BRANCH);
             }

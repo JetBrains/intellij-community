@@ -92,13 +92,19 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     }
   }
 
-  private static boolean isOnDemand(PsiElement fileContext, PsiClass psiClass) {
+  private boolean isOnDemand(PsiElement fileContext, PsiClass psiClass) {
     if (fileContext instanceof PsiImportStatementBase) {
       return ((PsiImportStatementBase)fileContext).isOnDemand();
     }
     String fqn = psiClass.getQualifiedName();
     if (fqn == null) return false;
-    return "java.lang".equals(StringUtil.getPackageName(fqn));
+    String packageName = StringUtil.getPackageName(fqn);
+    if ("java.lang".equals(packageName)) return true;
+
+    // class from my package imported implicitly
+    PsiFile file = myPlace == null ? null : FileContextUtil.getContextFile(myPlace);
+    
+    return file instanceof PsiJavaFile && ((PsiJavaFile)file).getPackageName().equals(packageName);
   }
 
   public boolean execute(PsiElement element, ResolveState state) {
@@ -154,9 +160,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     myCandidates.add(new ClassCandidateInfo(aClass, state.get(PsiSubstitutor.KEY), !accessible, myCurrentFileContext));
     myResult = null;
     if (!accessible) return true;
-    if (!(myCurrentFileContext instanceof PsiImportStatementBase)) return false;
-
-    return true;
+    return myCurrentFileContext instanceof PsiImportStatementBase;
   }
 
   private boolean checkAccessibility(final PsiClass aClass) {

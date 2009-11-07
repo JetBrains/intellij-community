@@ -504,8 +504,9 @@ public class PsiTreeUtil {
     return nextLeaf(parent);
   }
 
-  public static PsiElement lastChild(final PsiElement element) {
-    if(element.getLastChild() != null) return lastChild(element.getLastChild());
+  public static PsiElement lastChild(@NotNull PsiElement element) {
+    PsiElement lastChild = element.getLastChild();
+    if(lastChild != null) return lastChild(lastChild);
     return element;
   }
 

@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPsiElementPointer;
+import org.jetbrains.annotations.NotNull;
 
 public class FileContextUtil {
   public static final Key<SmartPsiElementPointer> INJECTED_IN_ELEMENT = Key.create("injectedIn");
@@ -32,7 +33,7 @@ public class FileContextUtil {
     return pointer == null ? null : pointer.getElement();
   }
 
-  public static PsiFile getContextFile(PsiElement element){
+  public static PsiFile getContextFile(@NotNull PsiElement element){
     if (!element.isValid()) return null;
     PsiFile file = element.getContainingFile();
     if (file == null) return null;

@@ -90,10 +90,10 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
         for (int i = 1; i < text.length; i++) {
           TextChunk textChunk = text[i];
           final SimpleTextAttributes attrs = SimpleTextAttributes.fromTextAttributes(textChunk.getAttributes());
-          final Color selectedColor = attrs.getStyle() == SimpleTextAttributes.STYLE_BOLD ? Color.WHITE : Color.GRAY;
+          final Color bg = UIUtil.getListSelectionBackground();
+          final Color fg = UIUtil.getListSelectionForeground();
           SimpleTextAttributes attributes = isSelected ?
-            new SimpleTextAttributes(UIUtil.getListSelectionBackground(), selectedColor, selectedColor, attrs.getStyle())
-            : deriveAttributesWithColor(attrs, fileBgColor);
+            new SimpleTextAttributes(bg, fg, fg, attrs.getStyle()) : deriveAttributesWithColor(attrs, fileBgColor);
           textChunks.append(textChunk.getText(), attributes);
         }
       }

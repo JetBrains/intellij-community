@@ -172,27 +172,24 @@ public class ProjectViewDirectoryHelper {
       return psiDirectory.getChildren();
     }
 
-    Set<VirtualFile> directoriesOnTheWayToContentRoots = new THashSet<VirtualFile>();
+    PsiManager manager = psiDirectory.getManager();
+    Set<PsiElement> directoriesOnTheWayToContentRoots = new THashSet<PsiElement>();
     for (VirtualFile root : getTopLevelRoots()) {
       VirtualFile current = root;
       while (current != null) {
         VirtualFile parent = current.getParent();
 
         if (parent == dir) {
-          directoriesOnTheWayToContentRoots.add(current);
+          final PsiDirectory psi = manager.findDirectory(current);
+          if (psi != null) {
+            directoriesOnTheWayToContentRoots.add(psi);
+          }
         }
         current = parent;
       }
     }
 
-    PsiManager manager = psiDirectory.getManager();
-    PsiElement[] answer = new PsiElement[directoriesOnTheWayToContentRoots.size()];
-    int i = 0;
-    for (VirtualFile directory : directoriesOnTheWayToContentRoots) {
-      answer[i++] = manager.findDirectory(directory);
-    }
-
-    return answer;
+    return directoriesOnTheWayToContentRoots.toArray(new PsiElement[directoriesOnTheWayToContentRoots.size()]);
   }
 
   // used only for non-flatten packages mode

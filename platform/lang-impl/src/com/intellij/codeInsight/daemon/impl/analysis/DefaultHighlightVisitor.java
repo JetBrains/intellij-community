@@ -16,11 +16,9 @@
 
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
+import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
+import com.intellij.lang.Language;
 import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
@@ -32,7 +30,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -84,8 +84,16 @@ public class DefaultHighlightVisitor extends PsiElementVisitor implements Highli
     runAnnotators(element);
   }
 
+  private static final PerThreadMap<Annotator,Language> cachedAnnotators = new PerThreadMap<Annotator, Language>() {
+    @NotNull
+    @Override
+    public Collection<Annotator> initialValue(@NotNull Language key) {
+      return LanguageAnnotators.INSTANCE.allForLanguage(key);
+    }
+  };
+
   private void runAnnotators(final PsiElement element) {
-    List<Annotator> annotators = LanguageAnnotators.INSTANCE.allForLanguage(element.getLanguage());
+    List<Annotator> annotators = cachedAnnotators.get(element.getLanguage());
     if (!annotators.isEmpty()) {
       final boolean dumb = DumbService.getInstance(myProject).isDumb();
       //noinspection ForLoopReplaceableByForEach

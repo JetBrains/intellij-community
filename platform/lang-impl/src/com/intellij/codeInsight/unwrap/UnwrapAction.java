@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 
 public class UnwrapAction extends BaseCodeInsightAction{
   public UnwrapAction() {
+    super(true);
     setEnabledInModalContext(true);
   }
 

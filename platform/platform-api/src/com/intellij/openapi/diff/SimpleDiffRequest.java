@@ -31,46 +31,15 @@ public class SimpleDiffRequest extends DiffRequest {
   private final DiffContent[] myContents = new DiffContent[2];
   private final String[] myContentTitles = new String[2];
   private String myWindowTitle;
-  private final HashSet myHints = new HashSet();
-  private final Map<String, Object> myGenericData;
 
   public SimpleDiffRequest(Project project, String windowtitle) {
     super(project);
     myWindowTitle = windowtitle;
-    myGenericData = new HashMap<String, Object>(2);
   }
 
   public DiffContent[] getContents() { return myContents; }
   public String[] getContentTitles() { return myContentTitles; }
   public String getWindowTitle() { return myWindowTitle; }
-
-  public Collection getHints() {
-    return Collections.unmodifiableCollection(myHints);
-  }
-
-  public void passForDataContext(final DataKey key, final Object value) {
-    myGenericData.put(key.getName(), value);
-  }
-
-  public Map<String, Object> getGenericData() {
-    return myGenericData;
-  }
-
-  /**
-   * @param hint
-   * @see DiffRequest#getHints()
-   */
-  public void addHint(Object hint) {
-    myHints.add(hint);
-  }
-
-  /**
-   * @param hint
-   * @see DiffRequest#getHints()
-   */
-  public void removeHint(Object hint) {
-    myHints.remove(hint);
-  }
 
   public void setContents(@NotNull DiffContent content1, @NotNull DiffContent content2) {
     myContents[0] = content1;

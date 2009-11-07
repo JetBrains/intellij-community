@@ -333,8 +333,7 @@ public class FileManagerImpl implements FileManager {
 
   @NotNull
   public GlobalSearchScope getResolveScope(@NotNull PsiElement element) {
-    final ProgressManager progressManager = ProgressManager.getInstance();
-    progressManager.checkCanceled();
+    ProgressManager.checkCanceled();
 
     VirtualFile vFile;
     final Project project = myManager.getProject();
@@ -383,10 +382,9 @@ public class FileManagerImpl implements FileManager {
       // resolve references in libraries in context of all modules which contain it
       List<Module> modulesLibraryUsedIn = new ArrayList<Module>();
       List<OrderEntry> orderEntries = projectFileIndex.getOrderEntriesForFile(vFile);
-      final ProgressManager progressManager = ProgressManager.getInstance();
 
       for (OrderEntry entry : orderEntries) {
-        progressManager.checkCanceled();
+        ProgressManager.checkCanceled();
 
         if (entry instanceof JdkOrderEntry) {
           return ((ProjectRootManagerEx)myProjectRootManager).getScopeForJdk((JdkOrderEntry)entry);

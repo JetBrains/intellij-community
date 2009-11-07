@@ -113,7 +113,13 @@ public class GitConvertFilesDialog extends DialogWrapper {
    */
   private void createUIComponents() {
     myRootNode = new CheckedTreeNode("ROOT");
-    myFilesToConvert = new CheckboxTree(new FileTreeCellRenderer(), myRootNode);
+    myFilesToConvert = new CheckboxTree(new FileTreeCellRenderer(), myRootNode) {
+      protected void onNodeStateChanged(CheckedTreeNode node) {
+        VirtualFile[] files = myFilesToConvert.getCheckedNodes(VirtualFile.class, null);
+        setOKActionEnabled(files != null && files.length > 0);
+        super.onNodeStateChanged(node);
+      }
+    };
   }
 
   /**

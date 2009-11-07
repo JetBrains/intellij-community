@@ -2419,7 +2419,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     int dx = 0;
-    if (x < rect.x) {
+    if (x < rect.x && rect.x > 0) {
       dx = x - rect.x;
     }
     else {
@@ -2430,7 +2430,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     int dy = 0;
     int y = e.getY();
-    if (y < rect.y) {
+    if (y < rect.y && rect.y > 0) {
       dy = y - rect.y;
     }
     else {

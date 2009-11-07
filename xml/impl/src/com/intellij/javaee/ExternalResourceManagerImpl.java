@@ -381,8 +381,11 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     }
   }
 
+
+  private final static NotNullLazyKey<ProjectResources, Project> INSTANCE_CACHE = ServiceManager.createLazyKey(ProjectResources.class);
+
   private static ExternalResourceManagerImpl getProjectResources(Project project) {
-    return ServiceManager.getService(project, ProjectResources.class);
+    return INSTANCE_CACHE.getValue(project);
   }
 
 }

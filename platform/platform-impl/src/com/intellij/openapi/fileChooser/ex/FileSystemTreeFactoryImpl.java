@@ -27,7 +27,6 @@ import com.intellij.openapi.project.Project;
 
 public class FileSystemTreeFactoryImpl implements FileSystemTreeFactory{
   public FileSystemTreeFactoryImpl() {
-    System.out.println("");
   }
 
   public FileSystemTree createFileSystemTree(Project project, FileChooserDescriptor fileChooserDescriptor) {

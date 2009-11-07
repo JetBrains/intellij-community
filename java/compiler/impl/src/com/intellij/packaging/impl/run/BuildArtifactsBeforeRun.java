@@ -72,7 +72,7 @@ public class BuildArtifactsBeforeRun implements BeforeRunTaskProvider<BuildArtif
       return "Build Artifacts";
     }
     if (pointers.size() == 1) {
-      return "Build '" + pointers.get(0).getName() + "' artifact";
+      return "Build '" + pointers.get(0).getArtifactName() + "' artifact";
     }
     return "Build " + pointers.size() + " artifacts";
   }
@@ -89,7 +89,7 @@ public class BuildArtifactsBeforeRun implements BeforeRunTaskProvider<BuildArtif
     final Artifact[] artifacts = ArtifactManager.getInstance(myProject).getArtifacts();
     Set<ArtifactPointer> pointers = new THashSet<ArtifactPointer>();
     for (Artifact artifact : artifacts) {
-      pointers.add(ArtifactPointerManager.getInstance(myProject).create(artifact));
+      pointers.add(ArtifactPointerManager.getInstance(myProject).createPointer(artifact));
     }
     pointers.addAll(task.getArtifactPointers());
     ArtifactChooser chooser = new ArtifactChooser(new ArrayList<ArtifactPointer>(pointers));

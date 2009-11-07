@@ -23,7 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.*;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -52,7 +52,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
   @NonNls public static final String COMPONENT_NAME = "ArtifactManager";
   @NonNls public static final String PACKAGING_ELEMENT_NAME = "element";
   @NonNls public static final String TYPE_ID_ATTRIBUTE = "id";
-  private final ArtifactManagerModel myModel = new ArtifactManagerModel();
+  private final ArtifactManagerModel myModel;
   private final Project myProject;
   private final DefaultPackagingElementResolvingContext myResolvingContext;
   private boolean myInsideCommit = false;
@@ -65,9 +65,11 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
   };
   private Map<String, LocalFileSystem.WatchRequest> myWatchedOutputs = new HashMap<String, LocalFileSystem.WatchRequest>();
 
-  public ArtifactManagerImpl(Project project) {
+  public ArtifactManagerImpl(Project project, VirtualFileManager virtualFileManager) {
     myProject = project;
+    myModel = new ArtifactManagerModel();
     myResolvingContext = new DefaultPackagingElementResolvingContext(myProject);
+    virtualFileManager.addVirtualFileListener(new ArtifactVirtualFileListener(myProject, this), myProject);
   }
 
   @NotNull
@@ -82,6 +84,11 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
   @NotNull
   public Artifact getArtifactByOriginal(@NotNull Artifact artifact) {
     return myModel.getArtifactByOriginal(artifact);
+  }
+
+  @NotNull
+  public Artifact getOriginalArtifact(@NotNull Artifact artifact) {
+    return myModel.getOriginalArtifact(artifact);
   }
 
   public Collection<? extends Artifact> getArtifactsByType(@NotNull ArtifactType type) {
@@ -182,8 +189,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
     }
 
     if (myLoaded) {
-      final ArtifactModelImpl model = new ArtifactModelImpl(this);
-      model.addArtifacts(artifacts);
+      final ArtifactModelImpl model = new ArtifactModelImpl(this, artifacts);
       doCommit(model);
     }
     else {
@@ -257,10 +263,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
 
   @Override
   public ModifiableArtifactModel createModifiableModel() {
-    ((ArtifactPointerManagerImpl)ArtifactPointerManager.getInstance(myProject)).updateAllPointers();
-    final ArtifactModelImpl model = new ArtifactModelImpl(this);
-    model.addArtifacts(getArtifactsList());
-    return model;
+    return new ArtifactModelImpl(this, getArtifactsList());
   }
 
   @Override
