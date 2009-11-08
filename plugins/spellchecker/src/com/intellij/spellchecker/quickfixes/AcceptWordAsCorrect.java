@@ -16,10 +16,11 @@
 package com.intellij.spellchecker.quickfixes;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.openapi.actionSystem.Anchor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.spellchecker.SpellCheckerManager;
-
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,15 +28,14 @@ import javax.swing.*;
 
 
 public class AcceptWordAsCorrect implements SpellCheckerQuickFix {
-  private String word;
+  private ProblemDescriptor myProblemDescriptor;
 
-  public AcceptWordAsCorrect(String word) {
-    this.word = word;
+  public AcceptWordAsCorrect() {
   }
 
   @NotNull
   public String getName() {
-    return SpellCheckerBundle.message("add.0.to.dictionary", word);
+    return SpellCheckerBundle.message("add.0.to.dictionary", getWord());
   }
 
   @NotNull
@@ -50,10 +50,23 @@ public class AcceptWordAsCorrect implements SpellCheckerQuickFix {
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     SpellCheckerManager spellCheckerManager = SpellCheckerManager.getInstance(project);
-    spellCheckerManager.acceptWordAsCorrect(word);
+    final String w = getWord();
+    spellCheckerManager.acceptWordAsCorrect(w);
+  }
+
+  private String getWord() {
+      final ProblemDescriptorImpl d = (ProblemDescriptorImpl)myProblemDescriptor;
+    final TextRange r = d.getTextRange();
+    final String t = d.getPsiElement().getContainingFile().getText();
+    final String w = t.substring(r.getStartOffset(), r.getEndOffset());
+    return w;
   }
 
   public Icon getIcon(int flags) {
     return new ImageIcon(ShowSuggestions.class.getResource("spellcheck.png"));
+  }
+
+  public void setDescriptor(ProblemDescriptor problemDescriptor) {
+    myProblemDescriptor = problemDescriptor;
   }
 }

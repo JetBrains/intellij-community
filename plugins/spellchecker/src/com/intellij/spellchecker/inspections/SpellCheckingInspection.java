@@ -186,9 +186,13 @@ public class SpellCheckingInspection extends LocalInspectionTool {
         }
       }
 
-      fixes.add(new AcceptWordAsCorrect(word));
+      final AcceptWordAsCorrect acceptWordAsCorrect = new AcceptWordAsCorrect();
+      fixes.add(acceptWordAsCorrect);
 
-      holder.registerProblem(createProblemDescriptor(token, holder, textRange, word, fixes));
+      final ProblemDescriptor problemDescriptor = createProblemDescriptor(token, holder, textRange, word, fixes);
+      holder.registerProblem(problemDescriptor);
+
+      acceptWordAsCorrect.setDescriptor(problemDescriptor);
     }
 
   }
