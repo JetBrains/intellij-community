@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.event.EditorEventMulticaster;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,6 +99,19 @@ public abstract class EditorFactory implements ApplicationComponent {
    * @see #releaseEditor(Editor)
    */
   public abstract Editor createEditor(@NotNull Document document, Project project, @NotNull FileType fileType, boolean isViewer);
+
+  /**
+   * Creates an editor for the specified document associated with the specified project.
+   *
+   * @param document the document to create the editor for.
+   * @param project the project for which highlighter should be created
+   * @param file the file according to which the editor contents is highlighted.
+   * @param isViewer true if read-only editor should be created
+   * @return the editor instance.
+   * @see Editor#getProject()
+   * @see #releaseEditor(Editor)
+   */
+  public abstract Editor createEditor(@NotNull Document document, Project project, @NotNull VirtualFile file, boolean isViewer);
 
   /**
    * Creates a read-only editor for the specified document associated with the specified project.

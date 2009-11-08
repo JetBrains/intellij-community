@@ -58,10 +58,8 @@ public class CheckDtdReferencesInspection extends XmlSuppressableInspectionTool 
   }
 
   private static void doCheckRefs(final XmlElement element, final ProblemsHolder holder) {
-    final ProgressManager progressManager = ProgressManager.getInstance();
-
     for(PsiReference ref:element.getReferences()) {
-      progressManager.checkCanceled();
+      ProgressManager.checkCanceled();
       if (XmlHighlightVisitor.hasBadResolve(ref)) {
         if (ref.getElement() instanceof XmlElementContentSpec) {
           final String image = ref.getCanonicalText();

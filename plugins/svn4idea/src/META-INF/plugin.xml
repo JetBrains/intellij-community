@@ -126,6 +126,6 @@
     <vcs name="svn" vcsClass="org.jetbrains.idea.svn.SvnVcs"/>
 
     <ComponentRoamingType component="SvnConfiguration" type="DISABLED"/>
-
+    <vcsPopupProvider implementation="org.jetbrains.idea.svn.actions.SvnQuickListContentProvider"/>
   </extensions>
 </idea-plugin>

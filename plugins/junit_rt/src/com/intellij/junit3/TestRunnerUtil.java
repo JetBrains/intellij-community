@@ -131,7 +131,7 @@ public class TestRunnerUtil {
             return new FailedTestCase(testClass, BaseTestRunner.SUITE_METHODNAME, message, e);
           }
         }
-        catch (Exception e) {
+        catch (Throwable e) {
           // try to extract a test suite automatically
           runner.clearStatus();
           test = new TestSuite(testClass);
@@ -155,7 +155,7 @@ public class TestRunnerUtil {
       }
       runner.runFailed(MessageFormat.format(ourBundle.getString("junit.class.not.found"), new Object[] {clazz}));
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       runner.runFailed(MessageFormat.format(ourBundle.getString("junit.cannot.instantiate.tests"), new Object[]{e.toString()}));
     }
     return null;
@@ -196,7 +196,7 @@ public class TestRunnerUtil {
         return new FailedTestCase(testClass, methodName, message, e1);
       }
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       String message = MessageFormat.format(ourBundle.getString("junit.cannot.instantiate.tests"), new Object[]{e.toString()});
       return new FailedTestCase(testClass, methodName, message, e);
     }

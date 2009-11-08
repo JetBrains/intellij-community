@@ -15,9 +15,13 @@
  */
 package git4idea.actions;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
@@ -36,7 +40,7 @@ import java.util.*;
  * Base class for actions that affect the entire git repository.
  * The action is available if there is at least one git root.
  */
-public abstract class GitRepositoryAction extends AnAction {
+public abstract class GitRepositoryAction extends DumbAwareAction {
   /**
    * The task delayed until end of the primary action. These tasks happen after repository refresh.
    */

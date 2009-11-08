@@ -156,7 +156,9 @@ public class CommonRefactoringUtil {
       else {
         PsiFile file = element.getContainingFile();
         if (file == null) {
-          seenNonWritablePsiFilesWithoutVirtualFile = true;
+          if (!element.isWritable()) {
+            seenNonWritablePsiFilesWithoutVirtualFile = true;
+          }
         }
         else {
           final VirtualFile vFile = file.getVirtualFile();
@@ -164,7 +166,9 @@ public class CommonRefactoringUtil {
             readonly.add(vFile);
           }
           else {
-            seenNonWritablePsiFilesWithoutVirtualFile = true;
+            if (!element.isWritable()) {
+              seenNonWritablePsiFilesWithoutVirtualFile = true;
+            }
           }
         }
       }

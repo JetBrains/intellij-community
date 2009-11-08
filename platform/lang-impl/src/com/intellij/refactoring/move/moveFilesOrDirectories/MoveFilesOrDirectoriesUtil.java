@@ -66,7 +66,7 @@ public class MoveFilesOrDirectoriesUtil {
     }
 
     final PsiDirectory targetDirectory = resolveToDirectory(project, targetElement[0]);
-    if (targetElement != null && targetElement[0] != null && targetDirectory == null) return;
+    if (targetElement[0] != null && targetDirectory == null) return;
 
     final PsiDirectory initialTargetDirectory = getInitialTargetDirectory(targetDirectory, elements);
 
@@ -92,19 +92,19 @@ public class MoveFilesOrDirectoriesUtil {
         }
         catch (IncorrectOperationException e) {
           CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("error.title"), e.getMessage(),
-                                                 "refactoring.movePackage", project);
+                                                 "refactoring.moveFile", project);
         }
       }
     };
 
     final MoveFilesOrDirectoriesDialog moveDialog = new MoveFilesOrDirectoriesDialog(project, doRun);
-    moveDialog.setData(elements, initialTargetDirectory, "refactoring.movePackage");
+    moveDialog.setData(elements, initialTargetDirectory, "refactoring.moveFile");
     moveDialog.show();
   }
 
   @Nullable
   private static PsiDirectory resolveToDirectory(final Project project, final PsiElement element) {
-    if (!(element instanceof PsiDirectoryContainer)) {
+    if (!(element instanceof PsiDirectoryContainer)) {                                                                 
       return (PsiDirectory)element;
     }
 

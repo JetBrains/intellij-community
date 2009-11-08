@@ -18,6 +18,7 @@ package com.intellij.ide.favoritesTreeView.actions;
 
 import com.intellij.ide.actions.QuickSwitchSchemeAction;
 import com.intellij.ide.favoritesTreeView.FavoritesManager;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 
@@ -26,7 +27,7 @@ import com.intellij.openapi.project.Project;
  * Date: Feb 24, 2005
  */
 public class AddToFavoritesPopupAction extends QuickSwitchSchemeAction {
-  protected void fillActions(Project project, DefaultActionGroup group) {
+  protected void fillActions(Project project, DefaultActionGroup group, DataContext dataContext) {
     group.removeAll();
     final String[] availableFavoritesLists = FavoritesManager.getInstance(project).getAvailableFavoritesLists();
     for (String favoritesList : availableFavoritesLists) {

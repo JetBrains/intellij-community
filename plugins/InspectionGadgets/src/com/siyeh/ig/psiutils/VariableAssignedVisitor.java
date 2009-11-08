@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,25 +17,29 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class VariableAssignedVisitor extends JavaRecursiveElementVisitor{
 
     @NotNull private final PsiVariable variable;
     private final boolean recurseIntoClasses;
+    private final boolean checkUnaryExpressions;
     private boolean assigned = false;
 
     public VariableAssignedVisitor(@NotNull PsiVariable variable,
                                    boolean recurseIntoClasses){
-        super();
         this.variable = variable;
+        final PsiType type = variable.getType();
+        checkUnaryExpressions = TypeConversionUtil.isNumericType(type);
         this.recurseIntoClasses = recurseIntoClasses;
     }
 
     @Override public void visitElement(@NotNull PsiElement element){
-        if(!assigned){
-            super.visitElement(element);
+        if(assigned){
+            return;
         }
+        super.visitElement(element);
     }
 
     @Override public void visitAssignmentExpression(
@@ -66,6 +70,9 @@ public class VariableAssignedVisitor extends JavaRecursiveElementVisitor{
         if(assigned){
             return;
         }
+        if(!checkUnaryExpressions){
+            return;
+        }
         super.visitPrefixExpression(prefixExpression);
         final PsiJavaToken operationSign = prefixExpression.getOperationSign();
         final IElementType tokenType = operationSign.getTokenType();
@@ -82,6 +89,9 @@ public class VariableAssignedVisitor extends JavaRecursiveElementVisitor{
     @Override public void visitPostfixExpression(
             @NotNull PsiPostfixExpression postfixExpression){
         if(assigned){
+            return;
+        }
+        if(!checkUnaryExpressions){
             return;
         }
         super.visitPostfixExpression(postfixExpression);
