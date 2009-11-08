@@ -74,9 +74,11 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
     updateKinds();
     myControlledCycle = new ControlledCycle(project, new ControlledCycle.MyCallback() {
       public boolean call(final AtomicSectionsAware atomicSectionsAware) {
+        atomicSectionsAware.checkShouldExit();
         final boolean shouldBeDone = VcsConfiguration.getInstance(myProject).CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND;
         if (shouldBeDone) {
           boolean somethingChanged = myRemoteRevisionsNumbersCache.updateStep(atomicSectionsAware);
+          atomicSectionsAware.checkShouldExit();
           somethingChanged |= myRemoteRevisionsStateCache.updateStep(atomicSectionsAware);
           if (somethingChanged) {
             myProject.getMessageBus().syncPublisher(REMOTE_VERSION_CHANGED).run();
@@ -84,7 +86,7 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
         }
         return shouldBeDone;
       }
-    });
+    }, "Finishing \"changed on server\" update");
     if ((! myProject.isDefault()) && VcsConfiguration.getInstance(myProject).CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND) {
       myControlledCycle.start();
     }

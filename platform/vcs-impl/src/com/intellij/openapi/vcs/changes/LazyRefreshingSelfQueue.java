@@ -96,6 +96,7 @@ public class LazyRefreshingSelfQueue<T> {
     }
 
     // do not ask under lock
+    pi.checkCanceled();
     final Boolean shouldUpdateOld = onlyAbsolute ? false : myShouldUpdateOldChecker.compute();
 
     synchronized (myLock) {
@@ -126,7 +127,7 @@ public class LazyRefreshingSelfQueue<T> {
 
     LOG.debug("found something to update: " + (! dirty.isEmpty()));
     for (T t : dirty) {
-      ProgressManager.checkCanceled();
+      pi.checkCanceled();
       myUpdater.consume(t);
       synchronized (myLock) {
         if (myInProgress.remove(t)) {

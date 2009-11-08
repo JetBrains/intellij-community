@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -36,7 +37,7 @@ public class ControlledCycle implements Runnable {
 
   private final AtomicBoolean myActive;
 
-  public ControlledCycle(final Project project, final MyCallback callback) {
+  public ControlledCycle(final Project project, final MyCallback callback, @NotNull final String name) {
     myActive = new AtomicBoolean(false);
     myRunnable = new Runnable() {
       boolean shouldBeContinued = true;
@@ -56,7 +57,7 @@ public class ControlledCycle implements Runnable {
       }
     };
     mySimpleAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, project);
-    myControlledAlarm = ControlledAlarmFactory.createOnApplicationPooledThread(project);
+    myControlledAlarm = ControlledAlarmFactory.createOnApplicationPooledThread(project, name);
   }
 
   public void start() {

@@ -47,8 +47,8 @@ public class ControlledAlarmFactory {
     return new ScheduledSlowlyClosingAlarm(project, name, new MyScheduledExecutorServiceWrapper(executor), true);
   }
 
-  public static SlowlyClosingAlarm createOnApplicationPooledThread(@NotNull final Project project) {
-    return new SlowlyClosingAlarm(project, "Application pooled thread controlled alarm", new MyApplicationPooledThreadExecutorWrapper(), true);
+  public static SlowlyClosingAlarm createOnApplicationPooledThread(@NotNull final Project project, @NotNull final String name) {
+    return new SlowlyClosingAlarm(project, name, new MyApplicationPooledThreadExecutorWrapper(), true);
   }
 
   static MyExecutorWrapper createExecutorWrapper(final ExecutorService executorService) {
