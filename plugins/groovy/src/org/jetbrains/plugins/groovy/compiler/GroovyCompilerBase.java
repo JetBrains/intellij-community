@@ -57,7 +57,6 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.groovy.compiler.rt.CompilerMessage;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -67,7 +66,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
-import java.util.regex.Pattern;
 
 /**
  * @author peter
@@ -75,8 +73,6 @@ import java.util.regex.Pattern;
 public abstract class GroovyCompilerBase implements TranslatingCompiler {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.compiler.GroovyCompilerBase");
   protected final Project myProject;
-  @NonNls private static final String GROOVYC_RUNNER_REQUIRED = ".*(groovy|asm|antlr|junit|jline|ant|commons).*\\.jar";
-  private static final Pattern NONTRADITIONAL_GROOVYC_RUNNER_REQUIRED = Pattern.compile(".*(groovy|junit|jline|ant).*\\.jar");
 
   public GroovyCompilerBase(Project project) {
     myProject = project;
@@ -142,7 +138,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
 
     try {
       File fileWithParameters = File.createTempFile("toCompile", "");
-      fillFileWithGroovycParameters(toCompile, fileWithParameters, outputDir, patchers);
+      fillFileWithGroovycParameters(toCompile, fileWithParameters, outputDir, patchers, getMainOutput(compileContext, module, tests));
 
       commandLine.addParameter(forStubs ? "stubs" : "groovyc");
       commandLine.addParameter(fileWithParameters.getPath());
@@ -211,6 +207,10 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     }
   }
 
+  protected static VirtualFile getMainOutput(CompileContext compileContext, Module module, boolean tests) {
+    return tests ? compileContext.getModuleOutputDirectoryForTests(module) : compileContext.getModuleOutputDirectory(module);
+  }
+
   private static CompilerMessageCategory getMessageCategory(CompilerMessage compilerMessage) {
     String category;
     category = compilerMessage.getCategory();
@@ -223,7 +223,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     return CompilerMessageCategory.ERROR;
   }
 
-  private void fillFileWithGroovycParameters(List<VirtualFile> virtualFiles, File f, VirtualFile outputDir, final List<String> patchers) {
+  private void fillFileWithGroovycParameters(List<VirtualFile> virtualFiles, File f, VirtualFile outputDir, final List<String> patchers, VirtualFile finalOutputDir) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Running groovyc on: " + virtualFiles.toString());
     }
@@ -269,9 +269,13 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       printer.println(ideCharset.name());
     }
 
-    //production output
     printer.println(GroovycRunner.OUTPUTPATH);
     printer.println(PathUtil.getLocalPath(outputDir));
+
+    printer.println(GroovycRunner.FINAL_OUTPUTPATH);
+    printer.println(PathUtil.getLocalPath(finalOutputDir));
+
+
     printer.close();
   }
 
@@ -314,10 +318,10 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
         }
 
         if (!toCompile.isEmpty()) {
-          compileFiles(compileContext, module, toCompile, compileContext.getModuleOutputDirectory(module), sink, false);
+          compileFiles(compileContext, module, toCompile, sink, false);
         }
         if (!toCompileTests.isEmpty()) {
-          compileFiles(compileContext, module, toCompileTests, compileContext.getModuleOutputDirectoryForTests(module), sink, true);
+          compileFiles(compileContext, module, toCompileTests, sink, true);
         }
 
       }
@@ -325,9 +329,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
   }
 
   protected abstract void compileFiles(CompileContext compileContext, Module module,
-                                       List<VirtualFile> toCompile,
-                                       VirtualFile outputDir,
-                                       OutputSink sink, boolean tests);
+                                       List<VirtualFile> toCompile, OutputSink sink, boolean tests);
 
   public boolean isCompilableFile(VirtualFile file, CompileContext context) {
     final boolean result = GroovyFileType.GROOVY_FILE_TYPE.equals(file.getFileType());

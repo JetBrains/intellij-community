@@ -80,7 +80,7 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
 
   @Override
   protected void compileFiles(CompileContext compileContext, Module module,
-                              final List<VirtualFile> toCompile, VirtualFile outputDir, OutputSink sink, boolean tests) {
+                              final List<VirtualFile> toCompile, OutputSink sink, boolean tests) {
     boolean hasGroovy = false;
     boolean hasJava = false;
     for (final VirtualFile file : toCompile) {
