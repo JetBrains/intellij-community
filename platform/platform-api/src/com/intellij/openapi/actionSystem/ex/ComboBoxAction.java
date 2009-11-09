@@ -53,6 +53,18 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
   @NotNull
   protected abstract DefaultActionGroup createPopupActionGroup(JComponent button);
 
+  protected int getMaxRows() {
+    return 30;
+  }
+
+  protected int getMinHeight() {
+    return 1;
+  }
+
+  protected int getMinWidth() {
+    return 1;
+  }
+
   protected class ComboBoxButton extends JButton {
     private final Presentation myPresentation;
     private boolean myForcePressed = false;
@@ -105,7 +117,8 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, group, DataManager.getInstance().getDataContext(),
                                                                                   JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false,
                                                                                   onDispose,
-                                                                                  30);
+                                                                                  getMaxRows());
+      popup.setMinimumSize(new Dimension(getMinWidth(), getMinHeight()));
       return popup;
     }
 
