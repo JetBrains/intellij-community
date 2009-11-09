@@ -38,8 +38,6 @@ public interface ModifiableFacetModel extends FacetModel {
   boolean isModified();
 
   boolean isNewFacet(Facet facet);
-  
-  String getFacetName(Facet facet);
 
   void addListener(@NotNull Listener listener, @Nullable Disposable parentDisposable);
 

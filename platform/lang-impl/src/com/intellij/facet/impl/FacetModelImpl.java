@@ -96,7 +96,8 @@ public class FacetModelImpl extends FacetModelBase implements ModifiableFacetMod
     return myFacets.toArray(new Facet[myFacets.size()]);
   }
 
-  public String getFacetName(final Facet facet) {
+  @NotNull
+  public String getFacetName(@NotNull final Facet facet) {
     return myFacet2NewName.containsKey(facet) ? myFacet2NewName.get(facet) : facet.getName();
   }
 

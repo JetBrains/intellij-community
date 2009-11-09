@@ -82,6 +82,11 @@ public abstract class FacetModelBase implements FacetModel {
     return facets != null ? facets : Collections.<F>emptyList();
   }
 
+  @NotNull
+  public String getFacetName(@NotNull Facet facet) {
+    return facet.getName();
+  }
+
   @Nullable
   public <F extends Facet> F findFacet(final FacetTypeId<F> type, final String name) {
     final Collection<F> fs = getFacetsByType(type);
