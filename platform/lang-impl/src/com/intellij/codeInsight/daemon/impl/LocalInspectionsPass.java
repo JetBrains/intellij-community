@@ -24,6 +24,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.concurrency.JobUtil;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
@@ -444,9 +445,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     message = StringUtil.replace(message, "<code>", "'");
     message = StringUtil.replace(message, "</code>", "'");
     //message = message.replaceAll("<[^>]*>", "");
-    String text = psiElement == null ? "" : psiElement.getText();
+    String ref = ProblemDescriptionNode.extractHighlightedText(descriptor, psiElement);
     message = StringUtil.replace(message, "#loc", "");
-    message = StringUtil.replace(message, "#ref", text);
+    message = StringUtil.replace(message, "#ref", ref);
 
     message = StringUtil.unescapeXml(message).trim();
     return message;
