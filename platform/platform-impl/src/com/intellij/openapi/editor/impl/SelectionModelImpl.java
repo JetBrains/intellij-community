@@ -64,7 +64,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   private LogicalPosition myBlockStart;
   private LogicalPosition myBlockEnd;
   private TextAttributes myTextAttributes;
-  private boolean myIsInUpdate;
+  private DocumentEvent myIsInUpdate;
 
   private class MyRangeMarker extends RangeMarkerImpl {
     private boolean myIsReleased;
@@ -102,13 +102,15 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   }
 
   public void beforeDocumentChange(DocumentEvent event) {
-    myIsInUpdate = true;
+    myIsInUpdate = event;
   }
 
   public void documentChanged(DocumentEvent event) {
-    myIsInUpdate = false;
-    if (mySelectionMarker != null && mySelectionMarker.isValid()) {
-      mySelectionMarker.documentChanged(event);
+    if (myIsInUpdate == event) {
+      myIsInUpdate = null;
+      if (mySelectionMarker != null && mySelectionMarker.isValid()) {
+        mySelectionMarker.documentChanged(event);
+      }
     }
   }
 
@@ -133,7 +135,10 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     else {
       ApplicationManager.getApplication().assertReadAccessAllowed();
     }
-    LOG.assertTrue(!myIsInUpdate, "Selection model is in its update stage. All requests are illegal at this point.");
+
+    if (myIsInUpdate != null) {
+      documentChanged(myIsInUpdate);
+    }
   }
 
   public int getSelectionEnd() {
