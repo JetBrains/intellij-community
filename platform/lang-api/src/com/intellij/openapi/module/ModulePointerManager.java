@@ -15,11 +15,12 @@
  */
 package com.intellij.openapi.module;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 
 public abstract class ModulePointerManager {
   public static ModulePointerManager getInstance(Project project) {
-    return project.getComponent(ModulePointerManager.class);
+    return ServiceManager.getService(project, ModulePointerManager.class);
   }
 
   public abstract ModulePointer create(Module module);
