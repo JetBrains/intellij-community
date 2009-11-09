@@ -18,88 +18,65 @@ package org.jetbrains.idea.maven.utils;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.Condition;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MavenProgressIndicator {
-  private final List<ProgressIndicator> myIndicators = ContainerUtil.createEmptyCOWList();
-  private String myText;
-  private String myText2;
-  private double myFraction;
-  private boolean myCanceled;
+  private ProgressIndicator myIndicator;
+  private List<Condition<MavenProgressIndicator>> myCancelConditions = new ArrayList<Condition<MavenProgressIndicator>>();
 
   public MavenProgressIndicator() {
+    this(new EmptyProgressIndicator());
   }
 
   public MavenProgressIndicator(ProgressIndicator i) {
-    myText = i.getText();
-    myText2 = i.getText2();
-    myFraction = i.getFraction();
-    myCanceled = i.isCanceled();
-    addIndicator(i);
+    myIndicator = i;
   }
 
-  public void addIndicator(ProgressIndicator i) {
-    synchronized (this) {
-      i.setText(myText);
-      i.setText2(myText2);
-      i.setFraction(myFraction);
-      if (myCanceled) i.cancel();
-    }
-    myIndicators.add(i);
+  public synchronized void setIndicator(ProgressIndicator i) {
+    i.setText(myIndicator.getText());
+    i.setText2(myIndicator.getText2());
+    i.setFraction(myIndicator.getFraction());
+    if (i.isCanceled()) i.cancel();
+    myIndicator = i;
   }
 
-  public ProgressIndicator getIndicator() {
-    return myIndicators.isEmpty() ? new EmptyProgressIndicator() : myIndicators.get(0);
+  public synchronized ProgressIndicator getIndicator() {
+    return myIndicator;
   }
 
-  public void setText(String text) {
-    synchronized (this) {
-      myText = text;
-    }
-    for (ProgressIndicator each : myIndicators) {
-      each.setText(text);
-    }
+  public synchronized void setText(String text) {
+    myIndicator.setText(text);
   }
 
-  public void setText2(String text) {
-    synchronized (this) {
-      myText2 = text;
-    }
-    for (ProgressIndicator each : myIndicators) {
-      each.setText2(text);
-    }
+  public synchronized void setText2(String text) {
+    myIndicator.setText2(text);
   }
 
-  public void setFraction(double fraction) {
-    synchronized (this) {
-      myFraction = fraction;
-    }
-    for (ProgressIndicator each : myIndicators) {
-      each.setFraction(fraction);
-    }
+  public synchronized void setFraction(double fraction) {
+    myIndicator.setFraction(fraction);
   }
 
-  public void cancel() {
-    synchronized (this) {
-      myCanceled = true;
-    }
-    for (ProgressIndicator each : myIndicators) {
-      each.cancel();
-    }
+  public synchronized void cancel() {
+    myIndicator.cancel();
   }
 
-  public boolean isCanceled() {
-    for (ProgressIndicator each : myIndicators) {
-      if (each.isCanceled()) {
-        synchronized (this) {
-          myCanceled = true;
-        }
-        break;
-      }
+  public synchronized void addCancelCondition(Condition<MavenProgressIndicator> condition) {
+    myCancelConditions.add(condition);
+  }
+
+  public synchronized void removeCancelCondition(Condition<MavenProgressIndicator> condition) {
+    myCancelConditions.remove(condition);
+  }
+
+  public synchronized boolean isCanceled() {
+    if (myIndicator.isCanceled()) return true;
+    for (Condition<MavenProgressIndicator> each : myCancelConditions) {
+      if (each.value(this)) return true;
     }
-    return myCanceled;
+    return false;
   }
 
   public void checkCanceled() throws MavenProcessCanceledException {

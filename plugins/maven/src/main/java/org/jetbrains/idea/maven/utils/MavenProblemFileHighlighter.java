@@ -15,7 +15,9 @@
  */
 package org.jetbrains.idea.maven.utils;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -29,8 +31,12 @@ public class MavenProblemFileHighlighter implements Condition<VirtualFile> {
     myProject = project;
   }
 
-  public boolean value(VirtualFile file) {
-    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
-    return psiFile != null && MavenDomUtil.isMavenFile(psiFile);
+  public boolean value(final VirtualFile file) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      public Boolean compute() {
+        PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
+        return psiFile != null && MavenDomUtil.isMavenFile(psiFile);
+      }
+    });
   }
 }
