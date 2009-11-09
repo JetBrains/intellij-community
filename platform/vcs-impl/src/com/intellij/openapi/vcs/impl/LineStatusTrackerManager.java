@@ -172,19 +172,19 @@ public class LineStatusTrackerManager implements ProjectComponent {
   }
 
 
-  public LineStatusTracker setUpToDateContent(Document document, String lastUpToDateContent) {
+  public LineStatusTracker setUpToDateContent(final Document document, final String lastUpToDateContent, final VirtualFile vf) {
     trackAwtThread();
     LineStatusTracker result = myLineStatusTrackers.get(document);
     if (result == null) {
-      result = LineStatusTracker.createOn(document, lastUpToDateContent, myProject);
+      result = LineStatusTracker.createOn(document, lastUpToDateContent, myProject, vf);
       myLineStatusTrackers.put(document, result);
     }
     return result;
   }
 
-  private LineStatusTracker createTrackerForDocument(Document document) {
+  private LineStatusTracker createTrackerForDocument(Document document, VirtualFile vf) {
     LOG.assertTrue(!myLineStatusTrackers.containsKey(document));
-    LineStatusTracker result = LineStatusTracker.createOn(document, myProject);
+    LineStatusTracker result = LineStatusTracker.createOn(document, myProject, vf);
     myLineStatusTrackers.put(document, result);
     return result;
   }
@@ -297,7 +297,7 @@ public class LineStatusTrackerManager implements ProjectComponent {
         myLineStatusUpdateAlarms.put(document, alarm);
       }
 
-      final LineStatusTracker tracker = createTrackerForDocument(document);
+      final LineStatusTracker tracker = createTrackerForDocument(document, virtualFile);
 
       alarm.addRequest(new Runnable() {
         public void run() {
