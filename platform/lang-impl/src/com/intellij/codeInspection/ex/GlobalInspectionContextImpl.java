@@ -542,18 +542,8 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
   public void initializeTools(List<Tools> tools, List<Tools> localTools) {
     myJobDescriptors = new ArrayList<JobDescriptor>();
-    final InspectionProfile profile = getCurrentProfile();
-    InspectionProfileWrapper inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper(profile.getName());
-    if (inspectionProfile == null){
-      inspectionProfile = new InspectionProfileWrapper(profile);
-      final InspectionProfileWrapper profileWrapper = inspectionProfile;
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          profileWrapper.init(getProject()); //offline inspections only
-        }
-      });
-    }
-    final List<ToolsImpl> usedTools = ((InspectionProfileImpl)inspectionProfile.getInspectionProfile()).getAllEnabledInspectionTools();
+    final InspectionProfileImpl profile = new InspectionProfileImpl((InspectionProfileImpl)getCurrentProfile());
+    final List<ToolsImpl> usedTools = profile.getAllEnabledInspectionTools();
     for (Tools currentTools : usedTools) {
       final String shortName = currentTools.getShortName();
       myTools.put(shortName, currentTools);
