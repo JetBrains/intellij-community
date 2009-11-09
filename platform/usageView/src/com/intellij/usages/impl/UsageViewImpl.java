@@ -316,6 +316,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       }
     });
 
+    TreeUtil.selectFirstNode(myTree);
     PopupHandler.installPopupHandler(myTree, IdeActions.GROUP_USAGE_VIEW_POPUP, ActionPlaces.USAGE_VIEW_POPUP);
     //TODO: install speed search. Not in openapi though. It makes sense to create a common TreeEnchancer service.
   }
