@@ -53,7 +53,7 @@ public class ArtifactConfigurable extends ProjectStructureElementConfigurable<Ar
   public void setDisplayName(String name) {
     final String oldName = getArtifact().getName();
     if (name != null && !name.equals(oldName) && !myIsInUpdateName) {
-      myArtifactsStructureContext.getModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact).setName(name);
+      myArtifactsStructureContext.getOrCreateModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact).setName(name);
       myEditor.updateOutputPath(oldName, name);
     }
   }

@@ -17,7 +17,9 @@ package com.intellij.packaging.impl.ui;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModulePointer;
 import com.intellij.packaging.ui.PackagingElementWeights;
 import com.intellij.packaging.ui.TreeNodePresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
@@ -29,46 +31,67 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public class ModuleElementPresentation extends TreeNodePresentation {
-  private final String myName;
+  private final ModulePointer myModulePointer;
   private final ArtifactEditorContext myContext;
-  private final Module myModule;
 
-  public ModuleElementPresentation(@NotNull String name, @Nullable Module module, ArtifactEditorContext context) {
-    myModule = module;
-    myName = name;
+  public ModuleElementPresentation(@Nullable ModulePointer modulePointer, @NotNull ArtifactEditorContext context) {
+    myModulePointer = modulePointer;
     myContext = context;
   }
 
   public String getPresentableName() {
-    return myName;
+    return myModulePointer != null ? myModulePointer.getModuleName() : "<unknown>";
   }
 
   @Override
   public boolean canNavigateToSource() {
-    return myModule != null;
+    return findModule() != null;
   }
 
   @Override
   public Object getSourceObject() {
-    return myModule;
+    return findModule();
+  }
+
+  @Nullable
+  private Module findModule() {
+    return myModulePointer != null ? myModulePointer.getModule() : null;
   }
 
   @Override
   public void navigateToSource() {
-    myContext.selectModule(myModule);
+    final Module module = findModule();
+    if (module != null) {
+      myContext.selectModule(module);
+    }
   }
 
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
-    if (myModule != null) {
-      presentationData.setOpenIcon(myModule.getModuleType().getNodeIcon(true));
-      presentationData.setClosedIcon(myModule.getModuleType().getNodeIcon(false));
+    final Module module = findModule();
+    if (module != null) {
+      presentationData.setOpenIcon(module.getModuleType().getNodeIcon(true));
+      presentationData.setClosedIcon(module.getModuleType().getNodeIcon(false));
     }
-    presentationData.addText(getNodeText(),
-                             myModule != null ? mainAttributes : SimpleTextAttributes.ERROR_ATTRIBUTES);
-  }
+    String moduleName;
+    if (module != null) {
+      moduleName = module.getName();
+      final ModifiableModuleModel moduleModel = myContext.getModifiableModuleModel();
+      if (moduleModel != null) {
+        final String newName = moduleModel.getNewName(module);
+        if (newName != null) {
+          moduleName = newName;
+        }
+      }
+    }
+    else if (myModulePointer != null) {
+      moduleName = myModulePointer.getModuleName();
+    }
+    else {
+      moduleName = "<unknown>";
+    }
 
-  protected String getNodeText() {
-    return CompilerBundle.message("node.text.0.compile.output", myName);
+    presentationData.addText(CompilerBundle.message("node.text.0.compile.output", moduleName),
+                             module != null ? mainAttributes : SimpleTextAttributes.ERROR_ATTRIBUTES);
   }
 
   @Override

@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.facet.Facet;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootModel;
@@ -57,8 +58,12 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
   }
 
   @NotNull
-  public ModifiableArtifactModel getModifiableArtifactModel() {
-    return myParent.getModifiableArtifactModel();
+  public ModifiableArtifactModel getOrCreateModifiableArtifactModel() {
+    return myParent.getOrCreateModifiableArtifactModel();
+  }
+
+  public ModifiableModuleModel getModifiableModuleModel() {
+    return myParent.getModifiableModuleModel();
   }
 
   @NotNull

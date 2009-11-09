@@ -112,10 +112,16 @@ public class DumbServiceImpl extends DumbService {
         // ok to test and set the flag like this, because the change is always done from dispatch thread
         final boolean wasDumb = myDumb;
         if (!wasDumb) {
-          myDumb = true;
-          myPublisher.enteredDumbMode();
+          // always change dumb status inside write action.
+          // This will ensure all active read actions are completed before the app goes dumb
+          application.runWriteAction(new Runnable() {
+            public void run() {
+              myDumb = true;
+              myPublisher.enteredDumbMode();
 
-          updateRunnable.run();
+              updateRunnable.run();
+            }
+          });
         }
         else {
           myUpdatesQueue.addLast(updateRunnable);
@@ -153,6 +159,13 @@ public class DumbServiceImpl extends DumbService {
 
   @Override
   public BalloonHandler showDumbModeNotification(final String message) {
+    if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      return new BalloonHandler() {
+        public void hide() {
+        }
+      };
+    }
+
     StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getIdeFrame(myProject).getStatusBar();
     HyperlinkListener listener = new HyperlinkListener() {
       public void hyperlinkUpdate(HyperlinkEvent e) {

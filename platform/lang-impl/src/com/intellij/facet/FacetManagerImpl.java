@@ -115,6 +115,11 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
   }
 
   @NotNull
+  public String getFacetName(@NotNull Facet facet) {
+    return myModel.getFacetName(facet);
+  }
+
+  @NotNull
   public <F extends Facet, C extends FacetConfiguration> F createFacet(@NotNull final FacetType<F, C> type, @NotNull final String name, @NotNull final C cofiguration,
                                                                           @Nullable final Facet underlying) {
     final F facet = type.createFacet(myModule, name, cofiguration, underlying);

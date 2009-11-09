@@ -232,23 +232,23 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     });
   }
 
-  private void disposeSelf() {
+  private boolean disposeSelf() {
     Project[] openProjects = ProjectManagerEx.getInstanceEx().getOpenProjects();
     final boolean[] canClose = {true};
     for (final Project project : openProjects) {
       CommandProcessor commandProcessor = CommandProcessor.getInstance();
       commandProcessor.executeCommand(project, new Runnable() {
         public void run() {
-          FileDocumentManager.getInstance().saveAllDocuments();
           canClose[0] = ProjectUtil.closeProject(project);
         }
       }, ApplicationBundle.message("command.exit"), null);
-      if (!canClose[0]) return;
+      if (!canClose[0]) return false;
     }
     myDisposeInProgress = true;
     Disposer.dispose(this);
 
     Disposer.assertIsEmpty();
+    return true;
   }
 
   public String getName() {
@@ -630,12 +630,14 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
             return;
           }
         }
-        saveAll();
+
+        FileDocumentManager.getInstance().saveAllDocuments();
+
+        saveSettings();
+
         if (!canExit()) return;
 
-        disposeSelf();
-
-        System.exit(0);
+        if (disposeSelf()) System.exit(0);
       }
     };
     
@@ -962,7 +964,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
 
   public void saveSettings() {
-    if (myDoNotSave) return;
+    if (myDoNotSave || isUnitTestMode() || isHeadlessEnvironment()) return;
+
+    System.out.println("Saving application settings");
 
     if (mySaveSettingsIsInProgress.compareAndSet(false, true)) {
       try {

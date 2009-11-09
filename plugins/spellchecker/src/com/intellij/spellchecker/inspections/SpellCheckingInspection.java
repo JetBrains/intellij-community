@@ -186,9 +186,13 @@ public class SpellCheckingInspection extends LocalInspectionTool {
         }
       }
 
-      fixes.add(new AcceptWordAsCorrect(word));
+      final AcceptWordAsCorrect acceptWordAsCorrect = new AcceptWordAsCorrect();
+      fixes.add(acceptWordAsCorrect);
 
-      holder.registerProblem(createProblemDescriptor(token, holder, textRange, word, fixes));
+      final ProblemDescriptor problemDescriptor = createProblemDescriptor(token, holder, textRange, word, fixes);
+      holder.registerProblem(problemDescriptor);
+
+      acceptWordAsCorrect.setDescriptor(problemDescriptor);
     }
 
   }
@@ -198,6 +202,8 @@ public class SpellCheckingInspection extends LocalInspectionTool {
                                                            TextRange textRange,
                                                            String word,
                                                            Collection<LocalQuickFix> fixes) {
+    //TODO: these descriptions eat LOTS of HEAP on batch run - need either to make them constant or evaluate template dynamically
+    //  ( add something like #text substitution)
     final String defaultDescription = SpellCheckerBundle.message("word.0.1.is.misspelled", word, token.getElement().getLanguage());
     final String tokenDescription = token.getDescription();
     final String description = tokenDescription == null ? defaultDescription : tokenDescription;

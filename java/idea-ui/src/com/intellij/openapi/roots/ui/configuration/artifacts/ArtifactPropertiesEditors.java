@@ -109,7 +109,7 @@ public class ArtifactPropertiesEditors {
 
     public void applyProperties() {
       myEditor.apply();
-      final ModifiableArtifact artifact = myContext.getModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact);
+      final ModifiableArtifact artifact = myContext.getOrCreateModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact);
       artifact.setProperties(myProvider, myProperties);
     }
 

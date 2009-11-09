@@ -16,13 +16,11 @@
 
 package com.intellij.facet.impl.pointers;
 
-import com.intellij.facet.Facet;
-import com.intellij.facet.FacetManager;
-import com.intellij.facet.FacetType;
-import com.intellij.facet.FacetTypeRegistry;
+import com.intellij.facet.*;
 import com.intellij.facet.pointers.FacetPointer;
 import com.intellij.facet.pointers.FacetPointersManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -113,7 +111,7 @@ public class FacetPointerImpl<F extends Facet> implements FacetPointer<F> {
   }
 
   @Nullable
-  public F findFacet(ModulesProvider modulesProvider, FacetsProvider facetsProvider) {
+  public F findFacet(@NotNull ModulesProvider modulesProvider, @NotNull FacetsProvider facetsProvider) {
     final Module module = modulesProvider.getModule(myModuleName);
     if (module == null) return null;
     final FacetType<F, ?> type = getFacetType();
@@ -139,6 +137,25 @@ public class FacetPointerImpl<F extends Facet> implements FacetPointer<F> {
   @NotNull
   public String getFacetTypeId() {
     return myFacetTypeId;
+  }
+
+  @NotNull
+  public String getModuleName(@Nullable ModifiableModuleModel moduleModel) {
+    if (moduleModel != null && myFacet != null) {
+      final String newName = moduleModel.getNewName(myFacet.getModule());
+      if (newName != null) {
+        return newName;
+      }
+    }
+    return myModuleName;
+  }
+
+  @NotNull
+  public String getFacetName(@NotNull ModulesProvider modulesProvider, @NotNull FacetsProvider facetsProvider) {
+    if (myFacet != null) {
+      return modulesProvider.getFacetModel(myFacet.getModule()).getFacetName(myFacet);
+    }
+    return myFacetName;
   }
 
   @Nullable

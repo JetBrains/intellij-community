@@ -15,7 +15,13 @@
  */
 package com.intellij.openapi.module;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 public interface ModulePointer {
+  @Nullable 
   Module getModule();
+
+  @NotNull
   String getModuleName();
 }
