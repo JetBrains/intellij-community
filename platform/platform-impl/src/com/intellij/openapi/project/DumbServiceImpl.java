@@ -244,9 +244,9 @@ public class DumbServiceImpl extends DumbService {
               indicator.setIndeterminate(false);
               indicator.setText(IdeBundle.message("progress.indexing.updaing"));
               updateRunner.processFiles(indicator, true);
+              updateRunner.updatingDone();
             }
             finally {
-              updateRunner.updatingDone();
               myProcessedItems += count;
               invokeOnEDT(new DumbAwareRunnable() {
                 public void run() {
