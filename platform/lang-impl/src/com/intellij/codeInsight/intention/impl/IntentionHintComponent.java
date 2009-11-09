@@ -183,9 +183,8 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
 
     LOG.assertTrue(editor.getComponent().isDisplayable());
     Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-    Point location = SwingUtilities.convertPoint(editor.getContentComponent(),
-                                                 new Point(visibleArea.x - xShift, position.y + yShift),
-                                                 editor.getComponent().getRootPane().getLayeredPane());
+    Point realPoint = new Point(Math.max(0,visibleArea.x - xShift), position.y + yShift-20);
+    Point location = SwingUtilities.convertPoint(editor.getContentComponent(), realPoint, editor.getComponent().getRootPane().getLayeredPane());
 
     return new Point(location.x, location.y);
   }

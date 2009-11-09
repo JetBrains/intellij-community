@@ -83,7 +83,6 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
   }
 
   private boolean wrapActionsTo(final List<HighlightInfo.IntentionActionDescriptor> descriptors, final Set<IntentionActionWithTextCaching> cachedActions) {
-    boolean result = true;
     final int caretOffset = myEditor.getCaretModel().getOffset();
     final int fileOffset = caretOffset > 0 && caretOffset == myFile.getTextLength() ? caretOffset - 1 : caretOffset;
     PsiElement element;
@@ -98,26 +97,27 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     else {
       element = InjectedLanguageUtil.findElementAtNoCommit(myFile, fileOffset);
     }
-    if (!descriptors.isEmpty()) {
-
-      for (HighlightInfo.IntentionActionDescriptor descriptor : descriptors) {
-        IntentionAction action = descriptor.getAction();
-        IntentionActionWithTextCaching cachedAction = new IntentionActionWithTextCaching(action, descriptor.getDisplayName(), descriptor.getIcon());
-        result &= !cachedActions.add(cachedAction);
-        final List<IntentionAction> options;
-        if (element != null && (options = descriptor.getOptions(element)) != null) {
-          for (IntentionAction option : options) {
-            boolean isErrorFix = myCachedErrorFixes.contains(new IntentionActionWithTextCaching(option, option.getText()));
-            if (isErrorFix) {
-              cachedAction.addErrorFix(option);
-            }
-            boolean isInspectionFix = myCachedInspectionFixes.contains(new IntentionActionWithTextCaching(option, option.getText()));
-            if (isInspectionFix) {
-              cachedAction.addInspectionFix(option);
-            }
-            else {
-              cachedAction.addIntention(option);
-            }
+    boolean result = true;
+    for (HighlightInfo.IntentionActionDescriptor descriptor : descriptors) {
+      IntentionAction action = descriptor.getAction();
+      IntentionActionWithTextCaching cachedAction = new IntentionActionWithTextCaching(action, descriptor.getDisplayName(), descriptor.getIcon());
+      result &= !cachedActions.add(cachedAction);
+      if (element == null) continue;
+      final List<IntentionAction> options = descriptor.getOptions(element);
+      if (options != null) {
+        for (IntentionAction option : options) {
+          if (!option.isAvailable(myProject, myEditor, element.getContainingFile())) continue;
+          IntentionActionWithTextCaching textCaching = new IntentionActionWithTextCaching(option, option.getText());
+          boolean isErrorFix = myCachedErrorFixes.contains(textCaching);
+          if (isErrorFix) {
+            cachedAction.addErrorFix(option);
+          }
+          boolean isInspectionFix = myCachedInspectionFixes.contains(textCaching);
+          if (isInspectionFix) {
+            cachedAction.addInspectionFix(option);
+          }
+          else {
+            cachedAction.addIntention(option);
           }
         }
       }
@@ -252,22 +252,12 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     }
 
     if (mySettings.isShowLightBulb(action)) {
-      if (myCachedErrorFixes.contains(value)) {
-        return IntentionHintComponent.ourQuickFixIcon;
-      } else if (myCachedInspectionFixes.contains(value)) {
-        return IntentionHintComponent.ourBulbIcon;
-      }
-      else {
-        return IntentionHintComponent.ourIntentionIcon;
-      }
+      return myCachedErrorFixes.contains(value) ? IntentionHintComponent.ourQuickFixIcon
+             : myCachedInspectionFixes.contains(value) ? IntentionHintComponent.ourBulbIcon :
+               IntentionHintComponent.ourIntentionIcon;
     }
     else {
-      if (myCachedErrorFixes.contains(value)) {
-        return IntentionHintComponent.ourQuickFixOffIcon;
-      }
-      else {
-        return IntentionHintComponent.ourIntentionOffIcon;
-      }
+      return myCachedErrorFixes.contains(value) ? IntentionHintComponent.ourQuickFixOffIcon : IntentionHintComponent.ourIntentionOffIcon;
     }
   }
 
