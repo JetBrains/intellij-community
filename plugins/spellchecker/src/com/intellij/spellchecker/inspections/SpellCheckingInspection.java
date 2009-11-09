@@ -189,7 +189,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
       final AcceptWordAsCorrect acceptWordAsCorrect = new AcceptWordAsCorrect();
       fixes.add(acceptWordAsCorrect);
 
-      final ProblemDescriptor problemDescriptor = createProblemDescriptor(token, holder, textRange, word, fixes);
+      final ProblemDescriptor problemDescriptor = createProblemDescriptor(token, holder, textRange, fixes);
       holder.registerProblem(problemDescriptor);
 
       acceptWordAsCorrect.setDescriptor(problemDescriptor);
@@ -199,12 +199,10 @@ public class SpellCheckingInspection extends LocalInspectionTool {
 
   private static ProblemDescriptor createProblemDescriptor(Token token,
                                                            ProblemsHolder holder,
-                                                           TextRange textRange,
-                                                           String word,
-                                                           Collection<LocalQuickFix> fixes) {
+                                                           TextRange textRange, Collection<LocalQuickFix> fixes) {
     //TODO: these descriptions eat LOTS of HEAP on batch run - need either to make them constant or evaluate template dynamically
     //  ( add something like #text substitution)
-    final String defaultDescription = SpellCheckerBundle.message("word.0.1.is.misspelled", word, token.getElement().getLanguage());
+    final String defaultDescription = SpellCheckerBundle.message("word.0.1.is.misspelled",  token.getElement().getLanguage());
     final String tokenDescription = token.getDescription();
     final String description = tokenDescription == null ? defaultDescription : tokenDescription;
     final TextRange highlightRange = TextRange.from(token.getOffset() + textRange.getStartOffset(), textRange.getLength());
