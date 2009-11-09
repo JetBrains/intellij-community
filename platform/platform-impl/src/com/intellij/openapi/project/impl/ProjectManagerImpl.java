@@ -885,6 +885,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     try {
       if (save) {
         FileDocumentManager.getInstance().saveAllDocuments();
+        System.out.println("Saving project: " + project.getName());
         project.save();
       }
       fireProjectClosing(project);
@@ -892,11 +893,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       myOpenProjects.remove(project);
       myChangedProjectFiles.remove(project);
       fireProjectClosed(project);
-
-      if (save) {
-        ApplicationEx application = ApplicationManagerEx.getApplicationEx();
-        if (!application.isUnitTestMode()) application.saveSettings();
-      }
     }
     finally {
       shutDownTracker.unregisterStopperThread(Thread.currentThread());
