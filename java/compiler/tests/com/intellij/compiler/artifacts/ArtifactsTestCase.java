@@ -4,6 +4,7 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.impl.DefaultFacetsProvider;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
@@ -84,11 +85,15 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
     private Map<CompositePackagingElement<?>, ManifestFileConfiguration> myManifestFiles = new HashMap<CompositePackagingElement<?>, ManifestFileConfiguration>();
 
     @NotNull
-    public ModifiableArtifactModel getModifiableArtifactModel() {
+    public ModifiableArtifactModel getOrCreateModifiableArtifactModel() {
       if (myModifiableModel == null) {
         myModifiableModel = ArtifactManager.getInstance(myProject).createModifiableModel();
       }
       return myModifiableModel;
+    }
+
+    public ModifiableModuleModel getModifiableModuleModel() {
+      return null;
     }
 
     @NotNull

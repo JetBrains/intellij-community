@@ -2,6 +2,7 @@ package com.intellij.compiler.artifacts;
 
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.module.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 
@@ -60,6 +61,31 @@ public class UpdateArtifactsAfterRenameTest extends PackagingElementsTestCase {
     assertLayout(artifact, "<root>\n" +
                            " artifact:yyy");
   }
+
+  public void testRenameModule() throws Exception {
+    final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+    final Module module = moduleManager.newModule(getProjectBasePath() + "/myModule.iml", StdModuleTypes.JAVA);
+    final Artifact artifact = addArtifact(root().module(module));
+
+    assertLayout(artifact, "<root>\n" +
+                           " module:myModule");
+    new WriteAction() {
+      protected void run(final Result result) throws ModuleWithNameAlreadyExists {
+        final ModifiableModuleModel model = moduleManager.getModifiableModel();
+        model.renameModule(module, "newName");
+        model.commit();
+      }
+    }.execute();
+
+    assertLayout(artifact, "<root>\n" +
+                           " module:newName");
+
+    moduleManager.disposeModule(module);
+
+    assertLayout(artifact, "<root>\n" +
+                           " module:newName");
+  }
+
 
   private void renameFile(final VirtualFile file, final String newName) {
     new WriteAction() {
