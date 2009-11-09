@@ -153,6 +153,13 @@ public class DumbServiceImpl extends DumbService {
 
   @Override
   public BalloonHandler showDumbModeNotification(final String message) {
+    if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      return new BalloonHandler() {
+        public void hide() {
+        }
+      };
+    }
+
     StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getIdeFrame(myProject).getStatusBar();
     HyperlinkListener listener = new HyperlinkListener() {
       public void hyperlinkUpdate(HyperlinkEvent e) {
