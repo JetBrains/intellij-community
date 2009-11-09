@@ -214,7 +214,15 @@ public class MavenEmbedderFactory {
   }
 
   public static MavenEmbedderWrapper createEmbedder(MavenGeneralSettings generalSettings) {
-    DefaultPlexusContainer container = new DefaultPlexusContainer();
+    DefaultPlexusContainer container;
+    try {
+      container = new DefaultPlexusContainer();
+    }
+    catch (RuntimeException e) {
+      String s = "Cannot initialize Maven. Please make sure that your IDEA installation is correct and has no old libraries.";
+      throw new RuntimeException(s, e);
+    }
+
     container.setClassWorld(new ClassWorld("plexus.core", generalSettings.getClass().getClassLoader()));
     CustomLoggerManager loggerManager = new CustomLoggerManager(generalSettings.getLoggingLevel());
     container.setLoggerManager(loggerManager);
