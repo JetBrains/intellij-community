@@ -20,6 +20,7 @@ import com.intellij.codeInspection.LossyEncodingInspection;
 import com.intellij.codeInspection.RedundantSuppressInspection;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
 import com.intellij.codeInspection.canBeFinal.CanBeFinalInspection;
+import com.intellij.codeInspection.concurrencyAnnotations.*;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.codeInspection.deadCode.DeadCodeInspection;
 import com.intellij.codeInspection.defUse.DefUseInspection;
@@ -108,7 +109,14 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider {
       UncheckedWarningLocalInspection.class,
       SuspiciousNameCombinationInspection.class,
       DuplicateThrowsInspection.class,
-      LossyEncodingInspection.class
+      LossyEncodingInspection.class,
+
+      FieldAccessNotGuardedInspection.class,
+      InstanceGuardedByStaticInspection.class,
+      NonFinalFieldInImmutableInspection.class,
+      NonFinalGuardInspection.class,
+      StaticGuardedByInstanceInspection.class,
+      UnknownGuardInspection.class
     };
   }
 }
