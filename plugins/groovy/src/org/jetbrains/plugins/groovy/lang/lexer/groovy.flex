@@ -282,6 +282,7 @@ mGSTRING_LITERAL = \"\"
 
 <IN_SINGLE_GSTRING> {
   {mGSTRING_SINGLE_CONTENT} (\\)?         {  return mGSTRING_CONTENT; }
+  \\                                      {  return mGSTRING_CONTENT; }
 
   \"                                      {  if (!gStringStack.isEmpty()) {
                                                gStringStack.pop();
