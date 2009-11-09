@@ -16,16 +16,20 @@
 
 package com.intellij.internal.psiView;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+
+import javax.swing.*;
 
 /**
  * @author yole
+ * @author Konstantin Bulenkov
  */
 public interface PsiViewerExtension {
   ExtensionPointName<PsiViewerExtension> EP_NAME = ExtensionPointName.create("com.intellij.psiViewerExtension");
 
   String getName();
+  Icon getIcon();
   PsiElement createElement(Project project, String text);
 }
