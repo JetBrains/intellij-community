@@ -16,6 +16,8 @@
 package com.intellij.spellchecker.quickfixes;
 
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.TextRange;
@@ -28,17 +30,12 @@ import java.util.List;
 
 public abstract class ShowSuggestions implements LocalQuickFix, Iconable {
 
-  protected TextRange textRange;
-  protected String word;
-  protected Project project;
   private List<String> suggestions;
   private boolean processed;
+  protected ProblemDescriptor myProblemDescriptor;
 
 
-  public ShowSuggestions(@NotNull TextRange textRange, @NotNull String word, @NotNull Project project) {
-    this.textRange = textRange;
-    this.word = word;
-    this.project = project;
+  public ShowSuggestions() {
   }
 
   @NotNull
@@ -51,12 +48,15 @@ public abstract class ShowSuggestions implements LocalQuickFix, Iconable {
   }
 
   private void calculateSuggestions(){
-    SpellCheckerManager manager = SpellCheckerManager.getInstance(project);
-    suggestions = manager.getSuggestions(word);
+    SpellCheckerManager manager = SpellCheckerManager.getInstance(myProblemDescriptor.getPsiElement().getProject());
+    suggestions = manager.getSuggestions(ProblemDescriptionNode.extractHighlightedText(myProblemDescriptor, myProblemDescriptor.getPsiElement()));
   }
 
   public Icon getIcon(int flags) {
     return new ImageIcon(ShowSuggestions.class.getResource("spellcheck.png"));
   }
 
+  public void setDescriptor(ProblemDescriptor problemDescriptor) {
+    myProblemDescriptor = problemDescriptor;
+  }
 }

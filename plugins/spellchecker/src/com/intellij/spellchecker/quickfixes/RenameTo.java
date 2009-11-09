@@ -33,8 +33,8 @@ import javax.swing.*;
 
 public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
 
-  public RenameTo(@NotNull TextRange textRange, @NotNull String word, @NotNull Project project) {
-    super(textRange, word, project);
+  public RenameTo() {
+    super();
   }
 
   @NotNull
