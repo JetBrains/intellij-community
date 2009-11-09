@@ -68,7 +68,7 @@ public class ToggleBookmarkWithMnemonicAction extends ToggleBookmarkAction {
 
       final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(mc, mc);
       popup[0] = builder.
-        setTitle("Choose Mnemonic").
+        setTitle("Bookmark Mnemonic").
         setFocusable(true).
         setRequestFocus(true).
         setMovable(false).
