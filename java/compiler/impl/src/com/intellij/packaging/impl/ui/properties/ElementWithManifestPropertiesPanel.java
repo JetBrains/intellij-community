@@ -211,7 +211,7 @@ public abstract class ElementWithManifestPropertiesPanel<E extends CompositeElem
 
   public void reset() {
     myTitleLabel.setText("'" + myElement.getName() + "' manifest properties:");
-    myManifestNotFoundLabel.setText("Manifest.mf file not found in '" + myElement.getName() + "'");
+    myManifestNotFoundLabel.setText("META-INF/MANIFEST.MF file not found in '" + myElement.getName() + "'");
     final VirtualFile file = ManifestFileUtil.findManifestFile(myElement, myContext, myContext.getArtifactType());
     String path = file != null ? file.getPath() : null;
     if (!Comparing.equal(path, myManifestFileConfiguration.getManifestFilePath())) {
