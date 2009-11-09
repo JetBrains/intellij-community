@@ -101,10 +101,12 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
 
   protected final List<T> buildExtensions(Set<String> keys) {
     List<T> result = null;
-    for (String expKey : myExplicitExtensions.keySet()) {
-      if (keys.contains(expKey)) {
+    for (Map.Entry<String, List<T>> entry : myExplicitExtensions.entrySet()) {
+      String key = entry.getKey();
+      if (keys.contains(key)) {
         if (result == null) result = new ArrayList<T>();
-        result.addAll(myExplicitExtensions.get(expKey));
+        List<T> list = entry.getValue();
+        result.addAll(list);
       }
     }
 
@@ -121,9 +123,7 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
             LOG.error(e);
             continue;
           }
-          if (result == null) {
-            result = new ArrayList<T>();
-          }
+          if (result == null) result = new ArrayList<T>();
           result.add(instance);
         }
       }

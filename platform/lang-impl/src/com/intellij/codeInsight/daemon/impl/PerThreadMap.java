@@ -15,12 +15,13 @@
  */
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.UserDataHolder;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.picocontainer.PicoContainer;
+import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -43,26 +44,11 @@ public abstract class PerThreadMap<T, KeyT extends UserDataHolder> {
 
   private List<T> cloneTemplates(Collection<T> templates) {
     List<T> result = new ArrayList<T>(templates.size());
+    PicoContainer container = ApplicationManager.getApplication().getPicoContainer();
     for (T template : templates) {
       Class<? extends T> aClass = (Class<? extends T>)template.getClass();
-      try {
-        Constructor<? extends T> constructor = aClass.getDeclaredConstructor();
-        constructor.setAccessible(true);
-        T clone = constructor.newInstance();
-        result.add(clone);
-      }
-      catch (InstantiationException e) {
-        throw new RuntimeException("Cannot instantiate annotator "+aClass+". There must be public no-args constructor", e);
-      }
-      catch (IllegalAccessException e) {
-        throw new RuntimeException("Cannot access annotator "+aClass+". There must be public no-args constructor", e);
-      }
-      catch (NoSuchMethodException e) {
-        throw new RuntimeException("Cannot create annotator "+aClass+". There must be public no-args constructor", e);
-      }
-      catch (InvocationTargetException e) {
-        throw new RuntimeException("Error during creating annotator "+aClass, e);
-      }
+      T clone = (T)new ConstructorInjectionComponentAdapter(aClass.getName(), aClass).getComponentInstance(container);
+      result.add(clone);
     }
     return result;
   }
