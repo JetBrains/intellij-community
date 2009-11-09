@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
@@ -23,13 +24,14 @@ import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.ui.ArtifactEditor;
 import com.intellij.packaging.ui.ManifestFileConfiguration;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
  */
 public interface ArtifactsStructureConfigurableContext extends PackagingElementResolvingContext {
   @NotNull
-  ModifiableArtifactModel getModifiableArtifactModel();
+  ModifiableArtifactModel getOrCreateModifiableArtifactModel();
 
   @NotNull
   ManifestFileConfiguration getManifestFile(CompositePackagingElement<?> element, ArtifactType artifactType);
@@ -44,4 +46,7 @@ public interface ArtifactsStructureConfigurableContext extends PackagingElementR
 
   @NotNull
   Artifact getOriginalArtifact(@NotNull Artifact artifact);
+
+  @Nullable
+  ModifiableModuleModel getModifiableModuleModel();
 }

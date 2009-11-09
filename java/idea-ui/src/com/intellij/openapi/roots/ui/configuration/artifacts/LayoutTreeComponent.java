@@ -390,7 +390,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   }
 
   public void setRootElement(CompositePackagingElement<?> rootElement) {
-    myContext.getModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact).setRootElement(rootElement);
+    myContext.getOrCreateModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact).setRootElement(rootElement);
     myTreeStructure.updateRootElement();
     final DefaultMutableTreeNode node = myTree.getRootNode();
     node.setUserObject(myTreeStructure.getRootElement());

@@ -61,7 +61,7 @@ public class ExtractArtifactAction extends LayoutTreeActionBase {
     if (name != null) {
       final Project project = myArtifactEditor.getContext().getProject();
       //todo[nik] select type?
-      final ModifiableArtifact artifact = myArtifactEditor.getContext().getModifiableArtifactModel().addArtifact(name, PlainArtifactType.getInstance());
+      final ModifiableArtifact artifact = myArtifactEditor.getContext().getOrCreateModifiableArtifactModel().addArtifact(name, PlainArtifactType.getInstance());
       treeComponent.editLayout(new Runnable() {
         public void run() {
           for (PackagingElement<?> element : selectedElements) {

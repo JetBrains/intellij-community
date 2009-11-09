@@ -17,6 +17,8 @@ package com.intellij.packaging.impl.elements;
 
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModulePointer;
+import com.intellij.openapi.module.ModulePointerManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
@@ -173,14 +175,16 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   }
 
   @NotNull
-  public PackagingElement<?> createModuleOutput(@NotNull String moduleName, Project project) {
-    return new ModuleOutputPackagingElement(moduleName);
+  public PackagingElement<?> createModuleOutput(@NotNull String moduleName, @NotNull Project project) {
+    final ModulePointer pointer = ModulePointerManager.getInstance(project).create(moduleName);
+    return new ModuleOutputPackagingElement(project, pointer);
   }
 
   @NotNull
   @Override
   public PackagingElement<?> createModuleOutput(@NotNull Module module) {
-    return new ModuleOutputPackagingElement(module.getName());
+    final ModulePointer modulePointer = ModulePointerManager.getInstance(module.getProject()).create(module);
+    return new ModuleOutputPackagingElement(module.getProject(), modulePointer);
   }
 
   @NotNull

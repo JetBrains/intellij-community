@@ -125,7 +125,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   }
 
   public ModifiableArtifactModel getModifiableArtifactModel() {
-    return myPackagingEditorContext.getModifiableArtifactModel();
+    return myPackagingEditorContext.getOrCreateModifiableArtifactModel();
   }
 
   protected AbstractAddGroup createAddAction() {
@@ -178,7 +178,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
       name = DEFAULT_ARTIFACT_NAME + i;
       i++;
     }
-    final ModifiableArtifact artifact = myPackagingEditorContext.getModifiableArtifactModel().addArtifact(name, type, artifactTemplate.createRootElement(name));
+    final ModifiableArtifact artifact = myPackagingEditorContext.getOrCreateModifiableArtifactModel().addArtifact(name, type, artifactTemplate.createRootElement(name));
     selectNodeInTree(findNodeByObject(myRoot, artifact));
   }
 
@@ -216,7 +216,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
 
   @Override
   protected void removeArtifact(Artifact artifact) {
-    myPackagingEditorContext.getModifiableArtifactModel().removeArtifact(artifact);
+    myPackagingEditorContext.getOrCreateModifiableArtifactModel().removeArtifact(artifact);
     myContext.getDaemonAnalyzer().removeElement(new ArtifactProjectStructureElement(myContext, myPackagingEditorContext, artifact));
   }
 

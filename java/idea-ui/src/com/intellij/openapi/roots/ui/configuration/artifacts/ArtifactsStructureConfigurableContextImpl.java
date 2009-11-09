@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
@@ -73,6 +74,10 @@ class ArtifactsStructureConfigurableContextImpl implements ArtifactsStructureCon
     return artifact;
   }
 
+  public ModifiableModuleModel getModifiableModuleModel() {
+    return myContext.getModulesConfigurator().getModuleModel();
+  }
+
   public CompositePackagingElement<?> getRootElement(@NotNull Artifact artifact) {
     artifact = getOriginalArtifact(artifact);
     if (myModifiableModel != null) {
@@ -95,7 +100,7 @@ class ArtifactsStructureConfigurableContextImpl implements ArtifactsStructureCon
 
   public void editLayout(@NotNull Artifact artifact, Runnable action) {
     artifact = getOriginalArtifact(artifact);
-    final ModifiableArtifact modifiableArtifact = getModifiableArtifactModel().getOrCreateModifiableArtifact(artifact);
+    final ModifiableArtifact modifiableArtifact = getOrCreateModifiableArtifactModel().getOrCreateModifiableArtifact(artifact);
     if (modifiableArtifact.getRootElement() == artifact.getRootElement()) {
       modifiableArtifact.setRootElement(getOrCreateModifiableRootElement(artifact));
     }
@@ -120,7 +125,7 @@ class ArtifactsStructureConfigurableContextImpl implements ArtifactsStructureCon
   }
 
   @NotNull
-  public ModifiableArtifactModel getModifiableArtifactModel() {
+  public ModifiableArtifactModel getOrCreateModifiableArtifactModel() {
     if (myModifiableModel == null) {
       myModifiableModel = ArtifactManager.getInstance(myProject).createModifiableModel();
       myModifiableModel.addListener(myModifiableModelListener);

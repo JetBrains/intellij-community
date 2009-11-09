@@ -16,6 +16,7 @@
 package com.intellij.packaging.ui;
 
 import com.intellij.facet.Facet;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.packaging.artifacts.Artifact;
@@ -24,6 +25,7 @@ import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -38,7 +40,10 @@ public interface ArtifactEditorContext extends PackagingElementResolvingContext 
   ArtifactType getArtifactType();
 
   @NotNull
-  ModifiableArtifactModel getModifiableArtifactModel();
+  ModifiableArtifactModel getOrCreateModifiableArtifactModel();
+
+  @Nullable
+  ModifiableModuleModel getModifiableModuleModel();
 
   @NotNull
   ManifestFileConfiguration getManifestFile(CompositePackagingElement<?> element, ArtifactType artifactType);

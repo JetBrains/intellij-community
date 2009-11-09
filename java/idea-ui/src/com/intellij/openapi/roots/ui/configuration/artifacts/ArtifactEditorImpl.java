@@ -128,7 +128,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   }
 
   public void apply() {
-    final ModifiableArtifact modifiableArtifact = myContext.getModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact);
+    final ModifiableArtifact modifiableArtifact = myContext.getOrCreateModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact);
     modifiableArtifact.setBuildOnMake(myBuildOnMakeCheckBox.isSelected());
     modifiableArtifact.setOutputPath(getConfiguredOutputPath());
     myPropertiesEditors.applyProperties();
@@ -387,7 +387,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   }
 
   public void setArtifactType(ArtifactType artifactType) {
-    final ModifiableArtifact modifiableArtifact = myContext.getModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact);
+    final ModifiableArtifact modifiableArtifact = myContext.getOrCreateModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact);
     modifiableArtifact.setArtifactType(artifactType);
 
     myPropertiesEditors.removeTabs(myTabbedPane);

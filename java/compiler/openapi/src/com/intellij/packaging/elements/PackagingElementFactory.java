@@ -46,7 +46,7 @@ public abstract class PackagingElementFactory {
   public abstract CompositePackagingElement<?> createArchive(@NotNull @NonNls String archiveFileName);
 
   @NotNull
-  public abstract PackagingElement<?> createModuleOutput(@NotNull String moduleName, Project project);
+  public abstract PackagingElement<?> createModuleOutput(@NotNull String moduleName, @NotNull Project project);
 
   @NotNull
   public abstract PackagingElement<?> createModuleOutput(@NotNull Module module);

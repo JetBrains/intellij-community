@@ -18,6 +18,8 @@ package com.intellij.openapi.module.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModulePointer;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
@@ -41,6 +43,7 @@ public class ModulePointerImpl implements ModulePointer {
     return myModule;
   }
 
+  @NotNull
   public String getModuleName() {
     if (myModule != null) {
       return myModule.getName();
