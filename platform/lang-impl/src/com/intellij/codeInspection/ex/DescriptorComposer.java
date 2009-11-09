@@ -22,6 +22,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -149,7 +150,7 @@ public class DescriptorComposer extends HTMLComposerImpl {
       }
 
       anchor.append("\">");
-      anchor.append(expression.getText().replaceAll("\\$", "\\\\\\$"));
+      anchor.append(ProblemDescriptionNode.extractHighlightedText(description, expression).replaceAll("\\$", "\\\\\\$"));
       //noinspection HardCodedStringLiteral
       anchor.append("</a>");
     }

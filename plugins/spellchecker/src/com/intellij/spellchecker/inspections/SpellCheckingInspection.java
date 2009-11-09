@@ -30,6 +30,7 @@ import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.quickfixes.AcceptWordAsCorrect;
 import com.intellij.spellchecker.quickfixes.ChangeTo;
 import com.intellij.spellchecker.quickfixes.RenameTo;
+import com.intellij.spellchecker.quickfixes.SpellCheckerQuickFix;
 import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
 import com.intellij.spellchecker.tokenizer.Token;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
@@ -176,42 +177,43 @@ public class SpellCheckingInspection extends LocalInspectionTool {
     }
 
     if (manager.hasProblem(word)) {
-      List<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
+      List<SpellCheckerQuickFix> fixes = new ArrayList<SpellCheckerQuickFix>();
       if (isOnTheFly) {
         if (!token.isUseRename()) {
-          fixes.add(new ChangeTo(textRange, word, token.getElement().getProject()));
+          fixes.add(new ChangeTo());
         }
         else {
-          fixes.add(new RenameTo(textRange, word, token.getElement().getProject()));
+          fixes.add(new RenameTo());
         }
       }
 
       final AcceptWordAsCorrect acceptWordAsCorrect = new AcceptWordAsCorrect();
       fixes.add(acceptWordAsCorrect);
 
-      final ProblemDescriptor problemDescriptor = createProblemDescriptor(token, holder, textRange, word, fixes);
+      final ProblemDescriptor problemDescriptor = createProblemDescriptor(token, holder, textRange, fixes);
       holder.registerProblem(problemDescriptor);
-
-      acceptWordAsCorrect.setDescriptor(problemDescriptor);
     }
 
   }
 
   private static ProblemDescriptor createProblemDescriptor(Token token,
                                                            ProblemsHolder holder,
-                                                           TextRange textRange,
-                                                           String word,
-                                                           Collection<LocalQuickFix> fixes) {
+                                                           TextRange textRange, Collection<SpellCheckerQuickFix> fixes) {
     //TODO: these descriptions eat LOTS of HEAP on batch run - need either to make them constant or evaluate template dynamically
     //  ( add something like #text substitution)
-    final String defaultDescription = SpellCheckerBundle.message("word.0.1.is.misspelled", word, token.getElement().getLanguage());
+    final String defaultDescription = SpellCheckerBundle.message("word.0.1.is.misspelled");
     final String tokenDescription = token.getDescription();
     final String description = tokenDescription == null ? defaultDescription : tokenDescription;
     final TextRange highlightRange = TextRange.from(token.getOffset() + textRange.getStartOffset(), textRange.getLength());
+    assert highlightRange.getStartOffset()>=0 : token.getText();
     final LocalQuickFix[] quickFixes = fixes.size() > 0 ? fixes.toArray(new LocalQuickFix[fixes.size()]) : null;
 
-    return holder.getManager()
+    final ProblemDescriptor problemDescriptor = holder.getManager()
       .createProblemDescriptor(token.getElement(), highlightRange, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, quickFixes);
+    for (SpellCheckerQuickFix fix : fixes) {
+      fix.setDescriptor(problemDescriptor);
+    }
+    return problemDescriptor;
   }
 
   @Nullable

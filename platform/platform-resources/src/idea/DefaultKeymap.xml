@@ -877,7 +877,7 @@
     </action>
 
     <action id="Vcs.QuickListPopupAction">
-      <keyboard-shortcut first-keystroke="alt X" />
+      <keyboard-shortcut first-keystroke="ctrl shift X" />
     </action>
   </keymap>
 

@@ -105,7 +105,7 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
   /**
    * Wraps one entry to display in "Go To Symbol" dialog.
    */
-  protected static class BaseNavigationItem extends FakePsiElement {
+  public static class BaseNavigationItem extends FakePsiElement {
 
     private final PsiElement myPsiElement;
     private final String myText;
@@ -118,7 +118,7 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
      * @param text       Text to show for this element.
      * @param icon       Icon to show for this element.
      */
-    protected BaseNavigationItem(@NotNull PsiElement psiElement, @NotNull @NonNls String text, @Nullable Icon icon) {
+    public BaseNavigationItem(@NotNull PsiElement psiElement, @NotNull @NonNls String text, @Nullable Icon icon) {
       myPsiElement = psiElement;
       myText = text;
       myIcon = icon;

@@ -19,6 +19,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.Anchor;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -34,8 +35,8 @@ import java.util.List;
 
 public class ChangeTo extends ShowSuggestions implements SpellCheckerQuickFix {
 
-  public ChangeTo(@NotNull TextRange textRange, @NotNull String word, @NotNull Project project) {
-    super(textRange, word, project);
+  public ChangeTo() {
+    super();
   }
 
 
@@ -62,9 +63,8 @@ public class ChangeTo extends ShowSuggestions implements SpellCheckerQuickFix {
       return;
     }
 
-    int psiElementOffset = descriptor.getPsiElement().getTextRange().getStartOffset();
-    editor.offsetToLogicalPosition(psiElementOffset + textRange.getStartOffset());
-    editor.getSelectionModel().setSelection(psiElementOffset + textRange.getStartOffset(), psiElementOffset + textRange.getEndOffset());
+    TextRange textRange = ((ProblemDescriptorImpl)descriptor).getTextRange();
+    editor.getSelectionModel().setSelection(textRange.getStartOffset(), textRange.getEndOffset());
 
     String word = editor.getSelectionModel().getSelectedText();
 

@@ -776,9 +776,11 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     }
 
     protected void actionPerformed() {
-      final int selectionSize = getSelection().size();
-      if (selectionSize == 2) {
-        showDifferences(myProject, (VcsFileRevision)getSelection().get(0), (VcsFileRevision)getSelection().get(1));
+      List<TreeNodeOnVcsRevision> sel = getSelection();
+
+      int selectionSize = sel.size();
+      if (selectionSize > 1) {
+        showDifferences(myProject, sel.get(0), sel.get(sel.size() - 1));
       }
       else if (selectionSize == 1) {
         final VcsRevisionNumber currentRevisionNumber = myHistorySession.getCurrentRevisionNumber();
@@ -806,17 +808,15 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
       if (selectionSize == 1) {
         return isDiffWithCurrentEnabled();
       }
-      else if (selectionSize == 2) {
+      else if (selectionSize > 1) {
         return isDiffEnabled();
       }
       return false;
     }
 
     private boolean isDiffEnabled() {
-      if (!myHistorySession.isContentAvailable(getSelectedRevision(0)) || !myHistorySession.isContentAvailable(getSelectedRevision(1))) {
-        return false;
-      }
-      return true;
+      List<TreeNodeOnVcsRevision> sel = getSelection();
+      return myHistorySession.isContentAvailable(sel.get(0)) && myHistorySession.isContentAvailable(sel.get(sel.size() - 1));
     }
 
     private boolean isDiffWithCurrentEnabled() {

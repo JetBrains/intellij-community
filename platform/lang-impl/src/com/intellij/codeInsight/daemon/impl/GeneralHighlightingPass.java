@@ -259,7 +259,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     }, "Highlight injected language fragments");
   }
 
-  private TextRange getFixedTextRange(DocumentWindow documentWindow, int startOffset) {
+  private static TextRange getFixedTextRange(@NotNull DocumentWindow documentWindow, int startOffset) {
     final TextRange fixedTextRange;
     TextRange textRange = documentWindow.getHostRange(startOffset);
     if (textRange == null) {

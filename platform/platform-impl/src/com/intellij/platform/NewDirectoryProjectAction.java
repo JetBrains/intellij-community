@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -33,7 +34,7 @@ import java.io.File;
 /**
  * @author yole
  */
-public class NewDirectoryProjectAction extends AnAction {
+public class NewDirectoryProjectAction extends AnAction implements DumbAware {
   public void actionPerformed(final AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
     NewDirectoryProjectDialog dlg = new NewDirectoryProjectDialog(project);
