@@ -205,6 +205,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
     final String tokenDescription = token.getDescription();
     final String description = tokenDescription == null ? defaultDescription : tokenDescription;
     final TextRange highlightRange = TextRange.from(token.getOffset() + textRange.getStartOffset(), textRange.getLength());
+    assert highlightRange.getStartOffset()>=0 : token.getText();
     final LocalQuickFix[] quickFixes = fixes.size() > 0 ? fixes.toArray(new LocalQuickFix[fixes.size()]) : null;
 
     final ProblemDescriptor problemDescriptor = holder.getManager()
