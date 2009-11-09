@@ -616,14 +616,6 @@ public class FileBasedIndex implements ApplicationComponent {
         return;
       }
     }
-    else {
-      final Application application = ApplicationManager.getApplication();
-      if (application.isUnitTestMode() && !application.isDispatchThread()) {
-        DumbService.getInstance(project).waitForSmartMode();
-        return;
-      }
-    }
-
 
     throw new IndexNotReadyException();
   }
