@@ -98,30 +98,43 @@ public class LineStatusTrackerManager implements ProjectComponent {
   }
 
   public void projectOpened() {
-    final MyFileStatusListener myFileStatusListener = new MyFileStatusListener();
-    final EditorFactoryListener myEditorFactoryListener = new MyEditorFactoryListener();
-    final MyVirtualFileListener myVirtualFileListener = new MyVirtualFileListener();
-    final EditorColorsListener myEditorColorsListener = new EditorColorsListener() {
+    trackAwtThread();
+    final MyFileStatusListener fileStatusListener = new MyFileStatusListener();
+    final EditorFactoryListener editorFactoryListener = new MyEditorFactoryListener();
+    final MyVirtualFileListener virtualFileListener = new MyVirtualFileListener();
+    final EditorColorsListener editorColorsListener = new EditorColorsListener() {
       public void globalSchemeChange(EditorColorsScheme scheme) {
         resetTrackersForOpenFiles();
       }
     };
 
     myLineStatusTrackers = new HashMap<Document, LineStatusTracker>();
-    FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener, myProject);
-    EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener);
-    VirtualFileManager.getInstance().addVirtualFileListener(myVirtualFileListener,myProject);
-    EditorColorsManager.getInstance().addEditorColorsListener(myEditorColorsListener);
+    final FileStatusManager fsManager = FileStatusManager.getInstance(myProject);
+    fsManager.addFileStatusListener(fileStatusListener, myProject);
+
+    final EditorFactory editorFactory = EditorFactory.getInstance();
+    editorFactory.addEditorFactoryListener(editorFactoryListener);
+
+    final VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
+    virtualFileManager.addVirtualFileListener(virtualFileListener,myProject);
+
+    final EditorColorsManager editorColorsManager = EditorColorsManager.getInstance();
+    editorColorsManager.addEditorColorsListener(editorColorsListener);
+
     Disposer.register(myProject, new Disposable() {
       public void dispose() {
-        EditorFactory.getInstance().removeEditorFactoryListener(myEditorFactoryListener);
-        EditorColorsManager.getInstance().removeEditorColorsListener(myEditorColorsListener);
+        trackAwtThread();
+        fsManager.removeFileStatusListener(fileStatusListener);
+        editorFactory.removeEditorFactoryListener(editorFactoryListener);
+        virtualFileManager.removeVirtualFileListener(virtualFileListener);
+        editorColorsManager.removeEditorColorsListener(editorColorsListener);
       }
     });
   }
 
   public void projectClosed() {
     try {
+      trackAwtThread();
       dispose();
     }
     finally {
@@ -152,19 +165,15 @@ public class LineStatusTrackerManager implements ProjectComponent {
     myLineStatusTrackers = null;
 }
 
-  public void setLineStatusTracker(Document document, LineStatusTracker tracker) {
-    synchronized (TRACKERS_LOCK) {
-      myLineStatusTrackers.put(document, tracker);
-    }
-  }
-
   public LineStatusTracker getLineStatusTracker(Document document) {
+    trackAwtThread();
     if (myLineStatusTrackers == null) return null;
     return myLineStatusTrackers.get(document);
   }
 
 
   public LineStatusTracker setUpToDateContent(Document document, String lastUpToDateContent) {
+    trackAwtThread();
     LineStatusTracker result = myLineStatusTrackers.get(document);
     if (result == null) {
       result = LineStatusTracker.createOn(document, lastUpToDateContent, myProject);
@@ -173,7 +182,7 @@ public class LineStatusTrackerManager implements ProjectComponent {
     return result;
   }
 
-  public LineStatusTracker createTrackerForDocument(Document document) {
+  private LineStatusTracker createTrackerForDocument(Document document) {
     LOG.assertTrue(!myLineStatusTrackers.containsKey(document));
     LineStatusTracker result = LineStatusTracker.createOn(document, myProject);
     myLineStatusTrackers.put(document, result);
@@ -229,6 +238,7 @@ public class LineStatusTrackerManager implements ProjectComponent {
   }
 
   public void resetTracker(final LineStatusTracker tracker) {
+    trackAwtThread();
     if (tracker != null) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
@@ -324,6 +334,7 @@ public class LineStatusTrackerManager implements ProjectComponent {
             });
           }
           finally {
+            // todo guard alarms!!!
             myLineStatusUpdateAlarms.remove(document);
           }
         }
@@ -345,16 +356,19 @@ public class LineStatusTrackerManager implements ProjectComponent {
     public void fileStatusesChanged() {
       if (myProject.isDisposed()) return;
       LOG.debug("LineStatusTrackerManager: fileStatusesChanged");
+      trackAwtThread();
       resetTrackersForOpenFiles();
     }
 
     public void fileStatusChanged(@NotNull VirtualFile virtualFile) {
+      trackAwtThread();
       resetTracker(virtualFile);
     }
   }
 
   private class MyEditorFactoryListener extends EditorFactoryAdapter {
     public void editorCreated(EditorFactoryEvent event) {
+      trackAwtThread();
       Editor editor = event.getEditor();
       if (editor.getProject() != null && editor.getProject() != myProject) return;
       Document document = editor.getDocument();
@@ -363,6 +377,7 @@ public class LineStatusTrackerManager implements ProjectComponent {
     }
 
     public void editorReleased(EditorFactoryEvent event) {
+      trackAwtThread();
       final Editor editor = event.getEditor();
       if (editor.getProject() != null && editor.getProject() != myProject) return;
       final Document doc = editor.getDocument();
@@ -375,9 +390,16 @@ public class LineStatusTrackerManager implements ProjectComponent {
 
   private class MyVirtualFileListener extends VirtualFileAdapter {
     public void beforeContentsChange(VirtualFileEvent event) {
+      trackAwtThread();
       if (event.isFromRefresh()) {
         resetTracker(event.getFile());
       }
+    }
+  }
+
+  private void trackAwtThread() {
+    if (! ApplicationManager.getApplication().isDispatchThread()) {
+      LOG.info("NOT dispatch thread: " + Thread.currentThread().getName(), new Throwable());
     }
   }
 }
