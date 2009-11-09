@@ -922,8 +922,6 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     }
     fireScheduledImportsChanged();
 
-    long before = System.currentTimeMillis();
-
     final Ref<MavenProjectImporter> importer = new Ref<MavenProjectImporter>();
     final Ref<List<MavenProjectsProcessorTask>> postTasks = new Ref<List<MavenProjectsProcessorTask>>();
 
@@ -952,8 +950,6 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
       }).waitFor();
     }
 
-    long importTime = System.currentTimeMillis() - before;
-    //System.out.println("Import/Commit time: " + importTime + "/" + modelsProvider.getCommitTime() + " ms");
 
     VirtualFileManager.getInstance().refresh(isNormalProject());
     schedulePostImportTasts(postTasks.get());
