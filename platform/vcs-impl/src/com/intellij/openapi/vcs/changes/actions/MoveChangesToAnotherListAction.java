@@ -66,7 +66,10 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
     final List<VirtualFile> unversionedFiles = e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
     if (unversionedFiles != null && (! unversionedFiles.isEmpty())) return true;
 
-    return SelectedFilesHelper.hasChangedOrUnversionedFiles(project, e);
+    final boolean hasChangedOrUnversionedFiles = SelectedFilesHelper.hasChangedOrUnversionedFiles(project, e);
+    if (hasChangedOrUnversionedFiles) return true;
+    Change[] changes = e.getData(VcsDataKeys.CHANGES);
+    return changes != null && changes.length > 0;
   }
 
   @Nullable
