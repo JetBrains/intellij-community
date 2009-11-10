@@ -78,6 +78,7 @@ public class PsiViewerDialog extends DialogWrapper {
   private final ViewerTreeBuilder myTreeBuilder;
 
   private final JList myRefs;
+  private static String REFS_CACHE = "References Resolve Cache";
 
   private Editor myEditor;
   private String myLastParsedText = null;
@@ -126,6 +127,15 @@ public class PsiViewerDialog extends DialogWrapper {
     myRefs.addKeyListener(listener);
     myRefs.addMouseListener(listener);
     myRefs.getSelectionModel().addListSelectionListener(listener);
+    myRefs.setCellRenderer(new DefaultListCellRenderer() {
+      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        final Component comp = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        if (resolve(index) == null) {
+          comp.setForeground(Color.red);
+        }
+        return comp;
+      }
+    });
 
     setModal(modal);
     setOKButtonText("&Build PSI Tree");
@@ -246,45 +256,86 @@ public class PsiViewerDialog extends DialogWrapper {
 
     updateDialectsCombo();
 
+    registerCustomKeyboardActions();
+    super.init();
+  }
+
+  private void registerCustomKeyboardActions() {
     final Component component = myButtonPanel.getComponents()[0];
     if (component instanceof JComponent) {
       final Component button = ((JComponent)component).getComponents()[0];
       if (button instanceof JButton) {
         final JButton jButton = (JButton)button;
         final int mask = SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.ALT_DOWN_MASK;
-        getRootPane().registerKeyboardAction(new ActionListener() {
+        registerKeyboardAction(new ActionListener() {
           public void actionPerformed(ActionEvent e) {
             jButton.doClick();
           }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_P, mask), JComponent.WHEN_IN_FOCUSED_WINDOW);
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_P, mask));
 
-        getRootPane().registerKeyboardAction(new ActionListener() {
+        registerKeyboardAction(new ActionListener() {
           public void actionPerformed(ActionEvent e) {
-            IdeFocusManager.getInstance(myProject).requestFocus(myEditor.getContentComponent(), true);
+            focusEditor();
           }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_T, mask), JComponent.WHEN_IN_FOCUSED_WINDOW);
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_T, mask));
 
-        getRootPane().registerKeyboardAction(new ActionListener() {
+        registerKeyboardAction(new ActionListener() {
           public void actionPerformed(ActionEvent e) {
-            IdeFocusManager.getInstance(myProject).requestFocus(myTree, true);
+            focusTree();
           }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_S, mask), JComponent.WHEN_IN_FOCUSED_WINDOW);
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_S, mask));
 
-        getRootPane().registerKeyboardAction(new ActionListener() {
+        registerKeyboardAction(new ActionListener() {
           public void actionPerformed(ActionEvent e) {
-            IdeFocusManager.getInstance(myProject).requestFocus(myRefs, true);
-            if (myRefs.getModel().getSize() > 0) {
-              if (myRefs.getSelectedIndex() == -1) {
-                myRefs.setSelectedIndex(0);
-              }
+            focusTree();
+          }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_S, mask));
+
+
+        registerKeyboardAction(new ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            focusTree();
+          }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_S, mask));
+
+        registerKeyboardAction(new ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            focusRefs();
+          }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_R, mask));
+
+        registerKeyboardAction(new ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            if (myRefs.isFocusOwner()) {
+              focusTree();
+            } else if (myTree.isFocusOwner()) {
+              focusRefs();
             }
           }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_R, mask), JComponent.WHEN_IN_FOCUSED_WINDOW);
-
-
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0));
       }
     }
-    super.init();
+  }
+
+  private void registerKeyboardAction(ActionListener actionListener, KeyStroke keyStroke) {
+    getRootPane().registerKeyboardAction(actionListener, keyStroke, JComponent.WHEN_IN_FOCUSED_WINDOW);
+  }
+
+  private void focusEditor() {
+    IdeFocusManager.getInstance(myProject).requestFocus(myEditor.getContentComponent(), true);
+  }
+
+  private void focusTree() {
+    IdeFocusManager.getInstance(myProject).requestFocus(myTree, true);
+  }
+
+  private void focusRefs() {
+    IdeFocusManager.getInstance(myProject).requestFocus(myRefs, true);
+    if (myRefs.getModel().getSize() > 0) {
+      if (myRefs.getSelectedIndex() == -1) {
+        myRefs.setSelectedIndex(0);
+      }
+    }
   }
 
   private void initBorders() {
@@ -360,7 +411,7 @@ public class PsiViewerDialog extends DialogWrapper {
           rootElement = PsiFileFactory.getInstance(myProject).createFileFromText("Dummy." + type.getDefaultExtension(), text);
         }
       }
-      IdeFocusManager.getInstance(myProject).requestFocus(myTree, true);
+      focusTree();
     }
     catch (IncorrectOperationException e1) {
       rootElement = null;
@@ -426,6 +477,12 @@ public class PsiViewerDialog extends DialogWrapper {
     public void updateReferences(PsiElement element) {
       final DefaultListModel model = (DefaultListModel)myRefs.getModel();
       model.clear();
+      final Object cache = myRefs.getClientProperty(REFS_CACHE);
+      if (cache instanceof Map) {
+        ((Map)cache).clear();
+      } else {
+        myRefs.putClientProperty(REFS_CACHE, new HashMap());
+      }
       if (element != null) {
         for (PsiReference reference : element.getReferences()) {
           model.addElement(reference.getClass().getName());
@@ -452,6 +509,28 @@ public class PsiViewerDialog extends DialogWrapper {
     EditorFactory.getInstance().releaseEditor(myEditor);
 
     super.dispose();
+  }
+
+  @Nullable
+  private PsiElement resolve(int index) {
+    final PsiElement element = getPsiElement();
+    if (element == null) return null;
+    Object o = myRefs.getClientProperty(REFS_CACHE);
+    if (o == null) {
+      myRefs.putClientProperty(REFS_CACHE, o = new HashMap());
+    }
+    HashMap map = (HashMap)o;
+    Object cache = map.get(element);
+    if (cache == null) {
+      final PsiReference[] references = element.getReferences();
+      cache = new PsiElement[references.length];
+      for (int i = 0; i < references.length; i++) {
+        ((PsiElement[])cache)[i] = references[i].resolve();
+      }
+      map.put(element, cache);
+    }
+    PsiElement[] elements = (PsiElement[])cache;
+    return index >= elements.length ? null : elements[index];
   }
 
   private class ChoosePsiTypeButton extends ComboBoxAction {

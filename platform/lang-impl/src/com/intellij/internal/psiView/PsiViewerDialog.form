@@ -16,7 +16,7 @@
         </constraints>
         <properties>
           <dividerLocation value="200"/>
-          <dividerSize value="1"/>
+          <dividerSize value="4"/>
           <orientation value="0"/>
         </properties>
         <border type="none"/>
@@ -48,7 +48,7 @@
                 </constraints>
                 <properties>
                   <dividerLocation value="400"/>
-                  <dividerSize value="1"/>
+                  <dividerSize value="4"/>
                 </properties>
                 <border type="none"/>
                 <children>
