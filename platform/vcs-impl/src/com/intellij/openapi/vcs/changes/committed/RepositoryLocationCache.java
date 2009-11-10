@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,23 +35,23 @@ public class RepositoryLocationCache {
 
   public RepositoryLocationCache(final Project project) {
     myProject = project;
-    myMap = new HashMap<Pair<String, String>, RepositoryLocation>();
+    myMap = Collections.synchronizedMap(new HashMap<Pair<String, String>, RepositoryLocation>());
   }
 
-  public RepositoryLocation getLocation(final AbstractVcs vcs, final FilePath filePath) {
+  public RepositoryLocation getLocation(final AbstractVcs vcs, final FilePath filePath, final boolean silent) {
     final Pair<String, String> key = new Pair<String, String>(vcs.getName(), filePath.getIOFile().getAbsolutePath());
     RepositoryLocation location = myMap.get(key);
     if (location != null) {
       return location;
     }
-    location = getUnderProgress(vcs, filePath);
+    location = getUnderProgress(vcs, filePath, silent);
     myMap.put(key, location);
     return location;
   }
 
-  private RepositoryLocation getUnderProgress(final AbstractVcs vcs, final FilePath filePath) {
+  private RepositoryLocation getUnderProgress(final AbstractVcs vcs, final FilePath filePath, final boolean silent) {
     final MyLoader loader = new MyLoader(vcs, filePath);
-    if (ApplicationManager.getApplication().isDispatchThread()) {
+    if ((! silent) && ApplicationManager.getApplication().isDispatchThread()) {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(loader, "Discovering location of " + filePath.getPresentableUrl(),
                                                                         true, myProject);
     } else {
