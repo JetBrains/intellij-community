@@ -95,7 +95,8 @@ public class SSBasedInspection extends BaseJavaLocalInspectionTool {
       PsiElement element = matchResult.getMatch();
       String name = configuration.getName();
       LocalQuickFix fix = createQuickFix(project, matchResult, configuration);
-      ProblemDescriptor problemDescriptor = manager.createProblemDescriptor(element, name, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+      ProblemDescriptor problemDescriptor = manager.createProblemDescriptor(element, name, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                                                            isOnTheFly);
       problems.add(problemDescriptor);
     }
     return problems.toArray(new ProblemDescriptor[problems.size()]);
