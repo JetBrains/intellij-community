@@ -23,8 +23,8 @@ import java.util.ArrayList;
 
 public final class TypeHierarchyTreeStructure extends SubtypesHierarchyTreeStructure {
 
-  public TypeHierarchyTreeStructure(final Project project, final PsiClass aClass) {
-    super(project, buildHierarchyElement(project, aClass));
+  public TypeHierarchyTreeStructure(final Project project, final PsiClass aClass, String currentScopeType) {
+    super(project, buildHierarchyElement(project, aClass), currentScopeType);
     setBaseElement(myBaseDescriptor); //to set myRoot
   }
 

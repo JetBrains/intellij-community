@@ -27,6 +27,7 @@ import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -38,6 +39,8 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
@@ -99,6 +102,11 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       return "";
     }
   };
+  public static final String SCOPE_PROJECT = IdeBundle.message("hierarchy.scope.project");
+  public static final String SCOPE_ALL = IdeBundle.message("hierarchy.scope.all");
+  public static final String SCOPE_TEST = IdeBundle.message("hierarchy.scope.test");
+  public static final String SCOPE_CLASS = IdeBundle.message("hierarchy.scope.this.class");
+  protected final Map<String, String> myType2ScopeMap = new HashMap<String, String>();
 
   public HierarchyBrowserBaseEx(final Project project, final PsiElement element) {
     super(project);
@@ -109,6 +117,10 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     myTreePanel = new JPanel(myCardLayout);
 
     createTrees(myType2TreeMap);
+
+    for (String type : myType2TreeMap.keySet()) {
+      myType2ScopeMap.put(type, SCOPE_ALL);
+    }
 
     final Enumeration<String> keys = myType2TreeMap.keys();
     while (keys.hasMoreElements()) {
@@ -336,11 +348,11 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     return getOccurrenceNavigator().hasPreviousOccurence();
   }
 
-  public OccurenceNavigator.OccurenceInfo goNextOccurence() {
+  public OccurenceInfo goNextOccurence() {
     return getOccurrenceNavigator().goNextOccurence();
   }
 
-  public OccurenceNavigator.OccurenceInfo goPreviousOccurence() {
+  public OccurenceInfo goPreviousOccurence() {
     return getOccurrenceNavigator().goPreviousOccurence();
   }
 
@@ -444,6 +456,11 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
         }
       }
     });
+  }
+
+  protected String getCurrentScopeType() {
+    if (myCurrentViewType == null) return null;
+    return myType2ScopeMap.get(myCurrentViewType);
   }
 
   protected class AlphaSortAction extends ToggleAction {
@@ -560,4 +577,68 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
   }
 
+  public class ChangeScopeAction extends ComboBoxAction {
+    public final void update(final AnActionEvent e) {
+      final Presentation presentation = e.getPresentation();
+      final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+      if (project == null) return;
+      presentation.setEnabled(isEnabled());
+      presentation.setText(getCurrentScopeType());
+    }
+
+    protected boolean isEnabled(){
+      return true;
+    }
+
+    @NotNull
+    protected final DefaultActionGroup createPopupActionGroup(final JComponent button) {
+      final DefaultActionGroup group = new DefaultActionGroup();
+
+      group.add(new MenuAction(SCOPE_PROJECT));
+      group.add(new MenuAction(SCOPE_TEST));
+      group.add(new MenuAction(SCOPE_ALL));
+      group.add(new MenuAction(SCOPE_CLASS));
+
+      final NamedScopesHolder[] holders = NamedScopesHolder.getAllNamedScopeHolders(myProject);
+      for (NamedScopesHolder holder : holders) {
+        NamedScope[] scopes = holder.getEditableScopes(); //predefined scopes already included
+        for (NamedScope scope : scopes) {
+          group.add(new MenuAction(scope.getName()));
+        }
+      }
+
+      return group;
+    }
+
+    public final JComponent createCustomComponent(final Presentation presentation) {
+      final JPanel panel = new JPanel(new GridBagLayout());
+      panel.add(new JLabel(IdeBundle.message("label.scope")),
+                new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.BOTH, new Insets(0, 5, 0, 0), 0, 0));
+      panel.add(super.createCustomComponent(presentation),
+                new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+      return panel;
+    }
+
+    private final class MenuAction extends AnAction {
+      private final String myScopeType;
+
+      public MenuAction(final String scopeType) {
+        super(scopeType);
+        myScopeType = scopeType;
+      }
+
+      public final void actionPerformed(final AnActionEvent e) {
+        myType2ScopeMap.put(myCurrentViewType, myScopeType);
+
+        // invokeLater is called to update state of button before long tree building operation
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            doRefresh(true); // scope is kept per type so other builders doesn't need to be refreshed
+          }
+        });
+
+      }
+    }
+
+  }
 }

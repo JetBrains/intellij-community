@@ -62,7 +62,7 @@ public class CachesHolder {
       if (provider instanceof CachingCommittedChangesProvider) {
         final List<VirtualFile> roots = getAllRootsUnderVcs(vcs);
         for (VirtualFile root : roots) {
-          final RepositoryLocation location = myLocationCache.getLocation(vcs, new FilePathImpl(root));
+          final RepositoryLocation location = myLocationCache.getLocation(vcs, new FilePathImpl(root), false);
           if (location != null) {
             final ChangesCacheFile cacheFile = getCacheFile(vcs, root, location);
             if (Boolean.TRUE.equals(consumer.fun(cacheFile))) {

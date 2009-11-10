@@ -414,7 +414,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
     for (String name : myListsToDisappear) {
       final LocalChangeList changeList = myMap.get(name);
-      if (changeList.getChanges().isEmpty() && (! changeList.isReadOnly()) && (! changeList.isDefault())) {
+      if ((changeList != null) && changeList.getChanges().isEmpty() && (! changeList.isReadOnly()) && (! changeList.isDefault())) {
         removeChangeList(name);
       }
     }

@@ -90,8 +90,6 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
       }
     }
 
-    addAction("ActivateChangesToolWindow", group);
-
     // basic operations
     addSeparator(group, vcs != null ? vcs.getDisplayName() : null);
     addAction("ChangesView.AddUnversioned", group);
@@ -104,17 +102,14 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
     addAction("Vcs.ShowTabbedFileHistory", group);
     addAction("Annotate", group);
     addAction("Compare.SameVersion", group);
-    addAction("Compare.LastVersion", group);
 
     // custom actions
     addSeparator(group);
     addActions(actions, group);
-    addAction("Vcs.UpdateProject", group);
 
     // additional stuff
     addSeparator(group);
     addAction("MoveToChangeList", group);
-    addAction("CompareClipboardWithSelection", group);
 
     // local history
     addLocalHistoryActions(group);
