@@ -44,8 +44,6 @@ public class GitQuickListContentProvider implements VcsQuickListContentProvider 
     final ActionManager manager = ActionManager.getInstance();
     final List<AnAction> actions = new ArrayList<AnAction>();
 
-    add("ActivateChangesToolWindow", manager, actions);
-
     // Basic
     actions.add(new Separator(activeVcs.getDisplayName()));
     add("ChangesView.AddUnversioned", manager, actions);
@@ -58,27 +56,17 @@ public class GitQuickListContentProvider implements VcsQuickListContentProvider 
     add("Vcs.ShowTabbedFileHistory", manager, actions);
     add("Annotate", manager, actions);
     add("Compare.SameVersion", manager, actions);
-    add("Compare.LastVersion", manager, actions);
 
     // Pull/Push
     addSeparator(actions);
     add("Git.Checkout", manager, actions);
-    add("Git.Pull", manager, actions);
-    add("Git.Push", manager, actions);
     add("Git.Push.Active.Branches", manager, actions);
-    add("Git.Fetch", manager, actions);
-    add("Vcs.UpdateProject", manager, actions);
 
     // misc
-    addSeparator(actions);
     add("Git.Stash", manager, actions);
     add("Git.Unstash", manager, actions);
-    add("Git.Rebase", manager, actions);
     add("Git.Rebase.Continue", manager, actions);
     add("Git.Rebase.Abort", manager, actions);
-
-    addSeparator(actions);
-    add("CompareClipboardWithSelection", manager, actions);
 
     return actions;
   }
