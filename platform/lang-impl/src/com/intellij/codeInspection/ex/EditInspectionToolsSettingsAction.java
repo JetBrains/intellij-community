@@ -41,11 +41,11 @@ import javax.swing.*;
 public class EditInspectionToolsSettingsAction implements IntentionAction {
   private final String myShortName;
 
-  public EditInspectionToolsSettingsAction(LocalInspectionTool tool) {
+  public EditInspectionToolsSettingsAction(@NotNull LocalInspectionTool tool) {
     myShortName = tool.getShortName();
   }
 
-  public EditInspectionToolsSettingsAction(HighlightDisplayKey key) {
+  public EditInspectionToolsSettingsAction(@NotNull HighlightDisplayKey key) {
     myShortName = key.toString();
   }
 
