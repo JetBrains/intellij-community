@@ -44,8 +44,7 @@ public class DefaultStubBuilder implements StubBuilder {
       }
     }
 
-    final PsiElement[] psiElements = elt.getChildren();
-    for (PsiElement child : psiElements) {
+    for (PsiElement child = elt.getFirstChild(); child != null; child = child.getNextSibling()) {
       buildStubTreeFor(child, stub);
     }
 
