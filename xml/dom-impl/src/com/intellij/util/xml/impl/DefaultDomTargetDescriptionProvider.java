@@ -22,7 +22,9 @@ import com.intellij.psi.ElementDescriptionLocation;
 import com.intellij.usageView.UsageViewNodeTextLocation;
 import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.usageView.UsageViewLongNameLocation;
+import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomTarget;
+import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.TypeNameManager;
 import com.intellij.codeInsight.highlighting.HighlightUsagesDescriptionLocation;
 import org.jetbrains.annotations.NotNull;
@@ -36,16 +38,16 @@ public class DefaultDomTargetDescriptionProvider extends PomDescriptionProvider 
 
     final DomTarget target = (DomTarget)element;
 
+    DomElement domElement = target.getDomElement();
     if (location == UsageViewTypeLocation.INSTANCE) {
-      return TypeNameManager.getTypeName(target.getDomElement().getClass());
+      return ElementPresentationManager.getTypeNameForObject(domElement);
     }
     if (location == UsageViewNodeTextLocation.INSTANCE || location == UsageViewLongNameLocation.INSTANCE) {
-      return TypeNameManager.getTypeName(target.getDomElement().getClass()) + " " + StringUtil.notNullize(target.getName(), "''");
+      return TypeNameManager.getTypeName(domElement.getClass()) + " " + StringUtil.notNullize(target.getName(), "''");
     }
     if (location instanceof HighlightUsagesDescriptionLocation) {
-      return TypeNameManager.getTypeName(target.getDomElement().getClass());
+      return TypeNameManager.getTypeName(domElement.getClass());
     }
-
     return null;
   }
 
