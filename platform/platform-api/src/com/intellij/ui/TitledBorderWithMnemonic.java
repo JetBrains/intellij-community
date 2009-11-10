@@ -15,9 +15,6 @@
  */
 package com.intellij.ui;
 
-import sun.swing.SwingUtilities2;
-
-import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
@@ -72,15 +69,13 @@ public class TitledBorderWithMnemonic extends TitledBorder {
     Color color = g.getColor();
 
     g.setFont(getFont(c));
-
-    JComponent jc = (c instanceof JComponent) ? (JComponent)c : null;
-    FontMetrics fm = SwingUtilities2.getFontMetrics(jc, g);
+    
+    FontMetrics fm = g.getFontMetrics();
     int         fontHeight = fm.getHeight();
     int         descent = fm.getDescent();
     int         ascent = fm.getAscent();
     int         diff;
-    int         stringWidth = SwingUtilities2.stringWidth(jc, fm,
-                                                          getTitle());
+    int         stringWidth = fm.stringWidth(getTitle());
     Insets      insets;
 
     if (border != null) {
@@ -223,12 +218,12 @@ public class TitledBorderWithMnemonic extends TitledBorder {
     }
 
     g.setColor(getTitleColor());
-    SwingUtilities2.drawString(jc, g, getTitle(), textLoc.x, textLoc.y);
+    g.drawString(getTitle(), textLoc.x, textLoc.y);
 
     final int index = myOriginalTitle.indexOf('&');
     if (index != -1 && index != myOriginalTitle.length() - 1 && index == myOriginalTitle.lastIndexOf('&') && g instanceof Graphics2D) {
-      int x0 = SwingUtilities2.stringWidth(jc, fm, getTitle().substring(0, index));
-      int x1 = SwingUtilities2.stringWidth(jc, fm, getTitle().substring(0, index+1));
+      int x0 = fm.stringWidth(getTitle().substring(0, index));
+      int x1 = fm.stringWidth(getTitle().substring(0, index+1));
       ((Graphics2D)g).setPaint(getTitleColor());
       g.drawLine(textLoc.x + x0 - 1, textLoc.y + 1, textLoc.x + x1 - 1, textLoc.y + 1);
       ((Graphics2D)g).setPaint(color);
