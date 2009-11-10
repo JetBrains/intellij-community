@@ -358,6 +358,9 @@ public class AbstractTreeUi {
   }
 
   protected void doExpandNodeChildren(final DefaultMutableTreeNode node) {
+    if (!myUnbuiltNodes.contains(node)) return;
+    if (isLoadedInBackground(getElementFor(node))) return;
+
     getTreeStructure().commit();
     addSubtreeToUpdate(node);
     getUpdater().performUpdate();
@@ -958,14 +961,13 @@ public class AbstractTreeUi {
                 insertNodesInto(nodesToInsert, node);
                 updateNodesToInsert(nodesToInsert, pass, canSmartExpand, isChildNodeForceUpdate(node, forceUpdate, expanded));
                 removeLoading(node, true);
+                removeFromUpdating(node);
 
                 if (node.getChildCount() > 0) {
                   if (expanded) {
                     expand(node, canSmartExpand);
                   }
                 }
-
-                removeFromUpdating(node);
 
                 final Object element = getElementFor(node);
                 addNodeAction(element, new NodeAction() {
@@ -1611,13 +1613,17 @@ public class AbstractTreeUi {
   }
 
   private boolean isUpdatingParent(DefaultMutableTreeNode kid) {
+    return getUpdatingParent(kid) != null;
+  }
+
+  private DefaultMutableTreeNode getUpdatingParent(DefaultMutableTreeNode kid) {
     DefaultMutableTreeNode eachParent = kid;
     while (eachParent != null) {
-      if (isUpdatingNow(eachParent)) return true;
+      if (isUpdatingNow(eachParent)) return eachParent;
       eachParent = (DefaultMutableTreeNode)eachParent.getParent();
     }
 
-    return false;
+    return null;
   }
 
   private boolean isLoadedInBackground(Object element) {
@@ -1886,7 +1892,11 @@ public class AbstractTreeUi {
   }
 
   private boolean isParentLoading(Object nodeObject) {
-    if (!(nodeObject instanceof DefaultMutableTreeNode)) return false;
+    return getParentLoading(nodeObject) != null;
+  }
+
+  private DefaultMutableTreeNode getParentLoading(Object nodeObject) {
+    if (!(nodeObject instanceof DefaultMutableTreeNode)) return null;
 
     DefaultMutableTreeNode node = (DefaultMutableTreeNode)nodeObject;
 
@@ -1896,11 +1906,11 @@ public class AbstractTreeUi {
       eachParent = eachParent.getParent();
       if (eachParent instanceof DefaultMutableTreeNode) {
         final Object eachElement = getElementFor((DefaultMutableTreeNode)eachParent);
-        if (isLoadedInBackground(eachElement)) return true;
+        if (isLoadedInBackground(eachElement)) return (DefaultMutableTreeNode)eachParent;
       }
     }
 
-    return false;
+    return null;
   }
 
   protected String getLoadingNodeText() {
@@ -2499,14 +2509,20 @@ public class AbstractTreeUi {
   }
 
   private void disposeNode(DefaultMutableTreeNode node) {
-    removeFromUpdating(node);
-    removeFromUnbuilt(node);
+    TreeNode parent = node.getParent();
+    if (parent instanceof DefaultMutableTreeNode) {
+      addToUnbuilt((DefaultMutableTreeNode)parent);
+    }
 
     if (node.getChildCount() > 0) {
       for (DefaultMutableTreeNode _node = (DefaultMutableTreeNode)node.getFirstChild(); _node != null; _node = _node.getNextSibling()) {
         disposeNode(_node);
       }
     }
+
+    removeFromUpdating(node);
+    removeFromUnbuilt(node);
+
     if (isLoadingNode(node)) return;
     NodeDescriptor descriptor = getDescriptorFrom(node);
     if (descriptor == null) return;
@@ -3035,18 +3051,20 @@ public class AbstractTreeUi {
     }, true);
 
 
-    if (myTree.isExpanded(getPathFor(toExpand)) && !myUnbuiltNodes.contains(toExpand)) {
-      if (!areChildrenToBeUpdated(toExpand)) {
-        processNodeActionsIfReady(toExpand);
-      }
-    }
-    else {
-      if (!myUnbuiltNodes.contains(toExpand)) {
+    boolean childrenToUpdate = areChildrenToBeUpdated(toExpand);
+    boolean expanded = myTree.isExpanded(getPathFor(toExpand));
+    boolean unbuilt = myUnbuiltNodes.contains(toExpand);
+
+    if (expanded) {
+      if (unbuilt && !childrenToUpdate) {
         addSubtreeToUpdate(toExpand);
       }
-      else {
-        expand(toExpand, canSmartExpand);
-      }
+    } else {
+      expand(toExpand, canSmartExpand);
+    }
+
+    if (!unbuilt && !childrenToUpdate) {
+      processNodeActionsIfReady(toExpand);
     }
   }
 
@@ -3093,20 +3111,27 @@ public class AbstractTreeUi {
   }
 
   public final boolean isNodeBeingBuilt(Object node) {
-    if (isParentLoading(node) || isLoadingParent(node)) return true;
+    return getParentBuiltNode(node) != null;
+  }
+
+  public final DefaultMutableTreeNode getParentBuiltNode(Object node) {
+    DefaultMutableTreeNode parent = getParentLoading(node);
+    if (parent != null) return parent;
+
+    if (isLoadingParent(node)) return (DefaultMutableTreeNode)node;
 
     final boolean childrenAreNoLoadedYet = myUnbuiltNodes.contains(node);
     if (childrenAreNoLoadedYet) {
       if (node instanceof DefaultMutableTreeNode) {
         final TreePath nodePath = new TreePath(((DefaultMutableTreeNode)node).getPath());
-        if (!myTree.isExpanded(nodePath)) return false;
+        if (!myTree.isExpanded(nodePath)) return null;
       }
 
-      return true;
+      return (DefaultMutableTreeNode)node;
     }
 
 
-    return false;
+    return null;
   }
 
   private boolean isLoadingParent(Object node) {
@@ -3347,17 +3372,19 @@ public class AbstractTreeUi {
       if (!myUnbuiltNodes.contains(node)) {
         removeLoading(node, false);
 
-        boolean hasUnbuiltChildren = false;
+        Set<DefaultMutableTreeNode> childrenToUpdate = new HashSet<DefaultMutableTreeNode>();
         for (int i = 0; i < node.getChildCount(); i++) {
           DefaultMutableTreeNode each = (DefaultMutableTreeNode)node.getChildAt(i);
           if (myUnbuiltNodes.contains(each)) {
             makeLoadingOrLeafIfNoChildren(each);
-            hasUnbuiltChildren = true;
+            childrenToUpdate.add(each);
           }
         }
 
-        if (hasUnbuiltChildren) {
-          addSubtreeToUpdate(node);
+        if (childrenToUpdate.size() > 0) {
+          for (DefaultMutableTreeNode each : childrenToUpdate) {
+            maybeUpdateSubtreeToUpdate(each);
+          }
         }
       }
       else {
@@ -3428,6 +3455,24 @@ public class AbstractTreeUi {
         if (path.isDescendant(path1)) return true;
       }
       return false;
+    }
+  }
+
+  private void maybeUpdateSubtreeToUpdate(final DefaultMutableTreeNode subtreeRoot) {
+    if (!myUnbuiltNodes.contains(subtreeRoot)) return;
+    TreePath path = getPathFor(subtreeRoot);
+
+    if (myTree.getRowForPath(path) == -1) return;
+
+    DefaultMutableTreeNode parent = getParentBuiltNode(subtreeRoot);
+    if (parent == null) {
+      addSubtreeToUpdate(subtreeRoot);
+    } else if (parent != subtreeRoot) {
+      addNodeAction(getElementFor(subtreeRoot), new NodeAction() {
+        public void onReady(DefaultMutableTreeNode parent) {
+          maybeUpdateSubtreeToUpdate(subtreeRoot);
+        }
+      }, true);
     }
   }
 
@@ -3592,6 +3637,10 @@ public class AbstractTreeUi {
       myWasExpanded = updateInfo.myWasExpanded;
       myForceUpdate = updateInfo.myForceUpdate;
       myDescriptorIsUpToDate = updateInfo.myDescriptorIsUpToDate;
+    }
+
+    public String toString() {
+      return "UpdateInfo: desc=" + myDescriptor + " pass=" + myPass + " canSmartExpand=" + myCanSmartExpand + " wasExpanded=" + myWasExpanded + " forceUpdate=" + myForceUpdate + " descriptorUpToDate=" + myDescriptorIsUpToDate;
     }
   }
 
