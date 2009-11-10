@@ -8,6 +8,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.jetbrains.python.toolbox.ArrayIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

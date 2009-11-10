@@ -16,7 +16,12 @@
 
 package com.jetbrains.python.psi;
 
+import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Describes an assignment statement.
@@ -43,4 +48,23 @@ public interface PyAssignmentStatement extends PyStatement, NameDefiner {
    * @param visitor its {@link PyElementVisitor#visitPyExpression} method will be called for each elementary target expression
    */
   //void visitElementaryTargets(PyElementVisitor visitor);
+
+
+  /**
+   * Maps target expressions to assigned values, unpacking tuple expressions.
+   * For "{@code a, (b, c) = 1, (2, 'foo')}" the result will be [(a,1), (b:2), (c:'foo')].
+   * <br/>
+   * If there's a number of LHS targets, the RHS expression is mapped to every target.
+   * For "{@code a = b = c = 1}" the result will be [(a,1), (b,1), (c,1)].
+   * <br/>
+   * Elements of tuples and tuples themselves may get interspersed in complex mappings.
+   * For "{@code a = b,c = 1,2}" the result will be [(a,(1,2)), (b,1), (c,2)].
+   * <br/>
+   * If RHS and LHS are mis-balanced, certain target or value expressions may be null.
+   * If source is severely incorrect, the returned mapping is empty.
+   * @return a map where target expressions are keys and expressions assigned to them are values.
+   */
+  @NotNull
+  List<Pair<PyExpression, PyExpression>> getTargetsToValuesMapping();
+
 }

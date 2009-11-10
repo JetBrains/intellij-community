@@ -17,18 +17,23 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.toolbox.FP;
+import com.jetbrains.python.toolbox.RepeatIterable;
+import com.jetbrains.python.toolbox.RepeatIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -72,6 +77,60 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
       child = child.getPrevSibling();
     }
     return (PyExpression)child;
+  }
+
+  @NotNull
+  public List<Pair<PyExpression, PyExpression>> getTargetsToValuesMapping() {
+    List<Pair<PyExpression, PyExpression>> ret = new ArrayList<Pair<PyExpression, PyExpression>>();
+    List<PyExpression> lhses = new ArrayList<PyExpression>(1);
+    PyExpression rhs = null;
+    // extract all LHSes and RHS
+    boolean seen_eq = false;
+    for (PsiElement child = this.getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (child instanceof PsiWhiteSpace) continue;
+      if ("=".equals(child.getText())) seen_eq = true;
+      if (child instanceof PyExpression) {
+        PyExpression expr = (PyExpression)child;
+        if (seen_eq) {
+          if (rhs != null) { // more than one RHS is clearly a parsing error, return nothing.
+            ret.clear();
+            return ret;
+          }
+          rhs = expr;
+        }
+        else lhses.add(expr);
+      }
+    }
+    if (lhses.size() == 0) { // no LHS, must be incorrectly parsed
+      ret.clear();
+      return ret;
+    }
+    for (PyExpression lhs : lhses) mapToValues(lhs, rhs, ret);
+    return ret;
+  }
+
+  private static void mapToValues(PyExpression lhs, PyExpression rhs, List<Pair<PyExpression, PyExpression>> map) {
+    // cast for convenience
+    PyTupleExpression lhs_tuple = null;
+    PyTargetExpression lhs_target = null;
+    if (lhs instanceof PyTupleExpression) lhs_tuple = (PyTupleExpression)lhs;
+    else if (lhs instanceof PyTargetExpression) lhs_target = (PyTargetExpression)lhs;
+    
+    PyTupleExpression rhs_tuple = null;
+    PyTargetExpression rhs_target = null;
+    if (rhs instanceof PyTupleExpression) rhs_tuple = (PyTupleExpression)rhs;
+    else if (rhs instanceof PyTargetExpression) rhs_target = (PyTargetExpression)rhs;
+    //
+    if (lhs_target != null) { // single LHS, single RHS (direct mapping) or multiple RHS (packing)
+       map.add(new Pair<PyExpression, PyExpression>(lhs_target, rhs));
+    }
+    else if (lhs_tuple != null && rhs_target != null) { // multiple LHS, single RHS: unpacking
+      //for (PyExpression tuple_elt : lhs_tuple.getElements()) map.add(new Pair<PyExpression, PyExpression>(tuple_elt, rhs_target));
+      map.addAll(FP.zip(lhs_tuple, new RepeatIterable<PyExpression>(rhs_target)));
+    }
+    else if (lhs_tuple != null && rhs_tuple != null) { // multiple both sides: piecewise mapping
+      map.addAll(FP.zip(lhs_tuple, rhs_tuple, null, null));
+    }
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,

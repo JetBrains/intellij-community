@@ -29,6 +29,7 @@ import com.jetbrains.python.PythonDosStringFinder;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
+import com.jetbrains.python.toolbox.SingleIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

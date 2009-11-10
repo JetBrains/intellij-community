@@ -23,8 +23,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
@@ -593,4 +595,57 @@ public class PyUtil {
   public static void sure(boolean thing) {
     if (!thing) throw new IncorrectOperationException();
   }
+
+  /**
+   * Goes through a chain of assignment statements until a non-assignment expression is encountered.
+   * <i>Note: will return null if the assignment chain ends in a target of a non-assignment statement such as 'for'.</i>
+   * @param start where to start to unfold the assignments chain
+   * @return value that is assigned to start element via a chain of definite assignments, or null.
+   */
+  @Nullable
+  public static PyElement followAssignmentsChain(PyReferenceExpression start) {
+    PyReferenceExpression seeker = start;
+    PyElement ret = null;
+    SEARCH:
+    while (seeker != null && ret == null) {
+      ResolveResult[] targets = seeker.multiResolve(false);
+      for (ResolveResult target : targets) {
+        PsiElement elt = target.getElement();
+        if (elt instanceof PyTargetExpression) {
+          PyExpression assigned_from = findAssignedValue((PyTargetExpression)elt);
+          if (assigned_from instanceof PyReferenceExpression) {
+            seeker = (PyReferenceExpression)assigned_from;
+            continue SEARCH;
+          }
+        }
+        else if (ret == null && elt instanceof PyElement) { // remember this result, but a reference may be the next resolve result
+          ret = (PyElement)elt;
+        }
+        else { // not a reassignment, not anything from Python; no point to continue
+          break SEARCH;
+        }
+      }
+    }
+    return ret;
+  }
+
+  /**
+   * Given a target expression, find the value that maps to it in an enclosing assignment expression.
+   * Does not work with other expressions (e.g. if the taget is in a 'for' loop). 
+   * @param target for which we seek the value
+   * @return the expression assigned to target via an enclosing assignment expression, or null.
+   */
+  @Nullable
+  public static PyExpression findAssignedValue(PyTargetExpression target) {
+    PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(target, PyAssignmentStatement.class);
+    if (assignment != null) {
+      List<Pair<PyExpression, PyExpression>> mapping = assignment.getTargetsToValuesMapping();
+      for (Pair<PyExpression, PyExpression> pair : mapping) {
+        PyExpression assigned_to = pair.getFirst();
+        if (assigned_to == target) return pair.getSecond();
+      }
+    }
+    return null;
+  }
+
 }

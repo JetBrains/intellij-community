@@ -25,6 +25,6 @@ import org.jetbrains.annotations.NotNull;
  * Time: 15:31:49
  * To change this template use File | Settings | File Templates.
  */
-public interface PyTupleExpression extends PyExpression {
+public interface PyTupleExpression extends PyExpression, Iterable<PyExpression> {
     @NotNull PyExpression[] getElements();
 }

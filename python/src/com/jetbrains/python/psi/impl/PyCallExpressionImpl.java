@@ -73,11 +73,6 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
     return PyCallExpressionHelper.resolveCallee(this);
   }
 
-  @Nullable
-  public PyElement resolveCallee2() {
-    return PyCallExpressionHelper.resolveCallee2(this);
-  }
-
   @Override
   public String toString() {
     return "PyCallExpression: " + PyUtil.getReadableRepr(getCallee(), true); //or: getCalledFunctionReference().getReferencedName();

@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyParameterListStub;
+import com.jetbrains.python.toolbox.ArrayIterable;
 import org.jetbrains.annotations.NotNull;
 
 /**

@@ -1,16 +1,14 @@
 package com.jetbrains.python;
 
 import com.intellij.lang.documentation.QuickDocumentationProvider;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.xml.util.XmlStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.toolbox.FP;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -58,10 +56,10 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
   private static StringBuilder describeFunction(
     PyFunction fun,
     StringBuilder cat,
-    Lambda2<String, StringBuilder, StringBuilder> deco_name_wrapper,
+    FP.Lambda2<String, StringBuilder, StringBuilder> deco_name_wrapper,
     String deco_separator,
-    Lambda2<String, StringBuilder, StringBuilder> func_name_wrapper,
-    Lambda1<String, String> escaper
+    FP.Lambda2<String, StringBuilder, StringBuilder> func_name_wrapper,
+    FP.Lambda1<String, String> escaper
   ) {
     PyDecoratorList deco_list = fun.getDecoratorList();
     if (deco_list != null) {
@@ -84,7 +82,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
   private static StringBuilder describeClass(
     PyClass cls,
     StringBuilder cat,
-    Lambda2<String, StringBuilder, StringBuilder> name_wrapper
+    FP.Lambda2<String, StringBuilder, StringBuilder> name_wrapper
   ) {
     cat.append("class ");
     name_wrapper.apply(cls.getName(), cat);
@@ -100,8 +98,26 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
 
 
   // provides ctrl+Q doc
-  public String generateDoc(final PsiElement element, final PsiElement originalElement) {
-    final StringBuilder cat = new StringBuilder("<html><body><code>");
+  public String generateDoc(PsiElement element, final PsiElement originalElement) {
+    final StringBuilder cat = new StringBuilder("<html><body>");
+    // resolved element may point to intermediate assignment
+    boolean reassignment_marked = false;
+    if (element instanceof PyTargetExpression) {
+      if (! reassignment_marked) {
+        LWrapInSmall.enclose(cat, "Assigned to ", element.getText(), BR);
+        reassignment_marked = true;
+      }
+      element = PyUtil.findAssignedValue((PyTargetExpression)element);
+    }
+    if (element instanceof PyReferenceExpression) {
+      if (! reassignment_marked) {
+        LWrapInSmall.enclose(cat, "Assigned to ", element.getText(), BR);
+        reassignment_marked = true;
+      }
+      element = PyUtil.followAssignmentsChain((PyReferenceExpression)element);
+    }
+    // now element may contain a doc string
+    cat.append("<code>");
     if (element instanceof PyDocStringOwner) {
       String docString = null;
       boolean prepended_something = false;
@@ -115,9 +131,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
       else if (element instanceof PyFunction) {
         PyFunction fun = (PyFunction)element;
         PyClass cls = fun.getContainingClass();
-        if (cls != null) {
-          cat.append("<small>class ").append(cls.getName()).append("</small>").append(BR);
-        }
+        if (cls != null) LWrapInSmall.enclose(cat, "class ", cls.getName(), BR);
         describeFunction(fun, cat, LWrapInItalic, BR, LWrapInBold, LCombUp);
         prepended_something = true;
         boolean not_found = true;
@@ -200,8 +214,8 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
   private static StringBuilder describeDeco(
     PyDecorator deco,
     final StringBuilder cat,
-    final Lambda2<String, StringBuilder, StringBuilder> name_wrapper, //  wrap in tags, if need be
-    final Lambda1<String, String> arg_wrapper   // add escaping, if need be
+    final FP.Lambda2<String, StringBuilder, StringBuilder> name_wrapper, //  wrap in tags, if need be
+    final FP.Lambda1<String, String> arg_wrapper   // add escaping, if need be
   ) {
     cat.append("@");
     name_wrapper.apply(PyUtil.getReadableRepr(deco.getCallee(), true), cat);
@@ -221,94 +235,53 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
     return cat;
   }
 
-  private static Lambda1<String, String> LCombUp = new Lambda1<String, String>() {
+  private static FP.Lambda1<String, String> LCombUp = new FP.Lambda1<String, String>() {
     public String apply(String argname) {
       return combUp(argname);
     }
   };
 
-  private static Lambda1<String, String> LSame1 = new Lambda1<String, String>() {
+  private static FP.Lambda1<String, String> LSame1 = new FP.Lambda1<String, String>() {
     public String apply(String name) {
       return name;
     }
   };
 
-  private static class WrapInTagLambda implements Lambda2<String, StringBuilder, StringBuilder> {
+  private static class TagWrapper implements FP.Lambda2<String, StringBuilder, StringBuilder> {
     private String start_tag, end_tag;
 
-    WrapInTagLambda(String tag) {
+    TagWrapper(String tag) {
       end_tag = "</" + tag + ">";
       start_tag = "<" + tag + ">";
     }
 
-    public StringBuilder apply(String deconame, @NonNls StringBuilder cat) {
-        return cat.append(start_tag).append(deconame).append(end_tag);
+    public StringBuilder apply(String content, @NonNls StringBuilder cat) {
+        return cat.append(start_tag).append(content).append(end_tag);
+    }
+
+    public StringBuilder enclose(@NonNls StringBuilder cat, String... contents) {
+      cat.append(start_tag);
+      for (String item : contents) cat.append(item);
+      cat.append(end_tag);
+      return cat;
     }
   }
 
-  private static Lambda2<String, StringBuilder, StringBuilder> LWrapInBold = new WrapInTagLambda("b");
-  private static Lambda2<String, StringBuilder, StringBuilder> LWrapInItalic = new WrapInTagLambda("i");
+  private static TagWrapper LWrapInBold = new TagWrapper("b");
+  private static TagWrapper LWrapInItalic = new TagWrapper("i");
+  private static TagWrapper LWrapInSmall = new TagWrapper("small");
 
-  private static Lambda2<String, StringBuilder, StringBuilder> LSame2 = new Lambda2<String, StringBuilder, StringBuilder>() {
+  private static FP.Lambda2<String, StringBuilder, StringBuilder> LSame2 = new FP.Lambda2<String, StringBuilder, StringBuilder>() {
     public StringBuilder apply(String name, StringBuilder cat) {
       return cat.append(name);
     }
   };
 
-  public static Lambda1<PyExpression, String> LReadableRepr = new Lambda1<PyExpression, String>() {
+  public static FP.Lambda1<PyExpression, String> LReadableRepr = new FP.Lambda1<PyExpression, String>() {
     public String apply(PyExpression arg) {
       return PyUtil.getReadableRepr(arg, true);
     }
   };
-
-  // // from here on, a cry of desperation.
-  private static interface Lambda1<A, R> {
-    R apply(A arg);
-  }
-
-  private static interface Lambda2<A1, A2, R> {
-    R apply(A1 arg1, A2 arg2);
-  }
-
-  private static class FP {
-    @NotNull
-    public static <S, R> List<R> map(@NotNull Lambda1<S, R> lambda, @NotNull List<S> source) {
-      List<R> ret = new ArrayList<R>(source.size());
-      for (S item : source) ret.add(lambda.apply(item));
-      return ret;
-    }
-
-    public static <R> R fold(@NotNull Lambda2<R, R, R> lambda, @NotNull List<R> source, @NotNull final R unit) {
-      R ret = unit;
-      for (R item : source) ret = lambda.apply(ret, item);
-      return ret;
-    }
-
-    public static <R> R foldr(@NotNull Lambda2<R, R, R> lambda, @NotNull List<R> source, @NotNull final R unit) {
-      R ret = unit;
-      for (R item : source) ret = lambda.apply(item, ret);
-      return ret;
-    }
-
-    public static <R1, R2> List<Pair<R1, R2>> zip(List<R1> one, List<R2> two) {
-      if (one.size() != two.size()) throw new IllegalArgumentException("Size of one is " + one.size() + ", of two " + two.size());
-      List<Pair<R1, R2>> ret = new ArrayList<Pair<R1, R2>>(one.size());
-      for (int i = 0; i < one.size(); i += 1) { // a more kosher way would be using iterators, but i don't bother now
-        ret.add(new Pair<R1, R2>(one.get(i), two.get(i)));
-      }
-      return ret;
-    }
-
-    public static <A1, R1, R2> Lambda1<A1, R2> combine(final Lambda1<A1, R1> f, final Lambda1<R1, R2> g) {
-      return new Lambda1<A1, R2>() {
-        public R2 apply(A1 arg) {
-          return g.apply(f.apply(arg));
-        }
-      };
-    }
-
-    // TODO: add slices, array wrapping %)
-  }
 
   private static StringBuilder join(String delimiter, List list, StringBuilder cat) {
     boolean is_next = false;
