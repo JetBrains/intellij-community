@@ -176,7 +176,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     if (position != null) {
       final GlobalSearchScope scope = debugProcess.getSearchScope();
       final VirtualFile file = position.getFile().getVirtualFile();
-      if (file != null && ProjectRootManager.getInstance(debugProcess.getProject()).getFileIndex().isInContent(file)) {
+      if (file != null && ProjectRootManager.getInstance(debugProcess.getProject()).getFileIndex().isInSourceContent(file)) {
         return scope.accept(file);
       }
     }
