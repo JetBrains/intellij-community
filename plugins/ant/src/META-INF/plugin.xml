@@ -16,7 +16,9 @@
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <renameHandler implementation="com.intellij.lang.ant.refactoring.AntRenameHandler"/>
     <stepsBeforeRunProvider implementation="com.intellij.lang.ant.config.impl.AntBeforeRunTaskProvider"/>
-    <packaging.artifactPropertiesProvider implementation="com.intellij.lang.ant.config.impl.AntArtifactPostprocessingPropertiesProvider"/>    <keymapExtension implementation="com.intellij.lang.ant.config.impl.AntKeymapExtension"/>
+    <packaging.artifactPropertiesProvider implementation="com.intellij.lang.ant.config.impl.artifacts.AntArtifactPostprocessingPropertiesProvider"/>
+    <packaging.artifactPropertiesProvider implementation="com.intellij.lang.ant.config.impl.artifacts.AntArtifactPreProcessingPropertiesProvider"/>    
+    <keymapExtension implementation="com.intellij.lang.ant.config.impl.AntKeymapExtension"/>
     <extendWordSelectionHandler implementation="com.intellij.lang.ant.AntPropertyRefSelectioner"/>
     <annotator language="ANT" implementationClass="com.intellij.lang.ant.validation.AntAnnotator"/>
     <lang.documentationProvider language="ANT" implementationClass="com.intellij.lang.ant.doc.AntDocumentationProvider"/>

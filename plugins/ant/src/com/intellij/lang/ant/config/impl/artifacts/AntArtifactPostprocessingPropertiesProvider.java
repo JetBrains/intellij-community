@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.lang.ant.config.impl;
+package com.intellij.lang.ant.config.impl.artifacts;
 
 import com.intellij.packaging.artifacts.ArtifactProperties;
 import com.intellij.packaging.artifacts.ArtifactPropertiesProvider;
@@ -30,7 +30,7 @@ public class AntArtifactPostprocessingPropertiesProvider extends ArtifactPropert
 
   @NotNull
   public ArtifactProperties<?> createProperties(@NotNull ArtifactType artifactType) {
-    return new AntArtifactPostprocessingProperties();
+    return new AntArtifactProperties(true);
   }
 
 }

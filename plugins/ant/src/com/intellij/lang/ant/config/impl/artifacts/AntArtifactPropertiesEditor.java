@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.lang.ant.config.impl;
+package com.intellij.lang.ant.config.impl.artifacts;
 
 import com.intellij.lang.ant.config.AntBuildTarget;
 import com.intellij.lang.ant.config.AntConfiguration;
+import com.intellij.lang.ant.config.impl.artifacts.AntArtifactProperties;
+import com.intellij.lang.ant.config.impl.TargetChooserDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.util.Comparing;
@@ -30,17 +32,19 @@ import java.awt.event.ActionListener;
 /**
  * @author nik
  */
-public class AntArtifactPostprocessingPropertiesEditor extends ArtifactPropertiesEditor {
-  private final AntArtifactPostprocessingProperties myProperties;
+public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
+  private final AntArtifactProperties myProperties;
   private final Project myProject;
   private JPanel myMainPanel;
   private JCheckBox myRunTargetCheckBox;
   private FixedSizeButton mySelectTargetButton;
   private AntBuildTarget myTarget;
+  private boolean myPostProcessing;
 
-  public AntArtifactPostprocessingPropertiesEditor(AntArtifactPostprocessingProperties properties, Project project) {
+  public AntArtifactPropertiesEditor(AntArtifactProperties properties, Project project, boolean postProcessing) {
     myProperties = properties;
     myProject = project;
+    myPostProcessing = postProcessing;
     mySelectTargetButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         selectTarget();
@@ -75,7 +79,7 @@ public class AntArtifactPostprocessingPropertiesEditor extends ArtifactPropertie
   }
 
   public String getTabName() {
-    return POSTPROCESSING_TAB;
+    return myPostProcessing ? POST_PROCESSING_TAB : PRE_PROCESSING_TAB;
   }
 
   public void apply() {

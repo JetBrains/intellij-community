@@ -13,18 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.lang.ant.config.impl;
+package com.intellij.lang.ant.config.impl.artifacts;
 
 import com.intellij.lang.ant.config.*;
+import com.intellij.lang.ant.config.impl.AntConfigurationImpl;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactProperties;
-import com.intellij.packaging.ui.ArtifactPropertiesEditor;
 import com.intellij.packaging.ui.ArtifactEditorContext;
+import com.intellij.packaging.ui.ArtifactPropertiesEditor;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -34,35 +37,64 @@ import org.jetbrains.annotations.Nullable;
 /**
 * @author nik
 */
-public class AntArtifactPostprocessingProperties extends ArtifactProperties<AntArtifactPostprocessingProperties> {
+public class AntArtifactProperties extends ArtifactProperties<AntArtifactProperties> {
   private String myFileUrl;
   private String myTargetName;
   private boolean myEnabled;
+  private boolean myPostProcessing;
 
-  public ArtifactPropertiesEditor createEditor(@NotNull ArtifactEditorContext context) {
-    return new AntArtifactPostprocessingPropertiesEditor(this, context.getProject());
+  public AntArtifactProperties() {
   }
 
-  public AntArtifactPostprocessingProperties getState() {
+  public AntArtifactProperties(boolean postProcessing) {
+    myPostProcessing = postProcessing;
+  }
+
+  public ArtifactPropertiesEditor createEditor(@NotNull ArtifactEditorContext context) {
+    return new AntArtifactPropertiesEditor(this, context.getProject(), myPostProcessing);
+  }
+
+  public AntArtifactProperties getState() {
     return this;
   }
 
   @Override
+  public void onBuildStarted(@NotNull Artifact artifact, @NotNull CompileContext compileContext) {
+    if (!myPostProcessing) {
+      runAntTarget(compileContext, artifact);
+    }
+  }
+
+  @Override
   public void onBuildFinished(@NotNull Artifact artifact, @NotNull final CompileContext compileContext) {
+    if (myPostProcessing) {
+      runAntTarget(compileContext, artifact);
+    }
+  }
+
+  private void runAntTarget(CompileContext compileContext, Artifact artifact) {
     if (myEnabled) {
       final Project project = compileContext.getProject();
       final AntBuildTarget target = findTarget(AntConfiguration.getInstance(project));
       if (target != null) {
+        final DataContext dataContext = SimpleDataContext.getProjectContext(project);
+        if (!myPostProcessing) {
+          final boolean success = AntConfigurationImpl.executeTargetSynchronously(dataContext, target);
+          if (!success) {
+            compileContext.addMessage(CompilerMessageCategory.ERROR, "Cannot build artifact '" + artifact.getName() + "': ant target '" + target.getDisplayName() + "' failed with error", null, -1, -1);
+          }
+          return;
+        }
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            target.run(SimpleDataContext.getProjectContext(project), AntBuildListener.NULL);
+            target.run(dataContext, AntBuildListener.NULL);
           }
         });
       }
     }
   }
 
-  public void loadState(AntArtifactPostprocessingProperties state) {
+  public void loadState(AntArtifactProperties state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 
