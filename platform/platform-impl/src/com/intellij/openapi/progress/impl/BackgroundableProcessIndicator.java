@@ -135,7 +135,6 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   }
 
   public void dispose() {
-    cancel();
     super.dispose();
     myDisposed = true;
     myInfo = null;
