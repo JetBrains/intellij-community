@@ -96,7 +96,7 @@ public abstract class ChooseByNameBase{
 
   private final ListUpdater myListUpdater = new ListUpdater();
 
-  private boolean myListIsUpToDate = false;
+  private volatile boolean myListIsUpToDate = false;
   protected boolean myDisposedFlag = false;
   private ActionCallback myPosponedOkAction;
 
@@ -142,13 +142,6 @@ public abstract class ChooseByNameBase{
   }
 
   /**
-   * @return get tool area
-   */
-  public JComponent getToolArea() {
-    return myToolArea;
-  }
-
-  /**
    * Set tool area. The method may be called only before invoke.
    * @param toolArea a tool area component
    */
@@ -166,10 +159,6 @@ public abstract class ChooseByNameBase{
   public class JPanelProvider extends JPanel implements DataProvider {
     JBPopup myHint = null;
     boolean myFocusRequested = false;
-
-    JPanelProvider(LayoutManager mgr) {
-      super(mgr);
-    }
 
     JPanelProvider() {
     }
@@ -607,11 +596,12 @@ public abstract class ChooseByNameBase{
   private final Object myRebuildMutex = new Object ();
 
   protected void rebuildList(final int pos, final int delay, final Runnable postRunnable, final ModalityState modalityState) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myListIsUpToDate = false;
     myAlarm.cancelAllRequests();
     myListUpdater.cancelAll();
 
-    tryToCancel();
+    cancelCalcElementsThread();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         final String text = myTextField.getText();
@@ -643,10 +633,9 @@ public abstract class ChooseByNameBase{
               }
             };
 
-            tryToCancel();
+            cancelCalcElementsThread();
 
-            myCalcElementsThread = new CalcElementsThread(text, myCheckBox.isSelected(), callback, modalityState);
-            myCalcElementsThread.setCanCancel(postRunnable == null);
+            myCalcElementsThread = new CalcElementsThread(text, myCheckBox.isSelected(), callback, modalityState, postRunnable == null);
             ApplicationManager.getApplication().executeOnPooledThread(myCalcElementsThread);
           }
         };
@@ -661,7 +650,7 @@ public abstract class ChooseByNameBase{
     }, modalityState);
   }
 
-  private void tryToCancel() {
+  private void cancelCalcElementsThread() {
     if (myCalcElementsThread != null) {
       myCalcElementsThread.cancel();
       myCalcElementsThread = null;
@@ -743,6 +732,7 @@ public abstract class ChooseByNameBase{
     return bestPosition;
   }
 
+  @NonNls
   protected String statisticsContext() {
     return "choose_by_name#"+myModel.getPromptText()+"#"+ myCheckBox.isSelected() + "#" + myTextField.getText();
   }
@@ -1053,13 +1043,14 @@ public abstract class ChooseByNameBase{
     private Set<Object> myElements = null;
 
     private volatile boolean myCancelled = false;
-    private boolean myCanCancel = true;
+    private final boolean myCanCancel;
 
-    private CalcElementsThread(String pattern, boolean checkboxState, CalcElementsCallback callback, ModalityState modalityState) {
+    private CalcElementsThread(String pattern, boolean checkboxState, CalcElementsCallback callback, ModalityState modalityState, boolean canCancel) {
       myPattern = pattern;
       myCheckboxState = checkboxState;
       myCallback = callback;
       myModalityState = modalityState;
+      myCanCancel = canCancel;
     }
 
     private final Alarm myShowCardAlarm = new Alarm();
@@ -1073,7 +1064,9 @@ public abstract class ChooseByNameBase{
             ensureNamesLoaded(myCheckboxState);
             addElementsByPattern(elements, myPattern);
             for (Object elem : elements) {
-              if (myCancelled) break;
+              if (myCancelled) {
+                break;
+              }
               if (elem instanceof PsiElement) {
                 final PsiElement psiElement = (PsiElement)elem;
                 psiElement.isWritable(); // That will cache writable flag in VirtualFile. Taking the action here makes it canceleable.
@@ -1119,10 +1112,6 @@ public abstract class ChooseByNameBase{
           myCard.show(myCardContainer, card);
         }
       }, delay, myModalityState);
-    }
-
-    public void setCanCancel(boolean canCancel) {
-      myCanCancel = canCancel;
     }
 
     private void addElementsByPattern(Set<Object> elementsArray, String pattern) {
