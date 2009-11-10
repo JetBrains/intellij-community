@@ -32,28 +32,31 @@ import java.util.List;
 public abstract class PsiManagerEx extends PsiManager {
   public abstract boolean isBatchFilesProcessingMode();
 
-  public abstract boolean isAssertOnFileLoading(VirtualFile file);
+  public abstract boolean isAssertOnFileLoading(@NotNull VirtualFile file);
 
   public abstract void nonPhysicalChange();
 
   public abstract void physicalChange();
 
+  @NotNull
   public abstract ResolveCache getResolveCache();
 
-  public abstract void registerRunnableToRunOnChange(Runnable runnable);
+  public abstract void registerRunnableToRunOnChange(@NotNull Runnable runnable);
 
-  public abstract void registerWeakRunnableToRunOnChange(Runnable runnable);
+  public abstract void registerWeakRunnableToRunOnChange(@NotNull Runnable runnable);
 
-  public abstract void registerRunnableToRunOnAnyChange(Runnable runnable);
+  public abstract void registerRunnableToRunOnAnyChange(@NotNull Runnable runnable);
 
-  public abstract void registerRunnableToRunAfterAnyChange(Runnable runnable);
+  public abstract void registerRunnableToRunAfterAnyChange(@NotNull Runnable runnable);
 
+  @NotNull
   public abstract FileManager getFileManager();
 
-  public abstract void invalidateFile(PsiFile file);
+  public abstract void invalidateFile(@NotNull PsiFile file);
 
-  public abstract void beforeChildRemoval(final PsiTreeChangeEventImpl event);
+  public abstract void beforeChildRemoval(@NotNull PsiTreeChangeEventImpl event);
 
+  @NotNull
   public abstract CacheManager getCacheManager();
 
   @NotNull

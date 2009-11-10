@@ -200,7 +200,7 @@ public class MockPsiManager extends PsiManagerEx {
     return false;
   }
 
-  public boolean isAssertOnFileLoading(VirtualFile file) {
+  public boolean isAssertOnFileLoading(@NotNull VirtualFile file) {
     return false;
   }
 
@@ -212,6 +212,7 @@ public class MockPsiManager extends PsiManagerEx {
     throw new UnsupportedOperationException("physicalChange is not implemented"); // TODO
   }
 
+  @NotNull
   public ResolveCache getResolveCache() {
     if (myResolveCache == null) {
       myResolveCache = new ResolveCache(this);
@@ -219,19 +220,20 @@ public class MockPsiManager extends PsiManagerEx {
     return myResolveCache;
   }
 
-  public void registerRunnableToRunOnChange(Runnable runnable) {
+  public void registerRunnableToRunOnChange(@NotNull Runnable runnable) {
   }
 
-  public void registerWeakRunnableToRunOnChange(Runnable runnable) {
+  public void registerWeakRunnableToRunOnChange(@NotNull Runnable runnable) {
   }
 
-  public void registerRunnableToRunOnAnyChange(Runnable runnable) {
+  public void registerRunnableToRunOnAnyChange(@NotNull Runnable runnable) {
   }
 
-  public void registerRunnableToRunAfterAnyChange(Runnable runnable) {
+  public void registerRunnableToRunAfterAnyChange(@NotNull Runnable runnable) {
     throw new UnsupportedOperationException("Method registerRunnableToRunAfterAnyChange is not yet implemented in " + getClass().getName());
   }
 
+  @NotNull
   public FileManager getFileManager() {
     if (myMockFileManager == null) {
       myMockFileManager = new MockFileManager(this);
@@ -239,12 +241,13 @@ public class MockPsiManager extends PsiManagerEx {
     return myMockFileManager;
   }
 
-  public void invalidateFile(final PsiFile file) {
+  public void invalidateFile(@NotNull final PsiFile file) {
   }
 
-  public void beforeChildRemoval(final PsiTreeChangeEventImpl event) {
+  public void beforeChildRemoval(@NotNull final PsiTreeChangeEventImpl event) {
   }
 
+  @NotNull
   public CacheManager getCacheManager() {
     return myCompositeCacheManager;
   }
