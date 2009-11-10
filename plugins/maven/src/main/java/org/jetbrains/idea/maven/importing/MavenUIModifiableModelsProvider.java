@@ -99,10 +99,6 @@ public class MavenUIModifiableModelsProvider extends MavenBaseModifiableModelsPr
   public void dispose() {
   }
 
-  public long getCommitTime() {
-    return 0;
-  }
-
   public ModalityState getModalityStateForQuestionDialogs() {
     return ModalityState.defaultModalityState();
   }
