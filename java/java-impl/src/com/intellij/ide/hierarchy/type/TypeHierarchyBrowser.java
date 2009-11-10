@@ -20,12 +20,10 @@ import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.ide.hierarchy.JavaHierarchyUtil;
 import com.intellij.ide.hierarchy.TypeHierarchyBrowserBase;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -73,6 +71,14 @@ public final class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
     trees.put(SUBTYPES_HIERARCHY_TYPE, tree3);
   }
 
+  protected void prependActions(DefaultActionGroup actionGroup) {
+    super.prependActions(actionGroup);
+    actionGroup.add(new ChangeScopeAction() {
+      protected boolean isEnabled() {
+        return !Comparing.strEqual(myCurrentViewType, SUPERTYPES_HIERARCHY_TYPE);
+      }
+    });
+  }
 
   @Override
   protected String getContentDisplayName(@NotNull String typeName, @NotNull PsiElement element) {
@@ -102,10 +108,10 @@ public final class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
       return new SupertypesHierarchyTreeStructure(myProject, (PsiClass)psiElement);
     }
     else if (SUBTYPES_HIERARCHY_TYPE.equals(typeName)) {
-      return new SubtypesHierarchyTreeStructure(myProject, (PsiClass)psiElement);
+      return new SubtypesHierarchyTreeStructure(myProject, (PsiClass)psiElement, getCurrentScopeType());
     }
     else if (TYPE_HIERARCHY_TYPE.equals(typeName)) {
-      return new TypeHierarchyTreeStructure(myProject, (PsiClass)psiElement);
+      return new TypeHierarchyTreeStructure(myProject, (PsiClass)psiElement, getCurrentScopeType());
     }
     else {
       LOG.error("unexpected type: " + typeName);

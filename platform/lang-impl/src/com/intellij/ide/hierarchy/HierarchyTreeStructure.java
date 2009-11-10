@@ -20,6 +20,10 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -122,6 +126,20 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
 
   public final Object getRootElement() {
     return myRoot;
+  }
+
+  protected SearchScope getSearchScope(final String scopeType, final PsiElement thisClass) {
+    SearchScope searchScope = GlobalSearchScope.allScope(myProject);
+    if (HierarchyBrowserBaseEx.SCOPE_CLASS.equals(scopeType)) {
+      searchScope = new LocalSearchScope(thisClass);
+    }
+    else if (HierarchyBrowserBaseEx.SCOPE_PROJECT.equals(scopeType)) {
+      searchScope = GlobalSearchScope.projectProductionScope(myProject);
+    }
+    else if (HierarchyBrowserBaseEx.SCOPE_TEST.equals(scopeType)) {
+      searchScope = GlobalSearchScope.projectTestScope(myProject);
+    }
+    return searchScope;
   }
 
   private static final class TextInfoNodeDescriptor extends NodeDescriptor {
