@@ -36,7 +36,6 @@ import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDate;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDateImpl;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.SimpleRevision;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
-import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
@@ -77,7 +76,7 @@ public class CvsDiffProvider implements DiffProvider{
   public ItemLatestState getLastRevision(VirtualFile virtualFile) {
     //return getLastRevision(CvsVfsUtil.getFileFor(virtualFile));
     if (virtualFile.getParent() == null) {
-      return new ItemLatestState(new CvsRevisionNumber("HEAD"), true);
+      return new ItemLatestState(new CvsRevisionNumber("HEAD"), true, true);
     }
     return getLastState(virtualFile.getParent(), virtualFile.getName());
   }
@@ -116,7 +115,7 @@ public class CvsDiffProvider implements DiffProvider{
     if (parent != null) {
       return getLastState(parent, filePath.getName());
     }
-    return new ItemLatestState(new CvsRevisionNumber("HEAD"), true);
+    return new ItemLatestState(new CvsRevisionNumber("HEAD"), true, true);
   }
 
   public VcsRevisionNumber getLatestCommittedRevision(VirtualFile vcsRoot) {
@@ -161,29 +160,31 @@ public class CvsDiffProvider implements DiffProvider{
         final String headRevision = getHeadRevisionFromLog(statusOperation.getRepositoryRevision(), file);
         if (headRevision != null) {
           return new ItemLatestState(new CvsRevisionNumber(headRevision),
-                                 (statusOperation.getStatus() != null) && (! FileStatus.REMOVED.equals(statusOperation.getStatus())));
+                                 (statusOperation.getStatus() != null) && (! FileStatus.REMOVED.equals(statusOperation.getStatus())),
+                                 false);
         }
       } else {
         return new ItemLatestState(new CvsRevisionNumber(statusOperation.getRepositoryRevision()),
-                                 (statusOperation.getStatus() != null) && (! FileStatus.REMOVED.equals(statusOperation.getStatus())));
+                                 (statusOperation.getStatus() != null) && (! FileStatus.REMOVED.equals(statusOperation.getStatus())),
+                                 false);
       }
     }
 
-    return new ItemLatestState(new CvsRevisionNumber("HEAD"), true);
+    return new ItemLatestState(new CvsRevisionNumber("HEAD"), true, true);
   }
 
   private ItemLatestState getLastState(final VirtualFile parent, final String name) {
     final Entry entry = CvsEntriesManager.getInstance().getEntryFor(parent, name);
-    if (entry == null) return new ItemLatestState(new CvsRevisionNumber("HEAD"), true);
+    if (entry == null) return new ItemLatestState(new CvsRevisionNumber("HEAD"), true, true);
     if (entry.getStickyDate() != null || entry.getStickyTag() != null || entry.getStickyRevision() != null) {
       final String headRevision = getHeadRevisionFromLog(entry.getRevision(), new File(parent.getPath(), name));
       if (headRevision != null) {
-        return new ItemLatestState(new CvsRevisionNumber(headRevision), (! entry.isRemoved()));
+        return new ItemLatestState(new CvsRevisionNumber(headRevision), (! entry.isRemoved()), false);
       }
     } else {
-      return new ItemLatestState(new CvsRevisionNumber(entry.getRevision()), (! entry.isRemoved()));
+      return new ItemLatestState(new CvsRevisionNumber(entry.getRevision()), (! entry.isRemoved()), false);
     }
-    return new ItemLatestState(new CvsRevisionNumber("HEAD"), true);
+    return new ItemLatestState(new CvsRevisionNumber("HEAD"), true, true);
   }
 
   @Nullable
