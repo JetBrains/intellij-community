@@ -13,34 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.compiler.make;
 
-import com.intellij.util.io.KeyDescriptor;
+/*
+ * @author max
+ */
+package com.intellij.util.io;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-/**
- * @author Eugene Zhuravlev
-*         Date: Dec 1, 2008
- */
-class ClassIdKeyDescriptor implements KeyDescriptor<StorageClassId> {
-  public static final ClassIdKeyDescriptor INSTANCE = new ClassIdKeyDescriptor();
-
-  public int getHashCode(StorageClassId value) {
-    return value.hashCode();
+public abstract class InlineKeyDescriptor<T> implements KeyDescriptor<T> {
+  public final int getHashCode(T value) {
+    return toInt(value);
   }
 
-  public boolean isEqual(StorageClassId val1, StorageClassId val2) {
-    return val1.equals(val2);
+  public final boolean isEqual(T val1, T val2) {
+    return toInt(val1) == toInt(val2);
   }
 
-  public void save(DataOutput out, StorageClassId value) throws IOException {
-    out.writeInt(value.getClassQName());
+  public final void save(DataOutput out, T value) throws IOException {
+    out.writeInt(toInt(value));
   }
 
-  public StorageClassId read(DataInput in) throws IOException {
-    return new StorageClassId(in.readInt());
+  public final T read(DataInput in) throws IOException {
+    return fromInt(in.readInt());
   }
+
+  public abstract T fromInt(int n);
+
+  public abstract int toInt(T t);
 }

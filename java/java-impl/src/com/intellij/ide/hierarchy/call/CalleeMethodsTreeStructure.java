@@ -18,11 +18,8 @@ package com.intellij.ide.hierarchy.call;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 
@@ -61,7 +58,7 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
     final ArrayList<CallHierarchyNodeDescriptor> result = new ArrayList<CallHierarchyNodeDescriptor>();
 
     for (final PsiMethod calledMethod : methods) {
-      if (!isInScope(baseClass, calledMethod)) continue;
+      if (!isInScope(baseClass, calledMethod, myScopeType)) continue;
 
       CallHierarchyNodeDescriptor d = methodToDescriptorMap.get(calledMethod);
       if (d == null) {
@@ -77,7 +74,7 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
     // also add overriding methods as children
     final PsiMethod[] overridingMethods = OverridingMethodsSearch.search(method, method.getUseScope(), true).toArray(PsiMethod.EMPTY_ARRAY);
     for (final PsiMethod overridingMethod : overridingMethods) {
-      if (!isInScope(baseClass, overridingMethod)) continue;
+      if (!isInScope(baseClass, overridingMethod, myScopeType)) continue;
       final CallHierarchyNodeDescriptor node = new CallHierarchyNodeDescriptor(myProject, descriptor, overridingMethod, false, false);
       if (!result.contains(node)) result.add(node);
     }
@@ -93,30 +90,7 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
     return ArrayUtil.toObjectArray(result);
   }
 
-  private boolean isInScope(final PsiClass baseClass, final PsiMethod calledMethod) {
-    if (!calledMethod.getManager().isInProject(calledMethod)) {
-      return false;
-    }
-    if (CallHierarchyBrowser.SCOPE_CLASS.equals(myScopeType)) {
-      if (!PsiTreeUtil.isAncestor(baseClass, calledMethod, true)) {
-        return false;
-      }
-    }
-    else if (CallHierarchyBrowser.SCOPE_PROJECT.equals(myScopeType)) {
-      final VirtualFile virtualFile = calledMethod.getContainingFile().getVirtualFile();
-      if (virtualFile != null && ProjectRootManager.getInstance(myProject).getFileIndex().isInTestSourceContent(virtualFile)) {
-        return false;
-      }
-    }
-    else if (CallHierarchyBrowser.SCOPE_TEST.equals(myScopeType)) {
 
-      final VirtualFile virtualFile = calledMethod.getContainingFile().getVirtualFile();
-      if (virtualFile != null && !ProjectRootManager.getInstance(myProject).getFileIndex().isInTestSourceContent(virtualFile)) {
-        return false;
-      }
-    }
-    return true;
-  }
 
 
   private static void visitor(final PsiElement element, final ArrayList<PsiMethod> methods) {

@@ -66,6 +66,11 @@ public class Storage implements Disposable, Forceable {
 
   @NotNull
   public static Storage create(String storageFilePath, PagePool pool) throws IOException {
+    return create(storageFilePath, pool, 0);
+  }
+
+  @NotNull
+  private static Storage create(String storageFilePath, PagePool pool, final int retryCount) throws IOException {
     convertFromOldExtensions(storageFilePath);
 
     final File recordsFile = new File(storageFilePath + INDEX_EXTENSION);
@@ -94,7 +99,10 @@ public class Storage implements Disposable, Forceable {
       if (!deleted) {
         throw new IOException("Can't delete caches at: " + storageFilePath);
       }
-      return create(storageFilePath, pool);
+      if (retryCount >= 5) {
+        throw new IOException("Can't create storage at: " + storageFilePath);
+      }
+      return create(storageFilePath, pool, retryCount+1);
     }
 
     return new Storage(storageFilePath, recordsTable, dataTable, pool);

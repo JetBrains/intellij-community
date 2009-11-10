@@ -29,13 +29,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SubtypesHierarchyTreeStructure extends HierarchyTreeStructure {
+  private final String myCurrentScopeType;
 
-  protected SubtypesHierarchyTreeStructure(final Project project, final HierarchyNodeDescriptor descriptor) {
+  protected SubtypesHierarchyTreeStructure(final Project project, final HierarchyNodeDescriptor descriptor, String currentScopeType) {
     super(project, descriptor);
+    myCurrentScopeType = currentScopeType;
   }
 
-  public SubtypesHierarchyTreeStructure(final Project project, final PsiClass psiClass) {
+  public SubtypesHierarchyTreeStructure(Project project, PsiClass psiClass, String currentScopeType) {
     super(project, new TypeHierarchyNodeDescriptor(project, null, psiClass, true));
+    myCurrentScopeType = currentScopeType;
   }
 
   protected final Object[] buildChildren(final HierarchyNodeDescriptor descriptor) {
@@ -45,7 +48,7 @@ public class SubtypesHierarchyTreeStructure extends HierarchyTreeStructure {
     }
     if (psiClass instanceof PsiAnonymousClass) return ArrayUtil.EMPTY_OBJECT_ARRAY;
     if (psiClass.hasModifierProperty(PsiModifier.FINAL)) return ArrayUtil.EMPTY_OBJECT_ARRAY;
-    final List<PsiClass> classes = new ArrayList<PsiClass>(ClassInheritorsSearch.search(psiClass, psiClass.getUseScope(), false).findAll());
+    final List<PsiClass> classes = new ArrayList<PsiClass>(ClassInheritorsSearch.search(psiClass, psiClass.getUseScope().intersectWith(getSearchScope(myCurrentScopeType, psiClass)), false).findAll());
     final HierarchyNodeDescriptor[] descriptors = new HierarchyNodeDescriptor[classes.size()];
     for (int i = 0; i < classes.size(); i++) {
       descriptors[i] = new TypeHierarchyNodeDescriptor(myProject, descriptor, classes.get(i), false);
