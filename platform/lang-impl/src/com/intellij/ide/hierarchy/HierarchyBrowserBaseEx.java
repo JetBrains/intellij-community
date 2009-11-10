@@ -39,6 +39,8 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
@@ -101,7 +103,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
   };
   public static final String SCOPE_PROJECT = IdeBundle.message("hierarchy.scope.project");
-  static final String SCOPE_ALL = IdeBundle.message("hierarchy.scope.all");
+  public static final String SCOPE_ALL = IdeBundle.message("hierarchy.scope.all");
   public static final String SCOPE_TEST = IdeBundle.message("hierarchy.scope.test");
   public static final String SCOPE_CLASS = IdeBundle.message("hierarchy.scope.this.class");
   protected final Map<String, String> myType2ScopeMap = new HashMap<String, String>();
@@ -596,6 +598,14 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       group.add(new MenuAction(SCOPE_TEST));
       group.add(new MenuAction(SCOPE_ALL));
       group.add(new MenuAction(SCOPE_CLASS));
+
+      final NamedScopesHolder[] holders = NamedScopesHolder.getAllNamedScopeHolders(myProject);
+      for (NamedScopesHolder holder : holders) {
+        NamedScope[] scopes = holder.getEditableScopes(); //predefined scopes already included
+        for (NamedScope scope : scopes) {
+          group.add(new MenuAction(scope.getName()));
+        }
+      }
 
       return group;
     }
