@@ -65,8 +65,6 @@ public class GitQuickListContentProvider implements VcsQuickListContentProvider 
     // misc
     add("Git.Stash", manager, actions);
     add("Git.Unstash", manager, actions);
-    add("Git.Rebase.Continue", manager, actions);
-    add("Git.Rebase.Abort", manager, actions);
 
     return actions;
   }
