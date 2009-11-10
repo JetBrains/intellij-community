@@ -24,8 +24,8 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +35,9 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -55,7 +57,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
   }
 
   public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    List<ProblemDescriptor> list = checkCodeBlock(method.getBody(), manager);
+    List<ProblemDescriptor> list = checkCodeBlock(method.getBody(), manager, isOnTheFly);
     return list == null ? null : list.toArray(new ProblemDescriptor[list.size()]);
   }
 
@@ -63,7 +65,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
     List<ProblemDescriptor> allProblems = null;
     final PsiClassInitializer[] initializers = aClass.getInitializers();
     for (PsiClassInitializer initializer : initializers) {
-      final List<ProblemDescriptor> problems = checkCodeBlock(initializer.getBody(), manager);
+      final List<ProblemDescriptor> problems = checkCodeBlock(initializer.getBody(), manager, isOnTheFly);
       if (problems != null) {
         if (allProblems == null) {
           allProblems = new ArrayList<ProblemDescriptor>(1);
@@ -75,7 +77,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
   }
 
   @Nullable
-  private List<ProblemDescriptor> checkCodeBlock(final PsiCodeBlock body, InspectionManager manager) {
+  private List<ProblemDescriptor> checkCodeBlock(final PsiCodeBlock body, InspectionManager manager, boolean onTheFly) {
     if (body == null) return null;
     final ControlFlow flow;
     try {
@@ -216,12 +218,12 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
       if (variable instanceof PsiParameter && !(((PsiParameter)variable).getDeclarationScope() instanceof PsiForeachStatement)) {
         problems.add(manager.createProblemDescriptor(problemElement,
                                                      InspectionsBundle.message("inspection.can.be.local.parameter.problem.descriptor"),
-                                                     myQuickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                                                     myQuickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, onTheFly));
       }
       else {
         problems.add(manager.createProblemDescriptor(problemElement,
                                                      InspectionsBundle.message("inspection.can.be.local.variable.problem.descriptor"),
-                                                     myQuickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                                                     myQuickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, onTheFly));
       }
     }
 

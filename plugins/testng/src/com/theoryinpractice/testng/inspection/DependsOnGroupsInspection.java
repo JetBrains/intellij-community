@@ -125,7 +125,7 @@ public class DependsOnGroupsInspection extends BaseJavaLocalInspectionTool {
               LOGGER.info("group doesn't exist:" + methodName);
               ProblemDescriptor descriptor = manager.createProblemDescriptor(annotation, "Group '" + methodName + "' is undefined.",
                                                                              new GroupNameQuickFix(methodName),
-                                                                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+                                                                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
               problemDescriptors.add(descriptor);
 
             }

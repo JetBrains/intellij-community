@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.codeInspection;
 
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
@@ -90,14 +89,14 @@ public abstract class BaseInspection extends GroovySuppressableInspectionTool {
   }
 
   @Nullable
-  public ProblemDescriptor[] checkFile(@NotNull PsiFile psiFile, @NotNull InspectionManager inspectionManager, boolean onTheFly) {
+  public ProblemDescriptor[] checkFile(@NotNull PsiFile psiFile, @NotNull InspectionManager inspectionManager, boolean isOnTheFly) {
     if (!(psiFile instanceof GroovyFile)) {
-      return super.checkFile(psiFile, inspectionManager, onTheFly);
+      return super.checkFile(psiFile, inspectionManager, isOnTheFly);
     }
     final GroovyFile groovyFile = (GroovyFile) psiFile;
 
-    final ProblemsHolder problemsHolder = new ProblemsHolder(inspectionManager, psiFile);
-    final BaseInspectionVisitor visitor = buildGroovyVisitor(problemsHolder, onTheFly);
+    final ProblemsHolder problemsHolder = new ProblemsHolder(inspectionManager, psiFile, isOnTheFly);
+    final BaseInspectionVisitor visitor = buildGroovyVisitor(problemsHolder, isOnTheFly);
     groovyFile.accept(visitor);
     final List<ProblemDescriptor> problems = problemsHolder.getResults();
     if (problems == null) {

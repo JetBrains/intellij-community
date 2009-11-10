@@ -96,7 +96,7 @@ public abstract class BaseFormInspection extends BaseJavaLocalInspectionTool imp
       if (rootContainer.isInspectionSuppressed(getShortName(), null)) {
         return null;
       }
-      final FormFileErrorCollector collector = new FormFileErrorCollector(file, manager);
+      final FormFileErrorCollector collector = new FormFileErrorCollector(file, manager, isOnTheFly);
       startCheckForm(rootContainer);
       FormEditingUtil.iterate(rootContainer, new FormEditingUtil.ComponentVisitor() {
         public boolean visit(final IComponent component) {

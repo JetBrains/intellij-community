@@ -15,29 +15,28 @@
  */
 package org.intellij.lang.xpath.validation.inspections;
 
-import org.intellij.lang.xpath.context.ContextProvider;
-import org.intellij.lang.xpath.context.NamespaceContext;
-import org.intellij.lang.xpath.psi.PrefixedName;
-import org.intellij.lang.xpath.psi.XPathNodeTest;
-
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.psi.xml.XmlElement;
+import org.intellij.lang.xpath.context.ContextProvider;
+import org.intellij.lang.xpath.context.NamespaceContext;
+import org.intellij.lang.xpath.psi.PrefixedName;
+import org.intellij.lang.xpath.psi.XPathNodeTest;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.xml.namespace.QName;
-import java.util.Set;
 import java.text.MessageFormat;
+import java.util.Set;
 
 public class CheckNodeTest extends XPathInspection {
     @NonNls
     private static final String SHORT_NAME = "CheckNodeTest";
 
-    protected Visitor createVisitor(InspectionManager manager) {
-        return new MyVisitor(manager);
+    protected Visitor createVisitor(InspectionManager manager, boolean isOnTheFly) {
+        return new MyVisitor(manager, isOnTheFly);
     }
 
     @NotNull
@@ -56,8 +55,8 @@ public class CheckNodeTest extends XPathInspection {
     }
 
     final static class MyVisitor extends Visitor {
-        MyVisitor(InspectionManager manager) {
-            super(manager);
+        MyVisitor(InspectionManager manager, boolean isOnTheFly) {
+            super(manager, isOnTheFly);
         }
 
         protected void checkNodeTest(XPathNodeTest nodeTest) {
@@ -122,7 +121,7 @@ public class CheckNodeTest extends XPathInspection {
 
             final LocalQuickFix[] fixes = contextProvider.getQuickFixFactory().createUnknownNodeTestFixes(nodeTest);
             addProblem(myManager.createProblemDescriptor(nodeTest, "<html>Unknown " + type + " name " + name + "</html>",
-                    fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                    fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly));
         }
 
         private static boolean matches(@Nullable PrefixedName prefixedName, QName element, NamespaceContext namespaceContext, XmlElement context) {

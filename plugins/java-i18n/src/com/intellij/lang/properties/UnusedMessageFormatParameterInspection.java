@@ -15,24 +15,24 @@
  */
 package com.intellij.lang.properties;
 
-import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiElement;
+import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.ArrayList;
-import java.util.Set;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * User: anna
@@ -94,7 +94,8 @@ public class UnusedMessageFormatParameterInspection extends BaseLocalInspectionT
               PsiElement valElement = nodes.length < 3 ? property : nodes[2].getPsi();
               problemDescriptors.add(manager.createProblemDescriptor(valElement, PropertiesBundle.message(
                 "unused.message.format.parameter.problem.descriptor", integer.toString(), Integer.toString(i)),
-                                                                     (LocalQuickFix[])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                                                                     (LocalQuickFix[])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                                                     isOnTheFly));
               break;
             }
           }

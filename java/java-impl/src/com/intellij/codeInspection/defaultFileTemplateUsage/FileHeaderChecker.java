@@ -49,8 +49,7 @@ import java.util.regex.Pattern;
 public class FileHeaderChecker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.defaultFileTemplateUsage.FileHeaderChecker");
 
-  static ProblemDescriptor checkFileHeader(final PsiFile file,
-                                           final InspectionManager manager) {
+  static ProblemDescriptor checkFileHeader(final PsiFile file, final InspectionManager manager, boolean onTheFly) {
     FileTemplate template = FileTemplateManager.getInstance().getDefaultTemplate(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME);
     TIntObjectHashMap<String> offsetToProperty = new TIntObjectHashMap<String>();
     String templateText = template.getText().trim();
@@ -78,7 +77,7 @@ public class FileHeaderChecker {
       if (element == null) return null;
       LocalQuickFix[] quickFix = createQuickFix(element, matcher, offsetToProperty);
       final String description = InspectionsBundle.message("default.file.template.description");
-      return manager.createProblemDescriptor(element, description, quickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+      return manager.createProblemDescriptor(element, description, quickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, onTheFly);
     }
     return null;
   }

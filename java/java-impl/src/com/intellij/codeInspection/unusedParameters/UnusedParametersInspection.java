@@ -83,7 +83,7 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
                                                      ? InspectionsBundle.message("inspection.unused.parameter.composer")
                                                      : InspectionsBundle.message("inspection.unused.parameter.composer1"),
                                                      new AcceptSuggested(globalContext.getRefManager(), processor, refParameter.toString()),
-                                                     ProblemHighlightType.LIKE_UNUSED_SYMBOL));
+                                                     ProblemHighlightType.LIKE_UNUSED_SYMBOL, false));
         }
       }
       return result.toArray(new CommonProblemDescriptor[result.size()]);

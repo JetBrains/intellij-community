@@ -37,19 +37,23 @@ public abstract class InspectionManager {
    * @param psiElement problem is reported against
    * @param descriptionTemplate problem message. Use <code>#ref</code> for a link to problem piece of code and <code>#loc</code> for location in source code.
    * @param fix should be null if no fix is provided.
+   * @param onTheFly for local tools on batch run
    */
-  @NotNull public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement, @NotNull String descriptionTemplate, LocalQuickFix fix, ProblemHighlightType highlightType);
+  @NotNull public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement, @NotNull String descriptionTemplate,
+                                                                     LocalQuickFix fix, ProblemHighlightType highlightType, boolean onTheFly);
 
-  @NotNull public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement, @NotNull String descriptionTemplate, LocalQuickFix[] fixes, ProblemHighlightType highlightType);
+  @NotNull public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement, @NotNull String descriptionTemplate,
+                                                                     LocalQuickFix[] fixes, ProblemHighlightType highlightType,
+                                                                     boolean onTheFly);
 
-  @NotNull public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement, @NotNull String descriptionTemplate, LocalQuickFix[] fixes, ProblemHighlightType highlightType, boolean isAfterEndOfLine);
+  @NotNull public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement, @NotNull String descriptionTemplate,
+                                                                     LocalQuickFix[] fixes, ProblemHighlightType highlightType,
+                                                                     boolean onTheFly, boolean isAfterEndOfLine);
 
   @NotNull public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement startElement,
                                                                      @NotNull PsiElement endElement,
                                                                      @NotNull String descriptionTemplate,
-                                                                     ProblemHighlightType highlightType,
-                                                                     LocalQuickFix... fixes
-  );
+                                                                     ProblemHighlightType highlightType, boolean onTheFly, LocalQuickFix... fixes);
 
   
   @NotNull public abstract Project getProject();
@@ -57,17 +61,15 @@ public abstract class InspectionManager {
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
                                                             final TextRange rangeInElement,
                                                             @NotNull final String descriptionTemplate,
-                                                            final ProblemHighlightType highlightType,
-                                                            final LocalQuickFix... fixes);
+                                                            final ProblemHighlightType highlightType, boolean onTheFly, final LocalQuickFix... fixes);
 
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
                                                             @NotNull final String descriptionTemplate,
                                                             final ProblemHighlightType highlightType,
-                                                            @Nullable final HintAction hintAction,
-                                                            final LocalQuickFix... fixes);
+                                                            @Nullable final HintAction hintAction, boolean onTheFly, final LocalQuickFix... fixes);
 
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
                                                             @NotNull final String descriptionTemplate,
                                                             final boolean showTooltip,
-                                                            final ProblemHighlightType highlightType, final LocalQuickFix... fixes);
+                                                            final ProblemHighlightType highlightType, boolean onTheFly, final LocalQuickFix... fixes);
 }

@@ -15,16 +15,15 @@
  */
 package org.intellij.lang.xpath.validation.inspections;
 
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
 import org.intellij.lang.xpath.context.ContextProvider;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.psi.XPathFunctionCall;
 import org.intellij.lang.xpath.psi.XPathType;
 import org.intellij.lang.xpath.validation.ExpectedTypeUtil;
 import org.intellij.lang.xpath.validation.inspections.quickfix.XPathQuickFixFactory;
-
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemHighlightType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,8 +51,8 @@ public class RedundantTypeConversion extends XPathInspection {
         return true;
     }
 
-    protected Visitor createVisitor(InspectionManager manager) {
-        return new MyElementVisitor(manager);
+    protected Visitor createVisitor(InspectionManager manager, boolean isOnTheFly) {
+        return new MyElementVisitor(manager, isOnTheFly);
     }
 
     @Nullable
@@ -63,8 +62,8 @@ public class RedundantTypeConversion extends XPathInspection {
 
     final class MyElementVisitor extends Visitor {
 
-        MyElementVisitor(InspectionManager manager) {
-            super(manager);
+        MyElementVisitor(InspectionManager manager, boolean isOnTheFly) {
+            super(manager, isOnTheFly);
         }
 
         protected void checkExpression(final @NotNull XPathExpression expr) {
@@ -79,7 +78,7 @@ public class RedundantTypeConversion extends XPathInspection {
 
                     addProblem(myManager.createProblemDescriptor(expression,
                             "Redundant conversion to type '" + convertedType.getName() + "'", fixes,
-                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly));
                 } else if (CHECK_ANY) {
                     final XPathType expectedType = ExpectedTypeUtil.getExpectedType(expression);
                     if (expectedType == XPathType.ANY) {
@@ -88,7 +87,7 @@ public class RedundantTypeConversion extends XPathInspection {
 
                         addProblem(myManager.createProblemDescriptor(expression,
                                 "Redundant conversion to type '" + expectedType.getName() + "'", fixes,
-                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly));
                     }
                 }
             }

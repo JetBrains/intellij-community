@@ -79,7 +79,7 @@ public class DescriptionNotFoundInspection extends DevKitInspectionBase{
       .createProblemDescriptor(problem == null ? nameIdentifier : problem,
                                "Inspection does not have a description",
                                new LocalQuickFix[]{new CreateHtmlDescriptionFix(filename, module)},
-                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
     return new ProblemDescriptor[]{problemDescriptor};    
   }
 

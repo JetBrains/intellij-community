@@ -167,7 +167,7 @@ public class InconsistentResourceBundleInspection extends DescriptorProviderInsp
             String message = InspectionsBundle.message("inconsistent.bundle.property.inherited.with.the.same.value", parent.getName());
             ProblemDescriptor descriptor = manager.createProblemDescriptor(property, message,
                                                                            RemovePropertyLocalFix.INSTANCE,
-                                                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+                                                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
             addProblemElement(getRefManager().getReference(file), descriptor);
           }
           parent = parents.get(parent);
@@ -199,7 +199,7 @@ public class InconsistentResourceBundleInspection extends DescriptorProviderInsp
         String message = InspectionsBundle.message("inconsistent.bundle.property.error", inconsistentKey, parent.getName());
         ProblemDescriptor descriptor = manager.createProblemDescriptor(property, message,
                                                                        LocalQuickFix.EMPTY_ARRAY,
-                                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+                                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
         addProblemElement(getRefManager().getReference(file), descriptor);
       }
     }
@@ -236,7 +236,7 @@ public class InconsistentResourceBundleInspection extends DescriptorProviderInsp
         String message = InspectionsBundle.message("inconsistent.bundle.untranslated.property.error", untranslatedKey, file.getName());
         ProblemDescriptor descriptor = manager.createProblemDescriptor(untranslatedProperty, message,
                                                                        LocalQuickFix.EMPTY_ARRAY,
-                                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+                                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
         addProblemElement(getRefManager().getReference(untranslatedFile), descriptor);
       }
     }

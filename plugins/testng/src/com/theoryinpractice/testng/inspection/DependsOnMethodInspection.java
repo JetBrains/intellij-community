@@ -88,7 +88,7 @@ public class DependsOnMethodInspection extends BaseJavaLocalInspectionTool
                     Matcher matcher = PATTERN.matcher(dep.getValue().getText());
                     while (matcher.find()) {
                         String methodName = matcher.group(1);
-                        checkMethodNameDependency(manager, psiClass, methodName, dep, problemDescriptors);
+                        checkMethodNameDependency(manager, psiClass, methodName, dep, problemDescriptors, isOnTheFly);
                     }
                 }
             }
@@ -97,7 +97,8 @@ public class DependsOnMethodInspection extends BaseJavaLocalInspectionTool
         return problemDescriptors.toArray(new ProblemDescriptor[] {} );
     }
 
-    private static void checkMethodNameDependency(InspectionManager manager, PsiClass psiClass, String methodName, PsiNameValuePair dep, List<ProblemDescriptor> problemDescriptors) {
+    private static void checkMethodNameDependency(InspectionManager manager, PsiClass psiClass, String methodName, PsiNameValuePair dep,
+                                                  List<ProblemDescriptor> problemDescriptors, boolean onTheFly) {
         LOGGER.debug("Found dependsOnMethods with text: " + methodName);
         if (methodName.length() > 0 && methodName.charAt(methodName.length() - 1) == ')') {
 
@@ -106,7 +107,7 @@ public class DependsOnMethodInspection extends BaseJavaLocalInspectionTool
             ProblemDescriptor descriptor = manager.createProblemDescriptor(dep,
                                                                "Method '" + methodName + "' should not include () characters.",
                                                                (LocalQuickFix) null,
-                                                               ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+                                                               ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, onTheFly);
 
             problemDescriptors.add(descriptor);
 
@@ -118,7 +119,7 @@ public class DependsOnMethodInspection extends BaseJavaLocalInspectionTool
                 ProblemDescriptor descriptor = manager.createProblemDescriptor(dep,
                                                                    "Method '" + methodName + "' unknown.",
                                                                    (LocalQuickFix) null,
-                                                                   ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+                                                                   ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, onTheFly);
                 problemDescriptors.add(descriptor);
 
             } else {
@@ -130,7 +131,7 @@ public class DependsOnMethodInspection extends BaseJavaLocalInspectionTool
                 ProblemDescriptor descriptor = manager.createProblemDescriptor(dep,
                                                                      "Method '" + methodName + "' is not a test or configuration method.",
                                                                      (LocalQuickFix) null,
-                                                                     ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+                                                                     ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, onTheFly);
                 problemDescriptors.add(descriptor);
               }
             }

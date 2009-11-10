@@ -99,7 +99,7 @@ public class ComparingReferencesInspection extends BaseJavaLocalInspectionTool {
             if (problemList[0] == null) problemList[0] = new ArrayList();
             problemList[0].add(manager.createProblemDescriptor(expression, DESCRIPTION_TEMPLATE,
                                                                myQuickFix,
-                                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING, onTheFly));
           }
         }
       }

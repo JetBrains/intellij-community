@@ -55,7 +55,7 @@ public class WrongPackageStatementInspection extends BaseJavaLocalInspectionTool
 
         return new ProblemDescriptor[]{manager.createProblemDescriptor(classes[0].getNameIdentifier(), description,
                                                                        new AdjustPackageNameFix(javaFile, null, dirPackage),
-                                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
+                                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly)};
       }
       if (packageStatement != null) {
         final PsiJavaCodeReferenceElement packageReference = packageStatement.getPackageReference();
@@ -75,7 +75,8 @@ public class WrongPackageStatementInspection extends BaseJavaLocalInspectionTool
           String description = JavaErrorMessages.message("package.name.file.path.mismatch",
                                                          packageReference.getText(),
                                                          dirPackage.getQualifiedName());
-          return new ProblemDescriptor[]{manager.createProblemDescriptor(packageStatement, description, availableFixes.toArray(new LocalQuickFix[availableFixes.size()]), ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
+          return new ProblemDescriptor[]{manager.createProblemDescriptor(packageStatement, description, availableFixes.toArray(new LocalQuickFix[availableFixes.size()]), ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                                                         isOnTheFly)};
 
         }
       }

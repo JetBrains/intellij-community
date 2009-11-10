@@ -162,7 +162,7 @@ public class CanBeFinalInspection extends GlobalJavaInspectionTool {
       if (psiIdentifier != null) {
         return new ProblemDescriptor[]{manager.createProblemDescriptor(psiIdentifier, InspectionsBundle.message(
           "inspection.export.results.can.be.final.description"), new AcceptSuggested(globalContext.getRefManager()),
-                                                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
+                                                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false)};
       }
     }
     return null;

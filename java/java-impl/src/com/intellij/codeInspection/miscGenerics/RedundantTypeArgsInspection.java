@@ -58,12 +58,12 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
   public ProblemDescriptor[] checkMethod(@NotNull PsiMethod psiMethod, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final PsiCodeBlock body = psiMethod.getBody();
     if (body != null) {
-      return getDescriptions(body, manager);
+      return getDescriptions(body, manager, isOnTheFly);
     }
     return null;
   }
 
-  public ProblemDescriptor[] getDescriptions(PsiElement place, final InspectionManager inspectionManager) {
+  public ProblemDescriptor[] getDescriptions(PsiElement place, final InspectionManager inspectionManager, boolean isOnTheFly) {
     final List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
     place.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitMethodCallExpression(PsiMethodCallExpression expression) {
@@ -120,7 +120,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
             final ProblemDescriptor descriptor = inspectionManager.createProblemDescriptor(expression.getTypeArgumentList(),
                                                                                            InspectionsBundle.message("inspection.redundant.type.problem.descriptor"),
                                                                                            myQuickFixAction,
-                                                                                           ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+                                                                                           ProblemHighlightType.LIKE_UNUSED_SYMBOL, false);
             problems.add(descriptor);
           }
         }

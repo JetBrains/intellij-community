@@ -16,9 +16,9 @@
 package com.intellij.lang.ant.validation;
 
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntProject;
@@ -57,7 +57,7 @@ public class AntMissingPropertiesFileInspection extends AntInspection {
       final AntProject project = ((AntFile)file).getAntProject();
       if (project != null) {
         final List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
-        checkElement(project, manager, problems);
+        checkElement(project, manager, problems, isOnTheFly);
         final int problemCount = problems.size();
         if (problemCount > 0) {
           return problems.toArray(new ProblemDescriptor[problemCount]);
@@ -69,7 +69,7 @@ public class AntMissingPropertiesFileInspection extends AntInspection {
 
   private static void checkElement(final AntStructuredElement tag,
                                    @NotNull InspectionManager manager,
-                                   final List<ProblemDescriptor> problems) {
+                                   final List<ProblemDescriptor> problems, boolean isOnTheFly) {
     for (final PsiElement element : tag.getChildren()) {
       if (element instanceof AntProperty) {
         final AntProperty prop = (AntProperty)element;
@@ -77,12 +77,12 @@ public class AntMissingPropertiesFileInspection extends AntInspection {
           final String filename = prop.getFileName();
           if (filename != null && prop.getPropertiesFile() == null) {
             problems.add(manager.createProblemDescriptor(prop, AntBundle.message("file.doesnt.exist", filename), LocalQuickFix.EMPTY_ARRAY,
-                                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly));
           }
         }
       }
       else if (element instanceof AntStructuredElement) {
-        checkElement((AntStructuredElement)element, manager, problems);
+        checkElement((AntStructuredElement)element, manager, problems, isOnTheFly);
       }
     }
   }

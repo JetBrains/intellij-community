@@ -40,11 +40,13 @@ class CatchBodyVisitor extends JavaRecursiveElementWalkingVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.defaultFileTemplateUsage.CatchBodyVisitor");
 
   Collection<ProblemDescriptor> myProblemDescriptors;
+  private boolean myOnTheFly;
   private final InspectionManager myManager;
 
-  public CatchBodyVisitor(InspectionManager manager, Collection<ProblemDescriptor> descriptors) {
+  public CatchBodyVisitor(InspectionManager manager, Collection<ProblemDescriptor> descriptors, boolean onTheFly) {
     myManager = manager;
     myProblemDescriptors = descriptors;
+    myOnTheFly = onTheFly;
   }
 
   @Override public void visitCatchSection(PsiCatchSection section) {
@@ -104,7 +106,8 @@ class CatchBodyVisitor extends JavaRecursiveElementWalkingVisitor {
     }
     Pair<? extends PsiElement, ? extends PsiElement> range = DefaultFileTemplateUsageInspection.getInteriorRange(catchBlock);
     final String description = InspectionsBundle.message("default.file.template.description");
-    ProblemDescriptor descriptor = myManager.createProblemDescriptor(range.first, range.second, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, createQuickFix(section));
+    ProblemDescriptor descriptor = myManager.createProblemDescriptor(range.first, range.second, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                                                     myOnTheFly, createQuickFix(section));
     myProblemDescriptors.add(descriptor);
   }
 

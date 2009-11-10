@@ -18,11 +18,11 @@ package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.psi.*;
-import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
 import com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightVisitor;
+import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -107,8 +107,7 @@ public class SyntaxErrorInspection extends GlobalInspectionTool {
           element,
           GlobalInspectionUtil.createInspectionMessage(element.getErrorDescription()),
           ProblemHighlightType.ERROR,
-          null
-        );
+          null, false);
       }
       else {
         PsiElement parent = element;
@@ -126,7 +125,7 @@ public class SyntaxErrorInspection extends GlobalInspectionTool {
         descriptor = manager.createProblemDescriptor(parent,
                                                      new TextRange(offset, offset+1),
                                                      GlobalInspectionUtil.createInspectionMessage(element.getErrorDescription()),
-                                                     ProblemHighlightType.ERROR);
+                                                     ProblemHighlightType.ERROR, false);
       }
 
       problemDescriptionsProcessor.addProblemElement(GlobalInspectionUtil.retrieveRefElement(element, globalContext), descriptor);

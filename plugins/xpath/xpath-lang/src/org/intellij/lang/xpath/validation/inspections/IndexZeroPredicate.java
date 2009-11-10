@@ -15,19 +15,18 @@
  */
 package org.intellij.lang.xpath.validation.inspections;
 
-import org.intellij.lang.xpath.psi.*;
-import org.intellij.lang.xpath.validation.ExpectedTypeUtil;
-import org.intellij.lang.xpath.XPathTokenTypes;
-
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
+import org.intellij.lang.xpath.XPathTokenTypes;
+import org.intellij.lang.xpath.psi.*;
+import org.intellij.lang.xpath.validation.ExpectedTypeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class IndexZeroPredicate extends XPathInspection {
-    protected Visitor createVisitor(InspectionManager manager) {
-        return new MyVisitor(manager);
+    protected Visitor createVisitor(InspectionManager manager, boolean isOnTheFly) {
+        return new MyVisitor(manager, isOnTheFly);
     }
 
     @NotNull
@@ -46,8 +45,8 @@ public class IndexZeroPredicate extends XPathInspection {
     }
 
     final static class MyVisitor extends Visitor {
-        MyVisitor(InspectionManager manager) {
-            super(manager);
+        MyVisitor(InspectionManager manager, boolean isOnTheFly) {
+            super(manager, isOnTheFly);
         }
 
         protected void checkPredicate(XPathPredicate predicate) {
@@ -57,7 +56,7 @@ public class IndexZeroPredicate extends XPathInspection {
                     if (isZero(expr)) {
                         addProblem(myManager.createProblemDescriptor(expr,
                                 "Use of 0 as predicate index", (LocalQuickFix)null,
-                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly));
                     }
                 } else if (expr instanceof XPathBinaryExpression && expr.getType() == XPathType.BOOLEAN) {
                     final XPathBinaryExpression expression = (XPathBinaryExpression)expr;
@@ -74,7 +73,7 @@ public class IndexZeroPredicate extends XPathInspection {
                         if (isPosition(rOp)) {
                             addProblem(myManager.createProblemDescriptor(expr,
                                     "Comparing position() to 0", (LocalQuickFix)null,
-                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly));
                         }
                     } else if (isZero(rOp)) {
                         assert rOp != null;
@@ -82,7 +81,7 @@ public class IndexZeroPredicate extends XPathInspection {
                         if (isPosition(lOp)) {
                             addProblem(myManager.createProblemDescriptor(expr,
                                     "Comparing position() to 0", (LocalQuickFix)null,
-                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly));
                         }
                     }
                 }

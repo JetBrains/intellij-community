@@ -32,8 +32,8 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.*;
@@ -42,8 +42,8 @@ import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.util.VisibilityUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -181,7 +181,7 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
           return new ProblemDescriptor[]{manager.createProblemDescriptor(psiElement,
                                                                          InspectionsBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(access)),
                                                                          new AcceptSuggestedAccess(globalContext.getRefManager(), access),
-                                                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
+                                                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false)};
         }
       }
     }

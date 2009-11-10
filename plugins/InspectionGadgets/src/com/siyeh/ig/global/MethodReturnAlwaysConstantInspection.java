@@ -85,7 +85,7 @@ public class MethodReturnAlwaysConstantInspection extends BaseGlobalInspection {
                     InspectionGadgetsBundle.message(
                             "method.return.always.constant.problem.descriptor"),
                     (LocalQuickFix[]) null,
-                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false));
             siblingRefMethod.putUserData(ALWAYS_CONSTANT,
                     Boolean.valueOf(true));
         }
