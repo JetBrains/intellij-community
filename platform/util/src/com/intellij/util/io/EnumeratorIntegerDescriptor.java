@@ -24,6 +24,8 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 public class EnumeratorIntegerDescriptor implements KeyDescriptor<Integer> {
+  public static final EnumeratorIntegerDescriptor INSTANCE = new EnumeratorIntegerDescriptor();
+  
   public int getHashCode(final Integer value) {
     return value.intValue();
   }
