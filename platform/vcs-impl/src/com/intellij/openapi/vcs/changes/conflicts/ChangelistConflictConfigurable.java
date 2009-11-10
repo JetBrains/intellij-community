@@ -114,6 +114,6 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
   }
 
   public String getHelpTopic() {
-    return null;
+    return "project.propVCSSupport.ChangelistConflict";
   }
 }
