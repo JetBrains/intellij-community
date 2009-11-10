@@ -4,6 +4,7 @@
  */
 package com.intellij.coverage;
 
+import com.intellij.CommonBundle;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,6 +14,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -23,6 +25,7 @@ import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.rt.coverage.util.ProjectDataLoader;
 import com.intellij.util.PathUtil;
 import jetbrains.coverage.report.ReportBuilderFactory;
+import jetbrains.coverage.report.ReportGenerationFailedException;
 import jetbrains.coverage.report.SourceCodeProvider;
 import jetbrains.coverage.report.html.HTMLReportBuilder;
 import jetbrains.coverage.report.idea.IDEACoverageData;
@@ -76,6 +79,8 @@ public class IDEACoverageRunner extends CoverageRunner {
   @Override
   public void generateReport(final Project project, final String coverageDataFileName, final String outputDir, final boolean openInBrowser) {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Generating coverage report ...") {
+      final Exception[] myExceptions = new Exception[1];
+
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
@@ -96,10 +101,17 @@ public class IDEACoverageRunner extends CoverageRunner {
         catch (IOException e) {
           LOG.error(e);
         }
+        catch (ReportGenerationFailedException e) {
+          myExceptions[0] = e;
+        }
       }
 
       @Override
       public void onSuccess() {
+        if (myExceptions[0] != null) {
+          Messages.showErrorDialog(project, myExceptions[0].getMessage(), CommonBundle.getErrorTitle());
+          return;
+        }
         if (openInBrowser) BrowserUtil.launchBrowser(VfsUtil.pathToUrl(outputDir + "/index.html"));
       }
     });
