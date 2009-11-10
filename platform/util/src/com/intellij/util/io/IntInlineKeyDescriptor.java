@@ -13,22 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/*
+ * @author max
+ */
 package com.intellij.util.io;
 
-/**
- * @author peter
- */
-public class BooleanDataDescriptor extends InlineKeyDescriptor<Boolean> {
-  public static final BooleanDataDescriptor INSTANCE = new BooleanDataDescriptor();
-
-  private BooleanDataDescriptor() {
+public class IntInlineKeyDescriptor extends InlineKeyDescriptor<Integer> {
+  public Integer fromInt(int n) {
+    return Integer.valueOf(n);
   }
 
-  public Boolean fromInt(int n) {
-    return n != 0 ? Boolean.TRUE : Boolean.FALSE;
-  }
-
-  public int toInt(Boolean aBoolean) {
-    return aBoolean == Boolean.TRUE ? 1 : 0;
+  public int toInt(Integer integer) {
+    return integer.intValue();
   }
 }

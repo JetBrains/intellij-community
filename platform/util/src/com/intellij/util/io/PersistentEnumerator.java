@@ -38,7 +38,7 @@ public class PersistentEnumerator<Data> implements Forceable {
   private static final int META_DATA_OFFSET = 4;
   private static final int FIRST_VECTOR_OFFSET = 8;
   private static final int DIRTY_MAGIC = 0xbabe0589;
-  private static final int VERSION = 4;
+  private static final int VERSION = 5;
   private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafac + VERSION;
 
   private static final int BITS_PER_LEVEL = 4;
@@ -53,6 +53,7 @@ public class PersistentEnumerator<Data> implements Forceable {
 
 
   protected final ResizeableMappedFile myStorage;
+  private final ResizeableMappedFile myKeyStorage;
 
   private boolean myClosed = false;
   private boolean myDirty = false;
@@ -67,17 +68,8 @@ public class PersistentEnumerator<Data> implements Forceable {
   private static final int KEY_REF_OFFSET = KEY_HASHCODE_OFFSET + 4;
   protected static final int RECORD_SIZE = KEY_REF_OFFSET + 4;
 
-  private final MyAppenderStream myKeyStream;
-  private final MyDataIS myKeyReadStream;
-  private final RandomAccessFile myKeyRaf;
   private boolean myCorrupted = false;
-
-  private static class MyAppenderStream extends DataOutputStream {
-    public MyAppenderStream(final File out) throws FileNotFoundException {
-      super(new BufferedOutputStream(new FileOutputStream(out, true)));
-      written = (int) out.length();
-    }
-  }
+  private final MyDataIS myKeyReadStream;
 
   private static class CacheKey implements ShareableKey {
     public PersistentEnumerator owner;
@@ -135,7 +127,6 @@ public class PersistentEnumerator<Data> implements Forceable {
     }
 
     myStorage = new ResizeableMappedFile(myFile, initialSize);
-    myKeyStream = new MyAppenderStream(keystreamFile());
 
     if (myStorage.length() == 0) {
       markDirty(true);
@@ -156,8 +147,14 @@ public class PersistentEnumerator<Data> implements Forceable {
       }
     }
 
-    myKeyRaf = new RandomAccessFile(keystreamFile(), "r");
-    myKeyReadStream = new MyDataIS(myKeyRaf);
+    if (myDataDescriptor instanceof InlineKeyDescriptor) {
+      myKeyStorage = null;
+      myKeyReadStream = null;
+    }
+    else {
+      myKeyStorage = new ResizeableMappedFile(keystreamFile(), initialSize);
+      myKeyReadStream = new MyDataIS(myKeyStorage);
+    }
   }
   
   protected synchronized int tryEnumerate(Data value) throws IOException {
@@ -360,8 +357,15 @@ public class PersistentEnumerator<Data> implements Forceable {
     try {
       markDirty(true);
 
-      byte[] buf = prepareEntryRecordBuf(hashCode, myKeyStream.size());
-      myDataDescriptor.save(myKeyStream, value);
+      final int dataOff = myKeyStorage != null ? (int)myKeyStorage.length() : ((InlineKeyDescriptor<Data>)myDataDescriptor).toInt(value);
+      byte[] buf = prepareEntryRecordBuf(hashCode, dataOff);
+
+      if (myKeyStorage != null) {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        DataOutput out = new DataOutputStream(bos);
+        myDataDescriptor.save(out, value);
+        myKeyStorage.put(dataOff, bos.toByteArray(), 0, bos.size());
+      }
 
       final ResizeableMappedFile storage = myStorage;
       final int pos = (int)storage.length();
@@ -391,7 +395,11 @@ public class PersistentEnumerator<Data> implements Forceable {
   }
 
   public boolean iterateData(final Processor<Data> processor) throws IOException {
-    flushKeysStream();
+    if (myKeyStorage == null) {
+      throw new UnsupportedOperationException("Iteration over InlineIntegerKeyDescriptors is not supported");
+    }
+
+    myKeyStorage.force();
 
     DataInputStream keysStream = new DataInputStream(new BufferedInputStream(new FileInputStream(keystreamFile())));
     try {
@@ -415,25 +423,18 @@ public class PersistentEnumerator<Data> implements Forceable {
     return new File(myFile.getPath() + ".keystream");
   }
 
-  private void flushKeysStream() {
-    try {
-      myKeyStream.flush();
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
   private int hashCodeOf(int idx) throws IOException {
     return myStorage.getInt(idx + KEY_HASHCODE_OFFSET);
   }
 
   public synchronized Data valueOf(int idx) throws IOException {
     try {
-      myKeyStream.flush();
       final ResizeableMappedFile storage = myStorage;
       int addr = storage.getInt(idx + KEY_REF_OFFSET);
-      myKeyReadStream.setup(addr, myKeyStream.size());
+
+      if (myKeyReadStream == null) return ((InlineKeyDescriptor<Data>)myDataDescriptor).fromInt(addr);
+
+      myKeyReadStream.setup(addr, myKeyStorage.length());
       return myDataDescriptor.read(myKeyReadStream);
     }
     catch (IOException io) {
@@ -447,8 +448,8 @@ public class PersistentEnumerator<Data> implements Forceable {
   }
 
   private static class MyDataIS extends DataInputStream {
-    private MyDataIS(RandomAccessFile raf) {
-      super(new MyBufferedIS(new RandomAccessFileInputStream(raf, 0, 0)));
+    private MyDataIS(ResizeableMappedFile raf) {
+      super(new MyBufferedIS(new MappedFileInputStream(raf, 0, 0)));
     }
 
     public void setup(long pos, long limit) {
@@ -464,7 +465,7 @@ public class PersistentEnumerator<Data> implements Forceable {
     public void setup(long pos, long limit) {
       this.pos = 0;
       count = 0;
-      ((RandomAccessFileInputStream)in).setup(pos, limit);
+      ((MappedFileInputStream)in).setup(pos, limit);
     }
   }
 
@@ -472,9 +473,9 @@ public class PersistentEnumerator<Data> implements Forceable {
     if (!myClosed) {
       myClosed = true;
       try {
-        myKeyStream.close();
-        myKeyReadStream.close();
-        myKeyRaf.close();
+        if (myKeyStorage != null) {
+          myKeyStorage.close();
+        }
         flush();
       }
       finally {
@@ -500,7 +501,9 @@ public class PersistentEnumerator<Data> implements Forceable {
 
   public synchronized void force() {
     try {
-      flushKeysStream();
+      if (myKeyStorage != null) {
+        myKeyStorage.force();
+      }
       flush();
     }
     catch (IOException e) {

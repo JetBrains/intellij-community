@@ -19,6 +19,28 @@
  */
 package com.intellij.util.io;
 
-public class EnumeratorIntegerDescriptor extends IntInlineKeyDescriptor {
-  public static final EnumeratorIntegerDescriptor INSTANCE = new EnumeratorIntegerDescriptor();
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+
+public abstract class InlineKeyDescriptor<T> implements KeyDescriptor<T> {
+  public final int getHashCode(T value) {
+    return toInt(value);
+  }
+
+  public final boolean isEqual(T val1, T val2) {
+    return toInt(val1) == toInt(val2);
+  }
+
+  public final void save(DataOutput out, T value) throws IOException {
+    out.writeInt(toInt(value));
+  }
+
+  public final T read(DataInput in) throws IOException {
+    return fromInt(in.readInt());
+  }
+
+  public abstract T fromInt(int n);
+
+  public abstract int toInt(T t);
 }
