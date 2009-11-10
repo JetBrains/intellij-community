@@ -965,9 +965,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   public void saveSettings() {
     if (myDoNotSave || isUnitTestMode() || isHeadlessEnvironment()) return;
-
-    System.out.println("Saving application settings");
-
     if (mySaveSettingsIsInProgress.compareAndSet(false, true)) {
       try {
         doSave();

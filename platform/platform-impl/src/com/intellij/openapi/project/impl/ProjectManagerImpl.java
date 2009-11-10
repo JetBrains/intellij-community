@@ -885,7 +885,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     try {
       if (save) {
         FileDocumentManager.getInstance().saveAllDocuments();
-        System.out.println("Saving project: " + project.getName());
         project.save();
       }
       fireProjectClosing(project);

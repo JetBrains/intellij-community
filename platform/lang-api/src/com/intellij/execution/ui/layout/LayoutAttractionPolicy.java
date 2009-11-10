@@ -38,11 +38,20 @@ public abstract class LayoutAttractionPolicy {
   public static class FocusOnce extends LayoutAttractionPolicy {
 
     private boolean myWasAttracted;
+    private boolean myRequestFocus;
+
+    public FocusOnce() {
+      this(true);
+    }
+
+    public FocusOnce(final boolean requestFocus) {
+      myRequestFocus = requestFocus;
+    }
 
     public void attract(final Content content, final RunnerLayoutUi ui) {
       if (!myWasAttracted) {
         myWasAttracted = true;
-        ui.selectAndFocus(content, true);
+        ui.selectAndFocus(content, myRequestFocus, true);
       } else {
         ui.setBouncing(content, true);
       }
@@ -55,7 +64,7 @@ public abstract class LayoutAttractionPolicy {
 
   public static class FocusAlways extends LayoutAttractionPolicy {
     public void attract(final Content content, final RunnerLayoutUi ui) {
-      ui.selectAndFocus(content, true);
+      ui.selectAndFocus(content, true, true);
     }
 
     public void clearAttraction(final Content content, final RunnerLayoutUi ui) {

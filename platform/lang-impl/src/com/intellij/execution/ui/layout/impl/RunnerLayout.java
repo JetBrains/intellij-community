@@ -16,8 +16,10 @@
 
 package com.intellij.execution.ui.layout.impl;
 
+import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -44,7 +46,7 @@ public class RunnerLayout  {
   private final Map<Integer, TabImpl.Default> myDefaultTabs = new HashMap<Integer, TabImpl.Default>();
 
   protected General myGeneral = new General();
-  private final Map<String, String> myDefaultFocus = new HashMap<String, String>();
+  private final Map<String, Pair<String, LayoutAttractionPolicy>> myDefaultFocus = new HashMap<String, Pair<String, LayoutAttractionPolicy>>();
 
 
   public RunnerLayout(final String ID) {
@@ -237,13 +239,18 @@ public class RunnerLayout  {
     myGeneral.focusOnCondition.put(condition, id);
   }
 
-  public void setDefaultToFocus(String id, final String condition) {
-    myDefaultFocus.put(condition, id);
+  public void setDefaultToFocus(String id, final String condition, @NotNull final LayoutAttractionPolicy policy) {
+    myDefaultFocus.put(condition, Pair.create(id, policy));
   }
 
   @Nullable
   public String getToFocus(final String condition) {
-    return myGeneral.focusOnCondition.containsKey(condition) ? myGeneral.focusOnCondition.get(condition) : myDefaultFocus.get(condition);
+    return myGeneral.focusOnCondition.containsKey(condition) ? myGeneral.focusOnCondition.get(condition) : (myDefaultFocus.containsKey(condition) ? myDefaultFocus.get(condition).getFirst() : null);
+  }
+
+  public LayoutAttractionPolicy getAttractionPolicy(final String condition) {
+    final Pair<String, LayoutAttractionPolicy> pair = myDefaultFocus.get(condition);
+    return pair == null ? new LayoutAttractionPolicy.FocusOnce() : pair.getSecond();
   }
 
   public static class General {
