@@ -66,4 +66,5 @@ public interface GroupNames {
   String MODULARIZATION_GROUP_NAME = InspectionsBundle.message("group.names.modularization.issues");
 
   String JAVAEE_GROUP_NAME = InspectionsBundle.message("group.names.javaee.issues");
+  String CONCURRENCY_ANNOTATION_ISSUES = "Concurrency annotation issues";
 }

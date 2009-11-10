@@ -44,6 +44,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
+import com.intellij.packaging.artifacts.ArtifactProperties;
 import com.intellij.packaging.artifacts.ArtifactPropertiesProvider;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
@@ -211,6 +212,11 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
     }
 
     try {
+      onBuildStartedOrFinished(builderContext, false);
+      if (context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
+        return false;
+      }
+
       int i = 0;
       for (final ProcessingItem item0 : items) {
         if (item0 instanceof MockProcessingItem) continue;
@@ -276,7 +282,7 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
         }
       }
 
-      onBuildFinished(builderContext);
+      onBuildStartedOrFinished(builderContext, true);
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -354,13 +360,18 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
     return outputPath;
   }
 
-  protected static void onBuildFinished(ArtifactsProcessingItemsBuilderContext context)
-    throws Exception {
+  private static void onBuildStartedOrFinished(ArtifactsProcessingItemsBuilderContext context, final boolean finished) throws Exception {
     final CompileContext compileContext = context.getCompileContext();
     final Set<Artifact> artifacts = getAffectedArtifacts(compileContext);
     for (Artifact artifact : artifacts) {
       for (ArtifactPropertiesProvider provider : artifact.getPropertiesProviders()) {
-        artifact.getProperties(provider).onBuildFinished(artifact, compileContext);
+        final ArtifactProperties<?> properties = artifact.getProperties(provider);
+        if (finished) {
+          properties.onBuildFinished(artifact, compileContext);
+        }
+        else {
+          properties.onBuildStarted(artifact, compileContext);
+        }
       }
     }
   }

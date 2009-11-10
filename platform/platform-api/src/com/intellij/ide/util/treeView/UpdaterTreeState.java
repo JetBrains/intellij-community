@@ -171,8 +171,8 @@ public class UpdaterTreeState {
           public void run() {
             myUi.expand(toExpand, new Runnable() {
               public void run() {
-                setProcessingNow(false);
                 myUi.clearUpdaterState();
+                setProcessingNow(false);
               }
             }, true);
           }
@@ -343,7 +343,7 @@ public class UpdaterTreeState {
 
   public void setProcessingNow(boolean processingNow) {
     myProcessingNow = processingNow;
-    if (processingNow) {
+    if (!processingNow) {
       myUi.maybeReady();
     }
   }

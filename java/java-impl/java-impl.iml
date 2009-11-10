@@ -26,6 +26,7 @@
     <orderEntry type="module" module-name="dom-impl" />
     <orderEntry type="module" module-name="vcs-impl" />
     <orderEntry type="module" module-name="icons" />
+    <orderEntry type="library" name="jcip" level="project" />
   </component>
   <component name="copyright">
     <Base>

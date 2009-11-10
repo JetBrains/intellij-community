@@ -54,7 +54,7 @@ public class TargetChooserDialog extends DialogWrapper {
   private AntBuildTarget mySelectedTarget;
   private Tree myTree;
 
-  protected TargetChooserDialog(final Project project, final AntBuildTarget selectedTarget) {
+  public TargetChooserDialog(final Project project, final AntBuildTarget selectedTarget) {
     super(project, false);
     myProject = project;
     mySelectedTarget = selectedTarget;

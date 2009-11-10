@@ -13,24 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.packaging.artifacts;
+package com.intellij.lang.ant.config.impl.artifacts;
 
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.packaging.ui.ArtifactEditorContext;
-import com.intellij.packaging.ui.ArtifactPropertiesEditor;
+import com.intellij.packaging.artifacts.ArtifactProperties;
+import com.intellij.packaging.artifacts.ArtifactPropertiesProvider;
+import com.intellij.packaging.artifacts.ArtifactType;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
-public abstract class ArtifactProperties<S> implements PersistentStateComponent<S> {
-
-  public void onBuildStarted(@NotNull Artifact artifact, @NotNull CompileContext compileContext) {
+public class AntArtifactPreProcessingPropertiesProvider extends ArtifactPropertiesProvider {
+  public AntArtifactPreProcessingPropertiesProvider() {
+    super("ant-preprocessing");
   }
 
-  public void onBuildFinished(@NotNull Artifact artifact, @NotNull CompileContext compileContext) {
+  @NotNull
+  @Override
+  public ArtifactProperties<?> createProperties(@NotNull ArtifactType artifactType) {
+    return new AntArtifactProperties(false);
   }
-
-  public abstract ArtifactPropertiesEditor createEditor(@NotNull ArtifactEditorContext context);
 }

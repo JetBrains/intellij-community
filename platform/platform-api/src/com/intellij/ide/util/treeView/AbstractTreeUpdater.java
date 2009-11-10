@@ -100,7 +100,6 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
       LOG.debug("addSubtreeToUpdate:" + toAdd.getNode());
     }
 
-
     assert !toAdd.isExpired();
 
 

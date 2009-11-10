@@ -315,7 +315,8 @@ public class ProgressManagerImpl extends ProgressManager {
     }
     else {
       final BackgroundableProcessIndicator indicator = new BackgroundableProcessIndicator(task);
-      Disposer.register(ApplicationManager.getApplication(), indicator);
+      final Project project = task.getProject();
+      Disposer.register(project != null ? project : ApplicationManager.getApplication(), indicator);
       progressIndicator = indicator;
     }
 

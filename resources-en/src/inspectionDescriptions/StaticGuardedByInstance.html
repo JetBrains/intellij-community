@@ -1,0 +1,21 @@
+<html>
+<body>
+<table>
+    <tr>
+        <td valign="top" height="150">
+            <font face="verdana" size="-1">
+                This inspection reports any @net.jcip.annotations.GuardedBy annotations on static fields or methods,
+                where
+                the guard is either a non-static field or 'this'. Guarding a static by a non-static may result in
+                excessive
+                concurrency, multiple threads may be able to access the guarded field simultaneously, by locking in
+                different
+                object contexts.
+            </font></td>
+    </tr>
+    <tr>
+        <td height="20"><font face="verdana" size="-2">New in 9</font></td>
+    </tr>
+</table>
+</body>
+</html>

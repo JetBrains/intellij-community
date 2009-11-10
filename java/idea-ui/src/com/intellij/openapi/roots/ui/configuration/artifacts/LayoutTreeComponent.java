@@ -418,10 +418,10 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
 
   public void putIntoDefaultLocations(@NotNull final List<? extends PackagingSourceItem> items) {
     final List<PackagingElement<?>> toSelect = new ArrayList<PackagingElement<?>>();
-    final CompositePackagingElement<?> rootElement = getArtifact().getRootElement();
-    final ArtifactType artifactType = getArtifact().getArtifactType();
     editLayout(new Runnable() {
       public void run() {
+        final CompositePackagingElement<?> rootElement = getArtifact().getRootElement();
+        final ArtifactType artifactType = getArtifact().getArtifactType();
         for (PackagingSourceItem item : items) {
           final String path = artifactType.getDefaultPathFor(item);
           if (path != null) {

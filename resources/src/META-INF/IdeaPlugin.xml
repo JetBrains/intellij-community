@@ -557,6 +557,10 @@
       <className>com.intellij.testIntegration.createTest.CreateTestAction</className>
     </intentionAction>
 
+    <intentionAction>
+      <className>com.intellij.codeInspection.concurrencyAnnotations.JCiPOrderEntryFix</className>
+    </intentionAction>
+
 
     <daemon.highlightInfoFilter implementation="com.intellij.debugger.engine.evaluation.DebuggerHighlightFilter"/>
     <daemon.highlightInfoFilter implementation="com.intellij.codeInsight.daemon.impl.HighlightInfoFilterImpl"/>

@@ -38,7 +38,6 @@ public class TestResultsSender implements TestListener {
 
   public synchronized void addError(Test test, Throwable throwable) {
     if (throwable instanceof AssertionError) {
-      // junit4 makes no distinction between errors and failures
       doAddFailure(test, (Error)throwable);
     }
     else {
