@@ -20,6 +20,8 @@ import java.util.Set;
  * @author yole
  */
 public class PythonPyInspectionToolProvider implements InspectionToolsFactory {
+  private final JythonManager myManager;
+
   public static PythonPyInspectionToolProvider getInstance() {
     return ApplicationManager.getApplication().getComponent(PythonPyInspectionToolProvider.class);
   }
@@ -28,14 +30,15 @@ public class PythonPyInspectionToolProvider implements InspectionToolsFactory {
 
   private Set<String> myShortNames = new HashSet<String>();
 
-  public PythonPyInspectionToolProvider(final InspectionToolRegistrar registrar) {
+  public PythonPyInspectionToolProvider(final InspectionToolRegistrar registrar, final JythonManager jythonManager) {
     myRegistrar = registrar;
+    myManager = jythonManager;
   }
 
   @Nullable
-  public static LocalInspectionTool createLocalInspectionTool(final String inspectionToolName) {
+  public LocalInspectionTool createLocalInspectionTool(final String inspectionToolName) {
     try {
-      final PyObject object = JythonManager.getInstance().eval(inspectionToolName + "()");
+      final PyObject object = myManager.eval(inspectionToolName + "()");
       final Object o = object.__tojava__(LocalInspectionTool.class);
       return (LocalInspectionTool)o;
     }
@@ -53,10 +56,9 @@ public class PythonPyInspectionToolProvider implements InspectionToolsFactory {
       }
     });
 
-    final JythonManager manager = JythonManager.getInstance();
-    manager.execScriptFromResource("inspections/inspections.py");
+    myManager.execScriptFromResource("inspections/inspections.py");
 
-    final PyList pyList = (PyList) manager.eval("getAllInspections()");
+    final PyList pyList = (PyList) myManager.eval("getAllInspections()");
     int len = pyList.__len__();
     final InspectionProfileEntry[] profileEntries = new InspectionProfileEntry[len];
     for(int i=0; i<len; i++) {
