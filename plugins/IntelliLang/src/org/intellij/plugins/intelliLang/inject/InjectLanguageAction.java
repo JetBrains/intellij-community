@@ -30,9 +30,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.FileContentUtil;
@@ -70,7 +68,11 @@ public class InjectLanguageAction implements IntentionAction {
   @Nullable
   protected static PsiLanguageInjectionHost findInjectionHost(Editor editor, PsiFile file) {
     final int offset = editor.getCaretModel().getOffset();
-    return PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiLanguageInjectionHost.class, false);
+    final PsiLanguageInjectionHost host = PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiLanguageInjectionHost.class, false);
+    if (host == null) return null;
+    final TextRange textRange = ElementManipulators.getManipulator(host).getRangeInElement(host);
+    if (textRange.getStartOffset() == 0) return null;
+    return host;
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
