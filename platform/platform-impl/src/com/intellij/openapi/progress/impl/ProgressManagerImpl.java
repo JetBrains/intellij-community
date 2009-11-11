@@ -50,9 +50,10 @@ public class ProgressManagerImpl extends ProgressManager {
   private static volatile int ourLockedCheckCounter = 0;
   private final List<ProgressFunComponentProvider> myFunComponentProviders = new ArrayList<ProgressFunComponentProvider>();
   @NonNls private static final String NAME = "Progress Cancel Checker";
+  private static final boolean DISABLED = Comparing.equal(System.getProperty(PROCESS_CANCELED_EXCEPTION), "disabled");
 
   public ProgressManagerImpl(Application application) {
-    if (!application.isUnitTestMode() && !Comparing.equal(System.getProperty(PROCESS_CANCELED_EXCEPTION), "disabled")) {
+    if (!application.isUnitTestMode() && !DISABLED) {
       new Thread(NAME) {
         public void run() {
           while (true) {
@@ -76,6 +77,9 @@ public class ProgressManagerImpl extends ProgressManager {
         progress.checkCanceled();
       }
       catch (ProcessCanceledException e) {
+        if (DISABLED) {
+          return;
+        }
         if (Thread.holdsLock(PsiLock.LOCK)) {
           ourLockedCheckCounter++;
           if (ourLockedCheckCounter > 10) {
