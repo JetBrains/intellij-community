@@ -316,7 +316,7 @@ public class MoveClassesOrPackagesImpl {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            LocalHistoryAction a = LocalHistory.startAction(project, commandDescription);
+            LocalHistoryAction a = LocalHistory.getInstance().startAction(commandDescription);
             try {
               rearrangeDirectoriesToTarget(directories, selectedTarget);
             }

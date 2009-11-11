@@ -23,6 +23,7 @@ import com.intellij.history.integration.revertion.SelectionReverter;
 import com.intellij.history.integration.ui.models.SelectionCalculator;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.historyIntegrTests.IntegrationTestCase;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
@@ -36,7 +37,7 @@ public class SelectionReverterTest extends IntegrationTestCase {
   @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
-    f = root.createChildData(null, "f.txt");
+    f = myRoot.createChildData(null, "f.txt");
   }
 
   public void testBasics() throws IOException {
@@ -74,22 +75,22 @@ public class SelectionReverterTest extends IntegrationTestCase {
 
     revertToPreviousRevision(0, 0);
 
-    List<Revision> rr = getVcsRevisionsFor(f);
+    List<Revision> rr = getRevisionsFor(f);
     assertEquals(4, rr.size());
-    assertEquals("Revert of selection to 11.02.01 12:30", rr.get(0).getCauseChangeName());
+    assertEquals("Revert of selection to 11.02.01 12:30", rr.get(0).getChangeSetName());
   }
 
   public void testAskingForReadOnlyStatusClearingOnlyForTheSpecifiedFile() throws Exception {
-    root.createChildData(null, "foo1.txt");
+    myRoot.createChildData(null, "foo1.txt");
     f.setBinaryContent("one".getBytes());
-    root.createChildData(null, "foo2.txt");
+    myRoot.createChildData(null, "foo2.txt");
     f.setBinaryContent("two".getBytes());
-    root.createChildData(null, "foo3.txt");
+    myRoot.createChildData(null, "foo3.txt");
 
     final List<VirtualFile> files = new ArrayList<VirtualFile>();
-    gateway = new IdeaGateway(myProject) {
+    myGateway = new IdeaGateway() {
       @Override
-      public boolean ensureFilesAreWritable(List<VirtualFile> ff) {
+      public boolean ensureFilesAreWritable(Project p, List<VirtualFile> ff) {
         files.addAll(ff);
         return true;
       }
@@ -111,11 +112,11 @@ public class SelectionReverterTest extends IntegrationTestCase {
   }
 
   private SelectionReverter createReverter(int from, int to) {
-    List<Revision> rr = getVcsRevisionsFor(f);
-    SelectionCalculator c = new SelectionCalculator(gateway, rr, from, to);
+    List<Revision> rr = getRevisionsFor(f);
+    SelectionCalculator c = new SelectionCalculator(myGateway, rr, from, to);
     Revision leftRev = rr.get(1);
-    Entry right = getVcsEntry(f);
+    Entry entry = getRootEntry().getEntry(f.getPath());
 
-    return new SelectionReverter(getVcs(), gateway, c, leftRev, right, from, to);
+    return new SelectionReverter(myProject, getVcs(), myGateway, c, leftRev, entry, from, to);
   }
 }

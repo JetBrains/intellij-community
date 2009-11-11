@@ -20,6 +20,9 @@
   <applicationService serviceInterface="com.intellij.openapi.progress.ProgressManager"
                       serviceImplementation="com.intellij.openapi.progress.impl.ProgressManagerImpl"/>
 
+  <undoProvider implementation="com.intellij.openapi.command.impl.FileUndoProvider"/>
+  <projectUndoProvider implementation="com.intellij.openapi.command.impl.FileUndoProvider"/>
+
   <applicationService serviceInterface="com.intellij.openapi.command.CommandProcessor"
                       serviceImplementation="com.intellij.openapi.command.impl.CommandProcessorImpl"/>
 
@@ -80,8 +83,6 @@
                       serviceImplementation="com.intellij.codeInsight.hint.TooltipController"/>
   <applicationService serviceInterface="com.intellij.openapi.editor.actionSystem.EditorActionManager"
                       serviceImplementation="com.intellij.openapi.editor.impl.EditorActionManagerImpl"/>
-  <applicationService serviceInterface="com.intellij.history.LocalHistoryConfiguration"
-                      serviceImplementation="com.intellij.history.LocalHistoryConfiguration"/>
   <applicationService serviceInterface="com.intellij.openapi.updateSettings.impl.UpdateSettings"
                       serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateSettings"/>
   <applicationService serviceInterface="com.intellij.featureStatistics.FeatureUsageTracker"

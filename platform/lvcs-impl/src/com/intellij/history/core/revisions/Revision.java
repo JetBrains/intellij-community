@@ -19,22 +19,36 @@ package com.intellij.history.core.revisions;
 import com.intellij.history.core.changes.Change;
 import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.core.tree.Entry;
+import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 public abstract class Revision {
-  public String getName() {
+  @Nullable
+  public String getLabel() {
     return null;
+  }
+
+  public int getLabelColor() {
+    return -1;
   }
 
   public abstract long getTimestamp();
 
-  public String getCauseChangeName() {
-    return getCauseChange() == null ? null : getCauseChange().getName();
+  @Nullable
+  public Long getChangeSetId() {
+    return null;
   }
 
-  public Change getCauseChange() {
+  @Nullable
+  public String getChangeSetName() {
     return null;
+  }
+
+  public Pair<List<String>, Integer> getAffectedFileNames() {
+    return Pair.create(Collections.<String>emptyList(), 0);
   }
 
   public abstract Entry getEntry();
@@ -43,13 +57,5 @@ public abstract class Revision {
     Entry leftEntry = getEntry();
     Entry rightEntry = right.getEntry();
     return leftEntry.getDifferencesWith(rightEntry);
-  }
-
-  public boolean isImportant() {
-    return true;
-  }
-
-  public boolean isBefore(ChangeSet c) {
-    return false;
   }
 }

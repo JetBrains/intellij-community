@@ -16,86 +16,111 @@
 
 package com.intellij.history.integration.ui.models;
 
-import com.intellij.history.core.LocalVcs;
+import com.intellij.history.core.LocalHistoryFacade;
+import com.intellij.history.core.RevisionsCollector;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.patches.PatchCreator;
-import com.intellij.history.integration.revertion.ChangeReverter;
 import com.intellij.history.integration.revertion.Reverter;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public abstract class HistoryDialogModel {
-  protected LocalVcs myVcs;
+  protected final Project myProject;
+  protected LocalHistoryFacade myVcs;
   protected VirtualFile myFile;
   protected IdeaGateway myGateway;
+  private String myFilter;
   private List<Revision> myRevisionsCache;
-  private boolean myShowChangesOnly;
   private int myRightRevisionIndex;
   private int myLeftRevisionIndex;
-  private boolean myIsChangesSelected = false;
+  private Entry[] myLeftEntryCache;
+  private Entry[] myRightEntryCache;
 
-  public HistoryDialogModel(IdeaGateway gw, LocalVcs vcs, VirtualFile f) {
+  public HistoryDialogModel(Project p,  IdeaGateway gw, LocalHistoryFacade vcs, VirtualFile f) {
+    myProject = p;
     myVcs = vcs;
     myFile = f;
     myGateway = gw;
   }
 
+  public String getTitle() {
+    return FileUtil.toSystemDependentName(myFile.getPath());
+  }
+
   public List<Revision> getRevisions() {
-    if (myRevisionsCache == null) initRevisionsCache();
+    if (myRevisionsCache == null) {
+      myRevisionsCache = calcRevisionsCache();
+    }
     return myRevisionsCache;
   }
 
-  private void initRevisionsCache() {
-    myGateway.registerUnsavedDocuments(myVcs);
-    myRevisionsCache = getRevisionsCache();
+  protected List<Revision> calcRevisionsCache() {
+    return ApplicationManager.getApplication().runReadAction(new Computable<List<Revision>>() {
+      public List<Revision> compute() {
+        myGateway.registerUnsavedDocuments(myVcs);
+        RevisionsCollector collector = new RevisionsCollector(myVcs, myGateway.createTransientRootEntry(), 
+                                                              myFile.getPath(), myProject.getLocationHash(), myFilter);
+        return collector.getResult();
+      }
+    });
   }
 
-  protected List<Revision> getRevisionsCache() {
-    List<Revision> all = myVcs.getRevisionsFor(myFile.getPath());
-    if (!myShowChangesOnly) return all;
-
-    List<Revision> result = new ArrayList<Revision>();
-    for (Revision r : all) {
-      if (r.isImportant()) result.add(r);
-    }
-
-    if (result.isEmpty()) result.add(all.get(0));
-
-    return result;
+  public void setFilter(@Nullable String filter) {
+    myFilter = StringUtil.isEmptyOrSpaces(filter) ? null : filter;
+    clearRevisions();
   }
 
-  protected Revision getLeftRevision() {
+  public void clearRevisions() {
+    myRevisionsCache = null;
+    resetEntriesCache();
+  }
+
+  private void resetEntriesCache() {
+    myLeftEntryCache = null;
+    myRightEntryCache = null;
+  }
+
+  public Revision getLeftRevision() {
     return getRevisions().get(myLeftRevisionIndex);
   }
 
-  protected Revision getRightRevision() {
+  public Revision getRightRevision() {
     return getRevisions().get(myRightRevisionIndex);
   }
 
   protected Entry getLeftEntry() {
-    return getLeftRevision().getEntry();
+    if (myLeftEntryCache == null) {
+      // array is used because entry itself can be null
+      myLeftEntryCache = new Entry[]{getLeftRevision().getEntry()};
+    }
+    return myLeftEntryCache[0];
   }
 
   protected Entry getRightEntry() {
-    return getRightRevision().getEntry();
+    if (myRightEntryCache == null) {
+      // array is used because entry itself can be null
+      myRightEntryCache = new Entry[]{getRightRevision().getEntry()};
+    }
+    return myRightEntryCache[0];
   }
 
   public void selectRevisions(int first, int second) {
     doSelect(first, second);
-    myIsChangesSelected = false;
-  }
-
-  public void selectChanges(int first, int second) {
-    doSelect(first, second + 1);
-    myIsChangesSelected = true;
+    resetEntriesCache();
   }
 
   private void doSelect(int first, int second) {
@@ -109,21 +134,11 @@ public abstract class HistoryDialogModel {
     }
   }
 
-  public void showChangesOnly(boolean value) {
-    myShowChangesOnly = value;
-    initRevisionsCache();
-    resetSelection();
-  }
-
-  protected void resetSelection() {
+  public void resetSelection() {
     selectRevisions(0, 0);
   }
 
-  public boolean doesShowChangesOnly() {
-    return myShowChangesOnly;
-  }
-
-  protected boolean isCurrentRevisionSelected() {
+  public boolean isCurrentRevisionSelected() {
     return myRightRevisionIndex == 0;
   }
 
@@ -143,36 +158,21 @@ public abstract class HistoryDialogModel {
   }
 
   public void createPatch(String path, boolean isReverse) throws VcsException, IOException {
-    PatchCreator.create(myGateway, getChanges(), path, isReverse);
+    PatchCreator.create(myProject, getChanges(), path, isReverse);
   }
 
-  public Reverter createReverter() {
-    if (myIsChangesSelected) return createChangeReverter();
-    return createRevisionReverter();
-  }
-
-  protected Reverter createChangeReverter() {
-    return new ChangeReverter(myVcs, myGateway, getRightRevision().getCauseChange());
-  }
-
-  protected abstract Reverter createRevisionReverter();
+  public abstract Reverter createReverter();
 
   public boolean isRevertEnabled() {
-    if (myIsChangesSelected) return isCorrectChangeSelection();
-    return isCurrentRevisionSelected() && myLeftRevisionIndex > 0;
+    return isCorrectSelectionForRevertAndPatch();
   }
 
   public boolean isCreatePatchEnabled() {
-    return isCorrectSelectionForPatchCreation();
+    return isCorrectSelectionForRevertAndPatch();
   }
 
-  private boolean isCorrectSelectionForPatchCreation() {
-    if (myIsChangesSelected) return isCorrectChangeSelection();
+  private boolean isCorrectSelectionForRevertAndPatch() {
     return myLeftRevisionIndex > 0;
-  }
-
-  private boolean isCorrectChangeSelection() {
-    return myLeftRevisionIndex - myRightRevisionIndex == 1;
   }
 
   public boolean canPerformCreatePatch() {

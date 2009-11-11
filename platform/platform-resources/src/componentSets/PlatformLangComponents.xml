@@ -36,7 +36,6 @@
   <xi:include href="/componentSets/ProjectView.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="/componentSets/Profiles.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="/componentSets/Execution.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="/componentSets/LocalHistory.xml" xpointer="xpointer(/components/*)"/>
 
   <application-components>
     <component>

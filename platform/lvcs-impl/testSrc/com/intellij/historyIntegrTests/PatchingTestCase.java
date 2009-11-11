@@ -21,6 +21,7 @@ import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
 import com.intellij.openapi.diff.impl.patch.PatchVirtualFileReader;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
@@ -39,14 +40,14 @@ public abstract class PatchingTestCase extends IntegrationTestCase {
   }
 
   protected void clearRoot() throws IOException {
-    for (VirtualFile f : root.getChildren()) {
+    for (VirtualFile f : myRoot.getChildren()) {
       f.delete(null);
     }
   }
 
   protected void applyPatch() throws Exception {
     List<FilePatch> patches = new ArrayList<FilePatch>();
-    PatchReader reader = PatchVirtualFileReader.create(getFS().refreshAndFindFileByPath(patchFilePath));
+    PatchReader reader = PatchVirtualFileReader.create(LocalFileSystem.getInstance().refreshAndFindFileByPath(patchFilePath));
 
     while (true) {
       FilePatch p = reader.readNextPatch();
@@ -54,6 +55,6 @@ public abstract class PatchingTestCase extends IntegrationTestCase {
       patches.add(p);
     }
 
-    new PatchApplier<BinaryFilePatch>(myProject, root, patches, null, null).execute();
+    new PatchApplier<BinaryFilePatch>(myProject, myRoot, patches, null, null).execute();
   }
 }

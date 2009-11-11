@@ -56,12 +56,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.history.LocalHistory</interface-class>
-      <implementation-class>com.intellij.history.DeafLocalHistory</implementation-class>
-      <skipForDummyProject/>
-    </component>
-
-    <component>
       <implementation-class>com.intellij.platform.PlatformVcsDetector</implementation-class>
       <skipForDummyProject/>
     </component>

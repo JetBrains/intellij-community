@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.changes.committed;
 
-import com.intellij.openapi.localVcs.LocalVcsItemsLocker;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -31,7 +30,6 @@ public class MockAbstractVcs extends AbstractVcs {
   private static final String NAME = "mock";
   private static final VcsKey ourKey = createKey(NAME);
   private boolean myMarkExternalChangesAsCurrent = false;
-  private LocalVcsItemsLocker myUpToDateRevisionProvider;
   private CheckinEnvironment myCheckinEnvironment;
   private CommittedChangesProvider myCommittedChangesProvider;
   private DiffProvider myDiffProvider;
@@ -77,14 +75,6 @@ public class MockAbstractVcs extends AbstractVcs {
 
   public void setMarkExternalChangesAsCurrent(boolean value){
     myMarkExternalChangesAsCurrent = value;
-  }
-
-  public void setUpToDateRevisionProvider(LocalVcsItemsLocker upToDateRevisionProvider) {
-    myUpToDateRevisionProvider = upToDateRevisionProvider;
-  }
-
-  public LocalVcsItemsLocker getItemsLocker() {
-    return myUpToDateRevisionProvider;
   }
 
   public void setCheckinEnvironment(CheckinEnvironment ce) {

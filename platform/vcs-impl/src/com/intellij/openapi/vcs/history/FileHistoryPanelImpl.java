@@ -968,7 +968,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     }
 
     private LocalHistoryAction startLocalHistoryAction(final VcsFileRevision revision) {
-      return LocalHistory.startAction(myProject, createGetActionTitle(revision));
+      return LocalHistory.getInstance().startAction(createGetActionTitle(revision));
     }
 
     private String createGetActionTitle(final VcsFileRevision revision) {

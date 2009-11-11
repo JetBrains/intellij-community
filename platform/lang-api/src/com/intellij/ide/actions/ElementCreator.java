@@ -75,7 +75,7 @@ public abstract class ElementCreator {
       protected void run(Result result) throws Throwable {
         LocalHistoryAction action = LocalHistoryAction.NULL;
         try {
-          action = LocalHistory.startAction(myProject, commandName);
+          action = LocalHistory.getInstance().startAction(commandName);
 
           PsiElement[] psiElements = create(inputString);
           myCreatedElements[0] = new SmartPsiElementPointer[psiElements.length];

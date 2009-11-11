@@ -17,21 +17,24 @@
 package com.intellij.history.core.revisions;
 
 import com.intellij.history.core.tree.Entry;
+import com.intellij.history.core.tree.RootEntry;
 
 public class CurrentRevision extends Revision {
-  private final Entry myEntry;
+  private final RootEntry myRoot;
+  private final String myPath;
 
-  public CurrentRevision(Entry e) {
-    myEntry = e;
+  public CurrentRevision(RootEntry root, String path) {
+    myRoot = root;
+    myPath = path;
   }
 
   @Override
   public long getTimestamp() {
-    return myEntry.getTimestamp();
+    return getEntry().getTimestamp();
   }
 
   @Override
   public Entry getEntry() {
-    return myEntry;
+    return myRoot.getEntry(myPath);
   }
 }

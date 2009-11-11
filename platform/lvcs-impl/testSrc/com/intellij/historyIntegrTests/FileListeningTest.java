@@ -17,151 +17,104 @@
 package com.intellij.historyIntegrTests;
 
 
-import com.intellij.history.core.ContentFactory;
-import com.intellij.history.core.Paths;
+import com.intellij.history.core.changes.Change;
+import com.intellij.history.core.changes.DeleteChange;
+import com.intellij.history.core.changes.StructuralChange;
+import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.utils.RunnableAdapter;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.List;
 
 public class FileListeningTest extends IntegrationTestCase {
   public void testCreatingFiles() throws Exception {
-    VirtualFile f = root.createChildData(null, "file.txt");
-
-    Entry e = getVcs().findEntry(f.getPath());
-    assertNotNull(e);
-    assertFalse(e.isDirectory());
+    VirtualFile f = createFile("file.txt");
+    assertEquals(1, getRevisionsFor(f).size());
   }
 
   public void testCreatingDirectories() throws Exception {
-    VirtualFile f = root.createChildDirectory(null, "dir");
-
-    Entry e = getVcs().findEntry(f.getPath());
-    assertNotNull(e);
-    assertTrue(e.isDirectory());
-  }
-
-  public void testCreationOfROFile() throws Exception {
-    File newFile1 = new File(createFileExternally("f1.txt"));
-    File newFile2 = new File(createFileExternally("f2.txt"));
-    newFile1.setReadOnly();
-
-    VirtualFile f1 = getFS().refreshAndFindFileByIoFile(newFile1);
-    VirtualFile f2 = getFS().refreshAndFindFileByIoFile(newFile2);
-
-    assertTrue(hasVcsEntry(f1));
-    assertTrue(hasVcsEntry(f2));
-    assertTrue(getVcsEntry(f1).isReadOnly());
-    assertFalse(getVcsEntry(f2).isReadOnly());
+    VirtualFile f = createDirectory("dir");
+    assertEquals(1, getRevisionsFor(f).size());
   }
 
   public void testIgnoringFilteredFileTypes() throws Exception {
-    VirtualFile f = root.createChildData(null, "file.class");
-    assertFalse(hasVcsEntry(f));
+    int before = getRevisionsFor(myRoot).size();
+    createFile("file.hprof");
+
+    assertEquals(before, getRevisionsFor(myRoot).size());
   }
 
   public void testIgnoringFilteredDirectories() throws Exception {
-    VirtualFile f = root.createChildDirectory(null, FILTERED_DIR_NAME);
-    assertFalse(hasVcsEntry(f));
+    int before = getRevisionsFor(myRoot).size();
+
+    createDirectory(FILTERED_DIR_NAME);
+    assertEquals(before, getRevisionsFor(myRoot).size());
   }
 
-  public void testIgnoringExcludedDirectoriesAfterItsRecreation() throws Exception {
-    VirtualFile dir = root.createChildDirectory(null, "dir");
-    assertTrue(hasVcsEntry(dir));
+  public void testIgnoringFilesRecursively() throws Exception {
+    addExcludedDir(myRoot.getPath() + "/dir/subdir");
+    addContentRoot(createModule("foo"), myRoot.getPath() + "/dir/subdir/subdir2");
 
-    addExcludedDir(dir);
-    assertFalse(hasVcsEntry(dir));
+    String dir1 = createDirectoryExternally("dir");
+    String f1 = createFileExternally("dir/f.txt");
+    createFileExternally("dir/f.class");
+    createFileExternally("dir/subdir/f.txt");
+    String dir2 = createDirectoryExternally("dir/subdir/subdir2");
+    String f2 = createFileExternally("dir/subdir/subdir2/f.txt");
 
-    int revCount = getVcsRevisionsFor(root).size();
+    LocalFileSystem.getInstance().refresh(false);
 
-    dir.delete(null);
-    assertEquals(revCount, getVcsRevisionsFor(root).size());
-
-    dir = root.createChildDirectory(null, "dir");
-
-    // bug: excluded dir was created during fileCrated event
-    // end removed bu rootsChanges event right away
-    assertEquals(revCount, getVcsRevisionsFor(root).size());
-    assertFalse(hasVcsEntry(dir));
-  }
-
-  public void ignoreTestChangingContentOfDeletedFileDoesNotThrowException() throws Exception {
-    // todo try to write reliable test for exception handling during file events and update
-    final VirtualFile f = root.createChildData(null, "f.txt");
-
-    VirtualFileListener l = new VirtualFileAdapter() {
-      @Override
-      public void beforeContentsChange(VirtualFileEvent e) {
-        new File(e.getFile().getPath()).delete();
-      }
-    };
-
-    addFileListenerDuring(l, new RunnableAdapter() {
-      @Override
-      public void doRun() throws IOException {
-        f.setBinaryContent(new byte[]{1});
-      }
-    });
-
-    assertFalse(getVcs().getEntry(f.getPath()).getContent().isAvailable());
+    List<Change> changes = getVcs().getChangeListInTests().getChangesInTests().get(0).getChanges();
+    assertEquals(4, changes.size());
+    assertEquals(dir1, ((StructuralChange)changes.get(0)).getPath());
+    assertEquals(dir2, ((StructuralChange)changes.get(1)).getPath());
+    assertEquals(f2, ((StructuralChange)changes.get(2)).getPath());
+    assertEquals(f1, ((StructuralChange)changes.get(3)).getPath());
   }
 
   public void testChangingFileContent() throws Exception {
-    VirtualFile f = root.createChildData(null, "file.txt");
+    VirtualFile f = createFile("file.txt");
+    assertEquals(1, getRevisionsFor(f).size());
 
     f.setBinaryContent(new byte[]{1});
-    assertEquals(1, getVcsContentOf(f)[0]);
+    assertEquals(2, getRevisionsFor(f).size());
 
     f.setBinaryContent(new byte[]{2});
-    assertEquals(2, getVcsContentOf(f)[0]);
-  }
-
-  public void testChangingFileContentOnlyAfterContentChangedEvent() throws Exception {
-    final VirtualFile f = root.createChildData(null, "file.txt");
-    f.setBinaryContent("before".getBytes());
-
-    ContentChangesListener l = new ContentChangesListener(f);
-    addFileListenerDuring(l, new RunnableAdapter() {
-      @Override
-      public void doRun() throws IOException {
-        f.setBinaryContent("after".getBytes());
-      }
-    });
-
-    assertEquals("before", l.getContentBefore());
-    assertEquals("after", l.getContentAfter());
+    assertEquals(3, getRevisionsFor(f).size());
   }
 
   public void testRenamingFile() throws Exception {
-    VirtualFile f = root.createChildData(null, "file.txt");
-    f.rename(null, "file2.txt");
+    VirtualFile f = createFile("file.txt");
+    assertEquals(1, getRevisionsFor(f).size());
 
-    assertFalse(hasVcsEntry(Paths.renamed(f.getPath(), "file.txt")));
-    assertTrue(hasVcsEntry(f));
+    f.rename(null, "file2.txt");
+    assertEquals(2, getRevisionsFor(f).size());
   }
 
   public void testRenamingFileOnlyAfterRenamedEvent() throws Exception {
-    final VirtualFile f = root.createChildData(null, "old.txt");
-    final boolean[] log = new boolean[4];
-    final String oldPath = Paths.appended(root.getPath(), "old.txt");
-    final String newPath = Paths.appended(root.getPath(), "new.txt");
+    final VirtualFile f = createFile("old.txt");
 
+    final int[] log = new int[2];
     VirtualFileListener l = new VirtualFileAdapter() {
       public void beforePropertyChange(VirtualFilePropertyEvent e) {
-        log[0] = hasVcsEntry(oldPath);
-        log[1] = hasVcsEntry(newPath);
+        log[0] = getRevisionsFor(f).size();
       }
 
       public void propertyChanged(VirtualFilePropertyEvent e) {
-        log[2] = hasVcsEntry(oldPath);
-        log[3] = hasVcsEntry(newPath);
+        log[1] = getRevisionsFor(f).size();
       }
     };
+
+    assertEquals(1, getRevisionsFor(f).size());
 
     addFileListenerDuring(l, new RunnableAdapter() {
       @Override
@@ -170,104 +123,168 @@ public class FileListeningTest extends IntegrationTestCase {
       }
     });
 
-    assertEquals(true, log[0]);
-    assertEquals(false, log[1]);
-    assertEquals(false, log[2]);
-    assertEquals(true, log[3]);
+    assertEquals(1, log[0]);
+    assertEquals(2, log[1]);
   }
 
-  public void testRenamingFilteredFiles() throws Exception {
-    VirtualFile f = root.createChildData(null, "file.class");
-    assertFalse(hasVcsEntry(f));
+  public void testRenamingFilteredFileToNonFiltered() throws Exception {
+    int before = getRevisionsFor(myRoot).size();
+
+    VirtualFile f = createFile("file.hprof");
+    assertEquals(before, getRevisionsFor(myRoot).size());
+
     f.rename(null, "file.txt");
-    assertTrue(hasVcsEntry(f));
+    assertEquals(before + 1, getRevisionsFor(myRoot).size());
+
+    assertEquals(2, getRevisionsFor(f).size());
+  }
+
+  public void testRenamingNonFilteredFileToFiltered() throws Exception {
+    int before = getRevisionsFor(myRoot).size();
+
+    VirtualFile f = createFile("file.txt");
+    assertEquals(before + 1, getRevisionsFor(myRoot).size());
+
+    f.rename(null, "file.hprof");
+    assertEquals(before + 2, getRevisionsFor(myRoot).size());
   }
 
   public void testRenamingFilteredDirectoriesToNonFiltered() throws Exception {
-    VirtualFile f = root.createChildDirectory(null, FILTERED_DIR_NAME);
+    int before = getRevisionsFor(myRoot).size();
 
-    String filtered = Paths.appended(root.getPath(), FILTERED_DIR_NAME);
-    String notFiltered = Paths.appended(root.getPath(), "not_filtered");
+    VirtualFile f = createFile(FILTERED_DIR_NAME);
+    assertEquals(before, getRevisionsFor(myRoot).size());
 
-    assertFalse(hasVcsEntry(filtered));
     f.rename(null, "not_filtered");
+    assertEquals(before + 1, getRevisionsFor(myRoot).size());
 
-    assertFalse(hasVcsEntry(filtered));
-    assertTrue(hasVcsEntry(notFiltered));
+    assertEquals(2, getRevisionsFor(f).size());
   }
 
   public void testRenamingNonFilteredDirectoriesToFiltered() throws Exception {
-    VirtualFile f = root.createChildDirectory(null, "not_filtered");
+    int before = getRevisionsFor(myRoot).size();
 
-    String filtered = Paths.appended(root.getPath(), FILTERED_DIR_NAME);
-    String notFiltered = Paths.appended(root.getPath(), "not_filtered");
+    VirtualFile f = createDirectory("not_filtered");
+    assertEquals(before + 1, getRevisionsFor(myRoot).size());
 
-    assertTrue(hasVcsEntry(notFiltered));
     f.rename(null, FILTERED_DIR_NAME);
-
-    assertFalse(hasVcsEntry(notFiltered));
-    assertFalse(hasVcsEntry(filtered));
+    assertEquals(before + 2, getRevisionsFor(myRoot).size());
   }
 
   public void testChangingROStatusForFile() throws Exception {
-    VirtualFile f = root.createChildData(null, "f.txt");
-    assertFalse(getVcsEntry(f).isReadOnly());
+    VirtualFile f = createFile("f.txt");
+    assertEquals(1, getRevisionsFor(f).size());
 
     ReadOnlyAttributeUtil.setReadOnlyAttribute(f, true);
-    assertTrue(getVcsEntry(f).isReadOnly());
+    assertEquals(2, getRevisionsFor(f).size());
 
     ReadOnlyAttributeUtil.setReadOnlyAttribute(f, false);
-    assertFalse(getVcsEntry(f).isReadOnly());
+    assertEquals(3, getRevisionsFor(f).size());
   }
   
   public void testIgnoringROStstusChangeForUnversionedFiles() throws Exception {
-    VirtualFile f = root.createChildData(null, "f");
+    int before = getRevisionsFor(myRoot).size();
+
+    VirtualFile f = createFile("f.hprof");
     ReadOnlyAttributeUtil.setReadOnlyAttribute(f, true); // shouldn't throw
+
+    assertEquals(before, getRevisionsFor(myRoot).size());
   }
   
   public void testIgnoringChangeOfROStatusForDirectory() throws Exception {
-    VirtualFile dir = root.createChildDirectory(null, "dir");
-    assertEquals(1, getVcsRevisionsFor(dir).size());
+    VirtualFile dir = createDirectory("dir");
+    assertEquals(1, getRevisionsFor(dir).size());
 
     ReadOnlyAttributeUtil.setReadOnlyAttribute(dir, true);
-    assertEquals(1, getVcsRevisionsFor(dir).size());
+    assertEquals(1, getRevisionsFor(dir).size());
   }
 
   public void testDeletion() throws Exception {
-    VirtualFile f = root.createChildDirectory(null, "f.txt");
+    VirtualFile f = createDirectory("f.txt");
 
-    String path = f.getPath();
-    assertTrue(hasVcsEntry(path));
+    int before = getRevisionsFor(myRoot).size();
 
     f.delete(null);
-    assertFalse(hasVcsEntry(path));
+    assertEquals(before + 1, getRevisionsFor(myRoot).size());
   }
 
   public void testDeletionOfFilteredDirectoryDoesNotThrowsException() throws Exception {
-    VirtualFile f = root.createChildDirectory(null, FILTERED_DIR_NAME);
+    int before = getRevisionsFor(myRoot).size();
 
-    String filtered = Paths.appended(root.getPath(), FILTERED_DIR_NAME);
-
-    assertFalse(hasVcsEntry(filtered));
+    VirtualFile f = createDirectory(FILTERED_DIR_NAME);
     f.delete(null);
-
-    assertFalse(hasVcsEntry(filtered));
+    assertEquals(before, getRevisionsFor(myRoot).size());
   }
 
-  public void testDeletingBigFiles() throws Exception {
-    File tempDir = createTempDirectory();
-    File tempFile = new File(tempDir, "bigFile.txt");
-    OutputStream s = new FileOutputStream(tempFile);
-    s.write(new byte[ContentFactory.MAX_CONTENT_LENGTH + 1]);
-    s.close();
+  public void testDeletionDoesNotVersionIgnoredFilesRecursively() throws Exception {
+    String dir1 = createDirectoryExternally("dir");
+    String f1 = createFileExternally("dir/f.txt");
+    createFileExternally("dir/f.class");
+    createFileExternally("dir/subdir/f.txt");
+    String dir2 = createDirectoryExternally("dir/subdir/subdir2");
+    String f2 = createFileExternally("dir/subdir/subdir2/f.txt");
 
-    VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
-    assertNotNull(f);
+    LocalFileSystem.getInstance().refresh(false);
 
-    f.move(null, root);
-    assertTrue(hasVcsEntry(f));
+    addExcludedDir(myRoot.getPath() + "/dir/subdir");
+    addContentRoot(myRoot.getPath() + "/dir/subdir/subdir2");
 
-    f.delete(null);
-    assertFalse(hasVcsEntry(f));
+    LocalFileSystem.getInstance().findFileByPath(dir1).delete(this);
+
+    List<Change> changes = getVcs().getChangeListInTests().getChangesInTests().get(0).getChanges();
+    assertEquals(1, changes.size());
+    Entry e = ((DeleteChange)changes.get(0)).getDeletedEntry();
+    assertEquals(2, e.getChildren().size());
+    assertEquals("f.txt", e.getChildren().get(0).getName());
+    assertEquals("subdir", e.getChildren().get(1).getName());
+    assertEquals(1, e.getChildren().get(1).getChildren().size());
+    assertEquals("subdir2", e.getChildren().get(1).getChildren().get(0).getName());
   }
+
+  public void testCreationAndDeletionOfUnversionedFile() throws IOException {
+    addExcludedDir(myRoot.getPath() + "/dir");
+    
+    Module m = createModule("foo");
+    addContentRoot(m, myRoot.getPath() + "/dir/subDir");
+
+    createFileExternally("dir/subDir/file.txt");
+    LocalFileSystem.getInstance().refresh(false);
+
+    FileUtil.delete(new File(myRoot.getPath() + "/dir"));
+    LocalFileSystem.getInstance().refresh(false);
+
+    createFileExternally("dir/subDir/file.txt");
+    LocalFileSystem.getInstance().refresh(false);
+
+    List<Revision> revs = getRevisionsFor(myRoot);
+    assertEquals(4, revs.size());
+    assertNotNull(revs.get(0).getEntry().findEntry("dir/subDir/file.txt"));
+    assertNull(revs.get(1).getEntry().findEntry("dir/subDir/file.txt"));
+    assertNotNull(revs.get(2).getEntry().findEntry("dir/subDir/file.txt"));
+    assertNull(revs.get(3).getEntry().findEntry("dir/subDir/file.txt"));
+  }
+
+  public void testCreationAndDeletionOfFileUnderUnversionedDir() throws IOException {
+    addExcludedDir(myRoot.getPath() + "/dir");
+
+    Module m = createModule("foo");
+    addContentRoot(m, myRoot.getPath() + "/dir/subDir");
+
+    createFileExternally("dir/subDir/file.txt");
+    LocalFileSystem.getInstance().refresh(false);
+
+    FileUtil.delete(new File(myRoot.getPath() + "/dir/subDir"));
+    LocalFileSystem.getInstance().refresh(false);
+
+    createFileExternally("dir/subDir/file.txt");
+    LocalFileSystem.getInstance().refresh(false);
+
+    List<Revision> revs = getRevisionsFor(myRoot);
+    assertEquals(4, revs.size());
+    assertNotNull(revs.get(0).getEntry().findEntry("dir/subDir/file.txt"));
+    assertNull(revs.get(1).getEntry().findEntry("dir/subDir"));
+    assertNotNull(revs.get(2).getEntry().findEntry("dir/subDir/file.txt"));
+    assertNull(revs.get(3).getEntry().findEntry("dir/subDir"));
+  }
+
 }

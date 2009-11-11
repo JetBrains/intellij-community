@@ -22,7 +22,7 @@ import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
 import com.intellij.openapi.diff.impl.DiffUtil;
-import com.intellij.openapi.diff.impl.FrameWrapper;
+import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.Messages;

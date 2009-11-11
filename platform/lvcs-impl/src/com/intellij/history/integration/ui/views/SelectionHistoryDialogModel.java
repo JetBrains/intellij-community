@@ -16,17 +16,15 @@
 
 package com.intellij.history.integration.ui.views;
 
-import com.intellij.history.core.LocalVcs;
+import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.integration.IdeaGateway;
-import com.intellij.history.integration.LocalHistoryBundle;
-import com.intellij.history.integration.revertion.ChangeReverter;
 import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.history.integration.revertion.SelectionReverter;
 import com.intellij.history.integration.ui.models.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
-import java.io.IOException;
 import java.util.List;
 
 public class SelectionHistoryDialogModel extends FileHistoryDialogModel {
@@ -34,21 +32,22 @@ public class SelectionHistoryDialogModel extends FileHistoryDialogModel {
   private final int myFrom;
   private final int myTo;
 
-  public SelectionHistoryDialogModel(IdeaGateway gw, LocalVcs vcs, VirtualFile f, int from, int to) {
-    super(gw, vcs, f);
+  public SelectionHistoryDialogModel(Project p, IdeaGateway gw, LocalHistoryFacade vcs, VirtualFile f, int from, int to) {
+    super(p, gw, vcs, f);
     myFrom = from;
     myTo = to;
   }
 
   @Override
-  protected List<Revision> getRevisionsCache() {
+  protected List<Revision> calcRevisionsCache() {
     myCalculatorCache = null;
-    return super.getRevisionsCache();
+    return super.calcRevisionsCache();
   }
 
   @Override
   public FileDifferenceModel getDifferenceModel() {
-    return new SelectionDifferenceModel(myGateway,
+    return new SelectionDifferenceModel(myProject,
+                                        myGateway,
                                         getCalculator(),
                                         getLeftRevision(),
                                         getRightRevision(),
@@ -65,19 +64,7 @@ public class SelectionHistoryDialogModel extends FileHistoryDialogModel {
   }
 
   @Override
-  protected Reverter createRevisionReverter() {
-    return new SelectionReverter(myVcs, myGateway, getCalculator(), getLeftRevision(), getRightEntry(), myFrom, myTo);
-  }
-
-  @Override
-  protected ChangeReverter createChangeReverter() {
-    return new ChangeReverter(myVcs, myGateway, getRightRevision().getCauseChange()) {
-      @Override
-      public List<String> askUserForProceeding() throws IOException {
-        List<String> result = super.askUserForProceeding();
-        result.add(LocalHistoryBundle.message("revert.message.will.revert.whole.file"));
-        return result;
-      }
-    };
+  public Reverter createReverter() {
+    return new SelectionReverter(myProject, myVcs, myGateway, getCalculator(), getLeftRevision(), getRightEntry(), myFrom, myTo);
   }
 }

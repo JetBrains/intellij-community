@@ -43,6 +43,6 @@ public class LvcsHelper {
     }
     final TestConsoleProperties consoleProperties = model.getProperties();
     String name = label + " " + consoleProperties.getConfiguration().getName();
-    LocalHistory.putSystemLabel(consoleProperties.getProject(), name, color);
+    LocalHistory.getInstance().putSystemLabel(consoleProperties.getProject(), name, color);
   }
 }

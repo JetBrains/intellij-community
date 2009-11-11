@@ -16,32 +16,32 @@
 
 package com.intellij.history.core.revisions;
 
-import com.intellij.history.core.LocalVcsTestCase;
+import com.intellij.history.core.LocalHistoryTestCase;
 import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.core.changes.CreateFileChange;
 import org.junit.Test;
 
-public class RevisionsCauseChangesTest extends LocalVcsTestCase {
-  ChangeSet cs = cs("Action", new CreateFileChange(1, "f", null, -1, false));
+public class RevisionsCauseChangesTest extends LocalHistoryTestCase {
+  ChangeSet cs = cs("Action", new CreateFileChange(nextId(), "f"));
 
   @Test
   public void testCurrentRevisionIsBefore() {
-    Revision r = new CurrentRevision(null);
-    assertNull(r.getCauseChangeName());
-    assertNull(r.getCauseChange());
+    Revision r = new CurrentRevision(null, null);
+    assertNull(r.getChangeSetName());
+    assertNull(r.getChangeSetId());
   }
 
   @Test
   public void testRevisionBeforeChangeIsBefore() {
     Revision r = new RevisionBeforeChange(null, null, null, cs);
-    assertNull(r.getCauseChangeName());
-    assertNull(r.getCauseChange());
+    assertNull(r.getChangeSetName());
+    assertNull(r.getChangeSetId());
   }
 
   @Test
   public void testRevisionAfterChangeIsBefore() {
     Revision r = new RevisionAfterChange(null, null, null, cs);
-    assertEquals("Action", r.getCauseChangeName());
-    assertEquals(cs, r.getCauseChange());
+    assertEquals("Action", r.getChangeSetName());
+    assertEquals(cs.getId(), r.getChangeSetId().intValue());
   }
 }

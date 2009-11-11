@@ -16,15 +16,11 @@
 
 package com.intellij.execution.runners;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionManager;
-import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.Executor;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.history.LocalHistory;
-import com.intellij.history.LocalHistoryConfiguration;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.ApplicationManager;
@@ -98,9 +94,7 @@ public abstract class GenericProgramRunner<Settings extends JDOMExternalizable> 
           if (callback != null) callback.processStarted(descriptor);
 
           if (descriptor != null) {
-            if (LocalHistoryConfiguration.getInstance().ADD_LABEL_ON_RUNNING) {
-              LocalHistory.putSystemLabel(project, executor.getId() + " " + profile.getName());
-            }
+            LocalHistory.getInstance().putSystemLabel(project, getLocalHistoryLabel(profile, state));
 
             ExecutionManager.getInstance(project).getContentManager().showRunContent(executor, descriptor);
             final ProcessHandler processHandler = descriptor.getProcessHandler();
@@ -124,4 +118,8 @@ public abstract class GenericProgramRunner<Settings extends JDOMExternalizable> 
   protected abstract RunContentDescriptor doExecute(final Project project, final Executor executor, final RunProfileState state,
                                         final RunContentDescriptor contentToReuse,
                                         final ExecutionEnvironment env) throws ExecutionException;
+
+  protected String getLocalHistoryLabel(RunProfile profile, RunProfileState state) {
+    return ExecutionBundle.message("default.runner.start.action.label", profile.getName());
+  }
 }
