@@ -16,6 +16,7 @@
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.sm.SMTestsRunnerBundle;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsAdapter;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
@@ -66,6 +67,12 @@ public class SMTRunnerNotificationsHandler extends SMTRunnerEventsAdapter {
         type = MessageType.ERROR;
         break;
       case COMPLETE_INDEX:
+        if (testsRoot.getChildren().size() == 0) {
+          msg = SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.no.tests.were.found");
+          type = MessageType.ERROR;
+          break;
+        }
+        // else same as: PASSED_INDEX 
       case PASSED_INDEX:
         msg = "Tests passed";
         type = MessageType.INFO;
