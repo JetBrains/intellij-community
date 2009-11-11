@@ -19,6 +19,7 @@ import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
+import com.intellij.execution.testframework.sm.runner.ProxyFilters;
 import com.intellij.execution.testframework.ui.PrintableTestProxy;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
@@ -27,6 +28,8 @@ import com.intellij.util.OpenSourceUtil;
 import com.intellij.openapi.application.ModalityState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author Roman Chernyatchik
@@ -52,8 +55,24 @@ public class SMTRunnerUIActionsHandler implements TestResultsViewer.EventsListen
     // select first defect at the end (my be TRACK_RUNNING_TEST was enabled and affects on the fly selection)
     final SMTestProxy testsRootNode = sender.getTestsRootNode();
     if (TestConsoleProperties.SELECT_FIRST_DEFECT.value(myConsoleProperties)) {
-      final AbstractTestProxy firstDefect =
-          Filter.DEFECTIVE_LEAF.detectIn(testsRootNode.getAllTests());
+      final AbstractTestProxy firstDefect;
+
+      // defects priority:
+      // ERROR -> FAILURE -> GENERAL DEFECTIVE NODE
+      final List<SMTestProxy> allTests = testsRootNode.getAllTests();
+      final AbstractTestProxy firstError = ProxyFilters.ERROR_LEAF.detectIn(allTests);
+      if (firstError != null) {
+       firstDefect = firstError;
+      } else {
+        final AbstractTestProxy firstFailure = ProxyFilters.FAILURE_LEAF.detectIn(allTests);
+        if (firstFailure != null) {
+         firstDefect = firstFailure;
+        } else {
+          firstDefect = Filter.DEFECTIVE_LEAF.detectIn(allTests);
+        }
+      }
+
+      // select if detected
       if (firstDefect != null) {
         sender.selectAndNotify(firstDefect);
       }
