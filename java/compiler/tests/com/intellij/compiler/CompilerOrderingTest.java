@@ -5,6 +5,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -58,7 +59,7 @@ public class CompilerOrderingTest extends IdeaTestCase {
     for (TranslatingCompiler compiler : compilers) {
       actualDescriptions.add(compiler.getDescription());
     }
-    final String[] actual = (String[])actualDescriptions.toArray(new String[actualDescriptions.size()]);
+    final String[] actual = (String[])ArrayUtil.toStringArray(actualDescriptions);
 
     assertEquals(expected.length, actual.length);
 

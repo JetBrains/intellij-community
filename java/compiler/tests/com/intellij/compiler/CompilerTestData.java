@@ -7,6 +7,7 @@ package com.intellij.compiler;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 
 import java.util.*;
@@ -37,7 +38,7 @@ public class CompilerTestData implements JDOMExternalizable {
         data.add(pathElement.getAttributeValue("path"));
       }
     }
-    myDeletedByMake = data.toArray(new String[data.size()]);
+    myDeletedByMake = ArrayUtil.toStringArray(data);
 
     // read paths that are expected to be found by dependencies
     data.clear();
@@ -48,7 +49,7 @@ public class CompilerTestData implements JDOMExternalizable {
         data.add(pathElement.getAttributeValue("path"));
       }
     }
-    myToRecompile = data.toArray(new String[data.size()]);
+    myToRecompile = ArrayUtil.toStringArray(data);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
