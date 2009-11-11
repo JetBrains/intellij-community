@@ -49,10 +49,7 @@ public class FacetEditorImpl extends UnnamedConfigurableGroup implements Unnamed
   private final FacetEditorContext myContext;
   private final Set<FacetEditorTab> myVisitedTabs = new HashSet<FacetEditorTab>();
   private int mySelectedTabIndex = 0;
-  private Disposable myDisposable = new Disposable() {
-    public void dispose() {
-    }
-  };
+  private final Disposable myDisposable = Disposer.newDisposable();
 
   public FacetEditorImpl(final FacetEditorContext context, final FacetConfiguration configuration) {
     myContext = context;

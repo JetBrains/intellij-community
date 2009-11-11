@@ -55,10 +55,7 @@ import java.util.*;
  * @author peter
  */
 public abstract class UsefulTestCase extends TestCase {
-  protected final Disposable myTestRootDisposable = new Disposable() {
-    public void dispose() {
-    }
-  };
+  protected final Disposable myTestRootDisposable = Disposer.newDisposable();
   private static final String DEFAULT_SETTINGS_EXTERNALIZED;
   private static CodeStyleSettings myOldCodeStyleSettings;
 

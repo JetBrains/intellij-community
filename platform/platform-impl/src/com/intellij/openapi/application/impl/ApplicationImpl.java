@@ -195,15 +195,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
 
     if (!isUnitTestMode && !isHeadless) {
-      Disposer.register(this, new Disposable() {
-        public void dispose() {
-        }
-
-        @Override
-        public String toString() {
-          return "[ui]";
-        }
-      }, "ui");
+      Disposer.register(this, Disposer.newDisposable(), "ui");
     }
   }
 

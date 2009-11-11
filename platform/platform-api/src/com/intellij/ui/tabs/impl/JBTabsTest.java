@@ -17,6 +17,7 @@ package com.intellij.ui.tabs.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.tabs.JBTabsPosition;
@@ -43,10 +44,7 @@ public class JBTabsTest {
     final JFrame frame = new JFrame();
     frame.getContentPane().setLayout(new BorderLayout(0, 0));
     final int[] count = new int[1];
-    final JBTabsImpl tabs = new JBTabsImpl(null, null, null, new Disposable() {
-      public void dispose() {
-      }
-    });
+    final JBTabsImpl tabs = new JBTabsImpl(null, null, null, Disposer.newDisposable());
     tabs.setTestMode(true);
 
 

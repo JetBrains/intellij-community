@@ -234,10 +234,7 @@ public class LoadingDecorator {
 
     final JPanel content = new JPanel(new BorderLayout());
 
-    final LoadingDecorator loadingTree = new LoadingDecorator(new JComboBox(), new Disposable() {
-      public void dispose() {
-      }
-    }, -1);
+    final LoadingDecorator loadingTree = new LoadingDecorator(new JComboBox(), Disposer.newDisposable(), -1);
 
     content.add(loadingTree.getComponent(), BorderLayout.CENTER);
 
