@@ -9,6 +9,7 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.StringRef;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
@@ -47,7 +48,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
         }
       }
     }
-    return new PyClassStubImpl(psi.getName(), parentStub, superClasses.toArray(new String[superClasses.size()]));
+    return new PyClassStubImpl(psi.getName(), parentStub, ArrayUtil.toStringArray(superClasses));
   }
 
   public void serialize(final PyClassStub pyClassStub, final StubOutputStream dataStream) throws IOException {

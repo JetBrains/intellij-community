@@ -11,6 +11,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.jetbrains.python.PythonTestUtil;
 
@@ -74,7 +75,7 @@ public class PyTestRunnerTest extends LightPlatformTestCase {
     List<String> allArgs = new ArrayList<String>();
     allArgs.add(utRunner.getPath());
     Collections.addAll(allArgs, args);
-    final ProcessOutput output = runJython(workDir, helpersDir.getPath(), allArgs.toArray(new String[allArgs.size()]));
+    final ProcessOutput output = runJython(workDir, helpersDir.getPath(), ArrayUtil.toStringArray(allArgs));
     assertEquals(output.getStderr(), 0, splitLines(output.getStderr()).length);
     return splitLines(output.getStdout());
   }
@@ -87,7 +88,7 @@ public class PyTestRunnerTest extends LightPlatformTestCase {
         result.add(line);
       }
     }
-    return result.toArray(new String[result.size()]);
+    return ArrayUtil.toStringArray(result);
   }
 
   private static ProcessOutput runJython(String workDir, String pythonPath, String... args) throws ExecutionException {

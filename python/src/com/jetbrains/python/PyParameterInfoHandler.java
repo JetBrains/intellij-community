@@ -4,6 +4,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.jetbrains.python.psi.*;
 import static com.jetbrains.python.psi.PyCallExpression.PyMarkedFunction;
@@ -188,7 +189,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     }
 
     final String NO_PARAMS_MSG = "<No parameters>";
-    String[] hints = hint_texts.toArray(new String[hint_texts.size()]);
+    String[] hints = ArrayUtil.toStringArray(hint_texts);
     if (context instanceof ParameterInfoUIContextEx) {
       final ParameterInfoUIContextEx pic = (ParameterInfoUIContextEx)context;
       EnumSet<ParameterInfoUIContextEx.Flag>[] flags = new EnumSet[hint_flags.size()];
