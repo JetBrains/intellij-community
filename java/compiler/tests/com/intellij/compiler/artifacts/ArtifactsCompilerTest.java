@@ -7,7 +7,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 
 /**
  * @author nik
@@ -16,7 +15,7 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
 
   public void testFileCopy() throws Exception {
     final Artifact a = addArtifact(
-      root().file(createFile("file.txt", "foo").getPath())
+      root().file(createFile("file.txt", "foo"))
     );
     compileProject();
     assertOutput(a, fs().file("file.txt", "foo"));
@@ -25,9 +24,9 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
   public void testDir() throws Exception {
     final Artifact a = addArtifact(
       root()
-        .file(createFile("abc.txt").getPath())
+        .file(createFile("abc.txt"))
         .dir("dir")
-          .file(createFile("xxx.txt", "bar").getPath())
+          .file(createFile("xxx.txt", "bar"))
     );
     compileProject();
     assertOutput(a, fs()
@@ -41,9 +40,9 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
     final Artifact a = addArtifact(
       root()
         .archive("xxx.zip")
-          .file(createFile("X.class", "data").getPath())
+          .file(createFile("X.class", "data"))
           .dir("dir")
-             .file(createFile("Y.class").getPath())
+             .file(createFile("Y.class"))
     );
     compileProject();
     assertOutput(a, fs()
@@ -59,7 +58,7 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
       root()
         .archive("a.jar")
           .archive("b.jar")
-            .file(createFile("xxx.txt", "foo").getPath())
+            .file(createFile("xxx.txt", "foo"))
     );
     compileProject();
     assertOutput(a, fs()
@@ -72,14 +71,14 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
   public void testIncludedArtifact() throws Exception {
     final Artifact included = addArtifact("included",
                                           root()
-                                            .file(createFile("aaa.txt").getPath())
+                                            .file(createFile("aaa.txt"))
                                             .build());
     final Artifact a = addArtifact(
       root()
         .dir("dir")
           .artifact(included)
           .end()
-        .file(createFile("bbb.txt").getPath())
+        .file(createFile("bbb.txt"))
     );
     compileProject();
 
@@ -94,12 +93,12 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
 
   public void testMergeDirectories() throws Exception {
     final Artifact included = addArtifact("included",
-                                          root().dir("dir").file(createFile("aaa.class").getPath()).build());
+                                          root().dir("dir").file(createFile("aaa.class")).build());
     final Artifact a = addArtifact(
       root()
         .artifact(included)
         .dir("dir")
-          .file(createFile("bbb.class").getPath()));
+          .file(createFile("bbb.class")));
     compileProject();
     assertOutput(a, fs()
       .dir("dir")
@@ -111,12 +110,12 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
   //todo[nik] fix
   public void _testOverwriteArchives() throws Exception {
     final Artifact included = addArtifact("included",
-                                          root().archive("x.jar").file(createFile("aaa.class").getPath()).build());
+                                          root().archive("x.jar").file(createFile("aaa.class")).build());
     final Artifact a = addArtifact(
       root()
         .artifact(included)
         .archive("x.jar")
-          .file(createFile("bbb.class").getPath()));
+          .file(createFile("bbb.class")));
     compileProject();
     assertOutput(a, fs()
       .archive("x.jar")
@@ -134,14 +133,14 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
 
   public void testFileOrder() throws Exception {
     final Artifact a1 = addArtifact("included1",
-                                    root().dir("ddd").file(createFile("d1/xxx.txt", "first").getPath()).build());
+                                    root().dir("ddd").file(createFile("d1/xxx.txt", "first")).build());
     final Artifact a2 = addArtifact("included2",
-                                    root().dir("ddd").file(createFile("d2/xxx.txt", "second").getPath()).build());
+                                    root().dir("ddd").file(createFile("d2/xxx.txt", "second")).build());
     final Artifact a = addArtifact(
       root()
       .artifact(a1)
       .dir("ddd")
-        .file(createFile("d3/xxx.txt", "foo").getPath())
+        .file(createFile("d3/xxx.txt", "foo"))
         .end()
       .artifact(a2)
     );
@@ -154,7 +153,7 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
   public void testIgnoredFile() throws Exception {
     final VirtualFile file = createFile("a/.svn/a.txt");
     createFile("a/svn/b.txt");
-    final Artifact a = addArtifact(root().dirCopy(file.getParent().getParent().getPath()));
+    final Artifact a = addArtifact(root().dirCopy(file.getParent().getParent()));
     compileProject();
     assertOutput(a, fs().dir("svn").file("b.txt"));
   }
@@ -174,7 +173,7 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
       }
     }.execute();
 
-    final Artifact a = addArtifact(root().dirCopy(dir.getPath()));
+    final Artifact a = addArtifact(root().dirCopy(dir));
     compileProject();
     assertOutput(a, fs()
                      .dir("excluded")

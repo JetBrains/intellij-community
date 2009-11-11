@@ -3,33 +3,43 @@ package com.intellij.compiler.artifacts;
 import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
-import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.util.concurrency.Semaphore;
 import gnu.trove.THashSet;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import java.io.IOException;
 
 /**
  * @author nik
  */
 public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase {
-
+  @Override
+  protected void tearDown() throws Exception {
+    for (Artifact artifact : ArtifactManager.getInstance(myProject).getArtifacts()) {
+      final String outputPath = artifact.getOutputPath();
+      if (!StringUtil.isEmpty(outputPath)) {
+        FileUtil.delete(new File(FileUtil.toSystemDependentName(outputPath)));
+      }
+    }
+    super.tearDown();
+  }
 
   protected CompilationLog compileProject() throws Exception {
     return compile(ArtifactManager.getInstance(myProject).getArtifacts());
@@ -86,6 +96,13 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
   }
 
   protected void changeFile(VirtualFile file) throws Exception {
+    changeFile(file, null);
+  }
+
+  protected void changeFile(VirtualFile file, final String newText) throws Exception {
+    if (newText != null) {
+      VfsUtil.saveText(file, newText);
+    }
     ((NewVirtualFile)file).setTimeStamp(file.getTimeStamp() + 10);
   }
 
@@ -117,7 +134,8 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
     final String output = artifact.getOutputPath();
     assertNotNull("output path not specified for " + artifact.getName(), output);
     final VirtualFile outputFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(output);
-    assertNotNull("output file not found " + output);
+    assertNotNull("output file not found " + output, outputFile);
+    outputFile.refresh(false, true);
     item.build().assertDirectoryEqual(outputFile);
   }
 

@@ -2,7 +2,6 @@ package com.intellij.compiler.artifacts;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 
 /**
  * @author nik
@@ -11,7 +10,7 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
 
   public void testChangeFile() throws Exception {
     final VirtualFile file = createFile("file.txt");
-    addArtifact(root().dir("dir").file(file.getPath()));
+    addArtifact(root().dir("dir").file(file));
     compileProject();
     changeFile(file);
     compileProject().assertRecompiled("file.txt");
@@ -20,10 +19,10 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
   public void testOneFileInTwoArtifacts() throws Exception {
     final VirtualFile file = createFile("file.txt");
     final Artifact a1 = addArtifact("a1",
-                                    root().dir("dir").file(file.getPath()).build());
+                                    root().dir("dir").file(file).build());
 
     final Artifact a2 = addArtifact("a2",
-                                    root().dir("dir2").file(file.getPath()).build());
+                                    root().dir("dir2").file(file).build());
 
     compileProject();
     compile(a1).assertUpToDate();
@@ -41,7 +40,7 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
 
   public void testDeleteFile() throws Exception {
     final VirtualFile file = createFile("index.html");
-    addArtifact(root().file(file.getPath()));
+    addArtifact(root().file(file));
 
     compileProject();
     deleteFile(file);
@@ -53,8 +52,8 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
     final VirtualFile file2 = createFile("b/a.txt", "b");
     addArtifact(root()
                  .archive("x.jar")
-                  .file(file1.getPath())
-                  .file(file2.getPath()));
+                  .file(file1)
+                  .file(file2));
     compileProject();
     changeFile(file1);
     compileProject().assertRecompiled("a/a.txt");

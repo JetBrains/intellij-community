@@ -1,7 +1,6 @@
 package com.intellij.compiler.artifacts;
 
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
@@ -54,13 +53,13 @@ public class TestFileSystemItem {
   }
 
   public void assertDirectoryEqual(VirtualFile file) throws IOException {
-    assertDirectoryEqual(file, "/");
+    assertDirectoryEqual(VfsUtil.virtualToIoFile(file), "/");
   }
 
-  private void assertDirectoryEqual(VirtualFile file, String relativePath) throws IOException {
-    final VirtualFile[] actualChildren = file.getChildren();
+  private void assertDirectoryEqual(File file, String relativePath) throws IOException {
+    final File[] actualChildren = file.listFiles();
     Set<String> notFound = new HashSet<String>(myChildren.keySet());
-    for (VirtualFile child : actualChildren) {
+    for (File child : actualChildren) {
       final String name = child.getName();
       final TestFileSystemItem item = myChildren.get(name);
       Assert.assertNotNull("unexpected file: " + relativePath + name, item);
@@ -70,32 +69,19 @@ public class TestFileSystemItem {
     Assert.assertTrue("files " + notFound.toString() + " not found in " + relativePath, notFound.isEmpty());
   }
 
-  private void assertFileEqual(VirtualFile file, String relativePath) throws IOException {
+  private void assertFileEqual(File file, String relativePath) throws IOException {
     Assert.assertEquals("in " + relativePath, myName, file.getName());
     if (myArchive) {
-      final VirtualFile jarRoot;
-      if (file.isInLocalFileSystem()) {
-        jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(file);
-      }
-      else {
-        final String pathInJar = file.getPath().substring(file.getPath().lastIndexOf(JarFileSystem.JAR_SEPARATOR) + JarFileSystem.JAR_SEPARATOR.length());
-        final File dirForExtracted = PlatformTestCase.createTempDir("extracted_archive");
-        ZipUtil.extract(JarFileSystem.getInstance().getJarFile(file), dirForExtracted, null);
-        final VirtualFile extractedVirtualDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dirForExtracted);
-        Assert.assertNotNull("extracted dir not found: " + dirForExtracted.getAbsolutePath(), extractedVirtualDir);
-        final VirtualFile extractedFile = extractedVirtualDir.findFileByRelativePath(pathInJar);
-        Assert.assertNotNull("extracted file not found: " + pathInJar, extractedFile);
-        jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(extractedFile);
-      }
-      Assert.assertNotNull("archive file not found: " + relativePath, jarRoot);
-      assertDirectoryEqual(jarRoot, relativePath);
+      final File dirForExtracted = PlatformTestCase.createTempDir("extracted_archive");
+      ZipUtil.extract(file, dirForExtracted, null);
+      assertDirectoryEqual(dirForExtracted, relativePath);
     }
     else if (myDirectory) {
       Assert.assertTrue(relativePath + file.getName() + " is not a directory", file.isDirectory());
       assertDirectoryEqual(file, relativePath);
     }
     else if (myContent != null) {
-      final String content = VfsUtil.loadText(file);
+      final String content = new String(FileUtil.loadFileText(file));
       Assert.assertEquals("content mismatch for " + relativePath, myContent, content);
     }
   }

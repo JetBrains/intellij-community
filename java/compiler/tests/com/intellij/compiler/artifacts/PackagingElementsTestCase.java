@@ -157,9 +157,17 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
       return builder.myElement;
     }
 
+    public PackagingElementBuilder file(VirtualFile file) {
+      return file(file.getPath());
+    }
+
     public PackagingElementBuilder file(String path) {
       myElement.addOrFindChild(getFactory().createFileCopyWithParentDirectories(path, "/"));
       return this;
+    }
+
+    public PackagingElementBuilder dirCopy(VirtualFile dir) {
+      return dirCopy(dir.getPath());
     }
 
     public PackagingElementBuilder dirCopy(String path) {
