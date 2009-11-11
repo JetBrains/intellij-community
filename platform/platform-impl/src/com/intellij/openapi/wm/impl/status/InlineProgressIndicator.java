@@ -365,6 +365,9 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
 
       int arc = 8;
 
+      g.setColor(UIManager.getColor("Panel.background"));
+      g.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, arc, arc);
+      
       Color bg = getBackground().darker().darker();
       bg = new Color(bg.getRed(), bg.getGreen(), bg.getBlue(), 230);
 
