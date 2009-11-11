@@ -58,7 +58,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
   public static BuildNumber fromString(String version) {
     if (version == null) return null;
 
-    if ("__BUILD_NUMBER__".equals(version)) return new BuildNumber("", 90, Integer.MAX_VALUE);
+    if ("__BUILD_NUMBER__".equals(version)) return new BuildNumber("", 92, Integer.MAX_VALUE);
 
     String code = version;
     int productSeparator = code.indexOf('-');
