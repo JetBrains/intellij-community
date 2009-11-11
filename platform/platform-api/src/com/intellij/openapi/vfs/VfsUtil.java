@@ -28,6 +28,7 @@ import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.io.fs.FileSystem;
 import com.intellij.util.io.fs.IFile;
 import gnu.trove.THashSet;
@@ -453,7 +454,7 @@ public class VfsUtil {
       }
     }
 
-    path = StringUtil.replace(path, "%20", " ");
+    path = URLUtil.unescapePercentSequences(path);
     return protocol + "://" + path;
   }
 

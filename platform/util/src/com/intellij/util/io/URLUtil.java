@@ -17,13 +17,11 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtil;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
-import java.io.FileNotFoundException;
-import java.io.FilterInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URL;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -90,5 +88,59 @@ public class URLUtil {
           zipFile.close();
         }
       };
+  }
+
+  @NotNull
+  public static String unescapePercentSequences(@NotNull String s) {
+    if (s.indexOf('%') == -1) {
+      return s;
+    }
+
+    StringBuilder decoded = new StringBuilder();
+    final int len = s.length();
+    int i = 0;
+    while (i < len) {
+      char c = s.charAt(i);
+      if (c == '%') {
+        TIntArrayList bytes = new TIntArrayList();
+        while (i + 2 < len && s.charAt(i) == '%') {
+          final int d1 = decode(s.charAt(i + 1));
+          final int d2 = decode(s.charAt(i + 2));
+          if (d1 != -1 && d2 != -1) {
+            bytes.add(((d1 & 0xf) << 4 | d2 & 0xf));
+            i += 3;
+          }
+          else {
+            break;
+          }
+        }
+        if (!bytes.isEmpty()) {
+          final byte[] bytesArray = new byte[bytes.size()];
+          for (int j = 0; j < bytes.size(); j++) {
+            bytesArray[j] = (byte)bytes.get(j);
+          }
+          try {
+            decoded.append(new String(bytesArray, "UTF-8"));
+            continue;
+          }
+          catch (UnsupportedEncodingException ignored) {
+          }
+        }
+      }
+
+      decoded.append(c);
+      i++;
+    }
+    return decoded.toString();
+  }
+
+  private static int decode(char c) {
+      if ((c >= '0') && (c <= '9'))
+          return c - '0';
+      if ((c >= 'a') && (c <= 'f'))
+          return c - 'a' + 10;
+      if ((c >= 'A') && (c <= 'F'))
+          return c - 'A' + 10;
+      return -1;
   }
 }

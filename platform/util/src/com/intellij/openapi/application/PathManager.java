@@ -21,6 +21,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -297,8 +298,7 @@ public class PathManager {
     }
 
     resultPath = StringUtil.trimEnd(resultPath, File.separator);
-    resultPath = StringUtil.replace(resultPath, "%20", " ");
-    resultPath = StringUtil.replace(resultPath, "%23", "#");
+    resultPath = URLUtil.unescapePercentSequences(resultPath);
 
     return resultPath;
   }
