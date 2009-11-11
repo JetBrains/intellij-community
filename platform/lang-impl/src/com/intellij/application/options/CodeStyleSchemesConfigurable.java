@@ -334,7 +334,9 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
     }
 
     public void resetPanel() {
-      ensurePanel().reset();
+      if (myPanel != null) {
+        myPanel.reset();
+      }
     }
 
     public void reset() {

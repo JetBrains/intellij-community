@@ -132,7 +132,10 @@ public class CodeStyleMainPanel extends JPanel {
   }
 
   public void reset() {
-    clearPanels();
+    for (NewCodeStyleSettingsPanel panel : mySettingsPanels.values()) {
+      panel.reset();
+    }
+
     onCurrentSchemeChanged();
   }
 
