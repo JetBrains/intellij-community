@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareRunnable;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
@@ -98,7 +99,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private final VcsListener myVcsListener = new VcsListener() {
     public void directoryMappingChanged() {
       VcsDirtyScopeManager.getInstanceChecked(myProject).markEverythingDirty();
-      scheduleUpdate();
     }
   };
   private final ChangelistConflictTracker myConflictTracker;
@@ -241,6 +241,14 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
     final VcsInvalidated invalidated = dirtyScopeManager.retrieveScopes();
     if (invalidated == null || invalidated.isEmpty()) {
+      // a hack here; but otherwise everything here should be refactored ;)
+      if (invalidated.isEmpty() && invalidated.isEverythingDirty()) {
+        DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
+          public void run() {
+            VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
+          }
+        });
+      }
       return;
     }
     final boolean wasEverythingDirty = invalidated.isEverythingDirty();

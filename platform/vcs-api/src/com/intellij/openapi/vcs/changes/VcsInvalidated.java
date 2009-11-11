@@ -37,7 +37,7 @@ public class VcsInvalidated {
   }
 
   public boolean isEmpty() {
-    return (! myEverythingDirty) && myScopes.isEmpty();
+    return myScopes.isEmpty();
   }
 
   public boolean isFileDirty(final FilePath fp) {
