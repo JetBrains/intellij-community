@@ -74,9 +74,8 @@ public class MethodReturnAlwaysIgnoredInspection extends BaseGlobalInspection {
         }
 
         final ProblemDescriptor descriptor = manager.createProblemDescriptor(method,
-                InspectionGadgetsBundle.message("method.return.always.ignored.problem.descriptor"),
-                (LocalQuickFix []) null,
-                ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
+                InspectionGadgetsBundle.message("method.return.always.ignored.problem.descriptor"), false, (LocalQuickFix []) null,
+                ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         if (originalProblemDescriptors == null) {
             return new ProblemDescriptor[]{descriptor};
         } else {

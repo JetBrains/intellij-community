@@ -143,8 +143,8 @@ public class ImplicitTypeConversion extends XPathInspection {
                 }
 
                 addProblem(myManager.createProblemDescriptor(expression,
-                        "Expression should be of type '" + type.getName() + "'", fixes,
-                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly));
+                        "Expression should be of type '" + type.getName() + "'", myOnTheFly, fixes,
+                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
             }
         }
 

@@ -43,8 +43,7 @@ public abstract class InspectionManager {
                                                                      LocalQuickFix fix, ProblemHighlightType highlightType, boolean onTheFly);
 
   @NotNull public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement, @NotNull String descriptionTemplate,
-                                                                     LocalQuickFix[] fixes, ProblemHighlightType highlightType,
-                                                                     boolean onTheFly);
+                                                                     boolean onTheFly, LocalQuickFix[] fixes, ProblemHighlightType highlightType);
 
   @NotNull public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement, @NotNull String descriptionTemplate,
                                                                      LocalQuickFix[] fixes, ProblemHighlightType highlightType,
@@ -72,4 +71,49 @@ public abstract class InspectionManager {
                                                             @NotNull final String descriptionTemplate,
                                                             final boolean showTooltip,
                                                             final ProblemHighlightType highlightType, boolean onTheFly, final LocalQuickFix... fixes);
+
+
+  @Deprecated
+  /**
+   * Factory method for ProblemDescriptor. Should be called from LocalInspectionTool.checkXXX() methods.
+   * @param psiElement problem is reported against
+   * @param descriptionTemplate problem message. Use <code>#ref</code> for a link to problem piece of code and <code>#loc</code> for location in source code.
+   * @param fix should be null if no fix is provided.
+   */
+  @NotNull public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement, @NotNull String descriptionTemplate, LocalQuickFix fix, ProblemHighlightType highlightType);
+
+  @Deprecated
+  @NotNull public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement, @NotNull String descriptionTemplate, LocalQuickFix[] fixes, ProblemHighlightType highlightType);
+
+  @Deprecated
+  @NotNull public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement, @NotNull String descriptionTemplate, LocalQuickFix[] fixes, ProblemHighlightType highlightType, boolean isAfterEndOfLine);
+
+  @Deprecated
+  @NotNull public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement startElement,
+                                                                     @NotNull PsiElement endElement,
+                                                                     @NotNull String descriptionTemplate,
+                                                                     ProblemHighlightType highlightType,
+                                                                     LocalQuickFix... fixes
+  );
+
+
+  @Deprecated
+  public abstract ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
+                                                            final TextRange rangeInElement,
+                                                            @NotNull final String descriptionTemplate,
+                                                            final ProblemHighlightType highlightType,
+                                                            final LocalQuickFix... fixes);
+
+  @Deprecated
+  public abstract ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
+                                                            @NotNull final String descriptionTemplate,
+                                                            final ProblemHighlightType highlightType,
+                                                            @Nullable final HintAction hintAction,
+                                                            final LocalQuickFix... fixes);
+
+  @Deprecated
+  public abstract ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
+                                                            @NotNull final String descriptionTemplate,
+                                                            final boolean showTooltip,
+                                                            final ProblemHighlightType highlightType, final LocalQuickFix... fixes);
 }

@@ -77,7 +77,7 @@ public class FileHeaderChecker {
       if (element == null) return null;
       LocalQuickFix[] quickFix = createQuickFix(element, matcher, offsetToProperty);
       final String description = InspectionsBundle.message("default.file.template.description");
-      return manager.createProblemDescriptor(element, description, quickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, onTheFly);
+      return manager.createProblemDescriptor(element, description, onTheFly, quickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
     }
     return null;
   }

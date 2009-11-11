@@ -63,8 +63,8 @@ public class BooleanFieldAlwaysNegatedInspection extends BaseGlobalInspection {
             return null;
         }
         return new ProblemDescriptor[]{manager.createProblemDescriptor(refField.getElement(), InspectionGadgetsBundle.message(
-                "boolean.field.always.negated.problem.descriptor"), (LocalQuickFix []) null,
-                ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false)};
+                "boolean.field.always.negated.problem.descriptor"), false, (LocalQuickFix []) null,
+                ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
     }
 
   protected boolean queryExternalUsagesRequests(final RefManager manager, final GlobalJavaInspectionContext context,

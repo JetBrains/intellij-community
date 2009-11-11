@@ -70,8 +70,7 @@ public class AntDuplicateImportedTargetsInspection extends AntInspection {
               final String duplicatedMessage =
                 AntBundle.message("target.is.duplicated.in.imported.file", name, target.getAntFile().getName());
               problems
-                .add(manager.createProblemDescriptor(t, duplicatedMessage, LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                                     isOnTheFly));
+                .add(manager.createProblemDescriptor(t, duplicatedMessage, isOnTheFly, LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
             }
           }
           final int prolemCount = problems.size();

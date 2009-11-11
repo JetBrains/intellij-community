@@ -437,8 +437,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
 
         final ProblemDescriptor problem = myManager
           .createProblemDescriptor(expression,
-                                   description,
-                                   fixes.toArray(new LocalQuickFix[fixes.size()]), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly);
+                                   description, myOnTheFly, fixes.toArray(new LocalQuickFix[fixes.size()]), ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         myProblems.add(problem);
       }
     }

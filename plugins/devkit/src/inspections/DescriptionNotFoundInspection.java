@@ -77,9 +77,8 @@ public class DescriptionNotFoundInspection extends DevKitInspectionBase{
     final PsiElement problem = getProblemElement(aClass, method);
     final ProblemDescriptor problemDescriptor = manager
       .createProblemDescriptor(problem == null ? nameIdentifier : problem,
-                               "Inspection does not have a description",
-                               new LocalQuickFix[]{new CreateHtmlDescriptionFix(filename, module)},
-                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
+                               "Inspection does not have a description", isOnTheFly, new LocalQuickFix[]{new CreateHtmlDescriptionFix(filename, module)},
+                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
     return new ProblemDescriptor[]{problemDescriptor};    
   }
 

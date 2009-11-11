@@ -106,8 +106,9 @@ public class InspectionManagerEx extends InspectionManager {
   @NotNull
   public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                    @NotNull String descriptionTemplate,
+                                                   boolean onTheFly,
                                                    LocalQuickFix[] fixes,
-                                                   ProblemHighlightType highlightType, boolean onTheFly) {
+                                                   ProblemHighlightType highlightType) {
     return createProblemDescriptor(psiElement, descriptionTemplate, fixes, highlightType, onTheFly, false);
   }
 
@@ -211,5 +212,74 @@ public class InspectionManagerEx extends InspectionManager {
       }
     }
     return false;
+  }
+
+  @Deprecated
+  @NotNull
+  public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
+                                                   @NotNull String descriptionTemplate,
+                                                   LocalQuickFix fix,
+                                                   ProblemHighlightType highlightType) {
+    LocalQuickFix[] quickFixes = fix != null ? new LocalQuickFix[]{fix} : null;
+    return createProblemDescriptor(psiElement, descriptionTemplate, quickFixes, highlightType);
+  }
+
+  @Deprecated
+  @NotNull
+  public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
+                                                   @NotNull String descriptionTemplate,
+                                                   LocalQuickFix[] fixes,
+                                                   ProblemHighlightType highlightType) {
+    return createProblemDescriptor(psiElement, descriptionTemplate, fixes, highlightType, false);
+  }
+
+  @Deprecated
+  @NotNull
+  public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
+                                                   @NotNull String descriptionTemplate,
+                                                   LocalQuickFix[] fixes,
+                                                   ProblemHighlightType highlightType,
+                                                   boolean isAfterEndOfLine) {
+    return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, isAfterEndOfLine, null, true);
+  }
+
+  @Deprecated
+  @NotNull
+  public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement startElement,
+                                                   @NotNull PsiElement endElement,
+                                                   @NotNull String descriptionTemplate,
+                                                   ProblemHighlightType highlightType,
+                                                   LocalQuickFix... fixes) {
+    return new ProblemDescriptorImpl(startElement, endElement, descriptionTemplate, fixes, highlightType, false, null, true);
+  }
+
+  @Deprecated
+  public ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
+                                                   final TextRange rangeInElement,
+                                                   @NotNull final String descriptionTemplate,
+                                                   final ProblemHighlightType highlightType,
+                                                   final LocalQuickFix... fixes) {
+    return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, rangeInElement, true);
+  }
+
+  @Deprecated
+  public ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
+                                                   @NotNull final String descriptionTemplate,
+                                                   final ProblemHighlightType highlightType,
+                                                   @Nullable final HintAction hintAction,
+                                                   final LocalQuickFix... fixes) {
+
+    return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, null, hintAction, true);
+  }
+
+  @Deprecated
+  @Override
+  public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
+                                                   @NotNull String descriptionTemplate,
+                                                   boolean showTooltip,
+                                                   ProblemHighlightType highlightType,
+                                                   LocalQuickFix... fixes) {
+    return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, null, showTooltip, null,
+                                     true);
   }
 }

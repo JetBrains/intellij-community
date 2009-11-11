@@ -120,8 +120,7 @@ public class CheckNodeTest extends XPathInspection {
             }
 
             final LocalQuickFix[] fixes = contextProvider.getQuickFixFactory().createUnknownNodeTestFixes(nodeTest);
-            addProblem(myManager.createProblemDescriptor(nodeTest, "<html>Unknown " + type + " name " + name + "</html>",
-                    fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly));
+            addProblem(myManager.createProblemDescriptor(nodeTest, "<html>Unknown " + type + " name " + name + "</html>", myOnTheFly, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
         }
 
         private static boolean matches(@Nullable PrefixedName prefixedName, QName element, NamespaceContext namespaceContext, XmlElement context) {

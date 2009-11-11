@@ -77,8 +77,8 @@ public class RedundantTypeConversion extends XPathInspection {
                     LocalQuickFix[] fixes = fixFactory.createRedundantTypeConversionFixes(expression);
 
                     addProblem(myManager.createProblemDescriptor(expression,
-                            "Redundant conversion to type '" + convertedType.getName() + "'", fixes,
-                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly));
+                            "Redundant conversion to type '" + convertedType.getName() + "'", myOnTheFly, fixes,
+                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
                 } else if (CHECK_ANY) {
                     final XPathType expectedType = ExpectedTypeUtil.getExpectedType(expression);
                     if (expectedType == XPathType.ANY) {
@@ -86,8 +86,8 @@ public class RedundantTypeConversion extends XPathInspection {
                         LocalQuickFix[] fixes = fixFactory.createRedundantTypeConversionFixes(expression);
 
                         addProblem(myManager.createProblemDescriptor(expression,
-                                "Redundant conversion to type '" + expectedType.getName() + "'", fixes,
-                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly));
+                                "Redundant conversion to type '" + expectedType.getName() + "'", myOnTheFly, fixes,
+                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
                     }
                 }
             }

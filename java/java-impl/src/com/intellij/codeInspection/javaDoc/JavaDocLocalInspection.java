@@ -271,8 +271,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
 
   private static ProblemDescriptor createDescriptor(@NotNull PsiElement element, String template, InspectionManager manager,
                                                     boolean onTheFly) {
-    return manager.createProblemDescriptor(element, template, (LocalQuickFix [])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                           onTheFly);
+    return manager.createProblemDescriptor(element, template, onTheFly, (LocalQuickFix [])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
 
   private static ProblemDescriptor createDescriptor(@NotNull PsiElement element, String template, @NotNull LocalQuickFix fix,

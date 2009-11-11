@@ -197,8 +197,8 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
                 && !hasArrayTypeAt(i+1, methodCall)) {
               myProblems.add(myManager.createProblemDescriptor(methodCall,
                                                                CodeInsightBundle.message("property.has.more.parameters.than.passed", key, paramsCount, args.length-i-1),
-                                                               new LocalQuickFix[0], 
-                                                               ProblemHighlightType.GENERIC_ERROR, onTheFly));
+                                                               onTheFly, new LocalQuickFix[0],
+                                                               ProblemHighlightType.GENERIC_ERROR));
             }
             break;
           }

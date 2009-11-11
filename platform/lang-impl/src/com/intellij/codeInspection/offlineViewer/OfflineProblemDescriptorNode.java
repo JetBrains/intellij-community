@@ -111,8 +111,8 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
                                                                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
       final LocalQuickFix[] quickFixes = getFixes(descriptor, hints);
       if (quickFixes != null) {
-        descriptor = inspectionManager.createProblemDescriptor(psiElement, offlineProblemDescriptor.getDescription(), quickFixes,
-                                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
+        descriptor = inspectionManager.createProblemDescriptor(psiElement, offlineProblemDescriptor.getDescription(), false, quickFixes,
+                                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
       }
       setUserObject(descriptor);
       return descriptor;

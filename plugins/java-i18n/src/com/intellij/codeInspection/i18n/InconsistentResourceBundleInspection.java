@@ -197,9 +197,8 @@ public class InconsistentResourceBundleInspection extends DescriptorProviderInsp
         Property property = file.findPropertyByKey(inconsistentKey);
         assert property != null;
         String message = InspectionsBundle.message("inconsistent.bundle.property.error", inconsistentKey, parent.getName());
-        ProblemDescriptor descriptor = manager.createProblemDescriptor(property, message,
-                                                                       LocalQuickFix.EMPTY_ARRAY,
-                                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
+        ProblemDescriptor descriptor = manager.createProblemDescriptor(property, message, false, LocalQuickFix.EMPTY_ARRAY,
+                                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         addProblemElement(getRefManager().getReference(file), descriptor);
       }
     }
@@ -234,9 +233,8 @@ public class InconsistentResourceBundleInspection extends DescriptorProviderInsp
         }
         assert untranslatedProperty != null;
         String message = InspectionsBundle.message("inconsistent.bundle.untranslated.property.error", untranslatedKey, file.getName());
-        ProblemDescriptor descriptor = manager.createProblemDescriptor(untranslatedProperty, message,
-                                                                       LocalQuickFix.EMPTY_ARRAY,
-                                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
+        ProblemDescriptor descriptor = manager.createProblemDescriptor(untranslatedProperty, message, false, LocalQuickFix.EMPTY_ARRAY,
+                                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         addProblemElement(getRefManager().getReference(untranslatedFile), descriptor);
       }
     }

@@ -76,8 +76,8 @@ public class AntMissingPropertiesFileInspection extends AntInspection {
         if (AntFileImpl.PROPERTY.equals(prop.getSourceElement().getName())) {
           final String filename = prop.getFileName();
           if (filename != null && prop.getPropertiesFile() == null) {
-            problems.add(manager.createProblemDescriptor(prop, AntBundle.message("file.doesnt.exist", filename), LocalQuickFix.EMPTY_ARRAY,
-                                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly));
+            problems.add(manager.createProblemDescriptor(prop, AntBundle.message("file.doesnt.exist", filename), isOnTheFly, LocalQuickFix.EMPTY_ARRAY,
+                                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
           }
         }
       }

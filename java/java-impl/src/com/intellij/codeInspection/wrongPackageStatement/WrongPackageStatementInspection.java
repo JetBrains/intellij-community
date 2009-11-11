@@ -75,8 +75,7 @@ public class WrongPackageStatementInspection extends BaseJavaLocalInspectionTool
           String description = JavaErrorMessages.message("package.name.file.path.mismatch",
                                                          packageReference.getText(),
                                                          dirPackage.getQualifiedName());
-          return new ProblemDescriptor[]{manager.createProblemDescriptor(packageStatement, description, availableFixes.toArray(new LocalQuickFix[availableFixes.size()]), ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                                                         isOnTheFly)};
+          return new ProblemDescriptor[]{manager.createProblemDescriptor(packageStatement, description, isOnTheFly, availableFixes.toArray(new LocalQuickFix[availableFixes.size()]), ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
 
         }
       }

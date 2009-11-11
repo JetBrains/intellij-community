@@ -146,9 +146,9 @@ public class EmptyMethodInspection extends GlobalJavaInspectionTool {
         }
       });
 
-      final ProblemDescriptor descriptor = manager.createProblemDescriptor(refMethod.getElement().getNavigationElement(), message,
+      final ProblemDescriptor descriptor = manager.createProblemDescriptor(refMethod.getElement().getNavigationElement(), message, false,
                                                                            fixes.toArray(new LocalQuickFix[fixes.size()]),
-                                                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
+                                                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
       return new ProblemDescriptor[]{descriptor};
     }
 

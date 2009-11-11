@@ -46,13 +46,15 @@ public class HardwiredNamespacePrefix extends XPathInspection {
 
                     if (isNameComparison(lop, rop)) {
                         assert rop != null;
-                        final ProblemDescriptor p = manager.createProblemDescriptor(rop, "Hardwired namespace prefix", LocalQuickFix.EMPTY_ARRAY,
-                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
+                        final ProblemDescriptor p = manager.createProblemDescriptor(rop, "Hardwired namespace prefix", isOnTheFly,
+                                                                                    LocalQuickFix.EMPTY_ARRAY,
+                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
                         addProblem(p);
                     } else if (isNameComparison(rop, lop)) {
                         assert lop != null;
-                        final ProblemDescriptor p = manager.createProblemDescriptor(lop, "Hardwired namespace prefix", LocalQuickFix.EMPTY_ARRAY,
-                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
+                        final ProblemDescriptor p = manager.createProblemDescriptor(lop, "Hardwired namespace prefix", isOnTheFly,
+                                                                                    LocalQuickFix.EMPTY_ARRAY,
+                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
                         addProblem(p);
                     } else if (isNameFunctionCall(lop)) {
                         // TODO

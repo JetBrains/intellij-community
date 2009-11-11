@@ -140,9 +140,8 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
                             compClass.isInterface() ?
                                     DevKitBundle.message("keyword.implement") :
                                     DevKitBundle.message("keyword.extend"),
-                            compClass.getQualifiedName()),
-                    ImplementOrExtendFix.createFix(compClass, checkedClass, isOnTheFly),
-                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly));
+                            compClass.getQualifiedName()), isOnTheFly, ImplementOrExtendFix.createFix(compClass, checkedClass, isOnTheFly),
+                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
           }
         }
         if (ActionType.ACTION.isOfType(checkedClass)) {
@@ -155,8 +154,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
         }
         if (isAbstract(checkedClass)) {
           problems = addProblem(problems, manager.createProblemDescriptor(nameIdentifier,
-                  DevKitBundle.message("inspections.registration.problems.abstract"), LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                  isOnTheFly));
+                  DevKitBundle.message("inspections.registration.problems.abstract"), isOnTheFly, LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
         }
         return problems != null ? problems.toArray(new ProblemDescriptor[problems.size()]) : null;
       }
@@ -359,7 +357,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
 
     private void addProblem(PsiElement element, String problem, ProblemHighlightType type, boolean onTheFly, LocalQuickFix... fixes) {
       if (myList == null) myList = new SmartList<ProblemDescriptor>();
-      myList.add(myManager.createProblemDescriptor(element, problem, fixes, type, onTheFly));
+      myList.add(myManager.createProblemDescriptor(element, problem, onTheFly, fixes, type));
     }
 
     @Nullable

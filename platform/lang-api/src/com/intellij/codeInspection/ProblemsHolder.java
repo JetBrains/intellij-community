@@ -54,7 +54,7 @@ public class ProblemsHolder {
                               String descriptionTemplate,
                               ProblemHighlightType highlightType,
                               LocalQuickFix... fixes) {
-    registerProblem(myManager.createProblemDescriptor(psiElement, descriptionTemplate, fixes, highlightType, myOnTheFly));
+    registerProblem(myManager.createProblemDescriptor(psiElement, descriptionTemplate, myOnTheFly, fixes, highlightType));
   }
 
   public void registerProblem(ProblemDescriptor problemDescriptor) {

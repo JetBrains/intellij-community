@@ -101,9 +101,9 @@ public class UndeclaredTestInspection extends BaseJavaLocalInspectionTool {
       final PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
       LOG.assertTrue(nameIdentifier != null);
       return new ProblemDescriptor[]{manager.createProblemDescriptor(nameIdentifier, "Undeclared test \'" + aClass.getName() + "\'",
-                                                                     new LocalQuickFix[]{new RegisterClassFix(aClass),
+                                                                     isOnTheFly, new LocalQuickFix[]{new RegisterClassFix(aClass),
                                                                        new CreateTestngFix()},
-                                                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly)};
+                                                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
     }
     return null;
   }
