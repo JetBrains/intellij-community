@@ -43,6 +43,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.PsiElementUsage;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.RangeBlinker;
 import com.intellij.xml.util.XmlStringUtil;
@@ -344,7 +345,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
               }
 
               int option = Messages.showDialog(myProject, message, UsageViewBundle.message("dialog.title.information"),
-                                               titles.toArray(new String[titles.size()]), 0, Messages.getInformationIcon());
+                                               ArrayUtil.toStringArray(titles), 0, Messages.getInformationIcon());
 
               if (option > 0) {
                 notFoundActions.get(option - 1).actionPerformed(new ActionEvent(this, 0, titles.get(option)));

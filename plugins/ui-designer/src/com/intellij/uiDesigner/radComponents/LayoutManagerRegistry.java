@@ -19,6 +19,7 @@ package com.intellij.uiDesigner.radComponents;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.GuiDesignerConfiguration;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ArrayUtil;
 import com.jgoodies.forms.layout.FormLayout;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -73,7 +74,7 @@ public class LayoutManagerRegistry {
       }
     }
     Collections.sort(layoutManagerNames);
-    return layoutManagerNames.toArray(new String[layoutManagerNames.size()]);
+    return ArrayUtil.toStringArray(layoutManagerNames);
   }
 
   public static String getLayoutManagerDisplayName(String name) {

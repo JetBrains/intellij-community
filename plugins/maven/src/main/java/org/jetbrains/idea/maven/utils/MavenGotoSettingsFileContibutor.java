@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.ArrayUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
@@ -35,7 +36,7 @@ public class MavenGotoSettingsFileContibutor implements ChooseByNameContributor,
     for (VirtualFile each : getSettingsFiles(project)) {
       result.add(each.getName());
     }
-    return result.toArray(new String[result.size()]);
+    return ArrayUtil.toStringArray(result);
   }
 
   public NavigationItem[] getItemsByName(String name, String pattern, Project project, boolean includeNonProjectItems) {

@@ -59,7 +59,7 @@ public class ConflictsDialog extends DialogWrapper{
     for (String conflict : conflictDescriptions.values()) {
       conflicts.add(conflict);
     }
-    myConflictDescriptions = conflicts.toArray(new String[conflicts.size()]);
+    myConflictDescriptions = ArrayUtil.toStringArray(conflicts);
     myElementConflictDescription = conflictDescriptions;
     setTitle(RefactoringBundle.message("problems.detected.title"));
     setOKButtonText(RefactoringBundle.message("continue.button"));

@@ -23,6 +23,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
@@ -165,8 +166,8 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
 
     text = toEval.getText();
 
-    String[] names = namesList.toArray(new String[namesList.size()]);
-    String[] vals = valList.toArray(new String[valList.size()]);
+    String[] names = ArrayUtil.toStringArray(namesList);
+    String[] vals = ArrayUtil.toStringArray(valList);
 
     PsiClass contextClass = PsiUtil.getContextClass(context);
     boolean isStatic = isStaticContext(context);

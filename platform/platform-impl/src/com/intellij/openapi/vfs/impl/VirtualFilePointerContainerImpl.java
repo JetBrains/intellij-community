@@ -160,7 +160,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
     for (VirtualFilePointer smartVirtualFilePointer : myList) {
       result.add(smartVirtualFilePointer.getUrl());
     }
-    return result.toArray(new String[result.size()]);
+    return ArrayUtil.toStringArray(result);
   }
 
   private VirtualFile[] myCachedFiles;

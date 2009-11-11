@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.documentation;
 
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -79,7 +80,7 @@ public class GroovyPresentationUtil {
 
       if (!structural.isEmpty()) {
         builder.append(".");
-        String[] array = structural.toArray(new String[structural.size()]);
+        String[] array = ArrayUtil.toStringArray(structural);
         if (array.length> 1) builder.append("[");
         for (int i = 0; i < array.length; i++) {
           if (i > 0) builder.append(", ");

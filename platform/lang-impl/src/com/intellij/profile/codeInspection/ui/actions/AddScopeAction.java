@@ -34,6 +34,7 @@ import com.intellij.profile.codeInspection.ui.InspectionConfigTreeNode;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Icons;
 
 import javax.swing.tree.DefaultTreeModel;
@@ -77,8 +78,7 @@ public abstract class AddScopeAction extends AnAction {
     final InspectionProfileEntry tool = descriptor.getTool(); //copy
     final List<String> availableScopes = getAvailableScopes(descriptor, project);
 
-    final int idx = Messages.showChooseDialog(myTree, "Scope:", "Choose Scope",
-                                              availableScopes.toArray(new String[availableScopes.size()]), availableScopes.get(0), Messages.getQuestionIcon());
+    final int idx = Messages.showChooseDialog(myTree, "Scope:", "Choose Scope", ArrayUtil.toStringArray(availableScopes), availableScopes.get(0), Messages.getQuestionIcon());
     if (idx == -1) return;
     final NamedScope chosenScope = NamedScopesHolder.getScope(project, availableScopes.get(idx));
     final ScopeToolState scopeToolState = getSelectedProfile().addScope(tool, chosenScope,

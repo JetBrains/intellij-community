@@ -17,6 +17,7 @@
 package com.intellij.openapi.fileChooser;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -61,6 +62,6 @@ public class FileSaverDescriptor extends FileChooserDescriptor implements Clonea
    * @return accepted file extentions
    */
   public String[] getFileExtentions() {
-    return extentions.toArray(new String[extentions.size()]);
+    return ArrayUtil.toStringArray(extentions);
   }
 }

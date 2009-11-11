@@ -18,6 +18,7 @@ package com.intellij.uiDesigner.radComponents;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.lw.IButtonGroup;
+import com.intellij.util.ArrayUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -84,7 +85,7 @@ public class RadButtonGroup implements IButtonGroup {
   }
 
   public String[] getComponentIds() {
-    return myComponentIds.toArray(new String[myComponentIds.size()]);
+    return ArrayUtil.toStringArray(myComponentIds);
   }
 
   public boolean isEmpty() {

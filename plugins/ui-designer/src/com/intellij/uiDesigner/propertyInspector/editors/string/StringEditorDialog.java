@@ -51,6 +51,7 @@ import com.intellij.uiDesigner.binding.FormReferenceProvider;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.StringDescriptor;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
@@ -352,7 +353,7 @@ public final class StringEditorDialog extends DialogWrapper{
               myDefaultBundleInitialized = true;
               Set<String> bundleNames = FormEditingUtil.collectUsedBundleNames(myEditor.getRootContainer());
               if (bundleNames.size() > 0) {
-                myTfBundleName.setText(bundleNames.toArray(new String[bundleNames.size()]) [0]);
+                myTfBundleName.setText(ArrayUtil.toStringArray(bundleNames)[0]);
               }
             }
             CardLayout cardLayout = (CardLayout) myCardHolder.getLayout();

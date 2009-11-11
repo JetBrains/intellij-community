@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -171,7 +172,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
       }
     }
     if (extensions.size() > 0) {
-      final String[] extensionArray = extensions.toArray(new String[extensions.size()]);
+      final String[] extensionArray = ArrayUtil.toStringArray(extensions);
       myIgnoreMaskTextField.setText("*." + extensionArray [0]);
     }
     else {

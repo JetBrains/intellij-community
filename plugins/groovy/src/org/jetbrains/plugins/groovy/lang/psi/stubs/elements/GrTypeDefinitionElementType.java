@@ -22,6 +22,7 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
@@ -71,7 +72,7 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
         }
       }
     }
-    return annoNames.toArray(new String[annoNames.size()]);
+    return ArrayUtil.toStringArray(annoNames);
   }
 
   public void serialize(GrTypeDefinitionStub stub, StubOutputStream dataStream) throws IOException {

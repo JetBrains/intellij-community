@@ -18,6 +18,7 @@ package com.intellij.lang.ant.config.impl;
 import com.intellij.lang.ant.config.ExecutionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -44,7 +45,7 @@ public final class ExecuteCompositeTargetEvent extends ExecutionEvent {
     while (tokenizer.hasMoreTokens()) {
       targetNames.add(tokenizer.nextToken().trim());
     }
-    myTargetNames = targetNames.toArray(new String[targetNames.size()]);
+    myTargetNames = ArrayUtil.toStringArray(targetNames);
     myPresentableName = compositeName;
   }
 

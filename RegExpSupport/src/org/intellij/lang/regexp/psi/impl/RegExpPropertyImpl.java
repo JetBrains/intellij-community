@@ -22,6 +22,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
@@ -188,7 +189,7 @@ public class RegExpPropertyImpl extends RegExpElementImpl implements RegExpPrope
                 }
             }
         }
-        UNICODE_BLOCKS = unicodeBlocks.toArray(new String[unicodeBlocks.size()]);
+      UNICODE_BLOCKS = ArrayUtil.toStringArray(unicodeBlocks);
     }
     public static final String[][] PROPERTY_NAMES = {
             { "Cn", "UNASSIGNED" },

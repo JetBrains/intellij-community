@@ -20,6 +20,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SortedListModel;
+import com.intellij.util.ArrayUtil;
 import com.theoryinpractice.testng.util.TestNGUtil;
 
 import javax.swing.*;
@@ -43,7 +44,7 @@ public class GroupList extends JPanel
         });
         list = new JList(model);
         Set<String> groups = TestNGUtil.getAnnotationValues("groups", classes);
-        String[] array = groups.toArray(new String[groups.size()]);
+      String[] array = ArrayUtil.toStringArray(groups);
         Arrays.sort(array);
         model.addAll(array);
         add(ScrollPaneFactory.createScrollPane(list));

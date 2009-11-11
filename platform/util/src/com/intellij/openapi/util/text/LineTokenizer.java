@@ -57,7 +57,7 @@ public class LineTokenizer {
 
     if (!skipLastEmptyLine && stringEdnsWithSeparator(tokenizer)) lines.add("");
 
-    return lines.toArray(new String[lines.size()]);
+    return ArrayUtil.toStringArray(lines);
   }
 
   public static int calcLineCount(final CharSequence chars, final boolean skipLastEmptyLine) {

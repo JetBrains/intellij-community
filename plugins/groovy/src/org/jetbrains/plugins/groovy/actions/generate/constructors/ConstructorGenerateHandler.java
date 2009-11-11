@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.actions.generate.constructors;
 import com.intellij.codeInsight.generation.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,7 +101,7 @@ public class ConstructorGenerateHandler extends GenerateConstructorHandler {
         parametersNames.add(parameter.getName());
       }
 
-      final String[] paramNames = parametersNames.toArray(new String[parametersNames.size()]);
+      final String[] paramNames = ArrayUtil.toStringArray(parametersNames);
       assert constructorName != null;
       grConstructor = GroovyPsiElementFactory.getInstance(aClass.getProject()).createConstructorFromText(constructorName, null, paramNames, body);
 

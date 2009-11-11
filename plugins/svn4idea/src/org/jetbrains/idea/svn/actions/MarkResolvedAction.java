@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnStatusUtil;
@@ -75,7 +76,7 @@ public class MarkResolvedAction extends BasicAction {
       Messages.showInfoMessage(project, SvnBundle.message("message.text.no.conflicts.found"), SvnBundle.message("message.title.no.conflicts.found"));
       return;
     }
-    String[] pathsArray = paths.toArray(new String[paths.size()]);
+    String[] pathsArray = ArrayUtil.toStringArray(paths);
     SelectFilesDialog dialog = new SelectFilesDialog(project, SvnBundle.message("label.select.files.and.directories.to.mark.resolved"),
                                                      SvnBundle.message("dialog.title.mark.resolved"),
                                                      SvnBundle.message("action.name.mark.resolved"), pathsArray, "vcs.subversion.resolve"

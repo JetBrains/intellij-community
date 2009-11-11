@@ -151,7 +151,7 @@ public class SearchCyclesTest extends TestCase{
   private static void checkResult(String[][] expected, Set<List<String>> cycles){
     assertEquals(expected.length, cycles.size());
     for (List<String> strings : cycles) {
-      assertTrue(findInMatrix(expected, strings.toArray(new String[strings.size()])) > -1);
+      assertTrue(findInMatrix(expected, ArrayUtil.toStringArray(strings)) > -1);
     }
   }
 

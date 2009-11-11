@@ -33,6 +33,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -353,7 +354,7 @@ public class CvsEntriesManager extends VirtualFileAdapter {
   private void ensureFilesCached() {
     String[] paths;
     synchronized (myFilesToRefresh) {
-      paths = myFilesToRefresh.toArray(new String[myFilesToRefresh.size()]);
+      paths = ArrayUtil.toStringArray(myFilesToRefresh);
       myFilesToRefresh.clear();
     }
     for (String path : paths) {

@@ -18,6 +18,7 @@ package com.intellij.openapi.fileTypes;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -86,7 +87,7 @@ public class NativeFileType implements FileType {
     }
     commands.add(file.getPath());
     try {
-      Runtime.getRuntime().exec(commands.toArray(new String[commands.size()]));
+      Runtime.getRuntime().exec(ArrayUtil.toStringArray(commands));
     }
     catch (IOException e) {
       return false;

@@ -285,7 +285,7 @@ public class ExtractMethodUtil {
         i++;
       }
     }
-    return params.toArray(new String[params.size()]);
+    return ArrayUtil.toStringArray(params);
   }
 
   static String getTypeString(ExtractMethodInfoHelper helper, boolean forPresentation) {

@@ -197,7 +197,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   private static boolean checkIfGivenXmlHasTheseWords(final String name, final XmlFile tldFileByUri) {
     if (name == null || name.length() == 0) return true;
     final List<String> list = StringUtil.getWordsIn(name);
-    final String[] words = list.toArray(new String[list.size()]);
+    final String[] words = ArrayUtil.toStringArray(list);
     final boolean[] wordsFound = new boolean[words.length];
     final int[] wordsFoundCount = new int[1];
 

@@ -32,6 +32,7 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadErrorComponent;
 import com.intellij.uiDesigner.radComponents.RadHSpacer;
 import com.intellij.uiDesigner.radComponents.RadVSpacer;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
@@ -84,12 +85,12 @@ public final class BindingEditor extends ComboBoxPropertyEditor<String> {
     final IRootContainer root = FormEditingUtil.getRoot(component);
     final String className = root.getClassToBind();
     if (className == null) {
-      return result.toArray(new String[result.size()]);
+      return ArrayUtil.toStringArray(result);
     }
 
     final PsiClass aClass = FormEditingUtil.findClassToBind(component.getModule(), className);
     if (aClass == null) {
-      return result.toArray(new String[result.size()]);
+      return ArrayUtil.toStringArray(result);
     }
 
     final PsiField[] fields = aClass.getFields();
@@ -145,7 +146,7 @@ public final class BindingEditor extends ComboBoxPropertyEditor<String> {
       }
     }
 
-    final String[] names = result.toArray(new String[result.size()]);
+    final String[] names = ArrayUtil.toStringArray(result);
     Arrays.sort(names);
     return names;
   }
