@@ -21,6 +21,7 @@ import com.intellij.execution.testframework.sm.Marker;
 import com.intellij.execution.testframework.sm.runner.BaseSMTRunnerTestCase;
 import com.intellij.execution.testframework.sm.runner.GeneralToSMTRunnerEventsConvertor;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
@@ -338,6 +339,26 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
 
     myResultsViewer.onCustomProgressTestFailed();
     assertEquals(1, myResultsViewer.getTestsFailuresCount());
+
+    assertEquals(ColorProgressBar.RED, myResultsViewer.getTestsStatusColor());
+  }
+
+  public void testCustomProgress_Terminated() {
+    myResultsViewer.onTestingStarted(myTestsRootNode);
+
+    final SMTestProxy test1 = createTestProxy("some_test1", myTestsRootNode);
+    myResultsViewer.onTestStarted(test1);
+
+    myResultsViewer.onTestingFinished(myTestsRootNode);
+
+    assertEquals(ColorProgressBar.GREEN, myResultsViewer.getTestsStatusColor());
+  }
+
+  public void testCustomProgress_NotRun() {
+    myResultsViewer.onTestingStarted(myTestsRootNode);
+    myResultsViewer.onTestingFinished(myTestsRootNode);
+
+    assertEquals(ColorProgressBar.RED, myResultsViewer.getTestsStatusColor());
   }
 
   public void testCustomProgress_UnSetCount() {
@@ -482,5 +503,4 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
     myResultsViewer.onTestStarted(createTestProxy("some_test1", myTestsRootNode));
     assertEquals(4, myResultsViewer.getTestsCurrentCount());
   }
-
 }

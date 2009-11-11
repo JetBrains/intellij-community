@@ -216,6 +216,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
     }
     updateStatusLabel();
 
+    if (myTestsRootNode.getChildren().size() == 0) {
+      // no tests found
+      myStatusLine.setStatusColor(ColorProgressBar.RED);
+    }
 
     myAnimator.stopMovie();
     myTreeBuilder.updateFromRoot();
@@ -372,6 +376,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
 
   protected int getTestsFailuresCount() {
     return myTestsFailuresCount;
+  }
+
+  protected Color getTestsStatusColor() {
+    return myStatusLine.getStatusColor();
   }
 
   protected int getTestsTotal() {

@@ -211,6 +211,10 @@ public class ColorProgressBar extends JComponent {
     return dimension;
   }
 
+  public Color getColor() {
+    return myColor;
+  }
+
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static void main(String[] args) {
     JFrame frame = new JFrame("ColorProgressBar Test");
