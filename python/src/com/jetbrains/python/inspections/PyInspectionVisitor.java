@@ -1,10 +1,10 @@
 package com.jetbrains.python.inspections;
 
-import com.jetbrains.python.psi.PyElementVisitor;
-import com.intellij.psi.PsiElement;
 import com.intellij.codeInspection.*;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.PsiElement;
+import com.jetbrains.python.psi.PyElementVisitor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -47,7 +47,7 @@ public class PyInspectionVisitor extends PyElementVisitor {
     if (element == null || element.getTextLength() == 0){
         return;
     }
-    myHolder.registerProblem(myHolder.getManager().createProblemDescriptor(element, message, type,  action));
+    myHolder.registerProblem(myHolder.getManager().createProblemDescriptor(element, message, type,  action, myHolder.isOnTheFly()));
   }
 
   /**
@@ -61,6 +61,7 @@ public class PyInspectionVisitor extends PyElementVisitor {
     final HintAction hintAction,
     final LocalQuickFix... fixes)
   {
-    myHolder.registerProblem(myHolder.getManager().createProblemDescriptor(psiElement, descriptionTemplate, highlightType, hintAction, fixes));
+    myHolder.registerProblem(myHolder.getManager().createProblemDescriptor(psiElement, descriptionTemplate, highlightType, hintAction,
+                                                                           myHolder.isOnTheFly(), fixes));
   }
 }
