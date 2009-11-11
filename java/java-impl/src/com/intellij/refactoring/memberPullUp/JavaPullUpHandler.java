@@ -24,12 +24,8 @@
  */
 package com.intellij.refactoring.memberPullUp;
 
-import com.intellij.history.LocalHistory;
-import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -43,12 +39,9 @@ import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
-import com.intellij.usageView.UsageViewUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -145,44 +138,9 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
 
 
     dialog.show();
-
-    if (!dialog.isOK()) return;
-
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      public void run() {
-        final Runnable action = new Runnable() {
-          public void run() {
-            doRefactoring(dialog);
-          }
-        };
-        ApplicationManager.getApplication().runWriteAction(action);
-      }
-    }, REFACTORING_NAME, null);
-
   }
 
 
-  private void doRefactoring(PullUpDialog dialog) {
-    LocalHistoryAction a = LocalHistory.startAction(myProject, getCommandName());
-    try {
-      try {
-        PullUpHelper helper = new PullUpHelper(mySubclass, dialog.getSuperClass(), dialog.getSelectedMemberInfos(),
-                                               new DocCommentPolicy(dialog.getJavaDocPolicy()));
-        helper.moveMembersToBase();
-        helper.moveFieldInitializations();
-      }
-      finally {
-        a.finish();
-      }
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
-  }
-
-  private String getCommandName() {
-    return RefactoringBundle.message("pullUp.command", UsageViewUtil.getDescriptiveName(mySubclass));
-  }
 
   public boolean checkConflicts(PullUpDialog dialog) {
     final MemberInfo[] infos = dialog.getSelectedMemberInfos();
