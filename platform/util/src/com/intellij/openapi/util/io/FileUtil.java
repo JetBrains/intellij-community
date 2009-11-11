@@ -23,6 +23,7 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.io.URLUtil;
 import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -628,11 +629,9 @@ public class FileUtil {
     return aFileName.replace('\\', '/');
   }
 
-  //TODO: does only %20 need to be unescaped?
   public static String unquote(String urlString) {
     urlString = urlString.replace('/', File.separatorChar);
-    urlString = StringUtil.replace(urlString, "%20", " ");
-    return StringUtil.replace(urlString, "%21", "!");
+    return URLUtil.unescapePercentSequences(urlString);
   }
 
   public static boolean isFilePathAcceptable(File file, @Nullable FileFilter fileFilter) {
