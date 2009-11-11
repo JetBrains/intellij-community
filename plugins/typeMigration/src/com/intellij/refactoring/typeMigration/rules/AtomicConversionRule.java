@@ -190,26 +190,7 @@ public class AtomicConversionRule extends TypeConversionRule {
   private static TypeConversionDescriptor findDirectConversionForAtomicReference(PsiElement context, PsiType to, PsiType from) {
     final PsiElement parent = context.getParent();
     if (parent instanceof PsiVariable) {
-      String typeText = to.getPresentableText();
-      final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(to);
-      final PsiClass atomicClass = resolveResult.getElement();
-      LOG.assertTrue(atomicClass != null);
-      final PsiTypeParameter[] typeParameters = atomicClass.getTypeParameters();
-      if (typeParameters.length == 1) {
-        final PsiType initial = resolveResult.getSubstitutor().substitute(typeParameters[0]);
-        final PsiPrimitiveType unboxedInitialType = PsiPrimitiveType.getUnboxedType(initial);
-        if (unboxedInitialType != null) {
-          LOG.assertTrue(initial != null);
-          if (from instanceof PsiPrimitiveType) {
-            final PsiClassType boxedFromType = ((PsiPrimitiveType)from).getBoxedType(atomicClass);
-            LOG.assertTrue(boxedFromType != null);
-            if (!TypeConversionUtil.isAssignable(initial, boxedFromType)) {
-              return new TypeConversionDescriptor("$val$", "new " + typeText + "((" + unboxedInitialType.getCanonicalText() + ")$val$)");
-            }
-          }
-        }
-      }
-      return new TypeConversionDescriptor("$val$", "new " + typeText + "($val$)");
+      return wrapWithNewExpression(to, from);
     }
     else if (parent instanceof PsiAssignmentExpression) {
       final IElementType operationSign = ((PsiAssignmentExpression)parent).getOperationTokenType();
@@ -264,6 +245,29 @@ public class AtomicConversionRule extends TypeConversionRule {
     return null;
   }
 
+  private static TypeConversionDescriptor wrapWithNewExpression(PsiType to, PsiType from) {
+    String typeText = to.getPresentableText();
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(to);
+    final PsiClass atomicClass = resolveResult.getElement();
+    LOG.assertTrue(atomicClass != null);
+    final PsiTypeParameter[] typeParameters = atomicClass.getTypeParameters();
+    if (typeParameters.length == 1) {
+      final PsiType initial = resolveResult.getSubstitutor().substitute(typeParameters[0]);
+      final PsiPrimitiveType unboxedInitialType = PsiPrimitiveType.getUnboxedType(initial);
+      if (unboxedInitialType != null) {
+        LOG.assertTrue(initial != null);
+        if (from instanceof PsiPrimitiveType) {
+          final PsiClassType boxedFromType = ((PsiPrimitiveType)from).getBoxedType(atomicClass);
+          LOG.assertTrue(boxedFromType != null);
+          if (!TypeConversionUtil.isAssignable(initial, boxedFromType)) {
+            return new TypeConversionDescriptor("$val$", "new " + typeText + "((" + unboxedInitialType.getCanonicalText() + ")$val$)");
+          }
+        }
+      }
+    }
+    return new TypeConversionDescriptor("$val$", "new " + typeText + "($val$)");
+  }
+
   @Nullable
   private static TypeConversionDescriptor findDirectConversionForAtomicReferenceArray(PsiElement context, PsiType to, PsiType from) {
     LOG.assertTrue(from instanceof PsiArrayType);
@@ -293,33 +297,35 @@ public class AtomicConversionRule extends TypeConversionRule {
     }
 
     else if (parentExpression instanceof PsiVariable) {
-      LOG.assertTrue(context instanceof PsiNewExpression);
-      final PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression)context).getArrayInitializer();
-      String typeText = to.getPresentableText();
-      final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(to);
-      final PsiClass atomicClass = resolveResult.getElement();
-      LOG.assertTrue(atomicClass != null);
-      final PsiTypeParameter[] typeParameters = atomicClass.getTypeParameters();
-      if (typeParameters.length == 1) {
-        final PsiType initial = resolveResult.getSubstitutor().substitute(typeParameters[0]);
-        final PsiPrimitiveType unboxedInitialType = PsiPrimitiveType.getUnboxedType(initial);
-        if (unboxedInitialType != null) {
-          LOG.assertTrue(initial != null);
-          if (from instanceof PsiPrimitiveType) {
-            final PsiClassType boxedFromType = ((PsiPrimitiveType)from).getBoxedType(atomicClass);
-            LOG.assertTrue(boxedFromType != null);
-            final String qualifiedName = atomicClass.getQualifiedName();
-            LOG.assertTrue(qualifiedName != null);
-            if (qualifiedName.equals(AtomicReferenceArray.class.getName())) {
-              return arrayInitializer != null ?
-                     new TypeConversionDescriptor("new $type$[]{$initializer$}", "new " + typeText + "(new " + boxedFromType.getClassName() + "[] {$initializer$})") :
-                     new TypeConversionDescriptor("new $type$ [$length$]", "new " + typeText + "(new " + boxedFromType.getClassName() + "[$length$])");
+      if (context instanceof PsiNewExpression) {
+        final PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression)context).getArrayInitializer();
+        String typeText = to.getPresentableText();
+        final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(to);
+        final PsiClass atomicClass = resolveResult.getElement();
+        LOG.assertTrue(atomicClass != null);
+        final PsiTypeParameter[] typeParameters = atomicClass.getTypeParameters();
+        if (typeParameters.length == 1) {
+          final PsiType initial = resolveResult.getSubstitutor().substitute(typeParameters[0]);
+          final PsiPrimitiveType unboxedInitialType = PsiPrimitiveType.getUnboxedType(initial);
+          if (unboxedInitialType != null) {
+            LOG.assertTrue(initial != null);
+            if (from instanceof PsiPrimitiveType) {
+              final PsiClassType boxedFromType = ((PsiPrimitiveType)from).getBoxedType(atomicClass);
+              LOG.assertTrue(boxedFromType != null);
+              final String qualifiedName = atomicClass.getQualifiedName();
+              LOG.assertTrue(qualifiedName != null);
+              if (qualifiedName.equals(AtomicReferenceArray.class.getName())) {
+                return arrayInitializer != null ?
+                       new TypeConversionDescriptor("new $type$[]{$initializer$}", "new " + typeText + "(new " + boxedFromType.getClassName() + "[] {$initializer$})") :
+                       new TypeConversionDescriptor("new $type$ [$length$]", "new " + typeText + "(new " + boxedFromType.getClassName() + "[$length$])");
+              }
             }
           }
         }
+        return arrayInitializer != null ? new TypeConversionDescriptor("new $type$[] {$initializer$}", "new " + typeText + "(new $type$[] {$initializer$})")
+                                        : new TypeConversionDescriptor("new $type$ [$length$]", "new " + typeText + "(new $type$[$length$])");
       }
-      return arrayInitializer != null ? new TypeConversionDescriptor("new $type$[] {$initializer$}", "new " + typeText + "(new $type$[] {$initializer$})")
-                                      : new TypeConversionDescriptor("new $type$ [$length$]", "new " + typeText + "(new $type$[$length$])");
+      return wrapWithNewExpression(to, from);
     }
 
 
