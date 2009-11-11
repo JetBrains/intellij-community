@@ -61,8 +61,8 @@ public class AppEngineForbiddenCodeInspection extends BaseJavaLocalInspectionToo
       public void visitMethod(PsiMethod method) {
         final PsiModifierList modifierList = method.getModifierList();
         if (modifierList.hasModifierProperty(PsiModifier.NATIVE)) {
-          problems.add(manager.createProblemDescriptor(modifierList, "Native methods aren't allowed in App Engine application",
-                                                       LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly));
+          problems.add(manager.createProblemDescriptor(modifierList, "Native methods aren't allowed in App Engine application", isOnTheFly,
+                                                       LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
         }
         super.visitMethod(method);
       }
@@ -76,8 +76,8 @@ public class AppEngineForbiddenCodeInspection extends BaseJavaLocalInspectionToo
             final String qualifiedName = ((PsiClass)resolved).getQualifiedName();
             if (qualifiedName != null && appEngineSdk.isMethodInBlacklist(qualifiedName, "new")) {
               final String message = "App Engine application should not create new instances of '" + qualifiedName + "' class";
-              problems.add(manager.createProblemDescriptor(classReference, message, LocalQuickFix.EMPTY_ARRAY,
-                                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly));
+              problems.add(manager.createProblemDescriptor(classReference, message, isOnTheFly, LocalQuickFix.EMPTY_ARRAY,
+                                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
             }
           }
         }
@@ -97,8 +97,8 @@ public class AppEngineForbiddenCodeInspection extends BaseJavaLocalInspectionToo
             if (qualifiedName != null && appEngineSdk.isMethodInBlacklist(qualifiedName, methodName)) {
               final String message =
                   "AppEngine application should not call '" + StringUtil.getShortName(qualifiedName) + "." + methodName + "' method";
-              problems.add(manager.createProblemDescriptor(methodExpression, message, LocalQuickFix.EMPTY_ARRAY,
-                                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly));
+              problems.add(manager.createProblemDescriptor(methodExpression, message, isOnTheFly, LocalQuickFix.EMPTY_ARRAY,
+                                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
             }
           }
         }
@@ -118,8 +118,9 @@ public class AppEngineForbiddenCodeInspection extends BaseJavaLocalInspectionToo
                 if (entry instanceof JdkOrderEntry) {
                   final String className = ((PsiClass)resolved).getQualifiedName();
                   if (className != null && !appEngineSdk.isClassInWhiteList(className)) {
-                    problems.add(manager.createProblemDescriptor(reference, "Class '" + className + "' is not included in App Engine JRE White List", LocalQuickFix.EMPTY_ARRAY,
-                                                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly));
+                    problems.add(manager.createProblemDescriptor(reference, "Class '" + className + "' is not included in App Engine JRE White List",
+                                                                 isOnTheFly, LocalQuickFix.EMPTY_ARRAY,
+                                                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
                   }
                 }
               }
