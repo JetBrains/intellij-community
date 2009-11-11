@@ -30,8 +30,8 @@ import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -286,7 +286,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
     }
     final PsiCodeBlock body = method.getBody();
     if (body != null) {
-      return checkElement(body, manager);
+      return checkElement(body, manager, isOnTheFly);
     }
     return null;
   }
@@ -300,7 +300,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
     final PsiClassInitializer[] initializers = aClass.getInitializers();
     List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
     for (PsiClassInitializer initializer : initializers) {
-      final ProblemDescriptor[] descriptors = checkElement(initializer, manager);
+      final ProblemDescriptor[] descriptors = checkElement(initializer, manager, isOnTheFly);
       if (descriptors != null) {
         result.addAll(Arrays.asList(descriptors));
       }
@@ -319,10 +319,10 @@ public class I18nInspection extends BaseLocalInspectionTool {
       return null;
     }
     final PsiExpression initializer = field.getInitializer();
-    if (initializer != null) return checkElement(initializer, manager);
+    if (initializer != null) return checkElement(initializer, manager, isOnTheFly);
 
     if (field instanceof PsiEnumConstant) {
-      return checkElement(((PsiEnumConstant)field).getArgumentList(), manager);
+      return checkElement(((PsiEnumConstant)field).getArgumentList(), manager, isOnTheFly);
     }
     return null;
   }
@@ -342,8 +342,8 @@ public class I18nInspection extends BaseLocalInspectionTool {
     return null;
   }
 
-  private ProblemDescriptor[] checkElement(final PsiElement element, InspectionManager manager) {
-    StringI18nVisitor visitor = new StringI18nVisitor(manager);
+  private ProblemDescriptor[] checkElement(final PsiElement element, InspectionManager manager, boolean isOnTheFly) {
+    StringI18nVisitor visitor = new StringI18nVisitor(manager, isOnTheFly);
     element.accept(visitor);
     List<ProblemDescriptor> problems = visitor.getProblems();
     return problems.isEmpty() ? null : problems.toArray(new ProblemDescriptor[problems.size()]);
@@ -382,9 +382,11 @@ public class I18nInspection extends BaseLocalInspectionTool {
   private class StringI18nVisitor extends JavaRecursiveElementVisitor {
     private final List<ProblemDescriptor> myProblems = new ArrayList<ProblemDescriptor>();
     private final InspectionManager myManager;
+    private boolean myOnTheFly;
 
-    public StringI18nVisitor(final InspectionManager manager) {
+    public StringI18nVisitor(final InspectionManager manager, boolean onTheFly) {
       myManager = manager;
+      myOnTheFly = onTheFly;
     }
 
     @Override public void visitAnonymousClass(PsiAnonymousClass aClass) {
@@ -435,8 +437,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
 
         final ProblemDescriptor problem = myManager
           .createProblemDescriptor(expression,
-                                   description,
-                                   fixes.toArray(new LocalQuickFix[fixes.size()]), ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+                                   description, myOnTheFly, fixes.toArray(new LocalQuickFix[fixes.size()]), ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         myProblems.add(problem);
       }
     }

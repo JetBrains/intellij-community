@@ -528,12 +528,12 @@ public class FileBasedIndex implements ApplicationComponent {
 
   private static final ThreadLocal<Integer> myUpToDateCheckState = new ThreadLocal<Integer>();
 
-  public void disableUpToDateCheckForCurrentThread() {
+  public static void disableUpToDateCheckForCurrentThread() {
     final Integer currentValue = myUpToDateCheckState.get();
     myUpToDateCheckState.set(currentValue == null? 1 : currentValue.intValue() + 1);
   }
 
-  public void enableUpToDateCheckForCurrentThread() {
+  public static void enableUpToDateCheckForCurrentThread() {
     final Integer currentValue = myUpToDateCheckState.get();
     if (currentValue != null) {
       final int newValue = currentValue.intValue() - 1;

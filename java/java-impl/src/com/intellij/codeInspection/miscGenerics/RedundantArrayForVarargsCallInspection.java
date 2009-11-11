@@ -57,7 +57,7 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
     }
   }
 
-  public ProblemDescriptor[] getDescriptions(PsiElement place, final InspectionManager manager) {
+  public ProblemDescriptor[] getDescriptions(PsiElement place, final InspectionManager manager, final boolean isOnTheFly) {
     if (!PsiUtil.isLanguageLevel5OrHigher(place)) return null;
     final List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
     place.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -98,7 +98,8 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
                     final ProblemDescriptor descriptor = manager.createProblemDescriptor(lastArg,
                                                                                          InspectionsBundle.message("inspection.redundant.array.creation.for.varargs.call.descriptor"),
                                                                                          myQuickFixAction,
-                                                                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+                                                                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                                                                         isOnTheFly);
 
                     problems.add(descriptor);
                   }

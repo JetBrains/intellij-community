@@ -28,7 +28,7 @@ public class InlineSameParameterValueTest extends LightQuickFixTestCase {
     final PsiElement psiElement = getFile().findElementAt(offset);
     assert psiElement != null;
     final ProblemDescriptor descriptor = InspectionManager.getInstance(getProject())
-      .createProblemDescriptor(psiElement, "", fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+      .createProblemDescriptor(psiElement, "", fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true);
     fix.applyFix(getProject(), descriptor);
     final String expectedFilePath = getBasePath() + "/after" + testName;
     checkResultByFile("In file :" + expectedFilePath, expectedFilePath, false);

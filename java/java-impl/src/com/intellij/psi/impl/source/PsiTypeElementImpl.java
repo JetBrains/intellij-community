@@ -78,7 +78,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       IElementType elementType = element.getElementType();
       if (element.getTreeNext() == null && ElementType.PRIMITIVE_TYPE_BIT_SET.contains(elementType)) {
         addTypeUseAnnotationsFromModifierList(getParent(), typeAnnos);
-        PsiAnnotation[] array = typeAnnos.toArray(new PsiAnnotation[typeAnnos.size()]);
+        PsiAnnotation[] array = toAnnotationsArray(typeAnnos);
 
         cachedType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createPrimitiveType(element.getText(), array);
         assert cachedType != null;
@@ -90,7 +90,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       }
       else if (elementType == JavaElementType.JAVA_CODE_REFERENCE) {
         addTypeUseAnnotationsFromModifierList(getParent(), typeAnnos);
-        PsiAnnotation[] array = typeAnnos.toArray(new PsiAnnotation[typeAnnos.size()]);
+        PsiAnnotation[] array = toAnnotationsArray(typeAnnos);
         cachedType = new PsiClassReferenceType((PsiJavaCodeReferenceElement)element.getPsi(), null,array);
       }
       else if (elementType == JavaTokenType.QUEST) {
@@ -116,6 +116,11 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     if (cachedType == null) cachedType = PsiType.NULL;
     myCachedType = cachedType;
     return cachedType;
+  }
+
+  private static PsiAnnotation[] toAnnotationsArray(List<PsiAnnotation> typeAnnos) {
+    final int size = typeAnnos.size();
+    return size == 0 ? PsiAnnotation.EMPTY_ARRAY : typeAnnos.toArray(new PsiAnnotation[size]);
   }
 
   public static void addTypeUseAnnotationsFromModifierList(PsiElement member, List<PsiAnnotation> typeAnnos) {
@@ -250,7 +255,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       result.add((PsiAnnotation)element);
     }
 
-    return result== null ?  PsiAnnotation.EMPTY_ARRAY : result.toArray(new PsiAnnotation[result.size()]);
+    return result== null ?  PsiAnnotation.EMPTY_ARRAY : toAnnotationsArray(result);
   }
 
   @NotNull
@@ -260,7 +265,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     ArrayList<PsiAnnotation> list = new ArrayList<PsiAnnotation>(Arrays.asList(annotations));
     addTypeUseAnnotationsFromModifierList(getParent(), list);
 
-    return list.toArray(new PsiAnnotation[list.size()]);
+    return toAnnotationsArray(list);
   }
 
   public PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName) {

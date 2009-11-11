@@ -72,7 +72,7 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
         final PsiElement psiElement = ((RefElement)element).getElement();
         if (psiElement != null) {
           PsiFile containingFile = psiElement.getContainingFile();
-          final ProblemsHolder holder = new ProblemsHolder(inspectionManager, containingFile);
+          final ProblemsHolder holder = new ProblemsHolder(inspectionManager, containingFile, false);
           final LocalInspectionTool localInspectionTool = ((LocalInspectionToolWrapper)myTool).getTool();
           final PsiElementVisitor visitor = localInspectionTool.buildVisitor(holder, false);
           final PsiElement[] elementsInRange = LocalInspectionsPass.getElementsIntersectingRange(containingFile,
@@ -108,10 +108,10 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
       final PsiElement psiElement = ((RefElement)element).getElement();
       ProblemDescriptor descriptor = inspectionManager.createProblemDescriptor(psiElement, offlineProblemDescriptor.getDescription(),
                                                                                (LocalQuickFix)null,
-                                                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+                                                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
       final LocalQuickFix[] quickFixes = getFixes(descriptor, hints);
       if (quickFixes != null) {
-        descriptor = inspectionManager.createProblemDescriptor(psiElement, offlineProblemDescriptor.getDescription(), quickFixes,
+        descriptor = inspectionManager.createProblemDescriptor(psiElement, offlineProblemDescriptor.getDescription(), false, quickFixes,
                                                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
       }
       setUserObject(descriptor);

@@ -132,7 +132,10 @@ public class CodeStyleMainPanel extends JPanel {
   }
 
   public void reset() {
-    clearPanels();
+    for (NewCodeStyleSettingsPanel panel : mySettingsPanels.values()) {
+      panel.reset();
+    }
+
     onCurrentSchemeChanged();
   }
 
@@ -177,7 +180,7 @@ public class CodeStyleMainPanel extends JPanel {
   }
 
   public String getDisplayName() {
-    return ensureCurrentPanel().getDisplayName();
+    return myModel.getSelectedScheme().getName();
   }
 
   public void disposeUIResources() {

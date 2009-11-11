@@ -36,7 +36,7 @@ public class UsedByMemberDependencyGraph<T extends NavigatablePsiElement, C exte
   protected HashMap<T, HashSet<T>> myDependenciesToDependent = null;
   private final MemberDependenciesStorage<T, C> myMemberDependenciesStorage;
 
-  UsedByMemberDependencyGraph(C aClass) {
+  public UsedByMemberDependencyGraph(C aClass) {
     myMemberDependenciesStorage = new MemberDependenciesStorage<T, C>(aClass, null);
     mySelectedNormal = new HashSet<T>();
     mySelectedAbstract = new HashSet<T>();

@@ -15,27 +15,26 @@
  */
 package org.intellij.lang.xpath.validation.inspections;
 
-import org.intellij.lang.xpath.psi.XPathExpression;
-import org.intellij.lang.xpath.psi.XPathBinaryExpression;
-import org.intellij.lang.xpath.psi.XPathFunctionCall;
-import org.intellij.lang.xpath.psi.XPathString;
-import org.intellij.lang.xpath.XPathTokenTypes;
-
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
+import org.intellij.lang.xpath.XPathTokenTypes;
+import org.intellij.lang.xpath.psi.XPathBinaryExpression;
+import org.intellij.lang.xpath.psi.XPathExpression;
+import org.intellij.lang.xpath.psi.XPathFunctionCall;
+import org.intellij.lang.xpath.psi.XPathString;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class HardwiredNamespacePrefix extends XPathInspection {
     public boolean isEnabledByDefault() {
         return true;
     }
 
-    protected Visitor createVisitor(final InspectionManager manager) {
-        return new Visitor(manager) {
+    protected Visitor createVisitor(final InspectionManager manager, final boolean isOnTheFly) {
+        return new Visitor(manager, isOnTheFly) {
             protected void checkExpression(XPathExpression expression) {
                 if (!(expression instanceof XPathBinaryExpression)) {
                     return;
@@ -47,12 +46,14 @@ public class HardwiredNamespacePrefix extends XPathInspection {
 
                     if (isNameComparison(lop, rop)) {
                         assert rop != null;
-                        final ProblemDescriptor p = manager.createProblemDescriptor(rop, "Hardwired namespace prefix", LocalQuickFix.EMPTY_ARRAY,
+                        final ProblemDescriptor p = manager.createProblemDescriptor(rop, "Hardwired namespace prefix", isOnTheFly,
+                                                                                    LocalQuickFix.EMPTY_ARRAY,
                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
                         addProblem(p);
                     } else if (isNameComparison(rop, lop)) {
                         assert lop != null;
-                        final ProblemDescriptor p = manager.createProblemDescriptor(lop, "Hardwired namespace prefix", LocalQuickFix.EMPTY_ARRAY,
+                        final ProblemDescriptor p = manager.createProblemDescriptor(lop, "Hardwired namespace prefix", isOnTheFly,
+                                                                                    LocalQuickFix.EMPTY_ARRAY,
                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
                         addProblem(p);
                     } else if (isNameFunctionCall(lop)) {

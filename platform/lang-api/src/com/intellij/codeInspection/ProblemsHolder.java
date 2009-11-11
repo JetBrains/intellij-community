@@ -37,11 +37,13 @@ public class ProblemsHolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ProblemsHolder");
   private final InspectionManager myManager;
   private final PsiFile myFile;
+  private boolean myOnTheFly;
   private List<ProblemDescriptor> myProblems = null;
 
-  public ProblemsHolder(@NotNull InspectionManager manager, @NotNull PsiFile file) {
+  public ProblemsHolder(@NotNull InspectionManager manager, @NotNull PsiFile file, boolean onTheFly) {
     myManager = manager;
     myFile = file;
+    myOnTheFly = onTheFly;
   }
 
   public void registerProblem(PsiElement psiElement, @Nls String descriptionTemplate, LocalQuickFix... fixes) {
@@ -52,7 +54,7 @@ public class ProblemsHolder {
                               String descriptionTemplate,
                               ProblemHighlightType highlightType,
                               LocalQuickFix... fixes) {
-    registerProblem(myManager.createProblemDescriptor(psiElement, descriptionTemplate, fixes, highlightType));
+    registerProblem(myManager.createProblemDescriptor(psiElement, descriptionTemplate, myOnTheFly, fixes, highlightType));
   }
 
   public void registerProblem(ProblemDescriptor problemDescriptor) {
@@ -77,7 +79,8 @@ public class ProblemsHolder {
       fixes = ((LocalQuickFixProvider)reference).getQuickFixes();
     }
 
-    registerProblem(myManager.createProblemDescriptor(reference.getElement(), reference.getRangeInElement(), descriptionTemplate, highlightType, fixes));
+    registerProblem(myManager.createProblemDescriptor(reference.getElement(), reference.getRangeInElement(), descriptionTemplate, highlightType,
+                                                      myOnTheFly, fixes));
   }
 
   public void registerProblem(PsiReference reference) {
@@ -91,7 +94,8 @@ public class ProblemsHolder {
                               final TextRange rangeInElement,
                               final LocalQuickFix... fixes) {
 
-    final ProblemDescriptor descriptor = myManager.createProblemDescriptor(psiElement, rangeInElement, message, highlightType, fixes);
+    final ProblemDescriptor descriptor = myManager.createProblemDescriptor(psiElement, rangeInElement, message, highlightType, myOnTheFly,
+                                                                           fixes);
     registerProblem(descriptor);
   }
 
@@ -100,7 +104,7 @@ public class ProblemsHolder {
                               @NotNull final String message,
                               final LocalQuickFix... fixes) {
 
-    final ProblemDescriptor descriptor = myManager.createProblemDescriptor(psiElement, rangeInElement, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fixes);
+    final ProblemDescriptor descriptor = myManager.createProblemDescriptor(psiElement, rangeInElement, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly, fixes);
     registerProblem(descriptor);
   }
 
@@ -123,5 +127,9 @@ public class ProblemsHolder {
   }
   public boolean hasResults() {
     return myProblems != null && !myProblems.isEmpty();
+  }
+
+  public boolean isOnTheFly() {
+    return myOnTheFly;
   }
 }

@@ -60,7 +60,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaInspectio
         return new ProblemDescriptor[] { manager.createProblemDescriptor(psiIdentifier,
                                                                          InspectionsBundle.message("boolean.method.is.always.inverted.problem.descriptor"),
                                                                          new InvertMethodFix(),
-                                                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
+                                                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false)};
       }
     }
     return null;

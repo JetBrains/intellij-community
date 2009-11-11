@@ -55,7 +55,8 @@ public class UnusedReturnValue extends GlobalJavaInspectionTool{
       if (!refMethod.isReturnValueUsed()) {
         return new ProblemDescriptor[]{manager.createProblemDescriptor(refMethod.getElement().getNavigationElement(),
                                                                        InspectionsBundle.message("inspection.unused.return.value.problem.descriptor"),
-                                                                       getFix(processor), ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
+                                                                       getFix(processor), ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                                                       false)};
       }
     }
 

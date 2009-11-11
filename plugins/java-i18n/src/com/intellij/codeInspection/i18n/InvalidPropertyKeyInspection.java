@@ -68,7 +68,7 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
   @Override
   @Nullable
   public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    return checkElement(method, manager);
+    return checkElement(method, manager, isOnTheFly);
   }
 
   @Override
@@ -77,7 +77,7 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
     final PsiClassInitializer[] initializers = aClass.getInitializers();
     List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
     for (PsiClassInitializer initializer : initializers) {
-      final ProblemDescriptor[] descriptors = checkElement(initializer, manager);
+      final ProblemDescriptor[] descriptors = checkElement(initializer, manager, isOnTheFly);
       if (descriptors != null) {
         result.addAll(Arrays.asList(descriptors));
       }
@@ -90,16 +90,16 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
   @Nullable
   public ProblemDescriptor[] checkField(@NotNull PsiField field, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final PsiExpression initializer = field.getInitializer();
-    if (initializer != null) return checkElement(initializer, manager);
+    if (initializer != null) return checkElement(initializer, manager, isOnTheFly);
 
     if (field instanceof PsiEnumConstant) {
-      return checkElement(((PsiEnumConstant)field).getArgumentList(), manager);
+      return checkElement(((PsiEnumConstant)field).getArgumentList(), manager, isOnTheFly);
     }
     return null;
   }
 
-  @Nullable private static ProblemDescriptor[] checkElement(PsiElement element, final InspectionManager manager) {
-    UnresolvedPropertyVisitor visitor = new UnresolvedPropertyVisitor(manager);
+  @Nullable private static ProblemDescriptor[] checkElement(PsiElement element, final InspectionManager manager, boolean onTheFly) {
+    UnresolvedPropertyVisitor visitor = new UnresolvedPropertyVisitor(manager, onTheFly);
     element.accept(visitor);
     List<ProblemDescriptor> problems = visitor.getProblems();
     return problems.isEmpty() ? null : problems.toArray(new ProblemDescriptor[problems.size()]);
@@ -123,10 +123,12 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
   private static class UnresolvedPropertyVisitor extends JavaRecursiveElementWalkingVisitor {
     private final InspectionManager myManager;
     private final List<ProblemDescriptor> myProblems = new ArrayList<ProblemDescriptor>();
+    private boolean onTheFly;
 
 
-    public UnresolvedPropertyVisitor(final InspectionManager manager) {
+    public UnresolvedPropertyVisitor(final InspectionManager manager, boolean onTheFly) {
       myManager = manager;
+      this.onTheFly = onTheFly;
     }
 
     @Override public void visitAnonymousClass(PsiAnonymousClass aClass) {
@@ -153,7 +155,7 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
         final ProblemDescriptor problem = myManager.createProblemDescriptor(expression,
                                                                             description,
                                                                             new JavaCreatePropertyFix(expression, key, propertiesFiles),
-                                                                            ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+                                                                            ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, onTheFly);
         myProblems.add(problem);
       } else
       if (expression.getParent() instanceof PsiNameValuePair) {
@@ -168,7 +170,7 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
               final ProblemDescriptor problem = myManager.createProblemDescriptor(expression,
                                                                                   description,
                                                                                   (LocalQuickFix)null,
-                                                                                   ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+                                                                                   ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, onTheFly);
               myProblems.add(problem);
             }
           }
@@ -195,7 +197,7 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
                 && !hasArrayTypeAt(i+1, methodCall)) {
               myProblems.add(myManager.createProblemDescriptor(methodCall,
                                                                CodeInsightBundle.message("property.has.more.parameters.than.passed", key, paramsCount, args.length-i-1),
-                                                               new LocalQuickFix[0], 
+                                                               onTheFly, new LocalQuickFix[0],
                                                                ProblemHighlightType.GENERIC_ERROR));
             }
             break;

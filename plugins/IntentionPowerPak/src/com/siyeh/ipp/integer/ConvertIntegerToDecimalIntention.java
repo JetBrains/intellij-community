@@ -23,7 +23,7 @@ import com.siyeh.ipp.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ConvertIntegerToDecimalIntention extends Intention {
-    
+
     @Override @NotNull
     public PsiElementPredicate getElementPredicate() {
         return new ConvertIntegerToDecimalPredicate();
@@ -36,43 +36,39 @@ public class ConvertIntegerToDecimalIntention extends Intention {
         final boolean negated = ExpressionUtils.isNegated(expression);
         final Number value =
                 (Number)ExpressionUtils.computeConstantExpression(expression);
+        if (value == null) {
+            return;
+        }
         final PsiType type = expression.getType();
         final String decimalString;
-      if (PsiType.INT.equals(type)) {
-        if (negated) {
-          decimalString = String.valueOf(-value.intValue());
+        if (PsiType.INT.equals(type)) {
+            if (negated) {
+                decimalString = String.valueOf(-value.intValue());
+            } else {
+                decimalString = String.valueOf(value.intValue());
+            }
+        } else if (PsiType.LONG.equals(type)) {
+            if (negated) {
+                decimalString = String.valueOf(-value.longValue()) + 'L';
+            } else {
+                decimalString = String.valueOf(value.longValue()) + 'L';
+            }
+        } else if (PsiType.FLOAT.equals(type)) {
+            if (negated) {
+                decimalString = String.valueOf(-value.floatValue()) + 'f';
+            } else {
+                decimalString = String.valueOf(value.floatValue()) + 'f';
+            }
         }
-        else {
-          decimalString = String.valueOf(value.intValue());
+        else if (PsiType.DOUBLE.equals(type)) {
+            if (negated) {
+                decimalString = String.valueOf(-value.doubleValue());
+            } else {
+                decimalString = String.valueOf(value.doubleValue());
+            }
+        } else {
+            return;
         }
-      }
-      else if (PsiType.LONG.equals(type)) {
-        if (negated) {
-          decimalString = String.valueOf(-value.longValue());
-        }
-        else {
-          decimalString = String.valueOf(value.longValue());
-        }
-      }
-      else if (PsiType.FLOAT.equals(type)) {
-        if (negated) {
-          decimalString = String.valueOf(-value.floatValue());
-        }
-        else {
-          decimalString = String.valueOf(value.floatValue());
-        }
-      }
-      else if (PsiType.DOUBLE.equals(type)) {
-        if (negated) {
-          decimalString = String.valueOf(-value.doubleValue());
-        }
-        else {
-          decimalString = String.valueOf(value.doubleValue());
-        }
-      }
-      else {
-        return;
-      }
         if (negated) {
             replaceExpression(decimalString,
                     (PsiExpression)expression.getParent());

@@ -175,8 +175,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
             }
           }
           ProblemDescriptor patchedDescriptor = iManager.createProblemDescriptor(myFile, hostRange, descriptor.getDescriptionTemplate(),
-                                                                                 descriptor.getHighlightType(),
-                                                                                 localFixes);
+                                                                                 descriptor.getHighlightType(), true, localFixes);
           LocalInspectionToolWrapper toolWrapper = tool2Wrapper.get(tool);
           toolWrapper.addProblemDescriptors(Collections.singletonList(patchedDescriptor), true);
         }
@@ -204,7 +203,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
         ApplicationManager.getApplication().assertReadAccessAllowed();
 
-        ProblemsHolder holder = new ProblemsHolder(iManager, myFile);
+        ProblemsHolder holder = new ProblemsHolder(iManager, myFile, isOnTheFly);
         PsiElementVisitor elementVisitor = tool.buildVisitor(holder, isOnTheFly);
         //noinspection ConstantConditions
         if(elementVisitor == null) {
@@ -471,7 +470,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
   private static void inspectInjectedPsi(PsiFile injectedPsi, List<InjectedPsiInspectionResult> result, List<LocalInspectionTool> tools) {
     InspectionManager inspectionManager = InspectionManager.getInstance(injectedPsi.getProject());
-    final ProblemsHolder problemsHolder = new ProblemsHolder(inspectionManager, injectedPsi);
+    final ProblemsHolder problemsHolder = new ProblemsHolder(inspectionManager, injectedPsi, true);
     final PsiElement host = injectedPsi.getContext();
 
     final PsiElement[] elements = getElementsIntersectingRange(injectedPsi, 0, injectedPsi.getTextLength());

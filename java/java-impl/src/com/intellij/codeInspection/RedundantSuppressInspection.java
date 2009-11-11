@@ -229,7 +229,8 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
               if (identifier == null) {
                 identifier = psiMember;
               }
-              result.add(manager.createProblemDescriptor(identifier, description, (LocalQuickFix)fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+              result.add(manager.createProblemDescriptor(identifier, description, (LocalQuickFix)fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                                         false));
             }
           }
         }

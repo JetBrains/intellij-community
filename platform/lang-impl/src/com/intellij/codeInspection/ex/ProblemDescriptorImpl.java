@@ -49,14 +49,20 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
   private TextAttributesKey myEnforcedTextAttributes;
 
   public ProblemDescriptorImpl(@NotNull PsiElement startElement, @NotNull PsiElement endElement, String descriptionTemplate, LocalQuickFix[] fixes,
-                               ProblemHighlightType highlightType, boolean isAfterEndOfLine, final TextRange rangeInElement) {
-    this(startElement, endElement, descriptionTemplate, fixes, highlightType, isAfterEndOfLine, rangeInElement, null);
+                               ProblemHighlightType highlightType,
+                               boolean isAfterEndOfLine,
+                               final TextRange rangeInElement,
+                               boolean onTheFly) {
+    this(startElement, endElement, descriptionTemplate, fixes, highlightType, isAfterEndOfLine, rangeInElement, null, onTheFly);
   }
 
   public ProblemDescriptorImpl(@NotNull PsiElement startElement, @NotNull PsiElement endElement, String descriptionTemplate, LocalQuickFix[] fixes,
-                               ProblemHighlightType highlightType, boolean isAfterEndOfLine, final TextRange rangeInElement,
-                               @Nullable HintAction hintAction) {
-    this(startElement, endElement, descriptionTemplate, fixes, highlightType, isAfterEndOfLine, rangeInElement, true, hintAction);
+                               ProblemHighlightType highlightType,
+                               boolean isAfterEndOfLine,
+                               final TextRange rangeInElement,
+                               @Nullable HintAction hintAction,
+                               boolean onTheFly) {
+    this(startElement, endElement, descriptionTemplate, fixes, highlightType, isAfterEndOfLine, rangeInElement, true, hintAction, onTheFly);
   }
 
   public ProblemDescriptorImpl(@NotNull PsiElement startElement, @NotNull PsiElement endElement, String descriptionTemplate, LocalQuickFix[] fixes,
@@ -64,7 +70,8 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
                                boolean isAfterEndOfLine,
                                final TextRange rangeInElement,
                                final boolean tooltip,
-                               @Nullable HintAction hintAction) {
+                               @Nullable HintAction hintAction,
+                               boolean onTheFly) {
 
     super(fixes, descriptionTemplate);
     myShowTooltip = tooltip;
@@ -82,7 +89,7 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
 
     myHighlightType = highlightType;
     final Project project = startElement.getProject();
-    final boolean useLazy = ApplicationManager.getApplication().isHeadlessEnvironment();
+    final boolean useLazy = !onTheFly || ApplicationManager.getApplication().isHeadlessEnvironment();
     final SmartPointerManager manager = SmartPointerManager.getInstance(project);
     myStartSmartPointer = useLazy? manager.createLazyPointer(startElement) : manager.createSmartPsiElementPointer(startElement);
     myEndSmartPointer = startElement == endElement ? null : useLazy ? manager.createLazyPointer(endElement) : manager.createSmartPsiElementPointer(endElement);

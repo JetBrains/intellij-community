@@ -68,8 +68,9 @@ public class ArtifactModelImpl extends ArtifactModelBase implements ModifiableAr
 
   @NotNull
   public ModifiableArtifact addArtifact(@NotNull String name, @NotNull ArtifactType artifactType, CompositePackagingElement<?> rootElement) {
-    final String outputPath = ArtifactUtil.getDefaultArtifactOutputPath(name, myArtifactManager.getProject());
-    final ArtifactImpl artifact = new ArtifactImpl(generateUniqueName(name), artifactType, false, rootElement, outputPath, myDispatcher);
+    final String uniqueName = generateUniqueName(name);
+    final String outputPath = ArtifactUtil.getDefaultArtifactOutputPath(uniqueName, myArtifactManager.getProject());
+    final ArtifactImpl artifact = new ArtifactImpl(uniqueName, artifactType, false, rootElement, outputPath, myDispatcher);
     myOriginalArtifacts.add(artifact);
     myArtifact2ModifiableCopy.put(artifact, artifact);
     myModifiable2Original.put(artifact, artifact);

@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -40,7 +41,7 @@ public class SystemNotificationsImpl implements SystemNotifications, PersistentS
   private boolean myGrowlDisabled = false;
 
   public void notify(@NotNull String notificationName, @NotNull String title, @NotNull String text) {
-    if (!isGrowlEnabled()) return;
+    if (!isGrowlEnabled() || ApplicationManager.getApplication().isActive()) return;
 
     final GrowlNotifications nofications;
     try {

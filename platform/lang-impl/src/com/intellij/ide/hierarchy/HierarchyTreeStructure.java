@@ -146,10 +146,11 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
     }
     else if (HierarchyBrowserBaseEx.SCOPE_TEST.equals(scopeType)) {
       searchScope = GlobalSearchScope.projectTestScope(myProject);
-    }
-    final NamedScope namedScope = NamedScopesHolder.getScope(myProject, scopeType);
-    if (namedScope != null) {
-      searchScope = GlobalSearchScope.filterScope(myProject, namedScope);
+    } else {
+      final NamedScope namedScope = NamedScopesHolder.getScope(myProject, scopeType);
+      if (namedScope != null) {
+        searchScope = GlobalSearchScope.filterScope(myProject, namedScope);
+      }
     }
     return searchScope;
   }

@@ -5,4 +5,4 @@ class C<T> {
 
 C c=new C();
 c.a="abc";
-String s=<warning descr="Cannot assign 'Object' to 'String'">c[0]</warning>;
+Date s=<warning descr="Cannot assign 'Object' to 'Date'">c[0]</warning>;

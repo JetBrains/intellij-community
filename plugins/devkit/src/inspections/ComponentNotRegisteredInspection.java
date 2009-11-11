@@ -133,7 +133,7 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
                     classIdentifier,
                     DevKitBundle.message("inspections.component.not.registered.message",
                                          DevKitBundle.message("new.menu.action.text")),
-                    fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+                    fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
             return new ProblemDescriptor[]{problem};
           } else {
             // action IS registered, stop here
@@ -155,7 +155,7 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
             final ProblemDescriptor problem = manager.createProblemDescriptor(classIdentifier,
                                                                               DevKitBundle.message("inspections.component.not.registered.message",
                                                                                                    DevKitBundle.message(type.myPropertyKey)),
-                                                                              fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+                                                                              fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
             return new ProblemDescriptor[]{problem};
           } else {
             // component IS registered, stop here

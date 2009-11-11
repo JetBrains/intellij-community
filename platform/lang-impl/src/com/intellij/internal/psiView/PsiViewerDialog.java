@@ -229,6 +229,7 @@ public class PsiViewerDialog extends DialogWrapper {
       myGroup.add(new AnAction(popupItem.getText(), popupItem.getText(), popupItem.getIcon()) {
         public void actionPerformed(AnActionEvent e) {
           updatePresentation(e.getPresentation());
+          updateDialectsCombo();
         }
       });
     }
@@ -308,7 +309,8 @@ public class PsiViewerDialog extends DialogWrapper {
           public void actionPerformed(ActionEvent e) {
             if (myRefs.isFocusOwner()) {
               focusTree();
-            } else if (myTree.isFocusOwner()) {
+            }
+            else if (myTree.isFocusOwner()) {
               focusRefs();
             }
           }

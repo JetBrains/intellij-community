@@ -209,7 +209,8 @@ public class SpellCheckingInspection extends LocalInspectionTool {
     final LocalQuickFix[] quickFixes = fixes.size() > 0 ? fixes.toArray(new LocalQuickFix[fixes.size()]) : null;
 
     final ProblemDescriptor problemDescriptor = holder.getManager()
-      .createProblemDescriptor(token.getElement(), highlightRange, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, quickFixes);
+      .createProblemDescriptor(token.getElement(), highlightRange, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, holder.isOnTheFly(),
+                               quickFixes);
     for (SpellCheckerQuickFix fix : fixes) {
       fix.setDescriptor(problemDescriptor);
     }

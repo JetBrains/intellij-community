@@ -178,7 +178,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     try {
       try {
         // disable up-to-date check to avoid locks on attempt to acquire index write lock while holding at the same time the readLock for this index
-        FileBasedIndex.getInstance().disableUpToDateCheckForCurrentThread();
+        FileBasedIndex.disableUpToDateCheckForCurrentThread();
         index.getReadLock().lock();
         final ValueContainer<TIntArrayList> container = index.getData(key);
 
@@ -257,7 +257,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       }
       finally {
         index.getReadLock().unlock();
-        FileBasedIndex.getInstance().enableUpToDateCheckForCurrentThread();
+        FileBasedIndex.enableUpToDateCheckForCurrentThread();
       }
     }
     catch (StorageException e) {

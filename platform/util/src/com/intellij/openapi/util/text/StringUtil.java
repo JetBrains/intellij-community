@@ -610,6 +610,14 @@ public class StringUtil {
     return toUpperCase(s.charAt(0)) + s.substring(1);
   }
 
+  @NotNull
+  public static String capitalizeWithJavaBeanConvention(@NotNull String s) {
+    if (s.length() > 1 && Character.isUpperCase(s.charAt(1))) {
+      return s;
+    }
+    return capitalize(s);
+  }
+
   public static int stringHashCode(CharSequence chars) {
     if (chars instanceof String) return chars.hashCode();
     if (chars instanceof CharSequenceWithStringHash) return chars.hashCode();

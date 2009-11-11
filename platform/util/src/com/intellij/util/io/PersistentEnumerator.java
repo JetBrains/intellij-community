@@ -401,7 +401,8 @@ public class PersistentEnumerator<Data> implements Forceable {
 
     myKeyStorage.force();
 
-    DataInputStream keysStream = new DataInputStream(new BufferedInputStream(new FileInputStream(keystreamFile())));
+    DataInputStream keysStream = new DataInputStream(new BufferedInputStream(new LimitedInputStream(new FileInputStream(keystreamFile()),
+                                                                                                    (int)myKeyStorage.length())));
     try {
       try {
         while (true) {

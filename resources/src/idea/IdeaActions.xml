@@ -371,6 +371,15 @@
       <add-to-group group-id="ProjectViewPopupMenuRunGroup" anchor="first"/>
     </group>
 
+    <action id="PackageFile" class="com.intellij.packaging.impl.ui.actions.PackageFileAction">
+      <keyboard-shortcut first-keystroke="control shift F9" keymap="$default"/>
+      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="Compile"/>
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="MakeModule"/>
+      <add-to-group group-id="FavoritesViewPopupMenu" anchor="before" relative-to-action="MakeModule"/>
+      <add-to-group group-id="ScopeViewPopupMenu" anchor="before" relative-to-action="MakeModule"/>
+    </action>
+
+
     <reference ref="ModuleSettings">
       <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" anchor="first"/>
     </reference>

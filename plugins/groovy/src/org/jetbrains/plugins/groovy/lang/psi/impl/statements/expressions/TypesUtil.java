@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.pom.java.LanguageLevel;
-import static com.intellij.psi.CommonClassNames.*;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
@@ -27,7 +26,6 @@ import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
@@ -40,6 +38,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
 import java.util.Map;
+
+import static com.intellij.psi.CommonClassNames.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
  * @author ven
@@ -204,7 +205,7 @@ public class TypesUtil {
       }
     }
 
-    if (lType.equalsToText(JAVA_LANG_STRING) && isNumericType(rType)) return true;
+    if (lType.equalsToText(JAVA_LANG_STRING)) return true;
 
     rType = boxPrimitiveType(rType, manager, scope);
     lType = boxPrimitiveType(lType, manager, scope);

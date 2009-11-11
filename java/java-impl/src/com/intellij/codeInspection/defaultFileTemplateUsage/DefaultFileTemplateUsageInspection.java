@@ -59,10 +59,10 @@ public class DefaultFileTemplateUsageInspection extends BaseJavaLocalInspectionT
   public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     Collection<ProblemDescriptor> descriptors = new ArrayList<ProblemDescriptor>();
     if (CHECK_METHOD_BODY) {
-      MethodBodyChecker.checkMethodBody(method, manager, descriptors);
+      MethodBodyChecker.checkMethodBody(method, manager, descriptors, isOnTheFly);
     }
     if (CHECK_TRY_CATCH_SECTION) {
-      CatchBodyVisitor visitor = new CatchBodyVisitor(manager, descriptors);
+      CatchBodyVisitor visitor = new CatchBodyVisitor(manager, descriptors, isOnTheFly);
       PsiCodeBlock body = method.getBody();
       if (body != null) {
         body.accept(visitor);
@@ -94,7 +94,7 @@ public class DefaultFileTemplateUsageInspection extends BaseJavaLocalInspectionT
   @Nullable
   public ProblemDescriptor[] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (!CHECK_TRY_CATCH_SECTION) return null;
-    CatchBodyVisitor visitor = new CatchBodyVisitor(manager, new ArrayList<ProblemDescriptor>());
+    CatchBodyVisitor visitor = new CatchBodyVisitor(manager, new ArrayList<ProblemDescriptor>(), isOnTheFly);
     PsiClassInitializer[] initializers = aClass.getInitializers();
     for (PsiClassInitializer initializer : initializers) {
       initializer.accept(visitor);
@@ -106,7 +106,7 @@ public class DefaultFileTemplateUsageInspection extends BaseJavaLocalInspectionT
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (!CHECK_FILE_HEADER) return null;
-    ProblemDescriptor descriptor = FileHeaderChecker.checkFileHeader(file, manager);
+    ProblemDescriptor descriptor = FileHeaderChecker.checkFileHeader(file, manager, isOnTheFly);
     return descriptor == null ? null : new ProblemDescriptor[]{descriptor};
   }
 

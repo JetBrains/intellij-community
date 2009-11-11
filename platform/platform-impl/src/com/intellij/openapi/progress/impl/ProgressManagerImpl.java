@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.progress.impl;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -51,9 +50,10 @@ public class ProgressManagerImpl extends ProgressManager {
   private static volatile int ourLockedCheckCounter = 0;
   private final List<ProgressFunComponentProvider> myFunComponentProviders = new ArrayList<ProgressFunComponentProvider>();
   @NonNls private static final String NAME = "Progress Cancel Checker";
+  private static final boolean DISABLED = Comparing.equal(System.getProperty(PROCESS_CANCELED_EXCEPTION), "disabled");
 
   public ProgressManagerImpl(Application application) {
-    if (!application.isUnitTestMode() && !Comparing.equal(System.getProperty(PROCESS_CANCELED_EXCEPTION), "disabled")) {
+    if (!application.isUnitTestMode() && !DISABLED) {
       new Thread(NAME) {
         public void run() {
           while (true) {
@@ -77,6 +77,9 @@ public class ProgressManagerImpl extends ProgressManager {
         progress.checkCanceled();
       }
       catch (ProcessCanceledException e) {
+        if (DISABLED) {
+          return;
+        }
         if (Thread.holdsLock(PsiLock.LOCK)) {
           ourLockedCheckCounter++;
           if (ourLockedCheckCounter > 10) {
@@ -317,14 +320,7 @@ public class ProgressManagerImpl extends ProgressManager {
     else {
       final BackgroundableProcessIndicator indicator = new BackgroundableProcessIndicator(task);
       final Project project = task.getProject();
-      Disposer.register(project != null ? project : ApplicationManager.getApplication(), new Disposable() {
-        public void dispose() {
-          if (indicator.isRunning()) {
-            indicator.cancel();
-            Disposer.dispose(indicator);
-          }
-        }
-      });
+      Disposer.register(ApplicationManager.getApplication(), indicator);
       progressIndicator = indicator;
     }
 

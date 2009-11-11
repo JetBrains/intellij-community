@@ -1,3 +1,3 @@
 Map map=new HashMap();
 map.add("abc", "abc");
-String s=<warning descr="Cannot assign 'Object' to 'String'">map["abc"]</warning>;
+Date s=<warning descr="Cannot assign 'Object' to 'Date'">map["abc"]</warning>;
