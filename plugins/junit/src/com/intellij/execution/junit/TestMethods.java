@@ -35,9 +35,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.util.Function;
-import com.intellij.util.containers.hash.LinkedHashMap;
 
 import java.util.Collection;
+import java.util.LinkedHashMap;
 
 public class TestMethods extends TestMethod {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit.TestMethods");
