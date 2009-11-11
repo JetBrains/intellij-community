@@ -177,7 +177,7 @@ public class CodeStyleMainPanel extends JPanel {
   }
 
   public String getDisplayName() {
-    return ensureCurrentPanel().getDisplayName();
+    return myModel.getSelectedScheme().getName();
   }
 
   public void disposeUIResources() {
