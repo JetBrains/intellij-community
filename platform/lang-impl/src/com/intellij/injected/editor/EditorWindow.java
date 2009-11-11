@@ -69,18 +69,22 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
   public static Editor create(@NotNull final DocumentWindowImpl documentRange, @NotNull final EditorImpl editor, @NotNull final PsiFile injectedFile) {
     assert documentRange.isValid();
     assert injectedFile.isValid();
-    for (EditorWindow editorWindow : allEditors) {
-      if (editorWindow.getDocument() == documentRange && editorWindow.getDelegate() == editor) {
-        editorWindow.myInjectedFile = injectedFile;
-        if (editorWindow.isValid()) {
-          return editorWindow;
+    EditorWindow window;
+    synchronized (allEditors) {
+      for (EditorWindow editorWindow : allEditors) {
+        if (editorWindow.getDocument() == documentRange && editorWindow.getDelegate() == editor) {
+          editorWindow.myInjectedFile = injectedFile;
+          if (editorWindow.isValid()) {
+            return editorWindow;
+          }
+        }
+        if (editorWindow.getDocument().areRangesEqual(documentRange)) {
+          int i = 0;
         }
       }
-      if (editorWindow.getDocument().areRangesEqual(documentRange)) {
-        int i = 0;
-      }
+      window = new EditorWindow(documentRange, editor, injectedFile, documentRange.isOneLine());
+      allEditors.add(window);
     }
-    EditorWindow window = new EditorWindow(documentRange, editor, injectedFile, documentRange.isOneLine());
     assert window.isValid();
     return window;
   }
@@ -94,9 +98,6 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
     mySelectionModelDelegate = new SelectionModelWindow(myDelegate, myDocumentWindow,this);
     myMarkupModelDelegate = new MarkupModelWindow((MarkupModelEx)myDelegate.getMarkupModel(), myDocumentWindow);
     myFoldingModelWindow = new FoldingModelWindow((FoldingModelEx)delegate.getFoldingModel(), documentWindow);
-
-    //disposeInvalidEditors();
-    allEditors.add(this);
   }
 
   public static void disposeInvalidEditors() {

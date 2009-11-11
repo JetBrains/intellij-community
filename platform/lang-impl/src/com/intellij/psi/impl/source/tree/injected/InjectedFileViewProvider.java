@@ -37,11 +37,12 @@ import java.util.List;
  * @author cdr
 */
 class InjectedFileViewProvider extends SingleRootFileViewProvider {
+  private final Object LOCK = new Object();
   private Place myShreds;
   private Project myProject;
   private final Object myLock = new Object();
   private final DocumentWindow myDocumentWindow;
-  private volatile boolean physical = true;
+  private boolean physical = true;
 
   InjectedFileViewProvider(@NotNull PsiManager psiManager,
                            @NotNull VirtualFileWindow virtualFile,
@@ -141,15 +142,28 @@ class InjectedFileViewProvider extends SingleRootFileViewProvider {
 
   @Override
   public boolean isEventSystemEnabled() {
-    return physical;
+    if (LOCK == null) return true; // hack to avoid NPE when this method called from super class constructor
+    synchronized (LOCK) {
+      return physical;
+    }
   }
 
   @Override
   public boolean isPhysical() {
-    return physical;
+    synchronized (LOCK) {
+      return physical;
+    }
   }
 
-  public void setPhysical(boolean physical) {
-    this.physical = physical;
+  public void performNonPhysically(Runnable runnable) {
+    synchronized (LOCK) {
+      physical = false;
+      try {
+        runnable.run();
+      }
+      finally {
+        physical = true;
+      }
+    }
   }
 }
