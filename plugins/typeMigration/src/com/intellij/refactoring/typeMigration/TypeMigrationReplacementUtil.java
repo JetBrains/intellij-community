@@ -138,8 +138,9 @@ public class TypeMigrationReplacementUtil {
       PsiType type = expression.getType().getDeepComponentType();
 
       try {
+        final String with = type.getPresentableText().replace("[", "\\[").replace("]", "\\]");
         final String replacement =
-            image.replaceFirst(type.getPresentableText(), changeType.getDeepComponentType().getPresentableText());
+            image.replaceFirst(with, changeType.getDeepComponentType().getPresentableText());
         expression.replace(
             JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(replacement, expression));
       }
