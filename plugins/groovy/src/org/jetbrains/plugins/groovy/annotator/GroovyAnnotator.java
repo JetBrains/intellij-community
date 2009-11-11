@@ -61,6 +61,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrFlowInterruptingStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -160,6 +161,9 @@ public class GroovyAnnotator implements Annotator {
     else if (element instanceof GrLiteral) {
       checkLiteral(((GrLiteral)element), holder);
     }
+    else if (element instanceof GrForInClause) {
+      checkForInClause(((GrForInClause)element), holder);
+    }
     else if (element instanceof GroovyFile) {
       final GroovyFile file = (GroovyFile)element;
       if (file.isScript()) {
@@ -178,6 +182,22 @@ public class GroovyAnnotator implements Annotator {
           !isDocCommentElement(element)) {
         GroovyImportsTracker.getInstance(element.getProject()).markFileAnnotated((GroovyFile)element.getContainingFile());
       }
+    }
+  }
+
+  private static void checkForInClause(GrForInClause forInClause, AnnotationHolder holder) {
+    final GrVariable[] declaredVariables = forInClause.getDeclaredVariables();
+    if (declaredVariables.length < 1) return;
+    final GrVariable variable = declaredVariables[0];
+    final GrModifierList modifierList = ((GrModifierList)variable.getModifierList());
+    if (modifierList == null) return;
+    final PsiElement[] modifiers = modifierList.getModifiers();
+    for (PsiElement modifier : modifiers) {
+      if (modifier instanceof PsiAnnotation) continue;
+      final String modifierText = modifier.getText();
+      if (PsiModifier.FINAL.equals(modifierText)) continue;
+      if ("def".equals(modifierText)) continue;
+      holder.createErrorAnnotation(modifier, GroovyBundle.message("not.allowed.modifier.in.forin", modifierText));
     }
   }
 
