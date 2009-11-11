@@ -16,6 +16,7 @@
 
 package org.intellij.plugins.intelliLang;
 
+import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -34,7 +35,6 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.peer.PeerFactory;
 import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.Consumer;
@@ -574,7 +574,7 @@ public class InjectionsSettingsUI implements Configurable {
 
     final FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, myProject);
 
-    final SplitterProportionsData splitterData = PeerFactory.getInstance().getUIHelper().createSplitterProportionsData();
+    final SplitterProportionsData splitterData = new SplitterProportionsDataImpl();
     splitterData.externalizeFromDimensionService("IntelliLang.ImportSettingsKey.SplitterProportions");
 
     final VirtualFile[] files = chooser.choose(null, myProject);

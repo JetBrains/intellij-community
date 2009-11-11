@@ -25,14 +25,10 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
-import com.intellij.peer.PeerFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.ui.BooleanTableCellRenderer;
-import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.ReferenceEditorWithBrowseButton;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.ui.dualView.TreeTableView;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import com.intellij.ui.treeStructure.treetable.TreeColumnInfo;
@@ -121,7 +117,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
 
     });
     init(injection.copy());
-    PeerFactory.getInstance().getUIHelper().installTreeTableSpeedSearch(myParamsTable, new Convertor<TreePath, String>() {
+    new TreeTableSpeedSearch(myParamsTable, new Convertor<TreePath, String>() {
       @Nullable
       public String convert(final TreePath o) {
         final Object userObject = ((DefaultMutableTreeNode)o.getLastPathComponent()).getUserObject();
