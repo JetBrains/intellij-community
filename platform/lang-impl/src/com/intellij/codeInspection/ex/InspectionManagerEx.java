@@ -100,7 +100,7 @@ public class InspectionManagerEx extends InspectionManager {
                                                    LocalQuickFix fix,
                                                    ProblemHighlightType highlightType, boolean onTheFly) {
     LocalQuickFix[] quickFixes = fix != null ? new LocalQuickFix[]{fix} : null;
-    return createProblemDescriptor(psiElement, descriptionTemplate, quickFixes, highlightType, onTheFly);
+    return createProblemDescriptor(psiElement, descriptionTemplate, onTheFly, quickFixes, highlightType);
   }
 
   @NotNull
