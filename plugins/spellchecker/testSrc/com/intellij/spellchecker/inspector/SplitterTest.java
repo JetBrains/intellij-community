@@ -224,6 +224,18 @@ public class SplitterTest extends TestCase {
      correctListToCheck(checkAreas, text, new String[]{"BADD"});
      correctIgnored(checkAreas, text, new String[]{});
    }
+  public void testWordWithUmlauts() {
+     String text = "rechtsbündig";
+     List<CheckArea> checkAreas = TextSplitter.splitText(text);
+     correctListToCheck(checkAreas, text, new String[]{"rechtsbündig"});
+     correctIgnored(checkAreas, text, new String[]{});
+   }
+  public void testWordUpperCasedWithUmlauts() {
+     String text = "rechtsbündig".toUpperCase();
+     List<CheckArea> checkAreas = TextSplitter.splitText(text);
+     correctListToCheck(checkAreas, text, new String[]{"rechtsbündig".toUpperCase()});
+     correctIgnored(checkAreas, text, new String[]{});
+   }
 
 
   @Nullable

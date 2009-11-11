@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -40,10 +41,10 @@ public class TextSplitter {
   private static final Pattern HTML = Pattern.compile("<(0)>");
 
   @NonNls
-  /*private static final Pattern WORD = Pattern.compile("\\b\\p{L}+'?\\p{L}*\\b");*/
-  private static final Pattern WORD = Pattern.compile("\\b\\p{Alpha}*'?\\p{Alpha}*");
 
-  private static final Pattern EXTENDED_WORD = Pattern.compile("\\b\\p{Alpha}*'?\\p{Alpha}(_*\\p{Alpha})*");
+  private static final Pattern WORD = Pattern.compile("\\b\\p{L}*'?\\p{L}*");
+
+  private static final Pattern EXTENDED_WORD = Pattern.compile("\\b\\p{L}*'?\\p{L}(_*\\p{L})*");
 
   private static final String WORD_SPLITTER = "\\s+|<[^>]+>";
 
