@@ -20,6 +20,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
@@ -278,6 +279,26 @@ public abstract class VcsVFSListener implements Disposable {
       myCommandLevel++;
     }
 
+    private void checkMovedAddedSourceBack() {
+      if (myAddedFiles.isEmpty() || myMovedFiles.isEmpty()) return;
+
+      final Map<String, VirtualFile> addedPaths = new HashMap<String, VirtualFile>(myAddedFiles.size());
+      for (VirtualFile file : myAddedFiles) {
+        addedPaths.put(file.getPath(), file);
+      }
+
+      for (Iterator<MovedFileInfo> iterator = myMovedFiles.iterator(); iterator.hasNext();) {
+        final MovedFileInfo movedFile = iterator.next();
+        if (addedPaths.containsKey(movedFile.myOldPath)) {
+          iterator.remove();
+          final VirtualFile oldAdded = addedPaths.get(movedFile.myOldPath);
+          myAddedFiles.remove(oldAdded);
+          myAddedFiles.add(movedFile.myFile);
+          myCopyFromMap.put(oldAdded, movedFile.myFile);
+        }
+      }
+    }
+
     public void commandFinished(final CommandEvent event) {
       if (myProject != event.getProject()) return;
       myCommandLevel--;
@@ -292,6 +313,7 @@ public abstract class VcsVFSListener implements Disposable {
           finally {
             myCommandLevel--;
           }
+          checkMovedAddedSourceBack();
           if (!myAddedFiles.isEmpty()) {
             executeAdd();
           }
