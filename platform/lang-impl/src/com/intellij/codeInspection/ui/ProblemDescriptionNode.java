@@ -132,7 +132,7 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
       final TextRange elementRange = psiElement.getTextRange();
       if (textRange!=null && elementRange!=null) {
         textRange = textRange.shiftRight(-elementRange.getStartOffset());
-        if(textRange.getStartOffset() >= 0 && textRange.getEndOffset() < ref.length())
+        if(textRange.getStartOffset() >= 0 && textRange.getEndOffset() <= ref.length())
           ref = textRange.substring(ref);
       }
     }
