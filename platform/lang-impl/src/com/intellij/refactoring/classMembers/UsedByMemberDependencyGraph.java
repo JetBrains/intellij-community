@@ -19,8 +19,8 @@ package com.intellij.refactoring.classMembers;
 import com.intellij.lang.LanguageDependentMembersRefactoringSupport;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.NavigatablePsiElement;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.containers.HashMap;
 
