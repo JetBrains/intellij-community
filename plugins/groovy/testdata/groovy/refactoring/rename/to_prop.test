@@ -16,9 +16,9 @@ a.foo = ""
 a.<caret>setFoo("asd")
 -----
 class A {
-  def String newName = "asd"
+  def String foo = "asd"
 
-  def setFoo(asd){}
+  def setNewName(asd){}
 
   def getFoo(){"dsfsdf"}
 }
@@ -29,5 +29,5 @@ A a = new A()
 a.foo
 a.getFoo()
 
-a.foo = ""
+a.newName = ""
 a.setNewName("asd")

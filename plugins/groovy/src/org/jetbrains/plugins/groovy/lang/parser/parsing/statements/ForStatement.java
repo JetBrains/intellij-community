@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements;
 
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifiers;
@@ -38,7 +39,6 @@ public class ForStatement implements GroovyElementTypes {
   }
 
   private static boolean tradForClauseParse(PsiBuilder builder, GroovyParser parser) {
-
     PsiBuilder.Marker marker = builder.mark();
 
     if (ParserUtils.getToken(builder, mSEMI) || (Declaration.parse(builder, false, parser) && ParserUtils.getToken(builder, mSEMI))) {
@@ -102,23 +102,40 @@ public class ForStatement implements GroovyElementTypes {
    * Parses Groovy-style 'in' clause
    */
   private static boolean forInClauseParse(PsiBuilder builder, GroovyParser parser) {
-
     PsiBuilder.Marker marker = builder.mark();
 
-    PsiBuilder.Marker parameterMarker = builder.mark();
+    PsiBuilder.Marker paramMarker = builder.mark();
+
     Modifiers.parse(builder, parser);
-    if (ParserUtils.lookAhead(builder, mIDENT, kIN) || ParserUtils.lookAhead(builder, mIDENT, mCOLON)) {
-      ParserUtils.getToken(builder, mIDENT);
+
+    boolean isBuiltInType = TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType());
+
+    PsiBuilder.Marker typeSpec = builder.mark();
+    TypeSpec.parseStrict(builder);
+
+    if (builder.getTokenType() == mIDENT || isBuiltInType) {
+      typeSpec.drop();
     }
     else {
-      TypeSpec.parseStrict(builder);
-      ParserUtils.getToken(builder, mIDENT, GroovyBundle.message("identifier.expected"));
+      typeSpec.rollbackTo();
     }
-    parameterMarker.done(PARAMETER);
+
+    if (TokenSets.FOR_IN_DELIMITERS.contains(builder.getTokenType())) {
+      builder.error(GroovyBundle.message("identifier.expected"));
+      paramMarker.drop();
+    }
+    else if (builder.getTokenType() == mIDENT) {
+      ParserUtils.getToken(builder, mIDENT);
+      paramMarker.done(PARAMETER);
+    }
+    else {
+      paramMarker.drop();
+      marker.rollbackTo();
+      return false;
+    }
 
     if (!ParserUtils.getToken(builder, kIN) && !ParserUtils.getToken(builder, mCOLON)) {
-      builder.error(GroovyBundle.message("in.expected"));
-      marker.drop();
+      marker.rollbackTo();
       return false;
     }
 

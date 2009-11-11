@@ -134,4 +134,6 @@ public abstract class TokenSets implements GroovyTokenTypes {
       mREGEX_LITERAL,
       mGSTRING_LITERAL
   );
+
+  public static TokenSet FOR_IN_DELIMITERS = TokenSet.create(kIN, mCOLON);
 }
