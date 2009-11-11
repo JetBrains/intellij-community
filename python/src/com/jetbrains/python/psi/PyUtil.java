@@ -621,10 +621,9 @@ public class PyUtil {
         else if (ret == null && elt instanceof PyElement) { // remember this result, but a reference may be the next resolve result
           ret = (PyElement)elt;
         }
-        else { // not a reassignment, not anything from Python; no point to continue
-          break SEARCH;
-        }
       }
+      // all resolve results checked, reassignment not detected, nothing more to do
+      break;
     }
     return ret;
   }

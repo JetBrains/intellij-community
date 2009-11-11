@@ -45,6 +45,7 @@ public class PyCallExpressionHelper {
     if (callee instanceof PyReferenceExpression) {
       PyReferenceExpression ref = (PyReferenceExpression)callee;
       PsiElement resolved = PyUtil.followAssignmentsChain(ref);
+      if (resolved instanceof PyClass) resolved = ((PyClass)resolved).findMethodByName(PyNames.INIT); // class to constructor call
       if (resolved instanceof PyFunction) {
         EnumSet<PyCallExpression.Flag> flags = EnumSet.noneOf(PyCallExpression.Flag.class);
         int implicit_offset = 0;

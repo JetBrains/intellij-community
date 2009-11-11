@@ -213,7 +213,32 @@ public class PyParameterInfoTest extends MarkedTestCase {
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("self,a", new String[]{"a"});
   }
 
-  // TODO: add method tests with decorators when a mock SDK is available 
+  public void testReassignedFunction() throws Exception {
+    Map<String, PsiElement> marks = loadTest();
+    assertEquals("Test data sanity", marks.size(), 2);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a,b", new String[]{"a,"});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a,b", new String[]{"b"});
+  }
+
+  public void testReassignedInstanceMethod() throws Exception {
+    Map<String, PsiElement> marks = loadTest();
+    assertEquals("Test data sanity", marks.size(), 3);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("self,a,b,c", new String[]{"a,"}, new String[]{"self,"});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("self,a,b,c", new String[]{"b,"}, new String[]{"self,"});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("self,a,b,c", new String[]{"c"}, new String[]{"self,"});
+  }
+
+  public void testReassignedClassInit() throws Exception {
+    Map<String, PsiElement> marks = loadTest();
+    assertEquals("Test data sanity", marks.size(), 2);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("self,a,b", new String[]{"a,"}, new String[]{"self,"});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("self,a,b", new String[]{"b"}, new String[]{"self,"});
+  }
+
+  // TODO: add method tests with decorators when a mock SDK is available
 
   /**
    * Imitates pressing of Ctrl+P; fails if results are not as expected.

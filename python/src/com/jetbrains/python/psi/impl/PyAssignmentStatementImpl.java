@@ -24,6 +24,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
@@ -81,31 +82,16 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
 
   @NotNull
   public List<Pair<PyExpression, PyExpression>> getTargetsToValuesMapping() {
-    List<Pair<PyExpression, PyExpression>> ret = new ArrayList<Pair<PyExpression, PyExpression>>();
-    List<PyExpression> lhses = new ArrayList<PyExpression>(1);
-    PyExpression rhs = null;
-    // extract all LHSes and RHS
-    boolean seen_eq = false;
-    for (PsiElement child = this.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (child instanceof PsiWhiteSpace) continue;
-      if ("=".equals(child.getText())) seen_eq = true;
-      if (child instanceof PyExpression) {
-        PyExpression expr = (PyExpression)child;
-        if (seen_eq) {
-          if (rhs != null) { // more than one RHS is clearly a parsing error, return nothing.
-            ret.clear();
-            return ret;
-          }
-          rhs = expr;
-        }
-        else lhses.add(expr);
+    List<Pair<PyExpression, PyExpression>> ret = new SmartList<Pair<PyExpression, PyExpression>>();
+    if (!PsiTreeUtil.hasErrorElements(this)) { // no parse errors
+      PyExpression[] constituents = PsiTreeUtil.getChildrenOfType(this, PyExpression.class); // "a = b = c" -> [a, b, c]
+      if (constituents != null && constituents.length > 1) {
+        PyExpression rhs = constituents[constituents.length - 1]; // last
+        List<PyExpression> lhses = new ArrayList<PyExpression>(constituents.length - 1);
+        for (int i = 0; i < constituents.length - 1; i += 1) lhses.add(constituents[i]); // copy all but last; most often it's one element.
+        for (PyExpression lhs : lhses) mapToValues(lhs, rhs, ret);
       }
     }
-    if (lhses.size() == 0) { // no LHS, must be incorrectly parsed
-      ret.clear();
-      return ret;
-    }
-    for (PyExpression lhs : lhses) mapToValues(lhs, rhs, ret);
     return ret;
   }
 
