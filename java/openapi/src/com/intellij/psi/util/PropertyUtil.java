@@ -296,7 +296,7 @@ public class PropertyUtil {
   }
 
   public static String suggestGetterName(@NotNull String propertyName, @Nullable PsiType propertyType, @NonNls String existingGetterName) {
-    @NonNls StringBuffer name = new StringBuffer(StringUtil.capitalize(propertyName));
+    @NonNls StringBuffer name = new StringBuffer(StringUtil.capitalizeWithJavaBeanConvention(propertyName));
     if (isBoolean(propertyType)) {
       if (existingGetterName == null || !existingGetterName.startsWith("get")) {
         name.insert(0, "is");
@@ -319,12 +319,12 @@ public class PropertyUtil {
 
   @NonNls
   public static String[] suggestGetterNames(String propertyName) {
-    final String str = StringUtil.capitalize(propertyName);
+    final String str = StringUtil.capitalizeWithJavaBeanConvention(propertyName);
     return new String[] { "is" + str, "get" + str };
   }
 
   public static String suggestSetterName(String propertyName) {
-    @NonNls StringBuffer name = new StringBuffer(StringUtil.capitalize(propertyName));
+    @NonNls StringBuffer name = new StringBuffer(StringUtil.capitalizeWithJavaBeanConvention(propertyName));
     name.insert(0, "set");
     return name.toString();
   }
