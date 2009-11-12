@@ -188,7 +188,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
         }
       }
 
-      final AcceptWordAsCorrect acceptWordAsCorrect = isOnTheFly ? BATCH_ACCEPT_FIX : new AcceptWordAsCorrect();
+      final AcceptWordAsCorrect acceptWordAsCorrect = isOnTheFly ? new AcceptWordAsCorrect() : BATCH_ACCEPT_FIX;
       fixes.add(acceptWordAsCorrect);
 
       final ProblemDescriptor problemDescriptor = createProblemDescriptor(token, holder, textRange, fixes, isOnTheFly);
