@@ -22,7 +22,13 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public abstract class ArtifactTemplate {
+
   public abstract String getPresentableName();
 
   public abstract CompositePackagingElement<?> createRootElement(@NotNull String artifactName);
+
+  @NotNull
+  public String suggestArtifactName() {
+    return "unnamed";
+  }
 }
