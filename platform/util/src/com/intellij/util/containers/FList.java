@@ -18,7 +18,7 @@ package com.intellij.util.containers;
 import java.util.AbstractList;
 
 /**
- * Immmutable list in functional style
+ * Immutable list in functional style
  *
  * @author nik
  */
