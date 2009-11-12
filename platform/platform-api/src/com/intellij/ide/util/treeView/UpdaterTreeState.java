@@ -33,7 +33,7 @@ public class UpdaterTreeState {
   protected WeakHashMap<Object, Condition> myAdjustedSelection = new WeakHashMap<Object, Condition>();
   protected WeakHashMap<Object, Object> myDisposedElements = new WeakHashMap<Object, Object>();
   protected WeakHashMap<Object, Object> myToExpand = new WeakHashMap<Object, Object>();
-  private boolean myProcessingNow;
+  private int myProcessingCount;
 
   private boolean myCanRunRestore = true;
 
@@ -101,15 +101,12 @@ public class UpdaterTreeState {
   }
 
   public boolean process(Runnable runnable) {
-    boolean oldValue = isProcessingNow();
     try {
       setProcessingNow(true);
       runnable.run();
     }
     finally {
-      if (!oldValue) {
-        setProcessingNow(false);
-      }
+      setProcessingNow(false);
     }
 
     return isEmpty();
@@ -121,7 +118,7 @@ public class UpdaterTreeState {
 
 
   public boolean isProcessingNow() {
-    return myProcessingNow;
+    return myProcessingCount > 0;
   }
 
   public void addAll(final UpdaterTreeState state) {
@@ -342,8 +339,12 @@ public class UpdaterTreeState {
   }
 
   public void setProcessingNow(boolean processingNow) {
-    myProcessingNow = processingNow;
-    if (!processingNow) {
+    if (processingNow) {
+      myProcessingCount++;
+    } else {
+      myProcessingCount--;
+    }
+    if (!isProcessingNow()) {
       myUi.maybeReady();
     }
   }
