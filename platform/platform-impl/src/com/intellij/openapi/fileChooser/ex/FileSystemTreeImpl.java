@@ -426,7 +426,10 @@ public class FileSystemTreeImpl implements FileSystemTree {
           final Object object = ((DefaultMutableTreeNode)last).getUserObject();
           if (object instanceof FileNodeDescriptor) {
             final FileElement element = ((FileNodeDescriptor)object).getElement();
-            selection.add(element.getFile());
+            final VirtualFile file = element.getFile();
+            if (file != null) {
+              selection.add(file);
+            }
           }
         }
       }
