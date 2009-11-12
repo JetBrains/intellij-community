@@ -1,7 +1,5 @@
 package com.intellij.compiler;
 
-import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
-import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -80,12 +78,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     if (ex[0] != null) {
       throw ex[0];
     }
-    CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
-    compilerConfiguration.projectOpened();
-    compilerConfiguration.setDefaultCompiler(compilerConfiguration.getJavacCompiler());
-
-    JavacSettings javacSettings = JavacSettings.getInstance(myProject);
-    javacSettings.setTestsUseExternalCompiler(true);
+    CompilerTestUtil.setupJavacForTests(myProject);
   }
 
   //------------------------------------------------------------------------------------------
@@ -324,9 +317,8 @@ public abstract class CompilerTestCase extends ModuleTestCase {
         }
       }
     });
-    // need this to emulate project opening
-    final List<VirtualFile> roots = Arrays.asList(ProjectRootManager.getInstance(myProject).getContentSourceRoots());
-    TranslatingCompilerFilesMonitor.getInstance().scanSourceContent(myProject, roots, roots.size(), true);
+    CompilerTestUtil.scanSourceRootsToRecompile(myProject);
+
     if (ex[0] != null) {
       throw ex[0];
     }

@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -48,6 +49,10 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
   protected CompilationLog compile(final Artifact... artifacts) throws Exception {
     final CompileScope scope = ArtifactCompileScope.createArtifactsScope(myProject, Arrays.asList(artifacts));
     return compile(scope, CompilerFilter.ALL);
+  }
+
+  protected CompilationLog compile(Module module) throws Exception {
+    return compile(CompilerManager.getInstance(myProject).createModuleCompileScope(module, false), CompilerFilter.ALL);
   }
 
   protected CompilationLog compile(final CompileScope scope, final CompilerFilter filter) throws Exception {
@@ -130,6 +135,12 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
     return new TestFileSystemBuilder(new TestFileSystemItem("root", false, true), null);
   }
 
+  public static void assertNoOutput(Artifact artifact) {
+    final String outputPath = artifact.getOutputPath();
+    assertNotNull("output path not specified for " + artifact.getName(), outputPath);
+    assertFalse(new File(FileUtil.toSystemDependentName(outputPath)).exists());
+  }
+
   public static void assertOutput(Artifact artifact, TestFileSystemBuilder item) throws IOException {
     final String output = artifact.getOutputPath();
     assertNotNull("output path not specified for " + artifact.getName(), output);
@@ -138,6 +149,7 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
     outputFile.refresh(false, true);
     item.build().assertDirectoryEqual(outputFile);
   }
+
 
   protected class CompilationLog {
     private final Set<String> myRecompiledPaths;
