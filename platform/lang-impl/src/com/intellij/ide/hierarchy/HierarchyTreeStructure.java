@@ -156,10 +156,6 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
   }
 
   protected boolean isInScope(final PsiElement baseClass, final PsiElement srcElement, final String scopeType) {
-    if (!srcElement.getManager().isInProject(srcElement)) {
-      //TODO why get here???
-      return false;
-    }
     if (HierarchyBrowserBaseEx.SCOPE_CLASS.equals(scopeType)) {
       if (!PsiTreeUtil.isAncestor(baseClass, srcElement, true)) {
         return false;
