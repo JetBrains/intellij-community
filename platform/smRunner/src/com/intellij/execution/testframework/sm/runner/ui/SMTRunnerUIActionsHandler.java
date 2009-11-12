@@ -68,7 +68,7 @@ public class SMTRunnerUIActionsHandler implements TestResultsViewer.EventsListen
         if (firstFailure != null) {
          firstDefect = firstFailure;
         } else {
-          firstDefect = Filter.DEFECTIVE_LEAF.detectIn(allTests);
+          firstDefect = null;
         }
       }
 
