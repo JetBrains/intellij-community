@@ -35,9 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.*;
-import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
-import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -49,7 +47,6 @@ public class JarsBuilder {
   private final FileFilter myFileFilter;
   private final CompileContext myContext;
   private Map<JarInfo, File> myBuiltJars;
-  private final List<ExplodedDestinationInfo> myJarsDestinations;
   private Set<File> myJarsToDelete;
 
   public JarsBuilder(Set<JarInfo> jarsToBuild, FileFilter fileFilter, CompileContext context) {
@@ -60,7 +57,6 @@ public class JarsBuilder {
     myJarsToBuild = evaluator.getJars();
     myFileFilter = fileFilter;
     myContext = context;
-    myJarsDestinations = new ArrayList<ExplodedDestinationInfo>();
   }
 
   public boolean buildJars(Set<String> writtenPaths) throws IOException {
@@ -87,16 +83,8 @@ public class JarsBuilder {
 
   private void deleteTemporaryJars() {
     for (File file : myJarsToDelete) {
-      deleteFile(file);
+      FileUtil.delete(file);
     }
-  }
-
-  protected void deleteFile(final File file) {
-    FileUtil.delete(file);
-  }
-
-  public List<ExplodedDestinationInfo> getJarsDestinations() {
-    return myJarsDestinations;
   }
 
   private void copyJars(final Set<String> writtenPaths) throws IOException {
@@ -107,7 +95,6 @@ public class JarsBuilder {
       boolean first = true;
       for (DestinationInfo destination : entry.getKey().getAllDestinations()) {
         if (destination instanceof ExplodedDestinationInfo) {
-          myJarsDestinations.add((ExplodedDestinationInfo)destination);
           File toFile = new File(FileUtil.toSystemDependentName(destination.getOutputPath()));
 
           if (first) {
@@ -116,7 +103,7 @@ public class JarsBuilder {
             fromFile = toFile;
           }
           else {
-            copyFile(fromFile, toFile, writtenPaths);
+            DeploymentUtil.getInstance().copyFile(fromFile, toFile, myContext, writtenPaths, myFileFilter);
           }
 
         }
@@ -124,13 +111,9 @@ public class JarsBuilder {
     }
   }
 
-  protected void renameFile(final File fromFile, final File toFile, final Set<String> writtenPaths) throws IOException {
+  private static void renameFile(final File fromFile, final File toFile, final Set<String> writtenPaths) throws IOException {
     FileUtil.rename(fromFile, toFile);
     writtenPaths.add(toFile.getPath());
-  }
-
-  protected void copyFile(final File fromFile, final File toFile, final Set<String> writtenPaths) throws IOException {
-    DeploymentUtil.getInstance().copyFile(fromFile, toFile, myContext, writtenPaths, myFileFilter);
   }
 
   @Nullable
@@ -158,11 +141,11 @@ public class JarsBuilder {
   private void buildJar(final JarInfo jar) throws IOException {
     myContext.getProgressIndicator().setText(CompilerBundle.message("packaging.compiler.message.building.0",
                                                                     jar.getPresentableDestination()));
-    File jarFile = createTempFile();
+    File jarFile = FileUtil.createTempFile("artifactCompiler", "tmp");
     myBuiltJars.put(jar, jarFile);
 
-    Manifest manifest = null;
-    final JarOutputStream jarOutputStream = createJarOutputStream(jarFile, manifest);
+    FileUtil.createParentDirs(jarFile);
+    final JarOutputStream jarOutputStream = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(jarFile)));
 
     try {
       final THashSet<String> writtenPaths = new THashSet<String>();
@@ -181,25 +164,7 @@ public class JarsBuilder {
     }
   }
 
-  private static Manifest createManifest(final JarInfo jar) throws IOException {
-    for (Pair<String, VirtualFile> pair : jar.getPackedFiles()) {
-      if (JarFile.MANIFEST_NAME.equalsIgnoreCase(pair.getFirst())) {
-        return new Manifest(pair.getSecond().getInputStream());
-      }
-    }
-    return new Manifest();
-  }
-
-  protected JarOutputStream createJarOutputStream(final File jarFile, final Manifest manifest) throws IOException {
-    FileUtil.createParentDirs(jarFile);
-    return new JarOutputStream(new BufferedOutputStream(new FileOutputStream(jarFile)));
-  }
-
-  protected File createTempFile() throws IOException {
-    return FileUtil.createTempFile("packagingCompiler", "tmp");
-  }
-
-  protected void addFileToJar(final JarOutputStream jarOutputStream, final File file, String relativePath,
+  private void addFileToJar(final JarOutputStream jarOutputStream, final File file, String relativePath,
                             final THashSet<String> writtenPaths) throws IOException {
     //todo[nik] check file exists?
     while (relativePath.startsWith("/")) {
