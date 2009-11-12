@@ -47,8 +47,8 @@ public class MkdirOptionsDialog extends DialogWrapper {
     myOriginalURL = url;
     try {
       myURL = url.appendPath("NewFolder", true);
-    } catch (SVNException e) {
-      //
+    }
+    catch (SVNException ignore) {
     }
     setTitle("New Remote Folder");
     init();
@@ -61,9 +61,10 @@ public class MkdirOptionsDialog extends DialogWrapper {
     });
 
     if (!project.isDefault()) {
-      ArrayList<String> messages = VcsConfiguration.getInstance(project).getRecentMessages();
+      final ArrayList<String> messages = VcsConfiguration.getInstance(project).getRecentMessages();
       Collections.reverse(messages);
-      Object[] model = messages.toArray();
+
+      final String[] model = messages.toArray(new String[messages.size()]);
       myMessagesBox.setModel(new DefaultComboBoxModel(model));
       myMessagesBox.setRenderer(new MessageBoxCellRenderer());
     }
@@ -98,8 +99,8 @@ public class MkdirOptionsDialog extends DialogWrapper {
     if (getOKAction().isEnabled()) {
       try {
         return SVNURL.parseURIEncoded(myURLLabel.getText());
-      } catch (SVNException e) {
-        //
+      }
+      catch (SVNException ignore) {
       }
     }
     return null;
@@ -128,7 +129,8 @@ public class MkdirOptionsDialog extends DialogWrapper {
     try {
       myURLLabel.setText(myOriginalURL.appendPath(newName, false).toString());
       getOKAction().setEnabled(true);
-    } catch (SVNException e) {
+    }
+    catch (SVNException e) {
       myURLLabel.setText(myOriginalURL.toString());
       getOKAction().setEnabled(false);
     }
