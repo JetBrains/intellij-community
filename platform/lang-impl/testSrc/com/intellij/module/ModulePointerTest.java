@@ -60,6 +60,20 @@ public class ModulePointerTest extends PlatformTestCase {
     assertEquals("xyz", pointer.getModuleName());
   }
 
+  public void testDisposePointerFromUncommitedModifiableModel() throws Exception {
+    final ModifiableModuleModel modifiableModel = getModuleManager().getModifiableModel();
+    final Module module = modifiableModel.newModule(myProject.getBaseDir().getPath() + "/xxx.iml", EmptyModuleType.getInstance());
+    final ModulePointer pointer = getPointerManager().create(module);
+
+    assertSame(module, pointer.getModule());
+    assertEquals("xxx", pointer.getModuleName());
+
+    modifiableModel.dispose();
+
+    assertNull(pointer.getModule());
+    assertEquals("xxx", pointer.getModuleName());
+  }
+
   private ModuleManager getModuleManager() {
     return ModuleManager.getInstance(myProject);
   }

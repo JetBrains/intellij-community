@@ -16,11 +16,13 @@
 package com.intellij.openapi.module.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModulePointer;
 import com.intellij.openapi.module.ModulePointerManager;
 import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -38,11 +40,7 @@ public class ModulePointerManagerImpl extends ModulePointerManager {
     project.getMessageBus().connect().subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
       @Override
       public void beforeModuleRemoved(Project project, Module module) {
-        final ModulePointerImpl pointer = myPointers.remove(module);
-        if (pointer != null) {
-          pointer.moduleRemoved(module);
-          myUnresolved.put(pointer.getModuleName(), pointer);
-        }
+        unregisterPointer(module);
       }
 
       @Override
@@ -50,10 +48,27 @@ public class ModulePointerManagerImpl extends ModulePointerManager {
         final ModulePointerImpl pointer = myUnresolved.remove(module.getName());
         if (pointer != null) {
           pointer.moduleAdded(module);
-          myPointers.put(module, pointer);
+          registerPointer(module, pointer);
         }
       }
     });
+  }
+
+  private void registerPointer(final Module module, final ModulePointerImpl pointer) {
+    myPointers.put(module, pointer);
+    Disposer.register(module, new Disposable() {
+      public void dispose() {
+        unregisterPointer(module);
+      }
+    });
+  }
+
+  private void unregisterPointer(Module module) {
+    final ModulePointerImpl pointer = myPointers.remove(module);
+    if (pointer != null) {
+      pointer.moduleRemoved(module);
+      myUnresolved.put(pointer.getModuleName(), pointer);
+    }
   }
 
   @Override
@@ -61,7 +76,7 @@ public class ModulePointerManagerImpl extends ModulePointerManager {
     ModulePointerImpl pointer = myPointers.get(module);
     if (pointer == null) {
       pointer = new ModulePointerImpl(module);
-      myPointers.put(module, pointer);
+      registerPointer(module, pointer);
     }
     return pointer;
   }
