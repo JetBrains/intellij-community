@@ -88,6 +88,8 @@
                       serviceImplementation="com.intellij.featureStatistics.ProductivityFeaturesRegistryImpl"/>
   <applicationService serviceInterface="com.intellij.util.InstanceofCheckerGenerator"
                       serviceImplementation="com.intellij.util.InstanceofCheckerGeneratorImpl"/>
+  <applicationService serviceInterface="com.intellij.internal.psiView.PsiViewerSettings"
+                  serviceImplementation="com.intellij.internal.psiView.PsiViewerSettings"/>  
 
   <projectService serviceInterface="com.intellij.openapi.vfs.ReadonlyStatusHandler"
                   serviceImplementation="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>
