@@ -3,9 +3,11 @@ package com.intellij.compiler;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Chunk;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -79,7 +81,7 @@ public class CompilerOrderingTest extends IdeaTestCase {
       return false;
     }
 
-    public void compile(final CompileContext context, final VirtualFile[] files, OutputSink sink) {
+    public void compile(final CompileContext context, Chunk<Module> moduleChunk, final VirtualFile[] files, OutputSink sink) {
     }
 
     @NotNull
