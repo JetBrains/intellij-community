@@ -50,6 +50,10 @@ public class PsiFieldNode extends BasePsiMemberNode<PsiField>{
     return 70;
   }
 
+  public boolean isAlwaysLeaf() {
+    return true;
+  }
+
   @Override
   public String getTitle() {
     final PsiField field = getValue();

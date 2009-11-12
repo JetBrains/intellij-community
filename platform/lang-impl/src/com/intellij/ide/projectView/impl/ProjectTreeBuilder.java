@@ -90,9 +90,6 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
     myProblemListener = new MyProblemListener();
     WolfTheProblemSolver.getInstance(project).addProblemListener(myProblemListener);
 
-    //todo: kirillk turn into a real test
-    setCanYieldUpdate(!ApplicationManager.getApplication().isUnitTestMode());
-
     initRootNode();
   }
 

@@ -914,11 +914,45 @@ public class AbstractTreeUi {
 
   private boolean processAlwaysLeaf(DefaultMutableTreeNode node) {
     Object element = getElementFor(node);
+    NodeDescriptor desc = getDescriptorFrom(node);
+
+    if (desc == null) return false;
+
     if (getTreeStructure().isAlwaysLeaf(element)) {
       removeLoading(node, true);
+
+      if (node.getChildCount() > 0) {
+        final TreeNode[] children = new TreeNode[node.getChildCount()];
+        for (int i = 0; i < node.getChildCount(); i++) {
+          children[i] = node.getChildAt(i);
+        }
+
+        if (isSelectionInside(node)) {
+          addSelectionPath(getPathFor(node), true, Condition.TRUE);
+        }
+
+        doWithUpdaterState(new Runnable() {
+          public void run() {
+            for (TreeNode each : children) {
+              removeNodeFromParent((MutableTreeNode)each, true);
+              disposeNode((DefaultMutableTreeNode)each);
+            }
+          }
+        });
+      }
+
+      removeFromUnbuilt(node);
+      desc.setWasDeclaredAlwaysLeaf(true);
       processNodeActionsIfReady(node);
       return true;
     } else {
+      boolean wasLeaf = desc.isWasDeclaredAlwaysLeaf();
+      desc.setWasDeclaredAlwaysLeaf(false);
+
+      if (wasLeaf) {
+        insertLoadingNode(node, true);
+      }
+
       return false;
     }
   }
@@ -3449,16 +3483,6 @@ public class AbstractTreeUi {
       node.removeAllChildren();
       myTreeModel.nodeStructureChanged(node);
     }
-
-    private boolean isSelectionInside(DefaultMutableTreeNode parent) {
-      TreePath path = new TreePath(myTreeModel.getPathToRoot(parent));
-      TreePath[] paths = myTree.getSelectionPaths();
-      if (paths == null) return false;
-      for (TreePath path1 : paths) {
-        if (path.isDescendant(path1)) return true;
-      }
-      return false;
-    }
   }
 
   private void maybeUpdateSubtreeToUpdate(final DefaultMutableTreeNode subtreeRoot) {
@@ -3477,6 +3501,16 @@ public class AbstractTreeUi {
         }
       }, true);
     }
+  }
+
+  private boolean isSelectionInside(DefaultMutableTreeNode parent) {
+    TreePath path = new TreePath(myTreeModel.getPathToRoot(parent));
+    TreePath[] paths = myTree.getSelectionPaths();
+    if (paths == null) return false;
+    for (TreePath path1 : paths) {
+      if (path.isDescendant(path1)) return true;
+    }
+    return false;
   }
 
   public boolean isInStructure(@Nullable Object element) {

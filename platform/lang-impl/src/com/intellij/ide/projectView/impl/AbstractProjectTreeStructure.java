@@ -16,6 +16,7 @@
 
 package com.intellij.ide.projectView.impl;
 
+import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -53,4 +54,12 @@ public abstract class AbstractProjectTreeStructure extends ProjectAbstractTreeSt
     return false;
   }
 
+  public boolean isAlwaysLeaf(Object element) {
+    if (element instanceof ProjectViewNode) {
+      return ((ProjectViewNode)element).isAlwaysLeaf();
+    }
+    else {
+      return super.isAlwaysLeaf(element);
+    }
+  }
 }
