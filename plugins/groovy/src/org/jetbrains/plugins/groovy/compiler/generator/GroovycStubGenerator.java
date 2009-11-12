@@ -32,6 +32,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Chunk;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompilerBase;
@@ -53,7 +54,7 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
   }
 
   @Override
-  public void compile(CompileContext compileContext, VirtualFile[] virtualFiles, OutputSink sink) {
+  public void compile(CompileContext compileContext, Chunk<Module> moduleChunk, VirtualFile[] virtualFiles, OutputSink sink) {
     final CompileScope scope = compileContext.getCompileScope();
     if (scope.getFiles(StdFileTypes.JAVA, true).length == 0) {
       return;
@@ -75,7 +76,7 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
       return;
     }
 
-    super.compile(compileContext, total.toArray(new VirtualFile[total.size()]), sink);
+    super.compile(compileContext, moduleChunk, total.toArray(new VirtualFile[total.size()]), sink);
   }
 
   @Override

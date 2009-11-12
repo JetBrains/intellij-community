@@ -34,6 +34,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Chunk;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -90,7 +91,8 @@ public class AnnotationProcessingCompiler implements SourceProcessingCompiler{
   private void compile(final CompileContext context, final VirtualFile[] files) {
     final JavacCompiler javacCompiler = getBackEndCompiler();
     final boolean processorMode = javacCompiler.setAnnotationProcessorMode(true);
-    final BackendCompilerWrapper wrapper = new BackendCompilerWrapper(myProject, Arrays.asList(files), (CompileContextEx)context, javacCompiler, DummySink.INSTANCE);
+    final Chunk<Module> dummyChunk = new Chunk<Module>(Collections.<Module>emptySet()); // TODO!
+    final BackendCompilerWrapper wrapper = new BackendCompilerWrapper(dummyChunk, myProject, Arrays.asList(files), (CompileContextEx)context, javacCompiler, DummySink.INSTANCE);
     try {
       wrapper.compile();
     }

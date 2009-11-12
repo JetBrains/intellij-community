@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.compiler.ModuleCompilerUtil;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.FileSetCompileScope;
 import com.intellij.compiler.impl.javaCompiler.ModuleChunk;
@@ -290,42 +289,45 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     return new ModuleChunk((CompileContextEx)context, new Chunk<Module>(module), Collections.<Module, List<VirtualFile>>emptyMap());
   }
 
-  public void compile(final CompileContext compileContext, final VirtualFile[] virtualFiles, OutputSink sink) {
-    Map<Module, List<VirtualFile>> mapModulesToVirtualFiles = CompilerUtil.buildModuleToFilesMap(compileContext, virtualFiles);
-    final List<Chunk<Module>> chunks =
-      ModuleCompilerUtil.getSortedModuleChunks(myProject, new ArrayList<Module>(mapModulesToVirtualFiles.keySet()));
-    for (final Chunk<Module> chunk : chunks) {
-      for (final Module module : chunk.getNodes()) {
-        final List<VirtualFile> moduleFiles = mapModulesToVirtualFiles.get(module);
-        if (moduleFiles == null) {
-          continue;
-        }
+  public void compile(final CompileContext compileContext, Chunk<Module> moduleChunk, final VirtualFile[] virtualFiles, OutputSink sink) {
+    Map<Module, List<VirtualFile>> mapModulesToVirtualFiles;
+    if (moduleChunk.getNodes().size() == 1) {
+      mapModulesToVirtualFiles = Collections.singletonMap(moduleChunk.getNodes().iterator().next(), Arrays.asList(virtualFiles));
+    }
+    else {
+      mapModulesToVirtualFiles = CompilerUtil.buildModuleToFilesMap(compileContext, virtualFiles);
+    }
+    for (final Module module : moduleChunk.getNodes()) {
+      final List<VirtualFile> moduleFiles = mapModulesToVirtualFiles.get(module);
+      if (moduleFiles == null) {
+        continue;
+      }
 
-        final ModuleFileIndex index = ModuleRootManager.getInstance(module).getFileIndex();
-        final List<VirtualFile> toCompile = new ArrayList<VirtualFile>();
-        final List<VirtualFile> toCompileTests = new ArrayList<VirtualFile>();
-        final CompilerConfiguration configuration = CompilerConfiguration.getInstance(myProject);
+      final ModuleFileIndex index = ModuleRootManager.getInstance(module).getFileIndex();
+      final List<VirtualFile> toCompile = new ArrayList<VirtualFile>();
+      final List<VirtualFile> toCompileTests = new ArrayList<VirtualFile>();
+      final CompilerConfiguration configuration = CompilerConfiguration.getInstance(myProject);
 
-        if (module.getModuleType() instanceof JavaModuleType) {
-          for (final VirtualFile file : moduleFiles) {
-            final boolean shouldCompile = !configuration.isResourceFile(file) &&
-                                          (file.getFileType() == GroovyFileType.GROOVY_FILE_TYPE ||
-                                           file.getFileType() == StdFileTypes.JAVA);
-            if (shouldCompile) {
-              (index.isInTestSourceContent(file) ? toCompileTests : toCompile).add(file);
-            }
+      if (module.getModuleType() instanceof JavaModuleType) {
+        for (final VirtualFile file : moduleFiles) {
+          final boolean shouldCompile = !configuration.isResourceFile(file) &&
+                                        (file.getFileType() == GroovyFileType.GROOVY_FILE_TYPE ||
+                                         file.getFileType() == StdFileTypes.JAVA);
+          if (shouldCompile) {
+            (index.isInTestSourceContent(file) ? toCompileTests : toCompile).add(file);
           }
         }
-
-        if (!toCompile.isEmpty()) {
-          compileFiles(compileContext, module, toCompile, sink, false);
-        }
-        if (!toCompileTests.isEmpty()) {
-          compileFiles(compileContext, module, toCompileTests, sink, true);
-        }
-
       }
+
+      if (!toCompile.isEmpty()) {
+        compileFiles(compileContext, module, toCompile, sink, false);
+      }
+      if (!toCompileTests.isEmpty()) {
+        compileFiles(compileContext, module, toCompileTests, sink, true);
+      }
+
     }
+
   }
 
   protected abstract void compileFiles(CompileContext compileContext, Module module,
