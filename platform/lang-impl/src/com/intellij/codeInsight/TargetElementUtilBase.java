@@ -221,7 +221,8 @@ public class TargetElementUtilBase {
       for (PomDeclarationSearcher searcher : PomDeclarationSearcher.EP_NAME.getExtensions()) {
         searcher.findDeclarationsAt(parent, offset, consumer);
         if (!targets.isEmpty()) {
-          return PomService.convertToPsi(element.getProject(), targets.get(0));
+          final PomTarget target = targets.get(0);
+          return target == null ? null : PomService.convertToPsi(element.getProject(), target);
         }
       }
       offset += parent.getStartOffsetInParent();
