@@ -477,13 +477,22 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       if (id != null) {
         registerAction(id, group);
       }
-      // text
       Presentation presentation = group.getTemplatePresentation();
+
+      // text
       String text = loadTextForElement(element, bundle, id, GROUP_ELEMENT_NAME);
-      presentation.setText(text);
+      // don't override value which was set in API with empty value from xml descriptor
+      if (!StringUtil.isEmpty(text) || presentation.getText() == null) {
+        presentation.setText(text);
+      }
+
       // description
       String description = loadDescriptionForElement(element, bundle, id, GROUP_ELEMENT_NAME);
-      presentation.setDescription(description);
+      // don't override value which was set in API with empty value from xml descriptor
+      if (!StringUtil.isEmpty(description) || presentation.getDescription() == null) {
+        presentation.setDescription(description);
+      }
+
       // icon
       setIcon(element.getAttributeValue(ICON_ATTR_NAME), className, loader, presentation, pluginId);
       // popup

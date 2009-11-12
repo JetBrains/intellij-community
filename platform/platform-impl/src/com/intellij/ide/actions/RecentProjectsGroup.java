@@ -16,14 +16,28 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.RecentProjectsManagerBase;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class RecentProjectsGroup extends ActionGroup {
+  public RecentProjectsGroup() {
+    super();
+
+    final Presentation templatePresentation = getTemplatePresentation();
+    // Let's make tile more macish
+    if (SystemInfo.isMac) {
+      templatePresentation.setText(ActionsBundle.message("group.reopen.mac.text"));
+    } else {
+      templatePresentation.setText(ActionsBundle.message("group.reopen.win.text"));
+    }
+  }
+
   @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     return RecentProjectsManagerBase.getInstance().getRecentProjectsActions(true);
