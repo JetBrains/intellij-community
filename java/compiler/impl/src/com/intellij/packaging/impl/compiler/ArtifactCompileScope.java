@@ -18,6 +18,7 @@ package com.intellij.packaging.impl.compiler;
 import com.intellij.compiler.impl.ModuleCompileScope;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.packaging.artifacts.Artifact;
@@ -28,9 +29,11 @@ import com.intellij.packaging.impl.elements.ModuleOutputElementType;
 import com.intellij.packaging.impl.elements.ModuleOutputPackagingElement;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author nik
@@ -68,22 +71,33 @@ public class ArtifactCompileScope {
     return baseScope;
   }
 
-  @Nullable
-  public static Artifact[] getArtifacts(@NotNull CompileScope compileScope) {
-    return compileScope.getUserData(ARTIFACTS_KEY);
-  }
-
   public static Set<Artifact> getArtifactsToBuild(final Project project, final CompileScope compileScope) {
-    final Artifact[] artifactsFromScope = getArtifacts(compileScope);
+    final Artifact[] artifactsFromScope = compileScope.getUserData(ARTIFACTS_KEY);
     if (artifactsFromScope != null) {
       return new HashSet<Artifact>(Arrays.asList(artifactsFromScope));
     }
     Set<Artifact> artifacts = new HashSet<Artifact>();
-    for (Artifact artifact : ArtifactManager.getInstance(project).getArtifacts()) {
+    final ArtifactManager artifactManager = ArtifactManager.getInstance(project);
+    final Set<Module> modules = new HashSet<Module>(Arrays.asList(compileScope.getAffectedModules()));
+    for (Artifact artifact : artifactManager.getArtifacts()) {
       if (artifact.isBuildOnMake()) {
-        artifacts.add(artifact);
+        if (modules.containsAll(Arrays.asList(ModuleManager.getInstance(project).getModules()))
+            || containsModuleOutput(artifact, modules, artifactManager)) {
+          artifacts.add(artifact);
+        }
       }
     }
     return artifacts;
+  }
+
+  private static boolean containsModuleOutput(Artifact artifact, final Set<Module> modules, ArtifactManager artifactManager) {
+    final PackagingElementResolvingContext context = artifactManager.getResolvingContext();
+    return !ArtifactUtil.processPackagingElements(artifact, ModuleOutputElementType.MODULE_OUTPUT_ELEMENT_TYPE,
+                                                         new Processor<ModuleOutputPackagingElement>() {
+                                                           public boolean process(ModuleOutputPackagingElement moduleOutputPackagingElement) {
+                                                             final Module module = moduleOutputPackagingElement.findModule(context);
+                                                             return module == null || !modules.contains(module);
+                                                           }
+                                                         }, context, true);
   }
 }

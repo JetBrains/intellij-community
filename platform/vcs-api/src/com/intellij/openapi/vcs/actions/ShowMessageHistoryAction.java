@@ -18,8 +18,8 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.actions.ContentChooser;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
@@ -29,7 +29,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Action showing the history of recently used commit messages. Source code of this class is provided 
+ * Action showing the history of recently used commit messages. Source code of this class is provided
  * as a sample of using the {@link CheckinProjectPanel} API. Actions to be shown in the commit dialog
  * should be added to the <code>Vcs.MessageActionGroup</code> action group.
  *
@@ -43,11 +43,14 @@ public class ShowMessageHistoryAction extends AnAction implements DumbAware {
 
   public void update(AnActionEvent e) {
     super.update(e);
-    CheckinProjectPanel panel = (CheckinProjectPanel)e.getDataContext().getData(CheckinProjectPanel.PANEL);
+
+    final CheckinProjectPanel panel = (CheckinProjectPanel)CheckinProjectPanel.PANEL_KEY.getData(e.getDataContext());
+
     if (panel == null) {
       e.getPresentation().setVisible(false);
       e.getPresentation().setEnabled(false);
-    } else {
+    }
+    else {
       e.getPresentation().setVisible(true);
       final ArrayList<String> recentMessages = VcsConfiguration.getInstance(panel.getProject()).getRecentMessages();
       e.getPresentation().setEnabled(!recentMessages.isEmpty());
@@ -55,37 +58,42 @@ public class ShowMessageHistoryAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    CheckinProjectPanel panel = (CheckinProjectPanel)e.getDataContext().getData(CheckinProjectPanel.PANEL);
+    final CheckinProjectPanel panel = (CheckinProjectPanel)CheckinProjectPanel.PANEL_KEY.getData(e.getDataContext());
+
     if (panel != null) {
       final Project project = panel.getProject();
       final VcsConfiguration configuration = VcsConfiguration.getInstance(project);
 
-      final ArrayList<String> recentMessages = configuration.getRecentMessages();
-      Collections.reverse(recentMessages);
 
-      if (!recentMessages.isEmpty()) {
+      if (!configuration.getRecentMessages().isEmpty()) {
 
-        final ContentChooser<String> contentChooser = new ContentChooser<String>(project, VcsBundle.message("dialog.title.choose.commit.message.from.history"), false){
-          protected void removeContentAt(final String content) {
-          }
+        final ContentChooser<String> contentChooser =
+          new ContentChooser<String>(project, VcsBundle.message("dialog.title.choose.commit.message.from.history"), false) {
+            protected void removeContentAt(final String content) {
+              configuration.removeMessage(content);
+            }
 
-          protected String getStringRepresentationFor(final String content) {
-            return content;
-          }
+            protected String getStringRepresentationFor(final String content) {
+              return content;
+            }
 
-          protected List<String> getContents() {
-            return recentMessages;
-          }
-        };
+            protected List<String> getContents() {
+              final List<String> recentMessages = configuration.getRecentMessages();
+              Collections.reverse(recentMessages);
+              return recentMessages;
+            }
+          };
+
         contentChooser.show();
+
         if (contentChooser.isOK()) {
           final int selectedIndex = contentChooser.getSelectedIndex();
+
           if (selectedIndex >= 0) {
             panel.setCommitMessage(contentChooser.getAllContents().get(selectedIndex));
           }
         }
       }
-
     }
   }
 }

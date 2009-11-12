@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.ui;
 
-import org.jetbrains.annotations.NonNls;
 import com.intellij.openapi.actionSystem.DataKey;
 
 /**
@@ -25,17 +24,19 @@ import com.intellij.openapi.actionSystem.DataKey;
  * @author lesya
  */
 public interface Refreshable {
+  DataKey<Refreshable> PANEL_KEY = DataKey.create("Panel");
+
   /**
    * The data ID which can be used to retrieve the active <code>Refreshable</code>
    * instance from {@link com.intellij.openapi.actionSystem.DataContext}.
    *
    * @see com.intellij.openapi.actionSystem.DataContext#getData(String)
    */
-  @NonNls @Deprecated String PANEL = "Panel";
-  DataKey<Refreshable> PANEL_KEY = DataKey.create(PANEL);
+  @Deprecated String PANEL = PANEL_KEY.getName();
 
   void refresh();
 
   void saveState();
+
   void restoreState();
 }

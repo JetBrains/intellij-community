@@ -89,11 +89,10 @@ public class DeleteOptionsDialog extends DialogWrapper {
     panel.add(new JLabel("Recent Messages: "), gc);
     gc.gridy += 1;
 
-    ArrayList<String> messages = VcsConfiguration.getInstance(myProject).getRecentMessages();
-    if (messages != null) {
-      Collections.reverse(messages);
-    }
-    Object[] model = messages != null ? messages.toArray() : new Object[] {""};
+    final ArrayList<String> messages = VcsConfiguration.getInstance(myProject).getRecentMessages();
+    Collections.reverse(messages);
+
+    final String[] model = messages.toArray(new String[messages.size()]);
     final JComboBox messagesBox = new JComboBox(model);
     messagesBox.setRenderer(new MessageBoxCellRenderer());
     panel.add(messagesBox, gc);
