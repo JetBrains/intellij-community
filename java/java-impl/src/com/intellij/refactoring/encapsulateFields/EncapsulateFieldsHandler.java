@@ -106,6 +106,11 @@ public class EncapsulateFieldsHandler implements RefactoringActionHandler {
     }
 
     LOG.assertTrue(aClass != null);
+    final PsiField[] fields = aClass.getFields();
+    if (fields.length == 0) {
+      CommonRefactoringUtil.showErrorHint(project, PlatformDataKeys.EDITOR.getData(dataContext), "Class has no fields to encapsulate", REFACTORING_NAME, HelpID.ENCAPSULATE_FIELDS);
+      return;
+    }
 
     if (aClass.isInterface()) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("encapsulate.fields.refactoring.cannot.be.applied.to.interface"));
