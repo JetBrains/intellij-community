@@ -316,7 +316,7 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
   public void processOutdatedItem(final CompileContext context, final String url, @Nullable final ValidityState state) {
   }
 
-  protected boolean collectFilesToDelete(final CompileContext context, final ArtifactPackagingProcessingItem[] allProcessingItems) {
+  private boolean collectFilesToDelete(final CompileContext context, final ArtifactPackagingProcessingItem[] allProcessingItems) {
     List<String> filesToDelete = new ArrayList<String>();
     Set<String> outputPaths = createPathsHashSet();
     for (ArtifactPackagingProcessingItem item : allProcessingItems) {

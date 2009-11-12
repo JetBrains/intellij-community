@@ -17,22 +17,33 @@ package com.intellij.packaging.impl.compiler;
 
 import com.intellij.compiler.impl.packagingCompiler.DestinationInfo;
 import com.intellij.compiler.impl.packagingCompiler.ExplodedDestinationInfo;
-import com.intellij.compiler.impl.packagingCompiler.ProcessingItemsBuilderContext;
+import com.intellij.compiler.impl.packagingCompiler.JarInfo;
 import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.elements.ArtifactIncrementalCompilerContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author nik
  */
-public class ArtifactsProcessingItemsBuilderContext extends ProcessingItemsBuilderContext<ArtifactPackagingProcessingItem> implements ArtifactIncrementalCompilerContext {
+public class ArtifactsProcessingItemsBuilderContext implements ArtifactIncrementalCompilerContext {
   private boolean myCollectingEnabledItems;
+  protected final Map<VirtualFile, ArtifactPackagingProcessingItem> myItemsBySource;
+  private final Map<String, VirtualFile> mySourceByOutput;
+  private final MultiValuesMap<String, JarInfo> myJarsByPath;
+  private final CompileContext myCompileContext;
 
   public ArtifactsProcessingItemsBuilderContext(CompileContext compileContext) {
-    super(compileContext);
+    myCompileContext = compileContext;
+    myItemsBySource = new HashMap<VirtualFile, ArtifactPackagingProcessingItem>();
+    mySourceByOutput = new HashMap<String, VirtualFile>();
+    myJarsByPath = new MultiValuesMap<String, JarInfo>();
   }
 
   public boolean addDestination(@NotNull VirtualFile sourceFile, @NotNull DestinationInfo destinationInfo) {
@@ -47,10 +58,6 @@ public class ArtifactsProcessingItemsBuilderContext extends ProcessingItemsBuild
     return false;
   }
 
-  protected ArtifactPackagingProcessingItem createProcessingItem(VirtualFile sourceFile) {
-    return new ArtifactPackagingProcessingItem(sourceFile);
-  }
-
   public ArtifactPackagingProcessingItem[] getProcessingItems() {
     final Collection<ArtifactPackagingProcessingItem> processingItems = myItemsBySource.values();
     return processingItems.toArray(new ArtifactPackagingProcessingItem[processingItems.size()]);
@@ -58,5 +65,46 @@ public class ArtifactsProcessingItemsBuilderContext extends ProcessingItemsBuild
 
   public void setCollectingEnabledItems(boolean collectingEnabledItems) {
     myCollectingEnabledItems = collectingEnabledItems;
+  }
+
+  public boolean checkOutputPath(final String outputPath, final VirtualFile sourceFile) {
+    VirtualFile old = mySourceByOutput.get(outputPath);
+    if (old == null) {
+      mySourceByOutput.put(outputPath, sourceFile);
+      return true;
+    }
+    //todo[nik] show warning?
+    return false;
+  }
+
+  public ArtifactPackagingProcessingItem getItemBySource(VirtualFile source) {
+    return myItemsBySource.get(source);
+  }
+
+  public void registerJarFile(@NotNull JarInfo jarInfo, @NotNull String outputPath) {
+    myJarsByPath.put(outputPath, jarInfo);
+  }
+
+  @Nullable
+  public Collection<JarInfo> getJarInfos(String outputPath) {
+    return myJarsByPath.get(outputPath);
+  }
+
+  @Nullable
+  public VirtualFile getSourceByOutput(String outputPath) {
+    return mySourceByOutput.get(outputPath);
+  }
+
+  public CompileContext getCompileContext() {
+    return myCompileContext;
+  }
+
+  public ArtifactPackagingProcessingItem getOrCreateProcessingItem(VirtualFile sourceFile) {
+    ArtifactPackagingProcessingItem item = myItemsBySource.get(sourceFile);
+    if (item == null) {
+      item = new ArtifactPackagingProcessingItem(sourceFile);
+      myItemsBySource.put(sourceFile, item);
+    }
+    return item;
   }
 }
