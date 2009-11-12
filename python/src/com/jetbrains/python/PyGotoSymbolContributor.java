@@ -5,6 +5,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubIndex;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 
@@ -21,7 +22,7 @@ public class PyGotoSymbolContributor implements ChooseByNameContributor {
     Set<String> symbols = new HashSet<String>();
     symbols.addAll(StubIndex.getInstance().getAllKeys(PyClassNameIndex.KEY, project));
     symbols.addAll(StubIndex.getInstance().getAllKeys(PyFunctionNameIndex.KEY, project));
-    return symbols.toArray(new String[symbols.size()]);
+    return ArrayUtil.toStringArray(symbols);
   }
 
   public NavigationItem[] getItemsByName(final String name, final String pattern, final Project project, final boolean includeNonProjectItems) {

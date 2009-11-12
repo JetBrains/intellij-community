@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.facet.PythonFacetSettings;
 import org.jdom.Element;
@@ -103,7 +104,7 @@ public class PythonSdkType extends SdkType {
 
     if (candidates.size() > 0) {
       // return latest version
-      String[] candidateArray = candidates.toArray(new String[candidates.size()]);
+      String[] candidateArray = ArrayUtil.toStringArray(candidates);
       return candidateArray [candidateArray.length-1];
     }
     return null;

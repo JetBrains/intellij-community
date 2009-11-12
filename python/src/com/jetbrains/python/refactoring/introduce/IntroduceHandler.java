@@ -15,6 +15,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonLanguage;
@@ -72,7 +73,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
         }
       }
     }
-    return res.toArray(new String[res.size()]);
+    return ArrayUtil.toStringArray(res);
   }
 
   protected void performAction(@NotNull final Project project, Editor editor, PsiFile file, String name, boolean replaceAll) {

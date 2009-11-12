@@ -5,6 +5,7 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,7 +64,7 @@ public class SdkUtil {
         commands.add("/c");
       }
       Collections.addAll(commands, command);
-      Process process = Runtime.getRuntime().exec(commands.toArray(new String[commands.size()]), null, new File(homePath));
+      Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(commands), null, new File(homePath));
       CapturingProcessHandler processHandler = new CapturingProcessHandler(process);
       return processHandler.runProcess(timeout);
     }

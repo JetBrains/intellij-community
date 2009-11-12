@@ -1,6 +1,7 @@
 package com.jetbrains.python.refactoring.introduce.constant;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyExpression;
@@ -37,6 +38,6 @@ public class ConstantIntroduceHandler extends IntroduceHandler {
     for (String name : super.getSuggestedNames(expression)) {
       names.add(name.toUpperCase());
     }
-    return names.toArray(new String[names.size()]);
+    return ArrayUtil.toStringArray(names);
   }
 }
