@@ -73,6 +73,10 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
   private static final Key<ArtifactsProcessingItemsBuilderContext> BUILDER_CONTEXT_KEY = Key.create("artifacts_builder_context");
   @Nullable private PackagingCompilerCache myOutputItemsCache;
 
+  public static IncrementalArtifactsCompiler getInstance(@NotNull Project project) {
+    return CompilerManager.getInstance(project).getCompilers(IncrementalArtifactsCompiler.class)[0];
+  }
+
   private static ArtifactPackagingProcessingItem[] collectItems(ArtifactsProcessingItemsBuilderContext builderContext, final Project project) {
     final CompileContext context = builderContext.getCompileContext();
 

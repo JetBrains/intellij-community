@@ -313,7 +313,7 @@ public class CompileDriver {
     final AdditionalCompileScopeProvider[] scopeProviders = Extensions.getExtensions(AdditionalCompileScopeProvider.EXTENSION_POINT_NAME);
     CompileScope baseScope = scope;
     for (AdditionalCompileScopeProvider scopeProvider : scopeProviders) {
-      final CompileScope additionalScope = scopeProvider.getAdditionalScope(baseScope);
+      final CompileScope additionalScope = scopeProvider.getAdditionalScope(baseScope, filter, myProject);
       if (additionalScope != null) {
         scope = new CompositeScope(scope, additionalScope);
       }

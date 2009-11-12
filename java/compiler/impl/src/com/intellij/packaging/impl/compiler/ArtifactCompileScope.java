@@ -29,6 +29,7 @@ import com.intellij.packaging.impl.elements.ModuleOutputElementType;
 import com.intellij.packaging.impl.elements.ModuleOutputPackagingElement;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -40,6 +41,7 @@ import java.util.Set;
  */
 public class ArtifactCompileScope {
   private static final Key<Artifact[]> ARTIFACTS_KEY = Key.create("artifacts");
+  private static final Key<Set<Artifact>> CACHED_ARTIFACTS_KEY = Key.create("cached_artifacts");
 
   private ArtifactCompileScope() {
   }
@@ -72,10 +74,16 @@ public class ArtifactCompileScope {
   }
 
   public static Set<Artifact> getArtifactsToBuild(final Project project, final CompileScope compileScope) {
-    final Artifact[] artifactsFromScope = compileScope.getUserData(ARTIFACTS_KEY);
+    final Artifact[] artifactsFromScope = getArtifacts(compileScope);
     if (artifactsFromScope != null) {
       return new HashSet<Artifact>(Arrays.asList(artifactsFromScope));
     }
+
+    final Set<Artifact> cached = compileScope.getUserData(CACHED_ARTIFACTS_KEY);
+    if (cached != null) {
+      return cached;
+    }
+
     Set<Artifact> artifacts = new HashSet<Artifact>();
     final ArtifactManager artifactManager = ArtifactManager.getInstance(project);
     final Set<Module> modules = new HashSet<Module>(Arrays.asList(compileScope.getAffectedModules()));
@@ -87,7 +95,13 @@ public class ArtifactCompileScope {
         }
       }
     }
+    compileScope.putUserData(CACHED_ARTIFACTS_KEY, artifacts);
     return artifacts;
+  }
+
+  @Nullable
+  public static Artifact[] getArtifacts(CompileScope compileScope) {
+    return compileScope.getUserData(ARTIFACTS_KEY);
   }
 
   private static boolean containsModuleOutput(Artifact artifact, final Set<Module> modules, ArtifactManager artifactManager) {
