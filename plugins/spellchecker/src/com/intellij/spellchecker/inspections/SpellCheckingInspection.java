@@ -52,6 +52,7 @@ import java.util.Map;
 public class SpellCheckingInspection extends LocalInspectionTool {
   
   public static final String SPELL_CHECKING_INSPECTION_TOOL_NAME = "SpellCheckingInspection";
+  private static final AcceptWordAsCorrect BATCH_ACCEPT_FIX = new AcceptWordAsCorrect();
 
   @Nls
   @NotNull
@@ -187,10 +188,10 @@ public class SpellCheckingInspection extends LocalInspectionTool {
         }
       }
 
-      final AcceptWordAsCorrect acceptWordAsCorrect = new AcceptWordAsCorrect();
+      final AcceptWordAsCorrect acceptWordAsCorrect = isOnTheFly ? BATCH_ACCEPT_FIX : new AcceptWordAsCorrect();
       fixes.add(acceptWordAsCorrect);
 
-      final ProblemDescriptor problemDescriptor = createProblemDescriptor(token, holder, textRange, fixes);
+      final ProblemDescriptor problemDescriptor = createProblemDescriptor(token, holder, textRange, fixes, isOnTheFly);
       holder.registerProblem(problemDescriptor);
     }
 
@@ -198,10 +199,10 @@ public class SpellCheckingInspection extends LocalInspectionTool {
 
   private static ProblemDescriptor createProblemDescriptor(Token token,
                                                            ProblemsHolder holder,
-                                                           TextRange textRange, Collection<SpellCheckerQuickFix> fixes) {
+                                                           TextRange textRange, Collection<SpellCheckerQuickFix> fixes, boolean onTheFly) {
     //TODO: these descriptions eat LOTS of HEAP on batch run - need either to make them constant or evaluate template dynamically
     //  ( add something like #text substitution)
-    final String defaultDescription = SpellCheckerBundle.message("word.0.1.is.misspelled");
+    final String defaultDescription = SpellCheckerBundle.message("typo.in");
     final String tokenDescription = token.getDescription();
     final String description = tokenDescription == null ? defaultDescription : tokenDescription;
     final TextRange highlightRange = TextRange.from(token.getOffset() + textRange.getStartOffset(), textRange.getLength());
@@ -211,8 +212,10 @@ public class SpellCheckingInspection extends LocalInspectionTool {
     final ProblemDescriptor problemDescriptor = holder.getManager()
       .createProblemDescriptor(token.getElement(), highlightRange, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, holder.isOnTheFly(),
                                quickFixes);
-    for (SpellCheckerQuickFix fix : fixes) {
-      fix.setDescriptor(problemDescriptor);
+    if(onTheFly) {
+      for (SpellCheckerQuickFix fix : fixes) {
+        fix.setDescriptor(problemDescriptor);
+      }
     }
     return problemDescriptor;
   }
