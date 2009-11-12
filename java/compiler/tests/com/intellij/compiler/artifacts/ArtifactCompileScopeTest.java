@@ -33,15 +33,34 @@ public class ArtifactCompileScopeTest extends ArtifactCompilerTestCase {
     compile(module1);
     assertNoOutput(artifact);
 
-    final ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
-    model.getOrCreateModifiableArtifact(artifact).setBuildOnMake(true);
-    commitModel(model);                 
+    setBuildOnMake(artifact);
 
     compile(module2);
     assertNoOutput(artifact);
 
     compile(module1);
     assertOutput(artifact, fs().file("A.class"));
+  }
+
+  private void setBuildOnMake(Artifact artifact) {
+    final ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
+    model.getOrCreateModifiableArtifact(artifact).setBuildOnMake(true);
+    commitModel(model);
+  }
+
+  public void testMakeFullArtifactIfIncludedModuleIsCompiled() throws Exception {
+    final VirtualFile file1 = createFile("src1/A.java", "public class A{}");
+    final Module module1 = addModule("module1", file1.getParent());
+    final VirtualFile file2 = createFile("src2/B.java", "public class B {}");
+    final Module module2 = addModule("module2", file2.getParent());
+    CompilerTestUtil.scanSourceRootsToRecompile(myProject);
+
+    final Artifact artifact = addArtifact(root().module(module1).module(module2));
+
+    setBuildOnMake(artifact);
+
+    compile(module1);
+    assertOutput(artifact, fs().file("A.class").file("B.class"));
   }
 
   private Module addModule(final String moduleName, final VirtualFile sourceRoot) {
