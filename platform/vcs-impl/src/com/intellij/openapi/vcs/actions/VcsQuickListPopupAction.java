@@ -189,6 +189,10 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
     toGroup.add(separator);
   }
 
+  protected String getPopupTitle(AnActionEvent e) {
+    return VcsBundle.message("vcs.quicklist.pupup.title");
+  }
+
   public enum SupportedVCS {
     VCS,
     NOT_IN_VCS
