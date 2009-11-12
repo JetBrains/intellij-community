@@ -18,7 +18,8 @@ public class PythonInspectionToolProvider implements InspectionToolProvider {
       PyMethodFirstArgAssignmentInspection.class,
       PyStringFormatInspection.class,
       PyMethodOverridingInspection.class,
-      PyTrailingSemicolonInspection.class
+      PyTrailingSemicolonInspection.class,
+      PyReturnFromInitInspection.class,
     };
   }
 }

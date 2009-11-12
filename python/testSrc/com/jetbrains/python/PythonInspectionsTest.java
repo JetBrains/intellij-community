@@ -10,9 +10,8 @@ import com.jetbrains.python.inspections.*;
  */
 public class PythonInspectionsTest extends PyLightFixtureTestCase {
   public void testReturnValueFromInit() throws Throwable {
-    final JythonManager manager = JythonManager.getInstance();
-    manager.execScriptFromResource("inspections/inspections.py"); // could be moved to setUp() if more jython-based inspections existed
-    doTest(getTestName(true), PythonPyInspectionToolProvider.getInstance().createLocalInspectionTool("ReturnValueFromInitInspection"));
+    LocalInspectionTool inspection = new PyReturnFromInitInspection();
+    doTest(getTestName(true), inspection);
   }
 
   private void doTest(String testName, LocalInspectionTool localInspectionTool) throws Throwable {
