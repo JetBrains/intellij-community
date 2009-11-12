@@ -202,7 +202,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
                                                            TextRange textRange, Collection<SpellCheckerQuickFix> fixes, boolean onTheFly) {
     //TODO: these descriptions eat LOTS of HEAP on batch run - need either to make them constant or evaluate template dynamically
     //  ( add something like #text substitution)
-    final String defaultDescription = SpellCheckerBundle.message("typo.in");
+    final String defaultDescription = SpellCheckerBundle.message("typo.in.word.ref");
     final String tokenDescription = token.getDescription();
     final String description = tokenDescription == null ? defaultDescription : tokenDescription;
     final TextRange highlightRange = TextRange.from(token.getOffset() + textRange.getStartOffset(), textRange.getLength());
