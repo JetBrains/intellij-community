@@ -182,7 +182,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
         result.add(file);
       }
     }
-    return result.toArray(new VirtualFile[result.size()]);
+    return result.isEmpty() ? VirtualFile.EMPTY_ARRAY : result.toArray(new VirtualFile[result.size()]);
   }
 
   @NotNull

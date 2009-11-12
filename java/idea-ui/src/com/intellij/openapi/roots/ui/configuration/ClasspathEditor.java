@@ -213,11 +213,11 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
       return ClasspathStorage.getStorageType(getModel().getModule());
     }
 
-    boolean isModified () {
+    boolean isModified() {
       return cbClasspathFormat != null && !getSelectedClasspathFormat().equals(getModuleClasspathFormat());
     }
 
-    void apply () throws ConfigurationException {
+    void apply() throws ConfigurationException {
       final String storageID = getSelectedClasspathFormat();
       ClasspathStorage.getProvider(storageID).assertCompatible(getModel());
       ClasspathStorage.setStorageType(getModel(), storageID);

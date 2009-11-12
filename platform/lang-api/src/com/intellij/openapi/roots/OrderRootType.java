@@ -19,10 +19,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Root types that can be queried from OrderEntry.
@@ -111,13 +108,22 @@ public class OrderRootType {
   }
 
   protected static <T> T getOrderRootType(final Class<? extends T> orderRootTypeClass) {
-    for(OrderRootType rootType: Extensions.getExtensions(EP_NAME)) {
+    OrderRootType[] rootTypes = Extensions.getExtensions(EP_NAME);
+    for(OrderRootType rootType: rootTypes) {
       if (orderRootTypeClass.isInstance(rootType)) {
         //noinspection unchecked
         return (T)rootType;
       }
     }
-    assert false;
+    assert false : "Root type "+orderRootTypeClass+" not found. All roots: "+ Arrays.asList(rootTypes);
     return null;
+  }
+
+  public final int hashCode() {
+    return super.hashCode();
+  }
+
+  public final boolean equals(Object obj) {
+    return super.equals(obj);
   }
 }

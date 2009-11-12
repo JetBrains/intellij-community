@@ -26,7 +26,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.EventListener;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author max
@@ -36,7 +35,7 @@ public class EventDispatcher <T extends EventListener>{
 
   private final T myMulticaster;
 
-  private final CopyOnWriteArrayList<T> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<T> myListeners = ContainerUtil.createEmptyCOWList();
 
   public static <T extends EventListener> EventDispatcher<T> create(Class<T> listenerClass) {
     return new EventDispatcher<T>(listenerClass);
