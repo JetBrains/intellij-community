@@ -37,7 +37,7 @@ public class ProblemsHolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ProblemsHolder");
   private final InspectionManager myManager;
   private final PsiFile myFile;
-  private boolean myOnTheFly;
+  private final boolean myOnTheFly;
   private List<ProblemDescriptor> myProblems = null;
 
   public ProblemsHolder(@NotNull InspectionManager manager, @NotNull PsiFile file, boolean onTheFly) {
@@ -63,7 +63,13 @@ public class ProblemsHolder {
     }
     PsiElement element = problemDescriptor.getPsiElement();
     if (element != null && !isInPsiFile(element)) {
-      LOG.error("Reported element " + element + " is not from the file '" + myFile + "' the inspection was invoked for. Message:" + problemDescriptor.getDescriptionTemplate());
+      PsiFile containingFile = element.getContainingFile();
+      PsiElement context = containingFile.getContext();
+      PsiElement myContext = myFile.getContext();
+      LOG.error("Reported element " + element + " is not from the file '" + myFile + "' the inspection was invoked for. Message: '" + problemDescriptor.getDescriptionTemplate()+"'.\n" +
+                "Element' containing file: "+ containingFile +"; context: "+(context == null ? null : context.getContainingFile())+"\n"
+                +"Inspection invoked for file: "+ myFile +"; context: "+(myContext == null ? null : myContext.getContainingFile())+"\n"
+                );
     }
     myProblems.add(problemDescriptor);
   }
