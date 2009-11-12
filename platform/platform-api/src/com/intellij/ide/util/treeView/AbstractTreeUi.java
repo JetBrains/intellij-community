@@ -828,16 +828,19 @@ public class AbstractTreeUi {
                                   final boolean toSmartExpand,
                                   boolean forceUpdate,
                                   final boolean descriptorIsUpToDate) {
-    getTreeStructure().commit();
-    final boolean wasExpanded = myTree.isExpanded(new TreePath(node.getPath())) || isAutoExpand(node);
-    final boolean wasLeaf = node.getChildCount() == 0;
-
     try {
+      getTreeStructure().commit();
+
+
       final NodeDescriptor descriptor = getDescriptorFrom(node);
       if (descriptor == null) {
         removeLoading(node, true);
         return;
       }
+
+      final boolean wasExpanded = myTree.isExpanded(new TreePath(node.getPath())) || isAutoExpand(node);
+      final boolean wasLeaf = node.getChildCount() == 0;
+
 
       boolean bgBuild = isToBuildInBackground(descriptor);
       boolean notRequiredToUpdateChildren = !forcedNow && !wasExpanded;
