@@ -34,14 +34,25 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 public class InlineSuperCallUsageInfo extends FixableUsageInfo {
+  private PsiCodeBlock myConstrBody;
 
   public InlineSuperCallUsageInfo(PsiMethodCallExpression methodCallExpression) {
     super(methodCallExpression);
   }
 
+  public InlineSuperCallUsageInfo(PsiMethodCallExpression methodCallExpression, PsiCodeBlock constrBody) {
+    super(methodCallExpression);
+    myConstrBody = constrBody;
+  }
+
   @Override
   public void fixUsage() throws IncorrectOperationException {
-    final PsiElement element = getElement();
+    PsiElement element = getElement();
+    if (element != null && myConstrBody != null) {
+      assert !element.isPhysical();
+      final PsiStatement statement = JavaPsiFacade.getElementFactory(getProject()).createStatementFromText("super();", myConstrBody);
+      element = ((PsiExpressionStatement)myConstrBody.addBefore(statement, myConstrBody.getFirstBodyElement())).getExpression();
+    }
     if (element instanceof PsiMethodCallExpression) {
       PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)element).getMethodExpression();
       final PsiMethod superConstructor = (PsiMethod)methodExpression.resolve();

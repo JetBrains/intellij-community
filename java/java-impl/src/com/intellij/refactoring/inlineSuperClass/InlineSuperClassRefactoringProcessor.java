@@ -34,13 +34,13 @@ import com.intellij.refactoring.memberPushDown.PushDownProcessor;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.refactoring.util.FixableUsagesRefactoringProcessor;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
-import com.intellij.util.containers.HashMap;
+import com.intellij.util.Processor;import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -79,6 +79,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(myProject);
     final PsiElementFactory elementFactory = facade.getElementFactory();
     final PsiResolveHelper resolveHelper = facade.getResolveHelper();
+
     ReferencesSearch.search(mySuperClass).forEach(new Processor<PsiReference>() {
       public boolean process(final PsiReference reference) {
         final PsiElement element = reference.getElement();
@@ -134,12 +135,14 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
         for (PsiReference reference : ReferencesSearch.search(member, member.getUseScope(), true)) {
           final PsiElement element = reference.getElement();
           if (element instanceof PsiReferenceExpression &&
-              ((PsiReferenceExpression)element).getQualifierExpression() instanceof PsiSuperExpression && PsiTreeUtil.isAncestor(
-            targetClass, element, false)) {
+              ((PsiReferenceExpression)element).getQualifierExpression() instanceof PsiSuperExpression &&
+              PsiTreeUtil.isAncestor(targetClass, element, false)) {
             usages.add(new RemoveQualifierUsageInfo((PsiReferenceExpression)element));
           }
         }
       }
+
+      final PsiMethod[] superConstructors = mySuperClass.getConstructors();
       for (PsiMethod constructor : targetClass.getConstructors()) {
         final PsiCodeBlock constrBody = constructor.getBody();
         LOG.assertTrue(constrBody != null);
@@ -154,9 +157,28 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
                 final PsiMethod superConstructor = ((PsiMethodCallExpression)expression).resolveMethod();
                 if (superConstructor != null && superConstructor.getBody() != null) {
                   usages.add(new InlineSuperCallUsageInfo((PsiMethodCallExpression)expression));
+                  continue;
                 }
               }
             }
+          }
+        }
+
+        //insert implicit call to super
+        for (PsiMethod superConstructor : superConstructors) {
+          if (superConstructor.getParameterList().getParametersCount() == 0) {
+            final PsiExpression expression = JavaPsiFacade.getElementFactory(myProject).createExpressionFromText("super()", constructor);
+            usages.add(new InlineSuperCallUsageInfo((PsiMethodCallExpression)expression, constrBody));
+          }
+        }
+      }
+
+      if (targetClass.getConstructors().length == 0) {
+        //copy default constructor
+        for (PsiMethod superConstructor : superConstructors) {
+          if (superConstructor.getParameterList().getParametersCount() == 0) {
+            usages.add(new CopyDefaultConstructorUsageInfo(targetClass, superConstructor));
+            break;
           }
         }
       }
@@ -191,7 +213,25 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
       }
     }.run();
     replaceInnerTypeUsages();
-    super.performRefactoring(usages);
+
+    RefactoringUtil.sortDepthFirstRightLeftOrder(usages);
+    for (UsageInfo usageInfo : usages) {
+      if (!(usageInfo instanceof ReplaceExtendsListUsageInfo)) {
+        try {
+          ((FixableUsageInfo)usageInfo).fixUsage();
+        }
+        catch (IncorrectOperationException e) {
+          LOG.info(e);
+        }
+      }
+    }
+
+    //postpone broken hierarchy
+    for (UsageInfo usage : usages) {
+      if (usage instanceof ReplaceExtendsListUsageInfo) {
+        ((ReplaceExtendsListUsageInfo)usage).fixUsage();
+      }
+    }
     try {
       mySuperClass.delete();
     }

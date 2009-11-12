@@ -2,8 +2,10 @@ class Test {
     String s;
 
     Test(String s){
-    super(s);
-    System.out.println("hello");
+        if (s != null) {
+          this.s = s;
+        }
+        System.out.println("hello");
   }
 
     void foo() {
