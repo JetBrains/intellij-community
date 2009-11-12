@@ -171,8 +171,8 @@ public class SMTRunnerUIActionsHandlerTest extends BaseSMTRunnerTestCase {
   }
 
 
-  public void testSelectFirstDeffect_Priority_Error() {
-    // Priority: error -> failure -> pending
+  public void testSelectFirstDefect_Priority_Error() {
+    // Priority: error -> failure
     TestConsoleProperties.SELECT_FIRST_DEFECT.set(myProperties, true);
     mySuite.setStarted();
 
@@ -215,8 +215,8 @@ public class SMTRunnerUIActionsHandlerTest extends BaseSMTRunnerTestCase {
     assertEquals(testError, mySelectedTestProxy);
   }
 
-  public void testSelectFirstDeffect_Priority_Failure() {
-    // Priority: error -> failure -> pending
+  public void testSelectFirstDefect_Priority_Failure() {
+    // Priority: error -> failure
     TestConsoleProperties.SELECT_FIRST_DEFECT.set(myProperties, true);
     mySuite.setStarted();
 
@@ -253,8 +253,8 @@ public class SMTRunnerUIActionsHandlerTest extends BaseSMTRunnerTestCase {
     assertEquals(testFailed, mySelectedTestProxy);
   }
 
-  public void testSelectFirstDeffect_Priority_Pending() {
-    // Priority: error -> failure -> pending
+  public void testSelectFirstDefect_Priority_Pending() {
+    // Priority: error -> failure
     TestConsoleProperties.SELECT_FIRST_DEFECT.set(myProperties, true);
     mySuite.setStarted();
 
@@ -267,12 +267,6 @@ public class SMTRunnerUIActionsHandlerTest extends BaseSMTRunnerTestCase {
     myUIActionsHandler.onTestNodeAdded(myResultsViewer, testPending);
     testPending.setTestIgnored("", "");
 
-    // Second pending test just to check that first failed will be selected
-    final SMTestProxy testPending2 = createTestProxy("testPending2", testsSuite);
-    testPending2.setStarted();
-    myUIActionsHandler.onTestNodeAdded(myResultsViewer, testPending2);
-    testPending2.setTestIgnored("", "");
-
     // finish suite
     testsSuite.setFinished();
     assertNull(mySelectedTestProxy);
@@ -282,7 +276,8 @@ public class SMTRunnerUIActionsHandlerTest extends BaseSMTRunnerTestCase {
     assertNull(mySelectedTestProxy);
 
     myUIActionsHandler.onTestingFinished(myResultsViewer);
-    assertEquals(testPending, mySelectedTestProxy);
+    // pending tests shouldn't be considered as errors/failures
+    assertNull(mySelectedTestProxy);
   }
 
   public void testTrackRunningTest() {
