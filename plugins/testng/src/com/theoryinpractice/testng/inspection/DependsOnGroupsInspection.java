@@ -29,6 +29,7 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.ArrayUtil;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -80,7 +81,7 @@ public class DependsOnGroupsInspection extends BaseJavaLocalInspectionTool {
   public JComponent createOptionsPanel() {
     final LabeledComponent<JTextField> definedGroups = new LabeledComponent<JTextField>();
     definedGroups.setText("&Defined Groups");
-    final JTextField textField = new JTextField(StringUtil.join(groups.toArray(new String[groups.size()]), ","));
+    final JTextField textField = new JTextField(StringUtil.join(ArrayUtil.toStringArray(groups), ","));
     textField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {
         groups.clear();

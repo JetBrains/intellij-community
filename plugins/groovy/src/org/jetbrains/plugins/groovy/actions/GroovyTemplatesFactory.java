@@ -21,6 +21,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -103,6 +104,6 @@ public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactor
   }
 
   public String[] getCustomTemplates() {
-    return myCustomTemplates.toArray(new String[myCustomTemplates.size()]);
+    return ArrayUtil.toStringArray(myCustomTemplates);
   }
 }

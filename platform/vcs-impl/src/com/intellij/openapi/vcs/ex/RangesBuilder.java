@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.ex;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.diff.Diff;
 
 import java.util.ArrayList;
@@ -67,7 +68,7 @@ public class RangesBuilder {
       }
     }
 
-    Diff.Change ch = Diff.buildChanges(upToDate.toArray(new String[upToDate.size()]), current.toArray(new String[current.size()]));
+    Diff.Change ch = Diff.buildChanges(ArrayUtil.toStringArray(upToDate), ArrayUtil.toStringArray(current));
 
 
     while (ch != null) {

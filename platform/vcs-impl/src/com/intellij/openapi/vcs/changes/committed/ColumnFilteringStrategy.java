@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,7 +99,7 @@ public class ColumnFilteringStrategy extends JPanel implements ChangeListFilteri
         values.add(myColumn.getValue(ReceivedChangeList.unwrap(changeList)).toString());
       }
     }
-    final String[] valueArray = values.toArray(new String[values.size()]);
+    final String[] valueArray = ArrayUtil.toStringArray(values);
     myValueList.setModel(new AbstractListModel() {
       public int getSize() {
         return valueArray.length+1;

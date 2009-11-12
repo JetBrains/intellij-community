@@ -201,7 +201,7 @@ public class SvnUtil {
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(command, SvnBundle.message("progress.title.lock.files"), false, project);
     if (!failedLocks.isEmpty()) {
-      String[] failedFiles = failedLocks.toArray(new String[failedLocks.size()]);
+      String[] failedFiles = ArrayUtil.toStringArray(failedLocks);
       List<VcsException> exceptions = new ArrayList<VcsException>();
 
       for (String file : failedFiles) {
@@ -265,7 +265,7 @@ public class SvnUtil {
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(command, SvnBundle.message("progress.title.unlock.files"), false, project);
     if (!failedUnlocks.isEmpty()) {
-      String[] failedFiles = failedUnlocks.toArray(new String[failedUnlocks.size()]);
+      String[] failedFiles = ArrayUtil.toStringArray(failedUnlocks);
       List<VcsException> exceptions = new ArrayList<VcsException>();
 
       for (String file : failedFiles) {

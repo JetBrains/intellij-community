@@ -22,6 +22,7 @@ import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,7 +95,7 @@ public class XmlTagUtil extends XmlTagUtilBase {
 
   public static String[] getCharacterEntityNames() {
     Set<String> strings = ourCharacterEntities.keySet();
-    return strings.toArray(new String[strings.size()]);
+    return ArrayUtil.toStringArray(strings);
   }
 
   public static Character getCharacterByEntityName(String entityName) {

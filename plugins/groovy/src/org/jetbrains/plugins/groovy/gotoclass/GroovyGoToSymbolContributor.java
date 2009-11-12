@@ -20,6 +20,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubIndex;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotationMethodNameIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFieldNameIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrMethodNameIndex;
@@ -40,7 +41,7 @@ public class GroovyGoToSymbolContributor implements ChooseByNameContributor {
     symbols.addAll(StubIndex.getInstance().getAllKeys(GrFieldNameIndex.KEY, project));
     symbols.addAll(StubIndex.getInstance().getAllKeys(GrMethodNameIndex.KEY, project));
     symbols.addAll(StubIndex.getInstance().getAllKeys(GrAnnotationMethodNameIndex.KEY, project));
-    return symbols.toArray(new String[symbols.size()]);
+    return ArrayUtil.toStringArray(symbols);
   }
 
   public NavigationItem[] getItemsByName(String name, String pattern, Project project, boolean includeNonProjectItems) {

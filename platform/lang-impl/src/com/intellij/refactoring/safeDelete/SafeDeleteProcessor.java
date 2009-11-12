@@ -43,6 +43,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
@@ -173,7 +174,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
         throw new ConflictsInTestsException(conflicts);
       }
       else {
-        UnsafeUsagesDialog dialog = new UnsafeUsagesDialog(conflicts.toArray(new String[conflicts.size()]), myProject);
+        UnsafeUsagesDialog dialog = new UnsafeUsagesDialog(ArrayUtil.toStringArray(conflicts), myProject);
         dialog.show();
         if (!dialog.isOK()) {
           final int exitCode = dialog.getExitCode();

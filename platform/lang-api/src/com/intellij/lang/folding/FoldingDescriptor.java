@@ -118,5 +118,4 @@ public class FoldingDescriptor {
     }
     return null;
   }
-
 }

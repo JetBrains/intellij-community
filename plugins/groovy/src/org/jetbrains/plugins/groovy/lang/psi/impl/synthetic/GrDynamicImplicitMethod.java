@@ -27,6 +27,7 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
@@ -79,7 +80,7 @@ public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, 
       result.add(psiParameter.getTypeElement().getType().getCanonicalText());
     }
 
-    return result.toArray(new String[result.size()]);
+    return ArrayUtil.toStringArray(result);
   }
 
   public String getContainingClassName() {
@@ -300,7 +301,7 @@ public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, 
         }
 
         for (PsiClass aSuper : PsiUtil.iterateSupers(psiClass, true)) {
-          methodElement = DynamicManager.getInstance(myProject).findConcreteDynamicMethod(aSuper.getQualifiedName(), getName(), parameterTypes.toArray(new String[parameterTypes.size()]));
+          methodElement = DynamicManager.getInstance(myProject).findConcreteDynamicMethod(aSuper.getQualifiedName(), getName(), ArrayUtil.toStringArray(parameterTypes));
 
           if (methodElement != null) {
             trueClass = aSuper;

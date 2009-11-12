@@ -41,6 +41,7 @@ import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwRootContainer;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -475,7 +476,7 @@ public final class Generator {
         property2fqClassName.put(binding.myBeanProperty.myName, propertyClassName);
       }
 
-      generateBean(beanClass, properties.toArray(new String[properties.size()]), property2fqClassName);
+      generateBean(beanClass, ArrayUtil.toStringArray(properties), property2fqClassName);
 
       return beanClass;
     }

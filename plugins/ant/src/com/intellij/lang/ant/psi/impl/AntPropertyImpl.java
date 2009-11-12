@@ -390,7 +390,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
           }
         }
       }
-      return strings.toArray(new String[strings.size()]);
+      return ArrayUtil.toStringArray(strings);
     }
     finally {
       StringSetSpinAllocator.dispose(strings);
@@ -404,7 +404,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
       for (final String prefix : getAntFile().getEnvironmentPrefixes()) {
         strings.add(prefix + sourceName);
       }
-      return strings.toArray(new String[strings.size()]);
+      return ArrayUtil.toStringArray(strings);
     }
     finally {
       StringSetSpinAllocator.dispose(strings);

@@ -35,6 +35,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import org.jetbrains.idea.maven.project.MavenException;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -185,7 +186,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   private void assertModuleLibDepPath(LibraryOrderEntry lib, OrderRootType type, List<String> paths) {
     if (paths == null) return;
-    assertUnorderedElementsAreEqual(lib.getUrls(type), paths.toArray(new String[paths.size()]));
+    assertUnorderedElementsAreEqual(lib.getUrls(type), ArrayUtil.toStringArray(paths));
   }
 
   protected void assertModuleLibDepScope(String moduleName, String depName, DependencyScope scope) {

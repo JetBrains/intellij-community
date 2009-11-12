@@ -16,11 +16,9 @@
 package com.intellij.spellchecker.quickfixes;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.openapi.actionSystem.Anchor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +34,9 @@ public class AcceptWordAsCorrect implements SpellCheckerQuickFix {
 
   @NotNull
   public String getName() {
-    return SpellCheckerBundle.message("add.0.to.dictionary", ProblemDescriptionNode.extractHighlightedText(myProblemDescriptor, myProblemDescriptor.getPsiElement()));
+    return myProblemDescriptor!=null ? SpellCheckerBundle.message("add.0.to.dictionary", ProblemDescriptionNode.extractHighlightedText(myProblemDescriptor, myProblemDescriptor.getPsiElement()))
+       : SpellCheckerBundle.message("add.to.dictionary")
+       ;
   }
 
   @NotNull

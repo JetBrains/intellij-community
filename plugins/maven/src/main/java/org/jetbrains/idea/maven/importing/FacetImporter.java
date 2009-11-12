@@ -19,6 +19,7 @@ import com.intellij.facet.*;
 import com.intellij.facet.impl.autodetecting.FacetAutodetectingManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.idea.maven.project.*;
@@ -153,7 +154,7 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
     List<String> elements = new ArrayList<String>();
     elements.add(p.getBuildDirectory());
     Collections.addAll(elements, subFoldersAndFile);
-    return makePath(p, elements.toArray(new String[elements.size()]));
+    return makePath(p, ArrayUtil.toStringArray(elements));
   }
 
   protected String makePath(MavenProject p, String... elements) {

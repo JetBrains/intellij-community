@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.noncode;
 
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.plugins.groovy.annotator.inspections.GroovyImmutableAnnotationInspection;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -71,8 +72,7 @@ public class ImmutableAnnotationProcessor implements NonCodeMembersProcessor {
       String name = grClass.getName();
       if (name == null) return true;
       GrMethod constructor = GroovyPsiElementFactory.getInstance(annotation.getProject())
-          .createConstructorFromText(name, paramTypes.toArray(new String[paramTypes.size()]),
-                                     paramNames.toArray(new String[paramNames.size()]), "{}");
+          .createConstructorFromText(name, ArrayUtil.toStringArray(paramTypes), ArrayUtil.toStringArray(paramNames), "{}");
         GroovyResolveResultImpl result = new GroovyResolveResultImpl(new GrSyntheticConstructor(constructor, grClass), true);
         return processor.execute(result.getElement(), ResolveState.initial());
       }

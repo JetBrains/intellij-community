@@ -29,6 +29,7 @@ public class PomModelEvent extends EventObject {
     super(source);
   }
 
+  @NotNull
   public Set<PomModelAspect> getChangedAspects() {
     if (myChangeSets != null) {
       return myChangeSets.keySet();

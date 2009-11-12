@@ -18,13 +18,14 @@ package org.intellij.lang.xpath.xslt.impl;
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ArrayUtil;
 
 import java.util.Collection;
 
 class XsltChooseByNameContributor implements ChooseByNameContributor {
     public String[] getNames(Project project, boolean includeNonProjectItems) {
         final Collection<String> symbols = XsltSymbolIndex.getSymbolNames(project, includeNonProjectItems);
-        return symbols.toArray(new String[symbols.size()]);
+      return ArrayUtil.toStringArray(symbols);
     }
 
     public NavigationItem[] getItemsByName(String name, String pattern, Project project, boolean includeNonProjectItems) {

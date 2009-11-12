@@ -270,7 +270,7 @@ public class JavaCompletionUtil {
 
 
     }
-    return result.toArray(new String[result.size()]);
+    return ArrayUtil.toStringArray(result);
   }
 
   private static void tunePreferencePolicy(final List<LookupElement> list, final SuggestedNameInfo suggestedNameInfo) {
@@ -319,7 +319,7 @@ public class JavaCompletionUtil {
         newSuggestions.add(suggestion);
       }
     }
-    return newSuggestions.toArray(new String[newSuggestions.size()]);
+    return ArrayUtil.toStringArray(newSuggestions);
   }
 
   static int getOverlap(final String propertyName, final String prefix) {

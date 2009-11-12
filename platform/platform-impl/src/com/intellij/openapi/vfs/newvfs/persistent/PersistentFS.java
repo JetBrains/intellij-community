@@ -153,7 +153,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       Set<String> allNamesSet = new LinkedHashSet<String>((currentNames.length + delegateNames.length) * 2);
       allNamesSet.addAll(Arrays.asList(currentNames));
       allNamesSet.addAll(Arrays.asList(delegateNames));
-      names = allNamesSet.toArray(new String[allNamesSet.size()]);
+      names = ArrayUtil.toStringArray(allNamesSet);
     }
 
     final int[] childrenIds = ArrayUtil.newIntArray(names.length);

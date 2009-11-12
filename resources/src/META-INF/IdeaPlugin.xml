@@ -295,8 +295,6 @@
 
     <projectService serviceInterface="com.intellij.openapi.module.ModulePointerManager"
                     serviceImplementation="com.intellij.openapi.module.impl.ModulePointerManagerImpl"/>
-    <applicationService serviceInterface="com.intellij.internal.psiView.PsiViewerSettings"
-                    serviceImplementation="com.intellij.internal.psiView.PsiViewerSettings"/>
 
     <applicationService serviceInterface="com.intellij.facet.ui.FacetEditorsFactory"
                         serviceImplementation="com.intellij.facet.impl.ui.FacetEditorsFactoryImpl"/>

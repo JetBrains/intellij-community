@@ -39,7 +39,7 @@ public class ValueRegExpAnnotator implements Annotator {
     LanguageAnnotators.INSTANCE.addExplicitExtension(RegExpLanguage.INSTANCE, new ValueRegExpAnnotator());
   }
 
-  private ValueRegExpAnnotator() {
+  public ValueRegExpAnnotator() {
   }
 
   public void annotate(PsiElement psiElement, AnnotationHolder holder) {

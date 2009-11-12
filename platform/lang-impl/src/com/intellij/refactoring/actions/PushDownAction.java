@@ -28,6 +28,11 @@ import com.intellij.refactoring.lang.ElementsHandler;
 
 
 public class PushDownAction extends BaseRefactoringAction {
+
+  public PushDownAction() {
+    setInjectedContext(true);
+  }
+
   public boolean isAvailableInEditorOnly() {
     return false;
   }

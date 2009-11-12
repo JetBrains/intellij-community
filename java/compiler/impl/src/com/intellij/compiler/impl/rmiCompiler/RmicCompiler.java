@@ -39,6 +39,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
@@ -301,7 +302,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
     for (RmicProcessingItem item : items) {
       commandLine.add(item.getClassQName());
     }
-    return commandLine.toArray(new String[commandLine.size()]);
+    return ArrayUtil.toStringArray(commandLine);
   }
 
   @NotNull

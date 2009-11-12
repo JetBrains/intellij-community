@@ -180,7 +180,7 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
     final boolean exaustive = XmlUtil.collectEnumerationValues(declaration, variants);
 
     if (variants.size() > 0) {
-      return new EnumerationData(variants.toArray(new String[variants.size()]), exaustive);
+      return new EnumerationData(ArrayUtil.toStringArray(variants), exaustive);
     }
     return null;
   }

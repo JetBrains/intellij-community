@@ -37,7 +37,7 @@ public class UnknownConfigurationType implements ConfigurationType {
   }
 
   public String getConfigurationTypeDescription() {
-    return "Configuration which cannot be loaded due to some resons";
+    return "Configuration which cannot be loaded due to some reasons";
   }
 
   public Icon getIcon() {

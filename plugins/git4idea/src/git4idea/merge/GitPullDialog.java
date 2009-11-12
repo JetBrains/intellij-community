@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.ArrayUtil;
 import git4idea.GitRemote;
 import git4idea.GitVcs;
 import git4idea.commands.GitHandler;
@@ -214,7 +215,7 @@ public class GitPullDialog extends DialogWrapper {
     h.addParameters("-v");
     h.addParameters(getRemote());
     final List<String> markedBranches = myBranchChooser.getMarkedElements();
-    h.addParameters(markedBranches.toArray(new String[markedBranches.size()]));
+    h.addParameters(ArrayUtil.toStringArray(markedBranches));
     return h;
   }
 

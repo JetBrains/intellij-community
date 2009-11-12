@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -91,7 +92,7 @@ public class RmicSettings implements PersistentStateComponent<Element> {
       }
       options.add(token);
     }
-    return options.toArray(new String[options.size()]);
+    return ArrayUtil.toStringArray(options);
   }
 
   public static RmicSettings getInstance(Project project) {

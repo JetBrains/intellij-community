@@ -78,7 +78,7 @@ public class PatternValidationCompiler extends AnnotationBasedInstrumentingCompi
       myAnnotations.put(patternAnnotation.first, null);
 
       final Set<String> names = myAnnotations.keySet();
-      return names.toArray(new String[names.size()]);
+      return ArrayUtil.toStringArray(names);
     }
   }
 

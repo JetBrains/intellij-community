@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.impl.win32;
 
+import com.intellij.util.ArrayUtil;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
@@ -87,7 +88,7 @@ public class Win32Kernel {
     finally {
       myKernel.FindClose(hFind);
     }
-    return list.toArray(new String[list.size()]);
+    return ArrayUtil.toStringArray(list);
   }
 
   public boolean exists(String path) {

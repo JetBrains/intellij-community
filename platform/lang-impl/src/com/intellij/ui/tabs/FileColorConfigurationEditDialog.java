@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,7 +72,7 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
       }
     }
 
-    myScopeComboBox = new JComboBox(scopeNames.toArray(new String[scopeNames.size()]));
+    myScopeComboBox = new JComboBox(ArrayUtil.toStringArray(scopeNames));
     myScopeComboBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         updateOKButton();

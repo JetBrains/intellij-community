@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.doc.actions.GroovyDocAddPackageAction;
 import org.jetbrains.plugins.groovy.doc.actions.GroovyDocReducePackageAction;
@@ -171,7 +172,7 @@ private static String[] toStringArray(final DefaultListModel model) {
       result.add((String)o);
     }
 
-    return result.toArray(new String[result.size()]);
+  return ArrayUtil.toStringArray(result);
   }
 
   public JPanel getPanel() {

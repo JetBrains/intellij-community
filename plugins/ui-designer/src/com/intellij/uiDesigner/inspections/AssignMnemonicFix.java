@@ -30,6 +30,7 @@ import com.intellij.uiDesigner.propertyInspector.properties.IntroStringProperty;
 import com.intellij.uiDesigner.quickFixes.QuickFix;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.util.ArrayUtil;
 
 import java.util.ArrayList;
 
@@ -111,6 +112,6 @@ public class AssignMnemonicFix extends QuickFix {
     if (variants.size() == 0) {
       variants.add(value);
     }
-    return variants.toArray(new String[variants.size()]);
+    return ArrayUtil.toStringArray(variants);
   }
 }

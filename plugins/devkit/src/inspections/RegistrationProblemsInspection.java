@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -301,7 +302,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
               names.add(fqn + "#" + moduleType);
             }
           }
-          return names.toArray(new String[names.size()]);
+          return ArrayUtil.toStringArray(names);
         }
       }
       return new String[]{ fqn };

@@ -63,7 +63,7 @@ public class EnvironmentUtil {
         result.add(envName + "=" + enviromentProperties.get(envName));
       }
     }
-    return result.toArray(new String[result.size()]);
+    return ArrayUtil.toStringArray(result);
   }
 
   private static synchronized List getProcEnvironment() {
