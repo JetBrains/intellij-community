@@ -194,7 +194,7 @@ public class TypesUtil {
   public static boolean isAssignable(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope) {
     //all numeric types are assignable
     if (isNumericType(lType)) {
-      return isNumericType(rType) || rType.equalsToText(JAVA_LANG_STRING) || rType.equals(PsiType.NULL);
+      return isNumericType(rType) || rType.equals(PsiType.NULL);
     }
     if (rType instanceof GrTupleType) {
       final GrTupleType tuple = (GrTupleType)rType;
@@ -264,7 +264,7 @@ public class TypesUtil {
   }
 
   public static PsiType boxPrimitiveType(PsiType result, PsiManager manager, GlobalSearchScope resolveScope) {
-    if (result instanceof PsiPrimitiveType) {
+    if (result instanceof PsiPrimitiveType && result != PsiType.VOID) {
       PsiPrimitiveType primitive = (PsiPrimitiveType)result;
       String boxedTypeName = primitive.getBoxedTypeName();
       if (boxedTypeName != null) {

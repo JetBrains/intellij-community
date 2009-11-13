@@ -24,9 +24,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -72,11 +73,12 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
     return new MyVisitor();
   }
 
-  private class MyVisitor extends BaseInspectionVisitor {
+  private static class MyVisitor extends BaseInspectionVisitor {
     private void checkAssignability(@NotNull PsiType expectedType, @NotNull GrExpression expression, GroovyPsiElement element) {
       if (PsiUtil.isRawClassMemberAccess(expression)) return; //GRVY-2197
       final PsiType rType = expression.getType();
-      if (rType != null && !TypesUtil.isAssignable(expectedType, rType, element.getManager(), element.getResolveScope())) {
+      if (rType == null || rType == PsiType.VOID) return;
+      if (!TypesUtil.isAssignable(expectedType, rType, element.getManager(), element.getResolveScope())) {
         registerError(element, rType.getPresentableText(), expectedType.getPresentableText());
       }
     }
@@ -85,21 +87,21 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
     @Override
     public void visitOpenBlock(GrOpenBlock block) {
       super.visitOpenBlock(block);
-
       final PsiElement element = block.getParent();
       if (!(element instanceof GrMethod)) return;
       GrMethod method = (GrMethod)element;
       final PsiType expectedType = method.getReturnType();
-      if (PsiType.VOID.equals(expectedType)) return;
+      if (expectedType == null || PsiType.VOID.equals(expectedType)) return;
 
-      final GrStatement[] statements = block.getStatements();
-      if (statements.length == 0) return;
-      final GrStatement last = statements[statements.length - 1];
-      if (!(last instanceof GrExpression)) return;
-      final GrExpression expression = (GrExpression)last;
-
-      if (expectedType == null) return;
-      checkAssignability(expectedType, expression, last);
+      ControlFlowUtils.visitAllExitPoints(block, new ControlFlowUtils.ExitPointVisitor() {
+        public boolean visit(Instruction instruction) {
+          final PsiElement psiElement = instruction.getElement();
+          if (psiElement instanceof GrExpression) {
+            checkAssignability(expectedType, (GrExpression)psiElement, (GrExpression)psiElement);
+          }
+          return true;
+        }
+      });
     }
 
     @Override

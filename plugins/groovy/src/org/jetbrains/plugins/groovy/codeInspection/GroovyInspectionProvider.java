@@ -37,7 +37,6 @@ import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.Groov
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUntypedAccessInspection;
 import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection;
 import org.jetbrains.plugins.groovy.codeInspection.validity.GroovyDuplicateSwitchBranchInspection;
-import org.jetbrains.plugins.groovy.codeInspection.validity.GroovyMethodWithInconsistentReturnsInspection;
 import org.jetbrains.plugins.groovy.codeInspection.validity.GroovyUnreachableStatementInspection;
 
 /**
@@ -129,7 +128,6 @@ public class GroovyInspectionProvider implements InspectionToolProvider, Applica
         GroovyOctalIntegerInspection.class,
 
         GroovyDuplicateSwitchBranchInspection.class,
-        GroovyMethodWithInconsistentReturnsInspection.class,
 
         GroovyNonShortCircuitBooleanInspection.class,
         GroovyInfiniteLoopStatementInspection.class,
