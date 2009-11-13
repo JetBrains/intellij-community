@@ -17,19 +17,21 @@
 package com.intellij.historyIntegrTests;
 
 
-import static com.intellij.history.core.LocalVcsTestCase.list;
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.Semaphore;
+
+import static com.intellij.history.core.LocalVcsTestCase.list;
 
 public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   public void testRefreshingSynchronously() throws Exception {
@@ -113,10 +115,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   }
 
   private void executeSomeCommand() {
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      public void run() {
-      }
-    }, "", null);
+    CommandProcessor.getInstance().executeCommand(myProject, EmptyRunnable.getInstance(), "", null);
   }
 
   public void testContentOfFileChangedDuringRefresh() throws Exception {

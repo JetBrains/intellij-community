@@ -16,6 +16,7 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
@@ -62,18 +63,16 @@ public class Semaphore {
       sync.acquireSharedInterruptibly(1);
     }
     catch (InterruptedException e) {
-      LOG.debug(e);
-      throw new RuntimeException(e);
+      throw new ProcessCanceledException(e);
     }
   }
 
-  public boolean waitFor(final long timeout) {
+  public boolean waitFor(final long timeout)  {
     try {
       return sync.tryAcquireSharedNanos(1, TimeUnit.MILLISECONDS.toNanos(timeout));
     }
     catch (InterruptedException e) {
-      LOG.debug(e);
-      throw new RuntimeException(e);
+      throw new ProcessCanceledException(e);
     }
   }
 

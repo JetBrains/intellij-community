@@ -75,7 +75,7 @@ public abstract class CommonContentEntriesEditor extends ModuleElementsEditor {
   private VirtualFile myLastSelectedDir = null;
   private final String myModuleName;
   private final ModulesProvider myModulesProvider;
-  private ModuleConfigurationState myState;
+  private final ModuleConfigurationState myState;
 
   public CommonContentEntriesEditor(String moduleName, ModuleConfigurationState state) {
     super(state);
@@ -86,15 +86,12 @@ public abstract class CommonContentEntriesEditor extends ModuleElementsEditor {
       public void afterRefreshFinish(boolean asynchronous) {
         final Module module = getModule();
         if (module == null || module.isDisposed() || module.getProject().isDisposed()) return;
-        for (final String contentEntry : myEntryToEditorMap.keySet()) {
-          final ContentEntryEditor editor = myEntryToEditorMap.get(contentEntry);
-          if (editor != null) {
-            editor.update();
-          }
+        for (final ContentEntryEditor editor : myEntryToEditorMap.values()) {
+          editor.update();
         }
       }
     };
-    final VirtualFileManagerEx fileManager = ((VirtualFileManagerEx)VirtualFileManager.getInstance());
+    final VirtualFileManagerEx fileManager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
     fileManager.addVirtualFileManagerListener(fileManagerListener);
     registerDisposable(new Disposable() {
       public void dispose() {

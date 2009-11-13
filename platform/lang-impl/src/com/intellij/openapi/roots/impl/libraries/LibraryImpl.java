@@ -405,7 +405,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     Disposer.dispose(this);
   }
 
-  private void commit(LibraryImpl fromModel) {
+  private void commit(@NotNull LibraryImpl fromModel) {
     if (myLibraryTable != null) {
       ApplicationManager.getApplication().assertWriteAccessAllowed();
     }

@@ -70,19 +70,21 @@ public class Bookmark {
       myHighlighter = markup.addPersistentLineHighlighter(line, HighlighterLayer.ERROR + 1, null);
 
 
-      myHighlighter.setGutterIconRenderer(new GutterIconRenderer() {
-        @NotNull
-        public Icon getIcon() {
-          return Bookmark.this.getIcon();
-        }
+      if (myHighlighter != null) {
+        myHighlighter.setGutterIconRenderer(new GutterIconRenderer() {
+          @NotNull
+          public Icon getIcon() {
+            return Bookmark.this.getIcon();
+          }
 
-        public String getTooltipText() {
-          return StringUtil.escapeXml(getNotEmptyDescription());
-        }
-      });
+          public String getTooltipText() {
+            return StringUtil.escapeXml(getNotEmptyDescription());
+          }
+        });
 
-      myHighlighter.setErrorStripeMarkColor(Color.black);
-      myHighlighter.setErrorStripeTooltip(StringUtil.escapeXml(getNotEmptyDescription()));
+        myHighlighter.setErrorStripeMarkColor(Color.black);
+        myHighlighter.setErrorStripeTooltip(StringUtil.escapeXml(getNotEmptyDescription()));
+      }
     }
     else {
       myHighlighter = null;

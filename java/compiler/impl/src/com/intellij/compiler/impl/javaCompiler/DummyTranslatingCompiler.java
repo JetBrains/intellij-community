@@ -21,6 +21,7 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Chunk;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,7 +41,7 @@ public class DummyTranslatingCompiler implements TranslatingCompiler, Intermedia
     return file.getName().endsWith(FILETYPE_EXTENSION);
   }
 
-  public void compile(final CompileContext context, final VirtualFile[] files, OutputSink sink) {
+  public void compile(final CompileContext context, Chunk<Module> moduleChunk, final VirtualFile[] files, OutputSink sink) {
     final List<File> filesToRefresh = new ArrayList<File>();
     final Map<String, Collection<OutputItem>> outputs = new HashMap<String, Collection<OutputItem>>();
     ApplicationManager.getApplication().runReadAction(new Runnable() {

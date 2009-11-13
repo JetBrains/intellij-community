@@ -457,6 +457,11 @@ public String getAccessorsVisibility() {
       return;
     }
 
+    if (getCheckedRows().length == 0) {
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, "Nothing found to encapsulate", HelpID.ENCAPSULATE_FIELDS, myProject);
+      return;
+    }
+
     invokeRefactoring(new EncapsulateFieldsProcessor(myProject, this));
     JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
     settings.ENCAPSULATE_FIELDS_USE_ACCESSORS_WHEN_ACCESSIBLE = myCbUseAccessorsWhenAccessible.isSelected();

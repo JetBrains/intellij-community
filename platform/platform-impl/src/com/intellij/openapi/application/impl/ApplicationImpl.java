@@ -954,9 +954,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
-
-  public void saveSettings() {
-    if (myDoNotSave || isUnitTestMode() || isHeadlessEnvironment()) return;
+  public void _saveSettings() { // for testing purposes
     if (mySaveSettingsIsInProgress.compareAndSet(false, true)) {
       try {
         doSave();
@@ -992,6 +990,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         mySaveSettingsIsInProgress.set(false);
       }
     }
+  }
+
+  public void saveSettings() {
+    if (myDoNotSave || isUnitTestMode() || isHeadlessEnvironment()) return;
+    _saveSettings();
   }
 
   public void saveAll() {

@@ -171,6 +171,115 @@ public class SMTRunnerUIActionsHandlerTest extends BaseSMTRunnerTestCase {
   }
 
 
+  public void testSelectFirstDefect_Priority_Error() {
+    // Priority: error -> failure
+    TestConsoleProperties.SELECT_FIRST_DEFECT.set(myProperties, true);
+    mySuite.setStarted();
+
+    final SMTestProxy testsSuite = createSuiteProxy("my suite", mySuite);
+    testsSuite.setStarted();
+
+    // pending test
+    final SMTestProxy testPending = createTestProxy("testPending", testsSuite);
+    testPending.setStarted();
+    myUIActionsHandler.onTestNodeAdded(myResultsViewer, testPending);
+    testPending.setTestIgnored("", "");
+
+    //failed test
+    final SMTestProxy testFailed = createTestProxy("testFailed", testsSuite);
+    testFailed.setStarted();
+    myUIActionsHandler.onTestNodeAdded(myResultsViewer, testFailed);
+    testFailed.setTestFailed("", "", false);
+
+    //error test
+    final SMTestProxy testError = createTestProxy("testError", testsSuite);
+    testError.setStarted();
+    myUIActionsHandler.onTestNodeAdded(myResultsViewer, testError);
+    testError.setTestFailed("", "", true);
+
+    // Second error test just to check that first failed will be selected
+    final SMTestProxy testError2 = createTestProxy("testError2", testsSuite);
+    testError2.setStarted();
+    myUIActionsHandler.onTestNodeAdded(myResultsViewer, testError2);
+    testError2.setTestFailed("", "", true);
+
+    // finish suite
+    testsSuite.setFinished();
+    assertNull(mySelectedTestProxy);
+
+    //testing finished
+    mySuite.setFinished();
+    assertNull(mySelectedTestProxy);
+
+    myUIActionsHandler.onTestingFinished(myResultsViewer);
+    assertEquals(testError, mySelectedTestProxy);
+  }
+
+  public void testSelectFirstDefect_Priority_Failure() {
+    // Priority: error -> failure
+    TestConsoleProperties.SELECT_FIRST_DEFECT.set(myProperties, true);
+    mySuite.setStarted();
+
+    final SMTestProxy testsSuite = createSuiteProxy("my suite", mySuite);
+    testsSuite.setStarted();
+
+    // pending test
+    final SMTestProxy testPending = createTestProxy("testPending", testsSuite);
+    testPending.setStarted();
+    myUIActionsHandler.onTestNodeAdded(myResultsViewer, testPending);
+    testPending.setTestIgnored("", "");
+
+    //failed test
+    final SMTestProxy testFailed = createTestProxy("testFailed", testsSuite);
+    testFailed.setStarted();
+    myUIActionsHandler.onTestNodeAdded(myResultsViewer, testFailed);
+    testFailed.setTestFailed("", "", false);
+
+    // Second failed test just to check that first failed will be selected
+    final SMTestProxy testFailed2 = createTestProxy("testFailed2", testsSuite);
+    testFailed2.setStarted();
+    myUIActionsHandler.onTestNodeAdded(myResultsViewer, testFailed2);
+    testFailed2.setTestFailed("", "", false);
+
+    // finish suite
+    testsSuite.setFinished();
+    assertNull(mySelectedTestProxy);
+
+    //testing finished
+    mySuite.setFinished();
+    assertNull(mySelectedTestProxy);
+
+    myUIActionsHandler.onTestingFinished(myResultsViewer);
+    assertEquals(testFailed, mySelectedTestProxy);
+  }
+
+  public void testSelectFirstDefect_Priority_Pending() {
+    // Priority: error -> failure
+    TestConsoleProperties.SELECT_FIRST_DEFECT.set(myProperties, true);
+    mySuite.setStarted();
+
+    final SMTestProxy testsSuite = createSuiteProxy("my suite", mySuite);
+    testsSuite.setStarted();
+
+    // pending test
+    final SMTestProxy testPending = createTestProxy("testPending", testsSuite);
+    testPending.setStarted();
+    myUIActionsHandler.onTestNodeAdded(myResultsViewer, testPending);
+    testPending.setTestIgnored("", "");
+
+    // finish suite
+    testsSuite.setFinished();
+    assertNull(mySelectedTestProxy);
+
+    //testing finished
+    mySuite.setFinished();
+    assertNull(mySelectedTestProxy);
+
+    myUIActionsHandler.onTestingFinished(myResultsViewer);
+    // pending tests shouldn't be considered as errors/failures
+    assertNull(mySelectedTestProxy);
+  }
+
   public void testTrackRunningTest() {
     TestConsoleProperties.TRACK_RUNNING_TEST.set(myProperties, true);
     mySuite.setStarted();

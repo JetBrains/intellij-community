@@ -68,7 +68,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
     String name = element.getAttributeValue(NAME_ATTR);
     if (name == null) throw new InvalidDataException();
     if (level == null) throw new InvalidDataException();
-    searchForLibrary(level, name);
+    searchForLibrary(name, level);
     init(getRootProvider());
     addListeners();
   }
@@ -97,12 +97,12 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
                                ProjectRootManagerImpl projectRootManager,
                                VirtualFilePointerManager filePointerManager) {
     super(rootModel, projectRootManager, filePointerManager);
-    searchForLibrary(level, name);
+    searchForLibrary(name, level);
     init(getRootProvider());
     addListeners();
   }
 
-  private void searchForLibrary(@NotNull String level, @NotNull String name) {
+  private void searchForLibrary(@NotNull String name, @NotNull String level) {
     if (myLibrary != null) return;
     final LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(level, getRootModel().getModule().getProject());
     final Library library = libraryTable != null ? libraryTable.getLibraryByName(name) : null;
@@ -158,12 +158,8 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
   }
 
   @Nullable
-  private RootProvider getRootProvider() {
-    if (myLibrary != null) {
-      return myLibrary.getRootProvider();
-    } else {
-      return null;
-    }
+  protected RootProvider getRootProvider() {
+    return myLibrary == null ? null : myLibrary.getRootProvider();
   }
 
   public boolean isValid() {
@@ -203,12 +199,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
   }
 
   public String getLibraryName() {
-    if (myLibrary != null) {
-      return myLibrary.getName();
-    }
-    else {
-      return myLibraryName;
-    }
+    return myLibrary == null ? myLibraryName : myLibrary.getName();
   }
 
   private void addListeners () {

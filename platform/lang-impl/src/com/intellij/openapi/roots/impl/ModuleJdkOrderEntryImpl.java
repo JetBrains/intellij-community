@@ -116,13 +116,8 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
     myProjectRootManagerImpl.addJdkTableListener(this);
   }
 
-  private RootProvider getRootProvider() {
-    if (myJdk != null) {
-      return myJdk.getRootProvider();
-    }
-    else {
-      return null;
-    }
+  protected RootProvider getRootProvider() {
+    return myJdk == null ? null : myJdk.getRootProvider();
   }
 
   public Sdk getJdk() {
@@ -144,12 +139,7 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
 
 
   public String getPresentableName() {
-    if (myJdk != null) {
-      return "< " + myJdk.getName() + " >";
-    }
-    else {
-      return "< " + getJdkName() + " >";
-    }
+    return "< " + (myJdk == null ? getJdkName() : myJdk.getName())+ " >";
   }
 
   public boolean isValid() {

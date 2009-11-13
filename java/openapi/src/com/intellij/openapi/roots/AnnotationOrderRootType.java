@@ -27,7 +27,7 @@ import java.util.List;
  */
 public class AnnotationOrderRootType extends PersistentOrderRootType {
   /**
-   * External annotations path
+   * @return External annotations path
    */
   public static OrderRootType getInstance() {
     return getOrderRootType(AnnotationOrderRootType.class);

@@ -17,6 +17,7 @@ package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.DataManager;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
@@ -67,6 +68,7 @@ public class InjectLanguageAction implements IntentionAction {
 
   @Nullable
   protected static PsiLanguageInjectionHost findInjectionHost(Editor editor, PsiFile file) {
+    if (editor instanceof EditorWindow) return null;
     final int offset = editor.getCaretModel().getOffset();
     final PsiLanguageInjectionHost host = PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiLanguageInjectionHost.class, false);
     if (host == null) return null;

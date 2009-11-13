@@ -62,7 +62,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
   @NonNls private static final String ELEMENT_JDK = "jdk";
 
   private final Map<String, ProjectJdkImpl> myCachedProjectJdks = new HashMap<String, ProjectJdkImpl>();
-  private MessageBus myMessageBus;
+  private final MessageBus myMessageBus;
 
   public ProjectJdkTableImpl() {
     myMessageBus = ApplicationManager.getApplication().getMessageBus();

@@ -16,8 +16,11 @@
 
 package com.intellij.compiler.impl;
 
+import com.intellij.openapi.compiler.CompilerFilter;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -27,5 +30,5 @@ public abstract class AdditionalCompileScopeProvider {
   public static final ExtensionPointName<AdditionalCompileScopeProvider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.compiler.additionalCompileScopeProvider");
 
   @Nullable
-  public abstract CompileScope getAdditionalScope(CompileScope baseScope);
+  public abstract CompileScope getAdditionalScope(@NotNull CompileScope baseScope, @NotNull CompilerFilter filter, @NotNull Project project);
 }

@@ -13,34 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.compiler.make;
+package com.intellij.openapi.progress;
 
-/**
- * @author Eugene Zhuravlev
- *         Date: Dec 1, 2008
- */
-public class StorageClassId {
-  private final int myQName;
-
-  public StorageClassId(int QName) {
-    myQName = QName;
+public class ProcessCanceledException extends RuntimeException {
+  public ProcessCanceledException() {
   }
 
-  public int getClassQName() {
-    return myQName;
+  public ProcessCanceledException(Throwable cause) {
+    super(cause);
   }
-
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof StorageClassId)) return false;
-
-    if (myQName != ((StorageClassId)o).myQName) return false;
-
-    return true;
-  }
-
-  public int hashCode() {
-    return myQName;
-  }
-
 }

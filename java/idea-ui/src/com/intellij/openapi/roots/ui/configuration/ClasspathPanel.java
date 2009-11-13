@@ -24,7 +24,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -83,7 +82,7 @@ public class ClasspathPanel extends JPanel {
   private PopupAction[] myPopupActions = null;
   private Icon[] myIcons = null;
   private JButton myEditButton;
-  private ModuleConfigurationState myState;
+  private final ModuleConfigurationState myState;
 
   protected ClasspathPanel(ModuleConfigurationState state) {
     super(new BorderLayout());
@@ -322,7 +321,7 @@ public class ClasspathPanel extends JPanel {
     removeButton.addActionListener(new ButtonAction() {
       protected void executeImpl() {
         final List removedRows = TableUtil.removeSelectedItems(myEntryTable);
-        if (removedRows.size() == 0) {
+        if (removedRows.isEmpty()) {
           return;
         }
         for (final Object removedRow : removedRows) {
@@ -475,13 +474,12 @@ public class ClasspathPanel extends JPanel {
         return;
       }
       try {
-        final List<ItemType> chosen;
         dialog.doChoose();
         if (!dialog.isOK()) {
           return;
         }
-        chosen = dialog.getChosenElements();
-        if (chosen.size() == 0) {
+        final List<ItemType> chosen = dialog.getChosenElements();
+        if (chosen.isEmpty()) {
           return;
         }
         final ModuleStructureConfigurable rootConfigurable = ModuleStructureConfigurable.getInstance(myState.getProject());
@@ -512,7 +510,8 @@ public class ClasspathPanel extends JPanel {
     @Nullable
     protected abstract TableItem createTableItem(final ItemType item);
 
-    protected abstract @Nullable ChooserDialog<ItemType> createChooserDialog();
+    @Nullable
+    protected abstract ChooserDialog<ItemType> createChooserDialog();
   }
 
   private void initPopupActions() {
@@ -572,7 +571,7 @@ public class ClasspathPanel extends JPanel {
           }
           protected ChooserDialog<Module> createChooserDialog() {
             final List<Module> chooseItems = getDependencyModules();
-            if (chooseItems.size() == 0) {
+            if (chooseItems.isEmpty()) {
               Messages.showMessageDialog(ClasspathPanel.this, ProjectBundle.message("message.no.module.dependency.candidates"), getTitle(), Messages.getInformationIcon());
               return null;
             }
@@ -615,7 +614,8 @@ public class ClasspathPanel extends JPanel {
       myEntryTable.getCellEditor().stopCellEditing();
     }
     final ListSelectionModel selectionModel = myEntryTable.getSelectionModel();
-    for(int row = increment < 0? 0 : myModel.getRowCount() - 1; increment < 0? row < myModel.getRowCount() : row >= 0; row += (increment < 0? +1 : -1)){
+    for(int row = increment < 0? 0 : myModel.getRowCount() - 1; increment < 0? row < myModel.getRowCount() : row >= 0; row +=
+      increment < 0? +1 : -1){
       if (selectionModel.isSelectedIndex(row)) {
         final int newRow = moveRow(row, increment);
         selectionModel.removeSelectionInterval(row, row);
@@ -703,8 +703,8 @@ public class ClasspathPanel extends JPanel {
   }
 
 
-  private static abstract class TableItem<T extends OrderEntry> {
-    protected @Nullable T myEntry;
+  private abstract static class TableItem<T extends OrderEntry> {
+    @Nullable protected final T myEntry;
 
     protected TableItem(@Nullable T entry) {
       myEntry = entry;
@@ -715,12 +715,12 @@ public class ClasspathPanel extends JPanel {
     }
 
     public final boolean isExported() {
-      return isExportable() && myEntry != null && ((ExportableOrderEntry)myEntry).isExported();
+      return isExportable() && ((ExportableOrderEntry)getEntry()).isExported();
     }
 
     public final void setExported(boolean isExported) {
-      if (isExportable() && myEntry != null) {
-        ((ExportableOrderEntry)myEntry).setExported(isExported);
+      if (isExportable()) {
+        ((ExportableOrderEntry)getEntry()).setExported(isExported);
       }
     }
 
@@ -735,7 +735,7 @@ public class ClasspathPanel extends JPanel {
       }
     }
 
-    public final @Nullable T getEntry() {
+    public final T getEntry() {
       return myEntry;
     }
 
@@ -807,7 +807,7 @@ public class ClasspathPanel extends JPanel {
     public static final int ITEM_COLUMN = 1;
     public static final int SCOPE_COLUMN = 2;
     private final List<TableItem> myItems = new ArrayList<TableItem>();
-    private ModuleConfigurationState myState;
+    private final ModuleConfigurationState myState;
 
     public MyTableModel(final ModuleConfigurationState state) {
       myState = state;
@@ -834,16 +834,16 @@ public class ClasspathPanel extends JPanel {
 
     private void addOrderEntry(OrderEntry orderEntry) {
       if (orderEntry instanceof JdkOrderEntry) {
-        addItem(new JdkItem(((JdkOrderEntry)orderEntry)));
+        addItem(new JdkItem((JdkOrderEntry)orderEntry));
       }
       else if (orderEntry instanceof LibraryOrderEntry) {
-        addItem(new LibItem(((LibraryOrderEntry)orderEntry)));
+        addItem(new LibItem((LibraryOrderEntry)orderEntry));
       }
       else if (orderEntry instanceof ModuleOrderEntry) {
-        addItem(new ModuleItem(((ModuleOrderEntry)orderEntry)));
+        addItem(new ModuleItem((ModuleOrderEntry)orderEntry));
       }
       else if (orderEntry instanceof ModuleSourceOrderEntry) {
-        addItem(new SelfModuleItem(((ModuleSourceOrderEntry)orderEntry)));
+        addItem(new SelfModuleItem((ModuleSourceOrderEntry)orderEntry));
       }
     }
 
@@ -1054,7 +1054,7 @@ public class ClasspathPanel extends JPanel {
   private static class ChooseModuleLibrariesDialog extends LibraryFileChooser implements ChooserDialog<Library> {
     private Pair<String, VirtualFile[]> myLastChosen;
     private final LibraryTable myLibraryTable;
-    private final @Nullable VirtualFile myFileToSelect;
+    @Nullable private final VirtualFile myFileToSelect;
 
     public ChooseModuleLibrariesDialog(Component parent, final LibraryTable libraryTable, final VirtualFile fileToSelect) {
       super(createFileChooserDescriptor(parent), parent, false, null);
@@ -1166,8 +1166,6 @@ public class ClasspathPanel extends JPanel {
       public List<Library> getChosenElements() {
         final List<Library> chosen = new ArrayList<Library>(Arrays.asList(myEditor.getSelectedLibraries()));
         chosen.removeAll(getAlreadyAddedLibraries());
-        final Module module = getRootModel().getModule();
-        final Project project = module.getProject();
         return chosen;
       }
 

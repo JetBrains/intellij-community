@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.RefactoringBundle;
@@ -108,6 +109,8 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
     final ActionListener enableDisableListener = new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         setEnabled(myCreateBuilderClassRadioButton.isSelected());
+        IdeFocusManager.getInstance(myProject).requestFocus(
+          myCreateBuilderClassRadioButton.isSelected() ? myNewClassName : myExistentClassTF.getChildComponent(), true);
         validateButtons();
       }
     };
@@ -209,7 +212,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
     };
 
     myPackageTextField =
-      new PackageNameReferenceEditorCombo("", myProject, RECENT_KEYS, RefactoringBundle.message("choose.destination.package"));
+      new PackageNameReferenceEditorCombo(((PsiJavaFile)myConstructors[0].getContainingFile()).getPackageName(), myProject, RECENT_KEYS, RefactoringBundle.message("choose.destination.package"));
     myPackageTextField.getChildComponent().getDocument().addDocumentListener(adapter);
 
 
@@ -307,7 +310,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
         case PARAM:
           return "Parameter";
         case FIELD:
-          return "Fieled Name";
+          return "Field Name";
         case SETTER:
           return "Setter Name";
         case DEFAULT_VALUE:

@@ -25,6 +25,7 @@ import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.compiler.*;
 import com.intellij.compiler.make.CacheCorruptedException;
+import com.intellij.compiler.make.CacheUtils;
 import com.intellij.compiler.make.DependencyCache;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.diagnostic.IdeErrorsDialog;
@@ -47,6 +48,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -311,7 +313,7 @@ public class CompileDriver {
     final AdditionalCompileScopeProvider[] scopeProviders = Extensions.getExtensions(AdditionalCompileScopeProvider.EXTENSION_POINT_NAME);
     CompileScope baseScope = scope;
     for (AdditionalCompileScopeProvider scopeProvider : scopeProviders) {
-      final CompileScope additionalScope = scopeProvider.getAdditionalScope(baseScope);
+      final CompileScope additionalScope = scopeProvider.getAdditionalScope(baseScope, filter, myProject);
       if (additionalScope != null) {
         scope = new CompositeScope(scope, additionalScope);
       }
@@ -840,67 +842,121 @@ public class CompileDriver {
 
     final TranslatingCompiler[] translators = compilerManager.getCompilers(TranslatingCompiler.class, myCompilerFilter);
 
-    final Set<FileType> generatedTypes = new HashSet<FileType>();
-    VirtualFile[] snapshot = null;
 
+    final List<Chunk<Module>> sortedChunks = Collections.unmodifiableList(ApplicationManager.getApplication().runReadAction(new Computable<List<Chunk<Module>>>() {
+      public List<Chunk<Module>> compute() {
+        final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+        return ModuleCompilerUtil.getSortedModuleChunks(myProject, Arrays.asList(moduleManager.getModules()));
+      }
+    }));
 
-    final TranslatorsOutputSink sink = new TranslatorsOutputSink(context, translators);
     try {
-      for (int currentCompiler = 0, translatorsLength = translators.length; currentCompiler < translatorsLength; currentCompiler++) {
-        sink.setCurrentCompilerIndex(currentCompiler);
-        final TranslatingCompiler translator = translators[currentCompiler];
-        if (context.getProgressIndicator().isCanceled()) {
-          throw new ExitException(ExitStatus.CANCELLED);
-        }
-
-        DumbService.getInstance(myProject).waitForSmartMode();
-
-        if (snapshot == null || ContainerUtil.intersects(generatedTypes, compilerManager.getRegisteredInputTypes(translator))) {
-          // rescan snapshot if previously generated files can influence the input of this compiler
-          snapshot = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile[]>() {
-            public VirtualFile[] compute() {
-              return context.getCompileScope().getFiles(null, true);
-            }
-          });
-        }
-
-        final CompileContextEx _context;
-        if (translator instanceof IntermediateOutputCompiler) {
-          // wrap compile context so that output goes into intermediate directories
-          final IntermediateOutputCompiler _translator = (IntermediateOutputCompiler)translator;
-          _context = new CompileContextExProxy(context) {
-            public VirtualFile getModuleOutputDirectory(final Module module) {
-              return getGenerationOutputDir(_translator, module, false);
+      VirtualFile[] snapshot = null;
+      final Map<Chunk<Module>, Collection<VirtualFile>> chunkMap = new HashMap<Chunk<Module>, Collection<VirtualFile>>();
+      int total = 0;
+      int processed = 0;
+      for (final Chunk<Module> currentChunk : sortedChunks) {
+        final TranslatorsOutputSink sink = new TranslatorsOutputSink(context, translators);
+        final Set<FileType> generatedTypes = new HashSet<FileType>();
+        Collection<VirtualFile> chunkFiles = chunkMap.get(currentChunk);
+        try {
+          for (int currentCompiler = 0, translatorsLength = translators.length; currentCompiler < translatorsLength; currentCompiler++) {
+            sink.setCurrentCompilerIndex(currentCompiler);
+            final TranslatingCompiler compiler = translators[currentCompiler];
+            if (context.getProgressIndicator().isCanceled()) {
+              throw new ExitException(ExitStatus.CANCELLED);
             }
 
-            public VirtualFile getModuleOutputDirectoryForTests(final Module module) {
-              return getGenerationOutputDir(_translator, module, true);
+            DumbService.getInstance(myProject).waitForSmartMode();
+
+            if (snapshot == null || ContainerUtil.intersects(generatedTypes, compilerManager.getRegisteredInputTypes(compiler))) {
+              // rescan snapshot if previously generated files may influence the input of this compiler
+              snapshot = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile[]>() {
+                public VirtualFile[] compute() {
+                  return context.getCompileScope().getFiles(null, true);
+                }
+              });
+              final Map<Module, List<VirtualFile>> moduleToFilesMap = CompilerUtil.buildModuleToFilesMap(context, snapshot);
+              for (Chunk<Module> moduleChunk : sortedChunks) {
+                List<VirtualFile> files = Collections.emptyList();
+                for (Module module : moduleChunk.getNodes()) {
+                  final List<VirtualFile> moduleFiles = moduleToFilesMap.get(module);
+                  if (moduleFiles != null) {
+                    files = ContainerUtil.concat(files, moduleFiles);
+                  }
+                }
+                chunkMap.put(moduleChunk, files);
+              }
+              total = snapshot.length * translatorsLength;
+              chunkFiles = chunkMap.get(currentChunk);
             }
-          };
-        }
-        else {
-          _context = context;
-        }
-        final boolean compiledSomething =
-          compileSources(_context, translators, currentCompiler, snapshot, forceCompile, isRebuild, trackDependencies, onlyCheckStatus, sink);
 
-        if (compiledSomething) {
-          generatedTypes.addAll(compilerManager.getRegisteredOutputTypes(translator));
-        }
+            final CompileContextEx _context;
+            if (compiler instanceof IntermediateOutputCompiler) {
+              // wrap compile context so that output goes into intermediate directories
+              final IntermediateOutputCompiler _compiler = (IntermediateOutputCompiler)compiler;
+              _context = new CompileContextExProxy(context) {
+                public VirtualFile getModuleOutputDirectory(final Module module) {
+                  return getGenerationOutputDir(_compiler, module, false);
+                }
 
-        if (_context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
-          throw new ExitException(ExitStatus.ERRORS);
-        }
+                public VirtualFile getModuleOutputDirectoryForTests(final Module module) {
+                  return getGenerationOutputDir(_compiler, module, true);
+                }
+              };
+            }
+            else {
+              _context = context;
+            }
+            final boolean compiledSomething =
+              compileSources(_context, currentChunk, compiler, chunkFiles, forceCompile, isRebuild, trackDependencies, onlyCheckStatus, sink);
 
-        didSomething |= compiledSomething;
+            processed += chunkFiles.size();
+            _context.getProgressIndicator().setFraction(((double)processed) / total);
+
+            if (compiledSomething) {
+              generatedTypes.addAll(compilerManager.getRegisteredOutputTypes(compiler));
+            }
+
+            if (_context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
+              throw new ExitException(ExitStatus.ERRORS);
+            }
+
+            didSomething |= compiledSomething;
+          }
+        }
+        finally {
+          if (context.getMessageCount(CompilerMessageCategory.ERROR) == 0) {
+            // perform update only if there were no errors, so it is guaranteed that the file was processd by all neccesary compilers
+            sink.flushPostponedItems();
+          }
+        }
       }
     }
+    catch (ProcessCanceledException e) {
+      ProgressManager.getInstance().executeNonCancelableSection(new Runnable() {
+        public void run() {
+          try {
+            final Collection<VirtualFile> deps = CacheUtils.findDependentFiles(context, Collections.<VirtualFile>emptySet(), null, null);
+            if (deps.size() > 0) {
+              TranslatingCompilerFilesMonitor.getInstance().update(context, null, Collections.<TranslatingCompiler.OutputItem>emptyList(), deps.toArray(new VirtualFile[deps.size()]));
+            }
+          }
+          catch (IOException ignored) {
+            LOG.info(ignored);
+          }
+          catch (CacheCorruptedException ignored) {
+            LOG.info(ignored);
+          }
+        }
+      });
+      throw e;
+    }
     finally {
-      if (context.getMessageCount(CompilerMessageCategory.ERROR) == 0) {
-        // perform update only if there were no errors, so it is guaranteed that the file was processd by all neccesary compilers
-        sink.flushPostponedItems();
-      }
       dropDependencyCache(context);
+      if (didSomething) {
+        TranslatingCompilerFilesMonitor.getInstance().updateOutputRootsLayout(myProject);
+      }
     }
     return didSomething;
   }
@@ -1353,14 +1409,12 @@ public class CompileDriver {
     };
   }
 
-  private boolean compileSources(final CompileContextEx context, TranslatingCompiler[] compilers, int currentCompiler, final VirtualFile[] sources,
+  private boolean compileSources(final CompileContextEx context, final Chunk<Module> moduleChunk, final TranslatingCompiler compiler, final Collection<VirtualFile> srcSnapshot,
                                  final boolean forceCompile,
                                  final boolean isRebuild,
                                  final boolean trackDependencies,
                                  final boolean onlyCheckStatus,
                                  TranslatingCompiler.OutputSink sink) throws ExitException {
-
-    final TranslatingCompiler compiler = compilers[currentCompiler];
 
     final Set<VirtualFile> toCompile = new HashSet<VirtualFile>();
     final List<Trinity<File, String, Boolean>> toDelete = new ArrayList<Trinity<File, String, Boolean>>();
@@ -1372,13 +1426,13 @@ public class CompileDriver {
         public void run() {
 
           TranslatingCompilerFilesMonitor.getInstance().collectFiles(
-              context, compiler, Arrays.asList(sources).iterator(), forceCompile, isRebuild, toCompile, toDelete
+              context, compiler, srcSnapshot.iterator(), forceCompile, isRebuild, toCompile, toDelete
           );
           if (trackDependencies && !toCompile.isEmpty()) { // should add dependent files
+            // todo: drop this?
             final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
             final PsiManager psiManager = PsiManager.getInstance(myProject);
-            final VirtualFile[] filesToCompile = toCompile.toArray(new VirtualFile[toCompile.size()]);
-            for (final VirtualFile file : filesToCompile) {
+            for (final VirtualFile file : toCompile.toArray(new VirtualFile[toCompile.size()])) {
               if (fileTypeManager.getFileTypeByFile(file) == StdFileTypes.JAVA) {
                 final PsiFile psiFile = psiManager.findFile(file);
                 if (psiFile != null) {
@@ -1414,9 +1468,9 @@ public class CompileDriver {
           context.requestRebuildNextTime(e.getMessage());
         }
       }
-
+      
       if ((wereFilesDeleted[0] || !toCompile.isEmpty()) && context.getMessageCount(CompilerMessageCategory.ERROR) == 0) {
-        compiler.compile(context, toCompile.toArray(new VirtualFile[toCompile.size()]), sink);
+        compiler.compile(context, moduleChunk, toCompile.toArray(new VirtualFile[toCompile.size()]), sink);
       }
     }
     finally {
@@ -1729,7 +1783,6 @@ public class CompileDriver {
     return true;
   }
 
-  // todo: add validation for module chunks: all modules that form a chunk must have the same JDK
   private boolean validateCompilerConfiguration(final CompileScope scope, boolean checkOutputAndSourceIntersection) {
     final Module[] scopeModules = scope.getAffectedModules()/*ModuleManager.getInstance(myProject).getModules()*/;
     final List<String> modulesWithoutOutputPathSpecified = new ArrayList<String>();
@@ -2187,9 +2240,6 @@ public class CompileDriver {
       catch (IOException e) {
         LOG.info(e);
         myContext.requestRebuildNextTime(e.getMessage());
-      }
-      finally {
-        filesMonitor.updateOutputRootsLayout(myContext.getProject());
       }
     }
   }
