@@ -93,8 +93,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
   private final KeyboardGestureProcessor myKeyGestureProcessor = new KeyboardGestureProcessor(this);
 
   private final KeyProcessorContext myContext = new KeyProcessorContext();
+  private IdeEventQueue myQueue;
 
-  public IdeKeyEventDispatcher(){
+  public IdeKeyEventDispatcher(IdeEventQueue queue){
+    myQueue = queue;
     Application parent = ApplicationManager.getApplication();  // Application is null on early start when e.g. license dialog is shown
     if (parent != null) Disposer.register(parent, this);
   }
@@ -348,7 +350,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
     KeyStroke originalKeyStroke=KeyStroke.getKeyStrokeForEvent(e);
     KeyStroke keyStroke=getKeyStrokeWithoutMouseModifiers(originalKeyStroke);
 
-    if (myKeyGestureProcessor.processInitState()) return true;
+    if (myKeyGestureProcessor.processInitState()) {
+      return true;
+    }
 
     if (SystemInfo.isMac) {
       if (e.getModifiersEx() == InputEvent.ALT_DOWN_MASK &&
@@ -620,6 +624,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   public void setState(final int state) {
     myState = state;
+    if (myQueue != null) {
+      myQueue.maybeReady();
+    }
   }
 
   public void resetState() {
@@ -633,5 +640,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   public void setPressedWasProcessed(boolean pressedWasProcessed) {
     myPressedWasProcessed = pressedWasProcessed;
+  }
+
+  public boolean isReady() {
+    return myState == STATE_INIT;
   }
 }

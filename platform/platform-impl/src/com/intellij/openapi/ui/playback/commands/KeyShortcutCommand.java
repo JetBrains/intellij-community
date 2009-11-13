@@ -29,7 +29,7 @@ public class KeyShortcutCommand extends TypeCommand {
     super(text, line);
   }
 
-  public ActionCallback _execute(PlaybackRunner.StatusCallback cb, Robot robot) {
+  public ActionCallback _execute(PlaybackRunner.StatusCallback cb, Robot robot, boolean directActionCall) {
     final String one = getText().substring(PREFIX.length());
     if (!one.endsWith("]")) {
       dumpError(cb, "Expected " + "]");

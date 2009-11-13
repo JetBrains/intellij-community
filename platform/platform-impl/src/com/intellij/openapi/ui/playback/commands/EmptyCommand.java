@@ -25,7 +25,7 @@ public class EmptyCommand extends AbstractCommand {
     super("", line);
   }
 
-  public ActionCallback _execute(PlaybackRunner.StatusCallback cb, Robot robot) {
+  public ActionCallback _execute(PlaybackRunner.StatusCallback cb, Robot robot, boolean directActionCall) {
     return new ActionCallback.Done();
   }
 }

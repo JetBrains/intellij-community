@@ -28,7 +28,7 @@ public class StopCommand extends AbstractCommand {
     super(text, line);
   }
 
-  protected ActionCallback _execute(PlaybackRunner.StatusCallback cb, Robot robot) {
+  protected ActionCallback _execute(PlaybackRunner.StatusCallback cb, Robot robot, boolean directActionCall) {
     cb.message("Stopped", getLine());
     return new ActionCallback.Done();
   }
