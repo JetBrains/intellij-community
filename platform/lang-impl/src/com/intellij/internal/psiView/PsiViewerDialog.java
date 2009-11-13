@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -94,6 +95,14 @@ public class PsiViewerDialog extends DialogWrapper {
   private Presentation myPresentation = new Presentation();
   private Map<String, Object> handlers = new HashMap<String, Object>();
   private DefaultActionGroup myGroup;
+  private Language[] myLanguageDialects;
+  private static final Comparator<Language> DIALECTS_COMPARATOR = new Comparator<Language>() {
+    public int compare(final Language o1, final Language o2) {
+      if (o1 == null) return o2 == null ? 0 : -1;
+      if (o2 == null) return 1;
+      return o1.getID().compareTo(o2.getID());
+    }
+  };
 
   public PsiViewerDialog(Project project, boolean modal) {
     super(project, true);
@@ -195,19 +204,6 @@ public class PsiViewerDialog extends DialogWrapper {
       }
     });
 
-    myDialectsComboBox.setRenderer(new DefaultListCellRenderer() {
-      @Override
-      public Component getListCellRendererComponent(final JList list,
-                                                    final Object value,
-                                                    final int index,
-                                                    final boolean isSelected,
-                                                    final boolean cellHasFocus) {
-        final Component result = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        if (value == null) setText("<no dialect>");
-        return result;
-      }
-    });
-
     final ViewerTreeStructure treeStructure = (ViewerTreeStructure)myTreeBuilder.getTreeStructure();
     myShowWhiteSpacesBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -226,12 +222,7 @@ public class PsiViewerDialog extends DialogWrapper {
 
     myGroup = new DefaultActionGroup();
     for (final Presentation popupItem : popupItems) {
-      myGroup.add(new AnAction(popupItem.getText(), popupItem.getText(), popupItem.getIcon()) {
-        public void actionPerformed(AnActionEvent e) {
-          updatePresentation(e.getPresentation());
-          updateDialectsCombo();
-        }
-      });
+      myGroup.add(new PopupItemAction(popupItem));
     }
 
     final PsiViewerSettings settings = PsiViewerSettings.getSettings();
@@ -256,6 +247,14 @@ public class PsiViewerDialog extends DialogWrapper {
     myButtonPanel.add(typeButton.createCustomComponent(myPresentation), BorderLayout.CENTER);
 
     updateDialectsCombo();
+    if (myDialectsComboBox.isVisible()) {
+      for (int i = 0; i < myLanguageDialects.length; i++) {
+        if (settings.dialect.equals(myLanguageDialects[i].toString())) {
+          myDialectsComboBox.setSelectedIndex(i);
+          break;
+        }
+      }
+    }
 
     registerCustomKeyboardActions();
     super.init();
@@ -363,21 +362,19 @@ public class PsiViewerDialog extends DialogWrapper {
   }
 
   private void updateDialectsCombo() {
-    final SortedComboBoxModel<Language> model = new SortedComboBoxModel<Language>(new Comparator<Language>() {
-      public int compare(final Language o1, final Language o2) {
-        if (o1 == null) return o2 == null ? 0 : -1;
-        if (o2 == null) return 1;
-        return o1.getID().compareTo(o2.getID());
-      }
-    });
+    final SortedComboBoxModel<Language> model = new SortedComboBoxModel<Language>(DIALECTS_COMPARATOR);
     final Object handler = getHandler();
     if (handler instanceof LanguageFileType) {
       final Language baseLang = ((LanguageFileType)handler).getLanguage();
-      model.setAll(LanguageUtil.getLanguageDialects(baseLang));
-      model.add(null);
+      myLanguageDialects = LanguageUtil.getLanguageDialects(baseLang);
+      Arrays.sort(myLanguageDialects, DIALECTS_COMPARATOR);
+      model.setAll(myLanguageDialects);
     }
     myDialectsComboBox.setModel(model);
     myDialectsComboBox.setVisible(model.getSize() > 1);
+    if (!myDialectsComboBox.isVisible()) {
+      myLanguageDialects = new Language[0];
+    }
   }
 
   protected JComponent createCenterPanel() {
@@ -503,6 +500,8 @@ public class PsiViewerDialog extends DialogWrapper {
     settings.text = myEditor.getDocument().getText();
     settings.showTreeNodes = myShowTreeNodesCheckBox.isSelected();
     settings.showWhiteSpaces = myShowWhiteSpacesBox.isSelected();
+    final Object selectedDialect = myDialectsComboBox.getSelectedItem();
+    settings.dialect = myDialectsComboBox.isVisible() && selectedDialect != null ? selectedDialect.toString() : "";
     super.doCancelAction();
   }
 
@@ -642,6 +641,17 @@ public class PsiViewerDialog extends DialogWrapper {
     }
 
     public void mouseExited(MouseEvent e) {
+    }
+  }
+
+  private class PopupItemAction extends AnAction implements DumbAware {
+    public PopupItemAction(Presentation p) {
+      super(p.getText(), p.getText(), p.getIcon());
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      updatePresentation(e.getPresentation());
+      updateDialectsCombo();
     }
   }
 }
