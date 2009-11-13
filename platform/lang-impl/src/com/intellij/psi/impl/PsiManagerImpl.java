@@ -293,11 +293,9 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
     StartupManagerEx startupManager = StartupManagerEx.getInstanceEx(myProject);
     if (startupManager != null) {
-      if (PsiManagerConfiguration.getInstance().REPOSITORY_ENABLED) {
-        CacheUpdater[] updaters = myCacheManager.getCacheUpdaters();
-        for (CacheUpdater updater : updaters) {
-          startupManager.registerCacheUpdater(updater);
-        }
+      CacheUpdater[] updaters = myCacheManager.getCacheUpdaters();
+      for (CacheUpdater updater : updaters) {
+        startupManager.registerCacheUpdater(updater);
       }
     }
   }

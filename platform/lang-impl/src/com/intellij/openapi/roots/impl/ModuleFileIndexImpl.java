@@ -25,9 +25,9 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -100,7 +100,16 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
     if (dir == null) return Collections.emptyList();
     final DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(dir);
     if (info == null) return Collections.emptyList();
-    return new ArrayList<OrderEntry>(info.getOrderEntries(myModule));
+
+    final List<OrderEntry> orderEntries = info.getOrderEntries();
+    if (orderEntries.isEmpty()) return Collections.emptyList();
+
+    SmartList<OrderEntry> answer = new SmartList<OrderEntry>();
+    for (OrderEntry entry : orderEntries) {
+      if (entry.getOwnerModule() == myModule) answer.add(entry);
+    }
+
+    return answer;
   }
 
   public OrderEntry getOrderEntryForFile(@NotNull VirtualFile fileOrDir) {
