@@ -45,10 +45,10 @@ public abstract class AbstractCommand implements PlaybackCommand {
     return true;
   }
 
-  public final ActionCallback execute(PlaybackRunner.StatusCallback cb, Robot robot) {
+  public final ActionCallback execute(PlaybackRunner.StatusCallback cb, Robot robot, boolean useDirectActionCall) {
     try {
       dumpCommand(cb);
-      return _execute(cb, robot);
+      return _execute(cb, robot, useDirectActionCall);
     }
     catch (Exception e) {
       cb.error(e.getMessage(), getLine());
@@ -56,7 +56,7 @@ public abstract class AbstractCommand implements PlaybackCommand {
     }
   }
 
-  protected abstract ActionCallback _execute(PlaybackRunner.StatusCallback cb, Robot robot);
+  protected abstract ActionCallback _execute(PlaybackRunner.StatusCallback cb, Robot robot, boolean directActionCall);
 
   public void dumpCommand(final PlaybackRunner.StatusCallback cb) {
     cb.message(getText(), getLine());

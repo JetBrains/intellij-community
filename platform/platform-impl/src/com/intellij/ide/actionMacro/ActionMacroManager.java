@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.playback.PlaybackRunner;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import org.jdom.Element;
@@ -212,7 +213,7 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
       public void messageEdt(String text, int curentLine) {
         frame.getStatusBar().setInfo("Line " + curentLine + ": " + text);
       }
-    });
+    }, Registry.is("actionSystem.playback.useDirectActionCall"));
 
     myIsPlaying = true;
 

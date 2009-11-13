@@ -38,7 +38,7 @@ public class ActionCommand extends TypeCommand {
     super(text, line);
   }
 
-  protected ActionCallback _execute(PlaybackRunner.StatusCallback cb, Robot robot) {
+  protected ActionCallback _execute(PlaybackRunner.StatusCallback cb, Robot robot, boolean directActionCall) {
     final String actionName = getText().substring(PREFIX.length()).trim();
 
     final AnAction action = ActionManager.getInstance().getAction(actionName);
@@ -48,23 +48,26 @@ public class ActionCommand extends TypeCommand {
     }
 
 
-    final Shortcut[] sc = KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionName);
-    KeyStroke stroke = null;
-    for (Shortcut each : sc) {
-      if (each instanceof KeyboardShortcut) {
-        final KeyboardShortcut ks = (KeyboardShortcut)each;
-        final KeyStroke first = ks.getFirstKeyStroke();
-        final KeyStroke second = ks.getSecondKeyStroke();
-        if (first != null && second == null) {
-          stroke = KeyStroke.getKeyStroke(first.getKeyCode(), first.getModifiers(), false);
+    if (!directActionCall) {
+      final Shortcut[] sc = KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionName);
+      KeyStroke stroke = null;
+      for (Shortcut each : sc) {
+        if (each instanceof KeyboardShortcut) {
+          final KeyboardShortcut ks = (KeyboardShortcut)each;
+          final KeyStroke first = ks.getFirstKeyStroke();
+          final KeyStroke second = ks.getSecondKeyStroke();
+          if (first != null && second == null) {
+            stroke = KeyStroke.getKeyStroke(first.getKeyCode(), first.getModifiers(), false);
+            break;
+          }
         }
       }
-    }
 
-    if (stroke != null) {
-      cb.message("Invoking action via shortcut: " + stroke.toString(), getLine());
-      type(robot, stroke);
-      return new ActionCallback.Done();
+      if (stroke != null) {
+        cb.message("Invoking action via shortcut: " + stroke.toString(), getLine());
+        type(robot, stroke);
+        return new ActionCallback.Done();
+      }
     }
 
     final InputEvent input = getInputEvent(actionName);

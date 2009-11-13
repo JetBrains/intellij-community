@@ -439,7 +439,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     myMessage.clear();
 
     addInfo("Waiting for IDE frame activation", -1);
-    myRunner = new PlaybackRunner(myDocument.getText(), this);
+    myRunner = new PlaybackRunner(myDocument.getText(), this, false);
 
 
     new Thread() {
