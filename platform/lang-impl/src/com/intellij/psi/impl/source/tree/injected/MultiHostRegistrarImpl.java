@@ -204,7 +204,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
         assert parsedNode instanceof FileElement : "Parsed to "+parsedNode+" instead of FileElement";
 
         String documentText = documentWindow.getText();
-        assert outChars.toString().equals(parsedNode.getText()) : exceptionContext("Before patch: doc:\n" + documentText + "\n---PSI:\n" + parsedNode.getText() + "\n---chars:\n"+outChars);
+        assert outChars.toString().equals(parsedNode.getText()) : exceptionContext("Before patch: doc:\n'" + documentText + "'\n---PSI:\n'" + parsedNode.getText() + "'\n---chars:\n'"+outChars+"'");
         try {
           patchLeafs(parsedNode, escapers, place);
         }
@@ -214,7 +214,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
         catch (RuntimeException e) {
           throw new RuntimeException(exceptionContext("Patch error"), e);
         }
-        assert parsedNode.getText().equals(documentText) : exceptionContext("After patch: doc:\n" + documentText + "\n---PSI:\n" + parsedNode.getText() + "\n---chars:\n"+outChars);
+        assert parsedNode.getText().equals(documentText) : exceptionContext("After patch: doc:\n'" + documentText + "'\n---PSI:\n'" + parsedNode.getText() + "'\n---chars:\n'"+outChars+"'");
 
         virtualFile.setContent(null, documentWindow.getText(), false);
         
@@ -283,7 +283,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
   @NonNls
   private String exceptionContext(@NonNls String msg) {
     return msg + ".\n" +
-           "Language: " +myLanguage+";\n "+
+           myLanguage+";\n "+
            "Host file: "+myHostPsiFile+" in '" + myHostVirtualFile.getPresentableUrl() + "'\n" +
            "Context element "+myContextElement.getTextRange() + ": '" + myContextElement +"'; "+
            "Ranges: "+shreds;
