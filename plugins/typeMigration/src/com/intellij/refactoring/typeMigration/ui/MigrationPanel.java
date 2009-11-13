@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
@@ -193,7 +194,7 @@ public class MigrationPanel extends JPanel implements Disposable {
                       }
                     }
                     if (ReadonlyStatusHandler.getInstance(myProject).
-                        ensureFilesWritable(files.toArray(new VirtualFile[files.size()])).hasReadonlyFiles()) return;
+                        ensureFilesWritable(VfsUtil.toVirtualFileArray(files)).hasReadonlyFiles()) return;
 
                     TypeMigrationProcessor.change(myLabeler, usages);
                   }
