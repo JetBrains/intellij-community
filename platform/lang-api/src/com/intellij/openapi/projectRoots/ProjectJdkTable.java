@@ -43,7 +43,7 @@ public abstract class ProjectJdkTable {
 
   public abstract void updateJdk(Sdk originalJdk, Sdk modifiedJdk);
 
-  public static interface Listener extends EventListener {
+  public interface Listener extends EventListener {
     void jdkAdded(Sdk jdk);
 
     void jdkRemoved(Sdk jdk);
