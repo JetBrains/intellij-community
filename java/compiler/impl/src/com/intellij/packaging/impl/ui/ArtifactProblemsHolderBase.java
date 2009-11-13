@@ -15,7 +15,7 @@
  */
 package com.intellij.packaging.impl.ui;
 
-import com.intellij.packaging.ui.ArtifactValidationManager;
+import com.intellij.packaging.ui.ArtifactProblemsHolder;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ArtifactProblemQuickFix;
 import org.jetbrains.annotations.NotNull;
@@ -24,10 +24,10 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author nik
  */
-public abstract class ArtifactValidationManagerBase implements ArtifactValidationManager {
+public abstract class ArtifactProblemsHolderBase implements ArtifactProblemsHolder {
   private ArtifactEditorContext myContext;
 
-  protected ArtifactValidationManagerBase(ArtifactEditorContext context) {
+  protected ArtifactProblemsHolderBase(ArtifactEditorContext context) {
     myContext = context;
   }
 

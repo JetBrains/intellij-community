@@ -39,15 +39,23 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
   private final ArtifactsStructureConfigurableContext myArtifactsStructureContext;
   private final Artifact myOriginalArtifact;
 
-  public ArtifactProjectStructureElement(StructureConfigurableContext context,
-                                         ArtifactsStructureConfigurableContext artifactsStructureContext, Artifact artifact) {
+  ArtifactProjectStructureElement(StructureConfigurableContext context,
+                                  ArtifactsStructureConfigurableContext artifactsStructureContext, Artifact artifact) {
     super(context);
     myArtifactsStructureContext = artifactsStructureContext;
     myOriginalArtifact = artifactsStructureContext.getOriginalArtifact(artifact);
   }
 
   @Override
-  public void check(ProjectStructureProblemsHolder problemsHolder) {
+  public void check(final ProjectStructureProblemsHolder problemsHolder) {
+    final ArtifactEditorEx artifactEditor = (ArtifactEditorEx)myArtifactsStructureContext.getOrCreateEditor(myOriginalArtifact);
+    artifactEditor.getLayoutTreeComponent().saveElementProperties();
+    final Artifact artifact = artifactEditor.getArtifact();
+    artifact.getArtifactType().checkRootElement(artifactEditor.getRootElement(), artifact, new ArtifactProblemsHolderImpl(artifactEditor.getContext(), problemsHolder));
+  }
+
+  public Artifact getOriginalArtifact() {
+    return myOriginalArtifact;
   }
 
   @Override
@@ -74,8 +82,7 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
         else if (packagingElement instanceof ArtifactPackagingElement) {
           final Artifact usedArtifact = ((ArtifactPackagingElement)packagingElement).findArtifact(myArtifactsStructureContext);
           if (usedArtifact != null) {
-            final ArtifactProjectStructureElement artifactElement =
-              new ArtifactProjectStructureElement(myContext, myArtifactsStructureContext, usedArtifact);
+            final ArtifactProjectStructureElement artifactElement = myArtifactsStructureContext.getOrCreateArtifactElement(usedArtifact);
             usages.add(new UsageInArtifact(myOriginalArtifact, myArtifactsStructureContext, artifactElement,
                                            ArtifactProjectStructureElement.this, getPathFromRoot(parents, "/"), packagingElement));
           }
@@ -109,4 +116,5 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
   public boolean highlightIfUnused() {
     return false;
   }
+
 }

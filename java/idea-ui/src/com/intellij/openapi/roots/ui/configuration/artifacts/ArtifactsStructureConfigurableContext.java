@@ -49,4 +49,9 @@ public interface ArtifactsStructureConfigurableContext extends PackagingElementR
 
   @Nullable
   ModifiableModuleModel getModifiableModuleModel();
+
+  void queueValidation(Artifact artifact);
+
+  @NotNull
+  ArtifactProjectStructureElement getOrCreateArtifactElement(@NotNull Artifact artifact);
 }

@@ -13,22 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.packaging.ui;
+package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
-import com.intellij.packaging.elements.PackagingElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.EventListener;
 
 /**
  * @author nik
  */
-public interface ArtifactValidationManager {
+public interface ProjectStructureDaemonAnalyzerListener extends EventListener {
 
-  ArtifactEditorContext getContext();
+  void usagesCollected(@NotNull ProjectStructureElement containingElement);
 
-  void registerProblem(@NotNull String message);
+  void problemsChanged(@NotNull ProjectStructureElement element);
 
-  void registerProblem(@NotNull String message, @Nullable ArtifactProblemQuickFix quickFix);
-
-  void registerProblem(@NotNull String message, @Nullable PackagingElement<?> place, @Nullable ArtifactProblemQuickFix quickFix);
+  void allProblemsChanged();
 }

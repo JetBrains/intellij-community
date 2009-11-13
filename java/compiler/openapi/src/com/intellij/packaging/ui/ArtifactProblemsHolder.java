@@ -13,29 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
+package com.intellij.packaging.ui;
 
+import com.intellij.packaging.elements.PackagingElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
  */
-public class ProjectStructureProblemDescription {
-  private String myMessage;
-  private final Severity mySeverity;
+public interface ArtifactProblemsHolder {
 
-  public ProjectStructureProblemDescription(@NotNull String message, @NotNull Severity severity) {
-    myMessage = message;
-    mySeverity = severity;
-  }
+  ArtifactEditorContext getContext();
 
-  public String getMessage() {
-    return myMessage;
-  }
+  void registerProblem(@NotNull String message);
 
-  public Severity getSeverity() {
-    return mySeverity;
-  }
+  void registerProblem(@NotNull String message, @Nullable ArtifactProblemQuickFix quickFix);
 
-  public enum Severity { ERROR, WARNING }
+  void registerProblem(@NotNull String message, @Nullable PackagingElement<?> place, @Nullable ArtifactProblemQuickFix quickFix);
 }

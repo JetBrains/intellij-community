@@ -21,7 +21,7 @@ import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementOutputKind;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
-import com.intellij.packaging.ui.ArtifactValidationManager;
+import com.intellij.packaging.ui.ArtifactProblemsHolder;
 import com.intellij.packaging.ui.PackagingSourceItem;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +50,7 @@ public abstract class ArtifactType {
 
   public String getPresentableName() {
     return myTitle;
-  }
+  }                                
 
   @NotNull
   public abstract Icon getIcon();
@@ -89,7 +89,7 @@ public abstract class ArtifactType {
     return Collections.emptyList();
   }
 
-  public void checkRootElement(@NotNull CompositePackagingElement<?> rootElement, @NotNull Artifact artifact, @NotNull ArtifactValidationManager manager) {
+  public void checkRootElement(@NotNull CompositePackagingElement<?> rootElement, @NotNull Artifact artifact, @NotNull ArtifactProblemsHolder manager) {
   }
 
   @Nullable

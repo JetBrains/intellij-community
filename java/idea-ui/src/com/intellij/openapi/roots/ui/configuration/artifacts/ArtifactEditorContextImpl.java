@@ -50,7 +50,6 @@ import java.util.List;
 public class ArtifactEditorContextImpl implements ArtifactEditorContext {
   private final ArtifactsStructureConfigurableContext myParent;
   private final ArtifactEditorEx myEditor;
-  private ArtifactValidationManagerImpl myValidationManager;
 
   public ArtifactEditorContextImpl(ArtifactsStructureConfigurableContext parent, ArtifactEditorEx editor) {
     myParent = parent;
@@ -155,20 +154,12 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
   }
 
   public void queueValidation() {
-    myEditor.queueValidation();
+    myParent.queueValidation(getArtifact());
   }
 
   @NotNull
   public ArtifactType getArtifactType() {
     return myEditor.getArtifact().getArtifactType();
-  }
-
-  public ArtifactValidationManagerImpl getValidationManager() {
-    return myValidationManager;
-  }
-
-  public void setValidationManager(ArtifactValidationManagerImpl validationManager) {
-    myValidationManager = validationManager;
   }
 
   public List<Module> chooseModules(final List<Module> modules, final String title) {

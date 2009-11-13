@@ -18,7 +18,7 @@ package com.intellij.openapi.roots.ui.configuration.artifacts.nodes;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorContextImpl;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorImpl;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
@@ -55,7 +55,7 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
 
   private void doAddElement(E packagingElement) {
     myPackagingElements.add(packagingElement);
-    ((ArtifactEditorContextImpl)myContext).getValidationManager().elementAddedToNode(this, packagingElement);
+    ((ArtifactEditorImpl)myContext.getThisArtifactEditor()).getValidationManager().elementAddedToNode(this, packagingElement);
   }
 
   @Nullable 
@@ -93,7 +93,7 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
 
   @Override
   protected void update(PresentationData presentation) {
-    final String message = ((ArtifactEditorContextImpl)myContext).getValidationManager().getProblem(this);
+    final String message = ((ArtifactEditorImpl)myContext.getThisArtifactEditor()).getValidationManager().getProblem(this);
     if (message == null) {
       super.update(presentation);
       return;
@@ -104,7 +104,7 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
     presentation.setTooltip(message);
   }
 
-  private SimpleTextAttributes addErrorHighlighting(SimpleTextAttributes attributes) {
+  private static SimpleTextAttributes addErrorHighlighting(SimpleTextAttributes attributes) {
     final TextAttributes textAttributes = attributes.toTextAttributes();
     textAttributes.setEffectType(EffectType.WAVE_UNDERSCORE);
     textAttributes.setEffectColor(Color.RED);
