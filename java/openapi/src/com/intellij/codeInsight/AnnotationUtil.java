@@ -59,6 +59,8 @@ public class AnnotationUtil {
   public static final String TEST_ONLY = "org.jetbrains.annotations.TestOnly";
   @NonNls public static final String TEST_ONLY_SIMPLE_NAME = "TestOnly";
 
+  public static final String LANGUAGE = "org.intellij.lang.annotations.Language";
+
   public static final Set<String> ALL_ANNOTATIONS;
 
   @NonNls private static final String[] SIMPLE_NAMES =
