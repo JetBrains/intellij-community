@@ -62,6 +62,7 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -995,7 +996,7 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
             files.add(((PsiFileSystemItem)element).getVirtualFile());
           }
         }
-        return files.size() > 0 ? files.toArray(new VirtualFile[files.size()]) : null;
+        return files.size() > 0 ? VfsUtil.toVirtualFileArray(files) : null;
       }
       if (DataConstantsEx.TARGET_PSI_ELEMENT.equals(dataId)) {
         return null;

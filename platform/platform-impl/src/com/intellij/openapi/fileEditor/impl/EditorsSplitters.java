@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -285,7 +286,7 @@ public final class EditorsSplitters extends JPanel {
         files.add(editor.getFile());
       }
     }
-    return files.toArray(new VirtualFile[files.size()]);
+    return VfsUtil.toVirtualFileArray(files);
   }
 
   @NotNull public VirtualFile[] getSelectedFiles() {
@@ -296,7 +297,7 @@ public final class EditorsSplitters extends JPanel {
         files.add(file);
       }
     }
-    final VirtualFile[] virtualFiles = files.toArray(new VirtualFile[files.size()]);
+    final VirtualFile[] virtualFiles = VfsUtil.toVirtualFileArray(files);
     final VirtualFile currentFile = getCurrentFile();
     if (currentFile != null) {
       for (int i = 0; i != virtualFiles.length; ++i) {

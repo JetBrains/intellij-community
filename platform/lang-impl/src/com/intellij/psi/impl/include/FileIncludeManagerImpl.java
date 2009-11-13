@@ -19,6 +19,7 @@ package com.intellij.psi.impl.include;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -68,7 +69,7 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
           }
         }
       }
-      return files.toArray(new VirtualFile[files.size()]);
+      return VfsUtil.toVirtualFileArray(files);
     }
   };
 
@@ -87,7 +88,7 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
           }
         }
       }
-      return files.toArray(new VirtualFile[files.size()]);
+      return VfsUtil.toVirtualFileArray(files);
     }
   };
 

@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
@@ -172,8 +173,8 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
         set.addAll(Arrays.asList(context.getProjectCompileScope().getFiles(GroovyFileType.GROOVY_FILE_TYPE, true)));
       }
     });
-    
-    return set.toArray(new VirtualFile[set.size()]);
+
+    return VfsUtil.toVirtualFileArray(set);
   }
 
   public GenerationItem[] generate(CompileContext context, GenerationItem[] itemsToGenerate, VirtualFile outputRootDirectory) {

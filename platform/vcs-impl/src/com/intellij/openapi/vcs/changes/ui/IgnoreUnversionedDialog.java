@@ -153,7 +153,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
     }
     updateControls();
 
-    final VirtualFile[] ancestors = VfsUtil.getCommonAncestors(virtualFiles.toArray(new VirtualFile[virtualFiles.size()]));
+    final VirtualFile[] ancestors = VfsUtil.getCommonAncestors(VfsUtil.toVirtualFileArray(virtualFiles));
     if (dirCount > 1) {
       myIgnoreDirectoryTextField.setText(VcsBundle.message("ignored.edit.multiple.directories", dirCount));
     }

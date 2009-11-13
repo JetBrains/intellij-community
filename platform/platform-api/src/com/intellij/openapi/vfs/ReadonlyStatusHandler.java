@@ -39,7 +39,7 @@ public abstract class ReadonlyStatusHandler {
   public abstract OperationStatus ensureFilesWritable(@NotNull VirtualFile... files);
 
   public OperationStatus ensureFilesWritable(@NotNull Collection<VirtualFile> files) {
-    return ensureFilesWritable(files.toArray(new VirtualFile[files.size()]));
+    return ensureFilesWritable(VfsUtil.toVirtualFileArray(files));
   }
 
   public static ReadonlyStatusHandler getInstance(Project project) {

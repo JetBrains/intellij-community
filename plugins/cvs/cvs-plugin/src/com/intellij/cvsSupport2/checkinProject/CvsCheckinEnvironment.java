@@ -34,6 +34,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
@@ -123,7 +124,7 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
   }
 
   public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
-    final CvsHandler handler = AddFileOrDirectoryAction.getDefaultHandler(myProject, files.toArray(new VirtualFile[files.size()]));
+    final CvsHandler handler = AddFileOrDirectoryAction.getDefaultHandler(myProject, VfsUtil.toVirtualFileArray(files));
     final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
     executor.performActionSync(handler, CvsOperationExecutorCallback.EMPTY);
     return Collections.emptyList();

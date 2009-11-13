@@ -23,6 +23,7 @@ import com.intellij.cvsSupport2.actions.cvsContext.CvsContextAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -116,7 +117,7 @@ class AddHandler {
       }
 
       public VirtualFile[] getSelectedFiles() {
-        return files.toArray(new VirtualFile[files.size()]);
+        return VfsUtil.toVirtualFileArray(files);
       }
     };
   }

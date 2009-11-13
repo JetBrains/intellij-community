@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiClass;
@@ -68,7 +69,7 @@ abstract class OverrideImplementMethodAction extends AnAction {
                     }
                   }
                 }
-                final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files.toArray(new VirtualFile[files.size()]));
+                final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(VfsUtil.toVirtualFileArray(files));
                 if (!status.hasReadonlyFiles()) {
                   for (HierarchyNodeDescriptor selectedDescriptor : selectedDescriptors) {
                     OverrideImplementUtil.overrideOrImplement(((MethodHierarchyNodeDescriptor)selectedDescriptor).getPsiClass(), methodHierarchyBrowser.getBaseMethod());

@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -175,7 +176,7 @@ public class CommonRefactoringUtil {
     }
 
     final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project)
-      .ensureFilesWritable(readonly.toArray(new VirtualFile[readonly.size()]));
+      .ensureFilesWritable(VfsUtil.toVirtualFileArray(readonly));
     failed.addAll(Arrays.asList(status.getReadonlyFiles()));
     if (notifyOnFail && (!failed.isEmpty() || seenNonWritablePsiFilesWithoutVirtualFile && readonly.isEmpty())) {
       StringBuilder message = new StringBuilder(messagePrefix);

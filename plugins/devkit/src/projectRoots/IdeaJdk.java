@@ -27,10 +27,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.cls.BytePointer;
 import com.intellij.util.cls.ClsFormatException;
@@ -173,7 +170,7 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
     appendIdeaLibrary(home + File.separator + PLUGINS_DIR + File.separator + PERSISTENCE_SUPPORT + File.separator + LIB_DIR_NAME, "persistence-impl.jar", result);
     appendIdeaLibrary(home + File.separator + PLUGINS_DIR + File.separator + DATABASE_DIR + File.separator + LIB_DIR_NAME, "database-impl.jar", result);
     appendIdeaLibrary(home + File.separator + PLUGINS_DIR + File.separator + CSS_DIR + File.separator + LIB_DIR_NAME, "css.jar", result);
-    return result.toArray(new VirtualFile[result.size()]);
+    return VfsUtil.toVirtualFileArray(result);
   }
 
   private static void appendIdeaLibrary(final String path, @NonNls final String forbidden, final ArrayList<VirtualFile> result) {

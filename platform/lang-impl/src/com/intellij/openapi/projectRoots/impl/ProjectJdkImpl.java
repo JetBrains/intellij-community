@@ -30,6 +30,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
@@ -325,7 +326,7 @@ public class ProjectJdkImpl implements JDOMExternalizable, Sdk, SdkModificator {
     for (ProjectRoot root : roots) {
       files.addAll(Arrays.asList(root.getVirtualFiles()));
     }
-    return files.toArray(new VirtualFile[files.size()]);
+    return VfsUtil.toVirtualFileArray(files);
   }
 
   public void addRoot(VirtualFile root, OrderRootType rootType) {

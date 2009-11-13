@@ -181,7 +181,7 @@ public class BackendCompilerWrapper {
     }
     final List<TranslatingCompiler.OutputItem> outputs = processPackageInfoFiles();
     if (myFilesToRecompile.size() > 0 || outputs.size() > 0) {
-      mySink.add(null, outputs, myFilesToRecompile.toArray(new VirtualFile[myFilesToRecompile.size()]));
+      mySink.add(null, outputs, VfsUtil.toVirtualFileArray(myFilesToRecompile));
     }
   }
 

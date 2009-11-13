@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vcs.diff.DiffProvider;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
@@ -266,7 +267,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
 
     files.addAll(getSelectedVirtualFiles(null));
 
-    return files.toArray(new VirtualFile[files.size()]);
+    return VfsUtil.toVirtualFileArray(files);
   }
 
   private Change[] getLeadSelection() {

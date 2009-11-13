@@ -30,6 +30,7 @@ import com.intellij.openapi.fileChooser.ex.RootFileElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +50,7 @@ public class FileTreeStructure extends AbstractTreeStructure {
   public FileTreeStructure(Project project, FileChooserDescriptor chooserDescriptor) {
     myProject = project;
     List<VirtualFile> roots = chooserDescriptor.getRoots();
-    final VirtualFile[] rootFiles = roots.toArray(new VirtualFile[roots.size()]);
+    final VirtualFile[] rootFiles = VfsUtil.toVirtualFileArray(roots);
     VirtualFile rootFile = rootFiles.length == 1 ? rootFiles[0] : null;
     myRootElement = new RootFileElement(rootFiles, rootFile != null? rootFile.getPresentableUrl() : chooserDescriptor.getTitle(), chooserDescriptor.isShowFileSystemRoots());
     myChooserDescriptor = chooserDescriptor;

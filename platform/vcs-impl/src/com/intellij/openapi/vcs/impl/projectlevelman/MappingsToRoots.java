@@ -19,6 +19,7 @@ import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.Collections;
@@ -53,6 +54,6 @@ public class MappingsToRoots {
         }
       }
     }
-    return result.toArray(new VirtualFile[result.size()]);
+    return VfsUtil.toVirtualFileArray(result);
   }
 }

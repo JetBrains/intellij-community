@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.HashSet;
@@ -52,7 +53,7 @@ public class UnindexedFilesUpdater implements CacheUpdater {
     CollectingContentIterator finder = myIndex.createContentIterator();
     iterateIndexableFiles(finder);
     List<VirtualFile> files = finder.getFiles();
-    return files.toArray(new VirtualFile[files.size()]);
+    return VfsUtil.toVirtualFileArray(files);
   }
 
   public void processFile(final FileContent fileContent) {

@@ -19,6 +19,7 @@ package com.intellij.openapi.projectRoots.impl;
 import com.intellij.openapi.projectRoots.ex.ProjectRoot;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
@@ -48,7 +49,7 @@ class CompositeProjectRoot implements ProjectRoot {
       result.addAll(Arrays.asList(root.getVirtualFiles()));
     }
 
-    return result.toArray(new VirtualFile[result.size()]);
+    return VfsUtil.toVirtualFileArray(result);
   }
 
   public String[] getUrls() {

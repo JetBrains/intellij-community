@@ -939,7 +939,8 @@ public class CompileDriver {
           try {
             final Collection<VirtualFile> deps = CacheUtils.findDependentFiles(context, Collections.<VirtualFile>emptySet(), null, null);
             if (deps.size() > 0) {
-              TranslatingCompilerFilesMonitor.getInstance().update(context, null, Collections.<TranslatingCompiler.OutputItem>emptyList(), deps.toArray(new VirtualFile[deps.size()]));
+              TranslatingCompilerFilesMonitor.getInstance().update(context, null, Collections.<TranslatingCompiler.OutputItem>emptyList(),
+                                                                   VfsUtil.toVirtualFileArray(deps));
             }
           }
           catch (IOException ignored) {
@@ -1432,7 +1433,7 @@ public class CompileDriver {
             // todo: drop this?
             final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
             final PsiManager psiManager = PsiManager.getInstance(myProject);
-            for (final VirtualFile file : toCompile.toArray(new VirtualFile[toCompile.size()])) {
+            for (final VirtualFile file : VfsUtil.toVirtualFileArray(toCompile)) {
               if (fileTypeManager.getFileTypeByFile(file) == StdFileTypes.JAVA) {
                 final PsiFile psiFile = psiManager.findFile(file);
                 if (psiFile != null) {
@@ -1470,7 +1471,7 @@ public class CompileDriver {
       }
       
       if ((wereFilesDeleted[0] || !toCompile.isEmpty()) && context.getMessageCount(CompilerMessageCategory.ERROR) == 0) {
-        compiler.compile(context, moduleChunk, toCompile.toArray(new VirtualFile[toCompile.size()]), sink);
+        compiler.compile(context, moduleChunk, VfsUtil.toVirtualFileArray(toCompile), sink);
       }
     }
     finally {

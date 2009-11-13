@@ -316,7 +316,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
       }
     }
 
-    return files.toArray(new VirtualFile[files.size()]);
+    return VfsUtil.toVirtualFileArray(files);
   }
 
   public final void clearHistory() {

@@ -39,6 +39,7 @@ import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
@@ -902,8 +903,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         result.add(path.getVirtualFile());
       }
     }
-    
-    return result.toArray(new VirtualFile[result.size()]); 
+
+    return VfsUtil.toVirtualFileArray(result);
   }
 
   public boolean setReadOnly(final String name, final boolean value) {

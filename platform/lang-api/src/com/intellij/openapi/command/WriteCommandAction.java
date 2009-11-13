@@ -18,6 +18,7 @@ package com.intellij.openapi.command;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.GuiUtils;
@@ -99,7 +100,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
           }
       }
       if (!list.isEmpty()) {
-        if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(list.toArray(new VirtualFile[list.size()])).hasReadonlyFiles()) {
+        if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(VfsUtil.toVirtualFileArray(list)).hasReadonlyFiles()) {
           return false;
         }
       }

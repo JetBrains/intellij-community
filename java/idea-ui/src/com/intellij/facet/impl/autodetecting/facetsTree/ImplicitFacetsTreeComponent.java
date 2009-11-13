@@ -23,6 +23,7 @@ import com.intellij.facet.impl.autodetecting.model.DetectedFacetInfo;
 import com.intellij.facet.impl.autodetecting.model.FacetInfo2;
 import com.intellij.facet.impl.autodetecting.model.FacetInfoBackedByFacet;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -149,7 +150,7 @@ public class ImplicitFacetsTreeComponent {
 
     private FacetNodeImpl(@NotNull DetectedFacetInfo<Module> detectedFacet, VirtualFile projectRoot, @Nullable final DetectedFacetsTree.FacetNode parent,
                           final @NotNull List<VirtualFile> files) {
-      super(detectedFacet, detectedFacet.getFacetType(), projectRoot, files.toArray(new VirtualFile[files.size()]), parent);
+      super(detectedFacet, detectedFacet.getFacetType(), projectRoot, VfsUtil.toVirtualFileArray(files), parent);
       myDetectedFacetInfo = detectedFacet;
     }
 

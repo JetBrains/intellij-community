@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.PopupHandler;
@@ -138,7 +139,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
         files.add(file);
       }
     }
-    return files.isEmpty() ? null : files.toArray(new VirtualFile[files.size()]);
+    return files.isEmpty() ? null : VfsUtil.toVirtualFileArray(files);
   }
 
   private Object extractLocation() {

@@ -16,6 +16,7 @@
 package com.intellij.cvsSupport2.cvshandlers;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.Collection;
@@ -30,7 +31,7 @@ public abstract class AnyProcessedFiles extends FileSetToBeUpdated {
 
 
   public void refreshFilesAsync(final Runnable postRunnable) {
-    final VirtualFile[] files = getFiles().toArray(VirtualFile.EMPTY_ARRAY);
+    final VirtualFile[] files = VfsUtil.toVirtualFileArray(getFiles());
     final int[] index = new int[]{0};
     LOG.info("files.length=" + files.length);
     Runnable runnable = new Runnable() {

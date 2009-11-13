@@ -220,7 +220,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
       operation.addFile(info.getFile(), info.getKeywordSubstitution());
     }
     return new CommandCvsHandler(CvsBundle.message("action.name.add"), operation,
-                                 FileSetToBeUpdated.selectedFiles(addedFiles.toArray(new VirtualFile[addedFiles.size()])),
+                                 FileSetToBeUpdated.selectedFiles(VfsUtil.toVirtualFileArray(addedFiles)),
                                  VcsConfiguration.getInstance(project).getAddRemoveOption());
   }
 
@@ -241,7 +241,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
       VirtualFile cvsAdminDirectory = CvsVfsUtil.findFileByIoFile(new File(parentFile, CvsUtil.CVS));
       if (cvsAdminDirectory != null) result.add(cvsAdminDirectory);
     }
-    return result.toArray(new VirtualFile[result.size()]);
+    return VfsUtil.toVirtualFileArray(result);
   }
 
   public static CvsHandler createRestoreFileHandler(final VirtualFile parent,

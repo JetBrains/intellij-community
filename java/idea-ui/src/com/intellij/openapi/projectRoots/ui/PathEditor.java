@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.ui.ListUtil;
@@ -201,7 +202,7 @@ public abstract class PathEditor {
         added.add(vFile);
       }
     }
-    return added.toArray(new VirtualFile[added.size()]);
+    return VfsUtil.toVirtualFileArray(added);
   }
 
   /**

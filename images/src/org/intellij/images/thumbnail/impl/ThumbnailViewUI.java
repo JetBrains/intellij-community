@@ -164,7 +164,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             VirtualFile root = thumbnailView.getRoot();
             if (root != null && root.isValid() && root.isDirectory()) {
                 Set<VirtualFile> files = findFiles(root.getChildren());
-                VirtualFile[] virtualFiles = files.toArray(VirtualFile.EMPTY_ARRAY);
+              VirtualFile[] virtualFiles = VfsUtil.toVirtualFileArray(files);
                 Arrays.sort(virtualFiles, VIRTUAL_FILE_COMPARATOR);
 
                 model.ensureCapacity(model.size() + virtualFiles.length + 1);

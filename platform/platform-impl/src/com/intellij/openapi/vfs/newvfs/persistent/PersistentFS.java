@@ -633,7 +633,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       }
     }
 
-    return roots.toArray(new VirtualFile[roots.size()]);
+    return VfsUtil.toVirtualFileArray(roots);
   }
 
   //guarded by dirCacheReadLock/dirCacheWriteLock
@@ -704,7 +704,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   public VirtualFile[] getRoots() {
     synchronized (LOCK) {
       final Collection<NewVirtualFile> roots = myRoots.values();
-      return roots.toArray(new VirtualFile[roots.size()]);
+      return VfsUtil.toVirtualFileArray(roots);
     }
   }
 
@@ -718,7 +718,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       }
     }
 
-    return roots.toArray(new VirtualFile[roots.size()]);
+    return VfsUtil.toVirtualFileArray(roots);
   }
 
   private void applyEvent(final VFileEvent event) {

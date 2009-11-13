@@ -112,7 +112,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
         testOutputDirs.add(testsOutput);
       }
     }
-    myOutputDirectories = allDirs.toArray(new VirtualFile[allDirs.size()]);
+    myOutputDirectories = VfsUtil.toVirtualFileArray(allDirs);
     // need this to ensure that the sent contains only _dedicated_ test output dirs
     // Directories that are configured for both test and production classes must not be added in the resulting set
     testOutputDirs.removeAll(productionOutputDirs);

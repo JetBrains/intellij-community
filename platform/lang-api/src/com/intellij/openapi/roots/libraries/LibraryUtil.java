@@ -23,6 +23,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.StringTokenizer;
@@ -122,7 +123,7 @@ public class LibraryUtil {
         }
       }
     }
-    return roots.toArray(new VirtualFile[roots.size()]);
+    return VfsUtil.toVirtualFileArray(roots);
   }
 
   public static Library findLibrary(Module module, final String name) {
