@@ -30,7 +30,11 @@ import java.util.Set;
 public class ArtifactAdditionalCompileScopeProvider extends AdditionalCompileScopeProvider {
   @Override
   public CompileScope getAdditionalScope(@NotNull CompileScope baseScope, @NotNull CompilerFilter filter, @NotNull Project project) {
-    if (ArtifactCompileScope.getArtifacts(baseScope) != null || !filter.acceptCompiler(IncrementalArtifactsCompiler.getInstance(project))) {
+    if (ArtifactCompileScope.getArtifacts(baseScope) != null) {
+      return null;
+    }
+    final IncrementalArtifactsCompiler compiler = IncrementalArtifactsCompiler.getInstance(project);
+    if (compiler == null || !filter.acceptCompiler(compiler)) {
       return null;
     }
     final Set<Artifact> artifacts = ArtifactCompileScope.getArtifactsToBuild(project, baseScope);
