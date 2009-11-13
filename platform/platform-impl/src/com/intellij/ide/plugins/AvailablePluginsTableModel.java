@@ -39,7 +39,7 @@ import java.util.Map;
  * To change this template use Options | File Templates.
  */
 public class AvailablePluginsTableModel extends PluginTableModel {
-  private static final Map<PluginId, String> UpdateVersions = new HashMap<PluginId, String>();
+  private final Map<PluginId, String> myUpdateVersions = new HashMap<PluginId, String>();
 
   public AvailablePluginsTableModel(SortableProvider sortableProvider) {
     super(sortableProvider, 
@@ -65,7 +65,7 @@ public class AvailablePluginsTableModel extends PluginTableModel {
     for (IdeaPluginDescriptor descr : list) {
       updateStatus(descr);
       view.add(descr);
-      UpdateVersions.put(descr.getPluginId(), descr.getVersion());
+      myUpdateVersions.put(descr.getPluginId(), descr.getVersion());
     }
     safeSort();
   }
@@ -87,8 +87,8 @@ public class AvailablePluginsTableModel extends PluginTableModel {
     for (IdeaPluginDescriptor descr : list) {
       updateStatus(descr);
       PluginId descrId = descr.getPluginId();
-      if (UpdateVersions.containsKey(descrId)) {
-        String currVersion = UpdateVersions.get(descrId);
+      if (myUpdateVersions.containsKey(descrId)) {
+        String currVersion = myUpdateVersions.get(descrId);
         int state = StringUtil.compareVersionNumbers(descr.getVersion(), currVersion);
         if (state > 0) {
           for (int i = 0; i < view.size(); i++) {
@@ -100,6 +100,7 @@ public class AvailablePluginsTableModel extends PluginTableModel {
       }
       else {
         view.add(descr);
+        myUpdateVersions.put(descr.getPluginId(), descr.getVersion());
       }
     }
     safeSort();
