@@ -17,12 +17,13 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtil;
-import gnu.trove.TIntArrayList;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -102,7 +103,7 @@ public class URLUtil {
     while (i < len) {
       char c = s.charAt(i);
       if (c == '%') {
-        TIntArrayList bytes = new TIntArrayList();
+        List<Integer> bytes = new ArrayList<Integer>();
         while (i + 2 < len && s.charAt(i) == '%') {
           final int d1 = decode(s.charAt(i + 1));
           final int d2 = decode(s.charAt(i + 2));
@@ -117,7 +118,7 @@ public class URLUtil {
         if (!bytes.isEmpty()) {
           final byte[] bytesArray = new byte[bytes.size()];
           for (int j = 0; j < bytes.size(); j++) {
-            bytesArray[j] = (byte)bytes.get(j);
+            bytesArray[j] = (byte)bytes.get(j).intValue();
           }
           try {
             decoded.append(new String(bytesArray, "UTF-8"));
