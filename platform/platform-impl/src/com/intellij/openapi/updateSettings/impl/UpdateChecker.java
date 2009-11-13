@@ -222,7 +222,10 @@ public final class UpdateChecker {
       final Document document;
       try {
         document = loadVersionInfo(getUpdateUrl());
-        if (document == null) return null;
+        if (document == null) {
+          LOG.info("Failed to load version info document");
+          return null;
+        }
       }
       catch (Throwable t) {
         LOG.debug(t);
@@ -231,10 +234,14 @@ public final class UpdateChecker {
 
       Element root = document.getRootElement();
       UpdateChannel channel = findUpdateChannel(root, ourBuild.getProductCode());
-      if (channel == null) return null;
+      if (channel == null) {
+        LOG.info("Update channel not found for build " + ourBuild);
+        return null;
+      }
 
       BuildInfo latestBuild = channel.getLatestBuild();
       if (latestBuild == null) return null;
+      LOG.info("Latest build is " + latestBuild.getNumber());
 
       if (ourBuild.compareTo(latestBuild.getNumber()) < 0) {
         return channel;
