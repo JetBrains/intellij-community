@@ -195,7 +195,7 @@ public class AppEngineSdkImpl implements AppEngineSdk {
         }
       }
     }
-    return roots.toArray(new VirtualFile[roots.size()]);
+    return VfsUtil.toVirtualFileArray(roots);
   }
 
   public String getLibUserDirectoryPath() {
