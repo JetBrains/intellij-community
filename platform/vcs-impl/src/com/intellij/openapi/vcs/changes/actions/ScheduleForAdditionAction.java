@@ -25,10 +25,8 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -73,8 +71,8 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     if (dataContext == null) {
       return null;
     }
-    final Project project = LangDataKeys.PROJECT.getData(dataContext);
-    final VirtualFile file = project == null ? null : LangDataKeys.VIRTUAL_FILE.getData(dataContext);
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final VirtualFile file = project == null ? null : PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
     if (file != null && FileStatusManager.getInstance(project).getStatus(file) == FileStatus.UNKNOWN) {
       return file;
     }

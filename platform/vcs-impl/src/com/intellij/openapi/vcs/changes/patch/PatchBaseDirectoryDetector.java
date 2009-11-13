@@ -17,7 +17,10 @@ package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 /**
  * @author yole
@@ -29,6 +32,8 @@ public abstract class PatchBaseDirectoryDetector {
 
   @Nullable
   public abstract Result detectBaseDirectory(String name);
+
+  public abstract Collection<VirtualFile> findFiles(String fileName);
 
   public static class Result {
     public String baseDir;
