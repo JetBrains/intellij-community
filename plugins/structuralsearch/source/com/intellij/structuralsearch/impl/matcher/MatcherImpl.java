@@ -17,6 +17,7 @@ import com.intellij.openapi.roots.impl.FileIndexImplUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
@@ -283,7 +284,7 @@ public class MatcherImpl {
               }
             }
           }
-          return result.toArray(VirtualFile.EMPTY_ARRAY);
+          return VfsUtil.toVirtualFileArray(result);
         }
       });
 
