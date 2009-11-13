@@ -30,6 +30,8 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.io.ResizeableMappedFile;
+import com.intellij.util.io.storage.AbstractStorage;
+import com.intellij.util.io.storage.CompactStorage;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.io.storage.Storage;
 import gnu.trove.TIntArrayList;
@@ -47,7 +49,7 @@ import java.util.concurrent.TimeUnit;
 public class FSRecords implements Disposable, Forceable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.vfs.persistent.FSRecords");
 
-  private static final int VERSION = 9;
+  private static final int VERSION = 10;
 
   private static final int PARENT_OFFSET = 0;
   private static final int PARENT_SIZE = 4;
@@ -82,7 +84,6 @@ public class FSRecords implements Disposable, Forceable {
 
   private static final String CHILDREN_ATT = "FsRecords.DIRECTORY_CHILDREN";
   private static final Object lock = new Object();
-  private DbConnection myConnection;
 
   private volatile static int ourLocalModificationCount = 0;
 
@@ -101,7 +102,7 @@ public class FSRecords implements Disposable, Forceable {
     private static int CONTENT_ID;
 
     private static PersistentStringEnumerator myNames;
-    private static Storage myAttributes;
+    private static AbstractStorage myAttributes;
     private static Storage myContents;
     private static ResizeableMappedFile myRecords;
     private static final TIntArrayList myFreeRecords = new TIntArrayList();
@@ -168,7 +169,7 @@ public class FSRecords implements Disposable, Forceable {
       if (!namesFile.exists()) {
         invalidateIndex();
       }
-
+      boolean compact = true;
       try {
         if (getCorruptionMarkerFile().exists()) {
           invalidateIndex();
@@ -176,7 +177,7 @@ public class FSRecords implements Disposable, Forceable {
         }
 
         myNames = new PersistentStringEnumerator(namesFile);
-        myAttributes = Storage.create(attributesFile.getCanonicalPath());
+        myAttributes = compact ? new CompactStorage(attributesFile.getCanonicalPath()) : Storage.create(attributesFile.getCanonicalPath());
         myContents = Storage.create(contentsFile.getCanonicalPath());
         myRecords = new ResizeableMappedFile(recordsFile, 20 * 1024);
 
@@ -203,7 +204,7 @@ public class FSRecords implements Disposable, Forceable {
           boolean deleted = true;
           deleted &= FileUtil.delete(getCorruptionMarkerFile());
           deleted &= deleteWithSubordinates(namesFile);
-          deleted &= Storage.deleteFiles(attributesFile.getCanonicalPath());
+          deleted &= compact ? CompactStorage.deleteFiles(attributesFile.getCanonicalPath()) : Storage.deleteFiles(attributesFile.getCanonicalPath());
           deleted &= Storage.deleteFiles(contentsFile.getCanonicalPath());
           deleted &= deleteWithSubordinates(recordsFile);
 
@@ -349,7 +350,7 @@ public class FSRecords implements Disposable, Forceable {
       return myNames;
     }
 
-    public static Storage getAttributes(int attId) {
+    public static AbstractStorage getAttributes(int attId) {
       return attId == CONTENT_ID ? myContents : myAttributes;
     }
 
@@ -434,14 +435,14 @@ public class FSRecords implements Disposable, Forceable {
   }
 
   public void connect() {
-    myConnection = DbConnection.connect();
+    DbConnection.connect();
   }
 
   private static ResizeableMappedFile getRecords() {
     return DbConnection.getRecords();
   }
 
-  private static Storage getAttributes(int attId) {
+  private static AbstractStorage getAttributes(int attId) {
     return DbConnection.getAttributes(attId);
   }
 
@@ -514,14 +515,15 @@ public class FSRecords implements Disposable, Forceable {
   private void deleteAttribute(int id, int isContent) throws IOException {
     int att_page = getAttributeRecordId(id, isContent);
     if (att_page != 0) {
-      final DataInputStream attStream = getAttributes(isContent).readStream(att_page);
+      AbstractStorage storage = getAttributes(isContent);
+      final DataInputStream attStream = storage.readStream(att_page);
       while (attStream.available() > 0) {
         attStream.readInt(); // Attribute ID;
         int attAddress = attStream.readInt();
-        getAttributes(isContent).deleteRecord(attAddress);
+        storage.deleteRecord(attAddress);
       }
       attStream.close();
-      getAttributes(isContent).deleteRecord(att_page);
+      storage.deleteRecord(att_page);
     }
   }
 
@@ -677,7 +679,7 @@ public class FSRecords implements Disposable, Forceable {
     try {
       synchronized (lock) {
         int encodedAttId = DbConnection.getAttributeId(CHILDREN_ATT);
-        final int att = findAttributePage(id, encodedAttId, false);
+        final int att = findAttributePage(id, encodedAttId, false, 0);
         return att != 0;
       }
     }
@@ -860,7 +862,9 @@ public class FSRecords implements Disposable, Forceable {
   }
 
   private static int getAttributeRecordId(final int id, int attributeId) throws IOException {
-    return getRecords().getInt(getAttrOffset(id, attributeId));
+    final int record = getRecords().getInt(getAttrOffset(id, attributeId));
+    assert record >= 0;
+    return record;
   }
 
   private static int getAttrOffset(int id, int attributeId) {
@@ -875,7 +879,7 @@ public class FSRecords implements Disposable, Forceable {
         int encodedAttId;
         synchronized (lock) {
           encodedAttId = DbConnection.getAttributeId(attId);
-          page = findAttributePage(id, encodedAttId, false);
+          page = findAttributePage(id, encodedAttId, false, 0);
           if (page == 0) return null;
         }
 
@@ -887,7 +891,7 @@ public class FSRecords implements Disposable, Forceable {
     }
   }
 
-  private int findAttributePage(int fileId, int attributeId, boolean createIfNotFound) throws IOException {
+  private int findAttributePage(int fileId, int attributeId, boolean createIfNotFound, int capacity) throws IOException {
     if (fileId <= 0) {
       throw DbConnection.handleError(new AssertionError("assert fileId > 0 failed"));
     }
@@ -895,35 +899,58 @@ public class FSRecords implements Disposable, Forceable {
     if ((getFlags(fileId) & FREE_RECORD_FLAG) != 0) { // TODO: This assertion is a bit timey, will remove when bug is caught.
       throw DbConnection.handleError(new AssertionError("Trying to find an attribute of deleted page"));
     }
+
     int attrsRecord = getAttributeRecordId(fileId, attributeId);
 
+    AbstractStorage storage = getAttributes(attributeId);
     if (attrsRecord == 0) {
       if (!createIfNotFound) return 0;
 
-      attrsRecord = getAttributes(attributeId).createNewRecord();
+      attrsRecord = storage.createNewRecord(16 * 8);
       getRecords().putInt(getAttrOffset(fileId, attributeId), attrsRecord);
     }
     else {
-      final DataInputStream attrRefs = getAttributes(attributeId).readStream(attrsRecord);
+      final DataInputStream attrRefs = storage.readStream(attrsRecord);
       try {
+        int offset = 4;
         while (attrRefs.available() > 0) {
           final int attIdOnPage = attrRefs.readInt();
+          if (attrRefs.available() < 4) {
+            LOG.error("bad");
+          }
           final int attAddress = attrRefs.readInt();
 
-          if (attIdOnPage == attributeId) return attAddress;
+          if (attIdOnPage == attributeId) {
+            if (capacity > 0) {
+              int newAddress = storage.ensureCapacity(attAddress, capacity);
+              if (newAddress == attAddress) {
+                return attAddress;
+              }
+              ((CompactStorage)storage).replaceIntInData(attrsRecord + offset, newAddress, attAddress);
+              return newAddress;
+            } else {
+              return attAddress;
+            }
+          }
+          offset += 8;
         }
       }
       finally {
         attrRefs.close();
       }
+
+
     }
 
     if (createIfNotFound) {
-      Storage.AppenderStream appender = getAttributes(attributeId).appendStream(attrsRecord);
+      Storage.AppenderStream appender = storage.appendStream(attrsRecord);
       appender.writeInt(attributeId);
-      int attAddress = getAttributes(attributeId).createNewRecord();
+      int attAddress = storage.createNewRecord(capacity);
       appender.writeInt(attAddress);
       appender.close();
+      if (appender.getRecordId() != attrsRecord) {
+        getRecords().putInt(getAttrOffset(fileId, attributeId), appender.getRecordId());
+      }
       return attAddress;
     }
 
@@ -951,12 +978,35 @@ public class FSRecords implements Disposable, Forceable {
             DbConnection.markDirty();
             incModCount(myFileId);
             encodedAttId = DbConnection.getAttributeId(myAttributeId);
-            page = findAttributePage(myFileId, encodedAttId, true);
+            page = findAttributePage(myFileId, encodedAttId, true, ((ByteArrayOutputStream)out).size());
           }
 
-          final DataOutputStream sinkStream = getAttributes(encodedAttId).writeStream(page);
+          AbstractStorage storage = getAttributes(encodedAttId);
+          AbstractStorage.StorageDataOutput sinkStream = storage.writeStream(page);
           sinkStream.write(((ByteArrayOutputStream)out).toByteArray());
           sinkStream.close();
+          final int recordId = sinkStream.getRecordId();
+          if (recordId != page) {
+            int attrsRecord = getAttributeRecordId(myFileId, encodedAttId);
+            DataInputStream stream = storage.readStream(attrsRecord);
+            try {
+              while (stream.available() > 0) {
+                if (encodedAttId == stream.readInt()) {
+                  ((CompactStorage)storage).replaceIntInData(attrsRecord + 4, recordId, page);
+                  break;
+                }
+                if (stream.available() < 4) {
+                  LOG.error("wtf");
+                }
+                stream.readInt();
+                attrsRecord += 8;
+              }
+            }
+            finally {
+              stream.close();
+            }
+          }
+
         }
       }
       catch (Throwable e) {

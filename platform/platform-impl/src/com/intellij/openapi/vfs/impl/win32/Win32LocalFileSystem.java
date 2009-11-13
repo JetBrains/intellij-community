@@ -40,7 +40,9 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   };
 
   public static Win32LocalFileSystem getWin32Instance() {
-    return THREAD_LOCAL.get();
+    Win32LocalFileSystem fileSystem = THREAD_LOCAL.get();
+    fileSystem.myKernel.clearCache();
+    return fileSystem;
   }
 
   private final Win32Kernel myKernel = new Win32Kernel();
