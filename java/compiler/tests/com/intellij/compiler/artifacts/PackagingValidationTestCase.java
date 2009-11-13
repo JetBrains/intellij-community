@@ -5,7 +5,7 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.impl.ui.ArtifactValidationManagerBase;
+import com.intellij.packaging.impl.ui.ArtifactProblemsHolderBase;
 import com.intellij.packaging.ui.ArtifactProblemQuickFix;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -22,19 +22,19 @@ public abstract class PackagingValidationTestCase extends PackagingElementsTestC
     mySetupModule = true;
   }
 
-  protected MockArtifactValidationManager validate(CompositePackagingElement<?> root, final ArtifactType artifactType) {
-    final MockArtifactValidationManager validationManager = new MockArtifactValidationManager();
+  protected MockArtifactProblemsHolder validate(CompositePackagingElement<?> root, final ArtifactType artifactType) {
+    final MockArtifactProblemsHolder validationManager = new MockArtifactProblemsHolder();
     final Artifact artifact = addArtifact("artifact", artifactType, root);
     artifactType.checkRootElement(root, artifact, validationManager);
     return validationManager;
   }
 
 
-  protected class MockArtifactValidationManager extends ArtifactValidationManagerBase {
+  protected class MockArtifactProblemsHolder extends ArtifactProblemsHolderBase {
     private List<String> myProblems = new ArrayList<String>();
     private Map<String, ArtifactProblemQuickFix> myQuickFixes = new THashMap<String, ArtifactProblemQuickFix>();
 
-    public MockArtifactValidationManager() {
+    public MockArtifactProblemsHolder() {
       super(new MockPackagingEditorContext());
     }
 
