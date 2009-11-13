@@ -24,10 +24,8 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.*;
@@ -46,6 +44,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.SortedComboBoxModel;
 import com.intellij.ui.TitledBorderWithMnemonic;
 import com.intellij.ui.TreeSpeedSearch;
@@ -61,9 +60,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
@@ -96,6 +93,7 @@ public class PsiViewerDialog extends DialogWrapper {
   private Map<String, Object> handlers = new HashMap<String, Object>();
   private DefaultActionGroup myGroup;
   private Language[] myLanguageDialects;
+  private final Color SELECTION_BG_COLOR = new Color(0, 51, 51);
   private static final Comparator<Language> DIALECTS_COMPARATOR = new Comparator<Language>() {
     public int compare(final Language o1, final Language o2) {
       if (o1 == null) return o2 == null ? 0 : -1;
@@ -103,6 +101,18 @@ public class PsiViewerDialog extends DialogWrapper {
       return o1.getID().compareTo(o2.getID());
     }
   };
+  private EditorListener myEditorListener = new EditorListener();
+  private int myLastParsedTextHashCode = 17;
+  private int myNewDocumentHashCode = 11;
+
+  @Nullable
+  private static PsiElement findCommonParent(PsiElement start, PsiElement end) {
+    final TextRange range = end.getTextRange();
+    while (start != null && !start.getTextRange().contains(range)) {
+      start = start.getParent();
+    }
+    return start;
+  }
 
   public PsiViewerDialog(Project project, boolean modal) {
     super(project, true);
@@ -171,6 +181,9 @@ public class PsiViewerDialog extends DialogWrapper {
     final Document document = editorFactory.createDocument("");
     myEditor = editorFactory.createEditor(document, myProject);
     myEditor.getSettings().setFoldingOutlineShown(false);
+    document.addDocumentListener(myEditorListener);
+    myEditor.getSelectionModel().addSelectionListener(myEditorListener);
+    myEditor.getCaretModel().addCaretListener(myEditorListener);
 
     for (PsiViewerExtension extension : Extensions.getExtensions(PsiViewerExtension.EP_NAME)) {
       final Presentation p = new Presentation(extension.getName());
@@ -347,16 +360,18 @@ public class PsiViewerDialog extends DialogWrapper {
 
   @Nullable
   private PsiElement getPsiElement() {
-    TreePath path = myTree.getSelectionPath();
-    if (path != null) {
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-      if (node.getUserObject() instanceof ViewerNodeDescriptor) {
-        ViewerNodeDescriptor descriptor = (ViewerNodeDescriptor)node.getUserObject();
-        Object elementObject = descriptor.getElement();
-        return elementObject instanceof PsiElement
-               ? (PsiElement)elementObject
-               : elementObject instanceof ASTNode ? ((ASTNode)elementObject).getPsi() : null;
-      }
+    final TreePath path = myTree.getSelectionPath();
+    return path == null ? null : getPsiElement((DefaultMutableTreeNode)path.getLastPathComponent());
+  }
+
+  @Nullable
+  private PsiElement getPsiElement(DefaultMutableTreeNode node) {
+    if (node.getUserObject() instanceof ViewerNodeDescriptor) {
+      ViewerNodeDescriptor descriptor = (ViewerNodeDescriptor)node.getUserObject();
+      Object elementObject = descriptor.getElement();
+      return elementObject instanceof PsiElement
+             ? (PsiElement)elementObject
+             : elementObject instanceof ASTNode ? ((ASTNode)elementObject).getPsi() : null;
     }
     return null;
   }
@@ -390,6 +405,8 @@ public class PsiViewerDialog extends DialogWrapper {
     if (text.trim().length() == 0) return;
 
     myLastParsedText = text;
+    myLastParsedTextHashCode = text.hashCode();
+    myNewDocumentHashCode = myLastParsedTextHashCode;
     PsiElement rootElement = null;
     final Object handler = getHandler();
 
@@ -430,7 +447,7 @@ public class PsiViewerDialog extends DialogWrapper {
 
     public MyTreeSelectionListener() {
       myAttributes = new TextAttributes();
-      myAttributes.setBackgroundColor(new Color(0, 0, 128));
+      myAttributes.setBackgroundColor(SELECTION_BG_COLOR);
       myAttributes.setForegroundColor(Color.white);
     }
 
@@ -465,8 +482,12 @@ public class PsiViewerDialog extends DialogWrapper {
           if (end <= textLength) {
             myEditor.getMarkupModel()
               .addRangeHighlighter(start, end, HighlighterLayer.FIRST + 1, myAttributes, HighlighterTargetArea.EXACT_RANGE);
-            myEditor.getCaretModel().moveToOffset(start);
-            myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+            if (myTree.hasFocus()) {
+              myEditor.getCaretModel().moveToOffset(start);
+              myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+            } else {
+              myEditor.getScrollingModel().scrollTo(myEditor.offsetToLogicalPosition(start), ScrollType.MAKE_VISIBLE);
+            }
           }
           updateReferences(element);
         }
@@ -534,6 +555,20 @@ public class PsiViewerDialog extends DialogWrapper {
     return index >= elements.length ? null : elements[index];
   }
 
+  @Nullable
+  public static TreeNode findNodeWithObject(final Object object, final TreeModel model, final Object parent) {
+    for (int i = 0; i < model.getChildCount(parent); i++) {
+      final DefaultMutableTreeNode childNode = (DefaultMutableTreeNode) model.getChild(parent, i);
+      if (childNode.getUserObject().equals(object)) {
+        return childNode;
+      } else {
+        final TreeNode node = findNodeWithObject(object, model, childNode);
+        if (node != null) return node;
+      }
+    }
+    return null;
+  }
+
   private class ChoosePsiTypeButton extends ComboBoxAction {
     protected int getMaxRows() {
       return 15;
@@ -556,7 +591,7 @@ public class PsiViewerDialog extends DialogWrapper {
   private class GoToListener implements KeyListener, MouseListener, ListSelectionListener {
     private RangeHighlighter myHighlighter;
     private final TextAttributes myAttributes =
-      new TextAttributes(Color.white, new Color(0, 0, 128), Color.red, EffectType.BOXED, Font.PLAIN);
+      new TextAttributes(Color.white, SELECTION_BG_COLOR, Color.red, EffectType.BOXED, Font.PLAIN);
 
     private void navigate() {
       clearSelection();
@@ -625,23 +660,12 @@ public class PsiViewerDialog extends DialogWrapper {
       }
     }
 
-    public void keyTyped(KeyEvent e) {
-    }
-
-    public void keyReleased(KeyEvent e) {
-    }
-
-    public void mousePressed(MouseEvent e) {
-    }
-
-    public void mouseReleased(MouseEvent e) {
-    }
-
-    public void mouseEntered(MouseEvent e) {
-    }
-
-    public void mouseExited(MouseEvent e) {
-    }
+    public void keyTyped(KeyEvent e) {}
+    public void keyReleased(KeyEvent e) {}
+    public void mousePressed(MouseEvent e) {}
+    public void mouseReleased(MouseEvent e) {}
+    public void mouseEntered(MouseEvent e) {}
+    public void mouseExited(MouseEvent e) {}
   }
 
   private class PopupItemAction extends AnAction implements DumbAware {
@@ -652,6 +676,45 @@ public class PsiViewerDialog extends DialogWrapper {
     public void actionPerformed(AnActionEvent e) {
       updatePresentation(e.getPresentation());
       updateDialectsCombo();
+    }
+  }
+
+  private class EditorListener implements CaretListener, SelectionListener, DocumentListener {
+    public void caretPositionChanged(CaretEvent e) {
+      if (!available() || myEditor.getSelectionModel().hasSelection()) return;
+      final PsiFile psiFile = getPsiFile();
+      if (psiFile == null) return;
+      final int offset = myEditor.getCaretModel().getOffset();
+      final PsiElement element = PsiUtilBase.getElementAtOffset(psiFile, offset);
+      myTreeBuilder.select(element);
+    }
+
+    public void selectionChanged(SelectionEvent e) {
+      if (!available() || !myEditor.getSelectionModel().hasSelection()) return;
+      final PsiFile psiFile = getPsiFile();
+      if (psiFile == null) return;
+      final SelectionModel selection = myEditor.getSelectionModel();
+      final int start = selection.getSelectionStart();
+      final int end = selection.getSelectionEnd();
+      final PsiElement element = findCommonParent(PsiUtilBase.getElementAtOffset(psiFile, start), PsiUtilBase.getElementAtOffset(psiFile, end));
+      myTreeBuilder.select(element);
+    }
+
+    private boolean available() {
+      return myLastParsedTextHashCode == myNewDocumentHashCode && myEditor.getContentComponent().hasFocus();
+    }
+
+    @Nullable
+    private PsiFile getPsiFile() {
+      final PsiElement root = ((ViewerTreeStructure)myTreeBuilder.getTreeStructure()).getRootPsiElement();
+      return root instanceof PsiFile ? (PsiFile)root : null;
+    }
+
+    public void beforeDocumentChange(DocumentEvent event) {
+
+    }
+    public void documentChanged(DocumentEvent event) {
+      myNewDocumentHashCode = event.getDocument().getText().hashCode();
     }
   }
 }
