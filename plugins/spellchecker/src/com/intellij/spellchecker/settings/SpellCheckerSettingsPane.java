@@ -111,7 +111,7 @@ public class SpellCheckerSettingsPane implements Disposable {
           final ArrayList<Pair<String, Boolean>> result = new ArrayList<Pair<String, Boolean>>();
           final ArrayList<Pair<String, Boolean>> currentDictionaries = optionalChooserComponent.getValue();
           for (Pair<String, Boolean> pair : currentDictionaries) {
-            if (!pair.first.startsWith(path)) {
+            if (!pair.first.startsWith(FileUtil.toSystemDependentName(path))) {
               result.add(pair);
             }
           }
@@ -157,7 +157,7 @@ public class SpellCheckerSettingsPane implements Disposable {
   }
 
   public boolean isModified() {
-    return wordsPanel.isModified() || optionalChooserComponent.isModified();
+    return wordsPanel.isModified() || optionalChooserComponent.isModified() || pathsChooserComponent.isModified();
   }
 
   public void apply() throws ConfigurationException {
