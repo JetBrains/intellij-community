@@ -300,7 +300,7 @@ public class GroovyCompilerTest extends JavaCodeInsightFixtureTestCase {
     assertEmpty(make());
   }
 
-  public void _testDontApplyTransformsFromSameModule() throws Exception {
+  public void testDontApplyTransformsFromSameModule() throws Exception {
     addTransform();
 
     myFixture.addClass("public class JavaClassToGenerateStubs {}");
@@ -334,7 +334,7 @@ public class GroovyCompilerTest extends JavaCodeInsightFixtureTestCase {
     myFixture.addFileToProject("META-INF/services/org.codehaus.groovy.transform.ASTTransformation", "Transf");
   }
 
-  public void _testApplyTransformsFromDependencies() throws Exception {
+  public void testApplyTransformsFromDependencies() throws Exception {
     addTransform();
 
     myFixture.addFileToProject("dependent/Bar.groovy", "class Bar {\n" +
