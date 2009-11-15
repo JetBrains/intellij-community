@@ -24,6 +24,7 @@ import org.codehaus.groovy.tools.javac.JavaAwareResolveVisitor;
 import org.codehaus.groovy.tools.javac.JavaStubGenerator;
 
 import java.io.*;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -333,22 +334,11 @@ public class GroovycRunner {
 
     final GroovyClassLoader classLoader = buildClassLoaderFor(config);
 
-    final String localGlobalTransforms = new File(finalOutput + File.separator +
-                                                  "META-INF" + File.separator +
-                                                  "services" + File.separator +
-                                                  "org.codehaus.groovy.transform.ASTTransformation")
-      .getAbsolutePath();
+    final String localGlobalTransforms = finalOutput + "META-INF/services/org.codehaus.groovy.transform.ASTTransformation";
 
     final GroovyClassLoader transformLoader = new GroovyClassLoader(classLoader) {
       public Enumeration getResources(String name) throws IOException {
         if (name.endsWith("org.codehaus.groovy.transform.ASTTransformation")) {
-          if (forStubs) {
-            //commenting the next line (it shouldn't be there) will result in GroovyCompilerTest failure
-            //meaning that stub generation for some module (A) may require already compiled classes from another module (B)
-            //where A depends on B, of course
-            return Collections.enumeration(Collections.EMPTY_LIST);
-          }
-
           final Enumeration resources = super.getResources(name);
           final ArrayList list = Collections.list(resources);
           for (Iterator iterator = list.iterator(); iterator.hasNext();) {
