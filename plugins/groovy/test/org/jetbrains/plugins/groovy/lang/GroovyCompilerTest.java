@@ -51,6 +51,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
@@ -83,6 +84,12 @@ public class GroovyCompilerTest extends JavaCodeInsightFixtureTestCase {
     CompilerProjectExtension.getInstance(getProject()).setCompilerOutputUrl(myMainOutput.findOrCreateDir("out").getUrl());
 
     addGroovyLibrary(myModule);
+  }
+
+  @Override
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
+    moduleBuilder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);
+    super.tuneFixture(moduleBuilder);
   }
 
   private static void addGroovyLibrary(final Module to) {
@@ -324,6 +331,21 @@ public class GroovyCompilerTest extends JavaCodeInsightFixtureTestCase {
                                "    }\n" +
                                "  }\n" +
                                "}");
+
+    /*myFixture.addFileToProject("Transf.java",
+                               "import org.codehaus.groovy.ast.*;\n" +
+                               "import org.codehaus.groovy.control.*;\n" +
+                               "import org.codehaus.groovy.transform.*;\n" +
+                               "@GroovyASTTransformation(phase = CompilePhase.CONVERSION)\n" +
+                               "public class Transf implements ASTTransformation {\n" +
+                               "  public void visit(ASTNode[] nodes, SourceUnit sourceUnit) {\n" +
+                               "    ModuleNode module = (ModuleNode) nodes[0];\n" +
+                               "    for (ClassNode clazz : module.getClasses()) {\n" +
+                               "      if (clazz.getName().contains(\"Bar\")) " +
+                               "        module.addStaticImportClass(\"Foo\", ClassHelper.makeWithoutCaching(Foo.class));\n" +
+                               "    }\n" +
+                               "  }\n" +
+                               "}");*/
 
     myFixture.addFileToProject("Foo.groovy", "class Foo {\n" +
                                              "static def autoImported() { 239 }\n" +
