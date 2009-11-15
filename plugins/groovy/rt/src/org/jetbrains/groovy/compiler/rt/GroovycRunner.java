@@ -329,20 +329,23 @@ public class GroovycRunner {
     compilerMessages.add(new CompilerMessage(CompilerMessage.WARNING, message + ":\n" + writer, "<exception>", -1, -1));
   }
 
-  private static CompilationUnit createCompilationUnit(final boolean forStubs, final CompilerConfiguration config, String finalOutput) {
+  private static CompilationUnit createCompilationUnit(final boolean forStubs, final CompilerConfiguration config, final String finalOutput) {
     config.setClasspathList(Collections.EMPTY_LIST);
 
     final GroovyClassLoader classLoader = buildClassLoaderFor(config);
 
-    final String localGlobalTransforms = finalOutput + "META-INF/services/org.codehaus.groovy.transform.ASTTransformation";
-
     final GroovyClassLoader transformLoader = new GroovyClassLoader(classLoader) {
       public Enumeration getResources(String name) throws IOException {
+        if (forStubs) {
+          //return Collections.enumeration(Collections.EMPTY_LIST);
+        }
+
         if (name.endsWith("org.codehaus.groovy.transform.ASTTransformation")) {
           final Enumeration resources = super.getResources(name);
           final ArrayList list = Collections.list(resources);
           for (Iterator iterator = list.iterator(); iterator.hasNext();) {
-            if (localGlobalTransforms.equals(((URL)iterator.next()).getFile())) {
+            final String file = ((URL)iterator.next()).getFile();
+            if (file.contains(finalOutput)) {
               iterator.remove();
             }
           }

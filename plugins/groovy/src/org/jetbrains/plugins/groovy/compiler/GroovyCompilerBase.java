@@ -272,7 +272,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     printer.println(PathUtil.getLocalPath(outputDir));
 
     printer.println(GroovycRunner.FINAL_OUTPUTPATH);
-    printer.println(finalOutputDir.getPath() + "/");
+    printer.println(finalOutputDir.getPath());
 
 
     printer.close();
