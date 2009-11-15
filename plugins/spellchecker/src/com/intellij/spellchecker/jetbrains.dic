@@ -8,7 +8,6 @@ init
 config
 refactoring
 tokenizer
-init
 validator
 cdata
 html
@@ -93,5 +92,17 @@ filesets
 javadoc
 spellchecker
 spellchecking
-
+Holdability
+permalink
+serializable
+mutex, mutexes
+arity
+unhandled
+trinary
+Savepoint
+distinctrow
+AJAX
+utf
+stylesheet
+charset
 

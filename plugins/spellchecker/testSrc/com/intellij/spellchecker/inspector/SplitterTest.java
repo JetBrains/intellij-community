@@ -15,7 +15,6 @@
  */
 package com.intellij.spellchecker.inspector;
 
-import com.intellij.idea.Bombed;
 import com.intellij.spellchecker.inspections.CheckArea;
 import com.intellij.spellchecker.inspections.TextSplitter;
 import junit.framework.Assert;
@@ -25,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.List;
 
 
@@ -226,21 +224,19 @@ public class SplitterTest extends TestCase {
      correctListToCheck(checkAreas, text, new String[]{"BADD"});
      correctIgnored(checkAreas, text, new String[]{});
    }
-  @Bombed(user = "shkate", month = Calendar.NOVEMBER, day = 20, year = 2009,
-          description = "solve problems with encoding when run on server")
+
     public void testWordWithUmlauts() {
-     String text = "rechtsbündig";
+     String text = "rechtsb\u00FCndig";
      List<CheckArea> checkAreas = TextSplitter.splitText(text);
-     correctListToCheck(checkAreas, text, new String[]{"rechtsbündig"});
+     correctListToCheck(checkAreas, text, new String[]{text});
      correctIgnored(checkAreas, text, new String[]{});
    }
 
-  @Bombed(user = "shkate", month = Calendar.NOVEMBER, day = 20, year = 2009,
-          description = "solve problems with encoding when run on server")
+  
   public void testWordUpperCasedWithUmlauts() {
-     String text = "rechtsbündig".toUpperCase();
+     String text = "RECHTSB\u00DCNDIG";
      List<CheckArea> checkAreas = TextSplitter.splitText(text);
-     correctListToCheck(checkAreas, text, new String[]{"rechtsbündig".toUpperCase()});
+     correctListToCheck(checkAreas, text, new String[]{text});
      correctIgnored(checkAreas, text, new String[]{});
    }
 

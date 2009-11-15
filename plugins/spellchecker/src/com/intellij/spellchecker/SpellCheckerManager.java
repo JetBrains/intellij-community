@@ -136,6 +136,7 @@ public class SpellCheckerManager {
   }
 
   public void update(@Nullable Collection<String> words, SpellCheckerSettings allDictionaries) {
+    userDictionary.replaceAll(words);
     reloadConfiguration();
     restartInspections();
   }
