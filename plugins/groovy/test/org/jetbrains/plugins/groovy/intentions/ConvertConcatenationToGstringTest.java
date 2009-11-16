@@ -62,4 +62,12 @@ public class ConvertConcatenationToGstringTest extends GrIntentionTestCase {
   public void testQuotes() throws Exception {
     doTest("Convert concatenation to GString", true);
   }
+
+  public void testQuotes2() throws Exception {
+    doTest("Convert concatenation to GString", true);
+  }
+
+  public void testQuotesInMultilineString() throws Exception {
+    doTest("Convert concatenation to GString", true);
+  }
 }

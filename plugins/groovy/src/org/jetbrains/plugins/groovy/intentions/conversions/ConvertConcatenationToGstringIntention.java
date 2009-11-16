@@ -73,7 +73,8 @@ public class ConvertConcatenationToGstringIntention extends Intention {
       builder.append(GrStringUtil.removeQuotes(operand.getText()));
     }
     else if (operand instanceof GrLiteral) {
-      String text = GrStringUtil.escapeSymbolsForGString(GrStringUtil.removeQuotes(operand.getText()));
+      String text = GrStringUtil.escapeSymbolsForGString(GrStringUtil.removeQuotes(operand.getText()), false);
+      if (text.contains("\n")) text = GrStringUtil.escapeSymbolsForGString(text, true);
       builder.append(text);
     }
     else if (MyPredicate.satisfiedBy(operand, false)) {

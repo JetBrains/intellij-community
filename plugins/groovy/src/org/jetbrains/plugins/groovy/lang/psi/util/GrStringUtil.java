@@ -27,7 +27,7 @@ public class GrStringUtil {
   private GrStringUtil() {
   }
 
-  public static String escapeSymbolsForGString(String s) {
+  public static String escapeSymbolsForGString(String s, boolean escapeDoubleQuotes) {
     StringBuilder b = new StringBuilder();
     final char[] chars = s.toCharArray();
     final int len = chars.length - 1;
@@ -43,7 +43,7 @@ public class GrStringUtil {
           b.append('\n');
           i++;
         }
-        else if (next == '"') {
+        else if (escapeDoubleQuotes && next == '"') {
           b.append('"');
           i++;
         }
@@ -64,7 +64,7 @@ public class GrStringUtil {
     return b.toString();
   }
 
-  public static String escapeSymbolsForString(String s) {
+  public static String escapeSymbolsForString(String s, boolean escapeQuotes) {
     StringBuilder b = new StringBuilder();
     final char[] chars = s.toCharArray();
     final int len = chars.length - 1;
@@ -78,7 +78,7 @@ public class GrStringUtil {
         else if (next == 'n') {
           b.append('\n');
         }
-        else if (next == '\'') {
+        else if (escapeQuotes && next == '\'') {
           b.append(next);
         }
         else {
@@ -166,7 +166,8 @@ public class GrStringUtil {
       literal = addAllBracesInGString((GrString)literal);
     }
 
-    String literalText = escapeSymbolsForGString(removeQuotes(literal.getText()));
+    String literalText = escapeSymbolsForGString(removeQuotes(literal.getText()), false);
+    if(literalText.contains("\n")) literalText=escapeSymbolsForGString(literalText, true);
 
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(grString.getProject());
     final GrExpression expression = factory.createExpressionFromText("\"${}" + literalText + "\"");
