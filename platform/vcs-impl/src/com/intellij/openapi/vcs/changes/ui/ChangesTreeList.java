@@ -21,6 +21,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -576,12 +577,26 @@ public abstract class ChangesTreeList<T> extends JPanel {
             }
           }
           append(path.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, fileStatus.getColor(), null));
+          final boolean applyChangeDecorator = (value instanceof Change) && myChangeDecorator != null;
           final File parentFile = path.getIOFile().getParentFile();
           if (parentFile != null) {
-            append(" (" + parentFile.getPath() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+            final String parentPath = parentFile.getPath();
+            List<Pair<String,ChangeNodeDecorator.Stress>> parts = null;
+            if (applyChangeDecorator) {
+              parts = myChangeDecorator.stressPartsOfFileName((Change)value, parentPath);
+            }
+            if (parts == null) {
+              parts = Collections.singletonList(new Pair<String, ChangeNodeDecorator.Stress>(parentPath, ChangeNodeDecorator.Stress.PLAIN));
+            }
+
+            append(" (");
+            for (Pair<String, ChangeNodeDecorator.Stress> part : parts) {
+              append(part.getFirst(), part.getSecond().derive(SimpleTextAttributes.GRAYED_ATTRIBUTES));
+            }
+            append(")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
           }
-          if ((value instanceof Change) && myChangeDecorator != null) {
-            myChangeDecorator.decorate((Change) value, this);
+          if (applyChangeDecorator) {
+            myChangeDecorator.decorate((Change) value, this, isShowFlatten());
           }
         }
       };

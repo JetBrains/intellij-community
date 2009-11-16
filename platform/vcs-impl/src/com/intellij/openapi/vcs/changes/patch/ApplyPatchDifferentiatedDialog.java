@@ -36,7 +36,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.ZipperUpdater;
@@ -62,6 +61,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
@@ -703,9 +703,16 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   }
 
   private static class MyChangeNodeDecorator implements ChangeNodeDecorator {
-    public void decorate(Change change, SimpleColoredComponent component) {
+    public void decorate(Change change, SimpleColoredComponent component, boolean isShowFlatten) {
       if (change instanceof FilePatchInProgress.PatchChange) {
         final FilePatchInProgress.PatchChange patchChange = (FilePatchInProgress.PatchChange) change;
+        if (! isShowFlatten) {
+          // add change subpath
+          final TextFilePatch filePatch = patchChange.getPatchInProgress().getPatch();
+          final String patchPath = filePatch.getAfterName() == null ? filePatch.getBeforeName() : filePatch.getAfterName();
+          component.append("   ");
+          component.append("["+ patchPath + "]", SimpleTextAttributes.GRAY_ATTRIBUTES);
+        }
         final String text;
         if (FilePatchStatus.ADDED.equals(patchChange.getPatchInProgress().getStatus())) {
           text = "(Added)";
@@ -717,6 +724,19 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         component.append("   ");
         component.append(text, SimpleTextAttributes.GRAY_ATTRIBUTES);
       }
+    }
+
+    public List<Pair<String, Stress>> stressPartsOfFileName(final Change change, final String parentPath) {
+      if (change instanceof FilePatchInProgress.PatchChange) {
+        final FilePatchInProgress.PatchChange patchChange = (FilePatchInProgress.PatchChange) change;
+        final String basePath = patchChange.getPatchInProgress().getBase().getPath();
+        final String basePathCorrected = basePath.trim().replace('/', File.separatorChar);
+        if (parentPath.startsWith(basePathCorrected)) {
+          return Arrays.asList(new Pair<String, Stress>(basePathCorrected, Stress.BOLD),
+                               new Pair<String, Stress>(StringUtil.tail(parentPath, basePathCorrected.length()), Stress.PLAIN));
+        }
+      }
+      return null;
     }
   }
 

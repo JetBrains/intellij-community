@@ -1516,4 +1516,8 @@ public class StringUtil {
     if (s2 == null) return -1;
     return s1.compareTo(s2);
   }
+
+  public static String tail(final String s, final int idx) {
+    return idx >= s.length() ? "" : s.substring(idx, s.length());
+  }
 }

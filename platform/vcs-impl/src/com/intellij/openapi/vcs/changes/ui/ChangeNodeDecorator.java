@@ -15,9 +15,38 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.Nullable;
+
+import java.awt.*;
+import java.util.List;
 
 public interface ChangeNodeDecorator {
-  void decorate(final Change change, final SimpleColoredComponent component);
+  void decorate(final Change change, final SimpleColoredComponent component, boolean isShowFlatten);
+  @Nullable
+  List<Pair<String, Stress>> stressPartsOfFileName(final Change change, final String parentPath);
+
+  enum Stress {
+    BOLD(Font.BOLD),
+    ITALIC(Font.ITALIC),
+    BOLD_ITALIC(Font.BOLD | Font.ITALIC),
+    PLAIN(Font.PLAIN);
+
+    private final int myFontStyle;
+
+    private Stress(int fontStyle) {
+      myFontStyle = fontStyle;
+    }
+
+    public int getFontStyle() {
+      return myFontStyle;
+    }
+
+    public SimpleTextAttributes derive(final SimpleTextAttributes attributes) {
+      return attributes.derive(myFontStyle, attributes.getFgColor(), attributes.getBgColor(), attributes.getWaveColor());
+    }
+  }
 }
