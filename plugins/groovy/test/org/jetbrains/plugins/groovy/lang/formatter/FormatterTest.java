@@ -65,6 +65,7 @@ public class FormatterTest extends GroovyFormatterTestCase {
   public void testFor2() throws Throwable { doTest(); }
   public void testGbegin1() throws Throwable { doTest(); }
   public void testGrvy1637() throws Throwable { doTest(); }
+  public void testGString1() throws Throwable { doTest(); }
   public void testMap6() throws Throwable { doTest(); }
   public void testMeth1() throws Throwable { doTest(); }
   public void testMeth2() throws Throwable { doTest(); }
