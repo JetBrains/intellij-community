@@ -21,6 +21,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,7 +82,7 @@ public interface ModifiableRootModel extends ModuleRootModel {
    * @param level
    * @return
    */
-  LibraryOrderEntry addInvalidLibrary(String name, String level);
+  LibraryOrderEntry addInvalidLibrary(@NonNls String name, String level);
 
   ModuleOrderEntry addModuleOrderEntry(Module module);
 

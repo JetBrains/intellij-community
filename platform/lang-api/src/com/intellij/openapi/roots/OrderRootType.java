@@ -126,4 +126,9 @@ public class OrderRootType {
   public final boolean equals(Object obj) {
     return super.equals(obj);
   }
+
+  @Override
+  public String toString() {
+    return "Root " + name();
+  }
 }
