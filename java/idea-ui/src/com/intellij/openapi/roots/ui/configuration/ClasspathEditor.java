@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.OrderPanelListener;
 import org.jetbrains.annotations.NotNull;
@@ -52,9 +53,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
   public ClasspathEditor(final ModuleConfigurationState state) {
     super(state);
 
-    final Disposable disposable = new Disposable() {
-      public void dispose() {}
-    };
+    final Disposable disposable = Disposer.newDisposable();
     
     state.getProject().getMessageBus().connect(disposable).subscribe(ProjectTopics.PROJECT_ROOTS, this);
     registerDisposable(disposable);
@@ -214,11 +213,11 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
       return ClasspathStorage.getStorageType(getModel().getModule());
     }
 
-    boolean isModified () {
+    boolean isModified() {
       return cbClasspathFormat != null && !getSelectedClasspathFormat().equals(getModuleClasspathFormat());
     }
 
-    void apply () throws ConfigurationException {
+    void apply() throws ConfigurationException {
       final String storageID = getSelectedClasspathFormat();
       ClasspathStorage.getProvider(storageID).assertCompatible(getModel());
       ClasspathStorage.setStorageType(getModel(), storageID);

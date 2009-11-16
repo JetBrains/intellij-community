@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.Chunk;
@@ -167,7 +168,7 @@ public class ModuleChunk extends Chunk<Module> {
       }
       filteredRoots.add(root);
     }
-    return filteredRoots.toArray(new VirtualFile[filteredRoots.size()]);
+    return VfsUtil.toVirtualFileArray(filteredRoots);
   }
 
   private VirtualFile[] getAllSourceRoots() {
@@ -176,7 +177,7 @@ public class ModuleChunk extends Chunk<Module> {
     for (final Module module : modules) {
       roots.addAll(Arrays.asList(myContext.getSourceRoots(module)));
     }
-    return roots.toArray(new VirtualFile[roots.size()]);
+    return VfsUtil.toVirtualFileArray(roots);
   }
 
   public String getCompilationClasspath() {
@@ -236,7 +237,7 @@ public class ModuleChunk extends Chunk<Module> {
     return convertToStringPath(cpFiles);
   }
 
-  private String convertToStringPath(final OrderedSet<VirtualFile> cpFiles) {
+  private static String convertToStringPath(final OrderedSet<VirtualFile> cpFiles) {
     final StringBuilder classpathBuffer = StringBuilderSpinAllocator.alloc();
     try {
       for (final VirtualFile file : cpFiles) {

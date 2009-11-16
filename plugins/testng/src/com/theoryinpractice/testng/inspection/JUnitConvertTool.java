@@ -65,7 +65,7 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
       final PsiIdentifier nameIdentifier = psiClass.getNameIdentifier();
       ProblemDescriptor descriptor = manager.createProblemDescriptor(nameIdentifier != null ? nameIdentifier : psiClass, "TestCase can be converted to TestNG",
                                                                      new JUnitConverterQuickFix(),
-                                                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+                                                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
       return new ProblemDescriptor[]{descriptor};
     }
     return null;

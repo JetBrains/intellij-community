@@ -21,6 +21,7 @@ import com.intellij.openapi.options.binding.BindControl;
 import com.intellij.openapi.options.binding.BindableConfigurable;
 import com.intellij.openapi.options.binding.ControlBinder;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 
@@ -83,7 +84,7 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
   public void reset() {
     super.reset();
     Collection<String> conflicts = myConflictTracker.getIgnoredConflicts();
-    myIgnoredFiles.setListData(conflicts.toArray(new String[conflicts.size()]));     
+    myIgnoredFiles.setListData(ArrayUtil.toStringArray(conflicts));
     myClearButton.setEnabled(!conflicts.isEmpty());
     UIUtil.setEnabled(myOptionsPanel, myEnableCheckBox.isSelected(), true);    
   }
@@ -114,6 +115,6 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
   }
 
   public String getHelpTopic() {
-    return null;
+    return "project.propVCSSupport.ChangelistConflict";
   }
 }

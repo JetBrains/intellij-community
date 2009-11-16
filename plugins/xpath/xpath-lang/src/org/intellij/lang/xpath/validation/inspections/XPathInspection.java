@@ -15,26 +15,21 @@
  */
 package org.intellij.lang.xpath.validation.inspections;
 
-import com.intellij.codeInspection.CustomSuppressableInspectionTool;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.SuppressIntentionAction;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.SmartList;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import org.intellij.lang.xpath.XPathFileType;
 import org.intellij.lang.xpath.context.ContextProvider;
 import org.intellij.lang.xpath.psi.XPathElement;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.psi.XPathNodeTest;
 import org.intellij.lang.xpath.psi.XPathPredicate;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class XPathInspection extends LocalInspectionTool implements CustomSuppressableInspectionTool {
 
@@ -57,12 +52,12 @@ public abstract class XPathInspection extends LocalInspectionTool implements Cus
         return ContextProvider.getContextProvider(element.getContainingFile()).getQuickFixFactory().isSuppressedFor(element, this);
     }
 
-    protected abstract Visitor createVisitor(InspectionManager manager);
+    protected abstract Visitor createVisitor(InspectionManager manager, boolean isOnTheFly);
 
     @Nullable
     public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
         if (file.getLanguage() != XPathFileType.XPATH.getLanguage()) return null;
-        final Visitor visitor = createVisitor(manager);
+        final Visitor visitor = createVisitor(manager, isOnTheFly);
 
         file.accept(visitor);
 
@@ -71,10 +66,12 @@ public abstract class XPathInspection extends LocalInspectionTool implements Cus
 
     protected static abstract class Visitor extends PsiRecursiveElementVisitor {
         protected final InspectionManager myManager;
-        private SmartList<ProblemDescriptor> myProblems;
+      protected boolean myOnTheFly;
+      private SmartList<ProblemDescriptor> myProblems;
 
-        public Visitor(InspectionManager manager) {
+      public Visitor(InspectionManager manager, boolean isOnTheFly) {
             myManager = manager;
+          this.myOnTheFly = isOnTheFly;
         }
 
         public void visitElement(PsiElement psiElement) {

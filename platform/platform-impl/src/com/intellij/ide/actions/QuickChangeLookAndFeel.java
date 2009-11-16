@@ -18,6 +18,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 
@@ -27,7 +28,7 @@ import javax.swing.*;
  * @author max
  */
 public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
-  protected void fillActions(Project project, DefaultActionGroup group) {
+  protected void fillActions(Project project, DefaultActionGroup group, DataContext dataContext) {
     final LafManager manager = LafManager.getInstance();
     final UIManager.LookAndFeelInfo[] lfs = manager.getInstalledLookAndFeels();
     final UIManager.LookAndFeelInfo current = manager.getCurrentLookAndFeel();

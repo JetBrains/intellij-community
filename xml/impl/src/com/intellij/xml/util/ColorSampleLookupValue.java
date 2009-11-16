@@ -368,26 +368,33 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
     final Color colorFromElement = UserColorLookup.getColorFromElement(currentElement);
 
     if (colorFromElement != null) {
-      final String code = Integer.toHexString(colorFromElement.getRGB()).substring(2);
-      final String text = currentElement.getText();
+      addColorPreviewAndCodeToLookup(colorFromElement, currentElement.getText(), buf);
+    }
+  }
 
-      if (text.startsWith("#")) {
-        final String colorName = getColorNameForHexCode(text);
+  public static void addColorPreviewAndCodeToLookup(final Color color, final String value, final StringBuilder buf) {
+    if (color == null) return;
+
+    final String code = Integer.toHexString(color.getRGB()).substring(2);
+
+    if (value != null) {
+      if (value.startsWith("#")) {
+        final String colorName = getColorNameForHexCode(value);
 
         if (colorName != null) {
           buf.append(XmlBundle.message("color.name", colorName)).append(BR);
         }
       }
       else {
-        final String hexValue = getHexCodeForColorName(text);
+        final String hexValue = getHexCodeForColorName(value);
         if (hexValue != null) {
           buf.append(XmlBundle.message("color.rgb", hexValue.substring(1))).append(BR);
         }
       }
 
-      String colorBox = "<span style=\"background-color:#" + code + "\">&nbsp;&nbsp;&nbsp;</span>";
-
-      buf.append(XmlBundle.message("color.preview", colorBox)).append(BR);
     }
+
+    String colorBox = "<div style=\"border: 1px solid #000000; width: 50px; height: 20px; background-color:#" + code + "\"></div>";
+    buf.append(XmlBundle.message("color.preview", colorBox)).append(BR);
   }
 }

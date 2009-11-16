@@ -29,6 +29,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
@@ -48,10 +49,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 
 /**
@@ -83,7 +81,7 @@ public class IdeEventQueue extends EventQueue {
   private final Map<Runnable, MyFireIdleRequest> myListener2Request = new HashMap<Runnable, MyFireIdleRequest>();
   // IdleListener -> MyFireIdleRequest
 
-  private final IdeKeyEventDispatcher myKeyEventDispatcher = new IdeKeyEventDispatcher();
+  private final IdeKeyEventDispatcher myKeyEventDispatcher = new IdeKeyEventDispatcher(this);
 
   private final IdeMouseEventDispatcher myMouseEventDispatcher = new IdeMouseEventDispatcher();
 
@@ -129,6 +127,9 @@ public class IdeEventQueue extends EventQueue {
 
   private final Set<EventDispatcher> myDispatchers = new LinkedHashSet<EventDispatcher>();
   private final Set<EventDispatcher> myPostprocessors = new LinkedHashSet<EventDispatcher>();
+
+  private Set<Runnable> myReady = new HashSet<Runnable>();
+  private boolean myKeyboardBusy;
 
   private static class IdeEventQueueHolder {
     private static final IdeEventQueue INSTANCE = new IdeEventQueue();
@@ -379,6 +380,10 @@ public class IdeEventQueue extends EventQueue {
         each.dispatch(e);
       }
 
+      if (e instanceof KeyEvent) {
+        maybeReady();
+      }
+
       if (DEBUG) {
         final long processTime = System.currentTimeMillis() - t;
         if (processTime > 100) {
@@ -425,6 +430,10 @@ public class IdeEventQueue extends EventQueue {
 
     if (!myPopupManager.isPopupActive()) {
       enterSuspendModeIfNeeded(e);
+    }
+
+    if (e instanceof KeyEvent) {
+      myKeyboardBusy = e.getID() != KeyEvent.KEY_RELEASED || ((KeyEvent)e).getModifiers() != 0;
     }
 
     if (typeAheadDispatchToFocusManager(e)) return;
@@ -734,5 +743,38 @@ public class IdeEventQueue extends EventQueue {
 
   public boolean hasFocusEventsPending() {
     return peekEvent(FocusEvent.FOCUS_GAINED) != null || peekEvent(FocusEvent.FOCUS_LOST) != null;
+  }
+
+  private boolean isReady() {
+    return !myKeyboardBusy && myKeyEventDispatcher.isReady();
+  }
+
+  public void maybeReady() {
+    flushReady();
+  }
+
+  private void flushReady() {
+    if (myReady.size() == 0 || !isReady()) return;
+
+    Runnable[] ready = myReady.toArray(new Runnable[myReady.size()]);
+    myReady.clear();
+
+    for (Runnable each : ready) {
+      each.run();
+    }
+  }
+
+  public void doWhenReady(final Runnable runnable) {
+    if (EventQueue.isDispatchThread()) {
+      myReady.add(runnable);
+      maybeReady();
+    } else {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          myReady.add(runnable);
+          maybeReady();
+        }
+      });
+    }
   }
 }

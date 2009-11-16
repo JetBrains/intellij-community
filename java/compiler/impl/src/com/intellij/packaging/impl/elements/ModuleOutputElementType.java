@@ -17,6 +17,7 @@ package com.intellij.packaging.impl.elements;
 
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModulePointerManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.IconLoader;
@@ -56,8 +57,9 @@ public class ModuleOutputElementType extends PackagingElementType<ModuleOutputPa
                                                                        @NotNull CompositePackagingElement<?> parent) {
     List<Module> modules = chooseModules(context);
     final List<ModuleOutputPackagingElement> elements = new ArrayList<ModuleOutputPackagingElement>();
+    final ModulePointerManager pointerManager = ModulePointerManager.getInstance(context.getProject());
     for (Module module : modules) {
-      elements.add(new ModuleOutputPackagingElement(module.getName()));
+      elements.add(new ModuleOutputPackagingElement(context.getProject(), pointerManager.create(module)));
     }
     return elements;
   }
@@ -68,6 +70,6 @@ public class ModuleOutputElementType extends PackagingElementType<ModuleOutputPa
 
   @NotNull
   public ModuleOutputPackagingElement createEmpty(@NotNull Project project) {
-    return new ModuleOutputPackagingElement();
+    return new ModuleOutputPackagingElement(project);
   }
 }

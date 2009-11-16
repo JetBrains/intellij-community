@@ -26,8 +26,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.DepthCombo;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNURL;
 
 import javax.swing.*;
 import java.awt.*;
@@ -127,7 +127,7 @@ public class ImportOptionsDialog extends DialogWrapper implements ActionListener
     final JLabel depthLabel = new JLabel(SvnBundle.message("label.depth.text"));
     depthLabel.setToolTipText(SvnBundle.message("label.depth.description"));
     panel.add(depthLabel, gc);
-    ++ gc.gridx;
+    ++gc.gridx;
     myDepth = new DepthCombo();
     panel.add(myDepth, gc);
     depthLabel.setLabelFor(myDepth);
@@ -162,11 +162,10 @@ public class ImportOptionsDialog extends DialogWrapper implements ActionListener
     panel.add(new JLabel("Recent Messages: "), gc);
     gc.gridy += 1;
 
-    ArrayList<String> messages = VcsConfiguration.getInstance(myProject).getRecentMessages();
-    if (messages != null) {
-      Collections.reverse(messages);
-    }
-    Object[] model = messages != null ? messages.toArray() : new Object[] {""};
+    final ArrayList<String> messages = VcsConfiguration.getInstance(myProject).getRecentMessages();
+    Collections.reverse(messages);
+
+    final String[] model = messages.toArray(new String[messages.size()]);
     final JComboBox messagesBox = new JComboBox(model);
     messagesBox.setRenderer(new MessageBoxCellRenderer());
     panel.add(messagesBox, gc);
@@ -199,7 +198,7 @@ public class ImportOptionsDialog extends DialogWrapper implements ActionListener
     fcd.setDescription("Select directory to checkout from subversion");
     fcd.setHideIgnored(false);
     VirtualFile[] files = FileChooser.chooseFiles(getContentPane(), fcd, null);
-    if (files == null || files.length != 1 || files[0] == null) {
+    if (files.length != 1 || files[0] == null) {
       return;
     }
     myPathField.setText(files[0].getPath().replace('/', File.separatorChar));

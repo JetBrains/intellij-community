@@ -39,6 +39,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.Chunk;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -70,12 +71,13 @@ public class ResourceCompiler implements TranslatingCompiler {
     return !StdFileTypes.JAVA.equals(FILE_TYPE_MANAGER.getFileTypeByFile(file)) && myConfiguration.isResourceFile(file);
   }
 
-  public void compile(final CompileContext context, final VirtualFile[] files, OutputSink sink) {
+  public void compile(final CompileContext context, Chunk<Module> moduleChunk, final VirtualFile[] files, OutputSink sink) {
     context.getProgressIndicator().pushState();
     context.getProgressIndicator().setText(CompilerBundle.message("progress.copying.resources"));
 
     final Map<String, Collection<OutputItem>> processed = new HashMap<String, Collection<OutputItem>>();
     final LinkedList<CopyCommand> copyCommands = new LinkedList<CopyCommand>();
+    final Module singleChunkModule = moduleChunk.getNodes().size() == 1? moduleChunk.getNodes().iterator().next() : null;
     final long start = System.currentTimeMillis();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
@@ -84,7 +86,7 @@ public class ResourceCompiler implements TranslatingCompiler {
           if (context.getProgressIndicator().isCanceled()) {
             break;
           }
-          final Module module = context.getModuleByFile(file);
+          final Module module = singleChunkModule != null? singleChunkModule : context.getModuleByFile(file);
           if (module == null) {
             continue; // looks like file invalidated
           }
@@ -94,17 +96,20 @@ public class ResourceCompiler implements TranslatingCompiler {
           }
           final String sourcePath = file.getPath();
           final String relativePath = VfsUtil.getRelativePath(file, fileRoot, '/');
-          final String outputPath = CompilerPaths.getModuleOutputPath(module, ((CompileContextEx)context).isInTestSourceContent(file));
-          if (outputPath == null) {
+          final boolean inTests = ((CompileContextEx)context).isInTestSourceContent(file);
+          final VirtualFile outputDir = inTests? context.getModuleOutputDirectoryForTests(module) : context.getModuleOutputDirectory(module);
+          if (outputDir == null) {
             continue;
           }
+          final String outputPath = outputDir.getPath();
+          
           final String packagePrefix = fileIndex.getPackageNameByDirectory(fileRoot);
           final String targetPath;
           if (packagePrefix != null && packagePrefix.length() > 0) {
-            targetPath = outputPath+"/"+packagePrefix.replace('.', '/')+"/"+relativePath;
+            targetPath = outputPath + "/" + packagePrefix.replace('.', '/') + "/" + relativePath;
           }
           else {
-            targetPath = outputPath+"/"+relativePath;
+            targetPath = outputPath + "/" + relativePath;
           }
           if (sourcePath.equals(targetPath)) {
             addToMap(processed, outputPath, new MyOutputItem(targetPath, file));
@@ -126,7 +131,7 @@ public class ResourceCompiler implements TranslatingCompiler {
       if (context.getProgressIndicator().isCanceled()) {
         break;
       }
-      context.getProgressIndicator().setFraction((idx++) * 1.0 / total);
+      //context.getProgressIndicator().setFraction((idx++) * 1.0 / total);
       context.getProgressIndicator().setText2("Copying " + command.getFromPath() + "...");
       try {
         rootsToRefresh.add(command.getOutputPath());

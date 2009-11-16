@@ -39,6 +39,7 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.update.*;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -177,7 +178,7 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
     }
 
     if (readOnlyFiles.size() > 0) {
-      final CvsHandler editHandler = CommandCvsHandler.createEditHandler(readOnlyFiles.toArray(new VirtualFile[readOnlyFiles.size()]),
+      final CvsHandler editHandler = CommandCvsHandler.createEditHandler(VfsUtil.toVirtualFileArray(readOnlyFiles),
                                                                          CvsConfiguration.getInstance(project).RESERVED_EDIT);
       new CvsOperationExecutor(true, project, ModalityState.current()).performActionSync(editHandler, CvsOperationExecutorCallback.EMPTY);
       ApplicationManager.getApplication().runWriteAction(new Runnable() {

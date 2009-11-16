@@ -184,7 +184,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
       if (name != null) implementsNames.add(name);
     }
 
-    return implementsNames.toArray(new String[implementsNames.size()]);
+    return ArrayUtil.toStringArray(implementsNames);
   }
 
   protected String[] getExtendsNames() {
@@ -196,7 +196,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
       String name = ref.getReferenceName();
       if (name != null) extendsNames.add(name);
     }
-    return extendsNames.toArray(new String[extendsNames.size()]);
+    return ArrayUtil.toStringArray(extendsNames);
   }
 
   @NotNull

@@ -22,6 +22,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -57,7 +58,7 @@ public class PropertiesFilesManager extends AbstractProjectComponent {
                 public void run() {
                   if (myProject.isDisposed()) return;
                   Collection<VirtualFile> filesToRefresh = getAllPropertiesFiles();
-                  VirtualFile[] virtualFiles = filesToRefresh.toArray(new VirtualFile[filesToRefresh.size()]);
+                  VirtualFile[] virtualFiles = VfsUtil.toVirtualFileArray(filesToRefresh);
                   FileDocumentManager.getInstance().saveAllDocuments();
 
                   //force to re-detect encoding

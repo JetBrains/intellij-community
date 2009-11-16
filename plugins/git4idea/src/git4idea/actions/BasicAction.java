@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.TransactionRunnable;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -107,7 +108,7 @@ public abstract class BasicAction extends DumbAwareAction {
       }
 
     }
-    return affectedFiles.toArray(new VirtualFile[affectedFiles.size()]);
+    return VfsUtil.toVirtualFileArray(affectedFiles);
   }
 
   /**

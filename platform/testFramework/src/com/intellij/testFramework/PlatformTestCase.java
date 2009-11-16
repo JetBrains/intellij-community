@@ -244,7 +244,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     return createModule(myProject.getName());
   }
 
-  protected Module createModule(final String moduleName) {
+  protected Module createModule(@NonNls final String moduleName) {
     return doCreateRealModule(moduleName);
   }
 

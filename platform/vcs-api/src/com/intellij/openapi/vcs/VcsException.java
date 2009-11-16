@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -60,7 +61,7 @@ public class VcsException extends Exception {
   }
 
   public String[] getMessages() {
-    return myMessages.toArray(new String[myMessages.size()]);
+    return ArrayUtil.toStringArray(myMessages);
   }
 
   public VcsException setIsWarning(boolean warning) {

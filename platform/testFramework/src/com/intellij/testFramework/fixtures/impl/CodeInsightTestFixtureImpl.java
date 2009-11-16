@@ -284,7 +284,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     for (String path : filePaths) {
       files.add(copyFileToProject(path));
     }
-    return testHighlightingAllFiles(checkWarnings, checkInfos, checkWeakWarnings, files.toArray(new VirtualFile[files.size()]));
+    return testHighlightingAllFiles(checkWarnings, checkInfos, checkWeakWarnings, VfsUtil.toVirtualFileArray(files));
   }
 
   public long testHighlightingAllFiles(final boolean checkWarnings,

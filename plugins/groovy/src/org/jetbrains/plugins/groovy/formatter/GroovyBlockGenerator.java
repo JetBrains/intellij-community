@@ -100,6 +100,19 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
 
     }
 
+    //for gstrings
+    if (block.getNode().getElementType() == GSTRING) {
+      final ArrayList<Block> subBlocks = new ArrayList<Block>();
+      ASTNode children[] = getGroovyChildren(node);
+      ASTNode prevChildNode = null;
+      for (ASTNode childNode : children) {
+        final Indent indent = GroovyIndentProcessor.getChildIndent(block, prevChildNode, childNode);
+        subBlocks.add(new GroovyBlock(childNode, myAlignment, indent, myWrap, mySettings));
+        prevChildNode = childNode;
+      }
+      return subBlocks;
+    }
+
     //For nested selections
     if (NESTED.contains(block.getNode().getElementType()) &&
         blockPsi.getParent() != null &&

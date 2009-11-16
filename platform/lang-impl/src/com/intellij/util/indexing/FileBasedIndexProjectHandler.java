@@ -31,6 +31,7 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.Collection;
@@ -98,7 +99,7 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
   private class RefreshCacheUpdater implements CacheUpdater {
     public VirtualFile[] queryNeededFiles() {
       Collection<VirtualFile> files = myIndex.getFilesToUpdate(myProject);
-      return files.isEmpty() ? VirtualFile.EMPTY_ARRAY : files.toArray(new VirtualFile[files.size()]);
+      return VfsUtil.toVirtualFileArray(files);
     }
 
     public void processFile(FileContent fileContent) {

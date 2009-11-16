@@ -20,6 +20,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
@@ -94,7 +95,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
 
     boolean isFromUI = model != null;
     return manager.importProjects(isFromUI
-                                  ? new MavenUIModifiableModelsProvider(project, model, modulesProvider, artifactModel)
+                                  ? new MavenUIModifiableModelsProvider(project, model, (ModulesConfigurator)modulesProvider, artifactModel)
                                   : new MavenDefaultModifiableModelsProvider(project));
   }
 

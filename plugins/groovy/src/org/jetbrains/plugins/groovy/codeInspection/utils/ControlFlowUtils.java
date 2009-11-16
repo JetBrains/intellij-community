@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.utils;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +32,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.MaybeReturnInstruction;
 
 @SuppressWarnings({"OverlyComplexClass"})
 public class ControlFlowUtils {
@@ -538,4 +541,34 @@ public class ControlFlowUtils {
     return throwStatement != null;
   }
 
+
+  public interface ExitPointVisitor {
+    boolean visit(Instruction instruction);
+  }
+
+  public static void visitAllExitPoints(@Nullable GrCodeBlock block, ExitPointVisitor visitor) {
+    if (block == null) return;
+    final Instruction[] flow = block.getControlFlow();
+    boolean[] visited = new boolean[flow.length];
+    visitAllExitPointsInner(flow[flow.length - 1], flow[0], visited, visitor);
+  }
+
+  private static boolean visitAllExitPointsInner(Instruction last, Instruction first, boolean[] visited, ExitPointVisitor visitor) {
+    if (first == last) return true;
+    if (last instanceof MaybeReturnInstruction) {
+      return visitor.visit(last);
+    }
+
+    final PsiElement element = last.getElement();
+    if (element != null) {
+      return visitor.visit(last);
+    }
+    visited[last.num()] = true;
+    for (Instruction pred : last.allPred()) {
+      if (!visited[pred.num()]) {
+        if (!visitAllExitPointsInner(pred, first, visited, visitor)) return false;
+      }
+    }
+    return true;
+  }
 }

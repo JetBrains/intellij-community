@@ -262,8 +262,7 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
         }
       }
       if (duplicatesCount > 1) {
-        problemDescriptors.add(manager.createProblemDescriptor(psiFile, message.toString(),
-                                                               (LocalQuickFix[])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+        problemDescriptors.add(manager.createProblemDescriptor(psiFile, message.toString(), false, (LocalQuickFix[])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
       }
     }
 
@@ -304,8 +303,7 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
         }
       }
       if (duplicatesCount > 1 && CHECK_DUPLICATE_KEYS) {
-        problemDescriptors.add(manager.createProblemDescriptor(psiFile, message.toString(),
-                                                               (LocalQuickFix[])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+        problemDescriptors.add(manager.createProblemDescriptor(psiFile, message.toString(), false, (LocalQuickFix[])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
       }
     }
 
@@ -342,8 +340,7 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
             surroundWithHref(message, property.getFirstChild(), false);
           }
         }
-        problemDescriptors.add(manager.createProblemDescriptor(psiFile, message.toString(),
-                                                               (LocalQuickFix[])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+        problemDescriptors.add(manager.createProblemDescriptor(psiFile, message.toString(), false, (LocalQuickFix[])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
       }
     }
   }

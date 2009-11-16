@@ -31,6 +31,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
@@ -81,7 +82,11 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
   }
 
   public LayoutStateDefaults initFocusContent(@NotNull final String id, @NotNull final String condition) {
-    getLayout().setDefaultToFocus(id, condition);
+    return initFocusContent(id, condition, new LayoutAttractionPolicy.FocusOnce());
+  }
+
+  public LayoutStateDefaults initFocusContent(@NotNull final String id, @NotNull final String condition, @NotNull final LayoutAttractionPolicy policy) {
+    getLayout().setDefaultToFocus(id, condition, policy);
     return this;
   }
 
@@ -158,10 +163,15 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
     return myViewsContentManager;
   }
 
-  public ActionCallback selectAndFocus(@Nullable final Content content, final boolean forced) {
+  public ActionCallback selectAndFocus(@Nullable final Content content, boolean requestFocus, final boolean forced) {
     if (content == null) return new ActionCallback.Rejected();
 
-    return getContentManager().setSelectedContentCB(content, true, forced);
+    return getContentManager().setSelectedContentCB(content, requestFocus || shouldRequestFocus(), forced);
+  }
+
+  private boolean shouldRequestFocus() {
+    final Component focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    return focused != null && SwingUtilities.isDescendingFrom(focused, getContentManager().getComponent());
   }
 
   public boolean removeContent(final Content content, final boolean dispose) {

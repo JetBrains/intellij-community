@@ -21,6 +21,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.popup.IconButton;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.InplaceButton;
@@ -143,10 +144,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
   }
 
   private void updateRunning() {
-    queueRunningUpdate(new Runnable() {
-      public void run() {
-      }
-    });
+    queueRunningUpdate(EmptyRunnable.getInstance());
   }
 
   protected void updateProgress() {
@@ -365,6 +363,9 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
 
       int arc = 8;
 
+      g.setColor(UIManager.getColor("Panel.background"));
+      g.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, arc, arc);
+      
       Color bg = getBackground().darker().darker();
       bg = new Color(bg.getRed(), bg.getGreen(), bg.getBlue(), 230);
 

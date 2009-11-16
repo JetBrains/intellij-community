@@ -24,6 +24,7 @@ package com.intellij.compiler.impl.javaCompiler;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerException;
+import com.intellij.compiler.impl.CompileContextExProxy;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacCompiler;
 import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,19 +34,24 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Chunk;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.DataInput;
-import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
-public class AnnotationProcessingCompiler implements SourceProcessingCompiler{
+public class AnnotationProcessingCompiler implements TranslatingCompiler{
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.JavaCompiler");
   private final Project myProject;
+  private CompilerConfiguration myConfig;
 
   public AnnotationProcessingCompiler(Project project) {
     myProject = project;
+    myConfig = CompilerConfiguration.getInstance(project);
   }
 
   @NotNull
@@ -53,72 +59,47 @@ public class AnnotationProcessingCompiler implements SourceProcessingCompiler{
     return CompilerBundle.message("annotation.processing.compiler.description");
   }
 
-  @NotNull
-  public ProcessingItem[] getProcessingItems(CompileContext context) {
-    final CompilerConfiguration config = CompilerConfiguration.getInstance(myProject);
-    if (!config.isAnnotationProcessorsEnabled()) {
-      return ProcessingItem.EMPTY_ARRAY;
+  public boolean isCompilableFile(VirtualFile file, CompileContext context) {
+    if (!myConfig.isAnnotationProcessorsEnabled()) {
+      return false;
+    } 
+    return file.getFileType() == StdFileTypes.JAVA && !isExcludedFromAnnotationProcessing(file, context);
+  }
+
+  public void compile(final CompileContext context, final Chunk<Module> moduleChunk, final VirtualFile[] files, OutputSink sink) {
+    if (!myConfig.isAnnotationProcessorsEnabled()) {
+      return;
     }
-    final VirtualFile[] files = context.getCompileScope().getFiles(StdFileTypes.JAVA, true);
-    final List<ProcessingItem> items = new ArrayList<ProcessingItem>(files.length);
-    final Set<Module> excludedModules = config.getExcludedModules();
-    for (final VirtualFile file : files) {
-      if (excludedModules.size() != 0 && excludedModules.contains(context.getModuleByFile(file))) {
-        continue;
+    final LocalFileSystem lfs = LocalFileSystem.getInstance();
+    final CompileContextEx _context = new CompileContextExProxy((CompileContextEx)context) {
+      public VirtualFile getModuleOutputDirectory(Module module) {
+        final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
+        return path != null? lfs.findFileByPath(path) : null;
       }
-      if (config.isExcludedFromCompilation(file)) {
-        continue;
-      }
-      items.add(new MyProcessingItem(file));
-    }
-    return items.toArray(new ProcessingItem[items.size()]);
-  }
-
-  public ProcessingItem[] process(CompileContext context, ProcessingItem[] items) {
-    final VirtualFile[] files = new VirtualFile[items.length];
-    for (int idx = 0; idx < items.length; idx++) {
-      files[idx] = items[idx].getFile();
-    }
-    compile(context, files);
-    return context.getMessageCount(CompilerMessageCategory.ERROR) == 0? items : ProcessingItem.EMPTY_ARRAY;
-  }
-
-  public ValidityState createValidityState(DataInput in) throws IOException {
-    return null;
-  }
-
-  private void compile(final CompileContext context, final VirtualFile[] files) {
+    };
     final JavacCompiler javacCompiler = getBackEndCompiler();
     final boolean processorMode = javacCompiler.setAnnotationProcessorMode(true);
-    final BackendCompilerWrapper wrapper = new BackendCompilerWrapper(myProject, Arrays.asList(files), (CompileContextEx)context, javacCompiler, DummySink.INSTANCE);
+    final BackendCompilerWrapper wrapper = new BackendCompilerWrapper(moduleChunk, myProject, Arrays.asList(files), _context, javacCompiler, sink);
     try {
       wrapper.compile();
     }
     catch (CompilerException e) {
-      context.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), null, -1, -1);
+      _context.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), null, -1, -1);
     }
     catch (CacheCorruptedException e) {
       LOG.info(e);
-      context.requestRebuildNextTime(e.getMessage());
+      _context.requestRebuildNextTime(e.getMessage());
     }
     finally {
       javacCompiler.setAnnotationProcessorMode(processorMode);
       final Set<VirtualFile> dirsToRefresh = new HashSet<VirtualFile>();
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
-          final Set<Module> modules = new HashSet<Module>();
-          for (VirtualFile file : files) {
-            final Module module = context.getModuleByFile(file);
-            if (module != null) {
-              modules.add(module);
+          for (Module module : moduleChunk.getNodes()) {
+            final VirtualFile out = _context.getModuleOutputDirectory(module);
+            if (out != null) {
+              dirsToRefresh.add(out);
             }
-          }
-          for (Module module : modules) {
-            dirsToRefresh.add(context.getModuleOutputDirectory(module));
-            dirsToRefresh.add(context.getModuleOutputDirectoryForTests(module));
-            // todo: Some annotation processors put files into the source code. So need to refresh module source roots.
-            // It is an open question whether we shall support such processors
-            //dirsToRefresh.addAll(Arrays.asList(ModuleRootManager.getInstance(module).getSourceRoots()));
           }
         }
       });
@@ -126,6 +107,21 @@ public class AnnotationProcessingCompiler implements SourceProcessingCompiler{
         root.refresh(false, true);
       }
     }
+  }
+
+  private boolean isExcludedFromAnnotationProcessing(VirtualFile file, CompileContext context) {
+    final Module module = context.getModuleByFile(file);
+    if (module != null) {
+      if (myConfig.getExcludedModules().contains(module)) {
+        return true;
+      }
+      final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
+      final VirtualFile generationDir = LocalFileSystem.getInstance().findFileByPath(path);
+      if (VfsUtil.isAncestor(generationDir, file, false)) {
+        return true;
+      }
+    }
+    return myConfig.isExcludedFromCompilation(file);
   }
 
   public boolean validateConfiguration(CompileScope scope) {
@@ -144,26 +140,4 @@ public class AnnotationProcessingCompiler implements SourceProcessingCompiler{
     return configuration.getJavacCompiler();
   }
 
-  private static class MyProcessingItem implements ProcessingItem {
-    private final VirtualFile myFile;
-
-    public MyProcessingItem(VirtualFile file) {
-      myFile = file;
-    }
-
-    @NotNull
-    public VirtualFile getFile() {
-      return myFile;
-    }
-
-    public ValidityState getValidityState() {
-      return null;
-    }
-  }
-
-  private static class DummySink implements TranslatingCompiler.OutputSink {
-    public static final DummySink INSTANCE = new DummySink();
-    public void add(String outputRoot, Collection<TranslatingCompiler.OutputItem> items, VirtualFile[] filesToRecompile) {
-    }
-  }
 }

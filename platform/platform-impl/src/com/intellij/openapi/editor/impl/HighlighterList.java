@@ -16,8 +16,9 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.util.containers.SortedList;
 
@@ -54,7 +55,7 @@ public abstract class HighlighterList {
   };
 
   private boolean myIsDirtied = false;
-  private final DocumentAdapter myDocumentListener;
+  private final DocumentListener myDocumentListener;
   private final Document myDoc;
   private int myLongestHighlighterLength = 0;
 
@@ -73,7 +74,13 @@ public abstract class HighlighterList {
   };
 
   public HighlighterList(Document doc) {
-    myDocumentListener = new DocumentAdapter() {
+    myDocumentListener = new PrioritizedDocumentListener() {
+      public int getPriority() {
+        return 0; // Need to make sure we invalidate all the stuff before someone (like LineStatusTracker) starts to modify highlights.
+      }
+
+      public void beforeDocumentChange(DocumentEvent event) {}
+
       public void documentChanged(DocumentEvent e) {
         myIsDirtied = true;
         mySegmentHighlighters.markDirty();

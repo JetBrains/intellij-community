@@ -33,6 +33,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
@@ -316,6 +317,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       }
     });
 
+    TreeUtil.selectFirstNode(myTree);
     PopupHandler.installPopupHandler(myTree, IdeActions.GROUP_USAGE_VIEW_POPUP, ActionPlaces.USAGE_VIEW_POPUP);
     //TODO: install speed search. Not in openapi though. It makes sense to create a common TreeEnchancer service.
   }
@@ -869,7 +871,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
     if (!readOnlyUsages.isEmpty()) {
       return
-        !ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(readOnlyUsages.toArray(new VirtualFile[readOnlyUsages.size()])).hasReadonlyFiles();
+        !ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(VfsUtil.toVirtualFileArray(readOnlyUsages)).hasReadonlyFiles();
     }
     return true;
   }
@@ -1183,7 +1185,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         }
       }
 
-      return result.toArray(new VirtualFile[result.size()]);
+      return VfsUtil.toVirtualFileArray(result);
     }
 
   }

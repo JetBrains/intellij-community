@@ -16,9 +16,9 @@
 package com.intellij.lang.ant.validation;
 
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntProject;
@@ -64,9 +64,9 @@ public class AntDuplicateTargetsInspection extends AntInspection {
             if (t != null) {
               final String duplicatedMessage = AntBundle.message("target.is.duplicated", name);
               problems.add(
-                manager.createProblemDescriptor(target, duplicatedMessage, LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                manager.createProblemDescriptor(target, duplicatedMessage, isOnTheFly, LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
               problems
-                .add(manager.createProblemDescriptor(t, duplicatedMessage, LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                .add(manager.createProblemDescriptor(t, duplicatedMessage, isOnTheFly, LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
             }
             name2Target.put(name, target);
           }

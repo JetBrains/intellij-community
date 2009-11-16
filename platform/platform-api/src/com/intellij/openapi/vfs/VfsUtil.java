@@ -28,6 +28,7 @@ import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.io.fs.FileSystem;
 import com.intellij.util.io.fs.IFile;
 import gnu.trove.THashSet;
@@ -242,7 +243,7 @@ public class VfsUtil {
       ancestorsList.add(ancestor);
       filesSet.clear();
     }
-    return ancestorsList.toArray(new VirtualFile[ancestorsList.size()]);
+    return VfsUtil.toVirtualFileArray(ancestorsList);
   }
 
   /**
@@ -453,7 +454,7 @@ public class VfsUtil {
       }
     }
 
-    path = StringUtil.replace(path, "%20", " ");
+    path = URLUtil.unescapePercentSequences(path);
     return protocol + "://" + path;
   }
 
@@ -719,5 +720,12 @@ public class VfsUtil {
       }
     }
     return null;
+  }
+
+  @NotNull
+  public static VirtualFile[] toVirtualFileArray(@NotNull Collection<? extends VirtualFile> files) {
+    int size = files.size();
+    if (size == 0) return VirtualFile.EMPTY_ARRAY;
+    return files.toArray(new VirtualFile[size]);
   }
 }

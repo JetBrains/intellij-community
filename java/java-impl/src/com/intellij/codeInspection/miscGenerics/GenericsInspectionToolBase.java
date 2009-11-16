@@ -34,7 +34,7 @@ public abstract class GenericsInspectionToolBase extends BaseLocalInspectionTool
     if (initializers.length == 0) return null;
     List<ProblemDescriptor> descriptors = new ArrayList<ProblemDescriptor>();
     for (PsiClassInitializer initializer : initializers) {
-      final ProblemDescriptor[] localDescriptions = getDescriptions(initializer, manager);
+      final ProblemDescriptor[] localDescriptions = getDescriptions(initializer, manager, isOnTheFly);
       if (localDescriptions != null) {
         descriptors.addAll(Arrays.asList(localDescriptions));
       }
@@ -46,7 +46,7 @@ public abstract class GenericsInspectionToolBase extends BaseLocalInspectionTool
   public ProblemDescriptor[] checkField(@NotNull PsiField field, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final PsiExpression initializer = field.getInitializer();
     if (initializer != null) {
-      return getDescriptions(initializer, manager);
+      return getDescriptions(initializer, manager, isOnTheFly);
     }
     return null;
   }
@@ -54,10 +54,10 @@ public abstract class GenericsInspectionToolBase extends BaseLocalInspectionTool
   public ProblemDescriptor[] checkMethod(@NotNull PsiMethod psiMethod, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final PsiCodeBlock body = psiMethod.getBody();
     if (body != null) {
-      return getDescriptions(body, manager);
+      return getDescriptions(body, manager, isOnTheFly);
     }
     return null;
   }
 
-  public abstract ProblemDescriptor[] getDescriptions(PsiElement place, InspectionManager manager);
+  public abstract ProblemDescriptor[] getDescriptions(PsiElement place, InspectionManager manager, boolean isOnTheFly);
 }

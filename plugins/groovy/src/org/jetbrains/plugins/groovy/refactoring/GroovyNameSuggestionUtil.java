@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -62,7 +63,7 @@ public class GroovyNameSuggestionUtil {
     if (possibleNames.size() == 0) {
       possibleNames.add(validator.validateName("var", true));
     }
-    return possibleNames.toArray(new String[possibleNames.size()]);
+    return ArrayUtil.toStringArray(possibleNames);
   }
 
 

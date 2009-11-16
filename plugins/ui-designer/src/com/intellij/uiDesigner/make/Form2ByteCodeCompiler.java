@@ -297,7 +297,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
       final ArrayList<MyInstrumentationItem> list = module2itemsList.get(module);
 
       for (final MyInstrumentationItem item : list) {
-        context.getProgressIndicator().setFraction((double)++formsProcessed / (double)items.length);
+        //context.getProgressIndicator().setFraction((double)++formsProcessed / (double)items.length);
         
         final VirtualFile formFile = item.getFormFile();
         context.getProgressIndicator().setText2(formFile.getPresentableUrl());

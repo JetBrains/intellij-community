@@ -36,11 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
- * Date: Mar 26, 2004
- * Time: 7:03:41 PM
- * To change this template use File | Settings | File Templates.
+ * @author db
  */
 public abstract class PsiAnchor {
   @Nullable
@@ -50,7 +46,7 @@ public abstract class PsiAnchor {
   public abstract int getEndOffset();
 
   public static PsiAnchor create(final PsiElement element) {
-    if (element instanceof PsiCompiledElement) {
+    if (element instanceof PsiCompiledElement || element instanceof PsiFile) {
       return new HardReference(element);
     }
 

@@ -33,6 +33,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -327,7 +328,7 @@ public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> imple
       removeIndexEntry(url);
     }
 
-    return toUpdate.toArray(new VirtualFile[toUpdate.size()]);
+    return VfsUtil.toVirtualFileArray(toUpdate);
   }
 
   private class FileIndexCacheUpdater implements CacheUpdater {

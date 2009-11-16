@@ -35,6 +35,7 @@ import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.committed.RefreshIncomingChangesAction;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.ui.*;
@@ -300,8 +301,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
         result.addAll(treeNode.getVirtualFiles());
       }
     }
-    if (result.isEmpty()) return VirtualFile.EMPTY_ARRAY;
-    return result.toArray(new VirtualFile[result.size()]);
+    return VfsUtil.toVirtualFileArray(result);
   }
 
   @Nullable

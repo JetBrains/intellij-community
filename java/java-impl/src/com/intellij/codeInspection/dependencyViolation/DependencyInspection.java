@@ -84,7 +84,7 @@ public class DependencyInspection extends BaseLocalInspectionTool {
   }
 
   @Nullable
-  public ProblemDescriptor[] checkFile(@NotNull final PsiFile file, @NotNull final InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkFile(@NotNull final PsiFile file, @NotNull final InspectionManager manager, final boolean isOnTheFly) {
     if (file == null) return null;
     if (file.getViewProvider().getPsi(StdLanguages.JAVA) == null) return null;
     final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(file.getProject());
@@ -100,7 +100,7 @@ public class DependencyInspection extends BaseLocalInspectionTool {
             for (DependencyRule dependencyRule : rule) {
               StringBuffer message = new StringBuffer();
               message.append(MessageFormat.format(InspectionsBundle.message("inspection.dependency.violator.problem.descriptor"), dependencyRule.getDisplayText()));
-              problems.add(manager.createProblemDescriptor(place, message.toString(), new LocalQuickFix[]{new EditDependencyRulesAction(dependencyRule)}, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+              problems.add(manager.createProblemDescriptor(place, message.toString(), isOnTheFly, new LocalQuickFix[]{new EditDependencyRulesAction(dependencyRule)}, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
             }
           }
         }

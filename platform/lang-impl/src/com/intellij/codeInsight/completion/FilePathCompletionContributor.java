@@ -101,14 +101,16 @@ public class FilePathCompletionContributor extends CompletionContributor {
           if (first == null) return;
 
           final FileReferenceSet set = first.getFileReferenceSet();
-          String prefix = set.getPathString().replace(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED, "");
-
+          String prefix = set.getPathString().substring(0, parameters.getOffset() - set.getElement().getTextRange().getStartOffset() - set.getStartInElement());
+          
           final List<String>[] pathPrefixParts = new List[] {null};
           int lastSlashIndex;
           if ((lastSlashIndex = prefix.lastIndexOf('/')) != -1) {
             pathPrefixParts[0] = StringUtil.split(prefix.substring(0, lastSlashIndex), "/");
             prefix = prefix.substring(lastSlashIndex + 1);
           }
+
+          final CompletionResultSet __result = result.withPrefixMatcher(prefix).caseInsensitive();
 
           final PsiFile originalFile = parameters.getOriginalFile();
           final VirtualFile contextFile = originalFile.getVirtualFile();
@@ -147,7 +149,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
                         if (virtualFile != null && virtualFile.isValid() && virtualFile != contextFile) {
                           if (contextHelper.isMine(project, virtualFile)) {
                             if (pathPrefixParts[0] == null || fileMatchesPathPrefix(contextHelper.getPsiFileSystemItem(project, virtualFile), pathPrefixParts[0])) {
-                              result.addElement(new FilePathLookupItem(file, contextHelper));
+                              __result.addElement(new FilePathLookupItem(file, contextHelper));
                             }
                           }
                         }

@@ -44,6 +44,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.MultiValuesMap;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Alarm;
@@ -161,7 +162,7 @@ public class DetectedFacetManager implements Disposable {
       if (filesMap.size() == 1) {
         final DetectedFacetInfo<Module> facetInfo = detectedFacetInfos.iterator().next();
         final List<VirtualFile> files = filesMap.get(facetInfo);
-        notification = createSingleFacetDetectedNotification(facetInfo, files.toArray(new VirtualFile[files.size()]));
+        notification = createSingleFacetDetectedNotification(facetInfo, VfsUtil.toVirtualFileArray(files));
       }
       else {
         notification = createSeveralFacetsDetectedNotification(filesMap.keySet());

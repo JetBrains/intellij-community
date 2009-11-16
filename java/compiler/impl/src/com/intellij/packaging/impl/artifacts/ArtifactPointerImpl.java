@@ -47,19 +47,17 @@ public class ArtifactPointerImpl implements ArtifactPointer {
 
   @NotNull
   public String getArtifactName(@NotNull ArtifactModel artifactModel) {
-    final Artifact artifact = getArtifact();
-    if (artifact != null) {
-      return artifactModel.getArtifactByOriginal(artifact).getName();
+    if (myArtifact != null) {
+      return artifactModel.getArtifactByOriginal(myArtifact).getName();
     }
     return myName;
   }
 
   public Artifact findArtifact(@NotNull ArtifactModel artifactModel) {
-    final Artifact artifact = getArtifact();
-    if (artifact != null) {
-      return artifactModel.getArtifactByOriginal(artifact);
+    if (myArtifact != null) {
+      return artifactModel.getArtifactByOriginal(myArtifact);
     }
-    return null;
+    return artifactModel.findArtifact(myName);
   }
 
   void setArtifact(Artifact artifact) {

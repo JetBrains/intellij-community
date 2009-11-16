@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInspection.defaultFileTemplateUsage;
 
-import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInspection.*;
@@ -86,7 +86,7 @@ public class MethodBodyChecker {
 
   static void checkMethodBody(final PsiMethod method,
                               final InspectionManager manager,
-                              final Collection<ProblemDescriptor> problemDescriptors) {
+                              final Collection<ProblemDescriptor> problemDescriptors, boolean onTheFly) {
     PsiType returnType = method.getReturnType();
     if (method.isConstructor() || returnType == null) return;
     PsiCodeBlock body = method.getBody();
@@ -112,7 +112,7 @@ public class MethodBodyChecker {
       Pair<? extends PsiElement, ? extends PsiElement> range = DefaultFileTemplateUsageInspection.getInteriorRange(body);
       final String description = InspectionsBundle.message("default.file.template.description");
       ProblemDescriptor problem = manager.createProblemDescriptor(range.first, range.second, description,
-                                                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING, onTheFly,
                                                                   createMethodBodyQuickFix(method));
       problemDescriptors.add(problem);
     }

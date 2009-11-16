@@ -41,6 +41,10 @@ public class TestStatusLine extends JPanel {
     myProgressBar.setColor(color);
   }
 
+  public Color getStatusColor() {
+    return myProgressBar.getColor();
+  }
+
   public void setFraction(double v) {
     myProgressBar.setFraction(v);
   }

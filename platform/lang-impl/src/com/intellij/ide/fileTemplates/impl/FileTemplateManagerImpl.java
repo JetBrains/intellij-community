@@ -781,7 +781,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
         appendDefaultTemplatesDirFromClassloader(plugin.getPluginClassLoader(), dirList);
       }
 
-      ourTopDirs = dirList.toArray(new VirtualFile[dirList.size()]);
+      ourTopDirs = VfsUtil.toVirtualFileArray(dirList);
       for (VirtualFile topDir : ourTopDirs) {
         topDir.refresh(true,true);
       }

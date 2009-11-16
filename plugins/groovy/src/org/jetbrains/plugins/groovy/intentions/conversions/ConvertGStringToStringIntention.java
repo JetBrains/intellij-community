@@ -148,7 +148,8 @@ public class ConvertGStringToStringIntention extends Intention {
     }
     if (text.length() == 0) return null;
 
-    String escaped = GrStringUtil.escapeSymbolsForString(text);
+    String escaped = GrStringUtil.escapeSymbolsForString(text, false);
+    if (escaped.contains("\n")) escaped = GrStringUtil.escapeSymbolsForGString(escaped, true);
     return GrStringUtil.addQuotes(escaped, false);
   }
 }

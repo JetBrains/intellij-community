@@ -22,7 +22,8 @@ import com.intellij.openapi.options.UnnamedConfigurable;
  */
 public abstract class ArtifactPropertiesEditor implements UnnamedConfigurable {
   protected static final String VALIDATION_TAB = "Validation";  
-  protected static final String POSTPROCESSING_TAB = "Post-processing";
+  protected static final String POST_PROCESSING_TAB = "Post-processing";
+  protected static final String PRE_PROCESSING_TAB = "Pre-processing";
 
   public abstract String getTabName();
 

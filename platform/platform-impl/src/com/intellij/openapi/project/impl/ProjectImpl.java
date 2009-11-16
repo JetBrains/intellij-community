@@ -19,7 +19,7 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.startup.StartupManagerEx;
-import com.intellij.notification.NotificationsManager;
+import com.intellij.notification.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -65,6 +65,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectImpl");
+  private static final String PLUGIN_SETTINGS_ERROR = "Plugin Settings Error";
 
   private ProjectManagerImpl myManager;
 
@@ -264,16 +265,18 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
       }
       catch (PluginException e) {
         PluginManager.disablePlugin(e.getPluginId().getIdString());
-        MessagesEx.error(this, "The plugin " +
-                               e.getPluginId() +
-                               " failed to save settings and has been disabled. Please restart " +
-                               ApplicationNamesInfo.getInstance().getFullProductName() +
-                               (ApplicationManagerEx.getApplicationEx().isInternal() ? "\n" + StringUtil.getThrowableText(e) : ""));
+        Notifications.Bus.notify(new Notification(PLUGIN_SETTINGS_ERROR, "Unable to save plugin settings!",
+                                                  "<p>The plugin <i>" + e.getPluginId() + "</i> failed to save settings and has been disabled. Please restart" +
+                                                  ApplicationNamesInfo.getInstance().getFullProductName() + "</p>" +
+                                (ApplicationManagerEx.getApplicationEx().isInternal() ? "<p>" + StringUtil.getThrowableText(e) + "</p>": ""),
+                                                  NotificationType.ERROR), NotificationDisplayType.BALLOON, this);
+        LOG.info("Unable to save plugin settings",e);
       }
       catch (IOException e) {
         MessagesEx.error(this, ProjectBundle.message("project.save.error", ApplicationManagerEx.getApplicationEx().isInternal()
                                                                            ? StringUtil.getThrowableText(e)
                                                                            : e.getMessage())).showLater();
+        LOG.info("Error saving project", e);
       } finally {
         mySavingInProgress.set(false);
       }

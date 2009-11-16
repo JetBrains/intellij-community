@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorImpl;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.SourceItemsTree;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.packaging.artifacts.Artifact;
@@ -100,10 +101,7 @@ public class PutSourceItemIntoParentAndLinkViaManifestAction extends PutIntoDefa
     final Artifact artifact = parentsInfo.getGrandparentArtifact();
     final ArtifactEditorContext context = myArtifactEditor.getContext();
     //todo[nik] improve
-    final Runnable emptyRunnable = new Runnable() {
-      public void run() {
-      }
-    };
+    final Runnable emptyRunnable = EmptyRunnable.getInstance();
     context.editLayout(artifact, emptyRunnable);
     context.editLayout(parentsInfo.getParentArtifact(), emptyRunnable);
     parentsInfo = findParentAndGrandParent(myArtifactEditor.getArtifact());//find elements under modifiable root
@@ -134,10 +132,10 @@ public class PutSourceItemIntoParentAndLinkViaManifestAction extends PutIntoDefa
   }
 
   private static class ParentElementsInfo {
-    private Artifact myParentArtifact;
-    private CompositePackagingElement<?> myParentElement;
-    private Artifact myGrandparentArtifact;
-    private CompositePackagingElement<?> myGrandparentElement;
+    private final Artifact myParentArtifact;
+    private final CompositePackagingElement<?> myParentElement;
+    private final Artifact myGrandparentArtifact;
+    private final CompositePackagingElement<?> myGrandparentElement;
 
     private ParentElementsInfo(Artifact parentArtifact,
                                CompositePackagingElement<?> parentElement,

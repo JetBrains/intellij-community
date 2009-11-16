@@ -16,6 +16,7 @@
 package com.intellij.lang.ant.config.execution;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 
 import java.util.ArrayList;
@@ -42,7 +43,7 @@ final class AntMessage {
     while (tokenizer.hasMoreTokens()) {
       lines.add(tokenizer.nextToken());
     }
-    myTextLines = lines.toArray(new String[lines.size()]);
+    myTextLines = ArrayUtil.toStringArray(lines);
   }
 
   public AntMessage(AntBuildMessageView.MessageType type, int priority, String[] lines, VirtualFile file, int line, int column) {

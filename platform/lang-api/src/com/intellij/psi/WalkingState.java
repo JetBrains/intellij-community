@@ -57,8 +57,8 @@ public abstract class WalkingState<T> {
       T parent = myWalker.getParent(element);
       T next = myWalker.getNextSibling(element);
       visit(element);
-      assert myWalker.getNextSibling(element) == next;
-      assert myWalker.getParent(element) == parent;
+      assert myWalker.getNextSibling(element) == next : "Next sibling of the element '"+element+"' changed. Was: "+next+"; Now:"+myWalker.getNextSibling(element)+"; Root:"+root;
+      assert myWalker.getParent(element) == parent : "Parent of the element '"+element+"' changed. Was: "+parent+"; Now:"+myWalker.getParent(element)+"; Root:"+root;
     }
   }
 

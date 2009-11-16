@@ -52,11 +52,11 @@ public class RedundantThrowsDeclaration extends BaseJavaLocalInspectionTool {
   }
 
   @Nullable
-  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull final InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull final InspectionManager manager, final boolean isOnTheFly) {
     final Set<ProblemDescriptor> problems = new HashSet<ProblemDescriptor>();
     file.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-        final ProblemDescriptor descriptor = checkExceptionsNeverThrown(reference, manager);
+        final ProblemDescriptor descriptor = checkExceptionsNeverThrown(reference, manager, isOnTheFly);
         if (descriptor != null) {
           problems.add(descriptor);
         }
@@ -69,7 +69,8 @@ public class RedundantThrowsDeclaration extends BaseJavaLocalInspectionTool {
 
 
   //@top
-  private static ProblemDescriptor checkExceptionsNeverThrown(PsiJavaCodeReferenceElement referenceElement, InspectionManager inspectionManager) {
+  private static ProblemDescriptor checkExceptionsNeverThrown(PsiJavaCodeReferenceElement referenceElement, InspectionManager inspectionManager,
+                                                              boolean onTheFly) {
     if (!(referenceElement.getParent() instanceof PsiReferenceList)) return null;
     PsiReferenceList referenceList = (PsiReferenceList)referenceElement.getParent();
     if (!(referenceList.getParent() instanceof PsiMethod)) return null;
@@ -121,7 +122,8 @@ public class RedundantThrowsDeclaration extends BaseJavaLocalInspectionTool {
     String description = JavaErrorMessages.message("exception.is.never.thrown", HighlightUtil.formatType(exceptionType));
 
     final LocalQuickFix quickFixes = new DeleteThrowsFix(method, exceptionType);
-    return inspectionManager.createProblemDescriptor(referenceElement, description, quickFixes, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+    return inspectionManager.createProblemDescriptor(referenceElement, description, quickFixes, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                                                     onTheFly);
   }
 
 }

@@ -329,7 +329,7 @@ public class CompleteReferenceExpression {
     final PsiElement scope = PsiTreeUtil.getParentOfType(refExpr, GrMember.class, GroovyFileBase.class);
     Set<String> result = new LinkedHashSet<String>();
     addVariantsWithSameQualifier(scope, refExpr, qualifier, result);
-    return result.toArray(new String[result.size()]);
+    return ArrayUtil.toStringArray(result);
   }
 
   private static void addVariantsWithSameQualifier(PsiElement element,

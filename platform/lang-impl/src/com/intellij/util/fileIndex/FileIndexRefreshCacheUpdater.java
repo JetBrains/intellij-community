@@ -67,7 +67,7 @@ public class FileIndexRefreshCacheUpdater extends VirtualFileAdapter implements 
   }
 
   public VirtualFile[] queryNeededFiles() {
-    return myChangedFiles.toArray(new VirtualFile[myChangedFiles.size()]);
+    return VfsUtil.toVirtualFileArray(myChangedFiles);
   }
 
   public void processFile(FileContent fileContent) {

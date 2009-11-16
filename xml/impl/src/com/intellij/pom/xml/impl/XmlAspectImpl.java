@@ -61,8 +61,7 @@ public class XmlAspectImpl implements XmlAspect {
 
     final ASTNode[] changedElements = changeSet.getChangedElements();
     final CharTable table = ((FileElement)changeSet.getRootElement()).getCharTable();
-    for (int i = 0; i < changedElements.length; i++) {
-      ASTNode changedElement = changedElements[i];
+    for (ASTNode changedElement : changedElements) {
       TreeChange changesByElement = changeSet.getChangesByElement(changedElement);
       PsiElement psiElement = null;
       while (changedElement != null && (psiElement = changedElement.getPsi()) == null) {
@@ -73,12 +72,13 @@ public class XmlAspectImpl implements XmlAspect {
         changesByElement.addChange(changedElement, changeInfo);
         changedElement = parent;
       }
-      if(changedElement == null) continue;
+      if (changedElement == null) continue;
       final TreeChange finalChangedElement = changesByElement;
       psiElement.accept(new XmlElementVisitor() {
         TreeChange myChange = finalChangedElement;
 
-        @Override public void visitElement(PsiElement element) {
+        @Override
+        public void visitElement(PsiElement element) {
           final ASTNode child = element.getNode();
           final ASTNode treeParent = child.getTreeParent();
           if (treeParent == null) return;
@@ -92,12 +92,12 @@ public class XmlAspectImpl implements XmlAspect {
           parent.accept(this);
         }
 
-        @Override public void visitXmlAttribute(XmlAttribute attribute) {
+        @Override
+        public void visitXmlAttribute(XmlAttribute attribute) {
           final ASTNode[] affectedChildren = myChange.getAffectedChildren();
           String oldName = null;
           String oldValue = null;
-          for (int j = 0; j < affectedChildren.length; j++) {
-            final ASTNode treeElement = affectedChildren[j];
+          for (final ASTNode treeElement : affectedChildren) {
             final ChangeInfo changeByChild = myChange.getChangeByChild(treeElement);
             final int changeType = changeByChild.getChangeType();
             if (treeElement.getElementType() == XmlTokenType.XML_NAME) {
@@ -129,7 +129,8 @@ public class XmlAspectImpl implements XmlAspect {
           }
         }
 
-        @Override public void visitXmlTag(XmlTag tag) {
+        @Override
+        public void visitXmlTag(XmlTag tag) {
           ASTNode[] affectedChildren = shortenChange(myChange.getAffectedChildren(), changeSet);
 
           for (final ASTNode treeElement : affectedChildren) {
@@ -164,7 +165,7 @@ public class XmlAspectImpl implements XmlAspect {
 
             switch (changeType) {
               case ChangeInfo.ADD:
-                xmlChangeSet.add(new XmlTagChildAddImpl(tag, (XmlTagChild) element));
+                xmlChangeSet.add(new XmlTagChildAddImpl(tag, (XmlTagChild)element));
                 break;
               case ChangeInfo.REMOVED:
                 treeElement.putUserData(CharTable.CHAR_TABLE_KEY, table);
@@ -186,12 +187,14 @@ public class XmlAspectImpl implements XmlAspect {
           }
         }
 
-        @Override public void visitXmlDocument(XmlDocument document) {
+        @Override
+        public void visitXmlDocument(XmlDocument document) {
           xmlChangeSet.clear();
           xmlChangeSet.add(new XmlDocumentChangedImpl(document));
         }
 
-        @Override public void visitFile(PsiFile file) {
+        @Override
+        public void visitFile(PsiFile file) {
           final XmlDocument document = ((XmlFile)file).getDocument();
 
           if (document != null) {

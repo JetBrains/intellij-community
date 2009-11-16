@@ -16,6 +16,7 @@
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.sm.SMTestsRunnerBundle;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsAdapter;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
@@ -48,26 +49,33 @@ public class SMTRunnerNotificationsHandler extends SMTRunnerEventsAdapter {
     final MessageType type;
 
     final TestStateInfo.Magnitude magnitude = testsRoot.getMagnitudeInfo();
+    //noinspection EnumSwitchStatementWhichMissesCases
     switch (magnitude) {
       case SKIPPED_INDEX:
       case IGNORED_INDEX:
-        msg = "Tests skipped";
+        msg = SMTestsRunnerBundle.message("sm.test.runner.notifications.tests.skipped");
         type = MessageType.WARNING;
         break;
 
       case NOT_RUN_INDEX:
-        msg = "Tests were not started";
+        msg = SMTestsRunnerBundle.message("sm.test.runner.notifications.tests.not.run");
         type = MessageType.WARNING;
         break;
 
       case FAILED_INDEX:
       case ERROR_INDEX:
-        msg = "Tests failed";
+        msg = SMTestsRunnerBundle.message("sm.test.runner.notifications.tests.failed");
         type = MessageType.ERROR;
         break;
       case COMPLETE_INDEX:
+        if (testsRoot.getChildren().size() == 0) {
+          msg = SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.no.tests.were.found");
+          type = MessageType.ERROR;
+          break;
+        }
+        // else same as: PASSED_INDEX 
       case PASSED_INDEX:
-        msg = "Tests passed";
+        msg = SMTestsRunnerBundle.message("sm.test.runner.notifications.tests.passed");
         type = MessageType.INFO;
         break;
 

@@ -76,7 +76,7 @@ public class LossyEncodingInspection extends BaseJavaLocalInspectionTool {
       if (isRepresentable(c, charset)) {
         if (start != -1) {
           ProblemDescriptor descriptor = manager.createProblemDescriptor(file, new TextRange(start, i), InspectionsBundle.message(
-            "unsupported.character.for.the.charset", charset), ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+            "unsupported.character.for.the.charset", charset), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
           descriptors.add(descriptor);
           start = -1;
 
@@ -92,7 +92,7 @@ public class LossyEncodingInspection extends BaseJavaLocalInspectionTool {
     }
     if (start != -1) {
       ProblemDescriptor descriptor = manager.createProblemDescriptor(file, new TextRange(start, text.length()), InspectionsBundle.message(
-        "unsupported.character.for.the.charset", charset), ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+        "unsupported.character.for.the.charset", charset), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
       descriptors.add(descriptor);
     }
 

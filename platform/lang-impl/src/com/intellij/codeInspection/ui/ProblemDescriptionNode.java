@@ -24,6 +24,7 @@ import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
@@ -114,12 +115,27 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
     PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
     @NonNls String message = descriptor != null ? descriptor.getDescriptionTemplate().replaceAll("<[^>]*>", "") : "";
     message = StringUtil.replace(message, "#loc", "");
-    message = StringUtil.replace(message, "#ref", psiElement != null && psiElement.isValid() ? psiElement.getText() : "");
+    message = StringUtil.replace(message, "#ref", extractHighlightedText(descriptor, psiElement));
     final int endIndex = message.indexOf("#end");
     if (endIndex > 0) {
       message = message.substring(0, endIndex);
     }
     message = StringUtil.unescapeXml(message);
     return message;
+  }
+
+  public static String extractHighlightedText(CommonProblemDescriptor descriptor, PsiElement psiElement) {
+    if (psiElement == null || !psiElement.isValid()) return "";
+    String ref = psiElement.getText();
+    if(descriptor instanceof ProblemDescriptorImpl) {
+      TextRange textRange = ((ProblemDescriptorImpl)descriptor).getTextRange();
+      final TextRange elementRange = psiElement.getTextRange();
+      if (textRange!=null && elementRange!=null) {
+        textRange = textRange.shiftRight(-elementRange.getStartOffset());
+        if(textRange.getStartOffset() >= 0 && textRange.getEndOffset() <= ref.length())
+          ref = textRange.substring(ref);
+      }
+    }
+    return ref;
   }
 }

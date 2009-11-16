@@ -22,6 +22,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.util.ArrayUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -54,7 +55,7 @@ public class PropertyFileGeneratorImpl extends PropertyFileGenerator {
         final PathMacros pathMacros = PathMacros.getInstance();
         final Set<String> macroNamesSet = pathMacros.getUserMacroNames();
         if (macroNamesSet.size() > 0) {
-            final String[] macroNames = macroNamesSet.toArray(new String[macroNamesSet.size()]);
+          final String[] macroNames = ArrayUtil.toStringArray(macroNamesSet);
             Arrays.sort(macroNames);
             for (final String macroName : macroNames) {
                 addProperty(BuildProperties.getPathMacroProperty(macroName), pathMacros.getValue(macroName));

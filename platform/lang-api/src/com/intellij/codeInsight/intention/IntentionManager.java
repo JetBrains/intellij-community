@@ -21,6 +21,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -97,7 +98,7 @@ public abstract class IntentionManager  {
    * E.g. actions for suppress the problem via comment, javadoc or annotation,
    * and edit corresponding inspection settings.   
    */
-  public abstract List<IntentionAction> getStandardIntentionOptions(final HighlightDisplayKey displayKey, PsiElement context);
+  public abstract List<IntentionAction> getStandardIntentionOptions(@NotNull HighlightDisplayKey displayKey, @NotNull PsiElement context);
 
   /**
    * Wraps given action in a LocalQuickFix object.

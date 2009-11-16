@@ -892,11 +892,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       myOpenProjects.remove(project);
       myChangedProjectFiles.remove(project);
       fireProjectClosed(project);
-
-      if (save) {
-        ApplicationEx application = ApplicationManagerEx.getApplicationEx();
-        if (!application.isUnitTestMode()) application.saveSettings();
-      }
     }
     finally {
       shutDownTracker.unregisterStopperThread(Thread.currentThread());

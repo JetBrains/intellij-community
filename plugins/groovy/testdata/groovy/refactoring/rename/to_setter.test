@@ -30,4 +30,4 @@ a.foo
 a.getFoo()
 
 a.newName = ""
-a.setFoo("asd")
+a.setNewName("asd")

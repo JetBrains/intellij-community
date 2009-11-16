@@ -261,6 +261,12 @@ public abstract class GitHandler {
     myProject = project;
     mySettings = GitVcsSettings.getInstanceChecked(project);
     myEnv = new HashMap<String, String>(System.getenv());
+    if (!myEnv.containsKey("HOME")) {
+      String home = System.getProperty("user.home");
+      if (home != null) {
+        myEnv.put("HOME", home);
+      }
+    }
     myVcs = GitVcs.getInstance(project);
     if (myVcs != null) {
       myVcs.checkVersion();
@@ -617,10 +623,11 @@ public abstract class GitHandler {
   public void waitFor() {
     checkStarted();
     try {
-      if(myInputProcessor != null) {
+      if (myInputProcessor != null) {
         myInputProcessor.process(myHandler.getProcessInput());
       }
-    } finally {
+    }
+    finally {
       myHandler.waitFor();
     }
   }

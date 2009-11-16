@@ -19,7 +19,19 @@ package com.intellij.ide.hierarchy;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -122,6 +134,60 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
 
   public final Object getRootElement() {
     return myRoot;
+  }
+
+  protected SearchScope getSearchScope(final String scopeType, final PsiElement thisClass) {
+    SearchScope searchScope = GlobalSearchScope.allScope(myProject);
+    if (HierarchyBrowserBaseEx.SCOPE_CLASS.equals(scopeType)) {
+      searchScope = new LocalSearchScope(thisClass);
+    }
+    else if (HierarchyBrowserBaseEx.SCOPE_PROJECT.equals(scopeType)) {
+      searchScope = GlobalSearchScope.projectProductionScope(myProject);
+    }
+    else if (HierarchyBrowserBaseEx.SCOPE_TEST.equals(scopeType)) {
+      searchScope = GlobalSearchScope.projectTestScope(myProject);
+    } else {
+      final NamedScope namedScope = NamedScopesHolder.getScope(myProject, scopeType);
+      if (namedScope != null) {
+        searchScope = GlobalSearchScope.filterScope(myProject, namedScope);
+      }
+    }
+    return searchScope;
+  }
+
+  protected boolean isInScope(final PsiElement baseClass, final PsiElement srcElement, final String scopeType) {
+    if (HierarchyBrowserBaseEx.SCOPE_CLASS.equals(scopeType)) {
+      if (!PsiTreeUtil.isAncestor(baseClass, srcElement, true)) {
+        return false;
+      }
+    }
+    else if (HierarchyBrowserBaseEx.SCOPE_PROJECT.equals(scopeType)) {
+      final VirtualFile virtualFile = srcElement.getContainingFile().getVirtualFile();
+      if (virtualFile != null && ProjectRootManager.getInstance(myProject).getFileIndex().isInTestSourceContent(virtualFile)) {
+        return false;
+      }
+    }
+    else if (HierarchyBrowserBaseEx.SCOPE_TEST.equals(scopeType)) {
+
+      final VirtualFile virtualFile = srcElement.getContainingFile().getVirtualFile();
+      if (virtualFile != null && !ProjectRootManager.getInstance(myProject).getFileIndex().isInTestSourceContent(virtualFile)) {
+        return false;
+      }
+    } else if (!HierarchyBrowserBaseEx.SCOPE_ALL.equals(scopeType)) {
+      final NamedScope namedScope = NamedScopesHolder.getScope(myProject, scopeType);
+      if (namedScope == null) {
+        return false;
+      }
+      final PackageSet namedScopePattern = namedScope.getValue();
+      if (namedScopePattern == null) {
+        return false;
+      }
+      final PsiFile psiFile = srcElement.getContainingFile();
+      if (psiFile != null && !namedScopePattern.contains(psiFile, NamedScopesHolder.getHolder(myProject, scopeType, NamedScopeManager.getInstance(myProject)))) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private static final class TextInfoNodeDescriptor extends NodeDescriptor {

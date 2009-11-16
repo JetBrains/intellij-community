@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang;
 
+import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
@@ -38,16 +39,18 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.compiler.*;
-import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
@@ -77,6 +80,23 @@ public class GroovyCompilerTest extends JavaCodeInsightFixtureTestCase {
     super.setUp();
     getProject().getComponent(GroovyCompilerLoader.class).projectOpened();
     CompilerManagerImpl.testSetup();
+
+    CompilerProjectExtension.getInstance(getProject()).setCompilerOutputUrl(myMainOutput.findOrCreateDir("out").getUrl());
+
+    addGroovyLibrary(myModule);
+  }
+
+  @Override
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
+    moduleBuilder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);
+    super.tuneFixture(moduleBuilder);
+  }
+
+  private static void addGroovyLibrary(final Module to) {
+    final String root = PathManager.getHomePath() + "/community/lib/";
+    final File[] groovyJars = GroovyUtils.getFilesInDirectoryByPattern(root, GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN);
+    assert groovyJars.length == 1;
+    PsiTestUtil.addLibrary(to, "groovy", root, groovyJars[0].getName());
   }
 
   @Override
@@ -84,17 +104,6 @@ public class GroovyCompilerTest extends JavaCodeInsightFixtureTestCase {
     myMainOutput.tearDown();
     myMainOutput = null;
     super.tearDown();
-  }
-
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
-    super.tuneFixture(moduleBuilder);
-    moduleBuilder.setOutputPath(myMainOutput.getTempDirPath() + "/out/production");
-    moduleBuilder.setTestOutputPath(myMainOutput.getTempDirPath() + "/out/tests");
-    final File[] groovyJars = GroovyUtils.getFilesInDirectoryByPattern(PathManager.getHomePath() + "/community/lib", GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN);
-    assert groovyJars.length == 1;
-    moduleBuilder.addLibrary("Groovy", groovyJars[0].getPath());
-    //moduleBuilder.addJdk(CompilerConfigurationImpl.getTestsExternalCompilerHome());
   }
 
   public void testPlainGroovy() throws Throwable {
@@ -298,6 +307,100 @@ public class GroovyCompilerTest extends JavaCodeInsightFixtureTestCase {
     assertEmpty(make());
   }
 
+  public void testDontApplyTransformsFromSameModule() throws Exception {
+    addTransform();
+
+    myFixture.addClass("public class JavaClassToGenerateStubs {}");
+
+    assertEmpty(make());
+
+  }
+
+  private void addTransform() throws IOException {
+    myFixture.addFileToProject("Transf.groovy",
+                               "import org.codehaus.groovy.ast.*\n" +
+                               "import org.codehaus.groovy.control.*\n" +
+                               "import org.codehaus.groovy.transform.*\n" +
+                               "@GroovyASTTransformation(phase = CompilePhase.CONVERSION)\n" +
+                               "public class Transf implements ASTTransformation {\n" +
+                               "  void visit(ASTNode[] nodes, SourceUnit sourceUnit) {\n" +
+                               "    ModuleNode module = nodes[0]\n" +
+                               "    for (clazz in module.classes) {\n" +
+                               "      if (clazz.name.contains('Bar')) " +
+                               "        module.addStaticImportClass('Foo', ClassHelper.makeWithoutCaching(Foo.class));\n" +
+                               "    }\n" +
+                               "  }\n" +
+                               "}");
+
+    /*myFixture.addFileToProject("Transf.java",
+                               "import org.codehaus.groovy.ast.*;\n" +
+                               "import org.codehaus.groovy.control.*;\n" +
+                               "import org.codehaus.groovy.transform.*;\n" +
+                               "@GroovyASTTransformation(phase = CompilePhase.CONVERSION)\n" +
+                               "public class Transf implements ASTTransformation {\n" +
+                               "  public void visit(ASTNode[] nodes, SourceUnit sourceUnit) {\n" +
+                               "    ModuleNode module = (ModuleNode) nodes[0];\n" +
+                               "    for (ClassNode clazz : module.getClasses()) {\n" +
+                               "      if (clazz.getName().contains(\"Bar\")) " +
+                               "        module.addStaticImportClass(\"Foo\", ClassHelper.makeWithoutCaching(Foo.class));\n" +
+                               "    }\n" +
+                               "  }\n" +
+                               "}");*/
+
+    myFixture.addFileToProject("Foo.groovy", "class Foo {\n" +
+                                             "static def autoImported() { 239 }\n" +
+                                             "}");
+
+    CompilerConfiguration.getInstance(getProject()).addResourceFilePattern("*.ASTTransformation");
+
+    myFixture.addFileToProject("META-INF/services/org.codehaus.groovy.transform.ASTTransformation", "Transf");
+  }
+
+  public void testApplyTransformsFromDependencies() throws Exception {
+    addTransform();
+
+    myFixture.addFileToProject("dependent/Bar.groovy", "class Bar {\n" +
+                                                       "  static Object zzz = autoImported()\n" +
+                                                       "  static void main(String[] args) {\n" +
+                                                       "    println zzz\n" +
+                                                       "  }\n" +
+                                                       "}");
+
+    myFixture.addFileToProject("dependent/AJavaClass.java", "class AJavaClass {}");
+
+    Module dep = addDependentModule();
+
+    addGroovyLibrary(dep);
+
+    assertEmpty(make());
+    assertOutput("Bar", "239", dep);
+  }
+
+  private Module addDependentModule() {
+    Module dep = new WriteCommandAction<Module>(getProject()) {
+      @Override
+      protected void run(Result<Module> result) throws Throwable {
+        final ModifiableModuleModel moduleModel = ModuleManager.getInstance(getProject()).getModifiableModel();
+        moduleModel.newModule("dependent/dependent.iml", StdModuleTypes.JAVA);
+        moduleModel.commit();
+
+        final Module dep = ModuleManager.getInstance(getProject()).findModuleByName("dependent");
+        final ModifiableRootModel model = ModuleRootManager.getInstance(dep).getModifiableModel();
+        model.addModuleOrderEntry(myModule);
+        final VirtualFile depRoot = myFixture.getTempDirFixture().getFile("dependent");
+        final ContentEntry entry = model.addContentEntry(depRoot);
+        entry.addSourceFolder(depRoot, false);
+        model.setSdk(ModuleRootManager.getInstance(myModule).getSdk());
+
+        //model.getModuleExtension(CompilerModuleExtension.class).inheritCompilerOutputPath(true);
+
+        model.commit();
+        result.setResult(dep);
+      }
+    }.execute().getResultObject();
+    return dep;
+  }
+
   private void deleteClassFile(final String className) throws IOException {
     new WriteCommandAction(getProject()) {
       protected void run(Result result) throws Throwable {
@@ -349,9 +452,13 @@ public class GroovyCompilerTest extends JavaCodeInsightFixtureTestCase {
   */
 
   private void assertOutput(String className, String output) throws ExecutionException {
+    assertOutput(className, output, myModule);
+  }
+
+  private void assertOutput(String className, String output, final Module module) throws ExecutionException {
     final ApplicationConfiguration configuration =
       new ApplicationConfiguration("app", getProject(), ApplicationConfigurationType.getInstance());
-    configuration.setModule(myModule);
+    configuration.setModule(module);
     configuration.setMainClassName(className);
     final DefaultRunExecutor extension = Executor.EXECUTOR_EXTENSION_NAME.findExtension(DefaultRunExecutor.class);
     final ExecutionEnvironment environment = new ExecutionEnvironment(configuration, new RunnerSettings<JDOMExternalizable>(null, null),null, DataManager.getInstance().getDataContext());

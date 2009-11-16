@@ -38,7 +38,6 @@ import java.util.Collection;
 
 public class MavenDefaultModifiableModelsProvider extends MavenBaseModifiableModelsProvider {
   private final LibraryTable.ModifiableModel myLibrariesModel;
-  private volatile long myCommitTime;
 
   public MavenDefaultModifiableModelsProvider(Project project) {
     super(project);
@@ -99,8 +98,6 @@ public class MavenDefaultModifiableModelsProvider extends MavenBaseModifiableMod
   }
 
   public void commit() {
-    long before = System.currentTimeMillis();
-
     MavenUtil.invokeAndWaitWriteAction(myProject, new Runnable() {
       public void run() {
         processExternalArtifactDependencies();
@@ -122,8 +119,6 @@ public class MavenDefaultModifiableModelsProvider extends MavenBaseModifiableMod
         }
       }
     });
-
-    myCommitTime = System.currentTimeMillis() - before;
   }
 
   public void dispose() {
@@ -138,10 +133,6 @@ public class MavenDefaultModifiableModelsProvider extends MavenBaseModifiableMod
         }
       }
     });
-  }
-
-  public long getCommitTime() {
-    return myCommitTime;
   }
 
   public ModalityState getModalityStateForQuestionDialogs() {

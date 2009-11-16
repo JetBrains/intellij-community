@@ -41,6 +41,8 @@ public class StringLiteralManipulator extends AbstractElementManipulator<PsiLite
   }
 
   public static TextRange getValueRange(PsiLiteralExpression element) {
+    final Object value = element.getValue();
+    if (!(value instanceof String || value instanceof Character)) return TextRange.from(0, element.getTextLength());
     return new TextRange(1, Math.max(1, element.getTextLength() - 1));
   }
 }

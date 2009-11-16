@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlBundle;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -129,7 +130,7 @@ public class GenerateInstanceDocumentFromSchemaAction extends AnAction {
     parameters.add("-name");
     parameters.add(dialog.getElementName());
 
-    String xml = Xsd2InstanceUtils.generate(parameters.toArray(new String[parameters.size()]));
+    String xml = Xsd2InstanceUtils.generate(ArrayUtil.toStringArray(parameters));
 
 
     final VirtualFile baseDirForCreatedInstanceDocument1 = relativeFileDir;

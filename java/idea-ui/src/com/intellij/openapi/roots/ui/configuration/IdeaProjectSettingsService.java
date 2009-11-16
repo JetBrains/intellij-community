@@ -21,11 +21,11 @@ import com.intellij.ide.util.projectWizard.JdkChooserPanel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
-import com.intellij.openapi.projectRoots.Sdk;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -36,6 +36,15 @@ public class IdeaProjectSettingsService extends ProjectSettingsService {
 
   public IdeaProjectSettingsService(final Project project) {
     myProject = project;
+  }
+
+  public void openProjectSettings() {
+    final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(myProject);
+    ShowSettingsUtil.getInstance().editConfigurable(myProject, config, new Runnable() {
+      public void run() {
+        config.selectProjectGeneralSettings(true);
+      }
+    });
   }
 
   public void openModuleSettings(final Module module) {

@@ -27,6 +27,7 @@ import com.intellij.psi.PsiVariable;
 import java.util.Arrays;
 import java.util.LinkedList;
 
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class SuggestVariableNameMacro implements Macro {
@@ -88,7 +89,7 @@ public class SuggestVariableNameMacro implements Macro {
       }
     }
 
-    return (String[]) namesList.toArray(new String[namesList.size()]);
+    return (String[])ArrayUtil.toStringArray(namesList);
   }
 
 }

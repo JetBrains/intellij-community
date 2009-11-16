@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.pending.DuringChangeListManagerUpdateTestScheme;
 import com.intellij.openapi.vcs.changes.ui.RollbackWorker;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Assert;
 import org.junit.Test;
@@ -236,8 +237,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     clManager.ensureUpToDate(false);
     final List<VirtualFile> files = getAllFiles(subTree);
     
-    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(files.toArray(new VirtualFile[files.size()]),
-                                                                clManager.getDefaultListName(), clManager);
+    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(VfsUtil.toVirtualFileArray(files), clManager.getDefaultListName(), clManager);
 
     final Collection<Change> changes = clManager.getDefaultChangeList().getChanges();
 
@@ -274,8 +274,8 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     clManager.ensureUpToDate(false);
     final List<VirtualFile> files = getAllFiles(subTree);
-    DuringChangeListManagerUpdateTestScheme.checkDeletedFilesAreInList(files.toArray(new VirtualFile[files.size()]),
-                                                                clManager.getDefaultListName(), clManager);
+    DuringChangeListManagerUpdateTestScheme.checkDeletedFilesAreInList(VfsUtil.toVirtualFileArray(files), clManager.getDefaultListName(),
+                                                                       clManager);
 
     final Collection<Change> changes = clManager.getDefaultChangeList().getChanges();
 

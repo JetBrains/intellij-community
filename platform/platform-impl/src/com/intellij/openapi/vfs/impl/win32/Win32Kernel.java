@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.impl.win32;
 
+import com.intellij.util.ArrayUtil;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
@@ -49,6 +50,10 @@ public class Win32Kernel {
 
   private final WIN32_FIND_DATA myData = new WIN32_FIND_DATA();
 
+  void clearCache() {
+    myCache.clear();
+  }
+
   private static class FileInfo {
     private FileInfo(WIN32_FIND_DATA data) {
       this.dwFileAttributes = data.dwFileAttributes;
@@ -62,8 +67,6 @@ public class Win32Kernel {
   private Map<String, FileInfo> myCache = new HashMap<String, FileInfo>();
 
   public String[] list(String absolutePath) {
-
-    myCache.clear();
 
     ArrayList<String> list = new ArrayList<String>();
     WIN32_FIND_DATA data = myData;
@@ -87,11 +90,10 @@ public class Win32Kernel {
     finally {
       myKernel.FindClose(hFind);
     }
-    return list.toArray(new String[list.size()]);
+    return ArrayUtil.toStringArray(list);
   }
 
   public boolean exists(String path) {
-    myCache.clear();
     try {
       getInfo(path);
       return true;
@@ -107,7 +109,9 @@ public class Win32Kernel {
   }
 
   public boolean isWritable(String path) throws FileNotFoundException {
-    return (getInfo(path).dwFileAttributes & FILE_ATTRIBUTE_READONLY) == 0;
+    FileInfo fileInfo = getInfo(path);
+    myCache.remove(path);
+    return (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_READONLY) == 0;
   }
 
   public long getTimeStamp(String path) throws FileNotFoundException {
@@ -117,7 +121,6 @@ public class Win32Kernel {
   private FileInfo getInfo(String path) throws FileNotFoundException {
     FileInfo info = myCache.get(path);
     if (info == null) {
-      myCache.clear();
       WIN32_FIND_DATA data = myData;
       W32API.HANDLE handle = myKernel.FindFirstFile(path.replace('/', '\\'), data);
       if (handle.equals(INVALID_HANDLE_VALUE)) {

@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
@@ -160,7 +161,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
     for (VirtualFilePointer smartVirtualFilePointer : myList) {
       result.add(smartVirtualFilePointer.getUrl());
     }
-    return result.toArray(new String[result.size()]);
+    return ArrayUtil.toStringArray(result);
   }
 
   private VirtualFile[] myCachedFiles;
@@ -182,7 +183,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
         result.add(file);
       }
     }
-    return result.toArray(new VirtualFile[result.size()]);
+    return VfsUtil.toVirtualFileArray(result);
   }
 
   @NotNull
@@ -204,7 +205,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
         result.add(file);
       }
     }
-    return result.isEmpty() ? VirtualFile.EMPTY_ARRAY : result.toArray(new VirtualFile[result.size()]);
+    return VfsUtil.toVirtualFileArray(result);
   }
 
   @Nullable

@@ -20,6 +20,7 @@ import com.intellij.openapi.diff.impl.FrameWrapper;
 import com.intellij.openapi.diff.impl.incrementalMerge.ui.MergePanel2;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 
 public class MergeTool implements DiffTool {
   public void show(DiffRequest data) {
@@ -47,10 +48,7 @@ public class MergeTool implements DiffTool {
     DialogBuilder builder = new DialogBuilder(data.getProject());
     builder.setDimensionServiceKey(data.getGroupKey());
     builder.setTitle(data.getWindowTitle());
-    Disposable parent = new Disposable() {
-      public void dispose() {
-      }
-    };
+    Disposable parent = Disposer.newDisposable();
     builder.addDisposable(parent);
     MergePanel2 mergePanel = createMergeComponent(data, builder, parent);
     builder.setCenterPanel(mergePanel.getComponent());

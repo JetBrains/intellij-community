@@ -26,8 +26,8 @@ package com.intellij.refactoring.memberPullUp;
 
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
@@ -35,6 +35,8 @@ import com.intellij.refactoring.classMembers.MemberInfoChange;
 import com.intellij.refactoring.ui.ClassCellRenderer;
 import com.intellij.refactoring.ui.DocCommentPanel;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
+import com.intellij.refactoring.ui.RefactoringDialog;
+import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.classMembers.InterfaceContainmentVerifier;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
@@ -51,7 +53,7 @@ import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PullUpDialog extends DialogWrapper {
+public class PullUpDialog extends RefactoringDialog {
   private final Callback myCallback;
   private MemberSelectionPanel myMemberSelectionPanel;
   private MyMemberInfoModel myMemberInfoModel;
@@ -174,9 +176,12 @@ public class PullUpDialog extends DialogWrapper {
     }*/
   }
 
-  protected void doOKAction() {
+  protected void doAction() {
     if (!myCallback.checkConflicts(this)) return;
     JavaRefactoringSettings.getInstance().PULL_UP_MEMBERS_JAVADOC = myJavaDocPanel.getPolicy();
+
+    invokeRefactoring(new PullUpHelper(myClass, getSuperClass(), getSelectedMemberInfos(),
+                                               new DocCommentPolicy(getJavaDocPolicy())));
     close(OK_EXIT_CODE);
   }
 

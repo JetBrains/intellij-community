@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareRunnable;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
@@ -38,6 +39,7 @@ import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
@@ -98,7 +100,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private final VcsListener myVcsListener = new VcsListener() {
     public void directoryMappingChanged() {
       VcsDirtyScopeManager.getInstanceChecked(myProject).markEverythingDirty();
-      scheduleUpdate();
     }
   };
   private final ChangelistConflictTracker myConflictTracker;
@@ -241,6 +242,14 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
     final VcsInvalidated invalidated = dirtyScopeManager.retrieveScopes();
     if (invalidated == null || invalidated.isEmpty()) {
+      // a hack here; but otherwise everything here should be refactored ;)
+      if (invalidated.isEmpty() && invalidated.isEverythingDirty()) {
+        DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
+          public void run() {
+            VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
+          }
+        });
+      }
       return;
     }
     final boolean wasEverythingDirty = invalidated.isEverythingDirty();
@@ -894,8 +903,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         result.add(path.getVirtualFile());
       }
     }
-    
-    return result.toArray(new VirtualFile[result.size()]); 
+
+    return VfsUtil.toVirtualFileArray(result);
   }
 
   public boolean setReadOnly(final String name, final boolean value) {

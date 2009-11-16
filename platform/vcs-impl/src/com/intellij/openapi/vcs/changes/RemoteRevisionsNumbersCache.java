@@ -225,7 +225,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
       } else {
         state = diffProvider.getLastRevision(vf);
       }
-      final VcsRevisionNumber newNumber = state == null ? UNKNOWN : state.getNumber();
+      final VcsRevisionNumber newNumber = (state == null) || state.isDefaultHead() ? UNKNOWN : state.getNumber();
 
       final Pair<VcsRoot, VcsRevisionNumber> oldPair;
       synchronized (myLock) {

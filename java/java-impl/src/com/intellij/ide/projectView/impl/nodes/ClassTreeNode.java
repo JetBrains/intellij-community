@@ -63,6 +63,10 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass>{
     return treeNodes;
   }
 
+  public boolean isAlwaysLeaf() {
+    return !getSettings().isShowMembers();
+  }
+
   public void updateImpl(PresentationData data) {
     final PsiClass aClass = getValue();
     if (aClass != null) {

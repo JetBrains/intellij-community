@@ -26,6 +26,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.Nullable;
@@ -140,7 +141,7 @@ public class GenerateInstanceDocumentFromSchemaDialog extends DialogWrapper {
   }
 
   public void configureComboBox(JComboBox combo, List<String> lastValues) {  // without -editor.selectAll- no focus
-    combo.setModel(new DefaultComboBoxModel(lastValues.toArray(new String[lastValues.size()])));
+    combo.setModel(new DefaultComboBoxModel(ArrayUtil.toStringArray(lastValues)));
   }
 
   private void updateFile() {

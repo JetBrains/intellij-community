@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -72,6 +73,21 @@ public class ChangeListsIndexes {
     if (beforeRevision != null) {
       remove(beforeRevision.getFile());
     }
+  }
+
+  public VcsKey getVcsFor(final Change change) {
+    VcsKey key = getVcsForRevision(change.getAfterRevision());
+    if (key != null) return key;
+    return getVcsForRevision(change.getBeforeRevision());
+  }
+
+  @Nullable
+  private VcsKey getVcsForRevision(final ContentRevision revision) {
+    if (revision != null) {
+      final String fileKey = revision.getFile().getIOFile().getAbsolutePath();
+      return myFileToVcs.get(fileKey);
+    }
+    return null;
   }
 
   private void addChangeToIdx(final Change change, final VcsKey key) {

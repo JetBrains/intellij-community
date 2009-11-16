@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.naming;
 
+import com.intellij.psi.PsiEnumConstant;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
@@ -104,6 +105,9 @@ public class ConstantNamingConventionInspection extends ConventionInspection {
 
         @Override public void visitField(@NotNull PsiField field) {
             super.visitField(field);
+            if (field instanceof PsiEnumConstant) {
+                return;
+            }
             if (!field.hasModifierProperty(PsiModifier.STATIC) ||
                     !field.hasModifierProperty(PsiModifier.FINAL)) {
                 return;

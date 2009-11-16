@@ -1,5 +1,6 @@
 class Test {
-  Test(String s){super(s);}
+  Test(String s){
+  }
 
     void foo() {
       Test s = new Test("");

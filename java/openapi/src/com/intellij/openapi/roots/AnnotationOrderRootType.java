@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots;
 
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 
@@ -27,7 +28,7 @@ import java.util.List;
  */
 public class AnnotationOrderRootType extends PersistentOrderRootType {
   /**
-   * External annotations path
+   * @return External annotations path
    */
   public static OrderRootType getInstance() {
     return getOrderRootType(AnnotationOrderRootType.class);
@@ -61,7 +62,7 @@ public class AnnotationOrderRootType extends PersistentOrderRootType {
       }
     };
     entry.accept(policy, result);
-    return result.toArray(new VirtualFile[result.size()]);
+    return VfsUtil.toVirtualFileArray(result);
   }
 
   public static String[] getUrls(OrderEntry entry) {

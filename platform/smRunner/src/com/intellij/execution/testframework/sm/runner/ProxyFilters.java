@@ -38,4 +38,7 @@ public interface ProxyFilters {
       return ((SMTestProxy)test).getMagnitudeInfo() == TestStateInfo.Magnitude.FAILED_INDEX;
     }
   };
+  
+  Filter ERROR_LEAF = FILTER_ERRORS.and(Filter.LEAF);
+  Filter FAILURE_LEAF = FILTER_FAILURES.and(Filter.LEAF);
 }

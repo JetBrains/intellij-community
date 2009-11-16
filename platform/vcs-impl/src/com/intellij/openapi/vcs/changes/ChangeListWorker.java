@@ -19,10 +19,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
@@ -106,9 +104,54 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     
     myDelta.step(myIdx, worker.myIdx);
     myIdx = new ChangeListsIndexes(worker.myIdx);
+    checkForMultipleCopiesNotMove();
     // todo +-
     myLocallyDeleted.takeFrom(worker.myLocallyDeleted);
     mySwitchedHolder.takeFrom(worker.mySwitchedHolder);
+  }
+
+  private void checkForMultipleCopiesNotMove() {
+    final MultiMap<FilePath, Pair<Change, String>> moves = new MultiMap<FilePath, Pair<Change, String>>() {
+      protected Collection<Pair<Change, String>> createCollection() {
+        return new LinkedList<Pair<Change, String>>();
+      }
+
+      protected Collection<Pair<Change, String>> createEmptyCollection() {
+        return Collections.emptyList();
+      }
+    };
+
+    for (LocalChangeList changeList : myMap.values()) {
+      final Collection<Change> changes = changeList.getChanges();
+      for (Change change : changes) {
+        if (change.isMoved() || change.isRenamed()) {
+          moves.putValue(change.getBeforeRevision().getFile(), new Pair<Change, String>(change, changeList.getName()));
+        }
+      }
+    }
+    boolean somethingChanged = false;
+    for (FilePath filePath : moves.keySet()) {
+      final List<Pair<Change, String>> copies = (List<Pair<Change, String>>) moves.get(filePath);
+      if (copies.size() == 1) continue;
+      Collections.sort(copies, MyChangesAfterRevisionComparator.getInstance());
+      for (int i = 0; i < (copies.size() - 1); i++) {
+        somethingChanged = true;
+        final Pair<Change, String> item = copies.get(i);
+        final Change oldChange = item.getFirst();
+        final Change newChange = new Change(null, oldChange.getAfterRevision());
+
+        final LocalChangeListImpl list = (LocalChangeListImpl) myMap.get(item.getSecond());
+        list.removeChange(oldChange);
+        list.addChange(newChange);
+        
+        final VcsKey key = myIdx.getVcsFor(oldChange);
+        myIdx.changeRemoved(oldChange);
+        myIdx.changeAdded(newChange, key);
+      }
+    }
+    if (somethingChanged) {
+      FileStatusManager.getInstance(myProject).fileStatusesChanged();
+    }
   }
 
   public ChangeListWorker copy() {
@@ -371,7 +414,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
     for (String name : myListsToDisappear) {
       final LocalChangeList changeList = myMap.get(name);
-      if (changeList.getChanges().isEmpty() && (! changeList.isReadOnly()) && (! changeList.isDefault())) {
+      if ((changeList != null) && changeList.getChanges().isEmpty() && (! changeList.isReadOnly()) && (! changeList.isDefault())) {
         removeChangeList(name);
       }
     }
@@ -702,6 +745,21 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
     public void setListsToDisappear(final Collection<String> names) {
       myWorker.setListsToDisappear(names);
+    }
+  }
+
+  // assumes after revisions are all not null
+  private static class MyChangesAfterRevisionComparator implements Comparator<Pair<Change, String>> {
+    private static final MyChangesAfterRevisionComparator ourInstance = new MyChangesAfterRevisionComparator();
+
+    public static MyChangesAfterRevisionComparator getInstance() {
+      return ourInstance;
+    }
+
+    public int compare(final Pair<Change, String> o1, final Pair<Change, String> o2) {
+      final String s1 = o1.getFirst().getAfterRevision().getFile().getPresentableUrl();
+      final String s2 = o2.getFirst().getAfterRevision().getFile().getPresentableUrl();
+      return SystemInfo.isFileSystemCaseSensitive ? s1.compareTo(s2) : s1.compareToIgnoreCase(s2);
     }
   }
 }

@@ -92,7 +92,7 @@ public class GitHistoryUtils {
     GitBranch c = GitBranch.current(project, root);
     GitBranch t = c == null ? null : c.tracked(project, root);
     if (t == null) {
-      return new ItemLatestState(getCurrentRevision(project, filePath), true);
+      return new ItemLatestState(getCurrentRevision(project, filePath), true, false);
     }
     filePath = getLastCommitName(project, filePath);
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.LOG);
@@ -112,7 +112,7 @@ public class GitHistoryUtils {
     }
     String hash = lines[0];
     Date commitDate = GitUtil.parseTimestamp(lines[1]);
-    return new ItemLatestState(new GitRevisionNumber(hash, commitDate), lines[2].charAt(0) != 'D');
+    return new ItemLatestState(new GitRevisionNumber(hash, commitDate), lines[2].charAt(0) != 'D', false);
   }
 
 

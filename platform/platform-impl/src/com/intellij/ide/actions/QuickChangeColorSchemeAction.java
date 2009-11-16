@@ -15,10 +15,7 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -35,7 +32,7 @@ import java.util.Collection;
  * @author max
  */
 public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
-  protected void fillActions(Project project, DefaultActionGroup group) {
+  protected void fillActions(Project project, DefaultActionGroup group, DataContext dataContext) {
     final EditorColorsScheme[] schemes = EditorColorsManager.getInstance().getAllSchemes();
     EditorColorsScheme current = EditorColorsManager.getInstance().getGlobalScheme();
     for (final EditorColorsScheme scheme : schemes) {

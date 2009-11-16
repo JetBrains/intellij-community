@@ -15,11 +15,13 @@
  */
 package org.jetbrains.idea.maven.navigator;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -173,23 +175,35 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
     initTree();
     JPanel panel = new MavenProjectsNavigatorPanel(myProject, myTree);
 
-    ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(myProject);
+    final ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(myProject);
     myToolWindow = manager.registerToolWindow(TOOL_WINDOW_ID, panel, ToolWindowAnchor.RIGHT, myProject, true);
     myToolWindow.setIcon(MavenIcons.MAVEN_ICON);
 
-    manager.addToolWindowManagerListener(new ToolWindowManagerAdapter() {
+    final ToolWindowManagerAdapter listener = new ToolWindowManagerAdapter() {
+      boolean wasVisible = false;
+
       @Override
       public void stateChanged() {
+        if (myToolWindow.isDisposed()) return;
+        boolean visible = myToolWindow.isVisible();
+        if (!visible || visible == wasVisible) return;
         scheduleStructureUpdate();
+        wasVisible = visible;
+      }
+    };
+    manager.addToolWindowManagerListener(listener);
+    Disposer.register(myProject, new Disposable() {
+      public void dispose() {
+        manager.removeToolWindowManagerListener(listener);
       }
     });
   }
 
   private void initTree() {
     myTree = new SimpleTree() {
-      private final JLabel myLabel = new JLabel(ProjectBundle.message("maven.navigator.nothing.to.display",
-                                                                      MavenUtil.formatHtmlImage(ADD_ICON_URL),
-                                                                      MavenUtil.formatHtmlImage(SYNC_ICON_URL)));
+      private final JLabel myLabel = new JLabel(
+        ProjectBundle.message("maven.navigator.nothing.to.display", MavenUtil.formatHtmlImage(ADD_ICON_URL),
+                              MavenUtil.formatHtmlImage(SYNC_ICON_URL)));
 
       @Override
       protected void paintComponent(Graphics g) {
@@ -249,8 +263,7 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
   }
 
   private void initStructure() {
-    myStructure = new MavenProjectsStructure(myProject, myProjectsManager, myTasksManager,
-                                             myShortcutsManager, this, myTree);
+    myStructure = new MavenProjectsStructure(myProject, myProjectsManager, myTasksManager, myShortcutsManager, this, myTree);
   }
 
   private void scheduleStructureUpdate() {
@@ -288,9 +301,7 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
     }
 
     @Override
-    public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated,
-                                List<MavenProject> deleted,
-                                Object message) {
+    public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted, Object message) {
       scheduleUpdateProjects(MavenUtil.collectFirsts(updated), deleted);
     }
 

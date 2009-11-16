@@ -26,6 +26,9 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class ArtifactProperties<S> implements PersistentStateComponent<S> {
 
+  public void onBuildStarted(@NotNull Artifact artifact, @NotNull CompileContext compileContext) {
+  }
+
   public void onBuildFinished(@NotNull Artifact artifact, @NotNull CompileContext compileContext) {
   }
 

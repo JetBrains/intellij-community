@@ -87,10 +87,7 @@ public class RootModelImpl implements ModifiableRootModel {
   @NonNls private static final String ROOT_ELEMENT = "root";
   private final ProjectRootManagerImpl myProjectRootManager;
   // have to register all child disposables using this fake object since all clients call just ModifiableModel.dispose()
-  private final Disposable myDisposable = new Disposable() {
-    public void dispose() {
-    }
-  };
+  private final Disposable myDisposable = Disposer.newDisposable();
 
   RootModelImpl(ModuleRootManagerImpl moduleRootManager, ProjectRootManagerImpl projectRootManager, VirtualFilePointerManager filePointerManager) {
     myModuleRootManager = moduleRootManager;

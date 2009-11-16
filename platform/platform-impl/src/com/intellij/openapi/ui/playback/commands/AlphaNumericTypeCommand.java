@@ -27,7 +27,7 @@ public class AlphaNumericTypeCommand extends TypeCommand {
     super(text, line);
   }
 
-  public ActionCallback _execute(PlaybackRunner.StatusCallback cb, Robot robot) {
+  public ActionCallback _execute(PlaybackRunner.StatusCallback cb, Robot robot, boolean directActionCall) {
     final String text = getText();
     for (int i = 0; i < text.length(); i++) {
       final char each = text.charAt(i);

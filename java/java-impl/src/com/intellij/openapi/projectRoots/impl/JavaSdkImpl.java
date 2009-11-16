@@ -22,10 +22,7 @@ import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -35,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -343,18 +341,25 @@ public class JavaSdkImpl extends JavaSdk {
       jarDirs = new File[]{jreLibEndorsedFile, jreLibFile, jreLibExtFile};
     }
 
-    ArrayList<File> childrenList = new ArrayList<File>();
+    Set<File> childrenSet = new LinkedHashSet<File>();
     for (File jarDir : jarDirs) {
       if (jarDir != null && jarDir.isDirectory()) {
-        File[] files = jarDir.listFiles(jarFileFilter);
-        for (File file1 : files) {
-          childrenList.add(file1);
+        File[] jarFiles = jarDir.listFiles(jarFileFilter);
+        for (File jarFile : jarFiles) {
+          try {
+            // File.getCanonicalFile() allows us to filter out duplicate (symbolically linked) jar files,
+            // commonly found in osx JDK distributions
+            childrenSet.add(jarFile.getCanonicalFile());
+          }
+          catch (IOException e) {
+            // Symbolic links may fail to resolve. Just skip those jars as we won't be able to find virtual file in this case anyway. 
+          }
         }
       }
     }
 
     ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
-    for (File child : childrenList) {
+    for (File child : childrenSet) {
       String url = JarFileSystem.PROTOCOL_PREFIX + child.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
       VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(url);
       if (vFile != null) {
@@ -372,7 +377,7 @@ public class JavaSdkImpl extends JavaSdk {
       }
     }
 
-    return result.toArray(new VirtualFile[result.size()]);
+    return VfsUtil.toVirtualFileArray(result);
   }
 
   private static void addSources(File file, SdkModificator sdkModificator) {

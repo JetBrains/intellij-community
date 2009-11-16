@@ -25,6 +25,7 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -63,6 +64,8 @@ import java.util.List;
  *         Date: Dec 15, 2003
  */
 public class ModulesConfigurator implements ModulesProvider, ModuleEditor.ChangeListener {
+  private static final Logger LOG = Logger.getInstance("#" + ModulesConfigurator.class.getName());
+
   private final Project myProject;
   //private final ModuleStructureConfigurable myProjectRootConfigurable;
 
@@ -149,17 +152,16 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   public ModuleRootModel getRootModel(@NotNull Module module) {
-    final ModuleEditor editor = getModuleEditor(module);
-    ModuleRootModel rootModel = null;
-    if (editor != null) {
-      rootModel = editor.getRootModel();
-    }
-    if (rootModel == null && getModule(module.getName()) != null) {
-      createModuleEditor(module);
-      rootModel = getModuleEditor(module).getRootModel();
-    }
+    return getEditor(module).getRootModel();
+  }
 
-    return rootModel;
+  public ModuleEditor getEditor(Module module) {
+    LOG.assertTrue(getModule(module.getName()) != null, "Module has been deleted");
+    ModuleEditor editor = getModuleEditor(module);
+    if (editor == null) {
+      editor = createModuleEditor(module);
+    }
+    return editor;
   }
 
   public FacetModel getFacetModel(@NotNull Module module) {
@@ -185,7 +187,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     myModified = false;
   }
 
-  public void createModuleEditor(final Module module) {
+  public ModuleEditor createModuleEditor(final Module module) {
     final ModuleEditor moduleEditor = new ModuleEditor(myProject, this, module) {
       @Override
       public ProjectFacetsConfigurator getFacetsConfigurator() {
@@ -204,6 +206,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         moduleEditor.removeChangeListener(configurator);
       }
     });
+    return moduleEditor;
   }
 
   public void moduleStateChanged(final ModifiableRootModel moduleRootModel) {

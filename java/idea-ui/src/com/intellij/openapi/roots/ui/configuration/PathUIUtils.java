@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.ide.util.JavaUtilForVfs;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.DetectedSourceRootsDialog;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.awt.*;
@@ -68,6 +69,6 @@ public class PathUIUtils {
         result.clear();
       }
     }
-    return result.toArray(new VirtualFile[result.size()]);
+    return VfsUtil.toVirtualFileArray(result);
   }
 }

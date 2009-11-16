@@ -63,7 +63,9 @@ public class JUnit4TestResultsSender extends RunListener {
   }
 
   private void doAddFailure(final Description test, final Throwable assertion) {
-    stopMeter(test);
+    if (test.equals(myCurrentTest)) {
+      stopMeter(test);
+    }
     createExceptionNotification(assertion).createPacket(myRegistry, test).send();
   }
 

@@ -31,7 +31,7 @@ public class AssertFocused extends AbstractCommand {
     super(text, line);
   }
 
-  protected ActionCallback _execute(final PlaybackRunner.StatusCallback cb, Robot robot) {
+  protected ActionCallback _execute(final PlaybackRunner.StatusCallback cb, Robot robot, boolean directActionCall) {
     final ActionCallback result = new ActionCallback();
 
     String text = getText().substring(PREFIX.length()).trim();

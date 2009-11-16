@@ -17,6 +17,7 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.Disposable;
+import org.jetbrains.annotations.NotNull;
 
 
 /**
@@ -26,7 +27,7 @@ public abstract class RootModelComponentBase implements Disposable {
   private final RootModelImpl myRootModel;
   private boolean myDisposed;
 
-  RootModelComponentBase(RootModelImpl rootModel) {
+  RootModelComponentBase(@NotNull RootModelImpl rootModel) {
     rootModel.registerOnDispose(this);
     myRootModel = rootModel;
   }

@@ -22,11 +22,11 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactProperties;
@@ -289,10 +289,10 @@ public class ArtifactUtil {
   }
 
   public static Collection<? extends Artifact> findArtifactsByFile(@NotNull final VirtualFile file, @NotNull Project project) {
-    final Collection<Pair<Artifact, String>> pairs = findContainingArtifactsWithOutputPaths(file, project);
+    final Collection<Trinity<Artifact, List<CompositePackagingElement<?>>, String>> items = findContainingArtifactsWithOutputPaths(file, project);
     final List<Artifact> result = new ArrayList<Artifact>();
-    for (Pair<Artifact, String> pair : pairs) {
-      result.add(pair.getFirst());
+    for (Trinity<Artifact, List<CompositePackagingElement<?>>, String> item : items) {
+      result.add(item.getFirst());
     }
     return result;
   }
@@ -305,8 +305,8 @@ public class ArtifactUtil {
     processPackagingElements(artifact, PackagingElementFactoryImpl.DIRECTORY_COPY_ELEMENT_TYPE, processor, context, processSubstitutions);
   }
 
-  public static Collection<Pair<Artifact, String>> findContainingArtifactsWithOutputPaths(@NotNull final VirtualFile file, @NotNull Project project) {
-    final List<Pair<Artifact, String>> artifacts = new ArrayList<Pair<Artifact, String>>();
+  public static Collection<Trinity<Artifact, List<CompositePackagingElement<?>>, String>> findContainingArtifactsWithOutputPaths(@NotNull final VirtualFile file, @NotNull Project project) {
+    final List<Trinity<Artifact, List<CompositePackagingElement<?>>, String>> artifacts = new ArrayList<Trinity<Artifact, List<CompositePackagingElement<?>>, String>>();
     for (final Artifact artifact : ArtifactManager.getInstance(project).getArtifacts()) {
       processFileOrDirectoryCopyElements(artifact, new PackagingElementProcessor<FileOrDirectoryCopyPackagingElement<?>>() {
         @Override
@@ -314,28 +314,14 @@ public class ArtifactUtil {
                                @NotNull FileOrDirectoryCopyPackagingElement<?> element) {
           final VirtualFile root = element.findFile();
           if (root != null && VfsUtil.isAncestor(root, file, false)) {
-            boolean isInArchive = false;
-            for (CompositePackagingElement<?> parent : parents) {
-              if (parent instanceof ArchivePackagingElement) {
-                isInArchive = true;
-                break;
-              }
-            }
-            String path;
-            if (!isInArchive) {
-              final String relativePath;
-              if (root.equals(file) && element instanceof FileCopyPackagingElement) {
-                relativePath = ((FileCopyPackagingElement)element).getOutputFileName();
-              }
-              else {
-                relativePath = VfsUtil.getRelativePath(file, root, '/');
-              }
-              path = DeploymentUtil.concatPaths(getPathFromRoot(parents, "/"), relativePath);
+            final String relativePath;
+            if (root.equals(file) && element instanceof FileCopyPackagingElement) {
+              relativePath = ((FileCopyPackagingElement)element).getOutputFileName();
             }
             else {
-              path = null;
+              relativePath = VfsUtil.getRelativePath(file, root, '/');
             }
-            artifacts.add(Pair.create(artifact, path));
+            artifacts.add(Trinity.create(artifact, parents, relativePath));
             return false;
           }
           return true;

@@ -86,15 +86,18 @@ public class RedundantThrows extends GlobalJavaInspectionTool {
 
             if (refMethod.isAbstract() || refMethod.getOwnerClass().isInterface()) {
               problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message(
-                "inspection.redundant.throws.problem.descriptor", "<code>#ref</code>"), getFix(processor, throwsClassName), ProblemHighlightType.LIKE_UNUSED_SYMBOL));
+                "inspection.redundant.throws.problem.descriptor", "<code>#ref</code>"), getFix(processor, throwsClassName), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                                                           false));
             }
             else if (!refMethod.getDerivedMethods().isEmpty()) {
               problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message(
-                "inspection.redundant.throws.problem.descriptor1", "<code>#ref</code>"), getFix(processor, throwsClassName), ProblemHighlightType.LIKE_UNUSED_SYMBOL));
+                "inspection.redundant.throws.problem.descriptor1", "<code>#ref</code>"), getFix(processor, throwsClassName), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                                                           false));
             }
             else {
               problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message(
-                "inspection.redundant.throws.problem.descriptor2", "<code>#ref</code>"), getFix(processor, throwsClassName), ProblemHighlightType.LIKE_UNUSED_SYMBOL));
+                "inspection.redundant.throws.problem.descriptor2", "<code>#ref</code>"), getFix(processor, throwsClassName), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                                                           false));
             }
           }
         }

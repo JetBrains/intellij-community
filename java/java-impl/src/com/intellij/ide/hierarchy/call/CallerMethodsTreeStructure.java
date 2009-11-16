@@ -19,8 +19,6 @@ import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
@@ -51,19 +49,8 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
     final PsiMethod method = (PsiMethod)enclosingElement;
-
-    SearchScope searchScope = GlobalSearchScope.allScope(myProject);
-    if (CallHierarchyBrowser.SCOPE_CLASS.equals(myScopeType)) {
-      final PsiMethod baseMethod = (PsiMethod)((CallHierarchyNodeDescriptor)getBaseDescriptor()).getTargetElement();
-      final PsiClass containingClass = baseMethod.getContainingClass();
-      searchScope = new LocalSearchScope(containingClass);
-    }
-    else if (CallHierarchyBrowser.SCOPE_PROJECT.equals(myScopeType)) {
-      searchScope = GlobalSearchScope.projectProductionScope(myProject);
-    }
-    else if (CallHierarchyBrowser.SCOPE_TEST.equals(myScopeType)) {
-      searchScope = GlobalSearchScope.projectTestScope(myProject);
-    }
+    final PsiMethod baseMethod = (PsiMethod)((CallHierarchyNodeDescriptor)getBaseDescriptor()).getTargetElement();
+    final SearchScope searchScope = getSearchScope(myScopeType, baseMethod.getContainingClass());
 
     final PsiClass originalClass = method.getContainingClass();
     assert originalClass != null;

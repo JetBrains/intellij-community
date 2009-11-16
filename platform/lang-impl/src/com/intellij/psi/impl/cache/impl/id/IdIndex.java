@@ -25,6 +25,7 @@ import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.InlineKeyDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -60,21 +61,13 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
     }
   };
   
-  private final KeyDescriptor<IdIndexEntry> myKeyDescriptor = new KeyDescriptor<IdIndexEntry>() {
-    public int getHashCode(final IdIndexEntry value) {
-      return value.hashCode();
+  private final KeyDescriptor<IdIndexEntry> myKeyDescriptor = new InlineKeyDescriptor<IdIndexEntry>() {
+    public IdIndexEntry fromInt(int n) {
+      return new IdIndexEntry(n);
     }
 
-    public boolean isEqual(final IdIndexEntry val1, final IdIndexEntry val2) {
-      return val1.equals(val2);
-    }
-
-    public void save(final DataOutput out, final IdIndexEntry value) throws IOException {
-      out.writeInt(value.getWordHashCode());
-    }
-
-    public IdIndexEntry read(final DataInput in) throws IOException {
-      return new IdIndexEntry(in.readInt());
+    public int toInt(IdIndexEntry idIndexEntry) {
+      return idIndexEntry.getWordHashCode();
     }
   };
   

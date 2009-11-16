@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlBundle;
 
 import javax.swing.*;
@@ -102,7 +103,7 @@ public class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
   }
 
   public static void configureComboBox(JComboBox combo, List<String> lastValues) {
-    combo.setModel(new DefaultComboBoxModel(lastValues.toArray(new String[lastValues.size()])));
+    combo.setModel(new DefaultComboBoxModel(ArrayUtil.toStringArray(lastValues)));
     if (combo.getItemCount() != 0) {
       combo.setSelectedIndex(0);
       combo.getEditor().selectAll();

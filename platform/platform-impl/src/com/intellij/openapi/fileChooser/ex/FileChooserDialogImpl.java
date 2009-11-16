@@ -32,6 +32,7 @@ import com.intellij.openapi.ui.TitlePanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -294,7 +295,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
         if (!myChooserDescriptor.isChooseMultiple() && files.size() > 0) {
           selectInTree(new VirtualFile[] {files.get(0)}, true);
         } else {
-          selectInTree(files.toArray(new VirtualFile[files.size()]), true);
+          selectInTree(VfsUtil.toVirtualFileArray(files), true);
         }
       }
     });

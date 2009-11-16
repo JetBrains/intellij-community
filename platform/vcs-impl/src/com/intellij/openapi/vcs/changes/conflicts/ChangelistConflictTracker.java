@@ -157,10 +157,11 @@ public class ChangelistConflictTracker {
         for (FileEditor editor : editors) {
           EditorNotificationPanel panel = editor.getUserData(KEY);
           if (add && panel == null) {
-            panel = new ChangelistConflictNotificationPanel(ChangelistConflictTracker.this, file);
-
-            myFileEditorManager.addTopComponent(editor, panel);
-            editor.putUserData(KEY, panel);
+            if (getChangeListManager().getChangeList(file) != null) {
+              panel = new ChangelistConflictNotificationPanel(ChangelistConflictTracker.this, file);  
+              myFileEditorManager.addTopComponent(editor, panel);
+              editor.putUserData(KEY, panel);
+            }
           } else if (panel != null) {
             myFileEditorManager.removeTopComponent(editor, panel);
             editor.putUserData(KEY, null);
@@ -273,8 +274,18 @@ public class ChangelistConflictTracker {
     if (!myOptions.TRACKING_ENABLED) {
       return false;
     }
-    Conflict conflict = myConflicts.get(file.getPath());
-    return conflict != null && !conflict.ignored;
+    String path = file.getPath();
+    Conflict conflict = myConflicts.get(path);
+    if (conflict != null && !conflict.ignored) {
+      if (isFromActiveChangelist(file)) {
+        myConflicts.remove(path);
+        return false;
+      }
+      return true;
+    }
+    else {
+      return false;
+    }
   }
 
   public void ignoreConflict(@NotNull VirtualFile file, boolean ignore) {

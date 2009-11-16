@@ -875,6 +875,10 @@
       <keyboard-shortcut first-keystroke="ctrl TAB"/>
       <keyboard-shortcut first-keystroke="ctrl shift TAB"/>
     </action>
+
+    <action id="Vcs.QuickListPopupAction">
+      <keyboard-shortcut first-keystroke="alt BACK_QUOTE"/>
+    </action>
   </keymap>
 
   <!-- ############################################################################## -->
@@ -1133,6 +1137,9 @@
     <action id="ToolWindowSwitcher">
       <keyboard-shortcut first-keystroke="ctrl TAB"/>
       <keyboard-shortcut first-keystroke="ctrl shift TAB"/>
+    </action>
+    <action id="Vcs.QuickListPopupAction">
+      <keyboard-shortcut first-keystroke="ctrl V" />
     </action>
   </keymap>
 

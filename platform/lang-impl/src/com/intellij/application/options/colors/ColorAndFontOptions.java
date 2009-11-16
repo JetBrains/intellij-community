@@ -87,10 +87,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
   private boolean myApplyCompleted = false;
   private boolean myDisposeCompleted = false;
-  private final Disposable myDisposable = new Disposable() {
-    public void dispose() {
-    }
-  };
+  private final Disposable myDisposable = Disposer.newDisposable();
 
   public boolean isModified() {
     boolean listModified = isSchemeListModified();

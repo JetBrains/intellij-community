@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -152,7 +153,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
     }
     updateControls();
 
-    final VirtualFile[] ancestors = VfsUtil.getCommonAncestors(virtualFiles.toArray(new VirtualFile[virtualFiles.size()]));
+    final VirtualFile[] ancestors = VfsUtil.getCommonAncestors(VfsUtil.toVirtualFileArray(virtualFiles));
     if (dirCount > 1) {
       myIgnoreDirectoryTextField.setText(VcsBundle.message("ignored.edit.multiple.directories", dirCount));
     }
@@ -171,7 +172,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
       }
     }
     if (extensions.size() > 0) {
-      final String[] extensionArray = extensions.toArray(new String[extensions.size()]);
+      final String[] extensionArray = ArrayUtil.toStringArray(extensions);
       myIgnoreMaskTextField.setText("*." + extensionArray [0]);
     }
     else {

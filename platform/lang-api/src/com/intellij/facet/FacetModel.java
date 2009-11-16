@@ -75,4 +75,7 @@ public interface FacetModel {
    */
   @NotNull
   <F extends Facet> Collection<F> getFacetsByType(@NotNull Facet underlyingFacet, FacetTypeId<F> typeId);
+
+  @NotNull
+  String getFacetName(@NotNull Facet facet);
 }

@@ -21,6 +21,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
@@ -114,6 +115,6 @@ public class CompilerPathsEx extends CompilerPaths {
         dirs.add(testsOutputDir);
       }
     }
-    return dirs.toArray(new VirtualFile[dirs.size()]);
+    return VfsUtil.toVirtualFileArray(dirs);
   }
 }

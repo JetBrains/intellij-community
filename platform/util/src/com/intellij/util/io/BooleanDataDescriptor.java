@@ -15,32 +15,20 @@
  */
 package com.intellij.util.io;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-
 /**
  * @author peter
  */
-public class BooleanDataDescriptor implements KeyDescriptor<Boolean> {
+public class BooleanDataDescriptor extends InlineKeyDescriptor<Boolean> {
   public static final BooleanDataDescriptor INSTANCE = new BooleanDataDescriptor();
 
   private BooleanDataDescriptor() {
   }
 
-  public int getHashCode(final Boolean value) {
-    return value.hashCode();
+  public Boolean fromInt(int n) {
+    return n != 0 ? Boolean.TRUE : Boolean.FALSE;
   }
 
-  public boolean isEqual(final Boolean val1, final Boolean val2) {
-    return val1.equals(val2);
-  }
-
-  public void save(final DataOutput out, final Boolean value) throws IOException {
-    out.writeBoolean(value.booleanValue());
-  }
-
-  public Boolean read(final DataInput in) throws IOException {
-    return in.readBoolean();
+  public int toInt(Boolean aBoolean) {
+    return aBoolean == Boolean.TRUE ? 1 : 0;
   }
 }

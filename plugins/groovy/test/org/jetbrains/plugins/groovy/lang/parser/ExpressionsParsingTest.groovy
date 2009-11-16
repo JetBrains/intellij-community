@@ -69,6 +69,7 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
   public void testgstring$str_error5() throws Throwable { doTest(); }
   public void testgstring$str_error6() throws Throwable { doTest(); }
   public void testgstring$str_error7() throws Throwable { doTest(); }
+  public void testgstring$str_error8() throws Throwable { doTest(); }
   public void testgstring$triple$triple1() throws Throwable { doTest(); }
   public void testgstring$triple$triple2() throws Throwable { doTest(); }
   public void testgstring$triple$triple3() throws Throwable { doTest(); }

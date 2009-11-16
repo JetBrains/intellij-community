@@ -262,11 +262,7 @@ public class GitRootTracker implements VcsListener {
     if (!hasInvalidRoots) {
       // check if roots have a problem
       for (final VirtualFile root : rootSet) {
-        hasInvalidRoots = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-          public Boolean compute() {
-            return hasUnmappedSubroots(root, rootSet);
-          }
-        });
+        hasInvalidRoots = hasUnmappedSubroots(root, rootSet);
         if (hasInvalidRoots) {
           break;
         }

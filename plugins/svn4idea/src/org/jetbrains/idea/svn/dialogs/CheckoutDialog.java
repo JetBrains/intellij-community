@@ -44,6 +44,10 @@ public class CheckoutDialog extends RepositoryBrowserDialog {
     getOKAction().setEnabled(getRepositoryBrowser().getSelectedURL() != null);
   }
 
+  protected String getHelpId() {
+    return "vcs.subversion.browseSVN";
+  }
+
   protected void doOKAction() {
     final RepositoryTreeNode selectedNode = getSelectedNode();
     close(OK_EXIT_CODE);

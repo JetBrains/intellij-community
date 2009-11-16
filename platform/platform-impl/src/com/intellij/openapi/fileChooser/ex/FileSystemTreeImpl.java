@@ -377,7 +377,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
       VirtualFile file = fileConvertor.convert(descriptor.getElement().getFile());
       if (file != null && file.isValid()) files.add(file);
     }
-    return files.toArray(new VirtualFile[files.size()]);
+    return VfsUtil.toVirtualFileArray(files);
   }
 
   public boolean selectionExists() {
@@ -426,7 +426,10 @@ public class FileSystemTreeImpl implements FileSystemTree {
           final Object object = ((DefaultMutableTreeNode)last).getUserObject();
           if (object instanceof FileNodeDescriptor) {
             final FileElement element = ((FileNodeDescriptor)object).getElement();
-            selection.add(element.getFile());
+            final VirtualFile file = element.getFile();
+            if (file != null) {
+              selection.add(file);
+            }
           }
         }
       }

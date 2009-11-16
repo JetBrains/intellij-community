@@ -393,7 +393,7 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     PsiReference ref = configureByFile("unboxBigDecimal/A.groovy");
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof PsiMethod);
-    assertEquals(((PsiMethod) resolved).getReturnType(), PsiType.DOUBLE);
+    assertEquals(PsiType.DOUBLE, ((PsiMethod) resolved).getReturnType());
   }
 
   public void testGrvy1157() throws Exception {

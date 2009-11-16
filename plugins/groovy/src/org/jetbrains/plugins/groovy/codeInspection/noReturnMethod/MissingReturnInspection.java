@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.codeInspection.noReturnMethod;
 
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionTool;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
@@ -32,9 +34,9 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.MaybeReturnInstruction;
@@ -82,7 +84,7 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
   }
 
   private static void check(GrCodeBlock block, ProblemsHolder holder, boolean mustReturnValue) {
-    if ((mustReturnValue || hasReturnStatements(block)) && !alwaysReturns(block.getControlFlow())) {
+    if ((mustReturnValue || hasReturnStatements(block)) && !alwaysReturns(block)) {
       addNoReturnMessage(block, holder);
     }
   }
@@ -130,32 +132,25 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
     return true;
   }
 
-  public static boolean alwaysReturns(Instruction[] flow) {
-    boolean[] visited = new boolean[flow.length];
-    return alwaysReturnsInner(flow[flow.length - 1], flow[0], visited);
-  }
-
-  private static boolean alwaysReturnsInner(Instruction last, Instruction first, boolean[] visited) {
-    if (first == last) return false;
-    if (last instanceof MaybeReturnInstruction) {
-      return ((MaybeReturnInstruction)last).mayReturnValue();
-    }
-
-    final PsiElement element = last.getElement();
-    if (element instanceof GrReturnStatement || element instanceof GrThrowStatement || element instanceof GrAssertStatement) {
-      return true;
-    }
-
-    if (last.getElement() != null) {
-      return false;
-    }
-
-    visited[last.num()] = true;
-    for (Instruction pred : last.allPred()) {
-      if (!visited[pred.num()]) {
-        if (!alwaysReturnsInner(pred, first, visited)) return false;
+  public static boolean alwaysReturns(GrCodeBlock block) {
+    final Ref<Boolean> always = new Ref<Boolean>(true);
+    ControlFlowUtils.visitAllExitPoints(block, new ControlFlowUtils.ExitPointVisitor() {
+      public boolean visit(Instruction instruction) {
+        if (instruction instanceof MaybeReturnInstruction) {
+          if (!((MaybeReturnInstruction)instruction).mayReturnValue()) {
+            always.set(false);
+            return false;
+          }
+          return true;
+        }
+        final PsiElement element = instruction.getElement();
+        if (!(element instanceof GrReturnStatement || element instanceof GrThrowStatement || element instanceof GrAssertStatement)) {
+          always.set(false);
+          return false;
+        }
+        return true;
       }
-    }
-    return true;
+    });
+    return always.get();
   }
 }

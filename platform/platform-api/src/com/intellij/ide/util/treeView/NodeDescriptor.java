@@ -35,6 +35,8 @@ public abstract class NodeDescriptor<E> {
   private long myChildrenSortingStamp = -1;
   private long myUpdateCount;
 
+  private boolean myWasDeclaredAlwaysLeaf;
+
   public NodeDescriptor(Project project, NodeDescriptor parentDescriptor) {
     myProject = project;
     myParentDescriptor = parentDescriptor;
@@ -103,6 +105,14 @@ public abstract class NodeDescriptor<E> {
 
   public final void setUpdateCount(long updateCount) {
     myUpdateCount = updateCount;
+  }
+
+  public boolean isWasDeclaredAlwaysLeaf() {
+    return myWasDeclaredAlwaysLeaf;
+  }
+
+  public void setWasDeclaredAlwaysLeaf(boolean leaf) {
+    myWasDeclaredAlwaysLeaf = leaf;
   }
 
   public abstract static class NodeComparator<T extends NodeDescriptor> implements Comparator<T> {

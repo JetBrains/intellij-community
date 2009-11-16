@@ -225,6 +225,21 @@ public class SplitterTest extends TestCase {
      correctIgnored(checkAreas, text, new String[]{});
    }
 
+    public void testWordWithUmlauts() {
+     String text = "rechtsb\u00FCndig";
+     List<CheckArea> checkAreas = TextSplitter.splitText(text);
+     correctListToCheck(checkAreas, text, new String[]{text});
+     correctIgnored(checkAreas, text, new String[]{});
+   }
+
+  
+  public void testWordUpperCasedWithUmlauts() {
+     String text = "RECHTSB\u00DCNDIG";
+     List<CheckArea> checkAreas = TextSplitter.splitText(text);
+     correctListToCheck(checkAreas, text, new String[]{text});
+     correctIgnored(checkAreas, text, new String[]{});
+   }
+
 
   @Nullable
   private static List<String> wordsToCheck(List<CheckArea> toCheck, String text) {

@@ -60,7 +60,7 @@ public class JavaContentEntriesEditor extends CommonContentEntriesEditor {
   @Override
   protected List<ContentEntry> addContentEntries(VirtualFile[] files) {
     List<ContentEntry> contentEntries = super.addContentEntries(files);
-    if (contentEntries.size() > 0) {
+    if (!contentEntries.isEmpty()) {
       final ContentEntry[] contentEntriesArray = contentEntries.toArray(new ContentEntry[contentEntries.size()]);
       addSourceRoots(myProject, contentEntriesArray, new Runnable() {
         public void run() {

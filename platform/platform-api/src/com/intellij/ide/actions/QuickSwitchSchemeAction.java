@@ -16,10 +16,7 @@
 
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -39,22 +36,29 @@ public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAw
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
     DefaultActionGroup group = new DefaultActionGroup();
-    fillActions(project, group);
+    fillActions(project, group, e.getDataContext());
     showPopup(e, group);
   }
 
-  protected abstract void fillActions(Project project, DefaultActionGroup group);
+  protected abstract void fillActions(Project project, DefaultActionGroup group, DataContext dataContext);
 
-  private static void showPopup(AnActionEvent e, DefaultActionGroup group) {
+  private void showPopup(AnActionEvent e, DefaultActionGroup group) {
     if (group.getChildrenCount() == 0) return;
     final ListPopup popup = JBPopupFactory.getInstance()
-      .createActionGroupPopup(e.getPresentation().getText(),
+      .createActionGroupPopup(QuickSwitchSchemeAction.this.getPopupTitle(e),
                               group,
-                              e.getDataContext(),
-                              JBPopupFactory.ActionSelectionAid.NUMBERING,
+                              e.getDataContext(), getAidMethod(),
                               true);
 
     popup.showCenteredInCurrentWindow(e.getData(PlatformDataKeys.PROJECT));
+  }
+
+  protected JBPopupFactory.ActionSelectionAid getAidMethod() {
+    return JBPopupFactory.ActionSelectionAid.NUMBERING;
+  }
+
+  protected String getPopupTitle(AnActionEvent e) {
+    return e.getPresentation().getText();
   }
 
   public void update(AnActionEvent e) {

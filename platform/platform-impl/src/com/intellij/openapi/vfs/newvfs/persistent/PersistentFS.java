@@ -153,7 +153,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       Set<String> allNamesSet = new LinkedHashSet<String>((currentNames.length + delegateNames.length) * 2);
       allNamesSet.addAll(Arrays.asList(currentNames));
       allNamesSet.addAll(Arrays.asList(delegateNames));
-      names = allNamesSet.toArray(new String[allNamesSet.size()]);
+      names = ArrayUtil.toStringArray(allNamesSet);
     }
 
     final int[] childrenIds = ArrayUtil.newIntArray(names.length);
@@ -633,7 +633,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       }
     }
 
-    return roots.toArray(new VirtualFile[roots.size()]);
+    return VfsUtil.toVirtualFileArray(roots);
   }
 
   //guarded by dirCacheReadLock/dirCacheWriteLock
@@ -704,7 +704,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   public VirtualFile[] getRoots() {
     synchronized (LOCK) {
       final Collection<NewVirtualFile> roots = myRoots.values();
-      return roots.toArray(new VirtualFile[roots.size()]);
+      return VfsUtil.toVirtualFileArray(roots);
     }
   }
 
@@ -718,7 +718,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       }
     }
 
-    return roots.toArray(new VirtualFile[roots.size()]);
+    return VfsUtil.toVirtualFileArray(roots);
   }
 
   private void applyEvent(final VFileEvent event) {

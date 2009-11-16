@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -41,18 +42,18 @@ public class Cache {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.make.Cache");
   public static final int UNKNOWN = -1;
 
-  private final PersistentHashMap<StorageClassId, ClassInfo> myQNameToClassInfoMap;
+  private final PersistentHashMap<Integer, ClassInfo> myQNameToClassInfoMap;
 
   private final BackwardDependenciesStorage myDependencies;
-  private final CompilerDependencyStorage<StorageClassId> myQNameToReferencedClassesMap;
-  private final CompilerDependencyStorage<StorageClassId> myQNameToSubclassesMap;
-  private final PersistentHashMap<StorageClassId, Boolean> myRemoteQNames;
+  private final CompilerDependencyStorage<Integer> myQNameToReferencedClassesMap;
+  private final CompilerDependencyStorage<Integer> myQNameToSubclassesMap;
+  private final PersistentHashMap<Integer, Boolean> myRemoteQNames;
   private final String myStorePath;
 
   public Cache(@NonNls final String storePath, final int cacheSize) throws IOException {
     myStorePath = storePath;
     new File(storePath).mkdirs();
-    myQNameToClassInfoMap = new CachedPersistentHashMap<StorageClassId, ClassInfo>(getOrCreateFile("classes"), ClassIdKeyDescriptor.INSTANCE, new DataExternalizer<ClassInfo>() {
+    myQNameToClassInfoMap = new CachedPersistentHashMap<Integer, ClassInfo>(getOrCreateFile("classes"), EnumeratorIntegerDescriptor.INSTANCE, new DataExternalizer<ClassInfo>() {
       public void save(DataOutput out, ClassInfo value) throws IOException {
         value.save(out);
       }
@@ -66,10 +67,10 @@ public class Cache {
     };
 
     myDependencies = new BackwardDependenciesStorage(getOrCreateFile("bdeps"), cacheSize);
-    myQNameToReferencedClassesMap = new CompilerDependencyStorage<StorageClassId>(getOrCreateFile("fdeps"), ClassIdKeyDescriptor.INSTANCE, cacheSize);
-    myQNameToSubclassesMap = new CompilerDependencyStorage<StorageClassId>(getOrCreateFile("subclasses"), ClassIdKeyDescriptor.INSTANCE, cacheSize);
+    myQNameToReferencedClassesMap = new CompilerDependencyStorage<Integer>(getOrCreateFile("fdeps"), EnumeratorIntegerDescriptor.INSTANCE, cacheSize);
+    myQNameToSubclassesMap = new CompilerDependencyStorage<Integer>(getOrCreateFile("subclasses"), EnumeratorIntegerDescriptor.INSTANCE, cacheSize);
 
-    myRemoteQNames = new PersistentHashMap<StorageClassId, Boolean>(getOrCreateFile("remote"), ClassIdKeyDescriptor.INSTANCE, new DataExternalizer<Boolean>() {
+    myRemoteQNames = new PersistentHashMap<Integer, Boolean>(getOrCreateFile("remote"), EnumeratorIntegerDescriptor.INSTANCE, new DataExternalizer<Boolean>() {
       public void save(DataOutput out, Boolean value) throws IOException {
         out.writeBoolean(value.booleanValue());
       }
@@ -117,11 +118,11 @@ public class Cache {
 
   public int[] getAllClassNames() throws CacheCorruptedException {
     try {
-      final Collection<StorageClassId> allKeys = myQNameToClassInfoMap.getAllKeysWithExistingMapping();
+      final Collection<Integer> allKeys = myQNameToClassInfoMap.getAllKeysWithExistingMapping();
       final int[] array = ArrayUtil.newIntArray(allKeys.size());
       int idx = 0;
-      for (StorageClassId id : allKeys) {
-        array[idx++] = id.getClassQName();
+      for (Integer id : allKeys) {
+        array[idx++] = id.intValue();
       }
       return array;
     }
@@ -133,7 +134,7 @@ public class Cache {
   public int importClassInfo(ClassFileReader reader, SymbolTable symbolTable) throws ClsFormatException, CacheCorruptedException {
     try {
       final ClassInfo classInfo = new ClassInfo(reader, symbolTable);
-      myQNameToClassInfoMap.put(new StorageClassId(classInfo.getQualifiedName()), classInfo);
+      myQNameToClassInfoMap.put(classInfo.getQualifiedName(), classInfo);
       return classInfo.getQualifiedName();
     }
     catch (IOException e) {
@@ -143,12 +144,11 @@ public class Cache {
 
   public void importClassInfo(Cache fromCache, final int qName) throws CacheCorruptedException {
     try {
-      final StorageClassId storageClassId = new StorageClassId(qName);
-      final ClassInfo classInfo = fromCache.myQNameToClassInfoMap.get(storageClassId);
+      final ClassInfo classInfo = fromCache.myQNameToClassInfoMap.get(qName);
       if (classInfo != null) {
         final ClassInfo clone = classInfo.clone();
         clone.clearReferences();
-        myQNameToClassInfoMap.put(storageClassId, clone);
+        myQNameToClassInfoMap.put(qName, clone);
       }
     }
     catch (Throwable e) {
@@ -158,7 +158,7 @@ public class Cache {
 
   public AnnotationConstantValue[] getRuntimeVisibleAnnotations(int classId) throws CacheCorruptedException {
     try {
-      final ClassInfo classInfo = myQNameToClassInfoMap.get(new StorageClassId(classId));
+      final ClassInfo classInfo = myQNameToClassInfoMap.get(classId);
       return classInfo != null? classInfo.getRuntimeVisibleAnnotations() : AnnotationConstantValue.EMPTY_ARRAY;
     }
     catch (Throwable e) {
@@ -168,7 +168,7 @@ public class Cache {
 
   public AnnotationConstantValue[] getRuntimeInvisibleAnnotations(int classId) throws CacheCorruptedException {
     try {
-      final ClassInfo classInfo = myQNameToClassInfoMap.get(new StorageClassId(classId));
+      final ClassInfo classInfo = myQNameToClassInfoMap.get(classId);
       return classInfo != null? classInfo.getRuntimeInvisibleAnnotations() : AnnotationConstantValue.EMPTY_ARRAY;
     }
     catch (Throwable e) {
@@ -178,7 +178,7 @@ public class Cache {
 
   public int[] getSubclasses(int classId) throws CacheCorruptedException {
     try {
-      return myQNameToSubclassesMap.getValues(new StorageClassId(classId));
+      return myQNameToSubclassesMap.getValues(classId);
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
@@ -187,7 +187,7 @@ public class Cache {
 
   public void addSubclass(int classId, int subclassQName) throws CacheCorruptedException {
     try {
-      myQNameToSubclassesMap.addValue(new StorageClassId(classId), subclassQName);
+      myQNameToSubclassesMap.addValue(classId, subclassQName);
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
@@ -196,7 +196,7 @@ public class Cache {
 
   public void removeSubclass(int classId, int subclassQName) throws CacheCorruptedException {
     try {
-      myQNameToSubclassesMap.removeValue(new StorageClassId(classId), subclassQName);
+      myQNameToSubclassesMap.removeValue(classId, subclassQName);
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
@@ -205,7 +205,7 @@ public class Cache {
 
   public int[] getReferencedClasses(int classId) throws CacheCorruptedException {
     try {
-      return myQNameToReferencedClassesMap.getValues(new StorageClassId(classId));
+      return myQNameToReferencedClassesMap.getValues(classId);
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
@@ -214,7 +214,7 @@ public class Cache {
 
   public void clearReferencedClasses(int qName) throws CacheCorruptedException {
     try {
-      myQNameToReferencedClassesMap.remove(new StorageClassId(qName));
+      myQNameToReferencedClassesMap.remove(qName);
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
@@ -223,7 +223,7 @@ public class Cache {
 
   public Collection<ReferenceInfo> getReferences(int classId) throws CacheCorruptedException {
     try {
-      final ClassInfo classInfo = myQNameToClassInfoMap.get(new StorageClassId(classId));
+      final ClassInfo classInfo = myQNameToClassInfoMap.get(classId);
       return classInfo != null? Arrays.asList(classInfo.getReferences()) : Collections.<ReferenceInfo>emptyList();
     }
     catch (Throwable e) {
@@ -233,7 +233,7 @@ public class Cache {
 
   public String getSourceFileName(int classId) throws CacheCorruptedException {
     try {
-      final ClassInfo classInfo = myQNameToClassInfoMap.get(new StorageClassId(classId));
+      final ClassInfo classInfo = myQNameToClassInfoMap.get(classId);
       return classInfo != null? classInfo.getSourceFileName() : "";
     }
     catch (Throwable e) {
@@ -243,7 +243,7 @@ public class Cache {
 
   public boolean isRemote(int classId) throws CacheCorruptedException {
     try {
-      return myRemoteQNames.containsMapping(new StorageClassId(classId));
+      return myRemoteQNames.containsMapping(classId);
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
@@ -252,12 +252,11 @@ public class Cache {
 
   public void setRemote(int classId, boolean remote) throws CacheCorruptedException {
     try {
-      final StorageClassId key = new StorageClassId(classId);
       if (remote) {
-        myRemoteQNames.put(key, Boolean.TRUE);
+        myRemoteQNames.put(classId, Boolean.TRUE);
       }
       else {
-        myRemoteQNames.remove(key);
+        myRemoteQNames.remove(classId);
       }
     }
     catch (Throwable e) {
@@ -267,7 +266,7 @@ public class Cache {
 
   public int getSuperQualifiedName(int classId) throws CacheCorruptedException {
     try {
-      final ClassInfo classInfo = myQNameToClassInfoMap.get(new StorageClassId(classId));
+      final ClassInfo classInfo = myQNameToClassInfoMap.get(classId);
       return classInfo != null? classInfo.getSuperQualifiedName() : UNKNOWN;
     }
     catch (Throwable e) {
@@ -277,7 +276,7 @@ public class Cache {
 
   public String getPath(int classId) throws CacheCorruptedException {
     try {
-      final ClassInfo classInfo = myQNameToClassInfoMap.get(new StorageClassId(classId));
+      final ClassInfo classInfo = myQNameToClassInfoMap.get(classId);
       return classInfo != null? classInfo.getPath() : "";
     }
     catch (Throwable e) {
@@ -287,7 +286,7 @@ public class Cache {
 
   public void setPath(int classId, String path) throws CacheCorruptedException {
     try {
-      final ClassInfo classInfo = myQNameToClassInfoMap.get(new StorageClassId(classId));
+      final ClassInfo classInfo = myQNameToClassInfoMap.get(classId);
       if (classInfo != null) {
         classInfo.setPath(path);
       }
@@ -299,7 +298,7 @@ public class Cache {
   
   public int getGenericSignature(int classId) throws CacheCorruptedException {
     try {
-      final ClassInfo classInfo = myQNameToClassInfoMap.get(new StorageClassId(classId));
+      final ClassInfo classInfo = myQNameToClassInfoMap.get(classId);
       return classInfo != null? classInfo.getGenericSignature() : UNKNOWN;
     }
     catch (Throwable e) {
@@ -309,7 +308,7 @@ public class Cache {
 
   public boolean containsClass(int qName) throws CacheCorruptedException {
     try {
-      return myQNameToClassInfoMap.containsMapping(new StorageClassId(qName));
+      return myQNameToClassInfoMap.containsMapping(qName);
     }
     catch (IOException e) {
       throw new CacheCorruptedException(e);
@@ -318,7 +317,7 @@ public class Cache {
 
   public int[] getSuperInterfaces(int classId) throws CacheCorruptedException {
     try {
-      final ClassInfo classInfo = myQNameToClassInfoMap.get(new StorageClassId(classId));
+      final ClassInfo classInfo = myQNameToClassInfoMap.get(classId);
       return classInfo != null? classInfo.getSuperInterfaces() : ArrayUtil.EMPTY_INT_ARRAY;
     }
     catch (Throwable e) {
@@ -328,7 +327,7 @@ public class Cache {
 
   public int getFlags(int classId) throws CacheCorruptedException {
     try {
-      final ClassInfo classInfo = myQNameToClassInfoMap.get(new StorageClassId(classId));
+      final ClassInfo classInfo = myQNameToClassInfoMap.get(classId);
       return classInfo != null? classInfo.getFlags() : UNKNOWN;
     }
     catch (Throwable e) {
@@ -338,7 +337,7 @@ public class Cache {
 
   public FieldInfo[] getFields(int qName) throws CacheCorruptedException{
     try {
-      final ClassInfo classInfo = myQNameToClassInfoMap.get(new StorageClassId(qName));
+      final ClassInfo classInfo = myQNameToClassInfoMap.get(qName);
       return classInfo != null? classInfo.getFields() : FieldInfo.EMPTY_ARRAY;
     }
     catch (Throwable e) {
@@ -378,7 +377,7 @@ public class Cache {
 
   public MethodInfo[] getMethods(int classQName) throws CacheCorruptedException{
     try {
-      final ClassInfo classInfo = myQNameToClassInfoMap.get(new StorageClassId(classQName));
+      final ClassInfo classInfo = myQNameToClassInfoMap.get(classQName);
       return classInfo != null? classInfo.getMethods() : MethodInfo.EMPTY_ARRAY;
     }
     catch (Throwable e) {
@@ -436,9 +435,9 @@ public class Cache {
       if (qName == referencerQName) {
         return; // do not log self-dependencies
       }
-      if (myQNameToClassInfoMap.containsMapping(new StorageClassId(qName))) {
+      if (myQNameToClassInfoMap.containsMapping(qName)) {
         myDependencies.addClassReferencer(qName, referencerQName);
-        myQNameToReferencedClassesMap.addValue(new StorageClassId(referencerQName), qName);
+        myQNameToReferencedClassesMap.addValue(referencerQName, qName);
       }
     }
     catch (Throwable e) {
@@ -457,9 +456,9 @@ public class Cache {
 
   public void addFieldReferencer(int qName, int fieldName, int referencerQName) throws CacheCorruptedException {
     try {
-      if (qName != referencerQName && myQNameToClassInfoMap.containsMapping(new StorageClassId(qName))) {
+      if (qName != referencerQName && myQNameToClassInfoMap.containsMapping(qName)) {
         myDependencies.addFieldReferencer(qName, referencerQName, fieldName);
-        myQNameToReferencedClassesMap.addValue(new StorageClassId(referencerQName), qName);
+        myQNameToReferencedClassesMap.addValue(referencerQName, qName);
       }
     }
     catch (Throwable e) {
@@ -469,9 +468,9 @@ public class Cache {
 
   public void addMethodReferencer(int qName, int methodName, int methodDescriptor, int referencerQName) throws CacheCorruptedException {
     try {
-      if (qName != referencerQName && myQNameToClassInfoMap.containsMapping(new StorageClassId(qName))) {
+      if (qName != referencerQName && myQNameToClassInfoMap.containsMapping(qName)) {
         myDependencies.addMethodReferencer(qName, referencerQName, methodName, methodDescriptor);
-        myQNameToReferencedClassesMap.addValue(new StorageClassId(referencerQName), qName);
+        myQNameToReferencedClassesMap.addValue(referencerQName, qName);
       }
     }
     catch (Throwable e) {
@@ -512,16 +511,15 @@ public class Cache {
 
   public void removeClass(final int qName) throws CacheCorruptedException {
     try {
-      final StorageClassId classId = new StorageClassId(qName);
-      final ClassInfo classInfo = myQNameToClassInfoMap.get(classId);
+      final ClassInfo classInfo = myQNameToClassInfoMap.get(qName);
       if (classInfo == null) {
         return;
       }
       myDependencies.remove(qName);
-      myQNameToClassInfoMap.remove(classId);
-      myQNameToReferencedClassesMap.remove(classId);
-      myQNameToSubclassesMap.remove(classId);
-      myRemoteQNames.remove(classId);
+      myQNameToClassInfoMap.remove(qName);
+      myQNameToReferencedClassesMap.remove(qName);
+      myQNameToSubclassesMap.remove(qName);
+      myRemoteQNames.remove(qName);
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);

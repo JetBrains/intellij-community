@@ -44,6 +44,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class AbstractRerunFailedTestsAction extends AnAction {
@@ -122,18 +123,16 @@ public class AbstractRerunFailedTestsAction extends AnAction {
     return null;
   }
 
-  protected static abstract class MyRunProfile implements ModuleRunProfile, RunConfiguration {
-    private final RunConfiguration myConfiguration;
+  protected static abstract class MyRunProfile extends RunConfigurationBase implements ModuleRunProfile{
+    private final RunConfigurationBase myConfiguration;
 
-    public MyRunProfile(RunConfiguration configuration) {
+    public MyRunProfile(RunConfigurationBase configuration) {
+      super(configuration.getProject(), configuration.getFactory(), ActionsBundle.message("action.RerunFailedTests.text"));
       myConfiguration = configuration;
     }
 
     public void clear() {    }
 
-    public String getName() {
-      return ActionsBundle.message("action.RerunFailedTests.text");
-    }
 
     public void checkConfiguration() throws RuntimeConfigurationException {}
 
@@ -146,20 +145,8 @@ public class AbstractRerunFailedTestsAction extends AnAction {
       myConfiguration.writeExternal(element);
     }
 
-    public ConfigurationFactory getFactory() {
-      return myConfiguration.getFactory();
-    }
-
-    public void setName(final String name) {
-      myConfiguration.setName(name);
-    }
-
     public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
       return myConfiguration.getConfigurationEditor();
-    }
-
-    public Project getProject() {
-      return myConfiguration.getProject();
     }
 
     @NotNull
@@ -183,6 +170,20 @@ public class AbstractRerunFailedTestsAction extends AnAction {
       return myConfiguration.getUniqueID();
     }
 
+    public LogFileOptions getOptionsForPredefinedLogFile(PredefinedLogFile predefinedLogFile) {
+      return myConfiguration.getOptionsForPredefinedLogFile(predefinedLogFile);
+    }
 
+    public ArrayList<PredefinedLogFile> getPredefinedLogFiles() {
+      return myConfiguration.getPredefinedLogFiles();
+    }
+
+    public ArrayList<LogFileOptions> getAllLogFiles() {
+      return myConfiguration.getAllLogFiles();
+    }
+
+    public ArrayList<LogFileOptions> getLogFiles() {
+      return myConfiguration.getLogFiles();
+    }
   }
 }

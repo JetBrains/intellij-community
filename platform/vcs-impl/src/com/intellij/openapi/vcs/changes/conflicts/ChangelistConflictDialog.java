@@ -108,4 +108,8 @@ public class ChangelistConflictDialog extends DialogWrapper {
       }
     }};
   }
+
+  protected String getHelpId() {
+    return "project.propVCSSupport.ChangelistConflict";
+  }
 }

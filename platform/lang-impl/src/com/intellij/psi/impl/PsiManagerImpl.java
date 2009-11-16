@@ -42,7 +42,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import static com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.*;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.impl.CacheUtil;
 import com.intellij.psi.impl.cache.impl.CompositeCacheManager;
@@ -69,6 +68,8 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.*;
 
 public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiManagerImpl");
@@ -292,11 +293,9 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
     StartupManagerEx startupManager = StartupManagerEx.getInstanceEx(myProject);
     if (startupManager != null) {
-      if (PsiManagerConfiguration.getInstance().REPOSITORY_ENABLED) {
-        CacheUpdater[] updaters = myCacheManager.getCacheUpdaters();
-        for (CacheUpdater updater : updaters) {
-          startupManager.registerCacheUpdater(updater);
-        }
+      CacheUpdater[] updaters = myCacheManager.getCacheUpdaters();
+      for (CacheUpdater updater : updaters) {
+        startupManager.registerCacheUpdater(updater);
       }
     }
   }
@@ -306,7 +305,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     myAssertOnFileLoadingFilter = filter;
   }
 
-  public boolean isAssertOnFileLoading(VirtualFile file) {
+  public boolean isAssertOnFileLoading(@NotNull VirtualFile file) {
     return myAssertOnFileLoadingFilter.accept(file);
   }
 
@@ -315,10 +314,12 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     return myProject;
   }
 
+  @NotNull
   public FileManager getFileManager() {
     return myFileManager;
   }
 
+  @NotNull
   public CacheManager getCacheManager() {
     if (myIsDisposed) {
       LOG.error("Project is already disposed.");
@@ -331,6 +332,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     return CodeStyleManager.getInstance(myProject);
   }
 
+  @NotNull
   public ResolveCache getResolveCache() {
     ProgressManager.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
     return myResolveCache;
@@ -389,7 +391,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
 
-  public void invalidateFile(PsiFile file) {
+  public void invalidateFile(@NotNull PsiFile file) {
     if (myIsDisposed) {
       LOG.error("Disposed PsiManager calls invalidateFile!");
     }
@@ -431,7 +433,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     fireEvent(event);
   }
 
-  public void beforeChildRemoval(PsiTreeChangeEventImpl event) {
+  public void beforeChildRemoval(@NotNull PsiTreeChangeEventImpl event) {
     event.setCode(BEFORE_CHILD_REMOVAL);
     if (LOG.isDebugEnabled()) {
       LOG.debug(
@@ -649,19 +651,19 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     }
   }
 
-  public void registerRunnableToRunOnChange(Runnable runnable) {
+  public void registerRunnableToRunOnChange(@NotNull Runnable runnable) {
     myRunnablesOnChange.add(runnable);
   }
 
-  public void registerWeakRunnableToRunOnChange(Runnable runnable) {
+  public void registerWeakRunnableToRunOnChange(@NotNull Runnable runnable) {
     myWeakRunnablesOnChange.add(new WeakReference<Runnable>(runnable));
   }
 
-  public void registerRunnableToRunOnAnyChange(Runnable runnable) { // includes non-physical changes
+  public void registerRunnableToRunOnAnyChange(@NotNull Runnable runnable) { // includes non-physical changes
     myRunnablesOnAnyChange.add(runnable);
   }
 
-  public void registerRunnableToRunAfterAnyChange(Runnable runnable) { // includes non-physical changes
+  public void registerRunnableToRunAfterAnyChange(@NotNull Runnable runnable) { // includes non-physical changes
     myRunnablesAfterAnyChange.add(runnable);
   }
 

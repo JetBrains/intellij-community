@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.compiler;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Chunk;
 
 import java.util.Collection;
 
@@ -63,7 +65,7 @@ public interface TranslatingCompiler extends Compiler {
    * @param file    the file to check.
    * @param context the context for the current compile operation.
    * @return true if can compile the file, false otherwise. If the method returns false, <code>file</code>
-   *         will not be included in the list of files passed to {@link #compile(CompileContext,com.intellij.openapi.vfs.VirtualFile[], com.intellij.openapi.compiler.TranslatingCompiler.OutputSink)}.
+   *         will not be included in the list of files passed to {@link #compile(CompileContext,Chunk<Module>,com.intellij.openapi.vfs.VirtualFile[], com.intellij.openapi.compiler.TranslatingCompiler.OutputSink)}.
    */
   boolean isCompilableFile(VirtualFile file, CompileContext context);
 
@@ -71,8 +73,9 @@ public interface TranslatingCompiler extends Compiler {
    * Compiles the specified files.
    *
    * @param context the context for the current compile operation.
-   * @param files   the source files to compile.
+   * @param moduleChunk contains modules that form a cycle. If project module graph has no cycles, a chunk corresponds to a single module
+   * @param files   the source files to compile that correspond to the module chunk
    * @param sink storage that accepts compiler output results
    */
-  void compile(CompileContext context, VirtualFile[] files, OutputSink sink);
+  void compile(CompileContext context, Chunk<Module> moduleChunk, VirtualFile[] files, OutputSink sink);
 }

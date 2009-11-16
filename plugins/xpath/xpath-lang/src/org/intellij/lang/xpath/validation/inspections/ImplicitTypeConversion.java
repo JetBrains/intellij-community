@@ -22,24 +22,22 @@
  */
 package org.intellij.lang.xpath.validation.inspections;
 
-import org.intellij.lang.xpath.context.ContextProvider;
-import org.intellij.lang.xpath.psi.XPathExpression;
-import org.intellij.lang.xpath.psi.XPathType;
-import org.intellij.lang.xpath.psi.XPathFunctionCall;
-import org.intellij.lang.xpath.validation.ExpectedTypeUtil;
-import org.intellij.lang.xpath.validation.inspections.quickfix.XPathQuickFixFactory;
-
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.Alarm;
+import org.intellij.lang.xpath.context.ContextProvider;
+import org.intellij.lang.xpath.psi.XPathExpression;
+import org.intellij.lang.xpath.psi.XPathFunctionCall;
+import org.intellij.lang.xpath.psi.XPathType;
+import org.intellij.lang.xpath.validation.ExpectedTypeUtil;
+import org.intellij.lang.xpath.validation.inspections.quickfix.XPathQuickFixFactory;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import org.jdom.Element;
 
 import javax.swing.*;
 import java.awt.event.ItemEvent;
@@ -83,8 +81,8 @@ public class ImplicitTypeConversion extends XPathInspection {
         return true;
     }
 
-    protected Visitor createVisitor(InspectionManager manager) {
-        return new MyElementVisitor(manager);
+    protected Visitor createVisitor(InspectionManager manager, boolean isOnTheFly) {
+        return new MyElementVisitor(manager, isOnTheFly);
     }
 
     @Nullable
@@ -107,8 +105,8 @@ public class ImplicitTypeConversion extends XPathInspection {
     }
 
     final class MyElementVisitor extends Visitor {
-        MyElementVisitor(InspectionManager manager) {
-            super(manager);
+        MyElementVisitor(InspectionManager manager, boolean isOnTheFly) {
+            super(manager, isOnTheFly);
         }
 
         protected void checkExpression(@NotNull XPathExpression expression) {
@@ -145,7 +143,7 @@ public class ImplicitTypeConversion extends XPathInspection {
                 }
 
                 addProblem(myManager.createProblemDescriptor(expression,
-                        "Expression should be of type '" + type.getName() + "'", fixes,
+                        "Expression should be of type '" + type.getName() + "'", myOnTheFly, fixes,
                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
             }
         }

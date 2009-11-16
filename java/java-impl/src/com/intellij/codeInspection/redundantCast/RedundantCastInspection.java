@@ -52,20 +52,20 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
     myQuickFixAction = new AcceptSuggested();
   }
 
-  public ProblemDescriptor[] getDescriptions(PsiElement where, InspectionManager manager) {
+  public ProblemDescriptor[] getDescriptions(PsiElement where, InspectionManager manager, boolean isOnTheFly) {
     List<PsiTypeCastExpression> redundantCasts = RedundantCastUtil.getRedundantCastsInside(where);
     if (redundantCasts.isEmpty()) return null;
     ProblemDescriptor[] descriptions = new ProblemDescriptor[redundantCasts.size()];
     for (int i = 0; i < redundantCasts.size(); i++) {
-      descriptions[i] = createDescription(redundantCasts.get(i), manager);
+      descriptions[i] = createDescription(redundantCasts.get(i), manager, isOnTheFly);
     }
     return descriptions;
   }
 
-  private ProblemDescriptor createDescription(PsiTypeCastExpression cast, InspectionManager manager) {
+  private ProblemDescriptor createDescription(PsiTypeCastExpression cast, InspectionManager manager, boolean onTheFly) {
     String message = InspectionsBundle.message("inspection.redundant.cast.problem.descriptor",
                                                "<code>" + cast.getOperand().getText() + "</code>", "<code>#ref</code> #loc");
-    return manager.createProblemDescriptor(cast.getCastType(), message, myQuickFixAction, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+    return manager.createProblemDescriptor(cast.getCastType(), message, myQuickFixAction, ProblemHighlightType.LIKE_UNUSED_SYMBOL, onTheFly);
   }
 
 

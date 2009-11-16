@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 public abstract class DirectoryIndex {
@@ -40,6 +41,9 @@ public abstract class DirectoryIndex {
   @NotNull
   public abstract
   Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources);
+
+  @Nullable
+  public abstract String getPackageName(VirtualFile dir); 
 
   public abstract boolean isInitialized();
 }

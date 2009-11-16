@@ -22,6 +22,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.usages.Usage;
@@ -115,7 +116,7 @@ public class VirtualFileArrayRule implements GetDataRule {
       }
     }
 
-    return result.toArray(new VirtualFile[result.size()]);
+    return VfsUtil.toVirtualFileArray(result);
   }
 
   private static Object getFilesFromPsiElement(PsiElement elem) {
@@ -160,7 +161,7 @@ public class VirtualFileArrayRule implements GetDataRule {
         }
       }
     }
-    VirtualFile[] result = files.toArray(new VirtualFile[files.size()]);
+    VirtualFile[] result = VfsUtil.toVirtualFileArray(files);
     files.clear();
     return result;
   }
@@ -170,6 +171,6 @@ public class VirtualFileArrayRule implements GetDataRule {
     for (Module selectedModule : selectedModules) {
       result.addAll(Arrays.asList(ModuleRootManager.getInstance(selectedModule).getContentRoots()));
     }
-    return result.toArray(new VirtualFile[result.size()]);
+    return VfsUtil.toVirtualFileArray(result);
   }
 }

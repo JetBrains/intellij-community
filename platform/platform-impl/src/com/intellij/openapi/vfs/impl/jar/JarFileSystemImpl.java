@@ -92,7 +92,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
                 }
               }
 
-              VirtualFile[] roots = rootsToRefresh.toArray(new VirtualFile[rootsToRefresh.size()]);
+              VirtualFile[] roots = VfsUtil.toVirtualFileArray(rootsToRefresh);
               RefreshQueue.getInstance().refresh(false, true, null, roots);
             }
           };

@@ -17,9 +17,9 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.openapi.util.TextRange;
 
 /**
  * User: Maxim.Mossienko
@@ -50,8 +50,7 @@ public class GlobalInspectionUtil {
         elt,
         range,
         createInspectionMessage(message),
-        problemHighlightType
-    );
+        problemHighlightType, false);
     problemDescriptionsProcessor.addProblemElement(
       retrieveRefElement(elt, globalContext),
       descriptor

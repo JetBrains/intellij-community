@@ -151,11 +151,14 @@ public class BuildArtifactsBeforeRun implements BeforeRunTaskProvider<BuildArtif
       final BuildArtifactsBeforeRunTask task = (BuildArtifactsBeforeRunTask)editor.getStepsBeforeLaunch().get(ID);
       if (enable) {
         task.addArtifact(artifact);
+        task.setEnabled(true);
       }
       else {
         task.removeArtifact(artifact);
+        if (task.getArtifactPointers().isEmpty()) {
+          task.setEnabled(false);
+        }
       }
-      task.setEnabled(!task.getArtifactPointers().isEmpty());
       editor.updateBeforeRunTaskPanel(ID);
     }
   }

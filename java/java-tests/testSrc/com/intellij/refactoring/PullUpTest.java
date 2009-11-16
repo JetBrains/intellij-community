@@ -91,8 +91,7 @@ public class PullUpTest extends LightCodeInsightTestCase {
     };
     JavaRefactoringListenerManager.getInstance(getProject()).addMoveMembersListener(listener);
     final PullUpHelper helper = new PullUpHelper(sourceClass, targetClass, infos, new DocCommentPolicy(DocCommentPolicy.ASIS));
-    helper.moveMembersToBase();
-    helper.moveFieldInitializations();
+    helper.run();
     JavaRefactoringListenerManager.getInstance(getProject()).removeMoveMembersListener(listener);
     assertEquals(countMoved[0], membersToFind.length);
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");

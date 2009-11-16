@@ -34,7 +34,6 @@ import com.intellij.openapi.ui.MasterDetailsStateService;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +48,6 @@ import java.util.*;
     storages = {@Storage(id = "other", file = "$WORKSPACE_FILE$")}
 )
 public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
-  @NonNls private static final String DEFAULT_ARTIFACT_NAME = "unnamed";
   private ArtifactsStructureConfigurableContextImpl myPackagingEditorContext;
   private ArtifactEditorSettings myDefaultSettings = new ArtifactEditorSettings();
 
@@ -125,7 +123,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   }
 
   public ModifiableArtifactModel getModifiableArtifactModel() {
-    return myPackagingEditorContext.getModifiableArtifactModel();
+    return myPackagingEditorContext.getOrCreateModifiableArtifactModel();
   }
 
   protected AbstractAddGroup createAddAction() {
@@ -172,13 +170,14 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   }
 
   private void addArtifact(@NotNull ArtifactType type, @NotNull ArtifactTemplate artifactTemplate) {
-    String name = DEFAULT_ARTIFACT_NAME;
+    final String baseName = artifactTemplate.suggestArtifactName();
+    String name = baseName;
     int i = 2;
     while (myPackagingEditorContext.getArtifactModel().findArtifact(name) != null) {
-      name = DEFAULT_ARTIFACT_NAME + i;
+      name = baseName + i;
       i++;
     }
-    final ModifiableArtifact artifact = myPackagingEditorContext.getModifiableArtifactModel().addArtifact(name, type, artifactTemplate.createRootElement(name));
+    final ModifiableArtifact artifact = myPackagingEditorContext.getOrCreateModifiableArtifactModel().addArtifact(name, type, artifactTemplate.createRootElement(name));
     selectNodeInTree(findNodeByObject(myRoot, artifact));
   }
 
@@ -216,7 +215,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
 
   @Override
   protected void removeArtifact(Artifact artifact) {
-    myPackagingEditorContext.getModifiableArtifactModel().removeArtifact(artifact);
+    myPackagingEditorContext.getOrCreateModifiableArtifactModel().removeArtifact(artifact);
     myContext.getDaemonAnalyzer().removeElement(new ArtifactProjectStructureElement(myContext, myPackagingEditorContext, artifact));
   }
 

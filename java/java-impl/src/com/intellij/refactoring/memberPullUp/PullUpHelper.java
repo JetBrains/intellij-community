@@ -40,21 +40,28 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.JavaRefactoringListenerManager;
 import com.intellij.refactoring.listeners.impl.JavaRefactoringListenerManagerImpl;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewDescriptor;
+import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class PullUpHelper {
+public class PullUpHelper extends BaseRefactoringProcessor{
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.memberPullUp.PullUpHelper");
   private final PsiClass mySourceClass;
   private final PsiClass myTargetSuperClass;
@@ -67,12 +74,34 @@ public class PullUpHelper {
 
   public PullUpHelper(PsiClass sourceClass, PsiClass targetSuperClass, MemberInfo[] membersToMove,
                       DocCommentPolicy javaDocPolicy) {
+    super(sourceClass.getProject());
     mySourceClass = sourceClass;
     myTargetSuperClass = targetSuperClass;
     myMembersToMove = membersToMove;
     myJavaDocPolicy = javaDocPolicy;
     myIsTargetInterface = targetSuperClass.isInterface();
     myManager = mySourceClass.getManager();
+  }
+
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
+    return new PullUpUsageViewDescriptor();
+  }
+
+  @NotNull
+  protected UsageInfo[] findUsages() {
+    return new UsageInfo[0];
+  }
+
+  protected void refreshElements(PsiElement[] elements) {
+  }
+
+  protected void performRefactoring(UsageInfo[] usages) {
+    moveMembersToBase();
+    moveFieldInitializations();
+  }
+
+  protected String getCommandName() {
+    return RefactoringBundle.message("pullUp.command", UsageViewUtil.getDescriptiveName(mySourceClass));
   }
 
   public void moveMembersToBase()
@@ -743,4 +772,22 @@ public class PullUpHelper {
     return false;
   }
 
+  private class PullUpUsageViewDescriptor implements UsageViewDescriptor {
+    public String getProcessedElementsHeader() {
+      return "Pull up members from";
+    }
+
+    @NotNull
+    public PsiElement[] getElements() {
+      return new PsiElement[]{mySourceClass};
+    }
+
+    public String getCodeReferencesText(int usagesCount, int filesCount) {
+      return "Class to pull up members to \"" + RefactoringUIUtil.getDescription(myTargetSuperClass, true) + "\"";
+    }
+
+    public String getCommentReferencesText(int usagesCount, int filesCount) {
+      return null;
+    }
+  }
 }

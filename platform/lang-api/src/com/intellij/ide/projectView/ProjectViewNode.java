@@ -204,4 +204,8 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> {
     update();
     return getValue() != null;
   }
+
+  public boolean isAlwaysLeaf() {
+    return false;
+  }
 }

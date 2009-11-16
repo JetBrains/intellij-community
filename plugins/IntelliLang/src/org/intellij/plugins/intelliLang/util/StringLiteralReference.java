@@ -16,6 +16,7 @@
 package org.intellij.plugins.intelliLang.util;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiReference;
@@ -38,7 +39,7 @@ public abstract class StringLiteralReference implements PsiReference {
   }
 
   public TextRange getRangeInElement() {
-    return TextRange.from(1, myValue.getTextLength() - 1);
+    return ElementManipulators.getValueTextRange(myValue);
   }
 
   public String getCanonicalText() {

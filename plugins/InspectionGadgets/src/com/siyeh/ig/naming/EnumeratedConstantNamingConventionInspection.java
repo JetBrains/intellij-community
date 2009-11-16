@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,20 +28,24 @@ public class EnumeratedConstantNamingConventionInspection
     private static final int DEFAULT_MIN_LENGTH = 5;
     private static final int DEFAULT_MAX_LENGTH = 32;
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "enumerated.constant.naming.convention.display.name");
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new RenameFix();
     }
 
+    @Override
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
         return true;
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         final String fieldName = (String)infos[0];
@@ -58,18 +62,22 @@ public class EnumeratedConstantNamingConventionInspection
                 getRegex());
     }
 
+    @Override
     protected String getDefaultRegex() {
         return "[A-Z][A-Za-z\\d]*";
     }
 
+    @Override
     protected int getDefaultMinLength() {
         return DEFAULT_MIN_LENGTH;
     }
 
+    @Override
     protected int getDefaultMaxLength() {
         return DEFAULT_MAX_LENGTH;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new NamingConventionsVisitor();
     }

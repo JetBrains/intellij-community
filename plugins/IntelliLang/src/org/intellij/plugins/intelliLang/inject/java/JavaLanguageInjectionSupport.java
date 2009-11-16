@@ -16,11 +16,14 @@
 
 package org.intellij.plugins.intelliLang.inject.java;
 
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
@@ -200,14 +203,14 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
   static boolean doAddLanguageAnnotation(final Project project, final PsiModifierListOwner modifierListOwner,
                                                  final String languageId) {
     if (modifierListOwner.getModifierList() == null || !PsiUtil.getLanguageLevel(modifierListOwner).hasEnumKeywordAndAutoboxing()) return false;
+    OrderEntryFix.ensureAnnotationsJarInPath(ModuleUtil.findModuleForPsiElement(modifierListOwner), AnnotationUtil.LANGUAGE);
     new WriteCommandAction(project, modifierListOwner.getContainingFile()) {
       protected void run(final Result result) throws Throwable {
-        final String annotationName = org.intellij.lang.annotations.Language.class.getName();
         final PsiAnnotation annotation = JavaPsiFacade.getInstance(project).getElementFactory()
-            .createAnnotationFromText("@" + annotationName + "(\"" + languageId + "\")", modifierListOwner);
+            .createAnnotationFromText("@" + AnnotationUtil.LANGUAGE + "(\"" + languageId + "\")", modifierListOwner);
         final PsiModifierList list = modifierListOwner.getModifierList();
         assert list != null;
-        final PsiAnnotation existingAnnotation = list.findAnnotation(annotationName);
+        final PsiAnnotation existingAnnotation = list.findAnnotation(AnnotationUtil.LANGUAGE);
         if (existingAnnotation != null) {
           existingAnnotation.replace(annotation);
         }

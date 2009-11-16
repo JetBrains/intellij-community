@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -111,7 +112,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings> 
       authors.removeLast();
     }
     authors.addFirst(author);
-    PREVIOUS_COMMIT_AUTHORS = authors.toArray(new String[authors.size()]);
+    PREVIOUS_COMMIT_AUTHORS = ArrayUtil.toStringArray(authors);
   }
 
   /**

@@ -241,6 +241,7 @@
     <packaging.sourceItemProvider implementation="com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.ArtifactsSourceItemsProvider"/>
     <packaging.artifactType implementation="com.intellij.packaging.impl.artifacts.JarArtifactType" order="first"/>
     <packaging.artifactType implementation="com.intellij.packaging.impl.artifacts.PlainArtifactType" order="last"/>
+    <compiler.additionalCompileScopeProvider implementation="com.intellij.packaging.impl.compiler.ArtifactAdditionalCompileScopeProvider"/>
 
     <lookup.charFilter implementation="com.intellij.codeInsight.completion.JavaCharFilter" id="java"/>
 
@@ -292,6 +293,9 @@
 
     <projectService serviceInterface="com.intellij.facet.impl.ui.FacetEditorsStateManager"
                     serviceImplementation="com.intellij.facet.impl.ui.FacetEditorsStateManagerImpl"/>
+
+    <projectService serviceInterface="com.intellij.openapi.module.ModulePointerManager"
+                    serviceImplementation="com.intellij.openapi.module.impl.ModulePointerManagerImpl"/>
 
     <applicationService serviceInterface="com.intellij.facet.ui.FacetEditorsFactory"
                         serviceImplementation="com.intellij.facet.impl.ui.FacetEditorsFactoryImpl"/>
@@ -552,6 +556,10 @@
 
     <intentionAction>
       <className>com.intellij.testIntegration.createTest.CreateTestAction</className>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.intellij.codeInspection.concurrencyAnnotations.JCiPOrderEntryFix</className>
     </intentionAction>
 
 

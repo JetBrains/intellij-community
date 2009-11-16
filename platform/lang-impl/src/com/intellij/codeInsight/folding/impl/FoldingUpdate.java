@@ -36,16 +36,16 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.TreeMap;
 
-class FoldingUpdate {
+public class FoldingUpdate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.FoldingUpdate");
 
   private static final Key<Object> LAST_UPDATE_STAMP_KEY = Key.create("LAST_UPDATE_STAMP_KEY");
   private static final Comparator<PsiElement> COMPARE_BY_OFFSET = new Comparator<PsiElement>() {
-      public int compare(PsiElement element, PsiElement element1) {
-        int startOffsetDiff = element.getTextRange().getStartOffset() - element1.getTextRange().getStartOffset();
-        return startOffsetDiff == 0 ? element.getTextRange().getEndOffset() - element1.getTextRange().getEndOffset() : startOffsetDiff;
-      }
-    };
+    public int compare(PsiElement element, PsiElement element1) {
+      int startOffsetDiff = element.getTextRange().getStartOffset() - element1.getTextRange().getStartOffset();
+      return startOffsetDiff == 0 ? element.getTextRange().getEndOffset() - element1.getTextRange().getEndOffset() : startOffsetDiff;
+    }
+  };
 
   private FoldingUpdate() {
   }
@@ -69,20 +69,46 @@ class FoldingUpdate {
     final TreeMap<PsiElement, FoldingDescriptor> elementsToFoldMap = new TreeMap<PsiElement, FoldingDescriptor>(COMPARE_BY_OFFSET);
     getFoldingsFor(file, document, elementsToFoldMap, quick);
 
-    List<DocumentWindow> injectedDocuments = InjectedLanguageUtil.getCachedInjectedDocuments(file);
-    for (DocumentWindow injectedDocument : injectedDocuments) {
-      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(injectedDocument);
-      if (psiFile == null || !psiFile.isValid() || !injectedDocument.isValid()) continue;
-      getFoldingsFor(psiFile, injectedDocument, elementsToFoldMap, quick);
-    }
-
-    final Runnable operation = new UpdateFoldRegionsOperation(editor, elementsToFoldMap, applyDefaultState);
+    final Runnable operation = new UpdateFoldRegionsOperation(project, editor, elementsToFoldMap, applyDefaultState, false);
     return new Runnable() {
       public void run() {
         editor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(operation);
         if (!quick) {
           editor.putUserData(LAST_UPDATE_STAMP_KEY, timeStamp);
         }
+      }
+    };
+  }
+
+  private static final Key<Object> LAST_UPDATE_INJECTED_STAMP_KEY = Key.create("LAST_UPDATE_INJECTED_STAMP_KEY");
+  @Nullable
+  public static Runnable updateInjectedFoldRegions(@NotNull final Editor editor, @NotNull PsiFile file) {
+    if (file instanceof PsiCompiledElement) return null;
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+
+    final Project project = file.getProject();
+    Document document = editor.getDocument();
+    LOG.assertTrue(!PsiDocumentManager.getInstance(project).isUncommited(document));
+
+    final long timeStamp = document.getModificationStamp();
+    Object lastTimeStamp = editor.getUserData(LAST_UPDATE_INJECTED_STAMP_KEY);
+    if (lastTimeStamp instanceof Long && ((Long)lastTimeStamp).longValue() == timeStamp) return null;
+
+    final TreeMap<PsiElement, FoldingDescriptor> elementsToFoldMap = new TreeMap<PsiElement, FoldingDescriptor>(COMPARE_BY_OFFSET);
+
+    List<DocumentWindow> injectedDocuments = InjectedLanguageUtil.getCachedInjectedDocuments(file);
+    if (injectedDocuments.isEmpty()) return null;
+    for (DocumentWindow injectedDocument : injectedDocuments) {
+      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(injectedDocument);
+      if (psiFile == null || !psiFile.isValid() || !injectedDocument.isValid()) continue;
+      getFoldingsFor(psiFile, injectedDocument, elementsToFoldMap, false);
+    }
+
+    final Runnable operation = new UpdateFoldRegionsOperation(project, editor, elementsToFoldMap, false, true);
+    return new Runnable() {
+      public void run() {
+        editor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(operation);
+        editor.putUserData(LAST_UPDATE_INJECTED_STAMP_KEY, timeStamp);
       }
     };
   }

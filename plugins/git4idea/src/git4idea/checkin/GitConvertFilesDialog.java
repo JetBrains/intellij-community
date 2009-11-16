@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.util.Processor;
@@ -223,7 +224,7 @@ public class GitConvertFilesDialog extends DialogWrapper {
               for (Set<VirtualFile> fileSet : files.values()) {
                 fileList.addAll(fileSet);
               }
-              selectedFiles = fileList.toArray(new VirtualFile[fileList.size()]);
+              selectedFiles = VfsUtil.toVirtualFileArray(fileList);
             }
             if (selectedFiles != null) {
               for (VirtualFile f : selectedFiles) {

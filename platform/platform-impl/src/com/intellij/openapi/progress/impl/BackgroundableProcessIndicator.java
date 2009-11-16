@@ -26,9 +26,7 @@ import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.util.ProgressWindow;
-import com.intellij.openapi.project.DumbModeAction;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
@@ -47,6 +45,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
 
   private boolean myDisposed;
   private DumbModeAction myDumbModeAction = DumbModeAction.NOTHING;
+  private ProjectManagerListener myListener;
 
   public BackgroundableProcessIndicator(Task.Backgroundable task) {
     this(task.getProject(), task, task);
@@ -65,8 +64,18 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
     }
   }
 
-  public BackgroundableProcessIndicator(@Nullable Project project, TaskInfo info, @NotNull PerformInBackgroundOption option) {
+  public BackgroundableProcessIndicator(@Nullable final Project project, TaskInfo info, @NotNull PerformInBackgroundOption option) {
     super(info.isCancellable(), true, project, info.getCancelText());
+    if (project != null) {
+      myListener = new ProjectManagerAdapter() {
+        public void projectClosing(Project closingProject) {
+          if (project == closingProject && isRunning()) {
+            cancel();
+          }
+        }
+      };
+      ProjectManager.getInstance().addProjectManagerListener(myListener);
+    }
     setOwnerTask(info);
     setProcessId(info.getProcessId());
     myOption = option;
@@ -136,6 +145,10 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
 
   public void dispose() {
     super.dispose();
+    if (myListener != null) {
+      ProjectManager.getInstance().removeProjectManagerListener(myListener);
+      myListener = null;
+    }
     myDisposed = true;
     myInfo = null;
     myStatusBar = null;

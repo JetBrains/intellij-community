@@ -56,11 +56,11 @@ public class SvnDiffProvider implements DiffProvider {
   }
 
   private static ItemLatestState defaultResult() {
-    return createResult(SVNRevision.HEAD, true);
+    return createResult(SVNRevision.HEAD, true, true);
   }
 
-  private static ItemLatestState createResult(final SVNRevision revision, final boolean exists) {
-    return new ItemLatestState(new SvnRevisionNumber(revision), exists);
+  private static ItemLatestState createResult(final SVNRevision revision, final boolean exists, boolean defaultHead) {
+    return new ItemLatestState(new SvnRevisionNumber(revision), exists, defaultHead);
   }
 
   public ItemLatestState getLastRevision(VirtualFile file) {
@@ -107,13 +107,13 @@ public class SvnDiffProvider implements DiffProvider {
         final LatestExistentSearcher searcher = new LatestExistentSearcher(myVcs, svnStatus.getURL());
         final long revision = searcher.getDeletionRevision();
 
-        return createResult(SVNRevision.create(revision), exists);
+        return createResult(SVNRevision.create(revision), exists, false);
       }
       final SVNRevision remoteRevision = svnStatus.getRemoteRevision();
       if (remoteRevision != null) {
-        return createResult(remoteRevision, exists);
+        return createResult(remoteRevision, exists, false);
       }
-      return createResult(svnStatus.getCommittedRevision(), exists);
+      return createResult(svnStatus.getCommittedRevision(), exists, false);
     }
     catch (SVNException e) {
       LOG.debug(e);    // most likely the file is unversioned

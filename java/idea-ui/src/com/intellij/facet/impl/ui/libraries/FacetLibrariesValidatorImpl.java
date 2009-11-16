@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.Result;
@@ -75,7 +76,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
 
     ModuleRootModel rootModel = myContext.getRootModel();
     List<VirtualFile> roots = collectRoots(rootModel);
-    RequiredLibrariesInfo.RequiredClassesNotFoundInfo info = myRequiredLibraries.checkLibraries(roots.toArray(new VirtualFile[roots.size()]));
+    RequiredLibrariesInfo.RequiredClassesNotFoundInfo info = myRequiredLibraries.checkLibraries(VfsUtil.toVirtualFileArray(roots));
     if (info == null) {
       return ValidationResult.OK;
     }

@@ -27,10 +27,8 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.cls.BytePointer;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.cls.ClsUtil;
@@ -172,7 +170,7 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
     appendIdeaLibrary(home + File.separator + PLUGINS_DIR + File.separator + PERSISTENCE_SUPPORT + File.separator + LIB_DIR_NAME, "persistence-impl.jar", result);
     appendIdeaLibrary(home + File.separator + PLUGINS_DIR + File.separator + DATABASE_DIR + File.separator + LIB_DIR_NAME, "database-impl.jar", result);
     appendIdeaLibrary(home + File.separator + PLUGINS_DIR + File.separator + CSS_DIR + File.separator + LIB_DIR_NAME, "css.jar", result);
-    return result.toArray(new VirtualFile[result.size()]);
+    return VfsUtil.toVirtualFileArray(result);
   }
 
   private static void appendIdeaLibrary(final String path, @NonNls final String forbidden, final ArrayList<VirtualFile> result) {
@@ -219,8 +217,7 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
     }
 
     final int choice = Messages
-      .showChooseDialog("Select Java SDK to be used as IDEA internal platform",
-                        "Select internal Java platform", javaSdks.toArray(new String[javaSdks.size()]), javaSdks.get(0), Messages.getQuestionIcon());
+      .showChooseDialog("Select Java SDK to be used as IDEA internal platform", "Select internal Java platform", ArrayUtil.toStringArray(javaSdks), javaSdks.get(0), Messages.getQuestionIcon());
 
     if (choice != -1) {
       final String name = javaSdks.get(choice);

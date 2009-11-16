@@ -279,7 +279,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
       }
     }
     final ReadonlyStatusHandler.OperationStatus status =
-      ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(toCheck.toArray(new VirtualFile[toCheck.size()]));
+      ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(VfsUtil.toVirtualFileArray(toCheck));
     if (status.hasReadonlyFiles()) {
       throw new IOException(status.getReadonlyFilesMessage());
     }

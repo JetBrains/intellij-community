@@ -113,15 +113,13 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
   }
 
   public Object getParentElement(Object element) {
-    return null;
-    //if (element == myRootElement) {
-    //  return null;
-    //}
-    //if (element == myRootPsiElement) {
-    //  return myRootElement;
-    //}
-    //PsiElement parent = ((PsiElement)element).getParent();
-    //return parent;
+    if (element == myRootElement) {
+      return null;
+    }
+    if (element == myRootPsiElement) {
+      return myRootElement;
+    }
+    return ((PsiElement)element).getParent();
   }
 
   public void commit() {

@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.readOnlyHandler;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.application.ApplicationManager;
@@ -37,7 +38,7 @@ public class VcsHandleType extends HandleType {
 
   public void processFiles(final Collection<VirtualFile> files) {
     try {
-      myVcs.getEditFileProvider().editFiles(files.toArray(new VirtualFile[files.size()]));
+      myVcs.getEditFileProvider().editFiles(VfsUtil.toVirtualFileArray(files));
     }
     catch (VcsException e) {
       Messages.showErrorDialog(VcsBundle.message("message.text.cannot.edit.file", e.getLocalizedMessage()),

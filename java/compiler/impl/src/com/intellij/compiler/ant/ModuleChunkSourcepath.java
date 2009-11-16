@@ -107,8 +107,8 @@ public class ModuleChunkSourcepath extends CompositeGenerator{
       }
     }
 
-    mySourceRoots = sourceRootFiles.toArray(new VirtualFile[sourceRootFiles.size()]);
-    myTestSourceRoots = testSourceRootFiles.toArray(new VirtualFile[testSourceRootFiles.size()]);
+    mySourceRoots = VfsUtil.toVirtualFileArray(sourceRootFiles);
+    myTestSourceRoots = VfsUtil.toVirtualFileArray(testSourceRootFiles);
 
     if (excludedFromCompilation.getGeneratorCount() > 0) {
       add(excludedFromCompilation, 1);

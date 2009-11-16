@@ -66,6 +66,10 @@ public class ClassSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiEleme
     return treeNodes;
   }
 
+  public boolean isAlwaysLeaf() {
+    return !getSettings().isShowMembers();
+  }
+  
   public void updateImpl(PresentationData data) {
     final PsiClass aClass = getPsiClass();
     if (aClass != null) {

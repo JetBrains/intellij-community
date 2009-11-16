@@ -204,7 +204,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
         assert parsedNode instanceof FileElement : "Parsed to "+parsedNode+" instead of FileElement";
 
         String documentText = documentWindow.getText();
-        assert outChars.toString().equals(parsedNode.getText()) : exceptionContext("Before patch: doc:\n" + documentText + "\n---PSI:\n" + parsedNode.getText() + "\n---chars:\n"+outChars);
+        assert outChars.toString().equals(parsedNode.getText()) : exceptionContext("Before patch: doc:\n'" + documentText + "'\n---PSI:\n'" + parsedNode.getText() + "'\n---chars:\n'"+outChars+"'");
         try {
           patchLeafs(parsedNode, escapers, place);
         }
@@ -214,7 +214,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
         catch (RuntimeException e) {
           throw new RuntimeException(exceptionContext("Patch error"), e);
         }
-        assert parsedNode.getText().equals(documentText) : exceptionContext("After patch: doc:\n" + documentText + "\n---PSI:\n" + parsedNode.getText() + "\n---chars:\n"+outChars);
+        assert parsedNode.getText().equals(documentText) : exceptionContext("After patch: doc:\n'" + documentText + "'\n---PSI:\n'" + parsedNode.getText() + "'\n---chars:\n'"+outChars+"'");
 
         virtualFile.setContent(null, documentWindow.getText(), false);
         
@@ -283,7 +283,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
   @NonNls
   private String exceptionContext(@NonNls String msg) {
     return msg + ".\n" +
-           "Language: " +myLanguage+";\n "+
+           myLanguage+";\n "+
            "Host file: "+myHostPsiFile+" in '" + myHostVirtualFile.getPresentableUrl() + "'\n" +
            "Context element "+myContextElement.getTextRange() + ": '" + myContextElement +"'; "+
            "Ranges: "+shreds;
@@ -366,7 +366,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
 
     for (int i = injected.size()-1; i>=0; i--) {
       DocumentWindowImpl oldDocument = (DocumentWindowImpl)injected.get(i);
-      PsiFileImpl oldFile = (PsiFileImpl)documentManager.getCachedPsiFile(oldDocument);
+      final PsiFileImpl oldFile = (PsiFileImpl)documentManager.getCachedPsiFile(oldDocument);
       FileViewProvider viewProvider;
 
       if (oldFile == null ||
@@ -380,8 +380,8 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
       }
       InjectedFileViewProvider oldViewProvider = (InjectedFileViewProvider)viewProvider;
 
-      ASTNode injectedNode = injectedPsi.getNode();
-      ASTNode oldFileNode = oldFile.getNode();
+      final ASTNode injectedNode = injectedPsi.getNode();
+      final ASTNode oldFileNode = oldFile.getNode();
       assert injectedNode != null : "New node is null";
       assert oldFileNode != null : "Old node is null";
       if (oldDocument.areRangesEqual(documentWindow)) {
@@ -392,15 +392,12 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
         }
         oldFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, injectedPsi.getUserData(FileContextUtil.INJECTED_IN_ELEMENT));
 
-        try {
-          assert shreds.isValid();
-          oldViewProvider.setPhysical(false); //do not fire events now
-          BlockSupportImpl.mergeTrees(oldFile, oldFileNode, injectedNode);
-          oldFile.subtreeChanged();
-        }
-        finally {
-          oldViewProvider.setPhysical(true);
-        }
+        assert shreds.isValid();
+        oldViewProvider.performNonPhysically(new Runnable() {
+          public void run() {
+            BlockSupportImpl.mergeTrees(oldFile, oldFileNode, injectedNode);
+          }
+        });
         assert shreds.isValid();
 
         return oldFile;

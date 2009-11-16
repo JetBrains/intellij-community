@@ -90,6 +90,11 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   public boolean contains(VirtualFile file) {
     if (!myIncludeTests && myFileIndex.isInTestSourceContent(file)) return false;
 
+    if (myModules != null) {
+      final Module module = myProjectFileIndex.getModuleForFile(file);
+      if (module != null) return myModules.contains(module);
+    }
+
     final List<OrderEntry> entries = myFileIndex.getOrderEntriesForFile(file);
     for (OrderEntry orderEntry : entries) {
       if (myIncludeLibraries) {

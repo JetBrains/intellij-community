@@ -555,7 +555,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
                                       final ChangeBrowserSettings settings,
                                       final int maxCount,
                                       String title) {
-    final RepositoryLocation location = CommittedChangesCache.getInstance(myProject).getLocationCache().getLocation(vcs, new FilePathImpl(root));
+    final RepositoryLocation location = CommittedChangesCache.getInstance(myProject).getLocationCache().getLocation(vcs, new FilePathImpl(root),
+                                                                                                                    false);
     openCommittedChangesTab(vcs.getCommittedChangesProvider(), location, settings, maxCount, title);
   }
 

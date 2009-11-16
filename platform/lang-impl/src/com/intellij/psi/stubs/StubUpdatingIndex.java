@@ -37,6 +37,7 @@ import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.IntInlineKeyDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -96,23 +97,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     return false;
   }
 
-  private static final KeyDescriptor<Integer> DATA_DESCRIPTOR = new KeyDescriptor<Integer>() {
-    public int getHashCode(final Integer value) {
-      return value.hashCode();
-    }
-
-    public boolean isEqual(final Integer val1, final Integer val2) {
-      return val1.equals(val2);
-    }
-
-    public void save(final DataOutput out, final Integer value) throws IOException {
-      out.writeInt(value.intValue());
-    }
-
-    public Integer read(final DataInput in) throws IOException {
-      return in.readInt();
-    }
-  };
+  private static final KeyDescriptor<Integer> DATA_DESCRIPTOR = new IntInlineKeyDescriptor();
 
   public ID<Integer, SerializedStubTree> getName() {
     return INDEX_ID;

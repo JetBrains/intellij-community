@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.ui.playback;
 
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.ui.playback.commands.AssertFocused;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.playback.commands.*;
@@ -39,10 +40,12 @@ public class PlaybackRunner {
   private ArrayList<PlaybackCommand> myCommands = new ArrayList<PlaybackCommand>();
   private ActionCallback myActionCallback;
   private boolean myStopRequested;
+  private boolean myUseDirectActionCall;
 
-  public PlaybackRunner(String script, StatusCallback callback) {
+  public PlaybackRunner(String script, StatusCallback callback, final boolean useDirectActionCall) {
     myScript = script;
     myCallback = callback;
+    myUseDirectActionCall = useDirectActionCall;
   }
 
   public ActionCallback run() {
@@ -58,7 +61,15 @@ public class PlaybackRunner {
       new Thread() {
         @Override
         public void run() {
-          executeFrom(0);
+          if (myUseDirectActionCall) {
+            executeFrom(0);
+          } else {
+            IdeEventQueue.getInstance().doWhenReady(new Runnable() {
+              public void run() {
+                executeFrom(0);
+              }
+            });
+          }
         }
       }.start();
 
@@ -78,7 +89,7 @@ public class PlaybackRunner {
         myActionCallback.setRejected();
         return;
       }
-      cmd.execute(myCallback, myRobot).doWhenDone(new Runnable() {
+      cmd.execute(myCallback, myRobot, myUseDirectActionCall).doWhenDone(new Runnable() {
         public void run() {
           if (cmd.canGoFurther()) {
             executeFrom(cmdIndex + 1);
@@ -226,7 +237,7 @@ public class PlaybackRunner {
       public void message(String text, int currentLine) {
         System.out.println(currentLine + " " + text);
       }
-    }).run();
+    }, false).run();
   }
 
 

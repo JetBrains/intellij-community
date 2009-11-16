@@ -64,7 +64,7 @@ public class SameParameterValueInspection extends GlobalJavaInspectionTool {
           problems.add(manager.createProblemDescriptor(refParameter.getElement(), InspectionsBundle.message(
             "inspection.same.parameter.problem.descriptor", "<code>" + paramName + "</code>", "<code>" + value + "</code>"),
                                                        new InlineParameterValueFix(paramName, value),
-                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false));
         }
       }
     }

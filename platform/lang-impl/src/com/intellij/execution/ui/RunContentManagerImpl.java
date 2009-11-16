@@ -302,7 +302,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(executor.getToolWindowId());
-        toolWindow.activate(null);
+        toolWindow.show(null);
       }
     });
   }

@@ -230,7 +230,7 @@ public class LibraryDownloader {
       }
     }
 
-    return files.toArray(new VirtualFile[files.size()]);
+    return VfsUtil.toVirtualFileArray(files);
   }
 
   private static String getExpectedFileName(LibraryDownloadInfo info) {

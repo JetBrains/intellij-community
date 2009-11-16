@@ -24,7 +24,7 @@ import com.intellij.openapi.project.DumbAware;
  * @author max
  */
 public class QuickChangeSchemesAction extends QuickSwitchSchemeAction implements DumbAware {
-  protected void fillActions(Project project, DefaultActionGroup group) {
+  protected void fillActions(Project project, DefaultActionGroup group, DataContext dataContext) {
     final AnAction[] actions = getGroup().getChildren(null);
     for (AnAction action : actions) {
       group.add(action);

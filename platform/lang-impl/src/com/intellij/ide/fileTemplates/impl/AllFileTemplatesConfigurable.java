@@ -165,10 +165,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
   }
 
   public JComponent createComponent() {
-    myUIDisposable = new Disposable() {
-      public void dispose() {
-      }
-    };
+    myUIDisposable = Disposer.newDisposable();
     myTemplatesList = new FileTemplateTabAsList(TEMPLATES_TITLE) {
       public void onTemplateSelected() {
         onListSelectionChanged();

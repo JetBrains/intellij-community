@@ -432,14 +432,14 @@ public class MavenUtil {
 
     if (isNoBackgroundMode()) {
       runnable.run();
-      return new MavenTaskHandler(indicator) {
+      return new MavenTaskHandler() {
         public void waitFor() {
         }
       };
     }
     else {
       final Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(runnable);
-      final MavenTaskHandler handler = new MavenTaskHandler(indicator) {
+      final MavenTaskHandler handler = new MavenTaskHandler() {
         public void waitFor() {
           try {
             future.get();
@@ -457,7 +457,7 @@ public class MavenUtil {
           if (future.isDone()) return;
           new Task.Backgroundable(project, title, cancellable) {
             public void run(@NotNull ProgressIndicator i) {
-              indicator.addIndicator(i);
+              indicator.setIndicator(i);
               handler.waitFor();
             }
           }.queue();
@@ -467,21 +467,7 @@ public class MavenUtil {
     }
   }
 
-  public static abstract class MavenTaskHandler {
-    private final MavenProgressIndicator myIndicator;
-
-    private MavenTaskHandler(MavenProgressIndicator indicator) {
-      myIndicator = indicator;
-    }
-
-    public void stop() {
-      myIndicator.cancel();
-    }
-
-    public abstract void waitFor();
-
-    public boolean isCancelled() {
-      return myIndicator.isCanceled();
-    }
+  public interface MavenTaskHandler {
+    void waitFor();
   }
 }

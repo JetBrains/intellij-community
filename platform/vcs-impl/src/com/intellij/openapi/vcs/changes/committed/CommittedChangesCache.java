@@ -229,7 +229,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
         for (VirtualFile root : roots) {
           if (myProject.isDisposed())  return;
 
-          final RepositoryLocation location = myLocationCache.getLocation(vcs, new FilePathImpl(root));
+          final RepositoryLocation location = myLocationCache.getLocation(vcs, new FilePathImpl(root), false);
           if (location == null) continue;
 
           try {

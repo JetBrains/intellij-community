@@ -21,6 +21,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -76,7 +77,7 @@ public abstract class ChunkBuildExtension {
     if (allTargets.isEmpty()) {
       allTargets.add(BuildProperties.getCompileTargetName(chunk.getName()));
     }
-    return allTargets.toArray(new String[allTargets.size()]);
+    return ArrayUtil.toStringArray(allTargets);
   }
 
   public static void process(CompositeGenerator generator, ModuleChunk chunk, GenerationOptions genOptions) {

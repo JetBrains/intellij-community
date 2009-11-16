@@ -25,9 +25,9 @@ public interface BundledColorSchemesProvider {
   ExtensionPointName<BundledColorSchemesProvider> EP_NAME = ExtensionPointName.create("com.intellij.bundledColorSchemesProvider");
 
   /**
-   * Provides relative pathes for schemes.
-   * E.g. : ["/colorSchemes/colbalt", "myscheme"]
-   * @return Array of relative pathes for schemes.
+   * Provides custom bundled color schemes.
+   * @return Array of relative paths without extensions for schemes.
+   * E.g. : ["/colorSchemes/colbalt", "myscheme"] for colorSchemes/colbalt.xml, myscheme.xml
    */
   @NotNull
   String[] getBundledSchemesRelativePaths();

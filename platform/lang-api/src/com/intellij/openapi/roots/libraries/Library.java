@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -52,7 +53,7 @@ public interface Library extends JDOMExternalizable, Disposable {
 
     String getName();
 
-    void addRoot(@NotNull String url, @NotNull OrderRootType rootType);
+    void addRoot(@NonNls @NotNull String url, @NotNull OrderRootType rootType);
     
     void addJarDirectory(@NotNull String url, boolean recursive);
 

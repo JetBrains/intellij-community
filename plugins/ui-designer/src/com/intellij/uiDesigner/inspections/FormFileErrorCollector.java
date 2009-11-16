@@ -15,18 +15,21 @@
  */
 package com.intellij.uiDesigner.inspections;
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
-import com.intellij.uiDesigner.lw.IProperty;
-import com.intellij.uiDesigner.lw.IComponent;
-import com.intellij.uiDesigner.make.FormElementNavigatable;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
-import com.intellij.psi.PsiFile;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.psi.PsiFile;
+import com.intellij.uiDesigner.lw.IComponent;
+import com.intellij.uiDesigner.lw.IProperty;
+import com.intellij.uiDesigner.make.FormElementNavigatable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
@@ -34,11 +37,13 @@ import java.util.ArrayList;
 public class FormFileErrorCollector extends FormErrorCollector {
   private final InspectionManager myManager;
   private final PsiFile myFile;
+  private boolean myOnTheFly;
   private final List<ProblemDescriptor> myProblems = new ArrayList<ProblemDescriptor>();
 
-  public FormFileErrorCollector(final PsiFile file, final InspectionManager manager) {
+  public FormFileErrorCollector(final PsiFile file, final InspectionManager manager, boolean onTheFly) {
     myManager = manager;
     myFile = file;
+    myOnTheFly = onTheFly;
   }
 
   public void addError(final String inspectionId, final IComponent component, @Nullable IProperty prop,
@@ -46,7 +51,7 @@ public class FormFileErrorCollector extends FormErrorCollector {
                        @Nullable EditorQuickFixProvider editorQuickFixProvider) {
     final ProblemDescriptor problemDescriptor = myManager.createProblemDescriptor(myFile, JDOMUtil.escapeText(errorMessage),
                                                                                   (LocalQuickFix)null,
-                                                                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+                                                                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly);
     if (problemDescriptor instanceof ProblemDescriptorImpl && component != null) {
       FormElementNavigatable navigatable = new FormElementNavigatable(myFile.getProject(), myFile.getVirtualFile(),
                                                                       component.getId());

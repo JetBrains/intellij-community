@@ -16,6 +16,7 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.Function;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.DocumentReference;
@@ -121,7 +122,7 @@ abstract class UndoRedo {
     Collection<VirtualFile> readOnlyFiles = collectReadOnlyAffectedFiles();
     if (!readOnlyFiles.isEmpty()) {
       final Project project = myManager.getProject();
-      final VirtualFile[] files = readOnlyFiles.toArray(new VirtualFile[readOnlyFiles.size()]);
+      final VirtualFile[] files = VfsUtil.toVirtualFileArray(readOnlyFiles);
 
       if (project == null) {
         VirtualFileManager.getInstance().fireReadOnlyModificationAttempt(files);

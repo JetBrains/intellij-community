@@ -79,8 +79,11 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
 
-    checkExistingMethods(myDescriptor.getGetterPrototypes(), conflicts, true);
-    checkExistingMethods(myDescriptor.getSetterPrototypes(), conflicts, false);
+    final PsiMethod[] getterPrototypes = myDescriptor.getGetterPrototypes();
+    final PsiMethod[] setterPrototypes = myDescriptor.getSetterPrototypes();
+
+    checkExistingMethods(getterPrototypes, conflicts, true);
+    checkExistingMethods(setterPrototypes, conflicts, false);
     final Collection<PsiClass> classes = ClassInheritorsSearch.search(myClass).findAll();
     for (int i = 0; i < myFields.length; i++) {
       final PsiField field = myFields[i];
@@ -88,11 +91,11 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
       final Set<PsiMethod> getters = new HashSet<PsiMethod>();
 
       for (PsiClass aClass : classes) {
-        final PsiMethod getterOverrider = aClass.findMethodBySignature(myDescriptor.getGetterPrototypes()[i], false);
+        final PsiMethod getterOverrider = getterPrototypes != null ? aClass.findMethodBySignature(getterPrototypes[i], false) : null;
         if (getterOverrider != null) {
           getters.add(getterOverrider);
         }
-        final PsiMethod setterOverrider = aClass.findMethodBySignature(myDescriptor.getSetterPrototypes()[i], false);
+        final PsiMethod setterOverrider = setterPrototypes != null ? aClass.findMethodBySignature(setterPrototypes[i], false) : null;
         if (setterOverrider != null) {
           setters.add(setterOverrider);
         }
@@ -534,7 +537,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
       else {
         return null;
       }
-      if(containingClass.isInheritor(myClass, false)) {
+      if(containingClass != null && containingClass.isInheritor(myClass, false)) {
         final PsiExpression newMethodExpression =
                 factory.createExpressionFromText("super." + targetMethod.getName(), context);
         methodCall.getMethodExpression().replace(newMethodExpression);

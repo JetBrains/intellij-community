@@ -18,9 +18,9 @@ package com.intellij.lang.properties;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInspection.*;
 import com.intellij.concurrency.JobUtil;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -62,7 +62,7 @@ public class UnusedPropertyInspection extends LocalInspectionTool implements Cus
     return "UnusedProperty";
   }
 
-  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull final InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull final InspectionManager manager, final boolean isOnTheFly) {
     if (!(file instanceof PropertiesFile)) return null;
     final List<Property> properties = ((PropertiesFile)file).getProperties();
     Module module = ModuleUtil.findModuleForPsiElement(file);
@@ -86,7 +86,8 @@ public class UnusedPropertyInspection extends LocalInspectionTool implements Cus
           ASTNode[] nodes = propertyNode.getChildren(null);
           PsiElement key = nodes.length == 0 ? property : nodes[0].getPsi();
           String description = PropertiesBundle.message("unused.property.problem.descriptor.name");
-          ProblemDescriptor descriptor = manager.createProblemDescriptor(key, description, RemovePropertyLocalFix.INSTANCE, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+          ProblemDescriptor descriptor = manager.createProblemDescriptor(key, description, RemovePropertyLocalFix.INSTANCE, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                                                                         isOnTheFly);
           synchronized (descriptors) {
             descriptors.add(descriptor);
           }

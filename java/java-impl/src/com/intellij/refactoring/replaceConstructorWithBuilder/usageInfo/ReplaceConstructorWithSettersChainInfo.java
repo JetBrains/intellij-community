@@ -54,7 +54,7 @@ public class ReplaceConstructorWithSettersChainInfo extends FixableUsageInfo {
           final PsiParameter[] parameters = constructor.getParameterList().getParameters();
 
           final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(constructor.getProject());
-          for (int i = 0; i < constructor.getParameterList().getParametersCount(); i++) {
+          for (int i = 0; i < Math.min(constructor.getParameterList().getParametersCount(), args.length); i++) {
             String arg = args[i].getText();
             if (parameters[i].isVarArgs()) {
               for(int ia = i + 1; ia < args.length; ia++) {

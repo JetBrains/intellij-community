@@ -34,9 +34,8 @@ import java.util.Map;
 * Date: 24.01.2008
 */
 public class TemplateInvocationInspection extends XsltInspection {
-    private final XsltElementFactory myXsltElementFactory = XsltElementFactory.getInstance();
 
-    @NotNull
+  @NotNull
     public HighlightDisplayLevel getDefaultLevel() {
         return HighlightDisplayLevel.ERROR;
     }
@@ -53,14 +52,15 @@ public class TemplateInvocationInspection extends XsltInspection {
 
     @NotNull
     public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+        final XsltElementFactory xsltElementFactory = XsltElementFactory.getInstance();
         return new XmlElementVisitor() {
             @Override
             public void visitXmlTag(XmlTag tag) {
-                if (XsltSupport.isTemplateCall(tag)) {
-                    final XsltCallTemplate call = myXsltElementFactory.wrapElement(tag, XsltCallTemplate.class);
+              if (XsltSupport.isTemplateCall(tag)) {
+                  final XsltCallTemplate call = xsltElementFactory.wrapElement(tag, XsltCallTemplate.class);
                     checkTemplateInvocation(call, holder, isOnTheFly);
                 } else if (XsltSupport.isApplyTemplates(tag)) {
-                    final XsltApplyTemplates call = myXsltElementFactory.wrapElement(tag, XsltApplyTemplates.class);
+                    final XsltApplyTemplates call = xsltElementFactory.wrapElement(tag, XsltApplyTemplates.class);
                     checkTemplateInvocation(call, holder, isOnTheFly);
                 }
             }

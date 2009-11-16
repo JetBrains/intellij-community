@@ -779,28 +779,33 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   public void attractByCondition(String condition, boolean afterInitialized) {
-    processAttraction(myLayoutSettings.getToFocus(condition), myConditionAttractions, new LayoutAttractionPolicy.FocusOnce(), afterInitialized, true);
+    processAttraction(myLayoutSettings.getToFocus(condition), myConditionAttractions, myLayoutSettings.getAttractionPolicy(condition), afterInitialized, true);
   }
 
   public void clearAttractionByCondition(String condition, boolean afterInitialized) {
     processAttraction(myLayoutSettings.getToFocus(condition), myConditionAttractions, new LayoutAttractionPolicy.FocusOnce(), afterInitialized, false);
   }
 
-  private void processAttraction(final String contentId, final Map<String, LayoutAttractionPolicy> policyMap, final LayoutAttractionPolicy defaultPolicy, boolean afterInitialized, final boolean activate) {
-    myInitialized.processOnDone(new Runnable() {
+  private void processAttraction(final String contentId, final Map<String, LayoutAttractionPolicy> policyMap, final LayoutAttractionPolicy defaultPolicy, final boolean afterInitialized, final boolean activate) {
+    IdeFocusManager.getInstance(getProject()).doWhenFocusSettlesDown(new Runnable() {
       public void run() {
-        Content content = findContent(contentId);
-        if (content == null) return;
+        myInitialized.processOnDone(new Runnable() {
+          public void run() {
+            Content content = findContent(contentId);
+            if (content == null) return;
 
-        final LayoutAttractionPolicy policy = getOrCreatePolicyFor(contentId, policyMap, defaultPolicy);
-        if (activate) {
-          myAttractionCount++;
-          policy.attract(content, myRunnerUi);
-        } else {
-          policy.clearAttraction(content, myRunnerUi);
-        }
+            final LayoutAttractionPolicy policy = getOrCreatePolicyFor(contentId, policyMap, defaultPolicy);
+            if (activate) {
+              myAttractionCount++;
+              policy.attract(content, myRunnerUi);
+            }
+            else {
+              policy.clearAttraction(content, myRunnerUi);
+            }
+          }
+        }, afterInitialized);
       }
-    }, afterInitialized);
+    });
   }
 
 

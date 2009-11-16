@@ -27,4 +27,6 @@ public interface LayoutStateDefaults {
 
   LayoutStateDefaults initFocusContent(@NotNull String id, final String condition);
 
+  LayoutStateDefaults initFocusContent(@NotNull String id, final String condition, @NotNull final LayoutAttractionPolicy policy);
+
 }

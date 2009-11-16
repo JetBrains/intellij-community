@@ -310,9 +310,6 @@ public class JavacCompiler extends ExternalCompiler {
           }
         }
       }
-      //additionalOptions.add("-processor");
-      //additionalOptions.add("CheckNamesProcessor");
-      //additionalOptions.add("org.apache.openjpa.persistence.meta.AnnotationProcessor6");
     }
     while (tokenizer.hasMoreTokens()) {
       @NonNls String token = tokenizer.nextToken();

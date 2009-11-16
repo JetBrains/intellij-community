@@ -449,7 +449,7 @@ public class FileBasedIndex implements ApplicationComponent {
     
     LOG.info("START INDEX SHUTDOWN");
     try {
-      myChangedFilesCollector.forceUpdate(null, null);
+      myChangedFilesCollector.forceUpdate(null, null, true);
 
       for (ID<?, ?> indexId : myIndices.keySet()) {
         final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
@@ -528,12 +528,12 @@ public class FileBasedIndex implements ApplicationComponent {
 
   private static final ThreadLocal<Integer> myUpToDateCheckState = new ThreadLocal<Integer>();
 
-  public void disableUpToDateCheckForCurrentThread() {
+  public static void disableUpToDateCheckForCurrentThread() {
     final Integer currentValue = myUpToDateCheckState.get();
     myUpToDateCheckState.set(currentValue == null? 1 : currentValue.intValue() + 1);
   }
 
-  public void enableUpToDateCheckForCurrentThread() {
+  public static void enableUpToDateCheckForCurrentThread() {
     final Integer currentValue = myUpToDateCheckState.get();
     if (currentValue != null) {
       final int newValue = currentValue.intValue() - 1;
@@ -578,7 +578,7 @@ public class FileBasedIndex implements ApplicationComponent {
       if (isUpToDateCheckEnabled()) {
         try {
           checkRebuild(indexId, false);
-          myChangedFilesCollector.forceUpdate(project, filter);
+          myChangedFilesCollector.forceUpdate(project, filter, false);
           indexUnsavedDocuments(indexId, project, filter);
         }
         catch (StorageException e) {
@@ -616,14 +616,6 @@ public class FileBasedIndex implements ApplicationComponent {
         return;
       }
     }
-    else {
-      final Application application = ApplicationManager.getApplication();
-      if (application.isUnitTestMode() && !application.isDispatchThread()) {
-        DumbService.getInstance(project).waitForSmartMode();
-        return;
-      }
-    }
-
 
     throw new IndexNotReadyException();
   }
@@ -1192,7 +1184,7 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
 
   public void processRefreshedFile(@NotNull Project project, final com.intellij.ide.caches.FileContent fileContent) {
     myChangedFilesCollector.ensureAllInvalidateTasksCompleted();
-    myChangedFilesCollector.processFileImpl(project, fileContent);
+    myChangedFilesCollector.processFileImpl(project, fileContent, false);
   }
 
   public void indexFileContent(@Nullable Project project, com.intellij.ide.caches.FileContent content) {
@@ -1514,31 +1506,9 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
           else {
             final InvalidationTask invalidator = new InvalidationTask(file) {
               public void run() {
-                Throwable unexpectedError = null;
-                for (ID<?, ?> indexId : affectedIndices) {
-                  try {
-                    updateSingleIndex(indexId, file, null);
-                  }
-                  catch (StorageException e) {
-                    LOG.info(e);
-                    requestRebuild(indexId);
-                  }
-                  catch (ProcessCanceledException ignored) {
-                  }
-                  catch (Throwable e) {
-                    LOG.info(e);
-                    if (unexpectedError == null) {
-                      unexpectedError = e;
-                    }
-                  }
-                }
-                IndexingStamp.flushCache();
-                if (unexpectedError != null) {
-                  LOG.error(unexpectedError);
-                }
+                removeFileDataFromIndices(affectedIndices, file);
               }
             };
-
             w.lock();
             try {
               myFutureInvalidations.offer(invalidator);
@@ -1549,6 +1519,31 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
           }
         }
         IndexingStamp.flushCache();
+      }
+    }
+
+    private void removeFileDataFromIndices(List<ID<?, ?>> affectedIndices, VirtualFile file) {
+      Throwable unexpectedError = null;
+      for (ID<?, ?> indexId : affectedIndices) {
+        try {
+          updateSingleIndex(indexId, file, null);
+        }
+        catch (StorageException e) {
+          LOG.info(e);
+          requestRebuild(indexId);
+        }
+        catch (ProcessCanceledException ignored) {
+        }
+        catch (Throwable e) {
+          LOG.info(e);
+          if (unexpectedError == null) {
+            unexpectedError = e;
+          }
+        }
+      }
+      IndexingStamp.flushCache();
+      if (unexpectedError != null) {
+        LOG.error(unexpectedError);
       }
     }
 
@@ -1623,14 +1618,14 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
 
     private final Semaphore myForceUpdateSemaphore = new Semaphore();
 
-    public void forceUpdate(@Nullable Project project, @Nullable GlobalSearchScope filter) {
+    public void forceUpdate(@Nullable Project project, @Nullable GlobalSearchScope filter, boolean onlyRemoveOutdatedData) {
       myChangedFilesCollector.ensureAllInvalidateTasksCompleted();
       for (VirtualFile file: getAllFilesToUpdate()) {
         if (filter == null || filter.accept(file)) {
           try {
             myForceUpdateSemaphore.down();
             // process only files that can affect result
-            processFileImpl(project, new com.intellij.ide.caches.FileContent(file));
+            processFileImpl(project, new com.intellij.ide.caches.FileContent(file), onlyRemoveOutdatedData);
           }
           finally {
             myForceUpdateSemaphore.up();
@@ -1650,7 +1645,7 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
       }
     }
 
-    private void processFileImpl(Project project, final com.intellij.ide.caches.FileContent fileContent) {
+    private void processFileImpl(Project project, final com.intellij.ide.caches.FileContent fileContent, boolean onlyRemoveOutdatedData) {
       final VirtualFile file = fileContent.getVirtualFile();
       final boolean reallyRemoved;
       w.lock();
@@ -1661,7 +1656,19 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
         w.unlock();
       }
       if (reallyRemoved && file.isValid()) {
-        indexFileContent(project, fileContent);
+        if (onlyRemoveOutdatedData) {
+          // on shutdown there is no need to re-index the file, just remove outdated data from indices
+          final List<ID<?, ?>> affected = new ArrayList<ID<?,?>>();
+          for (final ID<?, ?> indexId : myIndices.keySet()) {
+            if (getInputFilter(indexId).acceptInput(file)) {
+              affected.add(indexId);
+            }
+          }
+          removeFileDataFromIndices(affected, file);
+        }
+        else {
+          indexFileContent(project, fileContent);
+        }
         IndexingStamp.flushCache();
       }
     }
@@ -1783,7 +1790,7 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
   }
 
   public void removeIndexableSet(IndexableFileSet set) {
-    myChangedFilesCollector.forceUpdate(null, null);
+    myChangedFilesCollector.forceUpdate(null, null, true);
     myIndexableSets.remove(set);
   }
 

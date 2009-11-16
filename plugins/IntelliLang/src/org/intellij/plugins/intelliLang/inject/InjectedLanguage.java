@@ -18,6 +18,7 @@ package org.intellij.plugins.intelliLang.inject;
 import com.intellij.lang.*;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,7 +87,7 @@ public final class InjectedLanguage {
         initLanguageCache();
       }
       final Set<String> keys = ourLanguageCache.keySet();
-      return keys.toArray(new String[keys.size()]);
+      return ArrayUtil.toStringArray(keys);
     }
   }
 

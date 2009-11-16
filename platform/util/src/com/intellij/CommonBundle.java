@@ -75,7 +75,7 @@ public class CommonBundle {
 
     value = UIUtil.replaceMnemonicAmpersand(value);
 
-    if (params.length > 0) {
+    if (params.length > 0 && value.indexOf('{')>=0) {
       return MessageFormat.format(value, params);
     }
 

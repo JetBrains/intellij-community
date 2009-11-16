@@ -424,7 +424,7 @@ public class ClsStubBuilder {
       }
 
       if (parsedViaGenericSignature && throwables != null) {
-        return throwables.toArray(new String[throwables.size()]);
+        return ArrayUtil.toStringArray(throwables);
       }
       else {
         String[] converted = ArrayUtil.newStringArray(exceptions.length);

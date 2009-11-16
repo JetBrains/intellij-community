@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.pom.java.LanguageLevel;
-import static com.intellij.psi.CommonClassNames.*;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
@@ -27,7 +26,6 @@ import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
@@ -40,6 +38,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
 import java.util.Map;
+
+import static com.intellij.psi.CommonClassNames.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
  * @author ven
@@ -193,7 +194,7 @@ public class TypesUtil {
   public static boolean isAssignable(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope) {
     //all numeric types are assignable
     if (isNumericType(lType)) {
-      return isNumericType(rType) || rType.equalsToText(JAVA_LANG_STRING) || rType.equals(PsiType.NULL);
+      return isNumericType(rType) || rType.equals(PsiType.NULL);
     }
     if (rType instanceof GrTupleType) {
       final GrTupleType tuple = (GrTupleType)rType;
@@ -204,7 +205,7 @@ public class TypesUtil {
       }
     }
 
-    if (lType.equalsToText(JAVA_LANG_STRING) && isNumericType(rType)) return true;
+    if (lType.equalsToText(JAVA_LANG_STRING)) return true;
 
     rType = boxPrimitiveType(rType, manager, scope);
     lType = boxPrimitiveType(lType, manager, scope);
@@ -215,6 +216,8 @@ public class TypesUtil {
   public static boolean isAssignableByMethodCallConversion(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope) {
     if (lType == null || rType == null) return false;
 
+    if (lType.equalsToText(JAVA_LANG_STRING)) return true;
+    
     if (isNumericType(lType) && isNumericType(rType)) {
       lType = unboxPrimitiveTypeWrapper(lType);
       if (lType.equalsToText(JAVA_MATH_BIG_DECIMAL)) lType = PsiType.DOUBLE;
@@ -263,7 +266,7 @@ public class TypesUtil {
   }
 
   public static PsiType boxPrimitiveType(PsiType result, PsiManager manager, GlobalSearchScope resolveScope) {
-    if (result instanceof PsiPrimitiveType) {
+    if (result instanceof PsiPrimitiveType && result != PsiType.VOID) {
       PsiPrimitiveType primitive = (PsiPrimitiveType)result;
       String boxedTypeName = primitive.getBoxedTypeName();
       if (boxedTypeName != null) {

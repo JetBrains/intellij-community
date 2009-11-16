@@ -32,7 +32,6 @@ import com.intellij.ui.PopupHandler;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.Comparator;
 import java.util.Map;
 
@@ -75,13 +74,6 @@ public final class CallHierarchyBrowser extends CallHierarchyBrowserBase {
       return nodeDescriptor.getTargetElement();
     }
     return null;
-  }
-
-  protected PsiElement getEnclosingElementFromNode(final DefaultMutableTreeNode node) {
-    if (node == null) return null;
-    final Object userObject = node.getUserObject();
-    if (!(userObject instanceof CallHierarchyNodeDescriptor)) return null;
-    return ((CallHierarchyNodeDescriptor)userObject).getEnclosingElement();
   }
 
   protected boolean isApplicableElement(@NotNull final PsiElement element) {

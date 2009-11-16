@@ -64,8 +64,8 @@ public class CompilerManagerImpl extends CompilerManager {
     myEventPublisher = messageBus.syncPublisher(CompilerTopics.COMPILATION_STATUS);
 
     // predefined compilers
-    addTranslatingCompiler(new JavaCompiler(myProject), new HashSet<FileType>(Arrays.asList(StdFileTypes.JAVA)), new HashSet<FileType>(Arrays.asList(StdFileTypes.CLASS)));
-    addCompiler(new AnnotationProcessingCompiler(project));
+    addTranslatingCompiler(new AnnotationProcessingCompiler(project), new HashSet<FileType>(Arrays.asList(StdFileTypes.JAVA)), new HashSet<FileType>(Arrays.asList(StdFileTypes.JAVA, StdFileTypes.CLASS)));
+    addTranslatingCompiler(new JavaCompiler(project), new HashSet<FileType>(Arrays.asList(StdFileTypes.JAVA)), new HashSet<FileType>(Arrays.asList(StdFileTypes.CLASS)));
     addCompiler(new ResourceCompiler(project, compilerConfiguration));
     addCompiler(new RmicCompiler());
     addCompiler(new IncrementalArtifactsCompiler());

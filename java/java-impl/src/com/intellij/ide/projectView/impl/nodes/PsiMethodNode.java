@@ -48,6 +48,10 @@ public class PsiMethodNode extends BasePsiMemberNode<PsiMethod>{
     data.setPresentableText(name);
   }
 
+  public boolean isAlwaysLeaf() {
+    return true;
+  }
+
   public boolean isConstructor() {
     final PsiMethod psiMethod = getValue();
     return psiMethod != null && psiMethod.isConstructor();

@@ -35,6 +35,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -151,7 +152,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
       else {
         namesList.add(0, defaultName);
       }
-      names = namesList.toArray(new String[namesList.size()]);
+      names = ArrayUtil.toStringArray(namesList);
 
       boolean myBeFinal = method.isConstructor();
       CreateFieldFromParameterDialog dialog = new CreateFieldFromParameterDialog(

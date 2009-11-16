@@ -57,9 +57,8 @@ public class GroovyCompiler extends GroovyCompilerBase {
   }
 
   @Override
-  protected void compileFiles(CompileContext compileContext, Module module, List<VirtualFile> toCompile, VirtualFile outputDir, OutputSink sink,
-                              boolean tests) {
-    runGroovycCompiler(compileContext, module, toCompile, false, outputDir, sink, tests);
+  protected void compileFiles(CompileContext compileContext, Module module, List<VirtualFile> toCompile, OutputSink sink, boolean tests) {
+    runGroovycCompiler(compileContext, module, toCompile, false, getMainOutput(compileContext, module, tests), sink, tests);
   }
 
   public boolean validateConfiguration(CompileScope compileScope) {

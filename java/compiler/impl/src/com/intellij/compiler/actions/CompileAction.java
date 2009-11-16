@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 
@@ -188,7 +189,7 @@ public class CompileAction extends CompileActionBase {
       }
       filesToCompile.add(file);
     }
-    return filesToCompile.size() > 0 ? filesToCompile.toArray(new VirtualFile[filesToCompile.size()]) : VirtualFile.EMPTY_ARRAY;
+    return VfsUtil.toVirtualFileArray(filesToCompile);
   }
 
   private boolean isCompilableResourceFile(final Project project, final CompilerConfiguration compilerConfiguration, final VirtualFile file) {

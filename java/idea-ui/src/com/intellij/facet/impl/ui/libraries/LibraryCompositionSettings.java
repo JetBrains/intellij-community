@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -121,7 +122,7 @@ public class LibraryCompositionSettings {
       for (Library library : myUsedLibraries) {
         roots.addAll(Arrays.asList(librariesContainer.getLibraryFiles(library, OrderRootType.CLASSES)));
       }
-      VirtualFile[] jars = roots.toArray(new VirtualFile[roots.size()]);
+      VirtualFile[] jars = VfsUtil.toVirtualFileArray(roots);
       RequiredLibrariesInfo.RequiredClassesNotFoundInfo info = requiredLibraries.checkLibraries(jars);
       if (info != null) {
         LibraryDownloadInfo[] downloadingInfos = LibraryDownloader.getDownloadingInfos(info.getLibraryInfos());
@@ -143,7 +144,7 @@ public class LibraryCompositionSettings {
   @Nullable
   private Library createLibrary(final ModifiableRootModel rootModel, @Nullable LibrariesContainer additionalContainer) {
     if (!myAddedJars.isEmpty()) {
-      VirtualFile[] roots = myAddedJars.toArray(new VirtualFile[myAddedJars.size()]);
+      VirtualFile[] roots = VfsUtil.toVirtualFileArray(myAddedJars);
       return LibrariesContainerFactory.createLibrary(additionalContainer, LibrariesContainerFactory.createContainer(rootModel),
                                                      myLibraryName, myLibraryLevel, roots, VirtualFile.EMPTY_ARRAY);
     }

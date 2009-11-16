@@ -83,10 +83,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
   private String myInitialPath;
   private final History myHistory;
 
-  private Disposable myDisposable = new Disposable() {
-    public void dispose() {
-    }
-  };
+  private Disposable myDisposable = Disposer.newDisposable();
 
   public SdkEditor(NotifiableSdkModel sdkModel, History history, final ProjectJdkImpl sdk) {
     mySdkModel = sdkModel;

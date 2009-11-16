@@ -142,9 +142,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
 
   public String getPackageNameByDirectory(@NotNull VirtualFile dir) {
     LOG.assertTrue(dir.isDirectory());
-    DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(dir);
-    if (info == null) return null;
-    return info.packageName;
+    return myDirectoryIndex.getPackageName(dir);
   }
 
   public boolean isContentJavaSourceFile(@NotNull VirtualFile file) {

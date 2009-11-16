@@ -17,6 +17,7 @@ package test;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
+import com.intellij.util.ArrayUtil;
 import org.intellij.lang.regexp.psi.impl.RegExpPropertyImpl;
 
 import java.io.File;
@@ -54,7 +55,7 @@ public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
         for (String[] stringArray : RegExpPropertyImpl.PROPERTY_NAMES) {
             nameList.add("p{" + stringArray[0] + "}");
         }
-        myFixture.testCompletionVariants(getInputDataFileName(getTestName(true)), nameList.toArray(new String[nameList.size()]));
+        myFixture.testCompletionVariants(getInputDataFileName(getTestName(true)), ArrayUtil.toStringArray(nameList));
     }
 
   public void testPropertyVariants() throws Throwable {
@@ -62,7 +63,7 @@ public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
         for (String[] stringArray : RegExpPropertyImpl.PROPERTY_NAMES) {
             nameList.add("{" + stringArray[0] + "}");
         }
-        myFixture.testCompletionVariants(getInputDataFileName(getTestName(true)), nameList.toArray(new String[nameList.size()]));
+        myFixture.testCompletionVariants(getInputDataFileName(getTestName(true)), ArrayUtil.toStringArray(nameList));
     }
 
     public void testPropertyAlpha() throws Throwable {

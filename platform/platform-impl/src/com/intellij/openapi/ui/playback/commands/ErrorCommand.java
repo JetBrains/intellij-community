@@ -26,7 +26,7 @@ public class ErrorCommand extends AbstractCommand {
     super(text, line);
   }
 
-  public ActionCallback _execute(PlaybackRunner.StatusCallback cb, Robot robot) {
+  public ActionCallback _execute(PlaybackRunner.StatusCallback cb, Robot robot, boolean directActionCall) {
     dumpError(cb, getText());
     return new ActionCallback.Rejected();
   }

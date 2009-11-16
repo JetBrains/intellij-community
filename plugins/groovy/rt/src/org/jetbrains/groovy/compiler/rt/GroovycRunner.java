@@ -24,6 +24,8 @@ import org.codehaus.groovy.tools.javac.JavaAwareResolveVisitor;
 import org.codehaus.groovy.tools.javac.JavaStubGenerator;
 
 import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.*;
@@ -39,6 +41,7 @@ public class GroovycRunner {
   public static final String PATCHERS = "patchers";
   public static final String ENCODING = "encoding";
   public static final String OUTPUTPATH = "outputpath";
+  public static final String FINAL_OUTPUTPATH = "final_outputpath";
   public static final String END = "end";
 
   public static final String SRC_FILE = "src_file";
@@ -112,11 +115,12 @@ public class GroovycRunner {
       final List srcFiles = new ArrayList();
       final Map class2File = new HashMap();
 
-      fillFromArgsFile(argsFile, compilerConfiguration, patchers, compilerMessages, srcFiles, class2File);
+      final String[] finalOutput = new String[1];
+      fillFromArgsFile(argsFile, compilerConfiguration, patchers, compilerMessages, srcFiles, class2File, finalOutput);
       if (srcFiles.isEmpty()) return;
 
       System.out.println(PRESENTABLE_MESSAGE + "Groovy compiler: loading sources...");
-      final CompilationUnit unit = createCompilationUnit(forStubs, compilerConfiguration);
+      final CompilationUnit unit = createCompilationUnit(forStubs, compilerConfiguration, finalOutput[0]);
       addSources(forStubs, srcFiles, unit);
       runPatchers(patchers, compilerMessages, class2File, unit);
 
@@ -165,7 +169,7 @@ public class GroovycRunner {
   }
 
   private static String fillFromArgsFile(File argsFile, CompilerConfiguration compilerConfiguration, List patchers, List compilerMessages,
-                                         List srcFiles, Map class2File) {
+                                         List srcFiles, Map class2File, String[] finalOutput) {
     String moduleClasspath = null;
 
     BufferedReader reader = null;
@@ -207,13 +211,14 @@ public class GroovycRunner {
             }
           }
         }
-
-        if (line.startsWith(ENCODING)) {
+        else if (line.startsWith(ENCODING)) {
           compilerConfiguration.setSourceEncoding(reader.readLine());
         }
-
-        if (line.startsWith(OUTPUTPATH)) {
+        else if (line.startsWith(OUTPUTPATH)) {
           compilerConfiguration.setTargetDirectory(reader.readLine());
+        }
+        else if (line.startsWith(FINAL_OUTPUTPATH)) {
+          finalOutput[0] = reader.readLine();
         }
 
         line = reader.readLine();
@@ -324,11 +329,32 @@ public class GroovycRunner {
     compilerMessages.add(new CompilerMessage(CompilerMessage.WARNING, message + ":\n" + writer, "<exception>", -1, -1));
   }
 
-  private static CompilationUnit createCompilationUnit(final boolean forStubs, final CompilerConfiguration config) {
+  private static CompilationUnit createCompilationUnit(final boolean forStubs, final CompilerConfiguration config, final String finalOutput) {
     config.setClasspathList(Collections.EMPTY_LIST);
 
     final GroovyClassLoader classLoader = buildClassLoaderFor(config);
-    final CompilationUnit unit = new CompilationUnit(config, null, classLoader) {
+
+    final GroovyClassLoader transformLoader = new GroovyClassLoader(classLoader) {
+      public Enumeration getResources(String name) throws IOException {
+        if (forStubs) {
+          //return Collections.enumeration(Collections.EMPTY_LIST);
+        }
+
+        if (name.endsWith("org.codehaus.groovy.transform.ASTTransformation")) {
+          final Enumeration resources = super.getResources(name);
+          final ArrayList list = Collections.list(resources);
+          for (Iterator iterator = list.iterator(); iterator.hasNext();) {
+            final String file = ((URL)iterator.next()).getFile();
+            if (file.contains(finalOutput)) {
+              iterator.remove();
+            }
+          }
+          return Collections.enumeration(list);
+        }
+        return super.getResources(name);
+      }
+    };
+    final CompilationUnit unit = new CompilationUnit(config, null, classLoader, transformLoader) {
 
       public void gotoPhase(int phase) throws CompilationFailedException {
         super.gotoPhase(phase);

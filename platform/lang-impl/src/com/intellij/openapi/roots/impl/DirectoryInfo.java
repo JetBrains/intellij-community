@@ -20,12 +20,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.OrderedSet;
 import gnu.trove.TObjectHashingStrategy;
-import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -34,21 +31,14 @@ public class DirectoryInfo {
   public boolean isInModuleSource; // true if files in this directory belongs to sources of the module (if field 'module' is not null)
   public boolean isTestSource; // (makes sense only if isInModuleSource is true)
   public boolean isInLibrarySource; // true if it's a directory with sources of some library
-  public String packageName; // package name; makes sense only when at least one of isInModuleSource, isInLibrary or isInLibrarySource is true
   public VirtualFile libraryClassRoot; // class root in library
   public VirtualFile contentRoot;
   public VirtualFile sourceRoot;
-  public final VirtualFile directory;
-
-  public DirectoryInfo(final VirtualFile directory) {
-    this.directory = directory;
-  }
 
   /**
    *  orderEntry to (classes of) which a directory belongs
    */
   private List<OrderEntry> orderEntries = null;
-  private volatile MultiMap<Module, OrderEntry> moduleOrderEntries = null;
 
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -56,12 +46,10 @@ public class DirectoryInfo {
 
     final DirectoryInfo info = (DirectoryInfo)o;
 
-    if (!Comparing.equal(directory, info.directory)) return false;
     if (isInLibrarySource != info.isInLibrarySource) return false;
     if (isInModuleSource != info.isInModuleSource) return false;
     if (isTestSource != info.isTestSource) return false;
     if (module != null ? !module.equals(info.module) : info.module != null) return false;
-    if (packageName != null ? !packageName.equals(info.packageName) : info.packageName != null) return false;
     if (orderEntries != null ? !orderEntries.equals(info.orderEntries) : info.orderEntries != null) return false;
     if (!Comparing.equal(libraryClassRoot, info.libraryClassRoot)) return false;
     if (!Comparing.equal(contentRoot, info.contentRoot)) return false;
@@ -71,7 +59,7 @@ public class DirectoryInfo {
   }
 
   public int hashCode() {
-    return (packageName != null ? packageName.hashCode() : 0);
+    throw new UnsupportedOperationException("DirectoryInfo shall not be used as a key to HashMap");
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -81,7 +69,6 @@ public class DirectoryInfo {
            ", isInModuleSource=" + isInModuleSource +
            ", isTestSource=" + isTestSource +
            ", isInLibrarySource=" + isInLibrarySource +
-           ", packageName=" + packageName +
            ", libraryClassRoot=" + libraryClassRoot +
            ", contentRoot=" + contentRoot +
            ", sourceRoot=" + sourceRoot +
@@ -92,27 +79,10 @@ public class DirectoryInfo {
     return orderEntries == null ? Collections.<OrderEntry>emptyList() : orderEntries;
   }
 
-  public Collection<OrderEntry> getOrderEntries(@NotNull Module module) {
-    if (orderEntries == null) {
-      return Collections.emptyList();
-    }
-
-    MultiMap<Module, OrderEntry> tmp = moduleOrderEntries;
-    if (tmp == null) {
-      tmp = new MultiMap<Module, OrderEntry>();
-      for (final OrderEntry orderEntry : orderEntries) {
-        tmp.putValue(orderEntry.getOwnerModule(), orderEntry);
-      }
-      moduleOrderEntries = tmp;
-    }
-    return tmp.get(module);
-  }
-
   @SuppressWarnings({"unchecked"})
   public void addOrderEntries(final List<OrderEntry> orderEntries,
                               final DirectoryInfo parentInfo,
                               final List<OrderEntry> oldParentEntries) {
-    moduleOrderEntries = null;
     if (this.orderEntries == null) {
       this.orderEntries = orderEntries;
     }

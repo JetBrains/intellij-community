@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.libraries;
 
 import com.intellij.openapi.Disposable;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,7 @@ public interface LibraryTable {
 
   Library createLibrary();
 
-  Library createLibrary(String name);
+  Library createLibrary(@NonNls String name);
 
   void removeLibrary(@NotNull Library library);
 

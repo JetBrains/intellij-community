@@ -37,7 +37,7 @@ public class PersistentOrderRootType extends OrderRootType {
   }
 
   /**
-   * Element name used for storing roots of this type in JDK and library definitions.
+   * @return Element name used for storing roots of this type in JDK and library definitions.
    */
   public String getSdkRootName() {
     return mySdkRootName;
@@ -48,10 +48,9 @@ public class PersistentOrderRootType extends OrderRootType {
   }
 
   /**
-   * Element name used for storing roots of this type in module definitions.
+   * @return Element name used for storing roots of this type in module definitions.
    */
   public String getModulePathsName() {
     return myModulePathsName;
   }
-
 }

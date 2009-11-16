@@ -41,6 +41,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.RestartAction;
 import com.intellij.execution.ui.*;
 import com.intellij.execution.ui.actions.CloseAction;
+import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
 import com.intellij.execution.ui.layout.LayoutViewOptions;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.ide.CommonActionsManager;
@@ -107,7 +108,7 @@ public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements
 
     myUi.getDefaults().initTabDefaults(0, "Debugger", null).
         initFocusContent(DebuggerContentInfo.FRAME_CONTENT, BREAKPOINT_CONDITION).
-        initFocusContent(DebuggerContentInfo.CONSOLE_CONTENT, LayoutViewOptions.STARTUP);
+        initFocusContent(DebuggerContentInfo.CONSOLE_CONTENT, LayoutViewOptions.STARTUP, new LayoutAttractionPolicy.FocusOnce(false));
 
     final DefaultActionGroup focus = new DefaultActionGroup();
     focus.add(ActionManager.getInstance().getAction("Debugger.FocusOnBreakpoint"));
@@ -505,7 +506,7 @@ public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements
   }
 
   public void showFramePanel() {
-    myUi.selectAndFocus(myUi.findContent(DebuggerContentInfo.FRAME_CONTENT), false);
+    myUi.selectAndFocus(myUi.findContent(DebuggerContentInfo.FRAME_CONTENT), true, false);
   }
 
   private int myThreadDumpsCount = 0;
@@ -543,7 +544,7 @@ public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements
         myUi.removeContent(content, true);
       }
     });
-    myUi.selectAndFocus(content, false);
+    myUi.selectAndFocus(content, true, false);
     if (threads.size() > 0) {
       panel.selectStackFrame(0);
     }

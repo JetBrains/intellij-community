@@ -18,6 +18,7 @@ package com.intellij.facet.pointers;
 
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetType;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
@@ -48,8 +49,14 @@ public interface FacetPointer<F extends Facet> {
   FacetType<F, ?> getFacetType();
 
   @Nullable
-  F findFacet(ModulesProvider modulesProvider, FacetsProvider facetsProvider);
+  F findFacet(@NotNull ModulesProvider modulesProvider, @NotNull FacetsProvider facetsProvider);
 
   @NotNull
   String getFacetTypeId();
+
+  @NotNull
+  String getFacetName(@NotNull ModulesProvider modulesProvider, @NotNull FacetsProvider facetsProvider);
+
+  @NotNull 
+  String getModuleName(@Nullable ModifiableModuleModel moduleModel);
 }

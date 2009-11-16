@@ -24,6 +24,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.concurrency.JobUtil;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
@@ -174,8 +175,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
             }
           }
           ProblemDescriptor patchedDescriptor = iManager.createProblemDescriptor(myFile, hostRange, descriptor.getDescriptionTemplate(),
-                                                                                 descriptor.getHighlightType(),
-                                                                                 localFixes);
+                                                                                 descriptor.getHighlightType(), true, localFixes);
           LocalInspectionToolWrapper toolWrapper = tool2Wrapper.get(tool);
           toolWrapper.addProblemDescriptors(Collections.singletonList(patchedDescriptor), true);
         }
@@ -203,7 +203,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
         ApplicationManager.getApplication().assertReadAccessAllowed();
 
-        ProblemsHolder holder = new ProblemsHolder(iManager, myFile);
+        ProblemsHolder holder = new ProblemsHolder(iManager, myFile, isOnTheFly);
         PsiElementVisitor elementVisitor = tool.buildVisitor(holder, isOnTheFly);
         //noinspection ConstantConditions
         if(elementVisitor == null) {
@@ -444,9 +444,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     message = StringUtil.replace(message, "<code>", "'");
     message = StringUtil.replace(message, "</code>", "'");
     //message = message.replaceAll("<[^>]*>", "");
-    String text = psiElement == null ? "" : psiElement.getText();
+    String ref = ProblemDescriptionNode.extractHighlightedText(descriptor, psiElement);
     message = StringUtil.replace(message, "#loc", "");
-    message = StringUtil.replace(message, "#ref", text);
+    message = StringUtil.replace(message, "#ref", ref);
 
     message = StringUtil.unescapeXml(message).trim();
     return message;
@@ -470,7 +470,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
   private static void inspectInjectedPsi(PsiFile injectedPsi, List<InjectedPsiInspectionResult> result, List<LocalInspectionTool> tools) {
     InspectionManager inspectionManager = InspectionManager.getInstance(injectedPsi.getProject());
-    final ProblemsHolder problemsHolder = new ProblemsHolder(inspectionManager, injectedPsi);
+    final ProblemsHolder problemsHolder = new ProblemsHolder(inspectionManager, injectedPsi, true);
     final PsiElement host = injectedPsi.getContext();
 
     final PsiElement[] elements = getElementsIntersectingRange(injectedPsi, 0, injectedPsi.getTextLength());

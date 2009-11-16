@@ -163,7 +163,7 @@ public class IgnoreFileAction extends AnAction {
                                                  final CvsContext context) {
     return new CvsContextAdapter() {
       public VirtualFile[] getSelectedFiles() {
-        return createdCvsIgnoreFiles.toArray(new VirtualFile[createdCvsIgnoreFiles.size()]);
+        return VfsUtil.toVirtualFileArray(createdCvsIgnoreFiles);
       }
 
       public Refreshable getRefreshableDialog() {

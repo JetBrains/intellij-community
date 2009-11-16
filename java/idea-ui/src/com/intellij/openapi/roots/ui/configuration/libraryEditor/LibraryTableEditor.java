@@ -49,10 +49,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
@@ -623,7 +620,7 @@ public class LibraryTableEditor implements Disposable {
       alreadyAdded.addAll(Arrays.asList(libraryFiles));
     }
     chosenFilesSet.removeAll(alreadyAdded);
-    return chosenFilesSet.toArray(new VirtualFile[chosenFilesSet.size()]);
+    return VfsUtil.toVirtualFileArray(chosenFilesSet);
   }
 
   private class AttachClassesAction extends AttachItemAction {

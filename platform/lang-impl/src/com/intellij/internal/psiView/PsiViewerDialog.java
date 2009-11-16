@@ -13,83 +13,111 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/**
- * class PsiViewerDialog
- * created Aug 25, 2001
- * @author Jeka
- */
 package com.intellij.internal.psiView;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.SortedComboBoxModel;
+import com.intellij.ui.TitledBorderWithMnemonic;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
+/**
+ * @author Konstantin Bulenkov
+ */
 public class PsiViewerDialog extends DialogWrapper {
-  private static final Object EXTENSION_KEY = new Object();
-
   private final Project myProject;
 
   private final Tree myTree;
   private final ViewerTreeBuilder myTreeBuilder;
 
   private final JList myRefs;
+  private static String REFS_CACHE = "References Resolve Cache";
 
   private Editor myEditor;
   private String myLastParsedText = null;
-
-  private List<JRadioButton> myExtensionButtons = new ArrayList<JRadioButton>();
-  private JRadioButton[] myFileTypeButtons;
-  private FileType[] myFileTypes;
 
   private JCheckBox myShowWhiteSpacesBox;
   private JPanel myStructureTreePanel;
   private JPanel myTextPanel;
   private JPanel myPanel;
-  private JPanel myChoicesPanel;
   private JCheckBox myShowTreeNodesCheckBox;
   private JComboBox myDialectsComboBox;
   private JPanel myReferencesPanel;
+  private JPanel myButtonPanel;
+  private JSplitPane myTextSplit;
+  private JSplitPane myTreeSplit;
+  private Presentation myPresentation = new Presentation();
+  private Map<String, Object> handlers = new HashMap<String, Object>();
+  private DefaultActionGroup myGroup;
+  private Language[] myLanguageDialects;
+  private final Color SELECTION_BG_COLOR = new Color(0, 51, 51);
+  private static final Comparator<Language> DIALECTS_COMPARATOR = new Comparator<Language>() {
+    public int compare(final Language o1, final Language o2) {
+      if (o1 == null) return o2 == null ? 0 : -1;
+      if (o2 == null) return 1;
+      return o1.getID().compareTo(o2.getID());
+    }
+  };
+  private EditorListener myEditorListener = new EditorListener();
+  private int myLastParsedTextHashCode = 17;
+  private int myNewDocumentHashCode = 11;
 
-  public PsiViewerDialog(Project project,boolean modal) {
+  @Nullable
+  private static PsiElement findCommonParent(PsiElement start, PsiElement end) {
+    final TextRange range = end.getTextRange();
+    while (start != null && !start.getTextRange().contains(range)) {
+      start = start.getParent();
+    }
+    return start;
+  }
+
+  public PsiViewerDialog(Project project, boolean modal) {
     super(project, true);
     setTitle("PSI Viewer");
     myProject = project;
@@ -117,16 +145,26 @@ public class PsiViewerDialog extends DialogWrapper {
     refPanel.add(refScrollPane, BorderLayout.CENTER);
     myReferencesPanel.setLayout(new BorderLayout());
     myReferencesPanel.add(refPanel, BorderLayout.CENTER);
-    final GoToListener listener = new GoToListener(myRefs, project);
+    final GoToListener listener = new GoToListener();
     myRefs.addKeyListener(listener);
     myRefs.addMouseListener(listener);
+    myRefs.getSelectionModel().addListSelectionListener(listener);
+    myRefs.setCellRenderer(new DefaultListCellRenderer() {
+      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        final Component comp = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        if (resolve(index) == null) {
+          comp.setForeground(Color.red);
+        }
+        return comp;
+      }
+    });
 
     setModal(modal);
     setOKButtonText("&Build PSI Tree");
     init();
   }
 
-  protected String getDimensionServiceKey(){
+  protected String getDimensionServiceKey() {
     return "#com.intellij.internal.psiView.PsiViewerDialog";
   }
 
@@ -134,184 +172,280 @@ public class PsiViewerDialog extends DialogWrapper {
     return myEditor.getContentComponent();
   }
 
+  private void updatePresentation(Presentation p) {
+    myPresentation.setText(p.getText());
+    myPresentation.setIcon(p.getIcon());
+  }
+
   protected void init() {
-    EditorFactory editorFactory = EditorFactory.getInstance();
-    Document document = editorFactory.createDocument("");
+    initBorders();
+    final List<Presentation> items = new ArrayList<Presentation>();
+    final EditorFactory editorFactory = EditorFactory.getInstance();
+    final Document document = editorFactory.createDocument("");
     myEditor = editorFactory.createEditor(document, myProject);
     myEditor.getSettings().setFoldingOutlineShown(false);
+    document.addDocumentListener(myEditorListener);
+    myEditor.getSelectionModel().addSelectionListener(myEditorListener);
+    myEditor.getCaretModel().addCaretListener(myEditorListener);
 
-    for(PsiViewerExtension extension: Extensions.getExtensions(PsiViewerExtension.EP_NAME)) {
-      JRadioButton button = new JRadioButton(extension.getName());
-      button.putClientProperty(EXTENSION_KEY, extension);
-      myExtensionButtons.add(button);
+    for (PsiViewerExtension extension : Extensions.getExtensions(PsiViewerExtension.EP_NAME)) {
+      final Presentation p = new Presentation(extension.getName());
+      p.setIcon(extension.getIcon());
+      handlers.put(p.getText(), extension);
+      items.add(p);
     }
 
+    for (FileType fileType : FileTypeManager.getInstance().getRegisteredFileTypes()) {
+      if (fileType != StdFileTypes.GUI_DESIGNER_FORM &&
+          fileType != StdFileTypes.IDEA_MODULE &&
+          fileType != StdFileTypes.IDEA_PROJECT &&
+          fileType != StdFileTypes.IDEA_WORKSPACE &&
+          fileType != FileTypes.ARCHIVE &&
+          fileType != FileTypes.UNKNOWN &&
+          fileType != FileTypes.PLAIN_TEXT &&
+          !(fileType instanceof AbstractFileType) &&
+          !fileType.isBinary() &&
+          !fileType.isReadOnly()) {
+        final Presentation p = new Presentation(fileType.getName() + " file");
+        p.setIcon(fileType.getIcon());
+        handlers.put(p.getText(), fileType);
+        items.add(p);
+      }
+    }
 
-    FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
-    Arrays.sort(fileTypes,new Comparator<FileType>() {
-      public int compare(final FileType o1, final FileType o2) {
-        return o1.getName().compareTo(o2.getName());
+    final Presentation[] popupItems = items.toArray(new Presentation[items.size()]);
+    Arrays.sort(popupItems, new Comparator<Presentation>() {
+      public int compare(Presentation p1, Presentation p2) {
+        return p1.getText().toUpperCase().compareTo(p2.getText().toUpperCase());
       }
     });
-
-    List<FileType> customFileTypes = new ArrayList<FileType>();
-
-    for (FileType fileType : fileTypes) {
-      if (fileType != StdFileTypes.GUI_DESIGNER_FORM && fileType != StdFileTypes.IDEA_MODULE && fileType != StdFileTypes.IDEA_PROJECT &&
-          fileType != StdFileTypes.IDEA_WORKSPACE && fileType != FileTypes.ARCHIVE && fileType != FileTypes.UNKNOWN &&
-          fileType != FileTypes.PLAIN_TEXT && !(fileType instanceof AbstractFileType) && !fileType.isBinary() && !fileType.isReadOnly()) {
-        customFileTypes.add(fileType);
-      }
-    }
-
-    myFileTypes = customFileTypes.toArray(new FileType[customFileTypes.size()]);
-    myFileTypeButtons = new JRadioButton[myFileTypes.length];
-
-    ButtonGroup bg = new ButtonGroup();
-    for (JRadioButton button : myExtensionButtons) {
-      bg.add(button);
-    }
-
-    final int rows = 1 + myFileTypes.length / 7;
-    JPanel choicesBox = new JPanel(new GridLayout(rows, 7));
-
-    for (JRadioButton extensionButton : myExtensionButtons) {
-      choicesBox.add(extensionButton);
-    }
-
-    for (int i = 0; i < myFileTypes.length; i++) {
-      FileType fileType = myFileTypes[i];
-      JRadioButton button = new JRadioButton(fileType.getName()+" file");
-      bg.add(button);
-      choicesBox.add(button);
-      myFileTypeButtons[i] = button;
-    }
-
-    final ActionListener updateDialectsListener = new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        updateDialectsCombo();
-      }
-    };
-    final Enumeration<AbstractButton> buttonEnum = bg.getElements();
-    while (buttonEnum.hasMoreElements()) {
-      buttonEnum.nextElement().addActionListener(updateDialectsListener);
-    }
-    updateDialectsCombo();
-    myDialectsComboBox.setRenderer(new DefaultListCellRenderer() {
-      @Override
-      public Component getListCellRendererComponent(final JList list,
-                                                    final Object value,
-                                                    final int index,
-                                                    final boolean isSelected,
-                                                    final boolean cellHasFocus) {
-        final Component result = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        if (value == null) setText("<no dialect>");
-        return result;
-      }
-    });
-
-    if (myExtensionButtons.size() > 0) {
-      myExtensionButtons.get(0).setSelected(true);
-    }
-    else {
-      myFileTypeButtons [0].setSelected(true);
-    }
-
-    myChoicesPanel.setLayout(new BorderLayout());
-    myChoicesPanel.add(choicesBox, BorderLayout.CENTER);
 
     final ViewerTreeStructure treeStructure = (ViewerTreeStructure)myTreeBuilder.getTreeStructure();
     myShowWhiteSpacesBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         treeStructure.setShowWhiteSpaces(myShowWhiteSpacesBox.isSelected());
-        myTreeBuilder.updateFromRoot();
+        myTreeBuilder.queueUpdate();
       }
     });
     myShowTreeNodesCheckBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         treeStructure.setShowTreeNodes(myShowTreeNodesCheckBox.isSelected());
-        myTreeBuilder.updateFromRoot();
+        myTreeBuilder.queueUpdate();
       }
     });
     myTextPanel.setLayout(new BorderLayout());
     myTextPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
 
-    super.init();
-  }
+    myGroup = new DefaultActionGroup();
+    for (final Presentation popupItem : popupItems) {
+      myGroup.add(new PopupItemAction(popupItem));
+    }
 
-  private void updateDialectsCombo() {
-    final SortedComboBoxModel<Language> model = new SortedComboBoxModel<Language>(new Comparator<Language>() {
-      public int compare(final Language o1, final Language o2) {
-        if (o1 == null) return o2 == null? 0 : -1;
-        if (o2 == null) return 1;
-        return o1.getID().compareTo(o2.getID());
-      }
-    });
-    for (int i = 0; i < myFileTypeButtons.length; i++) {
-      JRadioButton fileTypeButton = myFileTypeButtons[i];
-      if (fileTypeButton.isSelected()) {
-        final FileType type = myFileTypes[i];
-        if (type instanceof LanguageFileType) {
-          final Language baseLang = ((LanguageFileType)type).getLanguage();
-          model.setAll(LanguageUtil.getLanguageDialects(baseLang));
-          model.add(null);
-        }
+    final PsiViewerSettings settings = PsiViewerSettings.getSettings();
+    final String type = settings.type;
+    for (Presentation popupItem : popupItems) {
+      if (popupItem.getText().equals(type)) {
+        updatePresentation(popupItem);
         break;
       }
     }
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        myEditor.getDocument().setText(settings.text);
+      }
+    });
+
+    myShowWhiteSpacesBox.setSelected(settings.showWhiteSpaces);
+    myShowTreeNodesCheckBox.setSelected(settings.showTreeNodes);
+
+    final ChoosePsiTypeButton typeButton = new ChoosePsiTypeButton();
+    myButtonPanel.add(typeButton.createCustomComponent(myPresentation), BorderLayout.CENTER);
+
+    updateDialectsCombo();
+    if (myDialectsComboBox.isVisible()) {
+      for (int i = 0; i < myLanguageDialects.length; i++) {
+        if (settings.dialect.equals(myLanguageDialects[i].toString())) {
+          myDialectsComboBox.setSelectedIndex(i);
+          break;
+        }
+      }
+    }
+
+    registerCustomKeyboardActions();
+    final Dimension size = DimensionService.getInstance().getSize(getDimensionServiceKey(), myProject);
+    if (size == null) {
+      DimensionService.getInstance().setSize(getDimensionServiceKey(), new Dimension(600, 600));
+    }
+    myTextSplit.setDividerLocation(settings.textDividerLocation);
+    myTreeSplit.setDividerLocation(settings.treeDividerLocation);
+    super.init();
+  }
+
+  private void registerCustomKeyboardActions() {
+    final Component component = myButtonPanel.getComponents()[0];
+    if (component instanceof JComponent) {
+      final Component button = ((JComponent)component).getComponents()[0];
+      if (button instanceof JButton) {
+        final JButton jButton = (JButton)button;
+        final int mask = SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.ALT_DOWN_MASK;
+        registerKeyboardAction(new ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            jButton.doClick();
+          }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_P, mask));
+
+        registerKeyboardAction(new ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            focusEditor();
+          }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_T, mask));
+
+        registerKeyboardAction(new ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            focusTree();
+          }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_S, mask));
+
+        registerKeyboardAction(new ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            focusTree();
+          }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_S, mask));
+
+
+        registerKeyboardAction(new ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            focusTree();
+          }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_S, mask));
+
+        registerKeyboardAction(new ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            focusRefs();
+          }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_R, mask));
+
+        registerKeyboardAction(new ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            if (myRefs.isFocusOwner()) {
+              focusTree();
+            }
+            else if (myTree.isFocusOwner()) {
+              focusRefs();
+            }
+          }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0));
+      }
+    }
+  }
+
+  private void registerKeyboardAction(ActionListener actionListener, KeyStroke keyStroke) {
+    getRootPane().registerKeyboardAction(actionListener, keyStroke, JComponent.WHEN_IN_FOCUSED_WINDOW);
+  }
+
+  private void focusEditor() {
+    IdeFocusManager.getInstance(myProject).requestFocus(myEditor.getContentComponent(), true);
+  }
+
+  private void focusTree() {
+    IdeFocusManager.getInstance(myProject).requestFocus(myTree, true);
+  }
+
+  private void focusRefs() {
+    IdeFocusManager.getInstance(myProject).requestFocus(myRefs, true);
+    if (myRefs.getModel().getSize() > 0) {
+      if (myRefs.getSelectedIndex() == -1) {
+        myRefs.setSelectedIndex(0);
+      }
+    }
+  }
+
+  private void initBorders() {
+    myTextPanel.setBorder(new TitledBorderWithMnemonic("&Text"));
+    myStructureTreePanel.setBorder(new TitledBorderWithMnemonic("PSI &Structure"));
+    myReferencesPanel.setBorder(new TitledBorderWithMnemonic("&References"));
+  }
+
+  @Nullable
+  private PsiElement getPsiElement() {
+    final TreePath path = myTree.getSelectionPath();
+    return path == null ? null : getPsiElement((DefaultMutableTreeNode)path.getLastPathComponent());
+  }
+
+  @Nullable
+  private PsiElement getPsiElement(DefaultMutableTreeNode node) {
+    if (node.getUserObject() instanceof ViewerNodeDescriptor) {
+      ViewerNodeDescriptor descriptor = (ViewerNodeDescriptor)node.getUserObject();
+      Object elementObject = descriptor.getElement();
+      return elementObject instanceof PsiElement
+             ? (PsiElement)elementObject
+             : elementObject instanceof ASTNode ? ((ASTNode)elementObject).getPsi() : null;
+    }
+    return null;
+  }
+
+  private void updateDialectsCombo() {
+    final SortedComboBoxModel<Language> model = new SortedComboBoxModel<Language>(DIALECTS_COMPARATOR);
+    final Object handler = getHandler();
+    if (handler instanceof LanguageFileType) {
+      final Language baseLang = ((LanguageFileType)handler).getLanguage();
+      myLanguageDialects = LanguageUtil.getLanguageDialects(baseLang);
+      Arrays.sort(myLanguageDialects, DIALECTS_COMPARATOR);
+      model.setAll(myLanguageDialects);
+    }
     myDialectsComboBox.setModel(model);
     myDialectsComboBox.setVisible(model.getSize() > 1);
+    if (!myDialectsComboBox.isVisible()) {
+      myLanguageDialects = new Language[0];
+    }
   }
 
   protected JComponent createCenterPanel() {
     return myPanel;
   }
 
+  private Object getHandler() {
+    return handlers.get(myPresentation.getText());
+  }
+
   protected void doOKAction() {
     final String text = myEditor.getDocument().getText();
-    if ("".equals(text.trim())) {
-      return;
-    }
-    myLastParsedText = text;
-    PsiElement rootElement = null;
-    try {
-      for (JRadioButton button : myExtensionButtons) {
-        if (button.isSelected()) {
-          PsiViewerExtension ext = (PsiViewerExtension) button.getClientProperty(EXTENSION_KEY);
-          rootElement = ext.createElement(myProject, text);
-        }
-      }
-      if (rootElement == null) {
-        for (int i = 0; i < myFileTypeButtons.length; i++) {
-          JRadioButton fileTypeButton = myFileTypeButtons[i];
+    if (text.trim().length() == 0) return;
 
-          if (fileTypeButton.isSelected()) {
-            final FileType type = myFileTypes[i];
-            if (type instanceof LanguageFileType) {
-              final Language language = ((LanguageFileType)type).getLanguage();
-              final Language dialect = (Language)myDialectsComboBox.getSelectedItem();
-              rootElement = PsiFileFactory.getInstance(myProject).createFileFromText("Dummy." + type.getDefaultExtension(), dialect == null? language : dialect, text);
-            }
-            else {
-              rootElement = PsiFileFactory.getInstance(myProject).createFileFromText("Dummy." + type.getDefaultExtension(), text);
-            }
-          }
+    myLastParsedText = text;
+    myLastParsedTextHashCode = text.hashCode();
+    myNewDocumentHashCode = myLastParsedTextHashCode;
+    PsiElement rootElement = null;
+    final Object handler = getHandler();
+
+    try {
+      if (handler instanceof PsiViewerExtension) {
+        final PsiViewerExtension ext = (PsiViewerExtension)handler;
+        rootElement = ext.createElement(myProject, text);
+      }
+      else if (handler instanceof FileType) {
+        final FileType type = (FileType)handler;
+        if (type instanceof LanguageFileType) {
+          final Language language = ((LanguageFileType)type).getLanguage();
+          final Language dialect = (Language)myDialectsComboBox.getSelectedItem();
+          rootElement = PsiFileFactory.getInstance(myProject)
+            .createFileFromText("Dummy." + type.getDefaultExtension(), dialect == null ? language : dialect, text);
+        }
+        else {
+          rootElement = PsiFileFactory.getInstance(myProject).createFileFromText("Dummy." + type.getDefaultExtension(), text);
         }
       }
+      focusTree();
     }
     catch (IncorrectOperationException e1) {
       rootElement = null;
-      Messages.showMessageDialog(
-        myProject,
-        e1.getMessage(),
-        "Error",
-        Messages.getErrorIcon()
-      );
+      Messages.showMessageDialog(myProject, e1.getMessage(), "Error", Messages.getErrorIcon());
     }
     ViewerTreeStructure structure = (ViewerTreeStructure)myTreeBuilder.getTreeStructure();
     structure.setRootPsiElement(rootElement);
 
-    myTreeBuilder.updateFromRoot();
+    myTreeBuilder.queueUpdate();
     myTree.setRootVisible(true);
     myTree.expandRow(0);
     myTree.setRootVisible(false);
@@ -319,28 +453,28 @@ public class PsiViewerDialog extends DialogWrapper {
 
   private class MyTreeSelectionListener implements TreeSelectionListener {
     private final TextAttributes myAttributes;
-    private RangeHighlighter myHighlighter;
 
     public MyTreeSelectionListener() {
       myAttributes = new TextAttributes();
-      myAttributes.setBackgroundColor(new Color(0, 0, 128));
+      myAttributes.setBackgroundColor(SELECTION_BG_COLOR);
       myAttributes.setForegroundColor(Color.white);
     }
 
     public void valueChanged(TreeSelectionEvent e) {
       if (!myEditor.getDocument().getText().equals(myLastParsedText)) return;
       TreePath path = myTree.getSelectionPath();
-      if (path == null){
+      if (path == null) {
         clearSelection();
       }
-      else{
+      else {
         clearSelection();
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
         if (!(node.getUserObject() instanceof ViewerNodeDescriptor)) return;
         ViewerNodeDescriptor descriptor = (ViewerNodeDescriptor)node.getUserObject();
         Object elementObject = descriptor.getElement();
-        final PsiElement element = elementObject instanceof PsiElement? (PsiElement)elementObject :
-                                   elementObject instanceof ASTNode ? ((ASTNode)elementObject).getPsi() : null;
+        final PsiElement element = elementObject instanceof PsiElement
+                                   ? (PsiElement)elementObject
+                                   : elementObject instanceof ASTNode ? ((ASTNode)elementObject).getPsi() : null;
         if (element != null) {
           TextRange range = element.getTextRange();
           int start = range.getStartOffset();
@@ -355,7 +489,14 @@ public class PsiViewerDialog extends DialogWrapper {
 
           final int textLength = myEditor.getDocument().getTextLength();
           if (end <= textLength) {
-            myHighlighter = myEditor.getMarkupModel().addRangeHighlighter(start, end, HighlighterLayer.FIRST + 1, myAttributes, HighlighterTargetArea.EXACT_RANGE);
+            myEditor.getMarkupModel()
+              .addRangeHighlighter(start, end, HighlighterLayer.FIRST + 1, myAttributes, HighlighterTargetArea.EXACT_RANGE);
+            if (myTree.hasFocus()) {
+              myEditor.getCaretModel().moveToOffset(start);
+              myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+            } else {
+              myEditor.getScrollingModel().scrollTo(myEditor.offsetToLogicalPosition(start), ScrollType.MAKE_VISIBLE);
+            }
           }
           updateReferences(element);
         }
@@ -365,19 +506,35 @@ public class PsiViewerDialog extends DialogWrapper {
     public void updateReferences(PsiElement element) {
       final DefaultListModel model = (DefaultListModel)myRefs.getModel();
       model.clear();
+      final Object cache = myRefs.getClientProperty(REFS_CACHE);
+      if (cache instanceof Map) {
+        ((Map)cache).clear();
+      } else {
+        myRefs.putClientProperty(REFS_CACHE, new HashMap());
+      }
       if (element != null) {
         for (PsiReference reference : element.getReferences()) {
           model.addElement(reference.getClass().getName());
         }
-      }      
+      }
     }
 
     private void clearSelection() {
-      if (myHighlighter != null) {
-        myEditor.getMarkupModel().removeHighlighter(myHighlighter);
-        myHighlighter = null;
-      }
+      myEditor.getMarkupModel().removeAllHighlighters();
     }
+  }
+
+  public void doCancelAction() {
+    final PsiViewerSettings settings = PsiViewerSettings.getSettings();
+    settings.type = myPresentation.getText();
+    settings.text = myEditor.getDocument().getText();
+    settings.showTreeNodes = myShowTreeNodesCheckBox.isSelected();
+    settings.showWhiteSpaces = myShowWhiteSpacesBox.isSelected();
+    final Object selectedDialect = myDialectsComboBox.getSelectedItem();
+    settings.dialect = myDialectsComboBox.isVisible() && selectedDialect != null ? selectedDialect.toString() : "";
+    settings.textDividerLocation = myTextSplit.getDividerLocation();
+    settings.treeDividerLocation = myTreeSplit.getDividerLocation();    
+    super.doCancelAction();
   }
 
   public void dispose() {
@@ -387,17 +544,69 @@ public class PsiViewerDialog extends DialogWrapper {
     super.dispose();
   }
 
-  private static class GoToListener implements KeyListener, MouseListener {
-    private final JList myList;
-    private final Project myProject;
+  @Nullable
+  private PsiElement resolve(int index) {
+    final PsiElement element = getPsiElement();
+    if (element == null) return null;
+    Object o = myRefs.getClientProperty(REFS_CACHE);
+    if (o == null) {
+      myRefs.putClientProperty(REFS_CACHE, o = new HashMap());
+    }
+    HashMap map = (HashMap)o;
+    Object cache = map.get(element);
+    if (cache == null) {
+      final PsiReference[] references = element.getReferences();
+      cache = new PsiElement[references.length];
+      for (int i = 0; i < references.length; i++) {
+        ((PsiElement[])cache)[i] = references[i].resolve();
+      }
+      map.put(element, cache);
+    }
+    PsiElement[] elements = (PsiElement[])cache;
+    return index >= elements.length ? null : elements[index];
+  }
 
-    public GoToListener(JList list, Project project) {
-      myList = list;
-      myProject = project;
+  @Nullable
+  public static TreeNode findNodeWithObject(final Object object, final TreeModel model, final Object parent) {
+    for (int i = 0; i < model.getChildCount(parent); i++) {
+      final DefaultMutableTreeNode childNode = (DefaultMutableTreeNode) model.getChild(parent, i);
+      if (childNode.getUserObject().equals(object)) {
+        return childNode;
+      } else {
+        final TreeNode node = findNodeWithObject(object, model, childNode);
+        if (node != null) return node;
+      }
+    }
+    return null;
+  }
+
+  private class ChoosePsiTypeButton extends ComboBoxAction {
+    protected int getMaxRows() {
+      return 15;
     }
 
+    protected int getMinWidth() {
+      return 150;
+    }
+
+    protected int getMinHeight() {
+      return 200;
+    }
+
+    @NotNull
+    protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+      return myGroup;
+    }
+  }
+
+  private class GoToListener implements KeyListener, MouseListener, ListSelectionListener {
+    private RangeHighlighter myHighlighter;
+    private final TextAttributes myAttributes =
+      new TextAttributes(Color.white, SELECTION_BG_COLOR, Color.red, EffectType.BOXED, Font.PLAIN);
+
     private void navigate() {
-      final Object value = myList.getSelectedValue();
+      clearSelection();
+      final Object value = myRefs.getSelectedValue();
       if (value instanceof String) {
         final String fqn = (String)value;
         String filename = fqn;
@@ -427,11 +636,96 @@ public class PsiViewerDialog extends DialogWrapper {
       }
     }
 
+    public void valueChanged(ListSelectionEvent e) {
+      clearSelection();
+      updateDialectsCombo();
+      final int ind = myRefs.getSelectedIndex();
+      final PsiElement element = getPsiElement();
+      if (ind > -1 && element != null) {
+        final PsiReference[] references = element.getReferences();
+        if (ind < references.length) {
+          final TextRange textRange = references[ind].getRangeInElement();
+          TextRange range = element.getTextRange();
+          int start = range.getStartOffset();
+          int end = range.getEndOffset();
+          final ViewerTreeStructure treeStructure = (ViewerTreeStructure)myTreeBuilder.getTreeStructure();
+          PsiElement rootPsiElement = treeStructure.getRootPsiElement();
+          if (rootPsiElement != null) {
+            int baseOffset = rootPsiElement.getTextRange().getStartOffset();
+            start -= baseOffset;
+            end -= baseOffset;
+          }
+
+          start += textRange.getStartOffset();
+          end = start + textRange.getLength();
+          myHighlighter = myEditor.getMarkupModel()
+            .addRangeHighlighter(start, end, HighlighterLayer.FIRST + 1, myAttributes, HighlighterTargetArea.EXACT_RANGE);
+        }
+      }
+    }
+
+    public void clearSelection() {
+      if (myHighlighter != null && Arrays.asList(myEditor.getMarkupModel().getAllHighlighters()).contains(myHighlighter)) {
+        myEditor.getMarkupModel().removeHighlighter(myHighlighter);
+        myHighlighter = null;
+      }
+    }
+
     public void keyTyped(KeyEvent e) {}
     public void keyReleased(KeyEvent e) {}
     public void mousePressed(MouseEvent e) {}
     public void mouseReleased(MouseEvent e) {}
     public void mouseEntered(MouseEvent e) {}
     public void mouseExited(MouseEvent e) {}
+  }
+
+  private class PopupItemAction extends AnAction implements DumbAware {
+    public PopupItemAction(Presentation p) {
+      super(p.getText(), p.getText(), p.getIcon());
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      updatePresentation(e.getPresentation());
+      updateDialectsCombo();
+    }
+  }
+
+  private class EditorListener implements CaretListener, SelectionListener, DocumentListener {
+    public void caretPositionChanged(CaretEvent e) {
+      if (!available() || myEditor.getSelectionModel().hasSelection()) return;
+      final PsiFile psiFile = getPsiFile();
+      if (psiFile == null) return;
+      final int offset = myEditor.getCaretModel().getOffset();
+      final PsiElement element = PsiUtilBase.getElementAtOffset(psiFile, offset);
+      myTreeBuilder.select(element);
+    }
+
+    public void selectionChanged(SelectionEvent e) {
+      if (!available() || !myEditor.getSelectionModel().hasSelection()) return;
+      final PsiFile psiFile = getPsiFile();
+      if (psiFile == null) return;
+      final SelectionModel selection = myEditor.getSelectionModel();
+      final int start = selection.getSelectionStart();
+      final int end = selection.getSelectionEnd();
+      final PsiElement element = findCommonParent(PsiUtilBase.getElementAtOffset(psiFile, start), PsiUtilBase.getElementAtOffset(psiFile, end));
+      myTreeBuilder.select(element);
+    }
+
+    private boolean available() {
+      return myLastParsedTextHashCode == myNewDocumentHashCode && myEditor.getContentComponent().hasFocus();
+    }
+
+    @Nullable
+    private PsiFile getPsiFile() {
+      final PsiElement root = ((ViewerTreeStructure)myTreeBuilder.getTreeStructure()).getRootPsiElement();
+      return root instanceof PsiFile ? (PsiFile)root : null;
+    }
+
+    public void beforeDocumentChange(DocumentEvent event) {
+
+    }
+    public void documentChanged(DocumentEvent event) {
+      myNewDocumentHashCode = event.getDocument().getText().hashCode();
+    }
   }
 }
