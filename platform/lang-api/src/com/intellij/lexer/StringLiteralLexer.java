@@ -41,6 +41,8 @@ public class StringLiteralLexer extends LexerBase {
   private final boolean myCanEscapeEolOrFramingSpaces;
   private final String myAdditionalValidEscapes;
   private boolean mySeenEscapedSpacesOnly;
+  private boolean myAllowOctal;
+  private boolean myAllowHex;
 
   public StringLiteralLexer(char quoteChar, final IElementType originalLiteralToken) {
     this(quoteChar, originalLiteralToken, false, null);
@@ -52,10 +54,22 @@ public class StringLiteralLexer extends LexerBase {
    *    '\ ' (escaped space) in the beginning and in the end of the buffer (meaning escaped space, to avoid auto trimming on load)
    */
   public StringLiteralLexer(char quoteChar, final IElementType originalLiteralToken, boolean canEscapeEolOrFramingSpaces, String additionalValidEscapes) {
+    this(quoteChar, originalLiteralToken, canEscapeEolOrFramingSpaces, additionalValidEscapes, true, false);
+  }
+
+  /**
+   * @param canEscapeEolOrFramingSpaces true if following sequences are acceptable
+   *    '\' in the end of the buffer (meaning escaped end of line) or
+   * @param allowOctal
+   */
+  public StringLiteralLexer(char quoteChar, final IElementType originalLiteralToken, boolean canEscapeEolOrFramingSpaces, String additionalValidEscapes,
+                            boolean allowOctal, boolean allowHex) {
     myQuoteChar = quoteChar;
     myOriginalLiteralToken = originalLiteralToken;
     myCanEscapeEolOrFramingSpaces = canEscapeEolOrFramingSpaces;
     myAdditionalValidEscapes = additionalValidEscapes;
+    myAllowOctal = allowOctal;
+    myAllowHex = allowHex;
   }
 
   public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
@@ -104,15 +118,14 @@ public class StringLiteralLexer extends LexerBase {
       return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN;
     }
 
+    if (nextChar == 'x' && myAllowHex) {
+      for(int i = myStart + 2; i < myStart + 4; i++) {
+        if (i >= myEnd || !isHexDigit(myBuffer.charAt(i))) return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN;
+      }
+      return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN;
+    }
+
     switch (nextChar) {
-      case 'n':
-      case 'r':
-      case 'b':
-      case 't':
-      case 'f':
-      case '\'':
-      case '\"':
-      case '\\':
       case '0':
       case '1':
       case '2':
@@ -121,6 +134,15 @@ public class StringLiteralLexer extends LexerBase {
       case '5':
       case '6':
       case '7':
+        if (!myAllowOctal) return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN;
+      case 'n':
+      case 'r':
+      case 'b':
+      case 't':
+      case 'f':
+      case '\'':
+      case '\"':
+      case '\\':
         return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN;
     }
     if (myAdditionalValidEscapes != null && myAdditionalValidEscapes.indexOf(nextChar) != -1) {
@@ -163,13 +185,23 @@ public class StringLiteralLexer extends LexerBase {
         return i;
       }
 
-      if (myBuffer.charAt(i) >= '0' && myBuffer.charAt(i) <= '7') {
+      if (myAllowOctal && myBuffer.charAt(i) >= '0' && myBuffer.charAt(i) <= '7') {
         char first = myBuffer.charAt(i);
         i++;
         if (i < myBufferEnd && myBuffer.charAt(i) >= '0' && myBuffer.charAt(i) <= '7') {
           i++;
           if (i < myBufferEnd && first <= '3' && myBuffer.charAt(i) >= '0' && myBuffer.charAt(i) <= '7') {
             i++;
+          }
+        }
+        return i;
+      }
+
+      if (myAllowHex && myBuffer.charAt(i) == 'x') {
+        i++;
+        for (; i < start + 4; i++) {
+          if (i == myBufferEnd || myBuffer.charAt(i) == '\n' || myBuffer.charAt(i) == myQuoteChar) {
+            return i;
           }
         }
         return i;
