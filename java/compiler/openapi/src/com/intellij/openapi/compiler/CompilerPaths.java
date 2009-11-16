@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.compiler;
 
+import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,6 +24,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.CompilerProjectExtension;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,6 +36,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Locale;
 
 /**
@@ -41,6 +46,11 @@ import java.util.Locale;
 public class CompilerPaths {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.compiler.CompilerPaths");
   private static volatile String ourSystemPath;
+  private static final Comparator<String> URLS_COMPARATOR = new Comparator<String>() {
+    public int compare(String o1, String o2) {
+      return o1.compareTo(o2);
+    }
+  };
 
   /**
    * Returns a directory
@@ -180,6 +190,27 @@ public class CompilerPaths {
     return outPathUrl != null? VirtualFileManager.extractPath(outPathUrl) : null;
   }
 
+  public static String getAnnotationProcessorsGenerationPath(Module module) {
+    final CompilerConfiguration config = CompilerConfiguration.getInstance(module.getProject());
+
+    if (config.isStoreGenerateSourcesUnderModuleContent(module)) {
+      final String[] roots = ModuleRootManager.getInstance(module).getContentRootUrls();
+      if (roots.length == 0) {
+        return null;
+      }
+      if (roots.length > 1) {
+        Arrays.sort(roots, URLS_COMPARATOR);
+      }
+      return VirtualFileManager.extractPath(roots[0]) + "/" + config.getGeneratedDirName();
+    }
+
+    final String url = CompilerProjectExtension.getInstance(module.getProject()).getCompilerOutputUrl();
+    if (url == null) {
+      return null;
+    }
+    return VirtualFileManager.extractPath(url) + "/generated/" + module.getName().toLowerCase();
+  }
+  
   @NonNls
   public static String getGenerationOutputPath(IntermediateOutputCompiler compiler, Module module, final boolean forTestSources) {
     final String generatedCompilerDirectoryPath = getGeneratedDataDirectory(module.getProject(), compiler).getPath();

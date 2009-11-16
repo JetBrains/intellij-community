@@ -237,7 +237,7 @@ public class ModuleChunk extends Chunk<Module> {
     return convertToStringPath(cpFiles);
   }
 
-  private String convertToStringPath(final OrderedSet<VirtualFile> cpFiles) {
+  private static String convertToStringPath(final OrderedSet<VirtualFile> cpFiles) {
     final StringBuilder classpathBuffer = StringBuilderSpinAllocator.alloc();
     try {
       for (final VirtualFile file : cpFiles) {

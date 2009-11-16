@@ -118,6 +118,10 @@ public class DependencyCache {
     myTraverseRoots.clear();
   }
 
+  public boolean hasUnprocessedTraverseRoots() {
+    return !myTraverseRoots.isEmpty();
+  }
+
   public void markSourceRemoved(int qName) {
     myClassesWithSourceRemoved.add(qName);
   }

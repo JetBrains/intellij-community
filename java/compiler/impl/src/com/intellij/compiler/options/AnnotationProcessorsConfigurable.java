@@ -1,7 +1,6 @@
 package com.intellij.compiler.options;
 
 import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
@@ -16,7 +15,6 @@ import com.intellij.ui.TableUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.Table;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -38,7 +36,7 @@ import java.util.*;
  *         Date: Oct 5, 2009
  */
 public class AnnotationProcessorsConfigurable implements Configurable{
-  private ElementsChooser<Module> myModulesChooser;
+  private ProcessedModulesChooser myModulesChooser;
   private final Project myProject;
   private JRadioButton myRbClasspath;
   private JRadioButton myRbProcessorsPath;
@@ -107,15 +105,7 @@ public class AnnotationProcessorsConfigurable implements Configurable{
     processorTablePanel.add(buttons, BorderLayout.EAST);
     processorTablePanel.setPreferredSize(new Dimension(processorTablePanel.getPreferredSize().width, 50));
 
-    myModulesChooser = new ElementsChooser<Module>(true) {
-      protected String getItemText(@NotNull Module module) {
-        return module.getName() + " (" + FileUtil.toSystemDependentName(module.getModuleFilePath()) + ")";
-      }
-
-      protected Icon getItemIcon(Module module) {
-        return module.getModuleType().getNodeIcon(false);
-      }
-    };
+    myModulesChooser = new ProcessedModulesChooser();
     myModulesChooser.setBorder(BorderFactory.createTitledBorder("Processed Modules"));
 
     mainPanel.add(myCbEnableProcessing, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));

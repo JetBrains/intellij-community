@@ -338,6 +338,11 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     Place.queryFurther(mySelectedConfigurable, place);
   }
 
+  public ActionCallback selectProjectGeneralSettings(final boolean requestFocus) {
+    Place place = new Place().putPath(CATEGORY, myProjectConfig);
+    return navigateTo(place, requestFocus);
+  }
+
   public ActionCallback select(@Nullable final String moduleToSelect, String tab, final boolean requestFocus) {
     Place place = new Place().putPath(CATEGORY, myModulesConfig);
     if (moduleToSelect != null) {

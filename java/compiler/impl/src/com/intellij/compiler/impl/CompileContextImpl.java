@@ -51,6 +51,7 @@ import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -135,6 +136,13 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     }
     for (final VirtualFile root : myRootToModuleMap.keySet()) {
       if (VfsUtil.isAncestor(root, file, false)) {
+        return true;
+      }
+    }
+    final Module module = getModuleByFile(file);
+    if (module != null) {
+      final String procGenRoot = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
+      if (VfsUtil.isAncestor(new File(procGenRoot), new File(file.getPath()), true)) {
         return true;
       }
     }

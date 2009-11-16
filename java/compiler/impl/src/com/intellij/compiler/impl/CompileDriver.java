@@ -53,10 +53,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.ui.configuration.CommonContentEntriesEditor;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
@@ -145,16 +142,24 @@ public class CompileDriver {
 
     myGenerationCompilerModuleToOutputDirMap = new HashMap<Pair<IntermediateOutputCompiler, Module>, Pair<VirtualFile, VirtualFile>>();
 
+    final LocalFileSystem lfs = LocalFileSystem.getInstance();
     final IntermediateOutputCompiler[] generatingCompilers = CompilerManager.getInstance(myProject).getCompilers(IntermediateOutputCompiler.class, myCompilerFilter);
-    if (generatingCompilers.length > 0) {
-      final Module[] allModules = ModuleManager.getInstance(myProject).getModules();
+    final Module[] allModules = ModuleManager.getInstance(myProject).getModules();
+    final CompilerConfiguration config = CompilerConfiguration.getInstance(project);
+    for (Module module : allModules) {
       for (IntermediateOutputCompiler compiler : generatingCompilers) {
-        for (final Module module : allModules) {
-          final VirtualFile productionOutput = lookupVFile(compiler, module, false);
-          final VirtualFile testOutput = lookupVFile(compiler, module, true);
-          final Pair<IntermediateOutputCompiler, Module> pair = new Pair<IntermediateOutputCompiler, Module>(compiler, module);
-          final Pair<VirtualFile, VirtualFile> outputs = new Pair<VirtualFile, VirtualFile>(productionOutput, testOutput);
-          myGenerationCompilerModuleToOutputDirMap.put(pair, outputs);
+        final VirtualFile productionOutput = lookupVFile(lfs, CompilerPaths.getGenerationOutputPath(compiler, module, false));
+        final VirtualFile testOutput = lookupVFile(lfs, CompilerPaths.getGenerationOutputPath(compiler, module, true));
+        final Pair<IntermediateOutputCompiler, Module> pair = new Pair<IntermediateOutputCompiler, Module>(compiler, module);
+        final Pair<VirtualFile, VirtualFile> outputs = new Pair<VirtualFile, VirtualFile>(productionOutput, testOutput);
+        myGenerationCompilerModuleToOutputDirMap.put(pair, outputs);
+      }
+      if (config.isAnnotationProcessorsEnabled()) {
+        if (!config.getExcludedModules().contains(module)) {
+          final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
+          if (path != null) {
+            lookupVFile(lfs, path);  // ensure the file is created and added to VFS
+          }
         }
       }
     }
@@ -334,6 +339,27 @@ public class CompileDriver {
     return scope;
   }
 
+  private void attachAnnotationProcessorsOutputDirectories(CompileContextEx context) {
+    final LocalFileSystem lfs = LocalFileSystem.getInstance();
+    final Set<Module> affected = new HashSet<Module>(Arrays.asList(context.getCompileScope().getAffectedModules()));
+    for (Module module : affected) {
+      final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
+      if (path == null) {
+        continue;
+      }
+      final VirtualFile vFile = lfs.findFileByPath(path);
+      if (vFile == null) {
+        continue;
+      }
+      if (ModuleRootManager.getInstance(module).getFileIndex().isInSourceContent(vFile)) {
+        // no need to add, is already marked as source
+        continue;
+      }
+      context.addScope(new FileSetCompileScope(Collections.singletonList(vFile), new Module[]{module}));
+      context.assignModule(vFile, module, false);
+    }
+  }
+
   public static final Key<Long> COMPILATION_START_TIMESTAMP = Key.create("COMPILATION_START_TIMESTAMP");
 
   private void startup(final CompileScope scope,
@@ -365,7 +391,8 @@ public class CompileDriver {
       compileContext.assignModule(outputs.getFirst(), module, false);
       compileContext.assignModule(outputs.getSecond(), module, true);
     }
-
+    attachAnnotationProcessorsOutputDirectories(compileContext);
+    
     compileTask.start(new Runnable() {
       public void run() {
         long start = System.currentTimeMillis();
@@ -1147,8 +1174,20 @@ public class CompileDriver {
 
   private Set<File> getAllOutputDirectories() {
     final Set<File> outputDirs = new OrderedSet<File>((TObjectHashingStrategy<File>)TObjectHashingStrategy.CANONICAL);
-    for (final String path : CompilerPathsEx.getOutputPaths(ModuleManager.getInstance(myProject).getModules())) {
+    final Module[] modules = ModuleManager.getInstance(myProject).getModules();
+    for (final String path : CompilerPathsEx.getOutputPaths(modules)) {
       outputDirs.add(new File(path));
+    }
+    final CompilerConfiguration config = CompilerConfiguration.getInstance(myProject);
+    if (config.isAnnotationProcessorsEnabled()) {
+      for (Module module : modules) {
+        if (!config.getExcludedModules().contains(module)) {
+          final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
+          if (path != null) {
+            outputDirs.add(new File(path));
+          }
+        }
+      }
     }
     return outputDirs;
   }
@@ -1422,6 +1461,7 @@ public class CompileDriver {
     context.getProgressIndicator().pushState();
 
     final boolean[] wereFilesDeleted = new boolean[]{false};
+    boolean traverseRootsProcessed = false;
     try {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
@@ -1469,15 +1509,17 @@ public class CompileDriver {
           context.requestRebuildNextTime(e.getMessage());
         }
       }
-      
-      if ((wereFilesDeleted[0] || !toCompile.isEmpty()) && context.getMessageCount(CompilerMessageCategory.ERROR) == 0) {
+
+      final boolean hadUnprocessedTraverseRoots = context.getDependencyCache().hasUnprocessedTraverseRoots();
+      if ((wereFilesDeleted[0] || hadUnprocessedTraverseRoots || !toCompile.isEmpty()) && context.getMessageCount(CompilerMessageCategory.ERROR) == 0) {
         compiler.compile(context, moduleChunk, VfsUtil.toVirtualFileArray(toCompile), sink);
+        traverseRootsProcessed = hadUnprocessedTraverseRoots != context.getDependencyCache().hasUnprocessedTraverseRoots();
       }
     }
     finally {
       context.getProgressIndicator().popState();
     }
-    return !toCompile.isEmpty() || wereFilesDeleted[0];
+    return !toCompile.isEmpty() || traverseRootsProcessed || wereFilesDeleted[0];
   }
 
   private static boolean syncOutputDir(final CompileContextEx context, final Collection<Trinity<File, String, Boolean>> toDelete) throws CacheCorruptedException {
@@ -1787,8 +1829,10 @@ public class CompileDriver {
   private boolean validateCompilerConfiguration(final CompileScope scope, boolean checkOutputAndSourceIntersection) {
     final Module[] scopeModules = scope.getAffectedModules()/*ModuleManager.getInstance(myProject).getModules()*/;
     final List<String> modulesWithoutOutputPathSpecified = new ArrayList<String>();
+    boolean isProjectCompilePathSpecified = true;
     final List<String> modulesWithoutJdkAssigned = new ArrayList<String>();
     final Set<File> nonExistingOutputPaths = new HashSet<File>();
+    final CompilerConfiguration config = CompilerConfiguration.getInstance(myProject);
 
     for (final Module module : scopeModules) {
       final boolean hasSources = hasSources(module, false);
@@ -1830,10 +1874,38 @@ public class CompileDriver {
             modulesWithoutOutputPathSpecified.add(module.getName());
           }
         }
+        if (config.isAnnotationProcessorsEnabled() && !config.getExcludedModules().contains(module)) {
+          final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
+          if (path == null) {
+            if (CompilerProjectExtension.getInstance(module.getProject()).getCompilerOutputUrl() == null) {
+              isProjectCompilePathSpecified = false;
+            }
+            else {
+              modulesWithoutOutputPathSpecified.add(module.getName());
+            }
+          }
+          else {
+            final File file = new File(path);
+            if (!file.exists()) {
+              nonExistingOutputPaths.add(file);
+            }
+          }
+        }
       }
     }
     if (!modulesWithoutJdkAssigned.isEmpty()) {
       showNotSpecifiedError("error.jdk.not.specified", modulesWithoutJdkAssigned, ProjectBundle.message("modules.classpath.title"));
+      return false;
+    }
+
+    if (!isProjectCompilePathSpecified) {
+      final String message = CompilerBundle.message("error.project.output.not.specified");
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        LOG.error(message);
+      }
+
+      Messages.showMessageDialog(myProject, message, CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+      ProjectSettingsService.getInstance(myProject).openProjectSettings();
       return false;
     }
 
@@ -1880,7 +1952,6 @@ public class CompileDriver {
       }
     }
     final List<Chunk<Module>> chunks = ModuleCompilerUtil.getSortedModuleChunks(myProject, Arrays.asList(scopeModules));
-    final CompilerConfiguration config = CompilerConfiguration.getInstance(myProject);
     for (final Chunk<Module> chunk : chunks) {
       final Set<Module> chunkModules = chunk.getNodes();
       if (chunkModules.size() <= 1) {
@@ -2071,9 +2142,8 @@ public class CompileDriver {
     ProjectSettingsService.getInstance(myProject).showModuleConfigurationDialog(moduleNameToSelect, tabNameToSelect, false);
   }
 
-  private static VirtualFile lookupVFile(final IntermediateOutputCompiler compiler, final Module module, final boolean forTestSources) {
-    final File file = new File(CompilerPaths.getGenerationOutputPath(compiler, module, forTestSources));
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
+  private static VirtualFile lookupVFile(final LocalFileSystem lfs, final String path) {
+    final File file = new File(path);
 
     VirtualFile vFile = lfs.findFileByIoFile(file);
     if (vFile != null) {
