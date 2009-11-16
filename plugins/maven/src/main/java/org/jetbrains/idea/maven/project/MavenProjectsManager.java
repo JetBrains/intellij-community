@@ -44,6 +44,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
@@ -529,6 +530,12 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
       }
     });
     return f == null ? null : findProject(f);
+  }
+
+  @Nullable
+  public Module findModule(MavenProject project) {
+    if (!isInitialized()) return null;
+    return ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(project.getFile());
   }
 
   public MavenProject findContainingProject(VirtualFile file) {
