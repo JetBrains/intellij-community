@@ -326,11 +326,11 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     });
   }
 
-  public static void ensureAnnotationsJarInPath(final Module module, String annotationName) {
-    if (module == null) return;
+  public static boolean ensureAnnotationsJarInPath(final Module module, String annotationName) {
+    if (module == null) return false;
     final PsiClass psiClass = JavaPsiFacade.getInstance(module.getProject())
       .findClass(annotationName, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
-    if (psiClass != null) return;
+    if (psiClass != null) return true;
     final LocateLibraryDialog dialog = new LocateLibraryDialog(
       module, PathManager.getLibPath(), "annotations.jar",
       QuickFixBundle.message("add.library.annotations.description"));
@@ -341,6 +341,8 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
           addJarToRoots(dialog.getResultingLibraryPath(), module, null);
         }
       }.execute();
+      return true;
     }
+    return false;
   }
 }

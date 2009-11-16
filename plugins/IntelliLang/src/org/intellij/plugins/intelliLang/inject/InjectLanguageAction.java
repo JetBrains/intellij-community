@@ -19,6 +19,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
@@ -82,6 +83,7 @@ public class InjectLanguageAction implements IntentionAction {
     assert host != null;
     doChooseLanguageToInject(new Processor<String>() {
       public boolean process(final String languageId) {
+        if (project.isDisposed()) return false;
         if (defaultFunctionalityWorked(host, languageId)) return false;
         final Language language = InjectedLanguage.findLanguageById(languageId);
         try {
@@ -146,7 +148,11 @@ public class InjectLanguageAction implements IntentionAction {
     @Override
     public PopupStep onChosen(final String selectedValue, boolean finalChoice) {
       if (finalChoice) {
-        myFinalStepProcessor.process(selectedValue);
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            myFinalStepProcessor.process(selectedValue);
+          }
+        });
         return FINAL_CHOICE;
       }
       return new MyPopupStep(myMap, myMap.get(selectedValue), myFinalStepProcessor);
