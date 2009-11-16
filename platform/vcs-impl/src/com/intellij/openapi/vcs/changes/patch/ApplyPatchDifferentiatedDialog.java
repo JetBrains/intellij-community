@@ -372,7 +372,12 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       final MyShowDiff diffAction = new MyShowDiff();
       diffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), myCenterPanel);
       group.add(diffAction);
-      
+
+      group.add(new StripUp());
+      group.add(new StripDown());
+      group.add(new ResetStrip());
+      group.add(new ZeroStrip());
+
       final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("APPLY_PATCH", group, true);
       myCenterPanel.add(toolbar.getComponent(), gb);
 
@@ -488,11 +493,22 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   }
 
   private void updateTree(boolean doInitCheck) {
+    final List<FilePatchInProgress> patchesToSelect = changes2patches(myChangesTreeList.getSelectedChanges());
     final List<FilePatchInProgress.PatchChange> changes = getAllChanges();
     final Collection<FilePatchInProgress.PatchChange> included = getIncluded(doInitCheck, changes);
+
     myChangesTreeList.setChangesToDisplay(changes);
     myChangesTreeList.setIncludedChanges(included);
     myChangesTreeList.repaint();
+    if ((! doInitCheck) && patchesToSelect != null) {
+      final List<FilePatchInProgress.PatchChange> toSelect = new ArrayList<FilePatchInProgress.PatchChange>(patchesToSelect.size());
+      for (FilePatchInProgress.PatchChange change : changes) {
+        if (patchesToSelect.contains(change.getPatchInProgress())) {
+          toSelect.add(change);
+        }
+      }
+      myChangesTreeList.select(toSelect);
+    }
 
     myContainBasedChanges = false;
     for (FilePatchInProgress patch : myPatches) {
@@ -540,16 +556,15 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     } else {
       // todo maybe written pretty
       final Collection<FilePatchInProgress.PatchChange> includedNow = myChangesTreeList.getIncludedChanges();
-      final Set<Pair<String, String>> toBeIncluded = new HashSet<Pair<String, String>>();
+      final Set<FilePatchInProgress> toBeIncluded = new HashSet<FilePatchInProgress>();
       for (FilePatchInProgress.PatchChange change : includedNow) {
         final FilePatchInProgress patch = change.getPatchInProgress();
-        toBeIncluded.add(new Pair<String, String>(patch.getPatch().getBeforeName(), patch.getPatch().getAfterName()));
+        toBeIncluded.add(patch);
       }
       for (FilePatchInProgress.PatchChange change : changes) {
         final FilePatchInProgress patch = change.getPatchInProgress();
-        final Pair<String, String> pair = new Pair<String, String>(patch.getPatch().getBeforeName(), patch.getPatch().getAfterName());
         acceptChange(totalTrinity, change);
-        if (toBeIncluded.contains(pair) && patch.baseExistsOrAdded()) {
+        if (toBeIncluded.contains(patch) && patch.baseExistsOrAdded()) {
           acceptChange(includedTrinity, change);
           included.add(change);
         }
@@ -579,6 +594,14 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         updateTree(false);
       }
     }
+  }
+
+  private List<FilePatchInProgress> changes2patches(final List<FilePatchInProgress.PatchChange> selectedChanges) {
+    return ObjectsConvertor.convert(selectedChanges, new Convertor<FilePatchInProgress.PatchChange, FilePatchInProgress>() {
+      public FilePatchInProgress convert(FilePatchInProgress.PatchChange o) {
+        return o.getPatchInProgress();
+      }
+    });
   }
 
   private class MapPopup extends BaseListPopupStep<VirtualFile> {
@@ -757,6 +780,96 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   protected void doOKAction() {
     super.doOKAction();
     myCallback.consume(this);
+  }
+
+  private class ZeroStrip extends AnAction {
+    private ZeroStrip() {
+      super("Remove Directories", "Remove Directories", IconLoader.getIcon("/vcs/stripNull.png"));
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      final List<FilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
+      for (FilePatchInProgress.PatchChange change : selectedChanges) {
+        change.getPatchInProgress().setZero();
+      }
+      updateTree(false);
+    }
+  }
+
+  private class StripDown extends AnAction {
+    private StripDown() {
+      super("Restore Directory", "Restore Directory", IconLoader.getIcon("/vcs/stripDown.png"));
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(isEnabled());
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      if (! isEnabled()) return;
+      final List<FilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
+      for (FilePatchInProgress.PatchChange change : selectedChanges) {
+        change.getPatchInProgress().down();
+      }
+      updateTree(false);
+    }
+
+    private boolean isEnabled() {
+      final List<FilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
+      if (selectedChanges.isEmpty()) return false;
+      for (FilePatchInProgress.PatchChange change : selectedChanges) {
+        if (! change.getPatchInProgress().canDown()) return false;
+      }
+      return true;
+    }
+  }
+
+  private class StripUp extends AnAction {
+    private StripUp() {
+      super("Strip Directory", "Strip Directory", IconLoader.getIcon("/vcs/stripUp.png"));
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(isEnabled());
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      if (! isEnabled()) return;
+      final List<FilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
+      for (FilePatchInProgress.PatchChange change : selectedChanges) {
+        change.getPatchInProgress().up();
+      }
+      updateTree(false);
+    }
+
+    private boolean isEnabled() {
+      final List<FilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
+      if (selectedChanges.isEmpty()) return false;
+      for (FilePatchInProgress.PatchChange change : selectedChanges) {
+        if (! change.getPatchInProgress().canUp()) return false;
+      }
+      return true;
+    }
+  }
+
+  private class ResetStrip extends AnAction {
+    private ResetStrip() {
+      super("Reset Directories", "Reset Directories", IconLoader.getIcon("/vcs/resetStrip.png"));
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      final List<FilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
+      for (FilePatchInProgress.PatchChange change : selectedChanges) {
+        change.getPatchInProgress().reset();
+      }
+      updateTree(false);
+    }
   }
 
   private class MyShowDiff extends AnAction {

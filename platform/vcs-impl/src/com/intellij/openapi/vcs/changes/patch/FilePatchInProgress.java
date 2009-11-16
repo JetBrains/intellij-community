@@ -19,9 +19,13 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.diff.MergeRequest;
+import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
+import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
+import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.formove.PathMerger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
@@ -37,13 +41,12 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.io.IOException;
+import java.util.*;
 
-public class FilePatchInProgress {
+public class FilePatchInProgress implements Strippable {
   private final TextFilePatch myPatch;
+  private final PatchStrippable myStrippable;
   private final FilePatchStatus myStatus;
 
   private VirtualFile myBase;
@@ -59,6 +62,7 @@ public class FilePatchInProgress {
 
   public FilePatchInProgress(final TextFilePatch patch, final Collection<VirtualFile> autoBases, final VirtualFile baseDir) {
     myPatch = patch;
+    myStrippable = new PatchStrippable(patch);
     if (autoBases != null) {
       myAutoBases = new ArrayList<VirtualFile>();
       final String path = myPatch.getBeforeName() == null ? myPatch.getAfterName() : myPatch.getBeforeName();
@@ -269,5 +273,230 @@ public class FilePatchInProgress {
 
   public Pair<String, String> getKey() {
     return new Pair<String, String>(myPatch.getBeforeName(), myPatch.getAfterName());
+  }
+
+  private void refresh() {
+    myStrippable.applyBackToPatch(myPatch);
+    setNewBase(myBase);
+  }
+
+  public void reset() {
+    myStrippable.reset();
+    refresh();
+  }
+
+  public boolean canDown() {
+    return myStrippable.canDown();
+  }
+
+  public boolean canUp() {
+    return myStrippable.canUp();
+  }
+
+  public void up() {
+    myStrippable.up();
+    refresh();
+  }
+
+  public void down() {
+    myStrippable.down();
+    refresh();
+  }
+
+  public void setZero() {
+    myStrippable.setZero();
+    refresh();
+  }
+
+  public String getCurrentPath() {
+    return myStrippable.getCurrentPath();
+  }
+
+  private static class StripCapablePath implements Strippable {
+    private final int myStripMax;
+    private int myCurrentStrip;
+    private final StringBuilder mySourcePath;
+    private final int[] myParts;
+
+    private StripCapablePath(final String path) {
+      final String corrected = path.trim().replace('\\', '/');
+      mySourcePath = new StringBuilder(corrected);
+      final String[] steps = corrected.split("/");
+      myStripMax = steps.length - 1;
+      myParts = new int[steps.length];
+      int pos = 0;
+      for (int i = 0; i < steps.length; i++) {
+        final String step = steps[i];
+        myParts[i] = pos;
+        pos += step.length() + 1; // plus 1 for separator
+      }
+      myCurrentStrip = 0;
+    }
+
+    public void reset() {
+      myCurrentStrip = 0;
+    }
+
+    // down - restore dirs...
+    public boolean canDown() {
+      return myCurrentStrip > 0;
+    }
+
+    public boolean canUp() {
+      return myCurrentStrip < myStripMax;
+    }
+
+    public void up() {
+      if (canUp()) {
+        ++ myCurrentStrip;
+      }
+    }
+
+    public void down() {
+      if (canDown()) {
+        -- myCurrentStrip;
+      }
+    }
+
+    public void setZero() {
+      myCurrentStrip = myStripMax;
+    }
+
+    public String getCurrentPath() {
+      return mySourcePath.substring(myParts[myCurrentStrip]);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      StripCapablePath that = (StripCapablePath)o;
+
+      if (!mySourcePath.equals(that.mySourcePath)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return mySourcePath.hashCode();
+    }
+  }
+
+  private static class PatchStrippable implements Strippable {
+    private final Strippable[] myParts;
+    private final int myBeforeIdx;
+    private final int myAfterIdx;
+
+    private PatchStrippable(final FilePatch patch) {
+      final boolean onePath = patch.isDeletedFile() || patch.isNewFile() || Comparing.equal(patch.getAfterName(), patch.getBeforeName());
+      final int size = onePath ? 1 : 2;
+      myParts = new Strippable[size];
+
+      int cnt = 0;
+      if (patch.getAfterName() != null) {
+        myAfterIdx = 0;
+        myParts[cnt] = new StripCapablePath(patch.getAfterName());
+        ++ cnt;
+      } else {
+        myAfterIdx = -1;
+      }
+      if (cnt < size) {
+        myParts[cnt] = new StripCapablePath(patch.getBeforeName());
+        myBeforeIdx = cnt;
+      } else {
+        myBeforeIdx = 0;
+      }
+    }
+
+    public void reset() {
+      for (Strippable part : myParts) {
+        part.reset();
+      }
+    }
+
+    public boolean canDown() {
+      boolean result = true;
+      for (Strippable part : myParts) {
+        result &= part.canDown();
+      }
+      return result;
+    }
+
+    public boolean canUp() {
+      boolean result = true;
+      for (Strippable part : myParts) {
+        result &= part.canUp();
+      }
+      return result;
+    }
+
+    public void up() {
+      for (Strippable part : myParts) {
+        part.up();
+      }
+    }
+
+    public void down() {
+      for (Strippable part : myParts) {
+        part.down();
+      }
+    }
+
+    public void setZero() {
+      for (Strippable part : myParts) {
+        part.setZero();
+      }
+    }
+
+    public String getCurrentPath() {
+      return myParts[0].getCurrentPath();
+    }
+
+    public void applyBackToPatch(final FilePatch patch) {
+      final String beforeName = patch.getBeforeName();
+      if (beforeName != null) {
+        patch.setBeforeName(myParts[myBeforeIdx].getCurrentPath());
+      }
+      final String afterName = patch.getAfterName();
+      if (afterName != null) {
+        patch.setAfterName(myParts[myAfterIdx].getCurrentPath());
+      }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      PatchStrippable that = (PatchStrippable)o;
+
+      if (!Arrays.equals(myParts, that.myParts)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return Arrays.hashCode(myParts);
+    }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    FilePatchInProgress that = (FilePatchInProgress)o;
+
+    if (!myStrippable.equals(that.myStrippable)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myStrippable.hashCode();
   }
 }
