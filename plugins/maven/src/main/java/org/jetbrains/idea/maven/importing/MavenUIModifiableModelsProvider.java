@@ -15,29 +15,32 @@
  */
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.facet.ModifiableFacetModel;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 public class MavenUIModifiableModelsProvider extends MavenBaseModifiableModelsProvider {
   private final ModifiableModuleModel myModel;
-  private final ModulesProvider myModulesProvider;
+  private final ModulesConfigurator myModulesConfigurator;
   private final ModifiableArtifactModel myModifiableArtifactModel;
   private final LibrariesModifiableModel myLibrariesModel;
 
-  public MavenUIModifiableModelsProvider(Project project, ModifiableModuleModel model, ModulesProvider modulesProvider, ModifiableArtifactModel modifiableArtifactModel) {
+  public MavenUIModifiableModelsProvider(Project project,
+                                         ModifiableModuleModel model,
+                                         ModulesConfigurator modulesConfigurator,
+                                         ModifiableArtifactModel modifiableArtifactModel) {
     super(project);
     myModel = model;
-    myModulesProvider = modulesProvider;
+    myModulesConfigurator = modulesConfigurator;
     myModifiableArtifactModel = modifiableArtifactModel;
 
     ProjectLibrariesConfigurable configurable = ProjectLibrariesConfigurable.getInstance(project);
@@ -56,12 +59,12 @@ public class MavenUIModifiableModelsProvider extends MavenBaseModifiableModelsPr
 
   @Override
   protected ModifiableRootModel doGetRootModel(Module module) {
-    return (ModifiableRootModel)myModulesProvider.getRootModel(module);
+    return myModulesConfigurator.getEditor(module).getModifiableRootModel();
   }
 
   @Override
   protected ModifiableFacetModel doGetFacetModel(Module module) {
-    return (ModifiableFacetModel)myModulesProvider.getFacetModel(module);
+    return (ModifiableFacetModel)myModulesConfigurator.getFacetModel(module);
   }
 
   public Library[] getAllLibraries() {
@@ -94,10 +97,6 @@ public class MavenUIModifiableModelsProvider extends MavenBaseModifiableModelsPr
   }
 
   public void dispose() {
-  }
-
-  public long getCommitTime() {
-    return 0;
   }
 
   public ModalityState getModalityStateForQuestionDialogs() {

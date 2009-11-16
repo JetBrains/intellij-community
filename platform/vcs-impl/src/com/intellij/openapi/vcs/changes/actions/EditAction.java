@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.ArrayList;
@@ -51,7 +52,7 @@ public class EditAction extends AnAction {
         final EditFileProvider provider = vcs.getEditFileProvider();
         if (provider != null) {
           try {
-            provider.editFiles(items.toArray(new VirtualFile[items.size()]));
+            provider.editFiles(VfsUtil.toVirtualFileArray(items));
           }
           catch (VcsException e1) {
             exceptions.add(e1);

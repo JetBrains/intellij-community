@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -74,7 +75,7 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final List<VirtualFile> virtualFiles = DescriptionNotFoundInspection.getPotentialRoots(myModule);
-    final VirtualFile[] roots = prepare(virtualFiles.toArray(new VirtualFile[virtualFiles.size()]));
+    final VirtualFile[] roots = prepare(VfsUtil.toVirtualFileArray(virtualFiles));
     if (roots.length == 1) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
@@ -147,7 +148,7 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
         found.add(root);
       }
     }
-    return found.size() > 0 ? found.toArray(new VirtualFile[found.size()]) : roots;
+    return found.size() > 0 ? VfsUtil.toVirtualFileArray(found) : roots;
   }
 
   private static boolean containsDescriptionDir(VirtualFile root) {

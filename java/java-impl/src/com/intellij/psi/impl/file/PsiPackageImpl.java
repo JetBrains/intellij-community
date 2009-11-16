@@ -34,6 +34,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -262,7 +263,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
       }
     }
 
-    return result.toArray(new VirtualFile[result.size()]);
+    return VfsUtil.toVirtualFileArray(result);
   }
 
   public PsiPackage getParentPackage() {

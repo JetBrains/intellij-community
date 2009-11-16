@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots;
 
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 
@@ -61,7 +62,7 @@ public class AnnotationOrderRootType extends PersistentOrderRootType {
       }
     };
     entry.accept(policy, result);
-    return result.toArray(new VirtualFile[result.size()]);
+    return VfsUtil.toVirtualFileArray(result);
   }
 
   public static String[] getUrls(OrderEntry entry) {

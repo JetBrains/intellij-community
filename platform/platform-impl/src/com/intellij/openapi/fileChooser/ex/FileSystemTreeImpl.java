@@ -377,7 +377,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
       VirtualFile file = fileConvertor.convert(descriptor.getElement().getFile());
       if (file != null && file.isValid()) files.add(file);
     }
-    return files.toArray(new VirtualFile[files.size()]);
+    return VfsUtil.toVirtualFileArray(files);
   }
 
   public boolean selectionExists() {

@@ -29,6 +29,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 
@@ -45,7 +46,7 @@ public class ToggleReadOnlyAttributeAction extends AnAction implements DumbAware
         filesList.add(file);
       }
     }
-    return filesList.toArray(new VirtualFile[filesList.size()]);
+    return VfsUtil.toVirtualFileArray(filesList);
   }
 
   public void update(AnActionEvent e){

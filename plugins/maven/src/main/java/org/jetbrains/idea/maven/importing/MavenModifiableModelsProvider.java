@@ -52,7 +52,5 @@ public interface MavenModifiableModelsProvider extends MavenModelsProvider {
 
   void dispose();
 
-  long getCommitTime();
-
   ModalityState getModalityStateForQuestionDialogs();
 }

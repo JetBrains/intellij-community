@@ -26,6 +26,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -76,12 +77,12 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
         realFiles.add(file);
       }
     }
-    files = realFiles.toArray(new VirtualFile[realFiles.size()]);
+    files = VfsUtil.toVirtualFileArray(realFiles);
 
     for (WritingAccessProvider accessProvider : myAccessProviders) {
       Collection<VirtualFile> denied = accessProvider.requestWriting(files);
       if (!denied.isEmpty()) {
-        return new OperationStatusImpl(denied.toArray(new VirtualFile[denied.size()]));
+        return new OperationStatusImpl(VfsUtil.toVirtualFileArray(denied));
       }
     }
     
@@ -118,8 +119,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
       }
     }
 
-    return new OperationStatusImpl(
-      readOnlyFiles.isEmpty() ? VirtualFile.EMPTY_ARRAY : readOnlyFiles.toArray(new VirtualFile[readOnlyFiles.size()]));
+    return new OperationStatusImpl(VfsUtil.toVirtualFileArray(readOnlyFiles));
   }
 
   private FileInfo[] createFileInfos(VirtualFile[] files) {

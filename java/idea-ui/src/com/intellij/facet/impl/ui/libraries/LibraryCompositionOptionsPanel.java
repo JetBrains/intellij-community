@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.MutualMap;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.UIUtil;
@@ -198,7 +199,7 @@ public class LibraryCompositionOptionsPanel {
       roots.addAll(Arrays.asList(myLibrariesContainer.getLibraryFiles(library, OrderRootType.CLASSES)));
     }
     RequiredLibrariesInfo.RequiredClassesNotFoundInfo info = new RequiredLibrariesInfo(myLibraryCompositionSettings.getLibraryInfos()).checkLibraries(
-      roots.toArray(new VirtualFile[roots.size()]));
+      VfsUtil.toVirtualFileArray(roots));
     if (info != null) {
       missingJarsText = ProjectBundle.message("label.text.libraries.are.missing", info.getMissingJarsText());
     }

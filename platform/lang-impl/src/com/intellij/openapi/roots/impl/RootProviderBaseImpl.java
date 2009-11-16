@@ -16,24 +16,25 @@
 
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.roots.RootProvider;
 import com.intellij.util.EventDispatcher;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *  @author dsl
  */
 public abstract class RootProviderBaseImpl implements RootProvider {
   private final EventDispatcher<RootSetChangedListener> myDispatcher = EventDispatcher.create(RootSetChangedListener.class);
-  public void addRootSetChangedListener(RootSetChangedListener listener) {
+  public void addRootSetChangedListener(@NotNull RootSetChangedListener listener) {
     myDispatcher.addListener(listener);
   }
 
-  public void removeRootSetChangedListener(RootSetChangedListener listener) {
+  public void removeRootSetChangedListener(@NotNull RootSetChangedListener listener) {
     myDispatcher.removeListener(listener);
   }
 
-  public void addRootSetChangedListener(RootSetChangedListener listener, Disposable parentDisposable) {
+  public void addRootSetChangedListener(@NotNull RootSetChangedListener listener, @NotNull Disposable parentDisposable) {
     myDispatcher.addListener(listener, parentDisposable);
   }
 

@@ -32,10 +32,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
@@ -154,7 +151,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
       }
       expanded.add(file);
     }
-    return expanded.toArray(new VirtualFile[expanded.size()]);
+    return VfsUtil.toVirtualFileArray(expanded);
   }
 
   private static void addChildren(final VirtualFile dir, final List<VirtualFile> container, final boolean recursively) {

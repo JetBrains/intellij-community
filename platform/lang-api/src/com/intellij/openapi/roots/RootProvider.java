@@ -17,6 +17,7 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
@@ -25,14 +26,14 @@ import java.util.EventListener;
  *  @author dsl
  */
 public interface RootProvider {
-  String[] getUrls(OrderRootType rootType);
-  VirtualFile[] getFiles(OrderRootType rootType);
+  @NotNull String[] getUrls(@NotNull OrderRootType rootType);
+  @NotNull VirtualFile[] getFiles(@NotNull OrderRootType rootType);
 
   interface RootSetChangedListener extends EventListener {
     void rootSetChanged(RootProvider wrapper);
   }
 
-  void addRootSetChangedListener(RootSetChangedListener listener);
-  void addRootSetChangedListener(RootSetChangedListener listener, Disposable parentDisposable);
-  void removeRootSetChangedListener(RootSetChangedListener listener);
+  void addRootSetChangedListener(@NotNull RootSetChangedListener listener);
+  void addRootSetChangedListener(@NotNull RootSetChangedListener listener, @NotNull Disposable parentDisposable);
+  void removeRootSetChangedListener(@NotNull RootSetChangedListener listener);
 }

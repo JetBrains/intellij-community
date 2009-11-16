@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
@@ -281,6 +282,6 @@ public class SvnChangeProvider implements ChangeProvider {
   }
 
   public void doCleanup(final List<VirtualFile> files) {
-    new CleanupWorker(files.toArray(new VirtualFile[files.size()]), myVcs.getProject(), "action.Subversion.cleanup.progress.title").execute();
+    new CleanupWorker(VfsUtil.toVirtualFileArray(files), myVcs.getProject(), "action.Subversion.cleanup.progress.title").execute();
   }
 }

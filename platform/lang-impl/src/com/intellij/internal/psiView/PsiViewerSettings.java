@@ -33,6 +33,8 @@ public class PsiViewerSettings implements PersistentStateComponent<PsiViewerSett
   public String type = "JAVA file";
   public String text = "";
   public String dialect = "";
+  public int textDividerLocation = 250;
+  public int treeDividerLocation = 400;
 
   public static PsiViewerSettings getSettings() {
     return ServiceManager.getService(PsiViewerSettings.class);

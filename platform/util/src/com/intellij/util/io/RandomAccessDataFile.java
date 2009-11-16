@@ -102,6 +102,16 @@ public class RandomAccessDataFile implements Forceable {
     return Bits.getInt(myTypedIOBuffer, 0);
   }
 
+  public void putShort(long addr, short value) {
+    Bits.putShort(myTypedIOBuffer, 0, value);
+    put(addr, myTypedIOBuffer, 0, 2);
+  }
+
+  public short getShort(long addr) {
+    get(addr, myTypedIOBuffer, 0, 2);
+    return Bits.getShort(myTypedIOBuffer, 0);
+  }
+
   public void putLong(long addr, long value) {
     Bits.putLong(myTypedIOBuffer, 0, value);
     put(addr, myTypedIOBuffer, 0, 8);

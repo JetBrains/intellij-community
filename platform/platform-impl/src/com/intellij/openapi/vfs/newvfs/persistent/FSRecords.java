@@ -30,6 +30,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.io.ResizeableMappedFile;
+import com.intellij.util.io.storage.AbstractStorage;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.io.storage.Storage;
 import gnu.trove.TIntArrayList;
@@ -82,7 +83,6 @@ public class FSRecords implements Disposable, Forceable {
 
   private static final String CHILDREN_ATT = "FsRecords.DIRECTORY_CHILDREN";
   private static final Object lock = new Object();
-  private DbConnection myConnection;
 
   private volatile static int ourLocalModificationCount = 0;
 
@@ -434,7 +434,7 @@ public class FSRecords implements Disposable, Forceable {
   }
 
   public void connect() {
-    myConnection = DbConnection.connect();
+    DbConnection.connect();
   }
 
   private static ResizeableMappedFile getRecords() {
@@ -514,14 +514,15 @@ public class FSRecords implements Disposable, Forceable {
   private void deleteAttribute(int id, int isContent) throws IOException {
     int att_page = getAttributeRecordId(id, isContent);
     if (att_page != 0) {
-      final DataInputStream attStream = getAttributes(isContent).readStream(att_page);
+      Storage storage = getAttributes(isContent);
+      final DataInputStream attStream = storage.readStream(att_page);
       while (attStream.available() > 0) {
         attStream.readInt(); // Attribute ID;
         int attAddress = attStream.readInt();
-        getAttributes(isContent).deleteRecord(attAddress);
+        storage.deleteRecord(attAddress);
       }
       attStream.close();
-      getAttributes(isContent).deleteRecord(att_page);
+      storage.deleteRecord(att_page);
     }
   }
 
@@ -897,14 +898,15 @@ public class FSRecords implements Disposable, Forceable {
     }
     int attrsRecord = getAttributeRecordId(fileId, attributeId);
 
+    Storage storage = getAttributes(attributeId);
     if (attrsRecord == 0) {
       if (!createIfNotFound) return 0;
 
-      attrsRecord = getAttributes(attributeId).createNewRecord();
+      attrsRecord = storage.createNewRecord(0);
       getRecords().putInt(getAttrOffset(fileId, attributeId), attrsRecord);
     }
     else {
-      final DataInputStream attrRefs = getAttributes(attributeId).readStream(attrsRecord);
+      final DataInputStream attrRefs = storage.readStream(attrsRecord);
       try {
         while (attrRefs.available() > 0) {
           final int attIdOnPage = attrRefs.readInt();
@@ -919,9 +921,9 @@ public class FSRecords implements Disposable, Forceable {
     }
 
     if (createIfNotFound) {
-      Storage.AppenderStream appender = getAttributes(attributeId).appendStream(attrsRecord);
+      Storage.AppenderStream appender = storage.appendStream(attrsRecord);
       appender.writeInt(attributeId);
-      int attAddress = getAttributes(attributeId).createNewRecord();
+      int attAddress = getAttributes(attributeId).createNewRecord(0);
       appender.writeInt(attAddress);
       appender.close();
       return attAddress;
@@ -954,7 +956,8 @@ public class FSRecords implements Disposable, Forceable {
             page = findAttributePage(myFileId, encodedAttId, true);
           }
 
-          final DataOutputStream sinkStream = getAttributes(encodedAttId).writeStream(page);
+          AbstractStorage storage = getAttributes(encodedAttId);
+          AbstractStorage.StorageDataOutput sinkStream = storage.writeStream(page);
           sinkStream.write(((ByteArrayOutputStream)out).toByteArray());
           sinkStream.close();
         }

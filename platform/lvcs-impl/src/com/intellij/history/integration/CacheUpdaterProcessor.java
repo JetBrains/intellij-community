@@ -19,6 +19,7 @@ package com.intellij.history.integration;
 import com.intellij.history.core.ContentFactory;
 import com.intellij.history.core.LocalVcs;
 import com.intellij.ide.caches.FileContent;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
@@ -51,7 +52,7 @@ public class CacheUpdaterProcessor {
   public VirtualFile[] queryNeededFiles() {
     List<VirtualFile> result = new ArrayList<VirtualFile>(myFilesToCreate);
     result.addAll(myFilesToUpdate);
-    return result.toArray(new VirtualFile[result.size()]);
+    return VfsUtil.toVirtualFileArray(result);
   }
 
   public void processFile(FileContent c) {

@@ -80,6 +80,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private boolean myEnableAnnotationProcessors = false;
   private final Map<String, String> myProcessorsMap = new HashMap<String, String>(); // map: AnnotationProcessorName -> options
   private boolean myObtainProcessorsFromClasspath = true;
+  private boolean myStoreGenerateSourcesUnderModuleContent = false;
+  private String myGeneratedDirName = "generated";
   private String myProcessorPath = "";
   private final Set<Module> myExcludedModules = new HashSet<Module>();
   private final Set<String> myExcludedModuleNames = new HashSet<String>();
@@ -310,6 +312,24 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     myObtainProcessorsFromClasspath = obtainProcessorsFromClasspath;
   }
 
+  public boolean isStoreGenerateSourcesUnderModuleContent(Module module) {
+    // todo: make this per-module setting
+    return myStoreGenerateSourcesUnderModuleContent;
+  }
+
+  public void setStoreGenerateSourcesUnderModuleContent(boolean storeGenerateSourcesUnderModuleContent) {
+    myStoreGenerateSourcesUnderModuleContent = storeGenerateSourcesUnderModuleContent;
+  }
+
+  @NotNull
+  public String getGeneratedDirName() {
+    return myGeneratedDirName;
+  }
+
+  public void setGeneratedDirName(String generatedDirName) {
+    myGeneratedDirName = generatedDirName;
+  }
+
   public String getProcessorPath() {
     return myProcessorPath;
   }
@@ -522,6 +542,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     if (annotationProcessingSettings != null) {
       myEnableAnnotationProcessors = Boolean.valueOf(annotationProcessingSettings.getAttributeValue("enabled", "false"));
       myObtainProcessorsFromClasspath = Boolean.valueOf(annotationProcessingSettings.getAttributeValue("useClasspath", "true"));
+      myStoreGenerateSourcesUnderModuleContent = Boolean.valueOf(annotationProcessingSettings.getAttributeValue("storeGeneratedUnderContent", "false"));
+      myGeneratedDirName = annotationProcessingSettings.getAttributeValue("generatedDirName", "generated"); 
 
       final StringBuilder pathBuilder = new StringBuilder();
       for (Element pathElement : ((Collection<Element>)annotationProcessingSettings.getChildren("processorPath"))) {
@@ -596,6 +618,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     parentNode.addContent(annotationProcessingSettings);
     annotationProcessingSettings.setAttribute("enabled", String.valueOf(myEnableAnnotationProcessors));
     annotationProcessingSettings.setAttribute("useClasspath", String.valueOf(myObtainProcessorsFromClasspath));
+    annotationProcessingSettings.setAttribute("storeGeneratedUnderContent", String.valueOf(myStoreGenerateSourcesUnderModuleContent));
+    annotationProcessingSettings.setAttribute("generatedDirName", myGeneratedDirName);
     if (myProcessorPath.length() > 0) {
       final StringTokenizer tokenizer = new StringTokenizer(myProcessorPath, File.pathSeparator, false);
       while (tokenizer.hasMoreTokens()) {

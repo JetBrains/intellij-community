@@ -19,6 +19,7 @@ package com.intellij.compiler;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Map;
@@ -59,4 +60,13 @@ public abstract class CompilerConfiguration {
   public abstract Set<Module> getExcludedModules();
 
   public abstract void setExcludedModules(Collection<Module> modules);
+
+  public abstract boolean isStoreGenerateSourcesUnderModuleContent(Module module);
+
+  public abstract void setStoreGenerateSourcesUnderModuleContent(boolean storeGenerateSourcesUnderModuleContent);
+
+  @NotNull
+  public abstract String getGeneratedDirName();
+
+  public abstract void setGeneratedDirName(String generatedDirName);
 }

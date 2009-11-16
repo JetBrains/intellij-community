@@ -32,6 +32,9 @@ public class ProjectSettingsService {
     return ServiceManager.getService(project, ProjectSettingsService.class);
   }
 
+  public void openProjectSettings() {
+  }
+
   public void openModuleSettings(final Module module) {
   }
 

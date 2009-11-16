@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.PopupHandler;
@@ -123,22 +124,34 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
   }
 
   private VirtualFile extractVirtualFile() {
+    for (MavenProjectsStructure.CustomNode each : getSelectedNodes(MavenProjectsStructure.CustomNode.class)) {
+      VirtualFile file = each.getVirtualFile();
+      if (file != null) return file;
+    }
+
     final MavenProjectsStructure.ProjectNode projectNode = getContextProjectNode();
     if (projectNode == null) return null;
-    VirtualFile file = projectNode.getFile();
+    VirtualFile file = projectNode.getVirtualFile();
     if (file == null || !file.isValid()) return null;
     return file;
   }
 
   private Object extractVirtualFiles() {
     final List<VirtualFile> files = new ArrayList<VirtualFile>();
-    for (MavenProjectsStructure.ProjectNode projectNode : getSelectedProjectNodes()) {
-      VirtualFile file = projectNode.getFile();
-      if (file.isValid()) {
-        files.add(file);
-      }
+    for (MavenProjectsStructure.CustomNode each : getSelectedNodes(MavenProjectsStructure.CustomNode.class)) {
+      VirtualFile file = each.getVirtualFile();
+      if (file != null) files.add(file);
     }
-    return files.isEmpty() ? null : files.toArray(new VirtualFile[files.size()]);
+    return files.isEmpty() ? null : VfsUtil.toVirtualFileArray(files);
+  }
+
+  private Object extractNavigatables() {
+    final List<Navigatable> navigatables = new ArrayList<Navigatable>();
+    for (MavenProjectsStructure.CustomNode each : getSelectedNodes(MavenProjectsStructure.CustomNode.class)) {
+      Navigatable navigatable = each.getNavigatable();
+      if (navigatable != null) navigatables.add(navigatable);
+    }
+    return navigatables.isEmpty() ? null : navigatables.toArray(new Navigatable[navigatables.size()]);
   }
 
   private Object extractLocation() {
@@ -147,17 +160,6 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     if (file == null || goals == null) return null;
 
     return new MavenGoalLocation(myProject, file, extractGoals());
-  }
-
-  private Object extractNavigatables() {
-    final List<Navigatable> navigatables = new ArrayList<Navigatable>();
-    for (MavenProjectsStructure.ProjectNode projectNode : getSelectedProjectNodes()) {
-      final Navigatable navigatable = projectNode.getNavigatable();
-      if (navigatable != null) {
-        navigatables.add(navigatable);
-      }
-    }
-    return navigatables.isEmpty() ? null : navigatables.toArray(new Navigatable[navigatables.size()]);
   }
 
   private List<String> extractGoals() {

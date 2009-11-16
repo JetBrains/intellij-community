@@ -76,7 +76,7 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
       return;
     }
 
-    super.compile(compileContext, moduleChunk, total.toArray(new VirtualFile[total.size()]), sink);
+    super.compile(compileContext, moduleChunk, VfsUtil.toVirtualFileArray(total), sink);
   }
 
   @Override

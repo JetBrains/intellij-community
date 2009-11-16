@@ -181,7 +181,7 @@ public class BackendCompilerWrapper {
     }
     final List<TranslatingCompiler.OutputItem> outputs = processPackageInfoFiles();
     if (myFilesToRecompile.size() > 0 || outputs.size() > 0) {
-      mySink.add(null, outputs, myFilesToRecompile.toArray(new VirtualFile[myFilesToRecompile.size()]));
+      mySink.add(null, outputs, VfsUtil.toVirtualFileArray(myFilesToRecompile));
     }
   }
 
@@ -239,11 +239,6 @@ public class BackendCompilerWrapper {
 
   private void compileModules(final Map<Module, List<VirtualFile>> moduleToFilesMap) throws CompilerException {
     myProcessedFilesCount = 0;
-    //myTotalFilesToCompile = 0;
-    //for (List<VirtualFile> list : moduleToFilesMap.values()) {
-    //  myTotalFilesToCompile += list.size();
-    //}
-
     try {
       compileChunk(new ModuleChunk(myCompileContext, myChunk, moduleToFilesMap));
     }
@@ -262,7 +257,8 @@ public class BackendCompilerWrapper {
 
     try {
       for (final OutputDir outputDir : outs) {
-        doCompile(chunk, outputDir.getPath(), outputDir.getKind());
+        chunk.setSourcesFilter(outputDir.getKind());
+        doCompile(chunk, outputDir.getPath());
       }
     }
     finally {
@@ -295,7 +291,7 @@ public class BackendCompilerWrapper {
   }
 
   @Nullable
-  private File getOutputDirsToCompileTo(ModuleChunk chunk, final List<OutputDir> pairs) throws IOException {
+  private File getOutputDirsToCompileTo(ModuleChunk chunk, final List<OutputDir> dirs) throws IOException {
     File fileToDelete = null;
     if (chunk.getModuleCount() == 1) { // optimization
       final Module module = chunk.getModules()[0];
@@ -304,14 +300,14 @@ public class BackendCompilerWrapper {
           final String sourcesOutputDir = getOutputDir(module);
           if (shouldCompileTestsSeparately(module)) {
             if (sourcesOutputDir != null) {
-              pairs.add(new OutputDir(sourcesOutputDir, ModuleChunk.SOURCES));
+              dirs.add(new OutputDir(sourcesOutputDir, ModuleChunk.SOURCES));
             }
             final String testsOutputDir = getTestsOutputDir(module);
             if (testsOutputDir == null) {
               LOG.error("Tests output dir is null for module \"" + module.getName() + "\"");
             }
             else {
-              pairs.add(new OutputDir(testsOutputDir, ModuleChunk.TEST_SOURCES));
+              dirs.add(new OutputDir(testsOutputDir, ModuleChunk.TEST_SOURCES));
             }
           }
           else { // both sources and test sources go into the same output
@@ -319,7 +315,7 @@ public class BackendCompilerWrapper {
               LOG.error("Sources output dir is null for module \"" + module.getName() + "\"");
             }
             else {
-              pairs.add(new OutputDir(sourcesOutputDir, ModuleChunk.ALL_SOURCES));
+              dirs.add(new OutputDir(sourcesOutputDir, ModuleChunk.ALL_SOURCES));
             }
           }
         }
@@ -328,7 +324,7 @@ public class BackendCompilerWrapper {
     else { // chunk has several modules
       final File outputDir = FileUtil.createTempDirectory("compile", "output");
       fileToDelete = outputDir;
-      pairs.add(new OutputDir(outputDir.getPath(), ModuleChunk.ALL_SOURCES));
+      dirs.add(new OutputDir(outputDir.getPath(), ModuleChunk.ALL_SOURCES));
     }
     return fileToDelete;
   }
@@ -408,9 +404,8 @@ public class BackendCompilerWrapper {
     }
   }
 
-  private void doCompile(@NotNull final ModuleChunk chunk, @NotNull String outputDir, int sourcesFilter) throws IOException {
+  private void doCompile(@NotNull final ModuleChunk chunk, @NotNull String outputDir) throws IOException {
     myCompileContext.getProgressIndicator().checkCanceled();
-    chunk.setSourcesFilter(sourcesFilter);
 
     if (ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
@@ -645,7 +640,6 @@ public class BackendCompilerWrapper {
         it.remove(); // to free memory
       }
     }
-    CompilerUtil.refreshIOFiles(toRefresh);
     myFileNameToSourceMap.clear(); // clear the map before the next use
   }
 

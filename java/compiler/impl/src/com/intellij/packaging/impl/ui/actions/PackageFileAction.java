@@ -15,6 +15,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.packaging.artifacts.Artifact;
@@ -79,7 +80,7 @@ public class PackageFileAction extends AnAction {
       for (VirtualFile file : files) {
         PackageFileWorker.packageFile(file, project);
       }
-      setStatusText(project, files.toArray(new VirtualFile[files.size()]));
+      setStatusText(project, VfsUtil.toVirtualFileArray(files));
     }
     catch (IOException e) {
       Messages.showErrorDialog(CompilerBundle.message("message.tect.package.file.io.error", e), CommonBundle.getErrorTitle());

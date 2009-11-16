@@ -61,7 +61,7 @@ public class LocalHistoryCacheUpdater implements CacheUpdater {
     }
     ContainerUtil.removeDuplicates(result);
     sortRoots(result);
-    return result.toArray(new VirtualFile[result.size()]);
+    return VfsUtil.toVirtualFileArray(result);
   }
 
   private static void sortRoots(List<VirtualFile> roots) {

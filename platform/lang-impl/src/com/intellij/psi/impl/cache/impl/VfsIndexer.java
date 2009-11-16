@@ -19,6 +19,7 @@ package com.intellij.psi.impl.cache.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiBundle;
@@ -50,7 +51,7 @@ public class VfsIndexer {
       out.flush();
     }
 
-    return result.toArray(new VirtualFile[result.size()]);
+    return VfsUtil.toVirtualFileArray(result);
   }
 
   private static void _writeFileIndex(DataOutputStream out, VirtualFile file, VirtualFileFilter filter, List<VirtualFile> result) throws IOException {
@@ -97,7 +98,7 @@ public class VfsIndexer {
     LOG.assertTrue(root.getName().equals(rootName));
     _readFileIndex(in, root, filter, result);
 
-    return result.toArray(new VirtualFile[result.size()]);
+    return VfsUtil.toVirtualFileArray(result);
   }
 
   private static void _readFileIndex(DataInputStream in, VirtualFile file, VirtualFileFilter filter, List<VirtualFile> result) throws IOException {

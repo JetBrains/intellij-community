@@ -31,6 +31,7 @@ import com.intellij.openapi.roots.ProjectRootsTraversing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -80,7 +81,7 @@ public class HotSwapManager extends AbstractProjectComponent {
       public void run() {
         final List<VirtualFile> allClasses = ProjectRootsTraversing.collectRoots(myProject, ProjectClasspathTraversing.FULL_CLASSPATH_RECURSIVE).getRootDirs();
 
-        final VirtualFile[] allDirs = allClasses.toArray(new VirtualFile[allClasses.size()]);
+        final VirtualFile[] allDirs = VfsUtil.toVirtualFileArray(allClasses);
         final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
         CompilerPathsEx.visitFiles(allDirs, new CompilerPathsEx.FileVisitor() {
 

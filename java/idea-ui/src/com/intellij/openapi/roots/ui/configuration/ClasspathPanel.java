@@ -50,6 +50,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
@@ -1100,7 +1101,7 @@ public class ClasspathPanel extends JPanel {
         alreadyAdded.addAll(Arrays.asList(library.getFiles(OrderRootType.CLASSES)));
       }
       chosenFilesSet.removeAll(alreadyAdded);
-      return chosenFilesSet.toArray(new VirtualFile[chosenFilesSet.size()]);
+      return VfsUtil.toVirtualFileArray(chosenFilesSet);
     }
 
     public void doChoose() {

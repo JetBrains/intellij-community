@@ -393,7 +393,7 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
     for (ArtifactPackagingProcessingItem item : processedItems) {
       files.add(item.getFile());
     }
-    RefreshQueue.getInstance().refresh(false, false, null, files.toArray(new VirtualFile[files.size()]));
+    RefreshQueue.getInstance().refresh(false, false, null, VfsUtil.toVirtualFileArray(files));
 
     final Iterator<ArtifactPackagingProcessingItem> iterator = processedItems.iterator();
     while (iterator.hasNext()) {

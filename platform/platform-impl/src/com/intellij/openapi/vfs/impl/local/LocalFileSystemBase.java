@@ -215,7 +215,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
         }
       }
 
-      RefreshQueue.getInstance().refresh(false, false, null, filesToRefresh.toArray(new VirtualFile[filesToRefresh.size()]));
+      RefreshQueue.getInstance().refresh(false, false, null, VfsUtil.toVirtualFileArray(filesToRefresh));
     }
     finally {
       if (fireCommonRefreshSession) manager.fireAfterRefreshFinish(false);
@@ -232,7 +232,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       list.add(file);
     }
 
-    RefreshQueue.getInstance().refresh(async, recursive, null, list.toArray(new VirtualFile[list.size()]));
+    RefreshQueue.getInstance().refresh(async, recursive, null, VfsUtil.toVirtualFileArray(list));
   }
 
   public byte[] physicalContentsToByteArray(final VirtualFile virtualFile) throws IOException {

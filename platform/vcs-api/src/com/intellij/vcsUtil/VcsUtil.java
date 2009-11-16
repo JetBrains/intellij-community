@@ -37,6 +37,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.WindowManager;
@@ -210,7 +211,7 @@ public class VcsUtil {
   }
 
   private static void refreshFiles(final List<VirtualFile> filesToRefresh, final Runnable runnable) {
-    RefreshQueue.getInstance().refresh(true, true, runnable, filesToRefresh.toArray(new VirtualFile[filesToRefresh.size()]));
+    RefreshQueue.getInstance().refresh(true, true, runnable, VfsUtil.toVirtualFileArray(filesToRefresh));
   }
 
   private static List<VirtualFile> collectFilesToRefresh(final File[] roots) {

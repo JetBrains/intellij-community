@@ -310,6 +310,17 @@ public class MavenRootModelAdapter {
     return name != null && name.startsWith(MAVEN_LIB_PREFIX);
   }
 
+  @Nullable
+  public static OrderEntry findLibraryEntry(Module m, MavenArtifact artifact) {
+    String name = makeLibraryName(artifact);
+    for (OrderEntry each : ModuleRootManager.getInstance(m).getOrderEntries()) {
+      if (each instanceof LibraryOrderEntry && name.equals(((LibraryOrderEntry)each).getLibraryName())) {
+        return each;
+      }
+    }
+    return null;
+  }
+
   public void setLanguageLevel(LanguageLevel level) {
     try {
       myRootModel.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(level);

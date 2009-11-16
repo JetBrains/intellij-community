@@ -30,6 +30,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
@@ -236,7 +237,8 @@ public class ProjectJdkImpl implements JDOMExternalizable, Sdk, SdkModificator {
   }
 
   private class MyRootProvider extends RootProviderBaseImpl implements ProjectRootListener {
-    public String[] getUrls(OrderRootType rootType) {
+    @NotNull
+    public String[] getUrls(@NotNull OrderRootType rootType) {
       final ProjectRoot[] rootFiles = myRootContainer.getRoots(rootType);
       final ArrayList<String> result = new ArrayList<String>();
       for (ProjectRoot rootFile : rootFiles) {
@@ -245,20 +247,21 @@ public class ProjectJdkImpl implements JDOMExternalizable, Sdk, SdkModificator {
       return ArrayUtil.toStringArray(result);
     }
 
-    public VirtualFile[] getFiles(final OrderRootType rootType) {
+    @NotNull
+    public VirtualFile[] getFiles(@NotNull final OrderRootType rootType) {
       return myRootContainer.getRootFiles(rootType);
     }
 
     private final Set<RootSetChangedListener> myListeners = new HashSet<RootSetChangedListener>();
 
-    public void addRootSetChangedListener(RootSetChangedListener listener) {
+    public void addRootSetChangedListener(@NotNull RootSetChangedListener listener) {
       synchronized (this) {
         myListeners.add(listener);
       }
       super.addRootSetChangedListener(listener);
     }
 
-    public void addRootSetChangedListener(final RootSetChangedListener listener, Disposable parentDisposable) {
+    public void addRootSetChangedListener(@NotNull final RootSetChangedListener listener, @NotNull Disposable parentDisposable) {
       super.addRootSetChangedListener(listener, parentDisposable);
       Disposer.register(parentDisposable, new Disposable() {
         public void dispose() {
@@ -267,7 +270,7 @@ public class ProjectJdkImpl implements JDOMExternalizable, Sdk, SdkModificator {
       });
     }
 
-    public void removeRootSetChangedListener(RootSetChangedListener listener) {
+    public void removeRootSetChangedListener(@NotNull RootSetChangedListener listener) {
       super.removeRootSetChangedListener(listener);
       synchronized (this) {
         myListeners.remove(listener);
@@ -276,7 +279,7 @@ public class ProjectJdkImpl implements JDOMExternalizable, Sdk, SdkModificator {
 
     public void rootsChanged() {
       synchronized (this) {
-        if (myListeners.size() == 0) {
+        if (myListeners.isEmpty()) {
           return;
         }
       }
@@ -289,7 +292,6 @@ public class ProjectJdkImpl implements JDOMExternalizable, Sdk, SdkModificator {
   }
 
   // SdkModificator implementation
-
   public SdkModificator getSdkModificator() {
     try {
       ProjectJdkImpl sdk = (ProjectJdkImpl)clone();
@@ -325,7 +327,7 @@ public class ProjectJdkImpl implements JDOMExternalizable, Sdk, SdkModificator {
     for (ProjectRoot root : roots) {
       files.addAll(Arrays.asList(root.getVirtualFiles()));
     }
-    return files.toArray(new VirtualFile[files.size()]);
+    return VfsUtil.toVirtualFileArray(files);
   }
 
   public void addRoot(VirtualFile root, OrderRootType rootType) {

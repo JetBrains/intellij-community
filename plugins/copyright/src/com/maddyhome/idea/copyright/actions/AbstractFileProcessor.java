@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -295,7 +296,7 @@ public abstract class AbstractFileProcessor {
     for (PsiFile psiFile : files) {
       vFiles.add(psiFile.getVirtualFile());
     }
-    if (!ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(vFiles.toArray(new VirtualFile[vFiles.size()]))
+    if (!ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(VfsUtil.toVirtualFileArray(vFiles))
       .hasReadonlyFiles()) {
       if (!files.isEmpty()) {
         final Runnable[] resultRunnable = new Runnable[1];

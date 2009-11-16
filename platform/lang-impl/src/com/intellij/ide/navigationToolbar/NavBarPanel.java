@@ -657,7 +657,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
           files.add(((PsiFileSystemItem)element).getVirtualFile());
         }
       }
-      return files.size() > 0 ? files.toArray(new VirtualFile[files.size()]) : null;
+      return files.size() > 0 ? VfsUtil.toVirtualFileArray(files) : null;
     }
 
     if (dataId.equals(DataConstants.CONTEXT_COMPONENT)) {

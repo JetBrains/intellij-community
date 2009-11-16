@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
@@ -307,7 +308,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
           result.add(outputPathForTests);
         }
       }
-      return result.toArray(new VirtualFile[result.size()]);
+      return VfsUtil.toVirtualFileArray(result);
     }
     return null;
   }

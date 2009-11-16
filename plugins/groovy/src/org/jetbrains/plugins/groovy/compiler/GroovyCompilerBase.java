@@ -199,7 +199,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
         outputItems = Collections.emptyList();
       }
 
-      sink.add(outputDir.getPath(), outputItems, toRecompile.toArray(new VirtualFile[toRecompile.size()]));
+      sink.add(outputDir.getPath(), outputItems, VfsUtil.toVirtualFileArray(toRecompile));
     }
     catch (ExecutionException e) {
       LOG.error(e);

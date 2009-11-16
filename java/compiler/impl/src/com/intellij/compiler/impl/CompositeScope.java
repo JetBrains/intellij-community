@@ -26,6 +26,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -67,7 +68,7 @@ public class CompositeScope extends UserDataHolderBase implements CompileScope{
         allFiles.addAll(Arrays.asList(files));
       }
     }
-    return allFiles.toArray(new VirtualFile[allFiles.size()]);
+    return VfsUtil.toVirtualFileArray(allFiles);
   }
 
   public boolean belongs(String url) {
