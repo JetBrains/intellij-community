@@ -17,8 +17,6 @@ package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diff.DiffRequestFactory;
-import com.intellij.openapi.diff.MergeRequest;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
@@ -45,21 +43,15 @@ import com.intellij.openapi.vcs.ZipperUpdater;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.changes.actions.ChangeDiffRequestPresentable;
-import com.intellij.openapi.vcs.changes.actions.DiffPresentationReturnValue;
 import com.intellij.openapi.vcs.changes.actions.DiffRequestPresentable;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.search.FilenameIndex;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.ProjectScope;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
-import com.intellij.util.Icons;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
@@ -205,7 +197,6 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     final VirtualFile baseDir = myProject.getBaseDir();
 
     final List<FilePatchInProgress> result = new ArrayList<FilePatchInProgress>(list.size());
-    final GlobalSearchScope scope = ProjectScope.getProjectScope(myProject);
     final List<TextFilePatch> creations = new LinkedList<TextFilePatch>();
     final MultiMap<String, VirtualFile> foldersDecisions = new MultiMap<String, VirtualFile>() {
       @Override
@@ -218,6 +209,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       }
     };
 
+    final PatchBaseDirectoryDetector directoryDetector = PatchBaseDirectoryDetector.getInstance(myProject);
     for (TextFilePatch patch : list) {
       if (patch.isNewFile() || (patch.getBeforeName() == null)) {
         creations.add(patch);
@@ -226,7 +218,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       final String fileName = patch.getBeforeFileName();
       final Collection<VirtualFile> files = ApplicationManager.getApplication().runReadAction(new Computable<Collection<VirtualFile>>() {
         public Collection<VirtualFile> compute() {
-          return FilenameIndex.getVirtualFilesByName(myProject, fileName, scope);
+          return directoryDetector.findFiles(fileName);
         }
       });
       final Collection<VirtualFile> variants = filterVariants(patch, files);

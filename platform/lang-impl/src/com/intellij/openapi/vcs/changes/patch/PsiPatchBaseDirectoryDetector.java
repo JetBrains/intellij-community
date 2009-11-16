@@ -17,11 +17,14 @@
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 /**
  * @author yole
@@ -53,5 +56,9 @@ public class PsiPatchBaseDirectoryDetector extends PatchBaseDirectoryDetector {
       return new Result(parent.getVirtualFile().getPresentableUrl(), 0);
     }
     return null;
+  }
+
+  public Collection<VirtualFile> findFiles(final String fileName) {
+    return FilenameIndex.getVirtualFilesByName(myProject, fileName, GlobalSearchScope.projectScope(myProject));
   }
 }
