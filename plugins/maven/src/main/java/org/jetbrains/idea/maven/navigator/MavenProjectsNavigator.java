@@ -15,11 +15,13 @@
  */
 package org.jetbrains.idea.maven.navigator;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -173,12 +175,13 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
     initTree();
     JPanel panel = new MavenProjectsNavigatorPanel(myProject, myTree);
 
-    ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(myProject);
+    final ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(myProject);
     myToolWindow = manager.registerToolWindow(TOOL_WINDOW_ID, panel, ToolWindowAnchor.RIGHT, myProject, true);
     myToolWindow.setIcon(MavenIcons.MAVEN_ICON);
 
-    manager.addToolWindowManagerListener(new ToolWindowManagerAdapter() {
+    final ToolWindowManagerAdapter listener = new ToolWindowManagerAdapter() {
       boolean wasVisible = false;
+
       @Override
       public void stateChanged() {
         if (myToolWindow.isDisposed()) return;
@@ -186,6 +189,12 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
         if (!visible || visible == wasVisible) return;
         scheduleStructureUpdate();
         wasVisible = visible;
+      }
+    };
+    manager.addToolWindowManagerListener(listener);
+    Disposer.register(myProject, new Disposable() {
+      public void dispose() {
+        manager.removeToolWindowManagerListener(listener);
       }
     });
   }
