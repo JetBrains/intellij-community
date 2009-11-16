@@ -50,8 +50,9 @@ public class CompilerOrderingTest extends IdeaTestCase {
       //"groovy compiler",
       "C2",
       "C4",
-      "C1", 
-      CompilerBundle.message("java.compiler.description"), 
+      "C1",
+      CompilerBundle.message("annotation.processing.compiler.description"), 
+      CompilerBundle.message("java.compiler.description"),
       "C3"
     }, manager.getCompilers(TranslatingCompiler.class));
   }
