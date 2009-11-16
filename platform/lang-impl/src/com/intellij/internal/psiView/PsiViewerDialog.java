@@ -34,6 +34,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
@@ -89,6 +90,8 @@ public class PsiViewerDialog extends DialogWrapper {
   private JComboBox myDialectsComboBox;
   private JPanel myReferencesPanel;
   private JPanel myButtonPanel;
+  private JSplitPane myTextSplit;
+  private JSplitPane myTreeSplit;
   private Presentation myPresentation = new Presentation();
   private Map<String, Object> handlers = new HashMap<String, Object>();
   private DefaultActionGroup myGroup;
@@ -270,6 +273,12 @@ public class PsiViewerDialog extends DialogWrapper {
     }
 
     registerCustomKeyboardActions();
+    final Dimension size = DimensionService.getInstance().getSize(getDimensionServiceKey(), myProject);
+    if (size == null) {
+      DimensionService.getInstance().setSize(getDimensionServiceKey(), new Dimension(600, 600));
+    }
+    myTextSplit.setDividerLocation(settings.textDividerLocation);
+    myTreeSplit.setDividerLocation(settings.treeDividerLocation);
     super.init();
   }
 
@@ -523,6 +532,8 @@ public class PsiViewerDialog extends DialogWrapper {
     settings.showWhiteSpaces = myShowWhiteSpacesBox.isSelected();
     final Object selectedDialect = myDialectsComboBox.getSelectedItem();
     settings.dialect = myDialectsComboBox.isVisible() && selectedDialect != null ? selectedDialect.toString() : "";
+    settings.textDividerLocation = myTextSplit.getDividerLocation();
+    settings.treeDividerLocation = myTreeSplit.getDividerLocation();    
     super.doCancelAction();
   }
 
