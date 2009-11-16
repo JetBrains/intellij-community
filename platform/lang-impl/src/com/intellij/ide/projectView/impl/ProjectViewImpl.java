@@ -264,7 +264,9 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
     myActionGroupPanel = new JPanel(new BorderLayout());
 
     myLabel = new JLabel("View as:");
-    myLabel.setDisplayedMnemonic('a');
+    if (!SystemInfo.isMac) { // See IDEADEV-41315
+      myLabel.setDisplayedMnemonic('a');
+    }
     myCombo = new ComboBox();
     myCombo.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
     myLabel.setLabelFor(myCombo);
