@@ -23,6 +23,10 @@ public abstract class OrderEntryBaseImpl extends RootModelComponentBase implemen
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.OrderEntryVeryBaseImpl");
 
   private int myIndex;
+  private static int _hc = 0;
+
+  @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
+  private final int hc = _hc++;
 
   protected OrderEntryBaseImpl(RootModelImpl rootModel) {
     super(rootModel);
@@ -39,5 +43,16 @@ public abstract class OrderEntryBaseImpl extends RootModelComponentBase implemen
 
   boolean sameType(OrderEntry that) {
     return getClass().equals(that.getClass());
+  }
+
+  @Override
+  @SuppressWarnings({"EqualsWhichDoesntCheckParameterClass"})
+  public boolean equals(Object obj) {
+    return obj == this;
+  }
+
+  @Override
+  public int hashCode() {
+    return hc;
   }
 }
