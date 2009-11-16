@@ -19,6 +19,7 @@ package com.intellij.ide.util;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
@@ -32,6 +33,9 @@ public class EditSourceUtil {
   public static Navigatable getDescriptor(final PsiElement element) {
     if (!canNavigate(element)) {
       return null;
+    }
+    if (element instanceof PomTargetPsiElement) {
+      return ((PomTargetPsiElement)element).getTarget();
     }
     final PsiElement navigationElement = element.getNavigationElement();
     final int offset = navigationElement instanceof PsiFile ? -1 : navigationElement.getTextOffset();
