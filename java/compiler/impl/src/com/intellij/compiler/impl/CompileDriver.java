@@ -155,7 +155,7 @@ public class CompileDriver {
         myGenerationCompilerModuleToOutputDirMap.put(pair, outputs);
       }
       if (config.isAnnotationProcessorsEnabled()) {
-        if (!config.getExcludedModules().contains(module)) {
+        if (config.isAnnotationProcessingEnabled(module)) {
           final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
           if (path != null) {
             lookupVFile(lfs, path);  // ensure the file is created and added to VFS
@@ -1181,7 +1181,7 @@ public class CompileDriver {
     final CompilerConfiguration config = CompilerConfiguration.getInstance(myProject);
     if (config.isAnnotationProcessorsEnabled()) {
       for (Module module : modules) {
-        if (!config.getExcludedModules().contains(module)) {
+        if (config.isAnnotationProcessingEnabled(module)) {
           final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
           if (path != null) {
             outputDirs.add(new File(path));
@@ -1874,10 +1874,11 @@ public class CompileDriver {
             modulesWithoutOutputPathSpecified.add(module.getName());
           }
         }
-        if (config.isAnnotationProcessorsEnabled() && !config.getExcludedModules().contains(module)) {
+        if (config.isAnnotationProcessorsEnabled() && config.isAnnotationProcessingEnabled(module)) {
           final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
           if (path == null) {
-            if (CompilerProjectExtension.getInstance(module.getProject()).getCompilerOutputUrl() == null) {
+            final CompilerProjectExtension extension = CompilerProjectExtension.getInstance(module.getProject());
+            if (extension == null || extension.getCompilerOutputUrl() == null) {
               isProjectCompilePathSpecified = false;
             }
             else {
@@ -1958,9 +1959,8 @@ public class CompileDriver {
         continue; // no need to check one-module chunks
       }
       if (config.isAnnotationProcessorsEnabled()) {
-        final Set<Module> excluded = config.getExcludedModules();
         for (Module chunkModule : chunkModules) {
-          if (!excluded.contains(chunkModule)) {
+          if (config.isAnnotationProcessingEnabled(chunkModule)) {
             showCyclesNotSupportedForAnnotationProcessors(chunkModules.toArray(new Module[chunkModules.size()]));
             return false;
           }

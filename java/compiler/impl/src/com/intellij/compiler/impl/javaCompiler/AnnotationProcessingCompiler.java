@@ -112,7 +112,7 @@ public class AnnotationProcessingCompiler implements TranslatingCompiler{
   private boolean isExcludedFromAnnotationProcessing(VirtualFile file, CompileContext context) {
     final Module module = context.getModuleByFile(file);
     if (module != null) {
-      if (myConfig.getExcludedModules().contains(module)) {
+      if (!myConfig.isAnnotationProcessingEnabled(module)) {
         return true;
       }
       final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);

@@ -16,6 +16,7 @@
 package com.intellij.compiler.options;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SpeedSearchBase;
@@ -37,28 +38,43 @@ public class ProcessedModulesChooser extends JPanel {
   private Table myTable = null;
   private MyTableModel myTableModel = null;
   private boolean myColorUnmarkedElements = true;
-  private final Map<Module, Boolean> myDisabledMap = new HashMap<Module, Boolean>();
 
   public ProcessedModulesChooser() {
     super(new BorderLayout());
 
-    myTableModel = new MyTableModel(true);
+    myTableModel = new MyTableModel();
     myTable = new Table(myTableModel);
     myTable.setShowGrid(false);
     myTable.setIntercellSpacing(new Dimension(0, 0));
-    myTable.setTableHeader(null);
     myTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
     myTable.setColumnSelectionAllowed(false);
     JScrollPane pane = ScrollPaneFactory.createScrollPane(myTable);
     pane.setPreferredSize(new Dimension(100, 155));
-    int width = new JCheckBox().getPreferredSize().width;
-    TableColumnModel columnModel = myTable.getColumnModel();
 
-    TableColumn checkMarkColumn = columnModel.getColumn(myTableModel.CHECK_MARK_COLUM_INDEX);
-    checkMarkColumn.setPreferredWidth(width);
-    checkMarkColumn.setMaxWidth(width);
-    checkMarkColumn.setCellRenderer(new CheckMarkColumnCellRenderer(myTable.getDefaultRenderer(Boolean.class)));
-    columnModel.getColumn(myTableModel.ELEMENT_COLUMN_INDEX).setCellRenderer(new MyElementColumnCellRenderer());
+    final TableColumnModel columnModel = myTable.getColumnModel();
+
+    final int checkmarkWidth = new JCheckBox().getPreferredSize().width;
+    final CheckMarkColumnCellRenderer checkmarkRenderer = new CheckMarkColumnCellRenderer(myTable.getDefaultRenderer(Boolean.class));
+
+    final TableColumn checkMarkColumn = columnModel.getColumn(myTableModel.CHECK_MARK_COLUM_INDEX);
+    checkMarkColumn.setHeaderValue("");
+    checkMarkColumn.setPreferredWidth(checkmarkWidth);
+    checkMarkColumn.setMaxWidth(checkmarkWidth);
+    checkMarkColumn.setCellRenderer(checkmarkRenderer);
+
+    TableColumn storeUnderContent = columnModel.getColumn(myTableModel.STORE_UNDER_CONTENT_COLUM_INDEX);
+    final String title = "Generate Sources Under Content";
+    storeUnderContent.setHeaderValue(title);
+    final JTableHeader tableHeader = myTable.getTableHeader();
+    final FontMetrics metrics = tableHeader.getFontMetrics(tableHeader.getFont());
+    final int preferredWidth = metrics.stringWidth(title) + 12;
+    storeUnderContent.setPreferredWidth(preferredWidth);
+    storeUnderContent.setMaxWidth(preferredWidth);
+    storeUnderContent.setCellRenderer(checkmarkRenderer);
+
+    final TableColumn moduleColumn = columnModel.getColumn(myTableModel.ELEMENT_COLUMN_INDEX);
+    moduleColumn.setHeaderValue("Module");
+    moduleColumn.setCellRenderer(new MyElementColumnCellRenderer());
 
     add(pane, BorderLayout.CENTER);
     myTable.registerKeyboardAction(
@@ -67,7 +83,7 @@ public class ProcessedModulesChooser extends JPanel {
           final int[] selectedRows = myTable.getSelectedRows();
           boolean currentlyMarked = true;
           for (int selectedRow : selectedRows) {
-            currentlyMarked = myTableModel.isElementMarked(selectedRow);
+            currentlyMarked = myTableModel.isMarked(selectedRow);
             if (!currentlyMarked) {
               break;
             }
@@ -88,7 +104,7 @@ public class ProcessedModulesChooser extends JPanel {
         final int count = myTableModel.getRowCount();
         Object[] elements = new Object[count];
         for (int idx = 0; idx < count; idx++) {
-          elements[idx] = myTableModel.getElementAt(idx);
+          elements[idx] = myTableModel.getModuleAt(idx);
         }
         return elements;
       }
@@ -100,7 +116,7 @@ public class ProcessedModulesChooser extends JPanel {
       public void selectElement(Object element, String selectedText) {
         final int count = myTableModel.getRowCount();
         for (int row = 0; row < count; row++) {
-          if (element.equals(myTableModel.getElementAt(row))) {
+          if (element.equals(myTableModel.getModuleAt(row))) {
             myTable.getSelectionModel().setSelectionInterval(row, row);
             TableUtil.scrollSelectionToVisible(myTable);
             break;
@@ -134,22 +150,26 @@ public class ProcessedModulesChooser extends JPanel {
     }
   }
 
-  public void addElement(Module element, final boolean isMarked) {
-    myTableModel.addElement(element, isMarked);
+  public void addModule(Module element, final boolean isMarked, boolean isStoreGeneratedSourcesUnderContent) {
+    myTableModel.addElement(element, isMarked, isStoreGeneratedSourcesUnderContent);
     selectRow(myTableModel.getRowCount() - 1);
     myTable.requestFocus();
   }
 
   public boolean isElementMarked(Module element) {
     final int elementRow = myTableModel.getElementRow(element);
-    return myTableModel.isElementMarked(elementRow);
+    return myTableModel.isMarked(elementRow);
   }
 
   public void setElementMarked(Module element, boolean marked) {
     final int elementRow = myTableModel.getElementRow(element);
-    myTableModel.setMarked(elementRow, marked);
+    myTableModel.updateBooleanMap(elementRow, marked, myTableModel.myMarkedMap);
   }
 
+  public void setStoreGeneratedSourcesUnderContent(Module element, boolean value) {
+    final int elementRow = myTableModel.getElementRow(element);
+    myTableModel.updateBooleanMap(elementRow, value, myTableModel.myStoreUnderContentMap);
+  }
 
   public void removeElement(Module element) {
     final int elementRow = myTableModel.getElementRow(element);
@@ -185,7 +205,7 @@ public class ProcessedModulesChooser extends JPanel {
   @Nullable
   public Module getSelectedElement() {
     final int selectedRow = getSelectedElementRow();
-    return selectedRow < 0? null : myTableModel.getElementAt(selectedRow);
+    return selectedRow < 0? null : myTableModel.getModuleAt(selectedRow);
   }
 
   public int getSelectedElementRow() {
@@ -199,7 +219,7 @@ public class ProcessedModulesChooser extends JPanel {
       if (selectedRow < 0) {
         continue;
       }
-      elements.add(myTableModel.getElementAt(selectedRow));
+      elements.add(myTableModel.getModuleAt(selectedRow));
     }
     return elements;
   }
@@ -224,17 +244,13 @@ public class ProcessedModulesChooser extends JPanel {
     return rows;
   }
 
-  public void markElements(Collection<Module> elements) {
-    myTableModel.setMarked(getElementsRows(elements), true);
-  }
-
-  public List<Module> getMarkedElements() {
+  public List<Pair<Module, Boolean>> getMarkedModules() {
     final int count = myTableModel.getRowCount();
-    List<Module> elements = new ArrayList<Module>();
+    List<Pair<Module, Boolean>> elements = new ArrayList<Pair<Module, Boolean>>();
     for (int idx = 0; idx < count; idx++) {
-      final Module element = myTableModel.getElementAt(idx);
-      if (myTableModel.isElementMarked(idx)) {
-        elements.add(element);
+      final Module module = myTableModel.getModuleAt(idx);
+      if (myTableModel.isMarked(idx)) {
+        elements.add(new Pair<Module, Boolean>(module, myTableModel.isGenerateSourcesToContent(module)));
       }
     }
     return elements;
@@ -270,50 +286,45 @@ public class ProcessedModulesChooser extends JPanel {
   }
 
   public Module getElementAt(int row) {
-    return myTableModel.getElementAt(row);
-  }
-
-  public void disableElement(Module element) {
-    myDisabledMap.put(element, Boolean.TRUE);
+    return myTableModel.getModuleAt(row);
   }
 
   private final class MyTableModel extends AbstractTableModel {
     private final List<Module> myElements = new ArrayList<Module>();
     private final Map<Module, Boolean> myMarkedMap = new HashMap<Module, Boolean>();
-    public final int CHECK_MARK_COLUM_INDEX;
-    public final int ELEMENT_COLUMN_INDEX;
-    private final boolean myElementsCanBeMarked;
-
-    public MyTableModel(final boolean elementsCanBeMarked) {
-      myElementsCanBeMarked = elementsCanBeMarked;
-      if (elementsCanBeMarked) {
-        CHECK_MARK_COLUM_INDEX = 0;
-        ELEMENT_COLUMN_INDEX = 1;
-      }
-      else {
-        CHECK_MARK_COLUM_INDEX = -1;
-        ELEMENT_COLUMN_INDEX = 0;
-      }
-    }
+    private final Map<Module, Boolean> myStoreUnderContentMap = new HashMap<Module, Boolean>();
+    public final int CHECK_MARK_COLUM_INDEX = 0;
+    public final int ELEMENT_COLUMN_INDEX = 1;
+    public final int STORE_UNDER_CONTENT_COLUM_INDEX = 2;
 
     public void sort(Comparator<Module> comparator) {
       Collections.sort(myElements, comparator);
       fireTableDataChanged();
     }
 
-    public Module getElementAt(int index) {
+    public Module getModuleAt(int index) {
       return myElements.get(index);
     }
 
-    public boolean isElementMarked(int index) {
+    public boolean isMarked(int index) {
       final Module element = myElements.get(index);
-      final Boolean isMarked = myMarkedMap.get(element);
-      return isMarked.booleanValue();
+      return myMarkedMap.get(element).booleanValue();
     }
 
-    void addElement(Module element, boolean isMarked) {
+    public boolean isGenerateSourcesToContent(int index) {
+      final Module element = myElements.get(index);
+      return myStoreUnderContentMap.get(element).booleanValue();
+    }
+    
+    public boolean isGenerateSourcesToContent(Module module) {
+      final Boolean value = myStoreUnderContentMap.get(module);
+      return value != null && value.booleanValue();
+    }
+
+    void addElement(Module element, boolean isMarked, boolean isStoreGeneratedSourcesUnderContent) {
       myElements.add(element);
-      myMarkedMap.put(element, isMarked? Boolean.TRUE : Boolean.FALSE);
+      myMarkedMap.put(element, Boolean.valueOf(isMarked));
+      myStoreUnderContentMap.put(element, Boolean.valueOf(isStoreGeneratedSourcesUnderContent));
       int row = myElements.size() - 1;
       fireTableRowsInserted(row, row);
     }
@@ -325,6 +336,7 @@ public class ProcessedModulesChooser extends JPanel {
       for (final Module element : elements) {
         myElements.add(element);
         myMarkedMap.put(element, isMarked ? Boolean.TRUE : Boolean.FALSE);
+        myStoreUnderContentMap.put(element, Boolean.FALSE);
       }
       fireTableRowsInserted(myElements.size() - elements.size(), myElements.size() - 1);
     }
@@ -333,6 +345,7 @@ public class ProcessedModulesChooser extends JPanel {
       final boolean reallyRemoved = myElements.remove(element);
       if (reallyRemoved) {
         myMarkedMap.remove(element);
+        myStoreUnderContentMap.remove(element);
         fireTableDataChanged();
       }
     }
@@ -360,6 +373,7 @@ public class ProcessedModulesChooser extends JPanel {
         final Module element = myElements.get(row);
         toRemove.add(element);
         myMarkedMap.remove(element);
+        myStoreUnderContentMap.remove(element);
       }
       myElements.removeAll(toRemove);
       fireTableDataChanged();
@@ -370,7 +384,7 @@ public class ProcessedModulesChooser extends JPanel {
     }
 
     public int getColumnCount() {
-      return myElementsCanBeMarked? 2 : 1;
+      return 3;
     }
 
     @Nullable
@@ -382,19 +396,25 @@ public class ProcessedModulesChooser extends JPanel {
       if (columnIndex == CHECK_MARK_COLUM_INDEX) {
         return myMarkedMap.get(element);
       }
+      if (columnIndex == STORE_UNDER_CONTENT_COLUM_INDEX) {
+        return myStoreUnderContentMap.get(element);
+      }
       return null;
     }
 
-    public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+    public void setValueAt(Object value, int rowIndex, int columnIndex) {
       if (columnIndex == CHECK_MARK_COLUM_INDEX) {
-        setMarked(rowIndex, ((Boolean)aValue).booleanValue());
+        updateBooleanMap(rowIndex, ((Boolean)value).booleanValue(), myMarkedMap);
+      }
+      else if (columnIndex == STORE_UNDER_CONTENT_COLUM_INDEX) {
+        updateBooleanMap(rowIndex, ((Boolean)value).booleanValue(), myStoreUnderContentMap);
       }
     }
 
-    private void setMarked(int rowIndex, final boolean marked) {
+    private void updateBooleanMap(int rowIndex, boolean marked, final Map<Module, Boolean> map) {
       final Module element = myElements.get(rowIndex);
       final Boolean newValue = marked? Boolean.TRUE : Boolean.FALSE;
-      myMarkedMap.put(element, newValue);
+      map.put(element, newValue);
       fireTableRowsUpdated(rowIndex, rowIndex);
     }
 
@@ -415,23 +435,29 @@ public class ProcessedModulesChooser extends JPanel {
     }
 
     public Class getColumnClass(int columnIndex) {
-      if (columnIndex == CHECK_MARK_COLUM_INDEX) {
+      if (columnIndex == CHECK_MARK_COLUM_INDEX || columnIndex == STORE_UNDER_CONTENT_COLUM_INDEX) {
         return Boolean.class;
       }
       return super.getColumnClass(columnIndex);
     }
 
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-      if (!ProcessedModulesChooser.this.isEnabled() || columnIndex != CHECK_MARK_COLUM_INDEX) {
+      if (!ProcessedModulesChooser.this.isEnabled()) {
         return false;
       }
-      final Module o = (Module)getValueAt(rowIndex, ELEMENT_COLUMN_INDEX);
-      return myDisabledMap.get(o) == null;
+      if (columnIndex == CHECK_MARK_COLUM_INDEX) {
+        return true;
+      }
+      if (columnIndex == STORE_UNDER_CONTENT_COLUM_INDEX) {
+        return isMarked(rowIndex);
+      }
+      return false;
     }
 
     public void clear() {
       myElements.clear();
       myMarkedMap.clear();
+      myStoreUnderContentMap.clear();
       fireTableDataChanged();
     }
   }
@@ -453,7 +479,7 @@ public class ProcessedModulesChooser extends JPanel {
         UIManager.put(UIUtil.TABLE_FOCUS_CELL_BACKGROUND_PROPERTY, color);
       }
       final MyTableModel model = (MyTableModel)table.getModel();
-      component.setEnabled(ProcessedModulesChooser.this.isEnabled() && (myColorUnmarkedElements? model.isElementMarked(row) : true));
+      component.setEnabled(ProcessedModulesChooser.this.isEnabled() && (myColorUnmarkedElements? model.isMarked(row) : true));
       if (component instanceof JLabel) {
         final Icon icon = module != null ? module.getModuleType().getNodeIcon(false) : null;
         JLabel label = (JLabel)component;

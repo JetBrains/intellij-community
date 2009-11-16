@@ -193,7 +193,7 @@ public class CompilerPaths {
   public static String getAnnotationProcessorsGenerationPath(Module module) {
     final CompilerConfiguration config = CompilerConfiguration.getInstance(module.getProject());
 
-    if (config.isStoreGenerateSourcesUnderModuleContent(module)) {
+    if (config.isStoreGeneratedSourcesUnderContent(module)) {
       final String[] roots = ModuleRootManager.getInstance(module).getContentRootUrls();
       if (roots.length == 0) {
         return null;
