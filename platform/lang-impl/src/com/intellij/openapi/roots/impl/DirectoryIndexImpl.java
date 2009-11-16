@@ -18,7 +18,6 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.AppTopics;
 import com.intellij.ProjectTopics;
-import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -39,9 +38,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.psi.impl.PsiManagerConfiguration;
 import com.intellij.util.*;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
@@ -50,7 +48,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
-import java.util.HashSet;
 
 public class DirectoryIndexImpl extends DirectoryIndex implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.DirectoryIndexImpl");
@@ -60,22 +57,20 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   private volatile boolean myInitialized = false;
   private volatile boolean myDisposed = false;
 
-  private final boolean myIsLasyMode;
-
   private Map<VirtualFile, Set<String>> myExcludeRootsMap;
   private Set<VirtualFile> myProjectExcludeRoots;
   private Map<VirtualFile, DirectoryInfo> myDirToInfoMap = new ConcurrentHashMap<VirtualFile, DirectoryInfo>();
-  private Map<String, VirtualFile[]> myPackageNameToDirsMap = new ConcurrentHashMap<String, VirtualFile[]>();
+  private Map<String, List<VirtualFile>> myPackageNameToDirsMap = new ConcurrentHashMap<String, List<VirtualFile>>();
+  private Map<VirtualFile, String> myDirToPackageName = new ConcurrentHashMap<VirtualFile, String>();
 
   private final DirectoryIndexExcludePolicy[] myExcludePolicies;
   private final MessageBusConnection myConnection;
 
-  public DirectoryIndexImpl(Project project, PsiManagerConfiguration psiManagerConfiguration, StartupManager startupManager) {
+  public DirectoryIndexImpl(Project project, StartupManager startupManager) {
     myProject = project;
     myConnection = project.getMessageBus().connect(project);
 
-    myIsLasyMode = !psiManagerConfiguration.REPOSITORY_ENABLED;
-    ((StartupManagerEx)startupManager).registerPreStartupActivity(new Runnable() {
+    startupManager.registerPreStartupActivity(new Runnable() {
       public void run() {
         initialize();
       }
@@ -115,25 +110,10 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     Map<VirtualFile, DirectoryInfo> oldDirToInfoMap = myDirToInfoMap;
     myDirToInfoMap = new THashMap<VirtualFile, DirectoryInfo>();
 
-    Map<String, VirtualFile[]> oldPackageNameToDirsMap = myPackageNameToDirsMap;
-    myPackageNameToDirsMap = new THashMap<String, VirtualFile[]>();
+    Map<String, List<VirtualFile>> oldPackageNameToDirsMap = myPackageNameToDirsMap;
+    myPackageNameToDirsMap = new THashMap<String, List<VirtualFile>>();
 
-    doInitialize(reverseAllSets, null);
-
-    if (myIsLasyMode) {
-      Map<VirtualFile, DirectoryInfo> newDirToInfoMap = myDirToInfoMap;
-      Map<String, VirtualFile[]> newPackageNameToDirsMap = myPackageNameToDirsMap;
-      myDirToInfoMap = oldDirToInfoMap;
-      myPackageNameToDirsMap = oldPackageNameToDirsMap;
-
-      Set<VirtualFile> allDirsSet = newDirToInfoMap.keySet();
-      for (VirtualFile dir : allDirsSet) {
-        getInfoForDirectory(dir);
-      }
-
-      myDirToInfoMap = newDirToInfoMap;
-      myPackageNameToDirsMap = newPackageNameToDirsMap;
-    }
+    doInitialize(reverseAllSets);
 
     Set<VirtualFile> keySet = myDirToInfoMap.keySet();
     assert keySet.size() == oldDirToInfoMap.keySet().size();
@@ -144,15 +124,15 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     }
 
     assert myPackageNameToDirsMap.keySet().size() == oldPackageNameToDirsMap.keySet().size();
-    for (Map.Entry<String, VirtualFile[]> entry : myPackageNameToDirsMap.entrySet()) {
+    for (Map.Entry<String,List<VirtualFile>> entry : myPackageNameToDirsMap.entrySet()) {
       String packageName = entry.getKey();
-      VirtualFile[] dirs = entry.getValue();
-      VirtualFile[] dirs1 = oldPackageNameToDirsMap.get(packageName);
+      List<VirtualFile> dirs = entry.getValue();
+      List<VirtualFile> dirs1 = oldPackageNameToDirsMap.get(packageName);
 
       HashSet<VirtualFile> set1 = new HashSet<VirtualFile>();
-      set1.addAll(Arrays.asList(dirs));
+      set1.addAll(dirs);
       HashSet<VirtualFile> set2 = new HashSet<VirtualFile>();
-      set2.addAll(Arrays.asList(dirs1));
+      set2.addAll(dirs1);
       assert set1.equals(set2);
     }
   }
@@ -168,7 +148,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     }
 
     if (myDisposed) {
-      LOG.error("Directory index is aleady disposed for this project");
+      LOG.error("Directory index is already disposed for this project");
       return;
     }
 
@@ -201,15 +181,10 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   }
 
   private void doInitialize() {
-    if (myIsLasyMode) {
-      cleapAllMaps();
-    }
-    else {
-      doInitialize(false, null);
-    }
+    doInitialize(false);
   }
 
-  private void doInitialize(boolean reverseAllSets/* for testing order independence*/, VirtualFile forDir/* in LAZY_MODE only*/) {
+  private void doInitialize(boolean reverseAllSets/* for testing order independence*/) {
     ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     if (progress == null) progress = new EmptyProgressIndicator();
 
@@ -218,8 +193,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     progress.checkCanceled();
     progress.setText(ProjectBundle.message("project.index.scanning.files.progress"));
 
-    if (forDir == null) cleapAllMaps();
-    else createMapsFor(forDir);
+    cleanAllMaps();
 
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     if (reverseAllSets) modules = ArrayUtil.reverseArray(modules);
@@ -227,36 +201,28 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     initExcludedDirMap(modules, progress);
 
     for (Module module : modules) {
-      initModuleContents(module, forDir, reverseAllSets, progress);
-      initModuleSources(module, forDir, reverseAllSets, progress);
-      initLibrarySources(module, forDir, progress);
-      initLibraryClasses(module, forDir, progress);
+      initModuleContents(module, reverseAllSets, progress);
+      initModuleSources(module, reverseAllSets, progress);
+      initLibrarySources(module, progress);
+      initLibraryClasses(module, progress);
     }
 
     progress.checkCanceled();
     progress.setText2("");
 
     for (Module module : modules) {
-      initOrderEntries(module, forDir);
+      initOrderEntries(module);
     }
 
     progress.popState();
   }
 
-  private void cleapAllMaps() {
+  private void cleanAllMaps() {
     myDirToInfoMap.clear();
     myPackageNameToDirsMap.clear();
+    myDirToPackageName.clear();
   }
 
-  private void createMapsFor(VirtualFile forDir) {
-    // clear map for all ancestors to not interfer with previous results
-    VirtualFile dir = forDir;
-    do {
-      myDirToInfoMap.remove(dir);
-      dir = dir.getParent();
-    }
-    while (dir != null);
-  }
 
   private void initExcludedDirMap(Module[] modules, ProgressIndicator progress) {
     progress.checkCanceled();
@@ -288,8 +254,8 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       }
     }
 
-    for(DirectoryIndexExcludePolicy policy: myExcludePolicies) {
-      for(VirtualFile file: policy.getExcludeRootsForProject()) {
+    for (DirectoryIndexExcludePolicy policy : myExcludePolicies) {
+      for (VirtualFile file : policy.getExcludeRootsForProject()) {
         putForFileAndAllAncestors(result, file, file.getUrl());
         projectExcludeRoots.add(file);
       }
@@ -314,7 +280,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   }
 
   private boolean isExcludeRootForModule(Module module, VirtualFile excludeRoot) {
-    for(DirectoryIndexExcludePolicy policy: myExcludePolicies) {
+    for (DirectoryIndexExcludePolicy policy : myExcludePolicies) {
       if (policy.isExcludeRootForModule(module, excludeRoot)) return true;
     }
     return false;
@@ -328,10 +294,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     return ModuleRootManager.getInstance(module).getOrderEntries();
   }
 
-  private void initModuleContents(Module module,
-                                  VirtualFile forDir,
-                                  boolean reverseAllSets,
-                                  ProgressIndicator progress) {
+  private void initModuleContents(Module module, boolean reverseAllSets, ProgressIndicator progress) {
     progress.checkCanceled();
     progress.setText2(ProjectBundle.message("project.index.processing.module.content.progress", module.getName()));
 
@@ -342,20 +305,13 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     }
 
     for (final VirtualFile contentRoot : contentRoots) {
-      fillMapWithModuleContent(contentRoot, module, contentRoot, forDir);
+      fillMapWithModuleContent(contentRoot, module, contentRoot);
     }
   }
 
-  private void fillMapWithModuleContent(VirtualFile dir,
-                                        Module module,
-                                        VirtualFile contentRoot,
-                                        VirtualFile forDir) {
+  private void fillMapWithModuleContent(VirtualFile dir, Module module, VirtualFile contentRoot) {
     if (isExcluded(contentRoot, dir)) return;
     if (isIgnored(dir)) return;
-
-    if (forDir != null) {
-      if (!VfsUtil.isAncestor(dir, forDir, false)) return;
-    }
 
     DirectoryInfo info = getOrCreateDirInfo(dir);
 
@@ -367,7 +323,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     VirtualFile[] children = dir.getChildren();
     for (VirtualFile child : children) {
       if (child.isDirectory()) {
-        fillMapWithModuleContent(child, module, contentRoot, forDir);
+        fillMapWithModuleContent(child, module, contentRoot);
       }
     }
 
@@ -381,15 +337,12 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     return excludes != null && excludes.contains(dir.getUrl());
   }
 
-  private void initModuleSources(Module module,
-                                 VirtualFile forDir,
-                                 boolean reverseAllSets,
-                                 ProgressIndicator progress) {
+  private void initModuleSources(Module module, boolean reverseAllSets, ProgressIndicator progress) {
     progress.checkCanceled();
     progress.setText2(ProjectBundle.message("project.index.processing.module.sources.progress", module.getName()));
 
     ContentEntry[] contentEntries = getContentEntries(module);
-    
+
     if (reverseAllSets) {
       contentEntries = ArrayUtil.reverseArray(contentEntries);
     }
@@ -402,45 +355,37 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       for (SourceFolder sourceFolder : sourceFolders) {
         VirtualFile dir = sourceFolder.getFile();
         if (dir != null) {
-          fillMapWithModuleSource(dir, module, sourceFolder.getPackagePrefix(), dir, sourceFolder.isTestSource(), forDir);
+          fillMapWithModuleSource(dir, module, sourceFolder.getPackagePrefix(), dir, sourceFolder.isTestSource());
         }
       }
     }
   }
 
-  private void fillMapWithModuleSource(VirtualFile dir,
-                                       Module module,
-                                       String packageName,
-                                       VirtualFile sourceRoot,
-                                       boolean isTestSource,
-                                       VirtualFile forDir) {
+  private void fillMapWithModuleSource(VirtualFile dir, Module module, String packageName, VirtualFile sourceRoot, boolean isTestSource) {
     DirectoryInfo info = myDirToInfoMap.get(dir);
     if (info == null) return;
     if (!module.equals(info.module)) return;
 
-    if (forDir != null) {
-      if (!VfsUtil.isAncestor(dir, forDir, false)) return;
-    }
-
     if (info.isInModuleSource) { // module sources overlap
-      if (info.packageName != null && info.packageName.length() == 0) return; // another source root starts here
+      String definedPackage = myDirToPackageName.get(dir);
+      if (definedPackage != null && definedPackage.length() == 0) return; // another source root starts here
     }
 
     info.isInModuleSource = true;
     info.isTestSource = isTestSource;
     info.sourceRoot = sourceRoot;
-    setPackageName(dir, info, packageName);
+    setPackageName(dir, packageName);
 
     VirtualFile[] children = dir.getChildren();
     for (VirtualFile child : children) {
       if (child.isDirectory()) {
         String childPackageName = getPackageNameForSubdir(packageName, child.getName());
-        fillMapWithModuleSource(child, module, childPackageName, sourceRoot, isTestSource, forDir);
+        fillMapWithModuleSource(child, module, childPackageName, sourceRoot, isTestSource);
       }
     }
   }
 
-  private void initLibrarySources(Module module, VirtualFile forDir, ProgressIndicator progress) {
+  private void initLibrarySources(Module module, ProgressIndicator progress) {
     progress.checkCanceled();
     progress.setText2(ProjectBundle.message("project.index.processing.library.sources.progress", module.getName()));
 
@@ -449,43 +394,37 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       if (isLibrary) {
         VirtualFile[] sourceRoots = orderEntry.getFiles(OrderRootType.SOURCES);
         for (final VirtualFile sourceRoot : sourceRoots) {
-          fillMapWithLibrarySources(sourceRoot, "", sourceRoot, forDir);
+          fillMapWithLibrarySources(sourceRoot, "", sourceRoot);
         }
       }
     }
   }
 
-  private void fillMapWithLibrarySources(VirtualFile dir,
-                                         String packageName,
-                                         VirtualFile sourceRoot,
-                                         VirtualFile forDir) {
+  private void fillMapWithLibrarySources(VirtualFile dir, String packageName, VirtualFile sourceRoot) {
     if (isIgnored(dir)) return;
-
-    if (forDir != null) {
-      if (!VfsUtil.isAncestor(dir, forDir, false)) return;
-    }
 
     DirectoryInfo info = getOrCreateDirInfo(dir);
 
     if (info.isInLibrarySource) { // library sources overlap
-      if (info.packageName != null && info.packageName.length() == 0) return; // another library source root starts here
+      String definedPackage = myDirToPackageName.get(dir);
+      if (definedPackage != null && definedPackage.length() == 0) return; // another library source root starts here
     }
 
     info.isInModuleSource = false;
     info.isInLibrarySource = true;
     info.sourceRoot = sourceRoot;
-    setPackageName(dir, info, packageName);
+    setPackageName(dir, packageName);
 
     VirtualFile[] children = dir.getChildren();
     for (VirtualFile child : children) {
       if (child.isDirectory()) {
         String childPackageName = getPackageNameForSubdir(packageName, child.getName());
-        fillMapWithLibrarySources(child, childPackageName, sourceRoot, forDir);
+        fillMapWithLibrarySources(child, childPackageName, sourceRoot);
       }
     }
   }
 
-  private void initLibraryClasses(Module module, VirtualFile forDir, ProgressIndicator progress) {
+  private void initLibraryClasses(Module module, ProgressIndicator progress) {
     progress.checkCanceled();
     progress.setText2(ProjectBundle.message("project.index.processing.library.classes.progress", module.getName()));
 
@@ -494,41 +433,38 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       if (isLibrary) {
         VirtualFile[] classRoots = orderEntry.getFiles(OrderRootType.CLASSES);
         for (final VirtualFile classRoot : classRoots) {
-          fillMapWithLibraryClasses(classRoot, "", classRoot, forDir);
+          fillMapWithLibraryClasses(classRoot, "", classRoot);
         }
       }
     }
   }
 
-  private void fillMapWithLibraryClasses(VirtualFile dir, String packageName, VirtualFile classRoot, VirtualFile forDir) {
+  private void fillMapWithLibraryClasses(VirtualFile dir, String packageName, VirtualFile classRoot) {
     if (isIgnored(dir)) return;
-
-    if (forDir != null) {
-      if (!VfsUtil.isAncestor(dir, forDir, false)) return;
-    }
 
     DirectoryInfo info = getOrCreateDirInfo(dir);
 
     if (info.libraryClassRoot != null) { // library classes overlap
-      if (info.packageName != null && info.packageName.length() == 0) return; // another library root starts here
+      String definedPackage = myDirToPackageName.get(dir);
+      if (definedPackage != null && definedPackage.length() == 0) return; // another library root starts here
     }
 
     info.libraryClassRoot = classRoot;
 
     if (!info.isInModuleSource && !info.isInLibrarySource) {
-      setPackageName(dir, info, packageName);
+      setPackageName(dir, packageName);
     }
 
     VirtualFile[] children = dir.getChildren();
     for (VirtualFile child : children) {
       if (child.isDirectory()) {
         String childPackageName = getPackageNameForSubdir(packageName, child.getName());
-        fillMapWithLibraryClasses(child, childPackageName, classRoot, forDir);
+        fillMapWithLibraryClasses(child, childPackageName, classRoot);
       }
     }
   }
 
-  private void initOrderEntries(Module module, VirtualFile forDir) {
+  private void initOrderEntries(Module module) {
     Map<VirtualFile, List<OrderEntry>> depEntries = new HashMap<VirtualFile, List<OrderEntry>>();
     Map<VirtualFile, List<OrderEntry>> libClassRootEntries = new HashMap<VirtualFile, List<OrderEntry>>();
     Map<VirtualFile, List<OrderEntry>> libSourceRootEntries = new HashMap<VirtualFile, List<OrderEntry>>();
@@ -550,7 +486,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
         VirtualFile[] sourceRoots = orderEntry.getFiles(OrderRootType.SOURCES);
         for (VirtualFile sourceRoot : sourceRoots) {
-          fillMapWithOrderEntries(sourceRoot, oneEntryList, entryModule, null, null, forDir, null, null);
+          fillMapWithOrderEntries(sourceRoot, oneEntryList, entryModule, null, null, null, null);
         }
       }
       else if (orderEntry instanceof LibraryOrderEntry || orderEntry instanceof JdkOrderEntry) {
@@ -568,19 +504,19 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     for (Map.Entry<VirtualFile, List<OrderEntry>> mapEntry : depEntries.entrySet()) {
       final VirtualFile vRoot = mapEntry.getKey();
       final List<OrderEntry> entries = mapEntry.getValue();
-      fillMapWithOrderEntries(vRoot, entries, null, null, null, forDir, null, null);
+      fillMapWithOrderEntries(vRoot, entries, null, null, null, null, null);
     }
 
     for (Map.Entry<VirtualFile, List<OrderEntry>> mapEntry : libClassRootEntries.entrySet()) {
       final VirtualFile vRoot = mapEntry.getKey();
       final List<OrderEntry> entries = mapEntry.getValue();
-      fillMapWithOrderEntries(vRoot, entries, null, vRoot, null, forDir, null, null);
+      fillMapWithOrderEntries(vRoot, entries, null, vRoot, null, null, null);
     }
 
     for (Map.Entry<VirtualFile, List<OrderEntry>> mapEntry : libSourceRootEntries.entrySet()) {
       final VirtualFile vRoot = mapEntry.getKey();
       final List<OrderEntry> entries = mapEntry.getValue();
-      fillMapWithOrderEntries(vRoot, entries, null, null, vRoot, forDir, null, null);
+      fillMapWithOrderEntries(vRoot, entries, null, null, vRoot, null, null);
     }
   }
 
@@ -598,14 +534,9 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
                                        Module module,
                                        VirtualFile libraryClassRoot,
                                        VirtualFile librarySourceRoot,
-                                       VirtualFile forDir,
                                        DirectoryInfo parentInfo,
                                        final List<OrderEntry> oldParentEntries) {
     if (isIgnored(dir)) return;
-
-    if (forDir != null) {
-      if (!VfsUtil.isAncestor(dir, forDir, false)) return;
-    }
 
     DirectoryInfo info = myDirToInfoMap.get(dir); // do not create it here!
     if (info == null) return;
@@ -630,7 +561,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     final VirtualFile[] children = dir.getChildren();
     for (VirtualFile child : children) {
       if (child.isDirectory()) {
-        fillMapWithOrderEntries(child, orderEntries, module, libraryClassRoot, librarySourceRoot, forDir, info, oldEntries);
+        fillMapWithOrderEntries(child, orderEntries, module, libraryClassRoot, librarySourceRoot, info, oldEntries);
       }
     }
   }
@@ -642,12 +573,6 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   public DirectoryInfo getInfoForDirectory(VirtualFile dir) {
     checkAvailability();
     dispatchPendingEvents();
-
-    if (myIsLasyMode) {
-      DirectoryInfo info = myDirToInfoMap.get(dir);
-      if (info != null) return info;
-      doInitialize(false, dir);
-    }
 
     return myDirToInfoMap.get(dir);
   }
@@ -666,10 +591,10 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     }
   };
 
-  private class PackageSink extends QueryFactory<VirtualFile, VirtualFile[]> {
+  private class PackageSink extends QueryFactory<VirtualFile, List<VirtualFile>> {
     private PackageSink() {
-      registerExecutor(new QueryExecutor<VirtualFile, VirtualFile[]>() {
-        public boolean execute(final VirtualFile[] allDirs, final Processor<VirtualFile> consumer) {
+      registerExecutor(new QueryExecutor<VirtualFile, List<VirtualFile>>() {
+        public boolean execute(final List<VirtualFile> allDirs, final Processor<VirtualFile> consumer) {
           for (VirtualFile dir : allDirs) {
             DirectoryInfo info = getInfoForDirectory(dir);
             assert info != null;
@@ -684,8 +609,8 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     }
 
     public Query<VirtualFile> search(@NotNull String packageName, boolean includeLibrarySources) {
-      VirtualFile[] allDirs = doGetDirectoriesByPackageName(packageName);
-      return new FilteredQuery<VirtualFile>(includeLibrarySources ? new ArrayQuery<VirtualFile>(allDirs) : createQuery(allDirs), IS_VALID);
+      List<VirtualFile> allDirs = doGetDirectoriesByPackageName(packageName);
+      return new FilteredQuery<VirtualFile>(includeLibrarySources ? new CollectionQuery<VirtualFile>(allDirs) : createQuery(allDirs), IS_VALID);
     }
   }
 
@@ -695,87 +620,17 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     return mySink.search(packageName, includeLibrarySources);
   }
 
+  @Override
+  public String getPackageName(VirtualFile dir) {
+    return myDirToPackageName.get(dir);
+  }
+
   @NotNull
-  private VirtualFile[] doGetDirectoriesByPackageName(@NotNull String packageName) {
+  private List<VirtualFile> doGetDirectoriesByPackageName(@NotNull String packageName) {
     dispatchPendingEvents();
 
-    if (!myIsLasyMode) {
-      VirtualFile[] dirs = myPackageNameToDirsMap.get(packageName);
-      return dirs != null ? dirs : VirtualFile.EMPTY_ARRAY;
-    }
-    else {
-      VirtualFile[] dirs = myPackageNameToDirsMap.get(packageName);
-      if (dirs != null) return dirs;
-      dirs = doGetDirectoriesByPackageNameInLazyMode(packageName);
-      myPackageNameToDirsMap.put(packageName, dirs);
-      return dirs;
-    }
-  }
-
-  @NotNull
-  private VirtualFile[] doGetDirectoriesByPackageNameInLazyMode(@NotNull String packageName) {
-    ArrayList<VirtualFile> list = new ArrayList<VirtualFile>();
-
-    Module[] modules = ModuleManager.getInstance(myProject).getModules();
-    for (Module module : modules) {
-      for (ContentEntry contentEntry : getContentEntries(module)) {
-        SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
-        for (SourceFolder sourceFolder : sourceFolders) {
-          VirtualFile sourceRoot = sourceFolder.getFile();
-          if (sourceRoot != null) {
-            findAndAddDirByPackageName(list, sourceRoot, packageName);
-          }
-        }
-      }
-
-      for (OrderEntry orderEntry : getOrderEntries(module)) {
-        if (orderEntry instanceof LibraryOrderEntry || orderEntry instanceof JdkOrderEntry) {
-          VirtualFile[] libRoots = orderEntry.getFiles(OrderRootType.CLASSES);
-          for (VirtualFile libRoot : libRoots) {
-            findAndAddDirByPackageName(list, libRoot, packageName);
-          }
-
-          VirtualFile[] libSourceRoots = orderEntry.getFiles(OrderRootType.SOURCES);
-          for (VirtualFile libSourceRoot : libSourceRoots) {
-            findAndAddDirByPackageName(list, libSourceRoot, packageName);
-          }
-        }
-      }
-    }
-
-    return VfsUtil.toVirtualFileArray(list);
-  }
-
-  private void findAndAddDirByPackageName(ArrayList<VirtualFile> list, VirtualFile root, @NotNull String packageName) {
-    VirtualFile dir = findDirByPackageName(root, packageName);
-    if (dir == null) return;
-    DirectoryInfo info = getInfoForDirectory(dir);
-    if (info == null) return;
-    if (!packageName.equals(info.packageName)) return;
-    if (!list.contains(dir)) {
-      list.add(dir);
-    }
-  }
-
-  private static VirtualFile findDirByPackageName(VirtualFile root, @NotNull String packageName) {
-    if (packageName.length() == 0) {
-      return root;
-    }
-    else {
-      int index = packageName.indexOf('.');
-      if (index < 0) {
-        VirtualFile child = root.findChild(packageName);
-        if (child == null || !child.isDirectory()) return null;
-        return child;
-      }
-      else {
-        String name = packageName.substring(0, index);
-        String restName = packageName.substring(index + 1);
-        VirtualFile child = root.findChild(name);
-        if (child == null || !child.isDirectory()) return null;
-        return findDirByPackageName(child, restName);
-      }
-    }
+    List<VirtualFile> dirs = myPackageNameToDirsMap.get(packageName);
+    return dirs != null ? dirs : Collections.<VirtualFile>emptyList();
   }
 
   private void dispatchPendingEvents() {
@@ -784,80 +639,50 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
   private void checkAvailability() {
     if (!myInitialized) {
-      LOG.error("Directory index is not initialized yet for "+myProject);
+      LOG.error("Directory index is not initialized yet for " + myProject);
     }
 
     if (myDisposed) {
-      LOG.error("Directory index is aleady disposed for "+myProject);
+      LOG.error("Directory index is already disposed for " + myProject);
     }
   }
 
   private DirectoryInfo getOrCreateDirInfo(VirtualFile dir) {
     DirectoryInfo info = myDirToInfoMap.get(dir);
     if (info == null) {
-      info = new DirectoryInfo(dir);
+      info = new DirectoryInfo();
       myDirToInfoMap.put(dir, info);
     }
     return info;
   }
 
-  private void setPackageName(VirtualFile dir, DirectoryInfo info, String newPackageName) {
+  private void setPackageName(VirtualFile dir, String newPackageName) {
     assert dir != null;
 
-    if (!myIsLasyMode) {
-      String oldPackageName = info.packageName;
-      if (oldPackageName != null) {
-        VirtualFile[] oldPackageDirs = myPackageNameToDirsMap.get(oldPackageName);
-        assert oldPackageDirs != null;
-        assert oldPackageDirs.length > 0;
-        if (oldPackageDirs.length != 1) {
-          VirtualFile[] dirs = new VirtualFile[oldPackageDirs.length - 1];
+    String oldPackageName = myDirToPackageName.get(dir);
+    if (oldPackageName != null) {
+      List<VirtualFile> oldPackageDirs = myPackageNameToDirsMap.get(oldPackageName);
+      final boolean removed = oldPackageDirs.remove(dir);
+      assert removed;
 
-          boolean found = false;
-          for (int i = 0; i < oldPackageDirs.length; i++) {
-            VirtualFile oldDir = oldPackageDirs[i];
-            if (oldDir.equals(dir)) {
-              found = true;
-              continue;
-            }
-            dirs[found ? i - 1 : i] = oldDir;
-          }
-
-          assert found;
-
-          myPackageNameToDirsMap.put(oldPackageName, dirs);
-        }
-        else {
-          assert dir.equals(oldPackageDirs[0]);
-          myPackageNameToDirsMap.remove(oldPackageName);
-        }
-
+      if (oldPackageDirs.size() == 0) {
+        myPackageNameToDirsMap.remove(oldPackageName);
       }
+    }
 
-      if (newPackageName != null) {
-        VirtualFile[] newPackageDirs = myPackageNameToDirsMap.get(newPackageName);
-        VirtualFile[] dirs;
-        if (newPackageDirs == null) {
-          dirs = new VirtualFile[]{dir};
-        }
-        else {
-          dirs = new VirtualFile[newPackageDirs.length + 1];
-          System.arraycopy(newPackageDirs, 0, dirs, 0, newPackageDirs.length);
-          dirs[newPackageDirs.length] = dir;
-        }
-        myPackageNameToDirsMap.put(newPackageName, dirs);
+    if (newPackageName != null) {
+      List<VirtualFile> newPackageDirs = myPackageNameToDirsMap.get(newPackageName);
+      if (newPackageDirs == null) {
+        newPackageDirs = new SmartList<VirtualFile>();
+        myPackageNameToDirsMap.put(newPackageName, newPackageDirs);
       }
+      newPackageDirs.add(dir);
+
+      myDirToPackageName.put(dir, newPackageName);
     }
     else {
-      if (info.packageName != null) {
-        myPackageNameToDirsMap.remove(info.packageName);
-      }
-      if (newPackageName != null) {
-        myPackageNameToDirsMap.remove(newPackageName);
-      }
+      myDirToPackageName.remove(dir);
     }
-
-    info.packageName = newPackageName;
   }
 
   @Nullable
@@ -870,8 +695,6 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     private final Key<List<VirtualFile>> FILES_TO_RELEASE_KEY = Key.create("DirectoryIndexImpl.MyVirtualFileListener.FILES_TO_RELEASE_KEY");
 
     public void fileCreated(VirtualFileEvent event) {
-      if (myIsLasyMode) return;
-
       VirtualFile file = event.getFile();
 
       if (!file.isDirectory()) return;
@@ -886,31 +709,33 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
       Module module = parentInfo.module;
 
-      for(DirectoryIndexExcludePolicy policy: myExcludePolicies) {
+      for (DirectoryIndexExcludePolicy policy : myExcludePolicies) {
         if (policy.isExcludeRoot(file)) return;
       }
 
-      fillMapWithModuleContent(file, module, parentInfo.contentRoot, null);
+      fillMapWithModuleContent(file, module, parentInfo.contentRoot);
+
+      String parentPackage = myDirToPackageName.get(parent);
 
       if (module != null) {
         if (parentInfo.isInModuleSource) {
-          String newDirPackageName = getPackageNameForSubdir(parentInfo.packageName, file.getName());
-          fillMapWithModuleSource(file, module, newDirPackageName, parentInfo.sourceRoot, parentInfo.isTestSource, null);
+          String newDirPackageName = getPackageNameForSubdir(parentPackage, file.getName());
+          fillMapWithModuleSource(file, module, newDirPackageName, parentInfo.sourceRoot, parentInfo.isTestSource);
         }
       }
 
       if (parentInfo.libraryClassRoot != null) {
-        String newDirPackageName = getPackageNameForSubdir(parentInfo.packageName, file.getName());
-        fillMapWithLibraryClasses(file, newDirPackageName, parentInfo.libraryClassRoot, null);
+        String newDirPackageName = getPackageNameForSubdir(parentPackage, file.getName());
+        fillMapWithLibraryClasses(file, newDirPackageName, parentInfo.libraryClassRoot);
       }
 
       if (parentInfo.isInLibrarySource) {
-        String newDirPackageName = getPackageNameForSubdir(parentInfo.packageName, file.getName());
-        fillMapWithLibrarySources(file, newDirPackageName, parentInfo.sourceRoot, null);
+        String newDirPackageName = getPackageNameForSubdir(parentPackage, file.getName());
+        fillMapWithLibrarySources(file, newDirPackageName, parentInfo.sourceRoot);
       }
 
       if (!parentInfo.getOrderEntries().isEmpty()) {
-        fillMapWithOrderEntries(file, parentInfo.getOrderEntries(), null, null, null, null, parentInfo, null);
+        fillMapWithOrderEntries(file, parentInfo.getOrderEntries(), null, null, null, parentInfo, null);
       }
     }
 
@@ -944,7 +769,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       for (VirtualFile dir : list) {
         DirectoryInfo info = myDirToInfoMap.remove(dir);
         if (info != null) {
-          setPackageName(dir, info, null);
+          setPackageName(dir, null);
         }
       }
     }
