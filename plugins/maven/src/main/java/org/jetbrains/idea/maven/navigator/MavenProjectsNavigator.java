@@ -178,18 +178,23 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
     myToolWindow.setIcon(MavenIcons.MAVEN_ICON);
 
     manager.addToolWindowManagerListener(new ToolWindowManagerAdapter() {
+      boolean wasVisible = false;
       @Override
       public void stateChanged() {
+        if (myToolWindow.isDisposed()) return;
+        boolean visible = myToolWindow.isVisible();
+        if (!visible || visible == wasVisible) return;
         scheduleStructureUpdate();
+        wasVisible = visible;
       }
     });
   }
 
   private void initTree() {
     myTree = new SimpleTree() {
-      private final JLabel myLabel = new JLabel(ProjectBundle.message("maven.navigator.nothing.to.display",
-                                                                      MavenUtil.formatHtmlImage(ADD_ICON_URL),
-                                                                      MavenUtil.formatHtmlImage(SYNC_ICON_URL)));
+      private final JLabel myLabel = new JLabel(
+        ProjectBundle.message("maven.navigator.nothing.to.display", MavenUtil.formatHtmlImage(ADD_ICON_URL),
+                              MavenUtil.formatHtmlImage(SYNC_ICON_URL)));
 
       @Override
       protected void paintComponent(Graphics g) {
@@ -249,8 +254,7 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
   }
 
   private void initStructure() {
-    myStructure = new MavenProjectsStructure(myProject, myProjectsManager, myTasksManager,
-                                             myShortcutsManager, this, myTree);
+    myStructure = new MavenProjectsStructure(myProject, myProjectsManager, myTasksManager, myShortcutsManager, this, myTree);
   }
 
   private void scheduleStructureUpdate() {
@@ -288,9 +292,7 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
     }
 
     @Override
-    public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated,
-                                List<MavenProject> deleted,
-                                Object message) {
+    public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted, Object message) {
       scheduleUpdateProjects(MavenUtil.collectFirsts(updated), deleted);
     }
 
