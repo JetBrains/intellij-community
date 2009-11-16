@@ -736,6 +736,9 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
           component.append("   ");
           component.append("["+ patchPath + "]", SimpleTextAttributes.GRAY_ATTRIBUTES);
         }
+        if (patchChange.getPatchInProgress().getCurrentStrip() > 0) {
+          component.append(" stripped " + patchChange.getPatchInProgress().getCurrentStrip(), SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
+        }
         final String text;
         if (FilePatchStatus.ADDED.equals(patchChange.getPatchInProgress().getStatus())) {
           text = "(Added)";

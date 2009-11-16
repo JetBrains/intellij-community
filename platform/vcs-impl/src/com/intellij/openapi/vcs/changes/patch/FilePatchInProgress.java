@@ -312,6 +312,10 @@ public class FilePatchInProgress implements Strippable {
     return myStrippable.getCurrentPath();
   }
 
+  public int getCurrentStrip() {
+    return myStrippable.getCurrentStrip();
+  }
+
   private static class StripCapablePath implements Strippable {
     private final int myStripMax;
     private int myCurrentStrip;
@@ -335,6 +339,10 @@ public class FilePatchInProgress implements Strippable {
 
     public void reset() {
       myCurrentStrip = 0;
+    }
+
+    public int getCurrentStrip() {
+      return myCurrentStrip;
     }
 
     // down - restore dirs...
@@ -452,6 +460,10 @@ public class FilePatchInProgress implements Strippable {
 
     public String getCurrentPath() {
       return myParts[0].getCurrentPath();
+    }
+
+    public int getCurrentStrip() {
+      return myParts[0].getCurrentStrip();
     }
 
     public void applyBackToPatch(final FilePatch patch) {
