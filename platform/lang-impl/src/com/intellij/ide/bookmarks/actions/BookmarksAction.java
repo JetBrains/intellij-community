@@ -498,6 +498,7 @@ public class BookmarksAction extends AnAction implements DumbAware {
         }
         else {
           cleanup();
+          repaint();
         }
 
         revalidate();
