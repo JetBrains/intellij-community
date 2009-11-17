@@ -129,7 +129,7 @@ public class CompactStorage extends AbstractStorage {
     markDirty();
     int record = (int)myData.length();
     setSize(record, 0);
-    int capacity = Storage.calcCapacity(requiredLength);
+    int capacity = requiredLength;
 
     setCapacity(record, capacity);
     myData.put(record + DATA_OFFSET + capacity - 1, new byte[] {0}, 0, 1);

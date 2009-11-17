@@ -1221,9 +1221,8 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
     ModifiableRootModel rootModel = ModuleRootManager.getInstance(getModule("project")).getModifiableModel();
     LibraryTable.ModifiableModel tableModel = rootModel.getModuleLibraryTable().getModifiableModel();
-    Library lib = tableModel.createLibrary("junit:junit:4.0");
+    tableModel.createLibrary("junit:junit:4.0");
     tableModel.commit();
-    //rootModel.addLibraryEntry(lib);
     rootModel.commit();
 
     assertModuleLibDeps("project", "junit:junit:4.0");
@@ -1403,6 +1402,109 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                        "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-jdk15.jar!/",
                        "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-jdk15-sources.jar!/",
                        "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-jdk15-javadoc.jar!/");
+  }
+
+  public void testDoNotPopulateSameRootEntriesOnEveryImport() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>junit</groupId>" +
+                  "    <artifactId>junit</artifactId>" +
+                  "    <version>4.0</version>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    assertModuleLibDep("project", "Maven: junit:junit:4.0",
+                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/"),
+                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/"),
+                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/"));
+
+    scheduleResolveAll();
+    resolveDependenciesAndImport();
+    scheduleResolveAll();
+    resolveDependenciesAndImport();
+
+    assertModuleLibDep("project", "Maven: junit:junit:4.0",
+                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/"),
+                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/"),
+                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/"));
+  }
+
+  public void testDoNotPopulateSameRootEntriesOnEveryImportForSystemLibraries() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>xxx</groupId>" +
+                  "    <artifactId>yyy</artifactId>" +
+                  "    <version>1</version>" +
+                  "    <scope>system</scope>" +
+                  "    <systemPath>c:/foo/bar.jar</systemPath>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    assertModuleLibDep("project", "Maven: xxx:yyy:1",
+                       Arrays.asList("jar://c:/foo/bar.jar!/"),
+                       Arrays.asList("jar://c:/foo/bar-sources.jar!/"),
+                       Arrays.asList("jar://c:/foo/bar-javadoc.jar!/"));
+
+    scheduleResolveAll();
+    resolveDependenciesAndImport();
+    scheduleResolveAll();
+    resolveDependenciesAndImport();
+
+    assertModuleLibDep("project", "Maven: xxx:yyy:1",
+                       Arrays.asList("jar://c:/foo/bar.jar!/"),
+                       Arrays.asList("jar://c:/foo/bar-sources.jar!/"),
+                       Arrays.asList("jar://c:/foo/bar-javadoc.jar!/"));
+  }
+
+  public void testRemovingPreviousSystemPathForForSystemLibraries() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>xxx</groupId>" +
+                  "    <artifactId>yyy</artifactId>" +
+                  "    <version>1</version>" +
+                  "    <scope>system</scope>" +
+                  "    <systemPath>c:/foo/bar.jar</systemPath>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    assertModuleLibDep("project", "Maven: xxx:yyy:1",
+                       Arrays.asList("jar://c:/foo/bar.jar!/"),
+                       Arrays.asList("jar://c:/foo/bar-sources.jar!/"),
+                       Arrays.asList("jar://c:/foo/bar-javadoc.jar!/"));
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>xxx</groupId>" +
+                     "    <artifactId>yyy</artifactId>" +
+                     "    <version>1</version>" +
+                     "    <scope>system</scope>" +
+                     "    <systemPath>c:/foo/xxx.jar</systemPath>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    scheduleResolveAll();
+    resolveDependenciesAndImport();
+
+    assertModuleLibDep("project", "Maven: xxx:yyy:1",
+                       Arrays.asList("jar://c:/foo/xxx.jar!/"),
+                       Arrays.asList("jar://c:/foo/xxx-sources.jar!/"),
+                       Arrays.asList("jar://c:/foo/xxx-javadoc.jar!/"));
   }
 
   public void testRemovingUnusedLibraries() throws Exception {

@@ -29,10 +29,10 @@ import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
+import com.intellij.packaging.impl.artifacts.PackagingElementPath;
 import com.intellij.packaging.impl.artifacts.PackagingElementProcessor;
 import com.intellij.packaging.ui.ManifestFileConfiguration;
 import com.intellij.util.PathUtil;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,8 +71,9 @@ public class ManifestFileUtil {
 
     final Ref<VirtualFile> sourceDir = Ref.create(null);
     final Ref<VirtualFile> sourceFile = Ref.create(null);
-    ArtifactUtil.processElements(root.getChildren(), context, artifactType, new Processor<PackagingElement<?>>() {
-      public boolean process(PackagingElement<?> element) {
+    ArtifactUtil.processElements(root.getChildren(), context, artifactType, PackagingElementPath.EMPTY, new PackagingElementProcessor<PackagingElement<?>>() {
+      @Override
+      public boolean process(@NotNull PackagingElement<?> element, @NotNull PackagingElementPath path) {
         if (element instanceof FileCopyPackagingElement) {
           final VirtualFile file = ((FileCopyPackagingElement)element).findFile();
           if (file != null) {
@@ -216,17 +217,17 @@ public class ManifestFileUtil {
     final List<String> classpath = new ArrayList<String>();
     final PackagingElementProcessor<PackagingElement<?>> processor = new PackagingElementProcessor<PackagingElement<?>>() {
       @Override
-      public boolean process(@NotNull List<CompositePackagingElement<?>> parents, @NotNull PackagingElement<?> element) {
+      public boolean process(@NotNull PackagingElement<?> element, @NotNull PackagingElementPath path) {
         if (element instanceof FileCopyPackagingElement) {
           final String fileName = ((FileCopyPackagingElement)element).getOutputFileName();
-          classpath.add(DeploymentUtil.appendToPath(getPathFromRoot(parents, "/"), fileName));
+          classpath.add(DeploymentUtil.appendToPath(path.getPathString(), fileName));
         }
         else if (element instanceof DirectoryCopyPackagingElement) {
-          classpath.add(getPathFromRoot(parents, "/"));
+          classpath.add(path.getPathString());
         }
         else if (element instanceof ArchivePackagingElement) {
           final String archiveName = ((ArchivePackagingElement)element).getName();
-          classpath.add(DeploymentUtil.appendToPath(getPathFromRoot(parents, "/"), archiveName));
+          classpath.add(DeploymentUtil.appendToPath(path.getPathString(), archiveName));
         }
         return true;
       }

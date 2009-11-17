@@ -17,11 +17,13 @@
 package com.intellij.ide.bookmarks.actions;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.bookmarks.BookmarkManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.ToolWindowManager;
 
 public class ToggleBookmarkAction extends BookmarksAction implements DumbAware {
   public ToggleBookmarkAction() {
@@ -35,15 +37,20 @@ public class ToggleBookmarkAction extends BookmarksAction implements DumbAware {
     BookmarkInContextInfo info = new BookmarkInContextInfo(dataContext, project).invoke();
 
     if (info.getBookmarkAtPlace() != null) {
-      new RemoveBookmarkItem(info.getBookmarkAtPlace()).execute(project);
+      BookmarkManager.getInstance(project).removeBookmark(info.getBookmarkAtPlace());
     }
     else {
-      new SetBookmarkItem(info.getFile(), info.getLine()).execute(project);
+      BookmarkManager.getInstance(project).addTextBookmark(info.getFile(), info.getLine(), "");
     }
   }
 
   public void update(AnActionEvent event) {
-    super.update(event);
+    DataContext dataContext = event.getDataContext();
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    event.getPresentation().setEnabled(project != null &&
+                                       (ToolWindowManager.getInstance(project).isEditorComponentActive() &&
+                                        PlatformDataKeys.EDITOR.getData(dataContext) != null ||
+                                        PlatformDataKeys.VIRTUAL_FILE.getData(dataContext) != null));
 
     event.getPresentation().setText(IdeBundle.message("action.toggle.bookmark"));
   }

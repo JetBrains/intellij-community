@@ -34,10 +34,10 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
     final LibraryEx library = (LibraryEx)myLibrary;
     final String libraryName = myLibrary.getName();//todo[nik] get modified name?
     if (!library.allPathsValid(OrderRootType.CLASSES)) {
-      problemsHolder.addError(ProjectBundle.message("project.roots.tooltip.library.misconfigured", libraryName));
+      problemsHolder.registerError(ProjectBundle.message("project.roots.tooltip.library.misconfigured", libraryName));
     }
     else if (!library.allPathsValid(JavadocOrderRootType.getInstance()) || !library.allPathsValid(OrderRootType.SOURCES)) {
-      problemsHolder.addWarning(ProjectBundle.message("project.roots.tooltip.library.misconfigured", libraryName));
+      problemsHolder.registerWarning(ProjectBundle.message("project.roots.tooltip.library.misconfigured", libraryName));
     }
   }
 

@@ -54,6 +54,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerConfiguration");
   @NonNls public static final String TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME = "tests.external.compiler.home";
   public static final int DEPENDENCY_FORMAT_VERSION = 54;
+  private static final String DEFAULT_GENERATED_DIR_NAME = "generated";
 
   @SuppressWarnings({"WeakerAccess"}) public String DEFAULT_COMPILER;
   @NotNull private BackendCompiler myDefaultJavaCompiler;
@@ -80,11 +81,10 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private boolean myEnableAnnotationProcessors = false;
   private final Map<String, String> myProcessorsMap = new HashMap<String, String>(); // map: AnnotationProcessorName -> options
   private boolean myObtainProcessorsFromClasspath = true;
-  private boolean myStoreGenerateSourcesUnderModuleContent = false;
-  private String myGeneratedDirName = "generated";
+  private String myGeneratedDirName = DEFAULT_GENERATED_DIR_NAME;
   private String myProcessorPath = "";
-  private final Set<Module> myExcludedModules = new HashSet<Module>();
-  private final Set<String> myExcludedModuleNames = new HashSet<String>();
+  private final Map<Module, Boolean> myProcessedModules = new HashMap<Module, Boolean>();
+  private final Map<String, Boolean> myModuleNames = new HashMap<String, Boolean>();
 
 
   public CompilerConfigurationImpl(Project project, ModuleManager moduleManager) {
@@ -100,13 +100,14 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       }
 
       public void beforeModuleRemoved(Project project, Module module) {
-        myExcludedModules.remove(module);
-        myExcludedModuleNames.remove(module.getName());
+        myProcessedModules.remove(module);
+        myModuleNames.remove(module.getName());
       }
 
       public void moduleAdded(Project project, Module module) {
-        if (myExcludedModuleNames.remove(module.getName())) {
-          myExcludedModules.add(module);
+        final Boolean storeUnderContent = myModuleNames.remove(module.getName());
+        if (storeUnderContent != null) {
+          myProcessedModules.put(module, storeUnderContent);
         }
       }
     });
@@ -312,22 +313,18 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     myObtainProcessorsFromClasspath = obtainProcessorsFromClasspath;
   }
 
-  public boolean isStoreGenerateSourcesUnderModuleContent(Module module) {
-    // todo: make this per-module setting
-    return myStoreGenerateSourcesUnderModuleContent;
-  }
-
-  public void setStoreGenerateSourcesUnderModuleContent(boolean storeGenerateSourcesUnderModuleContent) {
-    myStoreGenerateSourcesUnderModuleContent = storeGenerateSourcesUnderModuleContent;
-  }
-
   @NotNull
   public String getGeneratedDirName() {
     return myGeneratedDirName;
   }
 
   public void setGeneratedDirName(String generatedDirName) {
-    myGeneratedDirName = generatedDirName;
+    if (generatedDirName == null || generatedDirName.length() == 0) {
+      myGeneratedDirName = DEFAULT_GENERATED_DIR_NAME;
+    }
+    else {
+      myGeneratedDirName = generatedDirName;
+    }
   }
 
   public String getProcessorPath() {
@@ -347,14 +344,22 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     myProcessorsMap.putAll(map);
   }
 
-  public Set<Module> getExcludedModules() {
-    return Collections.unmodifiableSet(myExcludedModules);
+  public void setAnotationProcessedModules(Map<Module, Boolean> modules) {
+    myProcessedModules.clear();
+    myModuleNames.clear();
+    myProcessedModules.putAll(modules);
   }
 
-  public void setExcludedModules(Collection<Module> modules) {
-    myExcludedModules.clear();
-    myExcludedModuleNames.clear();
-    myExcludedModules.addAll(modules);
+  public Map<Module, Boolean> getAnotationProcessedModules() {
+    return Collections.unmodifiableMap(myProcessedModules);
+  }
+
+  public boolean isAnnotationProcessingEnabled(Module module) {
+    return myProcessedModules.containsKey(module);
+  }
+
+  public boolean isStoreGeneratedSourcesUnderContent(Module module) {
+    return Boolean.TRUE.equals(myProcessedModules.get(module));
   }
 
   private void addWildcardResourcePattern(@NonNls final String wildcardPattern) throws MalformedPatternException {
@@ -542,8 +547,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     if (annotationProcessingSettings != null) {
       myEnableAnnotationProcessors = Boolean.valueOf(annotationProcessingSettings.getAttributeValue("enabled", "false"));
       myObtainProcessorsFromClasspath = Boolean.valueOf(annotationProcessingSettings.getAttributeValue("useClasspath", "true"));
-      myStoreGenerateSourcesUnderModuleContent = Boolean.valueOf(annotationProcessingSettings.getAttributeValue("storeGeneratedUnderContent", "false"));
-      myGeneratedDirName = annotationProcessingSettings.getAttributeValue("generatedDirName", "generated"); 
+      myGeneratedDirName = annotationProcessingSettings.getAttributeValue("generatedDirName", DEFAULT_GENERATED_DIR_NAME);
 
       final StringBuilder pathBuilder = new StringBuilder();
       for (Element pathElement : ((Collection<Element>)annotationProcessingSettings.getChildren("processorPath"))) {
@@ -563,23 +567,25 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
         final String options = processorChild.getAttributeValue("options", "");
         myProcessorsMap.put(name, options);
       }
-      myExcludedModules.clear();
-      myExcludedModuleNames.clear();
-      final Collection<Element> excluded = (Collection<Element>)annotationProcessingSettings.getChildren("excludeModule");
-      if (excluded.size() > 0) {
+      myProcessedModules.clear();
+      myModuleNames.clear();
+
+      final Collection<Element> processed = (Collection<Element>)annotationProcessingSettings.getChildren("processModule");
+      if (processed.size() > 0) {
         final Map<String, Module> moduleMap = new com.intellij.util.containers.HashMap<String, Module>();
         for (Module module : myModuleManager.getModules()) {
           moduleMap.put(module.getName(), module);
         }
-        for (Element moduleElement : excluded) {
+        for (Element moduleElement : processed) {
           final String name = moduleElement.getAttributeValue("name");
+          final Boolean isStoreUnderContent = Boolean.valueOf(moduleElement.getAttributeValue("storeGeneratedUnderContent", "false"));
           if (name != null) {
             final Module module = moduleMap.get(name);
             if (module != null) {
-              myExcludedModules.add(module);
+              myProcessedModules.put(module, isStoreUnderContent);
             }
             else {
-              myExcludedModuleNames.add(name);
+              myModuleNames.put(name, isStoreUnderContent);
             }
           }
         }
@@ -618,7 +624,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     parentNode.addContent(annotationProcessingSettings);
     annotationProcessingSettings.setAttribute("enabled", String.valueOf(myEnableAnnotationProcessors));
     annotationProcessingSettings.setAttribute("useClasspath", String.valueOf(myObtainProcessorsFromClasspath));
-    annotationProcessingSettings.setAttribute("storeGeneratedUnderContent", String.valueOf(myStoreGenerateSourcesUnderModuleContent));
     annotationProcessingSettings.setAttribute("generatedDirName", myGeneratedDirName);
     if (myProcessorPath.length() > 0) {
       final StringTokenizer tokenizer = new StringTokenizer(myProcessorPath, File.pathSeparator, false);
@@ -635,16 +640,17 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       processor.setAttribute("name", entry.getKey());
       processor.setAttribute("options", entry.getValue());
     }
-    final List<Module> modules = new ArrayList<Module>(getExcludedModules());
+    final List<Module> modules = new ArrayList<Module>(myProcessedModules.keySet());
     Collections.sort(modules, new Comparator<Module>() {
       public int compare(Module o1, Module o2) {
         return o1.getName().compareToIgnoreCase(o2.getName());
       }
     });
     for (Module module : modules) {
-      final Element moduleElement = new Element("excludeModule");
+      final Element moduleElement = new Element("processModule");
       annotationProcessingSettings.addContent(moduleElement);
       moduleElement.setAttribute("name", module.getName());
+      moduleElement.setAttribute("storeGeneratedUnderContent", String.valueOf(isStoreGeneratedSourcesUnderContent(module)));
     }
   }
 

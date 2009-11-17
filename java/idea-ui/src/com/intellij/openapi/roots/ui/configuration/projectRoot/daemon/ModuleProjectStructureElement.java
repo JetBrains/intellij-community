@@ -34,7 +34,7 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
     final Module[] all = moduleModel.getModules();
     for (Module each : all) {
       if (each != myModule && myContext.getRealName(each).equals(myContext.getRealName(myModule))) {
-        problemsHolder.addError(ProjectBundle.message("project.roots.module.duplicate.name.message"));
+        problemsHolder.registerError(ProjectBundle.message("project.roots.module.duplicate.name.message"));
         break;
       }
     }
@@ -45,9 +45,9 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
     for (OrderEntry entry : entries) {
       if (!entry.isValid()){
         if (entry instanceof JdkOrderEntry && ((JdkOrderEntry)entry).getJdkName() == null) {
-          problemsHolder.addError(ProjectBundle.message("project.roots.module.jdk.problem.message"));
+          problemsHolder.registerError(ProjectBundle.message("project.roots.module.jdk.problem.message"));
         } else {
-          problemsHolder.addError(ProjectBundle.message("project.roots.library.problem.message", entry.getPresentableName()));
+          problemsHolder.registerError(ProjectBundle.message("project.roots.library.problem.message", entry.getPresentableName()));
         }
       }
     }

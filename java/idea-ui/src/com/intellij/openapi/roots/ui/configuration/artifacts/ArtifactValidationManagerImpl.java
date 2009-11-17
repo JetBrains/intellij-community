@@ -16,98 +16,93 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.CompositePackagingElementNode;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemDescription;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemsHolderImpl;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.openapi.util.MultiValuesMap;
+import com.intellij.openapi.util.Pair;
 import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.impl.ui.ArtifactValidationManagerBase;
 import com.intellij.packaging.ui.ArtifactProblemQuickFix;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
 * @author nik
 */
-public class ArtifactValidationManagerImpl extends ArtifactValidationManagerBase implements Disposable {
-  private MergingUpdateQueue myValidationQueue;
+public class ArtifactValidationManagerImpl implements Disposable {
   private ArtifactErrorPanel myErrorPanel;
   private final ArtifactEditorImpl myArtifactEditor;
-  private Map<PackagingElementNode<?>, String> myErrorsForNodes = new HashMap<PackagingElementNode<?>, String>();
-  private Map<PackagingElement<?>, String> myErrorsForElements = new HashMap<PackagingElement<?>, String>();
+  private MultiValuesMap<PackagingElementNode<?>, String> myErrorsForNodes = new MultiValuesMap<PackagingElementNode<?>, String>(true);
+  private List<Pair<String, List<PackagingElement<?>>>> myProblems = new ArrayList<Pair<String, List<PackagingElement<?>>>>();
 
   ArtifactValidationManagerImpl(ArtifactEditorImpl artifactEditor) {
-    super(artifactEditor.getContext());
     Disposer.register(artifactEditor, this);
     myArtifactEditor = artifactEditor;
     myErrorPanel = new ArtifactErrorPanel(artifactEditor);
-    final JComponent mainComponent = artifactEditor.getMainComponent();
-    myValidationQueue = new MergingUpdateQueue("ArtifactValidation", 300, false, mainComponent, this, mainComponent);
-  }
-
-  private void runValidation() {
-    myErrorPanel.clearError();
-    myErrorsForNodes.clear();
-    myErrorsForElements.clear();
-
-    myArtifactEditor.getLayoutTreeComponent().saveElementProperties();
-    final Artifact artifact = myArtifactEditor.getArtifact();
-    artifact.getArtifactType().checkRootElement(myArtifactEditor.getRootElement(), artifact, this);
-
-    myArtifactEditor.getLayoutTreeComponent().updateTreeNodesPresentation();
-  }
-
-  public void registerProblem(@NotNull String message, @Nullable PackagingElement<?> place, @Nullable ArtifactProblemQuickFix quickFix) {
-    if (place != null) {
-      final LayoutTree layoutTree = myArtifactEditor.getLayoutTreeComponent().getLayoutTree();
-      myErrorsForElements.put(place, message);
-      final List<PackagingElementNode<?>> nodes = layoutTree.findNodes(Collections.singletonList(place));
-      for (PackagingElementNode<?> node : nodes) {
-        addNodeToErrorsWithParents(node, message);
-      }
-    }
-    myErrorPanel.showError(message, quickFix);
-  }
-
-  private void addNodeToErrorsWithParents(PackagingElementNode<?> node, String message) {
-    if (!myErrorsForNodes.containsKey(node)) {
-      myErrorsForNodes.put(node, message);
-      final CompositePackagingElementNode parentNode = node.getParentNode();
-      if (parentNode != null) {
-        addNodeToErrorsWithParents(parentNode, message);
-      }
-    }
   }
 
   public void dispose() {
-  }
-
-  public void queueValidation() {
-    myValidationQueue.queue(new Update("validate") {
-      public void run() {
-        runValidation();
-      }
-    });
   }
 
   public JComponent getMainErrorPanel() {
     return myErrorPanel.getMainPanel();
   }
 
-  public void elementAddedToNode(PackagingElementNode<?> node, PackagingElement<?> element) {
-    final String message = myErrorsForElements.get(element);
-    if (message != null) {
-      addNodeToErrorsWithParents(node, message);
+  public void onNodesAdded() {
+    for (Pair<String, List<PackagingElement<?>>> problem : myProblems) {
+      registerProblem(problem.getFirst(), problem.getSecond());
     }
   }
 
+  private void registerProblem(@NotNull PackagingElementNode<?> node, @NotNull String message) {
+    myErrorsForNodes.put(node, message);
+  }
+
   @Nullable
-  public String getProblem(PackagingElementNode<?> node) {
+  public Collection<String> getProblems(PackagingElementNode<?> node) {
     return myErrorsForNodes.get(node);
+  }
+
+  public void updateProblems(@Nullable ProjectStructureProblemsHolderImpl holder) {
+    myErrorPanel.clearError();
+    myErrorsForNodes.clear();
+    myProblems.clear();
+    if (holder != null) {
+      final List<ProjectStructureProblemDescription> problemDescriptions = holder.getProblemDescriptions();
+      if (problemDescriptions != null) {
+        for (ProjectStructureProblemDescription description : problemDescriptions) {
+          final String message = description.getMessage();
+          ArtifactProblemQuickFix quickFix = null;
+          if (description instanceof ArtifactProblemDescription) {
+            quickFix = ((ArtifactProblemDescription)description).getQuickFix();
+            final List<PackagingElement<?>> pathToPlace = ((ArtifactProblemDescription)description).getPathToPlace();
+            if (pathToPlace != null) {
+              myProblems.add(Pair.create(message, pathToPlace));
+              registerProblem(message, pathToPlace);
+            }
+          }
+          myErrorPanel.showError(message, quickFix);
+        }
+      }
+    }
+    myArtifactEditor.getLayoutTreeComponent().updateTreeNodesPresentation();
+  }
+
+  private void registerProblem(String message, List<PackagingElement<?>> pathToPlace) {
+    final LayoutTree layoutTree = myArtifactEditor.getLayoutTreeComponent().getLayoutTree();
+    PackagingElementNode<?> node = layoutTree.getRootPackagingNode();
+    int i = 0;
+    while (node != null) {
+      registerProblem(node, message);
+      i++;
+      if (i >= pathToPlace.size()) break;
+      node = node.findChildByElement(pathToPlace.get(i));
+    }
   }
 }

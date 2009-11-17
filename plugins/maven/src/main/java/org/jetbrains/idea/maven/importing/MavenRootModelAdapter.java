@@ -240,13 +240,14 @@ public class MavenRootModelAdapter {
                       OrderRootType type,
                       MavenArtifact artifact,
                       String classifier) {
+    String newUrl = artifact.getUrlForClassifier(classifier);
     for (String url : libraryModel.getUrls(type)) {
-      if (isRepositoryUrl(artifact, url, classifier)) {
+      if (newUrl.equals(url)) return;
+      if (MavenConstants.SCOPE_SYSTEM.equals(artifact.getScope()) || isRepositoryUrl(artifact, url, classifier)) {
         libraryModel.removeRoot(url, type);
       }
     }
-
-    libraryModel.addRoot(artifact.getUrlForClassifier(classifier), type);
+    libraryModel.addRoot(newUrl, type);
   }
 
   private boolean isRepositoryUrl(MavenArtifact artifact, String url, String classifier) {

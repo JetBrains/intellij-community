@@ -13,22 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.packaging.ui;
 
-import com.intellij.packaging.elements.PackagingElement;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-/**
- * @author nik
+/*
+ * @author max
  */
-public interface ArtifactValidationManager {
+package com.intellij.ide.bookmarks.actions;
 
-  ArtifactEditorContext getContext();
-
-  void registerProblem(@NotNull String message);
-
-  void registerProblem(@NotNull String message, @Nullable ArtifactProblemQuickFix quickFix);
-
-  void registerProblem(@NotNull String message, @Nullable PackagingElement<?> place, @Nullable ArtifactProblemQuickFix quickFix);
+public class GotoBookmark5Action extends GoToMnemonicBookmarkActionBase {
+  public GotoBookmark5Action() {
+    super(5);
+  }
 }

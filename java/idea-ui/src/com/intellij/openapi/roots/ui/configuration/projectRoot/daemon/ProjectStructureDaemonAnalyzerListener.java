@@ -13,19 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.io.storage;
+package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
+
+import org.jetbrains.annotations.NotNull;
+
+import java.util.EventListener;
 
 /**
- * @author Dmitry Avdeev
+ * @author nik
  */
-public class CompactStorageTest extends StorageTest {
+public interface ProjectStructureDaemonAnalyzerListener extends EventListener {
 
-  protected void setUp() throws Exception {
-    myStorage = new CompactStorage(getFileName());
-  }
+  void usagesCollected(@NotNull ProjectStructureElement containingElement);
 
-  protected void tearDown() throws Exception {
-    super.tearDown();
-    CompactStorage.deleteFiles(getFileName());
-  }
+  void problemsChanged(@NotNull ProjectStructureElement element);
+
+  void allProblemsChanged();
 }

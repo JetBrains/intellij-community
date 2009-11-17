@@ -142,7 +142,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     final Module module = getModuleByFile(file);
     if (module != null) {
       final String procGenRoot = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
-      if (VfsUtil.isAncestor(new File(procGenRoot), new File(file.getPath()), true)) {
+      if (procGenRoot != null && VfsUtil.isAncestor(new File(procGenRoot), new File(file.getPath()), true)) {
         return true;
       }
     }

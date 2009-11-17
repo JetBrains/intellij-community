@@ -111,7 +111,6 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     });
     setOutputPath(outputPath);
     myValidationManager = new ArtifactValidationManagerImpl(this);
-    myContext.setValidationManager(myValidationManager);
     updateShowContentCheckbox();
   }
 
@@ -174,7 +173,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   }
 
   public void queueValidation() {
-    myValidationManager.queueValidation();
+    myContext.queueValidation();
   }
 
   public JComponent createMainComponent() {
@@ -398,6 +397,10 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     final CompositePackagingElement<?> newRootElement = artifactType.createRootElement(getArtifact().getName());
     ArtifactUtil.copyChildren(oldRootElement, newRootElement, myProject);
     myLayoutTreeComponent.setRootElement(newRootElement);
+  }
+
+  public ArtifactValidationManagerImpl getValidationManager() {
+    return myValidationManager;
   }
 
   private class MyDataProvider implements TypeSafeDataProvider {

@@ -95,7 +95,7 @@ public class GroovyAnnotator implements Annotator {
     return node != null && PsiTreeUtil.getParentOfType(element, GrDocComment.class) != null || element instanceof GrDocComment;
   }
 
-  public void annotate(PsiElement element, AnnotationHolder holder) {
+  public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     if (element instanceof GrCodeReferenceElement) {
       checkReferenceElement(holder, (GrCodeReferenceElement)element);
     }
@@ -1124,7 +1124,7 @@ public class GroovyAnnotator implements Annotator {
     for (int i = 0; i < argumentTypes.length; i++) {
       final PsiType paramType = TypesUtil.boxPrimitiveType(paramTypes[i], manager, resolveScope);
       final PsiType argType = argumentTypes[i];
-      if (!paramType.isAssignableFrom(argType)) return false;
+      if (!TypesUtil.isAssignableByMethodCallConversion(paramType, argType, manager, resolveScope)) return false;
     }
     return true;
   }

@@ -21,9 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 
 public abstract class CompilerConfiguration {
   // need this flag for profiling purposes. In production code is always set to 'true'
@@ -57,13 +55,13 @@ public abstract class CompilerConfiguration {
 
   public abstract void setAnnotationProcessorsMap(Map<String, String> map);
 
-  public abstract Set<Module> getExcludedModules();
+  public abstract void setAnotationProcessedModules(Map<Module, Boolean> modules);
 
-  public abstract void setExcludedModules(Collection<Module> modules);
+  public abstract Map<Module, Boolean> getAnotationProcessedModules();
 
-  public abstract boolean isStoreGenerateSourcesUnderModuleContent(Module module);
+  public abstract boolean isAnnotationProcessingEnabled(Module module);
 
-  public abstract void setStoreGenerateSourcesUnderModuleContent(boolean storeGenerateSourcesUnderModuleContent);
+  public abstract boolean isStoreGeneratedSourcesUnderContent(Module module);
 
   @NotNull
   public abstract String getGeneratedDirName();

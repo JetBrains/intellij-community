@@ -112,12 +112,12 @@ public class AnnotationProcessingCompiler implements TranslatingCompiler{
   private boolean isExcludedFromAnnotationProcessing(VirtualFile file, CompileContext context) {
     final Module module = context.getModuleByFile(file);
     if (module != null) {
-      if (myConfig.getExcludedModules().contains(module)) {
+      if (!myConfig.isAnnotationProcessingEnabled(module)) {
         return true;
       }
       final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
-      final VirtualFile generationDir = LocalFileSystem.getInstance().findFileByPath(path);
-      if (VfsUtil.isAncestor(generationDir, file, false)) {
+      final VirtualFile generationDir = path != null? LocalFileSystem.getInstance().findFileByPath(path) : null;
+      if (generationDir != null && VfsUtil.isAncestor(generationDir, file, false)) {
         return true;
       }
     }

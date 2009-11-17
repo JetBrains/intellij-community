@@ -216,8 +216,14 @@ public class TypesUtil {
   public static boolean isAssignableByMethodCallConversion(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope) {
     if (lType == null || rType == null) return false;
 
-    if (lType.equalsToText(JAVA_LANG_STRING)) return true;
-    
+    if (rType.equalsToText(GrStringUtil.GROOVY_LANG_GSTRING)) {
+      final PsiClass javaLangString = JavaPsiFacade.getInstance(manager.getProject()).findClass(JAVA_LANG_STRING, scope);
+      if (javaLangString != null &&
+          isAssignable(lType, JavaPsiFacade.getElementFactory(manager.getProject()).createType(javaLangString), manager, scope)) {
+        return true;
+      }
+    }
+
     if (isNumericType(lType) && isNumericType(rType)) {
       lType = unboxPrimitiveTypeWrapper(lType);
       if (lType.equalsToText(JAVA_MATH_BIG_DECIMAL)) lType = PsiType.DOUBLE;

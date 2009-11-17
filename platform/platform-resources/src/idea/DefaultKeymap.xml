@@ -147,6 +147,36 @@
       <mouse-shortcut keystroke="ctrl shift button1"/>
       <mouse-shortcut keystroke="shift button2"/>
     </action>
+    <action id="GotoBookmark0">
+      <keyboard-shortcut first-keystroke="control 0"/>
+    </action>
+    <action id="GotoBookmark1">
+      <keyboard-shortcut first-keystroke="control 1"/>
+    </action>
+    <action id="GotoBookmark2">
+      <keyboard-shortcut first-keystroke="control 2"/>
+    </action>
+    <action id="GotoBookmark3">
+      <keyboard-shortcut first-keystroke="control 3"/>
+    </action>
+    <action id="GotoBookmark4">
+      <keyboard-shortcut first-keystroke="control 4"/>
+    </action>
+    <action id="GotoBookmark5">
+      <keyboard-shortcut first-keystroke="control 5"/>
+    </action>
+    <action id="GotoBookmark6">
+      <keyboard-shortcut first-keystroke="control 6"/>
+    </action>
+    <action id="GotoBookmark7">
+      <keyboard-shortcut first-keystroke="control 7"/>
+    </action>
+    <action id="GotoBookmark8">
+      <keyboard-shortcut first-keystroke="control 8"/>
+    </action>
+    <action id="GotoBookmark9">
+      <keyboard-shortcut first-keystroke="control 9"/>
+    </action>
 
     <action id="$Undo">
       <keyboard-shortcut first-keystroke="control Z"/>
@@ -287,6 +317,9 @@
     </action>
     <action id="Compile">
       <keyboard-shortcut first-keystroke="control shift F9"/>
+    </action>
+    <action id="RunAPT">
+      <keyboard-shortcut first-keystroke="control alt shift F9"/>
     </action>
     <action id="$Cut">
       <keyboard-shortcut first-keystroke="control X"/>
@@ -978,6 +1011,37 @@
     </action>
     <action id="RunGc"/>
     <action id="RunClass"/>
+
+    <action id="GotoBookmark0">
+      <keyboard-shortcut first-keystroke="control 0"/>
+    </action>
+    <action id="GotoBookmark1">
+      <keyboard-shortcut first-keystroke="control 1"/>
+    </action>
+    <action id="GotoBookmark2">
+      <keyboard-shortcut first-keystroke="control 2"/>
+    </action>
+    <action id="GotoBookmark3">
+      <keyboard-shortcut first-keystroke="control 3"/>
+    </action>
+    <action id="GotoBookmark4">
+      <keyboard-shortcut first-keystroke="control 4"/>
+    </action>
+    <action id="GotoBookmark5">
+      <keyboard-shortcut first-keystroke="control 5"/>
+    </action>
+    <action id="GotoBookmark6">
+      <keyboard-shortcut first-keystroke="control 6"/>
+    </action>
+    <action id="GotoBookmark7">
+      <keyboard-shortcut first-keystroke="control 7"/>
+    </action>
+    <action id="GotoBookmark8">
+      <keyboard-shortcut first-keystroke="control 8"/>
+    </action>
+    <action id="GotoBookmark9">
+      <keyboard-shortcut first-keystroke="control 9"/>
+    </action>
 
     <action id="MethodUp">
       <keyboard-shortcut first-keystroke="control UP"/>
@@ -2094,6 +2158,16 @@
   <action id="FindWordAtCaret">
     <keyboard-shortcut first-keystroke="control 3" />
   </action>
+  <action id="GotoBookmark0" />
+  <action id="GotoBookmark1" />
+  <action id="GotoBookmark2" />
+  <action id="GotoBookmark3" />
+  <action id="GotoBookmark4" />
+  <action id="GotoBookmark5" />
+  <action id="GotoBookmark6" />
+  <action id="GotoBookmark7" />
+  <action id="GotoBookmark8" />
+  <action id="GotoBookmark9" />
   <action id="HighlightUsagesInFile">
     <keyboard-shortcut first-keystroke="shift control 7" />
   </action>
@@ -2296,6 +2370,16 @@
   <action id="GotoAction">
     <keyboard-shortcut first-keystroke="control I" />
   </action>
+  <action id="GotoBookmark0" />
+  <action id="GotoBookmark1" />
+  <action id="GotoBookmark2" />
+  <action id="GotoBookmark3" />
+  <action id="GotoBookmark4" />
+  <action id="GotoBookmark5" />
+  <action id="GotoBookmark6" />
+  <action id="GotoBookmark7" />
+  <action id="GotoBookmark8" />
+  <action id="GotoBookmark9" />
   <action id="GotoClass">
     <keyboard-shortcut first-keystroke="control O" />
   </action>

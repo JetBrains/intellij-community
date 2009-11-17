@@ -60,6 +60,9 @@ import java.util.Properties;
 public class GroovyOverrideImplementUtil {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.overrideImplement.GroovyOverrideImplementUtil");
 
+  private GroovyOverrideImplementUtil() {
+  }
+
   public static void invokeOverrideImplement(final Project project, final Editor editor, final PsiFile file, boolean isImplement) {
     final int offset = editor.getCaretModel().getOffset();
 
@@ -159,13 +162,13 @@ public class GroovyOverrideImplementUtil {
               anchor = nextElement;
             }
 
-            aClass.addMemberDeclaration(result, anchor);
+            final GrMethod addedMethod = aClass.addMemberDeclaration(result, anchor);
 
-            PsiUtil.shortenReferences(result);
-              //[GenerateMembersUtil.positionCaret in unsuitable because method.getBody() returns null, it is neccesary use method.getBlock() instead.
+            PsiUtil.shortenReferences(addedMethod);
+              //[GenerateMembersUtil.positionCaret in unsuitable because method.getBody() returns null, it is necessary use method.getBlock() instead.
               //but it is impossible in common case]
 //            GenerateMembersUtil.positionCaret(editor, result, true);
-            positionCaret(editor, result);
+            positionCaret(editor, addedMethod);
           } catch (IncorrectOperationException e) {
             throw new RuntimeException(e);
           }

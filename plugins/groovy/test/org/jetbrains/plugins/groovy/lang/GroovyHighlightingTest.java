@@ -189,4 +189,6 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testGstringAssignableToString() throws Exception{doTest();} 
+  public void testGstringAssignableToStringInClosureParameter() throws Exception{doTest();}
+  public void testEverythingAssignableToString() throws Exception {doTest(new GroovyAssignabilityCheckInspection());}
 }
