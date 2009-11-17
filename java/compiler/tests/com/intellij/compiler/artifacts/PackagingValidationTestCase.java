@@ -38,7 +38,7 @@ public abstract class PackagingValidationTestCase extends PackagingElementsTestC
       super(new MockPackagingEditorContext());
     }
 
-    public void registerError(@NotNull String message, @Nullable PackagingElement<?> place, @Nullable ArtifactProblemQuickFix quickFix) {
+    public void registerError(@NotNull String message, @Nullable List<PackagingElement<?>> pathToPlace, @Nullable ArtifactProblemQuickFix quickFix) {
       myProblems.add(message);
       if (quickFix != null) {
         myQuickFixes.put(message, quickFix);
