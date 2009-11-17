@@ -191,6 +191,10 @@ public class JavaClassReferenceSet {
     return !Boolean.FALSE.equals(aBoolean) && myElement.getLanguage() instanceof XMLLanguage;
   }
 
+  protected boolean isStaticSeparator(char c) {
+    return isAllowDollarInNames() ? c == SEPARATOR2 : c == SEPARATOR;
+  }
+
   public void reparse(PsiElement element, final TextRange range) {
     final String text = range.substring(element.getText());
     reparse(text, element, false, myContext);
