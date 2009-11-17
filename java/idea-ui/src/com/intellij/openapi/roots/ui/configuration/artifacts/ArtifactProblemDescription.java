@@ -21,12 +21,14 @@ import com.intellij.packaging.ui.ArtifactProblemQuickFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @author nik
  */
 public class ArtifactProblemDescription extends ProjectStructureProblemDescription {
   private ArtifactProblemQuickFix myQuickFix;
-  private PackagingElement<?> myPlace;
+  private List<PackagingElement<?>> myPathToPlace;
 
   public ArtifactProblemDescription(@NotNull String message, @NotNull Severity severity) {
     super(message, severity);
@@ -39,10 +41,10 @@ public class ArtifactProblemDescription extends ProjectStructureProblemDescripti
 
   public ArtifactProblemDescription(@NotNull String message,
                                     @NotNull Severity severity,
-                                    @Nullable PackagingElement<?> place,
+                                    @Nullable List<PackagingElement<?>> pathToPlace,
                                     @Nullable ArtifactProblemQuickFix quickFix) {
     super(message, severity);
-    myPlace = place;
+    myPathToPlace = pathToPlace;
     myQuickFix = quickFix;
   }
 
@@ -51,7 +53,8 @@ public class ArtifactProblemDescription extends ProjectStructureProblemDescripti
     return myQuickFix;
   }
 
-  public PackagingElement<?> getPlace() {
-    return myPlace;
+  @Nullable 
+  public List<PackagingElement<?>> getPathToPlace() {
+    return myPathToPlace;
   }
 }

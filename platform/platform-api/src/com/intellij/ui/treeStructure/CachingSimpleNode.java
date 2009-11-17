@@ -17,6 +17,7 @@ package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class CachingSimpleNode extends SimpleNode {
 
@@ -36,9 +37,13 @@ public abstract class CachingSimpleNode extends SimpleNode {
   public final SimpleNode[] getChildren() {
     if (myChildren == null) {
       myChildren = buildChildren();
+      onChildrenBuilt();
     }
 
     return myChildren;
+  }
+
+  protected void onChildrenBuilt() {
   }
 
   protected abstract SimpleNode[] buildChildren();
@@ -47,7 +52,8 @@ public abstract class CachingSimpleNode extends SimpleNode {
     myChildren = null;
   }
 
-  SimpleNode[] getCached() {
+  @Nullable 
+  protected SimpleNode[] getCached() {
     return myChildren;
   }
 

@@ -19,6 +19,8 @@ import com.intellij.packaging.elements.PackagingElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @author nik
  */
@@ -30,5 +32,5 @@ public interface ArtifactProblemsHolder {
 
   void registerError(@NotNull String message, @Nullable ArtifactProblemQuickFix quickFix);
 
-  void registerError(@NotNull String message, @Nullable PackagingElement<?> place, @Nullable ArtifactProblemQuickFix quickFix);
+  void registerError(@NotNull String message, @Nullable List<PackagingElement<?>> pathToPlace, @Nullable ArtifactProblemQuickFix quickFix);
 }

@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorImpl;
 import com.intellij.openapi.util.MultiValuesMap;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.ui.ArtifactEditorContext;
@@ -55,7 +56,6 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
 
   private void doAddElement(E packagingElement) {
     myPackagingElements.add(packagingElement);
-    ((ArtifactEditorImpl)myContext.getThisArtifactEditor()).getValidationManager().elementAddedToNode(this, packagingElement);
   }
 
   @Nullable 
@@ -93,11 +93,12 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
 
   @Override
   protected void update(PresentationData presentation) {
-    final String message = ((ArtifactEditorImpl)myContext.getThisArtifactEditor()).getValidationManager().getProblem(this);
-    if (message == null) {
+    final Collection<String> problems = ((ArtifactEditorImpl)myContext.getThisArtifactEditor()).getValidationManager().getProblems(this);
+    if (problems == null || problems.isEmpty()) {
       super.update(presentation);
       return;
     }
+    final String message = StringUtil.join(problems, "\n");
 
     getElementPresentation().render(presentation, addErrorHighlighting(SimpleTextAttributes.REGULAR_ATTRIBUTES), 
                                     addErrorHighlighting(SimpleTextAttributes.GRAY_ATTRIBUTES));
@@ -143,6 +144,30 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
         }
       }
     }
+    return null;
+  }
+
+  @Nullable
+  public PackagingElementNode findChildByElement(@NotNull PackagingElement<?> element) {
+    final SimpleNode[] children = getCached();
+    if (children != null) {
+      for (SimpleNode child : children) {
+        if (child instanceof PackagingElementNode<?>) {
+          PackagingElementNode<?> elementNode = (PackagingElementNode<?>)child;
+          for (PackagingElement<?> childElement : elementNode.getPackagingElements()) {
+            if (childElement.isEqualTo(element)) {
+              return elementNode;
+            }
+          }
+          for (PackagingNodeSource nodeSource : elementNode.getNodeSources()) {
+            if (nodeSource.getSourceElement().isEqualTo(element)) {
+              return elementNode;
+            }
+          }
+        }
+      }
+    }
+
     return null;
   }
 }

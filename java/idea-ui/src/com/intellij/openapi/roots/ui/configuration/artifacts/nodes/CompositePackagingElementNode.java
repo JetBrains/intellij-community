@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts.nodes;
 
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorImpl;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ComplexElementSubstitutionParameters;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.CompositePackagingElement;
@@ -51,4 +52,8 @@ public class CompositePackagingElementNode extends PackagingElementNode<Composit
     return children.toArray(new SimpleNode[children.size()]);
   }
 
+  @Override
+  protected void onChildrenBuilt() {
+    ((ArtifactEditorImpl)myContext.getThisArtifactEditor()).getValidationManager().onNodesAdded();
+  }
 }
