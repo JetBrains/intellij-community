@@ -23,6 +23,7 @@ import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
+import com.intellij.packaging.impl.artifacts.PackagingElementPath;
 import com.intellij.packaging.impl.artifacts.PackagingElementProcessor;
 import com.intellij.packaging.impl.elements.ArtifactElementType;
 import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
@@ -61,11 +62,10 @@ public class ArtifactExternalDependenciesImporter {
     for (Artifact artifact : artifactModel.getArtifacts()) {
       ArtifactUtil.processPackagingElements(artifact, ArtifactElementType.ARTIFACT_ELEMENT_TYPE, new PackagingElementProcessor<ArtifactPackagingElement>() {
         @Override
-        public boolean process(@NotNull List<CompositePackagingElement<?>> parents,
-                               @NotNull ArtifactPackagingElement artifactPackagingElement) {
+        public boolean process(@NotNull ArtifactPackagingElement artifactPackagingElement, @NotNull PackagingElementPath path) {
           final Artifact included = artifactPackagingElement.findArtifact(context);
-          if (!parents.isEmpty() && included != null) {
-            final CompositePackagingElement<?> parent = parents.get(0);
+          final CompositePackagingElement<?> parent = path.getLastParent();
+          if (parent != null && included != null) {
             final List<PackagingElement<?>> elements = myExternalDependencies.get(included);
             if (elements != null) {
               elementsToInclude.add(Pair.create(parent, elements));

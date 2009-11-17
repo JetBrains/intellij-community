@@ -20,9 +20,9 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.*;
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
+import com.intellij.packaging.impl.artifacts.PackagingElementPath;
 import com.intellij.packaging.impl.artifacts.PackagingElementProcessor;
 import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
 import com.intellij.packaging.impl.elements.LibraryPackagingElement;
@@ -64,19 +64,19 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
     final List<ProjectStructureElementUsage> usages = new ArrayList<ProjectStructureElementUsage>();
     ArtifactUtil.processPackagingElements(myArtifactsStructureContext.getRootElement(artifact), null, new PackagingElementProcessor<PackagingElement<?>>() {
       @Override
-      public boolean process(@NotNull List<CompositePackagingElement<?>> parents, @NotNull PackagingElement<?> packagingElement) {
+      public boolean process(@NotNull PackagingElement<?> packagingElement, @NotNull PackagingElementPath path) {
         if (packagingElement instanceof ModuleOutputPackagingElement) {
           final Module module = ((ModuleOutputPackagingElement)packagingElement).findModule(myArtifactsStructureContext);
           if (module != null) {
             usages.add(new UsageInArtifact(myOriginalArtifact, myArtifactsStructureContext, new ModuleProjectStructureElement(myContext, module),
-                                           ArtifactProjectStructureElement.this, getPathFromRoot(parents, "/"), packagingElement));
+                                           ArtifactProjectStructureElement.this, path.getPathString(), packagingElement));
           }
         }
         else if (packagingElement instanceof LibraryPackagingElement) {
           final Library library = ((LibraryPackagingElement)packagingElement).findLibrary(myArtifactsStructureContext);
           if (library != null) {
             usages.add(new UsageInArtifact(myOriginalArtifact, myArtifactsStructureContext, new LibraryProjectStructureElement(myContext, library),
-                                           ArtifactProjectStructureElement.this, getPathFromRoot(parents, "/"), packagingElement));
+                                           ArtifactProjectStructureElement.this, path.getPathString(), packagingElement));
           }
         }
         else if (packagingElement instanceof ArtifactPackagingElement) {
@@ -84,7 +84,7 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
           if (usedArtifact != null) {
             final ArtifactProjectStructureElement artifactElement = myArtifactsStructureContext.getOrCreateArtifactElement(usedArtifact);
             usages.add(new UsageInArtifact(myOriginalArtifact, myArtifactsStructureContext, artifactElement,
-                                           ArtifactProjectStructureElement.this, getPathFromRoot(parents, "/"), packagingElement));
+                                           ArtifactProjectStructureElement.this, path.getPathString(), packagingElement));
           }
         }
         return true;

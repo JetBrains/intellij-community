@@ -27,10 +27,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.elements.ComplexPackagingElement;
-import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
+import com.intellij.packaging.impl.artifacts.PackagingElementPath;
 import com.intellij.packaging.impl.artifacts.PackagingElementProcessor;
 import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
 import com.intellij.packaging.impl.elements.ModuleOutputPackagingElement;
@@ -128,7 +128,7 @@ public class ArtifactsGenerator {
       }
 
       @Override
-      public boolean process(@NotNull List<CompositePackagingElement<?>> parents, @NotNull PackagingElement<?> packagingElement) {
+      public boolean process(@NotNull PackagingElement<?> packagingElement, @NotNull PackagingElementPath path) {
         if (packagingElement instanceof ArtifactPackagingElement) {
           final Artifact included = ((ArtifactPackagingElement)packagingElement).findArtifact(myResolvingContext);
           if (included != null) {
