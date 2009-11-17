@@ -30,7 +30,7 @@ import java.io.IOException;
  * @author yole
  */
 public class TextFilePatch extends FilePatch {
-  private final List<PatchHunk> myHunks = new ArrayList<PatchHunk>();
+  private final List<PatchHunk> myHunks;
 
   public void addHunk(final PatchHunk hunk) {
     myHunks.add(hunk);
@@ -38,6 +38,22 @@ public class TextFilePatch extends FilePatch {
 
   public List<PatchHunk> getHunks() {
     return Collections.unmodifiableList(myHunks);
+  }
+
+  public TextFilePatch() {
+    myHunks = new ArrayList<PatchHunk>();
+  }
+
+  private TextFilePatch(final TextFilePatch patch) {
+    setBeforeVersionId(patch.getBeforeVersionId());
+    setAfterVersionId(patch.getAfterVersionId());
+    setBeforeName(patch.getBeforeName());
+    setAfterName(patch.getAfterName());
+    myHunks = patch.myHunks;
+  }
+
+  public TextFilePatch pathsOnlyCopy() {
+    return new TextFilePatch(this);
   }
 
   protected ApplyPatchStatus applyChange(final VirtualFile fileToPatch) throws IOException, ApplyPatchException {
