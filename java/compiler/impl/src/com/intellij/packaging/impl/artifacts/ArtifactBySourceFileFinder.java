@@ -13,27 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.packaging.impl.artifacts;
 
-package com.intellij.packaging.elements;
-
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ModificationTracker;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packaging.artifacts.Artifact;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 /**
  * @author nik
  */
-public abstract class ComplexPackagingElementType<E extends ComplexPackagingElement<?>> extends PackagingElementType<E> {
-  protected ComplexPackagingElementType(@NotNull @NonNls String id, @NotNull String presentableName) {
-    super(id, presentableName);
+public abstract class ArtifactBySourceFileFinder {
+  public static ArtifactBySourceFileFinder getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, ArtifactBySourceFileFinder.class);
   }
 
-  public abstract String getShowContentActionText();
-
-  @Nullable
-  public ModificationTracker getAllSubstitutionsModificationTracker(@NotNull Project project) {
-    return null;
-  }
+  public abstract Collection<? extends Artifact> findArtifacts(@NotNull VirtualFile sourceFile);
 }

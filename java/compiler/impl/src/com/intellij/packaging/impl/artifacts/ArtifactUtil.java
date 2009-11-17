@@ -294,15 +294,6 @@ public class ArtifactUtil {
     });
   }
 
-  public static Collection<? extends Artifact> findArtifactsByFile(@NotNull final VirtualFile file, @NotNull Project project) {
-    final Collection<Trinity<Artifact, PackagingElementPath, String>> items = findContainingArtifactsWithOutputPaths(file, project);
-    final List<Artifact> result = new ArrayList<Artifact>();
-    for (Trinity<Artifact, PackagingElementPath, String> item : items) {
-      result.add(item.getFirst());
-    }
-    return result;
-  }
-
   public static void processFileOrDirectoryCopyElements(Artifact artifact,
                                                          PackagingElementProcessor<FileOrDirectoryCopyPackagingElement<?>> processor,
                                                          PackagingElementResolvingContext context,
