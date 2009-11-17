@@ -116,8 +116,8 @@ public class AnnotationProcessingCompiler implements TranslatingCompiler{
         return true;
       }
       final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
-      final VirtualFile generationDir = LocalFileSystem.getInstance().findFileByPath(path);
-      if (VfsUtil.isAncestor(generationDir, file, false)) {
+      final VirtualFile generationDir = path != null? LocalFileSystem.getInstance().findFileByPath(path) : null;
+      if (generationDir != null && VfsUtil.isAncestor(generationDir, file, false)) {
         return true;
       }
     }
