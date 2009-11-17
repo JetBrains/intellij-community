@@ -1,11 +1,10 @@
 package com.intellij.compiler.artifacts;
 
-import com.intellij.packaging.impl.artifacts.ArtifactUtil;
-import com.intellij.packaging.impl.artifacts.ParentElementProcessor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
-import com.intellij.packaging.impl.artifacts.PlainArtifactType;
+import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.impl.artifacts.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -14,6 +13,25 @@ import java.util.List;
  * @author nik
  */
 public class ArtifactUtilTest extends PackagingElementsTestCase {
+  public void testProcessElementsWithRelativePath() throws Exception {
+    final Artifact a = addArtifact(root().dir("lib").file(createFile("a.txt")));
+    final ElementToStringCollector processor = new ElementToStringCollector(true);
+    ArtifactUtil.processElementsByRelativePath(a.getRootElement(), "lib/a.txt", getContext(), PlainArtifactType.getInstance(),
+                                               PackagingElementPath.EMPTY, processor);
+    assertEquals("/lib/file:" + getProjectBasePath() + "/a.txt\n", processor.getOutput());
+  }
+
+  public void testProcessDirectory() throws Exception {
+    final ElementToStringCollector processor = new ElementToStringCollector();
+    final Artifact a = addArtifact(root().dir("lib").file(createFile("x.jar")));
+    processDirectoryChildren(a.getRootElement(), "lib/", processor);
+    assertEquals("file:" + getProjectBasePath() + "/x.jar\n", processor.getOutput());
+
+    final Artifact b = addArtifact(root().artifact(a).dir("lib").file(createFile("y.jar")));
+    processDirectoryChildren(b.getRootElement(), "lib", processor);
+    assertEquals("file:" + getProjectBasePath() + "/x.jar\n" +
+                 "file:" + getProjectBasePath() + "/y.jar\n", processor.getOutput());
+  }
 
   public void testProcessParents() throws Exception {
     final Artifact exploded = addArtifact("exploded:", root().build());
@@ -29,23 +47,58 @@ public class ArtifactUtilTest extends PackagingElementsTestCase {
     final MyParentElementProcessor processor = new MyParentElementProcessor();
 
     ArtifactUtil.processParents(exploded, getContext(), processor, 2);
-    assertEquals("war:dir;" +
-                 "war:web.war/dir;" +
-                 "ear:ear.ear/web.war/dir;", processor.getLog());
+    assertEquals("war:dir\n" +
+                 "war:web.war/dir\n" +
+                 "ear:ear.ear/web.war/dir\n", processor.getLog());
 
     ArtifactUtil.processParents(exploded, getContext(), processor, 1);
-    assertEquals("war:dir;" +
-                 "war:web.war/dir;", processor.getLog());
+    assertEquals("war:dir\n" +
+                 "war:web.war/dir\n", processor.getLog());
 
     ArtifactUtil.processParents(exploded, getContext(), processor, 0);
-    assertEquals("war:dir;", processor.getLog());
+    assertEquals("war:dir\n", processor.getLog());
 
     ArtifactUtil.processParents(war, getContext(), processor, 2);
-    assertEquals("war:web.war;ear:ear.ear/web.war;", processor.getLog());
+    assertEquals("war:web.war\n" +
+                 "ear:ear.ear/web.war\n", processor.getLog());
 
   }
 
-  private class MyParentElementProcessor extends ParentElementProcessor {
+
+  private void processDirectoryChildren(final CompositePackagingElement<?> rootElement, final String relativePath, ElementToStringCollector processor) {
+    ArtifactUtil.processDirectoryChildren(rootElement, PackagingElementPath.EMPTY, relativePath, getContext(), PlainArtifactType.getInstance(), processor);
+  }
+
+  private static class ElementToStringCollector extends PackagingElementProcessor<PackagingElement<?>> {
+    private StringBuilder myBuilder = new StringBuilder();
+    private boolean myAddParentPaths;
+
+    private ElementToStringCollector() {
+      myAddParentPaths = false;
+    }
+
+    private ElementToStringCollector(boolean addParentPaths) {
+      myAddParentPaths = addParentPaths;
+    }
+
+    @Override
+    public boolean process(@NotNull PackagingElement<?> element, @NotNull PackagingElementPath path) {
+      if (myAddParentPaths) {
+        myBuilder.append(path.getPathString()).append("/");
+      }
+      myBuilder.append(element.toString()).append("\n");
+      return true;
+    }
+
+    public String getOutput() {
+      final String output = myBuilder.toString();
+      myBuilder.setLength(0);
+      return output;
+    }
+  }
+
+
+  private static class MyParentElementProcessor extends ParentElementProcessor {
     private StringBuilder myLog = new StringBuilder();
 
     @Override
@@ -54,7 +107,7 @@ public class ArtifactUtilTest extends PackagingElementsTestCase {
       for (Pair<Artifact, CompositePackagingElement<?>> parent : parents) {
         myLog.append("/").append(parent.getSecond().getName());
       }
-      myLog.append(";");
+      myLog.append("\n");
       return true;
     }
 
