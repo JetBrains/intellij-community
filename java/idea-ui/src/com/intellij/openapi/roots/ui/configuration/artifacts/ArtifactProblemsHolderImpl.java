@@ -35,7 +35,7 @@ public class ArtifactProblemsHolderImpl extends ArtifactProblemsHolderBase {
     myProblemsHolder = problemsHolder;
   }
 
-  public void registerProblem(@NotNull String message, @Nullable PackagingElement<?> place, @Nullable ArtifactProblemQuickFix quickFix) {
+  public void registerError(@NotNull String message, @Nullable PackagingElement<?> place, @Nullable ArtifactProblemQuickFix quickFix) {
     myProblemsHolder.registerProblem(new ArtifactProblemDescription(message, ProjectStructureProblemDescription.Severity.ERROR, place, quickFix));
   }
 }

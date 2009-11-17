@@ -26,9 +26,9 @@ public interface ArtifactProblemsHolder {
 
   ArtifactEditorContext getContext();
 
-  void registerProblem(@NotNull String message);
+  void registerError(@NotNull String message);
 
-  void registerProblem(@NotNull String message, @Nullable ArtifactProblemQuickFix quickFix);
+  void registerError(@NotNull String message, @Nullable ArtifactProblemQuickFix quickFix);
 
-  void registerProblem(@NotNull String message, @Nullable PackagingElement<?> place, @Nullable ArtifactProblemQuickFix quickFix);
+  void registerError(@NotNull String message, @Nullable PackagingElement<?> place, @Nullable ArtifactProblemQuickFix quickFix);
 }

@@ -35,11 +35,11 @@ public abstract class ArtifactProblemsHolderBase implements ArtifactProblemsHold
     return myContext;
   }
 
-  public void registerProblem(@NotNull String message) {
-    registerProblem(message, null);
+  public void registerError(@NotNull String message) {
+    registerError(message, null);
   }
 
-  public void registerProblem(@NotNull String message, @Nullable ArtifactProblemQuickFix quickFix) {
-    registerProblem(message, null, quickFix);
+  public void registerError(@NotNull String message, @Nullable ArtifactProblemQuickFix quickFix) {
+    registerError(message, null, quickFix);
   }
 }
