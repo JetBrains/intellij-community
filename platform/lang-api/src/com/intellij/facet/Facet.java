@@ -17,6 +17,7 @@
 package com.intellij.facet;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.module.Module;
@@ -31,19 +32,21 @@ import org.jetbrains.annotations.NotNull;
  */
 public class Facet<C extends FacetConfiguration> extends UserDataHolderBase implements UserDataHolder, Disposable {
   public static final Facet[] EMPTY_ARRAY = new Facet[0];
-  private final @NotNull FacetType myFacetType;
-  private final @NotNull Module myModule;
-  private final @NotNull C myConfiguration;
+  @NotNull private final FacetType myFacetType;
+  @NotNull private final Module myModule;
+  @NotNull private final C myConfiguration;
   private final Facet myUnderlyingFacet;
   private String myName;
   private boolean myImplicit;
+  private boolean isDisposed;
 
-  public Facet(@NotNull final FacetType facetType, @NotNull final Module module, final @NotNull String name, @NotNull final C configuration, Facet underlyingFacet) {
+  public Facet(@NotNull final FacetType facetType, @NotNull final Module module, @NotNull final String name, @NotNull final C configuration, Facet underlyingFacet) {
     myName = name;
     myFacetType = facetType;
     myModule = module;
     myConfiguration = configuration;
     myUnderlyingFacet = underlyingFacet;
+    Disposer.register(myModule, this);
   }
 
   @NotNull
@@ -91,8 +94,9 @@ public class Facet<C extends FacetConfiguration> extends UserDataHolderBase impl
   public void disposeFacet() {
   }
 
-
   public final void dispose() {
+    assert !isDisposed;
+    isDisposed = true;
     disposeFacet();
   }
 
@@ -113,7 +117,7 @@ public class Facet<C extends FacetConfiguration> extends UserDataHolderBase impl
   /**
    * Use {@link com.intellij.facet.ModifiableFacetModel#rename} to rename facets
    */
-  final void setName(final @NotNull String name) {
+  final void setName(@NotNull final String name) {
     myName = name;
   }
 

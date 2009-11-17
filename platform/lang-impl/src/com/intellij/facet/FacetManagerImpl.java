@@ -123,7 +123,6 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
   public <F extends Facet, C extends FacetConfiguration> F createFacet(@NotNull final FacetType<F, C> type, @NotNull final String name, @NotNull final C cofiguration,
                                                                           @Nullable final Facet underlying) {
     final F facet = type.createFacet(myModule, name, cofiguration, underlying);
-    Disposer.register(myModule, facet);
     assertTrue(facet.getModule() == myModule, facet, "module");
     assertTrue(facet.getConfiguration() == cofiguration, facet, "configuration");
     assertTrue(Comparing.equal(facet.getName(), name), facet, "name");
@@ -430,9 +429,6 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
   }
 
   public void disposeComponent() {
-    for (Facet facet : getAllFacets()) {
-      Disposer.dispose(facet);
-    }
   }
 
   private static class FacetManagerModel extends FacetModelBase {
