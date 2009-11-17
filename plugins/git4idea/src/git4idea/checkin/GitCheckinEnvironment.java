@@ -32,10 +32,7 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
-import git4idea.commands.GitFileUtils;
-import git4idea.commands.GitHandler;
-import git4idea.commands.GitHandlerUtil;
-import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.*;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
@@ -212,20 +209,23 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                   }
                 }
               }
-              if (myNextCommitIsPushed != null && myNextCommitIsPushed.booleanValue()) {
-                // push
-                Collection<VcsException> problems = GitHandlerUtil.doSynchronouslyWithExceptions(GitPushUtils.preparePush(myProject, root));
+            }
+            finally {
+              if (!messageFile.delete()) {
+                log.warn("Failed to remove temporary file: " + messageFile);
+              }
+            }
+            if (myNextCommitIsPushed != null && myNextCommitIsPushed.booleanValue()) {
+              // push
+              GitLineHandler pushHandler = GitPushUtils.preparePush(myProject, root);
+              if (pushHandler != null) {
+                Collection<VcsException> problems = GitHandlerUtil.doSynchronouslyWithExceptions(pushHandler);
                 for (VcsException e : problems) {
                   if (!isNoOrigin(e)) {
                     // no origin exception just means that push was not applicable to the repository
                     exceptions.add(e);
                   }
                 }
-              }
-            }
-            finally {
-              if (!messageFile.delete()) {
-                log.warn("Failed to remove temporary file: " + messageFile);
               }
             }
           }
