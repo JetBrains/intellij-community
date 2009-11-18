@@ -263,10 +263,20 @@ public class PsiViewerDialog extends DialogWrapper {
     myButtonPanel.add(typeButton.createCustomComponent(myPresentation), BorderLayout.CENTER);
 
     updateDialectsCombo();
+    myDialectsComboBox.setRenderer(new DefaultListCellRenderer() {
+      @Override
+      public Component getListCellRendererComponent(JList list, Object value, int index,
+                                                    boolean isSelected, boolean cellHasFocus) {
+        final Component result = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        if (value == null) setText("<no dialect>");
+        return result;
+      }
+    });
+
     if (myDialectsComboBox.isVisible()) {
       for (int i = 0; i < myLanguageDialects.length; i++) {
         if (settings.dialect.equals(myLanguageDialects[i].toString())) {
-          myDialectsComboBox.setSelectedIndex(i);
+          myDialectsComboBox.setSelectedIndex(i+1);
           break;
         }
       }
@@ -393,6 +403,7 @@ public class PsiViewerDialog extends DialogWrapper {
       myLanguageDialects = LanguageUtil.getLanguageDialects(baseLang);
       Arrays.sort(myLanguageDialects, DIALECTS_COMPARATOR);
       model.setAll(myLanguageDialects);
+      model.add(null);
     }
     myDialectsComboBox.setModel(model);
     myDialectsComboBox.setVisible(model.getSize() > 1);
