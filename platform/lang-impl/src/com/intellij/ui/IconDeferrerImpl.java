@@ -90,11 +90,11 @@ public class IconDeferrerImpl extends IconDeferrer {
   }
 
   public <T> Icon defer(final Icon base, final T param, final Function<T, Icon> f) {
-    synchronized (LOCK) {
-      if (myEvaluationIsInProgress.get().booleanValue()) {
-        return f.fun(param);
-      }
+    if (myEvaluationIsInProgress.get().booleanValue()) {
+      return f.fun(param);
+    }
 
+    synchronized (LOCK) {
       Icon result = myIconsCache.get(param);
       if (result == null) {
         result = new DeferredIconImpl<T>(base, param, f);
