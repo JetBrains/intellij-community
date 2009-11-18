@@ -118,7 +118,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider {
         for (PyFunction func : candidates.get(pyClass)) {
           final String func_name = func.getName();
           assert func_name != null;
-          if (granny.findMethodByName(func_name) != null) {
+          if (granny.findMethodByName(func_name, false) != null) {
             overridden.add(func);
           }
         }

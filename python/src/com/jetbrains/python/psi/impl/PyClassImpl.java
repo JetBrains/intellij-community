@@ -203,7 +203,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
         }
       }
       else if (! PyBuiltinCache.BUILTIN_FILE.equals(getContainingFile().getName())) { // old-style *and* not builtin object() 
-        PyClass oldstyler = PyBuiltinCache.getInstance(getProject()).getClass("___Classobj");
+        PyClass oldstyler = PyBuiltinCache.getInstance(this).getClass("___Classobj");
         if (oldstyler != null) result.add(oldstyler);
       }
       return result;
@@ -243,11 +243,17 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return result.toArray(new PyFunction[result.size()]);
   }
 
-  public PyFunction findMethodByName(@NotNull final String name) {
+  public PyFunction findMethodByName(@NotNull final String name, boolean inherited) {
     PyFunction[] methods = getMethods();
     for(PyFunction method: methods) {
       if (name.equals(method.getName())) {
         return method;
+      }
+    }
+    if (inherited) {
+      for (PyClass ancestor : iterateAncestors()) {
+        PyFunction candidate = ancestor.findMethodByName(name, false); // not recursively, we want MRI in MI cases 
+        if (candidate != null) return candidate;
       }
     }
     return null;
@@ -274,7 +280,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   public PyTargetExpression[] getInstanceAttributes() {
-    PyFunctionImpl initMethod = (PyFunctionImpl) findMethodByName(PyNames.INIT);
+    PyFunctionImpl initMethod = (PyFunctionImpl) findMethodByName(PyNames.INIT, false);
     if (initMethod == null) return PyTargetExpression.EMPTY_ARRAY;
     final PyParameter[] params = initMethod.getParameterList().getParameters();
     if (params.length == 0) return PyTargetExpression.EMPTY_ARRAY;
@@ -304,7 +310,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   public boolean isNewStyleClass() {
-    PyClass objclass = PyBuiltinCache.getInstance(getProject()).getClass("object");
+    PyClass objclass = PyBuiltinCache.getInstance(this).getClass("object");
     if (this == objclass) return true; // a rare but possible case
     for (PyClass ancestor : iterateAncestors()) {
       if (ancestor == objclass) return true;

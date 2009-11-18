@@ -74,13 +74,13 @@ public class PythonUnitTestTestIdUrlProvider implements TestLocationProvider {
 
   @Nullable
   private static PyFunction locateMethodInHierarchy(final PyClass cls, final String methodName) {
-    PyFunction func = cls.findMethodByName(methodName);
+    PyFunction func = cls.findMethodByName(methodName, false);
     if (func != null) {
       return func;
     }
 
     for (PyClass ancestors : cls.iterateAncestors()) {
-      func = ancestors.findMethodByName(methodName);
+      func = ancestors.findMethodByName(methodName, false);
       if (func != null) {
         return func;
       }

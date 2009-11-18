@@ -113,7 +113,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     if (lastParent != null && ! substitutor.get(KEY_EXCLUDE_BUILTINS)) {
       final String fileName = getName();
       if (!fileName.equals("__builtin__.py")) {
-        final PyFile builtins = PyBuiltinCache.getInstance(getProject()).getBuiltinsFile();
+        final PyFile builtins = PyBuiltinCache.getInstance(this).getBuiltinsFile();
         if (builtins != null && !builtins.processDeclarations(processor, substitutor, null, place)) return false;
       }
     }

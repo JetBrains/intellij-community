@@ -86,7 +86,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
         PsiElement must_be_super_init = ((PyReferenceExpression)callee).resolve();
         if (must_be_super_init instanceof PyFunction) {
           PyClass must_be_super = ((PyFunction)must_be_super_init).getContainingClass();
-          if (must_be_super == PyBuiltinCache.getInstance(getProject()).getClass("super")) {
+          if (must_be_super == PyBuiltinCache.getInstance(this).getClass("super")) {
             PyArgumentList arglist = getArgumentList();
             if (arglist != null) {
               PyExpression[] args = arglist.getArguments();

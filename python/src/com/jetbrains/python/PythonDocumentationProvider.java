@@ -1,15 +1,18 @@
 package com.jetbrains.python;
 
 import com.intellij.lang.documentation.QuickDocumentationProvider;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.xml.util.XmlStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.toolbox.FP;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 
 /**
@@ -100,7 +103,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
   // provides ctrl+Q doc
   public String generateDoc(PsiElement element, final PsiElement originalElement) {
     final StringBuilder cat = new StringBuilder("<html><body>");
-    // resolved element may point to intermediate assignment
+    // here the ^Q target is already resolved; the resolved element may point to intermediate assignments
     boolean reassignment_marked = false;
     if (element instanceof PyTargetExpression) {
       if (! reassignment_marked) {
@@ -115,6 +118,19 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
         reassignment_marked = true;
       }
       element = PyUtil.followAssignmentsChain((PyReferenceExpression)element);
+    }
+    // it may be a call to decorator
+    if (element instanceof PyCallExpression) {
+      Pair<String, PyFunction> wrap_info = PyCallExpressionHelper.interpretAsStaticmethodOrClassmethodWrappingCall(
+        (PyCallExpression)element, originalElement
+      );
+      if (wrap_info != null) {
+        String wrapper_name = wrap_info.getFirst();
+        PyFunction wrapped_func = wrap_info.getSecond();
+        LWrapInSmall.enclose(cat, "Wrapped in <code>", wrapper_name, "</code>", BR); // NOTE: abstraction fail :(
+        element = wrapped_func;
+      }
+
     }
     // now element may contain a doc string
     cat.append("<code>");
@@ -140,7 +156,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
           if (cls != null && meth_name != null ) {
             // look for inherited
             for (PyClass ancestor : cls.iterateAncestors()) {
-              PyFunction inherited = ancestor.findMethodByName(meth_name);
+              PyFunction inherited = ancestor.findMethodByName(meth_name, false);
               if (inherited != null) {
                 PyStringLiteralExpression doc_elt = inherited.getDocStringExpression();
                 if (doc_elt != null) {
@@ -165,11 +181,11 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
               // for well-known methods, copy built-in doc string.
               // TODO: also handle predefined __xxx__ that are not part of 'object'.
               if (PyNames.UnderscoredNames.contains(meth_name)) {
-                PyClassType objtype = PyBuiltinCache.getInstance(fun.getProject()).getObjectType(); // old- and new-style classes share the __xxx__ stuff
+                PyClassType objtype = PyBuiltinCache.getInstance(fun).getObjectType(); // old- and new-style classes share the __xxx__ stuff
                 if (objtype != null) {
                   PyClass objcls = objtype.getPyClass();
                   if (objcls != null) {
-                    PyFunction obj_underscored = objcls.findMethodByName(meth_name);
+                    PyFunction obj_underscored = objcls.findMethodByName(meth_name, false);
                     if (obj_underscored != null) {
                       PyStringLiteralExpression predefined_doc_expr = obj_underscored.getDocStringExpression();
                       String predefined_doc = predefined_doc_expr != null? predefined_doc_expr.getStringValue() : null;

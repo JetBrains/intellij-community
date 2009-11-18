@@ -237,12 +237,12 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
     if (uexpr == null) {
       // ...as a part of current module
-      PyType otype = PyBuiltinCache.getInstance(getProject()).getObjectType(); // "object" as a closest kin to "module"
+      PyType otype = PyBuiltinCache.getInstance(this).getObjectType(); // "object" as a closest kin to "module"
       if (otype != null) uexpr = otype.resolveMember(getName());
     }
     if (uexpr == null) {
       // ...as a builtin symbol
-      PyFile bfile = PyBuiltinCache.getInstance(getProject()).getBuiltinsFile();
+      PyFile bfile = PyBuiltinCache.getInstance(this).getBuiltinsFile();
       uexpr = PyResolveUtil.treeCrawlUp(new ResolveProcessor(referencedName), true, bfile);
     }
     if (uexpr == null) {
@@ -290,7 +290,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         final PsiElement elt = rrr.getElement();
         if (elt instanceof PyClass) {
           PyClass cls = (PyClass)elt;
-          PyFunction init = cls.findMethodByName(PyNames.INIT);
+          PyFunction init = cls.findMethodByName(PyNames.INIT, false);
           if (init != null) {
             // replace
             final PyFunction the_init = init;
@@ -304,7 +304,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
           }
           else { // init not found; maybe it's ancestor's
             for (PyClass ancestor : cls.iterateAncestors()) {
-              init = ancestor.findMethodByName(PyNames.INIT);
+              init = ancestor.findMethodByName(PyNames.INIT, false);
               if (init != null) {
                 final PyFunction the_init = init;
                 // add to resuls as low priority
@@ -468,7 +468,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
     // include builtin names
     processor.setNotice(" | __builtin__");
-    PyResolveUtil.treeCrawlUp(processor, true, PyBuiltinCache.getInstance(getProject()).getBuiltinsFile()); // names from __builtin__
+    PyResolveUtil.treeCrawlUp(processor, true, PyBuiltinCache.getInstance(this).getBuiltinsFile()); // names from __builtin__
 
     // if we're a normal module, add module's attrs
     PsiFile f = getContainingFile();

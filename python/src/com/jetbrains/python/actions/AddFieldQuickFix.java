@@ -60,7 +60,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
     PyClass cls = myQualifierClass;
     String item_name = myIdentifier;
     if (cls != null && item_name != null) {
-      PyFunction init = cls.findMethodByName(PyNames.INIT);
+      PyFunction init = cls.findMethodByName(PyNames.INIT, false);
       Language language = cls.getLanguage();
       if (language instanceof PythonLanguage) {
         PythonLanguage pythonLanguage = (PythonLanguage)language;
@@ -71,7 +71,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
         }
         else { // no init! boldly copy ancestor's.
           for (PyClass ancestor : cls.iterateAncestors()) {
-            init = ancestor.findMethodByName(PyNames.INIT);
+            init = ancestor.findMethodByName(PyNames.INIT, false);
             if (init != null) break;
           }
           if (init != null) {

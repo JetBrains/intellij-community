@@ -569,7 +569,7 @@ public class PyUtil {
         else if ("__dict__".equals(attr_name)) {
           PyType qual_type = qualifier.getType();
           if (qual_type instanceof PyClassType && ((PyClassType)qual_type).isDefinition()) {
-            return PyBuiltinCache.getInstance(ref.getProject()).getDictType();
+            return PyBuiltinCache.getInstance(ref).getDictType();
           }
         }
       }
@@ -617,8 +617,9 @@ public class PyUtil {
             seeker = (PyReferenceExpression)assigned_from;
             continue SEARCH;
           }
+          else if (assigned_from != null) ret = assigned_from; 
         }
-        else if (ret == null && elt instanceof PyElement) { // remember this result, but a reference may be the next resolve result
+        else if (ret == null && elt instanceof PyElement) { // remember this result, but a further reference may be the next resolve result
           ret = (PyElement)elt;
         }
       }

@@ -60,7 +60,7 @@ public class PyOverrideImplementUtil {
       if (name == null) {
         continue;
       }
-      if (pyClass.findMethodByName(name) == null) {
+      if (pyClass.findMethodByName(name, false) == null) {
         elements.add(new PyMethodMember(function, name, function.getIcon(0)));
       }
     }

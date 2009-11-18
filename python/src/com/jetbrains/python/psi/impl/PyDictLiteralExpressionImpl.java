@@ -36,7 +36,7 @@ public class PyDictLiteralExpressionImpl extends PyElementImpl implements PyDict
   }
 
   public PyType getType() {
-    return PyBuiltinCache.getInstance(getProject()).getDictType();
+    return PyBuiltinCache.getInstance(this).getDictType();
   }
 
   @Override

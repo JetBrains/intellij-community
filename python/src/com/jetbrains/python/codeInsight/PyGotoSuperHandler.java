@@ -71,7 +71,7 @@ public class PyGotoSuperHandler implements CodeInsightActionHandler {
     final List<PyFunction> result = new ArrayList<PyFunction>();
     final PyClass[] superClasses = PyUtil.getAllSuperClasses(pyClass);
     for (PyClass aClass: superClasses) {
-      final PyFunction byName = aClass.findMethodByName(name);
+      final PyFunction byName = aClass.findMethodByName(name, false);
       if (byName != null) {
         result.add(byName);
       }

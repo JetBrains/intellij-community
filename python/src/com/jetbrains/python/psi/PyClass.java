@@ -43,8 +43,14 @@ public interface PyClass extends PsiNamedElement, PyStatement, NameDefiner, PyDo
   @NotNull
   PyFunction[] getMethods();
 
+  /**
+   * Finds a method with given name.
+   * @param name what to look for
+   * @param inherited true: search in superclasses; false: only look for methods defined in this class.
+   * @return
+   */
   @Nullable
-  PyFunction findMethodByName(@NotNull @NonNls final String name);
+  PyFunction findMethodByName(@NotNull @NonNls final String name, boolean inherited);
 
   PyTargetExpression[] getClassAttributes();
 

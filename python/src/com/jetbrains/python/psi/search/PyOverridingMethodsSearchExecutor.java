@@ -14,7 +14,7 @@ public class PyOverridingMethodsSearchExecutor implements QueryExecutor<PyFuncti
     PyClass containingClass = baseMethod.getContainingClass();
     return PyClassInheritorsSearch.search(containingClass, queryParameters.isCheckDeep()).forEach(new Processor<PyClass>() {
       public boolean process(final PyClass pyClass) {
-        PyFunction overridingMethod = pyClass.findMethodByName(baseMethod.getName());
+        PyFunction overridingMethod = pyClass.findMethodByName(baseMethod.getName(), false);
         //noinspection SimplifiableIfStatement
         if (overridingMethod != null) {
           return consumer.process(overridingMethod);

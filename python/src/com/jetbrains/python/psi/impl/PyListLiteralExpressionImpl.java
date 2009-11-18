@@ -93,6 +93,6 @@ public class PyListLiteralExpressionImpl extends PyElementImpl implements PyList
 
   @Nullable
   public PyType getType() {
-    return PyBuiltinCache.getInstance(getProject()).getListType();
+    return PyBuiltinCache.getInstance(this).getListType();
   }
 }

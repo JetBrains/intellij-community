@@ -139,12 +139,12 @@ public class PyNumericLiteralExpressionImpl extends PyElementImpl
     ASTNode node = getNode();
     IElementType type = node.getElementType();
     if (type == PyElementTypes.INTEGER_LITERAL_EXPRESSION) {
-      return PyBuiltinCache.getInstance(getProject()).getIntType();
+      return PyBuiltinCache.getInstance(this).getIntType();
     } else if (type == PyElementTypes.FLOAT_LITERAL_EXPRESSION) {
-      return PyBuiltinCache.getInstance(getProject()).getFloatType();
+      return PyBuiltinCache.getInstance(this).getFloatType();
     }
     else if (type == PyElementTypes.IMAGINARY_LITERAL_EXPRESSION) {
-      return PyBuiltinCache.getInstance(getProject()).getComplexType();
+      return PyBuiltinCache.getInstance(this).getComplexType();
     }
     return null;
   }

@@ -16,11 +16,13 @@
 
 package com.jetbrains.python.validation;
 
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import static com.jetbrains.python.PyBundle.message;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.sdk.PythonSdkType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -102,7 +104,8 @@ public class AssignTargetAnnotator extends PyAnnotator {
     public void visitPyTargetExpression(final PyTargetExpression node) {
       String targetName = node.getName();
       if (targetName != null && targetName.equals(PyNames.NONE)) {
-        if (node.getContainingFile() != PyBuiltinCache.getInstance(node.getProject()).getBuiltinsFile()){
+        final VirtualFile vfile = node.getContainingFile().getVirtualFile();
+        if (vfile != null && !vfile.getUrl().contains("/" + PythonSdkType.SKELETON_DIR_NAME + "/")){
           getHolder().createErrorAnnotation(node, (_op == Operation.Delete) ? DELETING_NONE : ASSIGNMENT_TO_NONE);
         }
       }

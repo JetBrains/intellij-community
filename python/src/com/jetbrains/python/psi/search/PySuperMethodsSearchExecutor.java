@@ -18,7 +18,7 @@ public class PySuperMethodsSearchExecutor implements QueryExecutor<PsiElement, P
       PyClass[] superClasses = containingClass.getSuperClasses();
       if (superClasses != null) {
         for(PyClass superClass: superClasses) {
-          PyFunction superMethod = superClass.findMethodByName(name);
+          PyFunction superMethod = superClass.findMethodByName(name, false);
           if (superMethod != null) {
             if (!consumer.process(superMethod)) return false;
           }

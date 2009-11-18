@@ -196,6 +196,6 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   }
 
   public PyType getType() {
-    return PyBuiltinCache.getInstance(getProject()).getStrType(); // TODO: detect unicode vs byte
+    return PyBuiltinCache.getInstance(this).getStrType(); // TODO: detect unicode vs byte
   }
 }

@@ -254,7 +254,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
             PyReferenceExpression refex = (PyReferenceExpression)reference;
             String refname = refex.getReferencedName();
             if (refex.getQualifier() != null) {
-              final PyClassType object_type = PyBuiltinCache.getInstance(node.getProject()).getObjectType();
+              final PyClassType object_type = PyBuiltinCache.getInstance(node).getObjectType();
               if ((object_type != null) && object_type.getPossibleInstanceMembers().contains(refname)) continue;
             }
             // unqualified:

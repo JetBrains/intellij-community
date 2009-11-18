@@ -16,6 +16,7 @@
 
 package com.jetbrains.python.psi;
 
+import com.jetbrains.python.PyNames;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,9 +56,16 @@ public interface PyCallExpression extends PyExpression {
      */
     CLASSMETHOD,
     /**
-     * Called function is decorated with @staticmethod, first param is as in a regular function.
+     * Called function is decorated with {@code @staticmethod}, first param is as in a regular function.
      */
-    STATICMETHOD
+    STATICMETHOD,
+
+    /**
+     * Called function is not decorated, but wrapped in an actual call to {@code staticmethod} or {@code classmethod},
+     * e.g. {@code foo = classmethod(foo)}. The callee is the inner version of {@code foo}, not the outer callable produced
+     * by the wrapping call.
+     */
+    WRAPPED,
   }
 
   /**

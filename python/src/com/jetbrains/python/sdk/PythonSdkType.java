@@ -71,6 +71,19 @@ public class PythonSdkType extends SdkType {
     return PythonFileType.INSTANCE.getIcon();
   }
 
+  /**
+   * Name of directory where skeleton files (despite the value) are stored.
+   */
+  public static final String SKELETON_DIR_NAME = "python_stubs";
+
+  /**
+   * @return name of builtins skeleton file; for Python 2.x it is '{@code __builtins__.py}'.
+   */
+  @NotNull @NonNls
+  public String getBuiltinsFileName() {
+    return "__builtin__.py"; // TODO: for py3k, return the appropriate name
+  }
+
   @NonNls
   @Nullable
   public String suggestHomePath() {
@@ -201,7 +214,7 @@ public class PythonSdkType extends SdkType {
   public SdkAdditionalData loadAdditionalData(final Sdk currentSdk, final Element additional) {
     final String[] urls = currentSdk.getRootProvider().getUrls(OrderRootType.SOURCES);
     for (String url : urls) {
-      if (url.contains("python_stubs")) {
+      if (url.contains(SKELETON_DIR_NAME)) {
         final String path = VfsUtil.urlToPath(url);
         File stubs_dir = new File(path);
         if (!stubs_dir.exists()) {
@@ -253,7 +266,7 @@ public class PythonSdkType extends SdkType {
     String sdk_path = sdkModificator.getHomePath();
     String bin_path = getInterpreterPath(sdk_path);
     @NonNls final String stubs_path =
-        PathManager.getSystemPath() + File.separator + "python_stubs" + File.separator + sdk_path.hashCode() + File.separator;
+        PathManager.getSystemPath() + File.separator + SKELETON_DIR_NAME + File.separator + sdk_path.hashCode() + File.separator;
     // we have a number of lib dirs, those listed in python's sys.path
     if (indicator != null) {
       indicator.setText("Adding library roots");

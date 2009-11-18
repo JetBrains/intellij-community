@@ -79,7 +79,7 @@ public class PyClassType implements PyType {
       // no superclasses, try old-style
       // TODO: in py3k, 'object' is the default base, not <classobj>
       if (getClass() != null) {
-        PyClassType oldstyle = PyBuiltinCache.getInstance(myClass.getProject()).getOldstyleClassobjType();
+        PyClassType oldstyle = PyBuiltinCache.getInstance(myClass).getOldstyleClassobjType();
         if (oldstyle != null) {
           final PyClass myclass = getPyClass();
           if (myclass != null) {
