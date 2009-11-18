@@ -24,9 +24,9 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -154,9 +154,11 @@ public class RunConfigurationAction extends ComboBoxAction implements DumbAware 
   }
 
   private static class SaveTemporaryAction extends AnAction {
+    private static final Icon ICON = IconLoader.getIcon("/runConfigurations/saveTempConfig.png");
+
     public SaveTemporaryAction() {
       Presentation presentation = getTemplatePresentation();
-      presentation.setIcon(IconLoader.getIcon("/runConfigurations/saveTempConfig.png"));
+      presentation.setIcon(ICON);
     }
 
     public void actionPerformed(final AnActionEvent e) {

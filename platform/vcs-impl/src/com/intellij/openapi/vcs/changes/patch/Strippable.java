@@ -29,4 +29,5 @@ public interface Strippable {
   void setZero();
 
   String getCurrentPath();
+  int getCurrentStrip();
 }

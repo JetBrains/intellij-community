@@ -179,7 +179,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       final VirtualFile file = filePresentation.getVf();
 
       final List<TextFilePatch> patches = loadPatches(file);
-      final List<FilePatchInProgress> matchedPathes = autoMatch(patches);
+      final AutoMatchIterator autoMatchIterator = new AutoMatchIterator(myProject);
+      final List<FilePatchInProgress> matchedPathes = autoMatchIterator.execute(patches);
 
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
@@ -191,80 +192,6 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         }
       });
     }
-  }
-
-  private List<FilePatchInProgress> autoMatch(final List<TextFilePatch> list) {
-    final VirtualFile baseDir = myProject.getBaseDir();
-
-    final List<FilePatchInProgress> result = new ArrayList<FilePatchInProgress>(list.size());
-    final List<TextFilePatch> creations = new LinkedList<TextFilePatch>();
-    final MultiMap<String, VirtualFile> foldersDecisions = new MultiMap<String, VirtualFile>() {
-      @Override
-      protected Collection<VirtualFile> createCollection() {
-        return new HashSet<VirtualFile>();
-      }
-      @Override
-      protected Collection<VirtualFile> createEmptyCollection() {
-        return Collections.emptySet();
-      }
-    };
-
-    final PatchBaseDirectoryDetector directoryDetector = PatchBaseDirectoryDetector.getInstance(myProject);
-    for (TextFilePatch patch : list) {
-      if (patch.isNewFile() || (patch.getBeforeName() == null)) {
-        creations.add(patch);
-        continue;
-      }
-      final String fileName = patch.getBeforeFileName();
-      final Collection<VirtualFile> files = ApplicationManager.getApplication().runReadAction(new Computable<Collection<VirtualFile>>() {
-        public Collection<VirtualFile> compute() {
-          return directoryDetector.findFiles(fileName);
-        }
-      });
-      final Collection<VirtualFile> variants = filterVariants(patch, files);
-
-      final FilePatchInProgress filePatchInProgress = new FilePatchInProgress(patch, variants, baseDir);
-      result.add(filePatchInProgress);
-      final String path = extractPathWithoutName(patch.getBeforeName());
-      if (path != null) {
-        foldersDecisions.putValue(path, filePatchInProgress.getBase());
-      }
-    }
-    // then try to match creations
-    for (TextFilePatch creation : creations) {
-      final String newFileParentPath = extractPathWithoutName(creation.getAfterName());
-      if (newFileParentPath == null) {
-        result.add(new FilePatchInProgress(creation, null, baseDir));
-      } else {
-        final Collection<VirtualFile> variants = filterVariants(creation, foldersDecisions.get(newFileParentPath));
-        result.add(new FilePatchInProgress(creation, variants, baseDir));
-      }
-    }
-
-    return result;
-  }
-
-  private Collection<VirtualFile> filterVariants(final TextFilePatch patch, final Collection<VirtualFile> in) {
-    String path = patch.getBeforeName() == null ? patch.getAfterName() : patch.getBeforeName();
-    path = path.replace("\\", "/");
-
-    final boolean caseSensitive = SystemInfo.isFileSystemCaseSensitive;
-    final Collection<VirtualFile> result = new LinkedList<VirtualFile>();
-    for (VirtualFile vf : in) {
-      final String vfPath = vf.getPath();
-      if ((caseSensitive && vfPath.endsWith(path)) || ((! caseSensitive) && StringUtil.endsWithIgnoreCase(vfPath, path))) {
-        result.add(vf);
-      }
-    }
-    return result;
-  }
-
-  @Nullable
-  private String extractPathWithoutName(final String path) {
-    final String replaced = path.replace("\\", "/");
-    final int idx = replaced.lastIndexOf('/');
-    if (idx == -1) return null;
-    return replaced.substring(0, idx);
   }
 
   private List<TextFilePatch> loadPatches(final VirtualFile patchFile) {
@@ -735,6 +662,9 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
           final String patchPath = filePatch.getAfterName() == null ? filePatch.getBeforeName() : filePatch.getAfterName();
           component.append("   ");
           component.append("["+ patchPath + "]", SimpleTextAttributes.GRAY_ATTRIBUTES);
+        }
+        if (patchChange.getPatchInProgress().getCurrentStrip() > 0) {
+          component.append(" stripped " + patchChange.getPatchInProgress().getCurrentStrip(), SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
         }
         final String text;
         if (FilePatchStatus.ADDED.equals(patchChange.getPatchInProgress().getStatus())) {
