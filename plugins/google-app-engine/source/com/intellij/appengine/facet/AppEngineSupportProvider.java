@@ -39,7 +39,7 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
-import com.intellij.packaging.impl.run.BuildArtifactsBeforeRun;
+import com.intellij.packaging.impl.run.BuildArtifactsBeforeRunTaskProvider;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,7 +114,7 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
 
       if (artifact != null) {
         ((AppEngineServerModel)configuration.getServerModel()).setArtifact(artifact);
-        BuildArtifactsBeforeRun.setBuildArtifactBeforeRun(module.getProject(), configuration, artifact);
+        BuildArtifactsBeforeRunTaskProvider.setBuildArtifactBeforeRun(module.getProject(), configuration, artifact);
       }
 
       runManager.addConfiguration(runSettings, false);

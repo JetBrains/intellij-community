@@ -7,7 +7,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.impl.run.BuildArtifactsBeforeRun;
+import com.intellij.packaging.impl.run.BuildArtifactsBeforeRunTaskProvider;
 import com.intellij.ui.RawCommandLineEditor;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,10 +39,10 @@ public class AppEngineRunConfigurationEditor extends SettingsEditor<CommonModel>
     final Artifact selectedArtifact = getSelectedArtifact();
     if (!Comparing.equal(myLastSelectedArtifact, selectedArtifact)) {
       if (myLastSelectedArtifact != null) {
-        BuildArtifactsBeforeRun.setBuildArtifactBeforeRunOption(myMainPanel, myLastSelectedArtifact, false);
+        BuildArtifactsBeforeRunTaskProvider.setBuildArtifactBeforeRunOption(myMainPanel, myLastSelectedArtifact, false);
       }
       if (selectedArtifact != null) {
-        BuildArtifactsBeforeRun.setBuildArtifactBeforeRunOption(myMainPanel, selectedArtifact, true);
+        BuildArtifactsBeforeRunTaskProvider.setBuildArtifactBeforeRunOption(myMainPanel, selectedArtifact, true);
       }
       myLastSelectedArtifact = selectedArtifact;
     }
