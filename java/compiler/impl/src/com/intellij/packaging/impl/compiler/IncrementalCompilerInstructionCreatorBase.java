@@ -15,12 +15,15 @@
  */
 package com.intellij.packaging.impl.compiler;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.elements.PackagingFileFilter;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.elements.IncrementalCompilerInstructionCreator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author nik
@@ -52,5 +55,14 @@ public abstract class IncrementalCompilerInstructionCreatorBase implements Incre
         }
       }
     }
+  }
+
+  public IncrementalCompilerInstructionCreator subFolderByRelativePath(@NotNull String relativeDirectoryPath) {
+    final List<String> folders = StringUtil.split(relativeDirectoryPath, "/");
+    IncrementalCompilerInstructionCreator current = this;
+    for (String folder : folders) {
+      current = current.subFolder(folder);
+    }
+    return current;
   }
 }

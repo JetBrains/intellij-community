@@ -519,6 +519,24 @@ public class XmlUtil {
     return null;
   }
 
+  @Nullable
+  public static PsiElement findNamespaceDeclaration(PsiFile xmlFile, String nsName) {
+    if (xmlFile instanceof XmlFile) {
+      final XmlDocument document = ((XmlFile)xmlFile).getDocument();
+      if (document != null) {
+        final XmlTag rootTag = document.getRootTag();
+        if (rootTag != null) {
+          for (XmlAttribute attribute : rootTag.getAttributes()) {
+            if (attribute.isNamespaceDeclaration() && attribute.getLocalName().equals(nsName)) {
+              return attribute;
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
   private static class XmlElementProcessor {
     private final PsiElementProcessor processor;
     private final PsiFile targetFile;

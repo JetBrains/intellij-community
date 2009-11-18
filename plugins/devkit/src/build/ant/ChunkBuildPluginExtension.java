@@ -38,10 +38,6 @@ import java.util.Set;
 
 public class ChunkBuildPluginExtension extends ChunkBuildExtension {
 
-  public boolean haveSelfOutputs(Module[] modules) {
-    return true;
-  }
-
   @NotNull
   public String[] getTargets(final ModuleChunk chunk) {
     return isPlugins(chunk.getModules()) ? new String[] {PluginBuildProperties.getBuildJarTargetName(chunk.getName())}

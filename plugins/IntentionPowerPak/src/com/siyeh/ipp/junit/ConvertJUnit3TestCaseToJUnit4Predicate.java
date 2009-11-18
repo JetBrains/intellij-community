@@ -15,11 +15,10 @@
  */
 package com.siyeh.ipp.junit;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiReferenceList;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
 
 public class ConvertJUnit3TestCaseToJUnit4Predicate
         implements PsiElementPredicate {
@@ -45,8 +44,16 @@ public class ConvertJUnit3TestCaseToJUnit4Predicate
         if (!(target instanceof PsiClass)) {
             return false;
         }
-        PsiClass targetClass = (PsiClass) target;
+        final PsiClass targetClass = (PsiClass) target;
         final String name = targetClass.getQualifiedName();
-        return "junit.framework.TestCase".equals(name);
+        if (!"junit.framework.TestCase".equals(name)) {
+            return false;
+        }
+        final Project project = element.getProject();
+        final GlobalSearchScope scope = element.getResolveScope();
+        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+        final PsiClass testAnnotation =
+                psiFacade.findClass("org.junit.Test", scope);
+        return testAnnotation != null;
     }
 }

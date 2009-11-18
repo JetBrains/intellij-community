@@ -106,7 +106,6 @@ public class GenerateAntBuildAction extends CompileActionBase {
     Presentation presentation = event.getPresentation();
     Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
     presentation.setEnabled(project != null);
-    presentation.setVisible(ChunkBuildExtension.hasBuildExtensions());
   }
 
   private void generate(final Project project, final GenerationOptions genOptions) {
