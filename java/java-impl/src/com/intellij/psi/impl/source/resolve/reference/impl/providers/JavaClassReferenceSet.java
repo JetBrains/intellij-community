@@ -191,7 +191,7 @@ public class JavaClassReferenceSet {
     return !Boolean.FALSE.equals(aBoolean) && myElement.getLanguage() instanceof XMLLanguage;
   }
 
-  protected boolean isStaticSeparator(char c) {
+  protected boolean isStaticSeparator(char c, boolean strict) {
     return isAllowDollarInNames() ? c == SEPARATOR2 : c == SEPARATOR;
   }
 
