@@ -105,7 +105,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
       processor.handleEvent(JavaScopeProcessorEvent.CHANGE_LEVEL, null);
     }
     else {
-      if (isStaticClassReference()) {
+      if (isDefinitelyStatic()) {
         processor.handleEvent(JavaScopeProcessorEvent.START_STATIC, null);
       }
       processorToUse = new PsiScopeProcessor() {
@@ -125,17 +125,17 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     super.processVariants(processorToUse);
   }
 
-  private boolean isStaticClassReference() {
+  private boolean isDefinitelyStatic() {
     final String s = getElement().getText();
-    return isStaticClassReference(s);
+    return isStaticClassReference(s, true);
   }
 
-  private boolean isStaticClassReference(final String s) {
+  private boolean isStaticClassReference(final String s, boolean strict) {
     if (myIndex == 0) {
       return false;
     }
     char c = s.charAt(getRangeInElement().getStartOffset() - 1);
-    return myJavaClassReferenceSet.isStaticSeparator(c);
+    return myJavaClassReferenceSet.isStaticSeparator(c, strict);
   }
 
   @Nullable
@@ -229,7 +229,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
       if (myInStaticImport) {
         return ArrayUtil.mergeArrays(aClass.getInnerClasses(), aClass.getFields(), Object.class);
       }
-      else if (isStaticClassReference()) {
+      else if (isDefinitelyStatic()) {
         final PsiClass[] psiClasses = aClass.getInnerClasses();
         final List<PsiClass> staticClasses = new ArrayList<PsiClass>(psiClasses.length);
 
@@ -327,10 +327,11 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
 
     final PsiElement context = getContext();
     if (context instanceof PsiClass) {
-      if (isStaticClassReference(elementText)) {
+      if (isStaticClassReference(elementText, false)) {
         final PsiClass psiClass = ((PsiClass)context).findInnerClassByName(getCanonicalText(), false);
         if (psiClass != null) return new ClassCandidateInfo(psiClass, PsiSubstitutor.EMPTY, false, psiElement);
-        return JavaResolveResult.EMPTY;
+        PsiElement member = doResolveMember((PsiClass)context, myText);
+        return member == null ? JavaResolveResult.EMPTY : new CandidateInfo(member, PsiSubstitutor.EMPTY, false, false, psiElement);
       }
       else if (!myInStaticImport && myJavaClassReferenceSet.isAllowDollarInNames()) {
         return JavaResolveResult.EMPTY;
@@ -548,6 +549,10 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     fqn = fqn.substring(0, i);
     aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(fqn, resolveScope);
     if (aClass == null) return null;
+    return doResolveMember(aClass, memberName);
+  }
+
+  private static PsiElement doResolveMember(PsiClass aClass, String memberName) {
     PsiMember member = aClass.findFieldByName(memberName, true);
     if (member != null) return member;
 

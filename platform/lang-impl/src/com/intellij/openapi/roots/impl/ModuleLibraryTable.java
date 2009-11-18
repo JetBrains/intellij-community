@@ -26,7 +26,6 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ConvertingIterator;
 import com.intellij.util.containers.Convertor;
@@ -45,7 +44,6 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTable.Modifiable
   private static final OrderEntryToLibraryConvertor ORDER_ENTRY_TO_LIBRARY_CONVERTOR = new OrderEntryToLibraryConvertor();
   private final RootModelImpl myRootModel;
   private final ProjectRootManagerImpl myProjectRootManager;
-  private final VirtualFilePointerManager myFilePointerManager;
   public static final LibraryTablePresentation MODULE_LIBRARY_TABLE_PRESENTATION = new LibraryTablePresentation() {
     public String getDisplayName(boolean plural) {
       return ProjectBundle.message("module.library.display.name", plural ? 2 : 1);
@@ -60,10 +58,9 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTable.Modifiable
     }
   };
 
-  ModuleLibraryTable(RootModelImpl rootModel, ProjectRootManagerImpl projectRootManager, VirtualFilePointerManager filePointerManager) {
+  ModuleLibraryTable(RootModelImpl rootModel, ProjectRootManagerImpl projectRootManager) {
     myRootModel = rootModel;
     myProjectRootManager = projectRootManager;
-    myFilePointerManager = filePointerManager;
   }
 
   @NotNull
@@ -75,13 +72,13 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTable.Modifiable
   }
 
   public Library createLibrary() {
-    final ModuleLibraryOrderEntryImpl orderEntry = new ModuleLibraryOrderEntryImpl(myRootModel, myProjectRootManager, myFilePointerManager);
+    final ModuleLibraryOrderEntryImpl orderEntry = new ModuleLibraryOrderEntryImpl(myRootModel, myProjectRootManager);
     myRootModel.addOrderEntry(orderEntry);
     return orderEntry.getLibrary();
   }
 
   public Library createLibrary(String name) {
-    final ModuleLibraryOrderEntryImpl orderEntry = new ModuleLibraryOrderEntryImpl(name, myRootModel, myProjectRootManager, myFilePointerManager);
+    final ModuleLibraryOrderEntryImpl orderEntry = new ModuleLibraryOrderEntryImpl(name, myRootModel, myProjectRootManager);
     myRootModel.addOrderEntry(orderEntry);
     return orderEntry.getLibrary();
   }

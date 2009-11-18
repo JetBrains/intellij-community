@@ -15,11 +15,10 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.impl.artifacts.ArtifactUtil;
+import com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinder;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -36,16 +35,17 @@ public class PackageFileAction extends AnAction {
     boolean visible = false;
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project != null) {
-      final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
-      if (files != null && files.length > 0) {
+      final List<VirtualFile> files = getFilesToPackage(e, project);
+      if (!files.isEmpty()) {
         visible = true;
-        e.getPresentation().setText(files.length == 1 ? CompilerBundle.message("action.name.package.file") : CompilerBundle.message("action.name.package.files"));
+        e.getPresentation().setText(files.size() == 1 ? CompilerBundle.message("action.name.package.file") : CompilerBundle.message("action.name.package.files"));
       }
     }
 
     e.getPresentation().setVisible(visible);
   }
 
+  @NotNull
   private static List<VirtualFile> getFilesToPackage(@NotNull AnActionEvent e, @NotNull Project project) {
     final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
     if (files == null) return Collections.emptyList();
@@ -58,7 +58,7 @@ public class PackageFileAction extends AnAction {
           fileIndex.isInSourceContent(file) && compilerManager.isCompilableFileType(file.getFileType())) {
         return Collections.emptyList();
       }
-      final Collection<? extends Artifact> artifacts = ArtifactUtil.findArtifactsByFile(file, project);
+      final Collection<? extends Artifact> artifacts = ArtifactBySourceFileFinder.getInstance(project).findArtifacts(file);
       for (Artifact artifact : artifacts) {
         if (!StringUtil.isEmpty(artifact.getOutputPath())) {
           result.add(file);
@@ -80,22 +80,22 @@ public class PackageFileAction extends AnAction {
       for (VirtualFile file : files) {
         PackageFileWorker.packageFile(file, project);
       }
-      setStatusText(project, VfsUtil.toVirtualFileArray(files));
+      setStatusText(project, files);
     }
     catch (IOException e) {
       Messages.showErrorDialog(CompilerBundle.message("message.tect.package.file.io.error", e), CommonBundle.getErrorTitle());
     }
   }
 
-  public static void setStatusText(Project project, VirtualFile[] files) {
-    if (files.length != 0) {
+  private static void setStatusText(Project project, List<VirtualFile> files) {
+    if (!files.isEmpty()) {
       String fileNames = "";
       for (VirtualFile file : files) {
         if (fileNames.length() != 0) fileNames += ", ";
         fileNames+="'"+file.getName()+"'";
       }
       String time = DateFormat.getTimeInstance().format(new Date());
-      final String statusText = CompilerBundle.message("status.text.file.has.been.packaged", files.length, fileNames, time);
+      final String statusText = CompilerBundle.message("status.text.file.has.been.packaged", files.size(), fileNames, time);
       WindowManager.getInstance().getStatusBar(project).setInfo(statusText);
     }
   }

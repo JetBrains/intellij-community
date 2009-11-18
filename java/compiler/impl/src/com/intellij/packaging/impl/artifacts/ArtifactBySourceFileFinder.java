@@ -13,19 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.module;
+package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packaging.artifacts.Artifact;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class ModulePointerManager {
-  public static ModulePointerManager getInstance(Project project) {
-    return ServiceManager.getService(project, ModulePointerManager.class);
+import java.util.Collection;
+
+/**
+ * @author nik
+ */
+public abstract class ArtifactBySourceFileFinder {
+  public static ArtifactBySourceFileFinder getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, ArtifactBySourceFileFinder.class);
   }
 
-  @NotNull
-  public abstract ModulePointer create(@NotNull Module module);
-  @NotNull
-  public abstract ModulePointer create(@NotNull String moduleName);
+  public abstract Collection<? extends Artifact> findArtifacts(@NotNull VirtualFile sourceFile);
 }

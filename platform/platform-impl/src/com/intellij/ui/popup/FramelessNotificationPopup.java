@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.ui.ListenerUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -64,15 +65,19 @@ public class FramelessNotificationPopup {
     }
   };
   private final Timer myFadeInTimer = new Timer(10, myFadeTracker);
+  private ActionListener myActionListener;
 
   public FramelessNotificationPopup(final JComponent owner, final JComponent content, Color backgroud) {
-    this(owner, content, backgroud, true);
+    this(owner, content, backgroud, true, null);
   }
 
-  public FramelessNotificationPopup(final JComponent owner, final JComponent content, Color backgroud, boolean useDefaultPreferredSize) {
+  public FramelessNotificationPopup(final JComponent owner, final JComponent content, Color backgroud, boolean useDefaultPreferredSize, final ActionListener listener) {
     myBackgroud = backgroud;
     myUseDefaultPreferredSize = useDefaultPreferredSize;
     myContent = new ContentComponent(content);
+
+    myActionListener = listener;
+
     myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(myContent, null)
       .setForceHeavyweight(true)
       .setRequestFocus(false)
@@ -117,6 +122,10 @@ public class FramelessNotificationPopup {
         public void mouseClicked(final MouseEvent e) {
           if (e.getButton() == MouseEvent.BUTTON3) {
             myPopup.cancel();
+          } else if (UIUtil.isActionClick(e)) {
+            if (myActionListener != null) {
+              myActionListener.actionPerformed(new ActionEvent(FramelessNotificationPopup.this, ActionEvent.ACTION_PERFORMED, null));
+            }
           }
         }
 

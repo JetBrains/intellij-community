@@ -16,8 +16,11 @@
 
 package com.intellij.packaging.elements;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ModificationTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
@@ -28,4 +31,9 @@ public abstract class ComplexPackagingElementType<E extends ComplexPackagingElem
   }
 
   public abstract String getShowContentActionText();
+
+  @Nullable
+  public ModificationTracker getAllSubstitutionsModificationTracker(@NotNull Project project) {
+    return null;
+  }
 }

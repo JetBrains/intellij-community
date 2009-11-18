@@ -19,7 +19,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
-import com.intellij.ide.projectView.impl.nodes.LibrariesElement;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -46,30 +45,35 @@ public class PackageViewLibrariesNode extends ProjectViewNode<LibrariesElement>{
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     final ArrayList<VirtualFile> roots = new ArrayList<VirtualFile>();
-    if (getValue().getModule() == null) {
+    Module myModule = getValue().getModule();
+    if (myModule == null) {
       final Module[] modules = ModuleManager.getInstance(getProject()).getModules();
-
-      for (int i = 0; i < modules.length; i++) {
-        Module module = modules[i];
+      for (Module module : modules) {
         addModuleLibraryRoots(ModuleRootManager.getInstance(module), roots);
       }
-
-    } else {
-      addModuleLibraryRoots(ModuleRootManager.getInstance(getValue().getModule()), roots);
+    }
+    else {
+      addModuleLibraryRoots(ModuleRootManager.getInstance(myModule), roots);
     }
     return PackageUtil.createPackageViewChildrenOnFiles(roots, getProject(), getSettings(), null, true);
   }
 
+
+  @Override
+  public boolean someChildContainsFile(VirtualFile file) {
+    ProjectFileIndex index = ProjectRootManager.getInstance(getProject()).getFileIndex();
+    if (!index.isInLibrarySource(file) && !index.isInLibraryClasses(file)) return false;
+    return super.someChildContainsFile(file);    
+  }
+
   private static void addModuleLibraryRoots(ModuleRootManager moduleRootManager, List<VirtualFile> roots) {
     final OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
-    for (int idx = 0; idx < orderEntries.length; idx++) {
-      final OrderEntry orderEntry = orderEntries[idx];
+    for (final OrderEntry orderEntry : orderEntries) {
       if (!(orderEntry instanceof LibraryOrderEntry || orderEntry instanceof JdkOrderEntry)) {
         continue;
       }
       final VirtualFile[] files = orderEntry.getFiles(OrderRootType.CLASSES);
-      for (int i = 0; i < files.length; i++) {
-        final VirtualFile file = files[i];
+      for (final VirtualFile file : files) {
         if (file.getFileSystem() instanceof JarFileSystem && file.getParent() != null) {
           // skip entries inside jars
           continue;
