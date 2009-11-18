@@ -142,6 +142,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     }
     ((StartupManagerImpl)StartupManagerEx.getInstanceEx(getProject())).runStartupActivities();
     ((StartupManagerImpl)StartupManagerEx.getInstanceEx(getProject())).runPostStartupActivities();
+    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
   }
 
   protected void tearDown() throws Exception {
@@ -301,14 +302,16 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   }
 
   @Retention(RetentionPolicy.RUNTIME)
-  @Target({ElementType.METHOD})
-  protected @interface CanChangeDocumentDuringHighlighting {}
+  @Target({ElementType.METHOD, ElementType.TYPE})
+  public @interface CanChangeDocumentDuringHighlighting {}
 
   private boolean canChangeDocumentDuringHighlighting() {
     String methodName = "test" + getTestName(false);
     Method method = null;
     try {
-      method = getClass().getDeclaredMethod(methodName);
+      Class<? extends DaemonAnalyzerTestCase> aClass = getClass();
+      if (aClass.getAnnotation(CanChangeDocumentDuringHighlighting.class) != null) return true;
+      method = aClass.getDeclaredMethod(methodName);
     }
     catch (NoSuchMethodException e) {
       fail(methodName);

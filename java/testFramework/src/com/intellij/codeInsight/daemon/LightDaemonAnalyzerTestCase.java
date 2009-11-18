@@ -41,6 +41,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
   protected void setUp() throws Exception {
     super.setUp();
     DaemonCodeAnalyzer.getInstance(getProject()).projectOpened();
+    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
   }
 
   @Override
