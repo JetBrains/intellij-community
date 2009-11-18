@@ -15,7 +15,6 @@
  */
 package com.intellij.packaging.elements;
 
-import com.intellij.packaging.elements.PackagingFileFilter;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,4 +33,6 @@ public interface IncrementalCompilerInstructionCreator {
   IncrementalCompilerInstructionCreator subFolder(@NotNull String directoryName);
 
   IncrementalCompilerInstructionCreator archive(@NotNull String archiveFileName);
+
+  IncrementalCompilerInstructionCreator subFolderByRelativePath(@NotNull String relativeDirectoryPath);
 }
