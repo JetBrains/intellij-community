@@ -30,13 +30,12 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.*;
-import com.intellij.openapi.roots.CollectingContentIterator;
-import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -62,8 +61,7 @@ import com.intellij.util.concurrency.JBLock;
 import com.intellij.util.concurrency.JBReentrantReadWriteLock;
 import com.intellij.util.concurrency.LockFactory;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.containers.ConcurrentHashSet;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.*;
 import com.intellij.util.io.*;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -78,6 +76,9 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.io.*;
 import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -897,7 +898,7 @@ public class FileBasedIndex implements ApplicationComponent {
             if (!cleanupOnly) {
               for (Project project : ProjectManager.getInstance().getOpenProjects()) {
                 UnindexedFilesUpdater updater =
-                  new UnindexedFilesUpdater(project, ProjectRootManager.getInstance(project), FileBasedIndex.this);
+                  new UnindexedFilesUpdater(project, FileBasedIndex.this);
                 DumbServiceImpl.getInstance(project).queueCacheUpdate(Collections.<CacheUpdater>singleton(updater));
               }
             }
@@ -1830,6 +1831,66 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
     else {
 /*      nvf.clearCachedFileType(); */
       nvf.setFlag(ALREADY_PROCESSED, false);
+    }
+  }
+
+  public static void iterateIndexableFiles(final ContentIterator processor, Project project) {
+    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    // iterate associated libraries
+    final Module[] modules = ModuleManager.getInstance(project).getModules();
+    // iterate project content
+    projectFileIndex.iterateContent(processor);
+
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+
+    Set<VirtualFile> visitedRoots = new com.intellij.util.containers.HashSet<VirtualFile>();
+    for (IndexedRootsProvider provider : Extensions.getExtensions(IndexedRootsProvider.EP_NAME)) {
+      //important not to depend on project here, to support per-project background reindex
+      // each client gives a project to FileBasedIndex
+      final Set<String> rootsToIndex = provider.getRootsToIndex();
+      for (String url : rootsToIndex) {
+        final VirtualFile root = VirtualFileManager.getInstance().findFileByUrl(url);
+        if (visitedRoots.add(root)) {
+          iterateRecursively(root, processor, indicator);
+        }
+      }
+    }
+    for (Module module : modules) {
+      OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
+      for (OrderEntry orderEntry : orderEntries) {
+        if (orderEntry instanceof LibraryOrderEntry || orderEntry instanceof JdkOrderEntry) {
+          final VirtualFile[] libSources = orderEntry.getFiles(OrderRootType.SOURCES);
+          final VirtualFile[] libClasses = orderEntry.getFiles(OrderRootType.CLASSES);
+          for (VirtualFile[] roots : new VirtualFile[][]{libSources, libClasses}) {
+            for (VirtualFile root : roots) {
+              if (visitedRoots.add(root)) {
+                iterateRecursively(root, processor, indicator);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private static void iterateRecursively(@Nullable final VirtualFile root, final ContentIterator processor, ProgressIndicator indicator) {
+    if (root != null) {
+      if (indicator != null) {
+        indicator.setText2(root.getPresentableUrl());
+      }
+
+      if (root.isDirectory()) {
+        for (VirtualFile file : root.getChildren()) {
+          if (file.isDirectory()) {
+            iterateRecursively(file, processor, indicator);
+          }
+          else {
+            processor.processFile(file);
+          }
+        }
+      } else {
+        processor.processFile(root);
+      }
     }
   }
 
