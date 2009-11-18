@@ -68,6 +68,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.lang.reflect.Method;
 import java.util.*;
 
 public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
@@ -286,13 +291,30 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
     CodeInsightTestFixtureImpl.instantiateAndRun(getFile(), getEditor(), toIgnore.toNativeArray());
 
-    if (doTestLineMarkers()) {
+    if (!canChangeDocumentDuringHighlighting()) {
       Document document = getDocument(getFile());
       assertTrue(((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).getFileStatusMap().allDirtyScopesAreNull(document));
     }
 
     List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), getProject());
     return infos == null ? Collections.<HighlightInfo>emptyList() : new ArrayList<HighlightInfo>(infos);
+  }
+
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.METHOD})
+  protected @interface CanChangeDocumentDuringHighlighting {}
+
+  private boolean canChangeDocumentDuringHighlighting() {
+    String methodName = "test" + getTestName(false);
+    Method method = null;
+    try {
+      method = getClass().getDeclaredMethod(methodName);
+    }
+    catch (NoSuchMethodException e) {
+      fail(methodName);
+    }
+    CanChangeDocumentDuringHighlighting annotation = method.getAnnotation(CanChangeDocumentDuringHighlighting.class);
+    return annotation != null;
   }
 
   public static List<HighlightInfo> filter(final List<HighlightInfo> infos, HighlightSeverity minSeverity) {

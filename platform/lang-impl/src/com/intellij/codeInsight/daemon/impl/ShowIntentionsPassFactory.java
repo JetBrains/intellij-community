@@ -40,10 +40,7 @@ import org.jetbrains.annotations.Nullable;
 public class ShowIntentionsPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
   public ShowIntentionsPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
-    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{
-      Pass.UPDATE_VISIBLE,
-      Pass.UPDATE_ALL,
-    }, null, false, Pass.POPUP_HINTS);
+    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL,}, null, false, Pass.POPUP_HINTS);
   }
 
   @NonNls

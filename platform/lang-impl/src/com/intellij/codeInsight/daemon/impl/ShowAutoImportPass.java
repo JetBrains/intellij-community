@@ -24,6 +24,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.HintAction;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -78,8 +79,9 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   }
 
   public void doApplyInformationToEditor() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    if (!myEditor.getContentComponent().hasFocus()) return;
+    Application application = ApplicationManager.getApplication();
+    application.assertIsDispatchThread();
+    if (!application.isUnitTestMode() && !myEditor.getContentComponent().hasFocus()) return;
     List<HighlightInfo> visibleHighlights = getVisibleHighlights(myStartOffset, myEndOffset, myProject, myEditor);
 
     int caretOffset = myEditor.getCaretModel().getOffset();
@@ -89,10 +91,9 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
       if (info.startOffset <= caretOffset && showAddImportHint(info)) return;
     }
 
-    for (int i = 0; i < visibleHighlights.size(); i++) {
+    for (HighlightInfo visibleHighlight : visibleHighlights) {
       ProgressManager.checkCanceled();
-      HighlightInfo info = visibleHighlights.get(i);
-      if (info.startOffset > caretOffset && showAddImportHint(info)) return;
+      if (visibleHighlight.startOffset > caretOffset && showAddImportHint(visibleHighlight)) return;
     }
   }
 
