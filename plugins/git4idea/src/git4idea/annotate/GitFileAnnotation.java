@@ -168,7 +168,6 @@ public class GitFileAnnotation implements FileAnnotation {
    */
   private void fireAnnotationChanged() {
     myListeners.getMulticaster().onAnnotationChanged();
-    LOG.debug("annotations changed fired from...", new Throwable());
   }
 
   /**
@@ -381,7 +380,6 @@ public class GitFileAnnotation implements FileAnnotation {
 
   private class MyFileStatusListener implements FileStatusListener {
     public void fileStatusesChanged() {
-      checkAndFire();
     }
 
     public void fileStatusChanged(@NotNull VirtualFile virtualFile) {
