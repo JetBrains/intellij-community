@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.IconLoader;
@@ -154,7 +155,7 @@ public abstract class ReorderableListController <T> {
       myShowText = showText;
     }
 
-    protected static class BaseAction<V> extends AnAction {
+    protected static class BaseAction<V> extends DumbAwareAction {
       private final ActionBehaviour<V> myBehaviour;
       private final CustomActionDescription<V> myCustomActionDescription;
 
