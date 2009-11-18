@@ -51,6 +51,7 @@ public class CompilerPaths {
       return o1.compareTo(o2);
     }
   };
+  private static final String DEFAULT_GENERATED_DIR_NAME = "generated";
 
   /**
    * Returns a directory
@@ -190,10 +191,12 @@ public class CompilerPaths {
     return outPathUrl != null? VirtualFileManager.extractPath(outPathUrl) : null;
   }
 
+  @Nullable
   public static String getAnnotationProcessorsGenerationPath(Module module) {
     final CompilerConfiguration config = CompilerConfiguration.getInstance(module.getProject());
 
-    if (config.isStoreGeneratedSourcesUnderContent(module)) {
+    final String sourceDirName = config.getGeneratedSourceDirName(module);
+    if (sourceDirName != null && sourceDirName.length() > 0) {
       final String[] roots = ModuleRootManager.getInstance(module).getContentRootUrls();
       if (roots.length == 0) {
         return null;
@@ -201,14 +204,18 @@ public class CompilerPaths {
       if (roots.length > 1) {
         Arrays.sort(roots, URLS_COMPARATOR);
       }
-      return VirtualFileManager.extractPath(roots[0]) + "/" + config.getGeneratedDirName();
+      return VirtualFileManager.extractPath(roots[0]) + "/" + sourceDirName;
     }
 
-    final String url = CompilerProjectExtension.getInstance(module.getProject()).getCompilerOutputUrl();
+    final CompilerProjectExtension extension = CompilerProjectExtension.getInstance(module.getProject());
+    if (extension == null) {
+      return null;
+    }
+    final String url = extension.getCompilerOutputUrl();
     if (url == null) {
       return null;
     }
-    return VirtualFileManager.extractPath(url) + "/generated/" + module.getName().toLowerCase();
+    return VirtualFileManager.extractPath(url) + "/" + DEFAULT_GENERATED_DIR_NAME + "/" + module.getName().toLowerCase();
   }
   
   @NonNls

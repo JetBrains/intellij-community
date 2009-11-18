@@ -19,7 +19,6 @@ package com.intellij.compiler;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -55,16 +54,12 @@ public abstract class CompilerConfiguration {
 
   public abstract void setAnnotationProcessorsMap(Map<String, String> map);
 
-  public abstract void setAnotationProcessedModules(Map<Module, Boolean> modules);
+  public abstract void setAnotationProcessedModules(Map<Module, String> modules);
 
-  public abstract Map<Module, Boolean> getAnotationProcessedModules();
+  public abstract Map<Module, String> getAnotationProcessedModules();
 
   public abstract boolean isAnnotationProcessingEnabled(Module module);
 
-  public abstract boolean isStoreGeneratedSourcesUnderContent(Module module);
+  public abstract String getGeneratedSourceDirName(Module module);
 
-  @NotNull
-  public abstract String getGeneratedDirName();
-
-  public abstract void setGeneratedDirName(String generatedDirName);
 }

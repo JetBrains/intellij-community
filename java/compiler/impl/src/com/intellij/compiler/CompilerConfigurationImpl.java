@@ -54,7 +54,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerConfiguration");
   @NonNls public static final String TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME = "tests.external.compiler.home";
   public static final int DEPENDENCY_FORMAT_VERSION = 54;
-  private static final String DEFAULT_GENERATED_DIR_NAME = "generated";
 
   @SuppressWarnings({"WeakerAccess"}) public String DEFAULT_COMPILER;
   @NotNull private BackendCompiler myDefaultJavaCompiler;
@@ -81,10 +80,9 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private boolean myEnableAnnotationProcessors = false;
   private final Map<String, String> myProcessorsMap = new HashMap<String, String>(); // map: AnnotationProcessorName -> options
   private boolean myObtainProcessorsFromClasspath = true;
-  private String myGeneratedDirName = DEFAULT_GENERATED_DIR_NAME;
   private String myProcessorPath = "";
-  private final Map<Module, Boolean> myProcessedModules = new HashMap<Module, Boolean>();
-  private final Map<String, Boolean> myModuleNames = new HashMap<String, Boolean>();
+  private final Map<Module, String> myProcessedModules = new HashMap<Module, String>();
+  private final Map<String, String> myModuleNames = new HashMap<String, String>();
 
 
   public CompilerConfigurationImpl(Project project, ModuleManager moduleManager) {
@@ -105,9 +103,10 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       }
 
       public void moduleAdded(Project project, Module module) {
-        final Boolean storeUnderContent = myModuleNames.remove(module.getName());
-        if (storeUnderContent != null) {
-          myProcessedModules.put(module, storeUnderContent);
+        final String moduleName = module.getName();
+        if (myModuleNames.containsKey(moduleName)) {
+          final String dirName = myModuleNames.remove(moduleName);
+          myProcessedModules.put(module, dirName);
         }
       }
     });
@@ -313,20 +312,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     myObtainProcessorsFromClasspath = obtainProcessorsFromClasspath;
   }
 
-  @NotNull
-  public String getGeneratedDirName() {
-    return myGeneratedDirName;
-  }
-
-  public void setGeneratedDirName(String generatedDirName) {
-    if (generatedDirName == null || generatedDirName.length() == 0) {
-      myGeneratedDirName = DEFAULT_GENERATED_DIR_NAME;
-    }
-    else {
-      myGeneratedDirName = generatedDirName;
-    }
-  }
-
   public String getProcessorPath() {
     return myProcessorPath;
   }
@@ -344,13 +329,13 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     myProcessorsMap.putAll(map);
   }
 
-  public void setAnotationProcessedModules(Map<Module, Boolean> modules) {
+  public void setAnotationProcessedModules(Map<Module, String> modules) {
     myProcessedModules.clear();
     myModuleNames.clear();
     myProcessedModules.putAll(modules);
   }
 
-  public Map<Module, Boolean> getAnotationProcessedModules() {
+  public Map<Module, String> getAnotationProcessedModules() {
     return Collections.unmodifiableMap(myProcessedModules);
   }
 
@@ -358,8 +343,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     return myProcessedModules.containsKey(module);
   }
 
-  public boolean isStoreGeneratedSourcesUnderContent(Module module) {
-    return Boolean.TRUE.equals(myProcessedModules.get(module));
+  public String getGeneratedSourceDirName(Module module) {
+    return myProcessedModules.get(module);
   }
 
   private void addWildcardResourcePattern(@NonNls final String wildcardPattern) throws MalformedPatternException {
@@ -547,7 +532,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     if (annotationProcessingSettings != null) {
       myEnableAnnotationProcessors = Boolean.valueOf(annotationProcessingSettings.getAttributeValue("enabled", "false"));
       myObtainProcessorsFromClasspath = Boolean.valueOf(annotationProcessingSettings.getAttributeValue("useClasspath", "true"));
-      myGeneratedDirName = annotationProcessingSettings.getAttributeValue("generatedDirName", DEFAULT_GENERATED_DIR_NAME);
 
       final StringBuilder pathBuilder = new StringBuilder();
       for (Element pathElement : ((Collection<Element>)annotationProcessingSettings.getChildren("processorPath"))) {
@@ -578,14 +562,14 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
         }
         for (Element moduleElement : processed) {
           final String name = moduleElement.getAttributeValue("name");
-          final Boolean isStoreUnderContent = Boolean.valueOf(moduleElement.getAttributeValue("storeGeneratedUnderContent", "false"));
+          final String dirname = moduleElement.getAttributeValue("generatedDirName");
           if (name != null) {
             final Module module = moduleMap.get(name);
             if (module != null) {
-              myProcessedModules.put(module, isStoreUnderContent);
+              myProcessedModules.put(module, dirname);
             }
             else {
-              myModuleNames.put(name, isStoreUnderContent);
+              myModuleNames.put(name, dirname);
             }
           }
         }
@@ -624,7 +608,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     parentNode.addContent(annotationProcessingSettings);
     annotationProcessingSettings.setAttribute("enabled", String.valueOf(myEnableAnnotationProcessors));
     annotationProcessingSettings.setAttribute("useClasspath", String.valueOf(myObtainProcessorsFromClasspath));
-    annotationProcessingSettings.setAttribute("generatedDirName", myGeneratedDirName);
     if (myProcessorPath.length() > 0) {
       final StringTokenizer tokenizer = new StringTokenizer(myProcessorPath, File.pathSeparator, false);
       while (tokenizer.hasMoreTokens()) {
@@ -650,7 +633,10 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       final Element moduleElement = new Element("processModule");
       annotationProcessingSettings.addContent(moduleElement);
       moduleElement.setAttribute("name", module.getName());
-      moduleElement.setAttribute("storeGeneratedUnderContent", String.valueOf(isStoreGeneratedSourcesUnderContent(module)));
+      final String dirName = myProcessedModules.get(module);
+      if (dirName != null && dirName.length() > 0) {
+        moduleElement.setAttribute("generatedDirName", dirName);
+      }
     }
   }
 

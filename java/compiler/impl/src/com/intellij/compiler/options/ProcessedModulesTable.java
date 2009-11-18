@@ -16,35 +16,39 @@
 package com.intellij.compiler.options;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.ChooseModulesDialog;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.TableUtil;
+import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
-public class ProcessedModulesChooser extends JPanel {
+public class ProcessedModulesTable extends JPanel {
   private Table myTable = null;
   private MyTableModel myTableModel = null;
-  private boolean myColorUnmarkedElements = true;
 
-  public ProcessedModulesChooser() {
+  public ProcessedModulesTable(final Project project) {
     super(new BorderLayout());
 
     myTableModel = new MyTableModel();
     myTable = new Table(myTableModel);
-    myTable.setShowGrid(false);
+    //myTable.setShowGrid(false);
     myTable.setIntercellSpacing(new Dimension(0, 0));
     myTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
     myTable.setColumnSelectionAllowed(false);
@@ -53,47 +57,54 @@ public class ProcessedModulesChooser extends JPanel {
 
     final TableColumnModel columnModel = myTable.getColumnModel();
 
-    final int checkmarkWidth = new JCheckBox().getPreferredSize().width;
-    final CheckMarkColumnCellRenderer checkmarkRenderer = new CheckMarkColumnCellRenderer(myTable.getDefaultRenderer(Boolean.class));
-
-    final TableColumn checkMarkColumn = columnModel.getColumn(myTableModel.CHECK_MARK_COLUM_INDEX);
-    checkMarkColumn.setHeaderValue("");
-    checkMarkColumn.setPreferredWidth(checkmarkWidth);
-    checkMarkColumn.setMaxWidth(checkmarkWidth);
-    checkMarkColumn.setCellRenderer(checkmarkRenderer);
-
-    TableColumn storeUnderContent = columnModel.getColumn(myTableModel.STORE_UNDER_CONTENT_COLUM_INDEX);
-    final String title = "Generate Sources Under Content";
-    storeUnderContent.setHeaderValue(title);
+    final TableColumn dirNameColumn = columnModel.getColumn(myTableModel.DIRNAME_COLUMN_INDEX);
+    final String title = "Generated Sources Directory Name";
+    dirNameColumn.setHeaderValue(title);
     final JTableHeader tableHeader = myTable.getTableHeader();
     final FontMetrics metrics = tableHeader.getFontMetrics(tableHeader.getFont());
     final int preferredWidth = metrics.stringWidth(title) + 12;
-    storeUnderContent.setPreferredWidth(preferredWidth);
-    storeUnderContent.setMaxWidth(preferredWidth);
-    storeUnderContent.setCellRenderer(checkmarkRenderer);
+    dirNameColumn.setPreferredWidth(preferredWidth);
+    dirNameColumn.setMaxWidth(preferredWidth + 20);
+    dirNameColumn.setCellRenderer(new MyElementColumnCellRenderer());
 
     final TableColumn moduleColumn = columnModel.getColumn(myTableModel.ELEMENT_COLUMN_INDEX);
     moduleColumn.setHeaderValue("Module");
     moduleColumn.setCellRenderer(new MyElementColumnCellRenderer());
 
     add(pane, BorderLayout.CENTER);
-    myTable.registerKeyboardAction(
-      new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          final int[] selectedRows = myTable.getSelectedRows();
-          boolean currentlyMarked = true;
-          for (int selectedRow : selectedRows) {
-            currentlyMarked = myTableModel.isMarked(selectedRow);
-            if (!currentlyMarked) {
-              break;
-            }
+
+    final JButton addButton = new JButton("Add");
+    addButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        final Set<Module> projectModules = new HashSet<Module>(Arrays.asList(ModuleManager.getInstance(project).getModules()));
+        projectModules.removeAll(myTableModel.getAllModules());
+        final ChooseModulesDialog chooser = new ChooseModulesDialog(ProcessedModulesTable.this, new ArrayList<Module>(projectModules), "ChooseModule");
+        chooser.show();
+        if (chooser.isOK()) {
+          final List<Module> chosen = chooser.getChosenElements();
+          for (Module module : chosen) {
+            myTableModel.addElement(module, null);
           }
-          myTableModel.setMarked(selectedRows, !currentlyMarked);
         }
-      },
-      KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0),
-      JComponent.WHEN_FOCUSED
-    );
+      }
+    });
+
+    final JButton removeButton = new JButton("Remove");
+    myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      public void valueChanged(ListSelectionEvent e) {
+        removeButton.setEnabled(myTable.getSelectedRowCount() > 0);
+      }
+    });
+    removeButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        TableUtil.removeSelectedItems(myTable);
+      }
+    });
+
+    final JPanel buttonPanel = new JPanel(new GridBagLayout());
+    buttonPanel.add(addButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 6, 0, 0), 0, 0));
+    buttonPanel.add(removeButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(5, 6, 0, 0), 0, 0));
+    add(buttonPanel, BorderLayout.EAST);
 
     final SpeedSearchBase<Table> speedSearch = new SpeedSearchBase<Table>(myTable) {
       public int getSelectedIndex() {
@@ -150,28 +161,13 @@ public class ProcessedModulesChooser extends JPanel {
     }
   }
 
-  public void addModule(Module element, final boolean isMarked, boolean isStoreGeneratedSourcesUnderContent) {
-    myTableModel.addElement(element, isMarked, isStoreGeneratedSourcesUnderContent);
+  public void addModule(Module element, String dirName) {
+    myTableModel.addElement(element, dirName);
     selectRow(myTableModel.getRowCount() - 1);
     myTable.requestFocus();
   }
 
-  public boolean isElementMarked(Module element) {
-    final int elementRow = myTableModel.getElementRow(element);
-    return myTableModel.isMarked(elementRow);
-  }
-
-  public void setElementMarked(Module element, boolean marked) {
-    final int elementRow = myTableModel.getElementRow(element);
-    myTableModel.updateBooleanMap(elementRow, marked, myTableModel.myMarkedMap);
-  }
-
-  public void setStoreGeneratedSourcesUnderContent(Module element, boolean value) {
-    final int elementRow = myTableModel.getElementRow(element);
-    myTableModel.updateBooleanMap(elementRow, value, myTableModel.myStoreUnderContentMap);
-  }
-
-  public void removeElement(Module element) {
+  public void removeModule(Module element) {
     final int elementRow = myTableModel.getElementRow(element);
     if (elementRow < 0) {
       return; // no such element
@@ -244,14 +240,12 @@ public class ProcessedModulesChooser extends JPanel {
     return rows;
   }
 
-  public List<Pair<Module, Boolean>> getMarkedModules() {
+  public List<Pair<Module, String>> getAllModules() {
     final int count = myTableModel.getRowCount();
-    List<Pair<Module, Boolean>> elements = new ArrayList<Pair<Module, Boolean>>();
+    List<Pair<Module, String>> elements = new ArrayList<Pair<Module, String>>();
     for (int idx = 0; idx < count; idx++) {
       final Module module = myTableModel.getModuleAt(idx);
-      if (myTableModel.isMarked(idx)) {
-        elements.add(new Pair<Module, Boolean>(module, myTableModel.isGenerateSourcesToContent(module)));
-      }
+      elements.add(new Pair<Module, String>(module, myTableModel.getGenDirName(module)));
     }
     return elements;
   }
@@ -289,71 +283,48 @@ public class ProcessedModulesChooser extends JPanel {
     return myTableModel.getModuleAt(row);
   }
 
-  private final class MyTableModel extends AbstractTableModel {
+  private final class MyTableModel extends AbstractTableModel implements ItemRemovable {
     private final List<Module> myElements = new ArrayList<Module>();
-    private final Map<Module, Boolean> myMarkedMap = new HashMap<Module, Boolean>();
-    private final Map<Module, Boolean> myStoreUnderContentMap = new HashMap<Module, Boolean>();
-    public final int CHECK_MARK_COLUM_INDEX = 0;
-    public final int ELEMENT_COLUMN_INDEX = 1;
-    public final int STORE_UNDER_CONTENT_COLUM_INDEX = 2;
+    private final Map<Module, String> myDirNameMap = new HashMap<Module, String>();
+    public final int ELEMENT_COLUMN_INDEX = 0;
+    public final int DIRNAME_COLUMN_INDEX = 1;
 
     public void sort(Comparator<Module> comparator) {
       Collections.sort(myElements, comparator);
       fireTableDataChanged();
     }
 
+    public List<Module> getAllModules() {
+      return Collections.unmodifiableList(myElements);
+    }
+
     public Module getModuleAt(int index) {
       return myElements.get(index);
     }
 
-    public boolean isMarked(int index) {
-      final Module element = myElements.get(index);
-      return myMarkedMap.get(element).booleanValue();
+    public String getGenDirName(Module module) {
+      return myDirNameMap.get(module);
     }
 
-    public boolean isGenerateSourcesToContent(int index) {
-      final Module element = myElements.get(index);
-      return myStoreUnderContentMap.get(element).booleanValue();
-    }
-    
-    public boolean isGenerateSourcesToContent(Module module) {
-      final Boolean value = myStoreUnderContentMap.get(module);
-      return value != null && value.booleanValue();
-    }
-
-    void addElement(Module element, boolean isMarked, boolean isStoreGeneratedSourcesUnderContent) {
-      myElements.add(element);
-      myMarkedMap.put(element, Boolean.valueOf(isMarked));
-      myStoreUnderContentMap.put(element, Boolean.valueOf(isStoreGeneratedSourcesUnderContent));
+    void addElement(Module module, final String dirName) {
+      myElements.add(module);
+      if (dirName != null && dirName.length() > 0) {
+        myDirNameMap.put(module, dirName);
+      }
       int row = myElements.size() - 1;
       fireTableRowsInserted(row, row);
     }
 
-    void addElements(List<Module> elements, boolean isMarked) {
-      if (elements == null || elements.size() == 0) {
-        return;
-      }
-      for (final Module element : elements) {
-        myElements.add(element);
-        myMarkedMap.put(element, isMarked ? Boolean.TRUE : Boolean.FALSE);
-        myStoreUnderContentMap.put(element, Boolean.FALSE);
-      }
-      fireTableRowsInserted(myElements.size() - elements.size(), myElements.size() - 1);
+    public void removeRow(int idx) {
+      final Module element = myElements.remove(idx);
+      myDirNameMap.remove(element);
+      fireTableRowsDeleted(idx, idx);
     }
 
     public void removeElement(Module element) {
       final boolean reallyRemoved = myElements.remove(element);
       if (reallyRemoved) {
-        myMarkedMap.remove(element);
-        myStoreUnderContentMap.remove(element);
-        fireTableDataChanged();
-      }
-    }
-
-    public void changeElementRow(Module element, int row) {
-      final boolean reallyRemoved = myElements.remove(element);
-      if (reallyRemoved) {
-        myElements.add(row, element);
+        myDirNameMap.remove(element);
         fireTableDataChanged();
       }
     }
@@ -367,24 +338,12 @@ public class ProcessedModulesChooser extends JPanel {
       fireTableDataChanged();
     }
 
-    public void removeRows(int[] rows) {
-      final List<Module> toRemove = new ArrayList<Module>();
-      for (int row : rows) {
-        final Module element = myElements.get(row);
-        toRemove.add(element);
-        myMarkedMap.remove(element);
-        myStoreUnderContentMap.remove(element);
-      }
-      myElements.removeAll(toRemove);
-      fireTableDataChanged();
-    }
-
     public int getRowCount() {
       return myElements.size();
     }
 
     public int getColumnCount() {
-      return 3;
+      return 2;
     }
 
     @Nullable
@@ -393,71 +352,54 @@ public class ProcessedModulesChooser extends JPanel {
       if (columnIndex == ELEMENT_COLUMN_INDEX) {
         return element;
       }
-      if (columnIndex == CHECK_MARK_COLUM_INDEX) {
-        return myMarkedMap.get(element);
-      }
-      if (columnIndex == STORE_UNDER_CONTENT_COLUM_INDEX) {
-        return myStoreUnderContentMap.get(element);
+      if (columnIndex == DIRNAME_COLUMN_INDEX) {
+        return myDirNameMap.get(element);
       }
       return null;
     }
 
     public void setValueAt(Object value, int rowIndex, int columnIndex) {
-      if (columnIndex == CHECK_MARK_COLUM_INDEX) {
-        updateBooleanMap(rowIndex, ((Boolean)value).booleanValue(), myMarkedMap);
+      if (columnIndex == DIRNAME_COLUMN_INDEX) {
+        final Module module = myElements.get(rowIndex);
+        if (value != null) {
+          String dir = FileUtil.toSystemIndependentName((String)value);
+          while (dir.startsWith("/")) {
+            dir = dir.substring(1);
+          }
+          if (dir.length() > 0) {
+            myDirNameMap.put(module, dir);
+          }
+          else {
+            myDirNameMap.remove(module);
+          }
+        }
+        else {
+          myDirNameMap.remove(module);
+        }
+        fireTableRowsUpdated(rowIndex, rowIndex);
       }
-      else if (columnIndex == STORE_UNDER_CONTENT_COLUM_INDEX) {
-        updateBooleanMap(rowIndex, ((Boolean)value).booleanValue(), myStoreUnderContentMap);
-      }
-    }
-
-    private void updateBooleanMap(int rowIndex, boolean marked, final Map<Module, Boolean> map) {
-      final Module element = myElements.get(rowIndex);
-      final Boolean newValue = marked? Boolean.TRUE : Boolean.FALSE;
-      map.put(element, newValue);
-      fireTableRowsUpdated(rowIndex, rowIndex);
-    }
-
-    private void setMarked(int[] rows, final boolean marked) {
-      if (rows == null || rows.length == 0) {
-        return;
-      }
-      int firstRow = Integer.MAX_VALUE;
-      int lastRow = Integer.MIN_VALUE;
-      final Boolean newValue = marked? Boolean.TRUE : Boolean.FALSE;
-      for (final int row : rows) {
-        final Module element = myElements.get(row);
-        myMarkedMap.put(element, newValue);
-        firstRow = Math.min(firstRow, row);
-        lastRow = Math.max(lastRow, row);
-      }
-      fireTableRowsUpdated(firstRow, lastRow);
     }
 
     public Class getColumnClass(int columnIndex) {
-      if (columnIndex == CHECK_MARK_COLUM_INDEX || columnIndex == STORE_UNDER_CONTENT_COLUM_INDEX) {
-        return Boolean.class;
+      if (columnIndex == DIRNAME_COLUMN_INDEX) {
+        return String.class;
       }
       return super.getColumnClass(columnIndex);
     }
 
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-      if (!ProcessedModulesChooser.this.isEnabled()) {
+      if (!ProcessedModulesTable.this.isEnabled()) {
         return false;
       }
-      if (columnIndex == CHECK_MARK_COLUM_INDEX) {
+      if (columnIndex == DIRNAME_COLUMN_INDEX) {
         return true;
-      }
-      if (columnIndex == STORE_UNDER_CONTENT_COLUM_INDEX) {
-        return isMarked(rowIndex);
       }
       return false;
     }
 
     public void clear() {
       myElements.clear();
-      myMarkedMap.clear();
-      myStoreUnderContentMap.clear();
+      myDirNameMap.clear();
       fireTableDataChanged();
     }
   }
@@ -466,11 +408,13 @@ public class ProcessedModulesChooser extends JPanel {
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       final Color color = UIUtil.getTableFocusCellBackground();
       Component component;
-      Module module = (Module)value;
+      final Module module = value instanceof Module? (Module)value : null;
       try {
         UIManager.put(UIUtil.TABLE_FOCUS_CELL_BACKGROUND_PROPERTY, table.getSelectionBackground());
         component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-        setText(module != null ? module.getName() + " (" + FileUtil.toSystemDependentName(module.getModuleFilePath()) + ")" : "");
+        if (module != null) {
+          setText(module.getName() + " (" + FileUtil.toSystemDependentName(module.getModuleFilePath()) + ")");
+        }
         if (component instanceof JLabel) {
           ((JLabel)component).setBorder(noFocusBorder);
         }
@@ -478,8 +422,7 @@ public class ProcessedModulesChooser extends JPanel {
       finally {
         UIManager.put(UIUtil.TABLE_FOCUS_CELL_BACKGROUND_PROPERTY, color);
       }
-      final MyTableModel model = (MyTableModel)table.getModel();
-      component.setEnabled(ProcessedModulesChooser.this.isEnabled() && (myColorUnmarkedElements? model.isMarked(row) : true));
+      component.setEnabled(ProcessedModulesTable.this.isEnabled());
       if (component instanceof JLabel) {
         final Icon icon = module != null ? module.getModuleType().getNodeIcon(false) : null;
         JLabel label = (JLabel)component;
@@ -487,23 +430,6 @@ public class ProcessedModulesChooser extends JPanel {
         label.setDisabledIcon(icon);
       }
       component.setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());
-      return component;
-    }
-  }
-
-  private class CheckMarkColumnCellRenderer implements TableCellRenderer {
-    private final TableCellRenderer myDelegate;
-
-    public CheckMarkColumnCellRenderer(TableCellRenderer delegate) {
-      myDelegate = delegate;
-    }
-
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      Component component = myDelegate.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-      component.setEnabled(ProcessedModulesChooser.this.isEnabled());
-      if (component instanceof JComponent) {
-        ((JComponent)component).setBorder(null);
-      }
       return component;
     }
   }
