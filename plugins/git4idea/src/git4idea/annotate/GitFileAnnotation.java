@@ -15,6 +15,7 @@
  */
 package git4idea.annotate;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorGutterAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
@@ -46,6 +47,8 @@ import java.util.List;
  * Based on the JetBrains SVNAnnotationProvider.
  */
 public class GitFileAnnotation implements FileAnnotation {
+  private final static Logger LOG = Logger.getInstance("#git4idea.annotate.GitFileAnnotation");
+
   /**
    * the format of the date shown in annotations
    */
@@ -377,7 +380,6 @@ public class GitFileAnnotation implements FileAnnotation {
 
   private class MyFileStatusListener implements FileStatusListener {
     public void fileStatusesChanged() {
-      checkAndFire();
     }
 
     public void fileStatusChanged(@NotNull VirtualFile virtualFile) {
