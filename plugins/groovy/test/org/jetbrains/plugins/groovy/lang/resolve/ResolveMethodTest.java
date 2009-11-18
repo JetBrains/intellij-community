@@ -241,11 +241,7 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
   public void testConstructor2() throws Exception {
     PsiReference ref = configureByFile("constructor2/A.groovy");
     PsiMethod method = ((GrNewExpression) ref.getElement().getParent()).resolveConstructor();
-    assertNotNull(method);
-    assertTrue(method.isConstructor());
-    final PsiParameter[] parameters = method.getParameterList().getParameters();
-    assertEquals(1, parameters.length);
-    assertTrue(parameters[0].getType().equalsToText("java.util.Map"));
+    assertNull(method);
   }
 
   //grvy-101
@@ -519,5 +515,29 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     final PsiElement resolved = ref.resolve();
     assertInstanceOf(resolved, PsiMethod.class);
     assertEquals("A", ((PsiMethod)resolved).getContainingClass().getName());
+  }
+
+  public void testOptionalParameters1() throws Exception {
+    PsiReference ref = configureByFile("optionalParameters1/A.groovy");
+    final PsiElement resolved = ref.resolve();
+    assertInstanceOf(resolved, PsiMethod.class);
+  }
+
+  public void testOptionalParameters2() throws Exception {
+    PsiReference ref = configureByFile("optionalParameters2/A.groovy");
+    final PsiElement resolved = ref.resolve();
+    assertInstanceOf(resolved, PsiMethod.class);
+  }
+
+  public void testOptionalParameters3() throws Exception {
+    PsiReference ref = configureByFile("optionalParameters3/A.groovy");
+    final PsiElement resolved = ref.resolve();
+    assertInstanceOf(resolved, PsiMethod.class);
+  }
+
+  public void testOptionalParameters4() throws Exception {
+    PsiReference ref = configureByFile("optionalParameters4/A.groovy");
+    final PsiElement resolved = ref.resolve();
+    assertInstanceOf(resolved, PsiMethod.class);
   }
 }

@@ -130,57 +130,87 @@ public class PsiUtil {
       parameters = ArrayUtil.remove(parameters, 0);
     }
 
-    PsiType[] parameterTypes = skipOptionalParametersAndSubstitute(argumentTypes.length, parameters, substitutor);
-    if (parameterTypes.length - 1 > argumentTypes.length) return false; //one Map type might represent named arguments
-    if (parameterTypes.length == 0 && argumentTypes.length > 0) return false;
+    if (parameters.length == 0) return argumentTypes.length == 0;
 
-    final GlobalSearchScope scope = method.getResolveScope();
+    final PsiParameter lastParameter = parameters[parameters.length - 1];
+    boolean hasVarArgs = lastParameter.isVarArgs() || lastParameter.getType() instanceof PsiArrayType;
+    if (!hasVarArgs && argumentTypes.length > parameters.length) return false;
 
-    if (parameterTypes.length - 1 == argumentTypes.length) {
-      final PsiType firstType = parameterTypes[0];
-      final PsiClassType mapType = createMapType(method.getManager(), scope);
-      if (mapType.isAssignableFrom(firstType)) {
-        final PsiType[] trimmed = new PsiType[parameterTypes.length - 1];
-        System.arraycopy(parameterTypes, 1, trimmed, 0, trimmed.length);
-        parameterTypes = trimmed;
-      } else if (!method.isVarArgs()) return false;
+    int allOptionalParameterCount = 0;
+    for (PsiParameter parameter : parameters) {
+      if (isOptionalParameter(parameter)) {
+        allOptionalParameterCount++;
+      }
     }
 
-    for (int i = 0; i < argumentTypes.length; i++) {
-      PsiType argType = argumentTypes[i];
-      PsiType parameterTypeToCheck;
-      if (i < parameterTypes.length - 1) {
-        parameterTypeToCheck = parameterTypes[i];
-      } else {
-        PsiType lastParameterType = parameterTypes[parameterTypes.length - 1];
-        if (lastParameterType instanceof PsiArrayType && !(argType instanceof PsiArrayType)) {
-          parameterTypeToCheck = ((PsiArrayType)lastParameterType).getComponentType();
-        } else if (parameterTypes.length == argumentTypes.length) {
-          parameterTypeToCheck = lastParameterType;
-        } else {
-          return false;
+    int optionalParameterCount;
+    if (hasVarArgs) {
+      optionalParameterCount = allOptionalParameterCount - (parameters.length - 1) + argumentTypes.length;
+      if (optionalParameterCount < 0) return false;
+      for (int i = optionalParameterCount; i >= 0; i--) {
+        if (checkMethodApplicability(parameters, argumentTypes, i, hasVarArgs, substitutor, method.getResolveScope(), method.getManager())) {
+          return true;
         }
       }
-
-      if (!TypesUtil.isAssignableByMethodCallConversion(parameterTypeToCheck, argType, method.getManager(), scope)) return false;
+      return false;
     }
+    else {
+      optionalParameterCount = allOptionalParameterCount - parameters.length + argumentTypes.length;
+      if (optionalParameterCount < 0) return false;
+      return checkMethodApplicability(parameters, argumentTypes, optionalParameterCount, hasVarArgs, substitutor, method.getResolveScope(),
+                                      method.getManager());
 
-    return true;
+    }
   }
 
-  public static PsiType[] skipOptionalParametersAndSubstitute(int argNum, PsiParameter[] parameters, PsiSubstitutor substitutor) {
-    int diff = parameters.length - argNum;
-    List<PsiType> result = new ArrayList<PsiType>(argNum);
-    for (PsiParameter parameter : parameters) {
-      if (diff > 0 && parameter instanceof GrParameter && ((GrParameter)parameter).isOptional()) {
-        diff--;
-        continue;
+  private static boolean checkMethodApplicability(PsiParameter[] parameters,
+                                                  PsiType[] argumentTypes,
+                                                  int optionalParametersCount,
+                                                  boolean hasVarArg,
+                                                  PsiSubstitutor substitutor,
+                                                  GlobalSearchScope scope,
+                                                  PsiManager manager) {
+
+    int argIndex = 0;
+    for (int i = 0; i < parameters.length - 1; i++) {
+      if (isOptionalParameter(parameters[i])) {
+        if (optionalParametersCount == 0) continue;
+        optionalParametersCount--;
       }
 
-      result.add(substitutor.substitute(parameter.getType()));
+      final PsiType parameterType = substitutor.substitute(parameters[i].getType());
+      if (argIndex >= argumentTypes.length) return false;
+      final PsiType argType = argumentTypes[argIndex++];
+      if (!TypesUtil.isAssignableByMethodCallConversion(parameterType, argType, manager, scope)) {
+        return false;
+      }
     }
 
-    return result.toArray(new PsiType[result.size()]);
+    final PsiParameter lastParameter = parameters[parameters.length - 1];
+    final PsiType lastParameterType = substitutor.substitute(lastParameter.getType());
+
+    if (hasVarArg) {
+      if (argIndex == argumentTypes.length - 1 &&
+          TypesUtil.isAssignableByMethodCallConversion(lastParameterType, argumentTypes[argIndex], manager, scope)) {
+        return true;
+      }
+      final PsiType arrayType = ((PsiArrayType)lastParameterType).getComponentType();
+      for (; argIndex < argumentTypes.length; argIndex++) {
+        if (!TypesUtil.isAssignableByMethodCallConversion(arrayType, argumentTypes[argIndex], manager, scope)) return false;
+      }
+    }
+    else {
+      if (!isOptionalParameter(lastParameter) || optionalParametersCount > 0) {
+        if (argIndex >= argumentTypes.length) return false;
+        final PsiType argType = argumentTypes[argIndex++];
+        if (!TypesUtil.isAssignableByMethodCallConversion(lastParameterType, argType, manager, scope)) return false;
+      }
+    }
+    return argIndex == argumentTypes.length;
+  }
+
+  private static boolean isOptionalParameter(PsiParameter parameter) {
+    return parameter instanceof GrParameter && ((GrParameter)parameter).isOptional();
   }
 
   public static PsiClassType createMapType(PsiManager manager, GlobalSearchScope scope) {
@@ -792,6 +822,7 @@ public class PsiUtil {
 
   @Nullable
   public static PsiElement skipWhitespaces(@Nullable PsiElement elem, boolean forward) {
+    //noinspection ConstantConditions
     while (elem != null &&
            elem.getNode() != null &&
            GroovyElementTypes.WHITE_SPACES_OR_COMMENTS.contains(elem.getNode().getElementType())) {
