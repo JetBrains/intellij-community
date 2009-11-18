@@ -35,6 +35,7 @@ public class AddList implements ChangeListCommand {
       myNewListCopy = worker.addChangeList(myName, myComment);
     } else {
       worker.editComment(myName, myComment);
+      myNewListCopy = worker.getCopyByName(myName);
     }
   }
 
